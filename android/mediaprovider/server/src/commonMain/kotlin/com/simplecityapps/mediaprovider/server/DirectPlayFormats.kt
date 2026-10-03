@@ -36,11 +36,18 @@ data class DirectPlayFormats(
 
         /**
          * The iOS engine's FFmpeg build (ios/scripts/build-ffmpeg.sh): its demuxers (ogg, matroska, which reads WebM
-         * and MKA, wav, flac, mov, mp3, aac, aiff) and decoders, which include ALAC.
+         * and MKA, wav, flac, mov, mp3, aac, aiff) and decoders (flac, alac, opus, vorbis, mp3, aac, PCM). Any other
+         * codec, even inside a container it demuxes (a Matroska file with AC3, an m4a with E-AC3), has no decoder, so
+         * the server transcodes it instead of the player failing.
          */
         val Ios = DirectPlayFormats(
             containers = setOf("mp3", "aac", "m4a", "m4b", "mp4", "flac", "ogg", "oga", "opus", "wav", "webm", "weba", "mka", "aiff", "aif"),
-            undecodableCodecs = emptySet()
+            undecodableCodecs = setOf(
+                "ac3", "eac3", "dts", "dca", "dts-hd", "dtshd", "truehd", "mlp",
+                "wmav1", "wmav2", "wmapro", "wmalossless", "wma",
+                "ape", "wavpack", "wv", "tta", "musepack", "mpc", "mp2",
+                "adpcm", "adpcm_ima_wav", "adpcm_ima_qt", "adpcm_ms", "adpcm_swf", "adpcm_yamaha", "adpcm_g722", "adpcm_g726"
+            )
         )
     }
 }
