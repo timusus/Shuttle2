@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createAlbum
+import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createGenre
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
@@ -37,6 +38,20 @@ class ResolveSongsTest {
         songRepository.setSongs(listOf(track2, track1))
 
         resolveSongs(MediaSelection.Albums(createAlbum())) shouldBe listOf(track1, track2)
+    }
+
+    @Test
+    fun `artists resolve artist by artist in the selection's order, each in the default song order`() = runTest {
+        songRepository.applyQueryPredicates = true
+        val aTrack2 = createSong(id = 1, albumArtist = "A", track = 2)
+        val aTrack1 = createSong(id = 2, albumArtist = "A", track = 1)
+        val b = createSong(id = 3, albumArtist = "B")
+        songRepository.setSongs(listOf(aTrack2, b, aTrack1))
+        val artistA = createAlbumArtist(name = "A", groupKey = aTrack1.albumArtistGroupKey)
+        val artistB = createAlbumArtist(name = "B", groupKey = b.albumArtistGroupKey)
+
+        resolveSongs(MediaSelection.AlbumArtists(listOf(artistB, artistA))) shouldBe listOf(b, aTrack1, aTrack2)
+        resolveSongs(MediaSelection.AlbumArtists(listOf(artistA, artistB))) shouldBe listOf(aTrack1, aTrack2, b)
     }
 
     @Test

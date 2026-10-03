@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.isByArtist
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
@@ -14,7 +15,7 @@ import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * The songs a [MediaSelection] stands for, in the order an action should use them: albums, artists and genres in
- * the default song order, playlists in their own order, folders in the folder browser's order.
+ * the default song order (artists in the selection's order), playlists in their own order, folders in the folder browser's order.
  */
 @Inject
 class ResolveSongs(
@@ -34,10 +35,14 @@ class ResolveSongs(
                 .loadSongs(SongQuery.AlbumGroupKeys(selection.albums.map { SongQuery.AlbumGroupKey(it.groupKey) }))
                 .sortedWith(SongSortOrder.Default.comparator)
 
-        is MediaSelection.AlbumArtists ->
+        // Artist by artist in the selection's order (the library's current sort, for the controls row), each artist's
+        // songs in the default song order.
+        is MediaSelection.AlbumArtists -> {
+            val artistKeys = selection.albumArtists.map { it.groupKey }
             songRepository
                 .loadSongs(SongQuery.ArtistGroupKeys(selection.albumArtists.map { SongQuery.ArtistGroupKey(it.groupKey) }))
-                .sortedWith(SongSortOrder.Default.comparator)
+                .sortedWith(compareBy<Song> { song -> artistKeys.indexOfFirst(song::isByArtist) }.then(SongSortOrder.Default.comparator))
+        }
 
         is MediaSelection.Genres ->
             genreRepository

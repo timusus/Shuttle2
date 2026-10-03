@@ -228,11 +228,11 @@ class GeneralPreferenceManager @Inject constructor(
 }
 
 enum class LibraryTab {
-    Genres,
-    Playlists,
-    Artists,
-    Albums,
     Songs,
+    Albums,
+    Artists,
+    Playlists,
+    Genres,
     Folders;
 
     companion object {
