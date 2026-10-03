@@ -1,0 +1,29 @@
+A music player for the library on your own Jellyfin, Emby or Plex server. No ads, no tracking, no account with us.
+
+Sign in to your server and your music is right there: albums, artists, genres, playlists and songs, with artwork, search and fast scrolling through big libraries.
+
+FEATURES
+
+• Works with Jellyfin, Emby and Plex. Sign in with a server address and your login, or with Quick Connect on Jellyfin.
+• Gapless playback, including FLAC and other formats that the system player does not handle.
+• Equalizer and ReplayGain, for the sound you want at a steady volume.
+• Browse by album, artist, genre or playlist, or search your whole library.
+• A queue you control, with shuffle and repeat.
+• Lock screen and Control Centre controls, and AirPlay to your speakers.
+• Now Playing shows the format and audio quality of the song you are hearing.
+• Light and dark appearance.
+• Runs on iPhone and iPad.
+
+FREE TRIAL, THEN PAY ONCE
+
+Shuttle Music is free to download. Streaming from your server is part of Shuttle Music Pro: you get a 14-day free trial, starting the first time you play a song from your server, and after that Pro is a single one-off purchase. There is no subscription and no ads.
+
+PRIVATE BY DESIGN
+
+Shuttle Music collects no data. There is no analytics and no crash reporting. Your server address and login stay on your device, in the Keychain, and are only ever sent to the server you chose. Purchases are handled by Apple.
+
+NEEDS YOUR OWN SERVER
+
+Shuttle Music does not provide music or a server. You need a Jellyfin, Emby or Plex server of your own, reachable from your iPhone or iPad, on your home network or over the internet. Playing music stored on the device itself is not part of this release.
+
+Questions or ideas? Visit https://simplecityapps.com/support.

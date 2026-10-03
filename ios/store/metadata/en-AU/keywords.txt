@@ -1,0 +1,1 @@
+jellyfin,emby,plex,music player,self-hosted,flac,gapless,equalizer,replay gain,streaming,library
