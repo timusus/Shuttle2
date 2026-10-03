@@ -4,7 +4,9 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
+import com.simplecityapps.fakes.FakeAlbumListPreferences
 import com.simplecityapps.fakes.FakeAlbumRepository
+import com.simplecityapps.fakes.FakeArtistListPreferences
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -24,6 +26,9 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewPreferences
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
@@ -76,7 +81,7 @@ class AlbumArtistDetailViewModelTest {
     }
     private val settingsStore = SettingsStore(InMemoryKeyValueStore())
     private val sortStore = InMemoryKeyValueStore()
-    private val sortPreferences = SortPreferenceManager(sortStore)
+    private val libraryViewPreferences = LibraryViewPreferences(SortPreferenceManager(sortStore), FakeAlbumListPreferences(), FakeArtistListPreferences())
 
     private val fakeAlbumArtistRepository = FakeAlbumArtistRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()
@@ -550,7 +555,8 @@ class AlbumArtistDetailViewModelTest {
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
-            sortPreferences = sortPreferences,
+            readSetting = ReadLibraryViewSetting(libraryViewPreferences),
+            saveSetting = SaveLibraryViewSetting(libraryViewPreferences),
         )
     }
 }

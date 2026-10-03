@@ -16,7 +16,9 @@ import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState.SongSection
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
@@ -41,7 +43,7 @@ import kotlinx.coroutines.launch
 /**
  * One artist's albums, the albums they appear on, and their songs (#637), loaded by [groupKey], the key its route carries. Song and album
  * actions go through the screen's MediaActionsHost; this derives state, sorts and sections the songs (the sort is
- * app-wide, in [SortPreferences]), unfolds albums and shuffles by album.
+ * app-wide, in [LibraryViewSetting.ArtistDetailSort]), unfolds albums and shuffles by album.
  */
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,
@@ -51,7 +53,8 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
     private val shuffleAlbums: ShuffleAlbums,
-    private val sortPreferences: SortPreferences,
+    readSetting: ReadLibraryViewSetting,
+    private val saveSetting: SaveLibraryViewSetting,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -61,7 +64,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         fun create(groupKey: AlbumArtistGroupKey): AlbumArtistDetailViewModel
     }
 
-    private val sortOrder = MutableStateFlow(sortPreferences.sortOrderArtistDetail)
+    private val sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.ArtistDetailSort))
 
     /** Null until the first load applies the default expansion, so a later rescan never reapplies it. */
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>?>(null)
@@ -122,7 +125,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
 
     fun onSortOrderSelected(order: ArtistSongSortOrder) {
         sortOrder.value = order
-        sortPreferences.sortOrderArtistDetail = order
+        saveSetting(LibraryViewSetting.ArtistDetailSort, order)
     }
 
     fun onToggleAlbum(album: Album) {
