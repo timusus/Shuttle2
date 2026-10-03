@@ -15,7 +15,8 @@
 #                        moved to <fail-dir> instead, replacing the previous failure there
 #
 # The caller defines step(), LOG, REPO_ROOT and LANE_STARTED, and sets APK, NO_RESET, NO_SEED,
-# REMOTE, REMOTE_BUILD and MAESTRO_DEVICE_ARGS (e.g. --device <serial>) as needed.
+# REMOTE, REMOTE_BUILD, SEED_FIXTURE (a seed-test-media.sh fixture, default playback) and
+# MAESTRO_DEVICE_ARGS (e.g. --device <serial>) as needed.
 
 emu_resolve_apk() {
     local head_sha cache_apk gradle
@@ -66,7 +67,7 @@ emu_lane_up() {
     elif [ "${NO_SEED:-0}" = "1" ]; then
         echo "emu-lane: --no-seed set, skipping seed-test-media.sh"
     else
-        step "seed-test-media: playback fixture" support/scripts/seed-test-media.sh playback --skip-onboarding --if-needed || return 1
+        step "seed-test-media: ${SEED_FIXTURE:-playback} fixture" support/scripts/seed-test-media.sh "${SEED_FIXTURE:-playback}" --skip-onboarding --if-needed || return 1
     fi
 }
 

@@ -5,7 +5,7 @@
 # screenshot-by-screenshot.
 #
 #   support/scripts/design-shots.sh --platform android|ios|both [--screens a,b,...]
-#                                   [--matrix quick|full] [--contact-sheet] [--flow-timeout <secs>]
+#                                   [--devices a,b] [--matrix quick|full] [--contact-sheet] [--flow-timeout <secs>]
 #                                   [--apk <path>] [--remote-build] [--no-ios-build]
 #
 #     --platform         android (a remote-emu.sh lane), ios (a simulator leased from the shared pool,
@@ -14,8 +14,11 @@
 #                          home  library-songs  library-albums  library-artists  album-detail
 #                          artist-detail  now-playing  queue  mini-player  search  settings
 #                          empty-state (a search with no results)
-#     --matrix quick     phone only (Android phone, iPhone); light + dark; default text size. (default)
-#     --matrix full      + Android tablet and foldable, + iPad; text default + large too.
+#     --devices a,b      form factors. Android: phone tablet foldable; iOS: iphone ipad.
+#                        Default: phone,iphone
+#     --matrix quick     light + dark; default text size. (default)
+#     --matrix full      light + dark; default + large text. Recommended for audits (with the
+#                        default devices: phone x 4 cells per screen).
 #     --contact-sheet    one ImageMagick `montage` per platform and screen, if `montage` is installed
 #     --flow-timeout     per-flow timeout in seconds (default 300)
 #     --apk <path>       Android: install this APK instead of building/reusing the cached one
@@ -30,8 +33,9 @@
 #           1840x2208 @ 420 dpi = ~877x1052 dp; no hinge or posture); the manifest says so.
 #           iOS: the leased iPhone, and the existing "S2 iPad" simulator (booted, then shut down).
 #
-# Library: Android seeds the `playback` fixture (seed-test-media.sh, as emu-verify.sh does), queued
-# and paused for the player screens. iOS signs in to the Jellyfin test server in
+# Library: Android seeds the `library` fixture (seed-test-media.sh: 16 albums with embedded covers,
+# the screenshot tests' sample library, so artwork and ArtworkTheme colour show). One album (Blue
+# Hours) is queued and paused for the player screens. iOS signs in to the Jellyfin test server in
 # ~/.config/s2-test/jellyfin.env (ios/maestro/sign-in-jellyfin.yaml), once per simulator.
 #
 # Flows: support/maestro/design/<screen>.yaml (Android), ios/maestro/design/<screen>.yaml (iOS); each
@@ -67,6 +71,8 @@ ALL_SCREENS=(home library-songs library-albums library-artists album-detail arti
 PLATFORM=""
 SCREENS_ARG=""
 MATRIX=quick
+DEVICES_ARG=phone,iphone
+SEED_FIXTURE=library
 CONTACT=0
 FLOW_TIMEOUT=300
 APK=""
@@ -80,6 +86,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --platform) PLATFORM="${2:?design-shots: --platform needs android, ios or both}"; shift 2 ;;
         --screens) SCREENS_ARG="${2:?design-shots: --screens needs a comma-separated list}"; shift 2 ;;
+        --devices) DEVICES_ARG="${2:?design-shots: --devices needs a comma-separated list}"; shift 2 ;;
         --matrix) MATRIX="${2:?design-shots: --matrix needs quick or full}"; shift 2 ;;
         --contact-sheet) CONTACT=1; shift ;;
         --flow-timeout) FLOW_TIMEOUT="${2:?design-shots: --flow-timeout needs seconds}"; shift 2 ;;
@@ -93,9 +100,24 @@ done
 
 case "$PLATFORM" in android | ios | both) ;; *) echo "design-shots: --platform must be android, ios or both" >&2; exit 2 ;; esac
 case "$MATRIX" in
-    quick) THEMES=(light dark); TEXTS=(default); ANDROID_DEVICES=(phone); IOS_DEVICES=(iphone) ;;
-    full) THEMES=(light dark); TEXTS=(default large); ANDROID_DEVICES=(phone tablet foldable); IOS_DEVICES=(iphone ipad) ;;
+    quick) THEMES=(light dark); TEXTS=(default) ;;
+    full) THEMES=(light dark); TEXTS=(default large) ;;
     *) echo "design-shots: --matrix must be quick or full" >&2; exit 2 ;;
+esac
+
+IFS=',' read -ra DEVICES <<<"$DEVICES_ARG"
+ANDROID_DEVICES=(); IOS_DEVICES=()
+for d in "${DEVICES[@]}"; do
+    case "$d" in
+        phone | tablet | foldable) ANDROID_DEVICES+=("$d") ;;
+        iphone | ipad) IOS_DEVICES+=("$d") ;;
+        *) echo "design-shots: unknown device '$d' (want: phone tablet foldable iphone ipad)" >&2; exit 2 ;;
+    esac
+done
+case "$PLATFORM" in
+    android) [ ${#ANDROID_DEVICES[@]} -gt 0 ] || { echo "design-shots: --platform android needs one of phone, tablet, foldable in --devices" >&2; exit 2; } ;;
+    ios) [ ${#IOS_DEVICES[@]} -gt 0 ] || { echo "design-shots: --platform ios needs iphone or ipad in --devices" >&2; exit 2; } ;;
+    both) { [ ${#ANDROID_DEVICES[@]} -gt 0 ] && [ ${#IOS_DEVICES[@]} -gt 0 ]; } || { echo "design-shots: --platform both needs an Android and an iOS device in --devices" >&2; exit 2; } ;;
 esac
 
 SCREENS=("${ALL_SCREENS[@]}")
@@ -281,10 +303,10 @@ android_phase() {
     if ! emu_lane_up; then record_fail android setup - "lane start / install / seed" "see $LOG"; return; fi
     MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
     # A queue for the player screens, then paused: playing music keeps the UI from ever going idle.
-    step "queue the fixture and pause" bash -c 'support/scripts/s2-debug.sh PLAY_ALL && support/scripts/s2-debug.sh PAUSE' \
+    step "queue Blue Hours and pause" bash -c "support/scripts/s2-debug.sh PLAY_ALL --es album \"'Blue Hours'\" && support/scripts/s2-debug.sh PAUSE" \
         || record_fail android setup - "queue the fixture" "player screens will show no queue"
     {
-        echo "- Android: Pixel-class AVD on the remote-emu.sh lane; \`playback\` fixture (Playback Artist / Playback Album, 5 tracks)."
+        echo "- Android: Pixel-class AVD on the remote-emu.sh lane; \`library\` fixture (16 albums with embedded covers); Blue Hours queued and paused."
         case " ${ANDROID_DEVICES[*]} " in *" tablet "*)
             echo "- Android tablet / foldable: no such AVD, so \`wm size\`/\`wm density\` overrides on the phone AVD: tablet 1600x2560 @ 320 dpi (800x1280 dp), foldable unfolded 1840x2208 @ 420 dpi (~877x1052 dp), no hinge or posture." ;;
         esac

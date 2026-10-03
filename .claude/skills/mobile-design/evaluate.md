@@ -20,12 +20,14 @@ Default source for a screen audit: **`design-shots.sh`**, one background call th
 emulator and/or simulator, applies the matrix outside the flows and writes the whole set:
 
 ```bash
-support/scripts/longjob.sh start design-shots -- support/scripts/design-shots.sh --platform both [--screens home,now-playing] [--matrix quick|full] [--contact-sheet]
+support/scripts/longjob.sh start design-shots -- support/scripts/design-shots.sh --platform both [--screens home,now-playing] [--devices phone,tablet,foldable,iphone,ipad] [--matrix quick|full] [--contact-sheet]
 support/scripts/longjob.sh wait design-shots
 ```
 
-`quick` is phone only, light + dark, default text; `full` adds Android tablet/foldable (`wm size` overrides,
-not AVDs), iPad and large text (font scale 2.0 / AX5). Output lands in `shots/<run>/<platform>/<screen>__<device>__<theme>__<text>.png`
+`--devices` picks form factors (Android `phone,tablet,foldable`, iOS `iphone,ipad`; default `phone,iphone`;
+tablet/foldable are `wm size` overrides, not AVDs). `--matrix` picks only theme × text: `quick` is light + dark
+at default text; `full` adds large text (font scale 2.0 / AX5). **For audits use `--matrix full` with the default
+devices** (4 cells per screen per platform). Android seeds the artwork `library` fixture, so shots show covers and ArtworkTheme colour. Output lands in `shots/<run>/<platform>/<screen>__<device>__<theme>__<text>.png`
 with `shots/<run>/manifest.md` (every shot, and every failed flow with its step and last error). Read
 manifest.md first, then Read only the PNGs the audit needs. `--help` lists the screen names.
 

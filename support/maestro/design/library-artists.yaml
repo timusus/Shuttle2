@@ -1,4 +1,4 @@
-# design-shots.sh screen: library-artists. The `playback` fixture is seeded, and (for player screens) queued then paused, by the script.
+# design-shots.sh screen: library-artists. The `library` fixture is seeded, and (for player screens) Blue Hours is queued then paused, by the script.
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: ../nav/launch-fresh.yaml
