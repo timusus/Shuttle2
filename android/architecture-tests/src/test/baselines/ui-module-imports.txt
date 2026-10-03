@@ -7,7 +7,6 @@ com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapp
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.trial.ProSource (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.Entitlement (:android:trial)
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.MonetisationAnalytics (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallOffer (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallOffers (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallPlan (:android:trial)
