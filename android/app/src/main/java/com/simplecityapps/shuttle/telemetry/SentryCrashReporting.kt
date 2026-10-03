@@ -7,6 +7,7 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
+import io.sentry.SentryEvent
 import io.sentry.SentryLevel
 import io.sentry.SentryOptions
 import io.sentry.android.core.SentryAndroid
@@ -51,7 +52,23 @@ class SentryCrashReporting @Inject constructor(
         // Crashes only: no tracing or profiling, and no user identity
         options.isSendDefaultPii = false
         // Belt and braces: an event raised while the SDK closes after an opt-out is dropped
-        options.beforeSend = SentryOptions.BeforeSendCallback { event, _ -> event.takeIf { enabled } }
+        options.beforeSend = SentryOptions.BeforeSendCallback { event, _ -> event.takeIf { enabled }?.let(::scrub) }
+    }
+
+    internal companion object {
+        /**
+         * Takes addresses, hosts, paths and credentials out of the event's message and each exception's value
+         * ([TelemetryScrubber]), as iOS's `beforeSend` does: an exception message can carry a server's URL.
+         */
+        fun scrub(event: SentryEvent): SentryEvent {
+            event.message?.let { message ->
+                message.formatted = message.formatted?.let(TelemetryScrubber::scrub)
+                message.message = message.message?.let(TelemetryScrubber::scrub)
+                message.params = message.params?.map(TelemetryScrubber::scrub)
+            }
+            event.exceptions?.forEach { exception -> exception.value = exception.value?.let(TelemetryScrubber::scrub) }
+            return event
+        }
     }
 }
 
