@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
 import com.simplecityapps.shuttle.ui.shell.ShellRoute
+import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.EntitlementRepository
@@ -27,6 +28,8 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -39,6 +42,9 @@ class MainActivity : AppCompatActivity() {
     interface Injector {
         fun inject(activity: MainActivity)
     }
+
+    // Buffered, so a request that opens the app is delivered once the shell is composed.
+    private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
 
     @Inject
     lateinit var viewModelFactory: MetroViewModelFactory
@@ -86,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
                 S2AppTheme {
-                    ShellRoute()
+                    ShellRoute(tabRequests = tabRequests.receiveAsFlow())
                     PaywallHost(observePaywallRequests)
                 }
             }
@@ -102,6 +108,7 @@ class MainActivity : AppCompatActivity() {
         // Not on recreation, or on a relaunch from recents, which redeliver the intent that opened the file
         if (savedInstanceState == null && intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0) {
             handleViewIntent(intent)
+            handleShortcutIntent(intent)
         }
 
         billing.queryPurchases()
@@ -121,9 +128,15 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         handleViewIntent(intent)
+        handleShortcutIntent(intent)
     }
 
     // Private
+
+    /** Opens the Search tab for the Search launcher shortcut. */
+    private fun handleShortcutIntent(intent: Intent?) {
+        if (intent?.action == ACTION_OPEN_SEARCH) tabRequests.trySend(ShellTab.Search)
+    }
 
     private fun recordPurchase() {
         lifecycleScope.launch {
@@ -153,5 +166,9 @@ class MainActivity : AppCompatActivity() {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
         playRequests.playFromUri(uri, intent.type)
+    }
+
+    companion object {
+        const val ACTION_OPEN_SEARCH = "com.simplecityapps.shuttle.shortcuts.OPEN_SEARCH"
     }
 }

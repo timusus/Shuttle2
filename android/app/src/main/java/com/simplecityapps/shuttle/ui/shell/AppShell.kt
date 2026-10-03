@@ -116,6 +116,7 @@ fun AppShell(
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfoV2(),
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey> = ::shellEntryProvider,
     navigationRequests: Flow<NavigationTarget> = emptyFlow(),
+    tabRequests: Flow<ShellTab> = emptyFlow(),
 ) {
     val layout = remember(windowAdaptiveInfo) { ShellLayout.from(windowAdaptiveInfo) }
     val navigator = rememberAppNavigator(startTab)
@@ -137,6 +138,8 @@ fun AppShell(
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
     // Screens the player's song actions open, such as Go to album.
     LaunchedEffect(navigationRequests) { navigationRequests.collect { target -> navigate { navigator.openTarget(target) } } }
+    // A tab another entry point asks for, such as the Search launcher shortcut.
+    LaunchedEffect(tabRequests) { tabRequests.collect { tab -> onSelectTab(tab) } }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
     val destinations: @Composable () -> Unit = {
         CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {

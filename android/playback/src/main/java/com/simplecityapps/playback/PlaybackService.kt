@@ -150,7 +150,7 @@ class PlaybackService : MediaLibraryService() {
         startId: Int
     ): Int {
         val result = super.onStartCommand(intent, flags, startId)
-        if (intent != null) handleStart(intent, foregroundStarts, playbackOperations, queueOperations, playRequests::playSearch)
+        if (intent != null) handleStart(intent, foregroundStarts, playbackOperations, queueOperations, playRequests::playSearch, playRequests::shuffleAll)
         return result
     }
 
@@ -180,11 +180,12 @@ class PlaybackService : MediaLibraryService() {
         const val ACTION_SKIP_NEXT: String = "com.simplecityapps.playback.next"
         const val ACTION_TOGGLE_SHUFFLE: String = "com.simplecityapps.playback.shuffle"
         const val ACTION_TOGGLE_REPEAT: String = "com.simplecityapps.playback.repeat"
+        const val ACTION_SHUFFLE_ALL: String = "com.simplecityapps.playback.shuffle_all"
 
         /** Plays a voice search: the intent's [SearchManager.QUERY] and its extras, as `VoiceSearch.from` reads them. */
         const val ACTION_PLAY_FROM_SEARCH: String = "com.simplecityapps.playback.search"
 
-        private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT, ACTION_PLAY_FROM_SEARCH)
+        private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT, ACTION_SHUFFLE_ALL, ACTION_PLAY_FROM_SEARCH)
 
         /**
          * Runs one of the actions above, or keeps the service in the foreground for a play button's start, whose play
@@ -196,7 +197,8 @@ class PlaybackService : MediaLibraryService() {
             foregroundStarts: ForegroundStarts,
             playbackOperations: PlaybackOperations,
             queueOperations: QueueOperations,
-            playSearch: suspend (query: String?, extras: Bundle?) -> Unit
+            playSearch: suspend (query: String?, extras: Bundle?) -> Unit,
+            shuffleAll: suspend () -> Unit
         ) {
             val action = intent.action
             when {
@@ -216,6 +218,7 @@ class PlaybackService : MediaLibraryService() {
                             ACTION_SKIP_NEXT -> playbackOperations.skipToNext(ignoreRepeat = true)
                             ACTION_TOGGLE_SHUFFLE -> queueOperations.toggleShuffleMode()
                             ACTION_TOGGLE_REPEAT -> queueOperations.toggleRepeatMode()
+                            ACTION_SHUFFLE_ALL -> shuffleAll()
                             ACTION_PLAY_FROM_SEARCH -> playSearch(intent.getStringExtra(SearchManager.QUERY), intent.extras)
                         }
                     }

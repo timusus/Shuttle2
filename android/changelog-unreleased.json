@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "The app icon's long-press menu now has Shuffle all and Search next to Play/Pause",
+      "commits": []
+    },
+    {
       "text": "You can now back up your play counts, favourites and playlists from Settings, Library, and restore them later without losing anything newer on your device",
       "commits": []
     },

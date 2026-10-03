@@ -71,6 +71,7 @@
             android:taskAffinity="">
             <intent-filter>
                 <action android:name="com.simplecityapps.shuttle.shortcuts.TOGGLE_PLAYBACK" />
+                <action android:name="com.simplecityapps.shuttle.shortcuts.SHUFFLE_ALL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

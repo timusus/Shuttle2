@@ -28,6 +28,8 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
 import com.simplecityapps.shuttle.ui.text.getString
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 
 /**
@@ -39,6 +41,7 @@ fun ShellRoute(
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = metroViewModel(),
     shellViewModel: ShellViewModel = metroViewModel(),
+    tabRequests: Flow<ShellTab> = emptyFlow(),
 ) {
     val playerState = viewModel.uiState.collectAsStateWithLifecycle()
     // Read apart from the progress, so a tick recomposes only what reads the progress.
@@ -54,6 +57,7 @@ fun ShellRoute(
         modifier = modifier,
         snackbarHostState = snackbarHostState,
         startTab = shellUi.startTab,
+        tabRequests = tabRequests,
         navigationRequests = remember(targets) { targets.receiveAsFlow() },
     )
 }

@@ -12,12 +12,14 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.resume
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -113,6 +115,18 @@ constructor(
             playQueue.songs.isEmpty() -> Unit
             setQueue(playQueue.songs, playQueue.position, source = "playFromSearch") -> playbackOperations.play()
         }
+    }
+
+    /** Shuffles the whole library and plays it, once the saved queue is restored. */
+    suspend fun shuffleAll() {
+        queueOperations.queueStateFlow.awaitRestored()
+        val songs = librarySongs()
+        if (songs.isEmpty()) return
+        val loaded = CompletableDeferred<Result<Any?>>()
+        playbackOperations.shuffle(songs, PlayContext.None) { loaded.complete(it) }
+        loaded.await()
+            .onSuccess { playbackOperations.play() }
+            .onFailure { error -> Timber.e(error, "Failed to load playback after shuffleAll") }
     }
 
     /** Plays the file at [uri] on its own, replacing the queue, or says it can't be opened. */

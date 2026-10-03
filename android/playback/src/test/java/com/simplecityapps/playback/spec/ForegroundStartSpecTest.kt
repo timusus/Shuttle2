@@ -16,6 +16,7 @@ import com.simplecityapps.playback.ForegroundStarts
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.R
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
@@ -110,6 +111,17 @@ class ForegroundStartSpecTest {
         queue.getQueue().map { it.song } shouldBe listOf(library[1])
     }
 
+    @Test
+    fun `a shuffle all that cold-starts the app shuffles the library once the saved queue is restored`() {
+        val foreground = start(Intent(PlaybackService.ACTION_SHUFFLE_ALL))
+        stayForegroundUntil(foreground) { true }
+
+        restore(foreground)
+        stayForegroundUntil(foreground) { isPlaying() && foreground.isMedia3Notification() }
+        queue.getQueue().map { it.song }.toSet() shouldBe library.toSet()
+        queue.getShuffleMode() shouldBe ShuffleMode.On
+    }
+
     private fun start(intent: Intent): ShadowService {
         StartedService.harness = harness
         service = Robolectric.buildService(StartedService::class.java, intent).create().startCommand(0, 1)
@@ -166,7 +178,7 @@ class ForegroundStartSpecTest {
             startId: Int
         ): Int {
             val result = super.onStartCommand(intent, flags, startId)
-            if (intent != null) PlaybackService.handleStart(intent, foregroundStarts, harness.playback.playbackOperations, harness.playback.queueOperations, harness.playRequests::playSearch)
+            if (intent != null) PlaybackService.handleStart(intent, foregroundStarts, harness.playback.playbackOperations, harness.playback.queueOperations, harness.playRequests::playSearch, harness.playRequests::shuffleAll)
             return result
         }
 
