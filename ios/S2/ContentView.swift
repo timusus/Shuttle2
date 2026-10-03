@@ -47,6 +47,9 @@ struct ContentView: View {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
             }
             .sourceSetupPresentation(isPresented: $showsFirstRun, fullScreen: firstRunFullScreen, navigator: navigator)
+            #if DEBUG
+            .screenshotHooks(navigator: navigator, showNowPlaying: $showNowPlaying)
+            #endif
             .onGeometryChange(for: CGSize.self) { proxy in
                 proxy.size
             } action: { size in
