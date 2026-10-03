@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.first
  * [LibraryBackupMatcher.mergeStats]), and playlists are created or extended with the backup members they
  * lack. Nothing the device already has is removed, so restoring is repeatable.
  *
- * [writeStats] receives every song whose merged stats differ from the device, to write in one transaction.
+ * [writeStats] receives every song whose merged stats differ from the device, to write in one transaction. The
+ * stats are merged again in SQL against the row as it is by then. A new playlist takes the backup's sort order;
+ * an existing one keeps its own.
  */
 class LibraryBackupRestorer(
     private val playlistRepository: PlaylistRepository,
@@ -27,30 +29,31 @@ class LibraryBackupRestorer(
         val matches = LibraryBackupMatcher.matchAll(backup.songs.map { it.identity }, library)
 
         var unmatched = 0
-        val restores = mutableListOf<SongStatsRestore>()
+        val merged = LinkedHashMap<Long, Pair<Song, LibraryBackupMatcher.MergedStats>>()
         backup.songs.forEach { backedUp ->
             val current = matches[backedUp.identity]?.song
             if (current == null) {
                 unmatched++
                 return@forEach
             }
-            val merged = LibraryBackupMatcher.mergeStats(current, backedUp)
-            if (!LibraryBackupMatcher.statsEqual(current, merged)) {
-                restores += SongStatsRestore(
-                    song = current,
-                    playCount = merged.playCount,
-                    lastPlayed = merged.lastPlayed,
-                    lastCompleted = merged.lastCompleted,
-                    playbackPosition = merged.playbackPosition,
-                    dateAdded = merged.dateAdded,
-                    excluded = merged.excluded,
-                    favouritedAt = merged.favouritedAt
-                )
-            }
+            // Entries resolving to one song fold into a single merge, on top of what the earlier ones brought.
+            val base = merged[current.id]?.second?.let { current.withStats(it) } ?: current
+            merged[current.id] = current to LibraryBackupMatcher.mergeStats(base, backedUp)
+        }
+        val restores = merged.values.filterNot { (current, stats) -> LibraryBackupMatcher.statsEqual(current, stats) }.map { (current, stats) ->
+            SongStatsRestore(
+                song = current,
+                playCount = stats.playCount,
+                lastPlayed = stats.lastPlayed,
+                lastCompleted = stats.lastCompleted,
+                playbackPosition = stats.playbackPosition,
+                dateAdded = stats.dateAdded,
+                excluded = stats.excluded,
+                favouritedAt = stats.favouritedAt
+            )
         }
         if (restores.isNotEmpty()) writeStats(restores)
 
-        val known = playlistRepository.getPlaylists(PlaylistQuery.All(null)).first().toMutableList()
         var playlistsRestored = 0
         var membersSkipped = 0
         val unresolved = mutableListOf<String>()
@@ -67,20 +70,23 @@ class LibraryBackupRestorer(
                 unresolved.add(backedUp.name)
                 return@forEach
             }
-            val sortOrder = runCatching { PlaylistSongSortOrder.valueOf(backedUp.sortOrder) }.getOrNull()
+            // Read afresh each time: an earlier backup playlist may have created this one.
+            val known = playlistRepository.getPlaylists(PlaylistQuery.All(null)).first()
             val target = known.firstOrNull { backedUp.externalId != null && it.mediaProvider == provider && it.externalId == backedUp.externalId }
                 ?: known.firstOrNull { it.mediaProvider == provider && it.name.equals(backedUp.name, ignoreCase = true) }
             if (target == null) {
-                val created = playlistRepository.createPlaylist(backedUp.name, provider, memberSongs, backedUp.externalId)
-                known += created
-                sortOrder?.let { playlistRepository.updatePlaylistSortOder(created, it, backedUp.sortDescending) }
+                val created = playlistRepository.createPlaylist(backedUp.name, provider, LibraryBackupMatcher.missingMembers(emptySet(), memberSongs), backedUp.externalId)
+                runCatching { PlaylistSongSortOrder.valueOf(backedUp.sortOrder) }.getOrNull()?.let { sortOrder ->
+                    playlistRepository.updatePlaylistSortOder(created, sortOrder, backedUp.sortDescending)
+                }
+                playlistsRestored++
             } else {
-                val present = playlistRepository.getSongsForPlaylist(target).first().map { it.song }
-                val missing = LibraryBackupMatcher.missingMembers(present, memberSongs)
-                if (missing.isNotEmpty()) playlistRepository.addToPlaylist(target, missing)
-                sortOrder?.let { playlistRepository.updatePlaylistSortOder(target, it, backedUp.sortDescending) }
+                val missing = LibraryBackupMatcher.missingMembers(playlistRepository.getMemberSongIds(target), memberSongs)
+                if (missing.isNotEmpty()) {
+                    playlistRepository.addToPlaylist(target, missing)
+                    playlistsRestored++
+                }
             }
-            playlistsRestored++
         }
 
         return RestoreReport(
@@ -92,4 +98,14 @@ class LibraryBackupRestorer(
             membersSkipped = membersSkipped
         )
     }
+
+    private fun Song.withStats(stats: LibraryBackupMatcher.MergedStats) = copy(
+        playCount = stats.playCount,
+        lastPlayed = stats.lastPlayed,
+        lastCompleted = stats.lastCompleted,
+        playbackPosition = stats.playbackPosition,
+        dateAdded = stats.dateAdded,
+        blacklisted = stats.excluded,
+        favouritedAt = stats.favouritedAt
+    )
 }

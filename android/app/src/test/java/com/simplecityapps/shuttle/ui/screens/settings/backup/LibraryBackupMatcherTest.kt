@@ -277,7 +277,7 @@ class LibraryBackupMatcherTest {
         val a = song(id = 1)
         val b = song(id = 2)
         val c = song(id = 3)
-        LibraryBackupMatcher.missingMembers(existing = listOf(c, a), backup = listOf(a, b, b, c)) shouldBe listOf(b)
+        LibraryBackupMatcher.missingMembers(existingIds = setOf(c.id, a.id), backup = listOf(a, b, b, c)) shouldBe listOf(b)
     }
 
     @Test

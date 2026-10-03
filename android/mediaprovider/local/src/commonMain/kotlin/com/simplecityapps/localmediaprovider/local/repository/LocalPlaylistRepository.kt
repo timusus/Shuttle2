@@ -108,12 +108,13 @@ class LocalPlaylistRepository(
         playlist: Playlist,
         songs: List<Song>
     ) {
+        val next = (playlistSongJoinDao.maxSortOrder(playlist.id) ?: -1L) + 1
         playlistSongJoinDao.insert(
             songs.inLibrary().mapIndexed { i, song ->
                 PlaylistSongJoin(
                     playlistId = playlist.id,
                     songId = song.id,
-                    sortOrder = (playlist.songCount + i).toLong()
+                    sortOrder = next + i
                 )
             }
         )
@@ -141,6 +142,8 @@ class LocalPlaylistRepository(
         )
         syncM3uFile(playlist)
     }
+
+    override suspend fun getMemberSongIds(playlist: Playlist): Set<Long> = playlistSongJoinDao.getSongIds(playlist.id).toSet()
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
         .withAlbumIdentities()

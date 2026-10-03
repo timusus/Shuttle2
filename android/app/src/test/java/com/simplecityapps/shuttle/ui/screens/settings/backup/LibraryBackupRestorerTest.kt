@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -122,5 +123,96 @@ class LibraryBackupRestorerTest {
         val report = restorer.restore(backup, emptyList())
         report.playlistsUnresolved shouldBe listOf("Lost")
         playlists.created shouldBe emptyList()
+    }
+
+    @Test
+    fun `an excluded playlist member is not appended again`() = runTest {
+        val a = song(1).copy(blacklisted = true)
+        val b = song(2)
+        val existing = createPlaylist(id = 7, name = "Mix")
+        playlists.setPlaylists(listOf(existing))
+        playlists.setSongsForPlaylist(existing, listOf(a, b))
+        val backup = backupOf(listOf(a, b), BackedUpPlaylist("Mix", "Shuttle", members = listOf(identity(a), identity(b))))
+
+        val first = restorer.restore(backup, listOf(a, b))
+        restorer.restore(backup, listOf(a, b))
+
+        playlists.addedToPlaylist shouldBe emptyList()
+        first.playlistsRestored shouldBe 0
+    }
+
+    @Test
+    fun `appended members go after every existing entry, excluded ones included`() = runTest {
+        val excluded = song(1).copy(blacklisted = true)
+        val a = song(2)
+        val b = song(3)
+        val existing = createPlaylist(id = 7, name = "Mix")
+        playlists.setPlaylists(listOf(existing))
+        playlists.setSongsForPlaylist(existing, listOf(excluded, a))
+        val backup = backupOf(listOf(b), BackedUpPlaylist("Mix", "Shuttle", members = listOf(identity(b))))
+
+        val report = restorer.restore(backup, listOf(excluded, a, b))
+
+        playlists.getSongsForPlaylist(existing).first().associate { it.song.id to it.sortOrder } shouldBe mapOf(2L to 1L, 3L to 2L)
+        report.playlistsRestored shouldBe 1
+    }
+
+    @Test
+    fun `an existing playlist keeps its own sort order`() = runTest {
+        val a = song(1)
+        val b = song(2)
+        val existing = createPlaylist(id = 7, name = "Mix", sortOrder = PlaylistSongSortOrder.Position)
+        playlists.setPlaylists(listOf(existing))
+        playlists.setSongsForPlaylist(existing, listOf(a))
+        val backup = backupOf(listOf(a, b), BackedUpPlaylist("Mix", "Shuttle", sortOrder = "SongName", sortDescending = true, members = listOf(identity(a), identity(b))))
+
+        restorer.restore(backup, listOf(a, b))
+
+        playlists.currentPlaylists.single().run {
+            sortOrder shouldBe PlaylistSongSortOrder.Position
+            sortDescending shouldBe false
+        }
+    }
+
+    @Test
+    fun `two backup playlists that resolve to one target both append to it`() = runTest {
+        val a = song(1)
+        val b = song(2)
+        val c = song(3)
+        val backup = backupOf(
+            listOf(a, b, c),
+            BackedUpPlaylist("Mix", "Shuttle", members = listOf(identity(a), identity(b))),
+            BackedUpPlaylist("mix", "Shuttle", members = listOf(identity(b), identity(c)))
+        )
+
+        restorer.restore(backup, listOf(a, b, c))
+
+        playlists.created.size shouldBe 1
+        playlists.addedToPlaylist.single().second shouldBe listOf(c)
+    }
+
+    @Test
+    fun `a new playlist lists each song once`() = runTest {
+        val a = song(1)
+        val backup = backupOf(listOf(a), BackedUpPlaylist("Mix", "Shuttle", members = listOf(identity(a), identity(a))))
+
+        restorer.restore(backup, listOf(a))
+
+        playlists.created.single().second shouldBe listOf(a)
+    }
+
+    @Test
+    fun `two backup entries for one song are written as one merged restore`() = runTest {
+        val s = song(1)
+        val first = BackedUpSong(identity(s), playCount = 5, lastPlayed = 1_000)
+        val second = BackedUpSong(identity(s), playCount = 9, lastPlayed = 500)
+
+        restorer.restore(LibraryBackup(exportedAt = 0, songs = listOf(first, second), playlists = emptyList()), listOf(s))
+
+        written.single().single().run {
+            song.id shouldBe 1L
+            playCount shouldBe 9
+            lastPlayed?.toEpochMilliseconds() shouldBe 1_000L
+        }
     }
 }

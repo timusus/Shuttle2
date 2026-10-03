@@ -43,6 +43,8 @@ open class FakePlaylistRepository : PlaylistRepository {
         return com.simplecityapps.createPlaylist(id = 1000L + created.size, name = name)
     }
 
+    override suspend fun getMemberSongIds(playlist: Playlist): Set<Long> = playlistSongs.value[playlist.id].orEmpty().mapTo(HashSet()) { it.id }
+
     override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
         failure?.let { throw it }
         addedToPlaylist += playlist to songs
@@ -66,9 +68,10 @@ open class FakePlaylistRepository : PlaylistRepository {
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> {
         val comparator = playlist.sortOrder.comparator
         return playlistSongs.map { byPlaylist ->
+            // Like the real query: positions count every member, but excluded songs aren't listed.
             val songs = byPlaylist[playlist.id].orEmpty().mapIndexed { index, song ->
                 PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = song)
-            }
+            }.filterNot { it.song.blacklisted }
             songs.sortedWith(if (playlist.sortDescending) comparator.reversed() else comparator)
         }
     }

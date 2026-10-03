@@ -56,6 +56,14 @@ abstract class PlaylistSongJoinDao {
 
     fun getCoverSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getCoverSongData(playlistId).map { list -> list.map { it.toPlaylistSong() } }
 
+    /** Every song in the playlist, excluded ones too, unlike [getSongsForPlaylist]. */
+    @Query("SELECT songId FROM playlist_song_join WHERE playlistId = :playlistId")
+    abstract suspend fun getSongIds(playlistId: Long): List<Long>
+
+    /** The highest [PlaylistSongJoin.sortOrder] in the playlist, excluded songs included; null when it is empty. */
+    @Query("SELECT MAX(sortOrder) FROM playlist_song_join WHERE playlistId = :playlistId")
+    abstract suspend fun maxSortOrder(playlistId: Long): Long?
+
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and id IN (:playlistSongIds)")
     abstract suspend fun delete(
         playlistId: Long,

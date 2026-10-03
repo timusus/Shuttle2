@@ -105,12 +105,12 @@ object LibraryBackupMatcher {
         current.blacklisted == merged.excluded &&
         current.favouritedAt == merged.favouritedAt
 
-    /** The songs of [backup] not already in [existing], in backup order, each once. */
+    /** The songs of [backup] whose ids aren't in [existingIds], in backup order, each once. */
     fun missingMembers(
-        existing: List<Song>,
+        existingIds: Set<Long>,
         backup: List<Song>
     ): List<Song> {
-        val present = existing.mapTo(HashSet()) { it.id }
+        val present = existingIds.toMutableSet()
         return backup.filter { present.add(it.id) }
     }
 

@@ -19,6 +19,10 @@ interface PlaylistRepository {
         externalId: String?
     ): Playlist
 
+    /** The ids of every song in [playlist], excluded ones included, which [getSongsForPlaylist] leaves out. */
+    suspend fun getMemberSongIds(playlist: Playlist): Set<Long>
+
+    /** Appends [songs] after the playlist's last entry. */
     suspend fun addToPlaylist(
         playlist: Playlist,
         songs: List<Song>
