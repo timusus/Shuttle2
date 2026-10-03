@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
@@ -39,6 +40,7 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
     val openedGenres = mutableListOf<Genre>()
     val openedPlaylists = mutableListOf<Playlist>()
     val shownActions = mutableListOf<MediaActionsTarget>()
+    val playedSelections = mutableListOf<MediaSelection>()
 
     fun setContent(uiState: SearchUiState, theme: ThemeMode = ThemeMode.Light) {
         rule.setContent {
@@ -60,6 +62,7 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
         onGenreClick = { openedGenres += it },
         onPlaylistClick = { openedPlaylists += it },
         onShowActions = { shownActions += it },
+        onPlay = { playedSelections += it },
     )
 
     fun tapText(text: String) {
@@ -85,7 +88,7 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
 
     /** The node showing [text] has [part] of it, and only that, in bold. */
     fun assertBold(text: String, part: String) {
-        val shown = rule.onAllNodesWithText(text)[0].fetchSemanticsNode().config[SemanticsProperties.Text].first()
+        val shown = rule.onAllNodesWithText(text, useUnmergedTree = true)[0].fetchSemanticsNode().config[SemanticsProperties.Text].first()
         val bold = shown.spanStyles.filter { it.item.fontWeight == FontWeight.Bold }.map { shown.text.substring(it.start, it.end) }
         bold shouldBe listOf(part)
     }

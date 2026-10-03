@@ -51,15 +51,17 @@ fun SectionHeader(
     containerColor: Color = MaterialTheme.colorScheme.surface,
     style: SectionHeaderStyle = SectionHeaderStyle.Label,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .background(containerColor)
-            .heightIn(min = S2TouchTarget.minimum)
             .padding(start = S2Spacing.medium, end = S2Spacing.xsmall),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        // The action shares the title's row, so "See all" sits level with the title and not the subtitle.
+        Row(
+            modifier = Modifier.heightIn(min = S2TouchTarget.minimum),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = title,
                 style = when (style) {
@@ -71,20 +73,21 @@ fun SectionHeader(
                     SectionHeaderStyle.Label -> MaterialTheme.colorScheme.primary
                     SectionHeaderStyle.Title, SectionHeaderStyle.Headline -> MaterialTheme.colorScheme.onSurface
                 },
-                modifier = Modifier.semantics { heading() },
+                modifier = Modifier.weight(1f).semantics { heading() },
             )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.rowSubtitle,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+            if (action != null) {
+                S2Button(text = action, onClick = onAction, style = S2ButtonStyle.Text)
             }
         }
-        if (action != null) {
-            S2Button(text = action, onClick = onAction, style = S2ButtonStyle.Text)
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.rowSubtitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(bottom = S2Spacing.small),
+            )
         }
     }
 }

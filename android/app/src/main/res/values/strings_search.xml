@@ -21,6 +21,16 @@
     <string name="search_category_playlists">Playlists</string>
     <!-- Results header above the single best match of the search -->
     <string name="search_top_result">Top result</string>
+    <!-- Kind of the top result, above its title: artist -->
+    <string name="search_kind_artist">Artist</string>
+    <!-- Kind of the top result, above its title: album -->
+    <string name="search_kind_album">Album</string>
+    <!-- Kind of the top result, above its title: song -->
+    <string name="search_kind_song">Song</string>
+    <!-- Kind of the top result, above its title: genre -->
+    <string name="search_kind_genre">Genre</string>
+    <!-- Kind of the top result, above its title: playlist -->
+    <string name="search_kind_playlist">Playlist</string>
     <!-- Action on a results header that shows every result in that group -->
     <string name="search_see_all">See all</string>
 </resources>

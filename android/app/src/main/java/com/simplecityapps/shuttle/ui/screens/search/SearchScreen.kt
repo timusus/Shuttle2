@@ -37,11 +37,13 @@ import com.simplecityapps.shuttle.designsystem.component.S2SearchField
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
@@ -56,6 +58,7 @@ class SearchCallbacks(
     val onGenreClick: (Genre) -> Unit,
     val onPlaylistClick: (Playlist) -> Unit,
     val onShowActions: (MediaActionsTarget) -> Unit,
+    val onPlay: (MediaSelection) -> Unit,
 )
 
 /**
@@ -134,7 +137,7 @@ private fun RecentSearches(
         return
     }
     LazyColumn(Modifier.fillMaxSize()) {
-        item(key = "header") { SectionHeader(stringResource(R.string.search_recent)) }
+        item(key = "header") { SectionHeader(stringResource(R.string.search_recent), style = SectionHeaderStyle.Title) }
         searches.forEach { query ->
             item(key = "recent:$query") { SearchRecentRow(query, onClick = { onSelect(query) }, onRemove = { onRemove(query) }) }
         }
@@ -152,14 +155,14 @@ private fun SearchResultList(
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = S2Spacing.medium)) {
         // The best match of all leads, lifted out of its own section.
         results.top?.let { top ->
-            item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result)) }
+            item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result), style = SectionHeaderStyle.Title) }
             item(key = "top", contentType = top) {
                 when (top) {
-                    SearchCategory.Artists -> ArtistResult(results.artists.first(), callbacks)
-                    SearchCategory.Albums -> AlbumResult(results.albums.first(), callbacks)
-                    SearchCategory.Songs -> SongResult(results.songs.first(), 0, callbacks)
-                    SearchCategory.Genres -> GenreResult(results.genres.first(), callbacks)
-                    SearchCategory.Playlists -> PlaylistResult(results.playlists.first(), callbacks)
+                    SearchCategory.Artists -> ArtistTopResult(results.artists.first(), callbacks)
+                    SearchCategory.Albums -> AlbumTopResult(results.albums.first(), callbacks)
+                    SearchCategory.Songs -> SongTopResult(results.songs.first(), 0, callbacks)
+                    SearchCategory.Genres -> GenreTopResult(results.genres.first(), callbacks)
+                    SearchCategory.Playlists -> PlaylistTopResult(results.playlists.first(), callbacks)
                 }
             }
         }
@@ -168,6 +171,7 @@ private fun SearchResultList(
             item(key = "header:$type", contentType = "header") {
                 SectionHeader(
                     title = section.category.label(),
+                    style = SectionHeaderStyle.Title,
                     action = if (section.hasMore) stringResource(R.string.search_see_all) else null,
                     onAction = { expanded = section.category },
                 )

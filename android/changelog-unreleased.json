@@ -108,6 +108,10 @@
       "commits": []
     },
     {
+      "text": "Search shows the best match as a larger card with its artwork and a Play button, and section headings are bolder",
+      "commits": []
+    },
+    {
       "text": "The default library tab order now starts with Songs, and the tabs share one row of count, Sort, Shuffle and Play, including Artists, and it stays readable at large text sizes",
       "commits": []
     },

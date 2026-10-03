@@ -41,6 +41,7 @@ import com.simplecityapps.shuttle.fixtures.SampleLibrary
 enum class ArtworkSize(val dp: Dp) {
     Small(40.dp),
     Medium(56.dp),
+    Feature(96.dp),
     Grid(160.dp),
     Hero(240.dp),
 }
@@ -141,7 +142,7 @@ internal fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when 
 
     ArtworkShape.Rounded -> when (size) {
         ArtworkSize.Small, ArtworkSize.Medium -> MaterialTheme.shapes.small
-        ArtworkSize.Grid -> MaterialTheme.shapes.large
+        ArtworkSize.Feature, ArtworkSize.Grid -> MaterialTheme.shapes.large
         ArtworkSize.Hero -> MaterialTheme.shapes.largeIncreased
     }
 }
