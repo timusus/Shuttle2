@@ -90,7 +90,7 @@ fun S2SeekBar(
                 SliderDefaults.Track(sliderState = sliderState, modifier = Modifier.height(trackHeight), enabled = enabled)
             },
         )
-        Row(Modifier.padding(horizontal = S2Spacing.xsmall)) {
+        Row(Modifier.padding(horizontal = S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 formatDuration(if (dragging) (fraction * durationMs).toLong() else positionMs),
                 style = MaterialTheme.typography.time,

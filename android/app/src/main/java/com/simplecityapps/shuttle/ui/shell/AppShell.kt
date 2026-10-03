@@ -68,11 +68,11 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.designsystem.component.s2MiniPlayerHeight
 import com.simplecityapps.shuttle.designsystem.component.S2NavItem
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
+import com.simplecityapps.shuttle.designsystem.component.s2MiniPlayerHeight
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
