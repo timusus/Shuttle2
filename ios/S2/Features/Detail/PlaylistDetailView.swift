@@ -15,7 +15,7 @@ struct PlaylistDetailView: View {
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             PlaylistDetailModels(graph: AppGraph.shared, playlistId: id)
         }
-        Observing(models.playlist.uiState, models.playlist.covers, models.actions.uiState) { state, covers, actions in
+        Observing(models.playlist.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             PlaylistDetailContent(
                 state: state,
                 covers: covers,
@@ -55,20 +55,22 @@ struct PlaylistDetailView: View {
 /// The Playlist detail screen's ViewModels, cached together under its route's key.
 final class PlaylistDetailModels: ViewModelGroup {
     let playlist: PlaylistDetailViewModel
+    let covers: PlaylistDetailCoversViewModel
     let actions: MediaActionsViewModel
 
     init(graph: IosAppGraph, playlistId: Int64) {
         playlist = graph.playlistDetailViewModelFactory.create(playlistId: playlistId)
+        covers = graph.playlistDetailCoversViewModelFactory.create(playlistId: playlistId)
         actions = graph.mediaActionsViewModel
     }
 
-    var members: [Lifecycle_viewmodelViewModel] { [playlist, actions] }
+    var members: [Lifecycle_viewmodelViewModel] { [playlist, covers, actions] }
 }
 
 /// The Playlist detail screen from a `PlaylistDetailUiState`, in a `DetailScaffold` tinted from its first song's cover.
 struct PlaylistDetailContent: View {
     let state: PlaylistDetailUiState
-    /// The songs whose covers make up its mosaic, as its Library row draws (`PlaylistDetailViewModel.covers`).
+    /// The songs whose covers make up its mosaic, as its Library row draws (`PlaylistDetailCoversViewModel`).
     var covers: [Song] = []
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }

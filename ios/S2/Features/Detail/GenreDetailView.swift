@@ -13,7 +13,7 @@ struct GenreDetailView: View {
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             GenreDetailModels(graph: AppGraph.shared, genreName: name)
         }
-        Observing(models.genre.uiState, models.genre.covers, models.actions.uiState) { state, covers, actions in
+        Observing(models.genre.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             GenreDetailContent(
                 state: state,
                 covers: covers,
@@ -43,21 +43,23 @@ struct GenreDetailView: View {
 /// The Genre detail screen's ViewModels, cached together under its route's key.
 final class GenreDetailModels: ViewModelGroup {
     let genre: GenreDetailViewModel
+    let covers: GenreDetailCoversViewModel
     let actions: MediaActionsViewModel
 
     init(graph: IosAppGraph, genreName: String) {
         genre = graph.genreDetailViewModelFactory.create(genreName: genreName)
+        covers = graph.genreDetailCoversViewModelFactory.create(genreName: genreName)
         actions = graph.mediaActionsViewModel
     }
 
-    var members: [Lifecycle_viewmodelViewModel] { [genre, actions] }
+    var members: [Lifecycle_viewmodelViewModel] { [genre, covers, actions] }
 }
 
 /// The Genre detail screen from a `GenreDetailUiState`, in a `DetailScaffold` with the app's accent (a genre has no
 /// cover to tint from).
 struct GenreDetailContent: View {
     let state: GenreDetailUiState
-    /// The songs whose covers make up its mosaic, as its Library row draws (`GenreDetailViewModel.covers`).
+    /// The songs whose covers make up its mosaic, as its Library row draws (`GenreDetailCoversViewModel`).
     var covers: [Song] = []
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }

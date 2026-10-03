@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 
 /// Library > Genres (P5-6b): `GenreListViewModel`'s genres as a list; a row pushes the genre's detail route. A genre
-/// has no artwork of its own, so each row draws a `CoverMosaic` of its albums' covers (`GenreListViewModel.covers`,
+/// has no artwork of its own, so each row draws a `CoverMosaic` of its albums' covers (`GenreCoversViewModel`,
 /// #643), which fill in after the list shows. A Shuffle row heads the list, shuffling every genre. Context menu plays
 /// or queues through the shared `MediaAction`s.
 struct GenreListView: View {
@@ -10,7 +10,7 @@ struct GenreListView: View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.genres).cacheKey) {
             GenreListModels(graph: AppGraph.shared)
         }
-        Observing(models.genres.uiState, models.genres.covers, models.actions.uiState) { state, covers, actions in
+        Observing(models.genres.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
             GenreListContent(
                 state: state,
                 covers: covers,
@@ -38,14 +38,16 @@ struct GenreListView: View {
 /// The Genres screen's ViewModels, cached together under its route's key.
 final class GenreListModels: ViewModelGroup {
     let genres: GenreListViewModel
+    let covers: GenreCoversViewModel
     let actions: MediaActionsViewModel
 
     init(graph: IosAppGraph) {
         genres = graph.genreListViewModel
+        covers = graph.genreCoversViewModel
         actions = graph.mediaActionsViewModel
     }
 
-    var members: [Lifecycle_viewmodelViewModel] { [genres, actions] }
+    var members: [Lifecycle_viewmodelViewModel] { [genres, covers, actions] }
 }
 
 extension Route {

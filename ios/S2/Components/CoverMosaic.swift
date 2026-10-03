@@ -54,7 +54,7 @@ struct CoverMosaic: View {
 }
 
 extension CoverMosaic {
-    /// A genre's artwork from its cover songs (`GenreListViewModel.covers`, `HomeUiState.covers`).
+    /// A genre's artwork from its cover songs (`GenreCoversViewModel`, `HomeUiState.covers`).
     static func genre(_ name: String, covers: [Song], shape: S2Shape = .artworkRow) -> CoverMosaic {
         CoverMosaic(covers: covers.map(ArtworkSource.song), seed: name, symbol: GeneratedArtwork.genreSymbol, shape: shape)
     }
