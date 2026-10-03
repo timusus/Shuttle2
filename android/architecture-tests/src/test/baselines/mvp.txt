@@ -1,2 +1,2 @@
 # No new MVP presenters or contracts (BasePresenter, BaseContract); build a Compose screen with a ViewModel
-# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.

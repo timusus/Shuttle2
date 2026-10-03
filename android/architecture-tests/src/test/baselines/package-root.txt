@@ -1,2 +1,2 @@
 # Production code lives under the com.simplecityapps package
-# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.

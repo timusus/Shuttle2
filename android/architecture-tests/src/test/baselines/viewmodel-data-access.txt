@@ -1,2 +1,2 @@
 # ViewModels must not depend on repositories, DAOs, Room, Retrofit, OkHttp, MediaProvider or MediaImporter; inject a use case
-# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.

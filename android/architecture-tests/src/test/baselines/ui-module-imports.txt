@@ -1,5 +1,5 @@
 # Files under ui/** (outside MainActivity, the shortcut/review helpers and ui/widgets, which stay in :android:app) must not import data, provider or other app-only declarations; move the dependency behind a domain port or use case
-# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoutes -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.mediaprovider.iconResId (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.trial.PaywallOffers (:android:trial)

@@ -5,7 +5,8 @@ import org.junit.Assert.fail
 
 /**
  * One rule violation. [entry] is the baseline line: a fully-qualified name, optionally followed by
- * ` -> dependency` or `: reason`. [module] (the Gradle path) and [path] (relative to the repo root) only
+ * ` -> dependency` or `: reason`; the design-system rule instead writes `path|Symbol|count`, a per-file
+ * usage count that may only fall. [module] (the Gradle path) and [path] (relative to the repo root) only
  * feed the per-module report.
  */
 data class Violation(val module: String, val entry: String, val path: String)
@@ -15,6 +16,11 @@ data class Violation(val module: String, val entry: String, val path: String)
  * violations, one per line. The rule fails on a violation that isn't in the baseline, and on a baseline
  * entry that no longer violates, so the file can only shrink.
  *
+ * Most rules' entries are fully-qualified names (with ` -> dependency` or `: reason`); a rule that passes
+ * `counted = true` (the design-system rule) writes `path|Symbol|count` entries instead, and [splitCountChanges]
+ * ratchets the counts: a changed count is reported with its direction rather than as a new violation. Counts
+ * only fall — regenerating the baseline may never raise one, and review enforces that.
+ *
  * `./gradlew :android:architecture-tests:test -PupdateArchitectureBaselines` rewrites every baseline from
  * the current code. Use it after fixing violations; a baseline that grows needs a reason in review.
  */
@@ -23,7 +29,7 @@ object Baseline {
     private val reportDir = File(requireNotNull(System.getProperty("architecture.reportDir")))
     private val update = System.getProperty("architecture.updateBaselines") == "true"
 
-    fun assertMatches(rule: String, description: String, violations: Collection<Violation>) {
+    fun assertMatches(rule: String, description: String, violations: Collection<Violation>, counted: Boolean = false) {
         val found = violations.map { it.entry }.toSortedSet()
         writeReport(rule, violations)
 
@@ -32,7 +38,13 @@ object Baseline {
             file.writeText(
                 buildString {
                     appendLine("# $description")
-                    appendLine("# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.")
+                    appendLine(
+                        if (counted) {
+                            "# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt."
+                        } else {
+                            "# Baseline of existing violations (#443). Only remove lines; see Baseline.kt."
+                        },
+                    )
                     found.forEach { appendLine(it) }
                 },
             )

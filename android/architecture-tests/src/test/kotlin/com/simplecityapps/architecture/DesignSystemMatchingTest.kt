@@ -48,15 +48,16 @@ class DesignSystemMatchingTest {
     }
 
     @Test
-    fun `aliased and wildcard-free imports count the alias`() {
+    fun `an aliased import counts the alias, not the symbol`() {
         val entries = DesignSystemMatching.entries("a/B.kt", listOf(m3 + "Text" to "M3Text"), "M3Text(); M3Text(); Text()")
         assertEquals(listOf("a/B.kt|Text|2"), entries)
     }
 
     @Test
-    fun `wildcard imports are not resolved but fully qualified uses are`() {
-        // Konsist reports `import androidx.compose.material3.*` as the name `androidx.compose.material3.*`.
-        assertTrue(DesignSystemMatching.entries("a/B.kt", listOf(m3 + "*" to null), "Text()").size <= 1)
+    fun `a wildcard import is one star entry and qualified uses count with no import`() {
+        // Konsist reports `import androidx.compose.material3.*` as the name `androidx.compose.material3.*`:
+        // an unresolved `*` symbol counted once, never the components it imports.
+        assertEquals(listOf("a/B.kt|*|1"), DesignSystemMatching.entries("a/B.kt", listOf(m3 + "*" to null), "Text()"))
         val entries = DesignSystemMatching.entries(
             "a/B.kt",
             emptyList(),

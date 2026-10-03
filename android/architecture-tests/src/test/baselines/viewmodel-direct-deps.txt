@@ -1,2 +1,2 @@
 # ViewModels must not inject *Operations, *Preference(s), *PreferenceManager, *Settings or *Store types; inject a use case (UDF 8a)
-# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.

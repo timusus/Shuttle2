@@ -31,6 +31,7 @@ class DesignSystemRules {
                 "component (design-language.md §5, docs/design/component-migration.md); if none exists yet, add it to " +
                 "the designsystem first. Entries are path|Symbol|usages; the count may only go down",
             violations,
+            counted = true,
         )
     }
 
