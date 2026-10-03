@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -121,12 +123,14 @@ internal fun FullPlayer(
                 expanded = player.panel != null,
                 bottomBar = bar,
                 expandedContent = {
-                    lastPanel.value?.let { panel -> PlayerPanel(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.fillMaxSize()) }
+                    lastPanel.value?.let { panel -> PlayerPanel(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.fillMaxWidth()) }
                 },
                 handle = { CollapseHandle(onCollapse) },
                 modifier = Modifier.weight(1f),
             ) {
-                NowPlayingSong(player, actions, gap = S2Spacing.medium, fillHeight = true, modifier = Modifier.weight(1f))
+                // An open panel pushes the song up out of view, so accessibility services skip it too.
+                val songHidden = if (player.panel != null) Modifier.clearAndSetSemantics { } else Modifier
+                NowPlayingSong(player, actions, gap = S2Spacing.medium, fillHeight = true, modifier = Modifier.weight(1f).then(songHidden))
                 Transport(player, progress, actions, gap = S2Spacing.medium)
             }
         }
@@ -155,7 +159,9 @@ internal fun PlayerPanel(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     S2PanelSheet(onDismiss = onClose, modifier = modifier.testTag(PlayerTestTags.PanelSheet), color = PanelColor) { grip ->
-        val scrolling = Modifier.verticalScroll(rememberScrollState()).padding(contentPadding)
+        // Switching panels starts the new one at its top, not scrolled to where the last one was.
+        val scrollState = key(panel) { rememberScrollState() }
+        val scrolling = Modifier.verticalScroll(scrollState).padding(contentPadding)
         when (panel) {
             NowPlayingPanel.Queue -> {
                 QueueHeader(onClear = actions::clearQueue, modifier = grip)
@@ -172,7 +178,7 @@ internal fun PlayerPanel(
 /** The player's [S2SheetHandle]: tapping it collapses the player. */
 @Composable
 internal fun CollapseHandle(onCollapse: () -> Unit) {
-    S2SheetHandle(onClickLabel = stringResource(R.string.player_collapse), onClick = onCollapse)
+    S2SheetHandle(contentDescription = stringResource(R.string.player_collapse), onClick = onCollapse)
 }
 
 /**

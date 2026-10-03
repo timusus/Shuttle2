@@ -187,7 +187,7 @@ private fun PlayerSheetSample(queueOpen: Boolean, height: Dp, modifier: Modifier
     Surface(modifier.height(height), color = MaterialTheme.colorScheme.surfaceContainer) {
         S2ExpandableSheetScaffold(
             expanded = queueOpen,
-            handle = { S2SheetHandle(onClick = {}, onClickLabel = "Collapse player") },
+            handle = { S2SheetHandle(onClick = {}, contentDescription = "Collapse player") },
             bottomBar = {
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
@@ -241,7 +241,7 @@ fun PlayerSheetBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Sheet handle") { S2SheetHandle(onClick = {}, onClickLabel = "Collapse player") },
+            BoardSection("Sheet handle") { S2SheetHandle(onClick = {}, contentDescription = "Collapse player") },
             BoardSection("Expanded, no panel") { PlayerSheetSample(queueOpen = false, height = PhoneSheetHeight) },
             BoardSection("Queue open: the player pushed up above it") { PlayerSheetSample(queueOpen = true, height = PhoneSheetHeight) },
         ),

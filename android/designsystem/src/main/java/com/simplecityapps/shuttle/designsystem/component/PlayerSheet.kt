@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.designsystem.component
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -24,8 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -41,19 +44,24 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.dismiss
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** The player sheet's measurements, shared by the sheet, the panel sheet inside it and the pane. */
@@ -77,19 +85,20 @@ private val PanelDismissVelocity = 800.dp
 
 /**
  * The sheet handle: a centred pill in a [height] tall strip, a full touch target by default. With
- * [onClick] it's a button, spoken as [onClickLabel] (the player's "Collapse player").
+ * [onClick] it's a button, spoken as [contentDescription] (the player's "Collapse player"), which
+ * names the action, so no click label repeats it.
  */
 @Composable
 fun S2SheetHandle(
     modifier: Modifier = Modifier,
     height: Dp = S2TouchTarget.minimum,
-    onClickLabel: String? = null,
+    contentDescription: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val clickModifier = if (onClick != null) {
         Modifier
-            .clickable(onClickLabel = onClickLabel, onClick = onClick)
-            .semantics { onClickLabel?.let { contentDescription = it } }
+            .clickable(onClick = onClick)
+            .semantics { contentDescription?.let { this.contentDescription = it } }
     } else {
         Modifier
     }
@@ -104,9 +113,10 @@ fun S2SheetHandle(
 
 /**
  * A sheet inside the player that holds a panel (the queue, the sleep timer): rounded top corners,
- * a [S2SheetHandle] grip, and [content]. Dragging the grip down, or anything [content] passes the
- * `grip` modifier to, or pulling its scrolling content down past the top, calls [onDismiss] once
- * it has moved a quarter of its height or is flung.
+ * a [S2SheetHandle] grip, and [content], as tall as [content] up to the height it's given. Dragging
+ * the grip down, or anything [content] passes the `grip` modifier to, or pulling its scrolling
+ * content down past the top, calls [onDismiss] once it has moved a quarter of its height or is
+ * flung; short of that it springs back. Accessibility services close it from the grip, "Close panel".
  */
 @Composable
 fun S2PanelSheet(
@@ -119,13 +129,17 @@ fun S2PanelSheet(
     val currentOnDismiss by rememberUpdatedState(onDismiss)
     var offset by remember { mutableFloatStateOf(0f) }
     var height by remember { mutableIntStateOf(0) }
+    // Cancelled by the next drag or scroll, so only one thing moves the sheet at a time.
+    var springBack by remember { mutableStateOf<Job?>(null) }
+    val stopSpringBack = { springBack?.cancel() }
     val dismissVelocity = with(LocalDensity.current) { PanelDismissVelocity.toPx() }
     val settle: (Float) -> Unit = remember(scope, dismissVelocity) {
         { velocity ->
+            springBack?.cancel()
             if (offset > height / 4f || velocity > dismissVelocity) {
                 currentOnDismiss()
             } else {
-                scope.launch { animate(offset, 0f) { value, _ -> offset = value } }
+                springBack = scope.launch { animate(offset, 0f) { value, _ -> offset = value } }
             }
         }
     }
@@ -136,6 +150,7 @@ fun S2PanelSheet(
                 source: NestedScrollSource,
             ): Offset {
                 if (available.y >= 0f || offset <= 0f) return Offset.Zero
+                stopSpringBack()
                 val consumed = maxOf(available.y, -offset)
                 offset += consumed
                 return Offset(0f, consumed)
@@ -147,6 +162,7 @@ fun S2PanelSheet(
                 source: NestedScrollSource,
             ): Offset {
                 if (available.y <= 0f || source != NestedScrollSource.UserInput) return Offset.Zero
+                stopSpringBack()
                 offset += available.y
                 return Offset(0f, available.y)
             }
@@ -161,8 +177,10 @@ fun S2PanelSheet(
     val grip = Modifier.draggable(
         state = rememberDraggableState { delta -> offset = (offset + delta).coerceAtLeast(0f) },
         orientation = Orientation.Vertical,
+        onDragStarted = { stopSpringBack() },
         onDragStopped = { velocity -> settle(velocity) },
     )
+    val closeLabel = stringResource(R.string.ds_close_panel)
     Surface(
         modifier = modifier
             .onSizeChanged { height = it.height }
@@ -171,8 +189,21 @@ fun S2PanelSheet(
         shape = ContinuousRoundedCornerShape(topStart = S2SheetDefaults.corner, topEnd = S2SheetDefaults.corner),
         color = color,
     ) {
-        Column(Modifier.fillMaxSize()) {
-            S2SheetHandle(grip, height = S2SheetDefaults.gripHeight)
+        Column(Modifier.fillMaxWidth()) {
+            S2SheetHandle(
+                grip.semantics {
+                    contentDescription = closeLabel
+                    onClick {
+                        currentOnDismiss()
+                        true
+                    }
+                    dismiss {
+                        currentOnDismiss()
+                        true
+                    }
+                },
+                height = S2SheetDefaults.gripHeight,
+            )
             content(grip)
         }
     }
@@ -181,9 +212,11 @@ fun S2PanelSheet(
 /**
  * The player's "sheet within a sheet", after Shuttle Podcasts' `ExpandableSheetScaffold`: a [handle]
  * over [content], with the [bottomBar] along the bottom. While [expanded], [expandedContent] (a
- * [S2PanelSheet]) slides up from the bar, taking up to [maxExpandedFraction] of the height above it,
- * and pushes [content] up by its own height, so the bottom of [content] (the transport) stays in view
- * above it and the top clips away. The bar stays put: its buttons switch and close the panels.
+ * [S2PanelSheet]) slides up from the bar, as tall as it needs up to [maxExpandedFraction] of the
+ * height above it, and pushes [content] up by its own height, so the bottom of [content] (the
+ * transport) stays in view above it and the top clips away. The bar stays put: its buttons switch and
+ * close the panels. Each opening starts [expandedContent] afresh, so a panel reopened while it was
+ * still sliding away isn't left where a drag had moved it.
  */
 @Composable
 fun S2ExpandableSheetScaffold(
@@ -200,6 +233,8 @@ fun S2ExpandableSheetScaffold(
     // A position that mustn't overshoot: a bounce would open a gap between the panel and the bar.
     val fraction by animateFloatAsState(if (expanded) 1f else 0f, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "panel")
     val panelShown by remember { derivedStateOf { fraction > 0f } }
+    val openings = remember { intArrayOf(0) }
+    val opening = remember(expanded) { if (expanded) ++openings[0] else openings[0] }
     Column(modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxWidth().clipToBounds().onSizeChanged { areaHeight = it.height }) {
             Column(Modifier.fillMaxSize().offset { IntOffset(0, -(panelHeight * fraction).roundToInt()) }) {
@@ -213,12 +248,14 @@ fun S2ExpandableSheetScaffold(
                     Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
+                        .offset { IntOffset(0, (panelHeight * (1f - fraction)).roundToInt()) }
                         .heightIn(max = maxHeight)
                         .onSizeChanged { panelHeight = it.height }
-                        .offset { IntOffset(0, (panelHeight * (1f - fraction)).roundToInt()) }
+                        // Switching to a panel of another height moves the content above with it, without overshooting.
+                        .animateContentSize(MaterialTheme.motionScheme.defaultEffectsSpec())
                         .then(if (expanded) Modifier else Modifier.clearAndSetSemantics { }),
                 ) {
-                    expandedContent()
+                    key(opening) { expandedContent() }
                 }
             }
         }

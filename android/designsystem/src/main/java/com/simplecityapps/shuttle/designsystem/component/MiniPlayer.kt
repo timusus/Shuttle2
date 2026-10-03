@@ -35,8 +35,8 @@ val S2MiniPlayerHeight = 72.dp
  * song's [artwork], [title] and [subtitle] ("artist • album"), a plain [S2PlayPauseIconButton]
  * (#738), skip next, and the [S2PlaybackProgress] wave along the bottom edge. [buffering] shows the
  * play button's `LoadingIndicator` and an indeterminate wave. While [castingTo] names a Cast device,
- * the subtitle says the song is playing there. Tapping the rest of the bar ([onClick]) expands the
- * player.
+ * the subtitle says the song is playing there; the app doesn't pass it yet (#795). Tapping the rest
+ * of the bar ([onClick]) expands the player.
  */
 @Composable
 fun S2MiniPlayer(
