@@ -9,7 +9,9 @@ checklist are in `ios/docs/app-store-review.md`.
 The primary language is English (U.S.), and the `en-AU/` copy went into that localisation.
 
 - App Information: subtitle, Content Rights, category, age rating (4+) and privacy policy URL are saved.
-- App Privacy: "Data Not Collected" is saved but **not published**. The owner publishes it, which is an attestation.
+- App Privacy: the portal still holds the earlier "Data Not Collected" (saved, never published). The answers
+  below (#776, Sentry and PostHog) are **not yet entered**; the owner enters and publishes them, which is an
+  attestation.
 - Pricing: Free, available in all 175 countries.
 - In-app purchases: both are in all countries, with en-US name and description and review notes. Each
   carries the 7-day paywall (`iap-review/paywall.png`) as its review screenshot.
@@ -48,26 +50,38 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
 
 ## App Privacy
 
-Privacy policy URL: https://simplecityapps.com/privacy (carries a Shuttle Music (iOS) section).
+Privacy policy URL: https://simplecityapps.com/privacy (carries a Shuttle Music (iOS) section; it must
+describe the crash reports and usage analytics below before submission).
 
-Answer: **Data Not Collected.** Tracking: No.
+Not yet entered in the portal (#776). Tracking: **No**. Every type is **Not Linked to You** and not used
+for tracking:
 
-Verified 2026-10-03 against the repo:
+| Data type | Purpose | Source |
+|---|---|---|
+| Usage Data > Product Interaction | Analytics | PostHog: app opens and backgrounding, paywall, purchase, sign-in and onboarding events |
+| Purchases > Purchase History | Analytics | PostHog: `purchase_started`/`_completed`/`_failed`/`_restored` with the product and a bucketed reason |
+| Identifiers > Device ID | Analytics | PostHog's random install id; declared conservatively, never the IDFA or IDFV |
+| Diagnostics > Crash Data | App Functionality | Sentry crash reports, including uncaught Kotlin exceptions |
+| Diagnostics > Performance Data | App Functionality | Sentry app hangs (2 s) and app start traces (5%) |
+| Diagnostics > Other Diagnostic Data | App Functionality | Sentry sessions and scrubbed warning/error breadcrumbs |
 
-- `ios/S2/PrivacyInfo.xcprivacy`: `NSPrivacyTracking` false, no tracking domains, empty
-  `NSPrivacyCollectedDataTypes`. Required-reason API entries only for UserDefaults (CA92.1), file
-  timestamps (C617.1) and system boot time (35F9.1).
-- No analytics, crash or ads SDK: `ios/project.yml` has only ViewInspector (tests) and the local
-  S2Playback package (FFmpeg); `shared/` has no analytics dependency on iOS (`IosSettingsCatalog.kt`:
-  "iOS has no crash reporting or analytics"; `IosPlatformModule.kt`: sign-in analytics is a no-op).
-- Server address, username and session token live in the Keychain and go only to the user's own server.
-  Apple processes purchases; the developer receives no purchase identifiers from the app.
+Both are on by default and each turns off in Settings > Privacy; the first run's welcome says so.
+
+- **PostHog:** the EU cloud, client IP discarded (project setting), no person profiles (`identified_only`,
+  `identify` never called). Screen views, autocapture, session replay, surveys and feature flags are off.
+  Events carry enums and buckets only: never titles, artists, server addresses, usernames or search text.
+- **Sentry** (`s2-ios`): `sendDefaultPii` off; no screenshots, view hierarchy, network breadcrumbs or
+  failed-request capture; every message, breadcrumb and extra goes through the shared `TelemetryScrubber`
+  (URLs, hosts, IPs, file paths, emails, `user=`/`token=` values) before it leaves the device.
+- `ios/S2/PrivacyInfo.xcprivacy` declares the same six types (Linked and Tracking false),
+  `NSPrivacyTracking` false and no tracking domains. Both SDKs link statically; their own manifests'
+  required-reason APIs (UserDefaults CA92.1, file timestamps C617.1, system boot time 35F9.1) are the ones
+  the app already declares. PostHog's own manifest also lists Other Usage Data; the events above are all
+  Product Interaction, so it is not answered separately.
+- No ATT prompt, no IDFA, no ads SDK. Server address, username and session token live in the Keychain and go
+  only to the user's own server. Apple processes purchases; StoreKit verifies them on the device.
 - ATS allows arbitrary loads (`NSAllowsArbitraryLoads`) so plain-http LAN servers work; that is transport
   to a user-chosen server, not collection by us.
-
-Contradictions found: none. Revisit when StoreKit (#609) lands: if the app calls a backend to validate
-purchases, or any analytics or crash SDK is added, "Data Not Collected" must change. A StoreKit-only
-integration (on-device verification) keeps it as is.
 
 ## In-App Purchases
 

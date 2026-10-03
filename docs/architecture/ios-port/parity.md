@@ -63,7 +63,7 @@ platform subsystem: playback engine, billing, background services). Status:
 | Settings — excluded songs | `android/app/.../ui/screens/settings/excluded/ExcludedSongsViewModel.kt` (shared) | S | 7 | shared-ready | |
 | Settings — artwork (clear cache, download all, Wi-Fi only) | `android/imageloader`, `android/app/.../ui/screens/settings/SettingsEffects.kt` | M | 7/9 | none | `android/imageloader` is android-only (Coil); iOS needs its own image pipeline. |
 | Settings — logging (file log, copy logs) | `android/app/.../debug/DebugLoggingTree.kt` | S | 7 | none | |
-| Settings — crash/analytics consent (Sentry, PostHog) | `android/app/.../telemetry/TelemetryConsentGate.kt` | S | 9 | none | |
+| Settings — crash/analytics consent (Sentry, PostHog) | `android/core/src/commonMain/.../telemetry/TelemetryConsentGate.kt` (shared) | S | 9 | done | Settings > Privacy toggles over the shared gate; Sentry (`SentryCrashReporter`) and PostHog (`PostHogProductAnalytics`) in `ios/S2/Platform/Telemetry/`, keys from a gitignored xcconfig, dSYMs uploaded by `ios/scripts/upload-dsyms.sh` (#776). The first run's welcome discloses both instead of Android's upgrade notice. |
 | Changelog / licences screens | `android/app/.../ui/screens/settings/about/LicencesScreen.kt` (shared: `ChangelogRepository`, `LicencesRepository`, `GetChangelog.kt`, `GetLicences.kt`) | S | 7 | shared-ready | |
 | Theme (dark/light, pure black, accent, dynamic colour) | `android/app/.../ui/theme/S2AppTheme.kt` | M | 7 | none | iOS gets its own HIG-driven `Theme` per `ios-port.md`; `ios/S2/Theme` dir exists but not inspected in depth. |
 | Song info screen | `android/app/.../ui/screens/songinfo/SongInfoViewModel.kt` | S | 7 | none | |
