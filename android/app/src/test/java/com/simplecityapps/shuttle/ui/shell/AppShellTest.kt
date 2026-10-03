@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -864,6 +865,75 @@ class AppShellTest {
         robot.assertSelectedTab("Library")
         robot.assertTextDisplayed(SampleLibrary.albums.first().title)
         robot.miniPlayerGapToBottom() shouldBeGreaterThan 0.dp
+    }
+
+    @Test
+    fun `a settings screen on top survives saved state restoration, still without the nav bar`() {
+        val restoration = StateRestorationTester(composeTestRule)
+        robot.setContent(restoration = restoration)
+        robot.tapText("Library")
+        robot.openSoundSettings()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeTestRule.waitForIdle()
+        robot.assertTextDisplayed("Settings: PlaybackAndSound")
+        robot.assertSelectedTab(null)
+        robot.miniPlayerGapToBottom() shouldBe 0.dp
+
+        robot.pressBack()
+        robot.assertSelectedTab("Library")
+    }
+
+    @Test
+    fun `a shortcut to another tab while settings is open leaves settings behind`() {
+        robot.setContent()
+        robot.tapText("Library")
+        robot.tapText(SampleLibrary.albums.first().title)
+        robot.openSoundSettings()
+
+        robot.requestTab(ShellTab.Search)
+        robot.assertSelectedTab("Search")
+
+        // Library comes back as it was under settings, with the bar.
+        robot.tapText("Library")
+        robot.assertSelectedTab("Library")
+        robot.assertTextDisplayed(SampleLibrary.albums.first().title)
+        robot.miniPlayerGapToBottom() shouldBeGreaterThan 0.dp
+    }
+
+    @Test
+    fun `a shortcut to the tab settings is open on pops that tab to its root`() {
+        robot.setContent()
+        robot.tapText("Library")
+        robot.openSoundSettings()
+
+        robot.requestTab(ShellTab.Library)
+        robot.assertSelectedTab("Library")
+        robot.assertTextDisplayed("Albums")
+    }
+
+    @Test
+    fun `while the nav bar slides away the mini player rides its top edge, stopping on the gesture bar`() {
+        robot.setContent(systemBars = PhoneSystemBars)
+        robot.openSoundSettingsHoldingTheSlide()
+
+        val tops = (1..4).map {
+            robot.advanceFrames(2)
+            (robot.miniPlayerBottom() - robot.navBarTop()).value shouldBe (0f plusOrMinus 1f)
+            robot.navBarTop()
+        }
+        tops.distinct().size shouldBeGreaterThan 1
+        robot.settle()
+        robot.miniPlayerGapToBottom().value shouldBe (PhoneSystemBars.navigationBarDp.toFloat() plusOrMinus 1f)
+    }
+
+    @Test
+    fun `at Medium width a settings screen pads itself clear of a cutout the hidden rail leaves bare`() {
+        robot.setContent(window = MediumWindow, systemBars = SystemBars(statusBarDp = 0, navigationBarDp = 0, leftCutoutDp = 48))
+        robot.openSoundSettings()
+
+        robot.assertSelectedTab(null)
+        robot.textLeft("Settings: PlaybackAndSound") shouldBeGreaterThanOrEqualTo 48.dp
     }
 
     @Test

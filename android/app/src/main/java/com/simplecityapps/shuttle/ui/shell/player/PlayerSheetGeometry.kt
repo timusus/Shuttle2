@@ -10,7 +10,9 @@ package com.simplecityapps.shuttle.ui.shell.player
  * - Full = 0, the sheet filling the shell
  *
  * [navBarHeight] is whatever the mini player docks on: the nav bar, or just the system navigation bar where the shell
- * has none (beside a rail, or while a [com.simplecityapps.shuttle.ui.shell.UtilityRoute] hides the nav bar).
+ * has none (beside a rail, or while a [com.simplecityapps.shuttle.ui.shell.UtilityRoute] hides the nav bar). While the
+ * nav bar slides in or out it is already the dock it is heading for, so the anchors and the destinations' padding
+ * change once, not per frame; [sheetTop] draws the sheet at each frame's [dockHeight] on the way.
  */
 data class PlayerSheetGeometry(
     val height: Float,
@@ -29,8 +31,15 @@ data class PlayerSheetGeometry(
     /** 0 mini → 1 full. */
     fun expand(offset: Float): Float = fraction(offsetOf(PlayerLevel.Mini), offsetOf(PlayerLevel.Full), offset)
 
-    /** Where the sheet itself sits: it never rises above the shell's top edge. */
-    fun sheetTop(offset: Float): Float = offset.coerceAtLeast(0f)
+    /**
+     * Where the sheet itself sits: it never rises above the shell's top edge. [dock] is where the mini player docks this
+     * frame while the nav bar slides ([dockHeight]); the sheet is drawn that far from its [navBarHeight] anchor, less
+     * as it opens, so Full stays at the top.
+     */
+    fun sheetTop(
+        offset: Float,
+        dock: Float = navBarHeight,
+    ): Float = (offset + (navBarHeight - dock) * (1f - expand(offset))).coerceAtLeast(0f)
 
     /**
      * The nav bar, [barHeight] px tall, slides down under the rising sheet, and away entirely as [shown] falls from 1 to 0
@@ -71,6 +80,17 @@ data class PlayerSheetGeometry(
 
     companion object {
         const val MaxScrimAlpha = 0.32f
+
+        /**
+         * Where the mini player docks, in px above the bottom edge, while the nav bar is [shown] (0 to 1) of its
+         * [barHeight]: on the bar's top edge as it slides, the same [shown] that drives [navBarTranslation], and never
+         * below the [systemBar] it stops on once the bar has gone.
+         */
+        fun dockHeight(
+            barHeight: Float,
+            systemBar: Float,
+            shown: Float,
+        ): Float = maxOf(systemBar, barHeight * shown)
 
         private fun fraction(
             from: Float,

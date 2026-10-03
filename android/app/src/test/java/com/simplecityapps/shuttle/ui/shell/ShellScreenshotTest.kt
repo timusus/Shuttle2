@@ -126,6 +126,14 @@ class ShellScreenshotTest {
         settings("phone")
     }
 
+    /** A phone on its side: the rail gone, the page clears the cutout, and the mini player's fill runs under the gesture bar. */
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-xhdpi")
+    fun phoneLandscapeSettings() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(891, 411), systemBars = PhoneSystemBars.copy(leftCutoutDp = 32))
+        settings("phone-landscape")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneSongInfoSheet() {

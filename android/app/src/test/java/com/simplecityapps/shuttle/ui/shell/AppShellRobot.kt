@@ -28,21 +28,24 @@ import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -300,12 +303,14 @@ fun windowInfo(
 ): WindowAdaptiveInfo = WindowAdaptiveInfo(WindowSizeClass.BREAKPOINTS_V2.computeWindowSizeClass(widthDp.toFloat(), heightDp.toFloat()), posture)
 
 /**
- * A phone's system bars in dp: a status bar and a gesture bar, for recordings that must show what sits under them.
- * Robolectric gives the window no insets otherwise.
+ * A phone's system bars in dp: a status bar and a gesture bar, for recordings that must show what sits under them, and
+ * optionally a display cutout on the left edge, as a phone held in landscape has. Robolectric gives the window no insets
+ * otherwise.
  */
 data class SystemBars(
     val statusBarDp: Int = 24,
     val navigationBarDp: Int = 24,
+    val leftCutoutDp: Int = 0,
 )
 
 val PhoneSystemBars = SystemBars()
@@ -326,6 +331,8 @@ class AppShellRobot(
     val actions = RecordingPlayerActions(queueState)
 
     val calls: List<String> get() = actions.calls
+
+    private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
 
     /** Each visibility Home has reported, in order. */
     val homeVisibility = mutableListOf<Boolean>()
@@ -368,6 +375,7 @@ class AppShellRobot(
                         windowAdaptiveInfo = currentWindow,
                         entryProvider = entryProvider,
                         navigationRequests = remember(targets) { targets.receiveAsFlow() },
+                        tabRequests = remember { tabRequests.receiveAsFlow() },
                     )
                 }
             }
@@ -688,6 +696,42 @@ class AppShellRobot(
         scrollToAndTapText("More sound settings")
     }
 
+    /** Asks for [tab] the way a launcher shortcut does. */
+    fun requestTab(tab: ShellTab) {
+        tabRequests.trySend(tab)
+        rule.waitForIdle()
+    }
+
+    /**
+     * Opens Playback & sound's settings page with the clock held, stopping once the page is up and the nav bar has
+     * started sliding away; [advanceFrames] moves the slide on and [settle] finishes it.
+     */
+    fun openSoundSettingsHoldingTheSlide() {
+        tapMiniPlayer()
+        tapPanelButton(NowPlayingPanel.PlaybackSound)
+        rule.onNodeWithText("More sound settings").performScrollTo()
+        rule.waitForIdle()
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithText("More sound settings").performTouchInput { click() }
+        // The player settles to Mini first, then the page opens.
+        repeat(200) {
+            if (rule.onAllNodesWithText("Settings: PlaybackAndSound").fetchSemanticsNodes().isNotEmpty()) return
+            rule.mainClock.advanceTimeByFrame()
+        }
+        error("Playback & sound's settings page never opened")
+    }
+
+    fun advanceFrames(frames: Int) = repeat(frames) { rule.mainClock.advanceTimeByFrame() }
+
+    /** The nav bar's top edge, as drawn, from the top of the shell. */
+    fun navBarTop(): Dp = rule.onNodeWithTag(ShellTestTags.NavigationBar).getBoundsInRoot().top
+
+    /** The mini player's bottom edge, as drawn, from the top of the shell. */
+    fun miniPlayerBottom(): Dp = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().bottom
+
+    /** How far from the shell's left edge [text] starts. */
+    fun textLeft(text: String): Dp = rule.onNodeWithText(text).getBoundsInRoot().left
+
     /** The tab the nav bar or rail lights, or, for null, no tab shown at all. */
     fun assertSelectedTab(label: String?) {
         val tab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
@@ -701,7 +745,8 @@ class AppShellRobot(
     /** The space below the docked mini player: the nav bar, or nothing once it has slid away. */
     fun miniPlayerGapToBottom(): Dp {
         val bottom = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().bottom
-        return rule.onRoot().getBoundsInRoot().bottom - bottom
+        // With system bars the shell sits in a second compose root.
+        return rule.onNode(isRoot() and hasAnyDescendant(hasTestTag(PlayerTestTags.MiniPlayer))).getBoundsInRoot().bottom - bottom
     }
 
     /** Opens song info from the Now Playing menu, which answers with the playing song's info route. */
@@ -769,6 +814,7 @@ private fun WithSystemBars(
         WindowInsetsCompat.Builder()
             .setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, systemBars.statusBarDp.dp.roundToPx(), 0, 0))
             .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, systemBars.navigationBarDp.dp.roundToPx()))
+            .setInsets(WindowInsetsCompat.Type.displayCutout(), Insets.of(systemBars.leftCutoutDp.dp.roundToPx(), 0, 0, 0))
             .build()
     }
     DeviceConfigurationOverride(DeviceConfigurationOverride.WindowInsets(insets), content)

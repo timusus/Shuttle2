@@ -9,8 +9,10 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -33,6 +35,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.util.lerp
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.designsystem.component.S2SheetDefaults
+import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
@@ -110,16 +113,24 @@ internal fun PlayerSheet(
                         modifier = nowPlayingModifier,
                     )
                 }
-                MiniPlayer(
-                    player = player,
-                    progress = progress,
-                    actions = actions,
-                    interactive = miniInteractive,
-                    onClick = { scope.launch { state.moveTo(PlayerLevel.Full) } },
-                    modifier = Modifier
+                Column(
+                    Modifier
+                        .fillMaxSize()
                         .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
                         .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) },
-                )
+                ) {
+                    MiniPlayer(
+                        player = player,
+                        progress = progress,
+                        actions = actions,
+                        interactive = miniInteractive,
+                        onClick = { scope.launch { state.moveTo(PlayerLevel.Full) } },
+                    )
+                    // The mini player's fill runs on to the bottom edge, under the system navigation bar wherever no nav
+                    // bar covers it, so the gesture area doesn't read as a band of its own.
+                    val colors = MaterialTheme.colorScheme
+                    Box(Modifier.weight(1f).fillMaxWidth().background(miniPlayerFill(colors.surfaceContainerHigh) { it.surfaceContainerHigh }))
+                }
             }
         }
     }

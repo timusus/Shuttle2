@@ -39,6 +39,28 @@ class PlayerSheetGeometryTest {
     }
 
     @Test
+    fun `the dock rides the sliding nav bar's top edge and stops on the system navigation bar`() {
+        PlayerSheetGeometry.dockHeight(barHeight = 200f, systemBar = 50f, shown = 1f) shouldBe 200f
+        // Half shown, the bar is translated 100 of its 200: its top edge is 100 above the bottom.
+        geometry.navBarTranslation(1700f, barHeight = 200f, shown = 0.5f) shouldBe 100f
+        PlayerSheetGeometry.dockHeight(barHeight = 200f, systemBar = 50f, shown = 0.5f) shouldBe 100f
+        PlayerSheetGeometry.dockHeight(barHeight = 200f, systemBar = 50f, shown = 0.1f) shouldBe 50f
+        PlayerSheetGeometry.dockHeight(barHeight = 200f, systemBar = 50f, shown = 0f) shouldBe 50f
+    }
+
+    @Test
+    fun `while the nav bar slides the sheet is drawn at the frame's dock, its anchors already where the bar is heading`() {
+        // Heading for a 50 px system bar: Mini anchors at 1850 from the first frame.
+        val hiding = geometry.copy(navBarHeight = 50f)
+        hiding.offsetOf(PlayerLevel.Mini) shouldBe 1850f
+        hiding.sheetTop(1850f, dock = 200f) shouldBe 1700f
+        hiding.sheetTop(1850f, dock = 100f) shouldBe 1800f
+        hiding.sheetTop(1850f) shouldBe 1850f
+        // Full stays at the top edge.
+        hiding.sheetTop(0f, dock = 200f) shouldBe 0f
+    }
+
+    @Test
     fun `nav bar, mini player and scrim track expand`() {
         geometry.navBarTranslation(1700f, barHeight = 200f, shown = 1f) shouldBe 0f
         geometry.navBarTranslation(850f, barHeight = 200f, shown = 1f) shouldBe 100f

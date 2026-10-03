@@ -319,8 +319,11 @@ and Library top bars at every width (#485), not a nav item or rail entry. Its ro
 it opens and every page under it implement `UtilityRoute`: they push onto the selected tab's stack
 like any route, but while one is on top (`AppNavigator.showsNavigation`) the shell slides the nav
 bar or rail away with the player pane's motion and lights no tab, and the mini player (or the pane)
-stays; on a phone it drops to the bottom edge where the bar was. Back pops to the tab as it was
-(#791). The tag editor and song info keep the chrome: they are panes and sheets of a tab's content,
+stays; on a phone it rides the bar's top edge down to the system navigation bar. The sheet's
+anchors and the destination's padding take the new dock at once and only the drawing slides, so
+nothing reflows per frame. Back pops to the tab as it was (#791). Leaving the tab (a launcher
+shortcut, or back from another tab to the start tab) pops its utility routes, so coming back shows
+the tab's own screens with the bar. The tag editor and song info keep the chrome: they are panes and sheets of a tab's content,
 not places of their own. Screen dialogs (tag
 editor, song info, create playlist, delete confirmations) are Compose dialogs owned by the screen
 that raises them; `DialogSceneStrategy` is only for a dialog that must survive as its own back
@@ -350,9 +353,10 @@ Insets are split by owner:
 | Inset | Owner |
 |---|---|
 | status bar | the destination's top bar |
-| navigation bar | the nav bar or rail; with the nav bar slid away, the sheet's own bottom padding |
+| navigation bar, bottom | the nav bar; with no nav bar (beside a rail, or slid away for a utility destination) the mini player docks above it and its fill runs on underneath, and the open sheet pads itself |
 | IME | destination content (`imePadding()`) |
-| display cutout, rail side | the rail and the pane |
+| side system bars and display cutout, start edge | the rail while it shows; the shell pads the destination when there is none (compact width, or a utility destination hiding it) |
+| side system bars and display cutout, end edge | the player pane while it is open; otherwise the shell pads the destination |
 
 ## 5. Theming
 

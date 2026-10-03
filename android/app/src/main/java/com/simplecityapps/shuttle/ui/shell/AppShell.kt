@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
@@ -54,6 +56,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
@@ -229,7 +232,8 @@ private fun rememberContentBottomPadding(player: PlayerSheetState) = with(LocalD
 
 /**
  * Below 600 dp: bottom bar, one pane, and the player sheet, which opens to full screen as the bar slides away under it.
- * With no [selectedTab] the bar slides away and the mini player drops to the bottom edge in its place.
+ * With no [selectedTab] the bar slides away and the mini player follows its top edge down to the system navigation bar,
+ * where it stops. The sheet's anchors and the destination's padding take the new dock at once; only the drawing moves.
  */
 @Composable
 private fun CompactShell(
@@ -245,12 +249,15 @@ private fun CompactShell(
     val miniHeight = with(density) { s2MiniPlayerHeight().toPx() }
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
-    val navigationShown = rememberNavigationShown(selectedTab != null)
-    val navBarComposed by remember { derivedStateOf { navigationShown.value > 0f } }
+    val navigationTarget = selectedTab != null
+    val navigationShown = rememberNavigationShown(navigationTarget)
+    // Composed from the frame it is asked for, so its height is known before it starts sliding in.
+    val navBarComposed by remember(navigationTarget) { derivedStateOf { navigationTarget || navigationShown.value > 0f } }
+    val sideInsets = destinationSideInsets(start = true, end = true)
 
     Layout(
         contents = listOf(
-            { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
+            { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding).windowInsetsPadding(sideInsets)) { destinations() } },
             { PlayerScrim(player) },
             { if (sheetVisible) PlayerSheet(player, content.state, content.progress, content.actions, layout, onOpenRoute = content.openRoute) },
             {
@@ -270,11 +277,12 @@ private fun CompactShell(
         val height = constraints.maxHeight
         val navBarPlaceables = navBar.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
         val navBarHeight = navBarPlaceables.maxOfOrNull { it.height } ?: 0
+        // The dock the nav bar is heading for, so the anchors hold still while it slides.
+        val dock = { shown: Float -> PlayerSheetGeometry.dockHeight(navBarHeight.toFloat(), navigationBarBottom.toFloat(), shown) }
         player.onMeasured(
             PlayerSheetGeometry(
                 height = height.toFloat(),
-                // The mini player docks on the nav bar, or on the system navigation bar as the nav bar slides away.
-                navBarHeight = lerp(navigationBarBottom.toFloat(), navBarHeight.toFloat(), navigationShown.value),
+                navBarHeight = dock(if (navigationTarget) 1f else 0f),
                 miniHeight = miniHeight,
             ),
         )
@@ -285,7 +293,8 @@ private fun CompactShell(
         layout(width, height) {
             destinationPlaceables.forEach { it.place(0, 0) }
             scrimPlaceables.forEach { it.place(0, 0) }
-            val sheetTop = player.geometry.sheetTop(player.offset).roundToInt()
+            // Reading the slide here re-runs placement only: the mini player rides the bar's top edge.
+            val sheetTop = player.geometry.sheetTop(player.offset, dock = dock(navigationShown.value)).roundToInt()
             sheetPlaceables.forEach { it.place(0, sheetTop) }
             navBarPlaceables.forEach { it.place(0, height - navBarHeight) }
         }
@@ -312,13 +321,15 @@ private fun RailSheetShell(
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
     val coversRail = layout.width == ShellWidth.Expanded
+    // Nothing else sits at the end edge; the start edge is the rail's while it shows.
+    val sideInsets = destinationSideInsets(start = selectedTab == null, end = true)
     // The rail's width as last laid out, for the mini player's inset: the rail's own toggle can widen it.
     var measuredRailWidth by remember { mutableIntStateOf(0) }
 
     Layout(
         contents = listOf(
             { AnimatedShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab) },
-            { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
+            { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding).windowInsetsPadding(sideInsets)) { destinations() } },
             { PlayerScrim(player) },
             {
                 if (sheetVisible) {
@@ -399,12 +410,15 @@ private fun PaneShell(
     val paneOpen = player.level == PlayerLevel.Full
     val docked = player.level == PlayerLevel.Mini
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
+    // The rail takes the start edge while it shows, the open pane the end edge.
+    val sideInsets = destinationSideInsets(start = selectedTab == null, end = !paneOpen)
     Row(Modifier.fillMaxSize()) {
         AnimatedShellRail(selectedTab, expanded = layout.railExpanded, onSelectTab = onSelectTab)
         Column(Modifier.weight(1f)) {
             Box(
                 Modifier
                     .weight(1f)
+                    .windowInsetsPadding(sideInsets)
                     .then(if (docked) Modifier else Modifier.windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))),
             ) {
                 destinations()
@@ -452,6 +466,20 @@ private fun ShellTab.navItem(): S2NavItem {
 @Composable
 private fun tabItems(): List<S2NavItem> = ShellTab.entries.map { it.navItem() }
 
+/**
+ * The side insets a destination pads itself clear of: side system bars and display cutouts on the [start] and [end] edges
+ * no rail or pane covers. The pane shell's docked mini player keeps its own.
+ */
+@Composable
+private fun destinationSideInsets(
+    start: Boolean,
+    end: Boolean,
+): WindowInsets {
+    val safe = WindowInsets.safeDrawing
+    val none = WindowInsets(0)
+    return (if (start) safe.only(WindowInsetsSides.Start) else none).union(if (end) safe.only(WindowInsetsSides.End) else none)
+}
+
 /** 1 with the nav bar shown, 0 with it hidden, moving between them with the player pane's motion. */
 @Composable
 private fun rememberNavigationShown(shown: Boolean): State<Float> = animateFloatAsState(if (shown) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "navigation")
@@ -467,8 +495,13 @@ private fun ShellNavigationBar(
         items = tabItems(),
         selectedIndex = selectedTab?.ordinal ?: -1,
         onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
-        modifier = modifier,
+        modifier = modifier.testTag(ShellTestTags.NavigationBar),
     )
+}
+
+/** Tags tests find the shell's own chrome by. */
+internal object ShellTestTags {
+    const val NavigationBar = "shell-navigation-bar"
 }
 
 /** The rail, which slides away without a [selectedTab] the way the player pane does. */
