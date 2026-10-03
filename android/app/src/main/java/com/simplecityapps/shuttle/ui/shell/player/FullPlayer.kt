@@ -243,6 +243,7 @@ internal fun NowPlayingBar(
                 // The same roles as the bar's other buttons: no container until its panel is open (#783).
                 style = if (queueOpen) S2ButtonStyle.Tonal else S2ButtonStyle.Text,
                 size = S2ButtonSize.Small,
+                textContentColor = PlayerTextButtonColor,
                 icon = Icons.AutoMirrored.Rounded.QueueMusic,
                 modifier = Modifier.semantics { this.selected = queueOpen },
             )

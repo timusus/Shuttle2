@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -66,7 +67,7 @@ internal val PlayerSheetColor: Color
 internal fun PlayerGround(modifier: Modifier = Modifier) {
     val base = PlayerSheetColor
     val top = artworkRole(base, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = GroundWashAlpha).compositeOver(base))
-    if (top != base) Spacer(modifier.fillMaxSize().background(Brush.verticalGradient(listOf(top, base))))
+    if (top != base) Spacer(modifier.fillMaxSize().drawBehind { drawRect(Brush.verticalGradient(listOf(top, base))) })
 }
 
 /** Short of the full container, so the seek bar's secondaryContainer track still parts from the ground. */

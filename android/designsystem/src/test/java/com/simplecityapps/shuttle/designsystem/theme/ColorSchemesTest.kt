@@ -144,13 +144,15 @@ class ColorSchemesTest {
                     scheme.onSecondaryContainer.contrastRatio(ground) shouldBeGreaterThan 4.5
                 }
                 // The mini player's fill: a light wash of secondaryContainer over the root scheme's surfaceContainerHigh (docked, surfaceContainer)
-                val root = accentColorScheme(S2Accent.Neutral, isDark)
-                for (surface in listOf(root.surfaceContainerHigh, root.surfaceContainer)) {
-                    val mini = lerp(surface, scheme.secondaryContainer, MiniPlayerArtworkTint)
-                    scheme.onSurface.contrastRatio(mini) shouldBeGreaterThan 4.5
-                    scheme.onSurfaceVariant.contrastRatio(mini) shouldBeGreaterThan 4.5
-                    scheme.primary.contrastRatio(mini) shouldBeGreaterThan 4.5 // the casting line
-                    scheme.primary.contrastRatio(mini) shouldBeGreaterThan 3.0 // the play button and progress line
+                for (accent in S2Accent.entries) {
+                    val root = accentColorScheme(accent, isDark)
+                    for (surface in listOf(root.surfaceContainerHigh, root.surfaceContainer)) {
+                        val mini = lerp(surface, scheme.secondaryContainer, MiniPlayerArtworkTint)
+                        scheme.onSurface.contrastRatio(mini) shouldBeGreaterThan 4.5
+                        scheme.onSurfaceVariant.contrastRatio(mini) shouldBeGreaterThan 4.5
+                        scheme.primary.contrastRatio(mini) shouldBeGreaterThan 4.5 // the casting line
+                        scheme.primary.contrastRatio(mini) shouldBeGreaterThan 3.0 // the play button and progress line
+                    }
                 }
             }
         }
