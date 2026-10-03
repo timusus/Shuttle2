@@ -31,11 +31,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.component.ArtistRow
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
+import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavItem
@@ -45,6 +47,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2SearchField
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
+import com.simplecityapps.shuttle.designsystem.component.SearchTopResult
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
@@ -145,6 +148,57 @@ fun SearchBoard(width: BoardWidth) {
                 }
             },
             BoardSection("No results") { SearchViewFrame("zzxq") { SearchNoResults("zzxq") } },
+        ),
+    )
+}
+
+@Composable
+fun SearchTopResultBoard(width: BoardWidth) {
+    val album = SampleLibrary.albums.first()
+    val artist = SampleLibrary.artist("Saltmarsh Choir")
+    Board(
+        width,
+        listOf(
+            BoardSection("Album, with actions") {
+                SearchTopResult(
+                    kind = "Album",
+                    title = AnnotatedString(album.title),
+                    subtitle = AnnotatedString(album.artist),
+                    playLabel = "Play",
+                    playDescription = "Play ${album.title}",
+                    onClick = {},
+                    onPlay = {},
+                    onLongClick = {},
+                    onMore = {},
+                    artwork = { Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Feature, image = { SampleArt(album.id) }) },
+                )
+            },
+            BoardSection("Artist, circular artwork") {
+                SearchTopResult(
+                    kind = "Artist",
+                    title = AnnotatedString(artist.name),
+                    subtitle = AnnotatedString("${artist.albums.size} albums"),
+                    playLabel = "Play",
+                    playDescription = "Play ${artist.name}",
+                    onClick = {},
+                    onPlay = {},
+                    onMore = {},
+                    artwork = { Artwork(ArtworkPlaceholder.Artist, size = ArtworkSize.Feature, shape = ArtworkShape.Circle, image = { SampleArt(artist.coverAlbumId) }) },
+                )
+            },
+            BoardSection("Long title and subtitle") {
+                SearchTopResult(
+                    kind = "Song",
+                    title = AnnotatedString("A very long song title that runs past two lines of the card and has to be cut off somewhere"),
+                    subtitle = AnnotatedString("An artist with a long name · An album with a long name too"),
+                    playLabel = "Play",
+                    playDescription = "Play the song",
+                    onClick = {},
+                    onPlay = {},
+                    onMore = {},
+                    artwork = { Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Feature) },
+                )
+            },
         ),
     )
 }

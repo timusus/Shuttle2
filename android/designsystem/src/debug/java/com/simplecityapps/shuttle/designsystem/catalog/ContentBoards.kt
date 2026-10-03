@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.fixtures.SampleAlbum
@@ -205,6 +206,12 @@ fun SectionHeaderBoard(width: BoardWidth) {
         listOf(
             BoardSection("With action") { SectionHeader("Recently added", action = "See all") },
             BoardSection("Plain") { SectionHeader("Albums") },
+            BoardSection("Title, long title with an action") {
+                SectionHeader("A section title long enough that it has to share its row with See all", action = "See all", style = SectionHeaderStyle.Title)
+            },
+            BoardSection("Title, subtitle with an action") {
+                SectionHeader("Albums", subtitle = "Matching your search", action = "See all", style = SectionHeaderStyle.Title)
+            },
             BoardSection("Sticky letter header") {
                 Column {
                     val artist = SampleLibrary.artist("Oda Kestrel Quartet")

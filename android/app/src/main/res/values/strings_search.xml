@@ -27,6 +27,8 @@
     <string name="search_kind_album">Album</string>
     <!-- Kind of the top result, above its title: song -->
     <string name="search_kind_song">Song</string>
+    <!-- Screen-reader label of the top result's Play button: %1$s is the item's name -->
+    <string name="search_play_item">Play %1$s</string>
     <!-- Kind of the top result, above its title: genre -->
     <string name="search_kind_genre">Genre</string>
     <!-- Kind of the top result, above its title: playlist -->

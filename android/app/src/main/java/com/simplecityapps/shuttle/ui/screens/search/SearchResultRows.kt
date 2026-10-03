@@ -117,13 +117,18 @@ internal fun PlaylistResult(hit: SearchHit<Playlist>, callbacks: SearchCallbacks
 internal fun ArtistTopResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallbacks) {
     val artist = hit.item
     val name = artist.name ?: artist.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
+    val summary = if (artist.isAlbumArtist) countString(R.plurals.albumsPlural, artist.albumCount) else countString(R.plurals.songsPlural, artist.songCount)
+    val showActions = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) }
     SearchTopResult(
         kind = stringResource(R.string.search_kind_artist),
         title = highlighted(hit, listOf(name)).single(),
-        subtitle = AnnotatedString(if (artist.isAlbumArtist) countString(R.plurals.albumsPlural, artist.albumCount) else countString(R.plurals.songsPlural, artist.songCount)),
+        subtitle = AnnotatedString(summary),
         playLabel = stringResource(R.string.menu_title_play),
+        playDescription = stringResource(R.string.search_play_item, name),
         onClick = { callbacks.onArtistClick(artist) },
         onPlay = { callbacks.onPlay(MediaSelection.AlbumArtists(artist)) },
+        onLongClick = showActions,
+        onMore = showActions,
         artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Feature, shape = ArtworkShape.Circle) },
     )
 }
@@ -132,32 +137,43 @@ internal fun ArtistTopResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallb
 internal fun AlbumTopResult(hit: SearchHit<Album>, callbacks: SearchCallbacks) {
     val album = hit.item
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
-    val (title, artist) = highlighted(hit, listOf(album.name ?: unknown), listOf(album.albumArtist ?: album.friendlyArtistName ?: unknown))
+    val name = album.name ?: unknown
+    val artistName = album.albumArtist ?: album.friendlyArtistName ?: unknown
+    val showActions = { callbacks.onShowActions(MediaActionsTarget(name, artistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) }
+    val (title, artist) = highlighted(hit, listOf(name), listOf(artistName))
     SearchTopResult(
         kind = stringResource(R.string.search_kind_album),
         title = title,
         subtitle = artist,
         playLabel = stringResource(R.string.menu_title_play),
+        playDescription = stringResource(R.string.search_play_item, name),
         onClick = { callbacks.onAlbumClick(album) },
         onPlay = { callbacks.onPlay(MediaSelection.Albums(album)) },
+        onLongClick = showActions,
+        onMore = showActions,
         artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Feature) },
     )
 }
 
-/** The top song result; playing it plays that song alone, as [SongResult] plays from its [index]. */
+/** The top song result; Play and a tap both call `onSongClick` with its [index], as [SongResult] does, which queues all the song results from it. */
 @Composable
 internal fun SongTopResult(hit: SearchHit<Song>, index: Int, callbacks: SearchCallbacks) {
     val song = hit.item
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
+    val name = song.name ?: unknown
     val subtitleParts = listOfNotNull(song.friendlyArtistName ?: song.albumArtist, song.album).ifEmpty { listOf(unknown) }
-    val (title, subtitle) = highlighted(hit, listOf(song.name ?: unknown), subtitleParts)
+    val showActions = { callbacks.onShowActions(MediaActionsTarget(name, subtitleParts.joinToString(" · "), MediaSelection.Songs(song), ArtworkPlaceholder.Song)) }
+    val (title, subtitle) = highlighted(hit, listOf(name), subtitleParts)
     SearchTopResult(
         kind = stringResource(R.string.search_kind_song),
         title = title,
         subtitle = subtitle,
         playLabel = stringResource(R.string.menu_title_play),
+        playDescription = stringResource(R.string.search_play_item, name),
         onClick = { callbacks.onSongClick(index) },
         onPlay = { callbacks.onSongClick(index) },
+        onLongClick = showActions,
+        onMore = showActions,
         artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Feature) },
     )
 }
@@ -165,13 +181,18 @@ internal fun SongTopResult(hit: SearchHit<Song>, index: Int, callbacks: SearchCa
 @Composable
 internal fun GenreTopResult(hit: SearchHit<Genre>, callbacks: SearchCallbacks) {
     val genre = hit.item
+    val songCount = countString(R.plurals.songsPlural, genre.songCount)
+    val showActions = { callbacks.onShowActions(MediaActionsTarget(genre.name, songCount, MediaSelection.Genres(genre), ArtworkPlaceholder.Genre)) }
     SearchTopResult(
         kind = stringResource(R.string.search_kind_genre),
         title = highlighted(hit, listOf(genre.name)).single(),
-        subtitle = AnnotatedString(countString(R.plurals.songsPlural, genre.songCount)),
+        subtitle = AnnotatedString(songCount),
         playLabel = stringResource(R.string.menu_title_play),
+        playDescription = stringResource(R.string.search_play_item, genre.name),
         onClick = { callbacks.onGenreClick(genre) },
         onPlay = { callbacks.onPlay(MediaSelection.Genres(genre)) },
+        onLongClick = showActions,
+        onMore = showActions,
         artwork = { LibraryArtwork(null, ArtworkPlaceholder.Genre, size = ArtworkSize.Feature) },
     )
 }
@@ -179,13 +200,18 @@ internal fun GenreTopResult(hit: SearchHit<Genre>, callbacks: SearchCallbacks) {
 @Composable
 internal fun PlaylistTopResult(hit: SearchHit<Playlist>, callbacks: SearchCallbacks) {
     val playlist = hit.item
+    val songCount = countString(R.plurals.songsPlural, playlist.songCount)
+    val showActions = { callbacks.onShowActions(MediaActionsTarget(playlist.name, songCount, MediaSelection.Playlists(playlist), ArtworkPlaceholder.Playlist)) }
     SearchTopResult(
         kind = stringResource(R.string.search_kind_playlist),
         title = highlighted(hit, listOf(playlist.name)).single(),
-        subtitle = AnnotatedString(countString(R.plurals.songsPlural, playlist.songCount)),
+        subtitle = AnnotatedString(songCount),
         playLabel = stringResource(R.string.menu_title_play),
+        playDescription = stringResource(R.string.search_play_item, playlist.name),
         onClick = { callbacks.onPlaylistClick(playlist) },
         onPlay = { callbacks.onPlay(MediaSelection.Playlists(playlist)) },
+        onLongClick = showActions,
+        onMore = showActions,
         artwork = { LibraryArtwork(null, ArtworkPlaceholder.Playlist, size = ArtworkSize.Feature) },
     )
 }

@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.designsystem.component
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -11,6 +13,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SearchOff
@@ -30,12 +33,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.heroTitle
 import com.simplecityapps.shuttle.designsystem.theme.rowSubtitle
 
@@ -91,7 +97,8 @@ fun SearchRecentRow(query: String, onClick: () -> Unit, onRemove: () -> Unit, mo
 
 /**
  * The best match of a search, lifted over the rows as a card: its [artwork] at feature size, what [kind] of thing it is,
- * its [title] and [subtitle], and a Play button. Tapping the card opens it.
+ * its [title] and [subtitle], and a Play button ([playDescription] names the item for a screen reader). Tapping the card
+ * opens it; [onLongClick] and [onMore] (the overflow icon) open its actions.
  */
 @Composable
 fun SearchTopResult(
@@ -99,19 +106,23 @@ fun SearchTopResult(
     title: AnnotatedString,
     subtitle: AnnotatedString?,
     playLabel: String,
+    playDescription: String,
     onClick: () -> Unit,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onMore: (() -> Unit)? = null,
     artwork: @Composable () -> Unit,
 ) {
     Surface(
-        onClick = onClick,
         modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Row(
-            modifier = Modifier.padding(S2Spacing.medium),
+            modifier = Modifier
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .padding(S2Spacing.medium),
             horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -127,7 +138,18 @@ fun SearchTopResult(
                     onClick = onPlay,
                     style = S2ButtonStyle.Tonal,
                     icon = Icons.Rounded.PlayArrow,
-                    modifier = Modifier.padding(top = S2Spacing.small),
+                    modifier = Modifier
+                        .padding(top = S2Spacing.small)
+                        .heightIn(min = S2TouchTarget.minimum)
+                        .semantics { contentDescription = playDescription },
+                )
+            }
+            if (onMore != null) {
+                S2IconButton(
+                    icon = Icons.Rounded.MoreVert,
+                    contentDescription = stringResource(R.string.ds_more_options),
+                    onClick = onMore,
+                    modifier = Modifier.align(Alignment.Top),
                 )
             }
         }
@@ -153,6 +175,25 @@ private fun S2SearchFieldPreview() {
             textFieldState = rememberTextFieldState(),
             onSearch = {},
             placeholder = "Search your library",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SearchTopResultPreview() {
+    S2Preview {
+        SearchTopResult(
+            kind = "Album",
+            title = AnnotatedString("Night Bus"),
+            subtitle = AnnotatedString("Nightjar"),
+            playLabel = "Play",
+            playDescription = "Play Night Bus",
+            onClick = {},
+            onPlay = {},
+            onLongClick = {},
+            onMore = {},
+            artwork = { Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Feature) },
         )
     }
 }

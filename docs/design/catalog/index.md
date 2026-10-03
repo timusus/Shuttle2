@@ -21,6 +21,7 @@ existing lines as they are.
 - [ ] `row-artist`: [boards](row-artist.md) · approved: — · boards hash: —
 - [ ] `row-playlist`: [boards](row-playlist.md) · approved: — · boards hash: —
 - [ ] `top-bar`: [boards](top-bar.md) · approved: — · boards hash: —
+- [ ] `search-top-result`: [boards](search-top-result.md) · approved: — · boards hash: —
 - [ ] `search`: [boards](search.md) · approved: — · boards hash: —
 - [ ] `nav-bar`: [boards](nav-bar.md) · approved: — · boards hash: —
 - [ ] `nav-rail`: [boards](nav-rail.md) · approved: — · boards hash: —

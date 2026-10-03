@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: with action; plain; sticky letter header.
+States: with action; plain; title with a long title and action; title with subtitle and action; sticky letter header.
 
 ## Compact, light
 

@@ -113,10 +113,9 @@ class SearchScreenTest {
     fun `more options opens the actions for that item`() {
         robot.setContent(SearchScenarios.results)
 
-        // The top result (the artist) is a card without a menu, so the first row is the first album.
         robot.tapMoreOn(0)
 
-        robot.shownActions.single().selection shouldBe MediaSelection.Albums(SearchScenarios.nightBus)
+        robot.shownActions.single().selection shouldBe MediaSelection.AlbumArtists(SearchScenarios.nightjar)
     }
 
     @Test
@@ -126,6 +125,15 @@ class SearchScreenTest {
         robot.tapText("Play")
 
         robot.playedSelections shouldBe listOf(MediaSelection.AlbumArtists(SearchScenarios.nightjar))
+    }
+
+    @Test
+    fun `the top song's play button plays from its place among the songs`() {
+        robot.setContent(SearchScenarios.songsOnly)
+
+        robot.tapText("Play")
+
+        robot.playedSongs shouldBe listOf(0)
     }
 
     @Test
