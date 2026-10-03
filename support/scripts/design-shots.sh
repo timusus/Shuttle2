@@ -125,6 +125,7 @@ SHOT_COUNT=0
 LANE_STARTED=0
 SIM_LEASED=0
 IPAD_BOOTED_UDID=""
+IOS_MATRIX_UDIDS=""
 START_TS=$(date +%s)
 
 # ---- helpers ----
@@ -183,13 +184,20 @@ write_manifest() {
     } >"$m"
 }
 
+# android_stop: puts the display and theme back, then stops the lane. Idempotent, and a no-op once the
+# lane is down, so the end of the Android phase and the EXIT trap can both call it.
+android_stop() {
+    [ "$LANE_STARTED" = "1" ] || return 0
+    run_with_timeout 60 android_reset_display
+    echo "design-shots: stopping lane ..."
+    support/scripts/remote-emu.sh stop >>"$LOG" 2>&1 \
+        || echo "design-shots: WARNING: remote-emu.sh stop failed, check the lane manually (see $LOG)" >&2
+    LANE_STARTED=0
+}
+
 cleanup() {
     write_manifest
-    if [ "$LANE_STARTED" = "1" ]; then
-        echo "design-shots: stopping lane ..."
-        support/scripts/remote-emu.sh stop >>"$LOG" 2>&1 \
-            || echo "design-shots: WARNING: remote-emu.sh stop failed, check the lane manually (see $LOG)" >&2
-    fi
+    android_stop
     ios_release
 }
 trap cleanup EXIT
@@ -209,7 +217,7 @@ fail_info() {
 
 # run_screen <platform> <screen> <device> <theme> <text> <flow> [maestro args...]
 run_screen() {
-    local plat="$1" screen="$2" dev="$3" theme="$4" text="$5" flow="$6" rc png name dest mlog
+    local plat="$1" screen="$2" dev="$3" theme="$4" text="$5" flow="$6" rc png name dest mlog fail_dir
     shift 6
     name="${screen}__${dev}__${theme}__${text}"
     mlog="${WORK}/${plat}-${name}.log"
@@ -217,11 +225,14 @@ run_screen() {
         record_fail "$plat" "$screen" "${dev}/${theme}/${text}" "-" "no such flow ($flow)"
         return
     fi
+    png="${WORK}/collected-${plat}/${screen}.png"
+    rm -f -- "$png" # never reuse a PNG from an earlier cell
+    fail_dir="${REPO_ROOT}/tmp/maestro/failed-${plat}-${name}"
     run_with_timeout "$FLOW_TIMEOUT" maestro_run "$flow" "${WORK}/scratch-${plat}" "$@" >"$mlog" 2>&1
     rc=$?
     cat "$mlog" >>"$LOG"
-    maestro_collect_shots "${WORK}/scratch-${plat}" "${WORK}/collected-${plat}"
-    png="${WORK}/collected-${plat}/${screen}.png"
+    maestro_collect_shots "${WORK}/scratch-${plat}" "${WORK}/collected-${plat}" "$rc" "$fail_dir"
+    [ "$rc" -eq 0 ] && rm -rf -- "$fail_dir"
     if [ "$rc" -eq 0 ] && [ -f "$png" ]; then
         dest="${OUT}/${plat}"
         mkdir -p "$dest"
@@ -230,10 +241,11 @@ run_screen() {
         SHOT_COUNT=$((SHOT_COUNT + 1))
         echo "design-shots: ${plat}/${name} -- ok"
     elif [ "$rc" -eq 124 ]; then
-        record_fail "$plat" "$screen" "${dev}/${theme}/${text}" "(flow timed out)" "timed out after ${FLOW_TIMEOUT}s (log ${mlog})"
+        record_fail "$plat" "$screen" "${dev}/${theme}/${text}" "(flow timed out)" "timed out after ${FLOW_TIMEOUT}s (log ${mlog}, Maestro debug output ${fail_dir})"
     else
         fail_info "$mlog"
         [ "$rc" -eq 0 ] && { FSTEP="-"; FERR="flow passed but took no '${screen}' screenshot"; }
+        [ "$rc" -eq 0 ] || FERR="${FERR} (Maestro debug output ${fail_dir})"
         record_fail "$plat" "$screen" "${dev}/${theme}/${text}" "$FSTEP" "$FERR"
     fi
 }
@@ -290,14 +302,26 @@ android_phase() {
             done
         done
     done
-    android_reset_display
 }
 
 # ---- iOS ----
 
+# ios_reset_appearance: puts every simulator the matrix touched back to light / default text size.
+# Runs before the shutdown / release, and tolerates a simulator that is already gone.
+ios_reset_appearance() {
+    local u
+    for u in $IOS_MATRIX_UDIDS; do
+        run_with_timeout 60 xcrun simctl ui "$u" appearance light >>"$LOG" 2>&1
+        run_with_timeout 60 xcrun simctl ui "$u" content_size large >>"$LOG" 2>&1
+    done
+    IOS_MATRIX_UDIDS=""
+    return 0
+}
+
 ios_release() {
     local holder
     [ "$SIM_LEASED" = "1" ] || [ -n "$IPAD_BOOTED_UDID" ] || return 0
+    ios_reset_appearance
     if [ -n "$IPAD_BOOTED_UDID" ]; then
         xcrun simctl shutdown "$IPAD_BOOTED_UDID" >>"$LOG" 2>&1
         IPAD_BOOTED_UDID=""
@@ -328,6 +352,7 @@ ios_sign_in() { # udid
 ios_run_device() { # label udid
     local dev="$1" udid="$2" theme text screen ctext
     MAESTRO_DEVICE_ARGS=(--udid "$udid")
+    IOS_MATRIX_UDIDS="${IOS_MATRIX_UDIDS} ${udid}"
     if ! ios_sign_in "$udid"; then
         fail_info "${WORK}/ios-signin.log"
         record_fail ios "setup ($dev)" - "sign in to the Jellyfin test server: ${FSTEP}" "$FERR"
@@ -343,8 +368,6 @@ ios_run_device() { # label udid
             done
         done
     done
-    xcrun simctl ui "$udid" appearance light >>"$LOG" 2>&1
-    xcrun simctl ui "$udid" content_size large >>"$LOG" 2>&1
 }
 
 ios_phase() {
@@ -376,6 +399,7 @@ ios_phase() {
                 fi
                 step "ios: boot iPad" xcrun simctl boot "$ipad" || { record_fail ios setup ipad "simctl boot" "see $LOG"; continue; }
                 IPAD_BOOTED_UDID="$ipad"
+                step "ios: wait for iPad boot" xcrun simctl bootstatus "$ipad" -b || { record_fail ios setup ipad "simctl bootstatus" "see $LOG"; continue; }
                 if ! BUILD=0 S2_SIMULATOR_UDID="$ipad" step "ios: install on iPad" ios/scripts/run-sim-server.sh; then
                     record_fail ios setup ipad "install" "see $LOG"
                     continue
@@ -392,7 +416,7 @@ ios_phase() {
 case "$PLATFORM" in
     android) android_phase ;;
     ios) ios_phase ;;
-    both) android_phase; ios_phase ;;
+    both) android_phase; android_stop; ios_phase ;;
 esac
 
 # ---- contact sheets ----
