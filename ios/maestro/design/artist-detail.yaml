@@ -1,4 +1,4 @@
-# design-shots.sh screen: artist-detail. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+# design-shots.sh screen: artist-detail. The `library` fixture is imported, with a listening history and Blue Hours paused part-way, by the script.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
@@ -9,10 +9,10 @@ appId: com.simplecityapps.shuttle.dev
       LABEL: Artists
 - scrollUntilVisible:
     element:
-      text: "The Mars Volta"
+      text: "Juniper Static"
     direction: DOWN
-    timeout: 180000
-- tapOn: "The Mars Volta"
+    timeout: 60000
+- tapOn: "Juniper Static"
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: artist-detail

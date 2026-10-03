@@ -1,4 +1,4 @@
-# design-shots.sh screen: empty-state. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+# design-shots.sh screen: empty-state. The `library` fixture is imported, with a listening history and Blue Hours paused part-way, by the script.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp

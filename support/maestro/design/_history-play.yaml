@@ -1,0 +1,21 @@
+# design-shots.sh history (#751): plays ${ALBUM} from its album screen, so the play's context is the album (as Jump
+# Back In needs), and keeps playing for ${LISTEN_MS}. The library fixture's 32 s tracks count as a play at 16 s and
+# as played through at their end; the script pauses the last one part-way with the debug receiver.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: ../device-checks/_library-tab.yaml
+    env:
+      TAB: Albums
+- scrollUntilVisible:
+    element: "${ALBUM}"
+    direction: DOWN
+    timeout: 60000
+- tapOn: "${ALBUM}"
+- tapOn: "Play"
+# Maestro has no sleep: wait on something that never shows, optionally, while the album plays.
+- extendedWaitUntil:
+    visible: "never shown, a delay"
+    timeout: ${LISTEN_MS}
+    optional: true

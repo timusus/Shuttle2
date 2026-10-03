@@ -27,7 +27,13 @@ support/scripts/longjob.sh wait design-shots
 `--devices` picks form factors (Android `phone,tablet,foldable`, iOS `iphone,ipad`; default `phone,iphone`;
 tablet/foldable are `wm size` overrides, not AVDs). `--matrix` picks only theme × text: `quick` is light + dark
 at default text; `full` adds large text (font scale 2.0 / AX5). **For audits use `--matrix full` with the default
-devices** (4 cells per screen per platform). Android seeds the artwork `library` fixture, so shots show covers and ArtworkTheme colour. Output lands in `shots/<run>/<platform>/<screen>__<device>__<theme>__<text>.png`
+devices** (4 cells per screen per platform). Both platforms use the artwork `library` fixture, so shots show
+covers and ArtworkTheme colour; iOS imports it as a local library (`--ios-source jellyfin` for the test server)
+on the iOS 26 simulator (`--ios-profile default` for iOS 18.5). Before the matrix, each device plays a
+listening history through the app (four albums by four artists, two of them twice, then Blue Hours paused
+part-way), so Home has Jump Back In with a resume card. The plays are all from today, so Heavy Rotation,
+Around This Time and Rediscover stay hidden. `--no-history` skips this, and saves about 6 minutes per device.
+Output lands in `shots/<run>/<platform>/<screen>__<device>__<theme>__<text>.png`
 with `shots/<run>/manifest.md` (every shot, and every failed flow with its step and last error). Read
 manifest.md first, then Read only the PNGs the audit needs. `--help` lists the screen names.
 

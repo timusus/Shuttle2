@@ -1,8 +1,8 @@
-# design-shots.sh screen: now-playing. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+# design-shots.sh screen: now-playing. The `library` fixture is imported, with a listening history and Blue Hours paused part-way, by the script.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
-- runFlow: _play-first.yaml
+- runFlow: _queued.yaml
 - tapOn:
     id: "miniPlayer.open"
 - extendedWaitUntil:

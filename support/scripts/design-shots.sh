@@ -7,6 +7,7 @@
 #   support/scripts/design-shots.sh --platform android|ios|both [--screens a,b,...]
 #                                   [--devices a,b] [--matrix quick|full] [--contact-sheet] [--flow-timeout <secs>]
 #                                   [--apk <path>] [--remote-build] [--no-ios-build]
+#                                   [--ios-source local|jellyfin] [--ios-profile ios26|default] [--no-history]
 #
 #     --platform         android (a remote-emu.sh lane), ios (a simulator leased from the shared pool,
 #                        S2_SIM_HOLDER, never `simctl create`), or both (one after the other)
@@ -15,7 +16,7 @@
 #                          artist-detail  now-playing  queue  mini-player  search  settings
 #                          empty-state (a search with no results)
 #     --devices a,b      form factors. Android: phone tablet foldable; iOS: iphone ipad.
-#                        Default: phone,iphone
+#                        Default: phone,iphone. A device named twice is shot once.
 #     --matrix quick     light + dark; default text size. (default)
 #     --matrix full      light + dark; default + large text. Recommended for audits (with the
 #                        default devices: phone x 4 cells per screen).
@@ -24,6 +25,13 @@
 #     --apk <path>       Android: install this APK instead of building/reusing the cached one
 #     --remote-build     Android: build via remote-build.sh (the Mac or the WSL box)
 #     --no-ios-build     iOS: install the last build (ios/build/DerivedData) instead of rebuilding
+#     --ios-source       local (default): the same `library` fixture as Android, copied into the
+#                        app's Documents and imported through first-run setup's Use Music on This
+#                        iPhone. jellyfin: sign in to the test server instead (no history step; the
+#                        flows name library-fixture albums, so album/artist detail and search differ)
+#     --ios-profile      ios26 (default): the "S2 iPhone iOS 26" pool (Liquid Glass, the bottom-accessory
+#                        mini player); default: the iPhone 16 / iOS 18.5 pool
+#     --no-history       skip the listening history step (Home then shows its cold start)
 #
 # Matrix cells are applied outside the flows, with adb / simctl, then every screen's flow runs:
 #   theme   Android `cmd uimode night yes|no`;     iOS `simctl ui appearance light|dark`
@@ -33,10 +41,19 @@
 #           1840x2208 @ 420 dpi = ~877x1052 dp; no hinge or posture); the manifest says so.
 #           iOS: the leased iPhone, and the existing "S2 iPad" simulator (booted, then shut down).
 #
-# Library: Android seeds the `library` fixture (seed-test-media.sh: 16 albums with embedded covers,
-# the screenshot tests' sample library, so artwork and ArtworkTheme colour show). One album (Blue
-# Hours) is queued and paused for the player screens. iOS signs in to the Jellyfin test server in
-# ~/.config/s2-test/jellyfin.env (ios/maestro/sign-in-jellyfin.yaml), once per simulator.
+# Library: both apps get the `library` fixture (seed-test-media.sh: 16 invented albums, 97 x 32 s
+# tracks with embedded covers, the screenshot tests' sample library, so artwork and ArtworkTheme
+# colour show). Android: pushed and imported on the lane. iOS: a fresh install per simulator, the
+# files copied into its Documents, then first-run setup's Use Music on This iPhone
+# (ios/support/store-screenshots/maestro/onboard-local.yaml). --ios-source jellyfin signs in to
+# the test server in ~/.config/s2-test/jellyfin.env (ios/maestro/sign-in-jellyfin.yaml) instead.
+#
+# History (#751): before the tour each app plays the same albums from their album screens, through
+# the UI (<platform>/design/_history-play.yaml), so Home has Jump Back In and played genres: HISTORY
+# below, five albums by five artists, two of them twice, ending on Blue Hours paused part-way
+# (Jump Back In's resume card, and the paused song the player screens show). A 32 s track counts as
+# a play at 16 s and as played through at its end. Real playback all happens today, so the
+# day-counting sections (Heavy Rotation, Around This Time, Rediscover) stay hidden. ~6 min a device.
 #
 # Flows: support/maestro/design/<screen>.yaml (Android), ios/maestro/design/<screen>.yaml (iOS); each
 # ends in `takeScreenshot: <screen>`.
@@ -81,6 +98,20 @@ IOS_BUILD=1
 NO_RESET=0
 NO_SEED=0
 REMOTE=""
+IOS_SOURCE=local
+IOS_PROFILE=ios26
+HISTORY_ON=1
+# album|seconds to keep playing|pause: 36 s plays a 32 s track through; 22 s passes the 16 s
+# threshold and stops part-way.
+HISTORY=(
+    "Cassette Summer|36"
+    "Night Bus Frequencies|36"
+    "Harbour Weather|36"
+    "Soft Focus|36"
+    "Cassette Summer|36"
+    "Night Bus Frequencies|36"
+    "Blue Hours|22|pause"
+)
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -93,12 +124,17 @@ while [ $# -gt 0 ]; do
         --apk) APK="${2:?design-shots: --apk needs a path}"; shift 2 ;;
         --remote-build) REMOTE_BUILD=1; shift ;;
         --no-ios-build) IOS_BUILD=0; shift ;;
+        --ios-source) IOS_SOURCE="${2:?design-shots: --ios-source needs local or jellyfin}"; shift 2 ;;
+        --ios-profile) IOS_PROFILE="${2:?design-shots: --ios-profile needs ios26 or default}"; shift 2 ;;
+        --no-history) HISTORY_ON=0; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "design-shots: unknown argument '$1'" >&2; usage >&2; exit 2 ;;
     esac
 done
 
 case "$PLATFORM" in android | ios | both) ;; *) echo "design-shots: --platform must be android, ios or both" >&2; exit 2 ;; esac
+case "$IOS_SOURCE" in local | jellyfin) ;; *) echo "design-shots: --ios-source must be local or jellyfin" >&2; exit 2 ;; esac
+case "$IOS_PROFILE" in ios26 | default) ;; *) echo "design-shots: --ios-profile must be ios26 or default" >&2; exit 2 ;; esac
 case "$MATRIX" in
     quick) THEMES=(light dark); TEXTS=(default) ;;
     full) THEMES=(light dark); TEXTS=(default large) ;;
@@ -108,6 +144,7 @@ esac
 IFS=',' read -ra DEVICES <<<"$DEVICES_ARG"
 ANDROID_DEVICES=(); IOS_DEVICES=()
 for d in "${DEVICES[@]}"; do
+    case " ${ANDROID_DEVICES[*]-} ${IOS_DEVICES[*]-} " in *" $d "*) continue ;; esac
     case "$d" in
         phone | tablet | foldable) ANDROID_DEVICES+=("$d") ;;
         iphone | ipad) IOS_DEVICES+=("$d") ;;
@@ -146,6 +183,7 @@ NOTES="${WORK}/notes.rows"
 SHOT_COUNT=0
 LANE_STARTED=0
 SIM_LEASED=0
+IOS_BUNDLE=com.simplecityapps.shuttle.dev
 IPAD_BOOTED_UDID=""
 IOS_MATRIX_UDIDS=""
 START_TS=$(date +%s)
@@ -156,11 +194,12 @@ START_TS=$(date +%s)
 step() {
     local desc="$1" start rc; shift
     start=$(date +%s)
-    if "$@" >>"$LOG" 2>&1; then
+    "$@" >>"$LOG" 2>&1
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
         echo "design-shots: ${desc} -- ok ($(($(date +%s) - start))s)"
         return 0
     fi
-    rc=$?
     echo "design-shots: ${desc} -- FAILED ($(($(date +%s) - start))s, see $LOG)" >&2
     return "$rc"
 }
@@ -272,6 +311,31 @@ run_screen() {
     fi
 }
 
+# seed_history <platform> <flow>: plays HISTORY through <flow>, from each album's screen. Android pauses
+# with the debug receiver, the iOS flow itself (PAUSE=yes). Stops at the first play that fails.
+seed_history() {
+    local plat="$1" flow="$2" entry album secs pause
+    for entry in "${HISTORY[@]}"; do
+        IFS='|' read -r album secs pause <<<"$entry"
+        if ! step "${plat}: history, ${album} for ${secs}s" run_with_timeout "$FLOW_TIMEOUT" maestro_run "$flow" "${WORK}/scratch-history-${plat}" \
+            -e ALBUM="$album" -e LISTEN_MS="$((secs * 1000))" -e PAUSE="$([ "$pause" = pause ] && echo yes || echo no)"; then
+            record_fail "$plat" "setup (history)" - "play ${album} (${flow})" "Home's history is partial; Maestro output in ${WORK}/scratch-history-${plat}"
+            return 1
+        fi
+        if [ "$plat" = android ] && [ "$pause" = pause ]; then
+            step "android: pause ${album}" support/scripts/s2-debug.sh PAUSE || return 1
+        fi
+    done
+}
+
+history_note() {
+    if [ "$HISTORY_ON" = 1 ]; then
+        echo "history: Cassette Summer and Night Bus Frequencies played twice, Harbour Weather and Soft Focus once, then Blue Hours paused part-way (today only, so no Heavy Rotation / Around This Time / Rediscover)"
+    else
+        echo "no history (--no-history); Blue Hours queued and paused"
+    fi
+}
+
 # ---- Android ----
 
 # adb_set <description> <adb args...>: a matrix setting that failed to apply is a failure, not a silent
@@ -302,12 +366,15 @@ android_phase() {
     if ! emu_resolve_apk; then record_fail android setup - "build" "could not build or find the debug APK"; return; fi
     if ! emu_lane_up; then record_fail android setup - "lane start / install / seed" "see $LOG"; return; fi
     MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
-    # A queue for the player screens, then paused: playing music keeps the UI from ever going idle.
-    step "queue Blue Hours and pause" bash -c "support/scripts/s2-debug.sh PLAY_ALL --es album \"'Blue Hours'\" && support/scripts/s2-debug.sh PAUSE" \
-        || record_fail android setup - "queue the fixture" "player screens will show no queue"
+    # The history ends on Blue Hours paused part-way, the player screens' queue. Without it, Blue Hours
+    # is queued and paused directly: playing music keeps the UI from ever going idle.
+    if [ "$HISTORY_ON" != 1 ] || ! seed_history android support/maestro/design/_history-play.yaml; then
+        step "queue Blue Hours and pause" bash -c "support/scripts/s2-debug.sh PLAY_ALL --es album \"'Blue Hours'\" && support/scripts/s2-debug.sh PAUSE" \
+            || record_fail android setup - "queue the fixture" "player screens will show no queue"
+    fi
     {
-        echo "- Android: Pixel-class AVD on the remote-emu.sh lane; \`library\` fixture (16 albums with embedded covers); Blue Hours queued and paused."
-        case " ${ANDROID_DEVICES[*]} " in *" tablet "*)
+        echo "- Android: Pixel-class AVD on the remote-emu.sh lane; \`library\` fixture (16 albums with embedded covers); $(history_note)."
+        case " ${ANDROID_DEVICES[*]} " in *" tablet "* | *" foldable "*)
             echo "- Android tablet / foldable: no such AVD, so \`wm size\`/\`wm density\` overrides on the phone AVD: tablet 1600x2560 @ 320 dpi (800x1280 dp), foldable unfolded 1840x2208 @ 420 dpi (~877x1052 dp), no hinge or posture." ;;
         esac
     } >>"$NOTES"
@@ -371,17 +438,55 @@ ios_sign_in() { # udid
     return "$rc"
 }
 
+# ios_install <udid> <build 0|1>: builds (if asked), installs and launches. For the local source the app
+# is uninstalled first, so first-run setup shows and the history starts empty.
+ios_install() {
+    local udid="$1" build="$2"
+    if [ "$IOS_SOURCE" = local ]; then
+        xcrun simctl uninstall "$udid" "$IOS_BUNDLE"
+        # Debug switches in the simulator's own defaults outlive an uninstall: generated artwork would swap
+        # every cover for a placeholder tile, and an entitlement override would show the free tier.
+        xcrun simctl spawn "$udid" defaults delete "$IOS_BUNDLE" S2GeneratedArtwork
+        xcrun simctl spawn "$udid" defaults delete "$IOS_BUNDLE" debug.entitlementOverride
+    fi
+    BUILD="$build" S2_SIMULATOR_UDID="$udid" ios/scripts/run-sim-server.sh
+}
+
+# ios_local_library <udid>: the `library` fixture's files (seed-test-media.sh's cache) into the app's
+# Documents, which the local source reads, then first-run setup's Use Music on This iPhone and the import.
+ios_local_library() {
+    local udid="$1" lib data
+    lib="$(support/scripts/seed-test-media.sh library --generate-only | tail -1)"
+    [ -d "$lib" ] || { echo "no library fixture at '$lib'"; return 1; }
+    xcrun simctl terminate "$udid" "$IOS_BUNDLE" 2>/dev/null
+    data="$(xcrun simctl get_app_container "$udid" "$IOS_BUNDLE" data)" || return 1
+    cp "$lib"/* "${data}/Documents/" || return 1
+    run_with_timeout "$FLOW_TIMEOUT" maestro_run ios/support/store-screenshots/maestro/onboard-local.yaml "${WORK}/scratch-onboard"
+}
+
 ios_run_device() { # label udid
     local dev="$1" udid="$2" theme text screen ctext
     MAESTRO_DEVICE_ARGS=(--udid "$udid")
     IOS_MATRIX_UDIDS="${IOS_MATRIX_UDIDS} ${udid}"
-    if ! ios_sign_in "$udid"; then
-        fail_info "${WORK}/ios-signin.log"
-        record_fail ios "setup ($dev)" - "sign in to the Jellyfin test server: ${FSTEP}" "$FERR"
-        return
+    # A pool simulator can be left in dark mode, and a switch made just before a launch can miss it, so
+    # the first theme goes on before the minutes of setup.
+    xcrun simctl ui "$udid" appearance "${THEMES[0]}" >>"$LOG" 2>&1
+    if [ "$IOS_SOURCE" = jellyfin ]; then
+        if ! ios_sign_in "$udid"; then
+            fail_info "${WORK}/ios-signin.log"
+            record_fail ios "setup ($dev)" - "sign in to the Jellyfin test server: ${FSTEP}" "$FERR"
+            return
+        fi
+    else
+        if ! step "ios: import the library fixture (${dev})" ios_local_library "$udid"; then
+            record_fail ios "setup ($dev)" - "import the library fixture (onboard-local.yaml)" "see $LOG; Maestro output in ${WORK}/scratch-onboard"
+            return
+        fi
+        [ "$HISTORY_ON" = 1 ] && seed_history ios ios/maestro/design/_history-play.yaml
     fi
     for theme in "${THEMES[@]}"; do
         xcrun simctl ui "$udid" appearance "$theme" >>"$LOG" 2>&1
+        xcrun simctl terminate "$udid" "$IOS_BUNDLE" >>"$LOG" 2>&1
         for text in "${TEXTS[@]}"; do
             ctext=large; [ "$text" = large ] && ctext=accessibility-extra-extra-extra-large
             xcrun simctl ui "$udid" content_size "$ctext" >>"$LOG" 2>&1
@@ -396,19 +501,23 @@ ios_phase() {
     local udid ipad dev lease_out="${WORK}/lease.out"
     echo "design-shots: == iOS =="
     export S2_SIM_HOLDER="${S2_SIM_HOLDER:-design-shots-$$}"
+    # Maestro's XCTest driver can take longer than its default to start on a loaded Mac.
+    export MAESTRO_DRIVER_STARTUP_TIMEOUT="${MAESTRO_DRIVER_STARTUP_TIMEOUT:-120000}"
+    # lease-sim.sh leases ios26 under "<holder>-ios26"; ios_release's `--holder` reads the same variable.
+    if [ "$IOS_PROFILE" = ios26 ]; then export S2_SIM_PROFILE=ios26; else unset S2_SIM_PROFILE; fi
     run_with_timeout 300 ios/scripts/lease-sim.sh >"$lease_out" 2>>"$LOG"
     udid="$(tail -1 "$lease_out" 2>/dev/null)"
     if [ -z "$udid" ]; then
-        record_fail ios setup - "lease a simulator (ios/scripts/lease-sim.sh)" "no simulator leased within 5 minutes (pool missing or full)"
+        record_fail ios setup - "lease a simulator (ios/scripts/lease-sim.sh, profile ${IOS_PROFILE})" "no simulator leased within 5 minutes (pool missing or full)"
         return
     fi
     SIM_LEASED=1
     echo "design-shots: leased simulator ${udid}"
-    if ! BUILD="$IOS_BUILD" S2_SIMULATOR_UDID="$udid" step "ios: build + install" ios/scripts/run-sim-server.sh; then
+    if ! step "ios: build + install" ios_install "$udid" "$IOS_BUILD"; then
         record_fail ios setup - "ios/scripts/run-sim-server.sh" "build or install failed, see $LOG"
         return
     fi
-    echo "- iOS: iPhone = the leased pool simulator ($(xcrun simctl list devices -j | python3 -c 'import json,sys; u=sys.argv[1]; print(next((d["name"] for v in json.load(sys.stdin)["devices"].values() for d in v if d["udid"]==u), u))' "$udid")); library = the Jellyfin test server." >>"$NOTES"
+    echo "- iOS: iPhone = the leased pool simulator ($(xcrun simctl list devices -j | python3 -c 'import json,sys; u=sys.argv[1]; print(next((d["name"] for v in json.load(sys.stdin)["devices"].values() for d in v if d["udid"]==u), u))' "$udid"), profile ${IOS_PROFILE}); $([ "$IOS_SOURCE" = jellyfin ] && echo "library = the Jellyfin test server" || echo "\`library\` fixture imported from Documents; $(history_note)")." >>"$NOTES"
     for dev in "${IOS_DEVICES[@]}"; do
         case "$dev" in
             iphone) ios_run_device iphone "$udid" ;;
@@ -422,7 +531,7 @@ ios_phase() {
                 step "ios: boot iPad" xcrun simctl boot "$ipad" || { record_fail ios setup ipad "simctl boot" "see $LOG"; continue; }
                 IPAD_BOOTED_UDID="$ipad"
                 step "ios: wait for iPad boot" xcrun simctl bootstatus "$ipad" -b || { record_fail ios setup ipad "simctl bootstatus" "see $LOG"; continue; }
-                if ! BUILD=0 S2_SIMULATOR_UDID="$ipad" step "ios: install on iPad" ios/scripts/run-sim-server.sh; then
+                if ! step "ios: install on iPad" ios_install "$ipad" 0; then
                     record_fail ios setup ipad "install" "see $LOG"
                     continue
                 fi

@@ -1,13 +1,13 @@
-# design-shots.sh screen: search. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+# design-shots.sh screen: search. The `library` fixture is imported, with a listening history and Blue Hours paused part-way, by the script.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
 - tapOn: "Search"
-- inputText: "Hans Zimmer"
+- inputText: "Juniper"
 - extendedWaitUntil:
     visible:
       id: "search.result.artist"
-    timeout: 180000
+    timeout: 30000
 - pressKey: Enter
 - waitForAnimationToEnd:
     timeout: 3000

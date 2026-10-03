@@ -1,0 +1,32 @@
+# Subflow: the queue design-shots.sh left paused part-way through Blue Hours (its history step), restored at launch,
+# so the mini player, Now Playing and the queue show the same paused song as on Android. With no queue (the Jellyfin
+# source has no history step) it plays the first song from Library > Songs instead.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.open"
+    timeout: 15000
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "miniPlayer.open"
+    commands:
+      - runFlow:
+          file: _library.yaml
+          env:
+            CATEGORY: songs
+            LABEL: Songs
+      - extendedWaitUntil:
+          visible:
+            id: "songRow.title"
+          timeout: 120000
+      - tapOn:
+          id: "songRow.title"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            id: "miniPlayer.playPause"
+            text: "Pause"
+          timeout: 15000

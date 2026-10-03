@@ -1,16 +1,25 @@
-# design-shots.sh screen: queue. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+# design-shots.sh screen: queue. The `library` fixture is imported, with a listening history and Blue Hours paused part-way, by the script.
+# Opens Now Playing, then its queue sheet. The sheet's toolbar ids (queue.edit) aren't exposed under iOS 26's glass
+# toolbar, so it waits on the "Up Next" header instead. Never tap the queue button again once the sheet is up: the
+# tap lands on a queue row and skips to that song.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
-- runFlow: _play-first.yaml
+- runFlow: _queued.yaml
 - tapOn:
     id: "miniPlayer.open"
 - extendedWaitUntil:
     visible:
       id: "nowPlaying.queue"
+      enabled: true
     timeout: 10000
-- tapOn:
-    id: "nowPlaying.queue"
 - waitForAnimationToEnd:
     timeout: 5000
+- tapOn:
+    id: "nowPlaying.queue"
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
 - takeScreenshot: queue
