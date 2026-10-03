@@ -33,7 +33,7 @@ If iOS changed since the last full verify, also run `ios/scripts/test.sh`. **STO
 
 ```bash
 API_KEY_PATH="${ASC_API_KEY_PATH:-/Users/tim/projects/simplecity-apps/podcasts/AuthKey_98Q5SW65X5.p8}"
-[ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_API_KEY_PATH)"; exit 1; }
+[ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_API_KEY_PATH)"; false; }
 ```
 
 Key ID `98Q5SW65X5`, issuer `9981aa4c-3137-41c0-bf69-4410dd990785`. Never print or commit the `.p8`.
@@ -41,14 +41,20 @@ Missing key: **STOP** and point the user at `ios/DEPLOY.md`.
 
 ### 4. Pick the tag
 
-Format `ios/vYYMMDDNN`, NN the day's sequence starting at 01. Build number is the tag's eight digits;
-the script derives the marketing version (`20YY.MM.DD`) from it.
+Format `ios/vYYMMDDNN`: NN is the highest existing `ios/v${TODAY}NN` — local tags and `origin`'s
+(`git ls-remote`) — plus one, else 01. Build number is the tag's eight digits; the script derives the
+marketing version (`20YY.MM.DD`) from it. Compute `TAG` and `BUILD_NUMBER` **here, once**, and reuse
+both in steps 5 and 6 — never recompute `TODAY` later (a deploy that crosses midnight must not mint
+a different tag than the build it uploaded).
 
 ```bash
-git fetch --tags
+git fetch --tags origin
 TODAY=$(date +%y%m%d)
-LAST=$(git tag -l "ios/v${TODAY}*" | sort | tail -1)
-# none -> ios/v${TODAY}01, else increment NN (zero-padded)
+LAST_NN=$( { git tag -l "ios/v${TODAY}??"; git ls-remote --tags origin "refs/tags/ios/v${TODAY}??"; } \
+  | sed -E "s/^.*ios\/v${TODAY}//; s/\^\{\}$//" | sort -n | tail -1)
+NN=$(printf '%02d' $((10#${LAST_NN:-0} + 1)))
+TAG="ios/v${TODAY}${NN}"
+BUILD_NUMBER="${TODAY}${NN}"
 ```
 
 ### 5. Confirm with the user, then archive and upload
@@ -72,12 +78,13 @@ The script builds FFmpeg and the Release iosArm64 `Shared.framework` itself (add
 
 ### 6. Record the release
 
-Only after a successful upload — the tag marks an uploaded build, so a failed attempt just picks
-`NN+1`:
+Two conditions, both required: `longjob.sh wait ios-deploy` exited 0 **and** the run was a real
+upload — not a `--no-upload` dry run. The tag marks an uploaded build, so a failed attempt or dry
+run records nothing and the next attempt picks `NN+1`:
 
 ```bash
-git tag "ios/v${TODAY}01"
-git push origin "ios/v${TODAY}01"
+git tag "$TAG"
+git push origin "$TAG"
 ```
 
 (`git push` of a tag is its own bare command.) The tag triggers nothing — no workflow watches it.

@@ -7,7 +7,7 @@ set -euo pipefail
 # Connect API key makes signing headless; run without the key flags and Xcode's signed-in account
 # does the signing. See DEPLOY.md.
 #
-# Prerequisites (local lane):
+# Prerequisites:
 #   1. Signed into Xcode with developer@simplecityapps.com (paid team 9HYNX943MQ; ExportOptions.plist
 #      carries it and the archive passes it below), OR the three --api-key-* flags.
 #      Either way an "Apple Distribution: Simplecity Apps Pty Ltd" certificate must be in the login
@@ -26,8 +26,7 @@ set -euo pipefail
 #   --marketing-version V    CFBundleShortVersionString. Derived from --build-number
 #                            (20YY.MM.DD) when omitted.
 #   --no-upload              Export the IPA to build/export instead of uploading; local dry runs.
-#   --skip-shared-framework  Do not build FFmpeg or link Shared.framework (the workflow does it in
-#                            its own step).
+#   --skip-shared-framework  Do not build FFmpeg or link Shared.framework (both freshly built).
 #   --api-key-path P         App Store Connect API key (.p8); with --api-key-id and
 #                            --api-issuer-id this makes signing and upload headless.
 
