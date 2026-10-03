@@ -5,10 +5,6 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.platform.PlatformFeatures
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
-import com.simplecityapps.shuttle.ui.screens.sources.FolderKind
-import com.simplecityapps.shuttle.ui.screens.sources.FolderLists
-import com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
-import com.simplecityapps.shuttle.ui.screens.sources.SourceFolder
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInAnalytics
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -19,13 +15,13 @@ import dev.zacsweers.metro.SingleIn
 import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 /**
- * The platform seams iOS doesn't have yet (docs/architecture/ios-port/phase-4-platform-seams.md): no widgets, Cast,
- * downloads or local files, so each is off or a no-op, and the screens hide what they would offer.
+ * The platform seams iOS doesn't have yet (docs/architecture/ios-port/phase-4-platform-seams.md): no widgets, Cast
+ * or downloads, so each is off or a no-op, and the screens hide what they would offer. Entitlements are
+ * [IosEntitlementModule]'s and this device's files are `local/`'s.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -58,25 +54,13 @@ class IosPlatformModule {
         override fun observeHeldPaths(): Flow<Set<String>> = flowOf(emptySet())
     }
 
-    /** Every song is a server's, which the app can't delete. */
+    /** A server's songs can't be deleted, and iOS doesn't offer deleting this device's files (Files does that). */
     @Provides
     fun provideSongFileDeleter(): SongFileDeleter = SongFileDeleter { false }
 
     /** iOS records no monetisation analytics, so a sign-in isn't recorded. */
     @Provides
     fun provideServerSignInAnalytics(): ServerSignInAnalytics = ServerSignInAnalytics { }
-
-    /** iOS has no local-file scanner, so there are no scanner folders and none can be picked. */
-    @Provides
-    fun provideScannerFolderStore(): ScannerFolderStore = object : ScannerFolderStore {
-        override val folders: StateFlow<FolderLists> = MutableStateFlow(FolderLists()).asStateFlow()
-
-        override fun add(kind: FolderKind, treeUri: String): Boolean = false
-
-        override fun remove(kind: FolderKind, folder: SourceFolder) = Unit
-
-        override fun refresh() = Unit
-    }
 
     /** No playlist files are imported on iOS, so none needs rewriting. */
     @Provides

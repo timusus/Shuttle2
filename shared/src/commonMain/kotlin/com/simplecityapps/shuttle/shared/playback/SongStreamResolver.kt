@@ -7,6 +7,7 @@ import com.simplecityapps.playback.dsp.replaygain.replayGain
 import com.simplecityapps.playback.dsp.replaygain.replayGainDb
 import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.shared.percentEncodedPath
 
 /**
  * What the engine opens for a song: a server song's authenticated stream URL from the provider that handles its path
@@ -20,12 +21,17 @@ import com.simplecityapps.shuttle.model.Song
  * [serverStreamAccess] refuses (streaming needs Shuttle Music Pro or the trial), so the controller skips it. One it
  * can't decide yet (StoreKit hasn't answered) throws [ServerStreamNotAllowedException] marked
  * [ServerStreamNotAllowedException.undecided], which the controller doesn't hold against the song.
+ *
+ * A song from this device's library (`s2local://...`) plays from the file [localFiles] finds for it, which seeks like any
+ * file, so it opens at the start; a file that's out of reach throws, failing the song. It isn't a server stream, so
+ * [serverStreamAccess] is never asked about it.
  */
 class SongStreamResolver(
     private val streamUrls: Collection<StreamUrlProvider>,
     private val replayGainMode: () -> ReplayGainMode,
     private val preAmpGainDb: () -> Float,
-    private val serverStreamAccess: suspend (song: Song, playRequested: Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed }
+    private val serverStreamAccess: suspend (song: Song, playRequested: Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed },
+    private val localFiles: StreamUrlProvider? = null
 ) : IosStreamResolver {
     override suspend fun resolve(
         song: Song,
@@ -34,7 +40,8 @@ class SongStreamResolver(
     ): IosStream {
         val provider = streamUrls.forPath(song.path)
         val gainDb = replayGainDb(replayGainMode(), preAmpGainDb().toDouble(), song.replayGain).toFloat()
-        if (provider != null) {
+        val localFile = listOfNotNull(localFiles).forPath(song.path)
+        if (localFile == null && provider != null) {
             when (serverStreamAccess(song, playRequested)) {
                 ServerAccess.Allowed -> Unit
                 ServerAccess.Refused -> throw ServerStreamNotAllowedException(song, undecided = false)
@@ -42,6 +49,7 @@ class SongStreamResolver(
             }
         }
         return when {
+            localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs), gainDb = gainDb)
             provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs), gainDb = gainDb, opensAtPosition = true)
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
             else -> IosStream(url = song.path, gainDb = gainDb)
@@ -49,25 +57,7 @@ class SongStreamResolver(
     }
 
     /** The engine parses the URL, so the path's spaces and reserved characters are escaped, each segment on its own. */
-    private fun fileUrl(path: String): String = "file://" + path.split('/').joinToString("/") { it.percentEncoded() }
-
-    private fun String.percentEncoded(): String = buildString {
-        for (byte in this@percentEncoded.encodeToByteArray()) {
-            val char = byte.toInt().toChar()
-            if (byte >= 0 && (char.isLetterOrDigit() || char in UNRESERVED)) {
-                append(char)
-            } else {
-                append('%')
-                append(HEX[(byte.toInt() shr 4) and 0xF])
-                append(HEX[byte.toInt() and 0xF])
-            }
-        }
-    }
-
-    private companion object {
-        const val UNRESERVED = "-._~"
-        const val HEX = "0123456789ABCDEF"
-    }
+    private fun fileUrl(path: String): String = "file://" + path.percentEncodedPath()
 }
 
 /**

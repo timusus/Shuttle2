@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.putString
+import com.simplecityapps.shuttle.shared.local.IosLocalMediaProvider
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
@@ -25,9 +26,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * The library's sources on iOS: Jellyfin and Emby for now (Plex and this device's files come in later phases). The
- * iOS counterpart of Android's `DefaultMediaSources`, saving the enabled types under the same key; a fresh install
- * has none, as there's no scanner to start with. Hands the saved providers to the importer when it's created.
+ * The library's sources on iOS: this device's files (the S2 scanner, [MediaProviderType.Shuttle]), Jellyfin and Emby
+ * (Plex comes in a later phase). The iOS counterpart of Android's `DefaultMediaSources`, saving the enabled types under
+ * the same key; a fresh install reads this device's files, as Android's scanner starts on. Hands the saved providers to
+ * the importer when it's created.
  */
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
@@ -37,6 +39,7 @@ class IosMediaSources @Inject constructor(
     private val mediaImporter: MediaImporter,
     private val jellyfinMediaProvider: JellyfinMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
+    private val localMediaProvider: IosLocalMediaProvider,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
     private val queueOperations: QueueOperations,
@@ -76,10 +79,7 @@ class IosMediaSources @Inject constructor(
         appCoroutineScope.launch { mediaImporter.import() }
     }
 
-    /** Nothing on this device to scan until iOS has a local provider. */
-    override fun scanThisDevice() = Unit
-
-    private fun savedTypes(): List<MediaProviderType> = store.getString(KEY, "")!!
+    private fun savedTypes(): List<MediaProviderType> = (store.getString(KEY, null) ?: MediaProviderType.Shuttle.ordinal.toString())
         .split(",")
         .filter { it.isNotEmpty() }
         .map { MediaProviderType.init(it.toInt()) }
@@ -91,9 +91,10 @@ class IosMediaSources @Inject constructor(
     }
 
     private fun MediaProviderType.provider(): MediaProvider? = when (this) {
+        MediaProviderType.Shuttle -> localMediaProvider
         MediaProviderType.Jellyfin -> jellyfinMediaProvider
         MediaProviderType.Emby -> embyMediaProvider
-        MediaProviderType.Shuttle, MediaProviderType.MediaStore, MediaProviderType.Plex -> null
+        MediaProviderType.MediaStore, MediaProviderType.Plex -> null
     }
 
     private companion object {

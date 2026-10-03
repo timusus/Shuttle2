@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.shared.percentEncodedPath
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
@@ -30,7 +31,8 @@ data class ArtworkRequest(
  * The order is Android's remote chain (`:android:imageloader`'s `CoilModule`): the media server's image, then the S2
  * artwork API by name. An album or artist has no artwork url of its own on the server, so it stands in one of its songs,
  * the same way the `MediaServerArtworkSource`s do. The S2 fallback is what covers an album the server has no image for,
- * or one whose image it fails to serve (Jellyfin answers 500 for some tagged album images).
+ * or one whose image it fails to serve (Jellyfin answers 500 for some tagged album images). A song from this device
+ * leads with its own file's picture.
  */
 @Inject
 class ArtworkUrls(
@@ -38,20 +40,11 @@ class ArtworkUrls(
     private val remoteArtworkProvider: RemoteArtworkProvider,
     private val songRepository: SongRepository
 ) {
-    suspend fun requests(song: Song): List<ArtworkRequest> {
-        if (artworkSettings.localOnly.value) return emptyList()
-        return listOfNotNull(
-            serverRequest { remoteArtworkProvider.getAlbumArtworkUrl(song) },
-            s2AlbumRequest(artist = song.albumArtist ?: song.friendlyArtistName, album = song.album)
-        )
-    }
+    suspend fun requests(song: Song): List<ArtworkRequest> = listOfNotNull(localRequest(song)) + remoteRequests(song)
 
     suspend fun requests(album: Album): List<ArtworkRequest> {
-        if (artworkSettings.localOnly.value) return emptyList()
-        return listOfNotNull(
-            firstSongOf(album)?.let { song -> serverRequest { remoteArtworkProvider.getAlbumArtworkUrl(song) } },
-            s2AlbumRequest(artist = album.albumArtist ?: album.friendlyArtistName, album = album.name)
-        )
+        val song = firstSongOf(album)
+        return listOfNotNull(song?.let(::localRequest)) + remoteRequests(album, song)
     }
 
     suspend fun requests(albumArtist: AlbumArtist): List<ArtworkRequest> {
@@ -60,6 +53,34 @@ class ArtworkUrls(
             firstSongOf(albumArtist)?.let { song -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song) } },
             (albumArtist.name ?: albumArtist.friendlyArtistName)?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) }
         )
+    }
+
+    private suspend fun remoteRequests(song: Song): List<ArtworkRequest> {
+        if (artworkSettings.localOnly.value) return emptyList()
+        return listOfNotNull(
+            serverRequest { remoteArtworkProvider.getAlbumArtworkUrl(song) },
+            s2AlbumRequest(artist = song.albumArtist ?: song.friendlyArtistName, album = song.album)
+        )
+    }
+
+    private suspend fun remoteRequests(
+        album: Album,
+        firstSong: Song?
+    ): List<ArtworkRequest> {
+        if (artworkSettings.localOnly.value) return emptyList()
+        return listOfNotNull(
+            firstSong?.let { song -> serverRequest { remoteArtworkProvider.getAlbumArtworkUrl(song) } },
+            s2AlbumRequest(artist = album.albumArtist ?: album.friendlyArtistName, album = album.name)
+        )
+    }
+
+    /**
+     * A song from this device's library (`s2local://...`, #590): its picture, embedded or beside it in its folder, which
+     * Swift's `ArtworkLoader` reads from the file. Asked even when artwork is local-only, which is what that setting keeps.
+     */
+    private fun localRequest(song: Song): ArtworkRequest? {
+        if (!song.path.startsWith(LOCAL_PREFIX)) return null
+        return ArtworkRequest(LOCAL_PREFIX + song.path.removePrefix(LOCAL_PREFIX).percentEncodedPath())
     }
 
     /** The server's url, or none when the lookup fails; as on Android, a failing source falls through to the next. */
@@ -92,4 +113,8 @@ class ArtworkUrls(
         .firstOrNull()
         .orEmpty()
         .let { songs -> songs.firstOrNull { song -> song.albumArtistGroupKey == albumArtist.groupKey } ?: songs.firstOrNull() }
+
+    private companion object {
+        const val LOCAL_PREFIX = "s2local://"
+    }
 }

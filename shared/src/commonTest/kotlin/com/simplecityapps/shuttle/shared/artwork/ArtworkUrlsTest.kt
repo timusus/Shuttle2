@@ -115,6 +115,23 @@ class ArtworkUrlsTest {
         remoteArtworkProvider.artistArtworkRequests shouldBe emptyList()
     }
 
+    @Test
+    fun `a local song's artwork is its file's first - even when artwork is local-only`() = runTest {
+        val song = song("song-1").copy(path = "s2local://documents/Björk/03 Hyperballad.flac", mediaProvider = MediaProviderType.Shuttle, externalId = null)
+        songRepository.setSongs(listOf(song))
+        val local = ArtworkRequest("s2local://documents/Bj%C3%B6rk/03%20Hyperballad.flac")
+        remoteArtworkProvider.hasArtwork = false
+
+        artworkUrls.requests(song) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+        artworkUrls.requests(album(song)) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+
+        artworkSettings.localOnly.value = true
+
+        artworkUrls.requests(song) shouldBe listOf(local)
+        artworkUrls.requests(album(song)) shouldBe listOf(local)
+        artworkUrls.requests(albumArtist(song)) shouldBe emptyList()
+    }
+
     private fun s2(url: String) = ArtworkRequest(url, authorization = S2ArtworkApi.authorization, unmeteredOnly = true)
 
     private fun song(externalId: String) = Song(

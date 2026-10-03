@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.playback.FakeIosAudioPlayer
 import com.simplecityapps.shuttle.shared.settings.IosSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
@@ -34,7 +35,7 @@ import kotlin.test.Test
 class IosAppGraphTest {
     private val player = FakeIosAudioPlayer()
 
-    private val graph = createIosAppGraph(player)
+    private val graph = createIosAppGraph(player, IosLocalFiles.None)
 
     @AfterTest
     fun removeTheSettingsWritten() {

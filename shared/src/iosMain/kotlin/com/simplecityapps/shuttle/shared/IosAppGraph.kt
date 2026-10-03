@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
+import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
@@ -63,8 +64,8 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters (phase-6-playback.md).
  *
  * One shared ViewModel is excluded until iOS binds what it needs (phase-4-viewmodels.md, "Wave 4"):
- * `TagEditorViewModel` needs a `TagFileAccess`, which iOS gets with local files (security-scoped folders and a TagLib
- * wrapper) in phase 8. Until then nothing offers tag editing on iOS: only the local provider supports it.
+ * `TagEditorViewModel` needs a `TagFileAccess`, a tag writer iOS doesn't have: it reads local files' tags with FFmpeg,
+ * which doesn't write them in place. Until then nothing offers tag editing on iOS.
  */
 @DependencyGraph(
     AppScope::class,
@@ -146,27 +147,35 @@ interface IosAppGraph : ViewModelGraph {
 
     @DependencyGraph.Factory
     fun interface Factory {
-        /** [audioPlayer]: the Swift adapter over the S2Playback engine; [storage]: where preferences and the library live. */
+        /**
+         * [audioPlayer]: the Swift adapter over the S2Playback engine; [storage]: where preferences and the library live;
+         * [localFiles]: this device's music files, Swift's `LocalLibrary`.
+         */
         fun create(
             @Provides audioPlayer: IosAudioPlayer,
-            @Provides storage: IosStorage
+            @Provides storage: IosStorage,
+            @Provides localFiles: IosLocalFiles
         ): IosAppGraph
     }
 }
 
-/** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:)` from Swift, once per process. */
-fun createIosAppGraph(audioPlayer: IosAudioPlayer): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null))
+/** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:localFiles:)` from Swift, once per process. */
+fun createIosAppGraph(
+    audioPlayer: IosAudioPlayer,
+    localFiles: IosLocalFiles
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null), localFiles)
 
 /**
  * A graph with storage of its own, for tests: preferences in the NSUserDefaults suite [isolatedStorage] rather than the
  * standard defaults, and an empty in-memory library rather than the app's database. Tests build several graphs at
  * once, which would otherwise restore each other's saved queue and modes, and query whatever library the simulator's
- * app holds.
+ * app holds. [localFiles] is none unless a test hands it some.
  */
 fun createIosAppGraph(
     audioPlayer: IosAudioPlayer,
-    isolatedStorage: String
-): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage))
+    isolatedStorage: String,
+    localFiles: IosLocalFiles = IosLocalFiles.None
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage), localFiles)
 
 /**
  * Where the graph keeps its preferences and library. [isolatedName] null: the standard defaults and the app's

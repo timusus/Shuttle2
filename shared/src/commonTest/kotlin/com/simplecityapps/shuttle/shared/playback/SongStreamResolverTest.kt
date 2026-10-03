@@ -38,8 +38,32 @@ class SongStreamResolverTest {
         serverStreamAccess = { song, _ ->
             askedToStream += song.path
             serverAccess
+        },
+        localFiles = object : StreamUrlProvider {
+            override fun handles(scheme: String?): Boolean = scheme == "s2local"
+
+            override fun streamUrl(
+                song: Song,
+                startPositionMs: Long
+            ): String = if (song.name == "gone") throw IllegalStateException("Out of reach") else "file:///Documents/a%20b.flac"
         }
     )
+
+    @Test
+    fun aLocalSongPlaysFromItsFileFromTheStart() = runTest {
+        resolver.resolve(songAt(path = "s2local://documents/a b.flac"), 30_000, playRequested = true) shouldBe
+            IosStream(url = "file:///Documents/a%20b.flac", opensAtPosition = false)
+        shouldThrow<IllegalStateException> { resolver.resolve(songAt(path = "s2local://documents/a b.flac", name = "gone"), 0, playRequested = true) }
+    }
+
+    @Test
+    fun aLocalSongPlaysWithoutAskingTheGateWhateverItsAnswer() = runTest {
+        for (access in listOf(ServerAccess.Undecided, ServerAccess.Refused)) {
+            serverAccess = access
+            resolver.resolve(songAt(path = "s2local://documents/a b.flac"), 0, playRequested = true).url shouldBe "file:///Documents/a%20b.flac"
+        }
+        askedToStream shouldBe emptyList()
+    }
 
     @Test
     fun serverSongsStreamFromTheProviderThatHandlesTheirPath() = runTest {
