@@ -251,6 +251,12 @@ struct SettingsContent: View {
                     }
                     .tint(.primary)
                     .accessibilityIdentifier("settings.acknowledgements")
+                    // FFmpeg is LGPL-2.1+: the matching source is a release asset on our public repository.
+                    Link(destination: Self.ffmpegSourceURL) {
+                        Label { Text("FFmpeg source code") } icon: { IconSquare(systemImage: "chevron.left.forwardslash.chevron.right", style: .filled(.gray)) }
+                    }
+                    .tint(.primary)
+                    .accessibilityIdentifier("settings.ffmpegSource")
                 } header: {
                     Text("About")
                 }
@@ -339,6 +345,8 @@ struct SettingsContent: View {
             .disabled(!isEnabled)
         }
     }
+
+    static let ffmpegSourceURL = URL(string: "https://github.com/timusus/Shuttle2/releases/tag/ffmpeg-n7.1.5-source")!
 
     /// "2026.09.28 (26092801)": the marketing version and build, as Android's About shows its version name.
     static var appVersion: String {

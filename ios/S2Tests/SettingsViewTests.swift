@@ -161,6 +161,7 @@ struct SettingsViewTests {
         let sut = SettingsContent(sections: [])
         #expect((try? sut.inspect().find(text: "Version")) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "settings.acknowledgements")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "settings.ffmpegSource")) != nil)
     }
 
     @Test func eachRowLeadsWithItsIconSquare() throws {

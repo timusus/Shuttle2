@@ -11,7 +11,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 2. A reachable demo server: stand up a public HTTPS Jellyfin with a small set of freely licensed music
    (see Screenshots in `ios/support/store-screenshots/README.md` for why not the test server's library),
    and a dedicated reviewer user. Fill in the placeholders in the notes below. Keep it up until approval.
-3. Host the FFmpeg n7.1.5 source tarball (e.g. a GitHub release asset) and link it from About (#610).
+3. Publish the draft `ffmpeg-n7.1.5-source` release on timusus/Shuttle2 (the About link points at it, #610).
 4. App Store Connect > App Information: paste `en-AU/*.txt`, set the privacy policy URL, category
    Music, content rights and age rating from `asc-answers.md`.
 5. App Privacy: Data Not Collected, publish.
@@ -63,7 +63,7 @@ server credentials stay in the device Keychain and go only to the user's server.
 
 Open source: playback uses FFmpeg (LGPL-2.1+ build, dynamically linked, unmodified frameworks) to
 decode formats such as FLAC. The FFmpeg licence notice is in Settings > About, and the matching
-source is available at <FFMPEG SOURCE URL>.
+source is available at https://github.com/timusus/Shuttle2/releases/tag/ffmpeg-n7.1.5-source.
 
 Contact: <owner email / phone as in ASC>.
 ```
@@ -76,8 +76,8 @@ Contact: <owner email / phone as in ASC>.
 |---|---|
 | Public demo server and reviewer credentials (#610) | open: owner to provide; never commit credentials |
 | Local-file playback with no server (#590) | built; the listing and review notes describe it |
-| FFmpeg source tarball hosted (#610) | open |
-| FFmpeg LGPL notice in About (#610) | open: verify Settings > About names FFmpeg and links the source |
+| FFmpeg source tarball hosted (#610) | done: draft release `ffmpeg-n7.1.5-source` on timusus/Shuttle2, publish before submitting |
+| FFmpeg LGPL notice in About (#610) | done: Acknowledgements names FFmpeg and LGPL-2.1+; About has an FFmpeg source code link |
 | No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |
 | Never rename the FFmpeg frameworks (#610) | do not touch `ios/scripts/build-ffmpeg.sh` naming |
 | Background modes limited to audio | `ios/project.yml` `UIBackgroundModes: [audio]` |
