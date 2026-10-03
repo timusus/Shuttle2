@@ -40,3 +40,10 @@ object S2ContentWidth {
     /** Scrolling content in a single pane (lists, details) never grows wider than this; centre it beyond. */
     val maximum = 1000.dp
 }
+
+/** A tile's width on a horizontal shelf, so a compact phone shows two and a peek of the third; wider windows take [wide]. */
+object S2ShelfTileWidth {
+    val compact = 150.dp
+
+    val wide = 180.dp
+}

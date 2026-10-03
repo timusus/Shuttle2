@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -41,6 +40,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
@@ -137,7 +137,7 @@ fun PlaylistDetailScreen(
                         text = stringResource(R.string.playlist_detail_reorder_hint, sortLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 12.dp).testTag("playlist-reorder-hint"),
+                        modifier = Modifier.padding(top = S2Spacing.smallMedium).testTag("playlist-reorder-hint"),
                     )
                 }
             },
@@ -195,7 +195,7 @@ fun PlaylistDetailScreen(
                             .takeIf { uiState.selectedEntries.let { entries -> entries.isNotEmpty() && entries.all { it.song.mediaProvider.supportsTagEditing } } },
                     ),
                 ).filter { it.isNotEmpty() },
-                modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 16.dp),
+                modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = S2Spacing.medium),
             )
         }
     }

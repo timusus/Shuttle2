@@ -198,7 +198,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
     fun clickShuffle() = clickText("Shuffle")
 
     fun clickNavigateUp() {
-        rule.onNodeWithContentDescription("Navigate up").performClick()
+        rule.onNodeWithContentDescription("Back").performClick()
         rule.waitForIdle()
     }
 
