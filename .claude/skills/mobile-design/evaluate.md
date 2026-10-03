@@ -39,7 +39,7 @@ capture; the orchestrator or reviewer looks.
 | Craft | 0.15 | Tokens only, optical details right, motion purposeful | Minor spacing/radius inconsistencies | Literals, misalignment, janky motion |
 | Accessibility | 0.15 | Passes the craft-floor checks at 200% and with a screen reader | Small targets or contrast misses in secondary UI | Breaks at large text; unlabeled controls |
 | Adaptivity | 0.10 | Deliberate layout per tier, posture-aware, state continuous | Works but under-uses space | Letterboxed, stretched or broken on resize |
-| Music fitness | 0.10 | Artwork-led, playback always reachable, source/download state clear | Functional but generic | Playback buried; art treated as decoration |
+| Music fitness | 0.10 | Artwork-led with art-derived colour at Shuttle's bar (music.md), playback always reachable, source/download state clear | Functional but generic; art colour flat or single-tone | Playback buried; art treated as decoration |
 | Parity | 0.10 | Same intent and information as the other platform, native idioms | Minor capability gaps | Missing features or borrowed idioms |
 | Distinctiveness | 0.05 | Has one memorable, appropriate moment | Competent and anonymous | AI-slop defaults (craft-floor list) |
 

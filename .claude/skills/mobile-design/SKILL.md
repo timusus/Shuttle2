@@ -53,8 +53,10 @@ References: [craft-floor.md](craft-floor.md) · [android.md](android.md) · [ios
    failed; so has one that looks like a stock Google app.
 2. **Parity of intent, not of look.** Same capability and information on both platforms; each built
    from its own idioms (see Parity).
-3. **Artwork is the hero.** It is a music app: covers lead, chrome recedes, colour comes from the art
-   with guaranteed contrast.
+3. **Artwork is the hero, and artwork colour is Shuttle's signature.** Shuttle pioneered theming the
+   app from colours extracted from album art and was known for it — it is the brand's one owned idea.
+   Covers lead, chrome recedes, colour comes from the art with guaranteed contrast. When deciding where
+   to "spend boldness", spend it here first (see music.md → Artwork colour).
 4. **Tokens, never literals.** No raw `N.dp`, `Color(0x…)`, `RoundedCornerShape(n.dp)`, `.padding(13)`,
    `Font.system(size:)` in screens. Missing token → add it to the design system, don't inline it.
 5. **Every form factor is a first-class layout,** not a stretched phone. Decide per layout tier

@@ -3,6 +3,31 @@
 Shuttle mixes a local library with Jellyfin/Emby/Plex streaming. These rules apply on both platforms;
 idioms per platform come from android.md / ios.md.
 
+## Artwork colour — the signature
+
+Shuttle did art-derived theming first and best; it must stay the best implementation in the category,
+on both platforms. Treat it as a system, not a player effect.
+
+- **Reach:** Now Playing and the mini player always; album/artist/playlist detail from their own art;
+  optionally the whole app chrome following the current track (a user-facing choice alongside accent
+  and dynamic colour, not hidden). Widgets, Auto/CarPlay art and Live surfaces carry the same colours
+  where the platform allows.
+- **Quality bar:** a full, contrast-safe scheme (MaterialKolor `SchemeContent`/fidelity-style from the
+  art seed on Android; `ArtworkPalette`/`PlayerPalette` on iOS), not a single dominant colour. Text and
+  controls ≥ 4.5:1 / 3:1 in light and dark; tone-clamp muddy, near-grey and neon art; monochrome art gets
+  a tasteful neutral, not a random hue.
+- **Craft:** multi-colour where it helps (gradient or blurred art backdrop on Now Playing, as Plexamp's
+  UltraBlur), tinted controls, tinted progress. Track-to-track transitions animate the scheme (effects
+  spring / ~400–600ms crossfade), never flash; pre-extract the next track's palette so it is ready.
+- **Performance:** extract off the main thread from a small downscaled image (~112px), cache per album
+  key; the first frame uses the cached or neutral scheme, never blocks.
+- **Parity:** same intent on both platforms, native rendering (tonal surfaces on Android, tint + glass
+  over art on iOS with dimming for bright art).
+- **Respect:** Reduce Motion → instant swap; Increase Contrast → push tones further apart; a setting to
+  turn it off.
+- Competitors now copy this (Plexamp, Gramophone, Namida, Finamp); it only stays a differentiator if it
+  is visibly more refined than theirs — judge it side by side in critiques.
+
 ## Now Playing
 
 - **Hierarchy:** artwork → title/artist → scrubber with elapsed/remaining → transport → secondary row
