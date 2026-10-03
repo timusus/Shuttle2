@@ -79,7 +79,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
         val viewModel: SettingsViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val proViewModel: SettingsProViewModel = metroViewModel()
-        val pro by proViewModel.isPro.collectAsStateWithLifecycle()
+        val pro by proViewModel.proState.collectAsStateWithLifecycle()
         SettingsRootScreen(
             uiState = uiState,
             pro = pro,

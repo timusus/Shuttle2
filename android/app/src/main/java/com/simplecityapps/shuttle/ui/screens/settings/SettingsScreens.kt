@@ -107,12 +107,13 @@ internal fun SettingsScaffold(
 
 /**
  * The Settings root: the Shuttle Music Pro row, then one row per [SettingsDestination], each showing the current
- * value of what it holds where there is one. [uiState] carries the stored settings; [pro] is whether Pro is owned.
+ * value of what it holds where there is one. [uiState] carries the stored settings; [pro] says which copy the Pro
+ * row shows.
  */
 @Composable
 fun SettingsRootScreen(
     uiState: SettingsUiState,
-    pro: Boolean,
+    pro: SettingsProState,
     onNavigateUp: () -> Unit,
     onOpenDestination: (SettingsDestination) -> Unit,
     onOpenPro: () -> Unit,
@@ -124,7 +125,11 @@ fun SettingsRootScreen(
                 rows = listOf { shapes: ListItemShapes ->
                     LinkSetting(
                         title = stringResource(R.string.paywall_title),
-                        summary = stringResource(if (pro) R.string.paywall_settings_summary_pro else R.string.paywall_settings_summary),
+                        summary = when (pro) {
+                            SettingsProState.Neutral -> null
+                            SettingsProState.Owned -> stringResource(R.string.paywall_settings_summary_pro)
+                            SettingsProState.Upsell -> stringResource(R.string.paywall_settings_summary)
+                        },
                         onClick = onOpenPro,
                         icon = Icons.Rounded.WorkspacePremium,
                         shapes = shapes

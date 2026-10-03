@@ -43,10 +43,19 @@ class SettingsScreenTest {
 
     @Test
     fun `the root says Pro is owned instead of selling it`() {
-        robot.setRootContent(pro = true)
+        robot.setRootContent(pro = SettingsProState.Owned)
 
         robot.assertDisplayed("Thank you for your support")
         robot.assertNotShown("Stream from Jellyfin, Emby and Plex")
+    }
+
+    @Test
+    fun `while Play hasn't answered the Pro row shows just its title`() {
+        robot.setRootContent(pro = SettingsProState.Neutral)
+
+        robot.assertDisplayed("Shuttle Music Pro")
+        robot.assertNotShown("Stream from Jellyfin, Emby and Plex")
+        robot.assertNotShown("Thank you for your support")
     }
 
     @Test

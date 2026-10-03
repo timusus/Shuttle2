@@ -36,7 +36,7 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
 
     fun setRootContent(
         uiState: SettingsUiState = SettingsUiState(),
-        pro: Boolean = false
+        pro: SettingsProState = SettingsProState.Upsell
     ) {
         rule.setContent {
             S2AppTheme(AppThemeState()) {

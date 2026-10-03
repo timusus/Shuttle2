@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -17,6 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -200,6 +202,17 @@ class SettingsViewModelTest {
         val keys = viewModel().uiState.value.values.keys
 
         keys shouldBe AndroidSettingsCatalog.settings.map { it.key }.toSet()
+    }
+
+    @Test
+    fun `the Equalizer row's state reaches the state, so the root can show it`() {
+        AndroidSettingsCatalog.items.filterIsInstance<SettingItem.Navigate>()
+            .single { it.target == SettingsLink.Equalizer }
+            .stateSetting shouldBe EqualizerSettings.Enabled
+
+        store.preference(EqualizerSettings.Enabled).value = true
+
+        viewModel().uiState.value.value(EqualizerSettings.Enabled) shouldBe true
     }
 
     private fun TestScope.events(viewModel: SettingsViewModel) = viewModel.uiState.value.events.map { it.value }

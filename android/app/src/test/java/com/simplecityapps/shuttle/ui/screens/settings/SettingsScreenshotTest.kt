@@ -84,10 +84,14 @@ class SettingsScreenshotTest {
     }
 
     @Test
-    fun root() = shot("root") { SettingsRootScreen(uiState = SettingsScenarios.equalizerOn, pro = false, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
+    fun root() = shot("root") { SettingsRootScreen(uiState = SettingsScenarios.equalizerOn, pro = SettingsProState.Upsell, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
+
+    /** Play hasn't answered yet: the Pro row shows just its title, with no copy to flash at a purchaser. */
+    @Test
+    fun rootChecking() = shot("root-checking") { SettingsRootScreen(uiState = SettingsScenarios.equalizerOn, pro = SettingsProState.Neutral, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
 
     @Test
-    fun rootPro() = shot("root-pro") { SettingsRootScreen(uiState = SettingsScenarios.darkPureBlack, pro = true, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
+    fun rootPro() = shot("root-pro") { SettingsRootScreen(uiState = SettingsScenarios.darkPureBlack, pro = SettingsProState.Owned, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
 
     @Test
     fun appearance() = shot("appearance", content = destination(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack))
