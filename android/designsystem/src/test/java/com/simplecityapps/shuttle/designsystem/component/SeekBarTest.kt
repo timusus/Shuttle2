@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
