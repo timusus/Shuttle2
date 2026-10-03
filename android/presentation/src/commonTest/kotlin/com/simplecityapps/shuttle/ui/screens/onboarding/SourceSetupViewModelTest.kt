@@ -99,6 +99,22 @@ class SourceSetupViewModelTest {
     }
 
     @Test
+    fun `choosing this device's music reads it - follows that import - and ends the first run`() = runTest {
+        val mediaSources = FakeMediaSources()
+        val viewModel = viewModel(mediaSources)
+
+        viewModel.onUseThisDevice()
+        mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Shuttle)
+        mediaSources.scans shouldBe 1
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Starting(MediaProviderType.Shuttle)
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Shuttle, null, null))
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Shuttle, error = null))
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Finished(MediaProviderType.Shuttle, error = null)
+        viewModel().uiState.value.firstRun shouldBe false
+    }
+
+    @Test
     fun `another provider's import or an earlier result doesn't move it`() = runTest {
         importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, error = "stale"))
         val viewModel = viewModel()

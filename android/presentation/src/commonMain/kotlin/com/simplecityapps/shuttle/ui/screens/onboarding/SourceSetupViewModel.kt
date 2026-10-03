@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** How far the import of a server connected during setup has got. */
+/** How far the import of a server connected during setup, or of this device's music, has got. */
 sealed interface SourceSetupImport {
     /** No server has been connected in this setup yet. */
     data object NotStarted : SourceSetupImport
@@ -48,7 +48,8 @@ data class SourceSetupUiState(
  * has, and the connected server's import, so the setup can show it running and let the user carry on meanwhile.
  *
  * Android has no first run (#379: the Library's empty state asks for the music permission instead); iOS has no music
- * on the device to start from, so it opens this setup until a server is connected or the user skips it.
+ * on the device to start from, so it opens this setup until a server is connected, the device's own music is chosen
+ * (Files and the app's Documents folder, #590) or the user skips it.
  */
 @ViewModelKey(SourceSetupViewModel::class)
 @ContributesIntoMap(AppScope::class)
@@ -87,6 +88,16 @@ class SourceSetupViewModel @Inject constructor(
     fun onServerConnected(type: MediaProviderType) {
         serverImport.value = SourceSetupImport.Starting(type)
         connectServer(type)
+        complete()
+    }
+
+    /**
+     * The music on this device was chosen (iOS's "On this iPhone", #590): read it, following that import from here, as
+     * the setup does a server's. The setup is done, as the device's music is the library's source from now on.
+     */
+    fun onUseThisDevice() {
+        serverImport.value = SourceSetupImport.Starting(MediaProviderType.Shuttle)
+        mediaSources.scanThisDevice()
         complete()
     }
 
