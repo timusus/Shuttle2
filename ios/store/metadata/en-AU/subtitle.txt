@@ -1,1 +1,1 @@
-Jellyfin & Emby music player
+Jellyfin, Emby & Plex player

@@ -46,3 +46,14 @@ Verified 2026-10-03 against the repo:
 Contradictions found: none. Revisit when StoreKit (#609) lands: if the app calls a backend to validate
 purchases, or any analytics or crash SDK is added, "Data Not Collected" must change. A StoreKit-only
 integration (on-device verification) keeps it as is.
+
+## In-App Purchases
+
+Both products cover what the app sells: streaming from the user's own Jellyfin, Emby or Plex server. The
+descriptions stay in step with the paywall copy (`ProFeatures` in `ios/S2/Features/Paywall/PaywallView.swift`,
+which names all three) and with `docs/product/monetisation.md`'s iOS section (guidelines 2.3 and 3.1.1).
+
+- `com.simplecityapps.shuttle.pro.trial`: display name "14-day Free Trial", description "Stream from
+  Jellyfin, Emby and Plex free for 14 days".
+- `com.simplecityapps.shuttle.pro.lifetime`: display name "Shuttle Music Pro (Lifetime)", description
+  "Stream from Jellyfin, Emby and Plex, for life".

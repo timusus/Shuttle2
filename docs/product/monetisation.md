@@ -177,21 +177,21 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 
 ### iOS (StoreKit 2, #609)
 
-iOS sells the same thing, as far as iOS has it: Jellyfin and Emby streaming need Pro after a 14-day trial; AirPlay,
-the equalizer and everything else stay free. Plex and downloads join Pro when iOS has them, and not before: the
+iOS sells the same thing, as far as iOS has it: Jellyfin, Emby and Plex streaming need Pro after a 14-day trial;
+AirPlay, the equalizer and everything else stay free. Downloads join Pro when iOS has them, and not before: the
 paywall, Settings and the App Store Connect product descriptions name only what the app does (guidelines 2.3 and
 3.1.1), from one place in Swift (`ProFeatures` in `PaywallView.swift`). There's no subscription on iOS yet, only the
 trial and Lifetime.
 
 - **Products.** Two non-consumables, ids in `shared/.../entitlement/AppStoreProducts.kt`:
   - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 14-day Trial", display name
-    "14-day Free Trial", description "Stream from Jellyfin and Emby free for 14 days". Buying it starts the trial,
+    "14-day Free Trial", description "Stream from Jellyfin, Emby and Plex free for 14 days". Buying it starts the trial,
     which runs 14 days from the transaction's `originalPurchaseDate`. The App Store keeps the transaction per Apple
     ID, and a restore, reinstall or new device reports the same original date, so none of them restarts the trial.
     A refunded or revoked trial counts as used.
   - `com.simplecityapps.shuttle.pro.lifetime`: paid (USD 9.99 in `S2.storekit`; set the real price in App Store
     Connect), reference name "Pro Lifetime", display name "Shuttle Music Pro (Lifetime)", description "Stream from
-    Jellyfin and Emby, for life". A refunded purchase is no longer Pro.
+    Jellyfin, Emby and Plex, for life". A refunded purchase is no longer Pro.
 - **Trial consent.** Android starts the trial silently on the first server stream. App Review wants the user to
   start a free trial knowingly, so on iOS `ServerAccessGate` has no `startTrial`: the first stream before the trial
   is refused and opens the paywall, which discloses the trial length, what stops after it and Lifetime's localized

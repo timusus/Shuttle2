@@ -1,1 +1,1 @@
-Stream your own music from Jellyfin or Emby. Gapless playback, EQ and ReplayGain. Try Pro free for 14 days, then pay once. No ads, no tracking.
+Stream your own music from Jellyfin, Emby or Plex. Gapless playback, EQ and ReplayGain. Try Pro free for 14 days, then pay once. No ads, no tracking.
