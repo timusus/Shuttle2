@@ -12,7 +12,11 @@ enum class StreamingQuality(val maxBitrateKbps: Int?) {
     Kbps128(128)
 }
 
-/** Settings > Sources: streaming quality from Jellyfin, Emby and Plex, one cap for unmetered networks and one for metered. */
+/**
+ * Settings > Sources > Streaming & downloads: streaming quality from Jellyfin, Emby and Plex, one cap for unmetered
+ * networks and one for metered. Mobile data defaults to 192 kbps rather than the original file; a stored choice,
+ * including an explicit Original, is kept.
+ */
 @SingleIn(AppScope::class)
 class StreamingSettings @Inject constructor(
     store: SettingsStore
@@ -21,13 +25,13 @@ class StreamingSettings @Inject constructor(
     val meteredQuality = store.preference(MeteredQuality)
 
     companion object {
-        val UnmeteredQuality = streamingQuality("pref_streaming_quality_unmetered")
-        val MeteredQuality = streamingQuality("pref_streaming_quality_metered")
+        val UnmeteredQuality = streamingQuality("pref_streaming_quality_unmetered", default = StreamingQuality.Original)
+        val MeteredQuality = streamingQuality("pref_streaming_quality_metered", default = StreamingQuality.Kbps192)
 
         /** Stored by name, so new qualities can go anywhere in the list. */
-        private fun streamingQuality(key: String) = Setting.string(
+        private fun streamingQuality(key: String, default: StreamingQuality) = Setting.string(
             key = key,
-            default = StreamingQuality.Original,
+            default = default,
             decode = { value -> StreamingQuality.entries.firstOrNull { it.name == value } },
             encode = { quality -> quality.name }
         )

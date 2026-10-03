@@ -154,6 +154,8 @@ val StringKey.resId: Int
         StringKey.PREF_VIEW_CHANGELOG_TITLE -> R.string.pref_view_changelog_title
         StringKey.PREF_VIEW_LICENSES_TITLE -> R.string.pref_view_licenses_title
         StringKey.SETTINGS_GROUP_ADVANCED -> R.string.settings_group_advanced
+        StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS -> R.string.settings_group_streaming_and_downloads
+        StringKey.SETTINGS_GROUP_SCANNING -> R.string.settings_group_scanning
         StringKey.PREF_FILE_LOGGING_TITLE -> R.string.pref_file_logging_title
         StringKey.PREF_FILE_LOGGING_SUBTITLE -> R.string.pref_file_logging_subtitle
         StringKey.PREF_COPY_DEBUG_LOGS_SUBTITLE -> R.string.pref_copy_debug_logs_subtitle

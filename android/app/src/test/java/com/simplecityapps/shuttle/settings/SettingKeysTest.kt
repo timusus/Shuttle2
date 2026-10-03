@@ -57,7 +57,7 @@ class SettingKeysTest {
             "PrivacySettings.CrashReporting: pref_crash_reporting = true",
             "PrivacySettings.Analytics: pref_firebase_analytics = true",
             "StreamingSettings.UnmeteredQuality: pref_streaming_quality_unmetered = Original",
-            "StreamingSettings.MeteredQuality: pref_streaming_quality_metered = Original",
+            "StreamingSettings.MeteredQuality: pref_streaming_quality_metered = Kbps192",
             "SourcesSettings.MusicPermissionRequested: music_permission_requested = false",
             "SourcesSettings.ExcludedFolders: scanner_excluded_folders = []",
             "SourcesSettings.ExtraFolders: scanner_extra_folders = []",

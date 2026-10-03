@@ -139,6 +139,14 @@
     <string name="settings_destination_about">About</string>
     <!-- Settings: Title of the Advanced group (debug logging) on the About screen -->
     <string name="settings_group_advanced">Advanced</string>
+    <!-- Settings: Title of the Sources group that holds the streaming quality, download and artwork Wi-Fi rules -->
+    <string name="settings_group_streaming_and_downloads">Streaming &amp; downloads</string>
+    <!-- Settings: Title of the Library group that holds the scan schedule and excluded songs -->
+    <string name="settings_group_scanning">Scanning</string>
+    <!-- Settings: Summary of the Sources row on the Settings screen. %1$s is the streaming quality used on mobile data, e.g. "320 kbps" -->
+    <string name="settings_sources_summary_streaming">%1$s on mobile data</string>
+    <!-- Settings: Summary of the Library row on the Settings screen. %1$s is how often the library rescans, e.g. "Weekly" or "Never" -->
+    <string name="settings_library_summary_rescan">Rescan: %1$s</string>
     <!-- Settings: Title of the switch that makes dark theme backgrounds pure black -->
     <string name="pref_pure_black_title">Pure black</string>
     <!-- Settings: Summary of the pure black switch -->

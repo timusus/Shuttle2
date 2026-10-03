@@ -160,16 +160,13 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         setting = LibrarySettings.ReportPlaybackToServer,
                         title = StringKey.PREF_REPORT_PLAYBACK_TITLE,
                         summary = StringKey.PREF_REPORT_PLAYBACK_SUMMARY
-                    ),
-                    SettingItem.Switch(
-                        setting = DownloadSettings.WifiOnly,
-                        title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
-                        summary = StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
                     )
                 )
             ),
+            // Every network rule in one place: what streams at, and what only runs on Wi-Fi. Downloads take the
+            // stream URL as it is built, so they follow the quality caps above; there is no separate download quality.
             SettingsGroup(
-                title = StringKey.PREF_CATEGORY_TITLE_STREAMING_QUALITY,
+                title = StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS,
                 items = listOf(
                     SettingItem.Choice(
                         setting = StreamingSettings.UnmeteredQuality,
@@ -180,6 +177,16 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         setting = StreamingSettings.MeteredQuality,
                         title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
                         options = StreamingQualityOptions
+                    ),
+                    SettingItem.Switch(
+                        setting = DownloadSettings.WifiOnly,
+                        title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
+                        summary = StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
+                    ),
+                    SettingItem.Switch(
+                        setting = ArtworkSettings.WifiOnly,
+                        title = StringKey.PREF_ARTWORK_WIFI_TITLE,
+                        summary = StringKey.PREF_ARTWORK_WIFI_SUBTITLE
                     )
                 )
             )
@@ -190,14 +197,9 @@ object AndroidSettingsCatalog : SettingsCatalog {
         destination = SettingsDestination.Library,
         groups = listOf(
             SettingsGroup(
-                title = null,
+                title = StringKey.SETTINGS_GROUP_SCANNING,
                 items = listOf(
-                    SettingItem.Action(
-                        action = SettingsAction.Rescan,
-                        title = StringKey.PREF_MEDIA_RESCAN_TITLE,
-                        summary = StringKey.PREF_MEDIA_RESCAN_SUMMARY,
-                        key = "pref_media_rescan"
-                    ),
+                    // The manual rescan lives on Sources' This device card, next to the scan's progress.
                     SettingItem.Choice(
                         setting = LibrarySettings.RescanFrequency,
                         title = StringKey.PREF_RESCAN_FREQUENCY_TITLE,
@@ -235,11 +237,6 @@ object AndroidSettingsCatalog : SettingsCatalog {
             SettingsGroup(
                 title = StringKey.PREF_CATEGORY_TITLE_ARTWORK,
                 items = listOf(
-                    SettingItem.Switch(
-                        setting = ArtworkSettings.WifiOnly,
-                        title = StringKey.PREF_ARTWORK_WIFI_TITLE,
-                        summary = StringKey.PREF_ARTWORK_WIFI_SUBTITLE
-                    ),
                     SettingItem.Switch(
                         setting = ArtworkSettings.LocalOnly,
                         title = StringKey.PREF_ARTWORK_LOCAL_ONLY_TITLE,
@@ -348,6 +345,7 @@ object AndroidSettingsCatalog : SettingsCatalog {
      */
     val droppedKeys: Map<String, String> = mapOf(
         "changelog_show_on_launch" to "Dropped by decision 12",
+        "pref_media_rescan" to "The manual rescan lives on Settings > Sources' This device card only",
         "pref_media_provider" to "Settings > Sources replaces the provider picker, above the catalog's own rows (#379)",
         "pref_library_tabs_all" to "Tab order moves to the Library screen's Edit tabs sheet",
         "pref_library_tabs_enabled" to "Tab visibility moves to the Library screen's Edit tabs sheet"

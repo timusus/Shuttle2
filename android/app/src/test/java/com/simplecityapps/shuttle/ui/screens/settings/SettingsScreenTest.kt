@@ -163,9 +163,9 @@ class SettingsScreenTest {
     fun `an unconfirmed action runs straight away`() {
         robot.setDestinationContent(SettingsDestination.Library)
 
-        robot.tapText("Rescan")
+        robot.tapText("Back up library")
 
-        robot.actions shouldBe listOf(SettingsAction.Rescan)
+        robot.actions shouldBe listOf(SettingsAction.ExportBackup)
     }
 
     @Test
@@ -239,7 +239,7 @@ class SettingsScreenTest {
     fun `sources shows the streaming quality on Wi-Fi and on mobile data`() {
         robot.setDestinationContent(SettingsDestination.Sources, SettingsScenarios.streamingCappedOnMobileData)
 
-        robot.assertDisplayed("Streaming quality")
+        robot.assertDisplayed("Streaming & downloads")
         robot.assertDisplayed("On Wi-Fi")
         robot.assertDisplayed("Original")
         robot.assertDisplayed("On mobile data")
@@ -252,9 +252,9 @@ class SettingsScreenTest {
 
         robot.tapText("On mobile data")
         robot.assertDialogDisplayed("320 kbps")
-        robot.tapDialogText("192 kbps")
+        robot.tapDialogText("128 kbps")
 
-        robot.choiceSelections shouldBe listOf(StreamingSettings.MeteredQuality.key to 2)
+        robot.choiceSelections shouldBe listOf(StreamingSettings.MeteredQuality.key to 3)
     }
 
     @Test

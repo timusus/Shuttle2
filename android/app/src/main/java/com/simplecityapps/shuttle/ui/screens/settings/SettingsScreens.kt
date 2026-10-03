@@ -52,6 +52,8 @@ import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
+import com.simplecityapps.shuttle.settings.Setting
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingOverride
@@ -161,20 +163,34 @@ private fun destinationSummary(
     destination: SettingsDestination,
     uiState: SettingsUiState
 ): String? = when (destination) {
-    SettingsDestination.Appearance -> {
-        val theme = uiState.value(AppearanceSettings.Theme)
-        AndroidSettingsCatalog.screen(destination).items
-            .filterIsInstance<SettingItem.Choice<*>>()
-            .firstOrNull { it.setting == AppearanceSettings.Theme }
-            ?.options?.firstOrNull { it.value == theme }
-            ?.let { stringResource(it.label) }
-    }
+    SettingsDestination.Appearance -> choiceLabel(destination, uiState, AppearanceSettings.Theme)
+
+    SettingsDestination.Sources -> choiceLabel(destination, uiState, StreamingSettings.MeteredQuality)
+        ?.let { stringResource(R.string.settings_sources_summary_streaming, it) }
+
+    SettingsDestination.Library -> choiceLabel(destination, uiState, LibrarySettings.RescanFrequency)
+        ?.let { stringResource(R.string.settings_library_summary_rescan, it) }
 
     SettingsDestination.PlaybackAndSound -> stringResource(
         if (uiState.value(EqualizerSettings.Enabled)) R.string.settings_playback_summary_equalizer_on else R.string.settings_playback_summary_equalizer_off
     )
 
     else -> null
+}
+
+/** The label of the option [setting] is on, from the choice row [destination] shows for it. */
+@Composable
+private fun <T> choiceLabel(
+    destination: SettingsDestination,
+    uiState: SettingsUiState,
+    setting: Setting<T>
+): String? {
+    val value = uiState.value(setting)
+    return AndroidSettingsCatalog.screen(destination).items
+        .filterIsInstance<SettingItem.Choice<*>>()
+        .firstOrNull { it.setting.key == setting.key }
+        ?.options?.firstOrNull { it.value == value }
+        ?.let { stringResource(it.label) }
 }
 
 private val SettingsDestination.icon: ImageVector
