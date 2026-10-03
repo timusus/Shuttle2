@@ -1,6 +1,7 @@
 package com.simplecityapps.trial.di
 
 import android.content.Context
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.entitlement.Entitlement
@@ -11,7 +12,6 @@ import com.simplecityapps.trial.BuildConfig
 import com.simplecityapps.trial.EntitlementRepository
 import com.simplecityapps.trial.EntitlementStore
 import com.simplecityapps.trial.KeyValueEntitlementStore
-import com.simplecityapps.trial.MonetisationAnalytics
 import com.simplecityapps.trial.PlayBilling
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer

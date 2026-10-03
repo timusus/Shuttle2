@@ -8,24 +8,25 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-/** Crash reporting (Sentry), switched on and off by [TelemetryConsentGate]. */
+/** Crash reporting (Sentry on Android and iOS), switched on and off by [TelemetryConsentGate]. */
 interface CrashReportingSdk {
     /** Starts reporting, setting the SDK up the first time, or stops it. Idempotent; a no-op without a DSN. */
     fun setEnabled(enabled: Boolean)
 }
 
-/** Product analytics (PostHog), switched on and off by [TelemetryConsentGate]. */
+/** Product analytics (PostHog on Android and iOS), switched on and off by [TelemetryConsentGate]. */
 interface AnalyticsSdk {
     /** Starts collecting, setting the SDK up the first time, or stops it. Idempotent; a no-op without an API key. */
     fun setEnabled(enabled: Boolean)
 }
 
 /**
- * Nothing is collected until the user opts in. [start] applies the stored choices before anything can send an event or
- * a crash, then follows every change to them, from Settings > Privacy or the Home consent card, as it happens.
+ * Each SDK runs only while its choice allows it. Both default to on for a user who never chose (#379, #481), and Home
+ * says so once (`HomeEvent.AnalyticsNowOn`); turning either off in Settings > Privacy stops its SDK at once. [start]
+ * applies the stored choices before anything can send an event or a crash, then follows every change to them.
  *
  * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
- * so each gates its own SDK.
+ * so each gates its own SDK. Shared by Android (`TelemetryInitializer`) and iOS (`IosTelemetry`).
  */
 @SingleIn(AppScope::class)
 class TelemetryConsentGate @Inject constructor(

@@ -7,7 +7,6 @@ import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupFlow
 import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInAnalytics
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -59,10 +58,6 @@ class IosPlatformModule {
     /** A server's songs can't be deleted, and iOS doesn't offer deleting this device's files (Files does that). */
     @Provides
     fun provideSongFileDeleter(): SongFileDeleter = SongFileDeleter { false }
-
-    /** iOS records no monetisation analytics, so a sign-in isn't recorded. */
-    @Provides
-    fun provideServerSignInAnalytics(): ServerSignInAnalytics = ServerSignInAnalytics { }
 
     /** No playlist files are imported on iOS, so none needs rewriting. */
     @Provides

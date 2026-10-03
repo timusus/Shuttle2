@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.playback.FakeIosAudioPlayer
 import com.simplecityapps.shuttle.shared.settings.IosSettingsCatalog
+import com.simplecityapps.shuttle.shared.telemetry.IosTelemetry
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
@@ -35,7 +36,7 @@ import kotlin.test.Test
 class IosAppGraphTest {
     private val player = FakeIosAudioPlayer()
 
-    private val graph = createIosAppGraph(player, IosLocalFiles.None)
+    private val graph = createIosAppGraph(player, IosLocalFiles.None, IosTelemetry.None)
 
     @AfterTest
     fun removeTheSettingsWritten() {
@@ -47,6 +48,8 @@ class IosAppGraphTest {
 
     @Test
     fun everyTypedPropertyResolves() {
+        graph.telemetryStartup
+        graph.monetisationAnalytics
         graph.shellViewModel
         graph.homeViewModel
         graph.libraryViewModel

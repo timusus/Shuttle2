@@ -1,26 +1,19 @@
 package com.simplecityapps.shuttle.telemetry
 
-import android.content.SharedPreferences
-import androidx.core.content.edit
-import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class TelemetryConsentGateTest {
-    private val prefs: SharedPreferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
-    private val privacySettings = PrivacySettings(SettingsStore(SharedPreferencesKeyValueStore(prefs)))
+    private val prefs = InMemoryKeyValueStore()
+    private val privacySettings = PrivacySettings(SettingsStore(prefs))
     private val crashReporting = FakeSdk()
     private val analytics = FakeSdk()
 
@@ -41,7 +34,7 @@ class TelemetryConsentGateTest {
 
     @Test
     fun `an explicit off stays off`() = runTest {
-        prefs.edit(commit = true) {
+        prefs.edit {
             putBoolean(PrivacySettings.CrashReporting.key, false)
             putBoolean(PrivacySettings.Analytics.key, false)
         }
@@ -53,8 +46,8 @@ class TelemetryConsentGateTest {
     }
 
     @Test
-    fun `the stored choice is applied at startup, before any coroutine runs`() = runTest {
-        prefs.edit(commit = true) {
+    fun `the stored choice is applied at startup before any coroutine runs`() = runTest {
+        prefs.edit {
             putBoolean(PrivacySettings.CrashReporting.key, true)
             putBoolean(PrivacySettings.Analytics.key, true)
         }
@@ -66,7 +59,7 @@ class TelemetryConsentGateTest {
     }
 
     @Test
-    fun `opting out of analytics stops it, independently of crash reporting`() = runTest {
+    fun `opting out of analytics stops it independently of crash reporting`() = runTest {
         startGate()
         runCurrent()
 
@@ -81,7 +74,7 @@ class TelemetryConsentGateTest {
     }
 
     @Test
-    fun `opting out of crash reporting stops it, independently of analytics`() = runTest {
+    fun `opting out of crash reporting stops it independently of analytics`() = runTest {
         startGate()
         runCurrent()
 

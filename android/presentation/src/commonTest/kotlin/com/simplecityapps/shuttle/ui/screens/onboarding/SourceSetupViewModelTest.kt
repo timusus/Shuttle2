@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle.ui.screens.onboarding
 
 import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.RecordingAnalytics
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -37,6 +39,9 @@ class SourceSetupViewModelTest {
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
     private val importState = FakeSongImportStateProvider()
     private var serverAllowed = true
+    private val analytics = RecordingAnalytics()
+
+    private fun onboardingCompleted(path: String) = RecordingAnalytics.Event("onboarding_completed", mapOf("path" to path))
 
     private fun TestScope.viewModel(mediaSources: FakeMediaSources = FakeMediaSources()) = SourceSetupViewModel(
         mediaSources,
@@ -45,6 +50,7 @@ class SourceSetupViewModelTest {
         importState,
         TryAddServer { serverAllowed },
         ConnectServer(mediaSources),
+        MonetisationAnalytics(analytics),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -69,6 +75,31 @@ class SourceSetupViewModelTest {
         viewModel().onFinish()
 
         viewModel().uiState.value.firstRun shouldBe false
+        analytics.events shouldBe listOf(onboardingCompleted("skipped"))
+    }
+
+    @Test
+    fun `the first finish is recorded with its path - and later ones aren't`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onServerConnected(MediaProviderType.Jellyfin)
+        viewModel.onUseThisDevice()
+        viewModel.onFinish()
+
+        analytics.events shouldBe listOf(onboardingCompleted("server"))
+    }
+
+    @Test
+    fun `choosing this device's music is recorded as local`() = runTest {
+        viewModel().onUseThisDevice()
+
+        analytics.events shouldBe listOf(onboardingCompleted("local"))
+    }
+
+    @Test
+    fun `a server that predates the setup completes it without recording`() = runTest {
+        viewModel(FakeMediaSources(MediaProviderType.Jellyfin)).onFinish()
+
+        analytics.events shouldBe emptyList()
     }
 
     @Test

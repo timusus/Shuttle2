@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
+import com.simplecityapps.shuttle.analytics.OnboardingPath
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.ConnectServer
@@ -49,7 +51,8 @@ data class SourceSetupUiState(
  *
  * Android has no first run (#379: the Library's empty state asks for the music permission instead); iOS has no music
  * on the device to start from, so it opens this setup until a server is connected, the device's own music is chosen
- * (Files and the app's Documents folder, #590) or the user skips it.
+ * (Files and the app's Documents folder, #590) or the user skips it. That first finish is recorded as
+ * `onboarding_completed` with its [OnboardingPath]; a later Add Source, or a server that predates the setup, isn't.
  */
 @ViewModelKey(SourceSetupViewModel::class)
 @ContributesIntoMap(AppScope::class)
@@ -60,13 +63,14 @@ class SourceSetupViewModel @Inject constructor(
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
     private val connectServer: ConnectServer,
+    private val analytics: MonetisationAnalytics,
 ) : ViewModel() {
     private val completed = MutableStateFlow(isSourceSetupCompleted())
     private val serverImport = MutableStateFlow<SourceSetupImport>(SourceSetupImport.NotStarted)
 
     init {
         // A server connected before the setup existed counts as set up: removing it later doesn't reopen the setup.
-        if (!completed.value && hasServer(mediaSources.enabledTypes.value)) complete()
+        if (!completed.value && hasServer(mediaSources.enabledTypes.value)) complete(path = null)
         viewModelScope.launch {
             importState.songImportState.collect { state -> serverImport.update { it.next(state) } }
         }
@@ -88,7 +92,7 @@ class SourceSetupViewModel @Inject constructor(
     fun onServerConnected(type: MediaProviderType) {
         serverImport.value = SourceSetupImport.Starting(type)
         connectServer(type)
-        complete()
+        complete(OnboardingPath.Server)
     }
 
     /**
@@ -98,15 +102,18 @@ class SourceSetupViewModel @Inject constructor(
     fun onUseThisDevice() {
         serverImport.value = SourceSetupImport.Starting(MediaProviderType.Shuttle)
         mediaSources.scanThisDevice()
-        complete()
+        complete(OnboardingPath.ThisDevice)
     }
 
     /** The setup closed, finished or skipped: it doesn't open by itself again. */
-    fun onFinish() = complete()
+    fun onFinish() = complete(OnboardingPath.Skipped)
 
-    private fun complete() {
+    /** [path] is recorded if this finishes the first run; null records nothing. */
+    private fun complete(path: OnboardingPath?) {
+        val firstFinish = !completed.value
         completeSourceSetup()
         completed.value = true
+        if (firstFinish && path != null) analytics.onboardingCompleted(path)
     }
 
     private fun hasServer(types: List<MediaProviderType>) = types.any { !it.isLocal }

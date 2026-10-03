@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.kotest.matchers.shouldBe
@@ -28,7 +29,8 @@ class IosSettingsCatalogTest {
             SettingsDestination.PlaybackAndSound,
             SettingsDestination.Sources,
             SettingsDestination.Library,
-            SettingsDestination.Appearance
+            SettingsDestination.Appearance,
+            SettingsDestination.Privacy
         )
     }
 
@@ -41,7 +43,9 @@ class IosSettingsCatalogTest {
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
             ArtworkSettings.LocalOnly.key,
-            AppearanceSettings.ShowHomeOnLaunch.key
+            AppearanceSettings.ShowHomeOnLaunch.key,
+            PrivacySettings.CrashReporting.key,
+            PrivacySettings.Analytics.key
         )
     }
 
@@ -60,10 +64,16 @@ class IosSettingsCatalogTest {
             PlaybackSettings.UsbDacDirectOutput.key,
             ArtworkSettings.WifiOnly.key,
             ArtworkSettings.MediaSessionArtwork.key,
-            PrivacySettings.CrashReporting.key,
-            PrivacySettings.Analytics.key,
             DebugSettings.FileLogging.key
         )
+    }
+
+    @Test
+    fun privacyHasTheCrashReportingAndAnalyticsSwitchesWithAndroidsText() {
+        val switches = catalog.privacy.items.filterIsInstance<SettingItem.Switch>()
+        switches.map { it.setting } shouldContainExactly listOf(PrivacySettings.CrashReporting, PrivacySettings.Analytics)
+        switches.map { it.title } shouldContainExactly listOf(StringKey.PREF_CRASH_REPORTING_TITLE, StringKey.PREF_ANALYTICS_TITLE)
+        switches.map { it.summary } shouldContainExactly listOf(StringKey.PREF_CRASH_REPORTING_SUBTITLE, StringKey.PREF_ANALYTICS_SUBTITLE)
     }
 
     @Test

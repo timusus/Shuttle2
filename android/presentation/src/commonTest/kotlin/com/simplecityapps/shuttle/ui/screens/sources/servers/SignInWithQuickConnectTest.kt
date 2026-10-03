@@ -1,7 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
+import com.simplecityapps.fakes.RecordingAnalytics
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
+import com.simplecityapps.shuttle.analytics.SignInFailureClassifier
+import com.simplecityapps.shuttle.analytics.SignInFailureReason
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -13,11 +17,14 @@ import kotlinx.coroutines.test.runTest
 
 class SignInWithQuickConnectTest {
     private val quickConnect = FakeQuickConnectAuthentication()
-    private val connected = mutableListOf<MediaProviderType>()
+    private val analytics = RecordingAnalytics()
     private val signIn = SignInWithQuickConnect(
         mapOf(MediaProviderType.Jellyfin to quickConnect),
-        ServerSignInAnalytics { connected += it },
+        MonetisationAnalytics(analytics),
+        SignInFailureClassifier { SignInFailureReason.Offline },
     )
+
+    private fun signInFailed(reason: String) = RecordingAnalytics.Event("sign_in_failed", mapOf("type" to "jellyfin", "method" to "quick_connect", "reason" to reason))
 
     @Test
     fun `approval authenticates and reports success`() = runTest {
@@ -27,7 +34,9 @@ class SignInWithQuickConnectTest {
 
         states shouldBe listOf(SignInWithQuickConnect.State.AwaitingApproval("123456"), SignInWithQuickConnect.State.Success)
         quickConnect.authenticated shouldBe listOf("http://server" to "secret-1")
-        connected shouldBe listOf(MediaProviderType.Jellyfin)
+        analytics.events shouldBe listOf(
+            RecordingAnalytics.Event("server_connected", mapOf("type" to "jellyfin", "method" to "quick_connect")),
+        )
     }
 
     @Test
@@ -41,6 +50,7 @@ class SignInWithQuickConnectTest {
             SignInWithQuickConnect.State.Failed("Quick Connect sign-in was denied."),
         )
         quickConnect.authenticated shouldBe emptyList()
+        analytics.events shouldBe listOf(signInFailed("denied"))
     }
 
     @Test
@@ -51,6 +61,7 @@ class SignInWithQuickConnectTest {
 
         states shouldBe listOf(SignInWithQuickConnect.State.AwaitingApproval("123456"), SignInWithQuickConnect.State.Expired)
         quickConnect.authenticated shouldBe emptyList()
+        analytics.events shouldBe listOf(signInFailed("expired"))
     }
 
     @Test
@@ -60,6 +71,7 @@ class SignInWithQuickConnectTest {
         val states = signIn(MediaProviderType.Jellyfin, "http://server").toList()
 
         states shouldBe listOf(SignInWithQuickConnect.State.Failed("boom"))
+        analytics.events shouldBe listOf(signInFailed("offline"))
     }
 
     @Test
@@ -74,5 +86,6 @@ class SignInWithQuickConnectTest {
 
         states shouldBe listOf(SignInWithQuickConnect.State.AwaitingApproval("123456"))
         quickConnect.authenticated shouldBe emptyList()
+        analytics.events shouldBe emptyList()
     }
 }

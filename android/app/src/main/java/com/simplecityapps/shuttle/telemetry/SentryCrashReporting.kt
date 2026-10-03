@@ -56,8 +56,8 @@ class SentryCrashReporting @Inject constructor(
 }
 
 /**
- * Leaves each logged error as a Sentry breadcrumb, so a crash report shows what went wrong just before it. A no-op
- * while Sentry isn't running.
+ * Leaves each logged error as a Sentry breadcrumb, so a crash report shows what went wrong just before it, with
+ * addresses, hosts, paths and credentials taken out ([TelemetryScrubber]). A no-op while Sentry isn't running.
  */
 class SentryBreadcrumbTree : Timber.Tree() {
     override fun log(
@@ -68,7 +68,7 @@ class SentryBreadcrumbTree : Timber.Tree() {
     ) {
         if (t == null) return
         Sentry.addBreadcrumb(
-            Breadcrumb.error("tag: $tag, message: $message, throwable: ${t.message}")
+            Breadcrumb.error(TelemetryScrubber.scrub("tag: $tag, message: $message, throwable: ${t.message}"))
         )
     }
 }

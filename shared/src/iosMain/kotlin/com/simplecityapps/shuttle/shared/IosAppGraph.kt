@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
@@ -10,6 +11,8 @@ import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
+import com.simplecityapps.shuttle.shared.telemetry.IosTelemetry
+import com.simplecityapps.shuttle.shared.telemetry.IosTelemetryStartup
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.home.HomeViewModel
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
@@ -99,6 +102,12 @@ interface IosAppGraph : ViewModelGraph {
     /** A gated action's paywall requests, which Swift's `PaywallPresenter` answers. */
     val observePaywallRequests: ObservePaywallRequests
 
+    /** Crash reporting, analytics and their consent; Swift starts it first of all, at launch. */
+    val telemetryStartup: IosTelemetryStartup
+
+    /** The paywall and purchase events Swift's `PaywallPresenter` and `StoreKitManager` record. */
+    val monetisationAnalytics: MonetisationAnalytics
+
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel
     val libraryViewModel: LibraryViewModel
@@ -149,33 +158,35 @@ interface IosAppGraph : ViewModelGraph {
     fun interface Factory {
         /**
          * [audioPlayer]: the Swift adapter over the S2Playback engine; [storage]: where preferences and the library live;
-         * [localFiles]: this device's music files, Swift's `LocalLibrary`.
+         * [localFiles]: this device's music files, Swift's `LocalLibrary`; [telemetry]: Sentry and PostHog.
          */
         fun create(
             @Provides audioPlayer: IosAudioPlayer,
             @Provides storage: IosStorage,
-            @Provides localFiles: IosLocalFiles
+            @Provides localFiles: IosLocalFiles,
+            @Provides telemetry: IosTelemetry
         ): IosAppGraph
     }
 }
 
-/** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:localFiles:)` from Swift, once per process. */
+/** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:localFiles:telemetry:)` from Swift, once per process. */
 fun createIosAppGraph(
     audioPlayer: IosAudioPlayer,
-    localFiles: IosLocalFiles
-): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null), localFiles)
+    localFiles: IosLocalFiles,
+    telemetry: IosTelemetry
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null), localFiles, telemetry)
 
 /**
  * A graph with storage of its own, for tests: preferences in the NSUserDefaults suite [isolatedStorage] rather than the
  * standard defaults, and an empty in-memory library rather than the app's database. Tests build several graphs at
  * once, which would otherwise restore each other's saved queue and modes, and query whatever library the simulator's
- * app holds. [localFiles] is none unless a test hands it some.
+ * app holds. [localFiles] is none unless a test hands it some; telemetry is always none.
  */
 fun createIosAppGraph(
     audioPlayer: IosAudioPlayer,
     isolatedStorage: String,
     localFiles: IosLocalFiles = IosLocalFiles.None
-): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage), localFiles)
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage), localFiles, IosTelemetry.None)
 
 /**
  * Where the graph keeps its preferences and library. [isolatedName] null: the standard defaults and the app's

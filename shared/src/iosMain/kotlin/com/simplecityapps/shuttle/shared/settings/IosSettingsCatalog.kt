@@ -5,6 +5,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.ChoiceOption
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
@@ -36,7 +37,6 @@ import dev.zacsweers.metro.Provides
  * - Library: rescan frequency needs a background scheduler; excluded songs and folders wait for local files (phase
  *   8); artwork Wi-Fi only gates the S2 artwork service iOS doesn't use; media session artwork, clearing the
  *   artwork cache and downloading all artwork reach Android's Coil and media session.
- * - Privacy: iOS has no crash reporting or analytics.
  * - About: What's New and Licences read Android's bundled changelog and `aboutlibraries.json`; iOS's
  *   acknowledgements are in its Settings bundle. File logging and debug logs have no iOS log file.
  */
@@ -151,7 +151,29 @@ object IosSettingsCatalog : SettingsCatalog {
         )
     )
 
-    override val screens: List<SettingsScreen> = listOf(playbackAndSound, sources, library, appearance)
+    /** Crash reporting (Sentry) and analytics (PostHog), each started and stopped by the shared consent gate. */
+    val privacy = SettingsScreen(
+        destination = SettingsDestination.Privacy,
+        groups = listOf(
+            SettingsGroup(
+                title = null,
+                items = listOf(
+                    SettingItem.Switch(
+                        setting = PrivacySettings.CrashReporting,
+                        title = StringKey.PREF_CRASH_REPORTING_TITLE,
+                        summary = StringKey.PREF_CRASH_REPORTING_SUBTITLE
+                    ),
+                    SettingItem.Switch(
+                        setting = PrivacySettings.Analytics,
+                        title = StringKey.PREF_ANALYTICS_TITLE,
+                        summary = StringKey.PREF_ANALYTICS_SUBTITLE
+                    )
+                )
+            )
+        )
+    )
+
+    override val screens: List<SettingsScreen> = listOf(playbackAndSound, sources, library, appearance, privacy)
 }
 
 @BindingContainer

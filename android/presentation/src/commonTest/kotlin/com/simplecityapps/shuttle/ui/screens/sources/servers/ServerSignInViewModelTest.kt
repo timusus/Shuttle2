@@ -2,9 +2,13 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.fakes.RecordingAnalytics
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerLogin
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
+import com.simplecityapps.shuttle.analytics.SignInFailureClassifier
+import com.simplecityapps.shuttle.analytics.SignInFailureReason
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
@@ -38,7 +42,7 @@ class ServerSignInViewModelTest {
 
     private val server = FakeServerAuthentication()
     private val quickConnect = FakeQuickConnectAuthentication()
-    private val connected = mutableListOf<MediaProviderType>()
+    private val analytics = RecordingAnalytics()
     private val needsPro = MutableStateFlow(false)
 
     /** [address] is typed over the saved or default one, unless it's null. */
@@ -48,15 +52,16 @@ class ServerSignInViewModelTest {
     ): ServerSignInViewModel {
         val servers = mapOf(type to server)
         val quickConnects = mapOf(MediaProviderType.Jellyfin to quickConnect)
-        val analytics = ServerSignInAnalytics { connected += it }
+        val monetisation = MonetisationAnalytics(analytics)
+        val classifyFailure = SignInFailureClassifier { SignInFailureReason.Other }
         return ServerSignInViewModel(
             type,
             ReadServerLogin(servers),
-            SignInToServer(servers, analytics),
+            SignInToServer(servers, monetisation, classifyFailure),
             ForgetServerLogin(servers),
             ObserveServerStreamingNeedsPro { needsPro },
             CheckQuickConnectAvailable(quickConnects),
-            SignInWithQuickConnect(quickConnects, analytics),
+            SignInWithQuickConnect(quickConnects, monetisation, classifyFailure),
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             address?.let(viewModel::onAddressChange)
@@ -153,7 +158,7 @@ class ServerSignInViewModelTest {
         viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
         server.authenticated shouldBe listOf(ServerLogin("http://plex:32400", "sam", "secret", "123456"))
         server.remembered shouldBe ServerLogin("http://plex:32400", "sam", "secret", "123456")
-        connected shouldBe listOf(MediaProviderType.Plex)
+        analytics.names shouldBe listOf("server_connected")
         viewModel.events shouldBe listOf(ServerSignInEvent.Connected)
 
         advanceTimeBy(1_001)
@@ -243,7 +248,7 @@ class ServerSignInViewModelTest {
         advanceTimeBy(5_001)
         runCurrent()
         viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
-        connected shouldBe listOf(MediaProviderType.Jellyfin)
+        analytics.names shouldBe listOf("server_connected")
         viewModel.events shouldBe listOf(ServerSignInEvent.Connected)
 
         advanceTimeBy(1_001)

@@ -65,7 +65,7 @@ final class IosAppDependencies {
     init() {
         audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
         localLibrary = LocalLibrary()
-        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary)
+        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: IosTelemetry.companion.None)
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
         playIntent = PlayIntent(following: graph.playerController)

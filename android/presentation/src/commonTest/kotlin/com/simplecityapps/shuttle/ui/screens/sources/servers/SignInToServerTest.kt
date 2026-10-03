@@ -1,7 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.fakes.RecordingAnalytics
 import com.simplecityapps.mediaprovider.server.ServerLogin
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
+import com.simplecityapps.shuttle.analytics.SignInFailureClassifier
+import com.simplecityapps.shuttle.analytics.SignInFailureReason
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -10,10 +14,11 @@ import kotlinx.coroutines.test.runTest
 class SignInToServerTest {
     private val plex = FakeServerAuthentication()
     private val jellyfin = FakeServerAuthentication()
-    private val connected = mutableListOf<MediaProviderType>()
+    private val analytics = RecordingAnalytics()
     private val signIn = SignInToServer(
         mapOf(MediaProviderType.Plex to plex, MediaProviderType.Jellyfin to jellyfin),
-        ServerSignInAnalytics { connected += it },
+        MonetisationAnalytics(analytics),
+        SignInFailureClassifier { SignInFailureReason.Unreachable },
     )
     private val login = ServerLogin("http://server:8096", "sam", "secret")
 
@@ -24,7 +29,9 @@ class SignInToServerTest {
         jellyfin.authenticated shouldBe listOf(login)
         jellyfin.remembered shouldBe login
         plex.authenticated shouldBe emptyList()
-        connected shouldBe listOf(MediaProviderType.Jellyfin)
+        analytics.events shouldBe listOf(
+            RecordingAnalytics.Event("server_connected", mapOf("type" to "jellyfin", "method" to "password")),
+        )
     }
 
     @Test
@@ -32,17 +39,19 @@ class SignInToServerTest {
         signIn(MediaProviderType.Plex, login, rememberLogin = false) shouldBe SignInToServer.Result.Success
 
         plex.remembered shouldBe null
-        connected shouldBe listOf(MediaProviderType.Plex)
+        analytics.names shouldBe listOf("server_connected")
     }
 
     @Test
-    fun `a failed sign-in reports why - and neither remembers the login nor is recorded`() = runTest {
+    fun `a failed sign-in reports why - and doesn't remember the login - and is recorded by its bucket alone`() = runTest {
         plex.failure = Exception("The server could not be reached.")
 
         signIn(MediaProviderType.Plex, login, rememberLogin = true) shouldBe SignInToServer.Result.Failure("The server could not be reached.")
 
         plex.remembered shouldBe null
-        connected shouldBe emptyList()
+        analytics.events shouldBe listOf(
+            RecordingAnalytics.Event("sign_in_failed", mapOf("type" to "plex", "method" to "password", "reason" to "unreachable")),
+        )
     }
 
     @Test

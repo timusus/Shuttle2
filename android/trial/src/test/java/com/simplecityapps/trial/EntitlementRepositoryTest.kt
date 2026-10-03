@@ -1,6 +1,7 @@
 package com.simplecityapps.trial
 
 import com.android.billingclient.api.Purchase
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.CachedPro
 import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
 import com.simplecityapps.shuttle.entitlement.Entitlement
