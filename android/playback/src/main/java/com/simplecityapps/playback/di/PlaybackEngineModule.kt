@@ -31,6 +31,7 @@ import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
+import com.simplecityapps.playback.exoplayer.followStoredSettings
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueOperations
@@ -39,6 +40,7 @@ import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -54,9 +56,12 @@ class PlaybackEngineModule {
     @Provides
     fun provideEqualizer(
         playbackPreferenceManager: PlaybackPreferenceManager,
-        equalizerSettings: EqualizerSettings
+        equalizerSettings: EqualizerSettings,
+        keyValueStore: KeyValueStore,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): EqualizerAudioProcessor = EqualizerAudioProcessor(equalizerSettings.enabled.value, equalizerSettings.preampGain.value).apply {
         preset = playbackPreferenceManager.restorePreset()
+        followStoredSettings(equalizerSettings, playbackPreferenceManager, keyValueStore, appCoroutineScope)
     }
 
     @Provides

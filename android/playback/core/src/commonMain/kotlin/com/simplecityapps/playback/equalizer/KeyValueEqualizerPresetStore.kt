@@ -17,32 +17,35 @@ class KeyValueEqualizerPresetStore(
 ) : EqualizerPresetStore {
     override var preset: Equalizer.Presets.Preset
         set(value) {
-            store.putString("preset_name", value.name)
+            store.putString(PresetKey, value.name)
         }
         get() {
-            val name = store.getString("preset_name", Equalizer.Presets.custom.name)!!
+            val name = store.getString(PresetKey, Equalizer.Presets.custom.name)!!
             return Equalizer.Presets.all.firstOrNull { preset -> preset.name == name } ?: Equalizer.Presets.custom
         }
 
     override var customPresetBands: List<EqualizerBand>?
         set(value) {
-            store.putString("custom_preset_bands", json.encodeToString(equalizerBandsSerializer, value))
+            store.putString(CustomPresetBandsKey, json.encodeToString(equalizerBandsSerializer, value))
         }
         get() {
-            return store.getString("custom_preset_bands", null)?.let { bands ->
+            return store.getString(CustomPresetBandsKey, null)?.let { bands ->
                 json.decodeFromString(equalizerBandsSerializer, bands)
             }
         }
 
-    private companion object {
+    companion object {
+        const val PresetKey = "preset_name"
+        const val CustomPresetBandsKey = "custom_preset_bands"
+
         /** Reads and writes the JSON Moshi wrote before (#584): nulls left out, unknown fields ignored. */
-        val json = Json {
+        private val json = Json {
             ignoreUnknownKeys = true
             explicitNulls = false
             encodeDefaults = true
         }
 
-        val equalizerBandsSerializer = ListSerializer(EqualizerBand.serializer()).nullable
+        private val equalizerBandsSerializer = ListSerializer(EqualizerBand.serializer()).nullable
     }
 }
 
