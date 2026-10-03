@@ -88,6 +88,15 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
         lastPlayed: Instant
     ) = throw NotImplementedError()
 
+    override suspend fun restoreStats(
+        id: Long,
+        playCount: Int,
+        lastPlayed: Instant?,
+        lastCompleted: Instant?,
+        playbackPosition: Int,
+        dateAdded: Instant?
+    ) = throw NotImplementedError()
+
     override suspend fun recordPlayedThrough(
         id: Long,
         playbackPosition: Int,

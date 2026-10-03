@@ -164,10 +164,22 @@ abstract class SongDataDao {
     )
 
     /**
-     * Writes a backup snapshot row (see LibraryBackupManager): every stat column at once. Used only
-     * by library-backup restore, never by the scanner, so rescan semantics are untouched.
+     * Merges a backup's stats into the row (see LibraryBackupManager) against the row as it is now, so a play finishing
+     * during a restore isn't lost: counts and dates only move forward (`dateAdded` earlier), and the backup's position
+     * is taken only when its `lastPlayed` is newer than the row's. Used only by library-backup restore, never by the
+     * scanner, so rescan semantics are untouched.
      */
-    @Query("UPDATE songs SET playCount = :playCount, lastPlayed = :lastPlayed, lastCompleted = :lastCompleted, playbackPosition = :playbackPosition, dateAdded = :dateAdded WHERE id = :id")
+    @Query(
+        """
+        UPDATE songs SET
+            playCount = MAX(playCount, :playCount),
+            playbackPosition = CASE WHEN :lastPlayed IS NOT NULL AND (lastPlayed IS NULL OR :lastPlayed > lastPlayed) THEN :playbackPosition ELSE playbackPosition END,
+            lastPlayed = COALESCE(MAX(lastPlayed, :lastPlayed), lastPlayed, :lastPlayed),
+            lastCompleted = COALESCE(MAX(lastCompleted, :lastCompleted), lastCompleted, :lastCompleted),
+            dateAdded = COALESCE(MIN(dateAdded, :dateAdded), dateAdded, :dateAdded)
+        WHERE id = :id
+        """
+    )
     abstract suspend fun restoreStats(
         id: Long,
         playCount: Int,
