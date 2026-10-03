@@ -121,10 +121,19 @@ constructor(
     suspend fun shuffleAll() {
         queueOperations.queueStateFlow.awaitRestored()
         val songs = librarySongs()
-        if (songs.isEmpty()) return
+        if (songs.isEmpty()) {
+            Timber.w("shuffleAll: the library is empty")
+            return
+        }
         val loaded = CompletableDeferred<Result<Any?>>()
         playbackOperations.shuffle(songs, PlayContext.None) { loaded.complete(it) }
-        loaded.await()
+        // A later load supersedes this one without calling back, so don't wait for it forever.
+        val result = withTimeoutOrNull(SHUFFLE_ALL_LOAD_WAIT_MS) { loaded.await() }
+        if (result == null) {
+            Timber.w("shuffleAll: timed out waiting for playback to load")
+            return
+        }
+        result
             .onSuccess { playbackOperations.play() }
             .onFailure { error -> Timber.e(error, "Failed to load playback after shuffleAll") }
     }
@@ -156,6 +165,9 @@ constructor(
 
 /** How long a request to play something waits for the saved queue to be restored before going ahead anyway. */
 internal const val RESTORE_WAIT_MS = 10_000L
+
+/** How long shuffling the library waits for the first song to load before giving up. */
+internal const val SHUFFLE_ALL_LOAD_WAIT_MS = 15_000L
 
 /**
  * Waits for the saved queue to be restored, so a request to play something made as the app starts isn't

@@ -45,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     // Buffered, so a request that opens the app is delivered once the shell is composed.
     private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
+    private val tabRequestFlow = tabRequests.receiveAsFlow()
 
     @Inject
     lateinit var viewModelFactory: MetroViewModelFactory
@@ -92,7 +93,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
                 S2AppTheme {
-                    ShellRoute(tabRequests = tabRequests.receiveAsFlow())
+                    ShellRoute(tabRequests = tabRequestFlow)
                     PaywallHost(observePaywallRequests)
                 }
             }
