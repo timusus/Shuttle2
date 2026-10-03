@@ -66,7 +66,8 @@ fun SettingsGroup(
 
 /**
  * A setting that opens another screen, or acts when tapped. Android's convention: no trailing chevron; the [summary] carries the current value.
- * [selected] marks the row whose screen is open beside the list, in the secondary container.
+ * Beside an open screen, as in a list-detail layout, pass [selected]: the row becomes selectable and the one whose screen
+ * is open takes the secondary container. Left null, the row is a plain button with no selection state to announce.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -79,19 +80,32 @@ fun LinkSetting(
     iconStyle: SettingIconStyle = SettingIconStyle.Tonal,
     enabled: Boolean = true,
     progress: SettingProgress? = null,
-    selected: Boolean = false,
+    selected: Boolean? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
 ) {
-    SegmentedListItem(
-        onClick = onClick,
-        selected = selected,
-        shapes = shapes,
-        modifier = modifier,
-        colors = settingColors(highlightSelected = true),
-        enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, iconStyle, enabled) } },
-        supportingContent = settingSummary(summary, progress),
-    ) { Text(title) }
+    val leadingContent: (@Composable () -> Unit)? = icon?.let { { SettingIcon(it, iconStyle, enabled) } }
+    if (selected == null) {
+        SegmentedListItem(
+            onClick = onClick,
+            shapes = shapes,
+            modifier = modifier,
+            colors = settingColors(),
+            enabled = enabled,
+            leadingContent = leadingContent,
+            supportingContent = settingSummary(summary, progress),
+        ) { Text(title) }
+    } else {
+        SegmentedListItem(
+            selected = selected,
+            onClick = onClick,
+            shapes = shapes,
+            modifier = modifier,
+            colors = settingColors(highlightSelected = true),
+            enabled = enabled,
+            leadingContent = leadingContent,
+            supportingContent = settingSummary(summary, progress),
+        ) { Text(title) }
+    }
 }
 
 /** An on/off setting; the whole row toggles [checked]. */
