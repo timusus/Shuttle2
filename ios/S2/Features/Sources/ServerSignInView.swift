@@ -278,14 +278,16 @@ struct ServerSignInContent: View {
             SecureField("Password", text: $password)
                 .textContentType(.password)
                 .focused($focus, equals: .password)
-                .submitLabel(.go)
-                .onSubmit(signIn)
+                .submitLabel(state.asksForAuthCode ? .next : .go)
+                .onSubmit { if state.asksForAuthCode { focus = .authCode } else { signIn() } }
                 .accessibilityIdentifier("serverSignIn.password")
             if state.asksForAuthCode {
                 TextField("Two-Factor Code", text: $authCode, prompt: Text("Optional"))
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
                     .focused($focus, equals: .authCode)
+                    .submitLabel(.go)
+                    .onSubmit(signIn)
                     .accessibilityIdentifier("serverSignIn.authCode")
             }
             Toggle("Remember Password", isOn: $rememberPassword)
