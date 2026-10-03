@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.settings.backup
+package com.simplecityapps.shuttle.backup
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe

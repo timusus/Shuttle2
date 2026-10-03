@@ -506,6 +506,10 @@
       {
       "text": "Library backups now include your settings, such as theme, playback, equalizer and library options, and restoring one asks before it replaces the settings on your device. Server sign-ins are never backed up",
       "commits": []
+    },
+    {
+      "text": "New Minimum song length setting in Settings, Library hides short songs like ringtones and voice notes from your songs, albums, artists, genres and search. Playlists still show them",
+      "commits": []
     }
   ]
 }

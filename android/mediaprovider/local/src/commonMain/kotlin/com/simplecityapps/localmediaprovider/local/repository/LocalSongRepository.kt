@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -33,7 +35,9 @@ import kotlinx.coroutines.withContext
 class LocalSongRepository(
     val scope: CoroutineScope,
     private val songDataDao: SongDataDao,
-    private val albumIndex: LibraryAlbumIndex
+    private val albumIndex: LibraryAlbumIndex,
+    /** Songs shorter than this are left out of every query but a lookup by id; a change re-emits [getSongs]. */
+    private val minTrackLength: Flow<MinTrackLength> = flowOf(MinTrackLength.Off)
 ) : SongRepository {
     private val songsRelay: StateFlow<List<Song>?> by lazy {
         songDataDao
@@ -50,7 +54,8 @@ class LocalSongRepository(
     /**
      * Songs by id (a restored queue, a song a controller names) are read by id, so the cost is bounded by how many are
      * asked for rather than by the library, and come in no particular order, as their callers look them up by id;
-     * every other query filters the whole library, in the query's sort order.
+     * every other query filters the whole library, in the query's sort order, and leaves out songs under the
+     * [minTrackLength] (a lookup by id is for songs something already holds, a playlist's or the queue's, so it keeps them).
      */
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {
         val songs: Flow<List<Song>?> =
@@ -59,7 +64,7 @@ class LocalSongRepository(
             } else if (query is SongQuery.SongIds) {
                 combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities) }.flowOn(Dispatchers.IO)
             } else {
-                songsRelay.map { songs -> songs?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
+                combine(songsRelay, minTrackLength) { songs, min -> songs?.filter(min::keeps)?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
             }
         return songs.map { result -> result?.matching(query) }
     }
@@ -72,8 +77,10 @@ class LocalSongRepository(
     override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(Dispatchers.IO) {
         val index = albumIndex.albumIndex()
         val songs = index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
+        val min = if (query is SongQuery.SongIds) MinTrackLength.Off else minTrackLength.first()
         songs
             .withAlbumIdentities(index.identities)
+            .filter(min::keeps)
             .filter(query.predicate)
             .sortedWith(query.sortOrder.comparator)
             .matching(query)

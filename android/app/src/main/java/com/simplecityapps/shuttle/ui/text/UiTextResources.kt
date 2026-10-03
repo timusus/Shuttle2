@@ -133,6 +133,12 @@ val StringKey.resId: Int
         StringKey.PREF_RESCAN_FREQUENCY_WEEKLY -> R.string.pref_rescan_frequency_weekly
         StringKey.PREF_EXCLUDE_TITLE -> R.string.pref_exclude_title
         StringKey.PREF_EXCLUDE_SUMMARY -> R.string.pref_exclude_summary
+        StringKey.PREF_MIN_TRACK_LENGTH_TITLE -> R.string.pref_min_track_length_title
+        StringKey.PREF_MIN_TRACK_LENGTH_SUMMARY -> R.string.pref_min_track_length_summary
+        StringKey.PREF_MIN_TRACK_LENGTH_OFF -> R.string.pref_min_track_length_off
+        StringKey.PREF_MIN_TRACK_LENGTH_10_SECONDS -> R.string.pref_min_track_length_10_seconds
+        StringKey.PREF_MIN_TRACK_LENGTH_30_SECONDS -> R.string.pref_min_track_length_30_seconds
+        StringKey.PREF_MIN_TRACK_LENGTH_60_SECONDS -> R.string.pref_min_track_length_60_seconds
         StringKey.PREF_CATEGORY_TITLE_ARTWORK -> R.string.pref_category_title_artwork
         StringKey.PREF_CATEGORY_TITLE_BACKUP -> R.string.pref_category_title_backup
         StringKey.PREF_ARTWORK_WIFI_TITLE -> R.string.pref_artwork_wifi_title

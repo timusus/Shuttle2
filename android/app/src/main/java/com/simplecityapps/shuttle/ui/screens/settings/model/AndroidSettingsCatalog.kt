@@ -8,6 +8,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.downloads.DownloadSettings
+import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -214,6 +215,17 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         title = StringKey.PREF_EXCLUDE_TITLE,
                         summary = StringKey.PREF_EXCLUDE_SUMMARY,
                         key = "pref_excluded"
+                    ),
+                    SettingItem.Choice(
+                        setting = LibrarySettings.MinTrackLength,
+                        title = StringKey.PREF_MIN_TRACK_LENGTH_TITLE,
+                        summary = StringKey.PREF_MIN_TRACK_LENGTH_SUMMARY,
+                        options = listOf(
+                            ChoiceOption(MinTrackLength.Off, StringKey.PREF_MIN_TRACK_LENGTH_OFF),
+                            ChoiceOption(MinTrackLength.TenSeconds, StringKey.PREF_MIN_TRACK_LENGTH_10_SECONDS),
+                            ChoiceOption(MinTrackLength.ThirtySeconds, StringKey.PREF_MIN_TRACK_LENGTH_30_SECONDS),
+                            ChoiceOption(MinTrackLength.SixtySeconds, StringKey.PREF_MIN_TRACK_LENGTH_60_SECONDS)
+                        )
                     )
                 )
             ),

@@ -62,6 +62,18 @@
     <string name="pref_exclude_title">Excluded</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_summary">View/Edit excluded</string>
+    <!-- Settings: Title for the option that hides songs shorter than a chosen length from the library -->
+    <string name="pref_min_track_length_title">Minimum song length</string>
+    <!-- Settings: Description for the minimum song length option; ringtones and voice notes are the short songs it hides -->
+    <string name="pref_min_track_length_summary">Hide shorter songs, like ringtones and voice notes, from your library. Playlists still show them</string>
+    <!-- Settings: Minimum song length choice that hides nothing -->
+    <string name="pref_min_track_length_off">Off</string>
+    <!-- Settings: Minimum song length choice that hides songs under 10 seconds -->
+    <string name="pref_min_track_length_10_seconds">10 seconds</string>
+    <!-- Settings: Minimum song length choice that hides songs under 30 seconds -->
+    <string name="pref_min_track_length_30_seconds">30 seconds</string>
+    <!-- Settings: Minimum song length choice that hides songs under 60 seconds -->
+    <string name="pref_min_track_length_60_seconds">60 seconds</string>
     <!-- Settings: Title for the option to restrict artwork downloading to only work on Wi-Fi -->
     <string name="pref_artwork_wifi_title">Wi-Fi only</string>
     <!-- Settings: Description for the option to restrict artwork downloading to only work on Wi-Fi -->

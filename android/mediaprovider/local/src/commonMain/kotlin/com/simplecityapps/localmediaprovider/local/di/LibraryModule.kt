@@ -25,6 +25,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.smartplaylists.SmartPlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -69,8 +70,9 @@ abstract class LibraryModule {
         fun provideSongRepository(
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
-            albumIndex: LibraryAlbumIndex
-        ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao(), albumIndex)
+            albumIndex: LibraryAlbumIndex,
+            librarySettings: LibrarySettings
+        ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao(), albumIndex, librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -89,15 +91,17 @@ abstract class LibraryModule {
         @SingleIn(AppScope::class)
         fun provideAlbumRepository(
             database: MediaDatabase,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao())
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            librarySettings: LibrarySettings
+        ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao(), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)
         fun provideAlbumArtistRepository(
             database: MediaDatabase,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao())
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            librarySettings: LibrarySettings
+        ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao(), librarySettings.minTrackLength.flow)
 
         @Provides
         @SingleIn(AppScope::class)

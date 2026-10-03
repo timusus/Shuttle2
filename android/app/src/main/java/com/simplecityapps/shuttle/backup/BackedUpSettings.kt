@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.settings.backup
+package com.simplecityapps.shuttle.backup
 
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.settings.PlaybackSettings
@@ -47,6 +47,7 @@ internal object BackedUpSettings {
         EqualizerSettings.PreampGain,
         LibrarySettings.RescanFrequency,
         LibrarySettings.ReportPlaybackToServer,
+        LibrarySettings.MinTrackLength,
         StreamingSettings.UnmeteredQuality,
         StreamingSettings.MeteredQuality,
         DownloadSettings.WifiOnly

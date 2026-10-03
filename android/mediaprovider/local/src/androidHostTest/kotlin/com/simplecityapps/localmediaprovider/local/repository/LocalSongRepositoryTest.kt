@@ -11,7 +11,10 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.trackingId
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.SongDiff
+import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
+import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
@@ -23,8 +26,11 @@ import java.util.concurrent.Executor
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -296,14 +302,67 @@ class LocalSongRepositoryTest {
         return database.songDataDao().get().map { songData -> songData.toSong() }.sortedBy(Song::id)
     }
 
+    @Test
+    fun `a minimum track length hides shorter songs from queries and keeps one exactly that long`() = runTest {
+        val minimum = MutableStateFlow(MinTrackLength.ThirtySeconds)
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(), minimum)
+        database.songDataDao().insert(listOf(songData("Short", duration = 29_999), songData("Exact", duration = 30_000), songData("Long", duration = 200_000), songData("Unknown", duration = 0)))
+
+        repository.loadSongs(SongQuery.All()).map(Song::name) shouldContainExactlyInAnyOrder listOf("Exact", "Long", "Unknown")
+        repository.getSongs(SongQuery.All()).filterNotNull().first().map(Song::name) shouldContainExactlyInAnyOrder listOf("Exact", "Long", "Unknown")
+        repository.loadSongs(SongQuery.Search("Short")) shouldBe emptyList()
+    }
+
+    @Test
+    fun `changing the minimum track length re-emits the library`() = runTest {
+        val minimum = MutableStateFlow(MinTrackLength.Off)
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(), minimum)
+        database.songDataDao().insert(listOf(songData("Short", duration = 5_000), songData("Long", duration = 200_000)))
+        val seen = mutableListOf<List<String?>>()
+
+        val afterChange = repository.getSongs(SongQuery.All())
+            .filterNotNull()
+            .map { songs -> songs.map(Song::name) }
+            .onEach { names ->
+                seen.add(names)
+                minimum.value = MinTrackLength.TenSeconds
+            }
+            .first { names -> "Short" !in names }
+
+        seen.first() shouldContainExactlyInAnyOrder listOf("Short", "Long")
+        afterChange shouldBe listOf("Long")
+    }
+
+    @Test
+    fun `songs asked for by id are kept however short, so playlists and the queue still hold them`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(), MutableStateFlow(MinTrackLength.SixtySeconds))
+        database.songDataDao().insert(listOf(songData("Short", duration = 5_000)))
+        val short = database.songDataDao().get().single().toSong()
+
+        repository.loadSongs(SongQuery.SongIds(listOf(short.id))).map(Song::name) shouldBe listOf("Short")
+        repository.getSongs(SongQuery.SongIds(listOf(short.id))).first().orEmpty().map(Song::name) shouldBe listOf("Short")
+    }
+
+    @Test
+    fun `albums and album artists are built from the songs that pass the minimum`() = runTest {
+        val minimum = MutableStateFlow(MinTrackLength.SixtySeconds)
+        val albums = LocalAlbumRepository(backgroundScope, database.songDataDao(), minimum)
+        val artists = LocalAlbumArtistRepository(backgroundScope, database.songDataDao(), minimum)
+        database.songDataDao().insert(listOf(songData("Ringtone", "Voice", duration = 4_000), songData("Song", "Band", duration = 240_000)))
+
+        albums.getAlbums(AlbumQuery.All()).first().map { album -> album.albumArtist } shouldBe listOf("Band")
+        artists.getAlbumArtists(AlbumArtistQuery.All()).first().map { artist -> artist.name } shouldBe listOf("Band")
+    }
+
     private fun songData(
         name: String,
-        artist: String = "Artist"
+        artist: String = "Artist",
+        duration: Int = 180_000
     ) = SongData(
         name = name,
         track = 1,
         disc = 1,
-        duration = 180_000,
+        duration = duration,
         year = null,
         genres = emptyList(),
         path = "/music/$name.mp3",

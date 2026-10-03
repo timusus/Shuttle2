@@ -102,6 +102,12 @@
 "pref_rescan_frequency_weekly" = "Weekly";
 "pref_exclude_title" = "Excluded";
 "pref_exclude_summary" = "View/Edit excluded";
+"pref_min_track_length_title" = "Minimum song length";
+"pref_min_track_length_summary" = "Hide shorter songs, like ringtones and voice notes, from your library. Playlists still show them";
+"pref_min_track_length_off" = "Off";
+"pref_min_track_length_10_seconds" = "10 seconds";
+"pref_min_track_length_30_seconds" = "30 seconds";
+"pref_min_track_length_60_seconds" = "60 seconds";
 "pref_category_title_artwork" = "Artwork";
 "pref_category_title_backup" = "Backup";
 "pref_artwork_wifi_title" = "Wi-Fi only";

@@ -64,6 +64,7 @@ class SettingKeysTest {
             "SourcesSettings.IncludedFolders: scanner_included_folders = []",
             "SourcesSettings.IncludedFoldersMigrated: scanner_included_folders_migrated = false",
             "LibrarySettings.RescanFrequency: pref_media_rescan_frequency = Never",
+            "LibrarySettings.MinTrackLength: pref_min_track_length = Off",
             "LibrarySettings.ReportPlaybackToServer: pref_report_playback = true",
             "PlaybackSettings.RetainShuffleOnNewQueue: pref_retain_shuffle_on_new_queue = false",
             "PlaybackSettings.UsbDacDirectOutput: pref_bit_perfect_usb = false",
