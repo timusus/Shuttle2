@@ -24,6 +24,7 @@ struct SentryCrashReporterTests {
         #expect(!options.enableNetworkTracking)
         #expect(!options.enableFileIOTracing)
         #expect(!options.enableUserInteractionTracing)
+        #expect(!options.enableAutoBreadcrumbTracking)
         #expect(!options.enableNetworkBreadcrumbs)
         #expect(!options.enableCaptureFailedRequests)
         #expect(!options.attachScreenshot)
@@ -69,5 +70,71 @@ struct SentryCrashReporterTests {
         #expect(scrubbed.extra?["user"] as? String == "signed in as <email>")
         #expect(scrubbed.request?.url == "<url>")
         #expect(scrubbed.request?.queryString == nil)
+    }
+
+    @Test func anEventsTagsAndContextsAreScrubbed() {
+        let event = Event(level: .error)
+        event.tags = ["server": "Tims-NAS.local", "kotlin_native": "true"]
+        event.context = ["sync": ["host": "homeserver:8096", "songs": 12, "nested": ["url": "https://a.example.com/x"]]]
+
+        let scrubbed = TelemetryScrub.event(event)
+
+        #expect(scrubbed.tags == ["server": "<host>", "kotlin_native": "true"])
+        #expect(scrubbed.context?["sync"]?["host"] as? String == "<host>")
+        #expect(scrubbed.context?["sync"]?["songs"] as? Int == 12)
+        #expect((scrubbed.context?["sync"]?["nested"] as? [String: Any])?["url"] as? String == "<url>")
+    }
+
+    // MARK: - The SIGABRT that follows a Kotlin crash
+
+    private func marker() -> KotlinCrashMarker {
+        KotlinCrashMarker(url: FileManager.default.temporaryDirectory.appendingPathComponent("KotlinCrashSent-\(UUID().uuidString)"))
+    }
+
+    private func abortReport(at date: Date, signalOnly: Bool = false) -> Event {
+        let event = Event(level: .fatal)
+        event.timestamp = date
+        let exception = Exception(value: "Signal 6, Code 0", type: signalOnly ? "SIGABRT" : "EXC_CRASH")
+        event.exceptions = [exception]
+        return event
+    }
+
+    @Test func theAbortReportAfterAKotlinCrashIsDroppedOnce() {
+        let marker = marker()
+        let crashed = Date()
+        marker.record(at: crashed)
+
+        #expect(marker.isDuplicate(abortReport(at: crashed.addingTimeInterval(0.2))))
+        #expect(!marker.isDuplicate(abortReport(at: crashed.addingTimeInterval(0.2), signalOnly: true)))
+    }
+
+    @Test func theKotlinEventItselfAndOtherCrashesAreKept() {
+        let marker = marker()
+        let crashed = Date()
+        marker.record(at: crashed)
+
+        let kotlin = KotlinCrashEvent.make(message: "boom", stackTrace: "", exceptionClass: "kotlin.IllegalStateException")
+        kotlin.timestamp = crashed
+        #expect(!marker.isDuplicate(kotlin))
+
+        let segv = Event(level: .fatal)
+        segv.timestamp = crashed
+        segv.exceptions = [Exception(value: "Signal 11", type: "SIGSEGV")]
+        #expect(!marker.isDuplicate(segv))
+
+        #expect(marker.isDuplicate(abortReport(at: crashed, signalOnly: true)))
+    }
+
+    @Test func anAbortLongAfterTheMarkerIsKeptAndClearsIt() {
+        let marker = marker()
+        let crashed = Date()
+        marker.record(at: crashed)
+
+        #expect(!marker.isDuplicate(abortReport(at: crashed.addingTimeInterval(3600))))
+        #expect(!marker.isDuplicate(abortReport(at: crashed)))
+    }
+
+    @Test func noMarkerKeepsEveryAbort() {
+        #expect(!marker().isDuplicate(abortReport(at: Date())))
     }
 }
