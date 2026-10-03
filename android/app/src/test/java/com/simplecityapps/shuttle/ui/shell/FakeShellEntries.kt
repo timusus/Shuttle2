@@ -60,7 +60,7 @@ fun fakeShellEntryProvider(
             onShuffle = {},
             onMore = {},
         ) {
-            items(album?.songs.orEmpty(), key = { it.id }) { song -> SongRow(title = song.title, subtitle = song.artist, onClick = {}, trackNumber = song.track) }
+            items(album?.songs.orEmpty(), key = { it.id }) { song -> SongRow(title = song.title, subtitle = song.artist.takeIf { it != album?.artist }, onClick = {}, trackNumber = song.track) }
         }
     }
     entry<AlbumArtistRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
