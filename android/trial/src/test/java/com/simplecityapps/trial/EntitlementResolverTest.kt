@@ -1,5 +1,8 @@
 package com.simplecityapps.trial
 
+import com.simplecityapps.shuttle.entitlement.CachedPro
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant

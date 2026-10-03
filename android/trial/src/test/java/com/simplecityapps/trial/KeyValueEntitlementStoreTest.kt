@@ -1,5 +1,7 @@
 package com.simplecityapps.trial
 
+import com.simplecityapps.shuttle.entitlement.CachedPro
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import kotlin.time.Instant
 import org.junit.Assert.assertEquals

@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.paywall
 
 import com.simplecityapps.fakes.FakeBilling
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.trial.PaywallOffers
-import com.simplecityapps.trial.ProSource
 
 /** Paywall UI states the characterisation and screenshot tests render. */
 object PaywallScenarios {

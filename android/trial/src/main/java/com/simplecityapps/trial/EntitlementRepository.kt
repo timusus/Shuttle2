@@ -1,5 +1,10 @@
 package com.simplecityapps.trial
 
+import com.simplecityapps.shuttle.entitlement.CachedPro
+import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.resolvesAsDebug
+import com.simplecityapps.shuttle.entitlement.toEntitlement
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,7 +27,7 @@ import timber.log.Timber
  * The single source of the user's [Entitlement].
  *
  * Pro comes from any completed purchase of a [ProductIds] product, legacy ones included. Otherwise the user gets
- * one 14-day server trial, which [ServerAccessGate] starts the first time they stream or download from a remote server;
+ * one 14-day server trial, which [com.simplecityapps.shuttle.entitlement.ServerAccessGate] starts the first time they stream or download from a remote server;
  * the old first-launch trial doesn't count against it.
  *
  * @param owned completed purchases from Play, or null until Play has answered.
@@ -44,7 +49,7 @@ class EntitlementRepository(
         combine(owned, trialStartedAt, debugOverride) { owned, trialStartedAt, override -> Triple(owned, trialStartedAt, override) }
             .transformLatest { (owned, trialStartedAt, override) ->
                 while (true) {
-                    val entitlement = override.toEntitlement(clock.now()) ?: resolveEntitlement(owned, store.cachedPro, trialStartedAt, clock.now(), isDebug)
+                    val entitlement = override.toEntitlement(clock.now()) ?: resolveEntitlement(owned, store.cachedPro, trialStartedAt, clock.now(), override.resolvesAsDebug(isDebug))
                     emit(entitlement)
                     // Re-resolve when the trial runs out, so collectors see it expire.
                     if (entitlement !is Entitlement.Trial) break
@@ -55,7 +60,7 @@ class EntitlementRepository(
             .stateIn(
                 coroutineScope,
                 SharingStarted.Eagerly,
-                debugOverride.value.toEntitlement(clock.now()) ?: resolveEntitlement(owned.value, store.cachedPro, trialStartedAt.value, clock.now(), isDebug)
+                debugOverride.value.toEntitlement(clock.now()) ?: resolveEntitlement(owned.value, store.cachedPro, trialStartedAt.value, clock.now(), debugOverride.value.resolvesAsDebug(isDebug))
             )
 
     init {
@@ -75,7 +80,7 @@ class EntitlementRepository(
         if (trialStartedAt.value != null) return false
         val owned = owned.filterNotNull().first()
         val now = clock.now()
-        if (resolveEntitlement(owned, store.cachedPro, null, now, isDebug) is Entitlement.Pro) return false
+        if (resolveEntitlement(owned, store.cachedPro, null, now, debugOverride.value.resolvesAsDebug(isDebug)) is Entitlement.Pro) return false
 
         store.serverTrialStartedAt = now
         trialStartedAt.value = now

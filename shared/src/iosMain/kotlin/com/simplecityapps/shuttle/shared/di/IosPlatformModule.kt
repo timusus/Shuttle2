@@ -1,9 +1,6 @@
 package com.simplecityapps.shuttle.shared.di
 
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
-import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
-import com.simplecityapps.shuttle.entitlement.TryAddServer
-import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.platform.PlatformFeatures
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
@@ -28,7 +25,7 @@ import kotlinx.coroutines.flow.flowOf
 
 /**
  * The platform seams iOS doesn't have yet (docs/architecture/ios-port/phase-4-platform-seams.md): no widgets, Cast,
- * downloads, entitlements or local files, so each is off or a no-op, and the screens hide what they would offer.
+ * downloads or local files, so each is off or a no-op, and the screens hide what they would offer.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -65,22 +62,7 @@ class IosPlatformModule {
     @Provides
     fun provideSongFileDeleter(): SongFileDeleter = SongFileDeleter { false }
 
-    /** No entitlements on iOS until phase 9, so a download is never refused on their account. */
-    @Provides
-    fun provideTryDownloadFromServer(): TryDownloadFromServer = TryDownloadFromServer { true }
-
-    /** No entitlements on iOS until phase 9, so a server's sign-in always opens. */
-    @Provides
-    fun provideTryAddServer(): TryAddServer = TryAddServer { true }
-
-    /** No entitlements on iOS until phase 9, so the sign-in never discloses that streaming needs Pro. */
-    @Provides
-    fun provideObserveServerStreamingNeedsPro(): ObserveServerStreamingNeedsPro {
-        val needsPro = MutableStateFlow(false).asStateFlow()
-        return ObserveServerStreamingNeedsPro { needsPro }
-    }
-
-    /** No monetisation analytics on iOS until StoreKit (#609), so a sign-in isn't recorded. */
+    /** iOS records no monetisation analytics, so a sign-in isn't recorded. */
     @Provides
     fun provideServerSignInAnalytics(): ServerSignInAnalytics = ServerSignInAnalytics { }
 

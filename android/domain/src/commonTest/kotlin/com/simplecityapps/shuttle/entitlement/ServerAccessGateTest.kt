@@ -1,6 +1,9 @@
-package com.simplecityapps.trial
+package com.simplecityapps.shuttle.entitlement
 
-import com.simplecityapps.shuttle.entitlement.PaywallSource
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -8,10 +11,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerAccessGateTest {
@@ -22,7 +21,12 @@ class ServerAccessGateTest {
         true
     }
 
-    private fun requests(block: suspend TestScope.() -> Unit): List<PaywallSource> {
+    private fun requests(block: suspend TestScope.() -> Unit): List<PaywallSource> = requests(gate, block)
+
+    private fun requests(
+        gate: ServerAccessGate,
+        block: suspend TestScope.() -> Unit
+    ): List<PaywallSource> {
         val requests = mutableListOf<PaywallSource>()
         runTest(UnconfinedTestDispatcher()) {
             backgroundScope.launch { gate.paywallRequests.collect { requests += it } }
@@ -30,6 +34,9 @@ class ServerAccessGateTest {
         }
         return requests
     }
+
+    /** iOS: the trial is a free App Store purchase, so only the paywall can start it. */
+    private val consentGate = ServerAccessGate(entitlement, startTrial = null)
 
     @Test
     fun `adding a server doesn't start the trial, so a cancelled sign-in doesn't use it up`() {
@@ -97,5 +104,33 @@ class ServerAccessGateTest {
         entitlement.value = Entitlement.Free(trialUsed = true)
         runTest { gate.tryStreamFromServer() }
         assertEquals(emptyList<PaywallSource>(), requests {})
+    }
+
+    @Test
+    fun `where only the paywall can start the trial, the first stream or download opens it instead`() {
+        val requests = requests(consentGate) {
+            assertFalse(consentGate.tryStreamFromServer())
+            assertFalse(consentGate.tryDownloadFromServer())
+        }
+        assertEquals(listOf(PaywallSource.ServerPlayback, PaywallSource.ServerDownload), requests)
+    }
+
+    @Test
+    fun `where only the paywall can start the trial, a user who hasn't had it may still add a server`() {
+        assertEquals(emptyList<PaywallSource>(), requests(consentGate) { assertTrue(consentGate.tryAddServer()) })
+    }
+
+    @Test
+    fun `where only the paywall can start the trial, trial and Pro users stream and a user whose trial ended doesn't`() {
+        listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.Lifetime)).forEach {
+            entitlement.value = it
+            assertEquals(emptyList<PaywallSource>(), requests(consentGate) { assertTrue(consentGate.tryStreamFromServer()) })
+        }
+        entitlement.value = Entitlement.Free(trialUsed = true)
+        val requests = requests(consentGate) {
+            assertFalse(consentGate.tryAddServer())
+            assertFalse(consentGate.tryStreamFromServer())
+        }
+        assertEquals(listOf(PaywallSource.AddServer, PaywallSource.ServerPlayback), requests)
     }
 }

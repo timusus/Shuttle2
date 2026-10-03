@@ -3,10 +3,10 @@ package com.simplecityapps.shuttle.entitlement
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.shuttle.downloads.SongDownload
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ProSource
-import com.simplecityapps.trial.ServerAccessGate
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -2,9 +2,11 @@ package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
+import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
@@ -89,6 +91,12 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Authenticated artwork urls for songs, albums and album artists; Swift's `ArtworkLoader` fetches and decodes. */
     val artworkUrls: ArtworkUrls
+
+    /** The user's entitlement, fed from StoreKit by Swift's `StoreKitManager`. */
+    val storeEntitlements: StoreEntitlements
+
+    /** A gated action's paywall requests, which Swift's `PaywallPresenter` answers. */
+    val observePaywallRequests: ObservePaywallRequests
 
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel

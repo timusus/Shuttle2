@@ -15,12 +15,14 @@ import com.simplecityapps.shuttle.model.Song
  * Each stream carries the song's ReplayGain under the user's [replayGainMode] and [preAmpGainDb], by the rule Android's
  * `ReplayGainAudioProcessor` applies ([replayGainDb]); the engine's limiter keeps a boost from clipping. Both are read
  * as each song is resolved, so a change applies from the next song. A provider that can't build a URL (signed out, no
- * address) throws, which fails the song as the controller expects.
+ * address) throws, which fails the song as the controller expects, and so does a server song that
+ * [allowsServerStream] refuses (streaming needs Shuttle Music Pro or the trial), so the controller skips it.
  */
 class SongStreamResolver(
     private val streamUrls: Collection<StreamUrlProvider>,
     private val replayGainMode: () -> ReplayGainMode,
-    private val preAmpGainDb: () -> Float
+    private val preAmpGainDb: () -> Float,
+    private val allowsServerStream: suspend (Song) -> Boolean = { true }
 ) : IosStreamResolver {
     override suspend fun resolve(
         song: Song,
@@ -28,6 +30,7 @@ class SongStreamResolver(
     ): IosStream {
         val provider = streamUrls.forPath(song.path)
         val gainDb = replayGainDb(replayGainMode(), preAmpGainDb().toDouble(), song.replayGain).toFloat()
+        if (provider != null && !allowsServerStream(song)) throw ServerStreamNotAllowedException(song)
         return when {
             provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs), gainDb = gainDb, opensAtPosition = true)
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
@@ -56,3 +59,8 @@ class SongStreamResolver(
         const val HEX = "0123456789ABCDEF"
     }
 }
+
+/** A server song refused because streaming it needs Shuttle Music Pro or the trial. */
+class ServerStreamNotAllowedException(
+    song: Song
+) : IllegalStateException("Streaming ${song.name} from a server needs Shuttle Music Pro")

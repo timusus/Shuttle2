@@ -51,10 +51,10 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypes
 import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.PaywallPlan
-import com.simplecityapps.trial.ProSource
 
 /**
  * The S2 Pro paywall: where the user stands, what Pro unlocks, and the plans with Play's prices. While Play's

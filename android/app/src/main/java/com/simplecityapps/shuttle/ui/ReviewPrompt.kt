@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui
 
+import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.trial.Entitlement
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days

@@ -1,9 +1,9 @@
 package com.simplecityapps.shuttle.entitlement
 
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ServerAccessGate
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo

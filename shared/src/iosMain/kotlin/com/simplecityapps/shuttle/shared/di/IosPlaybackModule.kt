@@ -18,6 +18,7 @@ import com.simplecityapps.provider.jellyfin.JellyfinStreamUrlProvider
 import com.simplecityapps.shuttle.di.AppSupervisorJob
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
+import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosEqualizer
 import com.simplecityapps.shuttle.shared.playback.IosPlaybackStore
@@ -38,7 +39,7 @@ import kotlinx.coroutines.Job
 /**
  * iOS playback: the [IosPlayerController] over the Swift engine the graph's factory is given, as the app's
  * [PlaybackOperations] and [QueueOperations], so the shared use cases resolve unchanged, and the [StreamProfile] its
- * FFmpeg build plays, for the Jellyfin and Emby stream URLs. The equalizer ([IosEqualizer]) designs the engine's
+ * FFmpeg build plays, for the Jellyfin and Emby stream URLs, which need Pro or the trial ([GatedServerStreams]). The equalizer ([IosEqualizer]) designs the engine's
  * filters with the shared maths, and each resolved stream carries its ReplayGain. The queue, position, modes and speed
  * are kept across launches in Android's prefs ([PlaybackPreferenceManager]) by an [IosPlaybackStore] started with the
  * controller.
@@ -54,11 +55,12 @@ class IosPlaybackModule {
     fun provideStreamResolver(
         jellyfin: JellyfinStreamUrlProvider,
         emby: EmbyStreamUrlProvider,
-        playbackSettings: PlaybackSettings
+        playbackSettings: PlaybackSettings,
+        gatedServerStreams: GatedServerStreams
     ): IosStreamResolver {
         val replayGainMode = playbackSettings.replayGainMode
         val preAmpGain = playbackSettings.preAmpGain
-        return SongStreamResolver(listOf(jellyfin, emby), { replayGainMode.value }, { preAmpGain.value })
+        return SongStreamResolver(listOf(jellyfin, emby), { replayGainMode.value }, { preAmpGain.value }, gatedServerStreams::allows)
     }
 
     @Provides

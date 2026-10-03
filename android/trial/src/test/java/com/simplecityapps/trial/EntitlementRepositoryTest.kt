@@ -1,6 +1,10 @@
 package com.simplecityapps.trial
 
 import com.android.billingclient.api.Purchase
+import com.simplecityapps.shuttle.entitlement.CachedPro
+import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -196,6 +200,19 @@ class EntitlementRepositoryTest {
         repository.setDebugOverride(DebugEntitlementOverride.None)
         runCurrent()
         assertEquals(Entitlement.Pro(ProSource.Debug), repository.entitlement.value)
+    }
+
+    @Test
+    fun `the store override resolves a debug build from Play as a release build does`() = runTest {
+        val repository = repository(isDebug = true)
+        owned.value = emptySet()
+        repository.setDebugOverride(DebugEntitlementOverride.Store)
+        runCurrent()
+        assertEquals(Entitlement.Free(trialUsed = false), repository.entitlement.value)
+
+        owned.value = setOf(ProductIds.PRO_LIFETIME)
+        runCurrent()
+        assertEquals(Entitlement.Pro(ProSource.Lifetime), repository.entitlement.value)
     }
 
     @Test(expected = IllegalStateException::class)

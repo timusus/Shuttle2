@@ -1,9 +1,9 @@
 package com.simplecityapps.shuttle.ui
 
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ProSource
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant

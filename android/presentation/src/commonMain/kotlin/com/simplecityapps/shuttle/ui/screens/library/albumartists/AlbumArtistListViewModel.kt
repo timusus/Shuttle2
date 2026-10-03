@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.mediaprovider.repository.artists.comparator
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.albumArtistLetterIndex

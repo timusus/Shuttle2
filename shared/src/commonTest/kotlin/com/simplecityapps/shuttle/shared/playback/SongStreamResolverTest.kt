@@ -27,11 +27,17 @@ class SongStreamResolverTest {
 
     private var replayGainMode = ReplayGainMode.Off
     private var preAmpGainDb = 0f
+    private var serverStreamsAllowed = true
+    private val askedToStream = mutableListOf<String>()
 
     private val resolver = SongStreamResolver(
         listOf(FakeStreamUrls("jellyfin"), FakeStreamUrls("emby")),
         replayGainMode = { replayGainMode },
-        preAmpGainDb = { preAmpGainDb }
+        preAmpGainDb = { preAmpGainDb },
+        allowsServerStream = { song ->
+            askedToStream += song.path
+            serverStreamsAllowed
+        }
     )
 
     @Test
@@ -63,6 +69,22 @@ class SongStreamResolverTest {
     @Test
     fun aProviderThatCantBuildTheUrlFailsTheSong() = runTest {
         shouldThrow<IllegalStateException> { resolver.resolve(songAt(path = "jellyfin://item/abc", name = "signed out"), 0) }
+    }
+
+    @Test
+    fun aServerSongTheGateRefusesFailsTheSong() = runTest {
+        serverStreamsAllowed = false
+
+        shouldThrow<ServerStreamNotAllowedException> { resolver.resolve(songAt(path = "jellyfin://item/abc"), 0) }
+    }
+
+    @Test
+    fun onlyServerSongsAskTheGate() = runTest {
+        serverStreamsAllowed = false
+
+        resolver.resolve(songAt(path = "/Music/song.flac"), 0).url shouldBe "file:///Music/song.flac"
+        resolver.resolve(songAt(path = "demo://1"), 0).url shouldBe "demo://1"
+        askedToStream shouldBe emptyList()
     }
 
     @Test

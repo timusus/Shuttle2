@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.entitlement
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.shuttle.downloads.SongDownload
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.trial.ServerAccessGate
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
