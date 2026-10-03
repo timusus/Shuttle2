@@ -123,6 +123,8 @@
 "pref_view_changelog_title" = "View changelog";
 "pref_view_licenses_title" = "View licenses";
 "settings_group_advanced" = "Advanced";
+"settings_group_streaming_and_downloads" = "Streaming & downloads";
+"settings_group_scanning" = "Scanning";
 "pref_file_logging_title" = "Debug logging";
 "pref_file_logging_subtitle" = "Writes debug logs to a file on disk";
 "pref_copy_debug_logs_subtitle" = "Copy debug logs";
