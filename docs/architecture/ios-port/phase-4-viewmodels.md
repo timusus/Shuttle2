@@ -241,12 +241,12 @@ commonMain. The real blocker was the layering (presentation sees only core and d
   `EmbyServerAuthentication`, `PlexServerAuthentication`) `@IntoMap` under `MediaProviderTypeKey`, and maps a
   failure to its `userDescription()` there, so `SignInToServer` shows the message as it comes;
 - the ViewModel and its use cases (`SignInToServer`, `SignInWithQuickConnect`, `CheckQuickConnectAvailable`,
-  `ReadServerLogin`, `ForgetServerLogin`) are in `presentation`'s `commonMain`, and the analytics call is the
-  `ServerSignInAnalytics` port, bound to `MonetisationAnalytics` in app's `di/ServerSignInAnalyticsModule`.
+  `ReadServerLogin`, `ForgetServerLogin`) are in `presentation`'s `commonMain`; `SignInToServer` and
+  `SignInWithQuickConnect` send their events through the shared `MonetisationAnalytics` (`:android:domain`, #776).
 
 iOS builds it from `IosAppGraph.serverSignInViewModelFactory` for Jellyfin (with Quick Connect), Emby and
 Plex (with its optional 2FA code). Until entitlements (phase 9) and StoreKit (#609) there is no
-Pro disclosure and no sign-in analytics on iOS.
+Pro disclosure on iOS; its sign-in events go to PostHog since #776.
 
 **`PaywallViewModel` (S5) is deferred to StoreKit (#609).** It needs `Billing`, `Entitlement` and
 `MonetisationAnalytics`, which are Play Billing on Android and have no iOS counterpart yet, so it stays in app.
