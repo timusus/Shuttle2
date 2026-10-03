@@ -10,7 +10,7 @@ import SwiftUI
 /// "Open in Shuttle Music?" alert in front of a URL that nothing scripted can dismiss. Actions:
 ///
 ///     tab?name=home|library|search           select a root tab (pops it to its root)
-///     library?category=albums|songs|...      select a library category
+///     library?category=albums|songs|...      show a library category (selected on iPad, pushed on the iPhone's Library tab)
 ///     route?to=sources|equalizer             push onto the current stack (Settings' stack while it is up)
 ///     settings?open=1|0                      the Settings sheet
 ///     player?open=1|0                        Now Playing
@@ -51,7 +51,13 @@ struct ScreenshotHooksModifier: ViewModifier {
             navigator.selection = .tab(tab)
         case "library":
             guard let category = LibraryCategory(rawValue: query["category"] ?? "") else { return }
-            navigator.selectLibraryCategory(category)
+            if UIDevice.current.userInterfaceIdiom == .pad {
+                navigator.selectLibraryCategory(category)
+            } else {
+                // The compact tab bar has no category tags: open the Library tab and push the category on it.
+                navigator.selection = .tab(.library)
+                navigator.open(.libraryCategory(category))
+            }
         case "route":
             switch query["to"] {
             case "sources": navigator.open(.sources)
