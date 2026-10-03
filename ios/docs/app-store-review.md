@@ -26,7 +26,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 ## Review notes (paste into "Notes" under App Review Information)
 
 ```
-Shuttle Music is a music player for the user's own Jellyfin, Emby or Plex media server. It has no
+Shuttle Music is a music player for the user's own Jellyfin or Emby media server. It has no
 catalogue of its own, so it needs a server to show anything. We have set up a demo Jellyfin server:
 
   Server address: <DEMO SERVER URL, e.g. https://demo.example.com>
@@ -40,7 +40,7 @@ Genres, Playlists), Search, Now Playing, the queue and Settings > Equalizer all 
 In-app purchase: Shuttle Music is free to download. Streaming from a server is part of Shuttle Music
 Pro: a 14-day free trial begins the first time a song from a server is played, after which Pro is a
 one-off lifetime purchase (no subscription). A sandbox Apple Account is enough to test the purchase,
-and Restore Purchases is on the paywall.
+and Restore Purchases is on the paywall and in Settings.
 
 Background audio: UIBackgroundModes is limited to audio, used so music keeps playing with the screen
 locked or the app in the background, with lock screen and Control Centre controls.
@@ -60,7 +60,7 @@ source is available at <FFMPEG SOURCE URL>.
 Contact: <owner email / phone as in ASC>.
 ```
 
-(About 1,950 characters; the limit is 4,000.)
+(About 1,960 characters; the limit is 4,000.)
 
 ## Checks and open items
 

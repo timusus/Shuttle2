@@ -1,1 +1,1 @@
-First release of Shuttle Music for iPhone and iPad: a music player for your own Jellyfin, Emby or Plex server.
+First release of Shuttle Music for iPhone and iPad: a music player for your own Jellyfin or Emby server.
