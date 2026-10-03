@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -17,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -27,10 +30,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.LocalRootColorScheme
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
+
+/** How much of the artwork's secondaryContainer tints the mini player's fill. */
+internal const val MiniPlayerArtworkTint = 0.25f
+
+/**
+ * The mini player's fill: [root] without artwork, under artwork a light wash of the cover's secondaryContainer over
+ * [surface] of the root scheme (the artwork scheme's own surfaces already carry the cover's chroma, which would
+ * stack into a saturated bar), so the bar reads as tinted beside the neutral navigation bar.
+ */
+@Composable
+@ReadOnlyComposable
+fun miniPlayerFill(root: Color, surface: (ColorScheme) -> Color): Color = artworkRole(root, lerp(surface(LocalRootColorScheme.current ?: MaterialTheme.colorScheme), MaterialTheme.colorScheme.secondaryContainer, MiniPlayerArtworkTint))
 
 /** The mini player's height at the default text size: the shell docks the player sheet's Mini level this far above the nav bar. */
 private val MiniPlayerBaseHeight = 72.dp
@@ -77,12 +93,12 @@ fun S2MiniPlayer(
     castingTo: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
-    // Under artwork, the cover's secondaryContainer: the tone Now Playing's ground starts from.
+    // Under artwork, a light wash of the cover's secondaryContainer over the usual fill.
     Surface(
         onClick = onClick,
         modifier = modifier,
-        color = artworkRole(colors.surfaceContainerHigh, colors.secondaryContainer),
-        contentColor = artworkRole(colors.onSurface, colors.onSecondaryContainer),
+        color = miniPlayerFill(colors.surfaceContainerHigh) { it.surfaceContainerHigh },
+        contentColor = colors.onSurface,
     ) {
         Column {
             Row(
@@ -96,8 +112,7 @@ fun S2MiniPlayer(
                 Column(Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (castingTo != null) {
-                        // primary is too light for text on an artwork container.
-                        val castColor = artworkRole(colors.primary, colors.onSecondaryContainer)
+                        val castColor = colors.primary
                         Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.Cast, contentDescription = null, tint = castColor, modifier = Modifier.size(S2IconSize.small))
                             Text(

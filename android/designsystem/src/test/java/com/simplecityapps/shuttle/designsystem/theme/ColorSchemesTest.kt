@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.luminance
 import com.materialkolor.PaletteStyle
 import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.toHct
+import com.simplecityapps.shuttle.designsystem.component.MiniPlayerArtworkTint
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThan
@@ -142,10 +143,15 @@ class ColorSchemesTest {
                     // The controls colour, which the bar's Queue label is in
                     scheme.onSecondaryContainer.contrastRatio(ground) shouldBeGreaterThan 4.5
                 }
-                // The mini player's fill
-                scheme.onSecondaryContainer.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
-                scheme.onSurfaceVariant.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
-                scheme.primary.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 3.0
+                // The mini player's fill: a light wash of secondaryContainer over the root scheme's surfaceContainerHigh (docked, surfaceContainer)
+                val root = accentColorScheme(S2Accent.Neutral, isDark)
+                for (surface in listOf(root.surfaceContainerHigh, root.surfaceContainer)) {
+                    val mini = lerp(surface, scheme.secondaryContainer, MiniPlayerArtworkTint)
+                    scheme.onSurface.contrastRatio(mini) shouldBeGreaterThan 4.5
+                    scheme.onSurfaceVariant.contrastRatio(mini) shouldBeGreaterThan 4.5
+                    scheme.primary.contrastRatio(mini) shouldBeGreaterThan 4.5 // the casting line
+                    scheme.primary.contrastRatio(mini) shouldBeGreaterThan 3.0 // the play button and progress line
+                }
             }
         }
     }
