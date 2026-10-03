@@ -347,10 +347,12 @@ task lists as checkboxes; tables do not):
   building the screen and approving the component are independent. The owner reviews
   `docs/design/catalog/index.md` on their own time, not as a gate any build-order step waits on
   (app-shell §6 build order updated to match). Screens still build their UI only from
-  `:android:designsystem` components; a check in `support/scripts/lint` flags
+  `:android:designsystem` components; a Konsist rule flags
   `androidx.compose.material3` component imports in `ui/screens/**` (theme and token access
   allowed), so a screen cannot slip in an uncatalogued control — catalogued but not yet approved
-  is fine, raw Material3 is not.
+  is fine, raw Material3 is not. The check is `DesignSystemRules` in `:android:architecture-tests`,
+  baselined; [`component-migration.md`](component-migration.md) tracks component status and the
+  screens still to migrate.
 - **Approve**: the owner ticks the box (on GitHub or by telling a session), and the commit records
   the date, the commit hash and a hash of that component's PNGs.
 - **A change to a component flows to every screen that uses it.** Because screens only ever import
