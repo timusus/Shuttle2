@@ -93,7 +93,7 @@ def config_for(canvas_name, slot):
         "deviceWidth": c["deviceWidth"],
         "island": c["island"],
         "headline": slot["headline"],
-        "subheadline": slot.get("subheadline", ""),
+        "subheadline": slot.get(f"subheadline_{c['device']}", slot.get("subheadline", "")),
         "screenshotUrl": "file://" + os.path.join(RAW, c["device"], f"{slot['n']}.png"),
     }
     for key in SCALED_KEYS:

@@ -8,7 +8,8 @@
       "layout": "hero",
       "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:2", "maestro:albums-top.yaml", "sleep:1"],
       "headline": "Your Jellyfin, Emby & Plex music.",
-      "subheadline": "Plus the music on your iPhone."
+      "subheadline": "Plus the music on your iPhone.",
+      "subheadline_ipad": "Plus the music on your iPad."
     },
     {
       "n": 2,
