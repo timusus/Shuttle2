@@ -7,8 +7,16 @@ enum NowPlayingPresentationStyle: Equatable {
     case formSheet
 
     static func resolve(for tier: LayoutTier) -> NowPlayingPresentationStyle {
-        tier == .compact ? .fullScreenCover : .formSheet
+        #if DEBUG
+        if forcesFullScreenCover { return .fullScreenCover }
+        #endif
+        return tier == .compact ? .fullScreenCover : .formSheet
     }
+
+    #if DEBUG
+    /// Full screen in every tier, for the App Store screenshots' iPad player (`ScreenshotHooks`' `player?fullScreen=1`).
+    nonisolated(unsafe) static var forcesFullScreenCover = false
+    #endif
 }
 
 /// How a sheet opened from inside Now Playing (the queue) is presented, after Shuttle Podcasts'

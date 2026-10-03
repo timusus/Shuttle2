@@ -1,5 +1,0 @@
-# Signs in to the Jellyfin test server through Settings > Sources (every tier), erasing the app's state first.
-# Run by capture.sh through ios/scripts/maestro-sim.sh, which supplies the MAESTRO_ env.
-appId: com.simplecityapps.shuttle.dev
----
-- runFlow: ../../../maestro/sign-in-jellyfin-settings-ipad.yaml

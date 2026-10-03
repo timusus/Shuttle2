@@ -10,10 +10,12 @@ import SwiftUI
 /// "Open in Shuttle Music?" alert in front of a URL that nothing scripted can dismiss. Actions:
 ///
 ///     tab?name=home|library|search           select a root tab (pops it to its root)
-///     library?category=albums|songs|...      show a library category (selected on iPad, pushed on the iPhone's Library tab)
+///     library?category=albums|songs|...      show a library category (selected in the iPad's sidebar, or in the
+///                                            iPhone's Library tab as its chip would, so there's no back button)
 ///     route?to=sources|equalizer             push onto the current stack (Settings' stack while it is up)
 ///     settings?open=1|0                      the Settings sheet
-///     player?open=1|0                        Now Playing
+///     player?open=1|0[&fullScreen=1]         Now Playing; fullScreen=1 covers the screen on iPad too, rather than
+///                                            a form sheet over a dimmed library
 ///     reset                                  close every sheet and pop the selected root
 ///
 /// What a hook can't reach (the queue sheet, the first album) the capture flows tap through Maestro.
@@ -54,9 +56,10 @@ struct ScreenshotHooksModifier: ViewModifier {
             if UIDevice.current.userInterfaceIdiom == .pad {
                 navigator.selectLibraryCategory(category)
             } else {
-                // The compact tab bar has no category tags: open the Library tab and push the category on it.
+                // The compact tab bar has no category tags: choose it on the Library tab's rail (`LibraryView`'s
+                // stored category), then show the tab, popped to that root.
+                UserDefaults.standard.set(category.rawValue, forKey: "library.category")
                 navigator.selection = .tab(.library)
-                navigator.open(.libraryCategory(category))
             }
         case "route":
             switch query["to"] {
@@ -67,9 +70,11 @@ struct ScreenshotHooksModifier: ViewModifier {
         case "settings":
             navigator.showsSettings = query["open"] == "1"
         case "player":
+            NowPlayingPresentationStyle.forcesFullScreenCover = query["fullScreen"] == "1"
             showNowPlaying = query["open"] == "1"
         case "reset":
             showNowPlaying = false
+            NowPlayingPresentationStyle.forcesFullScreenCover = false
             navigator.showsSettings = false
             navigator.selection = navigator.selection
         default:
