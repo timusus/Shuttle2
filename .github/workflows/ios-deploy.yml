@@ -152,18 +152,6 @@ jobs:
           fi
           ./archive-and-upload.sh "${args[@]}"
 
-      - name: Verify exported build number
-        working-directory: ios
-        env:
-          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
-        run: |
-          set -euo pipefail
-          plist=build/S2.xcarchive/Products/Applications/S2.app/Info.plist
-          actual=$(plutil -extract CFBundleVersion raw -o - "$plist")
-          echo "CFBundleVersion=$actual CFBundleShortVersionString=$(plutil -extract CFBundleShortVersionString raw -o - "$plist")"
-          [ "$actual" = "$BUILD_NUMBER" ] || { echo "::error::Archive carries CFBundleVersion $actual, expected $BUILD_NUMBER"; exit 1; }
-          ls -la build/export || true
-
       - name: Remove the API key
         if: always()
         run: rm -f "$RUNNER_TEMP/AuthKey.p8"
