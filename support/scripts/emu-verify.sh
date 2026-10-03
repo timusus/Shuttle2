@@ -69,6 +69,8 @@ CHECKS_DIR="${SCRIPT_DIR}/checks"
 source "${CHECKS_DIR}/_suite_names.sh"
 # shellcheck source=support/scripts/checks/_timeout_fallback.sh
 source "${CHECKS_DIR}/_timeout_fallback.sh"
+# shellcheck source=support/scripts/emu-lane.sh
+source "${SCRIPT_DIR}/emu-lane.sh"
 
 usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
@@ -183,55 +185,10 @@ step() {
 }
 
 # ---- APK: reuse a cached build for HEAD when the tree is clean, else build once ----
-if [ -n "$APK" ]; then
-    [ -f "$APK" ] || { echo "emu-verify: no APK at $APK" >&2; exit 1; }
-    echo "emu-verify: using given APK $APK"
-else
-    HEAD_SHA="$(git rev-parse HEAD)"
-    CACHE_APK="/tmp/s2-apk/${HEAD_SHA}.apk"
-    if [ -f "$CACHE_APK" ] && [ -z "$(git status --porcelain)" ]; then
-        APK="$CACHE_APK"
-        echo "emu-verify: reusing cached APK for HEAD (${HEAD_SHA:0:12}) at $APK"
-    else
-        GRADLE=(./gradlew); [ "$REMOTE_BUILD" = 1 ] && GRADLE=(support/scripts/remote-build.sh)
-        step "building assembleDebug" "${GRADLE[@]}" :android:app:assembleDebug -q || exit 1
-        APK=android/app/build/outputs/apk/debug/app-debug.apk
-        if [ -z "$(git status --porcelain)" ]; then
-            # Only a clean tree may populate the cache: a dirty build is not what HEAD contains.
-            mkdir -p /tmp/s2-apk
-            cp "$APK" "$CACHE_APK"
-            APK="$CACHE_APK"
-            echo "emu-verify: built and cached APK at $APK"
-        else
-            echo "emu-verify: built $APK (dirty tree, not cached)"
-        fi
-    fi
-fi
+emu_resolve_apk || exit 1
 
 # ---- Lane: start, install, seed ----
-step "remote-emu: start" support/scripts/remote-emu.sh start || exit 1
-LANE_STARTED=1
-
-ENV_OUT="$(support/scripts/remote-emu.sh env)" || { echo "emu-verify: remote-emu.sh env FAILED" >&2; exit 1; }
-echo "$ENV_OUT" >>"$LOG"
-eval "$ENV_OUT"
-echo "emu-verify: lane env exported"
-
-if [ "$NO_RESET" = "1" ]; then
-    echo "emu-verify: --no-reset set, skipping remote-emu.sh reset"
-else
-    step "remote-emu: reset" support/scripts/remote-emu.sh reset || exit 1
-fi
-step "remote-emu: install" support/scripts/remote-emu.sh install "$APK" || exit 1
-
-if [ -n "$REMOTE" ]; then
-    step "seed-remote-provider: $REMOTE" support/scripts/seed-remote-provider.sh "$REMOTE" || exit 1
-    export S2_REMOTE="$REMOTE"
-elif [ "$NO_SEED" = "1" ]; then
-    echo "emu-verify: --no-seed set, skipping seed-test-media.sh"
-else
-    step "seed-test-media: playback fixture" support/scripts/seed-test-media.sh playback --skip-onboarding --if-needed || exit 1
-fi
+emu_lane_up || exit 1
 
 # ---- Checks / flows ----
 run_check() {
@@ -246,23 +203,27 @@ run_check() {
     fi
 }
 
+# Maestro screenshots end up flat in tmp/maestro (#725): each run writes to a clean scratch dir, its
+# named PNGs are moved up, and the timestamped run folders earlier versions left behind are removed.
 run_flow() {
-    local flow="$1" name device out maestro_bin
+    local flow="$1" name out rc
     name="$(basename "$flow" .yaml)"
     if [ ! -f "$flow" ]; then
         echo "FAIL $name -- no such flow ($flow)"
         FAILED=$((FAILED + 1))
         return
     fi
-    device="$(support/scripts/remote-emu.sh serial)"
+    MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
     out="${REPO_ROOT}/tmp/maestro"
     mkdir -p "$out"
-    maestro_bin="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}"
-    if MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "$maestro_bin" --device "$device" test --test-output-dir "$out" "$flow" 2>&1 | tee -a "$LOG"; then
+    prune_run_dirs "$out"
+    maestro_run "$flow" "${out}/.run-$$" 2>&1 | tee -a "$LOG"
+    rc=${PIPESTATUS[0]}
+    maestro_collect_shots "${out}/.run-$$" "$out"
+    if [ "$rc" -eq 0 ]; then
         echo "PASS $name"
     else
-        echo "FAIL $name -- Maestro flow failed (output in $out, log $LOG)"
+        echo "FAIL $name -- Maestro flow failed (screenshots in $out, log $LOG)"
         FAILED=$((FAILED + 1))
     fi
 }

@@ -83,3 +83,6 @@ __pycache__/
 # iOS screenshot output (ios-simulator / ios-device skills)
 .ios-screenshots/
 .ios-device-screenshots/
+
+# design-shots.sh output
+shots/
