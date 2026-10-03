@@ -47,7 +47,7 @@ class ResolveSongs(
             val songs = songRepository.loadSongs(SongQuery.ArtistGroupKeys(selection.albumArtists.map { SongQuery.ArtistGroupKey(it.groupKey) }))
             withContext(defaultDispatcher) {
                 val artistIndex = HashMap<AlbumArtistGroupKey, Int>()
-                selection.albumArtists.forEachIndexed { index, artist -> artistIndex.putIfAbsent(artist.groupKey, index) }
+                selection.albumArtists.forEachIndexed { index, artist -> if (artist.groupKey !in artistIndex) artistIndex[artist.groupKey] = index }
                 val ranked = songs.map { song ->
                     val rank = minOf(
                         artistIndex[song.albumArtistGroupKey] ?: Int.MAX_VALUE,

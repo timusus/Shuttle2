@@ -4,6 +4,8 @@ import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
+import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import dev.zacsweers.metro.AppScope
@@ -33,5 +35,11 @@ class IosArtworkModule {
      * is what Android reports for artwork it can't seed from, so those surfaces keep the app's own scheme.
      */
     @Provides
-    fun provideArtworkSeedSource(): ArtworkSeedSource = ArtworkSeedSource { ArtworkSeed.None }
+    fun provideArtworkSeedSource(): ArtworkSeedSource = NoArtworkSeedSource
+}
+
+private object NoArtworkSeedSource : ArtworkSeedSource {
+    override suspend fun seedFor(song: Song): ArtworkSeed = ArtworkSeed.None
+
+    override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed = ArtworkSeed.None
 }
