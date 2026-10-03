@@ -293,6 +293,7 @@ struct DeviceSection: View {
                     IconSquare(systemImage: MediaProviderType.shuttle.symbol, style: .filled(.blue))
                 }
             }
+            .s2Switch()
             .accessibilityIdentifier("sources.thisDevice")
             if state.thisDevice {
                 Label {
