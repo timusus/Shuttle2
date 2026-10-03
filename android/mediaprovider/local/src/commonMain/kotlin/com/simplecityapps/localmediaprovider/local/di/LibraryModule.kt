@@ -133,16 +133,17 @@ abstract class LibraryModule {
         @SingleIn(AppScope::class)
         fun provideSuggestionsRepository(
             database: MediaDatabase,
-            albumIndex: LibraryAlbumIndex
-        ): SuggestionsRepository = LocalSuggestionsRepository(database.suggestionsDao(), albumIndex)
+            albumIndex: LibraryAlbumIndex,
+            songRepository: SongRepository,
+            genreRepository: GenreRepository
+        ): SuggestionsRepository = LocalSuggestionsRepository(database.suggestionsDao(), albumIndex, songRepository, genreRepository)
 
         @Provides
         @SingleIn(AppScope::class)
         fun provideGenreRepository(
             songRepository: SongRepository,
-            database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
             albumIndex: LibraryAlbumIndex
-        ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository, database.songDataDao(), albumIndex)
+        ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository, albumIndex)
     }
 }

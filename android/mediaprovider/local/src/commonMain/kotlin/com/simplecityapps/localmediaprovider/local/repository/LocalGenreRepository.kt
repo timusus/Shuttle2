@@ -1,6 +1,5 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.genres.comparator
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.stateIn
 class LocalGenreRepository(
     private val scope: CoroutineScope,
     val songRepository: SongRepository,
-    private val songDataDao: SongDataDao,
     private val albumIndex: LibraryAlbumIndex
 ) : GenreRepository {
     private val genreRelay: StateFlow<Map<String, List<Song>>?> by lazy {
@@ -84,15 +82,14 @@ class LocalGenreRepository(
         }
 
     /**
-     * One song per album identity of the genre, by album artist then album, up to [limit]: the genre's song ids come
-     * from the database and the albums from the library's [albumIndex], so only the covers' songs are read whole.
+     * One song per album identity of the genre, by album artist then album, up to [limit]: the genre's songs are the
+     * genre list's own (so a song too short for the library isn't a cover) and the albums the library's [albumIndex].
      */
-    override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = combine(songDataDao.getSongIdsForGenre(genre), albumIndex.updates) { ids, index ->
-        val coverIds = ids
-            .sortedBy { id -> index.identities[id]?.albumArtistName?.lowercase().orEmpty() }
-            .distinctBy { id -> index.identities[id]?.groupKey ?: id }
+    override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = combine(genreRelay.filterNotNull(), albumIndex.updates) { genres, index ->
+        genres[genre].orEmpty()
+            .sortedWith(compareBy<Song>({ index.identities[it.id]?.albumArtistName?.lowercase().orEmpty() }, { it.album?.lowercase() }, { it.id }))
+            .distinctBy { song -> index.identities[song.id]?.groupKey ?: song.id }
             .take(limit)
-        val songs = songDataDao.loadByIds(coverIds).associateBy { it.id }
-        coverIds.mapNotNull(songs::get).withAlbumIdentities(index.identities)
+            .withAlbumIdentities(index.identities)
     }.flowOn(Dispatchers.IO)
 }

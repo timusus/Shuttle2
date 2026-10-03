@@ -344,6 +344,19 @@ class LocalSongRepositoryTest {
     }
 
     @Test
+    fun `album and artist key queries leave out songs under the minimum`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(), MutableStateFlow(MinTrackLength.ThirtySeconds))
+        database.songDataDao().insert(listOf(songData("Intro", duration = 8_000), songData("Song", duration = 200_000)))
+        val album = SongQuery.AlbumGroupKey(repository.loadSongs(SongQuery.All()).single().albumGroupKey)
+        val artist = SongQuery.ArtistGroupKey(album.key?.albumArtistGroupKey)
+
+        repository.loadSongs(album).map(Song::name) shouldBe listOf("Song")
+        repository.loadSongs(SongQuery.AlbumGroupKeys(listOf(album))).map(Song::name) shouldBe listOf("Song")
+        repository.loadSongs(SongQuery.ArtistGroupKeys(listOf(artist))).map(Song::name) shouldBe listOf("Song")
+        repository.getSongs(album).filterNotNull().first().map(Song::name) shouldBe listOf("Song")
+    }
+
+    @Test
     fun `albums and album artists are built from the songs that pass the minimum`() = runTest {
         val minimum = MutableStateFlow(MinTrackLength.SixtySeconds)
         val albums = LocalAlbumRepository(backgroundScope, database.songDataDao(), minimum)

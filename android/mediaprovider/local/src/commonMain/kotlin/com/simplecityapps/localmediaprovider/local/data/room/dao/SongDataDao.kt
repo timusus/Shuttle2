@@ -35,20 +35,6 @@ abstract class SongDataDao {
     @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
     abstract fun getAllSongData(): Flow<List<SongData>>
 
-    /**
-     * The ids of the songs tagged [genre], by album name then id: what a genre tile's cover mosaic (#633) picks its
-     * albums from, by album identity, before reading just those songs. [genre] matches a whole entry of the `;`-joined
-     * genres column, case-sensitively, as the genre list does. Excluded songs are left out.
-     */
-    @Query(
-        """
-            SELECT id FROM songs
-            WHERE blacklisted = 0 AND instr(';' || genres || ';', ';' || :genre || ';') > 0
-            ORDER BY LOWER(album), id
-            """
-    )
-    abstract fun getSongIdsForGenre(genre: String): Flow<List<Long>>
-
     /** The whole library, each song holding its album identity among the others. */
     fun getAll(): Flow<List<Song>> = getAllSongData().map { list -> list.map { songData -> songData.toSong() }.withAlbumIdentities() }
 

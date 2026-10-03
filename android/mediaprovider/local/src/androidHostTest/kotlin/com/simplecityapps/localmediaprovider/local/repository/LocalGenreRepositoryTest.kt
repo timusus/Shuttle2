@@ -42,7 +42,7 @@ class LocalGenreRepositoryTest {
             Triple("OK Computer", "Radiohead", listOf("Rock")),
             Triple("Jazz Odyssey", "Spinal Tap", listOf("Jazz Fusion")),
         )
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), database.songDataDao(), index) }
+        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), index) }
 
         repository.getGenreCoverSongs("Jazz", limit = 4).first().map { it.album } shouldBe
             listOf("Mingus Ah Um", "Time Out", "A Love Supreme", "Blue Train")
@@ -59,7 +59,7 @@ class LocalGenreRepositoryTest {
                 createSongData("Head Hunters", "Herbie Hancock", track = 1).copy(genres = listOf("Jazz")),
             ),
         )
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), database.songDataDao(), index) }
+        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), index) }
 
         repository.getGenreCoverSongs("Jazz", limit = 4).first().map { it.album } shouldBe listOf("Head Hunters", "Bitches Brew")
     }
@@ -69,7 +69,7 @@ class LocalGenreRepositoryTest {
         insert(Triple("Kid A", "Radiohead", listOf("Electronic")), Triple("Amnesiac", "Radiohead", listOf("Electronic")))
         val kidA = database.songDataDao().get().first { it.album == "Kid A" }
         database.songDataDao().setExcluded(listOf(kidA.id), true)
-        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), database.songDataDao(), index) }
+        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), index) }
 
         repository.getGenreCoverSongs("Electronic", limit = 4).first().map { it.album } shouldBe listOf("Amnesiac")
         repository.getGenreCoverSongs("Electro", limit = 4).first() shouldBe emptyList()

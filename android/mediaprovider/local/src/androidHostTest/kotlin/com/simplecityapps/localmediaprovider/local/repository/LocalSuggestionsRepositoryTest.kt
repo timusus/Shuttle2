@@ -5,18 +5,23 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
+import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.MinTrackLength
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
@@ -26,10 +31,21 @@ import org.junit.runner.RunWith
 class LocalSuggestionsRepositoryTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
+        .trackingIdentityChanges()
         .allowMainThreadQueries()
         .build()
     private val songDao = database.songDataDao()
-    private val repository = LocalSuggestionsRepository(database.suggestionsDao(), freshAlbumIndex(database))
+    private val minimum = MutableStateFlow(MinTrackLength.Off)
+
+    /** As the app builds it: Home's songs, genres, albums and artists are the library repositories'. */
+    private fun TestScope.repositories(): Pair<LocalSuggestionsRepository, LocalGenreRepository> {
+        val albumIndex = freshAlbumIndex(database)
+        val songs = LocalSongRepository(backgroundScope, songDao, database.libraryAlbumIndex(), minimum)
+        val genres = LocalGenreRepository(backgroundScope, songs, database.libraryAlbumIndex())
+        return LocalSuggestionsRepository(database.suggestionsDao(), albumIndex, songs, genres) to genres
+    }
+
+    private val TestScope.repository get() = repositories().first
 
     private val now = Instant.parse("2026-09-23T08:00:00Z")
 
@@ -160,5 +176,40 @@ class LocalSuggestionsRepositoryTest {
 
         repository.recentlyCompletedAlbums(10).shouldBeEmpty()
         repository.songCount().first() shouldBe 0
+    }
+
+    @Test
+    fun `an album whose songs are all under the minimum track length is left out, and its songs aren't counted`() = runTest {
+        minimum.value = MinTrackLength.ThirtySeconds
+        insert(
+            createSongData(album = "Ringtones", track = 1).copy(duration = 4_000, dateAdded = now),
+            createSongData(album = "Ringtones", track = 2).copy(duration = 6_000, dateAdded = now),
+            createSongData(album = "Blue", albumArtist = "Joni Mitchell", track = 1).copy(dateAdded = now - 1.days),
+            createSongData(album = "Blue", albumArtist = "Joni Mitchell", track = 2).copy(duration = 9_000, dateAdded = now - 1.days)
+        )
+        val repository = repository
+
+        val albums = repository.albums(repository.recentlyAddedAlbums(limit = 10))
+        albums.map { it.name } shouldBe listOf("Blue")
+        albums.single().songCount shouldBe 1
+        repository.albumArtists(listOf(AlbumArtistGroupKey("artist"))).shouldBeEmpty()
+        repository.songCount().first() shouldBe 1
+    }
+
+    @Test
+    fun `genre counts are the Genres screen's, minimum track length and all`() = runTest {
+        minimum.value = MinTrackLength.TenSeconds
+        insert(
+            createSongData(album = "A", track = 1).copy(genres = listOf("Jazz", "Soul")),
+            createSongData(album = "A", track = 2).copy(genres = listOf("Jazz"), duration = 3_000),
+            createSongData(album = "B", track = 1).copy(genres = listOf("Soul")),
+            createSongData(album = "C", track = 1).copy(genres = listOf("Spoken"), duration = 5_000)
+        )
+        val (repository, genres) = repositories()
+
+        repository.genres() shouldBe genres.getGenres(GenreQuery.All()).first()
+        repository.genres().map { it.name to it.songCount }.sortedBy { it.first } shouldBe listOf("Jazz" to 1, "Soul" to 2)
+        genres.getGenreCoverSongs("Jazz", limit = 4).first().map { it.track } shouldBe listOf(1)
+        genres.getGenreCoverSongs("Spoken", limit = 4).first().shouldBeEmpty()
     }
 }

@@ -1,65 +1,60 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
-import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
+import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
+import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentity
-import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.withAlbumIdentities
+import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 /**
  * [SuggestionsRepository] over the songs table. Albums and album artists are the library's album identities (#637),
- * resolved from the identity columns rather than whole songs, so a key found here is one the album and artist
- * repositories have; a lookup then reads only the songs of the few albums or artists it names.
+ * resolved from the identity columns rather than whole songs; a lookup then reads only the songs of the few albums or
+ * artists it names. What Home shows (the song count, genres, albums, album artists) comes from [songRepository] and
+ * [genreRepository], so it holds the same songs the library does (not excluded, not under the minimum track length):
+ * an album key found here whose songs are all hidden finds no album.
  */
 class LocalSuggestionsRepository(
     private val suggestionsDao: SuggestionsDao,
-    private val albumIndex: AlbumIndexProvider
+    private val albumIndex: AlbumIndexProvider,
+    private val songRepository: SongRepository,
+    private val genreRepository: GenreRepository
 ) : SuggestionsRepository {
-    override fun songCount(): Flow<Int> = suggestionsDao.songCount()
+    override fun songCount(): Flow<Int> = songRepository.getSongs(SongQuery.All()).filterNotNull().map { it.size }.distinctUntilChanged()
 
     override suspend fun albums(keys: List<AlbumGroupKey>): List<Album> {
-        val wanted = keys.filter { it.key != null }.toSet()
+        val wanted = keys.filter { it.key != null }.distinct()
         if (wanted.isEmpty()) return emptyList()
-        val albums = songsOf { index -> wanted.flatMap(index::songIds) }
+        val albums = songRepository.loadSongs(SongQuery.AlbumGroupKeys(wanted.map { SongQuery.AlbumGroupKey(it) }))
             .groupBy { it.albumGroupKey }
             .mapValues { (key, songs) -> songs.toAlbum(key) }
         return keys.mapNotNull { albums[it] }.distinct()
     }
 
     override suspend fun albumArtists(keys: List<AlbumArtistGroupKey>): List<AlbumArtist> {
-        val wanted = keys.toSet()
+        val wanted = keys.distinct()
         if (wanted.isEmpty()) return emptyList()
-        val albumArtists = songsOf { index -> wanted.flatMap(index::songIds) }
+        val albumArtists = songRepository.loadSongs(SongQuery.ArtistGroupKeys(wanted.map { SongQuery.ArtistGroupKey(it) }))
             .groupBy { it.albumArtistGroupKey }
             .mapValues { (key, songs) -> songs.toAlbumArtist(key) }
         return keys.mapNotNull { albumArtists[it] }.distinct()
     }
 
-    /** Each genre's songs, summed over the genre taggings: a song tagged with several genres counts for each. */
-    override suspend fun genres(): List<Genre> {
-        val totals = linkedMapOf<String, Genre>()
-        suggestionsDao.genreTaggings().forEach { row ->
-            row.genres.filter { it.isNotBlank() }.distinct().forEach { name ->
-                val genre = totals[name] ?: Genre(name, 0, 0, emptyList())
-                totals[name] = genre.copy(
-                    songCount = genre.songCount + row.songs,
-                    duration = genre.duration + row.duration.toInt(),
-                    mediaProviders = (genre.mediaProviders + row.mediaProvider).distinct()
-                )
-            }
-        }
-        return totals.values.toList()
-    }
+    /** The Genres screen's genres: a song tagged with several genres counts for each. */
+    override suspend fun genres(): List<Genre> = genreRepository.getGenres(GenreQuery.All()).first()
 
     override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.completedSongs().map { it.id to it.at }, limit)
 
@@ -87,16 +82,6 @@ class LocalSuggestionsRepository(
 
     private suspend fun identities(): Map<Long, AlbumIdentity> = albumIndex.albumIndex().identities
 
-    /** The songs (not excluded) with the ids [ids] finds in the library's index, read by id, each holding its identity. */
-    private suspend fun songsOf(ids: (AlbumIndex) -> List<Long>): List<Song> {
-        val index = albumIndex.albumIndex()
-        val identities = index.identities
-        return ids(index).distinct().chunked(MAX_BOUND_VARIABLES)
-            .flatMap { chunk -> suggestionsDao.songsWithIds(chunk) }
-            .map { it.toSong() }
-            .withAlbumIdentities(identities)
-    }
-
     /** The albums of these (song id, time) rows, latest first by their latest song, at most [limit]; songs without an album name left out. */
     private suspend fun latestAlbums(
         rows: List<Pair<Long, Instant>>,
@@ -111,10 +96,5 @@ class LocalSuggestionsRepository(
             .sortedByDescending { it.value }
             .take(limit)
             .map { it.key }
-    }
-
-    private companion object {
-        // SQLite before 3.32 (below API 31) binds at most 999 variables a statement
-        const val MAX_BOUND_VARIABLES = 999
     }
 }
