@@ -21,19 +21,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.LocalRootColorScheme
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
+import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** How much of the artwork's secondaryContainer tints the mini player's fill. */
@@ -48,31 +48,20 @@ internal const val MiniPlayerArtworkTint = 0.25f
 @ReadOnlyComposable
 fun miniPlayerFill(root: Color, surface: (ColorScheme) -> Color): Color = artworkRole(root, lerp(surface(LocalRootColorScheme.current ?: MaterialTheme.colorScheme), MaterialTheme.colorScheme.secondaryContainer, MiniPlayerArtworkTint))
 
-/** The mini player's height at the default text size: the shell docks the player sheet's Mini level this far above the nav bar. */
-private val MiniPlayerBaseHeight = 72.dp
-
-/** The two text lines' height at the default text size (title and subtitle line heights, 20sp and 16sp). */
-private val MiniPlayerTextLines = 36.sp
-
 /**
- * The mini player's height: [MiniPlayerBaseHeight], plus whatever its two text lines grow by at the
- * user's text size, so the artist line isn't cut at 200% text. The shell docks the player sheet's Mini
- * level this far above the nav bar.
+ * The mini player's height, whatever the text size: the shell docks the player sheet's Mini level this far
+ * above the nav bar. At large text the bar keeps one line, the title, so it never outgrows this (#730).
  */
-@Composable
-@ReadOnlyComposable
-fun s2MiniPlayerHeight(): Dp {
-    val textGrowth = with(LocalDensity.current) { MiniPlayerTextLines.toDp() - MiniPlayerTextLines.value.dp }
-    return MiniPlayerBaseHeight + textGrowth.coerceAtLeast(0.dp)
-}
+val S2MiniPlayerHeight = 72.dp
 
 /**
  * The collapsed player above the nav bar (compact) or docked under the content (expanded): the
  * song's [artwork], [title] and [subtitle] ("artist • album"), a plain [S2PlayPauseIconButton]
  * (#738), skip next, and the [S2PlaybackProgress] wave along the bottom edge. [buffering] shows the
  * play button's `LoadingIndicator` and an indeterminate wave. While [castingTo] names a Cast device,
- * the subtitle says the song is playing there; the app doesn't pass it yet (#795). Tapping the rest
- * of the bar ([onClick]) expands the player.
+ * the subtitle says the song is playing there; the app doesn't pass it yet (#795). At large text
+ * ([isLargeText]) only the title shows, and the second line is spoken with it, so the bar keeps its
+ * [S2MiniPlayerHeight]. Tapping the rest of the bar ([onClick]) expands the player.
  */
 @Composable
 fun S2MiniPlayer(
@@ -109,28 +98,24 @@ fun S2MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 artwork?.invoke()
-                Column(Modifier.weight(1f)) {
+                val castLine = castingTo?.let { stringResource(R.string.ds_playing_on, it) }
+                val largeText = isLargeText()
+                // At large text the second line would push the bar past its height, so it's only spoken.
+                val spoken = if (largeText) Modifier.semantics { contentDescription = listOfNotNull(title, castLine ?: subtitle.ifEmpty { null }).joinToString() } else Modifier
+                Column(Modifier.weight(1f).then(spoken)) {
                     Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    if (castingTo != null) {
-                        val castColor = colors.primary
-                        Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Cast, contentDescription = null, tint = castColor, modifier = Modifier.size(S2IconSize.small))
-                            Text(
-                                stringResource(R.string.ds_playing_on, castingTo),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = castColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                    when {
+                        largeText -> Unit
+
+                        castLine != null -> {
+                            val castColor = colors.primary
+                            Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Rounded.Cast, contentDescription = null, tint = castColor, modifier = Modifier.size(S2IconSize.small))
+                                Text(castLine, style = MaterialTheme.typography.bodySmall, color = castColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                         }
-                    } else {
-                        Text(
-                            subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+
+                        else -> Text(subtitle, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 S2PlayPauseIconButton(playing, onPlayPause, buffering = buffering)

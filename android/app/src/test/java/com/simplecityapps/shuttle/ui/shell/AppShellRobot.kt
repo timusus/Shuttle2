@@ -55,6 +55,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
@@ -728,6 +729,31 @@ class AppShellRobot(
 
     /** The mini player's bottom edge, as drawn, from the top of the shell. */
     fun miniPlayerBottom(): Dp = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().bottom
+
+    /**
+     * Why [text], inside the node tagged [tag], doesn't draw whole, or null when it does: its lines must fit the height it
+     * was laid out in, and no ancestor may cut it off (#730).
+     */
+    fun textClipping(text: String, tag: String): String? {
+        val node = rule.onNode(hasText(text) and hasAnyAncestor(hasTestTag(tag)), useUnmergedTree = true).fetchSemanticsNode()
+        val layouts = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        val layout = layouts.single()
+        return when {
+            layout.size.height < layout.multiParagraph.height -> "\"$text\" is ${layout.multiParagraph.height}px of lines in ${layout.size.height}px"
+            node.boundsInRoot.height < node.size.height -> "\"$text\" shows ${node.boundsInRoot.height}px of ${node.size.height}px"
+            else -> null
+        }
+    }
+
+    /** Whether [text] shows inside the node tagged [tag]. */
+    fun showsText(text: String, tag: String): Boolean = rule.onAllNodes(hasText(text) and hasAnyAncestor(hasTestTag(tag)), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+
+    /** Whether something inside the node tagged [tag] is spoken with [text] in its description. */
+    fun speaksInside(text: String, tag: String): Boolean = rule.onAllNodes(hasContentDescription(text, substring = true) and hasAnyAncestor(hasTestTag(tag))).fetchSemanticsNodes().isNotEmpty()
+
+    /** The mini player's height, as laid out. */
+    fun miniPlayerHeight(): Dp = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().let { it.bottom - it.top }
 
     /** How far from the shell's left edge [text] starts. */
     fun textLeft(text: String): Dp = rule.onNodeWithText(text).getBoundsInRoot().left

@@ -220,7 +220,7 @@
       "commits": []
     },
     {
-      "text": "The mini player and the queue header no longer clip at large text sizes",
+      "text": "At large text sizes the mini player shows the song title alone, so nothing is cut off, and the queue header no longer clips",
       "commits": []
     }
   ],
