@@ -15,6 +15,8 @@ set -euo pipefail
 #      which scripts/ensure-store-profiles.sh creates/installs when the key flags are given.
 #   2. Gradle and the FFmpeg frameworks: scripts/build-framework.sh installs ios/Playback/Frameworks
 #      (scripts/build-ffmpeg.sh) and links the Release iosArm64 Shared.framework.
+#   3. Optional: sentry-cli and SENTRY_AUTH_TOKEN (environment or ~/.config/s2-telemetry/ios.env) to
+#      upload the dSYMs to Sentry (scripts/upload-dsyms.sh); without them that step is skipped.
 #
 # Usage:
 #   ./archive-and-upload.sh [--build-number N] [--marketing-version V] [--no-upload]
@@ -141,6 +143,10 @@ if [ -n "$MARKETING_VERSION" ] && [ "$ARCHIVED_VERSION" != "$MARKETING_VERSION" 
     echo "Archive carries CFBundleShortVersionString $ARCHIVED_VERSION, expected $MARKETING_VERSION" >&2
     exit 1
 fi
+
+# Crash symbolication (#776): S2.app.dSYM, which carries Shared.framework's code too. Skips, without failing, when
+# there is no Sentry auth token or sentry-cli on this Mac.
+"$SCRIPT_DIR/scripts/upload-dsyms.sh" "$ARCHIVE_PATH"
 
 EXPORT_OPTIONS="$PROJECT_DIR/ExportOptions.plist"
 if [ "$UPLOAD" = 0 ]; then
