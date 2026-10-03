@@ -192,10 +192,16 @@ capped at 2, and 1 below Expanded or at compact height; the player pane is the t
 outside `NavDisplay`. This resolves decision 5: at 840–1199 dp there is no persistent pane, so
 list-detail has the whole content area; from 1200 dp the pane takes its fixed width.
 
-Settings is a list pane too (`SettingsRoute`), its pages detail panes, with the first page as the placeholder
-and its row lit while nothing else is open (#770). `NavDisplay` pops as many entries as separate a scene's
-entries from its `previousEntries`, and the list-detail scene's sit below the list pane, so back from a
-detail popped the list too; `PopOneEntrySceneStrategy` wraps the strategy so back pops one entry.
+Settings is a list pane too (`SettingsRoute`), every page under it a detail pane, all under their own
+`sceneKey` so a Settings opened from Library never joins Library's scene (#770). Beside the list the first page
+stands in as the placeholder, borrowing the list entry's ViewModel store, with no Up button. Picking a page
+in the list calls `AppNavigator.replaceAbove(SettingsRoute, page)`, which drops whatever is open above the
+list (a page, or a page opened from it) and pushes the pick; it keeps the anchor, so it can never take a
+stack's root. The marked row is the entry directly above `SettingsRoute` (`settingsPageBesideList`, a page
+under a page standing for its parent), shown only where `LocalListBesideDetail` says the scene has two panes,
+so phone rows carry no selection state. `NavDisplay` pops as many entries as separate a scene's entries from
+its `previousEntries`, and the list-detail scene's sit below the list pane, so back from a detail popped the
+list too; `PopOneEntrySceneStrategy` wraps the strategy so back pops one entry.
 
 ### Sheets (#463)
 

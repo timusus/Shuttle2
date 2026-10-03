@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -26,8 +27,14 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.library.LibraryDetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
+import com.simplecityapps.shuttle.ui.screens.settings.FolderRulesRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDetailPane
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsList
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsProState
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsScenarios
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.settings.settingsListPane
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen
 import com.simplecityapps.shuttle.ui.screens.songinfo.songInfoReady
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoMetadata
@@ -73,17 +80,19 @@ fun fakeShellEntryProvider(
     }
     // The real screen, so a sheet shows what a phone would; its ViewModel needs the Metro graph.
     entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}) }
-    // The real Settings entries need the Metro graph; these keep its list-detail shape: the first page stands in beside the list.
-    entry<SettingsRoute>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { FakeList("Settings: Appearance", emptyList(), openAlbum) })) {
-        LazyColumn {
-            item { SectionHeader(title = "Settings") }
-            items(listOf(SettingsDestination.Appearance, SettingsDestination.Sources)) { destination ->
-                Text("Open ${destination.name}", Modifier.clickable { navigator.open(SettingsDestinationRoute(destination)) })
-            }
+    // The real Settings list and its pane metadata, over scenario state rather than its ViewModels; the stand-in and the
+    // pages are fakes. Sources opens Folder rules, a page under a page.
+    entry<SettingsRoute>(metadata = settingsListPane { FakeList("Settings: Appearance", emptyList(), openAlbum) }) {
+        SettingsList(navigator, SettingsScenarios.equalizerOn, SettingsProState.Upsell)
+    }
+    entry<EqualizerRoute>(metadata = SettingsDetailPane) { FakeList("Equalizer screen", emptyList(), openAlbum) }
+    entry<FolderRulesRoute>(metadata = SettingsDetailPane) { FakeList("Folder rules screen", emptyList(), openAlbum) }
+    entry<SettingsDestinationRoute>(metadata = SettingsDetailPane) { route ->
+        Column {
+            if (route.destination == SettingsDestination.Sources) Text("Open folder rules", Modifier.clickable { navigator.open(FolderRulesRoute) })
+            FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum)
         }
     }
-    entry<EqualizerRoute>(metadata = ListDetailSceneStrategy.detailPane()) { FakeList("Equalizer screen", emptyList(), openAlbum) }
-    entry<SettingsDestinationRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route -> FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum) }
 }
 
 @Composable

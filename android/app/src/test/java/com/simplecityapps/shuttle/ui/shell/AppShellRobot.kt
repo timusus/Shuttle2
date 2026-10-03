@@ -25,6 +25,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
@@ -33,6 +34,7 @@ import androidx.compose.ui.test.down
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -60,6 +62,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
+import androidx.navigation3.runtime.NavKey
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
@@ -698,6 +701,22 @@ class AppShellRobot(
     fun openSettings() {
         rule.runOnUiThread { checkNotNull(navigator).open(SettingsRoute) }
         rule.waitForIdle()
+    }
+
+    /** The selected tab's back stack. */
+    val selectedStack: List<NavKey> get() = checkNotNull(navigator).let { it.stack(it.selectedTab).toList() }
+
+    /** Asserts the row titled [title] is selectable and in [selected] state, or carries no selection state at all when null. */
+    fun assertRowSelection(
+        title: String,
+        selected: Boolean?,
+    ) {
+        val row = rule.onNode(hasText(title) and hasClickAction())
+        when (selected) {
+            null -> row.assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Selected))
+            true -> row.assertIsSelected()
+            false -> row.assertIsNotSelected()
+        }
     }
 
     /** Opens Playback & sound's settings page, a utility destination, from the player's panel. */

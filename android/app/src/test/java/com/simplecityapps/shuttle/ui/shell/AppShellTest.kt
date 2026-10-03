@@ -14,6 +14,8 @@ import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.SnackbarAction
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
@@ -21,6 +23,7 @@ import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -951,38 +954,86 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
-    fun `at Expanded width settings shows the list and its first page, a page replaces it, and back returns to the first page then home`() {
+    fun `at Expanded width settings shows the list beside its first page, picking a page replaces the open one, and back leaves the page then settings`() {
         robot.setContent(window = windowInfo(840, 900))
         robot.openSettings()
-        robot.assertTextDisplayed("Settings")
+        robot.assertTextDisplayed("Sources")
         robot.assertTextDisplayed("Settings: Appearance")
+        robot.assertRowSelection("Appearance", selected = true)
+        robot.assertRowSelection("Sources", selected = false)
         robot.assertSelectedTab(null)
 
-        robot.tapText("Open Sources")
-        robot.assertTextDisplayed("Settings")
+        robot.tapText("Sources")
         robot.assertTextDisplayed("Settings: Sources")
+        robot.assertRowSelection("Sources", selected = true)
+        robot.assertRowSelection("Appearance", selected = false)
 
-        // The page replaced the stand-in rather than stacking: one back closes it, back again leaves settings.
+        robot.tapText("Privacy")
+        robot.assertTextDisplayed("Settings: Privacy")
+        robot.assertRowSelection("Privacy", selected = true)
+        robot.selectedStack shouldBe listOf(HomeRoute, SettingsRoute, SettingsDestinationRoute(SettingsDestination.Privacy))
+
         robot.pressBack()
         robot.assertTextDisplayed("Settings: Appearance")
-        robot.assertTextDisplayed("Open Sources")
+        robot.assertRowSelection("Appearance", selected = true)
+        robot.selectedStack shouldBe listOf(HomeRoute, SettingsRoute)
         robot.pressBack()
         robot.assertSelectedTab("Home")
     }
 
     @Test
-    fun `at Compact width settings pushes a page over the list, and back returns to the list`() {
-        robot.setContent()
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `at Expanded width a page opened from a page keeps its category lit, and picking another category replaces both`() {
+        robot.setContent(window = windowInfo(840, 900))
         robot.openSettings()
-        robot.assertTextDisplayed("Open Sources")
-        robot.assertReachable("Settings: Appearance", reachable = false)
+        robot.tapText("Sources")
+        robot.tapText("Open folder rules")
+        robot.assertTextDisplayed("Folder rules screen")
+        robot.assertRowSelection("Sources", selected = true)
 
-        robot.tapText("Open Sources")
-        robot.assertTextDisplayed("Settings: Sources")
-        robot.assertReachable("Open Sources", reachable = false)
+        robot.tapText("About")
+        robot.assertTextDisplayed("Settings: About")
+        robot.assertRowSelection("About", selected = true)
+        robot.selectedStack shouldBe listOf(HomeRoute, SettingsRoute, SettingsDestinationRoute(SettingsDestination.About))
 
         robot.pressBack()
-        robot.assertTextDisplayed("Open Sources")
+        robot.assertTextDisplayed("Settings: Appearance")
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `at Expanded width settings opened over a library detail takes its own scene, and back returns to the detail`() {
+        val album = SampleLibrary.albums.first()
+        robot.setContent(window = windowInfo(840, 900))
+        robot.tapText("Library")
+        robot.tapText(album.title)
+        robot.openSettings()
+        robot.assertTextDisplayed("Sources")
+        robot.assertTextDisplayed("Settings: Appearance")
+        robot.assertReachable("Albums", reachable = false)
+        robot.assertReachable(album.songs.first().title, reachable = false)
+
+        robot.pressBack()
+        robot.assertSelectedTab("Library")
+        robot.assertTextDisplayed("Albums")
+        robot.assertTextDisplayed(album.songs.first().title)
+    }
+
+    @Test
+    fun `at Compact width settings pushes a page over the list, its rows carry no selection state, and back returns to the list`() {
+        robot.setContent()
+        robot.openSettings()
+        robot.assertTextDisplayed("Sources")
+        robot.assertRowSelection("Appearance", selected = null)
+        robot.assertRowSelection("Sources", selected = null)
+        robot.assertReachable("Settings: Appearance", reachable = false)
+
+        robot.tapText("Sources")
+        robot.assertTextDisplayed("Settings: Sources")
+        robot.assertReachable("Privacy", reachable = false)
+
+        robot.pressBack()
+        robot.assertTextDisplayed("Sources")
         robot.pressBack()
         robot.assertSelectedTab("Home")
     }
@@ -1003,11 +1054,11 @@ class AppShellTest {
         val restoration = StateRestorationTester(composeTestRule)
         robot.setContent(window = windowInfo(840, 900), restoration = restoration)
         robot.openSettings()
-        robot.tapText("Open Sources")
+        robot.tapText("Sources")
 
         restoration.emulateSavedInstanceStateRestore()
         composeTestRule.waitForIdle()
-        robot.assertTextDisplayed("Settings")
+        robot.assertTextDisplayed("Privacy")
         robot.assertTextDisplayed("Settings: Sources")
     }
 
@@ -1019,6 +1070,8 @@ class AppShellTest {
         robot.assertTextDisplayed("Settings: PlaybackAndSound")
         robot.assertSelectedTab(null)
         robot.assertPaneShown()
+        // Opened with no Settings list beneath it, the page takes the content area rather than sitting beside an empty list pane.
+        robot.textLeft("Settings: PlaybackAndSound") shouldBeLessThan 100.dp
 
         // The pane's Playback & sound panel is still open, and back closes it first.
         robot.pressBack()

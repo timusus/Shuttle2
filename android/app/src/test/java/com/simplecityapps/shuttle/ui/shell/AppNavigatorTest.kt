@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.compose.runtime.mutableStateOf
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
+import com.simplecityapps.shuttle.ui.screens.settings.FolderRulesRoute
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
@@ -15,6 +18,8 @@ class AppNavigatorTest {
     )
 
     private val album = AlbumRoute(albumKey = "a", albumArtistKey = "b")
+    private val sources = SettingsDestinationRoute(SettingsDestination.Sources)
+    private val privacy = SettingsDestinationRoute(SettingsDestination.Privacy)
 
     @Test
     fun `open pushes onto the selected tab only`() {
@@ -140,5 +145,55 @@ class AppNavigatorTest {
         navigator.visibleTabs shouldBe listOf(ShellTab.Library, ShellTab.Home)
         navigator.back() shouldBe true
         navigator.selectedTab shouldBe ShellTab.Library
+    }
+
+    @Test
+    fun `replaceAbove drops everything above the anchor and pushes the route`() {
+        val navigator = navigator()
+        navigator.open(SettingsRoute)
+        navigator.open(sources)
+        navigator.open(FolderRulesRoute)
+
+        navigator.replaceAbove(SettingsRoute, privacy)
+
+        navigator.stack(ShellTab.Home) shouldBe listOf(HomeRoute, SettingsRoute, privacy)
+    }
+
+    @Test
+    fun `replaceAbove with nothing above the anchor pushes, and the same page again leaves the stack alone`() {
+        val navigator = navigator()
+        navigator.open(SettingsRoute)
+        navigator.replaceAbove(SettingsRoute, sources)
+        navigator.replaceAbove(SettingsRoute, sources)
+
+        navigator.stack(ShellTab.Home) shouldBe listOf(HomeRoute, SettingsRoute, sources)
+    }
+
+    @Test
+    fun `replaceAbove keeps the anchor nearest the top`() {
+        val navigator = navigator()
+        navigator.open(SettingsRoute)
+        navigator.open(sources)
+        navigator.open(SettingsRoute)
+        navigator.open(privacy)
+
+        navigator.replaceAbove(SettingsRoute, sources)
+
+        navigator.stack(ShellTab.Home) shouldBe listOf(HomeRoute, SettingsRoute, sources, SettingsRoute, sources)
+    }
+
+    @Test
+    fun `replaceAbove never replaces the tab's root`() {
+        val navigator = navigator()
+        navigator.selectTab(ShellTab.Library)
+        navigator.open(album)
+
+        // Anchored on the root, the root stays and only what is above it goes.
+        navigator.replaceAbove(LibraryRoute, sources)
+        navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute, sources)
+
+        // With no anchor on the stack, the route is pushed over what is there.
+        navigator.replaceAbove(SettingsRoute, privacy)
+        navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute, sources, privacy)
     }
 }

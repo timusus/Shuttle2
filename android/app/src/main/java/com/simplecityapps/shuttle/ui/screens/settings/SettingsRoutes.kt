@@ -8,14 +8,17 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.BuildConfig
@@ -37,6 +40,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
+import com.simplecityapps.shuttle.ui.shell.LocalListBesideDetail
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import com.simplecityapps.shuttle.ui.shell.UtilityRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -70,64 +74,50 @@ data object FolderRulesRoute : UtilityRoute
 
 /**
  * The Settings screens' entries, for the shell's entry provider. Settings is the list pane and its pages the detail
- * pane (list-detail from Expanded, one pane and push navigation below it); beside the list the first page stands in
- * until one is opened, and opening another replaces the open one rather than stacking.
+ * pane (list-detail from Expanded, one pane and push navigation below it), in a scene of their own; beside the list
+ * [SettingsPlaceholderPage] stands in until a page is opened, and picking a page in the list replaces the open one.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     val navigateUp = { navigator.back() }
-    val openLink = { link: SettingsLink ->
-        when (link) {
-            SettingsLink.Equalizer -> navigator.open(EqualizerRoute)
-            SettingsLink.ExcludedSongs -> navigator.open(ExcludedSongsRoute)
-            SettingsLink.WhatsNew -> navigator.open(WhatsNewRoute)
-            SettingsLink.Licences -> navigator.open(LicencesRoute)
-            SettingsLink.LiveLog -> navigator.open(LiveLogRoute)
-        }
-    }
-    val detail = ListDetailSceneStrategy.detailPane()
-    // True while the list pane has the default page beside it, so the list lights that page's row.
-    val defaultPageShown = mutableStateOf(false)
-    val openDestination = { destination: SettingsDestination ->
-        val route = SettingsDestinationRoute(destination)
-        if (navigator.stack(navigator.selectedTab).last() is SettingsDestinationRoute) navigator.replace(route) else navigator.open(route)
-    }
+    val openLink = { link: SettingsLink -> navigator.open(link.route) }
+    val openFolderRules = { navigator.open(FolderRulesRoute) }
+    // The list entry's ViewModel store, lent to the stand-in page: the scene composes it outside any entry, where
+    // metroViewModel() would reach the activity's store and keep a SettingsViewModel for the activity's lifetime.
+    val listStore = mutableStateOf<ViewModelStoreOwner?>(null)
     entry<SettingsRoute>(
-        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
-            DisposableEffect(Unit) {
-                defaultPageShown.value = true
-                onDispose { defaultPageShown.value = false }
+        metadata = settingsListPane {
+            listStore.value?.let { owner ->
+                CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+                    SettingsDestinationEntry(SettingsPlaceholderPage, onNavigateUp = null, onOpenLink = openLink, onOpenFolderRules = openFolderRules)
+                }
             }
-            SettingsDestinationEntry(SettingsDestination.entries.first(), onNavigateUp = {}, onOpenLink = openLink, onOpenFolderRules = { navigator.open(FolderRulesRoute) })
-        })
+        }
     ) {
+        val owner = checkNotNull(LocalViewModelStoreOwner.current)
+        DisposableEffect(owner) {
+            listStore.value = owner
+            onDispose { if (listStore.value === owner) listStore.value = null }
+        }
         val viewModel: SettingsViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val proViewModel: SettingsProViewModel = metroViewModel()
         val pro by proViewModel.proState.collectAsStateWithLifecycle()
-        SettingsRootScreen(
-            uiState = uiState,
-            pro = pro,
-            onNavigateUp = { navigateUp() },
-            onOpenDestination = openDestination,
-            onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) },
-            selected = (navigator.stack(navigator.selectedTab).last() as? SettingsDestinationRoute)?.destination
-                ?: SettingsDestination.entries.first().takeIf { defaultPageShown.value }
-        )
+        SettingsList(navigator, uiState, pro)
     }
-    entry<SettingsDestinationRoute>(metadata = detail) { route ->
-        SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink, onOpenFolderRules = { navigator.open(FolderRulesRoute) })
+    entry<SettingsDestinationRoute>(metadata = SettingsDetailPane) { route ->
+        SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink, onOpenFolderRules = openFolderRules)
     }
-    entry<FolderRulesRoute>(metadata = detail) { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
-    entry<EqualizerRoute>(metadata = detail) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
-    entry<ExcludedSongsRoute>(metadata = detail) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
-    entry<LiveLogRoute>(metadata = detail) { LiveLogEntry(onNavigateUp = { navigateUp() }) }
-    entry<WhatsNewRoute>(metadata = detail) {
+    entry<FolderRulesRoute>(metadata = SettingsDetailPane) { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
+    entry<EqualizerRoute>(metadata = SettingsDetailPane) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
+    entry<ExcludedSongsRoute>(metadata = SettingsDetailPane) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
+    entry<LiveLogRoute>(metadata = SettingsDetailPane) { LiveLogEntry(onNavigateUp = { navigateUp() }) }
+    entry<WhatsNewRoute>(metadata = SettingsDetailPane) {
         val viewModel: WhatsNewViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         WhatsNewScreen(uiState = uiState, onNavigateUp = { navigateUp() })
     }
-    entry<LicencesRoute>(metadata = detail) {
+    entry<LicencesRoute>(metadata = SettingsDetailPane) {
         val viewModel: LicencesViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val uriHandler = LocalUriHandler.current
@@ -139,10 +129,41 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     }
 }
 
+/** Settings' own list-detail scene, so a Settings opened over Library's list and detail never joins their scene. */
+private const val SettingsSceneKey = "settings"
+
+/** [SettingsRoute]'s pane: the list, with [placeholder] beside it until a page is opened. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+internal fun settingsListPane(placeholder: @Composable () -> Unit): Map<String, Any> = ListDetailSceneStrategy.listPane(sceneKey = SettingsSceneKey, detailPlaceholder = { placeholder() })
+
+/** The pane of every page under Settings: the detail beside its list. */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+internal val SettingsDetailPane: Map<String, Any> = ListDetailSceneStrategy.detailPane(sceneKey = SettingsSceneKey)
+
+/**
+ * The Settings list: picking a page replaces whatever is open above the list, so beside it one page shows at a time
+ * and back closes it; in one pane the list is on top and the page is pushed. Beside a page, its row is marked.
+ */
+@Composable
+internal fun SettingsList(
+    navigator: AppNavigator,
+    uiState: SettingsUiState,
+    pro: SettingsProState
+) {
+    SettingsRootScreen(
+        uiState = uiState,
+        pro = pro,
+        onNavigateUp = { navigator.back() },
+        onOpenDestination = { navigator.replaceAbove(SettingsRoute, SettingsDestinationRoute(it)) },
+        onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) },
+        selected = if (LocalListBesideDetail.current) settingsPageBesideList(navigator.stack(navigator.selectedTab)) else null
+    )
+}
+
 @Composable
 private fun SettingsDestinationEntry(
     destination: SettingsDestination,
-    onNavigateUp: () -> Unit,
+    onNavigateUp: (() -> Unit)?,
     onOpenLink: (SettingsLink) -> Unit,
     onOpenFolderRules: () -> Unit
 ) {

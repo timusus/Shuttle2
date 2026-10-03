@@ -105,18 +105,27 @@ class ShellScreenshotTest {
         libraryDetail("phone")
     }
 
-    /** A settings page over the shell: no nav bar or rail, the mini player (or pane) still there (#791). */
+    /**
+     * A settings page over the shell: no nav bar or rail, the mini player (or pane) still there (#791). With the pane
+     * open the page comes from its Playback & sound panel, and with no Settings list beneath it fills the content area.
+     */
     private fun settings(
         prefix: String,
         paneOpen: Boolean = false,
     ) {
         if (paneOpen) {
-            // From Home, the Settings list with its first page beside it (list-detail from Expanded, #770).
-            robot.openSettings()
+            robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
+            robot.scrollToAndTapText("More sound settings")
         } else {
             robot.openSoundSettings()
         }
         shot("$prefix-settings")
+    }
+
+    /** The Settings list with its first page beside it, list-detail from Expanded (#770). */
+    private fun settingsListDetail(prefix: String) {
+        robot.openSettings()
+        shot("$prefix-settings-list-detail")
     }
 
     @Test
@@ -211,6 +220,10 @@ class ShellScreenshotTest {
         libraryDetail("tablet")
         // levels() leaves the pane open.
         settings("tablet", paneOpen = true)
+        // Back closes the pane's panel, then the page.
+        robot.pressBack()
+        robot.pressBack()
+        settingsListDetail("tablet")
     }
 
     @Test

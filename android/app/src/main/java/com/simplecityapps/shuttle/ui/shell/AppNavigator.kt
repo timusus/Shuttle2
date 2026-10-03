@@ -49,10 +49,17 @@ class AppNavigator(
         stacks.getValue(selectedTab).add(route)
     }
 
-    /** Swaps the selected tab's top route for [route], as picking another page beside a list does. */
-    fun replace(route: NavKey) {
+    /**
+     * Drops whatever sits above the top-most [anchor] on the selected tab's stack and pushes [route], as picking a page
+     * in a list with another page open beside it does. The anchor stays, so the stack keeps its root; with no anchor on
+     * the stack this is [open].
+     */
+    fun replaceAbove(anchor: NavKey, route: NavKey) {
         val stack = stacks.getValue(selectedTab)
-        stack[stack.lastIndex] = route
+        val index = stack.lastIndexOf(anchor)
+        if (index >= 0 && stack.size == index + 2 && stack.last() == route) return
+        if (index >= 0) while (stack.size > index + 1) stack.removeAt(stack.lastIndex)
+        stack.add(route)
     }
 
     fun selectTab(tab: ShellTab) {

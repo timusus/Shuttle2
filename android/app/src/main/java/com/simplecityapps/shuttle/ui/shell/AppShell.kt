@@ -200,7 +200,8 @@ private fun ShellNavDisplay(
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey>,
 ) {
     val directive = remember(layout, windowAdaptiveInfo) { layout.listDetailDirective(windowAdaptiveInfo) }
-    val listDetail = PopOneEntrySceneStrategy(rememberListDetailSceneStrategy<NavKey>(directive = directive))
+    val listDetailScenes = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+    val listDetail = remember(listDetailScenes) { PopOneEntrySceneStrategy(listDetailScenes) }
     // Routes marked sheet() open in a bottom sheet on a phone; from 600 dp their detail-pane marker applies instead.
     val sheet = remember(layout.width) { ShellSheetSceneStrategy<NavKey>(enabled = layout.width == ShellWidth.Compact) }
     val saveableState = rememberSaveableStateHolderNavEntryDecorator<NavKey>()
@@ -209,11 +210,13 @@ private fun ShellNavDisplay(
     val entries = remember(navigator, entryProvider) { entryProvider(navigator) }
     // Every tab's entries stay decorated, so a tab's screens keep their state while another is shown.
     val entriesByTab = ShellTab.entries.associateWith { tab -> rememberDecoratedNavEntries(navigator.stack(tab), decorators, entries) }
-    NavDisplay(
-        entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
-        sceneStrategies = listOf(sheet, listDetail, SinglePaneSceneStrategy()),
-        onBack = { navigator.back() },
-    )
+    CompositionLocalProvider(LocalListBesideDetail provides (directive.maxHorizontalPartitions > 1)) {
+        NavDisplay(
+            entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
+            sceneStrategies = listOf(sheet, listDetail, SinglePaneSceneStrategy()),
+            onBack = { navigator.back() },
+        )
+    }
 }
 
 /** Sheet visible unless it is settled at Hidden: nothing is composed for an empty queue. */

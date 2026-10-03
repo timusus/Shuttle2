@@ -75,7 +75,7 @@ import kotlin.math.roundToInt
 @Composable
 internal fun SettingsScaffold(
     title: String,
-    onNavigateUp: () -> Unit,
+    onNavigateUp: (() -> Unit)?,
     modifier: Modifier = Modifier,
     root: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
@@ -110,7 +110,8 @@ internal fun SettingsScaffold(
 /**
  * The Settings root: the Shuttle Music Pro row, then one row per [SettingsDestination], each showing the current
  * value of what it holds where there is one. [uiState] carries the stored settings; [pro] says which copy the Pro
- * row shows. [selected] is the row whose page is open beside the list, at widths that show both.
+ * row shows. [selected] is the page open beside the list, at widths that show both; null in one pane, where the rows
+ * carry no selection state.
  */
 @Composable
 fun SettingsRootScreen(
@@ -149,7 +150,7 @@ fun SettingsRootScreen(
                             summary = destinationSummary(destination, uiState),
                             onClick = { onOpenDestination(destination) },
                             icon = destination.icon,
-                            selected = destination == selected,
+                            selected = selected?.let { destination == it },
                             shapes = shapes
                         )
                     }
@@ -208,13 +209,14 @@ private val SettingsDestination.icon: ImageVector
 /**
  * One settings destination, rendered from its catalog [screen] after any [leadingContent]. Rows below [sdkInt]'s
  * level are left out; a row whose `dependsOn` switch is off is disabled, as is a choice whose `overriddenBy`
- * switch is shown and on. About gets a version row when [versionName] is set.
+ * switch is shown and on. About gets a version row when [versionName] is set. With no [onNavigateUp] the bar has no Up
+ * button, as for the page standing in beside the Settings list.
  */
 @Composable
 fun SettingsDestinationScreen(
     screen: SettingsScreen,
     uiState: SettingsUiState,
-    onNavigateUp: () -> Unit,
+    onNavigateUp: (() -> Unit)?,
     onSwitchChange: (SettingItem.Switch, Boolean) -> Unit,
     onChoiceSelect: (SettingItem.Choice<*>, Int) -> Unit,
     onSliderChange: (SettingItem.Slider<*>, Float) -> Unit,
