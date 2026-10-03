@@ -62,11 +62,15 @@ targets:
         ITSAppUsesNonExemptEncryption: false
     settings:
       base:
-        # Placeholder until the App Store Connect app exists.
+        # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).
         PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.dev
         PRODUCT_NAME: S2
-        MARKETING_VERSION: "2026.09.27"
-        CURRENT_PROJECT_VERSION: "1"
+        # ios/archive-and-upload.sh (and ios-deploy.yml) override the S2_ settings on the xcodebuild
+        # command line: build number YYMMDDNN from the ios/vYYMMDDNN tag, marketing version 20YY.MM.DD.
+        S2_MARKETING_VERSION: "2026.09.27"
+        S2_BUILD_NUMBER: "1"
+        MARKETING_VERSION: $(S2_MARKETING_VERSION)
+        CURRENT_PROJECT_VERSION: $(S2_BUILD_NUMBER)
         GENERATE_INFOPLIST_FILE: true
         # The neutral accent: Assets.xcassets' AccentColor (near-black / near-white). The system ignores a neutral asset as the global tint, so S2App applies .tint(.s2Accent) and AccentTint sets UIKit's (Theme/Colors.swift).
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -97,6 +101,7 @@ targets:
             - "-framework"
             - "Shared"
         Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle
           "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]":
             - "$(inherited)"
             - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/releaseFramework"
