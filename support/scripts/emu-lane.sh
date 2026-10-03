@@ -9,7 +9,8 @@
 #                        subfolders, which pile up across runs), so the caller finds this run's
 #                        screenshots, and only this run's, under it
 #   maestro_collect_shots <out-dir> <dest-dir> [<rc> <fail-dir>]
-#                        moves the named PNGs a run took (not Maestro's failed-step screenshots)
+#                        moves the named PNGs a run took (not Maestro's failed-step screenshots:
+#                        screenshot-*, or step-* from Maestro 2.10)
 #                        flat into <dest-dir>, then deletes <out-dir>. With a non-zero <rc> and a
 #                        <fail-dir>, <out-dir> (failure screenshots, maestro.log, command JSON) is
 #                        moved to <fail-dir> instead, replacing the previous failure there
@@ -97,9 +98,10 @@ maestro_collect_shots() {
     mkdir -p "$dest"
     while IFS= read -r f; do
         mv -f "$f" "$dest/"
-    done < <(find "$out" -name '*.png' ! -name 'screenshot-*' 2>/dev/null)
+    done < <(find "$out" -name '*.png' ! -name 'screenshot-*' ! -name 'step-*' 2>/dev/null)
     if [ "$rc" -ne 0 ] && [ -n "$fail_dir" ] && [ -d "$out" ]; then
         rm -rf -- "$fail_dir"
+        mkdir -p "$(dirname "$fail_dir")"
         mv -f "$out" "$fail_dir"
     else
         rm -rf -- "$out"

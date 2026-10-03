@@ -175,11 +175,12 @@ trap 'exit 143' TERM
 step() {
     local desc="$1" start rc; shift
     start=$(date +%s)
-    if "$@" >>"$LOG" 2>&1; then
+    "$@" >>"$LOG" 2>&1
+    rc=$?
+    if [ "$rc" -eq 0 ]; then
         echo "emu-verify: ${desc} -- ok ($(($(date +%s) - start))s)"
         return 0
     fi
-    rc=$?
     echo "emu-verify: ${desc} -- FAILED ($(($(date +%s) - start))s, see $LOG)" >&2
     return "$rc"
 }
