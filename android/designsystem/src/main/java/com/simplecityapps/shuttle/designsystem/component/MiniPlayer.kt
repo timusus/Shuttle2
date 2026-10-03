@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,7 +60,7 @@ val S2MiniPlayerHeight = 72.dp
  * song's [artwork], [title] and [subtitle] ("artist • album"), a plain [S2PlayPauseIconButton]
  * (#738), skip next, and the [S2PlaybackProgress] wave along the bottom edge. [buffering] shows the
  * play button's `LoadingIndicator` and an indeterminate wave. While [castingTo] names a Cast device,
- * the subtitle says the song is playing there; the app doesn't pass it yet (#795). At large text
+ * the subtitle says the song is playing there ([S2PlayingOn]). At large text
  * ([isLargeText]) only the title shows, and the second line is spoken with it, so the bar keeps its
  * [S2MiniPlayerHeight]. Tapping the rest of the bar ([onClick]) expands the player.
  */
@@ -106,15 +107,7 @@ fun S2MiniPlayer(
                     Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     when {
                         largeText -> Unit
-
-                        castLine != null -> {
-                            val castColor = colors.primary
-                            Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Rounded.Cast, contentDescription = null, tint = castColor, modifier = Modifier.size(S2IconSize.small))
-                                Text(castLine, style = MaterialTheme.typography.bodySmall, color = castColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            }
-                        }
-
+                        castingTo != null -> S2PlayingOn(castingTo, style = MaterialTheme.typography.bodySmall)
                         else -> Text(subtitle, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
@@ -130,6 +123,20 @@ fun S2MiniPlayer(
                     .padding(bottom = S2Spacing.xsmall),
             )
         }
+    }
+}
+
+/** "Playing on [deviceName]" beside the Cast icon, in the primary colour: where the song plays while casting. */
+@Composable
+fun S2PlayingOn(
+    deviceName: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    val color = MaterialTheme.colorScheme.primary
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Rounded.Cast, contentDescription = null, tint = color, modifier = Modifier.size(S2IconSize.small))
+        Text(stringResource(R.string.ds_playing_on, deviceName), style = style, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

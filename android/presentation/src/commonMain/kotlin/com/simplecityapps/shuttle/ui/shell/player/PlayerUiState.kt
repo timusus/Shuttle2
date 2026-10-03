@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.runtime.Immutable
+import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -51,6 +52,8 @@ data class PlayerUiState(
     val sleepTimerActive: Boolean = false,
     val sleepTimerPlayToEnd: Boolean = false,
     val castAvailable: Boolean = false,
+    /** The Cast device playback plays on, or null while it plays on this one. */
+    val castDevice: CastDevice? = null,
     val seed: ArtworkSeed = ArtworkSeed.None,
     /** The playback speed, 1 being normal; the pitch stays the same at any speed. */
     val playbackSpeed: Float = 1f,

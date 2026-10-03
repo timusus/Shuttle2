@@ -189,6 +189,7 @@ class PlayerViewModel @AssistedInject constructor(
                 sleepTimerActive = extras.sleepTimerActive,
                 sleepTimerPlayToEnd = extras.sleepTimerPlayToEnd,
                 castAvailable = castAvailable,
+                castDevice = playback.castDevice,
                 seed = extras.seed,
                 playbackSpeed = playback.speed,
                 replayGainMode = extras.replayGainMode,

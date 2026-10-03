@@ -87,6 +87,7 @@ internal fun MiniPlayer(
                 } else {
                     { actions.seekBy(progress(), SkipHoldSeekSeconds) }
                 },
+                castingTo = player.castingTo(),
             )
         }
     }

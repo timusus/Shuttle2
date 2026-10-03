@@ -8,6 +8,7 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
@@ -229,6 +230,19 @@ class PlayerViewModelTest {
         playbackOperations.playbackStateFlow.value = PlaybackState.Loading
         viewModel.uiState.value.player.buffering shouldBe true
         viewModel.uiState.value.player.playing shouldBe false
+    }
+
+    @Test
+    fun `the state follows playback onto a Cast device and back`() = runTest {
+        val viewModel = viewModel()
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
+        viewModel.uiState.value.player.castDevice shouldBe null
+
+        playbackOperations.castDeviceFlow.value = CastDevice("Living Room TV")
+        viewModel.uiState.value.player.castDevice shouldBe CastDevice("Living Room TV")
+
+        playbackOperations.castDeviceFlow.value = null
+        viewModel.uiState.value.player.castDevice shouldBe null
     }
 
     @Test

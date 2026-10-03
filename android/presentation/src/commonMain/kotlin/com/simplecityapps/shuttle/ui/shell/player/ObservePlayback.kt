@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
+import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -19,13 +20,15 @@ class ObserveQueue @Inject constructor(
     operator fun invoke(): StateFlow<QueueState> = queueOperations.queueStateFlow
 }
 
-/** How playback is going: whether it plays, its shuffle and repeat modes, and its speed. */
+/** How playback is going: whether it plays, its shuffle and repeat modes, its speed, and the Cast device it plays on. */
 data class PlaybackStatus(
     val state: PlaybackState,
     val shuffleMode: ShuffleMode,
     val repeatMode: RepeatMode,
     /** 1 being normal. */
     val speed: Float,
+    /** Null while playback plays on this device. */
+    val castDevice: CastDevice?,
 )
 
 /** The [PlaybackStatus], each time any part of it changes. */
@@ -38,6 +41,7 @@ class ObservePlayback @Inject constructor(
         queueOperations.shuffleModeFlow,
         queueOperations.repeatModeFlow,
         playbackOperations.playbackSpeedFlow,
+        playbackOperations.castDeviceFlow,
         ::PlaybackStatus,
     )
 }

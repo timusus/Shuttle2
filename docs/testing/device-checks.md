@@ -342,3 +342,6 @@ previous and new outputs, and where each pause came from.
 - [ ] Phone with Play services and no Cast targets nearby: the Cast button on Now Playing opens Android's output switcher listing Bluetooth and wired outputs; picking one moves playback.
 - [ ] Android 13 or lower (API 33 and below): the Cast button opens the Cast device chooser and still works; Bluetooth outputs are switched from the system panel.
 - [ ] Device without Google Play services (or Cast unavailable): Now Playing shows an Audio output button instead of Cast; tapping it opens the system output switcher.
+
+## Casting device name (#795)
+- [ ] Phone with a Cast device nearby: start a song, then cast to the device from Now Playing's Cast button. The mini player's second line and Now Playing (under the artist) both read "Playing on" and the device's name, with the Cast icon; stop casting and the mini player shows the artist again, Now Playing the quality line.

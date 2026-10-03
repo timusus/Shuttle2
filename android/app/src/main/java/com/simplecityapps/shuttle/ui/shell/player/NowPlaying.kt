@@ -45,10 +45,15 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
+import com.simplecityapps.shuttle.designsystem.component.S2PlayingOn
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
+
+/** The name of the Cast device playback plays on, or null while it plays on this one. */
+@Composable
+internal fun PlayerUiState.castingTo(): String? = castDevice?.let { it.name ?: stringResource(R.string.player_cast_device) }
 
 /** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */
 @Composable
@@ -102,7 +107,10 @@ internal fun NowPlayingArtwork(
     }
 }
 
-/** The title, the artist and album, and the quality line beside the favourite toggle, sitting a small step above the seek bar. */
+/**
+ * The title, the artist and album, and the quality line beside the favourite toggle, sitting a small step above the
+ * seek bar. While casting, the Cast device playback plays on takes the quality line's place.
+ */
 @Composable
 internal fun NowPlayingTitle(
     player: PlayerUiState,
@@ -120,8 +128,13 @@ internal fun NowPlayingTitle(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            current?.song?.qualityLine()?.let { quality ->
-                Text(text = quality, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val castingTo = player.castingTo()
+            if (castingTo != null) {
+                S2PlayingOn(castingTo, style = MaterialTheme.typography.bodyMedium)
+            } else {
+                current?.song?.qualityLine()?.let { quality ->
+                    Text(text = quality, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
         S2IconToggleButton(
