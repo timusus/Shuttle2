@@ -89,6 +89,10 @@
 "pref_streaming_quality_metered_title" = "On mobile data";
 "pref_media_rescan_title" = "Rescan";
 "pref_media_rescan_summary" = "Rescan the selected media providers";
+"pref_backup_export_title" = "Back up library";
+"pref_backup_export_summary" = "Save play counts, favourites, exclusions and playlists to a file";
+"pref_backup_import_title" = "Restore library backup";
+"pref_backup_import_summary" = "Merge a backup into your library. Newer data on this device is kept";
 "pref_rescan_frequency_title" = "Rescan frequency";
 "pref_rescan_frequency_never" = "Never";
 "pref_rescan_frequency_daily" = "Daily";
@@ -96,6 +100,7 @@
 "pref_exclude_title" = "Excluded";
 "pref_exclude_summary" = "View/Edit excluded";
 "pref_category_title_artwork" = "Artwork";
+"pref_category_title_backup" = "Backup";
 "pref_artwork_wifi_title" = "Wi-Fi only";
 "pref_artwork_wifi_subtitle" = "Only download artwork from remote sources when Wi-Fi is available";
 "pref_artwork_local_only_title" = "Local only";

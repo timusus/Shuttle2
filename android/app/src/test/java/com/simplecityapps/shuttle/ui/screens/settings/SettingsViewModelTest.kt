@@ -238,7 +238,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `importing reports the songs updated, playlists restored and songs not found`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `importing reports the songs matched, playlists restored and songs not found`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
