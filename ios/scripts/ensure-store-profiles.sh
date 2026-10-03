@@ -46,8 +46,11 @@ if ! security find-identity -v -p codesigning | /usr/bin/grep -q "$CERT_NAME"; t
     echo "ensure-store-profiles: no signing identity '$CERT_NAME' in the keychain (see DEPLOY.md, runner prerequisites)" >&2
     exit 1
 fi
-LOCAL_SHA1="$(security find-certificate -c "$CERT_NAME" -p \
-    | openssl x509 -noout -fingerprint -sha1 | sed 's/^.*=//; s/://g' | tr 'a-f' 'A-F')"
+# Several certificates can share the name (expired ones linger), so take the SHA-1 of the first
+# *valid* identity (`find-identity -v` omits expired and revoked ones) rather than the first match.
+LOCAL_SHA1="$(security find-identity -v -p codesigning | /usr/bin/grep "$CERT_NAME" | head -1 \
+    | awk '{print $2}' | tr 'a-f' 'A-F')"
+[[ "$LOCAL_SHA1" =~ ^[0-9A-F]{40}$ ]] || { echo "ensure-store-profiles: cannot read the identity's SHA-1" >&2; exit 1; }
 echo "==> Local distribution certificate SHA-1 $LOCAL_SHA1"
 
 mkdir -p "$PROFILE_DIR"
