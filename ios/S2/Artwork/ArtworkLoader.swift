@@ -41,6 +41,11 @@ actor ArtworkLoader {
     }()
 
     private let fetch: Fetch
+    #if DEBUG
+    /// Reads the debug "Use generated artwork" switch. Injected so a test turns the branch on for its own
+    /// loader rather than flipping the process-global `UserDefaults` flag every other loader reads.
+    private nonisolated let isGeneratedArtworkEnabled: @Sendable () -> Bool
+    #endif
     private var inFlight: [String: Task<UIImage?, Never>] = [:]
 
     private init() {
@@ -59,8 +64,11 @@ actor ArtworkLoader {
         self.init(fetch: { request in try await session.data(for: request) })
     }
 
-    init(fetch: @escaping Fetch) {
+    init(fetch: @escaping Fetch, isGeneratedArtworkEnabled: @escaping @Sendable () -> Bool = { DebugArtwork.isEnabled }) {
         self.fetch = fetch
+        #if DEBUG
+        self.isGeneratedArtworkEnabled = isGeneratedArtworkEnabled
+        #endif
     }
 
     // MARK: - Reading
@@ -69,7 +77,7 @@ actor ArtworkLoader {
     /// before draws its cover in the first frame instead of flashing the placeholder.
     nonisolated func cached(_ source: ArtworkSource, maxPixelSize: Int) -> UIImage? {
         #if DEBUG
-        if DebugArtwork.isEnabled {
+        if isGeneratedArtworkEnabled() {
             return memory.object(forKey: DebugArtwork.cacheKey(source, maxPixelSize) as NSString)
         }
         #endif
@@ -83,7 +91,7 @@ actor ArtworkLoader {
     @MainActor
     func image(for source: ArtworkSource, maxPixelSize: Int) async -> UIImage? {
         #if DEBUG
-        if DebugArtwork.isEnabled {
+        if isGeneratedArtworkEnabled() {
             if let hit = cached(source, maxPixelSize: maxPixelSize) { return hit }
             guard let image = DebugArtwork.image(for: source, maxPixelSize: maxPixelSize) else { return nil }
             memory.setObject(image, forKey: DebugArtwork.cacheKey(source, maxPixelSize) as NSString, cost: image.byteCost)

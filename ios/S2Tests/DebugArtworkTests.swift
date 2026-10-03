@@ -4,6 +4,8 @@ import UIKit
 
 /// The generated artwork behind the debug "Use generated artwork" switch (`DebugArtwork`): the same seed draws the
 /// same pixels, a different tone draws different ones, and the loader serves it instead of the network's cover.
+/// Everything under test is DEBUG-only, so the whole suite compiles away in Release.
+#if DEBUG
 @MainActor
 struct DebugArtworkTests {
 
@@ -39,14 +41,15 @@ struct DebugArtworkTests {
         #expect(DebugArtwork.symbol(for: source("a", key: "song:1")) == "music.note")
     }
 
-    #if DEBUG
-    @Test func theLoaderServesGeneratedArtworkWhenSwitchedOn() async throws {
-        UserDefaults.standard.set(true, forKey: DebugArtwork.defaultsKey)
-        defer { UserDefaults.standard.removeObject(forKey: DebugArtwork.defaultsKey) }
+    @Test func theLoaderServesGeneratedArtworkWhenSwitchedOn() async {
+        // The switch is injected on, so no process-global flag is flipped and no other loader can see it.
+        let loader = ArtworkLoader(fetch: { _ in throw URLError(.notConnectedToInternet) }, isGeneratedArtworkEnabled: { true })
         let src = source("x", key: "album:debug-loader")
-        let loaded = await ArtworkLoader.shared.image(for: src, maxPixelSize: 48)
+
+        let loaded = await loader.image(for: src, maxPixelSize: 48)
+
         #expect(loaded != nil)
-        #expect(ArtworkLoader.shared.cached(src, maxPixelSize: 48) != nil)
+        #expect(loader.cached(src, maxPixelSize: 48) != nil)
     }
-    #endif
 }
+#endif
