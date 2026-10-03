@@ -1,0 +1,20 @@
+# Subflow: plays the first song from Library > Songs, so the mini player, Now Playing and the queue have a track.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: _library.yaml
+    env:
+      CATEGORY: songs
+      LABEL: Songs
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 120000
+- tapOn:
+    id: "songRow.title"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 15000

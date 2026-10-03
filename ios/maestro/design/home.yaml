@@ -1,0 +1,8 @@
+# design-shots.sh screen: home. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- tapOn: "Home"
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: home

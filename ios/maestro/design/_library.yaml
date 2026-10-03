@@ -1,0 +1,28 @@
+# Subflow: Library on the category ${CATEGORY} (chip raw value: songs, albums, albumArtists) / ${LABEL} (its visible
+# name). iPhone has the chip rail; iPad has a category picker at the top of the Library detail.
+appId: com.simplecityapps.shuttle.dev
+---
+- tapOn: "Library"
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow:
+    when:
+      visible:
+        id: "libraryChips"
+    file: ../common/library-open.yaml
+    env:
+      CATEGORY: ${CATEGORY}
+- runFlow:
+    when:
+      notVisible:
+        id: "libraryChips"
+    commands:
+      - tapOn:
+          point: "35%,4%"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - tapOn:
+          text: "${LABEL}"
+          index: 0
+- waitForAnimationToEnd:
+    timeout: 5000

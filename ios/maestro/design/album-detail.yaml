@@ -1,0 +1,18 @@
+# design-shots.sh screen: album-detail. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- runFlow:
+    file: _library.yaml
+    env:
+      CATEGORY: albums
+      LABEL: Albums
+- scrollUntilVisible:
+    element:
+      text: "Frogstomp"
+    direction: DOWN
+    timeout: 120000
+- tapOn: "Frogstomp"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: album-detail

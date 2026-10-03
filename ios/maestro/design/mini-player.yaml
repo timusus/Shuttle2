@@ -1,0 +1,8 @@
+# design-shots.sh screen: mini-player. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- runFlow: _play-first.yaml
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: mini-player

@@ -1,0 +1,14 @@
+# design-shots.sh screen: empty-state. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- tapOn: "Search"
+- inputText: "Zzqxj Vrrk"
+- extendedWaitUntil:
+    visible:
+      id: "search.noResults"
+    timeout: 30000
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: empty-state

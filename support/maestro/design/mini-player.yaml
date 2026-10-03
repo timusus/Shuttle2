@@ -1,0 +1,8 @@
+# design-shots.sh screen: mini-player. The `playback` fixture is seeded, and (for player screens) queued then paused, by the script.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- assertVisible: "Playback One"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: mini-player

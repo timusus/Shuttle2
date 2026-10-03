@@ -1,0 +1,10 @@
+# design-shots.sh screen: queue. The `playback` fixture is seeded, and (for player screens) queued then paused, by the script.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: ../nav/open-queue.yaml
+    env:
+      TITLE: "Playback One"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: queue

@@ -1,0 +1,10 @@
+# design-shots.sh screen: empty-state. The `playback` fixture is seeded, and (for player screens) queued then paused, by the script.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: ../nav/search.yaml
+    env:
+      QUERY: "Zzqxj Vrrk"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: empty-state

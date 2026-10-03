@@ -1,0 +1,12 @@
+# design-shots.sh screen: artist-detail. The `playback` fixture is seeded, and (for player screens) queued then paused, by the script.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: ../device-checks/_library-tab.yaml
+    env:
+      TAB: Artists
+- tapOn: "Playback Artist"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: artist-detail

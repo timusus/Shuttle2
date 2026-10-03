@@ -1,0 +1,12 @@
+# design-shots.sh screen: library-songs. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- runFlow:
+    file: _library.yaml
+    env:
+      CATEGORY: songs
+      LABEL: Songs
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: library-songs

@@ -1,0 +1,10 @@
+# design-shots.sh screen: search. The `playback` fixture is seeded, and (for player screens) queued then paused, by the script.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: ../nav/search.yaml
+    env:
+      QUERY: "Playback"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: search

@@ -1,0 +1,14 @@
+# design-shots.sh screen: now-playing. Signed in already (sign-in-jellyfin.yaml, run once per device by the script).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- runFlow: _play-first.yaml
+- tapOn:
+    id: "miniPlayer.open"
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.bottomBar"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: now-playing
