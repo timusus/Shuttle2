@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,8 +36,10 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -47,6 +48,7 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.sorting.letterSections
@@ -78,7 +80,7 @@ import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
  */
 private fun fastScrollerModifier(controls: LibraryTabControls?) = Modifier
     .fillMaxSize()
-    .padding(top = 8.dp + controlsRowHeight(controls), bottom = 8.dp)
+    .padding(top = S2Spacing.small + controlsRowHeight(controls), bottom = S2Spacing.small)
     .testTag("library-fast-scroller")
 
 /**
@@ -119,14 +121,14 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
 /** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
 private val LibraryGridColumns = GridCells.Adaptive(minSize = 160.dp)
 
-private val GridHorizontalPadding = 16.dp
+private val GridHorizontalPadding = S2Spacing.medium
 
 /** A grid's padding: [top] above the first tiles, or none when the controls row leads the grid. */
 private fun gridPadding(controls: LibraryTabControls?, top: Dp) = PaddingValues(
     start = GridHorizontalPadding,
     end = GridHorizontalPadding,
     top = if (controlsItemCount(controls) > 0) 0.dp else top,
-    bottom = 16.dp,
+    bottom = S2Spacing.medium,
 )
 
 /** Songs: every song. Tap plays from that row; long-press selects. */
@@ -217,15 +219,15 @@ private fun songEntries(songs: List<Song>, byAlbum: Boolean): List<SongEntry> = 
 @Composable
 private fun SongAlbumHeader(song: Song) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = S2Spacing.medium, end = S2Spacing.medium, top = S2Spacing.medium, bottom = S2Spacing.xsmall),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         LibraryArtwork(song, ArtworkPlaceholder.Album, size = ArtworkSize.Medium)
         Column(Modifier.weight(1f)) {
-            Text(song.album.orEmpty(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            S2Text(song.album.orEmpty(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             song.albumArtist?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                S2Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }
@@ -287,9 +289,9 @@ fun AlbumsPage(
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = gridPadding(controls, top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = gridPadding(controls, top = S2Spacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
                     modifier = Modifier.fillMaxSize().testTag("library-albums"),
                 ) {
                     controlsItem(controls, GridHorizontalPadding)
@@ -346,17 +348,18 @@ fun ArtistsPage(
     }
     LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress, controls) {
         val artists = state.albumArtists
-        // Android offers only the name sort, which orders by group key and so drops a leading "The".
-        val sections = state.letterIndex.orEmpty()
+        val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
+            LibraryFastScroller(artists, state.letterIndex, scrollableState, thumbLabel = artistThumbLabel(state.sortOrder), controls = controls)
+        }
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = gridPadding(controls, top = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = gridPadding(controls, top = S2Spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
                     modifier = Modifier.fillMaxSize().testTag("library-artists"),
                 ) {
                     controlsItem(controls, GridHorizontalPadding)
@@ -371,7 +374,7 @@ fun ArtistsPage(
                         )
                     }
                 }
-                AlphabetFastScroller(sections, rememberFastScrollableState(gridState), fastScrollerModifier(controls), controlsItemCount(controls))
+                fastScroller(rememberFastScrollableState(gridState))
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-artists")) {
@@ -388,10 +391,16 @@ fun ArtistsPage(
                         )
                     }
                 }
-                AlphabetFastScroller(sections, rememberFastScrollableState(listState), fastScrollerModifier(controls), controlsItemCount(controls))
+                fastScroller(rememberFastScrollableState(listState))
             }
         }
     }
+}
+
+/** The popup label of a plain-thumb artists scroll: the album count a count sort orders by; none under the name sort, which has letter sections. */
+private fun artistThumbLabel(sortOrder: AlbumArtistSortOrder): ((AlbumArtist) -> String?)? = when (sortOrder) {
+    AlbumArtistSortOrder.AlbumCount -> { artist -> artist.albumCount.toString() }
+    AlbumArtistSortOrder.Default, AlbumArtistSortOrder.PlayCount -> null
 }
 
 /** Genres: a list, no multi-select (inventory §1). */

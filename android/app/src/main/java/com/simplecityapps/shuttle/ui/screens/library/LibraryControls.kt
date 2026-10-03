@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -17,8 +16,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -40,6 +38,9 @@ import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
+import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 
 /** A tab's controls row: its count, sort, view and play actions, each only where the tab offers it. */
 class LibraryTabControls(
@@ -82,7 +83,11 @@ internal fun controlsItemCount(controls: LibraryTabControls?): Int = if (control
 /** The controls row's height when the page shows one, so the fast scroller's track can start below it. */
 internal fun controlsRowHeight(controls: LibraryTabControls?): Dp = if (controlsItemCount(controls) == 0) 0.dp else ControlsRowHeight
 
-private val ControlsRowHeight = 48.dp
+/** The row's least height; it grows with the text, but its buttons keep the scroller's track clear of them at this much. */
+private val ControlsRowHeight = S2TouchTarget.minimum
+
+/** From this font scale the sort button drops its label, so the count and the end actions still fit the row. */
+private const val LARGE_TEXT_FONT_SCALE = 1.5f
 
 /** Widens the content by [amount] on each side, past the padding its parent gives it. */
 private fun Modifier.bleed(amount: Dp) = layout { measurable, constraints ->
@@ -101,33 +106,53 @@ internal fun LibraryControlsRow(controls: LibraryTabControls, modifier: Modifier
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = ControlsRowHeight)
-            .padding(start = 16.dp, end = 8.dp)
+            .padding(start = S2Spacing.medium, end = S2Spacing.small)
             .testTag("library-controls"),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
     ) {
-        controls.count?.let { count ->
-            Text(count, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        if (controls.sortOptions.isNotEmpty()) {
-            Box {
-                var sorting by remember { mutableStateOf(false) }
-                val current = controls.sortOptions.firstOrNull { it.selected == true }?.label
-                val description = current?.let { stringResource(R.string.library_sort_current, it) } ?: stringResource(R.string.library_sort)
-                S2Button(
-                    text = current ?: stringResource(R.string.library_sort),
-                    onClick = { sorting = true },
-                    style = S2ButtonStyle.Text,
-                    icon = Icons.Rounded.SwapVert,
-                    modifier = Modifier
-                        .minimumInteractiveComponentSize()
-                        .semantics { contentDescription = description }
-                        .testTag("library-sort"),
+        // The start group takes what the end actions leave. Its count keeps its width until the sort, which drops its label at
+        // large text, no longer fits; then the count is what gives way.
+        val largeText = LocalDensity.current.fontScale >= LARGE_TEXT_FONT_SCALE
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+            controls.count?.let { count ->
+                S2Text(
+                    count,
+                    modifier = if (largeText) Modifier.weight(1f, fill = false) else Modifier,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                S2Menu(expanded = sorting, onDismissRequest = { sorting = false }, groups = listOf(controls.sortOptions))
+            }
+            if (controls.sortOptions.isNotEmpty()) {
+                Box(if (largeText) Modifier else Modifier.weight(1f, fill = false)) {
+                    var sorting by remember { mutableStateOf(false) }
+                    val current = controls.sortOptions.firstOrNull { it.selected == true }?.label
+                    val description = current?.let { stringResource(R.string.library_sort_current, it) } ?: stringResource(R.string.library_sort)
+                    if (largeText) {
+                        S2IconButton(
+                            icon = Icons.Rounded.SwapVert,
+                            contentDescription = description,
+                            onClick = { sorting = true },
+                            modifier = Modifier.testTag("library-sort"),
+                        )
+                    } else {
+                        S2Button(
+                            text = current ?: stringResource(R.string.library_sort),
+                            onClick = { sorting = true },
+                            style = S2ButtonStyle.Text,
+                            icon = Icons.Rounded.SwapVert,
+                            modifier = Modifier
+                                .heightIn(min = S2TouchTarget.minimum)
+                                .semantics { contentDescription = description }
+                                .testTag("library-sort"),
+                        )
+                    }
+                    S2Menu(expanded = sorting, onDismissRequest = { sorting = false }, groups = listOf(controls.sortOptions))
+                }
             }
         }
-        Spacer(Modifier.weight(1f))
         controls.viewMode?.let { mode ->
             val next = if (mode == ViewMode.Grid) ViewMode.List else ViewMode.Grid
             S2IconButton(

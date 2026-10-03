@@ -35,7 +35,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,7 +50,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
@@ -63,9 +61,12 @@ import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.persistence.LibraryTab
+import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
@@ -79,6 +80,7 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.label
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListEvent
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
@@ -131,7 +133,7 @@ fun LibraryScreen(
         topBar = {
             AnimatedContent(targetState = chrome.selectedCount > 0, label = "library-top-bar") { selecting ->
                 if (selecting) {
-                    Box(Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp)) {
+                    Box(Modifier.fillMaxWidth().statusBarsPadding().padding(S2Spacing.small)) {
                         S2SelectionToolbar(
                             selectedCount = chrome.selectedCount,
                             onClearSelection = chrome.onClearSelection,
@@ -252,7 +254,7 @@ private fun LibrarySectionChips(
     LazyRow(
         state = listState,
         contentPadding = PaddingValues(horizontal = SectionChipsPadding),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
         modifier = Modifier.fillMaxWidth().testTag("library-sections"),
     ) {
         itemsIndexed(tabs, key = { _, tab -> tab }) { index, tab ->
@@ -278,16 +280,16 @@ private fun LazyListLayoutInfo.revealScrollOffset(index: Int): Int? {
     }
 }
 
-private val SectionChipsPadding = 16.dp
+private val SectionChipsPadding = S2Spacing.medium
 
 @Composable
 fun LibraryTab.label(): String = stringResource(
     when (this) {
-        LibraryTab.Genres -> R.string.genres
-        LibraryTab.Playlists -> R.string.library_playlists
-        LibraryTab.Artists -> R.string.artists
-        LibraryTab.Albums -> R.string.albums
         LibraryTab.Songs -> R.string.songs
+        LibraryTab.Albums -> R.string.albums
+        LibraryTab.Artists -> R.string.artists
+        LibraryTab.Playlists -> R.string.library_playlists
+        LibraryTab.Genres -> R.string.genres
         LibraryTab.Folders -> R.string.library_tab_folders
     },
 )
@@ -301,7 +303,7 @@ private fun EditTabsSheet(
     onDismissRequest: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismissRequest) {
-        Text(stringResource(R.string.library_edit_tabs), modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+        S2Text(stringResource(R.string.library_edit_tabs), modifier = Modifier.padding(horizontal = S2Spacing.large, vertical = S2Spacing.small))
         val order = uiState.allTabs
         order.forEachIndexed { index, tab ->
             val enabled = tab in uiState.enabledTabs
@@ -332,7 +334,7 @@ private fun EditTabsSheet(
                     }
                 },
             ) {
-                Text(tab.label())
+                S2Text(tab.label())
             }
         }
     }
@@ -598,10 +600,22 @@ private fun tabControls(tab: LibraryTab, actions: MediaActionsState): LibraryTab
     LibraryTab.Artists -> {
         val viewModel: AlbumArtistListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
+        // Play and Shuffle take every listed artist's songs, artist by artist in the current sort.
+        val artists = state.albumArtists.takeIf { state.loadingState == AlbumArtistListUiState.LoadingState.Ready && it.isNotEmpty() }
         LibraryTabControls(
             count = pluralString(R.plurals.library_count_artists, state.albumArtists.size),
+            sortOptions = sortOptions(
+                state.sortOrder,
+                listOf(
+                    AlbumArtistSortOrder.Default to R.string.menu_title_sort_artist_name,
+                    AlbumArtistSortOrder.AlbumCount to R.string.menu_title_sort_album_count,
+                ),
+                viewModel::setSortOrder,
+            ),
             viewMode = state.viewMode,
             onViewModeChange = viewModel::setViewMode,
+            onPlay = artists?.let { { actions.dispatch(MediaAction.Play(MediaSelection.AlbumArtists(it))) } },
+            onShuffle = artists?.let { { actions.dispatch(MediaAction.Shuffle(MediaSelection.AlbumArtists(it))) } },
         )
     }
 

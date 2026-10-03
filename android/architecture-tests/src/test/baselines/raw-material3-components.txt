@@ -24,7 +24,6 @@ com.simplecityapps.shuttle.ui.screens.home.JumpBackInGrid -> androidx.compose.ma
 com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.DropdownMenu
 com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.DropdownMenuItem
 com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.LibraryControls -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen -> androidx.compose.material3.LinearWavyProgressIndicator
 com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.DropdownMenu
@@ -32,12 +31,10 @@ com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.co
 com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.Icon
 com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.IconButton
 com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.LibraryPages -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.ListItem
 com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.ModalBottomSheet
 com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.Scaffold
 com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.Switch
-com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailScreen -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.PlaylistDialogs -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.songs.ShuffleListItem -> androidx.compose.material3.Text

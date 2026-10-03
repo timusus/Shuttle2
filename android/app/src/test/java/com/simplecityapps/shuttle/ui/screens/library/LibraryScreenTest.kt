@@ -44,7 +44,7 @@ class LibraryScreenTest {
 
         robot.assertTextDisplayed("Library")
         robot.assertTextDisplayed("12 songs")
-        robot.tabLabels() shouldBe listOf("Genres", "Playlists", "Artists", "Albums", "Songs")
+        robot.tabLabels() shouldBe listOf("Songs", "Albums", "Artists", "Playlists", "Genres")
     }
 
     @Test
@@ -56,31 +56,31 @@ class LibraryScreenTest {
 
     @Test
     fun `the section row leaves the first chip fully visible and scrolls the last one into view`() {
-        robot.setContent(libraryState(currentTab = LibraryTab.Genres), libraryControls(count = "1 genre"))
-        robot.sectionChipIsFullyVisible("Genres") shouldBe true
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), libraryControls(count = "1 song"))
+        robot.sectionChipIsFullyVisible("Songs") shouldBe true
 
         repeat(4) { robot.swipeToNextPage() }
 
-        robot.assertTabSelected("Songs")
-        robot.sectionChipIsFullyVisible("Songs") shouldBe true
+        robot.assertTabSelected("Genres")
+        robot.sectionChipIsFullyVisible("Genres") shouldBe true
     }
 
     @Test
     fun `right to left, selecting the last section scrolls its chip fully into view`() {
-        robot.setContent(libraryState(currentTab = LibraryTab.Genres), layoutDirection = LayoutDirection.Rtl)
-        robot.sectionChipIsFullyVisible("Genres") shouldBe true
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), layoutDirection = LayoutDirection.Rtl)
+        robot.sectionChipIsFullyVisible("Songs") shouldBe true
 
         repeat(4) { robot.swipeToNextPage() }
 
-        robot.assertTabSelected("Songs")
-        robot.sectionChipIsFullyVisible("Songs") shouldBe true
+        robot.assertTabSelected("Genres")
+        robot.sectionChipIsFullyVisible("Genres") shouldBe true
     }
 
     @Test
     fun `right to left, opening on the last section shows its chip fully`() {
-        robot.setContent(libraryState(currentTab = LibraryTab.Songs), layoutDirection = LayoutDirection.Rtl)
+        robot.setContent(libraryState(currentTab = LibraryTab.Genres), layoutDirection = LayoutDirection.Rtl)
 
-        robot.sectionChipIsFullyVisible("Songs") shouldBe true
+        robot.sectionChipIsFullyVisible("Genres") shouldBe true
     }
 
     @Test
@@ -114,9 +114,9 @@ class LibraryScreenTest {
 
         robot.swipeToNextPage()
 
-        robot.assertTabSelected("Albums")
-        robot.assertTextDisplayed("page:Albums")
-        robot.lastTabSelected shouldBe LibraryTab.Albums
+        robot.assertTabSelected("Playlists")
+        robot.assertTextDisplayed("page:Playlists")
+        robot.lastTabSelected shouldBe LibraryTab.Playlists
     }
 
     @Test
@@ -218,6 +218,40 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `the artists tab has the songs tab's controls, count and sort and shuffle and play`() {
+        var sortedBy: String? = null
+        val options = listOf("Artist Name", "Album Count").map { label -> S2Action(label, { sortedBy = label }, selected = label == "Artist Name") }
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Artists),
+            libraryControls(count = "2 artists", sortOptions = options, viewMode = ViewMode.List, onPlay = {}, onShuffle = {}),
+            LibraryPageStates(artists = readyAlbumArtistList(listOf(createAlbumArtist(name = "Harbour Owl"), createAlbumArtist(name = "Juniper Static")))),
+        )
+
+        robot.assertTextDisplayed("2 artists")
+        robot.assertTextDisplayed("Artist Name")
+        robot.assertContentDescriptionDisplayed("Shuffle")
+        robot.assertContentDescriptionDisplayed("Play")
+        robot.openSort()
+        robot.clickText("Album Count")
+        sortedBy shouldBe "Album Count"
+        robot.clickContentDescription("Play")
+        robot.playClicked shouldBe true
+    }
+
+    @Test
+    fun `at double text size every control stays on screen and the row grows past its minimum height`() {
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Albums),
+            libraryControls(count = "1,284 albums", sortOptions = sorts("Album Name", "Artist Name"), viewMode = ViewMode.Grid, onPlay = {}, onShuffle = {}),
+            fontScale = 2f,
+        )
+
+        robot.controlsRowFitsScreen() shouldBe true
+        robot.assertSortAnnounced("Sort: Album Name")
+        (robot.controlsRowSize().height >= 48.dp) shouldBe true
+    }
+
+    @Test
     fun `the view toggle switches the albums page between grid and list`() {
         val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"), createAlbum(name = "Salt Lines", albumArtist = "Harbour Owl"))
         robot.setAlbumsWithViewToggle(readyAlbumList(albums, viewMode = ViewMode.Grid))
@@ -241,7 +275,7 @@ class LibraryScreenTest {
         robot.lastTabsChanged shouldBe (LibraryTab.entries to LibraryTab.defaultEnabled.toSet() - LibraryTab.Genres)
 
         robot.moveTabUp(1)
-        robot.lastTabsChanged!!.first shouldBe listOf(LibraryTab.Playlists, LibraryTab.Genres) + LibraryTab.entries.drop(2)
+        robot.lastTabsChanged!!.first shouldBe listOf(LibraryTab.Albums, LibraryTab.Songs) + LibraryTab.entries.drop(2)
     }
 
     // -- Selection --

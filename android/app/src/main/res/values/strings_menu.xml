@@ -26,6 +26,7 @@
     <string name="menu_title_sort_album_name">Album Name</string>
     <!-- Menu option to sort by artist name -->
     <string name="menu_title_sort_artist_name">Artist Name</string>
+    <string name="menu_title_sort_album_count">Album Count</string>
     <!-- Menu option to sort by song name -->
     <string name="menu_title_sort_song_name">Song Name</string>
     <!-- Menu option to sort by year-->

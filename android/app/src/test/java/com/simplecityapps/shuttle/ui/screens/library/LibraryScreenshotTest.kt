@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.readyAlbumArtistList
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
 import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
@@ -87,6 +88,32 @@ class LibraryScreenshotTest {
     fun phoneSongs() {
         container(LibraryTab.Songs, "${songs.size} songs")
         shot("phone-songs")
+    }
+
+    /** The Songs page at 200% text: the controls row grows and keeps Shuffle and Play on screen (#730). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneSongsLargeText() {
+        library.setContent(
+            libraryState(currentTab = LibraryTab.Songs),
+            libraryControls("${songs.size} songs", sorts("Album Name", "Song Name", "Artist Name"), onPlay = {}, onShuffle = {}),
+            LibraryPageStates(songs = readySongList(songs = songs)),
+            fontScale = 2f,
+        )
+        shot("phone-songs-large-text")
+    }
+
+    /** Artists carries the same control row as Songs: count, sort, view, Shuffle and Play. */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneArtists() {
+        val artists = SampleLibrary.artists.map { it.toAlbumArtist() }
+        library.setContent(
+            libraryState(currentTab = LibraryTab.Artists),
+            libraryControls("${artists.size} artists", sorts("Artist Name", "Album Count"), ViewMode.List, onPlay = {}, onShuffle = {}),
+            LibraryPageStates(artists = readyAlbumArtistList(artists)),
+        )
+        shot("phone-artists")
     }
 
     @Test

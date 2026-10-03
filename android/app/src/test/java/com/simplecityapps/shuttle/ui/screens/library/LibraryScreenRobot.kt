@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertContentDescriptionEquals
@@ -34,6 +35,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -121,11 +123,13 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         pages: LibraryPageStates = LibraryPageStates(),
         chrome: LibraryTabChrome = LibraryTabChrome(),
         layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        fontScale: Float = 1f,
     ) {
         this.layoutDirection = layoutDirection
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection, LocalDensity provides Density(density.density, fontScale)) {
                 S2Theme { Screen(uiState, chrome, controls, pages) }
             }
         }
@@ -297,6 +301,23 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     /** The sort button's touch target, which may be larger than what it draws. */
     fun sortTouchTarget(): DpSize {
         val bounds = rule.onNodeWithTag("library-sort").fetchSemanticsNode().touchBoundsInRoot
+        return with(rule.density) { DpSize(bounds.width.toDp(), bounds.height.toDp()) }
+    }
+
+    /** Whether the controls row's actions all lie within the screen: none pushed off an edge by wide text. */
+    fun controlsRowFitsScreen(): Boolean {
+        val root = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        val row = rule.onNodeWithTag("library-controls").fetchSemanticsNode().boundsInRoot
+        return row.left >= root.left && row.right <= root.right &&
+            listOf("Shuffle", "Play").all { description ->
+                val bounds = rule.onNodeWithContentDescription(description).fetchSemanticsNode().boundsInRoot
+                bounds.left >= root.left && bounds.right <= root.right
+            }
+    }
+
+    /** The controls row's size, which grows with the text. */
+    fun controlsRowSize(): DpSize {
+        val bounds = rule.onNodeWithTag("library-controls").fetchSemanticsNode().boundsInRoot
         return with(rule.density) { DpSize(bounds.width.toDp(), bounds.height.toDp()) }
     }
 
