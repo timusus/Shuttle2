@@ -28,19 +28,24 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2ContentWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.rowTitle
+import com.simplecityapps.shuttle.designsystem.theme.supporting
 
 /**
  * A dialog: [title], an optional hero [icon], the [content] (a message, a [S2ChoiceList], a text
  * field), then the buttons. [confirmLabel] null leaves only the dismiss button, for a choice that
  * applies on tap. [destructive] draws the confirm button in `error`; [confirmEnabled] false
- * disables it until a form is valid. Built on `BasicAlertDialog`, so every kind of dialog shares
+ * disables it until a form is valid. [error] shows a failure (a rejected sign-in, a taken name) below the
+ * content in `error`, announced politely to TalkBack. Built on `BasicAlertDialog`, so every kind of dialog shares
  * one layout.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +60,7 @@ fun S2Dialog(
     confirmEnabled: Boolean = true,
     destructive: Boolean = false,
     icon: ImageVector? = null,
+    error: String? = null,
     content: @Composable () -> Unit,
 ) {
     BasicAlertDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
@@ -67,6 +73,7 @@ fun S2Dialog(
             confirmEnabled = confirmEnabled,
             destructive = destructive,
             icon = icon,
+            error = error,
             content = content,
         )
     }
@@ -84,6 +91,7 @@ fun S2DialogContent(
     confirmEnabled: Boolean = true,
     destructive: Boolean = false,
     icon: ImageVector? = null,
+    error: String? = null,
     content: @Composable () -> Unit,
 ) {
     Surface(
@@ -113,6 +121,16 @@ fun S2DialogContent(
             )
             CompositionLocalProvider(LocalContentColor provides AlertDialogDefaults.textContentColor) {
                 ProvideTextStyle(MaterialTheme.typography.bodyMedium) { content() }
+            }
+            if (error != null) {
+                Text(
+                    error,
+                    style = MaterialTheme.typography.supporting,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .padding(top = S2Spacing.medium)
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                )
             }
             Row(
                 modifier = Modifier

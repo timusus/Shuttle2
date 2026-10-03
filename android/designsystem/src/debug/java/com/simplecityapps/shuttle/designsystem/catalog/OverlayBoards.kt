@@ -237,6 +237,17 @@ fun DialogBoard(width: BoardWidth) {
                     NameField("Road trip")
                 }
             },
+            BoardSection("Text input: error") {
+                S2DialogContent(
+                    title = "New playlist",
+                    onDismiss = {},
+                    confirmLabel = "Create",
+                    dismissLabel = "Cancel",
+                    error = "A playlist called Road trip already exists.",
+                ) {
+                    NameField("Road trip")
+                }
+            },
         ),
     )
 }

@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: confirm; destructive with icon; choice list; text input with confirm disabled; text input filled.
+States: confirm; destructive with icon; choice list; text input with confirm disabled; text input filled; text input error.
 
 ## Compact, light
 

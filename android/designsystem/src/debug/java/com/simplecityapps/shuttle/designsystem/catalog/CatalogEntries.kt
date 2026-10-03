@@ -83,7 +83,7 @@ val CatalogEntries = listOf(
     },
     CatalogEntry("menu", "Menu", listOf("overflow with icons, groups and a destructive item", "sort with checked items")) { MenuBoard(it) },
     CatalogEntry("song-actions-sheet", "Actions sheet", listOf("song target with destructive item", "playlist target with long title")) { ActionsSheetBoard(it) },
-    CatalogEntry("dialog", "Dialog", listOf("confirm", "destructive with icon", "choice list", "text input with confirm disabled", "text input filled")) { DialogBoard(it) },
+    CatalogEntry("dialog", "Dialog", listOf("confirm", "destructive with icon", "choice list", "text input with confirm disabled", "text input filled", "text input error")) { DialogBoard(it) },
     CatalogEntry("snackbar", "Snackbar", listOf("message", "with action", "long with action and dismiss", "above the nav bar")) { SnackbarBoard(it) },
     CatalogEntry("toolbar-selection", "Selection toolbar", listOf("floating, 1 selected", "floating, many with overflow", "overflow open", "docked alternative")) {
         SelectionToolbarBoard(it)
