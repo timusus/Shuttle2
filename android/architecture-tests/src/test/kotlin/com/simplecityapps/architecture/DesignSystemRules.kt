@@ -37,11 +37,10 @@ class DesignSystemRules {
 
     @Test
     fun `app sources use spacing and size tokens rather than literal dp values`() {
-        val literal = Regex("(?<![\\w.])(?!0\\.dp)\\d+(?:\\.\\d+)?\\.dp\\b")
         val violations = Production.scope.files
             .filter { it.module == ":android:app" && "/src/main/" in it.relativePath }
             .mapNotNull { file ->
-                val count = literal.findAll(DesignSystemMatching.stripNonCode(file.text)).count()
+                val count = DesignSystemMatching.LITERAL_DP.findAll(DesignSystemMatching.stripNonCode(file.text)).count()
                 if (count > 0) file.violation("${file.relativePath}|dp|$count") else null
             }
         Baseline.assertMatches(
@@ -61,6 +60,12 @@ class DesignSystemRules {
 /** The matching logic of [DesignSystemRules], free of Konsist so it can be unit-tested. */
 object DesignSystemMatching {
     const val M3_PREFIX = "androidx.compose.material3."
+
+    /**
+     * A literal `N.dp`, however Kotlin spells the number: a float suffix (`16f.dp`), a decimal (`2.5.dp`) or a
+     * parenthesised negative (`(-16).dp`) all count. Zero is exempt, spelled any way (`0.dp`, `0.0.dp`, `0f.dp`).
+     */
+    val LITERAL_DP = Regex("(?<![\\w.])(?!0+(?:\\.0+)?f?\\)?\\.dp\\b)\\d+(?:\\.\\d+)?f?\\)?\\.dp\\b")
 
     /**
      * Layout, window and navigation3 helpers from `material3.adaptive`, relative to [M3_PREFIX]. Adaptive

@@ -22,7 +22,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import kotlin.math.log10
 import kotlinx.collections.immutable.ImmutableList
 
@@ -48,6 +47,9 @@ private fun frequencyLabel(hz: Float): String = if (hz >= 1000f) "%.0f kHz".form
 // label's height so the ±20 dB labels aren't clipped.
 private val DB_LABEL_GUTTER = 40.dp
 private val PLOT_VERTICAL_INSET = 7.dp
+
+/** The frequency curve's stroke. */
+private val CHART_STROKE_WIDTH = 2.dp
 
 /**
  * Draws an equalizer frequency-response curve: log-frequency x axis, dB y axis, gridlines at
@@ -110,7 +112,7 @@ fun FrequencyResponseChart(
                         val y = inset + yFraction(point.gainDb.coerceIn(MIN_DB, MAX_DB)) * plotHeight
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                     }
-                    drawPath(path, color = lineColor, style = Stroke(width = S2Spacing.tiny.toPx()))
+                    drawPath(path, color = lineColor, style = Stroke(width = CHART_STROKE_WIDTH.toPx()))
                 }
             }
         }

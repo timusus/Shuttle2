@@ -47,7 +47,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2InfoChip
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
-import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
@@ -56,6 +55,9 @@ import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.text.stringResource
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
+
+/** The breathing room above and below the loading and not-found states. */
+private val StateVerticalPadding = 48.dp
 
 @Composable
 fun SongInfoDestination(
@@ -111,8 +113,8 @@ fun SongInfoScreen(
     ) { padding ->
         when {
             song != null -> SongInfoContent(song, Modifier.padding(padding))
-            uiState.loading -> LoadingState(Modifier.padding(padding).padding(vertical = S2TouchTarget.minimum))
-            else -> EmptyState(title = stringResource(R.string.song_info_not_found), modifier = Modifier.padding(padding).padding(vertical = S2TouchTarget.minimum))
+            uiState.loading -> LoadingState(Modifier.padding(padding).padding(vertical = StateVerticalPadding))
+            else -> EmptyState(title = stringResource(R.string.song_info_not_found), modifier = Modifier.padding(padding).padding(vertical = StateVerticalPadding))
         }
     }
 }

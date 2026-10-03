@@ -189,7 +189,7 @@ private fun StatusCard(
             horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Rounded.WorkspacePremium, contentDescription = null, modifier = Modifier.size(S2Spacing.xlarge))
+            Icon(Icons.Rounded.WorkspacePremium, contentDescription = null, modifier = Modifier.size(HeroIconSize))
             Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                 Text(text, style = MaterialTheme.typography.bodyLarge)
                 if (explainsTrialEnd) Text(stringResource(R.string.paywall_trial_terms), style = MaterialTheme.typography.bodyMedium)
@@ -238,6 +238,12 @@ private fun ServerMarks() {
 private val ServerMarkSize = 20.dp
 private val ServerMarkSpacing = 4.dp
 private val BenefitLeadingWidth = ServerMarkSize * 3 + ServerMarkSpacing * 2
+
+/** The premium glyph beside the heading. */
+private val HeroIconSize = 32.dp
+
+/** The outline that marks the selected plan. */
+private val SelectedBorderWidth = 2.dp
 
 @Composable
 private fun SectionTitle(text: String) {
@@ -319,7 +325,7 @@ private fun PlanCard(
     if (selected) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            border = BorderStroke(S2Spacing.tiny, MaterialTheme.colorScheme.primary),
+            border = BorderStroke(SelectedBorderWidth, MaterialTheme.colorScheme.primary),
             modifier = Modifier.fillMaxWidth()
         ) { content() }
     } else {

@@ -272,7 +272,7 @@ fun DefaultPopup(
     text?.let {
         Box(
             modifier = modifier
-                .offset(x = (-16).dp)
+                .offset(x = -S2Spacing.medium)
                 .sizeIn(minWidth = 64.dp, minHeight = 64.dp)
                 .background(
                     color = MaterialTheme.colorScheme.primary,

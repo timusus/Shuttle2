@@ -95,4 +95,25 @@ class DesignSystemMatchingTest {
         assertEquals(setOf("b|Card|1"), newOnly)
         assertTrue(fixedOnly.isEmpty())
     }
+
+    @Test
+    fun `literal dp values are flagged in every spelling, zeros are not`() {
+        listOf(
+            "16.dp",
+            "16f.dp",
+            "(-16).dp",
+            "(16f).dp",
+            "2.5.dp",
+            "0.5.dp",
+            "100.dp",
+        ).forEach { assertTrue(it, DesignSystemMatching.LITERAL_DP.containsMatchIn(it)) }
+        listOf(
+            "0.dp",
+            "0.0.dp",
+            "0f.dp",
+            "(0).dp",
+            "a16.dp",
+            ".16.dp",
+        ).forEach { assertFalse(it, DesignSystemMatching.LITERAL_DP.containsMatchIn(it)) }
+    }
 }

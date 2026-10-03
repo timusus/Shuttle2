@@ -104,6 +104,13 @@ object WidgetDimens {
      */
     val compactCardMinHeight = padding + titleLineHeight + buttonSize + padding - compactPlaySlack
 
+    /** The Shuttle logo an idle widget centres, and the smaller one beside the text in a [WidgetMode.Row]. */
+    val idleLogo = 48.dp
+    val idleRowLogo = 32.dp
+
+    /** The dot that marks a toggled control. */
+    val toggleDot = 4.dp
+
     /** From this height, the art sits above a full-width button row. */
     val splitMinHeight = 160.dp
 
