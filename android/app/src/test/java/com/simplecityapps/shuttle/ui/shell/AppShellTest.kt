@@ -24,6 +24,7 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -937,6 +938,69 @@ class AppShellTest {
 
         robot.assertSelectedTab(null)
         robot.textLeft("Settings: PlaybackAndSound") shouldBeGreaterThanOrEqualTo 48.dp
+    }
+
+    @Test
+    fun `while the nav bar slides back the page's bottom edge stays on the mini player riding it`() {
+        robot.setContent(systemBars = PhoneSystemBars)
+        robot.openSoundSettings()
+        robot.pressBackHoldingTheSlide()
+
+        val bottoms = (1..6).map {
+            robot.advanceFrames(2)
+            (robot.miniPlayerTop() - robot.destinationBottom()).value shouldBe (0f plusOrMinus 1f)
+            (robot.miniPlayerBottom() - robot.navBarTop()).value shouldBeLessThanOrEqualTo 1f
+            robot.destinationBottom()
+        }
+        bottoms.distinct().size shouldBeGreaterThan 2
+        robot.settle()
+        robot.assertSelectedTab("Home")
+        (robot.miniPlayerTop() - robot.destinationBottom()).value shouldBe (0f plusOrMinus 1f)
+    }
+
+    @Test
+    fun `while the rail slides away the page's start padding keeps step with it`() {
+        robot.setContent(window = MediumWindow, systemBars = SystemBars(statusBarDp = 0, navigationBarDp = 0, leftCutoutDp = 48))
+        robot.openSoundSettingsHoldingTheSlide()
+
+        val lefts = (1..6).map {
+            robot.advanceFrames(2)
+            robot.destinationLeft().value shouldBe (maxOf(robot.railRight(), 48.dp).value plusOrMinus 1f)
+            robot.destinationLeft()
+        }
+        lefts.distinct().size shouldBeGreaterThan 1
+        robot.settle()
+        robot.destinationLeft().value shouldBe (48f plusOrMinus 1f)
+    }
+
+    @Test
+    fun `below 600 dp the mini player clears a side cutout while its sheet runs under it`() {
+        robot.setContent(systemBars = SystemBars(leftCutoutDp = 48))
+
+        robot.sheetLeft().value shouldBe (0f plusOrMinus 1f)
+        robot.miniPlayerLeft() shouldBeGreaterThanOrEqualTo 48.dp
+    }
+
+    @Test
+    fun `at Medium width the mini and full player clear a cutout the hidden rail leaves bare`() {
+        robot.setContent(window = MediumWindow, systemBars = SystemBars(statusBarDp = 0, navigationBarDp = 0, leftCutoutDp = 48))
+        robot.openSoundSettings()
+        robot.assertSelectedTab(null)
+
+        robot.sheetLeft().value shouldBe (0f plusOrMinus 1f)
+        robot.miniPlayerLeft() shouldBeGreaterThanOrEqualTo 48.dp
+        robot.tapMiniPlayer()
+        robot.nowPlayingLeft() shouldBeGreaterThanOrEqualTo 48.dp
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `at Expanded width the full player grown over the rail clears the cutout under it`() {
+        robot.setContent(window = windowInfo(840, 900), systemBars = SystemBars(statusBarDp = 0, navigationBarDp = 0, leftCutoutDp = 48))
+
+        robot.miniPlayerLeft() shouldBeGreaterThanOrEqualTo robot.railRight()
+        robot.tapMiniPlayer()
+        robot.nowPlayingLeft() shouldBeGreaterThanOrEqualTo 48.dp
     }
 
     @Test

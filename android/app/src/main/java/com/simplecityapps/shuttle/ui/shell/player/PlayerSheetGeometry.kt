@@ -11,8 +11,8 @@ package com.simplecityapps.shuttle.ui.shell.player
  *
  * [navBarHeight] is whatever the mini player docks on: the nav bar, or just the system navigation bar where the shell
  * has none (beside a rail, or while a [com.simplecityapps.shuttle.ui.shell.UtilityRoute] hides the nav bar). While the
- * nav bar slides in or out it is already the dock it is heading for, so the anchors and the destinations' padding
- * change once, not per frame; [sheetTop] draws the sheet at each frame's [dockHeight] on the way.
+ * nav bar slides in or out it is already the dock it is heading for, so the anchors change once, not per frame;
+ * [sheetTop] draws the sheet, and [contentBottomPadding] pads the destinations, at each frame's [dockHeight] on the way.
  */
 data class PlayerSheetGeometry(
     val height: Float,
@@ -75,8 +75,14 @@ data class PlayerSheetGeometry(
         return corner * expand(offset) * toStatusBar
     }
 
-    /** Follows reveal only, never expand, so destinations never reflow per frame. */
-    fun contentBottomPadding(reveal: Float): Float = navBarHeight + miniHeight * reveal
+    /**
+     * Follows reveal only, never expand, so a drag never reflows the destinations. [dock] is where the mini player docks
+     * this frame ([dockHeight]), so the padding moves with the nav bar as it slides rather than taking its new height at once.
+     */
+    fun contentBottomPadding(
+        reveal: Float,
+        dock: Float = navBarHeight,
+    ): Float = dock + miniHeight * reveal
 
     companion object {
         const val MaxScrimAlpha = 0.32f

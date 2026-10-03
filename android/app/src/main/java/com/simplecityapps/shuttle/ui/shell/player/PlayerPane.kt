@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,6 +34,7 @@ internal fun PlayerPane(
     width: Dp,
     onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
+    sideInsets: WindowInsets = WindowInsets(0),
 ) {
     val scope = rememberCoroutineScope()
     PanelResetEffect(state, player, actions)
@@ -48,6 +51,7 @@ internal fun PlayerPane(
                     actions = actions,
                     onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
                     onOpenRoute = onOpenRoute,
+                    modifier = Modifier.windowInsetsPadding(sideInsets),
                 )
             }
         }

@@ -331,8 +331,10 @@ it opens and every page under it implement `UtilityRoute`: they push onto the se
 like any route, but while one is on top (`AppNavigator.showsNavigation`) the shell slides the nav
 bar or rail away with the player pane's motion and lights no tab, and the mini player (or the pane)
 stays; on a phone it rides the bar's top edge down to the system navigation bar. The sheet's
-anchors and the destination's padding take the new dock at once and only the drawing slides, so
-nothing reflows per frame. Back pops to the tab as it was (#791). Leaving the tab (a launcher
+anchors take the new dock at once and only the drawing slides, so the sheet never re-anchors per
+frame; the destination's bottom padding follows the same slide (`navigationShown`, through
+`PlayerSheetGeometry.dockHeight`), so the page's bottom edge stays on the mini player's top edge
+both ways (#799). Back pops to the tab as it was (#791). Leaving the tab (a launcher
 shortcut, or back from another tab to the start tab) pops its utility routes, so coming back shows
 the tab's own screens with the bar. The tag editor and song info keep the chrome: they are panes and sheets of a tab's content,
 not places of their own. Screen dialogs (tag
@@ -366,8 +368,12 @@ Insets are split by owner:
 | status bar | the destination's top bar |
 | navigation bar, bottom | the nav bar; with no nav bar (beside a rail, or slid away for a utility destination) the mini player docks above it and its fill runs on underneath, and the open sheet pads itself |
 | IME | destination content (`imePadding()`) |
-| side system bars and display cutout, start edge | the rail while it shows; the shell pads the destination when there is none (compact width, or a utility destination hiding it) |
-| side system bars and display cutout, end edge | the player pane while it is open; otherwise the shell pads the destination |
+| side system bars and display cutout, start edge | the rail while it shows; the shell pads the destination, the mini player and the open sheet by whatever the rail leaves bare as laid out that frame (`ChromeInsets`), so the padding slides with the rail rather than switching on at once (#799) |
+| side system bars and display cutout, end edge | the player pane while it is open (it pads its own content), likewise measured as it slides; otherwise the shell pads the destination, the docked mini player and the sheet |
+
+The player chrome's backgrounds (the sheet, the mini player's fill) run edge to edge under a cutout; only their content is
+padded clear of it. A sheet grown over the rail (Expanded) pads its expanded content by the whole inset, and its mini
+player by what the rail beside it doesn't cover.
 
 ## 5. Theming
 

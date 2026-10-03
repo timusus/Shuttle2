@@ -498,6 +498,10 @@
     {
       "text": "On a tablet, Settings now shows its list beside the page you open, instead of stretching the phone layout",
       "commits": []
+    },
+    {
+      "text": "With the phone held sideways, the mini player and Now Playing no longer sit under the camera cutout, and pages no longer jump as the bottom bar or side bar slides in or out",
+      "commits": []
     }
   ]
 }

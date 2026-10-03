@@ -9,11 +9,11 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -39,6 +39,7 @@ import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
+import com.simplecityapps.shuttle.ui.shell.ChromeInsets
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
@@ -61,6 +62,7 @@ internal fun PlayerSheet(
     layout: ShellLayout,
     onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
+    sideInsets: WindowInsets = WindowInsets(0),
     collapsedInset: () -> Int = { 0 },
 ) {
     val scope = rememberCoroutineScope()
@@ -92,6 +94,7 @@ internal fun PlayerSheet(
                 val nowPlayingModifier = Modifier
                     .hiddenFromSemantics(!nowPlayingShown)
                     .graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) }
+                    .windowInsetsPadding(sideInsets)
                 if (state.mode == PlayerMode.CompactSheet) {
                     FullPlayer(
                         player = player,
@@ -113,11 +116,16 @@ internal fun PlayerSheet(
                         modifier = nowPlayingModifier,
                     )
                 }
-                Column(
+                // The mini player's fill runs on to the bottom edge, under the system navigation bar wherever no nav bar
+                // covers it, so the gesture area doesn't read as a band of its own, and out under a side cutout, which only
+                // its content clears.
+                val colors = MaterialTheme.colorScheme
+                Box(
                     Modifier
                         .fillMaxSize()
                         .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
-                        .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) },
+                        .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) }
+                        .background(miniPlayerFill(colors.surfaceContainerHigh) { it.surfaceContainerHigh }),
                 ) {
                     MiniPlayer(
                         player = player,
@@ -125,11 +133,9 @@ internal fun PlayerSheet(
                         actions = actions,
                         interactive = miniInteractive,
                         onClick = { scope.launch { state.moveTo(PlayerLevel.Full) } },
+                        // Beside the rail, the rail already covers that much of the cutout.
+                        modifier = Modifier.windowInsetsPadding(sideInsets.exclude(remember(collapsedInset) { ChromeInsets(start = collapsedInset) })),
                     )
-                    // The mini player's fill runs on to the bottom edge, under the system navigation bar wherever no nav
-                    // bar covers it, so the gesture area doesn't read as a band of its own.
-                    val colors = MaterialTheme.colorScheme
-                    Box(Modifier.weight(1f).fillMaxWidth().background(miniPlayerFill(colors.surfaceContainerHigh) { it.surfaceContainerHigh }))
                 }
             }
         }

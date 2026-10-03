@@ -756,6 +756,43 @@ class AppShellRobot(
     /** The nav bar's top edge, as drawn, from the top of the shell. */
     fun navBarTop(): Dp = rule.onNodeWithTag(ShellTestTags.NavigationBar).getBoundsInRoot().top
 
+    /**
+     * Presses back from a utility page with the clock held, stopping once the nav bar is back and has started sliding in;
+     * [advanceFrames] moves the slide on and [settle] finishes it.
+     */
+    fun pressBackHoldingTheSlide() {
+        rule.mainClock.autoAdvance = false
+        rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
+        repeat(200) {
+            rule.mainClock.advanceTimeByFrame()
+            val bar = rule.onAllNodesWithTag(ShellTestTags.NavigationBar).fetchSemanticsNodes().firstOrNull()
+            if (bar != null && bar.boundsInRoot.top > 0f) return
+        }
+        error("The nav bar never came back")
+    }
+
+    /** The edges of the space the shell lays its destinations out in, inside the padding that keeps them clear of the chrome. */
+    fun destinationBottom(): Dp = rule.onNodeWithTag(ShellTestTags.Destinations).getBoundsInRoot().bottom
+
+    fun destinationLeft(): Dp = rule.onNodeWithTag(ShellTestTags.Destinations).getBoundsInRoot().left
+
+    /** The rail's trailing edge as drawn, from the shell's left edge, or zero once it has gone. */
+    fun railRight(): Dp = rule.onAllNodesWithTag(ShellTestTags.NavigationRail).fetchSemanticsNodes().firstOrNull()?.let { node ->
+        with(rule.density) { node.boundsInRoot.right.toDp() }
+    } ?: 0.dp
+
+    /** The player sheet's left edge, where its background starts. */
+    fun sheetLeft(): Dp = rule.onNodeWithTag(PlayerTestTags.Sheet).getBoundsInRoot().left
+
+    /** The mini player's left edge, where its content starts. */
+    fun miniPlayerLeft(): Dp = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().left
+
+    /** Where Now Playing's content starts, in the sheet or the pane. */
+    fun nowPlayingLeft(): Dp = rule.onNodeWithTag(PlayerTestTags.NowPlaying).getBoundsInRoot().left
+
+    /** The mini player's top edge, as drawn, from the top of the shell. */
+    fun miniPlayerTop(): Dp = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().top
+
     /** The mini player's bottom edge, as drawn, from the top of the shell. */
     fun miniPlayerBottom(): Dp = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().bottom
 
