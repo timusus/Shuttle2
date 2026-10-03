@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.forPath
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.dsp.replaygain.replayGain
 import com.simplecityapps.playback.dsp.replaygain.replayGainDb
+import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.model.Song
 
 /**
@@ -16,21 +17,30 @@ import com.simplecityapps.shuttle.model.Song
  * `ReplayGainAudioProcessor` applies ([replayGainDb]); the engine's limiter keeps a boost from clipping. Both are read
  * as each song is resolved, so a change applies from the next song. A provider that can't build a URL (signed out, no
  * address) throws, which fails the song as the controller expects, and so does a server song that
- * [allowsServerStream] refuses (streaming needs Shuttle Music Pro or the trial), so the controller skips it.
+ * [serverStreamAccess] refuses (streaming needs Shuttle Music Pro or the trial), so the controller skips it. One it
+ * can't decide yet (StoreKit hasn't answered) throws [ServerStreamNotAllowedException] marked
+ * [ServerStreamNotAllowedException.undecided], which the controller doesn't hold against the song.
  */
 class SongStreamResolver(
     private val streamUrls: Collection<StreamUrlProvider>,
     private val replayGainMode: () -> ReplayGainMode,
     private val preAmpGainDb: () -> Float,
-    private val allowsServerStream: suspend (Song) -> Boolean = { true }
+    private val serverStreamAccess: suspend (song: Song, playRequested: Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed }
 ) : IosStreamResolver {
     override suspend fun resolve(
         song: Song,
-        startPositionMs: Long
+        startPositionMs: Long,
+        playRequested: Boolean
     ): IosStream {
         val provider = streamUrls.forPath(song.path)
         val gainDb = replayGainDb(replayGainMode(), preAmpGainDb().toDouble(), song.replayGain).toFloat()
-        if (provider != null && !allowsServerStream(song)) throw ServerStreamNotAllowedException(song)
+        if (provider != null) {
+            when (serverStreamAccess(song, playRequested)) {
+                ServerAccess.Allowed -> Unit
+                ServerAccess.Refused -> throw ServerStreamNotAllowedException(song, undecided = false)
+                ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
+            }
+        }
         return when {
             provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs), gainDb = gainDb, opensAtPosition = true)
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
@@ -60,7 +70,13 @@ class SongStreamResolver(
     }
 }
 
-/** A server song refused because streaming it needs Shuttle Music Pro or the trial. */
+/**
+ * A server song refused because streaming it needs Shuttle Music Pro or the trial, or, if [undecided], because StoreKit
+ * hadn't said yet whether the user has them.
+ */
 class ServerStreamNotAllowedException(
-    song: Song
-) : IllegalStateException("Streaming ${song.name} from a server needs Shuttle Music Pro")
+    song: Song,
+    val undecided: Boolean
+) : IllegalStateException(
+    if (undecided) "Streaming ${song.name} waits on the App Store's answer" else "Streaming ${song.name} from a server needs Shuttle Music Pro"
+)

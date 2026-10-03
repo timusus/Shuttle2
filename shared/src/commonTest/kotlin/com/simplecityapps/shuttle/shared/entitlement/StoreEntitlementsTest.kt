@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.shared.entitlement
 
 import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
 import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.shared.playback.song
@@ -16,6 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -37,8 +40,9 @@ class StoreEntitlementsTest {
 
     private fun purchase(
         productId: String,
-        at: Instant
-    ) = StorePurchase(productId, at.toEpochMilliseconds())
+        at: Instant,
+        revoked: Boolean = false
+    ) = StorePurchase(productId, at.toEpochMilliseconds(), revoked)
 
     @Test
     fun unknownUntilTheStoreAnswers() = runTest {
@@ -123,6 +127,61 @@ class StoreEntitlementsTest {
     }
 
     @Test
+    fun aRestoreOrReinstallReportingTheOriginalPurchaseKeepsTheTrialsEnd() = runTest {
+        val store = entitlements()
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 10.days)))
+        runCurrent()
+        store.entitlement.value shouldBe Entitlement.Trial(start + 4.days)
+
+        // StoreKit reports the trial's original purchase on every device and after every restore.
+        advanceTimeBy(5.days)
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 10.days)))
+        runCurrent()
+        store.entitlement.value shouldBe Entitlement.Free(trialUsed = true)
+    }
+
+    @Test
+    fun whatARestoreFoundIgnoresTheDebugBuildsPro() = runTest {
+        val store = entitlements(isDebug = true)
+        store.storeAnswered(emptyList()) shouldBe Entitlement.Free(trialUsed = false)
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 20.days))) shouldBe Entitlement.Free(trialUsed = true)
+        runCurrent()
+        store.entitlement.value shouldBe Entitlement.Pro(ProSource.Debug)
+    }
+
+    @Test
+    fun aRevokedTrialCountsAsUsed() = runTest {
+        val store = entitlements()
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 1.days, revoked = true)))
+        runCurrent()
+        store.entitlement.value shouldBe Entitlement.Free(trialUsed = true)
+    }
+
+    @Test
+    fun aRefundedLifetimePurchaseIsNotPro() = runTest {
+        val store = entitlements()
+        store.storeAnswered(listOf(purchase(AppStoreProducts.LIFETIME, start - 1.days, revoked = true)))
+        runCurrent()
+        store.entitlement.value shouldBe Entitlement.Free(trialUsed = false)
+    }
+
+    @Test
+    fun aStreamAtLaunchWaitsForStoreKitsAnswerRatherThanRefusingATrialUser() = runTest {
+        val store = entitlements()
+        val gate = ServerAccessGate(store.entitlement, startTrial = null, storeAnswerWait = 5.seconds)
+        val paywalls = mutableListOf<PaywallSource>()
+        backgroundScope.launch { gate.paywallRequests.toList(paywalls) }
+        val streams = GatedServerStreams(gate)
+        val access = async { streams.access(song(id = 1, path = "jellyfin://item/1"), playRequested = true) }
+        advanceTimeBy(1.seconds)
+
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 1.days)))
+
+        access.await() shouldBe ServerAccess.Allowed
+        paywalls shouldBe emptyList()
+    }
+
+    @Test
     fun aReleaseBuildRefusesADebugOverride() = runTest {
         shouldThrow<IllegalStateException> { entitlements().setDebugOverride(DebugEntitlementOverride.Pro) }
     }
@@ -138,7 +197,7 @@ class StoreEntitlementsTest {
         runCurrent()
         val song = song(id = 1, path = "jellyfin://item/1")
 
-        streams.allows(song) shouldBe false
+        streams.access(song, playRequested = true) shouldBe ServerAccess.Refused
         runCurrent()
         skipped shouldBe listOf(song)
     }

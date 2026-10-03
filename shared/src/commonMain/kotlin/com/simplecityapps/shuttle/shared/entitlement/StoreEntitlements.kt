@@ -18,10 +18,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 
-/** One of the user's App Store transactions that StoreKit reports as current (`Transaction.currentEntitlements`). */
+/** The user's App Store transaction for one of [AppStoreProducts] (StoreKit's `Transaction.latest(for:)`). */
 data class StorePurchase(
     val productId: String,
-    val purchasedAtEpochMs: Long
+    /**
+     * When it was first bought (`Transaction.originalPurchaseDate`), which a restore, a reinstall or a new device
+     * doesn't change, so the trial can't start over.
+     */
+    val originalPurchasedAtEpochMs: Long,
+    /** Refunded or revoked (`Transaction.revocationDate`): it grants nothing, though a revoked trial was still had. */
+    val revoked: Boolean
 )
 
 /**
@@ -29,9 +35,10 @@ data class StorePurchase(
  * ([resolveEntitlement]: Pro, else a running trial, else Free, else Unknown until StoreKit answers) from what Swift's
  * `StoreKitManager` reports through [storeAnswered].
  *
- * Owning [AppStoreProducts.LIFETIME] is Pro. Owning [AppStoreProducts.TRIAL] means the server trial started at its
- * purchase date, so it runs for [Entitlement.TRIAL_LENGTH] from then and is used up after; StoreKit keeps both
- * transactions per Apple ID, so neither depends on anything stored on the device. StoreKit answers from its on-device
+ * Owning [AppStoreProducts.LIFETIME] is Pro, unless it was refunded. Owning [AppStoreProducts.TRIAL] means the server
+ * trial started at its original purchase date, so it runs for [Entitlement.TRIAL_LENGTH] from then and is used up
+ * after; a refunded or revoked trial is used up at once. StoreKit keeps both transactions per Apple ID, so neither
+ * depends on anything stored on the device. StoreKit answers from its on-device
  * cache, offline too, so unlike Android there's no cached Pro to stand in for it.
  *
  * Debug builds resolve Pro, as Android's do, unless [setDebugOverride] says otherwise
@@ -63,9 +70,14 @@ class StoreEntitlements(
             }
             .stateIn(coroutineScope, SharingStarted.Eagerly, resolve(purchases.value, _debugOverride.value))
 
-    /** StoreKit's current transactions, each time Swift reads them: at launch, after a purchase or restore, and on updates. */
-    fun storeAnswered(purchases: List<StorePurchase>) {
+    /**
+     * StoreKit's transactions, each time Swift reads them: at launch, after a purchase or restore, and on updates.
+     *
+     * @return what they alone resolve to, debug overrides aside: what a restore found.
+     */
+    fun storeAnswered(purchases: List<StorePurchase>): Entitlement {
         this.purchases.value = purchases
+        return resolve(purchases, DebugEntitlementOverride.Store)
     }
 
     /** Debug builds only: overrides the resolved entitlement for testing the paywall and the gates. */
@@ -84,14 +96,16 @@ class StoreEntitlements(
         override: DebugEntitlementOverride
     ): Entitlement {
         val now = clock.now()
+        val trials = purchases.orEmpty().filter { it.productId == AppStoreProducts.TRIAL }
+        // A revoked trial grants no time, but it was had: it resolves as one that has already ended.
+        val trialStartedAt = trials.minOfOrNull { it.originalPurchasedAtEpochMs }
+            ?.let(Instant::fromEpochMilliseconds)
+            ?.let { if (trials.all { trial -> trial.revoked }) minOf(it, now - Entitlement.TRIAL_LENGTH) else it }
         return override.toEntitlement(now) ?: resolveEntitlement(
             storeAnswered = purchases != null,
-            ownedPro = purchases.orEmpty().mapNotNull { AppStoreProducts.proSource(it.productId) }.minOrNull(),
+            ownedPro = purchases.orEmpty().filterNot { it.revoked }.mapNotNull { AppStoreProducts.proSource(it.productId) }.minOrNull(),
             cachedPro = null,
-            trialStartedAt = purchases.orEmpty()
-                .filter { it.productId == AppStoreProducts.TRIAL }
-                .minOfOrNull { it.purchasedAtEpochMs }
-                ?.let(Instant::fromEpochMilliseconds),
+            trialStartedAt = trialStartedAt,
             now = now,
             isDebug = override.resolvesAsDebug(isDebug)
         )

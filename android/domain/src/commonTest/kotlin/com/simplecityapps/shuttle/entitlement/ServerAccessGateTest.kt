@@ -4,22 +4,28 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerAccessGateTest {
     private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
     private var trialStarts = 0
-    private val gate = ServerAccessGate(entitlement) {
-        trialStarts++
-        true
-    }
+    private val gate = ServerAccessGate(
+        entitlement,
+        startTrial = {
+            trialStarts++
+            true
+        }
+    )
 
     private fun requests(block: suspend TestScope.() -> Unit): List<PaywallSource> = requests(gate, block)
 
@@ -57,15 +63,48 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `while Play hasn't answered, a user may add a server but not stream from one, and the trial doesn't start`() {
+    fun `while Play hasn't answered, a user may add a server but not stream from one, and neither the trial nor the paywall starts`() {
         entitlement.value = Entitlement.Unknown
         val requests = requests {
             assertTrue(gate.tryAddServer())
             assertFalse(gate.tryStreamFromServer())
+            assertEquals(ServerAccess.Undecided, gate.streamFromServer())
             assertFalse(gate.tryDownloadFromServer())
         }
-        assertEquals(listOf(PaywallSource.ServerPlayback, PaywallSource.ServerDownload), requests)
+        assertEquals(emptyList<PaywallSource>(), requests)
         assertEquals(0, trialStarts)
+    }
+
+    @Test
+    fun `a stream waits for the store's first answer, then decides`() {
+        entitlement.value = Entitlement.Unknown
+        val waitingGate = ServerAccessGate(entitlement, startTrial = null, storeAnswerWait = 5.seconds)
+        val requests = requests(waitingGate) {
+            val access = async { waitingGate.streamFromServer() }
+            advanceTimeBy(1.seconds)
+            entitlement.value = Entitlement.Pro(ProSource.LegacyLifetime)
+            assertEquals(ServerAccess.Allowed, access.await())
+        }
+        assertEquals(emptyList<PaywallSource>(), requests)
+    }
+
+    @Test
+    fun `a store that doesn't answer in time leaves a stream undecided, without the paywall`() {
+        entitlement.value = Entitlement.Unknown
+        val waitingGate = ServerAccessGate(entitlement, startTrial = null, storeAnswerWait = 5.seconds)
+        val requests = requests(waitingGate) {
+            assertEquals(ServerAccess.Undecided, waitingGate.streamFromServer())
+        }
+        assertEquals(emptyList<PaywallSource>(), requests)
+    }
+
+    @Test
+    fun `a refusal the user didn't ask for doesn't open the paywall`() {
+        entitlement.value = Entitlement.Free(trialUsed = true)
+        val requests = requests(consentGate) {
+            assertEquals(ServerAccess.Refused, consentGate.streamFromServer(askForPaywall = false))
+        }
+        assertEquals(emptyList<PaywallSource>(), requests)
     }
 
     @Test

@@ -156,10 +156,12 @@ data class IosStream(
 fun interface IosStreamResolver {
     /**
      * [startPositionMs] asks a stream that [IosStream.opensAtPosition] to start that far into the song (a transcode
-     * started there); 0 is the whole song. Any other stream ignores it.
+     * started there); 0 is the whole song. Any other stream ignores it. [playRequested] is whether the user is waiting
+     * to hear it: only then may a refusal open the paywall, so a queue restored at launch never does.
      */
     suspend fun resolve(
         song: Song,
-        startPositionMs: Long
+        startPositionMs: Long,
+        playRequested: Boolean
     ): IosStream
 }

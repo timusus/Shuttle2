@@ -234,16 +234,21 @@ class IosPlayerController(
 
     private fun newFeed(item: QueueItem) = Feed("${item.uid}-${++feedSerial}", item)
 
+    /** [song]'s stream, or why it has none; a refusal opens the paywall only while the user is waiting to play. */
     private suspend fun resolve(
         song: Song,
         startPositionMs: Int = 0
-    ): IosStream? = try {
-        resolver.resolve(song, startPositionMs.toLong())
+    ): Result<IosStream> = try {
+        Result.success(resolver.resolve(song, startPositionMs.toLong(), playRequested = playWhenReady))
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        null
+        Result.failure(e)
     }
+
+    /** StoreKit hadn't answered whether the user may stream it: not the song's fault, so it isn't failed for it. */
+    private val Result<IosStream>.undecided: Boolean
+        get() = (exceptionOrNull() as? ServerStreamNotAllowedException)?.undecided == true
 
     private fun Feed.track(stream: IosStream) = IosAudioTrack(
         id,
@@ -293,13 +298,15 @@ class IosPlayerController(
             return
         }
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val stream = resolve(item.song, feed.offsetMs)
+            val resolved = resolve(item.song, feed.offsetMs)
             if (current !== feed) return@launch
+            val stream = resolved.getOrNull()
             if (stream == null) {
-                // Nothing of it can play, and whatever the engine had is no longer current.
+                // Nothing of it can play, and whatever the engine had is no longer current. Undecided, it stays
+                // current, and playing it asks again.
                 player.stop()
                 feed.reportFailure = false
-                onCurrentFailed(feed)
+                onCurrentFailed(feed, skip = !resolved.undecided)
                 return@launch
             }
             handOver(feed, stream, startMs)
@@ -344,16 +351,19 @@ class IosPlayerController(
         val feed = newFeed(want)
         next = feed
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val stream = resolve(want.song)
+            val resolved = resolve(want.song)
             if (next !== feed) return@launch
+            val stream = resolved.getOrNull()
             if (stream == null) {
-                // Reached, it's skipped as a failed item (see onEnded).
-                feed.failed = true
-                feed.reportFailure = false
                 if (engineNext != null) {
                     engineNext = null
                     player.setNext(null)
                 }
+                // Undecided, it's left unsent, and loaded afresh when playback reaches it (see onEnded).
+                if (resolved.undecided) return@launch
+                // Reached, it's skipped as a failed item (see onEnded).
+                feed.failed = true
+                feed.reportFailure = false
                 return@launch
             }
             feed.sent = true
@@ -533,13 +543,16 @@ class IosPlayerController(
     /**
      * [feed], the current item, failed to load: skipped for the one after it (not wrapping), as `ItemLoader` does,
      * unless the load that loaded it doesn't skip, it had already been playing, or [PlaybackPolicy.MAX_LOAD_ATTEMPTS] items failed in a
-     * row; then playback stops there.
+     * row; then playback stops there. Not [skip], it stops there regardless.
      */
-    private fun onCurrentFailed(feed: Feed) {
+    private fun onCurrentFailed(
+        feed: Feed,
+        skip: Boolean = true
+    ) {
         feed.failed = true
         if (feed.reportFailure) _playbackFailureFlow.tryEmit(feed.item.song)
         val pending = pendingLoad
-        val skips = playWhenReady || pending?.skipUnloadable != false
+        val skips = skip && (playWhenReady || pending?.skipUnloadable != false)
         if (!feed.ready && skips) {
             loadFailures++
             val following = queue.following(feed.item.uid)

@@ -9,8 +9,8 @@ import com.simplecityapps.shuttle.entitlement.ProSource
 object AppStoreProducts {
     /**
      * Free (price tier 0). Buying it starts the server trial, which runs [com.simplecityapps.shuttle.entitlement.Entitlement.TRIAL_LENGTH]
-     * from the transaction's purchase date. The App Store keeps the transaction, so the trial survives a reinstall and
-     * is had once per Apple ID.
+     * from the transaction's original purchase date. The App Store keeps the transaction, and a restore or reinstall
+     * reports the same original date, so the trial is had once per Apple ID.
      */
     const val TRIAL = "com.simplecityapps.shuttle.pro.trial"
 

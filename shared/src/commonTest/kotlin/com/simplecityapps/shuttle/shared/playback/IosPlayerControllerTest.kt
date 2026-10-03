@@ -5,8 +5,13 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.PaywallSource
+import com.simplecityapps.shuttle.entitlement.ServerAccess
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -16,6 +21,7 @@ import kotlin.test.Test
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -48,6 +54,9 @@ class IosPlayerControllerTest {
     /** Songs on a server, whose streams open at a position (`StartTimeTicks`). */
     private val server = mutableSetOf<Long>()
 
+    /** Whether a [server] song may stream, given whether the user asked to play it; the real gate in the gate tests. */
+    private var serverAccess: suspend (Song, Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed }
+
     private fun url(song: Song) = "song:${song.id}"
 
     /**
@@ -61,8 +70,15 @@ class IosPlayerControllerTest {
         val dispatcher = if (unconfined) UnconfinedTestDispatcher(testScheduler) else StandardTestDispatcher(testScheduler)
         val controller = IosPlayerController(
             player = engine,
-            resolver = { song, startPositionMs ->
+            resolver = { song, startPositionMs, playRequested ->
                 resolved += song.id
+                if (song.id in server) {
+                    when (serverAccess(song, playRequested)) {
+                        ServerAccess.Allowed -> Unit
+                        ServerAccess.Refused -> throw ServerStreamNotAllowedException(song, undecided = false)
+                        ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
+                    }
+                }
                 when {
                     song.id in unresolvable -> error("No stream for ${song.name}")
                     song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true)
@@ -465,6 +481,68 @@ class IosPlayerControllerTest {
 
         controller.currentSong shouldBe c
         failures shouldBe emptyList()
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    // The Shuttle Music Pro gate
+
+    @Test
+    fun `a server queue restored at launch doesn't open the paywall - playing it does`() = test { controller ->
+        val gate = ServerAccessGate(MutableStateFlow(Entitlement.Free(trialUsed = true)), startTrial = null)
+        val streams = GatedServerStreams(gate)
+        serverAccess = streams::access
+        server += listOf(a.id, b.id)
+        val paywalls = collect(gate.paywallRequests)
+        val skipped = collect(streams.gatedSongs)
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+
+        controller.load(skipUnloadable = false) { }
+        engine.settle()
+
+        paywalls shouldBe emptyList()
+        skipped shouldBe emptyList()
+        controller.currentSong shouldBe a
+        controller.playbackState() shouldBe PlaybackState.Paused
+
+        controller.play()
+        engine.settle()
+
+        paywalls.first() shouldBe PaywallSource.ServerPlayback
+        skipped.first() shouldBe a
+    }
+
+    @Test
+    fun `a next song refused before StoreKit answers isn't kept as failed - it loads when playback reaches it`() = test { controller ->
+        server += b.id
+        serverAccess = { _, _ -> ServerAccess.Undecided }
+        controller.start(listOf(a, b, c))
+        serverAccess = { _, _ -> ServerAccess.Allowed }
+
+        engine.finishTrack()
+
+        controller.currentSong shouldBe b
+        engine.calls shouldContain "load song:2@0 playing"
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a song refused before StoreKit answers stays current - and plays when asked again`() = test { controller ->
+        server += a.id
+        serverAccess = { _, _ -> ServerAccess.Undecided }
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+
+        controller.play()
+        engine.settle()
+
+        controller.currentSong shouldBe a
+        controller.playbackState() shouldBe PlaybackState.Paused
+
+        serverAccess = { _, _ -> ServerAccess.Allowed }
+        engine.clearCalls()
+        controller.play()
+        engine.settle()
+
+        engine.calls shouldContain "load song:1@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 

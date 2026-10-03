@@ -60,7 +60,7 @@ class IosPlaybackModule {
     ): IosStreamResolver {
         val replayGainMode = playbackSettings.replayGainMode
         val preAmpGain = playbackSettings.preAmpGain
-        return SongStreamResolver(listOf(jellyfin, emby), { replayGainMode.value }, { preAmpGain.value }, gatedServerStreams::allows)
+        return SongStreamResolver(listOf(jellyfin, emby), { replayGainMode.value }, { preAmpGain.value }, gatedServerStreams::access)
     }
 
     @Provides

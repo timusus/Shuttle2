@@ -20,6 +20,7 @@ import dev.zacsweers.metro.SingleIn
 import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.Platform
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -29,6 +30,8 @@ import kotlinx.coroutines.flow.stateIn
  * Shuttle Music Pro on iOS: the entitlement StoreKit answers ([StoreEntitlements], fed by Swift's `StoreKitManager`)
  * behind the same [ServerAccessGate] Android uses. The trial is a free App Store purchase the user starts from the
  * paywall, so the gate never starts it itself: a stream or download before the trial refuses and opens the paywall.
+ * StoreKit answers from its on-device cache soon after launch; until it has, a stream waits up to
+ * [STORE_ANSWER_WAIT] for it rather than refusing a purchaser.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -41,7 +44,11 @@ class IosEntitlementModule {
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideServerAccessGate(storeEntitlements: StoreEntitlements): ServerAccessGate = ServerAccessGate(storeEntitlements.entitlement, startTrial = null)
+    fun provideServerAccessGate(storeEntitlements: StoreEntitlements): ServerAccessGate = ServerAccessGate(
+        storeEntitlements.entitlement,
+        startTrial = null,
+        storeAnswerWait = STORE_ANSWER_WAIT
+    )
 
     @Provides
     @SingleIn(AppScope::class)
@@ -72,3 +79,5 @@ class IosEntitlementModule {
     @Provides
     fun provideObserveGatedServerSkip(streams: GatedServerStreams): ObserveGatedServerSkip = ObserveGatedServerSkip { streams.gatedSongs }
 }
+
+private val STORE_ANSWER_WAIT = 5.seconds
