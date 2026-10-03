@@ -45,9 +45,14 @@ val syncKonsistRoot = tasks.register<Sync>("syncKonsistRoot") {
     description = "Copies the production sources the rules read into a private Konsist project root."
     from(rootDir.resolve("android")) {
         include("**/src/**/*.kt")
-        exclude("**/build/**", "architecture-tests/**", "**/.*/**")
+        exclude("**/build/**", "**/architecture-tests/**", "**/.*/**")
         // No test source sets (`test`, `androidTest`, `testFixtures`, ...), as the rules only check production code.
-        exclude { it.relativePath.segments.getOrNull(it.relativePath.segments.indexOf("src") + 1)?.contains("test", ignoreCase = true) == true }
+        // Files only: a module directory such as `presentation-testing` has no `src` segment yet and must stay.
+        exclude { element ->
+            val segments = element.relativePath.segments
+            val src = segments.indexOf("src")
+            !element.isDirectory && src >= 0 && segments.getOrNull(src + 1)?.contains("test", ignoreCase = true) == true
+        }
         eachFile { relativePath = RelativePath(true, "android", *relativePath.segments) }
         includeEmptyDirs = false
     }
