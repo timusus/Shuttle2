@@ -5,10 +5,13 @@
 # from the orchestrator's primary checkout (not a feature worktree), so `git push origin
 # HEAD:main` pushes the right ref.
 #
-#   support/scripts/land.sh <branch>... [--close N ...] [--no-push] [--dry-run]
+#   support/scripts/land.sh <branch>... [--close N|BRANCH:N ...] [--no-push] [--dry-run]
 #
 #   --close N     close GitHub issue N with "Landed in <sha>" after a successful push
-#                 (repeatable)
+#                 (repeatable); only honoured when every branch in the batch landed
+#   --close BRANCH:N
+#                 close issue N only when BRANCH landed (repeatable); BRANCH is named
+#                 exactly as in the positional branch arguments
 #   --no-push     do everything except `git push`, issue close and worktree cleanup
 #   --dry-run     implies --no-push, and also skips issue close / worktree cleanup
 #   --no-device-install
@@ -154,13 +157,13 @@ NO_PUSH=0
 DEVICE_INSTALL=1
 [ "${LAND_SKIP_DEVICE_INSTALL:-0}" = 1 ] && DEVICE_INSTALL=0
 BRANCHES=()
-CLOSE_ISSUES=()
+CLOSE_SPECS=()
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --close)
-      [ $# -ge 2 ] || { echo "land.sh: --close needs an issue number" >&2; exit 2; }
-      CLOSE_ISSUES+=("$2"); shift 2 ;;
+      [ $# -ge 2 ] || { echo "land.sh: --close needs an issue number or BRANCH:N" >&2; exit 2; }
+      CLOSE_SPECS+=("$2"); shift 2 ;;
     --no-push) NO_PUSH=1; shift ;;
     --dry-run) NO_PUSH=1; shift ;;
     --no-device-install) DEVICE_INSTALL=0; shift ;;
@@ -171,6 +174,60 @@ while [ $# -gt 0 ]; do
 done
 
 [ "${#BRANCHES[@]}" -gt 0 ] || { echo "land.sh: no branches given (see --help)" >&2; exit 2; }
+
+# --- --close specs: a bare issue number, or BRANCH:N scoped to one branch ------------------
+is_issue() { case "$1" in ''|*[!0-9]*) return 1 ;; esac; return 0; }
+
+# validate_close_specs: reject malformed specs (anything but N or BRANCH:N) and BRANCH:N
+# specs whose branch is not in the batch, before anything is picked.
+validate_close_specs() {
+  local spec b n x ok
+  for spec in ${CLOSE_SPECS[@]+"${CLOSE_SPECS[@]}"}; do
+    b=${spec%%:*}; n=${spec##*:}
+    if [ "$spec" != "$b" ]; then  # BRANCH:N (git ref names cannot contain ':')
+      if [ -z "$b" ] || ! is_issue "$n"; then
+        echo "land.sh: bad --close spec '$spec' (use N or BRANCH:N)" >&2
+        return 1
+      fi
+      ok=0
+      for x in "${BRANCHES[@]}"; do [ "$x" = "$b" ] && ok=1; done
+      if [ "$ok" != 1 ]; then
+        echo "land.sh: --close '$spec': $b is not one of the branches being landed" >&2
+        return 1
+      fi
+    elif ! is_issue "$spec"; then  # bare form: digits only
+      echo "land.sh: bad --close spec '$spec' (use N or BRANCH:N)" >&2
+      return 1
+    fi
+  done
+  return 0
+}
+
+# close_decision <spec>: given BRANCHES/STATUS/REASON, print the issue number to close, or
+# "skip <reason>" when the spec must not be honoured. A bare N needs every branch landed;
+# BRANCH:N needs only BRANCH.
+close_decision() {
+  local spec=${1:?} b n i failed=()
+  b=${spec%%:*}; n=${spec##*:}
+  [ "$spec" = "$b" ] && b=""
+  for i in "${!BRANCHES[@]}"; do
+    [ "${STATUS[$i]}" = landed ] || failed+=("${BRANCHES[$i]} (${REASON[$i]:-did not land})")
+  done
+  if [ -z "$b" ]; then
+    if [ "${#failed[@]}" -eq 0 ]; then printf '%s\n' "$n"; else printf 'skip not every branch landed: %s\n' "${failed[*]}"; fi
+    return 0
+  fi
+  for i in "${!BRANCHES[@]}"; do
+    if [ "${BRANCHES[$i]}" = "$b" ]; then
+      if [ "${STATUS[$i]}" = landed ]; then printf '%s\n' "$n"
+      else printf 'skip %s did not land (%s)\n' "$b" "${REASON[$i]:-did not land}"; fi
+      return 0
+    fi
+  done
+  printf 'skip unknown branch %s\n' "$b"  # unreachable: validate_close_specs ran first
+}
+
+validate_close_specs || exit 2
 
 https_fallback
 
@@ -264,7 +321,7 @@ landed_indices() {
 drop_branch() {  # $1 = index; resets HEAD back to before this branch's picks
   local i=$1
   git reset --hard "${START_SHA[$i]}" >> "$LOG" 2>&1
-  STATUS[$i]=dropped
+  STATUS[$i]=dropped; REASON[i]="broke verify"
   log "${BRANCHES[$i]}: dropped to isolate a verify failure"
 }
 
@@ -392,12 +449,16 @@ fi
 SHA=$(git rev-parse HEAD)
 say "land.sh: pushed $SHA"
 
-for n in "${CLOSE_ISSUES[@]+"${CLOSE_ISSUES[@]}"}"; do
-  if gh issue close "$n" --comment "Landed in $SHA" >> "$LOG" 2>&1; then
-    log "closed issue #$n"
-  else
-    say "land.sh: could not close issue #$n (see log)"
-  fi
+for spec in ${CLOSE_SPECS[@]+"${CLOSE_SPECS[@]}"}; do
+  n=$(close_decision "$spec")
+  case "$n" in
+    skip\ *) say "land.sh: --close '$spec': $n" ;;
+    *) if gh issue close "$n" --comment "Landed in $SHA" >> "$LOG" 2>&1; then
+         log "closed issue #$n"
+       else
+         say "land.sh: could not close issue #$n (see log)"
+       fi ;;
+  esac
 done
 
 for i in "${LANDED_IDX[@]}"; do

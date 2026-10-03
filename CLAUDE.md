@@ -30,11 +30,12 @@ S2 Music Player — an Android app for local music playback and streaming via Je
   owns, fix it in the same session and close the issue in the landing commit.
 - **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
   A worker's brief asks for `unit-test --changed` and nothing wider — no full suite, no emulator/simulator
-  lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N ...]`
+  lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
   cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
   (Android: `unit-test --changed` + assembleDebug; iOS, only when the picked commits touch `ios/`,
   `shared/`, or `android/domain|presentation|core`: framework + app build and just the `S2Tests` classes
-  mapped from the changed files), pushes, closes issues and cleans up the landed worktrees. Run it as a
+  mapped from the changed files), pushes, closes issues and cleans up the landed worktrees (`--close
+  BRANCH:N` closes only when BRANCH landed; a bare `--close N` only when every branch landed). Run it as a
   `longjob.sh` batch, never twice for the same batch. `support/scripts/full-verify.sh` (via `longjob.sh
   start full-verify -- ...`) runs the whole suites at `origin/main` and records the sha as the watermark;
   `--status` shows how far main is past it, SessionStart prints the same, and `/deploy-android` runs it
@@ -77,7 +78,7 @@ back to plain `./gradlew` when it isn't installed.
 
 # Landing: cherry-picks approved branches onto main, light-verifies once under machine-lock, pushes,
 # closes issues, cleans up worktrees. Run via longjob.sh, not a foreground call.
-support/scripts/longjob.sh start land -- support/scripts/land.sh <branch>... [--close N ...]
+support/scripts/longjob.sh start land -- support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]
 
 # Full verify (Android + iOS, temp worktree, records the watermark; before every Play release):
 support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh
