@@ -208,6 +208,7 @@ class MediaImporter(
                                 deletes = songDiff.deletes,
                                 mediaProviderType = mediaProvider.type
                             )
+                        mediaProvider.songsStored()
                         emit(
                             FlowEvent.Success(
                                 SongImportResult(

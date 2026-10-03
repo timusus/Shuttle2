@@ -237,6 +237,19 @@ class MediaImporterTest {
         preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
     }
 
+    @Test
+    fun `a provider hears its songs are stored only when the import succeeds`() = runBlocking<Unit> {
+        provider.scanFailure = "Unreadable"
+        provider.gate.trySend(Unit)
+        importer.import()
+        provider.stored.load() shouldBe 0
+
+        provider.scanFailure = null
+        provider.gate.trySend(Unit)
+        importer.import()
+        provider.stored.load() shouldBe 1
+    }
+
     /**
      * Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext]
      * is set, reports [scanFailure] if that's set, or else finds no songs.
@@ -246,6 +259,7 @@ class MediaImporterTest {
     ) : MediaProvider {
 
         val scans = AtomicInt(0)
+        val stored = AtomicInt(0)
         val started = Channel<Unit>(Channel.UNLIMITED)
         val gate = Channel<Unit>(Channel.UNLIMITED)
         val failNext = AtomicBoolean(false)
@@ -259,6 +273,10 @@ class MediaImporterTest {
             gate.receive()
             if (failNext.exchange(false)) throw failure
             emit(scanFailure?.let { message -> FlowEvent.Failure(message) } ?: FlowEvent.Success(emptyList()))
+        }
+
+        override suspend fun songsStored() {
+            stored.incrementAndFetch()
         }
 
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()

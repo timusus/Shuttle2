@@ -19,5 +19,11 @@ interface MediaProvider {
      */
     suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> = emptyList()
 
+    /**
+     * The songs the last [findSongs] found are stored: called once the import has saved them, and not when it fails, so
+     * a provider can note what it imported (iOS's local files remember their listing, to import again only on a change).
+     */
+    suspend fun songsStored() {}
+
     fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
 }
