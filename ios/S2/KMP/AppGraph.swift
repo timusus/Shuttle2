@@ -45,6 +45,8 @@ enum AppGraph {
 final class IosAppDependencies {
     /// The Kotlin `IosAudioPlayer` over the S2Playback engine.
     let audioPlayer: EngineAudioPlayer
+    /// This device's music files: Documents and the folders picked in Files (#590).
+    let localLibrary: LocalLibrary
     let graph: IosAppGraph
     let audioSession: AudioSessionController
     let nowPlaying: NowPlayingController
@@ -62,7 +64,8 @@ final class IosAppDependencies {
 
     init() {
         audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
-        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer)
+        localLibrary = LocalLibrary()
+        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary)
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
         playIntent = PlayIntent(following: graph.playerController)

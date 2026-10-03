@@ -1,0 +1,65 @@
+# This device's music end to end (#590): from a fresh install with three songs already copied into the app's
+# Documents (as Files or Finder would), the welcome > Get Started > Use Music on This iPhone > the import > Start
+# Listening, then Library > Songs, tap the first song, and the mini player shows it playing. Copy the songs first:
+#
+#   udid=<simulator>; xcrun simctl install $udid <S2.app>; xcrun simctl launch $udid com.simplecityapps.shuttle.dev
+#   cp ios/Playback/Sources/S2PlaybackTestSupport/Fixtures/tagged{.mp3,.flac,-alac.m4a} \
+#     "$(xcrun simctl get_app_container $udid com.simplecityapps.shuttle.dev data)/Documents/"
+#   cp "Long Tone.m4a" <that Documents>/     # 30 s of anything, so playback can be seen
+#   ios/scripts/maestro-sim.sh local-library.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- runFlow:
+    when:
+      visible:
+        id: "onboarding.getStarted"
+    commands:
+        - tapOn:
+            id: "onboarding.getStarted"
+        - extendedWaitUntil:
+            visible:
+              id: "onboarding.useThisDevice"
+            timeout: 10000
+        - waitForAnimationToEnd:
+            timeout: 3000
+        - takeScreenshot: 1-cards
+        - tapOn:
+            id: "onboarding.useThisDevice"
+        - extendedWaitUntil:
+            visible: "Your Library Is Ready"
+            timeout: 60000
+        - takeScreenshot: 2-ready
+        - tapOn:
+            id: "onboarding.continue"
+- tapOn: "Library"
+# The category chips start at the last one shown; Songs is the last chip, off to the right.
+- extendedWaitUntil:
+    visible: "Albums"
+    timeout: 30000
+- swipe:
+    start: 85%, 20%
+    end: 15%, 20%
+- tapOn: "Songs"
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 30000
+- takeScreenshot: 3-songs
+# The fixtures are half a second long; a 30 s file (any name, here "Long Tone.m4a", untagged) stays playing long
+# enough to see, and copying it in while the app is closed checks the rescan at launch.
+- tapOn: "Long Tone"
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.title"
+      text: "Long Tone"
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 15000
+- takeScreenshot: 4-playing

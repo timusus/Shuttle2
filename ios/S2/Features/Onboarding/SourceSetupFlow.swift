@@ -24,7 +24,9 @@ enum SourceSetupStep: Hashable {
 /// at the cards or a sign-in in a sheet, so the first run and Add a Server are one implementation. Closing it, from
 /// Not Now, Continue or Cancel, finishes the setup (`onFinish`), so the first run never opens by itself again.
 ///
-/// Android has no first run (#379); this is iOS's, since iOS has no music on the device to start from.
+/// Android has no first run (#379); this is iOS's, since an iPhone's music isn't readable until it's copied into the
+/// app or a folder is picked in Files. The first run's cards also offer this device's music (#590): it turns the device
+/// on as a source and follows its import, as a sign-in does.
 struct SourceSetupFlow: View {
     let start: SourceSetupStart
     /// Keeps the sign-in's view model live while the setup is up (`Navigator.sourceSetupLive`); nil in previews.
@@ -78,10 +80,18 @@ struct SourceSetupFlow: View {
     }
 
     private func cards(_ models: SourceSetupModels) -> some View {
-        SourceTypeCards(types: MediaProviderType.signInTypes) { type in
-            // The entitlement gate (`TryAddServer`, open on iOS until billing lands) before the sign-in.
-            if models.setup.onChooseType() { path.append(.signIn(type)) }
-        }
+        SourceTypeCards(
+            types: MediaProviderType.signInTypes,
+            onSelect: { type in
+                // The entitlement gate (`TryAddServer`, open on iOS until billing lands) before the sign-in.
+                if models.setup.onChooseType() { path.append(.signIn(type)) }
+            },
+            // Sources has its own switch for this device; only the first run offers it here.
+            onUseThisDevice: start == .welcome ? {
+                models.setup.onUseThisDevice()
+                path.append(.importing)
+            } : nil
+        )
     }
 
     private func signIn(_ type: MediaProviderType, _ models: SourceSetupModels) -> some View {
@@ -194,15 +204,15 @@ struct SourceSetupWelcome: View {
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("onboarding.welcome")
-                    Text("Your music library, streamed from your own server.")
+                    Text("Your music library, on this iPhone or streamed from your own server.")
                         .font(.s2Title3)
                         .foregroundStyle(.s2TextSecondary)
                         .multilineTextAlignment(.center)
                 }
                 VStack(alignment: .leading, spacing: Spacing.large) {
                     FeatureRow(
-                        symbol: "server.rack", color: .purple, title: "Your Server, Your Music",
-                        detail: "Sign in to Jellyfin or Emby and play your own collection."
+                        symbol: "server.rack", color: .purple, title: "Your Music, Wherever It Lives",
+                        detail: "Play the music on this iPhone, or sign in to Jellyfin or Emby and play your own collection."
                     )
                     FeatureRow(
                         symbol: "square.stack", color: .orange, title: "Your Whole Library",
@@ -270,6 +280,8 @@ private struct FeatureRow: View {
 struct SourceTypeCards: View {
     let types: [MediaProviderType]
     let onSelect: (MediaProviderType) -> Void
+    /// The first run's card for this device's music, above the servers; nil leaves it out.
+    var onUseThisDevice: (() -> Void)?
 
     var body: some View {
         ScrollView {
@@ -278,10 +290,17 @@ struct SourceTypeCards: View {
                     Text("Where's your music?")
                         .font(.s2Title)
                         .accessibilityAddTraits(.isHeader)
-                    Text("Choose the server your library lives on.")
+                    Text(onUseThisDevice == nil ? "Choose the server your library lives on." : "Play the music on this iPhone, or choose the server your library lives on.")
                         .foregroundStyle(.s2TextSecondary)
                 }
                 .padding(.bottom, Spacing.small)
+                if let onUseThisDevice {
+                    Button(action: onUseThisDevice) {
+                        SourceTypeCard(type: .shuttle)
+                    }
+                    .buttonStyle(.pressScale)
+                    .accessibilityIdentifier("onboarding.useThisDevice")
+                }
                 ForEach(types, id: \.self) { type in
                     Button { onSelect(type) } label: {
                         SourceTypeCard(type: type)
@@ -295,7 +314,7 @@ struct SourceTypeCards: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Add a Server")
+        .navigationTitle(onUseThisDevice == nil ? "Add a Server" : "Add Your Music")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -307,7 +326,7 @@ private struct SourceTypeCard: View {
         HStack(spacing: Spacing.medium) {
             IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
             VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(type.title).font(.s2Headline)
+                Text(type.setupTitle).font(.s2Headline)
                 Text(type.setupBlurb)
                     .font(.subheadline)
                     .foregroundStyle(.s2TextSecondary)
@@ -333,13 +352,21 @@ private struct SourceTypeCard: View {
 }
 
 extension MediaProviderType {
-    /// A server type's line on its setup card.
+    /// A source's name on its setup card.
+    var setupTitle: String {
+        switch self {
+        case .shuttle, .mediaStore: "Use Music on This iPhone"
+        case .jellyfin, .emby, .plex: title
+        }
+    }
+
+    /// A source's line on its setup card.
     var setupBlurb: String {
         switch self {
         case .jellyfin: "The free, open-source media server. Sign in with Quick Connect or a password."
         case .emby: "Sign in with your Emby server's address and account."
         case .plex: "Sign in with your Plex account."
-        case .shuttle, .mediaStore: "Music on this device."
+        case .shuttle, .mediaStore: "Songs copied into Shuttle Music in the Files app or Finder, and folders you add from Files."
         }
     }
 }
@@ -413,6 +440,8 @@ struct SourceSetupImportPage: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    private var isThisDevice: Bool { state.type == .shuttle }
+
     private var serverName: String { state.type?.title ?? "your server" }
 
     private var title: String {
@@ -425,8 +454,9 @@ struct SourceSetupImportPage: View {
 
     private var detail: String {
         switch state {
-        case .starting: "Connecting to \(serverName)…"
+        case .starting: isThisDevice ? "Looking for music on this iPhone…" : "Connecting to \(serverName)…"
         case .running(_, let message, _): message ?? "Fetching your library…"
+        case .ready where isThisDevice: "Your songs on this iPhone are in. Copy more into Shuttle Music in Files, or add a folder in Sources."
         case .ready: "Your songs from \(serverName) are in. Playlists follow in a moment."
         case .failed(_, let error): error
         }

@@ -5,6 +5,7 @@ import SwiftUI
 struct S2App: App {
     /// Read once at launch, as Android's shell does: a change in Settings applies from the next launch.
     private let startTab: AppTab
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         AppGraph.initialize()
@@ -16,7 +17,13 @@ struct S2App: App {
         WindowGroup {
             ContentView(startTab: startTab)
                 .tint(.s2Accent)
-                .task { LibraryImport.atLaunch() }
+                .task {
+                    LibraryImport.atLaunch()
+                    await LibraryImport.whenLocalFilesChange()
+                }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active { Task { await LibraryImport.whenLocalFilesChange() } }
+                }
         }
     }
 }

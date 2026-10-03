@@ -1,12 +1,14 @@
 import Shared
 import SwiftUI
+import UniformTypeIdentifiers
 
-/// Sources (#587, #624, #645; phase 7 in `docs/architecture/ios-port/phase-5-ios-app.md`): the media servers the library
-/// imports from, on the shared `SourcesViewModel`, as an inset-grouped list in the Settings style. Each server row
-/// shows its host and its import's status and pushes its detail (`ServerDetailView`); Add Server opens the source
-/// setup (`SourceSetupFlow`) in a sheet, the same cards, sign-in and import progress the first run shows. Scanning is
-/// its own section. This device's music is phase 8 (local files), so there is no "On this iPhone" section until iOS
-/// has a local provider to show in it.
+/// Sources (#587, #624, #645, #590; phases 7 and 8 in `docs/architecture/ios-port/phase-5-ios-app.md`): this device's
+/// music and the media servers the library imports from, on the shared `SourcesViewModel`, as an inset-grouped list in
+/// the Settings style. On This iPhone turns the device's music on, lists where it's read from (the app's folder in
+/// Files, and each folder picked there) and adds a folder through the Files picker. Each server row shows its host and
+/// its import's status and pushes its detail (`ServerDetailView`); Add Server opens the source setup
+/// (`SourceSetupFlow`) in a sheet, the same cards, sign-in and import progress the first run shows. Scanning is its own
+/// section.
 struct SourcesView: View {
     /// Absent only outside the shell (previews); every stack in `AppShell` has it.
     @Environment(Navigator.self) private var navigator: Navigator?
@@ -20,17 +22,31 @@ struct SourcesView: View {
         Observing(models.sources.uiState, models.importState) { state, importState in
             SourcesContent(
                 state: SourcesState(state, importStatus: ImportStatus(importState), logins: logins),
+                onThisDeviceChange: { models.sources.onThisDeviceChange(enabled: $0) },
+                onAddFolder: { url in
+                    let picked = AppGraph.dependencies.localLibrary.stage(url)
+                    models.sources.onFolderPicked(kind: .extra, treeUri: picked)
+                },
+                onRemoveFolder: { folder in
+                    models.sources.onRemoveFolder(
+                        kind: .extra,
+                        folder: SourceFolder(uri: folder.id, path: folder.path, name: folder.name, hasAccess: folder.hasAccess)
+                    )
+                },
                 onAddServer: { setup = .chooseSource },
                 onRemove: { models.sources.onRemoveServer(type: $0) },
                 onRescan: { models.sources.onRescan() }
             )
-            // The only event is an exclude folder off this device's storage, which iOS has no folders to raise.
+            // The only event is an exclude folder off this device's storage; iOS only adds folders to read in full.
             .consumeEvents(state.events, handled: { models.sources.onEventHandled(id: $0) }) { _ in }
         }
         .sheet(item: $setup, onDismiss: { logins = ServerLogin.readAll() }) { start in
             SourceSetupFlow(start: start, navigator: navigator, onClose: { setup = nil })
         }
-        .onAppear { logins = ServerLogin.readAll() }
+        .onAppear {
+            logins = ServerLogin.readAll()
+            SourcesModels.cached().sources.onResume()
+        }
         .navigationTitle("Sources")
     }
 }
@@ -76,14 +92,25 @@ struct ServerLogin: Equatable {
     }
 }
 
-/// `SourcesUiState` as iOS shows it: the connected servers with their saved sign-ins, each one's import, the scan,
-/// and when the library last finished importing.
+/// `SourcesUiState` as iOS shows it: this device's music and its folders, the connected servers with their saved
+/// sign-ins, each one's import, the scan, and when the library last finished importing.
 struct SourcesState: Equatable {
+    var thisDevice: Bool
+    var folders: [DeviceFolder]
+    var deviceSongs: Int?
     var servers: [MediaProviderType]
     var scan: Scan
     var importStatus: ImportStatus
     var lastImport: Date?
     var logins: [MediaProviderType: ServerLogin]
+
+    /// A folder picked in Files: [hasAccess] is false while its bookmark won't resolve, until it's picked again.
+    struct DeviceFolder: Equatable, Identifiable {
+        var id: String
+        var name: String
+        var path: String?
+        var hasAccess = true
+    }
 
     enum Scan: Equatable {
         case idle
@@ -109,12 +136,18 @@ struct SourcesState: Equatable {
     }
 
     init(
+        thisDevice: Bool = false,
+        folders: [DeviceFolder] = [],
+        deviceSongs: Int? = nil,
         servers: [MediaProviderType],
         scan: Scan = .idle,
         importStatus: ImportStatus = .idle,
         lastImport: Date? = nil,
         logins: [MediaProviderType: ServerLogin] = [:]
     ) {
+        self.thisDevice = thisDevice
+        self.folders = folders
+        self.deviceSongs = deviceSongs
         self.servers = servers
         self.scan = scan
         self.importStatus = importStatus
@@ -123,6 +156,11 @@ struct SourcesState: Equatable {
     }
 
     init(_ state: SourcesUiState, importStatus: ImportStatus = .idle, logins: [MediaProviderType: ServerLogin] = [:]) {
+        thisDevice = state.thisDevice
+        folders = state.folders.extras.compactMap { folder in
+            folder.uri.map { DeviceFolder(id: $0, name: folder.name, path: folder.path, hasAccess: folder.hasAccess) }
+        }
+        deviceSongs = state.deviceSongs.map(\.intValue)
         servers = state.servers.filter(\.connected).map(\.type)
         if let progress = state.scan {
             scan = .scanning(message: progress.message, fraction: progress.fraction.map { Double($0.floatValue) })
@@ -188,9 +226,13 @@ extension MediaProviderType {
     }
 }
 
-/// Sources from plain values: Media Servers (each server, then Add Server) and, once there is a server, Scan.
+/// Sources from plain values: On This iPhone, Media Servers (each server, then Add Server) and, once there is a
+/// source, Scan.
 struct SourcesContent: View {
     let state: SourcesState
+    var onThisDeviceChange: (Bool) -> Void = { _ in }
+    var onAddFolder: (URL) -> Void = { _ in }
+    var onRemoveFolder: (SourcesState.DeviceFolder) -> Void = { _ in }
     var onAddServer: () -> Void = {}
     var onRemove: (MediaProviderType) -> Void = { _ in }
     var onRescan: () -> Void = {}
@@ -200,6 +242,7 @@ struct SourcesContent: View {
 
     var body: some View {
         List {
+            DeviceSection(state: state, onThisDeviceChange: onThisDeviceChange, onAddFolder: onAddFolder, onRemoveFolder: onRemoveFolder)
             Section {
                 ForEach(state.servers, id: \.self) { type in
                     NavigationLink(value: Route.server(type: type.name)) {
@@ -221,12 +264,94 @@ struct SourcesContent: View {
                     Text("Connect a Jellyfin or Emby server to stream your music library from it.")
                 }
             }
-            if !state.servers.isEmpty {
-                ScanSection(scan: state.scan, lastImport: state.lastImport, onRescan: onRescan)
+            if state.thisDevice || !state.servers.isEmpty {
+                ScanSection(scan: state.scan, lastImport: state.lastImport, onRescan: onRescan, footer: state.scanFooter)
             }
         }
         .listStyle(.insetGrouped)
         .confirmingServerRemoval($removing, onRemove: onRemove)
+    }
+}
+
+/// On This iPhone: the switch for this device's music and, while it's on, where it's read from: the app's own
+/// folder in Files (On My iPhone > Shuttle Music, where Finder's file sharing copies to too) and each folder picked in
+/// Files, which a swipe removes. A folder out of reach says so, and tapping it picks it again. Add Folder opens the
+/// Files picker; its folder is read in full, subfolders and all.
+struct DeviceSection: View {
+    let state: SourcesState
+    let onThisDeviceChange: (Bool) -> Void
+    let onAddFolder: (URL) -> Void
+    let onRemoveFolder: (SourcesState.DeviceFolder) -> Void
+
+    @State private var picking = false
+
+    var body: some View {
+        Section {
+            Toggle(isOn: Binding(get: { state.thisDevice }, set: onThisDeviceChange)) {
+                Label {
+                    Text("Music on This iPhone")
+                } icon: {
+                    IconSquare(systemImage: MediaProviderType.shuttle.symbol, style: .filled(.blue))
+                }
+            }
+            .accessibilityIdentifier("sources.thisDevice")
+            if state.thisDevice {
+                Label {
+                    VStack(alignment: .leading, spacing: Spacing.tiny) {
+                        Text("Shuttle Music Folder")
+                        Text("On My iPhone in Files").font(.subheadline).foregroundStyle(.s2TextSecondary)
+                    }
+                } icon: {
+                    IconSquare(systemImage: "folder.fill", style: .filled(.gray))
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("sources.documents")
+                ForEach(state.folders) { folder in
+                    Button { if !folder.hasAccess { picking = true } } label: {
+                        DeviceFolderRow(folder: folder)
+                    }
+                    .tint(.primary)
+                    .accessibilityIdentifier("sources.folder.\(folder.name)")
+                    .swipeActions {
+                        Button("Remove", role: .destructive) { onRemoveFolder(folder) }
+                    }
+                }
+                Button { picking = true } label: {
+                    Label("Add Folder", systemImage: "plus")
+                }
+                .accessibilityIdentifier("sources.addFolder")
+            }
+        } header: {
+            Text("On This iPhone")
+        } footer: {
+            Text(state.deviceFooter)
+        }
+        .fileImporter(isPresented: $picking, allowedContentTypes: [.folder]) { result in
+            if case .success(let url) = result { onAddFolder(url) }
+        }
+    }
+}
+
+/// A folder picked in Files: its name over where it is, or a warning to pick it again when it's out of reach.
+struct DeviceFolderRow: View {
+    let folder: SourcesState.DeviceFolder
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
+                Text(folder.name)
+                if folder.hasAccess {
+                    if let path = folder.path {
+                        Text(path).font(.subheadline).foregroundStyle(.s2TextSecondary).lineLimit(1).truncationMode(.head)
+                    }
+                } else {
+                    Text("Can't Be Read. Tap to Choose It Again.").font(.subheadline).foregroundStyle(.s2Error)
+                }
+            }
+        } icon: {
+            IconSquare(systemImage: folder.hasAccess ? "folder.fill" : "exclamationmark.triangle.fill", style: .filled(folder.hasAccess ? .blue : .orange))
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -334,6 +459,26 @@ struct ScanSection: View {
             Text("Scan")
         } footer: {
             Text(footer)
+        }
+    }
+}
+
+extension SourcesState {
+    /// On This iPhone's footer: how many songs came from this device, or how to add some.
+    var deviceFooter: String {
+        guard thisDevice else { return "Play music stored on this iPhone, copied in through the Files app or Finder." }
+        switch deviceSongs {
+        case let count? where count > 0: return "\(count.formatted()) \(count == 1 ? "song" : "songs") on this iPhone."
+        default: return "Copy music into Shuttle Music in the Files app or Finder, or add a folder from Files."
+        }
+    }
+
+    /// What Scan Now looks through.
+    var scanFooter: String {
+        switch (thisDevice, servers.isEmpty) {
+        case (true, true): "Looks for new and changed music on this iPhone."
+        case (true, false): "Looks for new and changed music on this iPhone and your servers."
+        default: "Looks for new and changed music on your servers."
         }
     }
 }

@@ -6,7 +6,8 @@ import UIKit
 ///
 /// Ported from Shuttle Podcasts' `Utilities/ArtworkLoader.swift`, trimmed to what S2 actually needs.
 /// Kotlin's `ArtworkUrls` (`shared/.../artwork/ArtworkUrls.kt`) says where an item's artwork may be, in
-/// Android's order: the media server's image, then the S2 artwork API by name. This loader tries those
+/// Android's order: a local song's own file (an `s2local:` url, read through `LocalLibrary`), the media server's
+/// image, then the S2 artwork API by name. This loader tries those
 /// candidates in turn and draws the first that arrives as an image, so an album the server has no image
 /// for — or one it fails to serve — still gets a cover, as it does on Android.
 ///
@@ -61,7 +62,15 @@ actor ArtworkLoader {
         configuration.httpMaximumConnectionsPerHost = 6
         configuration.timeoutIntervalForRequest = 20
         let session = URLSession(configuration: configuration)
-        self.init(fetch: { request in try await session.data(for: request) })
+        self.init(fetch: { request in
+            // This device's songs (#590): the picture in the file, or an image beside it.
+            if let url = request.url, url.scheme == LocalLibrary.scheme {
+                let library = await MainActor.run { AppGraph.dependencies.localLibrary }
+                guard let data = library.artwork(forArtworkURL: url) else { throw URLError(.fileDoesNotExist) }
+                return (data, URLResponse(url: url, mimeType: nil, expectedContentLength: data.count, textEncodingName: nil))
+            }
+            return try await session.data(for: request)
+        })
     }
 
     init(fetch: @escaping Fetch, isGeneratedArtworkEnabled: @escaping @Sendable () -> Bool = { DebugArtwork.isEnabled }) {

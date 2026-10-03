@@ -48,6 +48,10 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # Keep playing with the screen locked or the app in the background (#588).
         UIBackgroundModes: [audio]
+        # This device's music (#590): Documents shows in Files ("On My iPhone > Shuttle Music") and Finder's file
+        # sharing, so music can be copied in, and files opened there are read in place.
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
         # Jellyfin and Emby servers are often plain http on the LAN, or https with a self-signed
         # certificate; the servers' own iOS apps allow both the same way (#587). Do NOT add
         # NSAllowsLocalNetworking: on iOS 10+ it makes the system ignore NSAllowsArbitraryLoads, which

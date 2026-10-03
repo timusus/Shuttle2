@@ -30,7 +30,7 @@ The template is Shuttle Podcasts (`~/projects/simplecity-apps/podcasts/main/mobi
   `TabView`/`NavigationSplitView` above; mini player as a `safeAreaInset`. Navigation and screens mirror
   Android's shell (Home/Library/Search, player sheet or pane) but follow the HIG where they differ.
 - **iOS MVP source**: Jellyfin/Emby/Plex (all-shared Kotlin once on Ktor). Local files on iOS
-  (Files-app folders + security-scoped bookmarks, AVAsset/TagLib metadata) come later.
+  (Documents + Files-app folders as security-scoped bookmarks, metadata read with FFmpeg) followed in phase 8.
 - Existing modules convert in place (no parallel copies); paths keep their `android/` prefix for now.
 
 ## Phases
@@ -49,7 +49,7 @@ checkpoints, workers compile only the module they touch (`compileKotlinIosSimula
 | 5 | iOS skeleton: `Shared.framework`, XcodeGen project, graph + ViewModel cache, adaptive shell, Library + detail screens | first simulator build, ViewInspector |
 | 6 | iOS playback: IosPlayerController + Swift audio player, now-playing, mini player, Now Playing, queue | simulator run, Maestro iOS flow |
 | 7 | Remaining iOS screens: Home, Search, Settings, Sources/sign-in, playlists, Song info, sleep timer | ViewInspector + Maestro batch |
-| 8 | iOS local library (Files folders, metadata) | device check |
+| 8 | iOS local library (Files folders, metadata) — done, #590 | device check |
 | 9 | iOS platform features: StoreKit 2, AirPlay, CarPlay, WidgetKit, Cast | per feature |
 
 Phase designs: [2 data](ios-port/phase-2-data.md), [3 network](ios-port/phase-3-network.md),

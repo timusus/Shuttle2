@@ -83,5 +83,5 @@ func drainMainQueue() async {
 /// queue and modes the last one saved, so graphs sharing the standard defaults would restore each other's; tests run
 /// in parallel) and an empty in-memory library (not the simulator app's database, whose contents vary).
 func makeTestGraph(audioPlayer: IosAudioPlayer) -> IosAppGraph {
-    IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, isolatedStorage: "S2Tests.\(UUID().uuidString)")
+    IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, isolatedStorage: "S2Tests.\(UUID().uuidString)", localFiles: IosLocalFilesNone.shared)
 }

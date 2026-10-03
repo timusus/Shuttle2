@@ -52,7 +52,23 @@ struct SourceSetupFlowTests {
         #expect(chosen == .emby)
     }
 
+    @Test func onlyTheFirstRunOffersThisDevice() throws {
+        let sources = SourceTypeCards(types: MediaProviderType.signInTypes, onSelect: { _ in })
+        #expect((try? sources.inspect().find(viewWithAccessibilityIdentifier: "onboarding.useThisDevice")) == nil)
+
+        var used = false
+        let firstRun = SourceTypeCards(types: MediaProviderType.signInTypes, onSelect: { _ in }, onUseThisDevice: { used = true })
+        #expect((try? firstRun.inspect().find(text: "Use Music on This iPhone")) != nil)
+        try firstRun.inspect().find(viewWithAccessibilityIdentifier: "onboarding.useThisDevice").button().tap()
+        #expect(used)
+    }
+
     // MARK: Import page
+
+    @Test func thisDevicesImportSaysWhereItsLooking() throws {
+        let sut = SourceSetupImportPage(state: .starting(.shuttle), onRetry: {}, onContinue: {})
+        #expect((try? sut.inspect().find(text: "Looking for music on this iPhone…")) != nil)
+    }
 
     @Test func aRunningImportShowsItsProgressAndCanBeLeft() throws {
         var continued = false

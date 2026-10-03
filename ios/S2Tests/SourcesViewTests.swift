@@ -12,16 +12,19 @@ struct SourcesViewTests {
         connected: [MediaProviderType] = [],
         scan: ScanProgress? = nil,
         scanError: String? = nil,
-        lastImport: KotlinInstant? = nil
+        lastImport: KotlinInstant? = nil,
+        thisDevice: Bool = false,
+        extras: [SourceFolder] = [],
+        deviceSongs: Int? = nil
     ) -> SourcesUiState {
         SourcesUiState(
-            thisDevice: false,
+            thisDevice: thisDevice,
             usesAndroidProvider: false,
-            folders: FolderLists(includes: [], excludes: [], extras: []),
+            folders: FolderLists(includes: [], excludes: [], extras: extras),
             scan: scan,
             scanError: scanError,
             deviceStatus: SourceStatusIdle.shared,
-            deviceSongs: nil,
+            deviceSongs: deviceSongs.map { KotlinInt(int: Int32($0)) },
             servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil) },
             lastImport: lastImport,
             events: []
@@ -87,6 +90,45 @@ struct SourcesViewTests {
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.addServer")) != nil)
         #expect((try? sut.inspect().find(text: "Connect a Jellyfin or Emby server to stream your music library from it.")) != nil)
         #expect((try? sut.inspect().find(text: "Scan Now")) == nil)
+    }
+
+    // MARK: On This iPhone
+
+    @Test func thisDevicesFoldersAndSongsAreMapped() {
+        let folder = SourceFolder(uri: "f1", path: "/Music", name: "Music", hasAccess: false)
+        let state = SourcesState(uiState(thisDevice: true, extras: [folder], deviceSongs: 12))
+        #expect(state.thisDevice)
+        #expect(state.folders == [SourcesState.DeviceFolder(id: "f1", name: "Music", path: "/Music", hasAccess: false)])
+        #expect(state.deviceSongs == 12)
+        #expect(state.deviceFooter == "12 songs on this iPhone.")
+    }
+
+    @Test func thisDeviceOffShowsOnlyItsSwitchAndNoScan() throws {
+        var enabled: Bool?
+        let sut = SourcesContent(state: SourcesState(servers: []), onThisDeviceChange: { enabled = $0 })
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.addFolder")) == nil)
+        #expect((try? sut.inspect().find(text: "Scan Now")) == nil)
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "sources.thisDevice").toggle().tap()
+        #expect(enabled == true)
+    }
+
+    @Test func thisDeviceOnListsItsFoldersAndScans() throws {
+        let folders = [
+            SourcesState.DeviceFolder(id: "a", name: "Music", path: "/Music"),
+            SourcesState.DeviceFolder(id: "b", name: "Away", path: nil, hasAccess: false),
+        ]
+        let sut = SourcesContent(state: SourcesState(thisDevice: true, folders: folders, deviceSongs: 1, servers: []))
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.documents")) != nil)
+        #expect((try? sut.inspect().find(text: "Music")) != nil)
+        #expect((try? sut.inspect().find(text: "Can't Be Read. Tap to Choose It Again.")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.addFolder")) != nil)
+        #expect((try? sut.inspect().find(text: "1 song on this iPhone.")) != nil)
+        #expect((try? sut.inspect().find(text: "Scan Now")) != nil)
+        #expect((try? sut.inspect().find(text: "Looks for new and changed music on this iPhone.")) != nil)
+    }
+
+    @Test func thisDeviceWithoutSongsSaysHowToAddThem() {
+        #expect(SourcesState(thisDevice: true, deviceSongs: 0, servers: []).deviceFooter.hasPrefix("Copy music into Shuttle Music"))
     }
 
     @Test func scanIsItsOwnSectionWithTheLastUpdate() throws {
