@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  .frame {
+    width: var(--frame-width);
+    height: var(--frame-height);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ambient glow behind the device, as on the Android set. */
+  .frame::before {
+    content: '';
+    position: absolute;
+    width: 80%;
+    height: 45%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--glow-color);
+    filter: blur(140px);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .frame.hero::before { bottom: 0; }
+  .frame.headline-bottom::before { top: 8%; }
+
+  .headline-area {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--subheadline-gap);
+    padding: 0 var(--headline-hpad);
+    width: 100%;
+    z-index: 2;
+  }
+
+  .headline {
+    font-weight: 800;
+    font-size: var(--headline-size);
+    line-height: 1.06;
+    color: var(--text-color);
+    letter-spacing: -0.03em;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .subheadline {
+    font-weight: 500;
+    font-size: var(--subheadline-size);
+    line-height: 1.3;
+    color: var(--subtext-color);
+  }
+
+  /* Slot 1: headline top-left, device below it running off the bottom edge. */
+  .frame.hero .headline-area {
+    height: var(--hero-headline-height);
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  /* Slots 2 onward: the whole device, then the headline centred under it. */
+  .frame.headline-bottom .headline-area {
+    flex: 1;
+    align-items: center;
+    text-align: center;
+    padding-bottom: var(--bottom-pad);
+  }
+
+  .device-area {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    z-index: 2;
+    overflow: hidden;
+  }
+  .frame.hero .device-area {
+    flex: 1;
+    align-items: flex-start;
+  }
+  .frame.headline-bottom .device-area {
+    flex-shrink: 0;
+    padding-top: var(--top-pad);
+  }
+
+  .device-frame {
+    position: relative;
+    width: var(--device-width);
+    border-radius: var(--device-radius);
+    background: var(--bezel-color);
+    padding: var(--device-bezel);
+    box-shadow:
+      0 6px 20px rgba(0,0,0,0.35),
+      0 24px 70px rgba(0,0,0,0.45),
+      0 60px 140px rgba(0,0,0,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.18),
+      inset 1px 0 0 rgba(255,255,255,0.07),
+      inset -1px 0 0 rgba(255,255,255,0.07);
+  }
+  .frame.hero .device-frame {
+    border-radius: var(--device-radius) var(--device-radius) 0 0;
+    padding-bottom: 0;
+    min-height: 120%;
+  }
+
+  .device-frame img {
+    width: 100%;
+    display: block;
+    border-radius: var(--screen-radius);
+  }
+  .frame.hero .device-frame img {
+    border-radius: var(--screen-radius) var(--screen-radius) 0 0;
+  }
+
+  /* Dynamic Island: drawn over the screenshot's own pill so the edge stays crisp at any scale. */
+  .island {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(var(--device-bezel) + var(--island-top));
+    width: var(--island-width);
+    height: var(--island-height);
+    border-radius: 999px;
+    background: #000;
+    z-index: 3;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const config = window.__CONFIG__ || {};
+
+  const root = document.getElementById('root');
+  const frame = document.createElement('div');
+  frame.className = `frame ${config.layout || 'headline-bottom'}`;
+
+  const props = {
+    '--frame-width': config.frameWidth || '1320px',
+    '--frame-height': config.frameHeight || '2868px',
+    '--bg-top': config.backgroundTop || '#0B0B0C',
+    '--bg-bottom': config.backgroundBottom || '#121214',
+    '--glow-color': config.glowColor || 'rgba(255,255,255,0.07)',
+    '--text-color': config.textColor || '#ffffff',
+    '--subtext-color': config.subtextColor || 'rgba(255,255,255,0.65)',
+    '--headline-size': config.headlineSize || '96px',
+    '--subheadline-size': config.subheadlineSize || '40px',
+    '--subheadline-gap': config.subheadlineGap || '20px',
+    '--headline-hpad': config.headlineHPad || '90px',
+    '--hero-headline-height': config.heroHeadlineHeight || '560px',
+    '--top-pad': config.topPad || '120px',
+    '--bottom-pad': config.bottomPad || '40px',
+    '--device-width': config.deviceWidth || '74%',
+    '--device-radius': config.deviceRadius || '66px',
+    '--device-bezel': config.deviceBezel || '11px',
+    '--screen-radius': config.screenRadius || '55px',
+    '--bezel-color': config.bezelColor || '#1c1c1e',
+    '--island-top': config.islandTop || '24px',
+    '--island-width': config.islandWidth || '0px',
+    '--island-height': config.islandHeight || '0px',
+  };
+  Object.entries(props).forEach(([k, v]) => frame.style.setProperty(k, v));
+
+  const headlineArea = document.createElement('div');
+  headlineArea.className = 'headline-area';
+  if (config.headline) {
+    const h = document.createElement('div');
+    h.className = 'headline';
+    h.textContent = config.headline;
+    headlineArea.appendChild(h);
+  }
+  if (config.subheadline) {
+    const s = document.createElement('div');
+    s.className = 'subheadline';
+    s.textContent = config.subheadline;
+    headlineArea.appendChild(s);
+  }
+
+  const deviceArea = document.createElement('div');
+  deviceArea.className = 'device-area';
+  const deviceFrame = document.createElement('div');
+  deviceFrame.className = 'device-frame';
+  if (config.screenshotUrl) {
+    const img = document.createElement('img');
+    img.src = config.screenshotUrl;
+    deviceFrame.appendChild(img);
+  }
+  if (config.island) {
+    const island = document.createElement('div');
+    island.className = 'island';
+    deviceFrame.appendChild(island);
+  }
+  deviceArea.appendChild(deviceFrame);
+
+  if ((config.layout || 'headline-bottom') === 'hero') {
+    frame.appendChild(headlineArea);
+    frame.appendChild(deviceArea);
+  } else {
+    frame.appendChild(deviceArea);
+    frame.appendChild(headlineArea);
+  }
+  root.appendChild(frame);
+
+  // render.py reads this back with --dump-dom to report which font actually drew the headline.
+  document.fonts.ready.then(() => {
+    const probe = document.createElement('div');
+    probe.id = 'font-probe';
+    probe.hidden = true;
+    probe.textContent = document.fonts.check('800 96px "DM Sans"') ? 'DM Sans' : 'fallback';
+    document.body.appendChild(probe);
+  });
+</script>
+</body>
+</html>

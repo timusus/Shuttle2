@@ -1,0 +1,56 @@
+{
+  "locale": "en-AU",
+  "slots": [
+    {
+      "n": 1,
+      "screen": "Sources (connected servers)",
+      "appearance": "dark",
+      "layout": "hero",
+      "steps": ["hook:reset", "sleep:1", "hook:settings?open=1", "sleep:1", "hook:route?to=sources", "sleep:3"],
+      "headline": "Your Jellyfin, Emby & Plex music.",
+      "subheadline": "A player for your own server."
+    },
+    {
+      "n": 2,
+      "screen": "Home",
+      "appearance": "light",
+      "steps": ["hook:reset", "sleep:1", "hook:tab?name=home", "sleep:4"],
+      "headline": "Jump back in."
+    },
+    {
+      "n": 3,
+      "screen": "Library albums",
+      "appearance": "light",
+      "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:4"],
+      "headline": "Your whole library, beautifully browsed."
+    },
+    {
+      "n": 4,
+      "screen": "Album detail",
+      "appearance": "light",
+      "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:3", "maestro:open-first-album.yaml", "sleep:2"],
+      "headline": "Every album, every track."
+    },
+    {
+      "n": 5,
+      "screen": "Now Playing",
+      "appearance": "dark",
+      "steps": ["hook:reset", "sleep:1", "hook:player?open=1", "sleep:4"],
+      "headline": "Gapless playback, in full colour."
+    },
+    {
+      "n": 6,
+      "screen": "Queue",
+      "appearance": "dark",
+      "steps": ["hook:reset", "sleep:1", "hook:player?open=1", "sleep:3", "maestro:open-queue.yaml", "sleep:2"],
+      "headline": "A queue you control."
+    },
+    {
+      "n": 7,
+      "screen": "Equalizer",
+      "appearance": "dark",
+      "steps": ["hook:reset", "sleep:1", "hook:settings?open=1", "sleep:1", "hook:route?to=equalizer", "sleep:3"],
+      "headline": "Equalizer and ReplayGain."
+    }
+  ]
+}

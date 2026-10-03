@@ -1,0 +1,16 @@
+# Plays a song from Library > Songs so the mini player, Now Playing and the queue have something to show.
+# capture.sh selects the Songs category with a hook first.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 180000
+- tapOn:
+    id: "songRow.title"
+    index: 2
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 30000

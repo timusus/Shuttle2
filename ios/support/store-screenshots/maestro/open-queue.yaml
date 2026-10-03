@@ -1,0 +1,11 @@
+# Opens the queue from Now Playing (capture.sh opens the player with a hook first).
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.queue"
+    timeout: 15000
+- tapOn:
+    id: "nowPlaying.queue"
+- waitForAnimationToEnd:
+    timeout: 5000
