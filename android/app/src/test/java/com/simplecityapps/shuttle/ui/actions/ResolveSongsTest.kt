@@ -13,6 +13,8 @@ import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
 import io.kotest.matchers.shouldBe
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -52,6 +54,38 @@ class ResolveSongsTest {
 
         resolveSongs(MediaSelection.AlbumArtists(listOf(artistB, artistA))) shouldBe listOf(b, aTrack1, aTrack2)
         resolveSongs(MediaSelection.AlbumArtists(listOf(artistA, artistB))) shouldBe listOf(aTrack1, aTrack2, b)
+    }
+
+    @Test
+    fun `a song credited to several selected artists sorts with the earliest of them`() = runTest {
+        songRepository.applyQueryPredicates = true
+        val collab = createSong(id = 1, albumArtist = "Various", artists = listOf("A", "B"))
+        val onlyA = createSong(id = 2, albumArtist = "A", track = 2)
+        val onlyB = createSong(id = 3, albumArtist = "B")
+        songRepository.setSongs(listOf(onlyB, collab, onlyA))
+        val keyA = onlyA.albumArtistGroupKey
+        val keyB = onlyB.albumArtistGroupKey
+
+        val resolved = resolveSongs(MediaSelection.AlbumArtists(listOf(createAlbumArtist(name = "B", groupKey = keyB), createAlbumArtist(name = "A", groupKey = keyA))))
+
+        resolved.last() shouldBe onlyA
+        resolved.take(2).toSet() shouldBe setOf(collab, onlyB)
+    }
+
+    @Test
+    fun `artists resolve a large library quickly`() = runTest {
+        songRepository.applyQueryPredicates = true
+        val artistCount = 1_500
+        val songs = List(30_000) { i -> createSong(id = i.toLong(), albumArtist = "artist-${i % artistCount}", artists = listOf("artist-${i % artistCount}", "artist-${(i + 1) % artistCount}"), track = i) }
+        songRepository.setSongs(songs)
+        val artists = (0 until artistCount).map { createAlbumArtist(name = "artist-$it", groupKey = songs[it].albumArtistGroupKey) }
+
+        val start = TimeSource.Monotonic.markNow()
+        val resolved = resolveSongs(MediaSelection.AlbumArtists(artists))
+
+        resolved.size shouldBe songs.size
+        // Generous: the old per-comparison search took minutes here; this only guards against it coming back.
+        (start.elapsedNow() < 10.seconds) shouldBe true
     }
 
     @Test
