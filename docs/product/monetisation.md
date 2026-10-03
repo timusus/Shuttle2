@@ -177,16 +177,16 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 
 ### iOS (StoreKit 2, #609)
 
-iOS sells the same thing, as far as iOS has it: Jellyfin, Emby and Plex streaming need Pro after a 14-day trial;
+iOS sells the same thing, as far as iOS has it: Jellyfin, Emby and Plex streaming need Pro after a 7-day trial;
 AirPlay, the equalizer and everything else stay free. Downloads join Pro when iOS has them, and not before: the
 paywall, Settings and the App Store Connect product descriptions name only what the app does (guidelines 2.3 and
 3.1.1), from one place in Swift (`ProFeatures` in `PaywallView.swift`). There's no subscription on iOS yet, only the
-trial and Lifetime.
+trial and Lifetime. The length is `AppStoreProducts.TRIAL_DAYS` in `:shared`, the one place it is defined.
 
 - **Products.** Two non-consumables, ids in `shared/.../entitlement/AppStoreProducts.kt`:
-  - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 14-day Trial", display name
-    "14-day Free Trial", description "Stream from Jellyfin, Emby and Plex free for 14 days". Buying it starts the trial,
-    which runs 14 days from the transaction's `originalPurchaseDate`. The App Store keeps the transaction per Apple
+  - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 7-day Trial", display name
+    "7-day Free Trial", description "Stream from Jellyfin, Emby and Plex free for 7 days". Buying it starts the trial,
+    which runs 7 days from the transaction's `originalPurchaseDate`. The App Store keeps the transaction per Apple
     ID, and a restore, reinstall or new device reports the same original date, so none of them restarts the trial.
     A refunded or revoked trial counts as used.
   - `com.simplecityapps.shuttle.pro.lifetime`: paid (USD 9.99 in `S2.storekit`; set the real price in App Store
@@ -195,7 +195,7 @@ trial and Lifetime.
 - **Trial consent.** Android starts the trial silently on the first server stream. App Review wants the user to
   start a free trial knowingly, so on iOS `ServerAccessGate` has no `startTrial`: the first stream before the trial
   is refused and opens the paywall, which discloses the trial length, what stops after it and Lifetime's localized
-  `displayPrice` above the "Start 14-day free trial" button (guideline 3.1.1). Adding a server stays allowed until
+  `displayPrice` above the "Start 7-day free trial" button (guideline 3.1.1). Adding a server stays allowed until
   the trial has been used, as on Android.
 - **Entitlement.** `StoreKitManager` (Swift) reads `Transaction.latest(for:)` for each product at launch, after
   each purchase or restore and on every `Transaction.updates`, and hands the verified transactions, revoked ones

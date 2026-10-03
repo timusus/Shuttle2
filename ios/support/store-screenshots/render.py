@@ -156,11 +156,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--canvas", action="append", choices=sorted(CANVASES), help="one or more canvases; default all")
     parser.add_argument("--slot", action="append", type=int, help="one or more slot numbers; default all")
+    parser.add_argument("--paywall-only", action="store_true", help="only the in-app purchase review paywall, no slots")
     args = parser.parse_args()
 
     with open(SLOTS) as f:
         spec = json.load(f)
     locale = spec["locale"]
+    if args.paywall_only:
+        render_paywall(locale)
+        return
     slots = [s for s in spec["slots"] if not args.slot or s["n"] in args.slot]
     canvases = args.canvas or sorted(CANVASES)
     chrome = find_chrome()

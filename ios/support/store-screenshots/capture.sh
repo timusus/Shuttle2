@@ -7,6 +7,7 @@
 #   ./capture.sh                 build, set up and capture iPhone and iPad, plus the paywall (iPhone)
 #   ./capture.sh --skip-build    install the last Debug build instead of rebuilding
 #   ./capture.sh --device iphone|ipad
+#   ./capture.sh --paywall-only  iPhone only, and only the paywall (raw/iphone/paywall.png)
 #   ./capture.sh --skip-setup    keep the app and its state from the last run (no reinstall, no import, no play)
 #
 # Raw PNGs land in raw/<iphone|ipad>/<n>.png next to this script, and the paywall in raw/iphone/paywall.png;
@@ -41,11 +42,13 @@ export S2_SIM_HOLDER="${S2_SIM_HOLDER:-store-screenshots}"
 
 SKIP_BUILD=0
 SKIP_SETUP=0
+PAYWALL_ONLY=0
 DEVICES="iphone ipad"
 while [ $# -gt 0 ]; do
   case "$1" in
     --skip-build) SKIP_BUILD=1 ;;
     --skip-setup) SKIP_SETUP=1 ;;
+    --paywall-only) PAYWALL_ONLY=1; DEVICES=iphone ;;
     --device) DEVICES="$2"; shift ;;
     -h|--help) sed -n 2,30p "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -148,7 +151,7 @@ walk_slots() {
 import json
 data = json.load(open('$SLOTS'))
 extras = [dict(data['paywall'], n='paywall')] if '$device' == 'iphone' else []
-for s in data['slots'] + extras:
+for s in ([] if $PAYWALL_ONLY else data['slots']) + extras:
     print(s['n'], s['appearance'], ' '.join(s.get('$device' + '_steps', s['steps'])), sep='\t')
 " | while IFS=$'\t' read -r n appearance steps; do
     log "$device slot $n ($appearance)"

@@ -3,7 +3,7 @@ import Shared
 import StoreKit
 
 /// StoreKit 2 for Shuttle Music Pro (#609), after Shuttle Podcasts' `StoreKitManager`. Two non-consumables, their ids
-/// in :shared's `AppStoreProducts`: the free 14-day trial and Pro for life. What owning them grants is resolved in
+/// in :shared's `AppStoreProducts`: the free trial and Pro for life. What owning them grants is resolved in
 /// Kotlin (`StoreEntitlements`); this only loads and buys the products and reports the user's current transactions to
 /// it, at launch, after each purchase or restore, and whenever `Transaction.updates` delivers one (a purchase made on
 /// another device, Ask to Buy approval, a refund).
@@ -117,7 +117,7 @@ final class StoreKitManager: ObservableObject {
         return entitlements.storeAnswered(purchases: purchases)
     }
 
-    /// Buys `productId`: the free trial starts the 14 days, Lifetime is Pro.
+    /// Buys `productId`: the free trial starts the trial, Lifetime is Pro.
     func purchase(_ productId: String) async -> PurchaseOutcome {
         if products[productId] == nil { await loadProducts() }
         guard let product = products[productId] else {

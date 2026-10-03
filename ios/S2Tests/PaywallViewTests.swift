@@ -29,10 +29,10 @@ struct PaywallViewTests {
         let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$9.99")
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
 
-        #expect(disclosure.contains("14 days"))
+        #expect(disclosure.contains("7 days"))
         #expect(disclosure.contains("streaming from Jellyfin, Emby and Plex stops"))
         #expect(disclosure.contains("$9.99"))
-        #expect((try? sut.inspect().find(text: "Start 14-day free trial")) != nil)
+        #expect((try? sut.inspect().find(text: "Start 7-day free trial")) != nil)
         #expect((try? sut.inspect().find(text: "$9.99 once")) != nil)
     }
 

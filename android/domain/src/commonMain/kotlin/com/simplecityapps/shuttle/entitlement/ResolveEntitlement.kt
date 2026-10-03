@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.entitlement
 
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
@@ -21,6 +22,7 @@ val CACHED_PRO_VALIDITY = 7.days
  * @param cachedPro the last Pro seen from the store; used only while it hasn't answered. Without it, a user who never
  *   had the trial is [Entitlement.Unknown] until the store answers.
  * @param trialStartedAt when the server trial started, or null if it never has.
+ * @param trialLength how long the trial runs from [trialStartedAt]; Android's by default, iOS passes its own.
  */
 fun resolveEntitlement(
     storeAnswered: Boolean,
@@ -28,7 +30,8 @@ fun resolveEntitlement(
     cachedPro: CachedPro?,
     trialStartedAt: Instant?,
     now: Instant,
-    isDebug: Boolean = false
+    isDebug: Boolean = false,
+    trialLength: Duration = Entitlement.TRIAL_LENGTH
 ): Entitlement {
     if (isDebug) return Entitlement.Pro(ProSource.Debug)
 
@@ -40,7 +43,7 @@ fun resolveEntitlement(
     if (proSource != null) return Entitlement.Pro(proSource)
 
     if (trialStartedAt != null) {
-        val endsAt = trialStartedAt + Entitlement.TRIAL_LENGTH
+        val endsAt = trialStartedAt + trialLength
         return if (now < endsAt) Entitlement.Trial(endsAt) else Entitlement.Free(trialUsed = true)
     }
     return if (storeAnswered) Entitlement.Free(trialUsed = false) else Entitlement.Unknown

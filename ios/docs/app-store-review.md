@@ -6,11 +6,11 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 
 ## Launch checklist (owner, in order)
 
-1. Land the StoreKit/paywall work (#609): the review notes below describe a 14-day trial and a one-off
+1. Land the StoreKit/paywall work (#609): the review notes below describe a 7-day trial and a one-off
    Pro purchase, so the IAP product must exist and be attached to the version.
-2. A reachable demo server: stand up a public HTTPS Jellyfin with a small set of freely licensed music
-   (see Screenshots in `ios/support/store-screenshots/README.md` for why not the test server's library),
-   and a dedicated reviewer user. Fill in the placeholders in the notes below. Keep it up until approval.
+2. The demo server is Emby at https://emby.mediaserver.timmalseed.dev, user `appreview`. The owner enters the
+   password in the demo account fields in App Store Connect (it is never written in the repo). Keep the server up
+   until approval.
 3. Publish the draft `ffmpeg-n7.1.5-source` release on timusus/Shuttle2 (the About link points at it, #610).
 4. App Store Connect > App Information: paste `en-AU/*.txt`, set the privacy policy URL, category
    Music, content rights and age rating from `asc-answers.md`.
@@ -28,13 +28,13 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 ```
 Shuttle Music is a music player for the user's own Jellyfin, Emby or Plex media server. It has no
 catalogue of its own: it plays audio files on the device, or from a media server. We have set up a
-demo Jellyfin server:
+demo Emby server:
 
-  Server address: <DEMO SERVER URL, e.g. https://demo.example.com>
-  Username:       <DEMO USERNAME>
-  Password:       <DEMO PASSWORD>
+  Server address: https://emby.mediaserver.timmalseed.dev
+  Username:       appreview
+  Password:       (entered in the demo account fields in App Store Connect)
 
-To test: open the app, tap Skip (or Add a Source), choose Add a Server > Jellyfin, enter the address,
+To test: open the app, tap Skip (or Add a Source), choose Add a Server > Emby, enter the address,
 username and password, and tap Sign In. The library imports, then Home, Library (Albums, Artists, Songs,
 Genres, Playlists), Search, Now Playing, the queue and Settings > Equalizer all work against it.
 Plex signs in with a plex.tv account (email or username, password, optional two-factor code), not a
@@ -45,7 +45,7 @@ to Files > On My iPhone > Shuttle Music, or from a Mac through Finder, or pick a
 in the Library and play without Pro or a sign-in.
 
 In-app purchase: Shuttle Music is free to download. Streaming from Jellyfin, Emby or Plex is part of Shuttle Music
-Pro: the first time a server song is played the paywall opens, and tapping Start 14-day free trial begins a
+Pro: the first time a server song is played the paywall opens, and tapping Start 7-day free trial begins a
 free App Store trial (nothing is charged), after which Pro is a
 one-off lifetime purchase (no subscription). A sandbox Apple Account is enough to test the purchase,
 and Restore Purchases is on the paywall and in Settings.

@@ -16,18 +16,21 @@ enum ProFeatures {
     /// The paywall's headline feature and Settings' row: "Stream from Jellyfin, Emby and Plex".
     static var headline: String { "Stream from \(serverList)" }
 
+    /// The trial's length in days, from :shared's `AppStoreProducts`: the one place it is defined.
+    static var trialDays: Int { Int(AppStoreProducts.shared.TRIAL_DAYS) }
+
     /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin, Emby and Plex".
     static var afterTrial: String { "streaming from \(serverList)" }
 
     /// Server sign-in's disclosure, for anyone without Pro or a running trial.
-    static var signInDisclosure: String { "Streaming from \(serverList) is part of Shuttle Music Pro. Free for 14 days." }
+    static var signInDisclosure: String { "Streaming from \(serverList) is part of Shuttle Music Pro. Free for \(ProFeatures.trialDays) days." }
 }
 
 /// Where the user stands with Shuttle Music Pro, from the Kotlin `Entitlement`.
 enum ProStatus: Equatable {
     /// StoreKit hasn't answered yet.
     case checking
-    /// Free, and the 14-day trial is still to have.
+    /// Free, and the free trial is still to have.
     case trialAvailable
     case trial(daysLeft: Int)
     case trialEnded
@@ -46,7 +49,7 @@ enum ProStatus: Equatable {
     var message: String {
         switch self {
         case .checking: "Checking your purchases with the App Store…"
-        case .trialAvailable: "Try streaming from your server free for 14 days."
+        case .trialAvailable: "Try streaming from your server free for \(ProFeatures.trialDays) days."
         case .trial(let daysLeft): daysLeft == 1 ? "1 day left in your free trial" : "\(daysLeft) days left in your free trial"
         case .trialEnded: "Your free trial has ended. Upgrade to keep \(ProFeatures.afterTrial)."
         case .pro: "You have Shuttle Music Pro. Thank you for supporting Shuttle Music."
@@ -185,7 +188,7 @@ struct PaywallContent: View {
     }
 
     private var trialDisclosure: String {
-        "The trial is free and lasts 14 days. After it ends, \(ProFeatures.afterTrial) stops until you buy Shuttle "
+        "The trial is free and lasts \(ProFeatures.trialDays) days. After it ends, \(ProFeatures.afterTrial) stops until you buy Shuttle "
             + "Music Pro, a one-time purchase of \(lifetimePrice ?? "the price shown"). Nothing is charged when the trial ends."
     }
 
@@ -194,7 +197,7 @@ struct PaywallContent: View {
         VStack(spacing: 12) {
             if status == .trialAvailable {
                 Button(action: onStartTrial) {
-                    Text("Start 14-day free trial").frame(maxWidth: .infinity)
+                    Text("Start \(ProFeatures.trialDays)-day free trial").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)

@@ -14,15 +14,16 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
 - In-app purchases: both are in all countries, with en-US name and description and review notes. Neither
   has a review screenshot yet. Family Sharing is off on both.
   - Trial (6818776748): $0.
-  - Lifetime (6818777051): $9.99, a placeholder price.
+  - Lifetime (6818777051): $9.99, the launch price. The plan is US$14.99 two to four weeks after launch.
 - Version 1.0 has these saved:
   - Promotional text, description and keywords.
   - Support URL, marketing URL and copyright ("2026 Simplecity Apps Pty Ltd").
-  - Review notes, with their `<...>` placeholders still in them.
+  - Contact information.
+  - The demo account: user `appreview` on https://emby.mediaserver.timmalseed.dev (Emby). The owner enters the
+    password; it is never written in the repo.
+  - Review notes, describing the Emby demo (`ios/docs/app-store-review.md`).
 - Version 1.0 still needs:
   - Screenshots and a build.
-  - Contact information.
-  - The demo account. "Sign-in required" is ticked, but the username and password are empty.
 
 ## App Information
 
@@ -73,7 +74,7 @@ Both products cover what the app sells (playing files on the device is free and 
 descriptions stay in step with the paywall copy (`ProFeatures` in `ios/S2/Features/Paywall/PaywallView.swift`,
 which names all three) and with `docs/product/monetisation.md`'s iOS section (guidelines 2.3 and 3.1.1).
 
-- `com.simplecityapps.shuttle.pro.trial`: display name "14-day Free Trial", description "Stream from
-  Jellyfin, Emby and Plex free for 14 days".
+- `com.simplecityapps.shuttle.pro.trial`: display name "7-day Free Trial", description "Stream from
+  Jellyfin, Emby and Plex free for 7 days".
 - `com.simplecityapps.shuttle.pro.lifetime`: display name "Shuttle Music Pro (Lifetime)", description
   "Stream from Jellyfin, Emby and Plex, for life".

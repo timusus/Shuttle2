@@ -36,7 +36,7 @@ data class StorePurchase(
  * `StoreKitManager` reports through [storeAnswered].
  *
  * Owning [AppStoreProducts.LIFETIME] is Pro, unless it was refunded. Owning [AppStoreProducts.TRIAL] means the server
- * trial started at its original purchase date, so it runs for [Entitlement.TRIAL_LENGTH] from then and is used up
+ * trial started at its original purchase date, so it runs for [AppStoreProducts.TRIAL_LENGTH] from then and is used up
  * after; a refunded or revoked trial is used up at once. StoreKit keeps both transactions per Apple ID, so neither
  * depends on anything stored on the device. StoreKit answers from its on-device
  * cache, offline too, so unlike Android there's no cached Pro to stand in for it.
@@ -100,14 +100,15 @@ class StoreEntitlements(
         // A revoked trial grants no time, but it was had: it resolves as one that has already ended.
         val trialStartedAt = trials.minOfOrNull { it.originalPurchasedAtEpochMs }
             ?.let(Instant::fromEpochMilliseconds)
-            ?.let { if (trials.all { trial -> trial.revoked }) minOf(it, now - Entitlement.TRIAL_LENGTH) else it }
-        return override.toEntitlement(now) ?: resolveEntitlement(
+            ?.let { if (trials.all { trial -> trial.revoked }) minOf(it, now - AppStoreProducts.TRIAL_LENGTH) else it }
+        return override.toEntitlement(now, AppStoreProducts.TRIAL_LENGTH) ?: resolveEntitlement(
             storeAnswered = purchases != null,
             ownedPro = purchases.orEmpty().filterNot { it.revoked }.mapNotNull { AppStoreProducts.proSource(it.productId) }.minOrNull(),
             cachedPro = null,
             trialStartedAt = trialStartedAt,
             now = now,
-            isDebug = override.resolvesAsDebug(isDebug)
+            isDebug = override.resolvesAsDebug(isDebug),
+            trialLength = AppStoreProducts.TRIAL_LENGTH
         )
     }
 }

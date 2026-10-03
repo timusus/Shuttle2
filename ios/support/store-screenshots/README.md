@@ -17,7 +17,7 @@ ios/support/store-screenshots/contact-sheet.py ios/store/screenshots/en-AU/ipad-
 ```
 
 Options: `capture.sh --skip-build` (install the last Debug build), `--skip-setup` (keep the installed app, its
-library, history and paused album), `--device iphone|ipad`; `render.py --canvas iphone-6.9 --slot 3`. Canvases:
+library, history and paused album), `--device iphone|ipad`, `--paywall-only` (iPhone, the paywall alone; `render.py --paywall-only` then writes it); `render.py --canvas iphone-6.9 --slot 3`. Canvases:
 `iphone-6.9` (1320x2868), `iphone-6.5` (1284x2778), both from the iPhone 16's raw captures, and `ipad-13`
 (2064x2752) from the iPad. Needs Maestro, xcodegen, ffmpeg, Pillow and Google Chrome (headless framing; the DM Sans
 headline font loads from Google Fonts, and the last line of `render.py` output says which font rendered).

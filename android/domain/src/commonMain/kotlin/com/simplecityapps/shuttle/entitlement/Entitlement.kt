@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.entitlement
 
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
@@ -67,10 +68,13 @@ enum class DebugEntitlementOverride {
 }
 
 /** The [Entitlement] this override stands in for, or null where the store resolves it ([None], [Store]). */
-fun DebugEntitlementOverride.toEntitlement(now: Instant): Entitlement? = when (this) {
+fun DebugEntitlementOverride.toEntitlement(
+    now: Instant,
+    trialLength: Duration = Entitlement.TRIAL_LENGTH
+): Entitlement? = when (this) {
     DebugEntitlementOverride.None, DebugEntitlementOverride.Store -> null
     DebugEntitlementOverride.Free -> Entitlement.Free(trialUsed = false)
-    DebugEntitlementOverride.Trial -> Entitlement.Trial(now + Entitlement.TRIAL_LENGTH)
+    DebugEntitlementOverride.Trial -> Entitlement.Trial(now + trialLength)
     DebugEntitlementOverride.Pro -> Entitlement.Pro(ProSource.Debug)
 }
 
