@@ -39,7 +39,8 @@ enum class SectionHeaderStyle {
 /**
  * A section heading, a [SectionHeaderStyle.Label] unless [style] says otherwise, with an optional trailing [action]
  * ("See all") and an optional one-line [subtitle] under the title saying what the section is. It sits on an opaque [containerColor] (`surface`), so it also works as a sticky letter header;
- * pass the container's colour when it heads a list on another surface, such as the search view.
+ * pass the container's colour when it heads a list on another surface, such as the search view, and pass [Color.Transparent] for
+ * group headers inside cards and lists.
  */
 @Composable
 fun SectionHeader(

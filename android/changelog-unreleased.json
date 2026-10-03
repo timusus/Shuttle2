@@ -104,6 +104,10 @@
   ],
   "improvements": [
     {
+      "text": "Settings, Edit Tags and the player's sound panel now use the same section heading style as the rest of the app",
+      "commits": []
+    },
+    {
       "text": "Settings tidied: Sources has one Streaming & downloads group for streaming quality and the Wi-Fi only rules, mobile data now streams at 192 kbps unless you choose otherwise, Library settings are split into scanning, backup and artwork, Rescan lives only in Sources, and the Settings list shows the current value of Sources and Library",
       "commits": []
     },
