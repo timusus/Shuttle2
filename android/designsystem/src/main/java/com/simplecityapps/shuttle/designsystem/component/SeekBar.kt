@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +18,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +45,8 @@ import com.simplecityapps.shuttle.format.formatDuration
  * thumb with it, while it's dragged. The elapsed and total times sit underneath; while dragging, the
  * elapsed time follows the thumb in `primary`. [onSeek] runs once, when the drag ends. While
  * [buffering], a small loading indicator and "Buffering" sit between the times; the bar stays usable.
+ * With [showRemaining] the end label counts down the time left ("-3:12"); [onToggleRemaining], when
+ * given, makes it tappable to switch between that and the total.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +57,8 @@ fun S2SeekBar(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     buffering: Boolean = false,
+    showRemaining: Boolean = false,
+    onToggleRemaining: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var dragFraction by remember { mutableStateOf<Float?>(null) }
@@ -101,7 +108,19 @@ fun S2SeekBar(
                 }
                 Spacer(Modifier.weight(1f))
             }
-            Text(formatDuration(durationMs), style = MaterialTheme.typography.time, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val shownMs = if (dragging) (fraction * durationMs).toLong() else positionMs
+            Text(
+                text = if (showRemaining) "-" + formatDuration((durationMs - shownMs).coerceAtLeast(0L)) else formatDuration(durationMs),
+                style = MaterialTheme.typography.time,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = if (onToggleRemaining != null) {
+                    Modifier
+                        .minimumInteractiveComponentSize()
+                        .clickable(onClickLabel = stringResource(if (showRemaining) R.string.ds_show_total_time else R.string.ds_show_remaining_time), role = Role.Button, onClick = onToggleRemaining)
+                } else {
+                    Modifier
+                },
+            )
         }
     }
 }

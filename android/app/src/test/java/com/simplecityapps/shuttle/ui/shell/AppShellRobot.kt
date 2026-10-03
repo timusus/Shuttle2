@@ -220,6 +220,11 @@ class RecordingPlayerActions(
 
     override fun sleepTimerRemaining(): Flow<Long?> = sleepTimerRemaining
 
+    override fun setShowRemainingTime(show: Boolean) {
+        calls += "setShowRemainingTime($show)"
+        state.value = state.value.copy(showRemainingTime = show)
+    }
+
     override fun setPlaybackSpeed(speed: Float) {
         calls += "setPlaybackSpeed($speed)"
         state.value = state.value.copy(playbackSpeed = speed)
@@ -471,6 +476,12 @@ class AppShellRobot(
 
     fun tapText(text: String) {
         rule.onNodeWithText(text).performClick()
+        rule.waitForIdle()
+    }
+
+    /** Taps [text] where it isn't a queue row's. */
+    fun tapTextOutsideQueue(text: String) {
+        rule.onNode(hasText(text) and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)).not()).performClick()
         rule.waitForIdle()
     }
 

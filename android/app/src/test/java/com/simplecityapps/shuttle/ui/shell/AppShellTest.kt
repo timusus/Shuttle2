@@ -426,7 +426,21 @@ class AppShellTest {
         robot.tapMiniPlayer()
         robot.assertTextDisplayed("Juniper Static • Phase Garden")
         robot.assertTextDisplayed("1:00")
+        robot.assertTextDisplayed("-2:00", outsideQueue = true)
+    }
+
+    @Test
+    fun `tapping the end time switches between the time left and the song's length`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.assertTextDisplayed("-2:00", outsideQueue = true)
+
+        robot.tapTextOutsideQueue("-2:00")
         robot.assertTextDisplayed("3:00", outsideQueue = true)
+        robot.tapTextOutsideQueue("3:00")
+        robot.assertTextDisplayed("-2:00", outsideQueue = true)
+
+        robot.calls shouldBe listOf("setShowRemainingTime(false)", "setShowRemainingTime(true)")
     }
 
     @Test

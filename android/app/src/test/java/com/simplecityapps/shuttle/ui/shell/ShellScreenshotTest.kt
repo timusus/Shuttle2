@@ -128,6 +128,18 @@ class ShellScreenshotTest {
         sheetLevels("phone-short")
     }
 
+    /** Now Playing and the mini player at 200% text, where fixed-height chrome used to clip (#730). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi", fontScale = 2f)
+    fun phoneLargeText() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)
+        shot("phone-large-text-mini")
+        robot.tapMiniPlayer()
+        shot("phone-large-text-now-playing")
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        shot("phone-large-text-queue")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h826dp-xhdpi")
     fun foldableFolded() {

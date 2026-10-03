@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -64,7 +64,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/** Height of the "Up Next" header over the queue's rows. */
+/** The least height of the "Up Next" header over the queue's rows; it grows with the text. */
 internal val QueueHeaderHeight = 56.dp
 
 /** "Up Next" over the queue, with Clear Queue. */
@@ -77,7 +77,7 @@ internal fun QueueHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(QueueHeaderHeight)
+            .heightIn(min = QueueHeaderHeight)
             .background(color)
             .testTag(PlayerTestTags.QueueHeader)
             .padding(end = S2Spacing.small),

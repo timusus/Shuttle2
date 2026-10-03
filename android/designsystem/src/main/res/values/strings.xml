@@ -31,6 +31,8 @@
     <string name="ds_repeat_one">Repeat one</string>
     <string name="ds_seek">Seek</string>
     <string name="ds_reorder">Reorder</string>
+    <string name="ds_show_remaining_time">Show time remaining</string>
+    <string name="ds_show_total_time">Show total time</string>
     <string name="ds_buffering">Buffering</string>
     <string name="ds_playing_on">Playing on %1$s</string>
 </resources>

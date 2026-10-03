@@ -92,6 +92,14 @@
     {
       "text": "Sign in to Jellyfin with Quick Connect: tap Use Quick Connect, enter the code shown in another Jellyfin app, and S2 signs in once you approve it there",
       "commits": []
+    },
+    {
+      "text": "Now Playing shows the track's audio quality, like FLAC 24-bit / 96 kHz, and counts down the time left; tap the time to see the track's length instead",
+      "commits": []
+    },
+    {
+      "text": "The Cast button on Now Playing now opens Android's output switcher, so you can pick Bluetooth, wired and Cast outputs from one place",
+      "commits": []
     }
   ],
   "improvements": [
@@ -197,6 +205,10 @@
     },
     {
       "text": "The app icon now matches your other icons when themed icons are turned on in Android 13 and later",
+      "commits": []
+    },
+    {
+      "text": "The mini player and the queue header no longer clip at large text sizes",
       "commits": []
     }
   ],

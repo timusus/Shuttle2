@@ -14,6 +14,8 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.PlayerSettings
+import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -92,6 +94,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val readSleepTimeRemaining: ReadSleepTimeRemaining,
     readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
     observeSetting: ObserveSetting,
+    private val saveSetting: SaveSetting,
     replayGainModeSetting: ReplayGainModeSetting,
     private val setReplayGainMode: SetReplayGainMode,
     observeArtworkSeed: ObserveArtworkSeed,
@@ -190,6 +193,8 @@ class PlayerViewModel @AssistedInject constructor(
                 playbackSpeed = playback.speed,
                 replayGainMode = extras.replayGainMode,
             )
+        }.combine(observeSetting(PlayerSettings.ShowRemainingTime)) { state, showRemainingTime ->
+            state.copy(showRemainingTime = showRemainingTime)
         }.combine(panel) { state, panel ->
             // An emptied queue takes the player, and its panel, away.
             state.copy(panel = panel.takeIf { state.hasQueue == true })
@@ -261,6 +266,8 @@ class PlayerViewModel @AssistedInject constructor(
             delay(SLEEP_TIMER_TICK_MS)
         }
     }.distinctUntilChanged()
+
+    override fun setShowRemainingTime(show: Boolean) = saveSetting(PlayerSettings.ShowRemainingTime, show)
 
     override fun setPlaybackSpeed(speed: Float) = control(PlaybackCommand.SetSpeed(speed))
 

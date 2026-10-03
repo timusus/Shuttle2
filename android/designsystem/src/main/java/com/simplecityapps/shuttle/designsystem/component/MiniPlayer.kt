@@ -14,21 +14,40 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
-/** The mini player's height: the shell docks the player sheet's Mini level this far above the nav bar. */
-val S2MiniPlayerHeight = 72.dp
+/** The mini player's height at the default text size: the shell docks the player sheet's Mini level this far above the nav bar. */
+private val MiniPlayerBaseHeight = 72.dp
+
+/** The two text lines' height at the default text size (title and subtitle line heights, 20sp and 16sp). */
+private val MiniPlayerTextLines = 36.sp
+
+/**
+ * The mini player's height: [MiniPlayerBaseHeight], plus whatever its two text lines grow by at the
+ * user's text size, so the artist line isn't cut at 200% text. The shell docks the player sheet's Mini
+ * level this far above the nav bar.
+ */
+@Composable
+@ReadOnlyComposable
+fun s2MiniPlayerHeight(): Dp {
+    val textGrowth = with(LocalDensity.current) { MiniPlayerTextLines.toDp() - MiniPlayerTextLines.value.dp }
+    return MiniPlayerBaseHeight + textGrowth.coerceAtLeast(0.dp)
+}
 
 /**
  * The collapsed player above the nav bar (compact) or docked under the content (expanded): the

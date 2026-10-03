@@ -55,6 +55,8 @@ data class PlayerUiState(
     /** The playback speed, 1 being normal; the pitch stays the same at any speed. */
     val playbackSpeed: Float = 1f,
     val replayGainMode: ReplayGainMode = ReplayGainMode.Off,
+    /** The seek bar's end label counts down the time left, rather than showing the song's length. */
+    val showRemainingTime: Boolean = true,
     /** The panel the bar has open, or null at rest. */
     val panel: NowPlayingPanel? = null,
 ) {
@@ -131,6 +133,9 @@ interface PlayerActions {
 
     /** The sleep timer's time left in milliseconds, ticking while collected: null when off, 0 while it waits for the track to end. */
     fun sleepTimerRemaining(): Flow<Long?>
+
+    /** Chooses what the seek bar's end label shows: the time left, or the song's length. */
+    fun setShowRemainingTime(show: Boolean)
 
     fun setPlaybackSpeed(speed: Float)
 

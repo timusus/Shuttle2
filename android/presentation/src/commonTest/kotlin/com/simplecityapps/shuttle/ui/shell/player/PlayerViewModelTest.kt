@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
@@ -112,6 +113,7 @@ class PlayerViewModelTest {
             readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
             readSleepTimerPlayToEnd = ReadSleepTimerPlayToEnd(preferenceManager),
             observeSetting = ObserveSetting(settingsStore),
+            saveSetting = SaveSetting(settingsStore),
             replayGainModeSetting = replayGainModeSetting,
             setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects, replayGainModeSetting),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
@@ -329,6 +331,17 @@ class PlayerViewModelTest {
 
         viewModel.uiState.value.player.seed shouldBe ArtworkSeed.None
         seededSongs shouldBe emptyList()
+    }
+
+    @Test
+    fun `the end label shows the time left until it is switched to the song's length, and the choice is stored`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.value.player.showRemainingTime shouldBe true
+
+        viewModel.setShowRemainingTime(false)
+
+        viewModel.uiState.value.player.showRemainingTime shouldBe false
+        ReadSetting(settingsStore)(PlayerSettings.ShowRemainingTime) shouldBe false
     }
 
     @Test

@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayer
-import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayerHeight
+import com.simplecityapps.shuttle.designsystem.component.s2MiniPlayerHeight
 
 /** How far the mini player must be swiped sideways to skip. */
 private val SkipSwipeThreshold = 72.dp
@@ -50,7 +50,7 @@ internal fun MiniPlayer(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier.fillMaxWidth().height(S2MiniPlayerHeight).testTag(PlayerTestTags.MiniPlayer)) {
+    Box(modifier = modifier.fillMaxWidth().height(s2MiniPlayerHeight()).testTag(PlayerTestTags.MiniPlayer)) {
         val current = player.current
         if (interactive && current != null) {
             val previousLabel = stringResource(DesignR.string.ds_previous)

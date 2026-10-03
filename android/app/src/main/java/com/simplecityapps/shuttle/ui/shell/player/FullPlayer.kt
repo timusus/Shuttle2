@@ -102,7 +102,7 @@ internal fun FullPlayer(
                 first = {
                     Column(Modifier.fillMaxSize()) {
                         CollapseHandle(onCollapse)
-                        NowPlayingSong(player, actions, gap = S2Spacing.medium, fillHeight = true, modifier = Modifier.weight(1f))
+                        NowPlayingSong(player, actions, gap = S2Spacing.medium, modifier = Modifier.weight(1f))
                     }
                 },
                 second = {
@@ -130,7 +130,7 @@ internal fun FullPlayer(
             ) {
                 // An open panel pushes the song up out of view, so accessibility services skip it too.
                 val songHidden = if (player.panel != null) Modifier.clearAndSetSemantics { } else Modifier
-                NowPlayingSong(player, actions, gap = S2Spacing.medium, fillHeight = true, modifier = Modifier.weight(1f).then(songHidden))
+                NowPlayingSong(player, actions, gap = S2Spacing.medium, modifier = Modifier.weight(1f).then(songHidden))
                 Transport(player, progress, actions, gap = S2Spacing.medium)
             }
         }

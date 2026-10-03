@@ -83,7 +83,7 @@ internal fun NowPlayingArtwork(
     }
 }
 
-/** The title and artist beside the favourite toggle, sitting a small step above the seek bar. */
+/** The title, the artist and album, and the quality line beside the favourite toggle, sitting a small step above the seek bar. */
 @Composable
 internal fun NowPlayingTitle(
     player: PlayerUiState,
@@ -101,6 +101,9 @@ internal fun NowPlayingTitle(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            current?.song?.qualityLine()?.let { quality ->
+                Text(text = quality, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         S2IconToggleButton(
             icon = Icons.Rounded.FavoriteBorder,
@@ -114,20 +117,19 @@ internal fun NowPlayingTitle(
 }
 
 /**
- * The artwork over the title, [gap] apart. With [fillHeight] the artwork's slot takes all the height
- * the title leaves, centring the artwork in it, so the title stays on whatever sits below; without it
- * the two wrap and centre together as a group.
+ * The artwork over the title, at least [gap] from the edges and from each other. The artwork takes
+ * the height the title leaves, up to its square; whatever is spare is shared evenly above the artwork,
+ * between it and the title, and below the title, rather than left as an empty band at either end.
  */
 @Composable
 internal fun NowPlayingSong(
     player: PlayerUiState,
     actions: PlayerActions,
     gap: Dp,
-    fillHeight: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
-        NowPlayingArtwork(player, actions, gap, Modifier.weight(1f, fill = fillHeight))
+    Column(modifier = modifier, verticalArrangement = Arrangement.SpaceEvenly) {
+        NowPlayingArtwork(player, actions, gap, Modifier.weight(1f, fill = false))
         NowPlayingTitle(player, actions)
     }
 }
@@ -203,6 +205,8 @@ private fun SeekBar(
         onSeek = actions::seekTo,
         enabled = player.current != null,
         buffering = player.buffering,
+        showRemaining = player.showRemainingTime,
+        onToggleRemaining = { actions.setShowRemainingTime(!player.showRemainingTime) },
         modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium),
     )
 }

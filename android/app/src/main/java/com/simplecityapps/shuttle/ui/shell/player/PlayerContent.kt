@@ -112,7 +112,7 @@ internal fun SideBySidePlayer(
                     CollapseHandle(onCollapse)
                     // Nothing pushes this player, so the song and transport centre together in the room above the bar.
                     Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
-                        NowPlayingSong(player, actions, gap = S2Spacing.large, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
+                        NowPlayingSong(player, actions, gap = S2Spacing.large, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
                         Transport(player, progress, actions, gap = S2Spacing.large)
                     }
                     NowPlayingBar(player, actions, selected = panel, onPanel = actions::togglePanel)
