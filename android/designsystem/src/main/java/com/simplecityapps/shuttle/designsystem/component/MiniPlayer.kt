@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** The mini player's height at the default text size: the shell docks the player sheet's Mini level this far above the nav bar. */
@@ -75,7 +76,14 @@ fun S2MiniPlayer(
     onNextHold: (() -> Unit)? = null,
     castingTo: String? = null,
 ) {
-    Surface(onClick = onClick, modifier = modifier, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+    val colors = MaterialTheme.colorScheme
+    // Under artwork, the cover's secondaryContainer: the tone Now Playing's ground starts from.
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        color = artworkRole(colors.surfaceContainerHigh, colors.secondaryContainer),
+        contentColor = artworkRole(colors.onSurface, colors.onSecondaryContainer),
+    ) {
         Column {
             Row(
                 modifier = Modifier
@@ -88,12 +96,14 @@ fun S2MiniPlayer(
                 Column(Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (castingTo != null) {
+                        // primary is too light for text on an artwork container.
+                        val castColor = artworkRole(colors.primary, colors.onSecondaryContainer)
                         Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Rounded.Cast, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(S2IconSize.small))
+                            Icon(Icons.Rounded.Cast, contentDescription = null, tint = castColor, modifier = Modifier.size(S2IconSize.small))
                             Text(
                                 stringResource(R.string.ds_playing_on, castingTo),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = castColor,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )

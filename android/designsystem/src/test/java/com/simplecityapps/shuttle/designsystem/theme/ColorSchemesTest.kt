@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import com.materialkolor.PaletteStyle
 import com.materialkolor.ktx.contrastRatio
@@ -121,6 +122,31 @@ class ColorSchemesTest {
             player.primaryContainer.toHct().hue shouldBe (dark.toHct().hue plusOrMinus 10.0)
             player.primary.toHct().tone shouldBeGreaterThan 15.0
             player.onPrimaryContainer.contrastRatio(player.primaryContainer) shouldBeGreaterThan 4.5
+        }
+    }
+
+    @Test
+    fun `the player's artwork ground and mini player keep AA text contrast at default contrast`() {
+        // Default only: artworkRole keeps the root roles at Medium and High contrast, whose containers leave the surface tones.
+        // Covers across hue and tone: Blue Hours, Night Bus Frequencies, Phase Garden, and brights
+        val seeds = listOf(0xFF1F3FA8, 0xFF0B3D40, 0xFF1F1530, 0xFFD9542B, 0xFFE6B800, 0xFF3FA34D, 0xFFF2A0C8).map(::Color)
+        for (seed in seeds) {
+            for (isDark in listOf(false, true)) {
+                val scheme = artworkColorScheme(seed, isDark, ArtworkSchemeStyle.Player)!!
+                // Now Playing's ground: secondaryContainer at the top fading into the sheet colour (PlayerGround)
+                val sheet = if (isDark) scheme.surfaceContainerHigh else scheme.surfaceContainer
+                for (step in 0..10) {
+                    val ground = lerp(scheme.secondaryContainer, sheet, step / 10f)
+                    scheme.onSurface.contrastRatio(ground) shouldBeGreaterThan 4.5
+                    scheme.onSurfaceVariant.contrastRatio(ground) shouldBeGreaterThan 4.5
+                    // The controls colour, which the bar's Queue label is in
+                    scheme.onSecondaryContainer.contrastRatio(ground) shouldBeGreaterThan 4.5
+                }
+                // The mini player's fill
+                scheme.onSecondaryContainer.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
+                scheme.onSurfaceVariant.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
+                scheme.primary.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 3.0
+            }
         }
     }
 

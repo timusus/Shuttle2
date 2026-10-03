@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -37,6 +39,8 @@ enum class S2ButtonSize(internal val height: Dp) {
 /**
  * An M3 button at one of the Expressive sizes, with its round → square press morph. Pass an
  * [interactionSource] to observe or drive the interaction state (the catalogue shows pressed).
+ * [textContentColor] recolours a [S2ButtonStyle.Text] button's label and icon, which are otherwise
+ * primary, to match the controls beside it; the other styles keep their container's roles.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -49,6 +53,7 @@ fun S2Button(
     icon: ImageVector? = null,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,
+    textContentColor: Color = Color.Unspecified,
 ) {
     val height = size.height
     val shapes = ButtonDefaults.shapesFor(height)
@@ -97,6 +102,7 @@ fun S2Button(
             shapes = shapes,
             modifier = sizedModifier,
             enabled = enabled,
+            colors = if (textContentColor.isSpecified) ButtonDefaults.textButtonColors(contentColor = textContentColor) else ButtonDefaults.textButtonColors(),
             contentPadding = contentPadding,
             interactionSource = interactionSource,
             content = content,
