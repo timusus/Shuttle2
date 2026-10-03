@@ -55,8 +55,8 @@ platform subsystem: playback engine, billing, background services). Status:
 | Server sign-in — Emby | `android/mediaprovider/emby` | M | 3/7 | shared-ready | Same as Jellyfin; module is KMP. |
 | Server sign-in — Plex | `android/mediaprovider/plex` | M | 3/7 | shared-ready | Module is KMP; Plex auth flow (PIN-based) needs iOS-side webview/browser handoff. |
 | Server management (edit, remove, remember password, retry) | `android/app/.../ui/screens/sources/SourcesScreen.kt`, `MediaSources.kt` (shared) | M | 7 | shared-ready | `MediaSources.kt`, `SourcesViewModel.kt` already commonMain. |
-| Server trial / entitlements | `android/trial/src/main/.../trial/` (`EntitlementRepository`, `EntitlementResolver`, `ServerAccessGate`) | L | 9 | none | Android-only Play Billing; iOS needs StoreKit 2 per `ios-port.md` phase 9, behind an `Entitlements` seam (phase 4 plan). |
-| Paywall / purchase UI | `android/app/.../ui/screens/paywall/PaywallScreen.kt`, `PaywallViewModel.kt` | M | 9 | none | Depends on StoreKit 2 entitlements above. |
+| Server trial / entitlements | `android/trial/src/main/.../trial/` (`EntitlementRepository`, `EntitlementResolver`); the model, `resolveEntitlement` and `ServerAccessGate` in `android/domain/.../entitlement/` | L | 9 | partial | StoreKit 2 (#609): `ios/S2/Platform/Billing/StoreKitManager.swift` reports transactions to `shared/.../entitlement/StoreEntitlements.kt` (same Pro > Trial > Free > Unknown rule); `IosEntitlementModule` binds the shared gate (trial needs consent: the paywall starts it) and `GatedServerStreams` gates the stream resolver. Not done until the App Store Connect products exist and a sandbox purchase is checked on a device; Plex isn't in `:shared` yet; downloads gate is bound but iOS has none. |
+| Paywall / purchase UI | `android/app/.../ui/screens/paywall/PaywallScreen.kt`, `PaywallViewModel.kt` | M | 9 | partial | `ios/S2/Features/Paywall/` (`PaywallView`, `PaywallPresenter` over any screen on a gate's request, `ProSettingsSection` in Settings with Restore and a debug override); `S2.storekit` backs the S2 scheme. Guideline 3.1.1 disclosure before the trial button. Partial until checked against real App Store products. |
 | Scrobbling (Last.fm) | `android/scrobbling/src/main/.../scrobbling/` | M | 9 | none | Module is android-only; no commonMain. |
 | Settings — catalog/rows (theme, accent, EQ entry, USB DAC, etc.) | `android/app/.../ui/screens/settings/model/AndroidSettingsCatalog.kt`, shared `SettingsCatalog.kt`/`SettingItem.kt` | M | 7 | shared-ready | Catalog model is in `android/presentation` commonMain; Android-specific rows (USB DAC, dynamic colour) won't all apply to iOS. |
 | Settings — rescan (frequency, last scan, progress) | `android/app/.../ui/screens/settings/SettingsViewModel.kt` (shared) | S | 7 | shared-ready | |
@@ -75,7 +75,8 @@ platform subsystem: playback engine, billing, background services). Status:
 - **Rows:** 51 (weighted; excludes the one out-of-scope "Voice assistant handoff" row)
 - **Total weight:** 182
 - **Weighted % done** (done only): 3/182 = **1.6%** — only the mini player counts as fully done.
-- **Weighted % shared-ready or better** (shared-ready + partial + done): 86/182 = **47.3%** —
+- **Weighted % shared-ready or better** (shared-ready + partial + done): 97/182 = **53.3%** (the trial and paywall
+  rows moved to partial with StoreKit 2, #609) —
   close to half of the domain/ViewModel/data layer that phases 0–4 target is already in
   `commonMain` or has partial iOS code, even though very few SwiftUI screens exist yet to consume it.
 

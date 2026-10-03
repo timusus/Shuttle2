@@ -134,7 +134,8 @@ The flows find views by `accessibilityIdentifier` (`onboarding.*`, `serverTypePi
 ```
 shared/                     # :shared: s2.kmp-library + SKIE, exports :android:domain and :android:presentation
   src/iosMain/.../IosAppGraph.kt   # the Metro graph; Swift builds it with IosAppGraphKt.createIosAppGraph(audioPlayer:)
-  src/iosMain/.../di/              # IosPersistenceModule, IosNetworkingModule, IosPlaybackModule, IosPlatformModule
+  src/iosMain/.../di/              # IosPersistenceModule, IosNetworkingModule, IosPlaybackModule, IosPlatformModule,
+                                   # IosEntitlementModule (StoreKit-fed Pro gate, #609)
   src/iosMain/.../platform/        # Apple-backed bindings: NWPathMonitor, NSBundle text/strings, MediaSources
 ios/
   project.yml               # source of truth; S2.xcodeproj is generated but committed (as in Podcasts)

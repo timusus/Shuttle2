@@ -175,6 +175,35 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 - **Server-side verification** isn't needed at this scale. If fraud shows up, verify through the existing `api.shuttlemusicplayer.app` backend using the Play Developer API and Real-time Developer Notifications.
 - **Bug to fix in any case (fixed):** `processPurchases` ignored `purchaseState`, so a PENDING purchase unlocked the app. `PlayBilling` now counts only PURCHASED purchases.
 
+### iOS (StoreKit 2, #609)
+
+iOS sells the same thing: Jellyfin, Emby and Plex streaming (and downloads, once iOS has them) need Pro after a
+14-day trial; AirPlay, the equalizer and everything else stay free. There's no subscription on iOS yet, only the
+trial and Lifetime.
+
+- **Products.** Two non-consumables, ids in `shared/.../entitlement/AppStoreProducts.kt`:
+  - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 14-day Trial", display name
+    "14-day Free Trial". Buying it starts the trial, which runs 14 days from the transaction's `purchaseDate`. The
+    App Store keeps the transaction per Apple ID, so a reinstall can't restart the trial.
+  - `com.simplecityapps.shuttle.pro.lifetime`: paid (USD 9.99 in `S2.storekit`; set the real price in App Store
+    Connect), reference name "Pro Lifetime", display name "Shuttle Music Pro (Lifetime)".
+- **Trial consent.** Android starts the trial silently on the first server stream. App Review wants the user to
+  start a free trial knowingly, so on iOS `ServerAccessGate` has no `startTrial`: the first stream before the trial
+  is refused and opens the paywall, which discloses the trial length, what stops after it and Lifetime's localized
+  `displayPrice` above the "Start 14-day free trial" button (guideline 3.1.1). Adding a server stays allowed until
+  the trial has been used, as on Android.
+- **Entitlement.** `StoreKitManager` (Swift) reads `Transaction.currentEntitlements` at launch, after each purchase
+  or restore and on every `Transaction.updates`, and hands the verified, unrevoked transactions to
+  `StoreEntitlements` (Kotlin), which resolves Pro > Trial > Free > Unknown with the same `resolveEntitlement` as
+  Android. StoreKit answers offline from its own cache, so there's no cached-Pro fallback. Restore is
+  `AppStore.sync()`.
+- **Paywall.** Opened over any screen by a refused action, and from Settings (Shuttle Music Pro row, plus Restore
+  Purchases). It links the Privacy Policy (https://simplecityapps.com/privacy) and Apple's standard EULA.
+- **Testing.** The S2 scheme runs with `ios/S2.storekit`. Debug builds resolve Pro unless Settings' "Debug
+  entitlement" picker says otherwise; "App Store" resolves from StoreKit as a release build does, so the local
+  StoreKit configuration (and Xcode's transaction manager, to expire or refund) drives it.
+- **Not on iOS:** PostHog monetisation events, account claiming and `appAccountToken`.
+
 ## 6. Measuring it
 
 - **Instrument first.** Add Firebase events: `provider_connected{type}`, `remote_trial_started`, `paywall_viewed{source}`, `purchase_started/completed{product}` and `remote_trial_expired`. Add a user property `media_sources` (local / jellyfin / emby / plex, multi-valued).
