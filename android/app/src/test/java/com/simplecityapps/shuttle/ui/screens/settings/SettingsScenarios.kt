@@ -34,6 +34,10 @@ object SettingsScenarios {
         lastScanDate = Instant.fromEpochMilliseconds(0)
     )
 
+    val streamingOriginalOnMobileData = SettingsUiState(
+        values = mapOf(StreamingSettings.MeteredQuality.key to StreamingQuality.Original)
+    )
+
     val streamingCappedOnMobileData = SettingsUiState(
         values = mapOf(
             StreamingSettings.UnmeteredQuality.key to StreamingQuality.Original,

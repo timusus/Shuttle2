@@ -73,6 +73,28 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `the root sums Sources up as the mobile data cap, defaulted to 192 kbps`() {
+        robot.setRootContent()
+
+        robot.assertDisplayed("192 kbps on mobile data")
+    }
+
+    @Test
+    fun `the root keeps an explicitly stored Original mobile data cap`() {
+        robot.setRootContent(SettingsScenarios.streamingOriginalOnMobileData)
+
+        robot.assertDisplayed("Original on mobile data")
+        robot.assertNotShown("192 kbps on mobile data")
+    }
+
+    @Test
+    fun `the root sums Library up by its rescan frequency`() {
+        robot.setRootContent(SettingsScenarios.scannedWeekly)
+
+        robot.assertDisplayed("Rescan: Weekly")
+    }
+
+    @Test
     fun `back leaves settings`() {
         robot.setRootContent()
 
