@@ -102,7 +102,7 @@ hook() {
 
 maestro_flow() { S2_SIMULATOR_UDID="$1" "$IOS_DIR/scripts/maestro-sim.sh" "../support/store-screenshots/maestro/$2" >&2; }
 
-# Installs (and builds, once) the Debug app, erases its state, signs in and plays a song so the mini player has one.
+# Installs (and builds, once) the Debug app, erases its state, signs in and plays an album track and pauses it so the mini player has one.
 prepare_app() {
   local udid="$1"
   # Generated artwork keeps commercial covers out of the frames; --real-artwork captures them anyway.
@@ -119,8 +119,8 @@ prepare_app() {
   maestro_flow "$udid" sign-in.yaml
   # Wait for the import before the first hook: the library lists are empty until it is done.
   hook "$udid" "reset"
-  hook "$udid" "library?category=songs"
-  maestro_flow "$udid" play-song.yaml
+  hook "$udid" "library?category=albums"
+  maestro_flow "$udid" play-album.yaml
 }
 
 walk_slots() {
@@ -134,6 +134,7 @@ for s in json.load(open('$SLOTS'))['slots']:
 " | while IFS=$'\t' read -r n appearance steps; do
     log "$device slot $n ($appearance)"
     xcrun simctl ui "$udid" appearance "$appearance"
+    sleep 3 # the switch animates; a frame taken straight after shows the old appearance
     for step in $steps; do
       case "$step" in
         hook:*) hook "$udid" "${step#hook:}" ;;

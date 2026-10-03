@@ -8,7 +8,7 @@
       "layout": "hero",
       "steps": ["hook:reset", "sleep:1", "hook:settings?open=1", "sleep:1", "hook:route?to=sources", "sleep:3"],
       "headline": "Your Jellyfin, Emby & Plex music.",
-      "subheadline": "A player for your own server."
+      "subheadline": "Plus the music on your iPhone."
     },
     {
       "n": 2,
