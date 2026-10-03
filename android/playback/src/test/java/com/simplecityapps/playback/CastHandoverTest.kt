@@ -16,7 +16,10 @@ class CastHandoverTest {
 
     private val switches = mutableListOf<Boolean>()
 
-    private val handover = CastHandover(player) { remote -> switches += remote }
+    /** The name the Cast session gives its device; null while there's no session. */
+    private var sessionDevice: String? = null
+
+    private val handover = CastHandover(player, castDeviceName = { sessionDevice }) { remote -> switches += remote }
 
     @Test
     fun `a move to a Cast receiver shows in whichever event comes first, once`() {
@@ -70,5 +73,34 @@ class CastHandoverTest {
 
         handover.isRemote shouldBe false
         switches shouldBe listOf(true, false)
+    }
+
+    @Test
+    fun `the Cast device is published as a session starts and ends, with its name`() {
+        handover.castDevice.value shouldBe null
+
+        sessionDevice = "Living Room TV"
+        player.device = FakeListenedPlayer.REMOTE
+        handover.onDeviceInfoChanged(player.device)
+
+        handover.castDevice.value shouldBe CastDevice("Living Room TV")
+
+        sessionDevice = null
+        player.device = DeviceInfo.UNKNOWN
+        handover.onDeviceInfoChanged(player.device)
+
+        handover.castDevice.value shouldBe null
+    }
+
+    @Test
+    fun `a name the session gives after the move is picked up on the next event`() {
+        player.device = FakeListenedPlayer.REMOTE
+        handover.onDeviceInfoChanged(player.device)
+        handover.castDevice.value shouldBe CastDevice(null)
+
+        sessionDevice = "Kitchen speaker"
+        handover.onPlaybackStateChanged(Player.STATE_READY)
+
+        handover.castDevice.value shouldBe CastDevice("Kitchen speaker")
     }
 }

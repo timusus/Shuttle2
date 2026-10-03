@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.playback
 
+import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.PlaybackProgress
@@ -177,6 +178,9 @@ class IosPlayerController(
     private val _playbackSpeedFlow = MutableStateFlow(1f)
 
     override val playbackSpeedFlow: StateFlow<Float> = _playbackSpeedFlow.asStateFlow()
+
+    /** Never casting: there's no Cast on iOS. */
+    override val castDeviceFlow: StateFlow<CastDevice?> = MutableStateFlow<CastDevice?>(null).asStateFlow()
 
     private val _trackEndedFlow = eventFlow<Song>()
 

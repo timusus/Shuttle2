@@ -7,21 +7,34 @@ import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import com.simplecityapps.playback.chromecast.isRemote
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
 /**
  * Follows playback moving between this device and a Cast receiver, as the Cast player around the local one hands it
  * over. The move shows first in whichever event it raises first, so every event checks for it; register this listener
  * on [player] before any other that reads [isRemote] or [isSwitching], so they see the move within the same event.
+ *
+ * Whether playback is remote is the player's to say; the device's name is the Cast session's, read through
+ * [castDeviceName] while it is.
  */
 class CastHandover(
     private val player: Player,
+    /** The name of the device the current Cast session plays on; null where there's none, or it doesn't say. */
+    private val castDeviceName: () -> String? = { null },
     /** Called with where playback now plays, as soon as a move is seen. */
     private val onSwitch: (remote: Boolean) -> Unit = {}
 ) : Player.Listener {
+    private val _castDevice = MutableStateFlow(device(player.isRemote))
+
+    /** The Cast device [player] plays on, or null while it plays locally, as of the last player event. */
+    val castDevice: StateFlow<CastDevice?> = _castDevice.asStateFlow()
+
     /** Whether [player] plays on a Cast receiver, as of the last player event. */
-    var isRemote = player.isRemote
-        private set
+    val isRemote: Boolean
+        get() = _castDevice.value != null
 
     /**
      * Whether playback just moved between this device and a Cast receiver, and the player it moved to isn't ready yet.
@@ -30,10 +43,14 @@ class CastHandover(
     var isSwitching = false
         private set
 
+    private fun device(remote: Boolean): CastDevice? = if (remote) CastDevice(castDeviceName()) else null
+
     private fun check() {
         val remote = player.isRemote
-        if (remote == isRemote) return
-        isRemote = remote
+        val wasRemote = isRemote
+        // The name is read again on every event while remote, in case the session hadn't said it yet.
+        _castDevice.value = device(remote)
+        if (remote == wasRemote) return
         Timber.v(if (remote) "Playing on a Cast receiver" else "Playing locally")
         isSwitching = true
         onSwitch(remote)

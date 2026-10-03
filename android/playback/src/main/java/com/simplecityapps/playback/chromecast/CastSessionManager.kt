@@ -127,6 +127,13 @@ constructor(
     }
 
     companion object {
+        /** The name of the device the current Cast session plays on; null when there's no session, or it doesn't say. */
+        fun deviceName(context: Context): String? = try {
+            Cast.getSingletonInstance(context).currentCastSession?.castDevice?.friendlyName
+        } catch (e: Exception) {
+            null
+        }
+
         /**
          * Whether the Cast receiver has gone idle because its item played to the end, rather than being stopped,
          * interrupted or failing: Media3's Cast player reports all of those as idle.

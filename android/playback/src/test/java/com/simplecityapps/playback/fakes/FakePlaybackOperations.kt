@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.fakes
 
+import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -15,6 +16,7 @@ class FakePlaybackOperations : PlaybackOperations {
     override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val playbackSpeedFlow = MutableStateFlow(1f)
+    override val castDeviceFlow = MutableStateFlow<CastDevice?>(null)
     override val trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)

@@ -22,6 +22,9 @@ interface PlaybackOperations {
     /** The playback speed, 1 being normal; republished each time it changes. */
     val playbackSpeedFlow: StateFlow<Float>
 
+    /** The Cast device playback plays on, or null while it plays on this one; republished each time it moves. */
+    val castDeviceFlow: StateFlow<CastDevice?>
+
     /**
      * Each song that plays to its end, emitted before the queue moves on. An event, not state: nothing is
      * replayed to a new collector, and a collector on the main thread sees every one.

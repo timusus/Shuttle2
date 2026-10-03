@@ -186,6 +186,7 @@ class PlaybackEngineModule {
         playbackSettings.playbackSpeed,
         CallMonitor(context.getSystemService()),
         coroutineScope,
-        castQueue
+        castQueue,
+        castDeviceName = { CastSessionManager.deviceName(context) }
     )
 }

@@ -57,11 +57,13 @@ class PlaybackFacade(
     callMonitor: CallMonitor,
     appCoroutineScope: CoroutineScope,
     /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
-    castQueue: CastQueue?
+    castQueue: CastQueue?,
+    /** The name of the device the current Cast session plays on (see [CastHandover]). */
+    castDeviceName: () -> String? = { null }
 ) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
 
-    private val handover: CastHandover = CastHandover(player) { remote -> if (!remote) queueStore.saveHandedBack() }
+    private val handover: CastHandover = CastHandover(player, castDeviceName) { remote -> if (!remote) queueStore.saveHandedBack() }
 
     private val loader = ItemLoader(player, localPlayer, giveUp = ::pause)
 
@@ -88,6 +90,8 @@ class PlaybackFacade(
     private val _playbackSpeedFlow = MutableStateFlow(player.playbackParameters.speed)
 
     override val playbackSpeedFlow: StateFlow<Float> = _playbackSpeedFlow.asStateFlow()
+
+    override val castDeviceFlow: StateFlow<CastDevice?> = handover.castDevice
 
     /**
      * Buffered, so a collector on the main thread misses no track end even when two arrive before it resumes
