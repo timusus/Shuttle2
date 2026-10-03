@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -165,6 +166,7 @@ class SettingsViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                logger.error(e) { "Library backup export failed" }
                 false
             }
             events.post(if (saved) SettingsUiEvent.BackupExportSaved else SettingsUiEvent.BackupExportFailed)
@@ -179,6 +181,7 @@ class SettingsViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                logger.error(e) { "Library backup import failed" }
                 null
             }
             events.post(
@@ -213,3 +216,5 @@ class SettingsViewModel @Inject constructor(
 }
 
 private const val BACKUP_FILE_NAME = "shuttle-library-backup.json"
+
+private val logger = Logger.tagged("SettingsViewModel")

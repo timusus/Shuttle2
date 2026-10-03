@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
+import java.io.FilterInputStream
 import java.io.IOException
 import java.io.InputStream
 import kotlin.time.Clock
@@ -19,6 +20,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import timber.log.Timber
 
 /**
@@ -94,7 +96,7 @@ class LibraryBackupManager @Inject constructor(
     override suspend fun readAndRestore(sourceUri: String): RestoreReport? = withContext(ioDispatcher) {
         val backup = try {
             context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
-                readCapped(input, MAX_IMPORT_BYTES)?.let { json.decodeFromString<LibraryBackup>(it.toString(Charsets.UTF_8)) }
+                json.decodeFromStream<LibraryBackup>(CappedInputStream(input, MAX_IMPORT_BYTES))
             }
         } catch (e: CancellationException) {
             throw e
@@ -138,25 +140,28 @@ class LibraryBackupManager @Inject constructor(
 
     internal companion object {
         const val MAX_IMPORT_BYTES = 64L * 1024 * 1024
+    }
 
-        /** All of [input], or null once it runs past [maxBytes]. */
-        fun readCapped(
-            input: InputStream,
-            maxBytes: Long
-        ): ByteArray? {
-            val out = java.io.ByteArrayOutputStream()
-            val buffer = ByteArray(8192)
-            var total = 0L
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) return out.toByteArray()
-                total += read
-                if (total > maxBytes) {
-                    Timber.w("Library backup larger than $maxBytes bytes, refusing to read it")
-                    return null
-                }
-                out.write(buffer, 0, read)
-            }
+    /** Fails with a [BackupTooLargeException] once more than [maxBytes] have been read. */
+    internal class CappedInputStream(
+        input: InputStream,
+        private val maxBytes: Long
+    ) : FilterInputStream(input) {
+        private var total = 0L
+
+        override fun read(): Int = super.read().also { if (it >= 0) count(1) }
+
+        override fun read(
+            b: ByteArray,
+            off: Int,
+            len: Int
+        ): Int = super.read(b, off, len).also { if (it > 0) count(it) }
+
+        private fun count(n: Int) {
+            total += n
+            if (total > maxBytes) throw BackupTooLargeException(maxBytes)
         }
     }
+
+    internal class BackupTooLargeException(maxBytes: Long) : IOException("Library backup larger than $maxBytes bytes")
 }
