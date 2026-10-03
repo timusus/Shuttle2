@@ -219,11 +219,12 @@ run_flow() {
     prune_run_dirs "$out"
     maestro_run "$flow" "${out}/.run-$$" 2>&1 | tee -a "$LOG"
     rc=${PIPESTATUS[0]}
-    maestro_collect_shots "${out}/.run-$$" "$out"
+    maestro_collect_shots "${out}/.run-$$" "$out" "$rc" "${out}/failed-${name}"
     if [ "$rc" -eq 0 ]; then
+        rm -rf -- "${out}/failed-${name}"
         echo "PASS $name"
     else
-        echo "FAIL $name -- Maestro flow failed (screenshots in $out, log $LOG)"
+        echo "FAIL $name -- Maestro flow failed (failure screenshots, maestro.log and command JSON in ${out}/failed-${name}; log $LOG)"
         FAILED=$((FAILED + 1))
     fi
 }

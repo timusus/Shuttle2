@@ -8,9 +8,11 @@
 #                        (#725: Maestro leaves screenshots at the top level AND in timestamped
 #                        subfolders, which pile up across runs), so the caller finds this run's
 #                        screenshots, and only this run's, under it
-#   maestro_collect_shots <out-dir> <dest-dir>
+#   maestro_collect_shots <out-dir> <dest-dir> [<rc> <fail-dir>]
 #                        moves the named PNGs a run took (not Maestro's failed-step screenshots)
-#                        flat into <dest-dir>, then deletes <out-dir>
+#                        flat into <dest-dir>, then deletes <out-dir>. With a non-zero <rc> and a
+#                        <fail-dir>, <out-dir> (failure screenshots, maestro.log, command JSON) is
+#                        moved to <fail-dir> instead, replacing the previous failure there
 #
 # The caller defines step(), LOG, REPO_ROOT and LANE_STARTED, and sets APK, NO_RESET, NO_SEED,
 # REMOTE, REMOTE_BUILD and MAESTRO_DEVICE_ARGS (e.g. --device <serial>) as needed.
@@ -90,10 +92,15 @@ prune_run_dirs() {
 }
 
 maestro_collect_shots() {
-    local out="$1" dest="$2" f
+    local out="$1" dest="$2" rc="${3:-0}" fail_dir="${4:-}" f
     mkdir -p "$dest"
     while IFS= read -r f; do
         mv -f "$f" "$dest/"
     done < <(find "$out" -name '*.png' ! -name 'screenshot-*' 2>/dev/null)
-    rm -rf -- "$out"
+    if [ "$rc" -ne 0 ] && [ -n "$fail_dir" ] && [ -d "$out" ]; then
+        rm -rf -- "$fail_dir"
+        mv -f "$out" "$fail_dir"
+    else
+        rm -rf -- "$out"
+    fi
 }
