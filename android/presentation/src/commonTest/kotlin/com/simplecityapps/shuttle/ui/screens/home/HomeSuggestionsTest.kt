@@ -48,7 +48,7 @@ class HomeSuggestionsTest {
 
     @Test
     fun `contexts resolve to items in order, dropping what the library no longer has`() = runTest {
-        val items = resolve(
+        val contexts =
             listOf(
                 context(kidA.groupKey),
                 PlayContext.Album(AlbumGroupKey("gone", AlbumArtistGroupKey("nobody"))),
@@ -59,10 +59,9 @@ class HomeSuggestionsTest {
                 PlayContext.UserSmartPlaylist(3),
                 PlayContext.Genre("Jazz"),
                 context(kidA.groupKey),
-            ),
-        )
+            )
 
-        items shouldBe listOf(
+        contexts.resolvedIn(resolve(contexts)) shouldBe listOf(
             HomeItem.AlbumItem(kidA),
             HomeItem.ArtistItem(joni),
             HomeItem.PlaylistItem(mix),

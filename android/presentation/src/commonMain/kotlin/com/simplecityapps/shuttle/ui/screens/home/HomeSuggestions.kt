@@ -35,10 +35,8 @@ class ResolveHomeItems @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val playlistRepository: PlaylistRepository,
 ) {
-    suspend operator fun invoke(contexts: List<PlayContext>): List<HomeItem> = contexts.resolvedIn(byContext(contexts))
-
-    /** The item each of [contexts] resolves to, reading each kind once, for callers that resolve several lists in one go. */
-    suspend fun byContext(contexts: List<PlayContext>): Map<PlayContext, HomeItem> {
+    /** The item each of [contexts] resolves to, reading each kind once; callers pick their lists out with [resolvedIn]. */
+    suspend operator fun invoke(contexts: List<PlayContext>): Map<PlayContext, HomeItem> {
         val albums = contexts.filterIsInstance<PlayContext.Album>().map { it.groupKey }
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albums(it) }.orEmpty().associateBy { it.groupKey }
         val artists = contexts.filterIsInstance<PlayContext.AlbumArtist>().map { it.groupKey }
@@ -79,7 +77,7 @@ class JumpBackIn @Inject constructor(
     suspend operator fun invoke(): JumpBackInCandidates {
         val fromHistory = playHistoryRepository.recentContexts(CANDIDATES).map { it.context }
         val lastCompleted = suggestionsRepository.recentlyCompletedAlbums(CANDIDATES).map { PlayContext.Album(it) }
-        val items = resolveHomeItems.byContext(fromHistory + lastCompleted)
+        val items = resolveHomeItems(fromHistory + lastCompleted)
         return JumpBackInCandidates(fromHistory.resolvedIn(items), lastCompleted.resolvedIn(items))
     }
 
@@ -105,7 +103,7 @@ class AroundThisTime @Inject constructor(
     ): List<AroundThisTimeCandidate> {
         val hour = now.toLocalDateTime(timeZone).hour
         val contexts = playHistoryRepository.contextsAroundHour(hour, WINDOW_MINUTES, since = now - WINDOW_DAYS.days, limit = CANDIDATES)
-        val items = resolveHomeItems.byContext(contexts.map { it.context })
+        val items = resolveHomeItems(contexts.map { it.context })
         return contexts.mapNotNull { context ->
             items[context.context]?.let { AroundThisTimeCandidate(it, context.days, context.weekendDays) }
         }
@@ -154,7 +152,7 @@ class HeavyRotation @Inject constructor(
             .filter { it.days > 0 }
             .sortedWith(compareByDescending<Tally> { it.days }.thenByDescending { it.lastPlayedAt })
             .take(CANDIDATES)
-        val items = resolveHomeItems.byContext(tallies.map { it.context })
+        val items = resolveHomeItems(tallies.map { it.context })
         return tallies.mapNotNull { tally -> items[tally.context]?.let { HeavyRotationCandidate(it, tally.days, tally.lastPlayedAt) } }
     }
 
@@ -175,9 +173,10 @@ class Rediscover @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(now: Instant): List<HomeItem> = resolveHomeItems(
-        suggestionsRepository.albumsToRediscover(MIN_PLAYS, playedBefore = now - UNPLAYED_DAYS.days, limit = CANDIDATES).map { PlayContext.Album(it) },
-    )
+    suspend operator fun invoke(now: Instant): List<HomeItem> {
+        val contexts = suggestionsRepository.albumsToRediscover(MIN_PLAYS, playedBefore = now - UNPLAYED_DAYS.days, limit = CANDIDATES).map { PlayContext.Album(it) }
+        return contexts.resolvedIn(resolveHomeItems(contexts))
+    }
 
     companion object {
         const val MIN_PLAYS = 3
@@ -191,7 +190,10 @@ class RecentlyAdded @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(): List<HomeItem> = resolveHomeItems(suggestionsRepository.recentlyAddedAlbums(CANDIDATES).map { PlayContext.Album(it) })
+    suspend operator fun invoke(): List<HomeItem> {
+        val contexts = suggestionsRepository.recentlyAddedAlbums(CANDIDATES).map { PlayContext.Album(it) }
+        return contexts.resolvedIn(resolveHomeItems(contexts))
+    }
 
     private companion object {
         const val CANDIDATES = 30
