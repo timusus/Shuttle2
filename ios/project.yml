@@ -15,6 +15,14 @@ packages:
   # The gapless engine (#588): a local package, see Playback/README.md.
   S2Playback:
     path: Playback
+  # Crash reporting and product analytics (#776), each started only while its Settings > Privacy switch is on
+  # (Platform/Telemetry). Their keys come from Config/Telemetry.xcconfig, never from this file.
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa
+    from: "9.30.0"
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    from: "3.89.0"
 settings:
   # Empty by default so the project builds for the simulator without a team; device builds pass
   # APP_TEAM on the xcodebuild command line.
@@ -38,6 +46,16 @@ targets:
       # S2.app/Frameworks by itself, so there is no `embed:` entry: one would copy them twice.
       - package: S2Playback
         product: S2Playback
+      - package: Sentry
+        product: Sentry
+      - package: PostHog
+        product: PostHog
+    # The telemetry keys: Config/Telemetry.xcconfig includes the gitignored file
+    # scripts/generate-telemetry-config.sh writes (build-framework.sh runs it). Without it the keys are empty and
+    # neither SDK starts.
+    configFiles:
+      Debug: Config/Telemetry.xcconfig
+      Release: Config/Telemetry.xcconfig
     # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
     # generated keys below (GENERATE_INFOPLIST_FILE stays on).
     info:
@@ -64,6 +82,11 @@ targets:
         # The app only uses standard HTTPS/TLS to reach user-configured media servers; no proprietary
         # or non-exempt encryption (#608).
         ITSAppUsesNonExemptEncryption: false
+        # Read at launch by SentryCrashReporter and PostHogProductAnalytics (#776); empty unless the generated
+        # Config/Telemetry.local.xcconfig sets them.
+        S2SentryDSN: $(S2_SENTRY_DSN)
+        S2PostHogAPIKey: $(S2_POSTHOG_API_KEY)
+        S2PostHogHost: $(S2_POSTHOG_HOST)
     settings:
       base:
         # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).

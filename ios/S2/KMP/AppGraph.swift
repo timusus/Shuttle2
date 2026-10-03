@@ -20,11 +20,13 @@ enum AppGraph {
         dependencies.graph
     }
 
-    /// Builds the graph, starts the playback system and the recording of plays. Call once, from `S2App.init`.
+    /// Builds the graph, applies the crash reporting and analytics choices before anything else runs, then starts the
+    /// playback system and the recording of plays. Call once, from `S2App.init`.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
         let dependencies = IosAppDependencies()
+        dependencies.graph.telemetryStartup.start()
         dependencies.playbackSystem.start()
         dependencies.graph.recordPlays.start()
         dependencies.graph.recordResumePoints.start()
@@ -65,7 +67,12 @@ final class IosAppDependencies {
     init() {
         audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
         localLibrary = LocalLibrary()
-        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: IosTelemetry.companion.None)
+        let telemetryConfig = TelemetryConfig.main
+        let telemetry = IosTelemetry(
+            crashReporter: SentryCrashReporter(config: telemetryConfig),
+            analytics: PostHogProductAnalytics(config: telemetryConfig)
+        )
+        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry)
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
         playIntent = PlayIntent(following: graph.playerController)
@@ -78,7 +85,7 @@ final class IosAppDependencies {
             makeEngine: { try? MusicPlaybackController() }
         )
         playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: playIntent)
-        storeKit = StoreKitManager(entitlements: graph.storeEntitlements)
+        storeKit = StoreKitManager(entitlements: graph.storeEntitlements, analytics: graph.monetisationAnalytics)
         paywallPresenter = PaywallPresenter(requests: graph.observePaywallRequests, store: storeKit)
     }
 

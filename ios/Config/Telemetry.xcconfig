@@ -1,0 +1,8 @@
+// The telemetry keys the S2 target's Info.plist reads (S2SentryDSN, S2PostHogAPIKey, S2PostHogHost; #776).
+// Empty here, so a checkout without keys builds with Sentry and PostHog off. ios/scripts/generate-telemetry-config.sh
+// writes the real values into Telemetry.local.xcconfig, which is gitignored and never committed.
+S2_SENTRY_DSN =
+S2_POSTHOG_API_KEY =
+S2_POSTHOG_HOST = https:/$()/eu.i.posthog.com
+
+#include? "Telemetry.local.xcconfig"

@@ -94,5 +94,5 @@ object IosTelemetryModule {
     }
 }
 
-/** [TelemetryScrubber] for Swift's Sentry hooks: `TelemetryKt.scrubForTelemetry(text:)`. */
+/** [TelemetryScrubber] for Swift's Sentry hooks: `IosTelemetryKt.scrubForTelemetry(text:)`. */
 fun scrubForTelemetry(text: String): String = TelemetryScrubber.scrub(text)

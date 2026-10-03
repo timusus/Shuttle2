@@ -21,15 +21,15 @@ final class PaywallPresenter {
         guard task == nil else { return }
         task = Task { [weak self] in
             guard let flow = self?.requests.invoke() else { return }
-            for await _ in flow {
-                self?.present()
+            for await source in flow {
+                self?.present(source)
             }
         }
     }
 
-    private func present() {
+    private func present(_ source: PaywallSource) {
         guard let top = Self.topViewController(), !(top is PaywallHostingController) else { return }
-        let controller = PaywallHostingController(store: store)
+        let controller = PaywallHostingController(store: store, source: source)
         top.present(controller, animated: true)
     }
 
@@ -49,12 +49,12 @@ final class PaywallPresenter {
 
 /// The paywall in its own navigation stack, with a Close button.
 private final class PaywallHostingController: UIHostingController<AnyView> {
-    init(store: StoreKitManager) {
+    init(store: StoreKitManager, source: PaywallSource) {
         weak var weakSelf: PaywallHostingController?
         super.init(
             rootView: AnyView(
                 NavigationStack {
-                    PaywallView(store: store, onClose: { weakSelf?.dismiss(animated: true) })
+                    PaywallView(store: store, source: source, onClose: { weakSelf?.dismiss(animated: true) })
                 }
                 .tint(.s2Accent)
             )

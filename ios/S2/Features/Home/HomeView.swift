@@ -16,6 +16,7 @@ struct HomeView: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var appeared = false
+    @State private var notice: PlayerNotice?
 
     var body: some View {
         let models = ViewModelCache.shared.viewModel(AppTab.home.cacheKey) {
@@ -35,8 +36,11 @@ struct HomeView: View {
                 onPlay: { item, action in models.actions.send(action, key: item.key) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
-            .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
+            .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { event in
+                notice = HomeNotice.notice(for: event as HomeEvent, openSettings: { navigator.showsSettings = true })
+            }
         }
+        .playerNotice($notice)
         .refreshable {
             models.home.refresh()
             LibraryImport.refresh()
@@ -82,8 +86,21 @@ final class HomeModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [home, actions] }
 }
 
-/// Home from a `HomeUiState`. `showWhatsNew`/`HomeEvent.AnalyticsNowOn` have no iOS surface yet (no
-/// changelog or analytics-consent screen until phase 7, #589), so their events are consumed and dropped.
+/// What Home shows for its one-shot `HomeEvent`s: Android's analytics notice (`HomeEntries`), once, with a Settings
+/// button. iOS has no install-or-upgrade check (Android's `InstallDefaults`), so every install sees it once.
+enum HomeNotice {
+    static let analyticsMessage =
+        "Shuttle Music now shares anonymous usage data to help improve the app. You can turn this off in Settings."
+    static let analyticsAction = "Settings"
+
+    static func notice(for event: HomeEvent, openSettings: @escaping () -> Void) -> PlayerNotice {
+        switch event {
+        case .analyticsNowOn: PlayerNotice(message: analyticsMessage, actionTitle: analyticsAction, action: openSettings)
+        }
+    }
+}
+
+/// Home from a `HomeUiState`. `showWhatsNew` has no iOS surface yet (no changelog screen until phase 7, #589).
 ///
 /// A `ScrollView` of a `LazyVStack`, not a `List`: the grid and the shelves are full-bleed, and the
 /// content is capped at `AdaptiveLayout.contentMaxWidth` and centred on an iPad.

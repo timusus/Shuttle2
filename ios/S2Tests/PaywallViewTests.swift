@@ -23,6 +23,32 @@ struct PaywallViewTests {
         #expect(ProStatus.trial(daysLeft: 1).message == "1 day left in your free trial")
     }
 
+    // MARK: Funnel
+
+    /// #776: a showing is `paywall_shown` from its source, then `paywall_dismissed` unless the user got Pro or a trial.
+    @Test func aVisitIsShownThenDismissedUnlessItConverted() {
+        let recording = RecordingAnalytics()
+        let visit = PaywallVisit(source: .settings, analytics: MonetisationAnalytics(analytics: recording))
+
+        visit.appeared()
+        visit.appeared()
+        visit.disappeared()
+        visit.appeared()
+        visit.converted()
+        visit.disappeared()
+
+        #expect(recording.events.map(\.0) == ["paywall_shown", "paywall_dismissed", "paywall_shown"])
+        #expect(recording.events.allSatisfy { $0.1["source"] as? String == "settings" })
+    }
+
+    @Test func onlyARestoredPurchaseOrTrialCountsAsConverted() {
+        #expect(StoreKitManager.RestoreOutcome.pro.restoredPro)
+        #expect(StoreKitManager.RestoreOutcome.trial(daysLeft: 3).restoredPro)
+        #expect(!StoreKitManager.RestoreOutcome.trialEnded.restoredPro)
+        #expect(!StoreKitManager.RestoreOutcome.nothingToRestore.restoredPro)
+        #expect(!StoreKitManager.RestoreOutcome.failed("x").restoredPro)
+    }
+
     // MARK: Content
 
     @Test func beforeTheTrialItDisclosesItsLengthWhatStopsAndThePrice() throws {
@@ -94,5 +120,14 @@ struct PaywallViewTests {
 
         #expect(try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.buy").button().isDisabled())
         #expect((try? sut.inspect().find(text: "Loading price…")) != nil)
+    }
+}
+
+/// The events a `MonetisationAnalytics` captured, in order.
+private final class RecordingAnalytics: NSObject, Analytics {
+    private(set) var events: [(String, [String: Any])] = []
+
+    func capture(event: String, properties: [String: Any]) {
+        events.append((event, properties))
     }
 }

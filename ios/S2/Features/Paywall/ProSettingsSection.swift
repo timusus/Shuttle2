@@ -19,7 +19,7 @@ private struct ProSettingsRows: View {
     var body: some View {
         Section {
             NavigationLink {
-                PaywallView(store: store)
+                PaywallView(store: store, source: .settings)
             } label: {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {

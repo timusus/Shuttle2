@@ -429,6 +429,17 @@ struct HomeViewTests {
         let sut = HomeView(navigator: Navigator())
         #expect(throws: Never.self) { try sut.inspect().find(HomeContent.self) }
     }
+
+    /// #776: the one-time analytics notice says what Android's does, and its button opens Settings.
+    @Test func analyticsNowOnShowsAndroidsNoticeWithASettingsButton() {
+        var opened = false
+        let notice = HomeNotice.notice(for: .analyticsNowOn, openSettings: { opened = true })
+
+        #expect(notice.message == "Shuttle Music now shares anonymous usage data to help improve the app. You can turn this off in Settings.")
+        #expect(notice.actionTitle == "Settings")
+        notice.action?()
+        #expect(opened)
+    }
 }
 
 private extension Array {

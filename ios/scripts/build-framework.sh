@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Links Shared.framework (the :shared KMP module) for the Xcode project in ios/. Run it before every
 # Xcode build that follows a Kotlin change: Xcode links whatever framework is on disk and never rebuilds it.
-# It installs the FFmpeg frameworks first (ios/scripts/build-ffmpeg.sh), which S2Playback needs.
+# It installs the FFmpeg frameworks first (ios/scripts/build-ffmpeg.sh), which S2Playback needs, and writes the
+# telemetry keys' xcconfig (ios/scripts/generate-telemetry-config.sh).
 #
 #   ios/scripts/build-framework.sh              # Debug, simulator (the default dev loop)
 #   ios/scripts/build-framework.sh --device     # Debug, device (iosArm64)
@@ -21,7 +22,7 @@ for arg in "$@"; do
     --device) targets=(IosArm64) ;;
     --all) targets=(IosSimulatorArm64 IosArm64) ;;
     --release) config=Release ;;
-    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) gradle_args+=("$arg") ;;
   esac
 done
@@ -35,5 +36,7 @@ cd "$repo_root"
 # The S2Playback package needs the FFmpeg frameworks to resolve at all; a no-op once installed, a
 # copy from the machine-wide cache in a new worktree, a ~2 minute build the first time on a machine.
 ios/scripts/build-ffmpeg.sh
+# The Sentry and PostHog keys, from the environment or ~/.config/s2-telemetry/ios.env, into a gitignored xcconfig
+ios/scripts/generate-telemetry-config.sh
 echo "==> ./gradlew ${tasks[*]}"
 ./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}

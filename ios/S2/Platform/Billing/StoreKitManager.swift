@@ -6,7 +6,8 @@ import StoreKit
 /// in :shared's `AppStoreProducts`: the free trial and Pro for life. What owning them grants is resolved in
 /// Kotlin (`StoreEntitlements`); this only loads and buys the products and reports the user's current transactions to
 /// it, at launch, after each purchase or restore, and whenever `Transaction.updates` delivers one (a purchase made on
-/// another device, Ask to Buy approval, a refund).
+/// another device, Ask to Buy approval, a refund). Each purchase and restore is recorded in the shared monetisation
+/// funnel (`MonetisationAnalytics`, #776).
 @MainActor
 final class StoreKitManager: ObservableObject {
     enum PurchaseOutcome: Equatable {
@@ -34,10 +35,12 @@ final class StoreKitManager: ObservableObject {
     @Published private(set) var isRestoring = false
 
     private let entitlements: StoreEntitlements
+    private let analytics: MonetisationAnalytics
     private var updates: Task<Void, Never>?
 
-    init(entitlements: StoreEntitlements) {
+    init(entitlements: StoreEntitlements, analytics: MonetisationAnalytics) {
         self.entitlements = entitlements
+        self.analytics = analytics
     }
 
     deinit {
@@ -119,12 +122,31 @@ final class StoreKitManager: ObservableObject {
 
     /// Buys `productId`: the free trial starts the trial, Lifetime is Pro.
     func purchase(_ productId: String) async -> PurchaseOutcome {
+        let outcome = await buy(productId)
+        record(outcome, productId)
+        return outcome
+    }
+
+    /// Android's funnel: a trial is `trial_started` alone; Lifetime is `purchase_started` then `purchase_completed`.
+    /// A trial or purchase that doesn't go through is `purchase_failed`, with why.
+    private func record(_ outcome: PurchaseOutcome, _ productId: String) {
+        switch outcome {
+        case .purchased where productId == AppStoreProducts.shared.TRIAL: analytics.trialStarted()
+        case .purchased: analytics.purchaseCompleted(productId: productId)
+        case .cancelled: analytics.purchaseFailed(productId: productId, reason: .cancelled)
+        case .pending: analytics.purchaseFailed(productId: productId, reason: .pending)
+        case .failed: analytics.purchaseFailed(productId: productId, reason: .failed)
+        }
+    }
+
+    private func buy(_ productId: String) async -> PurchaseOutcome {
         if products[productId] == nil { await loadProducts() }
         guard let product = products[productId] else {
             return .failed("The App Store isn't available right now. Try again later.")
         }
         purchasing = productId
         defer { purchasing = nil }
+        if productId != AppStoreProducts.shared.TRIAL { analytics.purchaseStarted(productId: productId) }
         do {
             switch try await product.purchase() {
             case .success(.verified(let transaction)):
@@ -155,8 +177,12 @@ final class StoreKitManager: ObservableObject {
             return .failed(error.localizedDescription)
         }
         switch onEnum(of: await refreshEntitlements()) {
-        case .pro: return .pro
-        case .trial(let trial): return .trial(daysLeft: Int(trial.daysRemainingNow()))
+        case .pro:
+            analytics.purchaseRestored(productId: AppStoreProducts.shared.LIFETIME)
+            return .pro
+        case .trial(let trial):
+            analytics.purchaseRestored(productId: AppStoreProducts.shared.TRIAL)
+            return .trial(daysLeft: Int(trial.daysRemainingNow()))
         case .free(let free): return free.trialUsed ? .trialEnded : .nothingToRestore
         case .unknown: return .nothingToRestore
         }

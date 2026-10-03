@@ -19,7 +19,7 @@ struct SettingsViewTests {
 
     @Test func mapsEachScreenToItsTitledSectionsInCatalogOrder() {
         let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, events: []))
-        #expect(sections.map(\.title) == ["Playback & sound", nil, "Replay Gain", "Sources", "Streaming quality", "Library", "Artwork", "Appearance"])
+        #expect(sections.map(\.title) == ["Playback & sound", nil, "Replay Gain", "Sources", "Streaming quality", "Library", "Artwork", "Appearance", "Privacy"])
     }
 
     /// #645: the Equalizer (with its own Preamp) and ReplayGain's pre-amp are separate sections, the pre-amp named
@@ -77,6 +77,34 @@ struct SettingsViewTests {
             confirmation: nil,
             isEnabled: true
         )))
+    }
+
+    /// #776: Settings > Privacy has Android's two switches, crash reporting and usage analytics, each on until turned
+    /// off and each with its own icon.
+    @Test func privacyHasTheCrashReportingAndAnalyticsSwitches() throws {
+        let crashKey = key(catalog.privacy, 0)
+        let analyticsKey = key(catalog.privacy, 1)
+        let state = SettingsUiState(values: [crashKey: KotlinBoolean(bool: true), analyticsKey: KotlinBoolean(bool: false)], lastScanDate: nil, events: [])
+        let privacy = try #require(SettingsSection.sections(catalog: catalog, state: state).first { $0.title == "Privacy" })
+
+        #expect(privacy.rows == [
+            .toggle(
+                key: "pref_crash_reporting",
+                title: "Crash reporting",
+                summary: "Anonymous crash statistics, which help to track down and resolve bugs",
+                isOn: true,
+                isEnabled: true
+            ),
+            .toggle(
+                key: "pref_firebase_analytics",
+                title: "Usage analytics",
+                summary: "Anonymous statistics about how the app is used, which help decide what to improve",
+                isOn: false,
+                isEnabled: true
+            ),
+        ])
+        #expect(SettingsIcon(id: crashKey).systemImage == "ladybug.fill")
+        #expect(SettingsIcon(id: analyticsKey).systemImage == "chart.bar.fill")
     }
 
     @Test func aStartedRescanShowsOnItsRow() {

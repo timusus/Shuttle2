@@ -1,0 +1,72 @@
+import Sentry
+import Testing
+@testable import S2
+
+/// Sentry's options and its scrubber (#776): what's on and off, and that nothing identifying leaves in an event or a
+/// breadcrumb. The scrubbing itself is the shared `TelemetryScrubber` (`TelemetryScrubberTest`); these check every
+/// field reaches it.
+struct SentryCrashReporterTests {
+    private let config = TelemetryConfig(info: ["CFBundleShortVersionString": "1.2", "CFBundleVersion": "34"])
+
+    @Test func configuresCrashesHangsSessionsAndAppStartOnly() {
+        let options = Options()
+        SentryCrashReporter.configure(options, dsn: "https://key@o1.ingest.sentry.io/2", config: config)
+
+        #expect(options.releaseName == "com.simplecityapps.shuttle@1.2+34")
+        #expect(options.dist == "34")
+        #expect(options.sendDefaultPii == false)
+        #expect(options.enableCrashHandler)
+        #expect(options.enableAutoSessionTracking)
+        #expect(options.appHangTimeoutInterval == 2)
+        #expect(options.tracesSampleRate == 0.05)
+        #expect(options.enableStandaloneAppStartTracing)
+        #expect(!options.enableUIViewControllerTracing)
+        #expect(!options.enableNetworkTracking)
+        #expect(!options.enableFileIOTracing)
+        #expect(!options.enableUserInteractionTracing)
+        #expect(!options.enableNetworkBreadcrumbs)
+        #expect(!options.enableCaptureFailedRequests)
+        #expect(!options.attachScreenshot)
+        #expect(!options.attachViewHierarchy)
+        #expect(options.sessionReplay.sessionSampleRate == 0)
+        #expect(options.sessionReplay.onErrorSampleRate == 0)
+        #expect(options.configureProfiling == nil)
+        #expect(options.beforeSend != nil)
+        #expect(options.beforeBreadcrumb != nil)
+    }
+
+    @Test func aBreadcrumbsMessageAndDataAreScrubbed() {
+        let crumb = Breadcrumb(level: .error, category: "JellyfinAuth")
+        crumb.message = "GET https://music.example.com/Items?api_key=abc failed"
+        crumb.data = ["host": "nas.local:8096", "count": 3]
+
+        let scrubbed = TelemetryScrub.breadcrumb(crumb)
+
+        #expect(scrubbed.message == "GET <url> failed")
+        #expect(scrubbed.data?["host"] as? String == "<host>")
+        #expect(scrubbed.data?["count"] as? Int == 3)
+    }
+
+    @Test func anEventsMessageExceptionsBreadcrumbsExtrasAndRequestAreScrubbed() {
+        let event = Event(level: .error)
+        event.message = SentryMessage(formatted: "Couldn't open /var/mobile/Containers/Data/Application/X/Documents/a.flac")
+        event.exceptions = [Exception(value: "Failed to connect to /192.168.1.20:8096", type: "IOException")]
+        let crumb = Breadcrumb(level: .warning, category: "Sync")
+        crumb.message = "retry token=s3cr3t"
+        event.breadcrumbs = [crumb]
+        event.extra = ["user": "signed in as sam@example.com"]
+        let request = SentryRequest()
+        request.url = "https://jellyfin.example.com/Users"
+        request.queryString = "api_key=abc"
+        event.request = request
+
+        let scrubbed = TelemetryScrub.event(event)
+
+        #expect(scrubbed.message?.formatted == "Couldn't open <path>")
+        #expect(scrubbed.exceptions?.first?.value == "Failed to connect to /<ip>")
+        #expect(scrubbed.breadcrumbs?.first?.message == "retry token=<redacted>")
+        #expect(scrubbed.extra?["user"] as? String == "signed in as <email>")
+        #expect(scrubbed.request?.url == "<url>")
+        #expect(scrubbed.request?.queryString == nil)
+    }
+}

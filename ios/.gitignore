@@ -14,3 +14,6 @@ TestResults/
 
 # Xcode-generated SwiftPM state
 **/.swiftpm/
+
+# Telemetry keys, written by scripts/generate-telemetry-config.sh (#776)
+Config/Telemetry.local.xcconfig

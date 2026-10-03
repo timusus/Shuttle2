@@ -26,7 +26,7 @@ interface AnalyticsSdk {
  * applies the stored choices before anything can send an event or a crash, then follows every change to them.
  *
  * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
- * so each gates its own SDK. Shared by Android (`TelemetryInitializer`) and iOS (`IosTelemetry`).
+ * so each gates its own SDK. Shared by Android (`TelemetryInitializer`) and iOS (`IosTelemetryStartup`).
  */
 @SingleIn(AppScope::class)
 class TelemetryConsentGate @Inject constructor(

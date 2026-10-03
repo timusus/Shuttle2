@@ -375,6 +375,8 @@ struct SettingsIcon: Equatable {
         case "pref_media_rescan": ("arrow.clockwise", .teal)
         case "artwork_local_only": ("photo.fill", .mint)
         case "pref_show_home_on_launch": ("house.fill", .red)
+        case "pref_crash_reporting": ("ladybug.fill", .red)
+        case "pref_firebase_analytics": ("chart.bar.fill", .blue)
         default: ("gearshape.fill", .gray)
         }
     }

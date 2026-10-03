@@ -58,16 +58,57 @@ enum ProStatus: Equatable {
 }
 
 /// The Shuttle Music Pro paywall (#609): opened by a gated action (`PaywallPresenter`) or from Settings. It observes
-/// the Kotlin entitlement and buys through the app's `StoreKitManager`.
+/// the Kotlin entitlement and buys through the app's `StoreKitManager`. Each showing is a `PaywallVisit`.
 struct PaywallView: View {
     @ObservedObject var store: StoreKitManager
+    /// What opened it, for the shown and dismissed events.
+    let source: PaywallSource
     /// Set when the paywall is presented on its own, so it can close itself once the user has Pro.
     var onClose: (() -> Void)?
+    @State private var visit: PaywallVisit?
 
     var body: some View {
         Observing(AppGraph.shared.storeEntitlements.entitlement) { entitlement in
-            PaywallActions(store: store, status: ProStatus(entitlement), onClose: onClose)
+            PaywallActions(store: store, status: ProStatus(entitlement), onClose: onClose, onConverted: { visit?.converted() })
         }
+        .onAppear {
+            let visit = visit ?? PaywallVisit(source: source, analytics: AppGraph.shared.monetisationAnalytics)
+            self.visit = visit
+            visit.appeared()
+        }
+        .onDisappear { visit?.disappeared() }
+    }
+}
+
+/// One showing of the paywall, for the monetisation funnel (#776): `paywall_shown` as it appears and
+/// `paywall_dismissed` as it goes, unless a purchase, the trial or a restore got the user Pro or a trial meanwhile.
+@MainActor
+final class PaywallVisit {
+    private let source: PaywallSource
+    private let analytics: MonetisationAnalytics
+    private var showing = false
+    private var didConvert = false
+
+    init(source: PaywallSource, analytics: MonetisationAnalytics) {
+        self.source = source
+        self.analytics = analytics
+    }
+
+    func appeared() {
+        guard !showing else { return }
+        showing = true
+        didConvert = false
+        analytics.paywallShown(source: source)
+    }
+
+    func converted() {
+        didConvert = true
+    }
+
+    func disappeared() {
+        guard showing else { return }
+        showing = false
+        if !didConvert { analytics.paywallDismissed(source: source) }
     }
 }
 
@@ -76,6 +117,7 @@ private struct PaywallActions: View {
     @ObservedObject var store: StoreKitManager
     let status: ProStatus
     let onClose: (() -> Void)?
+    let onConverted: () -> Void
     @State private var alert: String?
 
     var body: some View {
@@ -103,7 +145,9 @@ private struct PaywallActions: View {
     private func buy(_ productId: String) {
         Task {
             switch await store.purchase(productId) {
-            case .purchased: onClose?()
+            case .purchased:
+                onConverted()
+                onClose?()
             case .cancelled: break
             case .pending: alert = "Your purchase is waiting for approval. It will unlock as soon as it's approved."
             case .failed(let message): alert = message
@@ -112,11 +156,23 @@ private struct PaywallActions: View {
     }
 
     private func restore() {
-        Task { alert = await store.restore().message }
+        Task {
+            let outcome = await store.restore()
+            if outcome.restoredPro { onConverted() }
+            alert = outcome.message
+        }
     }
 }
 
 extension StoreKitManager.RestoreOutcome {
+    /// Whether the restore got the user Pro or a running trial.
+    var restoredPro: Bool {
+        switch self {
+        case .pro, .trial: true
+        case .trialEnded, .nothingToRestore, .failed: false
+        }
+    }
+
     /// What Restore Purchases tells the user it found.
     var message: String {
         switch self {
