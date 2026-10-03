@@ -6,6 +6,7 @@
 #   ./capture.sh --skip-build    install the last Debug build instead of rebuilding
 #   ./capture.sh --device iphone|ipad
 #   ./capture.sh --skip-setup    keep the signed-in state from the last run (no reset, no sign-in)
+#   ./capture.sh --real-artwork  capture the library's real covers instead of generated artwork
 #
 # Raw PNGs land in raw/<iphone|ipad>/<n>.png next to this script; render.py frames them.
 #
@@ -13,8 +14,13 @@
 # Documents/screenshot_hook.url, which the Debug build polls; the actions are in ios/S2/Debug/ScreenshotHooks.swift),
 # `maestro:<flow>` (a file in maestro/, run through ios/scripts/maestro-sim.sh) and `sleep:<seconds>`.
 #
+# Artwork: the test server's library is commercial music, so generated artwork is switched on in the app's
+# defaults (S2GeneratedArtwork) before capturing; the setting is read at launch and is harmless until it
+# ships. --real-artwork leaves the library's real covers in place.
+#
 # Simulators: the iPhone is leased from the shared ios-sim pool (lease-sim.sh, holder $S2_SIM_HOLDER, default
-# store-screenshots) and released at the end; the iPad is the project's own "S2 iPad". Neither is ever created.
+# store-screenshots) and released at the end, as is every status-bar override, by the EXIT trap; the iPad is
+# the project's own "S2 iPad". Neither is ever created.
 # The iPhone 16 is 1179x2556 and the iPad Pro 11-inch is 1668x2420: render.py frames them for the 6.9", 6.5" and
 # 13" canvases, so the raw size only needs to be at least as large as the framed screen.
 #
@@ -31,19 +37,39 @@ export S2_SIM_HOLDER="${S2_SIM_HOLDER:-store-screenshots}"
 
 SKIP_BUILD=0
 SKIP_SETUP=0
+REAL_ARTWORK=0
 DEVICES="iphone ipad"
 while [ $# -gt 0 ]; do
   case "$1" in
     --skip-build) SKIP_BUILD=1 ;;
     --skip-setup) SKIP_SETUP=1 ;;
+    --real-artwork) REAL_ARTWORK=1 ;;
     --device) DEVICES="$2"; shift ;;
-    -h|--help) sed -n 2,22p "$0"; exit 0 ;;
+    -h|--help) sed -n 2,27p "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
   shift
 done
 
 log() { printf '[capture] %s\n' "$*" >&2; }
+
+# Whatever happened — success, a failed step, Ctrl-C — undo what this run did: clear every status-bar
+# override we set and release the iPhone lease if we took one. A lease somebody else holds (a run that
+# failed before the lease, or a pre-existing holder) is never released.
+LEASE_TAKEN=0
+STATUS_BAR_UDIDS=()
+
+cleanup() {
+  local udid
+  for udid in ${STATUS_BAR_UDIDS[@]+"${STATUS_BAR_UDIDS[@]}"}; do
+    xcrun simctl status_bar "$udid" clear >/dev/null 2>&1 || true
+  done
+  if [ "$LEASE_TAKEN" = 1 ]; then
+    CLAUDE_CODE_SESSION_ID="$("$IOS_DIR/scripts/lease-sim.sh" --holder)" \
+      ~/.claude/scripts/ios-sim/sim-lease.sh release >&2 || true
+  fi
+}
+trap cleanup EXIT
 
 ipad_udid() {
   xcrun simctl list devices -j | python3 -c "
@@ -60,6 +86,7 @@ boot_sim() {
   xcrun simctl boot "$udid" 2>/dev/null || true
   xcrun simctl bootstatus "$udid" -b >/dev/null
   xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4
+  STATUS_BAR_UDIDS+=("$udid")
 }
 
 container() { xcrun simctl get_app_container "$1" "$BUNDLE_ID" data; }
@@ -78,6 +105,12 @@ maestro_flow() { S2_SIMULATOR_UDID="$1" "$IOS_DIR/scripts/maestro-sim.sh" "../su
 # Installs (and builds, once) the Debug app, erases its state, signs in and plays a song so the mini player has one.
 prepare_app() {
   local udid="$1"
+  # Generated artwork keeps commercial covers out of the frames; --real-artwork captures them anyway.
+  # Written before the app launches; the default is harmless until the setting ships.
+  if [ "$REAL_ARTWORK" = 0 ]; then
+    log "generated artwork on (S2GeneratedArtwork)"
+    xcrun simctl spawn "$udid" defaults write "$BUNDLE_ID" S2GeneratedArtwork -bool YES
+  fi
   if [ "$SKIP_BUILD" = 1 ] || [ "$BUILT" = 1 ]; then BUILD=0; else BUILD=1; BUILT=1; fi
   log "installing the Debug app (BUILD=$BUILD)"
   BUILD="$BUILD" RESET="$((1 - SKIP_SETUP))" S2_SIMULATOR_UDID="$udid" "$IOS_DIR/scripts/run-sim-server.sh" >&2
@@ -115,10 +148,9 @@ for s in json.load(open('$SLOTS'))['slots']:
 }
 
 BUILT=0
-RELEASE_LEASE=0
 for device in $DEVICES; do
   case "$device" in
-    iphone) udid="$("$IOS_DIR/scripts/lease-sim.sh")"; RELEASE_LEASE=1 ;;
+    iphone) udid="$("$IOS_DIR/scripts/lease-sim.sh")"; LEASE_TAKEN=1 ;;
     ipad) udid="$(ipad_udid)" ;;
     *) log "unknown device '$device' (iphone|ipad)"; exit 2 ;;
   esac
@@ -126,10 +158,6 @@ for device in $DEVICES; do
   boot_sim "$udid"
   prepare_app "$udid"
   walk_slots "$udid" "$device"
-  xcrun simctl status_bar "$udid" clear 2>/dev/null || true
   xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
   log "$device done: $(ls "$RAW/$device" | wc -l | tr -d ' ') PNGs in $RAW/$device"
 done
-if [ "$RELEASE_LEASE" = 1 ]; then
-  CLAUDE_CODE_SESSION_ID="$("$IOS_DIR/scripts/lease-sim.sh" --holder)" ~/.claude/scripts/ios-sim/sim-lease.sh release >&2 || true
-fi

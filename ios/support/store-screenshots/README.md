@@ -16,7 +16,8 @@ ios/support/store-screenshots/render.py             # frame raw/ -> ios/store/sc
 ```
 
 Options: `capture.sh --skip-build` (install the last Debug build), `--skip-setup` (keep the signed-in state),
-`--device iphone|ipad`; `render.py --canvas iphone-6.9 --slot 3`. Canvases: `iphone-6.9` (1320x2868),
+`--real-artwork` (capture the library's real covers instead of generated artwork), `--device iphone|ipad`;
+`render.py --canvas iphone-6.9 --slot 3`. Canvases: `iphone-6.9` (1320x2868),
 `iphone-6.5` (1284x2778), both from the iPhone 16's raw captures, and `ipad-13` (2064x2752) from the iPad.
 Needs Maestro, xcodegen, Google Chrome (headless framing; the DM Sans headline font loads from Google Fonts,
 and the last line of `render.py` output says which font rendered) and the test server being reachable.
@@ -29,9 +30,11 @@ actions in `ScreenshotHooks.swift`: `tab`, `library`, `route`, `settings`, `play
 `sleep:<seconds>`. Seven slots: Sources, Home, Albums, Album detail, Now Playing, Queue, Equalizer. The headlines
 only claim what iOS has today.
 
-## Artwork: do not upload these as they are
+## Artwork
 
-The test server's library is commercial music (Metallica, Tool, Pink Floyd and so on), so every frame shows
-copyrighted album art, a guideline 5.2 risk. `raw/` and `ios/store/screenshots/` are therefore git-ignored.
-To produce uploadable screenshots, point `~/.config/s2-test/jellyfin.env` at a library of freely licensed music
-(and update the album title in `maestro/open-first-album.yaml`), then run both commands above.
+The test server's library is commercial music (Metallica, Tool, Pink Floyd and so on), so real covers in
+the frames would be a guideline 5.2 risk. `capture.sh` therefore switches the app to generated artwork
+before capturing (`S2GeneratedArtwork` in the app's defaults, written before launch; until that setting
+ships the default is harmless and the real covers still show). `--real-artwork` captures the library's
+real covers instead — do not upload those frames as they are. `raw/` and `ios/store/screenshots/` are
+git-ignored either way.

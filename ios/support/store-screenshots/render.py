@@ -8,7 +8,7 @@ Chrome headless, one PNG per canvas:
     iphone-6.5  1284 x 2778  from raw/iphone   (the 6.5" listing accepts the same aspect)
     ipad-13     2064 x 2752  from raw/ipad     (iPad Pro 13-inch)
 
-Output: mobile/ios/store/screenshots/<locale>/<canvas>/<n>.png
+Output: ios/store/screenshots/<locale>/<canvas>/<n>.png
 
     ./render.py                 all canvases
     ./render.py --canvas ipad-13
