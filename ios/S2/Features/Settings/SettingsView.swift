@@ -208,6 +208,11 @@ struct SettingsContent: View {
 
     @Environment(\.openURL) private var openURL
 
+    #if DEBUG
+    /// Debug builds only: covers drawn by `GeneratedArtwork`, for store screenshots (`DebugArtwork`).
+    @AppStorage(DebugArtwork.defaultsKey) private var generatedArtwork = false
+    #endif
+
     /// The action row whose confirmation is showing.
     @State private var confirming: (key: String, confirmation: SettingsRow.Confirmation)?
 
@@ -244,6 +249,18 @@ struct SettingsContent: View {
                     Text("About")
                 }
             }
+            #if DEBUG
+            if showsAbout {
+                Section {
+                    Toggle("Use generated artwork", isOn: $generatedArtwork)
+                        .accessibilityIdentifier("settings.debug.generatedArtwork")
+                } header: {
+                    Text("Debug")
+                } footer: {
+                    Text("Replaces covers with generated artwork, for screenshots. Covers already on screen change when they next load.")
+                }
+            }
+            #endif
         }
         .formStyle(.grouped)
         .navigationTitle(title)

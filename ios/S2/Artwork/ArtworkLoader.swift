@@ -68,7 +68,12 @@ actor ArtworkLoader {
     /// `source`'s image already in memory, if there is one. Synchronous, so a row that has been seen
     /// before draws its cover in the first frame instead of flashing the placeholder.
     nonisolated func cached(_ source: ArtworkSource, maxPixelSize: Int) -> UIImage? {
-        memory.object(forKey: Self.key(source, maxPixelSize) as NSString)
+        #if DEBUG
+        if DebugArtwork.isEnabled {
+            return memory.object(forKey: DebugArtwork.cacheKey(source, maxPixelSize) as NSString)
+        }
+        #endif
+        return memory.object(forKey: Self.key(source, maxPixelSize) as NSString)
     }
 
     /// `source`'s image, from the first of its candidates that yields one, downsampled so its longest
@@ -77,6 +82,14 @@ actor ArtworkLoader {
     /// The candidates are looked up on the main actor, where the Kotlin lookups have always run.
     @MainActor
     func image(for source: ArtworkSource, maxPixelSize: Int) async -> UIImage? {
+        #if DEBUG
+        if DebugArtwork.isEnabled {
+            if let hit = cached(source, maxPixelSize: maxPixelSize) { return hit }
+            guard let image = DebugArtwork.image(for: source, maxPixelSize: maxPixelSize) else { return nil }
+            memory.setObject(image, forKey: DebugArtwork.cacheKey(source, maxPixelSize) as NSString, cost: image.byteCost)
+            return image
+        }
+        #endif
         if let hit = cached(source, maxPixelSize: maxPixelSize) { return hit }
         guard let candidates = try? await source.candidates(), !candidates.isEmpty else { return nil }
         return await image(for: candidates, cacheKey: Self.key(source, maxPixelSize), maxPixelSize: maxPixelSize)

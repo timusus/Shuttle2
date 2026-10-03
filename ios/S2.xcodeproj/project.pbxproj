@@ -27,6 +27,7 @@
 		22061B66DFCCC943591B60BA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB3130910D39D3EBAB25744C /* Assets.xcassets */; };
 		231078D87B2D4E48A18485EC /* CombineFlowBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071E70571E51743974A5AC4F /* CombineFlowBridge.swift */; };
 		27EDE8BF878B3F8D7F1580AE /* Shimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8477763CCDC4966B330DC086 /* Shimmer.swift */; };
+		28BC962B531FFE397879547B /* DebugArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE223215219F6F97AC1D9FD2 /* DebugArtwork.swift */; };
 		2A319BAAFA3AE125057BF8AC /* SectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36538449409BD13651C085A2 /* SectionHeader.swift */; };
 		2ABA345B8D63E42DA6D413BF /* CoverMosaic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32385386778AA341330EA17 /* CoverMosaic.swift */; };
 		2C7B3FD103869E7BB31DC2A7 /* NavigatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A6ADEACA55D27E692A2C22 /* NavigatorTests.swift */; };
@@ -60,6 +61,7 @@
 		585A0251C433400E10A4AF82 /* MiniPlayerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8AC265BC9335CC1C9710C63 /* MiniPlayerViewTests.swift */; };
 		5BF07A6C45571F1110476F74 /* ServerSignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1778C13112603D7FCD2AAAE6 /* ServerSignInView.swift */; };
 		5CB5C5912DA7AF5DF32CE0B4 /* RemoteArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442479EA4A659CDC3E88462B /* RemoteArtwork.swift */; };
+		5DF9EB33C38E447BC8F2378C /* DebugArtworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */; };
 		5E3B09AB807AB94FC257FAC9 /* AirPlayButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7AADEAF2F8D24AC514AD547 /* AirPlayButton.swift */; };
 		624E2C6798581CD66B607606 /* ArtworkBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC86FB5219FFA411079E834 /* ArtworkBackground.swift */; };
 		6431833B8D6C0A0B282E0F5F /* AlbumArtistListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969D7BE4B5B0AC1094B37103 /* AlbumArtistListView.swift */; };
@@ -235,6 +237,7 @@
 		8B1B9EE110E1BFA6AF478F22 /* LibraryLetterIndexTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryLetterIndexTests.swift; sourceTree = "<group>"; };
 		906D37F830AB77668D7F8D89 /* JumpBackInGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpBackInGrid.swift; sourceTree = "<group>"; };
 		9188F0A66E8159B42084CA4B /* PlayerPaletteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPaletteTests.swift; sourceTree = "<group>"; };
+		91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugArtworkTests.swift; sourceTree = "<group>"; };
 		91C9049F0CB5EDB935D8D6B8 /* PlaybackSystemCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackSystemCoordinator.swift; sourceTree = "<group>"; };
 		9439F2E0407BF9275E4CEC04 /* RouteDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDestination.swift; sourceTree = "<group>"; };
 		94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -274,6 +277,7 @@
 		DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E961F30A527AB450C8572B47 /* Separator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Separator.swift; sourceTree = "<group>"; };
+		EE223215219F6F97AC1D9FD2 /* DebugArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugArtwork.swift; sourceTree = "<group>"; };
 		EFF976AEFD8C5C99F5A3872E /* AudioQuality.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioQuality.swift; sourceTree = "<group>"; };
 		EFFBC031880E93536DB77D51 /* EngineAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineAudioPlayer.swift; sourceTree = "<group>"; };
 		F2E9C9B867D2C9D540A8AF3C /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
@@ -457,6 +461,7 @@
 			children = (
 				163103F43F01EBA86D007C5F /* ArtworkImage.swift */,
 				31E55AD106EEAAB1C05E1B8A /* ArtworkLoader.swift */,
+				EE223215219F6F97AC1D9FD2 /* DebugArtwork.swift */,
 			);
 			path = Artwork;
 			sourceTree = "<group>";
@@ -545,6 +550,7 @@
 				C72BD30E191F8DDEFB8D6B41 /* ArtworkTintTests.swift */,
 				12C790AE3052665B98697F90 /* AudioSessionControllerTests.swift */,
 				5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */,
+				91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */,
 				CA8F70031E091A9E05A0ABE8 /* DesignSystemTests.swift */,
 				FBA8DC3CAF502AB452A47E5C /* DetailSupportTests.swift */,
 				BA3C4C66EB5919CB2CD27F60 /* EngineAudioPlayerTests.swift */,
@@ -743,6 +749,7 @@
 				EA877E9F937EC35097A15E73 /* ConsumeEvents.swift in Sources */,
 				553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */,
 				2ABA345B8D63E42DA6D413BF /* CoverMosaic.swift in Sources */,
+				28BC962B531FFE397879547B /* DebugArtwork.swift in Sources */,
 				21FE30A773E2FAFEEB422155 /* DetailSupport.swift in Sources */,
 				A63A662503830912A4762A65 /* EmptyState.swift in Sources */,
 				A8A521383C88462C5210FEF1 /* EngineAudioPlayer.swift in Sources */,
@@ -819,6 +826,7 @@
 				1D096299208BE05D1B687A6A /* ArtworkTintTests.swift in Sources */,
 				E1955E56226D498BCA1865D2 /* AudioSessionControllerTests.swift in Sources */,
 				AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */,
+				5DF9EB33C38E447BC8F2378C /* DebugArtworkTests.swift in Sources */,
 				36448DF63FDD4D6333FB9DD2 /* DesignSystemTests.swift in Sources */,
 				2DA2E2E30509CFBEDD4130AD /* DetailSupportTests.swift in Sources */,
 				102D87FC8E24D263D787ECA9 /* EngineAudioPlayerTests.swift in Sources */,
