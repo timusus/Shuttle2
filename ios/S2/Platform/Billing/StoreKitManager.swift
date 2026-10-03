@@ -17,8 +17,12 @@ final class StoreKitManager: ObservableObject {
         case failed(String)
     }
 
+    /// What Restore Purchases found for this Apple ID.
     enum RestoreOutcome: Equatable {
-        case restored
+        case pro
+        case trial(daysLeft: Int)
+        /// The free trial was had, and has ended (or was revoked).
+        case trialEnded
         case nothingToRestore
         case failed(String)
     }
@@ -43,7 +47,9 @@ final class StoreKitManager: ObservableObject {
     var trial: Product? { products[AppStoreProducts.shared.TRIAL] }
     var lifetime: Product? { products[AppStoreProducts.shared.LIFETIME] }
 
-    /// Listens for transactions, then loads the products and reads the current entitlements. Call once at launch.
+    /// Listens for transactions, reads the entitlements and loads the products. Call once at launch. The entitlements
+    /// come from StoreKit's on-device cache, so they're read first and on their own: an App Store that can't be reached
+    /// only holds up the products, never whether the user may stream.
     func start() {
         guard updates == nil else { return }
         updates = Task { [weak self] in
@@ -55,10 +61,8 @@ final class StoreKitManager: ObservableObject {
                 await self.refreshEntitlements()
             }
         }
-        Task {
-            await loadProducts()
-            await refreshEntitlements()
-        }
+        Task { _ = await refreshEntitlements() }
+        Task { await loadProducts() }
     }
 
     func loadProducts() async {
@@ -66,19 +70,25 @@ final class StoreKitManager: ObservableObject {
         products = Dictionary(loaded.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
     }
 
-    /// Reports the user's verified, unrevoked transactions to Kotlin, which resolves the entitlement from them.
-    func refreshEntitlements() async {
+    /// Reports the user's verified transaction for each product to Kotlin, which resolves the entitlement from them.
+    /// `Transaction.latest(for:)` rather than `currentEntitlements`, which leaves out a refunded or revoked one: a
+    /// revoked trial was still had. Each carries its original purchase date, which a restore or reinstall keeps.
+    ///
+    /// - Returns: what the transactions alone resolve to, debug overrides aside.
+    @discardableResult
+    func refreshEntitlements() async -> Entitlement {
         var purchases: [StorePurchase] = []
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result, transaction.revocationDate == nil else { continue }
+        for productId in AppStoreProducts.shared.all {
+            guard case .verified(let transaction) = await Transaction.latest(for: productId) else { continue }
             purchases.append(
                 StorePurchase(
                     productId: transaction.productID,
-                    purchasedAtEpochMs: Int64(transaction.purchaseDate.timeIntervalSince1970 * 1000)
+                    originalPurchasedAtEpochMs: Int64(transaction.originalPurchaseDate.timeIntervalSince1970 * 1000),
+                    revoked: transaction.revocationDate != nil
                 )
             )
         }
-        entitlements.storeAnswered(purchases: purchases)
+        return entitlements.storeAnswered(purchases: purchases)
     }
 
     /// Buys `productId`: the free trial starts the 14 days, Lifetime is Pro.
@@ -118,11 +128,11 @@ final class StoreKitManager: ObservableObject {
         } catch {
             return .failed(error.localizedDescription)
         }
-        await refreshEntitlements()
-        var owned = false
-        for await result in Transaction.currentEntitlements {
-            if case .verified(let transaction) = result, transaction.revocationDate == nil { owned = true }
+        switch onEnum(of: await refreshEntitlements()) {
+        case .pro: return .pro
+        case .trial(let trial): return .trial(daysLeft: Int(trial.daysRemainingNow()))
+        case .free(let free): return free.trialUsed ? .trialEnded : .nothingToRestore
+        case .unknown: return .nothingToRestore
         }
-        return owned ? .restored : .nothingToRestore
     }
 }

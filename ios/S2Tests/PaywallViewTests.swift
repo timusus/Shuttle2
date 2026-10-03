@@ -30,10 +30,34 @@ struct PaywallViewTests {
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
 
         #expect(disclosure.contains("14 days"))
-        #expect(disclosure.contains("streaming and downloading from Jellyfin, Emby and Plex"))
+        #expect(disclosure.contains("streaming from Jellyfin and Emby stops"))
         #expect(disclosure.contains("$9.99"))
         #expect((try? sut.inspect().find(text: "Start 14-day free trial")) != nil)
         #expect((try? sut.inspect().find(text: "$9.99 once")) != nil)
+    }
+
+    @Test func namesOnlyWhatIOSHas() throws {
+        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$9.99")
+        let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
+        let copy = [disclosure, ProFeatures.headline, ProFeatures.signInDisclosure, ProStatus.trialEnded.message]
+
+        #expect((try? sut.inspect().find(text: "Stream from Jellyfin and Emby")) != nil)
+        for line in copy {
+            #expect(!line.contains("Plex"))
+            #expect(!line.localizedCaseInsensitiveContains("download"))
+        }
+    }
+
+    // MARK: Restore
+
+    @Test func restoreSaysWhatItFound() {
+        #expect(StoreKitManager.RestoreOutcome.pro.message == "Shuttle Music Pro has been restored.")
+        #expect(
+            StoreKitManager.RestoreOutcome.trial(daysLeft: 3).message
+                == "Your free trial has been restored. 3 days left in your free trial."
+        )
+        #expect(StoreKitManager.RestoreOutcome.trialEnded.message.contains("already used its free trial"))
+        #expect(StoreKitManager.RestoreOutcome.nothingToRestore.message.contains("No Shuttle Music Pro purchase or free trial"))
     }
 
     @Test func startingTheTrialAndBuyingCallTheirActions() throws {

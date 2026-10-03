@@ -309,7 +309,7 @@ struct ServerSignInContent: View {
             .accessibilityIdentifier("serverSignIn.signIn")
         } footer: {
             if state.showProDisclosure {
-                Text("Streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro. Free for 14 days.")
+                Text(ProFeatures.signInDisclosure)
             }
         }
     }

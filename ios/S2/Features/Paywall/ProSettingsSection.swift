@@ -24,7 +24,7 @@ private struct ProSettingsRows: View {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Shuttle Music Pro")
-                        Text(status == .trialAvailable ? "Stream from Jellyfin, Emby and Plex" : status.message)
+                        Text(status == .trialAvailable ? ProFeatures.headline : status.message)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -35,11 +35,7 @@ private struct ProSettingsRows: View {
             .accessibilityIdentifier("settings.pro")
             Button {
                 Task {
-                    switch await store.restore() {
-                    case .restored: alert = "Your purchase has been restored"
-                    case .nothingToRestore: alert = "No Shuttle Music Pro purchase found for this Apple ID"
-                    case .failed: alert = "Couldn't reach the App Store. Please try again."
-                    }
+                    alert = await store.restore().message
                 }
             } label: {
                 Label { Text("Restore purchases") } icon: { IconSquare(systemImage: "arrow.clockwise", style: .filled(.gray)) }

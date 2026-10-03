@@ -2,6 +2,28 @@ import Shared
 import StoreKit
 import SwiftUI
 
+/// What Shuttle Music Pro unlocks on iOS, for the paywall, its trial disclosure, Settings, server sign-in and Restore's
+/// messages. Name only what the app has (App Review 2.3, 3.1.1): add Plex to `servers` when it ships, and downloads
+/// when they do.
+enum ProFeatures {
+    /// The servers Pro streams from.
+    static let servers = ["Jellyfin", "Emby"]
+
+    /// "Jellyfin and Emby".
+    static var serverList: String {
+        servers.count < 2 ? servers.joined() : servers.dropLast().joined(separator: ", ") + " and " + servers.last!
+    }
+
+    /// The paywall's headline feature and Settings' row: "Stream from Jellyfin and Emby".
+    static var headline: String { "Stream from \(serverList)" }
+
+    /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin and Emby".
+    static var afterTrial: String { "streaming from \(serverList)" }
+
+    /// Server sign-in's disclosure, for anyone without Pro or a running trial.
+    static var signInDisclosure: String { "Streaming from \(serverList) is part of Shuttle Music Pro. Free for 14 days." }
+}
+
 /// Where the user stands with Shuttle Music Pro, from the Kotlin `Entitlement`.
 enum ProStatus: Equatable {
     /// StoreKit hasn't answered yet.
@@ -27,7 +49,7 @@ enum ProStatus: Equatable {
         case .checking: "Checking your purchases with the App Store…"
         case .trialAvailable: "Try streaming from your server free for 14 days."
         case .trial(let daysLeft): daysLeft == 1 ? "1 day left in your free trial" : "\(daysLeft) days left in your free trial"
-        case .trialEnded: "Your free trial has ended. Upgrade to keep streaming from your servers."
+        case .trialEnded: "Your free trial has ended. Upgrade to keep \(ProFeatures.afterTrial)."
         case .pro: "You have Shuttle Music Pro. Thank you for supporting Shuttle Music."
         }
     }
@@ -88,12 +110,19 @@ private struct PaywallActions: View {
     }
 
     private func restore() {
-        Task {
-            switch await store.restore() {
-            case .restored: alert = "Your purchase has been restored"
-            case .nothingToRestore: alert = "No Shuttle Music Pro purchase found for this Apple ID"
-            case .failed: alert = "Couldn't reach the App Store. Please try again."
-            }
+        Task { alert = await store.restore().message }
+    }
+}
+
+extension StoreKitManager.RestoreOutcome {
+    /// What Restore Purchases tells the user it found.
+    var message: String {
+        switch self {
+        case .pro: "Shuttle Music Pro has been restored."
+        case .trial(let daysLeft): "Your free trial has been restored. " + ProStatus.trial(daysLeft: daysLeft).message + "."
+        case .trialEnded: "This Apple ID has already used its free trial. Get Shuttle Music Pro to keep \(ProFeatures.afterTrial)."
+        case .nothingToRestore: "No Shuttle Music Pro purchase or free trial found for this Apple ID."
+        case .failed: "Couldn't reach the App Store. Please try again."
         }
     }
 }
@@ -123,7 +152,7 @@ struct PaywallContent: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Text("What you get").font(.headline)
-                    Label("Stream from Jellyfin, Emby and Plex", systemImage: "server.rack")
+                    Label(ProFeatures.headline, systemImage: "server.rack")
                     Label("AirPlay, the equalizer and the rest of the app stay free", systemImage: "checkmark.circle")
                 }
 
@@ -157,9 +186,8 @@ struct PaywallContent: View {
     }
 
     private var trialDisclosure: String {
-        "The trial is free and lasts 14 days. After it ends, streaming and downloading from Jellyfin, Emby and Plex "
-            + "stop until you buy Shuttle Music Pro, a one-time purchase of \(lifetimePrice ?? "the price shown"). "
-            + "Nothing is charged when the trial ends."
+        "The trial is free and lasts 14 days. After it ends, \(ProFeatures.afterTrial) stops until you buy Shuttle "
+            + "Music Pro, a one-time purchase of \(lifetimePrice ?? "the price shown"). Nothing is charged when the trial ends."
     }
 
     @ViewBuilder
