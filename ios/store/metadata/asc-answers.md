@@ -12,18 +12,19 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
 - App Privacy: "Data Not Collected" is saved but **not published**. The owner publishes it, which is an attestation.
 - Pricing: Free, available in all 175 countries.
 - In-app purchases: both are in all countries, with en-US name and description and review notes. Neither
-  has a review screenshot yet. Family Sharing is off on both.
-  - Trial (6818776748): $0.
-  - Lifetime (6818777051): $9.99, the launch price. The plan is US$14.99 two to four weeks after launch.
+  carries the 7-day paywall (`iap-review/paywall.png`) as its review screenshot.
+  - Trial (6818776748): $0, "7-day Free Trial". Family Sharing off.
+  - Lifetime (6818777051): $9.99, the launch price. The plan is US$14.99 two to four weeks after launch
+    (#762). Family Sharing is on, which can't be turned off.
 - Version 1.0 has these saved:
   - Promotional text, description and keywords.
   - Support URL, marketing URL and copyright ("2026 Simplecity Apps Pty Ltd").
   - Contact information.
   - The demo account: user `appreview` on https://emby.mediaserver.timmalseed.dev (Emby). The owner enters the
     password; it is never written in the repo.
-  - Review notes, describing the Emby demo (`ios/docs/app-store-review.md`).
-- Version 1.0 still needs:
-  - Screenshots and a build.
+  - Review notes, describing the Emby demo (`ios/docs/app-store-review.md`), with the FFmpeg source URL.
+  - Screenshots: six each for iPhone 6.5" (used for every iPhone size) and iPad 13".
+- Version 1.0 still needs a build.
 
 ## App Information
 
