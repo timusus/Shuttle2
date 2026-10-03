@@ -1,8 +1,28 @@
 # App Store Connect answers (Shuttle Music, app 6818057709)
 
-Drafted 2026-10-03, not yet entered in App Store Connect. Once pasted, add the date here and keep this
-file in step with the portal so the next person does not have to re-derive the answers. The listing text
-is in `en-AU/`; review notes and the launch checklist are in `ios/docs/app-store-review.md`.
+Entered in App Store Connect on 2026-10-03. Keep this file in step with the portal so the next person
+does not have to re-derive the answers. The listing text is in `en-AU/`; review notes and the launch
+checklist are in `ios/docs/app-store-review.md`.
+
+## Portal state (2026-10-03)
+
+The primary language is English (U.S.), and the `en-AU/` copy went into that localisation.
+
+- App Information: subtitle, Content Rights, category, age rating (4+) and privacy policy URL are saved.
+- App Privacy: "Data Not Collected" is saved but **not published**. The owner publishes it, which is an attestation.
+- Pricing: Free, available in all 175 countries.
+- In-app purchases: both are in all countries, with en-US name and description and review notes. Neither
+  has a review screenshot yet. Family Sharing is off on both.
+  - Trial (6818776748): $0.
+  - Lifetime (6818777051): $9.99, a placeholder price.
+- Version 1.0 has these saved:
+  - Promotional text, description and keywords.
+  - Support URL, marketing URL and copyright ("2026 Simplecity Apps Pty Ltd").
+  - Review notes, with their `<...>` placeholders still in them.
+- Version 1.0 still needs:
+  - Screenshots and a build.
+  - Contact information.
+  - The demo account. "Sign-in required" is ticked, but the username and password are empty.
 
 ## App Information
 
