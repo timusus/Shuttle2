@@ -14,6 +14,6 @@ appId: com.simplecityapps.shuttle.dev
 - takeScreenshot: ${PICKER_SHOT}
 - tapOn: "shuttle-library-backup.json"
 - extendedWaitUntil:
-    visible: "Updated .* songs and restored .* playlists.*"
+    visible: "Restore complete: .* songs? matched, .* playlists? added or updated.*"
     timeout: 15000
 - takeScreenshot: ${DONE_SHOT}

@@ -131,6 +131,7 @@ val StringKey.resId: Int
         StringKey.PREF_EXCLUDE_TITLE -> R.string.pref_exclude_title
         StringKey.PREF_EXCLUDE_SUMMARY -> R.string.pref_exclude_summary
         StringKey.PREF_CATEGORY_TITLE_ARTWORK -> R.string.pref_category_title_artwork
+        StringKey.PREF_CATEGORY_TITLE_BACKUP -> R.string.pref_category_title_backup
         StringKey.PREF_ARTWORK_WIFI_TITLE -> R.string.pref_artwork_wifi_title
         StringKey.PREF_ARTWORK_WIFI_SUBTITLE -> R.string.pref_artwork_wifi_subtitle
         StringKey.PREF_ARTWORK_LOCAL_ONLY_TITLE -> R.string.pref_artwork_local_only_title

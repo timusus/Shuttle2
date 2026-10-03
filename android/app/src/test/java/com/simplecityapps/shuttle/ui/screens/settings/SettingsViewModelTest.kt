@@ -247,7 +247,7 @@ class SettingsViewModelTest {
         viewModel.importBackupFrom("content://src")
         runCurrent()
 
-        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupImported(songsUpdated = 7, playlistsRestored = 2, songsUnmatched = 3))
+        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupImported(songsMatched = 9, playlistsRestored = 2, songsUnmatched = 3))
     }
 
     @Test

@@ -1,4 +1,4 @@
-# Settings > Library with both backup rows, screenshotted for the UI review.
+# Settings > Library, Backup section with both rows, screenshotted for the UI review.
 # -e NN=<file number> -e MODE=light|dark (the script sets the system theme first).
 appId: com.simplecityapps.shuttle.dev
 ---
@@ -7,6 +7,7 @@ appId: com.simplecityapps.shuttle.dev
 - scrollUntilVisible:
     element:
       text: "Restore library backup"
+- assertVisible: "Backup"
 - assertVisible: "Back up library"
 - assertVisible: "Restore library backup"
 - takeScreenshot: ${NN}-settings-library-${MODE}

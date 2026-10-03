@@ -42,14 +42,16 @@
     <string name="pref_media_rescan_title">Rescan</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">Rescan the selected media providers</string>
+    <!-- Settings: Title for the category holding library backup and restore -->
+    <string name="pref_category_title_backup">Backup</string>
     <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
     <string name="pref_backup_export_title">Back up library</string>
     <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
-    <string name="pref_backup_export_summary">Save play counts, favourites, exclusions and playlists to a JSON file</string>
+    <string name="pref_backup_export_summary">Save play counts, favourites, exclusions and playlists to a file</string>
     <!-- Settings: Title for the option to restore a library backup from a file -->
     <string name="pref_backup_import_title">Restore library backup</string>
     <!-- Settings: Description for the option to restore a library backup from a file -->
-    <string name="pref_backup_import_summary">Add play counts, favourites, exclusions and playlists from a backup file. Nothing on this device is removed or overwritten with older data</string>
+    <string name="pref_backup_import_summary">Merge a backup into your library. Newer data on this device is kept</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Excluded</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
@@ -181,10 +183,27 @@
     <string name="settings_backup_export_failed">Library backup failed</string>
     <!-- Settings: Snackbar shown when reading a library backup file fails -->
     <string name="settings_backup_import_failed">Could not read that backup file</string>
-    <!-- Settings: Snackbar summarising a library backup restore; %1$d songs updated, %2$d playlists restored -->
-    <string name="settings_backup_import_done">Updated %1$d songs and restored %2$d playlists</string>
-    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$d songs updated, %2$d playlists restored, %3$d backup songs not found in the library -->
-    <string name="settings_backup_import_done_unmatched">Updated %1$d songs and restored %2$d playlists; %3$d songs not found</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$s is the songs matched count (settings_backup_import_songs), %2$s the playlists added or updated count (settings_backup_import_playlists) -->
+    <string name="settings_backup_import_done">Restore complete: %1$s, %2$s</string>
+    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$s is the songs matched count, %2$s the playlists count, %3$s the backup songs not found count -->
+    <string name="settings_backup_import_done_unmatched">Restore complete: %1$s, %2$s; %3$s</string>
+    <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
+    <string name="settings_backup_import_nothing">Nothing in this backup matched your library</string>
+    <!-- Settings: Count of backup songs that matched the library during a restore -->
+    <plurals name="settings_backup_import_songs">
+        <item quantity="one">%1$d song matched</item>
+        <item quantity="other">%1$d songs matched</item>
+    </plurals>
+    <!-- Settings: Count of playlists added or updated during a restore -->
+    <plurals name="settings_backup_import_playlists">
+        <item quantity="one">%1$d playlist added or updated</item>
+        <item quantity="other">%1$d playlists added or updated</item>
+    </plurals>
+    <!-- Settings: Count of backup songs not found in the library during a restore -->
+    <plurals name="settings_backup_import_unmatched">
+        <item quantity="one">%1$d song not found</item>
+        <item quantity="other">%1$d songs not found</item>
+    </plurals>
     <!-- Settings: Snackbar shown once the artwork cache has been cleared -->
     <string name="settings_artwork_cache_cleared">Artwork cache cleared</string>
     <!-- Settings: Snackbar shown when downloading all artwork starts -->

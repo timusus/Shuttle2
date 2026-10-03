@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import android.content.res.Resources
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -137,13 +138,7 @@ private fun SettingsDestinationEntry(
 
             is SettingsUiEvent.BackupImportPickerRequested -> importLauncher.launch(arrayOf("application/json"))
 
-            is SettingsUiEvent.BackupImported -> snackbarHostState.showSnackbar(
-                if (event.songsUnmatched > 0) {
-                    context.getString(R.string.settings_backup_import_done_unmatched, event.songsUpdated, event.playlistsRestored, event.songsUnmatched)
-                } else {
-                    context.getString(R.string.settings_backup_import_done, event.songsUpdated, event.playlistsRestored)
-                }
-            )
+            is SettingsUiEvent.BackupImported -> snackbarHostState.showSnackbar(backupImportedMessage(context.resources, event))
 
             else -> snackbarHostState.showSnackbar(context.getString(checkNotNull(event.message)))
         }
@@ -244,5 +239,23 @@ private fun LiveLogEntry(onNavigateUp: () -> Unit) {
             onNavigateUp()
             onPauseOrDispose {}
         }
+    }
+}
+
+/** The restore snackbar text: counts of songs matched and playlists added or updated, or a note that nothing matched. */
+internal fun backupImportedMessage(
+    resources: Resources,
+    event: SettingsUiEvent.BackupImported
+): String {
+    if (event.songsMatched == 0 && event.playlistsRestored == 0) {
+        return resources.getString(R.string.settings_backup_import_nothing)
+    }
+    val songs = resources.getQuantityString(R.plurals.settings_backup_import_songs, event.songsMatched, event.songsMatched)
+    val playlists = resources.getQuantityString(R.plurals.settings_backup_import_playlists, event.playlistsRestored, event.playlistsRestored)
+    return if (event.songsUnmatched > 0) {
+        val unmatched = resources.getQuantityString(R.plurals.settings_backup_import_unmatched, event.songsUnmatched, event.songsUnmatched)
+        resources.getString(R.string.settings_backup_import_done_unmatched, songs, playlists, unmatched)
+    } else {
+        resources.getString(R.string.settings_backup_import_done, songs, playlists)
     }
 }
