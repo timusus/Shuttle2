@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -88,6 +89,7 @@ internal fun ServerSignInForm(
         onConfirm = actions.onAuthenticate,
         dismissLabel = stringResource(R.string.dialog_button_close),
         confirmEnabled = uiState.step == ServerSignInStep.Form,
+        error = (uiState.step as? ServerSignInStep.Failed)?.message,
     ) {
         when (val step = uiState.step) {
             ServerSignInStep.Form -> SignInFields(uiState, actions)
@@ -98,13 +100,11 @@ internal fun ServerSignInForm(
 
             ServerSignInStep.Connected -> Progress(stringResource(R.string.media_provider_authentication_success), showSpinner = false)
 
-            is ServerSignInStep.Failed -> Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(step.message, textAlign = TextAlign.Center)
+            is ServerSignInStep.Failed -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 S2Button(
                     text = stringResource(R.string.dialog_button_retry),
                     onClick = actions.onRetry,
                     style = S2ButtonStyle.Outlined,
-                    modifier = Modifier.padding(top = S2Spacing.small),
                 )
             }
         }
