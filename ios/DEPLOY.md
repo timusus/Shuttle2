@@ -33,6 +33,10 @@ and not uploaded.
    `--smoke` then fires the no-upload dispatch run.
 3. The `mac-builder` runner must be registered on this repo and online, with Xcode, xcodegen, a JDK and
    the **Apple Distribution: Simplecity Apps Pty Ltd (9HYNX943MQ)** certificate in the login keychain.
+   A launchd runner has no GUI session, so the login keychain must be unlocked
+   (`security unlock-keychain ~/Library/Keychains/login.keychain-db`, no auto-lock timeout) and the
+   Apple Distribution private key must allow `codesign` without a prompt:
+   `security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k <keychain password> ~/Library/Keychains/login.keychain-db`.
 4. Export signs manually with the profile "Shuttle Music App Store" (the team's API keys cannot use a
    cloud-managed distribution certificate). `ensure-store-profiles.sh` creates and installs it
    when the key flags are given, so no manual profile step is needed.
