@@ -2,11 +2,7 @@
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.debug.livelog.LiveLogScreen -> androidx.compose.material3.Scaffold
 com.simplecityapps.shuttle.debug.livelog.LiveLogScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.common.components.DetailScaffold -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.common.components.DetailScaffold -> androidx.compose.material3.IconButton
 com.simplecityapps.shuttle.ui.common.components.DetailScaffold -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.common.components.DetailScaffold -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.common.components.DetailScaffold -> androidx.compose.material3.TopAppBar
 com.simplecityapps.shuttle.ui.common.components.FastScroller -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.common.components.LinearProgressIndicatorWithText -> androidx.compose.material3.LinearProgressIndicator
 com.simplecityapps.shuttle.ui.common.components.LinearProgressIndicatorWithText -> androidx.compose.material3.Text
@@ -29,7 +25,6 @@ com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.c
 com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.DropdownMenuItem
 com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.LibraryControls -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.LibraryDetailComponents -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen -> androidx.compose.material3.LinearWavyProgressIndicator
 com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.DropdownMenu
@@ -53,9 +48,6 @@ com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Scaffold
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Surface
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.search.SearchScreen -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.screens.search.SearchScreen -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.screens.search.SearchScreen -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> androidx.compose.material3.Scaffold
 com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen -> androidx.compose.material3.Surface

@@ -28,8 +28,8 @@ approved; **missing** = specified in design-language.md §3 with no catalogue en
 | `row-album` | approved | `AlbumRow` |
 | `row-artist` | needs work | `ArtistRow` |
 | `row-playlist` | needs work | `PlaylistRow` |
-| `top-bar` | needs work | `S2TopBar`, `S2LargeTopBar` |
-| `search` | needs work | `S2SearchBar`, `SearchInputField` |
+| `top-bar` | needs work | `S2TopBar`, `S2LargeTopBar`, `S2DetailTopBar` |
+| `search` | needs work | `S2SearchField` |
 | `nav-bar` | needs work | `S2NavigationBar` |
 | `nav-rail` | needs work | `S2NavigationRail` |
 | `chip-sort-filter` | needs work | `S2FilterChip`, `S2ChoiceChip`, `S2InputChip`, `S2InfoChip` |
@@ -76,18 +76,18 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | Done | File (under `com.simplecityapps.shuttle`) | Raw material3 components |
 |---|---|---|
 | [ ] | `debug.livelog.LiveLogScreen` | Scaffold, Text |
-| [ ] | `ui.common.components.DetailScaffold` | Icon, IconButton, Scaffold, Text, TopAppBar |
+| [ ] | `ui.common.components.DetailScaffold` | Scaffold |
 | [ ] | `ui.common.components.FastScroller` | Text |
 | [ ] | `ui.common.components.LinearProgressIndicatorWithText` | LinearProgressIndicator, Text |
 | [ ] | `ui.common.components.LoadingStatusIndicator` | CircularProgressIndicator, HorizontalDivider, Icon, OutlinedButton, Text |
 | [ ] | `ui.common.mediaactions.MediaActionsHost` | OutlinedTextField, Text |
 | [ ] | `ui.screens.equalizer.FrequencyResponseChart` | Text |
-| [ ] | `ui.screens.home.HomeItemTile` | Text |
+| [x] | `ui.screens.home.HomeItemTile` | Text |
 | [ ] | `ui.screens.home.HomeScreen` | ElevatedCard, Icon, Scaffold, Text, pulltorefresh.PullToRefreshBox |
 | [ ] | `ui.screens.home.JumpBackInGrid` | Surface, Text |
 | [ ] | `ui.screens.library.AddToPlaylistSubmenu` | DropdownMenu, DropdownMenuItem, Text |
 | [ ] | `ui.screens.library.LibraryControls` | Text |
-| [ ] | `ui.screens.library.LibraryDetailComponents` | Text |
+| [x] | `ui.screens.library.LibraryDetailComponents` | Text |
 | [ ] | `ui.screens.library.LibraryEmptyScreen` | LinearWavyProgressIndicator, Text |
 | [ ] | `ui.screens.library.LibraryOverflowMenu` | DropdownMenu, DropdownMenuItem, Icon, IconButton, Text |
 | [ ] | `ui.screens.library.LibraryPages` | Text |
@@ -96,7 +96,7 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.screens.library.PlaylistDialogs` | Text |
 | [ ] | `ui.screens.library.songs.ShuffleListItem` | Text |
 | [ ] | `ui.screens.paywall.PaywallScreen` | Card, Icon, OutlinedCard, RadioButton, Scaffold, Surface, Text |
-| [ ] | `ui.screens.search.SearchScreen` | Icon, Surface, Text |
+| [x] | `ui.screens.search.SearchScreen` | Icon, Surface, Text |
 | [ ] | `ui.screens.settings.SettingsScreens` | Scaffold, Text |
 | [ ] | `ui.screens.settings.about.WhatsNewScreen` | Surface, Text |
 | [ ] | `ui.screens.settings.equalizer.EqualizerScreen` | Surface, Text, VerticalDivider |
