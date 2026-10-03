@@ -11,7 +11,7 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
 - App Information: subtitle, Content Rights, category, age rating (4+) and privacy policy URL are saved.
 - App Privacy: "Data Not Collected" is saved but **not published**. The owner publishes it, which is an attestation.
 - Pricing: Free, available in all 175 countries.
-- In-app purchases: both are in all countries, with en-US name and description and review notes. Neither
+- In-app purchases: both are in all countries, with en-US name and description and review notes. Each
   carries the 7-day paywall (`iap-review/paywall.png`) as its review screenshot.
   - Trial (6818776748): $0, "7-day Free Trial". Family Sharing off.
   - Lifetime (6818777051): $9.99, the launch price. The plan is US$14.99 two to four weeks after launch
