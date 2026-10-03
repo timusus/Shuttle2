@@ -12,6 +12,8 @@ struct TelemetryConfig: Equatable {
     var build: String
     /// Android's split: debug builds send too, as `development`.
     var environment: String
+    /// Android's `build_type` super property, so debug builds' analytics can be filtered out: `debug` or `release`.
+    var buildType: String
 
     static let defaultPostHogHost = "https://eu.i.posthog.com"
 
@@ -29,8 +31,10 @@ struct TelemetryConfig: Equatable {
         releaseName = "com.simplecityapps.shuttle@\(version)+\(build)"
         #if DEBUG
         environment = "development"
+        buildType = "debug"
         #else
         environment = "production"
+        buildType = "release"
         #endif
     }
 

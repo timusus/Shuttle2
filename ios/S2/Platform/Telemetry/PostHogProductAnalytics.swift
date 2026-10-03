@@ -15,11 +15,13 @@ final class PostHogProductAnalytics: NSObject, IosProductAnalytics {
     private let lock = NSLock()
     private var enabled = false
     private var setUp = false
-    /// The super properties, registered with PostHog once it's set up.
-    private var superProperties: [String: Any] = [:]
+    /// The super properties, registered with PostHog once it's set up. `build_type` is the app's own, as on Android;
+    /// the rest come from the shared `IosTelemetryStartup`.
+    private(set) var superProperties: [String: Any]
 
     init(config: TelemetryConfig) {
         self.config = config
+        superProperties = ["build_type": config.buildType]
     }
 
     func setEnabled(enabled: Bool) {

@@ -17,4 +17,11 @@ struct PostHogProductAnalyticsTests {
         #expect(!config.preloadFeatureFlags)
         #expect(!config.errorTrackingConfig.autoCapture)
     }
+
+    @Test func everyEventCarriesTheBuildTypeAsOnAndroid() {
+        let analytics = PostHogProductAnalytics(config: TelemetryConfig(info: [:]))
+        analytics.register(properties: ["platform": "ios"])
+        #expect(analytics.superProperties["build_type"] as? String == "debug")
+        #expect(analytics.superProperties["platform"] as? String == "ios")
+    }
 }

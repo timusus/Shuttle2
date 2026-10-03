@@ -17,6 +17,7 @@ struct TelemetryConfigTests {
         #expect(config.postHogHost == "https://eu.i.posthog.com")
         #expect(config.releaseName == "com.simplecityapps.shuttle@2026.10.04+7")
         #expect(config.environment == "development")
+        #expect(config.buildType == "debug")
     }
 
     @Test func aBlankOrUnexpandedKeyIsNoKey() {
