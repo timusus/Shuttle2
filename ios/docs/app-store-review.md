@@ -17,8 +17,8 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 5. App Privacy: Data Not Collected, publish.
 6. Version > Previews and Screenshots: upload `ios/store/screenshots/en-AU/{iphone-6.9,iphone-6.5,ipad-13}`
    once rendered from artwork we may show (#610 guideline 5.2 note).
-7. Version > App Review Information: paste the notes below with the placeholders filled; sign-in required
-   Yes is not needed (the demo credentials go in the notes); contact phone and email filled.
+7. Version > App Review Information: paste the notes below with the placeholders filled;
+   leave the demo-account toggle off (the credentials go in the notes); contact phone and email filled.
 8. Confirm the Info.plist background mode is `audio` only and the FFmpeg frameworks are not renamed.
 9. Push the archive tag, wait for TestFlight to process, install on a device, play from the demo server
    and run through the purchase with a sandbox account, then submit.
@@ -60,7 +60,7 @@ source is available at <FFMPEG SOURCE URL>.
 Contact: <owner email / phone as in ASC>.
 ```
 
-(About 2,500 characters; the limit is 4,000.)
+(About 1,950 characters; the limit is 4,000.)
 
 ## Checks and open items
 
