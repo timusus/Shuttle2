@@ -8,29 +8,27 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
-import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupFlow
-import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
 import dev.zacsweers.metro.Inject
 import java.io.IOException
+import java.io.InputStream
+import kotlin.time.Clock
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import timber.log.Timber
-import kotlin.time.Clock
 
 /**
  * Library backup export/import (Settings -> Library). Backs up per-song stats (play counts,
- * positions, favourites, exclusions, dates) plus playlists; restore writes each matched song back
- * to the backup's snapshot.
+ * positions, favourites, exclusions, dates) plus playlists; restore merges them into the library,
+ * keeping whatever the device already has (see [LibraryBackupRestorer]).
  *
  * Never backed up: Room ids, credentials/tokens, SAF grant URIs, transient queue/session state,
- * artwork caches and aggregates. Restoring favourites touches only the local songs table (no
- * `pending_favourites` rows), so a restore never pushes stale states to remote servers.
+ * artwork caches and aggregates. Restored favourites go through the same DAO path as the UI's, so remote-provider
+ * ones are queued for the server.
  */
 class LibraryBackupManager @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -39,10 +37,13 @@ class LibraryBackupManager @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : LibraryBackupFlow {
-    private val json = Json { ignoreUnknownKeys = true; prettyPrint = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        prettyPrint = true
+    }
 
     override suspend fun buildBackupJson(): String? = withContext(ioDispatcher) {
-        runCatching {
+        try {
             val songs = songRepository.loadSongs(SongQuery.All(includeExcluded = true))
             val playlists = playlistRepository.getPlaylists(PlaylistQuery.All(null)).first()
             val backedPlaylists = playlists.map { playlist ->
@@ -64,7 +65,12 @@ class LibraryBackupManager @Inject constructor(
                     playlists = backedPlaylists
                 )
             )
-        }.getOrNull()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to build library backup")
+            null
+        }
     }
 
     override suspend fun writeBackup(destinationUri: String, backupJson: String): Boolean = withContext(ioDispatcher) {
@@ -88,8 +94,10 @@ class LibraryBackupManager @Inject constructor(
     override suspend fun readAndRestore(sourceUri: String): RestoreReport? = withContext(ioDispatcher) {
         val backup = try {
             context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
-                json.decodeFromString<LibraryBackup>(input.readBytes().toString(Charsets.UTF_8))
+                readCapped(input, MAX_IMPORT_BYTES)?.let { json.decodeFromString<LibraryBackup>(it.toString(Charsets.UTF_8)) }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to read library backup from $sourceUri")
             null
@@ -102,84 +110,8 @@ class LibraryBackupManager @Inject constructor(
     }
 
     private suspend fun restore(backup: LibraryBackup): RestoreReport {
-        val songDataDao = database.songDataDao()
         val library = songRepository.loadSongs(SongQuery.All(includeExcluded = true))
-        val matches = LibraryBackupMatcher.matchAll(backup.songs.map { it.identity }, library)
-
-        var statsWritten = 0
-        var unmatched = 0
-        backup.songs.forEach { backedUp ->
-            val match = matches[backedUp.identity]
-            if (match == null) {
-                unmatched++
-                return@forEach
-            }
-            val current = match.song
-            val merged = LibraryBackupMatcher.mergeStats(current, backedUp)
-            if (!LibraryBackupMatcher.statsEqual(current, merged)) {
-                songDataDao.restoreStats(
-                    id = current.id,
-                    playCount = merged.playCount,
-                    lastPlayed = merged.lastPlayed,
-                    lastCompleted = merged.lastCompleted,
-                    playbackPosition = merged.playbackPosition,
-                    dateAdded = merged.dateAdded
-                )
-                if (merged.excluded != current.blacklisted) {
-                    songDataDao.setExcluded(listOf(current.id), merged.excluded)
-                }
-                if (current.favouritedAt != merged.favouritedAt) {
-                    if (merged.favouritedAt == null) {
-                        songDataDao.unfavourite(listOf(current.id))
-                    } else if (current.favouritedAt == null) {
-                        songDataDao.favourite(current.id, merged.favouritedAt)
-                    } else {
-                        songDataDao.unfavourite(listOf(current.id))
-                        songDataDao.favourite(current.id, merged.favouritedAt)
-                    }
-                }
-                statsWritten++
-            }
-        }
-
-        val existing = playlistRepository.getPlaylists(PlaylistQuery.All(null)).first()
-        var playlistsRestored = 0
-        var membersSkipped = 0
-        val unresolved = mutableListOf<String>()
-        backup.playlists.forEach { backedUp ->
-            val provider = runCatching { MediaProviderType.valueOf(backedUp.provider) }.getOrNull()
-                ?: MediaProviderType.Shuttle
-            val memberSongs = backedUp.members.mapNotNull { ref ->
-                matches[ref]?.song ?: run { membersSkipped++; null }
-            }
-            if (memberSongs.isEmpty()) {
-                unresolved.add(backedUp.name)
-                return@forEach
-            }
-            val target = if (backedUp.externalId != null) {
-                existing.firstOrNull { it.mediaProvider == provider && it.externalId == backedUp.externalId }
-            } else null
-                ?: existing.firstOrNull { it.mediaProvider == provider && it.name.equals(backedUp.name, ignoreCase = true) }
-            if (target == null) {
-                playlistRepository.createPlaylist(backedUp.name, provider, memberSongs, backedUp.externalId)
-            } else {
-                playlistRepository.clearPlaylist(target)
-                playlistRepository.addToPlaylist(target, memberSongs)
-                runCatching { PlaylistSongSortOrder.valueOf(backedUp.sortOrder) }.getOrNull()?.let { order ->
-                    playlistRepository.updatePlaylistSortOder(target, order, backedUp.sortDescending)
-                }
-            }
-            playlistsRestored++
-        }
-
-        return RestoreReport(
-            songsMatched = backup.songs.size - unmatched,
-            songsUnmatched = unmatched,
-            statsWritten = statsWritten,
-            playlistsRestored = playlistsRestored,
-            playlistsUnresolved = unresolved,
-            membersSkipped = membersSkipped
-        )
+        return LibraryBackupRestorer(playlistRepository, { database.songDataDao().restoreStats(it) }).restore(backup, library)
     }
 
     private fun Song.toIdentity(): SongIdentity = SongIdentity(
@@ -188,7 +120,7 @@ class LibraryBackupManager @Inject constructor(
         externalId = externalId,
         title = name,
         album = album,
-        artist = albumArtist ?: artists.joinToString(", ").ifEmpty { null },
+        artist = LibraryBackupMatcher.fingerprintArtist(this),
         duration = duration,
         size = size
     )
@@ -203,4 +135,28 @@ class LibraryBackupManager @Inject constructor(
         favouritedAt = favouritedAt?.toEpochMilliseconds(),
         dateAdded = dateAdded?.toEpochMilliseconds()
     )
+
+    internal companion object {
+        const val MAX_IMPORT_BYTES = 64L * 1024 * 1024
+
+        /** All of [input], or null once it runs past [maxBytes]. */
+        fun readCapped(
+            input: InputStream,
+            maxBytes: Long
+        ): ByteArray? {
+            val out = java.io.ByteArrayOutputStream()
+            val buffer = ByteArray(8192)
+            var total = 0L
+            while (true) {
+                val read = input.read(buffer)
+                if (read < 0) return out.toByteArray()
+                total += read
+                if (total > maxBytes) {
+                    Timber.w("Library backup larger than $maxBytes bytes, refusing to read it")
+                    return null
+                }
+                out.write(buffer, 0, read)
+            }
+        }
+    }
 }

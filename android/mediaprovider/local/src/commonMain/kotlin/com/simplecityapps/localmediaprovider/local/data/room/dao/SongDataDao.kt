@@ -177,6 +177,31 @@ abstract class SongDataDao {
         dateAdded: Instant?
     )
 
+    /**
+     * Writes the merged stats of a backup restore for [restores] in one transaction: the stat columns per song, the
+     * excluded flag in bulk, and the new favourites through [setFavourite], so a remote-provider song gets its
+     * `pending_favourites` row like a favourite made in the UI. Favourites are only ever added here, at the backup's time.
+     */
+    @Transaction
+    open suspend fun restoreStats(restores: List<SongStatsRestore>) {
+        restores.forEach { restore ->
+            restoreStats(
+                id = restore.song.id,
+                playCount = restore.playCount,
+                lastPlayed = restore.lastPlayed,
+                lastCompleted = restore.lastCompleted,
+                playbackPosition = restore.playbackPosition,
+                dateAdded = restore.dateAdded
+            )
+        }
+        restores.filter { it.excluded != it.song.blacklisted }.groupBy { it.excluded }.forEach { (excluded, group) ->
+            group.map { it.song.id }.chunked(MAX_BOUND_VARIABLES - 1).forEach { chunk -> setExcluded(chunk, excluded) }
+        }
+        val favourites = restores.filter { it.favouritedAt != null && it.song.favouritedAt == null }
+            .map { it.song.copy(favouritedAt = it.favouritedAt) }
+        if (favourites.isNotEmpty()) setFavourite(favourites, true)
+    }
+
     /** [updatePlaybackPosition] and incrementing the play count as one write, for a track playing through to its end. */
     @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :now, playCount = (SELECT songs.playCount + 1), lastCompleted = :now WHERE id =:id")
     abstract suspend fun recordPlayedThrough(
@@ -325,4 +350,16 @@ fun SongData.toSong(): Song = Song(
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
     serverAlbumArtistIds = serverAlbumArtistIds
+)
+
+/** One song's merged stats for [SongDataDao.restoreStats]: [song] is the on-device state they were merged against. */
+data class SongStatsRestore(
+    val song: Song,
+    val playCount: Int,
+    val lastPlayed: Instant?,
+    val lastCompleted: Instant?,
+    val playbackPosition: Int,
+    val dateAdded: Instant?,
+    val excluded: Boolean,
+    val favouritedAt: Instant?
 )

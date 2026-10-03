@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
-class FakePlaylistRepository : PlaylistRepository {
+open class FakePlaylistRepository : PlaylistRepository {
     private val playlists = MutableStateFlow<List<Playlist>>(emptyList())
     private val playlistSongs = MutableStateFlow<Map<Long, List<Song>>>(emptyMap())
+
+    val currentPlaylists: List<Playlist> get() = playlists.value
 
     /** Every [addToPlaylist] call, in order. */
     val addedToPlaylist = mutableListOf<Pair<Playlist, List<Song>>>()
