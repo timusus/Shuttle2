@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SpeakerGroup
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Forward30
@@ -29,13 +30,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.mediarouter.app.MediaRouteButton
+import androidx.mediarouter.app.SystemOutputSwitcherDialogController
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
+import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
@@ -63,6 +67,18 @@ internal fun CastButton(modifier: Modifier = Modifier) {
             }
         },
         modifier = modifier.size(S2TouchTarget.minimum),
+    )
+}
+
+/** Where Cast can't start (no Play services): a plain button that opens Android's output switcher for Bluetooth and wired outputs. */
+@Composable
+internal fun OutputButton(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    S2IconButton(
+        icon = Icons.Rounded.SpeakerGroup,
+        contentDescription = stringResource(R.string.player_output),
+        onClick = { SystemOutputSwitcherDialogController.showDialog(context) },
+        modifier = modifier,
     )
 }
 

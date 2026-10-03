@@ -337,3 +337,8 @@ previous and new outputs, and where each pause came from.
 - [ ] Long-press the launcher icon: Play/Pause, Shuffle all and Search are listed.
 - [ ] Shuffle all (app closed): starts playing the whole library shuffled, and shuffle shows as on.
 - [ ] Search (app closed and app open on another tab): opens the Search tab.
+
+## Output switcher (#760)
+- [ ] Phone with Play services and no Cast targets nearby: the Cast button on Now Playing opens Android's output switcher listing Bluetooth and wired outputs; picking one moves playback.
+- [ ] Android 13 or lower (API 33 and below): the Cast button opens the Cast device chooser and still works; Bluetooth outputs are switched from the system panel.
+- [ ] Device without Google Play services (or Cast unavailable): Now Playing shows an Audio output button instead of Cast; tapping it opens the system output switcher.

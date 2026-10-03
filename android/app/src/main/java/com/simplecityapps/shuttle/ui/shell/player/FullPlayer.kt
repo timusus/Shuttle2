@@ -232,7 +232,7 @@ internal fun NowPlayingBar(
         } else {
             BarButton(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), selected == NowPlayingPanel.SleepTimer) { onPanel(NowPlayingPanel.SleepTimer) }
         }
-        if (player.castAvailable) CastButton()
+        if (player.castAvailable) CastButton() else OutputButton()
         val queueOpen = selected == NowPlayingPanel.Queue
         S2Button(
             text = stringResource(R.string.player_queue),
