@@ -47,7 +47,22 @@ cache badges as clutter, later shipped them optional).
 
 Weak motion and polish; customisation instead of opinion; neglected large screens. Auxio (opinion),
 Gramophone (conformance), Spotify 2026 (large screens) show the way out. Shuttle's Android direction:
-opinionated defaults, strict M3 Expressive conformance, a deliberate layout per tier.
+opinionated defaults, conventional Material behaviour with selective Expressive styling and Shuttle's
+own artwork-led look, a deliberate layout per tier.
+
+## Shuttle's own history (Oct 2026 research)
+
+- Original Shuttle (2012–2020): ~5M installs; press called it "probably the best-looking music app on
+  Android" ([GSMArena](https://www.gsmarena.com/top_music_player_apps_for_android-news-25410.php)).
+  Peer group: Phonograph, Pulsar, BlackPlayer — the "beautiful Material player" tier, not Poweramp's.
+  Praised for looks and simplicity; criticised for "major usability problems" in its later years.
+- S2 / Shuttle Music: 100K+ installs, ~4.0 public rating; absent from 2025–2026 Jellyfin/self-hosted
+  roundups (Finamp, Symfonium, Plexamp own that space). Users value: fast, simple, battery-light, own tag
+  reader (accurate library), one-time price, Android Auto. Users complain about: library organisation
+  (no folder hierarchy, jumbled large libraries, playlist ordering, multi-disc/OST grouping), and the
+  trial penalty (being removed).
+- Design implications: keep "the beautiful one" as the brand; make library correctness and organisation
+  visibly first-class (folder view, grouping, sorting); lead with the local + server hybrid.
 
 ## Highest-value moves for Shuttle (from this survey)
 

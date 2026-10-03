@@ -5,11 +5,24 @@ Exact values and the list of wrapped Expressive components: `docs/design/design-
 
 ## Stance
 
-Material 3 Expressive is the house style: confident type, shape and colour contrast, spring motion, and
-standard components used first. Shuttle's Android problem is rarely the spec — it is screens that bypass
-the design system (≈290 literal `dp` in main source vs a few dozen `S2Spacing` uses when this skill was
-written). Most Android polish work is **moving screens onto tokens and standard components**, then adding
-expressive moments deliberately.
+**Material structure and behaviour strictly; Expressive styling selectively.**
+
+- Strict: navigation suite, standard components, insets, predictive back, touch targets, contrast,
+  font scaling, the motion system. This is what "native" means on Android.
+- Selective: Expressive is a toolkit, not a costume. One or two signature moments per screen (e.g. play
+  button shape morph, wavy progress while playing); everything else standard and quiet. Morphing,
+  springs and emphasized type on everything is a new kind of slop.
+- Shuttle's look, not Google's: artwork-derived colour on media screens beats dynamic colour (dynamic
+  colour for chrome only); continuous corners on artwork; restraint. Historically Shuttle was known as
+  "the beautiful one" — that identity is worth more than spec conformance.
+- Check on One UI as well as Pixel: if it only feels at home on a Pixel, it's too Expressive.
+- Expressive APIs are alpha (material3 pinned to an alpha): screens never import them; only
+  `designsystem` wrappers do, so API churn stays in one module.
+
+Shuttle's Android problem is rarely the spec — it is screens that bypass the design system (≈290 literal
+`dp` in main source vs a few dozen `S2Spacing` uses when this skill was written). Most Android polish
+work is **moving screens onto tokens and standard components**, then adding expressive moments
+deliberately.
 
 ## Theme and colour
 

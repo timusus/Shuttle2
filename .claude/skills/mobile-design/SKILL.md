@@ -45,9 +45,12 @@ References: [craft-floor.md](craft-floor.md) · [android.md](android.md) · [ios
 
 ## Principles (the whole skill in eight lines)
 
-1. **Native first, brand second.** The platform governs structure, navigation and interaction; Shuttle
-   expresses itself through artwork-driven colour, type, motion and content. An Android screen that
-   looks like an iOS port (or vice versa) has failed, however pretty.
+1. **Conventional behaviour, distinctive look.** Follow platform *and* music-genre conventions for
+   structure and behaviour (navigation, back, sheets, gestures, insets, a11y) — users read a deviation
+   there as broken, not distinctive. Deviate only when you can name the convention, the reason, and the
+   accessible standard alternative. Identity lives in the visual and motion layer: artwork-driven colour,
+   type, a few signature motions. An Android screen that looks like an iOS port (or vice versa) has
+   failed; so has one that looks like a stock Google app.
 2. **Parity of intent, not of look.** Same capability and information on both platforms; each built
    from its own idioms (see Parity).
 3. **Artwork is the hero.** It is a music app: covers lead, chrome recedes, colour comes from the art
