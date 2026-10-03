@@ -11,7 +11,7 @@ class PlayerQualityTest {
     fun `a song with a bit depth reads codec, depth and sample rate`() {
         bare.copy(bitDepth = 24, sampleRate = 96000).qualityLine() shouldBe "FLAC · 24-bit / 96 kHz"
         bare.copy(bitDepth = 16, sampleRate = 44100).qualityLine() shouldBe "FLAC · 16-bit / 44.1 kHz"
-        bare.copy(bitDepth = 24).qualityLine() shouldBe "FLAC · 24-bit"
+        bare.copy(bitDepth = 24).qualityLine() shouldBe "FLAC"
     }
 
     @Test
@@ -39,5 +39,27 @@ class PlayerQualityTest {
     @Test
     fun `a codec alone reads as itself`() {
         bare.qualityLine() shouldBe "FLAC"
+    }
+
+    @Test
+    fun `a lossy codec ignores bit depth`() {
+        bare.copy(mimeType = "audio/mpeg", bitRate = 320, bitDepth = 16, sampleRate = 44100).qualityLine() shouldBe "MP3 · 320 kbps"
+        bare.copy(mimeType = "audio/mpeg", bitDepth = 16, sampleRate = 44100).qualityLine() shouldBe "MP3 · 44.1 kHz"
+    }
+
+    @Test
+    fun `a lossless codec with a bit depth but no sample rate reads the bit rate`() {
+        bare.copy(bitDepth = 24, sampleRate = 0, bitRate = 900).qualityLine() shouldBe "FLAC · 900 kbps"
+        bare.copy(bitDepth = 24, sampleRate = 0).qualityLine() shouldBe "FLAC"
+    }
+
+    @Test
+    fun `an unknown mime type with a codec reads the codec`() {
+        bare.copy(mimeType = "", audioCodec = "opus", bitRate = 128).qualityLine() shouldBe "OPUS · 128 kbps"
+    }
+
+    @Test
+    fun `22 point 05 kHz reads with its decimals`() {
+        bare.copy(sampleRate = 22050).qualityLine() shouldBe "FLAC · 22.05 kHz"
     }
 }
