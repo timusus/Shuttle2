@@ -200,7 +200,7 @@ private fun ShellNavDisplay(
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey>,
 ) {
     val directive = remember(layout, windowAdaptiveInfo) { layout.listDetailDirective(windowAdaptiveInfo) }
-    val listDetail = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+    val listDetail = PopOneEntrySceneStrategy(rememberListDetailSceneStrategy<NavKey>(directive = directive))
     // Routes marked sheet() open in a bottom sheet on a phone; from 600 dp their detail-pane marker applies instead.
     val sheet = remember(layout.width) { ShellSheetSceneStrategy<NavKey>(enabled = layout.width == ShellWidth.Compact) }
     val saveableState = rememberSaveableStateHolderNavEntryDecorator<NavKey>()

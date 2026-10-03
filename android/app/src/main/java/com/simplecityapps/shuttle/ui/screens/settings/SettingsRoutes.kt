@@ -5,8 +5,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -64,7 +68,12 @@ data object LiveLogRoute : UtilityRoute
 @Serializable
 data object FolderRulesRoute : UtilityRoute
 
-/** The Settings screens' entries, for the shell's entry provider. */
+/**
+ * The Settings screens' entries, for the shell's entry provider. Settings is the list pane and its pages the detail
+ * pane (list-detail from Expanded, one pane and push navigation below it); beside the list the first page stands in
+ * until one is opened, and opening another replaces the open one rather than stacking.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     val navigateUp = { navigator.back() }
     val openLink = { link: SettingsLink ->
@@ -76,7 +85,22 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
             SettingsLink.LiveLog -> navigator.open(LiveLogRoute)
         }
     }
-    entry<SettingsRoute> {
+    val detail = ListDetailSceneStrategy.detailPane()
+    // True while the list pane has the default page beside it, so the list lights that page's row.
+    val defaultPageShown = mutableStateOf(false)
+    val openDestination = { destination: SettingsDestination ->
+        val route = SettingsDestinationRoute(destination)
+        if (navigator.stack(navigator.selectedTab).last() is SettingsDestinationRoute) navigator.replace(route) else navigator.open(route)
+    }
+    entry<SettingsRoute>(
+        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = {
+            DisposableEffect(Unit) {
+                defaultPageShown.value = true
+                onDispose { defaultPageShown.value = false }
+            }
+            SettingsDestinationEntry(SettingsDestination.entries.first(), onNavigateUp = {}, onOpenLink = openLink, onOpenFolderRules = { navigator.open(FolderRulesRoute) })
+        })
+    ) {
         val viewModel: SettingsViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val proViewModel: SettingsProViewModel = metroViewModel()
@@ -85,23 +109,25 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
             uiState = uiState,
             pro = pro,
             onNavigateUp = { navigateUp() },
-            onOpenDestination = { navigator.open(SettingsDestinationRoute(it)) },
-            onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) }
+            onOpenDestination = openDestination,
+            onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) },
+            selected = (navigator.stack(navigator.selectedTab).last() as? SettingsDestinationRoute)?.destination
+                ?: SettingsDestination.entries.first().takeIf { defaultPageShown.value }
         )
     }
-    entry<SettingsDestinationRoute> { route ->
+    entry<SettingsDestinationRoute>(metadata = detail) { route ->
         SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink, onOpenFolderRules = { navigator.open(FolderRulesRoute) })
     }
-    entry<FolderRulesRoute> { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
-    entry<EqualizerRoute> { EqualizerEntry(onNavigateUp = { navigateUp() }) }
-    entry<ExcludedSongsRoute> { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
-    entry<LiveLogRoute> { LiveLogEntry(onNavigateUp = { navigateUp() }) }
-    entry<WhatsNewRoute> {
+    entry<FolderRulesRoute>(metadata = detail) { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
+    entry<EqualizerRoute>(metadata = detail) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
+    entry<ExcludedSongsRoute>(metadata = detail) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
+    entry<LiveLogRoute>(metadata = detail) { LiveLogEntry(onNavigateUp = { navigateUp() }) }
+    entry<WhatsNewRoute>(metadata = detail) {
         val viewModel: WhatsNewViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         WhatsNewScreen(uiState = uiState, onNavigateUp = { navigateUp() })
     }
-    entry<LicencesRoute> {
+    entry<LicencesRoute>(metadata = detail) {
         val viewModel: LicencesViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val uriHandler = LocalUriHandler.current

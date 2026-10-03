@@ -950,6 +950,68 @@ class AppShellTest {
     }
 
     @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `at Expanded width settings shows the list and its first page, a page replaces it, and back returns to the first page then home`() {
+        robot.setContent(window = windowInfo(840, 900))
+        robot.openSettings()
+        robot.assertTextDisplayed("Settings")
+        robot.assertTextDisplayed("Settings: Appearance")
+        robot.assertSelectedTab(null)
+
+        robot.tapText("Open Sources")
+        robot.assertTextDisplayed("Settings")
+        robot.assertTextDisplayed("Settings: Sources")
+
+        // The page replaced the stand-in rather than stacking: one back closes it, back again leaves settings.
+        robot.pressBack()
+        robot.assertTextDisplayed("Settings: Appearance")
+        robot.assertTextDisplayed("Open Sources")
+        robot.pressBack()
+        robot.assertSelectedTab("Home")
+    }
+
+    @Test
+    fun `at Compact width settings pushes a page over the list, and back returns to the list`() {
+        robot.setContent()
+        robot.openSettings()
+        robot.assertTextDisplayed("Open Sources")
+        robot.assertReachable("Settings: Appearance", reachable = false)
+
+        robot.tapText("Open Sources")
+        robot.assertTextDisplayed("Settings: Sources")
+        robot.assertReachable("Open Sources", reachable = false)
+
+        robot.pressBack()
+        robot.assertTextDisplayed("Open Sources")
+        robot.pressBack()
+        robot.assertSelectedTab("Home")
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `at Expanded width back closes a library detail and leaves the list showing`() {
+        robot.setContent(window = windowInfo(840, 900))
+        robot.tapText("Library")
+        robot.tapText(SampleLibrary.albums.first().title)
+        robot.pressBack()
+        robot.assertSelectedTab("Library")
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `at Expanded width the open settings page survives saved state restoration`() {
+        val restoration = StateRestorationTester(composeTestRule)
+        robot.setContent(window = windowInfo(840, 900), restoration = restoration)
+        robot.openSettings()
+        robot.tapText("Open Sources")
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeTestRule.waitForIdle()
+        robot.assertTextDisplayed("Settings")
+        robot.assertTextDisplayed("Settings: Sources")
+    }
+
+    @Test
     @Config(qualifiers = "w1280dp-h900dp")
     fun `at pane width a settings screen hides the rail and leaves the pane open`() {
         robot.setContent(window = PaneWindow)

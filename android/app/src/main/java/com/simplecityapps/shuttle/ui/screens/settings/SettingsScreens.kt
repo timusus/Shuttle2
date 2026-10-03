@@ -110,7 +110,7 @@ internal fun SettingsScaffold(
 /**
  * The Settings root: the Shuttle Music Pro row, then one row per [SettingsDestination], each showing the current
  * value of what it holds where there is one. [uiState] carries the stored settings; [pro] says which copy the Pro
- * row shows.
+ * row shows. [selected] is the row whose page is open beside the list, at widths that show both.
  */
 @Composable
 fun SettingsRootScreen(
@@ -119,7 +119,8 @@ fun SettingsRootScreen(
     onNavigateUp: () -> Unit,
     onOpenDestination: (SettingsDestination) -> Unit,
     onOpenPro: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    selected: SettingsDestination? = null
 ) {
     SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = onNavigateUp, modifier = modifier, root = true) {
         item {
@@ -148,6 +149,7 @@ fun SettingsRootScreen(
                             summary = destinationSummary(destination, uiState),
                             onClick = { onOpenDestination(destination) },
                             icon = destination.icon,
+                            selected = destination == selected,
                             shapes = shapes
                         )
                     }

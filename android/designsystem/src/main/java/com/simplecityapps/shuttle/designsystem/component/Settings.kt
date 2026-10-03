@@ -64,7 +64,10 @@ fun SettingsGroup(
     }
 }
 
-/** A setting that opens another screen, or acts when tapped. Android's convention: no trailing chevron; the [summary] carries the current value. */
+/**
+ * A setting that opens another screen, or acts when tapped. Android's convention: no trailing chevron; the [summary] carries the current value.
+ * [selected] marks the row whose screen is open beside the list, in the secondary container.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LinkSetting(
@@ -76,13 +79,15 @@ fun LinkSetting(
     iconStyle: SettingIconStyle = SettingIconStyle.Tonal,
     enabled: Boolean = true,
     progress: SettingProgress? = null,
+    selected: Boolean = false,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
 ) {
     SegmentedListItem(
         onClick = onClick,
+        selected = selected,
         shapes = shapes,
         modifier = modifier,
-        colors = settingColors(),
+        colors = settingColors(highlightSelected = true),
         enabled = enabled,
         leadingContent = icon?.let { { SettingIcon(it, iconStyle, enabled) } },
         supportingContent = settingSummary(summary, progress),
@@ -239,19 +244,23 @@ private fun settingSummary(summary: String?, progress: SettingProgress?): (@Comp
 
 /**
  * Rows sit in `surfaceContainer` so a group reads as one container on the `surface` screen. A
- * checked switch row keeps the same colours: the `Switch` shows the state, not the row.
+ * checked switch row keeps the same colours: the `Switch` shows the state, not the row. Only a [highlightSelected]
+ * link row, the one open beside the list, takes the secondary container.
  */
 @Composable
-private fun settingColors(): ListItemColors {
+private fun settingColors(highlightSelected: Boolean = false): ListItemColors {
     val colors = MaterialTheme.colorScheme
+    val selectedContainer = if (highlightSelected) colors.secondaryContainer else colors.surfaceContainer
+    val selectedContent = if (highlightSelected) colors.onSecondaryContainer else colors.onSurface
+    val selectedSecondary = if (highlightSelected) colors.onSecondaryContainer else colors.onSurfaceVariant
     return ListItemDefaults.segmentedColors(
         containerColor = colors.surfaceContainer,
         disabledContainerColor = colors.surfaceContainer,
-        selectedContainerColor = colors.surfaceContainer,
-        selectedContentColor = colors.onSurface,
-        selectedLeadingContentColor = colors.onSurfaceVariant,
-        selectedTrailingContentColor = colors.onSurfaceVariant,
-        selectedSupportingContentColor = colors.onSurfaceVariant,
+        selectedContainerColor = selectedContainer,
+        selectedContentColor = selectedContent,
+        selectedLeadingContentColor = selectedSecondary,
+        selectedTrailingContentColor = selectedSecondary,
+        selectedSupportingContentColor = selectedSecondary,
     )
 }
 

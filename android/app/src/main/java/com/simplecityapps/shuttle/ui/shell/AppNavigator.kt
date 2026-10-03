@@ -49,6 +49,12 @@ class AppNavigator(
         stacks.getValue(selectedTab).add(route)
     }
 
+    /** Swaps the selected tab's top route for [route], as picking another page beside a list does. */
+    fun replace(route: NavKey) {
+        val stack = stacks.getValue(selectedTab)
+        stack[stack.lastIndex] = route
+    }
+
     fun selectTab(tab: ShellTab) {
         if (tab == selectedTab) {
             val stack = stacks.getValue(tab)

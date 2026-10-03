@@ -1,10 +1,13 @@
 package com.simplecityapps.shuttle.ui.shell
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -24,6 +27,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryDetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen
 import com.simplecityapps.shuttle.ui.screens.songinfo.songInfoReady
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoMetadata
@@ -69,9 +73,17 @@ fun fakeShellEntryProvider(
     }
     // The real screen, so a sheet shows what a phone would; its ViewModel needs the Metro graph.
     entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}) }
-    entry<SettingsRoute> { FakeList("Settings", emptyList(), openAlbum) }
-    entry<EqualizerRoute> { FakeList("Equalizer screen", emptyList(), openAlbum) }
-    entry<SettingsDestinationRoute> { route -> FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum) }
+    // The real Settings entries need the Metro graph; these keep its list-detail shape: the first page stands in beside the list.
+    entry<SettingsRoute>(metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { FakeList("Settings: Appearance", emptyList(), openAlbum) })) {
+        LazyColumn {
+            item { SectionHeader(title = "Settings") }
+            items(listOf(SettingsDestination.Appearance, SettingsDestination.Sources)) { destination ->
+                Text("Open ${destination.name}", Modifier.clickable { navigator.open(SettingsDestinationRoute(destination)) })
+            }
+        }
+    }
+    entry<EqualizerRoute>(metadata = ListDetailSceneStrategy.detailPane()) { FakeList("Equalizer screen", emptyList(), openAlbum) }
+    entry<SettingsDestinationRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route -> FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum) }
 }
 
 @Composable

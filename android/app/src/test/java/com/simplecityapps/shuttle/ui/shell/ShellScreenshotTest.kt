@@ -111,8 +111,8 @@ class ShellScreenshotTest {
         paneOpen: Boolean = false,
     ) {
         if (paneOpen) {
-            robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
-            robot.scrollToAndTapText("More sound settings")
+            // From Home, the Settings list with its first page beside it (list-detail from Expanded, #770).
+            robot.openSettings()
         } else {
             robot.openSoundSettings()
         }

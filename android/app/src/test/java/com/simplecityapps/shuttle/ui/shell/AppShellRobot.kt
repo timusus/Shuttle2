@@ -337,7 +337,11 @@ class AppShellRobot(
 
     /** Each visibility Home has reported, in order. */
     val homeVisibility = mutableListOf<Boolean>()
-    private val entryProvider = { navigator: AppNavigator -> fakeShellEntryProvider(navigator, homeVisibility::add) }
+    private var navigator: AppNavigator? = null
+    private val entryProvider = { navigator: AppNavigator ->
+        this.navigator = navigator
+        fakeShellEntryProvider(navigator, homeVisibility::add)
+    }
 
     /** The panel the player's state has open. */
     val panel: NowPlayingPanel? get() = queueState.value.panel
@@ -688,6 +692,12 @@ class AppShellRobot(
     ) {
         val nodes = rule.onAllNodes(hasText(text) or hasContentDescription(text))
         if (reachable) nodes.onFirst().assertExists() else nodes.assertCountEquals(0)
+    }
+
+    /** Opens the Settings list on the selected tab, as the real app does from a screen's top bar. */
+    fun openSettings() {
+        rule.runOnUiThread { checkNotNull(navigator).open(SettingsRoute) }
+        rule.waitForIdle()
     }
 
     /** Opens Playback & sound's settings page, a utility destination, from the player's panel. */

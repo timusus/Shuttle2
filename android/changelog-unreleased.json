@@ -494,6 +494,10 @@
     {
       "text": "On an artist page, tapping an album's cover opens the album, while tapping the rest of its row unfolds its songs",
       "commits": []
+    },
+    {
+      "text": "On a tablet, Settings now shows its list beside the page you open, instead of stretching the phone layout",
+      "commits": []
     }
   ]
 }

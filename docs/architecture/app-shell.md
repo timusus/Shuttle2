@@ -192,6 +192,11 @@ capped at 2, and 1 below Expanded or at compact height; the player pane is the t
 outside `NavDisplay`. This resolves decision 5: at 840–1199 dp there is no persistent pane, so
 list-detail has the whole content area; from 1200 dp the pane takes its fixed width.
 
+Settings is a list pane too (`SettingsRoute`), its pages detail panes, with the first page as the placeholder
+and its row lit while nothing else is open (#770). `NavDisplay` pops as many entries as separate a scene's
+entries from its `previousEntries`, and the list-detail scene's sit below the list pane, so back from a
+detail popped the list too; `PopOneEntrySceneStrategy` wraps the strategy so back pops one entry.
+
 ### Sheets (#463)
 
 `ShellSheetSceneStrategy` (`ui/shell`, adapted from the nav3-recipes bottom-sheet strategy) shows
