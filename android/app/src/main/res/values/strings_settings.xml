@@ -173,7 +173,6 @@
     <string name="pref_streaming_quality_128">128 kbps</string>
     <!-- Settings: Name of the amber accent colour -->
     <string name="theme_accent_entry_amber">Amber</string>
-    <!-- Settings: Title of the row showing the app's version number, on the About screen -->
     <!-- Settings: a row's summary when the switch it leads to is on -->
     <string name="settings_state_on">On</string>
     <!-- Settings: a row's summary when the switch it leads to is off -->
@@ -182,6 +181,7 @@
     <string name="settings_playback_summary_equalizer_on">Equalizer on</string>
     <!-- Settings root: summary of Playback and sound while the equalizer is off -->
     <string name="settings_playback_summary_equalizer_off">Equalizer off</string>
+    <!-- Settings: Title of the row showing the app's version number, on the About screen -->
     <string name="settings_version_title">Version</string>
     <!-- Settings: Snackbar shown when a library rescan starts -->
     <string name="settings_rescan_started">Scanning your library</string>
