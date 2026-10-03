@@ -1,94 +1,66 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.SearchOff
-import androidx.compose.material3.ExpandedDockedSearchBar
-import androidx.compose.material3.ExpandedFullScreenSearchBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SearchBarState
-import androidx.compose.material3.SearchBarValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
-import kotlinx.coroutines.launch
 
 /**
- * Search, reachable from the Home and Library top bars: the collapsed M3 `SearchBar`, which
- * expands into the search view showing [content] (recent searches, then results as the user
- * types). The view is full screen on Compact and Medium and docked under the bar from Expanded
- * ([docked]), passed down by the caller from its width class.
+ * The Search destination's field (reached from the Home and Library top bars): the M3 search bar's input field on its
+ * container, with a search icon and a clear button while there is text. [focusRequester] lets the screen focus it on
+ * arrival.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun S2SearchBar(
-    state: SearchBarState,
+fun S2SearchField(
     textFieldState: TextFieldState,
     onSearch: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    docked: Boolean = false,
-    content: @Composable ColumnScope.() -> Unit,
+    focusRequester: FocusRequester = remember { FocusRequester() },
 ) {
-    val inputField = @Composable { SearchInputField(state, textFieldState, onSearch, placeholder) }
-    SearchBar(state = state, inputField = inputField, modifier = modifier)
-    if (docked) {
-        ExpandedDockedSearchBar(state = state, inputField = inputField, content = content)
-    } else {
-        ExpandedFullScreenSearchBar(state = state, inputField = inputField, content = content)
-    }
-}
-
-/**
- * The search text field, shared by the collapsed bar and the expanded view: a search icon that
- * becomes back once expanded, and a clear button while there is text.
- */
-@Composable
-fun SearchInputField(
-    state: SearchBarState,
-    textFieldState: TextFieldState,
-    onSearch: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-) {
-    val scope = rememberCoroutineScope()
-    val expanded = state.currentValue == SearchBarValue.Expanded
-    SearchBarDefaults.InputField(
-        textFieldState = textFieldState,
-        searchBarState = state,
-        onSearch = onSearch,
+    Surface(
+        shape = SearchBarDefaults.inputFieldShape,
+        color = SearchBarDefaults.colors().containerColor,
         modifier = modifier,
-        placeholder = { Text(placeholder) },
-        leadingIcon = {
-            if (expanded) {
-                S2IconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.ds_back), { scope.launch { state.animateToCollapsed() } })
+    ) {
+        SearchBarDefaults.InputField(
+            state = textFieldState,
+            onSearch = onSearch,
+            expanded = false,
+            onExpandedChange = {},
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+            placeholder = { Text(placeholder) },
+            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
+            trailingIcon = if (textFieldState.text.isNotEmpty()) {
+                { S2IconButton(Icons.Rounded.Close, stringResource(R.string.ds_clear_search), { textFieldState.clearText() }) }
             } else {
-                Icon(Icons.Rounded.Search, contentDescription = null)
-            }
-        },
-        trailingIcon = if (textFieldState.text.isNotEmpty()) {
-            { S2IconButton(Icons.Rounded.Close, stringResource(R.string.ds_clear_search), { textFieldState.clearText() }) }
-        } else {
-            null
-        },
-    )
+                null
+            },
+        )
+    }
 }
 
 /** A recent search in the search view: tap to search it again, or remove it. */
@@ -118,13 +90,12 @@ fun SearchNoResults(query: String, modifier: Modifier = Modifier) {
 
 @Preview
 @Composable
-private fun S2SearchBarPreview() {
+private fun S2SearchFieldPreview() {
     S2Preview {
-        S2SearchBar(
-            state = rememberSearchBarState(),
+        S2SearchField(
             textFieldState = rememberTextFieldState(),
             onSearch = {},
             placeholder = "Search your library",
-        ) {}
+        )
     }
 }

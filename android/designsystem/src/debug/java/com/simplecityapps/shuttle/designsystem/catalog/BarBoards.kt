@@ -41,9 +41,8 @@ import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavItem
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
-import com.simplecityapps.shuttle.designsystem.component.S2SearchBar
+import com.simplecityapps.shuttle.designsystem.component.S2SearchField
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
-import com.simplecityapps.shuttle.designsystem.component.SearchInputField
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
@@ -100,24 +99,17 @@ fun TopBarBoard(width: BoardWidth) {
     )
 }
 
-/**
- * The expanded search view as `ExpandedFullScreenSearchBar` lays it out: the input field, a
- * divider, then the content, on the search container colour. The real one opens in a dialog
- * window, which a board capture can't see, so the board draws its layout in place.
- */
+/** The Search destination's field over [content], on the search container colour, as the screen lays them out. */
 @Composable
 private fun SearchViewFrame(query: String, content: @Composable ColumnScope.() -> Unit) {
-    val colors = SearchBarDefaults.colors()
-    Surface(color = colors.containerColor) {
+    Surface(color = SearchBarDefaults.colors().containerColor) {
         Column {
-            SearchInputField(
-                state = rememberSearchBarState(initialValue = SearchBarValue.Expanded),
+            S2SearchField(
                 textFieldState = rememberTextFieldState(query),
                 onSearch = {},
                 placeholder = "Search your library",
                 modifier = Modifier.fillMaxWidth(),
             )
-            HorizontalDivider(color = colors.dividerColor)
             content()
         }
     }
@@ -128,14 +120,13 @@ fun SearchBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Collapsed") {
-                S2SearchBar(
-                    state = rememberSearchBarState(),
+            BoardSection("Empty") {
+                S2SearchField(
                     textFieldState = rememberTextFieldState(),
                     onSearch = {},
                     placeholder = "Search your library",
                     modifier = Modifier.fillMaxWidth(),
-                ) {}
+                )
             },
             BoardSection("Focused, empty: recent searches") {
                 SearchViewFrame("") {

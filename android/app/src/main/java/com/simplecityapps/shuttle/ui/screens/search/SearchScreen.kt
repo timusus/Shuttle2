@@ -14,16 +14,8 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,17 +28,16 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.search.SearchHit
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
-import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2SearchField
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
@@ -72,7 +63,6 @@ class SearchCallbacks(
  * while the field is empty, or the results grouped by type. [queryState] holds the field's text; the destination
  * feeds it to the ViewModel.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     uiState: SearchUiState,
@@ -86,38 +76,25 @@ fun SearchScreen(
     LaunchedEffect(Unit) { if (queryState.text.isEmpty()) focusRequester.requestFocus() }
 
     Column(modifier.fillMaxSize()) {
-        Surface(
-            shape = SearchBarDefaults.inputFieldShape,
-            color = SearchBarDefaults.colors().containerColor,
+        S2SearchField(
+            textFieldState = queryState,
+            onSearch = {
+                callbacks.onSearch()
+                focusManager.clearFocus()
+            },
+            placeholder = stringResource(R.string.search_placeholder),
+            focusRequester = focusRequester,
             modifier = Modifier
                 .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
                 .fillMaxWidth(),
-        ) {
-            SearchBarDefaults.InputField(
-                state = queryState,
-                onSearch = {
-                    callbacks.onSearch()
-                    focusManager.clearFocus()
-                },
-                expanded = false,
-                onExpandedChange = {},
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                placeholder = { Text(stringResource(R.string.search_placeholder)) },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                trailingIcon = if (queryState.text.isNotEmpty()) {
-                    { S2IconButton(Icons.Rounded.Close, stringResource(com.simplecityapps.shuttle.designsystem.R.string.ds_clear_search), { queryState.clearText() }) }
-                } else {
-                    null
-                },
-            )
-        }
+        )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = S2Spacing.medium),
         ) {
             S2FilterChip(
                 label = stringResource(R.string.search_category_all),
@@ -172,7 +149,7 @@ private fun SearchResultList(
 ) {
     var expanded by rememberSaveable(query) { mutableStateOf<SearchCategory?>(null) }
     val sections = results.sections(expanded)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = S2Spacing.medium)) {
         // The best match of all leads, lifted out of its own section.
         results.top?.let { top ->
             item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result)) }
