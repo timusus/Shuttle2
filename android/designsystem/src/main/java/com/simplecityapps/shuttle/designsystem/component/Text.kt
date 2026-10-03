@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -9,12 +9,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 
-/** S2's text: a [style] from the theme's type scale, in [color] (the surrounding content colour when unspecified). */
+/** S2's text: a [style] (the surrounding one, so slot-styled containers like ListItem keep theirs, unless given), in [color] (the surrounding content colour when unspecified). */
 @Composable
 fun S2Text(
     text: String,
     modifier: Modifier = Modifier,
-    style: TextStyle = MaterialTheme.typography.bodyLarge,
+    style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
