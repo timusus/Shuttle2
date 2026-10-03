@@ -100,10 +100,10 @@ class PlaylistDetailViewModelTest {
             listOf(createSong(id = 1, album = "A"), createSong(id = 2, album = "A"), createSong(id = 3, album = "B")),
         )
         val viewModel = createViewModel(playlist.id)
-        backgroundScope.launch { viewModel.covers.collect {} }
+        backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.covers.value.map { it.id } shouldBe listOf(1L, 3L)
+        viewModel.uiState.value.covers.map { it.id } shouldBe listOf(1L, 3L)
     }
 
     @Test

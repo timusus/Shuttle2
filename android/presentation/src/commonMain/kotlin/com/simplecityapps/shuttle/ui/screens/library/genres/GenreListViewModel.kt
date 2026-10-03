@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
 data class GenreListUiState(
@@ -36,6 +37,8 @@ data class GenreListUiState(
     val sortOrder: GenreSortOrder = GenreSortOrder.Default,
     /** The genres' letter sections when sorted by name ([genreLetterIndex]); null for any other sort. */
     val letterIndex: List<LetterSection>? = null,
+    /** Each genre's mosaic covers by genre name (#643): up to four songs from different albums; they fill in after the list shows. */
+    val covers: Map<String, List<Song>> = emptyMap(),
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
@@ -59,15 +62,19 @@ class GenreListViewModel @Inject constructor(
         IndexedList(sorted, sortOrder, genreLetterIndex(sorted, sortOrder))
     }
 
+    private val covers = observeGenres().flatMapLatest { genres -> observeGenreCovers(genres) }.onStart { emit(emptyMap()) }
+
     val uiState: StateFlow<GenreListUiState> = combine(
         sortedGenres,
         mediaImportObserver.songImportState,
-    ) { sorted, songImportState ->
+        covers,
+    ) { sorted, songImportState, covers ->
         val sortedGenres = sorted.items
         GenreListUiState(
             genres = sortedGenres,
             sortOrder = sorted.sortOrder,
             letterIndex = sorted.letterIndex,
+            covers = covers,
             loadingState = when {
                 songImportState is SongImportState.ImportProgress -> GenreListUiState.LoadingState.Scanning
                 sortedGenres.isEmpty() -> GenreListUiState.LoadingState.Empty
@@ -80,19 +87,6 @@ class GenreListViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = GenreListUiState(),
     )
-
-    /**
-     * Each genre's mosaic covers by genre name (#643): up to four songs from different albums. Its own flow, apart
-     * from [uiState], so a screen that draws no genre artwork (Android's list) never runs the per-genre queries; the
-     * list shows first and a screen collecting this fills its artwork in as the covers load.
-     */
-    val covers: StateFlow<Map<String, List<Song>>> = observeGenres()
-        .flatMapLatest { genres -> observeGenreCovers(genres) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = emptyMap(),
-        )
 
     fun setSortOrder(sortOrder: GenreSortOrder) {
         saveSetting(LibraryViewSetting.GenreSort, sortOrder)

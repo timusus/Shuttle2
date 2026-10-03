@@ -13,10 +13,10 @@ struct GenreDetailView: View {
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             GenreDetailModels(graph: AppGraph.shared, genreName: name)
         }
-        Observing(models.genre.uiState, models.genre.covers, models.actions.uiState) { state, covers, actions in
+        Observing(models.genre.uiState, models.actions.uiState) { state, actions in
             GenreDetailContent(
                 state: state,
-                covers: covers,
+                covers: state.covers,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext))
@@ -57,7 +57,7 @@ final class GenreDetailModels: ViewModelGroup {
 /// cover to tint from).
 struct GenreDetailContent: View {
     let state: GenreDetailUiState
-    /// The songs whose covers make up its mosaic, as its Library row draws (`GenreDetailViewModel.covers`).
+    /// The songs whose covers make up its mosaic, as its Library row draws (`GenreDetailUiState.covers`).
     var covers: [Song] = []
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }

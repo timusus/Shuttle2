@@ -38,6 +38,8 @@ data class GenreDetailUiState(
     val albums: List<Album> = emptyList(),
     val songs: List<Song> = emptyList(),
     val currentSong: Song? = null,
+    /** The songs whose covers make up the genre's mosaic (#652), the same ones its Library row draws: up to four from different albums. */
+    val covers: List<Song> = emptyList(),
     val loading: Boolean = true,
 ) {
     /** What playing this screen's songs starts the queue from (#633). */
@@ -74,22 +76,18 @@ class GenreDetailViewModel @AssistedInject constructor(
 
     private val genre = observeGenres(GenreQuery.GenreName(genreName)).map { it.firstOrNull() }
 
-    val uiState: StateFlow<GenreDetailUiState> = combine(
-        genre,
-        songsAndAlbums,
-        observeCurrentSong(),
-    ) { genre, (songs, albums), currentSong ->
-        GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, loading = false)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GenreDetailUiState())
-
-    /**
-     * The songs whose covers make up the genre's mosaic (#652), the same ones its Library row draws: up to four from
-     * different albums. Its own flow, apart from [uiState], so a screen that draws no mosaic never runs the query.
-     */
-    val covers: StateFlow<List<Song>> = genre
+    private val covers = genre
         .distinctUntilChanged { old, new -> old?.name == new?.name }
         .flatMapLatest { genre ->
             if (genre == null) flowOf(emptyList()) else observeGenreCovers(listOf(genre)).map { it[genre.name].orEmpty() }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val uiState: StateFlow<GenreDetailUiState> = combine(
+        genre,
+        songsAndAlbums,
+        observeCurrentSong(),
+        covers,
+    ) { genre, (songs, albums), currentSong, covers ->
+        GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, covers = covers, loading = false)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GenreDetailUiState())
 }

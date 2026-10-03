@@ -54,22 +54,10 @@ class GenreListViewModelTest {
         genreRepository.setSongsForGenre("Jazz", listOf("A", "A", "B", "C", "D", "E").mapIndexed { i, album -> createSong(id = i.toLong(), album = album) })
 
         val viewModel = viewModel()
-        backgroundScope.launch { viewModel.covers.collect {} }
-        advanceUntilIdle()
-
-        viewModel.covers.value["Jazz"]?.map { it.album } shouldBe listOf("A", "B", "C", "D")
-        genreRepository.coverLimits.distinct() shouldBe listOf(4)
-    }
-
-    @Test
-    fun `the list alone runs no cover queries`() = runTest {
-        genreRepository.setGenres(listOf(createGenre(name = "Jazz")))
-
-        val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.uiState.value.genres.map { it.name } shouldBe listOf("Jazz")
-        genreRepository.coverLimits shouldBe emptyList()
+        viewModel.uiState.value.covers["Jazz"]?.map { it.album } shouldBe listOf("A", "B", "C", "D")
+        genreRepository.coverLimits.distinct() shouldBe listOf(4)
     }
 }

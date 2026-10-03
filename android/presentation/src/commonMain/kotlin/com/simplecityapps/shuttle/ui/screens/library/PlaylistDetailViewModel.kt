@@ -48,6 +48,8 @@ data class PlaylistDetailUiState(
     /** [PlaylistSong.id]s of the entries in the current multi-selection. */
     val selectedIds: Set<Long> = emptySet(),
     val currentSong: Song? = null,
+    /** The songs whose covers make up the playlist's mosaic (#652), the same ones its Library row draws: its first four from different albums, in the playlist's order. */
+    val covers: List<Song> = emptyList(),
     val loading: Boolean = true,
     val events: List<PendingEvent<PlaylistDetailEvent>> = emptyList(),
 ) {
@@ -113,30 +115,25 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         .flatMapLatest { playlist -> playlist?.let { observePlaylistSongs(it) } ?: flowOf(emptyList()) }
         .onEach { draggedOrder.value = null }
 
-    /**
-     * The songs whose covers make up the playlist's mosaic (#652), the same ones its Library row draws: its first four
-     * from different albums, in the playlist's order. Its own flow, apart from [uiState], so a screen that draws no
-     * mosaic never runs the query.
-     */
-    val covers: StateFlow<List<Song>> = playlist
+    private val covers = playlist
         .distinctUntilChanged { old, new -> old?.id == new?.id }
         .flatMapLatest { playlist ->
             if (playlist == null) flowOf(emptyList()) else observePlaylistCovers(listOf(playlist)).map { it[playlist.id].orEmpty() }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val uiState: StateFlow<PlaylistDetailUiState> = combine(
         playlist,
         combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
         selectedIds,
-        observeCurrentSong(),
+        combine(observeCurrentSong(), covers, ::Pair),
         events.flow,
-    ) { playlist, songs, selected, currentSong, events ->
+    ) { playlist, songs, selected, (currentSong, covers), events ->
         PlaylistDetailUiState(
             playlist = playlist,
             songs = songs,
             selectedIds = selected.filterTo(mutableSetOf()) { id -> songs.any { it.id == id } },
             currentSong = currentSong,
+            covers = covers,
             loading = false,
             events = events,
         )

@@ -72,10 +72,10 @@ class GenreDetailViewModelTest {
         genreRepository.setSongsForGenre("Jazz", songs)
 
         val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository), ObserveCurrentSong(queueOperations), ObserveGenreCovers(genreRepository))
-        backgroundScope.launch { viewModel.covers.collect {} }
+        backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.covers.value.map { it.id } shouldBe listOf(1L, 3L)
+        viewModel.uiState.value.covers.map { it.id } shouldBe listOf(1L, 3L)
     }
 
     @Test
