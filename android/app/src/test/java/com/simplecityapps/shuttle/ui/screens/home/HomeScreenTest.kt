@@ -115,15 +115,6 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `jump back in labels each cell with its kind`() {
-        robot.setContent(HomeScenarios.content)
-
-        robot.assertTextDisplayed("Album")
-        robot.assertTextDisplayed("Artist")
-        robot.assertTextDisplayed("Playlist")
-    }
-
-    @Test
     fun `a mixed shelf says what each tile is`() {
         robot.setContent(HomeScenarios.content)
 

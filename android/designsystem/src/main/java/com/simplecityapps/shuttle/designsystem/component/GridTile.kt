@@ -52,6 +52,9 @@ private const val SelectedArtworkScale = 0.88f
  * the title and [subtitle] under it, no card behind them. The caller sizes the tile; the artwork
  * fills the slot (`Artwork(modifier = Modifier.fillMaxSize())`) and clips itself to its own shape.
  *
+ * The title wraps to at most [titleLines] lines (two; more at the largest font sizes) and the subtitle takes one; both
+ * truncate with an ellipsis, and the subtitle sits right under the title however many lines it takes.
+ *
  * [selected] shrinks the artwork inside a `secondaryContainer` tile and badges it with a check;
  * [playing] marks the album or artist the current song belongs to, like [SongRow] does.
  */
@@ -65,6 +68,7 @@ fun GridTile(
     subtitle: String? = null,
     selected: Boolean = false,
     playing: Boolean = false,
+    titleLines: Int = 2,
     onLongClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
 ) {
@@ -98,7 +102,7 @@ fun GridTile(
                         scaleY = artworkScale
                     },
             ) { artwork() }
-            if (selected) SelectedBadge(Modifier.align(Alignment.TopEnd).padding(6.dp))
+            if (selected) SelectedBadge(Modifier.align(Alignment.TopEnd).padding(S2Spacing.xsmall))
         }
         Column(
             modifier = Modifier
@@ -120,7 +124,7 @@ fun GridTile(
                     text = title,
                     style = MaterialTheme.typography.tileTitle,
                     color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
+                    maxLines = titleLines,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -141,7 +145,7 @@ fun GridTile(
 private fun SelectedBadge(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .size(24.dp)
+            .size(S2IconSize.medium)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center,

@@ -6,7 +6,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -35,6 +35,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.GeneratedArtwork
+import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.SmartPlaylistId
@@ -221,11 +222,10 @@ fun homeItemActions(
 }
 
 /**
- * A shelf tile: the item's artwork, square with the tile corner, then its title and [HomeItem.subtitle] under it, where
- * they can't clash with text printed on the art (#404). A tap opens the item, or for a genre shuffles it (a Genre pick
- * is something to put on); a long press has the rest.
+ * A shelf tile: a [GridTile] of the item's artwork with its title and [HomeItem.subtitle] under it, where they can't
+ * clash with text printed on the art (#404). A tap opens the item, or for a genre shuffles it (a Genre pick is
+ * something to put on); a long press has the rest.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeShelfTile(
     item: HomeItem,
@@ -237,40 +237,18 @@ fun HomeShelfTile(
     modifier: Modifier = Modifier,
 ) {
     val actions = homeItemActions(item, callbacks)
-    val lines = if (largeText) LARGE_TEXT_TILE_LINES else 1
-    Column(
+    GridTile(
+        title = item.title(),
+        subtitle = item.subtitle(mixed),
+        onClick = { if (item is HomeItem.GenreItem) callbacks.onAction(item.playAction()) else callbacks.onOpenItem(item) },
+        onLongClick = actions.showMenu,
+        titleLines = if (largeText) LARGE_TEXT_TILE_LINES else 2,
+        artwork = { HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize()) },
         modifier = modifier
             .width(width)
-            .clip(MaterialTheme.shapes.large)
-            .combinedClickable(
-                onClick = { if (item is HomeItem.GenreItem) callbacks.onAction(item.playAction()) else callbacks.onOpenItem(item) },
-                onLongClick = actions.showMenu,
-            )
             .semantics { customActions = actions.accessibilityActions }
             .testTag(item.tileTag),
-        verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
-    ) {
-        HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.padding(bottom = S2Spacing.xsmall).fillMaxWidth().aspectRatio(1f))
-        // Inset from the tile's rounded corners, which clip the press ripple: flush, they'd shave the first glyph.
-        Column(
-            modifier = Modifier.padding(start = S2Spacing.small, end = S2Spacing.small, bottom = S2Spacing.small),
-            verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
-        ) {
-            Text(
-                text = item.title(),
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = lines,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = item.subtitle(mixed),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = lines,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
+    )
 }
 
 /** How many lines a tile's title may take at the largest font sizes, where one would cut off nearly every title. */

@@ -29,6 +29,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.tileSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.tileTitle
 import com.simplecityapps.shuttle.model.Song
 
 /**
@@ -79,7 +81,7 @@ fun jumpBackInColumns(
 
 /**
  * One cell, after Spotify's recents: the cover at the cell's leading edge, the title on up to two lines and the kind
- * of item as a one-line label under it, then the song its queue was left on ([progress], #670, #706), centred on a tonal
+ * of the title, then the song its queue was left on if any ([progress], #670, #706), centred on a tonal
  * container of a minimum height, with a play button at the end (shuffle, for a genre) when [showPlayButton]. A compact
  * cell has none, so titles keep the room (#660). Its play, and Play in its long-press sheet, carry on where the queue
  * was left; the sheet's Play from start starts over.
@@ -115,15 +117,16 @@ private fun JumpBackInCell(
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.tileTitle,
+                        minLines = 2,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    // The kind, then the song its queue was left on, on a line of its own: a phone cell is too narrow for both.
-                    listOfNotNull(stringResource(item.kind.label), progress?.takeUnless { it.finished }?.songName).forEach { label ->
+                    // The song its queue was left on, if any; the cover and title say what kind of item it is.
+                    progress?.takeUnless { it.finished }?.songName?.let { songName ->
                         Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelSmall,
+                            text = songName,
+                            style = MaterialTheme.typography.tileSubtitle,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
