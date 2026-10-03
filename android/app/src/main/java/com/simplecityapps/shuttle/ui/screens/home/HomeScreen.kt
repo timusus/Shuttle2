@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -51,6 +50,7 @@ import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
@@ -140,9 +140,6 @@ val HomeUiState.Content.coldStart: Boolean
 val HomeSectionId.hasSeeAll: Boolean
     get() = this == HomeSectionId.RecentlyAdded
 
-/** At this font scale and above, text needs the width: the grid is one column and shelf tiles wrap their titles. */
-private const val LARGE_TEXT_FONT_SCALE = 1.5f
-
 @Composable
 private fun HomeContent(
     content: HomeUiState.Content,
@@ -150,7 +147,7 @@ private fun HomeContent(
     modifier: Modifier,
 ) {
     val wide = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
-    val largeText = LocalDensity.current.fontScale >= LARGE_TEXT_FONT_SCALE
+    val largeText = isLargeText()
     val columns = jumpBackInColumns(widthAtLeastMedium = wide, largeText = largeText)
     val shelfTileWidth = if (wide) S2ShelfTileWidth.wide else S2ShelfTileWidth.compact
     // The lead section's header is a headline; the rest are shelf titles, set apart by a wider gap.

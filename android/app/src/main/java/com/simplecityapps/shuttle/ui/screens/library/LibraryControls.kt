@@ -24,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -41,6 +40,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
+import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 
 /** A tab's controls row: its count, sort, view and play actions, each only where the tab offers it. */
 class LibraryTabControls(
@@ -86,9 +86,6 @@ internal fun controlsRowHeight(controls: LibraryTabControls?): Dp = if (controls
 /** The row's least height; it grows with the text, but its buttons keep the scroller's track clear of them at this much. */
 private val ControlsRowHeight = S2TouchTarget.minimum
 
-/** From this font scale the sort button drops its label, so the count and the end actions still fit the row. */
-private const val LARGE_TEXT_FONT_SCALE = 1.5f
-
 /** Widens the content by [amount] on each side, past the padding its parent gives it. */
 private fun Modifier.bleed(amount: Dp) = layout { measurable, constraints ->
     val extra = amount.roundToPx() * 2
@@ -113,7 +110,7 @@ internal fun LibraryControlsRow(controls: LibraryTabControls, modifier: Modifier
     ) {
         // The start group takes what the end actions leave. Its count keeps its width until the sort, which drops its label at
         // large text, no longer fits; then the count is what gives way.
-        val largeText = LocalDensity.current.fontScale >= LARGE_TEXT_FONT_SCALE
+        val largeText = isLargeText()
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
             controls.count?.let { count ->
                 S2Text(
