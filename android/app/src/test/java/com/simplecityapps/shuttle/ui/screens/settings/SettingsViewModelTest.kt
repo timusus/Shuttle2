@@ -12,16 +12,18 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
+import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
-import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -198,5 +200,81 @@ class SettingsViewModelTest {
         val keys = viewModel().uiState.value.values.keys
 
         keys shouldBe AndroidSettingsCatalog.settings.map { it.key }.toSet()
+    }
+
+    private fun TestScope.events(viewModel: SettingsViewModel) = viewModel.uiState.value.events.map { it.value }
+
+    @Test
+    fun `exporting asks for a save location, then builds and writes the backup`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        viewModel.onAction(SettingsAction.ExportBackup)
+        runCurrent()
+        viewModel.exportBackupTo("content://dest")
+        runCurrent()
+
+        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupExportRequested("shuttle-library-backup.json"), SettingsUiEvent.BackupExportSaved)
+        backupFlow.written shouldBe mapOf("content://dest" to "{\"staged\":true}")
+    }
+
+    @Test
+    fun `an export that can't be built or written reports failure`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        backupFlow.stagedJson = null
+        viewModel.exportBackupTo("content://dest")
+        backupFlow.stagedJson = "{}"
+        backupFlow.writeSucceeds = false
+        viewModel.exportBackupTo("content://dest")
+        backupFlow.failure = IllegalStateException("boom")
+        viewModel.exportBackupTo("content://dest")
+        runCurrent()
+
+        events(viewModel) shouldBe List(3) { SettingsUiEvent.BackupExportFailed }
+    }
+
+    @Test
+    fun `importing reports the songs updated, playlists restored and songs not found`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        backupFlow.report = RestoreReport(songsMatched = 9, songsUnmatched = 3, statsWritten = 7, playlistsRestored = 2, playlistsUnresolved = emptyList(), membersSkipped = 0)
+
+        viewModel.importBackupFrom("content://src")
+        runCurrent()
+
+        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupImported(songsUpdated = 7, playlistsRestored = 2, songsUnmatched = 3))
+    }
+
+    @Test
+    fun `an import that can't be read or throws reports failure`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+
+        backupFlow.report = null
+        viewModel.importBackupFrom("content://src")
+        backupFlow.failure = IllegalStateException("boom")
+        viewModel.importBackupFrom("content://src")
+        runCurrent()
+
+        events(viewModel) shouldBe List(2) { SettingsUiEvent.BackupImportFailed }
+    }
+
+    @Test
+    fun `cancelling an import posts nothing`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        backupFlow.failure = kotlinx.coroutines.CancellationException("cancelled")
+
+        viewModel.importBackupFrom("content://src")
+        runCurrent()
+
+        events(viewModel) shouldBe emptyList()
     }
 }

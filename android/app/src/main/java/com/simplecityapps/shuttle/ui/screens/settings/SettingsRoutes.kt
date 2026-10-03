@@ -133,17 +133,19 @@ private fun SettingsDestinationEntry(
     }
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         when (event) {
-            is SettingsUiEvent.BackupExportReady -> exportLauncher.launch(event.suggestedName)
+            is SettingsUiEvent.BackupExportRequested -> exportLauncher.launch(event.suggestedName)
+
             is SettingsUiEvent.BackupImportPickerRequested -> importLauncher.launch(arrayOf("application/json"))
+
             is SettingsUiEvent.BackupImported -> snackbarHostState.showSnackbar(
-                context.getString(
-                    R.string.settings_backup_import_done,
-                    event.songsMatched,
-                    event.playlistsRestored,
-                    event.songsUnmatched
-                )
+                if (event.songsUnmatched > 0) {
+                    context.getString(R.string.settings_backup_import_done_unmatched, event.songsUpdated, event.playlistsRestored, event.songsUnmatched)
+                } else {
+                    context.getString(R.string.settings_backup_import_done, event.songsUpdated, event.playlistsRestored)
+                }
             )
-            else -> snackbarHostState.showSnackbar(context.getString(event.message))
+
+            else -> snackbarHostState.showSnackbar(context.getString(checkNotNull(event.message)))
         }
     }
     SettingsDestinationScreen(
@@ -162,7 +164,7 @@ private fun SettingsDestinationEntry(
 }
 
 @get:StringRes
-private val SettingsUiEvent.message: Int
+private val SettingsUiEvent.message: Int?
     get() = when (this) {
         SettingsUiEvent.RescanStarted -> R.string.settings_rescan_started
 
@@ -172,12 +174,10 @@ private val SettingsUiEvent.message: Int
 
         SettingsUiEvent.BackupImportFailed -> R.string.settings_backup_import_failed
 
-        // Handled with launchers/report formatting above, never as plain snackbars.
-        is SettingsUiEvent.BackupExportReady -> R.string.settings_backup_export_saved
-
-        is SettingsUiEvent.BackupImportPickerRequested -> R.string.settings_backup_import_failed
-
-        is SettingsUiEvent.BackupImported -> R.string.settings_backup_import_done
+        // Handled with launchers and report formatting where the events are consumed, never as plain snackbars.
+        is SettingsUiEvent.BackupExportRequested,
+        is SettingsUiEvent.BackupImportPickerRequested,
+        is SettingsUiEvent.BackupImported -> null
 
         SettingsUiEvent.ArtworkCacheCleared -> R.string.settings_artwork_cache_cleared
 

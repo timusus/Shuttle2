@@ -17,6 +17,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlin.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,8 +40,8 @@ data class SettingsUiState(
 sealed interface SettingsUiEvent {
     data object RescanStarted : SettingsUiEvent
 
-    /** A freshly built backup is staged in the ViewModel; the UI should open a save picker. */
-    data class BackupExportReady(val suggestedName: String) : SettingsUiEvent
+    /** The UI should open a save picker; its result goes to [SettingsViewModel.exportBackupTo]. */
+    data class BackupExportRequested(val suggestedName: String) : SettingsUiEvent
 
     data object BackupExportSaved : SettingsUiEvent
 
@@ -49,7 +50,7 @@ sealed interface SettingsUiEvent {
     /** The UI should open a file picker for a backup to restore. */
     data object BackupImportPickerRequested : SettingsUiEvent
 
-    data class BackupImported(val songsMatched: Int, val playlistsRestored: Int, val songsUnmatched: Int) : SettingsUiEvent
+    data class BackupImported(val songsUpdated: Int, val playlistsRestored: Int, val songsUnmatched: Int) : SettingsUiEvent
 
     data object BackupImportFailed : SettingsUiEvent
 
@@ -76,9 +77,6 @@ class SettingsViewModel @Inject constructor(
     private val catalogSettings = catalog.settings
 
     private val events = PendingEvents<SettingsUiEvent>()
-
-    /** The staged backup JSON between ExportBackup and the save-picker result. */
-    private var pendingBackupJson: String? = null
 
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(catalogSettings.map { setting -> observeSetting(setting).map { setting.key to it } }) { it.toMap() },
@@ -135,15 +133,7 @@ class SettingsViewModel @Inject constructor(
                 events.post(SettingsUiEvent.RescanStarted)
             }
 
-            SettingsAction.ExportBackup -> viewModelScope.launch {
-                val json = runCatching { backupFlow.buildBackupJson() }.getOrNull()
-                if (json == null) {
-                    events.post(SettingsUiEvent.BackupExportFailed)
-                } else {
-                    pendingBackupJson = json
-                    events.post(SettingsUiEvent.BackupExportReady(BACKUP_FILE_NAME))
-                }
-            }
+            SettingsAction.ExportBackup -> events.post(SettingsUiEvent.BackupExportRequested(BACKUP_FILE_NAME))
 
             SettingsAction.ImportBackup -> {
                 events.post(SettingsUiEvent.BackupImportPickerRequested)
@@ -167,29 +157,36 @@ class SettingsViewModel @Inject constructor(
 
     fun onEventHandled(id: Long) = events.consume(id)
 
-    /** Writes the staged backup to the save-picker [destination]; call once per pick. */
+    /** Builds the backup and writes it to the save-picker [destination]; call once per pick. */
     fun exportBackupTo(destination: String) {
-        val json = pendingBackupJson
-        pendingBackupJson = null
-        if (json == null) {
-            events.post(SettingsUiEvent.BackupExportFailed)
-            return
-        }
         viewModelScope.launch {
-            events.post(
-                if (backupFlow.writeBackup(destination, json)) SettingsUiEvent.BackupExportSaved
-                else SettingsUiEvent.BackupExportFailed
-            )
+            val saved = try {
+                backupFlow.buildBackupJson()?.let { backupFlow.writeBackup(destination, it) } ?: false
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                false
+            }
+            events.post(if (saved) SettingsUiEvent.BackupExportSaved else SettingsUiEvent.BackupExportFailed)
         }
     }
 
-    /** Reads and merges the backup at the picker [source]. */
+    /** Reads, parses and merges the backup at the picker [source]. */
     fun importBackupFrom(source: String) {
         viewModelScope.launch {
-            val report = runCatching { backupFlow.readAndRestore(source) }.getOrNull()
+            val report = try {
+                backupFlow.readAndRestore(source)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
             events.post(
-                if (report == null) SettingsUiEvent.BackupImportFailed
-                else SettingsUiEvent.BackupImported(report.songsMatched, report.playlistsRestored, report.songsUnmatched)
+                if (report == null) {
+                    SettingsUiEvent.BackupImportFailed
+                } else {
+                    SettingsUiEvent.BackupImported(report.statsWritten, report.playlistsRestored, report.songsUnmatched)
+                }
             )
         }
     }

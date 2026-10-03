@@ -12,9 +12,9 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
+import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
-import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule

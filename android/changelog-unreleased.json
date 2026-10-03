@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "You can now back up your play counts, favourites and playlists from Settings, Library, and restore them later without losing anything newer on your device",
+      "commits": []
+    },
+    {
       "text": "Album pages now end with a More by shelf of the artist's other albums, so you can keep browsing",
       "commits": []
     },
