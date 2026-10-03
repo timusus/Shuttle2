@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: playing; paused; loading; above the navigation bar.
+States: playing; paused; loading; casting; above the navigation bar.
 
 ## Compact, light
 

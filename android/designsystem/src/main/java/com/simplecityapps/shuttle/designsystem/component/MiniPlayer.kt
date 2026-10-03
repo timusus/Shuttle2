@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,15 +23,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
+/** The mini player's height: the shell docks the player sheet's Mini level this far above the nav bar. */
+val S2MiniPlayerHeight = 72.dp
+
 /**
  * The collapsed player above the nav bar (compact) or docked under the content (expanded): the
- * song's [artwork], [title] and [subtitle] ("artist • album"), a small morphing
- * [S2PlayPauseButton], skip next, and the [S2PlaybackProgress] wave along the bottom edge.
- * [buffering] shows the play button's `LoadingIndicator` and an indeterminate wave. Tapping the
- * rest of the bar ([onClick]) expands the player.
+ * song's [artwork], [title] and [subtitle] ("artist • album"), a plain [S2PlayPauseIconButton]
+ * (#738), skip next, and the [S2PlaybackProgress] wave along the bottom edge. [buffering] shows the
+ * play button's `LoadingIndicator` and an indeterminate wave. While [castingTo] names a Cast device,
+ * the subtitle says the song is playing there. Tapping the rest of the bar ([onClick]) expands the
+ * player.
  */
 @Composable
 fun S2MiniPlayer(
@@ -46,28 +54,42 @@ fun S2MiniPlayer(
     nextContentDescription: String = stringResource(R.string.ds_next),
     /** Holding the next button repeats this instead of calling [onNext] (1.0.10's `SkipButton`). */
     onNextHold: (() -> Unit)? = null,
+    castingTo: String? = null,
 ) {
     Surface(onClick = onClick, modifier = modifier, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = S2Spacing.smallMedium, end = S2Spacing.small, top = S2Spacing.small, bottom = 6.dp),
+                    .padding(start = S2Spacing.smallMedium, end = S2Spacing.small, top = S2Spacing.xsmall, bottom = S2Spacing.xsmall),
                 horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 artwork?.invoke()
                 Column(Modifier.weight(1f)) {
                     Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    if (castingTo != null) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.Cast, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(S2IconSize.small))
+                            Text(
+                                stringResource(R.string.ds_playing_on, castingTo),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    } else {
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
-                S2PlayPauseButton(playing, onPlayPause, buffering = buffering, size = 44.dp)
+                S2PlayPauseIconButton(playing, onPlayPause, buffering = buffering)
                 S2TransportButton(nextIcon, nextContentDescription, onNext, onHold = onNextHold)
             }
             S2PlaybackProgress(
@@ -76,7 +98,7 @@ fun S2MiniPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = S2Spacing.smallMedium)
-                    .padding(bottom = 6.dp),
+                    .padding(bottom = S2Spacing.xsmall),
             )
         }
     }

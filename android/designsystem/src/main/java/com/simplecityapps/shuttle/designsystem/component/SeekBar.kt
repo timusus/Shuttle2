@@ -3,11 +3,14 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -19,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -28,6 +32,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.time
 import com.simplecityapps.shuttle.format.formatDuration
@@ -35,7 +40,8 @@ import com.simplecityapps.shuttle.format.formatDuration
 /**
  * The now-playing seek bar: an M3 Expressive `Slider` with a thick track, which grows thicker, its
  * thumb with it, while it's dragged. The elapsed and total times sit underneath; while dragging, the
- * elapsed time follows the thumb in `primary`. [onSeek] runs once, when the drag ends.
+ * elapsed time follows the thumb in `primary`. [onSeek] runs once, when the drag ends. While
+ * [buffering], a small loading indicator and "Buffering" sit between the times; the bar stays usable.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +51,7 @@ fun S2SeekBar(
     onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    buffering: Boolean = false,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
     var dragFraction by remember { mutableStateOf<Float?>(null) }
@@ -83,6 +90,17 @@ fun S2SeekBar(
                 color = if (dragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.weight(1f))
+            if (buffering) {
+                Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(S2IconSize.small),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        strokeWidth = SeekBufferingStroke,
+                    )
+                    Text(stringResource(R.string.ds_buffering), style = MaterialTheme.typography.time, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.weight(1f))
+            }
             Text(formatDuration(durationMs), style = MaterialTheme.typography.time, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -95,6 +113,9 @@ private val SeekTrackDraggingHeight = 24.dp
 /** The thumb is a bar this wide, standing this much taller than the track. */
 private val SeekThumbWidth = 4.dp
 private val SeekThumbOverhang = 20.dp
+
+/** The buffering indicator's stroke, in proportion to its small icon size. */
+private val SeekBufferingStroke = 2.dp
 
 @Preview
 @Composable

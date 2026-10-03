@@ -34,6 +34,8 @@ existing lines as they are.
 - [ ] `player-controls`: [boards](player-controls.md) · approved: — · boards hash: —
 - [ ] `seek-bar`: [boards](seek-bar.md) · approved: — · boards hash: —
 - [ ] `progress`: [boards](progress.md) · approved: — · boards hash: —
+- [ ] `player-sheet`: [boards](player-sheet.md) · approved: — · boards hash: —
+- [ ] `player-pane`: [boards](player-pane.md) · approved: — · boards hash: —
 - [ ] `queue-row`: [boards](queue-row.md) · approved: — · boards hash: —
 - [ ] `setting-row`: [boards](setting-row.md) · approved: — · boards hash: —
 - [ ] `eq-band`: [boards](eq-band.md) · approved: — · boards hash: —

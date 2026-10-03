@@ -1,12 +1,11 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -18,18 +17,18 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
@@ -42,7 +41,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
-import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import kotlin.math.roundToInt
 
@@ -65,15 +65,9 @@ enum class S2PlayerControlsSize(
 }
 
 /**
- * The play/pause button's corner as a share of its side: softer while paused (showing Play), a
- * firmer rounded square while playing (showing Pause).
- */
-private const val PausedCornerFraction = 0.38f
-private const val PlayingCornerFraction = 0.28f
-
-/**
- * The play/pause button: a `primary` continuous rounded square whose corners firm up from paused
- * to playing on the fast spatial spring. [buffering] swaps the icon for a `LoadingIndicator`.
+ * The full player's play/pause button: a filled `primary` circle, the one transport button with a
+ * container (#783). [buffering] swaps the icon for a `LoadingIndicator`. Elsewhere (the mini player)
+ * play/pause is a plain [S2PlayPauseIconButton].
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -82,22 +76,14 @@ fun S2PlayPauseButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     buffering: Boolean = false,
-    size: Dp = 80.dp,
+    size: Dp = S2PlayerControlsSize.Regular.playPause,
     interactionSource: MutableInteractionSource? = null,
 ) {
-    val corner by animateFloatAsState(
-        if (playing) PlayingCornerFraction else PausedCornerFraction,
-        MaterialTheme.motionScheme.fastSpatialSpec(),
-        label = "playPauseCorner",
-    )
     val label = stringResource(if (playing) R.string.ds_pause else R.string.ds_play)
     Box(
         modifier = modifier
             .size(size)
-            .graphicsLayer {
-                shape = ContinuousRoundedCornerShape(CornerSize(this.size.minDimension * corner.coerceIn(0f, 0.5f)))
-                clip = true
-            }
+            .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary)
             .clickable(interactionSource = interactionSource, indication = ripple(), role = Role.Button, onClick = onClick)
             .semantics { contentDescription = label },
@@ -112,6 +98,29 @@ fun S2PlayPauseButton(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(size * 0.45f),
             )
+        }
+    }
+}
+
+/**
+ * Play/pause as a standard icon button, a [S2TouchTarget.minimum] square with no container: the mini
+ * player's (#738). [buffering] swaps the icon for a `LoadingIndicator`; the button stays enabled, so
+ * a tap while it spins pauses.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun S2PlayPauseIconButton(
+    playing: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    buffering: Boolean = false,
+) {
+    val label = stringResource(if (playing) R.string.ds_pause else R.string.ds_play)
+    IconButton(onClick = onClick, modifier = modifier.size(S2TouchTarget.minimum).semantics { contentDescription = label }) {
+        if (buffering) {
+            LoadingIndicator(color = MaterialTheme.colorScheme.primary, modifier = Modifier.size(S2IconSize.medium))
+        } else {
+            Icon(if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = null)
         }
     }
 }

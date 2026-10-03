@@ -87,12 +87,14 @@ val CatalogEntries = listOf(
     CatalogEntry("toolbar-selection", "Selection toolbar", listOf("floating, 1 selected", "floating, many with overflow", "overflow open", "docked alternative")) {
         SelectionToolbarBoard(it)
     },
-    CatalogEntry("mini-player", "Mini player", listOf("playing", "paused", "loading", "above the navigation bar")) { MiniPlayerBoard(it) },
+    CatalogEntry("mini-player", "Mini player", listOf("playing", "paused", "loading", "casting", "above the navigation bar")) { MiniPlayerBoard(it) },
     CatalogEntry("player-controls", "Player controls", listOf("playing", "paused", "buffering", "shuffle on, repeat all", "repeat one")) {
         PlayerControlsBoard(it)
     },
-    CatalogEntry("seek-bar", "Seek bar", listOf("resting", "disabled", "dragging", "over an hour")) { SeekBarBoard(it) },
+    CatalogEntry("seek-bar", "Seek bar", listOf("resting", "disabled", "buffering", "dragging", "over an hour")) { SeekBarBoard(it) },
     CatalogEntry("progress", "Playback progress", listOf("playing", "paused", "indeterminate")) { ProgressBoard(it) },
+    CatalogEntry("player-sheet", "Player sheet", listOf("sheet handle", "expanded, no panel", "queue open, player pushed up")) { PlayerSheetBoard(it) },
+    CatalogEntry("player-pane", "Player pane", listOf("pane", "pane, queue open")) { PlayerPaneBoard(it) },
     CatalogEntry("queue-row", "Queue row", listOf("played", "current", "upcoming", "dragging")) { QueueRowBoard(it) },
     CatalogEntry("setting-row", "Setting rows", listOf("group with header", "switch on, off, with summary", "slider and info", "disabled")) {
         SettingRowBoard(it)

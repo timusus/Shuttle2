@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: resting; disabled; dragging; over an hour.
+States: resting; disabled; buffering; dragging; over an hour.
 
 ## Compact, light
 
