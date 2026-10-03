@@ -38,7 +38,8 @@ struct SentryCrashReporterTests {
     @Test func aBreadcrumbsMessageAndDataAreScrubbed() {
         let crumb = Breadcrumb(level: .error, category: "JellyfinAuth")
         crumb.message = "GET https://music.example.com/Items?api_key=abc failed"
-        crumb.data = ["host": "nas.local:8096", "count": 3]
+        crumb.setData(value: "nas.local:8096", key: "host")
+        crumb.setData(value: 3, key: "count")
 
         let scrubbed = TelemetryScrub.breadcrumb(crumb)
 

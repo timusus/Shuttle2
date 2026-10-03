@@ -112,7 +112,10 @@ enum TelemetryScrub {
 
     static func breadcrumb(_ crumb: Breadcrumb) -> Breadcrumb {
         crumb.message = crumb.message.map(text)
-        crumb.data = crumb.data.map(values)
+        // Key by key: the `data` setter is deprecated (Sentry 9)
+        crumb.data?.forEach { key, value in
+            if let string = value as? String { crumb.setData(value: text(string), key: key) }
+        }
         return crumb
     }
 
