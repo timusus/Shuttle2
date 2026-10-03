@@ -1,9 +1,8 @@
-# Open Settings from the shell's More sheet.
+# Open Settings from the Library header's Settings button.
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: launch-fresh.yaml
 - extendedWaitUntil:
-    visible: "More"
+    visible: "Settings"
     timeout: 10000
-- tapOn: "More"
 - tapOn: "Settings"

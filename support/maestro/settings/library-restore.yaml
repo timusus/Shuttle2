@@ -1,0 +1,19 @@
+# Settings > Library > "Restore library backup": pick shuttle-library-backup.json in Downloads through the
+# system open-document picker and assert the success snackbar.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/open-settings.yaml
+- tapOn: "Library"
+- scrollUntilVisible:
+    element:
+      text: "Restore library backup"
+- tapOn: "Restore library backup"
+- extendedWaitUntil:
+    visible: "shuttle-library-backup.json"
+    timeout: 10000
+- takeScreenshot: ${PICKER_SHOT}
+- tapOn: "shuttle-library-backup.json"
+- extendedWaitUntil:
+    visible: "Updated .* songs and restored .* playlists.*"
+    timeout: 15000
+- takeScreenshot: ${DONE_SHOT}

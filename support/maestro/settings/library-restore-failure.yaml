@@ -1,0 +1,18 @@
+# Restoring a file that isn't a backup (garbage.json in Downloads) shows the failure snackbar.
+# 
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/open-settings.yaml
+- tapOn: "Library"
+- scrollUntilVisible:
+    element:
+      text: "Restore library backup"
+- tapOn: "Restore library backup"
+- extendedWaitUntil:
+    visible: "garbage.json"
+    timeout: 10000
+- tapOn: "garbage.json"
+- extendedWaitUntil:
+    visible: "Could not read that backup file"
+    timeout: 15000
+- takeScreenshot: 08-restore-failure-snackbar

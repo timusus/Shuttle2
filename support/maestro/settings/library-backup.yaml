@@ -1,0 +1,26 @@
+# Settings > Library > "Back up library": save the suggested shuttle-library-backup.json (the picker opens in Downloads) through the system
+# create-document picker and assert the success snackbar.
+# checks/library-backup.sh removes any old file first and drives the data assertions.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/open-settings.yaml
+- tapOn: "Library"
+- scrollUntilVisible:
+    element:
+      text: "Back up library"
+- tapOn: "Back up library"
+- extendedWaitUntil:
+    visible: "Save"
+    timeout: 10000
+- runFlow:
+    when:
+      notVisible: "Downloads"
+    commands:
+      - tapOn: "Show roots"
+      - tapOn: "Downloads"
+- takeScreenshot: 03-save-picker
+- tapOn: "Save"
+- extendedWaitUntil:
+    visible: "Library backup saved"
+    timeout: 15000
+- takeScreenshot: 04-backup-saved-snackbar
