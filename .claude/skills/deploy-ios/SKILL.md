@@ -1,13 +1,15 @@
 ---
 name: deploy-ios
-description: Deploy Shuttle Music for iOS to TestFlight via GitHub Actions. Runs pre-flight checks, creates an ios/vYYMMDDNN tag and pushes it; also covers the local archive-and-upload path.
+description: Deploy Shuttle Music for iOS to TestFlight from this Mac. Runs pre-flight checks, archives and uploads via ios/archive-and-upload.sh, then records the release with an ios/vYYMMDDNN tag.
 user_invocable: true
 ---
 
-# Deploy iOS to TestFlight
+# Deploy iOS to TestFlight (local)
 
-Pushing an `ios/vYYMMDDNN` tag triggers `.github/workflows/ios-deploy.yml` (self-hosted `mac-builder`:
-archive, export, upload to TestFlight). Details and one-time setup: `ios/DEPLOY.md`.
+The deploy runs entirely on this Mac via `ios/archive-and-upload.sh` — no CI. The repo is public, so a
+self-hosted runner is not acceptable (a forked PR could run code on the signing Mac); the
+`ios/vYYMMDDNN` tag is only the release record, pushed **after** a successful upload. Details and
+one-time setup: `ios/DEPLOY.md`.
 
 ## Steps
 
@@ -27,18 +29,20 @@ support/scripts/longjob.sh wait ios-preflight
 
 If iOS changed since the last full verify, also run `ios/scripts/test.sh`. **STOP** on failure.
 
-### 3. Pre-flight: secrets and runner
+### 3. Pre-flight: App Store Connect key
 
 ```bash
-gh secret list | grep -c 'ASC_KEY_ID\|ASC_ISSUER_ID\|ASC_API_KEY_P8'   # must be 3
-gh api repos/{owner}/{repo}/actions/runners --jq '.runners[] | select(.labels[].name=="mac-builder") | .status'
+API_KEY_PATH="${ASC_API_KEY_PATH:-/Users/tim/projects/simplecity-apps/podcasts/AuthKey_98Q5SW65X5.p8}"
+[ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_API_KEY_PATH)"; exit 1; }
 ```
 
-Missing secrets or an offline runner: STOP and point the user at `ios/DEPLOY.md`.
+Key ID `98Q5SW65X5`, issuer `9981aa4c-3137-41c0-bf69-4410dd990785`. Never print or commit the `.p8`.
+Missing key: **STOP** and point the user at `ios/DEPLOY.md`.
 
 ### 4. Pick the tag
 
-Format `ios/vYYMMDDNN`, NN the day's sequence starting at 01.
+Format `ios/vYYMMDDNN`, NN the day's sequence starting at 01. Build number is the tag's eight digits;
+the script derives the marketing version (`20YY.MM.DD`) from it.
 
 ```bash
 git fetch --tags
@@ -47,39 +51,38 @@ LAST=$(git tag -l "ios/v${TODAY}*" | sort | tail -1)
 # none -> ios/v${TODAY}01, else increment NN (zero-padded)
 ```
 
-Confirm the tag with the user, then:
+### 5. Confirm with the user, then archive and upload
+
+**Ask before every upload** — it is outward-facing. State the tag, build number and marketing version,
+and offer a dry run (`--no-upload`, IPA lands in `ios/build/export`) before the real thing.
 
 ```bash
-git tag ios/v26100301
-git push origin ios/v26100301
-```
-
-(`git push` of a tag is its own bare command.) Marketing version becomes `2026.10.03`, build
-number `26100301`.
-
-### 5. Watch the run
-
-```bash
-RUN=$(gh run list --workflow ios-deploy.yml --limit 1 --json databaseId -q '.[0].databaseId')
-support/scripts/longjob.sh start ios-deploy -- gh run watch "$RUN" --exit-status
+support/scripts/longjob.sh start ios-deploy -- ios/archive-and-upload.sh \
+  --build-number "$BUILD_NUMBER" \
+  --api-key-path "${ASC_API_KEY_PATH:-/Users/tim/projects/simplecity-apps/podcasts/AuthKey_98Q5SW65X5.p8}" \
+  --api-key-id 98Q5SW65X5 \
+  --api-issuer-id 9981aa4c-3137-41c0-bf69-4410dd990785
+# dry run: add --no-upload
 support/scripts/longjob.sh wait ios-deploy
 ```
 
-On failure: `gh run view "$RUN" --log-failed | tail -60`, report the cause. A re-run needs a new tag
-(or `gh run rerun`) only if nothing was uploaded; a spent build number needs `NN+1`.
+The script builds FFmpeg and the Release iosArm64 `Shared.framework` itself (add
+`--skip-shared-framework` only if they were just built). On failure: `ios/build/archive.log` /
+`ios/build/export.log`; a spent build number needs `NN+1`, so move to a fresh tag.
 
-### 6. Find the build
+### 6. Record the release
 
-App Store Connect > Shuttle Music (id 6818057709) > TestFlight. Processing takes 5-30 minutes.
-Report the tag, build number and run URL.
-
-## Local path (no CI)
+Only after a successful upload — the tag marks an uploaded build, so a failed attempt just picks
+`NN+1`:
 
 ```bash
-# Dry run, IPA lands in ios/build/export
-ios/archive-and-upload.sh --no-upload --build-number 26100301 \
-  --api-key-path /path/AuthKey_KEYID.p8 --api-key-id KEYID --api-issuer-id ISSUER
-# Real upload: drop --no-upload
+git tag "ios/v${TODAY}01"
+git push origin "ios/v${TODAY}01"
 ```
 
-Run it through `longjob.sh` (archive is slow). Never print or commit the `.p8`.
+(`git push` of a tag is its own bare command.) The tag triggers nothing — no workflow watches it.
+
+### 7. Find the build
+
+App Store Connect > Shuttle Music (id 6818057709) > TestFlight. Processing takes 5-30 minutes.
+Report the tag, build number and IPA path.
