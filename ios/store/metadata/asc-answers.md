@@ -58,7 +58,8 @@ for tracking:
 
 | Data type | Purpose | Source |
 |---|---|---|
-| Usage Data > Product Interaction | Analytics | PostHog: app opens and backgrounding, paywall, purchase, sign-in and onboarding events |
+| Usage Data > Product Interaction | Analytics | PostHog: paywall, purchase, sign-in and onboarding events |
+| Usage Data > Other Usage Data | Analytics | PostHog: the app lifecycle events the SDK sends itself (app opened/backgrounded) |
 | Purchases > Purchase History | Analytics | PostHog: `purchase_started`/`_completed`/`_failed`/`_restored` with the product and a bucketed reason |
 | Identifiers > Device ID | Analytics | PostHog's random install id; declared conservatively, never the IDFA or IDFV |
 | Diagnostics > Crash Data | App Functionality | Sentry crash reports, including uncaught Kotlin exceptions |
@@ -73,11 +74,11 @@ Both are on by default and each turns off in Settings > Privacy; the first run's
 - **Sentry** (`s2-ios`): `sendDefaultPii` off; no screenshots, view hierarchy, network breadcrumbs or
   failed-request capture; every message, breadcrumb and extra goes through the shared `TelemetryScrubber`
   (URLs, hosts, IPs, file paths, emails, `user=`/`token=` values) before it leaves the device.
-- `ios/S2/PrivacyInfo.xcprivacy` declares the same six types (Linked and Tracking false),
+- `ios/S2/PrivacyInfo.xcprivacy` declares the same seven types (Linked and Tracking false),
   `NSPrivacyTracking` false and no tracking domains. Both SDKs link statically; their own manifests'
   required-reason APIs (UserDefaults CA92.1, file timestamps C617.1, system boot time 35F9.1) are the ones
-  the app already declares. PostHog's own manifest also lists Other Usage Data; the events above are all
-  Product Interaction, so it is not answered separately.
+  the app already declares. Other Usage Data is declared to match PostHog's own manifest: its lifecycle
+  events (app opened/backgrounded) are usage data the SDK collects by itself.
 - No ATT prompt, no IDFA, no ads SDK. Server address, username and session token live in the Keychain and go
   only to the user's own server. Apple processes purchases; StoreKit verifies them on the device.
 - ATS allows arbitrary loads (`NSAllowsArbitraryLoads`) so plain-http LAN servers work; that is transport
