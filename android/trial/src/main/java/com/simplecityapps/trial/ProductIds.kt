@@ -1,6 +1,7 @@
 package com.simplecityapps.trial
 
 import com.simplecityapps.shuttle.entitlement.ProSource
+
 /**
  * Play product IDs that grant S2 Pro.
  *

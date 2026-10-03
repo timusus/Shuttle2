@@ -90,7 +90,8 @@ fun albumLetterIndex(albums: List<Album>, sortOrder: AlbumSortOrder): List<Lette
 
 fun genreLetterIndex(genres: List<Genre>, sortOrder: GenreSortOrder): List<LetterSection>? = genreLetterKey(sortOrder)?.let { letterSections(genres, it) }
 
-fun albumArtistLetterIndex(albumArtists: List<AlbumArtist>, sortOrder: AlbumArtistSortOrder): List<LetterSection>? = albumArtistLetterKey(sortOrder)?.let { letterSections(albumArtists, it) }
+fun albumArtistLetterIndex(albumArtists: List<AlbumArtist>, sortOrder: AlbumArtistSortOrder): List<LetterSection>? =
+    albumArtistLetterKey(sortOrder)?.let { letterSections(albumArtists, it) }
 
 /** [letter] with its accent or other diacritic dropped: the first character of its canonical decomposition. */
 internal expect fun baseLetter(letter: Char): Char
