@@ -53,6 +53,8 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$REPO_ROOT" || exit 1
+# platform-tools (adb) is not on a stock Mac PATH; remote-emu.sh adds the same dir.
+PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
 
 # shellcheck source=support/scripts/checks/_timeout_fallback.sh
 source "${SCRIPT_DIR}/checks/_timeout_fallback.sh"
@@ -238,11 +240,18 @@ run_screen() {
 
 # ---- Android ----
 
+# adb_set <description> <adb args...>: a matrix setting that failed to apply is a failure, not a silent
+# wrong-theme screenshot.
+adb_set() {
+    local desc="$1"; shift
+    adb "$@" >>"$LOG" 2>&1 || { record_fail android setup - "$desc" "adb $* failed, see $LOG"; return 1; }
+}
+
 android_device() { # phone | tablet | foldable
     case "$1" in
-        phone) adb shell wm size reset >/dev/null 2>&1; adb shell wm density reset >/dev/null 2>&1 ;;
-        tablet) adb shell wm size 1600x2560 >/dev/null 2>&1; adb shell wm density 320 >/dev/null 2>&1 ;;
-        foldable) adb shell wm size 1840x2208 >/dev/null 2>&1; adb shell wm density 420 >/dev/null 2>&1 ;;
+        phone) adb_set "wm size reset" shell wm size reset && adb_set "wm density reset" shell wm density reset ;;
+        tablet) adb_set "wm size (tablet)" shell wm size 1600x2560 && adb_set "wm density (tablet)" shell wm density 320 ;;
+        foldable) adb_set "wm size (foldable)" shell wm size 1840x2208 && adb_set "wm density (foldable)" shell wm density 420 ;;
     esac
 }
 
@@ -269,12 +278,12 @@ android_phase() {
         esac
     } >>"$NOTES"
     for dev in "${ANDROID_DEVICES[@]}"; do
-        android_device "$dev"
+        android_device "$dev" || continue
         for theme in "${THEMES[@]}"; do
-            adb shell cmd uimode night "$([ "$theme" = dark ] && echo yes || echo no)" >/dev/null 2>&1
+            adb_set "theme $theme" shell cmd uimode night "$([ "$theme" = dark ] && echo yes || echo no)" || continue
             for text in "${TEXTS[@]}"; do
                 scale=1.0; [ "$text" = large ] && scale=2.0
-                adb shell settings put system font_scale "$scale" >/dev/null 2>&1
+                adb_set "font_scale $scale" shell settings put system font_scale "$scale" || continue
                 for screen in "${SCREENS[@]}"; do
                     run_screen android "$screen" "$dev" "$theme" "$text" "support/maestro/design/${screen}.yaml"
                 done
