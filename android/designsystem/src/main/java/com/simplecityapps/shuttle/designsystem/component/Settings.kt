@@ -26,6 +26,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,17 +48,6 @@ import com.simplecityapps.shuttle.designsystem.theme.supporting
  */
 enum class SettingIconStyle { Tonal, Plain }
 
-/** The title over a [SettingsGroup]. */
-@Composable
-fun SettingsHeader(title: String, modifier: Modifier = Modifier) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = S2Spacing.medium, top = S2Spacing.medium, end = S2Spacing.medium, bottom = S2Spacing.small),
-    )
-}
-
 /** A group of settings [rows] under an optional [title]; each row lambda receives its segmented shapes. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -67,7 +57,7 @@ fun SettingsGroup(
     title: String? = null,
 ) {
     Column(modifier) {
-        if (title != null) SettingsHeader(title)
+        if (title != null) SectionHeader(title, containerColor = Color.Transparent)
         Column(verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)) {
             rows.forEachIndexed { index, row -> row(ListItemDefaults.segmentedShapes(index, rows.size)) }
         }

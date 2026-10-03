@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -71,8 +72,8 @@ import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2ConnectedButtonGroup
+import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
-import com.simplecityapps.shuttle.designsystem.component.SettingsHeader
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
@@ -244,7 +245,7 @@ internal fun PlaybackSoundPanel(
             modifier = Modifier.fillMaxWidth(),
         )
         Column {
-            SettingsHeader(stringResource(R.string.dsp_replay_gain_title))
+            SectionHeader(stringResource(R.string.dsp_replay_gain_title), containerColor = Color.Transparent)
             val replayGainLabels = replayGainLabels
             S2ConnectedButtonGroup(
                 options = ReplayGainModes,
