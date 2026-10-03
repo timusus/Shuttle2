@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
@@ -39,13 +40,16 @@ internal fun PlayerPane(
             modifier = modifier.width(width).fillMaxHeight().testTag(PlayerTestTags.Pane),
             color = PlayerSheetColor,
         ) {
-            FullPlayer(
-                player = player,
-                progress = progress,
-                actions = actions,
-                onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
-                onOpenRoute = onOpenRoute,
-            )
+            Box {
+                PlayerGround()
+                FullPlayer(
+                    player = player,
+                    progress = progress,
+                    actions = actions,
+                    onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+                    onOpenRoute = onOpenRoute,
+                )
+            }
         }
     }
     PlayerBackHandler(state, panelOpen = player.panel != null, onClosePanel = { actions.showPanel(null) })

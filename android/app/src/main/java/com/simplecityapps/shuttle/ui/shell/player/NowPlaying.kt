@@ -19,9 +19,11 @@ import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.SpeakerGroup
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -46,12 +48,13 @@ import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
+import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 
 /** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */
 @Composable
 internal fun CastButton(modifier: Modifier = Modifier) {
     val description = stringResource(R.string.player_cast)
-    val tint = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+    val tint = artworkRole(MaterialTheme.colorScheme.onSurfaceVariant, PlayerControlsColor).toArgb()
     AndroidView(
         factory = { context ->
             // The route button reads AppCompat colours from its context; don't depend on the host activity's theme for them.
@@ -169,40 +172,43 @@ internal fun Transport(
         SeekBar(player, progress, actions)
         Box(Modifier.padding(horizontal = S2Spacing.small), contentAlignment = Alignment.Center) {
             val seekable = player.current?.song?.type?.isSeekable == true
-            S2PlayerControls(
-                playing = player.playing,
-                onPlayPause = actions::togglePlayback,
-                onPrevious = if (seekable) {
-                    { actions.seekBy(progress(), -SeekBackwardSeconds) }
-                } else {
-                    actions::skipToPrevious
-                },
-                onNext = if (seekable) {
-                    { actions.seekBy(progress(), SeekForwardSeconds) }
-                } else {
-                    actions::skipToNext
-                },
-                shuffle = player.shuffle,
-                onShuffleChange = { actions.toggleShuffle() },
-                repeatMode = player.repeatMode,
-                onRepeatClick = actions::cycleRepeatMode,
-                buffering = player.buffering,
-                size = S2PlayerControlsSize.Large,
-                previousIcon = if (seekable) Icons.Rounded.Replay10 else Icons.Rounded.SkipPrevious,
-                previousContentDescription = if (seekable) stringResource(R.string.player_seek_backward) else stringResource(DesignR.string.ds_previous),
-                onPreviousHold = if (seekable) {
-                    null
-                } else {
-                    { actions.seekBy(progress(), -SkipHoldSeekSeconds) }
-                },
-                nextIcon = if (seekable) Icons.Rounded.Forward30 else Icons.Rounded.SkipNext,
-                nextContentDescription = if (seekable) stringResource(R.string.player_seek_forward) else stringResource(DesignR.string.ds_next),
-                onNextHold = if (seekable) {
-                    null
-                } else {
-                    { actions.seekBy(progress(), SkipHoldSeekSeconds) }
-                },
-            )
+            // The play disc keeps primary; the skips and toggles take the artwork's controls colour.
+            CompositionLocalProvider(LocalContentColor provides PlayerControlsColor) {
+                S2PlayerControls(
+                    playing = player.playing,
+                    onPlayPause = actions::togglePlayback,
+                    onPrevious = if (seekable) {
+                        { actions.seekBy(progress(), -SeekBackwardSeconds) }
+                    } else {
+                        actions::skipToPrevious
+                    },
+                    onNext = if (seekable) {
+                        { actions.seekBy(progress(), SeekForwardSeconds) }
+                    } else {
+                        actions::skipToNext
+                    },
+                    shuffle = player.shuffle,
+                    onShuffleChange = { actions.toggleShuffle() },
+                    repeatMode = player.repeatMode,
+                    onRepeatClick = actions::cycleRepeatMode,
+                    buffering = player.buffering,
+                    size = S2PlayerControlsSize.Large,
+                    previousIcon = if (seekable) Icons.Rounded.Replay10 else Icons.Rounded.SkipPrevious,
+                    previousContentDescription = if (seekable) stringResource(R.string.player_seek_backward) else stringResource(DesignR.string.ds_previous),
+                    onPreviousHold = if (seekable) {
+                        null
+                    } else {
+                        { actions.seekBy(progress(), -SkipHoldSeekSeconds) }
+                    },
+                    nextIcon = if (seekable) Icons.Rounded.Forward30 else Icons.Rounded.SkipNext,
+                    nextContentDescription = if (seekable) stringResource(R.string.player_seek_forward) else stringResource(DesignR.string.ds_next),
+                    onNextHold = if (seekable) {
+                        null
+                    } else {
+                        { actions.seekBy(progress(), SkipHoldSeekSeconds) }
+                    },
+                )
+            }
         }
     }
 }

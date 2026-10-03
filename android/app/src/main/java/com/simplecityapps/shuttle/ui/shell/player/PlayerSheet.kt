@@ -85,6 +85,7 @@ internal fun PlayerSheet(
             color = PlayerSheetColor,
         ) {
             Box(Modifier.fillMaxSize()) {
+                PlayerGround(Modifier.graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) })
                 val nowPlayingModifier = Modifier
                     .hiddenFromSemantics(!nowPlayingShown)
                     .graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) }

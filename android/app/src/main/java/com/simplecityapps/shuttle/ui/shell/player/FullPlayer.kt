@@ -29,8 +29,10 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -198,52 +200,54 @@ internal fun NowPlayingBar(
     val songActions = rememberSongActionsState()
     val currentSelected by rememberUpdatedState(selected)
     val currentOnPanel by rememberUpdatedState(onPanel)
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .swipeUpToOpen(enabled = { currentSelected == null }, onOpen = { currentOnPanel(NowPlayingPanel.Queue) })
-            .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
-            .testTag(PlayerTestTags.Bar),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val playbackSound = stringResource(R.string.settings_destination_playback_and_sound)
-        if (player.playbackSpeed != 1f) {
-            val speed = rememberSpeedFormat()(player.playbackSpeed)
-            BarValueButton(
-                text = speed,
-                icon = Icons.Rounded.GraphicEq,
-                description = "$playbackSound, ${stringResource(R.string.player_speed_description, speed)}",
-                checked = selected == NowPlayingPanel.PlaybackSound,
-                onClick = { onPanel(NowPlayingPanel.PlaybackSound) },
+    CompositionLocalProvider(LocalContentColor provides PlayerControlsColor) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .swipeUpToOpen(enabled = { currentSelected == null }, onOpen = { currentOnPanel(NowPlayingPanel.Queue) })
+                .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
+                .testTag(PlayerTestTags.Bar),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val playbackSound = stringResource(R.string.settings_destination_playback_and_sound)
+            if (player.playbackSpeed != 1f) {
+                val speed = rememberSpeedFormat()(player.playbackSpeed)
+                BarValueButton(
+                    text = speed,
+                    icon = Icons.Rounded.GraphicEq,
+                    description = "$playbackSound, ${stringResource(R.string.player_speed_description, speed)}",
+                    checked = selected == NowPlayingPanel.PlaybackSound,
+                    onClick = { onPanel(NowPlayingPanel.PlaybackSound) },
+                )
+            } else {
+                BarButton(Icons.Rounded.GraphicEq, playbackSound, selected == NowPlayingPanel.PlaybackSound) { onPanel(NowPlayingPanel.PlaybackSound) }
+            }
+            if (player.sleepTimerActive) {
+                val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
+                BarValueButton(
+                    text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty(),
+                    icon = Icons.Rounded.Bedtime,
+                    description = stringResource(R.string.player_sleep_timer_on),
+                    checked = selected == NowPlayingPanel.SleepTimer,
+                    onClick = { onPanel(NowPlayingPanel.SleepTimer) },
+                )
+            } else {
+                BarButton(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), selected == NowPlayingPanel.SleepTimer) { onPanel(NowPlayingPanel.SleepTimer) }
+            }
+            if (player.castAvailable) CastButton() else OutputButton()
+            val queueOpen = selected == NowPlayingPanel.Queue
+            S2Button(
+                text = stringResource(R.string.player_queue),
+                onClick = { onPanel(NowPlayingPanel.Queue) },
+                // The same roles as the bar's other buttons: no container until its panel is open (#783).
+                style = if (queueOpen) S2ButtonStyle.Tonal else S2ButtonStyle.Text,
+                size = S2ButtonSize.Small,
+                icon = Icons.AutoMirrored.Rounded.QueueMusic,
+                modifier = Modifier.semantics { this.selected = queueOpen },
             )
-        } else {
-            BarButton(Icons.Rounded.GraphicEq, playbackSound, selected == NowPlayingPanel.PlaybackSound) { onPanel(NowPlayingPanel.PlaybackSound) }
+            S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
         }
-        if (player.sleepTimerActive) {
-            val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
-            BarValueButton(
-                text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty(),
-                icon = Icons.Rounded.Bedtime,
-                description = stringResource(R.string.player_sleep_timer_on),
-                checked = selected == NowPlayingPanel.SleepTimer,
-                onClick = { onPanel(NowPlayingPanel.SleepTimer) },
-            )
-        } else {
-            BarButton(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), selected == NowPlayingPanel.SleepTimer) { onPanel(NowPlayingPanel.SleepTimer) }
-        }
-        if (player.castAvailable) CastButton() else OutputButton()
-        val queueOpen = selected == NowPlayingPanel.Queue
-        S2Button(
-            text = stringResource(R.string.player_queue),
-            onClick = { onPanel(NowPlayingPanel.Queue) },
-            // The same roles as the bar's other buttons: no container until its panel is open (#783).
-            style = if (queueOpen) S2ButtonStyle.Tonal else S2ButtonStyle.Text,
-            size = S2ButtonSize.Small,
-            icon = Icons.AutoMirrored.Rounded.QueueMusic,
-            modifier = Modifier.semantics { this.selected = queueOpen },
-        )
-        S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
     }
     val upNext = stringResource(R.string.playback_up_next)
     SongActionsHost(
@@ -319,6 +323,7 @@ private fun BarValueButton(
         onClick = onClick,
         style = if (checked) S2ButtonStyle.Tonal else S2ButtonStyle.Text,
         size = S2ButtonSize.ExtraSmall,
+        textContentColor = PlayerTextButtonColor,
         icon = icon,
         modifier = Modifier.semantics {
             contentDescription = description
