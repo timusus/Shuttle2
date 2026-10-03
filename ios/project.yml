@@ -65,8 +65,8 @@ targets:
         # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).
         PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.dev
         PRODUCT_NAME: S2
-        # ios/archive-and-upload.sh (and ios-deploy.yml) override the S2_ settings on the xcodebuild
-        # command line: build number YYMMDDNN from the ios/vYYMMDDNN tag, marketing version 20YY.MM.DD.
+        # ios/archive-and-upload.sh overrides the S2_ settings on the xcodebuild command line:
+        # build number YYMMDDNN (the ios/vYYMMDDNN tag's digits), marketing version 20YY.MM.DD.
         S2_MARKETING_VERSION: "2026.09.27"
         S2_BUILD_NUMBER: "1"
         MARKETING_VERSION: $(S2_MARKETING_VERSION)

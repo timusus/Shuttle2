@@ -3,10 +3,9 @@ set -euo pipefail
 
 # Archive Shuttle Music (S2) and upload it to TestFlight.
 #
-# One script for both lanes: the tag-driven pipeline (.github/workflows/ios-deploy.yml) and a
-# developer's Mac. The workflow passes an App Store Connect API key so signing never needs an
-# Apple-ID session; run without the key flags and Xcode's signed-in account does the signing, which
-# is today's local behaviour. See DEPLOY.md.
+# Runs on a developer's Mac (the deploy-ios skill); there is no CI lane. Passing an App Store
+# Connect API key makes signing headless; run without the key flags and Xcode's signed-in account
+# does the signing. See DEPLOY.md.
 #
 # Prerequisites (local lane):
 #   1. Signed into Xcode with developer@simplecityapps.com (paid team 9HYNX943MQ; ExportOptions.plist
@@ -26,8 +25,7 @@ set -euo pipefail
 #                            carries project.yml's S2_BUILD_NUMBER default.
 #   --marketing-version V    CFBundleShortVersionString. Derived from --build-number
 #                            (20YY.MM.DD) when omitted.
-#   --no-upload              Export the IPA to build/export instead of uploading; used by the
-#                            workflow_dispatch smoke run and for local dry runs.
+#   --no-upload              Export the IPA to build/export instead of uploading; local dry runs.
 #   --skip-shared-framework  Do not build FFmpeg or link Shared.framework (the workflow does it in
 #                            its own step).
 #   --api-key-path P         App Store Connect API key (.p8); with --api-key-id and
