@@ -155,9 +155,9 @@ if [ "$UPLOAD" = 0 ]; then
 else
     echo "==> Exporting archive and uploading to App Store Connect..."
 fi
-# Export signs manually (ExportOptions.plist names the four App Store profiles) because the team's
-# API keys cannot use a cloud-managed distribution certificate. With the key, make sure those
-# profiles exist for the certificate in this keychain and are installed before xcodebuild looks.
+# Export signs manually (ExportOptions.plist names the App Store profile) because the team's
+# API keys cannot use a cloud-managed distribution certificate. With the key, make sure that
+# profile exists for the certificate in this keychain and are installed before xcodebuild looks.
 if [ ${#AUTH_ARGS[@]} -gt 0 ]; then
     echo "==> Ensuring App Store provisioning profiles..."
     "$SCRIPT_DIR/scripts/ensure-store-profiles.sh" \
