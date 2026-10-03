@@ -177,26 +177,35 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 
 ### iOS (StoreKit 2, #609)
 
-iOS sells the same thing: Jellyfin, Emby and Plex streaming (and downloads, once iOS has them) need Pro after a
-14-day trial; AirPlay, the equalizer and everything else stay free. There's no subscription on iOS yet, only the
+iOS sells the same thing, as far as iOS has it: Jellyfin and Emby streaming need Pro after a 14-day trial; AirPlay,
+the equalizer and everything else stay free. Plex and downloads join Pro when iOS has them, and not before: the
+paywall, Settings and the App Store Connect product descriptions name only what the app does (guidelines 2.3 and
+3.1.1), from one place in Swift (`ProFeatures` in `PaywallView.swift`). There's no subscription on iOS yet, only the
 trial and Lifetime.
 
 - **Products.** Two non-consumables, ids in `shared/.../entitlement/AppStoreProducts.kt`:
   - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 14-day Trial", display name
-    "14-day Free Trial". Buying it starts the trial, which runs 14 days from the transaction's `purchaseDate`. The
-    App Store keeps the transaction per Apple ID, so a reinstall can't restart the trial.
+    "14-day Free Trial", description "Stream from Jellyfin and Emby free for 14 days". Buying it starts the trial,
+    which runs 14 days from the transaction's `originalPurchaseDate`. The App Store keeps the transaction per Apple
+    ID, and a restore, reinstall or new device reports the same original date, so none of them restarts the trial.
+    A refunded or revoked trial counts as used.
   - `com.simplecityapps.shuttle.pro.lifetime`: paid (USD 9.99 in `S2.storekit`; set the real price in App Store
-    Connect), reference name "Pro Lifetime", display name "Shuttle Music Pro (Lifetime)".
+    Connect), reference name "Pro Lifetime", display name "Shuttle Music Pro (Lifetime)", description "Stream from
+    Jellyfin and Emby, for life". A refunded purchase is no longer Pro.
 - **Trial consent.** Android starts the trial silently on the first server stream. App Review wants the user to
   start a free trial knowingly, so on iOS `ServerAccessGate` has no `startTrial`: the first stream before the trial
   is refused and opens the paywall, which discloses the trial length, what stops after it and Lifetime's localized
   `displayPrice` above the "Start 14-day free trial" button (guideline 3.1.1). Adding a server stays allowed until
   the trial has been used, as on Android.
-- **Entitlement.** `StoreKitManager` (Swift) reads `Transaction.currentEntitlements` at launch, after each purchase
-  or restore and on every `Transaction.updates`, and hands the verified, unrevoked transactions to
-  `StoreEntitlements` (Kotlin), which resolves Pro > Trial > Free > Unknown with the same `resolveEntitlement` as
-  Android. StoreKit answers offline from its own cache, so there's no cached-Pro fallback. Restore is
-  `AppStore.sync()`.
+- **Entitlement.** `StoreKitManager` (Swift) reads `Transaction.latest(for:)` for each product at launch, after
+  each purchase or restore and on every `Transaction.updates`, and hands the verified transactions, revoked ones
+  marked, to `StoreEntitlements` (Kotlin), which resolves Pro > Trial > Free > Unknown with the same
+  `resolveEntitlement` as Android. StoreKit answers offline from its own cache, so there's no cached-Pro fallback;
+  at launch the entitlements are read before, and apart from, the products, so an unreachable App Store never
+  delays them. Until StoreKit answers (Unknown), a server stream waits up to 5 seconds for it, and if it still
+  hasn't, the song is refused as undecided: no paywall, not failed for good, and played again when asked. A queue
+  restored at launch never opens the paywall; only a play the user asked for does. Restore is `AppStore.sync()`,
+  and its message says what it found: Pro, a running trial, a trial already used, or nothing.
 - **Paywall.** Opened over any screen by a refused action, and from Settings (Shuttle Music Pro row, plus Restore
   Purchases). It links the Privacy Policy (https://simplecityapps.com/privacy) and Apple's standard EULA.
 - **Testing.** The S2 scheme runs with `ios/S2.storekit`. Debug builds resolve Pro unless Settings' "Debug
