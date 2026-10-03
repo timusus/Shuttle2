@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -105,6 +106,48 @@ class LocalPlaylistRepositoryTest {
 
         repository.getPlaylistCoverSongs(playlist, limit = 4).first().map { it.name } shouldBe listOf("Only")
     }
+
+    @Test
+    fun `adding to an empty playlist starts at sort order 0`() = runTest {
+        val repository = repository(backgroundScope)
+        val (first, second) = insertSongs("First", "Second")
+        val playlist = repository.createPlaylist("Empty", MediaProviderType.Shuttle, emptyList(), null)
+
+        repository.addToPlaylist(playlist, listOf(first, second))
+
+        repository.getSongsForPlaylist(playlist).first().sortedBy { it.sortOrder }.map { it.sortOrder to it.song.name } shouldBe listOf(0L to "First", 1L to "Second")
+    }
+
+    @Test
+    fun `adding lands after the highest sort order, past an excluded member and a gap`() = runTest {
+        val repository = repository(backgroundScope)
+        val (kept, excluded, added) = insertSongs("Kept", "Excluded", "Added")
+        val playlist = repository.createPlaylist("Gappy", MediaProviderType.Shuttle, emptyList(), null)
+        database.playlistSongJoinDataDao().insert(
+            listOf(
+                PlaylistSongJoin(playlistId = playlist.id, songId = kept.id, sortOrder = 0),
+                PlaylistSongJoin(playlistId = playlist.id, songId = excluded.id, sortOrder = 5)
+            )
+        )
+        database.songDataDao().setExcluded(listOf(excluded.id), true)
+
+        repository.addToPlaylist(playlist, listOf(added))
+
+        database.playlistSongJoinDataDao().maxSortOrder(playlist.id) shouldBe 6L
+        repository.getSongsForPlaylist(playlist).first().single { it.song.name == "Added" }.sortOrder shouldBe 6L
+    }
+
+    @Test
+    fun `member song ids include excluded members`() = runTest {
+        val repository = repository(backgroundScope)
+        val (kept, excluded) = insertSongs("Kept", "Excluded")
+        val playlist = repository.createPlaylist("Members", MediaProviderType.Shuttle, listOf(kept, excluded), null)
+        database.songDataDao().setExcluded(listOf(excluded.id), true)
+
+        repository.getMemberSongIds(playlist) shouldBe setOf(kept.id, excluded.id)
+    }
+
+    private fun repository(scope: kotlinx.coroutines.CoroutineScope) = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex())
 
     private suspend fun insertSongs(vararg names: String): List<Song> {
         database.songDataDao().insert(names.map { name -> songData(name) })

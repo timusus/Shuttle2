@@ -34,6 +34,8 @@ class FakePlaylistRepository(private val playlists: Map<Playlist, List<Song>> = 
         playlists[playlist].orEmpty().mapIndexed { index, song -> PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = song) }
     )
 
+    override suspend fun getMemberSongIds(playlist: Playlist): Set<Long> = playlists[playlist].orEmpty().mapTo(HashSet()) { it.id }
+
     override fun getPlaylistCoverSongs(
         playlist: Playlist,
         limit: Int
