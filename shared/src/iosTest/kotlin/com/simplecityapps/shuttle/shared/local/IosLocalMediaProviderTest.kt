@@ -1,8 +1,11 @@
 package com.simplecityapps.shuttle.shared.local
 
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.ui.screens.sources.FolderKind
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -18,8 +21,12 @@ class IosLocalMediaProviderTest {
     private class FakeLocalFiles : IosLocalFiles {
         var folders = mutableListOf<IosLocalFolder>()
         var files = listOf<IosLocalFileRef>()
+        var offloaded = listOf<String>()
+        var unread = listOf<String>()
         val tags = mutableMapOf<String, IosLocalTags>()
         val reads = mutableListOf<String>()
+        val imported = mutableListOf<IosLocalListing>()
+        val downloads = mutableListOf<String>()
 
         override fun folders(): List<IosLocalFolder> = folders
 
@@ -33,7 +40,21 @@ class IosLocalMediaProviderTest {
             folders.removeAll { it.id == id }
         }
 
-        override fun audioFiles(): List<IosLocalFileRef> = files
+        override fun audioFiles(): IosLocalListing = IosLocalListing(
+            files = files,
+            offloaded = offloaded,
+            folders = listOf(IosLocalFiles.DOCUMENTS) + folders.map { it.id },
+            unread = unread + folders.filterNot { it.hasAccess }.map { it.id },
+            fingerprint = "${files.hashCode()}"
+        )
+
+        override fun imported(listing: IosLocalListing) {
+            imported += listing
+        }
+
+        override fun download(path: String) {
+            downloads += path
+        }
 
         override fun readTags(path: String): IosLocalTags? {
             reads += path
@@ -44,9 +65,12 @@ class IosLocalMediaProviderTest {
     }
 
     private val localFiles = FakeLocalFiles()
-    private val provider = IosLocalMediaProvider(localFiles)
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, MediaImporter.SONG_TAGS_VERSION) }
+    private val provider = IosLocalMediaProvider(localFiles, preferences)
 
     private suspend fun findSongs(existing: List<Song> = emptyList()): List<Song> = provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
+
+    private fun song(path: String, title: String = "Title") = tags(title = title).toSong(IosLocalFileRef(path, 1, 1))
 
     @Test
     fun aFilesTagsBecomeItsSong() = runTest {
@@ -115,12 +139,85 @@ class IosLocalMediaProviderTest {
     }
 
     @Test
+    fun songsPredatingThisBuildsTagsAreReadAgain() = runTest {
+        val file = IosLocalFileRef("s2local://documents/a.flac", lastModifiedMs = 10, size = 100)
+        localFiles.files = listOf(file)
+        localFiles.tags[file.path] = tags(title = "A")
+        val existing = findSongs()
+        localFiles.reads.clear()
+
+        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, MediaImporter.SONG_TAGS_VERSION - 1)
+        localFiles.tags[file.path] = tags(title = "A, with every tag")
+
+        findSongs(existing).single().name shouldBe "A, with every tag"
+        localFiles.reads shouldContainExactly listOf(file.path)
+    }
+
+    @Test
+    fun theListingCountsAsImportedOnlyOnceItsSongsAreStored() = runTest {
+        localFiles.files = listOf(IosLocalFileRef("s2local://documents/a.flac", 1, 1))
+        findSongs()
+        localFiles.imported shouldBe emptyList()
+
+        provider.songsStored()
+        localFiles.imported.single().files shouldBe localFiles.files
+
+        // Once only: a second store without a listing has nothing to record
+        provider.songsStored()
+        localFiles.imported.size shouldBe 1
+    }
+
+    @Test
     fun aFolderOutOfReachKeepsItsSongs() = runTest {
         localFiles.folders += IosLocalFolder(id = "gone", name = "Gone", path = "/x", hasAccess = false)
-        val kept = IosLocalFileRef("s2local://gone/a.flac", 1, 1).let { file -> tags(title = "Kept").toSong(file) }
-        val removed = IosLocalFileRef("s2local://documents/b.flac", 1, 1).let { file -> tags(title = "Removed").toSong(file) }
+        localFiles.files = listOf(IosLocalFileRef("s2local://documents/c.flac", 1, 1))
+        localFiles.tags["s2local://documents/c.flac"] = tags(title = "C")
+        val kept = song("s2local://gone/a.flac", "Kept")
+        val removed = song("s2local://documents/b.flac", "Removed")
 
-        findSongs(listOf(kept, removed)) shouldBe listOf(kept)
+        findSongs(listOf(kept, removed)).map { it.name } shouldBe listOf("Kept", "C")
+    }
+
+    @Test
+    fun aFolderThatCouldntBeReadKeepsItsSongs() = runTest {
+        localFiles.folders += IosLocalFolder(id = "music", name = "Music", path = "/x", hasAccess = true)
+        localFiles.unread = listOf("music")
+        val found = IosLocalFileRef("s2local://music/found.flac", 1, 1)
+        val new = IosLocalFileRef("s2local://music/new.flac", 1, 1)
+        localFiles.files = listOf(found, new)
+        localFiles.tags[new.path] = tags(title = "New")
+        val kept = song("s2local://music/a.flac", "Kept")
+        val refound = song(found.path, "Found")
+
+        // The files it got to before failing still import, and aren't kept twice
+        findSongs(listOf(kept, refound)).map { it.name } shouldBe listOf("Kept", "Found", "New")
+    }
+
+    @Test
+    fun aFolderThatListsNothingKeepsItsSongs() = runTest {
+        localFiles.folders += IosLocalFolder(id = "music", name = "Music", path = "/x", hasAccess = true)
+        val kept = listOf(song("s2local://music/a.flac", "A"), song("s2local://documents/b.flac", "B"))
+
+        findSongs(kept) shouldBe kept
+    }
+
+    @Test
+    fun aRemovedFolderLosesItsSongs() = runTest {
+        findSongs(listOf(song("s2local://forgotten/a.flac"))) shouldBe emptyList()
+    }
+
+    @Test
+    fun anOffloadedFileKeepsItsSongAndANewOneIsDownloaded() = runTest {
+        val listed = IosLocalFileRef("s2local://documents/c.flac", 1, 1)
+        localFiles.files = listOf(listed)
+        localFiles.tags[listed.path] = tags(title = "C")
+        localFiles.offloaded = listOf("s2local://documents/a.flac", "s2local://documents/new.flac")
+        val offloaded = song("s2local://documents/a.flac", "A")
+        val removed = song("s2local://documents/b.flac", "B")
+
+        findSongs(listOf(offloaded, removed)).map { it.name } shouldBe listOf("A", "C")
+        localFiles.downloads shouldContainExactly listOf("s2local://documents/new.flac")
+        localFiles.reads shouldContainExactly listOf(listed.path)
     }
 
     @Test

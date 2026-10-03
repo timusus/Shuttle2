@@ -12,8 +12,15 @@ struct LocalLibraryTests {
     private var defaults: UserDefaults { UserDefaults(suiteName: suite)! }
     private var documents: URL { root.appendingPathComponent("Documents") }
 
+    /// Documents is there, as it always is on a device: a missing one is a folder that couldn't be read.
     private func library() -> LocalLibrary {
-        LocalLibrary(defaults: defaults, documents: documents)
+        try? FileManager.default.createDirectory(at: documents, withIntermediateDirectories: true)
+        return LocalLibrary(defaults: defaults, documents: documents)
+    }
+
+    /// A library whose security scopes never open and whose container is elsewhere, as for a folder outside the app.
+    private func libraryWithoutScopes() -> LocalLibrary {
+        LocalLibrary(defaults: defaults, documents: documents, container: URL(fileURLWithPath: "/nowhere"), openScope: { _ in false })
     }
 
     /// A folder outside Documents, as the Files picker would return.
@@ -100,7 +107,7 @@ struct LocalLibraryTests {
         #expect(sut.addFolder(url: sut.stage(music)))
         let id = try #require(sut.folders().first?.id)
 
-        let paths = Set(sut.audioFiles().map(\.path))
+        let paths = Set(sut.audioFiles().files.map(\.path))
 
         #expect(paths == ["s2local://documents/a.mp3", "s2local://documents/Björk/03 Hyperballad.FLAC", "s2local://\(id)/x.m4a"])
     }
@@ -119,19 +126,137 @@ struct LocalLibraryTests {
         #expect(sut.fileUrl(path: "https://example.com/a.mp3") == nil)
     }
 
-    @Test func aChangeIsSeenUntilTheNextImport() throws {
+    @Test func aChangeIsSeenUntilTheNextImportIsStored() throws {
         defer { cleanUp() }
         try write(to: documents.appendingPathComponent("a.mp3"))
         let sut = library()
         #expect(sut.changedSinceLastImport())
-        _ = sut.audioFiles()
+        let listing = sut.audioFiles()
+        // Listed, but the import was interrupted before storing it: still changed, so it runs again
+        #expect(sut.changedSinceLastImport())
+        sut.imported(listing: listing)
         #expect(!sut.changedSinceLastImport())
 
         try write(to: documents.appendingPathComponent("b.mp3"))
         #expect(sut.changedSinceLastImport())
-        _ = sut.audioFiles()
+        sut.imported(listing: sut.audioFiles())
         try FileManager.default.removeItem(at: documents.appendingPathComponent("a.mp3"))
         #expect(sut.changedSinceLastImport())
+    }
+
+    @Test func aFolderOutOfReachIsUnread() throws {
+        defer { cleanUp() }
+        let music = try folder("Music")
+        try write(to: music.appendingPathComponent("x.m4a"))
+        let first = library()
+        #expect(first.addFolder(url: first.stage(music)))
+        let id = try #require(first.folders().first?.id)
+        try FileManager.default.removeItem(at: music)
+
+        let listing = library().audioFiles()
+
+        #expect(listing.unread == [id])
+        #expect(listing.folders.contains(id))
+        #expect(listing.files.isEmpty)
+    }
+
+    @Test func aFolderWhoseScopeWontOpenIsOutOfReach() throws {
+        defer { cleanUp() }
+        let music = try folder("Music")
+        try write(to: music.appendingPathComponent("x.m4a"))
+        let first = library()
+        #expect(first.addFolder(url: first.stage(music)))
+        let id = try #require(first.folders().first?.id)
+
+        let relaunched = libraryWithoutScopes()
+
+        #expect(relaunched.folders().first?.hasAccess == false)
+        #expect(relaunched.audioFiles().unread == [id])
+        #expect(!libraryWithoutScopes().addFolder(url: try folder("Other").absoluteString))
+    }
+
+    @Test func anUnreadableFolderIsUnread() throws {
+        defer { cleanUp() }
+        let music = try folder("Music")
+        try write(to: music.appendingPathComponent("x.m4a"))
+        let sut = library()
+        #expect(sut.addFolder(url: sut.stage(music)))
+        let id = try #require(sut.folders().first?.id)
+        try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: music.path)
+        defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: music.path) }
+
+        let listing = sut.audioFiles()
+
+        #expect(listing.unread == [id])
+        #expect(listing.files.isEmpty)
+    }
+
+    @Test func anOffloadedFileIsListedUnderItsOwnName() throws {
+        defer { cleanUp() }
+        try write(to: documents.appendingPathComponent("Post/.03 Hyperballad.flac.icloud"))
+        try write(to: documents.appendingPathComponent(".a.mp3.icloud"))
+        try write(to: documents.appendingPathComponent(".notes.txt.icloud"))
+        try write(to: documents.appendingPathComponent(".DS_Store"))
+
+        let listing = library().audioFiles()
+
+        #expect(Set(listing.offloaded) == ["s2local://documents/Post/03 Hyperballad.flac", "s2local://documents/a.mp3"])
+        #expect(listing.files.isEmpty)
+        #expect(listing.unread.isEmpty)
+    }
+
+    // MARK: Overlapping folders
+
+    @Test func pickingDocumentsOrAFolderInsideItAddsNothing() throws {
+        defer { cleanUp() }
+        try write(to: documents.appendingPathComponent("Rock/a.mp3"))
+        let sut = library()
+
+        #expect(sut.addFolder(url: sut.stage(documents)))
+        #expect(sut.addFolder(url: sut.stage(documents.appendingPathComponent("Rock", isDirectory: true))))
+
+        #expect(sut.folders().isEmpty)
+        #expect(sut.audioFiles().files.map(\.path) == ["s2local://documents/Rock/a.mp3"])
+    }
+
+    @Test func pickingAFolderInsideAPickedOneAddsNothing() throws {
+        defer { cleanUp() }
+        let music = try folder("Music")
+        try write(to: music.appendingPathComponent("Rock/a.mp3"))
+        let sut = library()
+        #expect(sut.addFolder(url: sut.stage(music)))
+        let id = try #require(sut.folders().first?.id)
+
+        #expect(sut.addFolder(url: sut.stage(music.appendingPathComponent("Rock", isDirectory: true))))
+
+        #expect(sut.folders().map(\.id) == [id])
+        #expect(sut.audioFiles().files.map(\.path) == ["s2local://\(id)/Rock/a.mp3"])
+    }
+
+    @Test func aFolderPickedAroundOnesThereLeavesThemTheirFiles() throws {
+        defer { cleanUp() }
+        let music = try folder("Music")
+        try write(to: music.appendingPathComponent("Rock/a.mp3"))
+        try write(to: music.appendingPathComponent("b.mp3"))
+        try write(to: documents.appendingPathComponent("c.mp3"))
+        let sut = library()
+        let rock = music.appendingPathComponent("Rock", isDirectory: true)
+        #expect(sut.addFolder(url: sut.stage(rock)))
+        let rockID = try #require(sut.folders().first?.id)
+
+        // The parent of both the picked folder and Documents
+        #expect(sut.addFolder(url: sut.stage(root)))
+        let rootID = try #require(sut.folders().last?.id)
+        try write(to: root.appendingPathComponent("d.mp3"))
+
+        let paths = sut.audioFiles().files.map(\.path).sorted()
+
+        #expect(paths == [
+            "s2local://\(rootID)/Music/b.mp3",
+            "s2local://\(rootID)/d.mp3",
+            "s2local://\(rockID)/a.mp3",
+            "s2local://documents/c.mp3",
+        ].sorted())
     }
 
     // MARK: Tags
@@ -172,6 +297,40 @@ struct LocalLibraryTests {
 
         #expect(sut.artwork(forArtworkURL: url) == cover)
         #expect(sut.artwork(forArtworkURL: try #require(URL(string: "s2local://documents/Post/missing.wav"))) == nil)
+    }
+
+    @Test func aPickedFoldersArtworkUrlSurvivesNormalising() throws {
+        defer { cleanUp() }
+        let cover = Data([0xFF, 0xD8, 0xFF, 0xE0])
+        let music = try folder("Music")
+        try write(Self.wav(info: [:]), to: music.appendingPathComponent("Post/03 Hyperballad.wav"))
+        try write(cover, to: music.appendingPathComponent("Post/cover.jpg"))
+        let sut = library()
+        #expect(sut.addFolder(url: sut.stage(music)))
+        let id = try #require(sut.folders().first?.id)
+        #expect(UUID(uuidString: id) != nil)
+        #expect(id == id.lowercased())
+
+        for host in [id, id.uppercased()] {
+            let url = try #require(URL(string: "s2local://\(host)/Post/03%20Hyperballad.wav"))
+            #expect(sut.artwork(forArtworkURL: url) == cover)
+        }
+    }
+
+    @Test func aFolderSavedWithAnUppercaseIdFindsItsArtworkFromALowercasedHost() throws {
+        defer { cleanUp() }
+        let cover = Data([0xFF, 0xD8, 0xFF, 0xE0])
+        let music = try folder("Music")
+        try write(Self.wav(info: [:]), to: music.appendingPathComponent("song.wav"))
+        try write(cover, to: music.appendingPathComponent("folder.png"))
+        let id = UUID().uuidString
+        let bookmark = try music.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+        let saved = [LocalLibrary.Folder(id: id, name: "Music", path: music.path, bookmark: bookmark)]
+        defaults.set(try JSONEncoder().encode(saved), forKey: "local_library_folders")
+
+        let url = try #require(URL(string: "s2local://\(id.lowercased())/song.wav"))
+
+        #expect(library().artwork(forArtworkURL: url) == cover)
     }
 
     /// One second of 8 kHz mono 16-bit silence, with [info] as its RIFF INFO tags.

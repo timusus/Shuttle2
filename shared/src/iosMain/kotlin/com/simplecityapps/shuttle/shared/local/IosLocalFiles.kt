@@ -20,8 +20,17 @@ interface IosLocalFiles {
 
     fun removeFolder(id: String)
 
-    /** Every audio file in Documents and the picked folders this app can reach. */
-    fun audioFiles(): List<IosLocalFileRef>
+    /** Every audio file in Documents and the picked folders, and which folders couldn't be read this time. */
+    fun audioFiles(): IosLocalListing
+
+    /**
+     * The import stored [listing]'s songs: until it's called, the files count as changed since the last import, so an
+     * import that's interrupted runs again.
+     */
+    fun imported(listing: IosLocalListing)
+
+    /** Asks iCloud for the offloaded file at song [path] (see [IosLocalListing.offloaded]), to import once it's here. */
+    fun download(path: String)
 
     /** The file at song [path]'s tags and audio properties, or null when it can't be read or isn't audio. */
     fun readTags(path: String): IosLocalTags?
@@ -37,7 +46,11 @@ interface IosLocalFiles {
 
         override fun removeFolder(id: String) = Unit
 
-        override fun audioFiles(): List<IosLocalFileRef> = emptyList()
+        override fun audioFiles(): IosLocalListing = IosLocalListing(files = emptyList(), offloaded = emptyList(), folders = listOf(DOCUMENTS), unread = emptyList(), fingerprint = "")
+
+        override fun imported(listing: IosLocalListing) = Unit
+
+        override fun download(path: String) = Unit
 
         override fun readTags(path: String): IosLocalTags? = null
 
@@ -59,6 +72,27 @@ data class IosLocalFolder(
     val name: String,
     val path: String?,
     val hasAccess: Boolean
+)
+
+/**
+ * One listing of this device's files, as [IosLocalFiles.audioFiles] makes it.
+ *
+ * Only a folder read in full can lose songs: one in [unread] (out of reach, unreadable, or failing partway) keeps them,
+ * and so does one that lists no files at all where it had songs before, as a folder that's briefly unavailable can.
+ *
+ * @property files the audio files found.
+ * @property offloaded the song paths of files iCloud has offloaded, leaving a placeholder: there, but not readable
+ * until downloaded.
+ * @property folders the id of every folder read or tried: [IosLocalFiles.DOCUMENTS] and each picked folder's.
+ * @property unread the ids of the [folders] that couldn't be read in full.
+ * @property fingerprint identifies the listing, to tell whether the files changed since the last import.
+ */
+data class IosLocalListing(
+    val files: List<IosLocalFileRef>,
+    val offloaded: List<String>,
+    val folders: List<String>,
+    val unread: List<String>,
+    val fingerprint: String
 )
 
 /** An audio file: its song [path] (see [IosLocalFiles]), when it was last modified, in epoch milliseconds, and its size. */
