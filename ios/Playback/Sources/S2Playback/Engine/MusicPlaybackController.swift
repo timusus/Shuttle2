@@ -151,6 +151,10 @@ public final class MusicPlaybackController {
     let engine = AVAudioEngine()
     /// Starts the stopped engine. Tests replace it to fail a start.
     var startEngine: (AVAudioEngine) throws -> Void = { try $0.start() }
+    /// How long a start that failed after a route change waits before it's tried again, and how many
+    /// times it is (#715).
+    var startRetryDelay: DispatchTimeInterval = .milliseconds(500)
+    static let startRetryAttempts = 4
     private let player = AVAudioPlayerNode()
     private let timePitch = AVAudioUnitTimePitch()
     let format: AVAudioFormat
@@ -236,7 +240,7 @@ public final class MusicPlaybackController {
 
     // MARK: Shared state (any thread, under `timelineLock`)
 
-    private struct Segment {
+    struct Segment {
         let streamStart: Int64
         let uid: String
         let mediaStart: Int64
@@ -244,20 +248,36 @@ public final class MusicPlaybackController {
         let slot: Int
     }
 
-    private struct Anchor {
+    struct Anchor {
         let stream: Int64
         let player: Int64
     }
 
-    private struct Timeline {
+    struct Timeline {
         var segments: [Segment] = []
         var anchors: [Anchor] = [Anchor(stream: 0, player: 0)]
         /// Frames scheduled so far; the playhead never passes it.
         var scheduledEnd: Int64 = 0
         /// Non-nil while the node is not rendering (stopped, paused, not yet started).
         var held: Int64? = 0
-        /// Where the node was released from `held`: the answer until its clock has rendered once.
-        var resumedFrom: Int64 = 0
+        /// The last stream index known to be heard: where the node was released from `held`, then
+        /// each tick's reading. The answer while the node's clock can't be read: before it first
+        /// renders after a release, and once a route change has stopped the engine under it (#714).
+        var heard: Int64 = 0
+
+        /// The stream index being heard, given the node's clock (`nodeTime`, nil when it has no
+        /// valid render time).
+        func playedStreamIndex(nodeTime: Int64?) -> Int64 {
+            if let held { return held }
+            guard let now = nodeTime else { return heard }
+            var stream: Int64 = 0
+            for (i, anchor) in anchors.enumerated() where anchor.player <= now {
+                stream = anchor.stream + (now - anchor.player)
+                // A starved node's clock ran on; the stream did not.
+                if i + 1 < anchors.count { stream = min(stream, anchors[i + 1].stream) }
+            }
+            return max(0, min(stream, scheduledEnd))
+        }
     }
 
     private let timelineLock = NSLock()
@@ -304,12 +324,12 @@ public final class MusicPlaybackController {
         if case let .offline(maximumFrameCount) = renderingMode {
             try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: maximumFrameCount)
             try engine.start()
-        } else {
-            NotificationCenter.default.addObserver(
-                self, selector: #selector(engineConfigurationChanged),
-                name: .AVAudioEngineConfigurationChange, object: engine
-            )
         }
+        // An offline engine never posts it; tests do, to stand in for a route change.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(engineConfigurationChanged),
+            name: .AVAudioEngineConfigurationChange, object: engine
+        )
     }
 
     deinit {
@@ -398,19 +418,16 @@ public final class MusicPlaybackController {
 
     public func play() {
         engineQueue.async { [self] in
+            log.notice("play: \(self.state.rawValue, privacy: .public)")
             playWhenReady = true
             guard current != nil, state != .ended else { return }
-            guard startEngineIfNeeded() else { return stayPaused() }
-            fill()
-            player.play()
-            releaseHold()
-            setState(.playing)
-            startTicker()
+            guard startPlaying() else { return stayPaused() }
         }
     }
 
     public func pause() {
         engineQueue.async { [self] in
+            log.notice("pause: \(self.state.rawValue, privacy: .public)")
             playWhenReady = false
             let held = playedStreamIndex()
             player.pause()
@@ -598,7 +615,7 @@ public final class MusicPlaybackController {
 
     private func releaseHold() {
         timelineLock.withLock {
-            timeline.resumedFrom = timeline.held ?? timeline.resumedFrom
+            timeline.heard = timeline.held ?? timeline.heard
             timeline.held = nil
         }
     }
@@ -635,6 +652,39 @@ public final class MusicPlaybackController {
         } catch {
             log.error("engine start failed: \(String(describing: error), privacy: .public)")
             return false
+        }
+    }
+
+    /// Starts the engine and plays the node from where the stream is; false, with nothing played, if
+    /// the engine won't start.
+    private func startPlaying() -> Bool {
+        guard startEngineIfNeeded() else { return false }
+        fill()
+        player.play()
+        releaseHold()
+        setState(.playing)
+        startTicker()
+        return true
+    }
+
+    /// A route change stopped the engine and it wouldn't start again while the route settled (#715):
+    /// loading, the start is tried again up to `startRetryAttempts` times, `startRetryDelay` apart. A
+    /// pause, play, load, seek or stop meanwhile drops it; the last failure stays paused, as a play
+    /// the engine can't start does.
+    private func retryStart(attempt: Int = 1) {
+        stopTicker()
+        setState(.loading)
+        let generation = self.generation
+        engineQueue.asyncAfter(deadline: .now() + startRetryDelay) { [weak self] in
+            guard let self, self.generation == generation, playWhenReady, state == .loading else { return }
+            if startPlaying() {
+                log.notice("engine started on retry \(attempt)")
+            } else if attempt < Self.startRetryAttempts {
+                retryStart(attempt: attempt + 1)
+            } else {
+                log.error("engine didn't start after \(attempt) retries; paused")
+                stayPaused()
+            }
         }
     }
 
@@ -780,8 +830,11 @@ public final class MusicPlaybackController {
     }
 
     /// Drop everything scheduled and start the stream again at `frame` of the current track.
-    private func restart(atFrame frame: Int64) {
+    /// `retryingStart`: an engine that won't start is tried again (``retryStart(attempt:)``) rather than
+    /// left paused at once.
+    private func restart(atFrame frame: Int64, retryingStart: Bool = false) {
         guard let current else { return }
+        log.notice("restart at \(frame) frames, playWhenReady \(self.playWhenReady)")
         generation += 1
         player.stop()
         // What the time-pitch unit already pulled belongs to the old stream.
@@ -824,15 +877,10 @@ public final class MusicPlaybackController {
         }
         appendSegment(for: current, mediaStart: startFrame)
         fill()
-        if playWhenReady, !startEngineIfNeeded() {
-            stayPaused()
-        } else if playWhenReady {
-            player.play()
-            releaseHold()
-            setState(.playing)
-            startTicker()
-        } else {
+        if !playWhenReady {
             setState(.paused)
+        } else if !startPlaying() {
+            if retryingStart { retryStart() } else { stayPaused() }
         }
         emitPosition()
     }
@@ -1005,7 +1053,11 @@ public final class MusicPlaybackController {
     private func updateTimeline(concludingEnd: Bool = true) {
         guard current != nil else { return }
         let stream = playedStreamIndex()
-        let segment = timelineLock.withLock { Self.segment(at: stream, in: timeline) }
+        // Recorded on the engine queue only, where a restart can't replace the timeline meanwhile.
+        let segment = timelineLock.withLock {
+            timeline.heard = stream
+            return Self.segment(at: stream, in: timeline)
+        }
         if let segment, let next, segment.slot == next.id {
             let old = current
             current = next
@@ -1049,12 +1101,23 @@ public final class MusicPlaybackController {
         ticker = nil
     }
 
-    /// The route or device changed and the engine stopped: rebuild from where the listener was.
+    /// The route or device changed and the engine stopped: rebuild from where the listener was. The
+    /// node's clock stopped with the engine, so that is the last tick's reading (#714). An engine that
+    /// won't start while the route settles is tried again (#715).
     @objc private func engineConfigurationChanged(_ notification: Notification) {
         engineQueue.async { [self] in
             guard current != nil else { return }
+            let renderTime = player.lastRenderTime == nil ? "nil" : "valid"
             updateTimeline()
-            restart(atFrame: currentMediaFrame())
+            let frame = currentMediaFrame()
+            let snapshot = timelineLock.withLock { timeline }
+            let held = snapshot.held.map(String.init) ?? "nil"
+            log.notice("""
+                engine configuration changed: stream \(snapshot.playedStreamIndex(nodeTime: self.nodeSampleTime())), \
+                heard \(snapshot.heard), held \(held, privacy: .public), render time \(renderTime, privacy: .public), \
+                frame \(frame), playWhenReady \(self.playWhenReady), running \(self.engine.isRunning)
+                """)
+            restart(atFrame: frame, retryingStart: true)
         }
     }
 
@@ -1078,15 +1141,7 @@ public final class MusicPlaybackController {
     /// The stream index being heard.
     private func playedStreamIndex() -> Int64 {
         let snapshot = timelineLock.withLock { timeline }
-        if let held = snapshot.held { return held }
-        guard let now = nodeSampleTime() else { return snapshot.resumedFrom }
-        var stream: Int64 = 0
-        for (i, anchor) in snapshot.anchors.enumerated() where anchor.player <= now {
-            stream = anchor.stream + (now - anchor.player)
-            // A starved node's clock ran on; the stream did not.
-            if i + 1 < snapshot.anchors.count { stream = min(stream, snapshot.anchors[i + 1].stream) }
-        }
-        return max(0, min(stream, snapshot.scheduledEnd))
+        return snapshot.playedStreamIndex(nodeTime: nodeSampleTime())
     }
 
     private static func segment(at stream: Int64, in timeline: Timeline) -> Segment? {

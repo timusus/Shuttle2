@@ -372,6 +372,139 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states, [.loading, .paused])
     }
 
+    // MARK: - Route change (an engine configuration change)
+
+    /// What a route change does to the engine: it stops, and with it the node's clock.
+    private func changeRoute(_ controller: MusicPlaybackController) {
+        controller.engine.stop()
+        NotificationCenter.default.post(name: .AVAudioEngineConfigurationChange, object: controller.engine)
+        controller.syncForTesting()
+    }
+
+    /// Where `out` starts in `samples` (interleaved), from its first frames.
+    private func offset(of out: (left: [Float], right: [Float]), in samples: [Float]) -> Int? {
+        let left = samples.channel(0)
+        let probe = Array(out.left.prefix(64))
+        return (0...(left.count - probe.count)).first { Array(left[$0..<($0 + probe.count)]) == probe }
+    }
+
+    /// Repeats `syncForTesting` until `condition` holds or `timeout` passes.
+    private func waitUntil(_ controller: MusicPlaybackController, timeout: TimeInterval = 2, _ condition: () -> Bool) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            controller.syncForTesting()
+            if condition() { return }
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+    }
+
+    /// #714: the engine stops before the change is reported, so the node's clock can't be read. The
+    /// stream is rebuilt where it was last heard, not at the start of the track.
+    func testARouteChangeMidTrackCarriesOnWhereItWasHeard() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 96_000, seed: 21)
+        controller.load(current: track("A", a), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 24_000)
+        let heard = try XCTUnwrap(controller.position).ms
+
+        changeRoute(controller)
+        XCTAssertEqual(Double(try XCTUnwrap(controller.position).ms), Double(heard), accuracy: 15)
+        let out = try renderer.render(frames: 9_600)
+
+        let from = try XCTUnwrap(offset(of: out, in: a))
+        XCTAssertEqual(Double(from), 24_000, accuracy: 1_024)
+        assertEqual(out.left[0..<9_600], out.right[0..<9_600], Array(a[(from * 2)..<((from + 9_600) * 2)]))
+        XCTAssertEqual(log.states, [.loading, .playing])
+        XCTAssertEqual(log.failures, [])
+    }
+
+    /// A paused track stays where it was paused, and paused.
+    func testARouteChangeWhilePausedKeepsThePausedPosition() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 96_000, seed: 22)
+        controller.load(current: track("A", a), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 24_000)
+        controller.pause()
+        controller.syncForTesting()
+        let paused = try XCTUnwrap(controller.position).ms
+
+        changeRoute(controller)
+        XCTAssertEqual(controller.position?.ms, paused)
+        XCTAssertEqual(log.states, [.loading, .playing, .paused])
+    }
+
+    /// A transcode can't be sought: the owner is told the position heard, to re-open the stream there.
+    func testARouteChangeOnAnUnseekableTrackReportsThePositionHeard() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: transcode("A", TestSignal.noise(frames: 96_000, seed: 23)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 24_000)
+
+        changeRoute(controller)
+        let reported = try XCTUnwrap(log.seeksUnsupported.last?.split(separator: " ").last.flatMap { Int64($0) })
+        XCTAssertEqual(Double(reported), 500, accuracy: 15)
+    }
+
+    /// #715: the engine won't start while the route settles. It shows loading and plays once a retry
+    /// starts it, from where it was heard.
+    func testAStartThatFailsAfterARouteChangeIsRetried() throws {
+        let (controller, log) = try makeController()
+        controller.startRetryDelay = .milliseconds(20)
+        let a = TestSignal.noise(frames: 96_000, seed: 24)
+        controller.load(current: track("A", a), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 24_000)
+        controller.startEngine = { _ in throw TrackSourceError.failed("route settling") }
+
+        changeRoute(controller)
+        XCTAssertEqual(log.states, [.loading, .playing, .loading])
+        controller.startEngine = { try $0.start() }
+        waitUntil(controller) { log.states.last == .playing }
+        XCTAssertEqual(log.states, [.loading, .playing, .loading, .playing])
+
+        let out = try renderer.render(frames: 9_600)
+        let from = try XCTUnwrap(offset(of: out, in: a))
+        XCTAssertEqual(Double(from), 24_000, accuracy: 1_024)
+    }
+
+    func testAStartThatKeepsFailingAfterARouteChangeGivesUpPaused() throws {
+        let (controller, log) = try makeController()
+        controller.startRetryDelay = .milliseconds(10)
+        controller.load(current: track("A", TestSignal.noise(frames: 96_000, seed: 25)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 9_600)
+        var attempts = 0
+        controller.startEngine = { _ in
+            attempts += 1
+            throw TrackSourceError.failed("route gone")
+        }
+
+        changeRoute(controller)
+        waitUntil(controller) { log.states.last == .paused }
+        XCTAssertEqual(log.states, [.loading, .playing, .loading, .paused])
+        XCTAssertEqual(attempts, 1 + MusicPlaybackController.startRetryAttempts)
+    }
+
+    func testAPauseWhileAStartIsRetriedCancelsIt() throws {
+        let (controller, log) = try makeController()
+        controller.startRetryDelay = .milliseconds(50)
+        controller.load(current: track("A", TestSignal.noise(frames: 96_000, seed: 26)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 9_600)
+        controller.startEngine = { _ in throw TrackSourceError.failed("route settling") }
+
+        changeRoute(controller)
+        controller.pause()
+        controller.startEngine = { try $0.start() }
+        Thread.sleep(forTimeInterval: 0.3)
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .playing, .loading, .paused])
+    }
+
     // MARK: - DSP
 
     func testFlatEqualizerIsIdentity() throws {
