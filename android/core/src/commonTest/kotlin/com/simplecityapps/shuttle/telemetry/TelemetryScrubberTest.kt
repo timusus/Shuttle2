@@ -38,6 +38,37 @@ class TelemetryScrubberTest {
     }
 
     @Test
+    fun `host names go whatever their case`() {
+        scrub("Tims-NAS.local refused") shouldBe "<host> refused"
+        scrub("connect to MyServer.example.com:8096 timed out") shouldBe "connect to <host> timed out"
+        scrub("SERVER.LOCAL down") shouldBe "<host> down"
+        // A capitalised first label is never a package
+        scrub("Platform.example.com down") shouldBe "<host> down"
+    }
+
+    @Test
+    fun `single-label hosts go where the text says they are hosts`() {
+        scrub("Failed to connect to homeserver/192.168.1.5:8096") shouldBe "Failed to connect to <host>/<ip>"
+        scrub("homeserver/192.168.1.5:8096 refused") shouldBe "<host>/<ip> refused"
+        scrub("Unable to resolve host \"homeserver\": No address associated with hostname") shouldBe
+            "Unable to resolve host \"<host>\": No address associated with hostname"
+        scrub("connect to Tims-NAS timed out") shouldBe "connect to <host> timed out"
+        scrub("host=homeserver, hostname: nas") shouldBe "host=<host>, hostname: <host>"
+        scrub("share //homeserver/music/x.flac gone") shouldNotContain "homeserver"
+        scrub("//homeserver:8096 refused") shouldBe "//<host> refused"
+        scrub("homeserver:32400 refused") shouldBe "<host> refused"
+    }
+
+    @Test
+    fun `ordinary words - members and source locations stay`() {
+        scrub("Failed to connect to the server") shouldBe "Failed to connect to the server"
+        scrub("Unable to resolve host: no network") shouldBe "Unable to resolve host: no network"
+        scrub("Fragment.onCreate threw at Queue.kt:42 (SettingsRoutes.kt)") shouldBe
+            "Fragment.onCreate threw at Queue.kt:42 (SettingsRoutes.kt)"
+        scrub("failed at line:42") shouldBe "failed at line:42"
+    }
+
+    @Test
     fun `file paths go`() {
         scrub("No such file /storage/emulated/0/Music/Artist/Song.mp3") shouldBe "No such file <path>"
         scrub("open /var/mobile/Containers/Data/Application/ABC/Documents failed") shouldBe "open <path> failed"
