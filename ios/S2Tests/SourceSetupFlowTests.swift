@@ -42,12 +42,12 @@ struct SourceSetupFlowTests {
     // MARK: Server cards
 
     @Test func theCardsOfferTheTypesIOSCanSignInTo() throws {
-        #expect(MediaProviderType.signInTypes == [.jellyfin, .emby])
+        #expect(MediaProviderType.signInTypes == [.jellyfin, .emby, .plex])
         var chosen: MediaProviderType?
         let sut = SourceTypeCards(types: MediaProviderType.signInTypes, onSelect: { chosen = $0 })
         #expect((try? sut.inspect().find(text: "Jellyfin")) != nil)
         #expect((try? sut.inspect().find(text: "Emby")) != nil)
-        #expect((try? sut.inspect().find(text: "Plex")) == nil)
+        #expect((try? sut.inspect().find(text: "Plex")) != nil)
         try sut.inspect().find(viewWithAccessibilityIdentifier: "serverTypePicker.Emby").button().tap()
         #expect(chosen == .emby)
     }

@@ -30,7 +30,7 @@ struct PaywallViewTests {
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
 
         #expect(disclosure.contains("14 days"))
-        #expect(disclosure.contains("streaming from Jellyfin and Emby stops"))
+        #expect(disclosure.contains("streaming from Jellyfin, Emby and Plex stops"))
         #expect(disclosure.contains("$9.99"))
         #expect((try? sut.inspect().find(text: "Start 14-day free trial")) != nil)
         #expect((try? sut.inspect().find(text: "$9.99 once")) != nil)
@@ -41,9 +41,9 @@ struct PaywallViewTests {
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
         let copy = [disclosure, ProFeatures.headline, ProFeatures.signInDisclosure, ProStatus.trialEnded.message]
 
-        #expect((try? sut.inspect().find(text: "Stream from Jellyfin and Emby")) != nil)
+        #expect((try? sut.inspect().find(text: "Stream from Jellyfin, Emby and Plex")) != nil)
         for line in copy {
-            #expect(!line.contains("Plex"))
+            #expect(line.contains("Plex"))
             #expect(!line.localizedCaseInsensitiveContains("download"))
         }
     }

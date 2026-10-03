@@ -153,7 +153,7 @@ struct LibraryRootContent<CategoryContent: View>: View {
             switch availability {
             case .empty where !importStatus.isImporting:
                 ScrollView {
-                    EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin or Emby server to stream your music.") {
+                    EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin, Emby or Plex server to stream your music.") {
                         NavigationLink("Add a Source", value: Route.sources)
                             .accessibilityIdentifier("libraryEmpty.addSource")
                     }

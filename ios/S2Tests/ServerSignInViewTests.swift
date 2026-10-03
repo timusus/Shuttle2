@@ -12,6 +12,7 @@ struct ServerSignInViewTests {
         type: MediaProviderType = .jellyfin,
         address: String = "http://music.local:8096",
         username: String = "tim",
+        authCode: String = "",
         missing: Set<ServerSignInField> = [],
         step: ServerSignInStep = ServerSignInStepForm.shared,
         quickConnectEnabled: Bool = false
@@ -19,7 +20,7 @@ struct ServerSignInViewTests {
         ServerSignInUiState(
             type: type,
             form: ServerSignInForm(
-                address: address, username: username, password: "hunter2", authCode: "",
+                address: address, username: username, password: "hunter2", authCode: authCode,
                 rememberPassword: false, passwordRevealable: true, missing: missing
             ),
             step: step,
@@ -54,6 +55,13 @@ struct ServerSignInViewTests {
         #expect(state.missing == [.username])
         #expect(state.step == .form)
         #expect(state.quickConnectEnabled)
+    }
+
+    @Test func mapsPlexsTwoFactorCode() {
+        let plex = ServerSignInState(uiState(type: .plex, authCode: "123456"))
+        #expect(plex.asksForAuthCode)
+        #expect(plex.authCode == "123456")
+        #expect(!ServerSignInState(uiState(type: .jellyfin)).asksForAuthCode)
     }
 
     @Test func mapsEachStep() {
@@ -110,6 +118,17 @@ struct ServerSignInViewTests {
         let sut = ServerSignInContent(state: state(.connected))
         #expect((try? sut.inspect().find(text: "Signed In")) != nil)
         #expect(try signInButton(sut).isDisabled())
+    }
+
+    @Test func plexAsksForAPlexTvAccountAndAnOptionalTwoFactorCode() throws {
+        var plex = ServerSignInState(type: .plex)
+        plex.asksForAuthCode = true
+        let sut = ServerSignInContent(state: plex)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.authCode")) != nil)
+        #expect((try? sut.inspect().find(text: "Your server's address, then your plex.tv account.")) != nil)
+
+        let jellyfin = ServerSignInContent(state: state(.form))
+        #expect((try? jellyfin.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.authCode")) == nil)
     }
 
     // MARK: Quick Connect

@@ -3,21 +3,20 @@ import StoreKit
 import SwiftUI
 
 /// What Shuttle Music Pro unlocks on iOS, for the paywall, its trial disclosure, Settings, server sign-in and Restore's
-/// messages. Name only what the app has (App Review 2.3, 3.1.1): add Plex to `servers` when it ships, and downloads
-/// when they do.
+/// messages. Name only what the app has (App Review 2.3, 3.1.1): add downloads when they ship.
 enum ProFeatures {
     /// The servers Pro streams from.
-    static let servers = ["Jellyfin", "Emby"]
+    static let servers = ["Jellyfin", "Emby", "Plex"]
 
-    /// "Jellyfin and Emby".
+    /// "Jellyfin, Emby and Plex".
     static var serverList: String {
         servers.count < 2 ? servers.joined() : servers.dropLast().joined(separator: ", ") + " and " + servers.last!
     }
 
-    /// The paywall's headline feature and Settings' row: "Stream from Jellyfin and Emby".
+    /// The paywall's headline feature and Settings' row: "Stream from Jellyfin, Emby and Plex".
     static var headline: String { "Stream from \(serverList)" }
 
-    /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin and Emby".
+    /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin, Emby and Plex".
     static var afterTrial: String { "streaming from \(serverList)" }
 
     /// Server sign-in's disclosure, for anyone without Pro or a running trial.

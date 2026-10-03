@@ -52,7 +52,7 @@ extension EmptyState where Action == EmptyView {
 
 #Preview("With an action") {
     NavigationStack {
-        EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin or Emby server to stream your music.") {
+        EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin, Emby or Plex server to stream your music.") {
             NavigationLink("Add a Source", value: Route.sources)
         }
     }

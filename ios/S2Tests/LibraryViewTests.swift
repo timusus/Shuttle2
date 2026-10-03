@@ -21,7 +21,7 @@ struct LibraryViewTests {
     @Test func emptyShowsTheEmptyState() throws {
         let sut = LibraryRootContent(categories: LibraryCategory.allCases, availability: .empty, importStatus: .idle)
         #expect((try? sut.inspect().find(text: "No Music")) != nil)
-        #expect((try? sut.inspect().find(text: "Connect a Jellyfin or Emby server to stream your music.")) != nil)
+        #expect((try? sut.inspect().find(text: "Connect a Jellyfin, Emby or Plex server to stream your music.")) != nil)
         #expect((try? sut.inspect().find(text: LibraryCategory.songs.title)) == nil)
     }
 

@@ -212,7 +212,7 @@ struct SourceSetupWelcome: View {
                 VStack(alignment: .leading, spacing: Spacing.large) {
                     FeatureRow(
                         symbol: "server.rack", color: .purple, title: "Your Music, Wherever It Lives",
-                        detail: "Play the music on this iPhone, or sign in to Jellyfin or Emby and play your own collection."
+                        detail: "Play the music on this iPhone, or sign in to Jellyfin, Emby or Plex and play your own collection."
                     )
                     FeatureRow(
                         symbol: "square.stack", color: .orange, title: "Your Whole Library",

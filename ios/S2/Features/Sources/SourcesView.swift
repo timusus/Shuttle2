@@ -185,10 +185,9 @@ struct SourcesState: Equatable {
 }
 
 extension MediaProviderType {
-    /// The server types the setup offers on iOS: the shared `ServerTypes` less Plex, whose provider isn't in
-    /// `:shared` yet, so its sign-in has no authentication to run.
+    /// The server types the setup offers on iOS: the shared `ServerTypes`, as on Android.
     static var signInTypes: [MediaProviderType] {
-        SourcesViewModelKt.ServerTypes.filter { $0 != .plex }
+        SourcesViewModelKt.ServerTypes
     }
 
     /// The server type a `Route.server` names, if it is one.
@@ -261,7 +260,7 @@ struct SourcesContent: View {
                 Text("Media Servers")
             } footer: {
                 if state.servers.isEmpty {
-                    Text("Connect a Jellyfin or Emby server to stream your music library from it.")
+                    Text("Connect a Jellyfin, Emby or Plex server to stream your music library from it.")
                 }
             }
             if state.thisDevice || !state.servers.isEmpty {

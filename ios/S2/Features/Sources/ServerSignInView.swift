@@ -1,12 +1,12 @@
 import Shared
 import SwiftUI
 
-/// A Jellyfin or Emby server's sign-in (#587, #624), on the shared `ServerSignInViewModel`: Android's
+/// A Jellyfin, Emby or Plex server's sign-in (#587, #624), on the shared `ServerSignInViewModel`: Android's
 /// `ServerSignInRoute`/`ServerSignInDialog` as a HIG form, a step of the source setup (`SourceSetupFlow`), which is
 /// the one place it opens from: the first run, Sources' Add a Server and Sign In Again. It starts from the saved
 /// login; once the server is signed in it calls `onConnected` (the setup enables the provider and imports), then
-/// `onFinished` when the view model says the success state has shown for long enough. Plex, and its 2FA code field,
-/// join with the Plex provider in `:shared`; until then the setup doesn't offer it (`MediaProviderType.signInTypes`).
+/// `onFinished` when the view model says the success state has shown for long enough. Plex signs in with a plex.tv
+/// account, and an optional two-factor code, as on Android.
 struct ServerSignInView: View {
     let type: MediaProviderType
     /// The view model's `ViewModelCache` key, kept live by whoever shows the form (`Navigator.sourceSetupLive`).
@@ -69,6 +69,9 @@ struct ServerSignInState: Equatable {
     var step: Step = .form
     var showProDisclosure = false
     var quickConnectEnabled = false
+    /// Plex's optional two-factor code, for a plex.tv account that has it on.
+    var authCode = ""
+    var asksForAuthCode = false
 
     init(type: MediaProviderType) {
         self.type = type
@@ -96,6 +99,8 @@ struct ServerSignInState: Equatable {
         }
         showProDisclosure = state.showProDisclosure
         quickConnectEnabled = state.quickConnectEnabled
+        authCode = state.form.authCode
+        asksForAuthCode = state.asksForAuthCode
     }
 }
 
@@ -104,6 +109,7 @@ struct ServerSignInActions {
     var onAddressChange: (String) -> Void = { _ in }
     var onUsernameChange: (String) -> Void = { _ in }
     var onPasswordChange: (String) -> Void = { _ in }
+    var onAuthCodeChange: (String) -> Void = { _ in }
     var onRememberPasswordChange: (Bool) -> Void = { _ in }
     var onAuthenticate: () -> Void = {}
     var onRetry: () -> Void = {}
@@ -117,6 +123,7 @@ extension ServerSignInActions {
             onAddressChange: { viewModel.onAddressChange(address: $0) },
             onUsernameChange: { viewModel.onUsernameChange(username: $0) },
             onPasswordChange: { viewModel.onPasswordChange(password: $0) },
+            onAuthCodeChange: { viewModel.onAuthCodeChange(authCode: $0) },
             onRememberPasswordChange: { viewModel.onRememberPasswordChange(remember: $0) },
             onAuthenticate: { viewModel.onAuthenticate() },
             onRetry: { viewModel.onRetry() },
@@ -143,10 +150,11 @@ struct ServerSignInContent: View {
     @State private var address: String
     @State private var username: String
     @State private var password: String
+    @State private var authCode: String
     @State private var rememberPassword: Bool
 
     private enum Focus: Hashable {
-        case address, username, password
+        case address, username, password, authCode
     }
 
     init(state: ServerSignInState, actions: ServerSignInActions = ServerSignInActions()) {
@@ -155,6 +163,7 @@ struct ServerSignInContent: View {
         _address = State(initialValue: state.address)
         _username = State(initialValue: state.username)
         _password = State(initialValue: state.password)
+        _authCode = State(initialValue: state.authCode)
         _rememberPassword = State(initialValue: state.rememberPassword)
     }
 
@@ -190,6 +199,7 @@ struct ServerSignInContent: View {
         .onChange(of: address) { _, value in actions.onAddressChange(value) }
         .onChange(of: username) { _, value in actions.onUsernameChange(value) }
         .onChange(of: password) { _, value in actions.onPasswordChange(value) }
+        .onChange(of: authCode) { _, value in actions.onAuthCodeChange(value) }
         .onChange(of: rememberPassword) { _, value in actions.onRememberPasswordChange(value) }
     }
 
@@ -213,7 +223,7 @@ struct ServerSignInContent: View {
 
     private var addressSection: some View {
         Section {
-            TextField("Address", text: $address, prompt: Text("192.168.1.20:8096"))
+            TextField("Address", text: $address, prompt: Text(state.type.exampleAddress))
                 .keyboardType(.URL)
                 .textContentType(.URL)
                 .textInputAutocapitalization(.never)
@@ -228,7 +238,7 @@ struct ServerSignInContent: View {
             if state.missing.contains(.address) {
                 RequiredNote(field: "address")
             } else if addressLooksInvalid {
-                Label("That isn't a server address. Try one like 192.168.1.20:8096.", systemImage: "exclamationmark.circle")
+                Label("That isn't a server address. Try one like \(state.type.exampleAddress).", systemImage: "exclamationmark.circle")
                     .foregroundStyle(.s2Error)
                     .accessibilityIdentifier("serverSignIn.addressInvalid")
             } else if let resolvedAddress {
@@ -271,6 +281,13 @@ struct ServerSignInContent: View {
                 .submitLabel(.go)
                 .onSubmit(signIn)
                 .accessibilityIdentifier("serverSignIn.password")
+            if state.asksForAuthCode {
+                TextField("Two-Factor Code", text: $authCode, prompt: Text("Optional"))
+                    .keyboardType(.numberPad)
+                    .textContentType(.oneTimeCode)
+                    .focused($focus, equals: .authCode)
+                    .accessibilityIdentifier("serverSignIn.authCode")
+            }
             Toggle("Remember Password", isOn: $rememberPassword)
                 .s2Switch()
                 .accessibilityIdentifier("serverSignIn.rememberPassword")
@@ -344,7 +361,7 @@ private struct SignInHeader: View {
                     .font(.s2Title3)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
-                Text("Your server's address, then your \(type.title) account.")
+                Text("Your server's address, then your \(type.accountName) account.")
                     .font(.subheadline)
                     .foregroundStyle(.s2TextSecondary)
                     .multilineTextAlignment(.center)
@@ -446,5 +463,17 @@ private struct QuickConnectSection: View {
 extension ServerSignInState.Step {
     var isFailure: Bool {
         if case .failed = self { true } else { false }
+    }
+}
+
+extension MediaProviderType {
+    /// An address like this type's server listens on, for the address field's prompt.
+    var exampleAddress: String {
+        self == .plex ? "192.168.1.20:32400" : "192.168.1.20:8096"
+    }
+
+    /// Whose account signs in: Plex's is a plex.tv account, not one on the server.
+    var accountName: String {
+        self == .plex ? "plex.tv" : title
     }
 }
