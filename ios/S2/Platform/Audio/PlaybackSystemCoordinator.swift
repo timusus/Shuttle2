@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Shared
 
 /// Connects the system's playback surfaces to the Kotlin player (phase 6, #588): the audio session
@@ -28,6 +29,8 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     private let makeEngine: () -> AudioEngine?
     private var observers: [Task<Void, Never>] = []
     private var intentListener: Int?
+    /// Where each pause and resume came from: the session or a remote command (#715).
+    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "AudioSession")
 
     init(
         playback: IosPlayerController,
@@ -53,8 +56,14 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             NSLog("S2: audio session configure failed: \(error)")
         }
         session.isPlaying = { [weak self] in self?.playerIsPlaying ?? false }
-        session.onPause = { [weak self] _ in self?.intent.pause() }
-        session.onResume = { [weak self] in self?.intent.resume() }
+        session.onPause = { [weak self] reason in
+            self?.log.notice("pause from the session: \(String(describing: reason), privacy: .public)")
+            self?.intent.pause()
+        }
+        session.onResume = { [weak self] in
+            self?.log.notice("resume from the session")
+            self?.intent.resume()
+        }
         session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
         player.onWillPlay = { [weak session] in
             MainActor.assumeIsolated {
@@ -185,14 +194,17 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     // MARK: - NowPlayingCommandHandler
 
     func play() {
+        log.notice("remote play")
         intent.play()
     }
 
     func pause() {
+        log.notice("remote pause")
         intent.pause()
     }
 
     func togglePlayPause() {
+        log.notice("remote togglePlayPause, playing \(self.playerIsPlaying)")
         intent.toggle()
     }
 

@@ -1,4 +1,5 @@
 import AVFoundation
+import os
 
 /// The `AVAudioSession` calls `AudioSessionController` makes, so tests can stand in for the session.
 protocol AudioSession: AnyObject {
@@ -24,7 +25,9 @@ extension AVAudioSession: AudioSession {}
 ///   paused in between. That is Android's transient focus loss. An end without `.shouldResume` stays
 ///   paused, as a permanent focus loss does. Ducking is the system's job on iOS.
 /// - **Route change, `.oldDeviceUnavailable`** (headphones unplugged, Bluetooth gone): pause, and don't
-///   resume when the device returns. That is Android's `ACTION_AUDIO_BECOMING_NOISY`.
+///   resume when the device returns. That is Android's `ACTION_AUDIO_BECOMING_NOISY`. Only when a
+///   personal output went away (``pausesOnRouteChange(reason:previousOutputs:currentOutputs:)``): a
+///   Bluetooth profile or codec switch on the same device is reported the same way (#715).
 /// - **Output sample rate**: none of its business. The engine renders at a fixed 48 kHz and the EQ is
 ///   designed for that; the main mixer converts to whatever the route runs at (phase-6-playback.md).
 /// - **Media services reset**: the session is configured again and the player's owner is told to
@@ -51,6 +54,7 @@ final class AudioSessionController {
 
     private let session: AudioSession
     private let notificationCenter: NotificationCenter
+    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "AudioSession")
     private var observers: [NSObjectProtocol] = []
     private var resumeAfterInterruption = false
 
@@ -89,13 +93,47 @@ final class AudioSessionController {
         resumeAfterInterruption = false
     }
 
+    // MARK: - Route changes
+
+    /// Outputs that are the listener's own (worn, plugged in or in their car), grouped by kind: unplugged
+    /// or disconnected, the audio would carry on out loud from the speaker.
+    nonisolated private static let personalOutputKinds: [AVAudioSession.Port: String] = [
+        .headphones: "headphones",
+        .bluetoothA2DP: "bluetooth",
+        .bluetoothLE: "bluetooth",
+        .bluetoothHFP: "bluetooth",
+        .usbAudio: "usb",
+        .lineOut: "lineOut",
+        .carAudio: "car",
+        .airPlay: "airPlay",
+    ]
+
+    /// Whether a route change pauses: the old device went away (Apple's "headphones unplugged" case) and
+    /// it was a personal output (``personalOutputKinds``) of a kind the new route no longer has. A
+    /// Bluetooth device switching profile (A2DP to HFP) or codec is still Bluetooth, and plays on.
+    nonisolated static func pausesOnRouteChange(
+        reason: AVAudioSession.RouteChangeReason?,
+        previousOutputs: [AVAudioSession.Port],
+        currentOutputs: [AVAudioSession.Port]
+    ) -> Bool {
+        guard reason == .oldDeviceUnavailable else { return false }
+        let remaining = Set(currentOutputs.compactMap { personalOutputKinds[$0] })
+        return previousOutputs.contains { port in
+            personalOutputKinds[port].map { !remaining.contains($0) } ?? false
+        }
+    }
+
     // MARK: - Notifications
 
     /// A session notification, read on the posting thread so only a value crosses to main.
-    private enum SessionEvent: Sendable {
+    enum SessionEvent: Sendable {
         case interruptionBegan
         case interruptionEnded(shouldResume: Bool)
-        case routeChanged(oldDeviceUnavailable: Bool)
+        case routeChanged(
+            reason: AVAudioSession.RouteChangeReason?,
+            previousOutputs: [AVAudioSession.Port],
+            currentOutputs: [AVAudioSession.Port]
+        )
         case mediaServicesReset
 
         init?(_ note: Notification) {
@@ -113,7 +151,13 @@ final class AudioSessionController {
                 }
             case AVAudioSession.routeChangeNotification:
                 let reason = (info[AVAudioSessionRouteChangeReasonKey] as? UInt).flatMap(AVAudioSession.RouteChangeReason.init)
-                self = .routeChanged(oldDeviceUnavailable: reason == .oldDeviceUnavailable)
+                let previous = info[AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription
+                let current = (note.object as? AVAudioSession)?.currentRoute
+                self = .routeChanged(
+                    reason: reason,
+                    previousOutputs: previous?.outputs.map(\.portType) ?? [],
+                    currentOutputs: current?.outputs.map(\.portType) ?? []
+                )
             case AVAudioSession.mediaServicesWereResetNotification:
                 self = .mediaServicesReset
             default:
@@ -142,25 +186,36 @@ final class AudioSessionController {
         }
     }
 
-    private func handle(_ event: SessionEvent) {
+    func handle(_ event: SessionEvent) {
         switch event {
         case .interruptionBegan:
             let wasPlaying = isPlaying()
+            log.notice("interruption began, playing \(wasPlaying)")
             if wasPlaying { onPause(.interruption) }
             // Set after `onPause`, whose pause may come back through `playbackPaused()`.
             resumeAfterInterruption = wasPlaying
         case let .interruptionEnded(shouldResume):
             let resume = resumeAfterInterruption && shouldResume
+            log.notice("interruption ended, shouldResume \(shouldResume), resuming \(resume)")
             resumeAfterInterruption = false
             guard resume else { return }
             do {
                 try session.setActive(true, options: [])
             } catch {
+                log.error("session didn't reactivate after the interruption: \(String(describing: error), privacy: .public)")
                 return // the other app still holds the hardware; stay paused
             }
             onResume()
-        case let .routeChanged(oldDeviceUnavailable):
-            if oldDeviceUnavailable {
+        case let .routeChanged(reason, previousOutputs, currentOutputs):
+            let pauses = Self.pausesOnRouteChange(
+                reason: reason, previousOutputs: previousOutputs, currentOutputs: currentOutputs
+            )
+            log.notice("""
+                route changed: \(Self.name(reason), privacy: .public), \
+                from \(previousOutputs.map(\.rawValue), privacy: .public) \
+                to \(currentOutputs.map(\.rawValue), privacy: .public), pauses \(pauses)
+                """)
+            if pauses {
                 // Unplugging while an interruption holds playback must not resume onto the speaker.
                 resumeAfterInterruption = false
                 if isPlaying() { onPause(.outputDeviceUnavailable) }
@@ -170,7 +225,22 @@ final class AudioSessionController {
         }
     }
 
+    private static func name(_ reason: AVAudioSession.RouteChangeReason?) -> String {
+        switch reason {
+        case .newDeviceAvailable: "newDeviceAvailable"
+        case .oldDeviceUnavailable: "oldDeviceUnavailable"
+        case .categoryChange: "categoryChange"
+        case .override: "override"
+        case .wakeFromSleep: "wakeFromSleep"
+        case .noSuitableRouteForCategory: "noSuitableRouteForCategory"
+        case .routeConfigurationChange: "routeConfigurationChange"
+        case let other?: "reason \(other.rawValue)"
+        case nil: "unknown"
+        }
+    }
+
     private func handleMediaServicesReset() {
+        log.notice("media services were reset")
         resumeAfterInterruption = false
         try? configure()
         onMediaServicesReset()

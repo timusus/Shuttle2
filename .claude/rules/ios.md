@@ -204,8 +204,10 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
 - `AudioSessionController`: `.playback` / `.default` / `.longFormAudio`. Interruption: pause; resume on
   `.shouldResume` only if we were playing and nothing paused or played meanwhile (Android's transient
   focus loss); no `.shouldResume` stays paused (permanent loss). `.oldDeviceUnavailable`: pause, never
-  auto-resume (Android's becoming-noisy). Asks for an engine rebuild on a media-services reset. It ignores
-  the route's sample rate: the engine renders at a fixed 48 kHz, the rate the shared EQ is designed at
+  auto-resume (Android's becoming-noisy), but only when a personal output (headphones, Bluetooth, USB,
+  line out, car, AirPlay) left and the new route has none of its kind
+  (`pausesOnRouteChange`, #715): a Bluetooth profile or codec switch plays on. Asks for an engine
+  rebuild on a media-services reset. It ignores the route's sample rate: the engine renders at a fixed 48 kHz, the rate the shared EQ is designed at
   (`phase-6-playback.md`, step 8). `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call
   `activate()` before any play and `playbackPaused()` on every pause; an activation that fails cancels the play
   (the engine stays paused, as when its own start fails).
@@ -226,7 +228,12 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
 - The engine pauses its `AVAudioEngine` output on every paused, idle or ended state: iOS reads a running
   output (even rendering silence) as playing, and the lock screen would show a pause button (#691). A play
   that can't start it again (`engine.start()` throws) stays paused and reports paused; the node never plays
-  on a stopped engine.
+  on a stopped engine. After a route change (`AVAudioEngineConfigurationChange`) the engine has already
+  stopped, so the rebuild starts where the last tick heard it (`Timeline.heard`, #714); a start that fails
+  then reports loading and is retried a few times before staying paused (#715).
+- Logging: subsystem `com.simplecityapps.shuttle2`, categories `MusicPlayback` (engine: configuration
+  changes, restarts, play/pause) and `AudioSession` (interruptions, route changes with their outputs, and
+  whether each pause came from the session or a remote command).
 - Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`; nothing plays in the
   background without it.
 

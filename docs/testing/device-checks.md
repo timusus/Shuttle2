@@ -319,3 +319,13 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone: a song without a duration tag shows a scrubber with the stream's length, as the app does.
 - [ ] iPhone: pause a few seconds before the end of a song on a gapless album, wait, then play. The elapsed time carries on from where it paused (no jump), and the next song starts on time with the title, lock screen and elapsed time changing together. The engine's output is paused while paused, so this checks its clock survives the restart.
 - [ ] iPhone: start a phone call (or play in another app that takes the audio exclusively), then press play in S2 from the app and from the lock screen. Nothing plays, the app doesn't crash, and both the app and the lock screen stay paused; after the call, play works.
+
+## iOS Bluetooth route changes (#714, #715)
+
+Stream the logs while testing: `log stream --predicate 'subsystem == "com.simplecityapps.shuttle2"' --level info`
+(categories MusicPlayback and AudioSession) shows each engine configuration change, route change with its
+previous and new outputs, and where each pause came from.
+
+- [ ] iPhone with Bluetooth headphones: a minute into a song (without pausing first), switch output mid-track: turn the headphones off and on, or pick the speaker then the headphones again in Control Center. Playback carries on (or, once disconnected, pauses) at the position it was heard, never back at 0:00; play resumes from there.
+- [ ] iPhone with Bluetooth headphones: press the headphones' volume keys up and down several times while playing. Playback never pauses.
+- [ ] iPhone with Bluetooth headphones: turn the headphones off (or walk out of range) while playing. Playback pauses and doesn't come back on the speaker; reconnecting doesn't resume it either.

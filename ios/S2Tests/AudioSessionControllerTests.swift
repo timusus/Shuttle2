@@ -69,6 +69,16 @@ struct AudioSessionControllerTests {
         func routeChanged(_ reason: AVAudioSession.RouteChangeReason) {
             post(AVAudioSession.routeChangeNotification, [AVAudioSessionRouteChangeReasonKey: reason.rawValue])
         }
+
+        /// A route change between real ports. The notification's routes can't be built in a test, so this
+        /// hands the controller the event it reads from one.
+        @MainActor func routeChanged(
+            _ reason: AVAudioSession.RouteChangeReason,
+            from previous: [AVAudioSession.Port],
+            to current: [AVAudioSession.Port]
+        ) {
+            controller.handle(.routeChanged(reason: reason, previousOutputs: previous, currentOutputs: current))
+        }
     }
 
     @Test func configureSetsTheLongFormPlaybackCategory() throws {
@@ -138,10 +148,10 @@ struct AudioSessionControllerTests {
     @Test func headphonesUnpluggedWhilePlayingPauses() {
         let h = Harness()
         h.playing = true
-        h.routeChanged(.oldDeviceUnavailable)
+        h.routeChanged(.oldDeviceUnavailable, from: [.headphones], to: [.builtInSpeaker])
         #expect(h.pauses == [.outputDeviceUnavailable])
 
-        h.routeChanged(.newDeviceAvailable) // plugged back in: Android doesn't resume, nor do we
+        h.routeChanged(.newDeviceAvailable, from: [.builtInSpeaker], to: [.headphones]) // plugged back in: Android doesn't resume, nor do we
         #expect(h.resumes == 0)
         #expect(h.pauses.count == 1)
     }
@@ -159,7 +169,7 @@ struct AudioSessionControllerTests {
         let h = Harness()
         h.playing = true
         h.interruptionBegan()
-        h.routeChanged(.oldDeviceUnavailable)
+        h.routeChanged(.oldDeviceUnavailable, from: [.bluetoothA2DP], to: [.builtInSpeaker])
         h.interruptionEnded(shouldResume: true)
         #expect(h.resumes == 0)
     }
@@ -176,10 +186,59 @@ struct AudioSessionControllerTests {
         let h = Harness()
         h.playing = true
         h.center.post(
-            name: AVAudioSession.routeChangeNotification,
+            name: AVAudioSession.interruptionNotification,
             object: FakeSession(),
-            userInfo: [AVAudioSessionRouteChangeReasonKey: AVAudioSession.RouteChangeReason.oldDeviceUnavailable.rawValue]
+            userInfo: [AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.began.rawValue]
         )
         #expect(h.pauses.isEmpty)
+    }
+
+    // MARK: - Which route changes pause (#715)
+
+    @Test func bluetoothDisconnectingWhilePlayingPauses() {
+        let h = Harness()
+        h.playing = true
+        h.routeChanged(.oldDeviceUnavailable, from: [.bluetoothA2DP], to: [.builtInSpeaker])
+        #expect(h.pauses == [.outputDeviceUnavailable])
+    }
+
+    /// A Bluetooth device moving between profiles or codecs (a volume key on some headsets) still plays
+    /// to the listener: no pause.
+    @Test func aBluetoothProfileSwitchDoesNotPause() {
+        let h = Harness()
+        h.playing = true
+        h.routeChanged(.oldDeviceUnavailable, from: [.bluetoothA2DP], to: [.bluetoothHFP])
+        #expect(h.pauses.isEmpty)
+    }
+
+    /// Nothing personal went away (no previous route, or only the speaker): nothing to stop playing out loud.
+    @Test func anOldDeviceThatWasntPersonalDoesNotPause() {
+        let h = Harness()
+        h.playing = true
+        h.routeChanged(.oldDeviceUnavailable)
+        h.routeChanged(.oldDeviceUnavailable, from: [.builtInSpeaker], to: [.builtInReceiver])
+        #expect(h.pauses.isEmpty)
+    }
+
+    @Test(arguments: [
+        AVAudioSession.Port.headphones, .bluetoothA2DP, .bluetoothLE, .bluetoothHFP, .usbAudio, .lineOut, .carAudio, .airPlay,
+    ])
+    func losingAPersonalOutputToTheSpeakerPauses(port: AVAudioSession.Port) {
+        #expect(AudioSessionController.pausesOnRouteChange(
+            reason: .oldDeviceUnavailable, previousOutputs: [port], currentOutputs: [.builtInSpeaker]
+        ))
+    }
+
+    @Test func theRouteChangeDecision() {
+        let pauses = AudioSessionController.pausesOnRouteChange
+        // Wired headphones pulled while Bluetooth is connected: the headphones went away.
+        #expect(pauses(.oldDeviceUnavailable, [.headphones], [.bluetoothA2DP]))
+        #expect(!pauses(.oldDeviceUnavailable, [.bluetoothLE], [.bluetoothA2DP]))
+        #expect(!pauses(.oldDeviceUnavailable, [], []))
+        #expect(!pauses(.oldDeviceUnavailable, [.builtInSpeaker], [.builtInSpeaker]))
+        for reason: AVAudioSession.RouteChangeReason in [.newDeviceAvailable, .categoryChange, .override, .routeConfigurationChange] {
+            #expect(!pauses(reason, [.bluetoothA2DP], [.builtInSpeaker]))
+        }
+        #expect(!pauses(nil, [.headphones], [.builtInSpeaker]))
     }
 }
