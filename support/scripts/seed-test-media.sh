@@ -40,6 +40,9 @@
 # build/test-media/<fixture> and reused on a later run instead of being regenerated.
 set -euo pipefail
 
+# Headless worker shells can start without the SDK platform-tools (adb) on PATH (same as remote-emu.sh).
+PATH="$PATH:/usr/sbin:/sbin:$HOME/Library/Android/sdk/platform-tools"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 CACHE_ROOT="${REPO_ROOT}/build/test-media"
