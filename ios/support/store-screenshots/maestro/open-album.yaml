@@ -1,0 +1,12 @@
+# Opens Cassette Summer from the Albums list (capture.sh shows the Albums category with a hook first),
+# scrolling up to it: the list keeps its place, and play-album.yaml left it down at Undertow. The tiles carry
+# no accessibility ids, so this taps it by title: change it with the sample library (build-library.py).
+appId: com.simplecityapps.shuttle.dev
+---
+- scrollUntilVisible:
+    element: "Cassette Summer"
+    direction: UP
+    timeout: 60000
+- tapOn: "Cassette Summer"
+- waitForAnimationToEnd:
+    timeout: 5000

@@ -1,0 +1,25 @@
+# Walks the first-run setup with the invented library already in the app's Documents (capture.sh copies it there and
+# launches nothing first): Get Started > Use Music on This iPhone > the import > Start Listening.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.getStarted"
+    timeout: 30000
+- tapOn:
+    id: "onboarding.getStarted"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.useThisDevice"
+    timeout: 10000
+- tapOn:
+    id: "onboarding.useThisDevice"
+- extendedWaitUntil:
+    visible: "Your Library Is Ready"
+    timeout: 180000
+- tapOn:
+    id: "onboarding.continue"
+- waitForAnimationToEnd:
+    timeout: 5000

@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# Captures the App Store screenshots for Shuttle Music: signs in to the Jellyfin test server on a leased
-# iPhone simulator and the project's iPad simulator, then walks slots.json.
+# Captures the App Store screenshots for Shuttle Music from an invented library: installs a fresh Debug app on a leased
+# iPhone simulator and the project's iPad simulator, copies the sample library (build-library.py) into its Documents,
+# walks the first-run setup on it, seeds a listening history (seed-history.py), turns the equalizer on, plays an
+# album, then walks slots.json.
 #
-#   ./capture.sh                 build, sign in, capture iPhone and iPad
+#   ./capture.sh                 build, set up and capture iPhone and iPad, plus the paywall (iPhone)
 #   ./capture.sh --skip-build    install the last Debug build instead of rebuilding
 #   ./capture.sh --device iphone|ipad
-#   ./capture.sh --skip-setup    keep the signed-in state from the last run (no reset, no sign-in)
-#   ./capture.sh --real-artwork  capture the library's real covers instead of generated artwork
+#   ./capture.sh --skip-setup    keep the app and its state from the last run (no reinstall, no import, no play)
 #
-# Raw PNGs land in raw/<iphone|ipad>/<n>.png next to this script; render.py frames them.
+# Raw PNGs land in raw/<iphone|ipad>/<n>.png next to this script, and the paywall in raw/iphone/paywall.png;
+# render.py frames the slots and copies the paywall out as it is.
 #
-# Each slot's `steps` (slots.json) are `hook:<action[?query]>` (an s2-debug://<action> URL written to
-# Documents/screenshot_hook.url, which the Debug build polls; the actions are in ios/S2/Debug/ScreenshotHooks.swift),
-# `maestro:<flow>` (a file in maestro/, run through ios/scripts/maestro-sim.sh) and `sleep:<seconds>`.
+# Each slot's `steps` (slots.json; `ipad_steps` replaces them on the iPad) are `hook:<action[?query]>` (an
+# s2-debug://<action> URL written to Documents/screenshot_hook.url, which the Debug build polls; the actions are in
+# ios/S2/Debug/ScreenshotHooks.swift), `maestro:<flow>` (a file in maestro/), `entitlement:<name>` (the debug
+# entitlement override, applied by relaunching) and `sleep:<seconds>`.
 #
-# Artwork: the test server's library is commercial music, so generated artwork is switched on in the app's
-# defaults (S2GeneratedArtwork) before capturing; the setting is read at launch and is harmless until it
-# ships. --real-artwork leaves the library's real covers in place.
+# Artwork: every album is invented and carries its own generated cover (52fbd9343's covers, embedded in its files),
+# so the frames show real-looking artwork with nothing commercial in them; nothing needs the debug generated-artwork
+# switch, which swaps every cover for a muted placeholder-style tile.
 #
 # Simulators: the iPhone is leased from the shared ios-sim pool (lease-sim.sh, holder $S2_SIM_HOLDER, default
 # store-screenshots) and released at the end, as is every status-bar override, by the EXIT trap; the iPad is
@@ -24,7 +27,7 @@
 # The iPhone 16 is 1179x2556 and the iPad Pro 11-inch is 1668x2420: render.py frames them for the 6.9", 6.5" and
 # 13" canvases, so the raw size only needs to be at least as large as the framed screen.
 #
-# Needs ~/.config/s2-test/jellyfin.env (see ios/scripts/maestro-sim.sh), Maestro and xcodegen on PATH.
+# Needs Maestro, xcodegen and ffmpeg on PATH; no media server.
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -32,20 +35,19 @@ IOS_DIR="$(cd "$HERE/../.." && pwd)"
 BUNDLE_ID="com.simplecityapps.shuttle.dev"
 SLOTS="$HERE/slots.json"
 RAW="$HERE/raw"
+LIBRARY="$HERE/library"
 IPAD_NAME="S2 iPad"
 export S2_SIM_HOLDER="${S2_SIM_HOLDER:-store-screenshots}"
 
 SKIP_BUILD=0
 SKIP_SETUP=0
-REAL_ARTWORK=0
 DEVICES="iphone ipad"
 while [ $# -gt 0 ]; do
   case "$1" in
     --skip-build) SKIP_BUILD=1 ;;
     --skip-setup) SKIP_SETUP=1 ;;
-    --real-artwork) REAL_ARTWORK=1 ;;
     --device) DEVICES="$2"; shift ;;
-    -h|--help) sed -n 2,27p "$0"; exit 0 ;;
+    -h|--help) sed -n 2,30p "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
   shift
@@ -100,24 +102,38 @@ hook() {
   log "hook '$action' was not picked up in 10 s; is the Debug build running?"; exit 1
 }
 
-maestro_flow() { S2_SIMULATOR_UDID="$1" "$IOS_DIR/scripts/maestro-sim.sh" "../support/store-screenshots/maestro/$2" >&2; }
+maestro_flow() {
+  maestro --udid "$1" test --test-output-dir "${TMPDIR:-/tmp}/s2-store-screenshots/maestro" "$HERE/maestro/$2" >&2 </dev/null
+}
 
-# Installs (and builds, once) the Debug app, erases its state, signs in and plays an album track and pauses it so the mini player has one.
+# A fresh Debug app with the invented library imported, a listening history, and an album paused part-way through, so
+# Home has shelves rather than its first-run hint, and the mini player, Now Playing and the queue have a song.
 prepare_app() {
-  local udid="$1"
-  # Generated artwork keeps commercial covers out of the frames; --real-artwork captures them anyway.
-  # Written before the app launches; the default is harmless until the setting ships.
-  if [ "$REAL_ARTWORK" = 0 ]; then
-    log "generated artwork on (S2GeneratedArtwork)"
-    xcrun simctl spawn "$udid" defaults write "$BUNDLE_ID" S2GeneratedArtwork -bool YES
-  fi
+  local udid="$1" data
   if [ "$SKIP_BUILD" = 1 ] || [ "$BUILT" = 1 ]; then BUILD=0; else BUILD=1; BUILT=1; fi
+  [ "$SKIP_SETUP" = 0 ] && xcrun simctl uninstall "$udid" "$BUNDLE_ID" 2>/dev/null || true
+  # Debug switches live in the simulator's own defaults, which outlive an uninstall. Covers come from the library's
+  # files, so generated artwork is off; every screen but the paywall is shot as Pro, so the entitlement override goes.
+  xcrun simctl spawn "$udid" defaults delete "$BUNDLE_ID" S2GeneratedArtwork 2>/dev/null || true
+  xcrun simctl spawn "$udid" defaults delete "$BUNDLE_ID" debug.entitlementOverride 2>/dev/null || true
   log "installing the Debug app (BUILD=$BUILD)"
   BUILD="$BUILD" RESET="$((1 - SKIP_SETUP))" S2_SIMULATOR_UDID="$udid" "$IOS_DIR/scripts/run-sim-server.sh" >&2
-  [ "$SKIP_SETUP" = 1 ] && return 0
-  log "signing in"
-  maestro_flow "$udid" sign-in.yaml
-  # Wait for the import before the first hook: the library lists are empty until it is done.
+  if [ "$SKIP_SETUP" = 1 ]; then sleep 3; return 0; fi
+  xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
+  data="$(container "$udid")"
+  log "copying the sample library into Documents"
+  "$HERE/build-library.py" "$LIBRARY"
+  cp -R "$LIBRARY/." "$data/Documents/"
+  log "first-run setup and import"
+  maestro_flow "$udid" onboard-local.yaml
+  xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
+  "$HERE/seed-history.py" "$data/Library/Application Support/song.db"
+  # The equalizer on with a shaped preset, written while the app is stopped: the Settings keys Android has always used
+  # (EqualizerSettings, KeyValueEqualizerPresetStore). Maestro's taps don't reach that screen's SwiftUI switch.
+  xcrun simctl spawn "$udid" defaults write "$BUNDLE_ID" equalizer_enabled -bool true
+  xcrun simctl spawn "$udid" defaults write "$BUNDLE_ID" preset_name -string "Bass Boost"
+  xcrun simctl launch "$udid" "$BUNDLE_ID" >/dev/null
+  sleep 3
   hook "$udid" "reset"
   hook "$udid" "library?category=albums"
   maestro_flow "$udid" play-album.yaml
@@ -126,11 +142,14 @@ prepare_app() {
 walk_slots() {
   local udid="$1" device="$2"
   mkdir -p "$RAW/$device"
-  # One line per slot: n<TAB>appearance<TAB>steps joined by a space (steps contain no spaces).
+  # One line per slot: n<TAB>appearance<TAB>steps joined by a space (steps contain no spaces). The iPhone's paywall
+  # (App Store Connect's in-app purchase review screenshot) follows the slots, unframed.
   python3 -c "
 import json
-for s in json.load(open('$SLOTS'))['slots']:
-    print(s['n'], s['appearance'], ' '.join(s['steps']), sep='\t')
+data = json.load(open('$SLOTS'))
+extras = [dict(data['paywall'], n='paywall')] if '$device' == 'iphone' else []
+for s in data['slots'] + extras:
+    print(s['n'], s['appearance'], ' '.join(s.get('$device' + '_steps', s['steps'])), sep='\t')
 " | while IFS=$'\t' read -r n appearance steps; do
     log "$device slot $n ($appearance)"
     xcrun simctl ui "$udid" appearance "$appearance"
@@ -140,6 +159,13 @@ for s in json.load(open('$SLOTS'))['slots']:
         hook:*) hook "$udid" "${step#hook:}" ;;
         maestro:*) maestro_flow "$udid" "${step#maestro:}" ;;
         sleep:*) sleep "${step#sleep:}" ;;
+        # The debug entitlement override (Settings > Pro's debug picker: None is Pro, Free shows the offer), which the
+        # app applies at launch, so it's written with the app stopped and the app relaunched.
+        entitlement:*)
+          xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
+          xcrun simctl spawn "$udid" defaults write "$BUNDLE_ID" debug.entitlementOverride "${step#entitlement:}"
+          xcrun simctl launch "$udid" "$BUNDLE_ID" >/dev/null
+          sleep 4 ;;
         *) log "unknown step '$step'"; exit 1 ;;
       esac
     done

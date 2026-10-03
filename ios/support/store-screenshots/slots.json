@@ -3,10 +3,11 @@
   "slots": [
     {
       "n": 1,
-      "screen": "Sources (connected servers)",
+      "screen": "Sources (this iPhone's music folder)",
       "appearance": "dark",
       "layout": "hero",
       "steps": ["hook:reset", "sleep:1", "hook:settings?open=1", "sleep:1", "hook:route?to=sources", "sleep:3"],
+      "ipad_steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:1", "hook:route?to=sources", "sleep:3"],
       "headline": "Your Jellyfin, Emby & Plex music.",
       "subheadline": "Plus the music on your iPhone."
     },
@@ -21,14 +22,14 @@
       "n": 3,
       "screen": "Library albums",
       "appearance": "light",
-      "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:4"],
+      "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:2", "maestro:albums-top.yaml", "sleep:1"],
       "headline": "Your whole library, beautifully browsed."
     },
     {
       "n": 4,
       "screen": "Album detail",
       "appearance": "light",
-      "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:3", "maestro:open-first-album.yaml", "sleep:2"],
+      "steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:3", "maestro:open-album.yaml", "sleep:2"],
       "headline": "Every album, every track."
     },
     {
@@ -36,6 +37,7 @@
       "screen": "Now Playing",
       "appearance": "dark",
       "steps": ["hook:reset", "sleep:1", "hook:player?open=1", "sleep:4"],
+      "ipad_steps": ["hook:reset", "sleep:1", "hook:player?open=1&fullScreen=1", "sleep:4"],
       "headline": "Gapless playback, in full colour."
     },
     {
@@ -43,6 +45,7 @@
       "screen": "Queue",
       "appearance": "dark",
       "steps": ["hook:reset", "sleep:1", "hook:player?open=1", "sleep:3", "maestro:open-queue.yaml", "sleep:2"],
+      "ipad_steps": ["hook:reset", "sleep:1", "hook:player?open=1&fullScreen=1", "sleep:3", "maestro:open-queue.yaml", "sleep:2"],
       "headline": "A queue you control."
     },
     {
@@ -50,7 +53,13 @@
       "screen": "Equalizer",
       "appearance": "dark",
       "steps": ["hook:reset", "sleep:1", "hook:settings?open=1", "sleep:1", "hook:route?to=equalizer", "sleep:3"],
+      "ipad_steps": ["hook:reset", "sleep:1", "hook:library?category=albums", "sleep:1", "hook:route?to=equalizer", "sleep:3"],
       "headline": "Equalizer and ReplayGain."
     }
-  ]
+  ],
+  "paywall": {
+    "screen": "Shuttle Music Pro paywall, unframed, for App Store Connect's in-app purchase review",
+    "appearance": "light",
+    "steps": ["entitlement:Free", "hook:reset", "sleep:1", "hook:settings?open=1", "sleep:2", "maestro:open-paywall.yaml", "sleep:2"]
+  }
 }

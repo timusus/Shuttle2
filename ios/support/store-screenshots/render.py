@@ -10,6 +10,10 @@ Chrome headless, one PNG per canvas:
 
 Output: ios/store/screenshots/<locale>/<canvas>/<n>.png
 
+The paywall capture (raw/iphone/paywall.png, slots.json's "paywall") is the in-app purchase's review screenshot:
+no frame or headline, just the screen scaled to the 6.9" canvas, at
+ios/store/screenshots/<locale>/iap-review/paywall.png.
+
     ./render.py                 all canvases
     ./render.py --canvas ipad-13
     ./render.py --slot 1 --slot 2
@@ -25,6 +29,8 @@ import os
 import subprocess
 import sys
 import tempfile
+
+from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 IOS_DIR = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -127,6 +133,25 @@ def render(chrome, config, output_path):
     return font
 
 
+def render_paywall(locale):
+    """The raw paywall, scaled to cover the 6.9" canvas and centre-cropped: App Review wants the screen as is."""
+    raw = os.path.join(RAW, "iphone", "paywall.png")
+    if not os.path.exists(raw):
+        sys.exit(f"missing raw capture {raw}; run capture.sh first")
+    width, height = CANVASES["iphone-6.9"]["width"], CANVASES["iphone-6.9"]["height"]
+    with Image.open(raw) as image:
+        image = image.convert("RGB")
+        scale = max(width / image.width, height / image.height)
+        image = image.resize((round(image.width * scale), round(image.height * scale)), Image.LANCZOS)
+        left, top = (image.width - width) // 2, (image.height - height) // 2
+        image = image.crop((left, top, left + width, top + height))
+        out_dir = os.path.join(OUT_ROOT, locale, "iap-review")
+        os.makedirs(out_dir, exist_ok=True)
+        out = os.path.join(out_dir, "paywall.png")
+        image.save(out)
+    print(f"iap-review paywall: {os.path.relpath(out, IOS_DIR)} ({width} x {height})")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--canvas", action="append", choices=sorted(CANVASES), help="one or more canvases; default all")
@@ -152,6 +177,8 @@ def main():
             out = os.path.join(out_dir, f"{slot['n']}.png")
             fonts.add(render(chrome, config_for(canvas_name, slot), out))
             print(f"{canvas_name} {slot['n']}: {os.path.relpath(out, IOS_DIR)} ({os.path.getsize(out) // 1024} KB)")
+    if not args.slot and "paywall" in spec:
+        render_paywall(locale)
     print(f"headline font: {', '.join(sorted(fonts))}")
 
 

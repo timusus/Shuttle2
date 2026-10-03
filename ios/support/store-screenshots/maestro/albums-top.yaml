@@ -1,0 +1,11 @@
+# Scrolls the Albums list back to its first row: it keeps its place, and play-album.yaml left it down at Undertow.
+# Scrolls to the first album by title rather than swiping, which could pull to refresh and re-import.
+appId: com.simplecityapps.shuttle.dev
+---
+- scrollUntilVisible:
+    element: "Blue Hours"
+    direction: UP
+    timeout: 30000
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 3000
