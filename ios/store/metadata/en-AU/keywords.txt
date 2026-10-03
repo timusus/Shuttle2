@@ -1,1 +1,1 @@
-self-hosted,flac,gapless,equalizer,replay gain,streaming,library,airplay,media server,lossless
+offline,local files,self-hosted,flac,gapless,equalizer,replay gain,streaming,airplay,media server

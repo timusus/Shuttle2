@@ -7,8 +7,8 @@ is in `en-AU/`; review notes and the launch checklist are in `ios/docs/app-store
 ## App Information
 
 - Content Rights: "No, it does not contain, show, or access third-party content." The app ships no
-  content and has no catalogue of its own: it plays files from the media server the user runs and signs in
-  to. If App Review pushes back, the fallback is "Yes ... and I have the necessary rights", as Shuttle
+  content and has no catalogue of its own: it plays audio files the user puts on the device, or from the
+  media server the user runs and signs in to. If App Review pushes back, the fallback is "Yes ... and I have the necessary rights", as Shuttle
   Podcasts did; the owner's call.
 - Categories: primary Music, secondary none.
 - Age rating questionnaire (all "None" / "No"; calculated 4+):
@@ -49,7 +49,7 @@ integration (on-device verification) keeps it as is.
 
 ## In-App Purchases
 
-Both products cover what the app sells: streaming from the user's own Jellyfin, Emby or Plex server. The
+Both products cover what the app sells (playing files on the device is free and not sold): streaming from the user's own Jellyfin, Emby or Plex server. The
 descriptions stay in step with the paywall copy (`ProFeatures` in `ios/S2/Features/Paywall/PaywallView.swift`,
 which names all three) and with `docs/product/monetisation.md`'s iOS section (guidelines 2.3 and 3.1.1).
 

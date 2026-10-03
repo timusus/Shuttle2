@@ -27,7 +27,8 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 
 ```
 Shuttle Music is a music player for the user's own Jellyfin, Emby or Plex media server. It has no
-catalogue of its own, so it needs a server to show anything. We have set up a demo Jellyfin server:
+catalogue of its own: it plays audio files on the device, or from a media server. We have set up a
+demo Jellyfin server:
 
   Server address: <DEMO SERVER URL, e.g. https://demo.example.com>
   Username:       <DEMO USERNAME>
@@ -36,9 +37,16 @@ catalogue of its own, so it needs a server to show anything. We have set up a de
 To test: open the app, tap Skip (or Add a Source), choose Add a Server > Jellyfin, enter the address,
 username and password, and tap Sign In. The library imports, then Home, Library (Albums, Artists, Songs,
 Genres, Playlists), Search, Now Playing, the queue and Settings > Equalizer all work against it.
+Plex signs in with a plex.tv account (email or username, password, optional two-factor code), not a
+server address.
+
+Local playback needs no server and is free: add audio files (FLAC, MP3, M4A, AAC, Ogg, Opus, WAV, AIFF)
+to Files > On My iPhone > Shuttle Music, or from a Mac through Finder, or pick a folder. The songs appear
+in the Library and play without Pro or a sign-in.
 
 In-app purchase: Shuttle Music is free to download. Streaming from Jellyfin, Emby or Plex is part of Shuttle Music
-Pro: a 14-day free trial begins the first time a song from a server is played, after which Pro is a
+Pro: the first time a server song is played the paywall opens, and tapping Start 14-day free trial begins a
+free App Store trial (nothing is charged), after which Pro is a
 one-off lifetime purchase (no subscription). A sandbox Apple Account is enough to test the purchase,
 and Restore Purchases is on the paywall and in Settings.
 
@@ -67,7 +75,7 @@ Contact: <owner email / phone as in ASC>.
 | Item | State |
 |---|---|
 | Public demo server and reviewer credentials (#610) | open: owner to provide; never commit credentials |
-| Local-file playback with no server (#590) | not built; the listing says so ("NEEDS YOUR OWN SERVER") |
+| Local-file playback with no server (#590) | built; the listing and review notes describe it |
 | FFmpeg source tarball hosted (#610) | open |
 | FFmpeg LGPL notice in About (#610) | open: verify Settings > About names FFmpeg and links the source |
 | No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |

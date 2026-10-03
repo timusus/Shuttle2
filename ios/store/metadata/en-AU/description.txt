@@ -1,10 +1,11 @@
-A music player for the library on your own Jellyfin, Emby or Plex server. No ads, no tracking, no account with us.
+A music player for music on your device and on your own Jellyfin, Emby or Plex server. No ads, no tracking, no account with us.
 
-Sign in to your server and your music is right there: albums, artists, genres, playlists and songs, with artwork, search and fast scrolling through big libraries.
+Play the files on your iPhone or iPad, or sign in to your server and your music is right there: albums, artists, genres, playlists and songs, with artwork, search and fast scrolling through big libraries.
 
 FEATURES
 
-• Works with Jellyfin, Emby and Plex. Sign in with a server address and your login, or with Quick Connect on Jellyfin.
+• Plays music stored on your device, free and with no server needed. Add files through the Files app or Finder, or pick a folder. FLAC, MP3, M4A, AAC, Ogg, Opus, WAV and AIFF are supported.
+• Works with Jellyfin, Emby and Plex. Jellyfin and Emby sign in with a server address and your login (or Quick Connect on Jellyfin). Plex signs in with your plex.tv account.
 • Gapless playback, including FLAC and other formats that the system player does not handle.
 • Equalizer and ReplayGain, for the sound you want at a steady volume.
 • Browse by album, artist, genre or playlist, or search your whole library.
@@ -16,14 +17,14 @@ FEATURES
 
 FREE TRIAL, THEN PAY ONCE
 
-Shuttle Music is free to download. Streaming from your Jellyfin, Emby or Plex server is part of Shuttle Music Pro: you get a 14-day free trial, starting the first time you play a song from your server, and after that Pro is a single one-off lifetime purchase. There is no subscription and no ads, and you can restore your purchases from the paywall or in Settings at any time.
+Shuttle Music is free to download, and playing music stored on your device is always free. Streaming from your Jellyfin, Emby or Plex server is part of Shuttle Music Pro. The first time you play a song from your server, the app offers a 14-day free trial that you start with one tap, and after that Pro is a single one-off lifetime purchase. There is no subscription and no ads, and you can restore your purchases from the paywall or in Settings at any time.
 
 PRIVATE BY DESIGN
 
 Shuttle Music collects no data. There is no analytics and no crash reporting. Your server address and login stay on your device, in the Keychain, and are only ever sent to the server you chose. Purchases are handled by Apple.
 
-NEEDS YOUR OWN SERVER
+MUSIC AND SERVERS
 
-Shuttle Music does not provide music or a server. You need a Jellyfin, Emby or Plex server of your own, reachable from your iPhone or iPad, on your home network or over the internet. Playing music stored on the device itself is not part of this release.
+Shuttle Music does not provide music or a server. To play from the device you need your own audio files. To stream you need a Jellyfin, Emby or Plex server of your own, reachable from your iPhone or iPad, on your home network or over the internet.
 
 Questions or ideas? Visit https://simplecityapps.com/support.
