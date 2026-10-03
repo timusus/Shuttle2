@@ -108,7 +108,8 @@ fun GridTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = S2Spacing.xsmall, top = S2Spacing.small, end = S2Spacing.xsmall, bottom = S2Spacing.xsmall),
+                // Side padding of 8 dp so the tile's rounded corners don't shave the first glyph of a caption.
+                .padding(start = S2Spacing.small, top = S2Spacing.small, end = S2Spacing.small, bottom = S2Spacing.xsmall),
             verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
