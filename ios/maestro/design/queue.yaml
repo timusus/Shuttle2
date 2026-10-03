@@ -1,7 +1,7 @@
 # design-shots.sh screen: queue. The `library` fixture is imported, with a listening history and Blue Hours paused part-way, by the script.
-# Opens Now Playing, then its queue sheet. The sheet's toolbar ids (queue.edit) aren't exposed under iOS 26's glass
-# toolbar, so it waits on the "Up Next" header instead. Never tap the queue button again once the sheet is up: the
-# tap lands on a queue row and skips to that song.
+# Opens Now Playing, then its queue sheet. Nothing in the sheet reaches Maestro's hierarchy (it still lists Now
+# Playing's elements under it, on iOS 26), so the flow can't wait on the sheet and gives it time to settle instead.
+# Never tap the queue button again once the sheet is up: the tap lands on a queue row and skips to that song.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
@@ -17,9 +17,6 @@ appId: com.simplecityapps.shuttle.dev
     timeout: 5000
 - tapOn:
     id: "nowPlaying.queue"
-- extendedWaitUntil:
-    visible: "Up Next"
-    timeout: 10000
 - waitForAnimationToEnd:
-    timeout: 3000
+    timeout: 5000
 - takeScreenshot: queue

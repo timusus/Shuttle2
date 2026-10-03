@@ -13,7 +13,16 @@ appId: com.simplecityapps.shuttle.dev
     direction: DOWN
     timeout: 60000
 - tapOn: "${ALBUM}"
-- tapOn: "Play"
+# "Play" is also the Albums list's play-all and, after a relaunch, the paused mini player's button. Wait for the
+# album screen to replace the list; its Play then comes before the mini player's.
+- extendedWaitUntil:
+    notVisible: "Sort: Album Name"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    text: "Play"
+    index: 0
 # Maestro has no sleep: wait on something that never shows, optionally, while the album plays.
 - extendedWaitUntil:
     visible: "never shown, a delay"
