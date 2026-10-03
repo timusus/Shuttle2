@@ -15,6 +15,9 @@ object S2IconSize {
 
     /** An empty or error state's glyph. */
     val hero = 40.dp
+
+    /** The tonal rounded-square a settings row sets its leading icon in. */
+    val container = 40.dp
 }
 
 /** Hit areas, after the iOS app's `TouchTarget`. Every tappable thing is at least [minimum] in both directions. */

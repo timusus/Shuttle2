@@ -84,7 +84,10 @@ class SettingsScreenshotTest {
     }
 
     @Test
-    fun root() = shot("root") { SettingsRootScreen(onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
+    fun root() = shot("root") { SettingsRootScreen(uiState = SettingsScenarios.equalizerOn, pro = false, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
+
+    @Test
+    fun rootPro() = shot("root-pro") { SettingsRootScreen(uiState = SettingsScenarios.darkPureBlack, pro = true, onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
 
     @Test
     fun appearance() = shot("appearance", content = destination(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack))

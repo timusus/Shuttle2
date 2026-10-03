@@ -76,7 +76,13 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
         }
     }
     entry<SettingsRoute> {
+        val viewModel: SettingsViewModel = metroViewModel()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val proViewModel: SettingsProViewModel = metroViewModel()
+        val pro by proViewModel.isPro.collectAsStateWithLifecycle()
         SettingsRootScreen(
+            uiState = uiState,
+            pro = pro,
             onNavigateUp = { navigateUp() },
             onOpenDestination = { navigator.open(SettingsDestinationRoute(it)) },
             onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) }

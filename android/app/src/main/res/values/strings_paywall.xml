@@ -4,6 +4,8 @@
     <string name="paywall_title">Shuttle Music Pro</string>
     <!-- Summary of the Shuttle Music Pro row in Settings -->
     <string name="paywall_settings_summary">Stream from Jellyfin, Emby and Plex</string>
+    <!-- Summary of the Shuttle Music Pro row in Settings when the user has Pro -->
+    <string name="paywall_settings_summary_pro">Thank you for your support</string>
     <!-- Shuttle Music Pro screen: status while Google Play hasn't yet said whether the user owns Shuttle Music Pro (e.g. offline) -->
     <string name="paywall_status_checking">Checking your purchases with Google Play…</string>
     <!-- Shuttle Music Pro screen: status when the user has never had the server trial -->

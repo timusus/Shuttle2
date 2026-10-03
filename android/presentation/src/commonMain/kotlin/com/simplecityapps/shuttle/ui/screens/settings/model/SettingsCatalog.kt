@@ -18,7 +18,8 @@ interface SettingsCatalog {
                     is SettingItem.Switch -> item.setting
                     is SettingItem.Choice<*> -> item.setting
                     is SettingItem.Slider<*> -> item.setting
-                    is SettingItem.Navigate, is SettingItem.Action -> null
+                    is SettingItem.Navigate -> item.stateSetting
+                    is SettingItem.Action -> null
                 }
                 listOfNotNull(stored, item.dependsOn, (item as? SettingItem.Choice<*>)?.overriddenBy?.setting)
             }

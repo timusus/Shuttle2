@@ -127,7 +127,9 @@ sealed interface SettingItem {
         override val summary: StringKey? = null,
         override val key: String? = null,
         override val minSdk: Int = 1,
-        override val dependsOn: Setting<Boolean>? = null
+        override val dependsOn: Setting<Boolean>? = null,
+        /** A switch on the screen this row opens; the row shows its state as its summary. */
+        val stateSetting: Setting<Boolean>? = null
     ) : SettingItem
 
     data class Action(

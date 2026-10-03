@@ -34,10 +34,13 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
     var navigatedUp = false
         private set
 
-    fun setRootContent() {
+    fun setRootContent(
+        uiState: SettingsUiState = SettingsUiState(),
+        pro: Boolean = false
+    ) {
         rule.setContent {
             S2AppTheme(AppThemeState()) {
-                SettingsRootScreen(onNavigateUp = { navigatedUp = true }, onOpenDestination = { openedDestinations += it }, onOpenPro = { openedPro = true })
+                SettingsRootScreen(uiState = uiState, pro = pro, onNavigateUp = { navigatedUp = true }, onOpenDestination = { openedDestinations += it }, onOpenPro = { openedPro = true })
             }
         }
     }

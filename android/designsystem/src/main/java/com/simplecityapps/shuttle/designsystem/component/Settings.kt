@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -30,7 +29,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -76,7 +74,7 @@ fun SettingsGroup(
     }
 }
 
-/** A setting that opens another screen. */
+/** A setting that opens another screen, or acts when tapped. Android's convention: no trailing chevron; the [summary] carries the current value. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LinkSetting(
@@ -97,7 +95,6 @@ fun LinkSetting(
         colors = settingColors(),
         enabled = enabled,
         leadingContent = icon?.let { { SettingIcon(it, iconStyle, enabled) } },
-        trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
         supportingContent = settingSummary(summary, progress),
     ) { Text(title) }
 }
@@ -130,8 +127,8 @@ fun SwitchSetting(
 }
 
 /**
- * A group's actions, such as "Scan now": buttons that act in place, so unlike a [LinkSetting] the row has no
- * chevron and isn't itself clickable. [content] lays out `S2Button`s, the primary one first, under an optional
+ * A group's actions, such as "Scan now": buttons that act in place, so unlike a [LinkSetting] the row isn't
+ * itself clickable. [content] lays out `S2Button`s, the primary one first, under an optional
  * [summary] such as what an empty group means.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -282,7 +279,7 @@ private fun SettingIcon(icon: ImageVector, style: SettingIconStyle, enabled: Boo
         icon = icon,
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        size = 40.dp,
+        size = S2IconSize.container,
         iconSize = S2IconSize.medium,
         modifier = Modifier.alpha(if (enabled) 1f else 0.38f),
     )

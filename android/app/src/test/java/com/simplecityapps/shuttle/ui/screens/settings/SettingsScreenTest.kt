@@ -42,6 +42,28 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `the root says Pro is owned instead of selling it`() {
+        robot.setRootContent(pro = true)
+
+        robot.assertDisplayed("Thank you for your support")
+        robot.assertNotShown("Stream from Jellyfin, Emby and Plex")
+    }
+
+    @Test
+    fun `the root shows the current theme and equalizer state`() {
+        robot.setRootContent(SettingsScenarios.darkPureBlack)
+        robot.assertDisplayed("Dark")
+        robot.assertDisplayed("Equalizer off")
+    }
+
+    @Test
+    fun `the root shows the equalizer on`() {
+        robot.setRootContent(SettingsScenarios.equalizerOn)
+
+        robot.assertDisplayed("Equalizer on")
+    }
+
+    @Test
     fun `back leaves settings`() {
         robot.setRootContent()
 

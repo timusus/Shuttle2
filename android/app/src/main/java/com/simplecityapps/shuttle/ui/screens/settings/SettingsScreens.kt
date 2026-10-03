@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import android.os.Build
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -34,7 +35,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.R
@@ -49,7 +49,10 @@ import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SliderSetting
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.EqualizerSettings
+import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingOverride
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
@@ -75,8 +78,8 @@ internal fun SettingsScaffold(
     root: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
     actions: @Composable RowScope.() -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(S2Spacing.medium),
     content: LazyListScope.() -> Unit
 ) {
     val scrollBehavior = if (root) TopAppBarDefaults.exitUntilCollapsedScrollBehavior() else TopAppBarDefaults.pinnedScrollBehavior()
@@ -102,9 +105,14 @@ internal fun SettingsScaffold(
     }
 }
 
-/** The Settings root: the S2 Pro row, then one row per [SettingsDestination]. */
+/**
+ * The Settings root: the Shuttle Music Pro row, then one row per [SettingsDestination], each showing the current
+ * value of what it holds where there is one. [uiState] carries the stored settings; [pro] is whether Pro is owned.
+ */
 @Composable
 fun SettingsRootScreen(
+    uiState: SettingsUiState,
+    pro: Boolean,
     onNavigateUp: () -> Unit,
     onOpenDestination: (SettingsDestination) -> Unit,
     onOpenPro: () -> Unit,
@@ -116,7 +124,7 @@ fun SettingsRootScreen(
                 rows = listOf { shapes: ListItemShapes ->
                     LinkSetting(
                         title = stringResource(R.string.paywall_title),
-                        summary = stringResource(R.string.paywall_settings_summary),
+                        summary = stringResource(if (pro) R.string.paywall_settings_summary_pro else R.string.paywall_settings_summary),
                         onClick = onOpenPro,
                         icon = Icons.Rounded.WorkspacePremium,
                         shapes = shapes
@@ -130,6 +138,7 @@ fun SettingsRootScreen(
                     { shapes: ListItemShapes ->
                         LinkSetting(
                             title = stringResource(destination.title),
+                            summary = destinationSummary(destination, uiState),
                             onClick = { onOpenDestination(destination) },
                             icon = destination.icon,
                             shapes = shapes
@@ -139,6 +148,28 @@ fun SettingsRootScreen(
             )
         }
     }
+}
+
+/** The current value a root row shows under its [destination]'s title, or null where nothing one-line sums it up. */
+@Composable
+private fun destinationSummary(
+    destination: SettingsDestination,
+    uiState: SettingsUiState
+): String? = when (destination) {
+    SettingsDestination.Appearance -> {
+        val theme = uiState.value(AppearanceSettings.Theme)
+        AndroidSettingsCatalog.screen(destination).items
+            .filterIsInstance<SettingItem.Choice<*>>()
+            .firstOrNull { it.setting == AppearanceSettings.Theme }
+            ?.options?.firstOrNull { it.value == theme }
+            ?.let { stringResource(it.label) }
+    }
+
+    SettingsDestination.PlaybackAndSound -> stringResource(
+        if (uiState.value(EqualizerSettings.Enabled)) R.string.settings_playback_summary_equalizer_on else R.string.settings_playback_summary_equalizer_off
+    )
+
+    else -> null
 }
 
 private val SettingsDestination.icon: ImageVector
@@ -303,7 +334,7 @@ private fun SettingRow(
         is SettingItem.Navigate -> LinkSetting(
             title = stringResource(item.title),
             onClick = { onOpenLink(item.target) },
-            summary = summary,
+            summary = item.stateSetting?.let { stringResource(onOffLabel(uiState.value(it))) } ?: summary,
             enabled = enabled,
             shapes = shapes
         )
@@ -317,6 +348,9 @@ private fun SettingRow(
         )
     }
 }
+
+@StringRes
+private fun onOffLabel(on: Boolean): Int = if (on) R.string.settings_state_on else R.string.settings_state_off
 
 @Composable
 private fun choiceValueLabel(

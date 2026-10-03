@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
@@ -17,6 +18,8 @@ object SettingsScenarios {
             AppearanceSettings.PureBlack.key to true
         )
     )
+
+    val equalizerOn = SettingsUiState(values = mapOf(EqualizerSettings.Enabled.key to true))
 
     val dynamicColourOn = SettingsUiState(values = mapOf(AppearanceSettings.DynamicColour.key to true))
 

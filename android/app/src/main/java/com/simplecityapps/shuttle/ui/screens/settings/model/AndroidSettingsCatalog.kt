@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
@@ -125,7 +126,8 @@ object AndroidSettingsCatalog : SettingsCatalog {
                 items = listOf(
                     SettingItem.Navigate(
                         target = SettingsLink.Equalizer,
-                        title = StringKey.DSP_EQUALIZER_TITLE
+                        title = StringKey.DSP_EQUALIZER_TITLE,
+                        stateSetting = EqualizerSettings.Enabled
                     ),
                     SettingItem.Choice(
                         setting = PlaybackSettings.ReplayGain,
