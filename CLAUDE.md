@@ -136,6 +136,7 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 ## Build Configuration
 
 - **Kotlin 2.x**, **Java 17** (with core library desugaring)
+- **Gradle daemon runs on JDK 21**, pinned by `gradle/gradle-daemon-jvm.properties` (foojay resolver in `settings.gradle` downloads it if missing), so builds don't depend on `JAVA_HOME`. If Android Studio sync complains, set Gradle JDK to a 21 (e.g. the bundled JBR)
 - **Min SDK 24** (Compose 1.13), Target/Compile SDK 36
 - **ExoPlayer**: AndroidX Media3 (`media3` in the catalog); the FLAC/Opus decoders are local AARs in `android/app/libs`, rebuilt with `support/scripts/build-media3-decoders.sh`
 - **Version catalog**: `gradle/libs.versions.toml`
