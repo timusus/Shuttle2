@@ -1,0 +1,51 @@
+{
+  "identifier" : "5C1F0B2A",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.0",
+      "familyShareable" : false,
+      "internalID" : "6740000001",
+      "localizations" : [
+        {
+          "description" : "Stream from Jellyfin, Emby and Plex free for 14 days.",
+          "displayName" : "14-day Free Trial",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.simplecityapps.shuttle.pro.trial",
+      "referenceName" : "Pro 14-day Trial",
+      "type" : "NonConsumable"
+    },
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "6740000002",
+      "localizations" : [
+        {
+          "description" : "Stream from Jellyfin, Emby and Plex. One purchase, yours for good.",
+          "displayName" : "Shuttle Music Pro (Lifetime)",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.simplecityapps.shuttle.pro.lifetime",
+      "referenceName" : "Pro Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6740000000",
+    "_developerTeamID" : "",
+    "_locale" : "en_US",
+    "_storefront" : "USA"
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

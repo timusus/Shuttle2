@@ -74,6 +74,11 @@ class StoreEntitlements(
         _debugOverride.value = override
     }
 
+    /** [setDebugOverride] by the override's name, as Swift's debug picker stores it; an unknown name is None. */
+    fun setDebugOverrideNamed(name: String) {
+        setDebugOverride(DebugEntitlementOverride.entries.firstOrNull { it.name == name } ?: DebugEntitlementOverride.None)
+    }
+
     private fun resolve(
         purchases: List<StorePurchase>?,
         override: DebugEntitlementOverride

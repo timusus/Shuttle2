@@ -29,6 +29,13 @@ enum AppGraph {
         dependencies.graph.recordPlays.start()
         dependencies.graph.recordResumePoints.start()
         dependencies.graph.librarySearchIndex.warmUp()
+        #if DEBUG
+        if let override = UserDefaults.standard.string(forKey: DebugEntitlement.defaultsKey) {
+            dependencies.graph.storeEntitlements.setDebugOverrideNamed(name: override)
+        }
+        #endif
+        dependencies.storeKit.start()
+        dependencies.paywallPresenter.start()
         _dependencies = dependencies
     }
 }
@@ -48,6 +55,10 @@ final class IosAppDependencies {
     /// Built here, not lazily behind a cache key, so there is exactly one ViewModel and one subscription to
     /// its state for the app's lifetime.
     let playerBinding: PlayerBinding
+    /// StoreKit for Shuttle Music Pro, reporting the user's purchases to the graph's `StoreEntitlements`.
+    let storeKit: StoreKitManager
+    /// Opens the paywall when a gated action asks for it.
+    let paywallPresenter: PaywallPresenter
 
     init() {
         audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
@@ -64,6 +75,8 @@ final class IosAppDependencies {
             makeEngine: { try? MusicPlaybackController() }
         )
         playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: playIntent)
+        storeKit = StoreKitManager(entitlements: graph.storeEntitlements)
+        paywallPresenter = PaywallPresenter(requests: graph.observePaywallRequests, store: storeKit)
     }
 
     /// The engine only fails to build without a stereo float format, which every device has.

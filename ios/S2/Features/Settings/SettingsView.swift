@@ -23,6 +23,7 @@ struct SettingsView: View {
                     sections: SettingsSection.sections(catalog: catalog, state: state, rescanStarted: rescanStarted, destinations: destinations),
                     title: title,
                     showsAbout: destinations == nil,
+                    showsPro: destinations == nil,
                     onToggle: { key, isOn in
                         if let item = catalog.item(key: key) as? SettingItemSwitch {
                             viewModel.onSwitchChange(item: item, checked: isOn)
@@ -201,6 +202,8 @@ struct SettingsContent: View {
     let sections: [SettingsSection]
     var title = "Settings"
     var showsAbout = true
+    /// The Shuttle Music Pro section, which reads the app's graph; off for tests of the catalog rows.
+    var showsPro = false
     var onToggle: (String, Bool) -> Void = { _, _ in }
     var onChoose: (String, Int) -> Void = { _, _ in }
     var onSlide: (String, Float) -> Void = { _, _ in }
@@ -218,6 +221,9 @@ struct SettingsContent: View {
 
     var body: some View {
         Form {
+            if showsPro {
+                ProSettingsSection()
+            }
             ForEach(sections) { section in
                 Section {
                     ForEach(section.rows) { row in

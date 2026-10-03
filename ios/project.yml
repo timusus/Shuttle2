@@ -144,6 +144,7 @@ schemes:
         S2Tests: [test]
     run:
       config: Debug
+      storeKitConfiguration: S2.storekit
     test:
       config: Debug
       targets:
