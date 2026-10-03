@@ -15,10 +15,10 @@ class StreamingBitrateCapTest {
     private val cap = StreamingBitrateCap(streamingSettings) { metered }
 
     @Test
-    fun `streams the original by default on either network`() {
+    fun `streams the original by default unmetered and 192 kbps metered`() {
         cap.maxBitrateKbps() shouldBe null
         metered = true
-        cap.maxBitrateKbps() shouldBe null
+        cap.maxBitrateKbps() shouldBe 192
     }
 
     @Test
@@ -48,10 +48,10 @@ class StreamingBitrateCapTest {
     }
 
     @Test
-    fun `a stored value no quality has reads as original`() {
+    fun `a stored value no quality has reads as the default`() {
         store.putString(StreamingSettings.MeteredQuality.key, "Kbps999")
         metered = true
 
-        cap.maxBitrateKbps() shouldBe null
+        cap.maxBitrateKbps() shouldBe 192
     }
 }
