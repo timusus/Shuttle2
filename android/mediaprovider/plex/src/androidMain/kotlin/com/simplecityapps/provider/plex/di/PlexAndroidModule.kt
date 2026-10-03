@@ -6,13 +6,13 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.plex.PlexArtworkTokenInterceptor
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
+import com.simplecityapps.provider.plex.PlexStreamUrlProvider
 import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.provider.plex.http.sendPlexClientHeaders
 import com.simplecityapps.shuttle.di.ApplicationContext
@@ -62,8 +62,8 @@ class PlexAndroidModule {
     @MediaProviderTypeKey(MediaProviderType.Plex)
     fun providePlexMediaInfoProvider(
         authenticationManager: PlexAuthenticationManager,
-        streamingBitrateCap: StreamingBitrateCap
-    ): MediaInfoProvider = PlexMediaInfoProvider(authenticationManager, streamingBitrateCap)
+        streamUrls: PlexStreamUrlProvider
+    ): MediaInfoProvider = PlexMediaInfoProvider(authenticationManager, streamUrls)
 
     @Provides
     @IntoSet

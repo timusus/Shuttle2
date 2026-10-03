@@ -49,7 +49,7 @@ kotlin {
             api(project(":android:presentation"))
             // The playback policy the iOS player controller shares with Android's Media3 queue (#597).
             implementation(project(":android:playback:core"))
-            // What IosAppGraph binds on iOS: the core bindings, the Room library, the Jellyfin and Emby providers
+            // What IosAppGraph binds on iOS: the core bindings, the Room library, the Jellyfin, Emby and Plex providers
             // and the Darwin HTTP client they share (#587)
             implementation(project(":android:core"))
             implementation(project(":android:networking"))
@@ -58,6 +58,7 @@ kotlin {
             implementation(project(":android:mediaprovider:server"))
             implementation(project(":android:mediaprovider:jellyfin"))
             implementation(project(":android:mediaprovider:emby"))
+            implementation(project(":android:mediaprovider:plex"))
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }

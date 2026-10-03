@@ -6,6 +6,8 @@ import com.simplecityapps.mediaprovider.getOrCreateClientId
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.NetworkConnectivity
 import com.simplecityapps.networking.createHttpClient
+import com.simplecityapps.provider.plex.http.plexClientHeaders
+import com.simplecityapps.provider.plex.http.sendPlexClientHeaders
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.platform.AppVersion
 import com.simplecityapps.shuttle.shared.platform.NetworkPathMonitor
@@ -20,9 +22,9 @@ import io.ktor.client.HttpClient
 import platform.UIKit.UIDevice
 
 /**
- * What the Jellyfin and Emby providers need from the platform (docs/architecture/ios-port/phase-3-network.md): a Darwin
- * [HttpClient] and a Keychain-backed [ServerCredentialStore] each, under the names their containers ask for, and
- * the [ClientIdentity] the servers list this device under.
+ * What the Jellyfin, Emby and Plex providers need from the platform (docs/architecture/ios-port/phase-3-network.md): a
+ * Darwin [HttpClient] each and, for Jellyfin and Emby, a Keychain-backed [ServerCredentialStore] (Plex's container
+ * makes its own), under the names their containers ask for, and the [ClientIdentity] the servers list this device under.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -53,6 +55,17 @@ abstract class IosNetworkingModule {
         @SingleIn(AppScope::class)
         @Named("EmbyCredentialStore")
         fun provideEmbyCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "emby")
+
+        /** Sends the `X-Plex-*` client identity on every request, as Android's does. */
+        @Provides
+        @SingleIn(AppScope::class)
+        @Named("PlexHttpClient")
+        fun providePlexHttpClient(
+            connectivity: NetworkConnectivity,
+            clientIdentity: ClientIdentity
+        ): HttpClient = createHttpClient(connectivity = connectivity) {
+            sendPlexClientHeaders(plexClientHeaders(clientIdentity))
+        }
 
         /** The client name Android sends too, so a server groups both apps' sessions under S2. */
         @Provides

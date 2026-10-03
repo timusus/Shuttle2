@@ -14,7 +14,8 @@ import dev.zacsweers.metro.SingleIn
 
 /**
  * Artwork urls on the signed-in Jellyfin or Emby server, the iOS twin of Android's `ImageLoaderModule` aggregate, and
- * the artwork seed colour.
+ * the artwork seed colour. Plex isn't in the aggregate yet: its artwork needs an `X-Plex-Token` header, which Swift's
+ * artwork loader can't send (#720), so Plex songs fall back to the S2 artwork API.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer

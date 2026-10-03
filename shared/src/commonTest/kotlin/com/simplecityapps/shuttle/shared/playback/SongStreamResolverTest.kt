@@ -32,7 +32,7 @@ class SongStreamResolverTest {
     private val askedToStream = mutableListOf<String>()
 
     private val resolver = SongStreamResolver(
-        listOf(FakeStreamUrls("jellyfin"), FakeStreamUrls("emby")),
+        listOf(FakeStreamUrls("jellyfin"), FakeStreamUrls("emby"), FakeStreamUrls("plex")),
         replayGainMode = { replayGainMode },
         preAmpGainDb = { preAmpGainDb },
         serverStreamAccess = { song, _ ->
@@ -71,6 +71,8 @@ class SongStreamResolverTest {
             IosStream(url = "https://jellyfin.example/Audio/abc/universal", opensAtPosition = true)
         resolver.resolve(songAt(path = "emby://item/def"), 0, playRequested = true) shouldBe
             IosStream(url = "https://emby.example/Audio/def/universal", opensAtPosition = true)
+        resolver.resolve(songAt(path = "plex:///library/metadata/1"), 0, playRequested = true) shouldBe
+            IosStream(url = "https://plex.example/Audio/1/universal", opensAtPosition = true)
     }
 
     @Test
@@ -102,6 +104,14 @@ class SongStreamResolverTest {
 
         shouldThrow<ServerStreamNotAllowedException> { resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true) }
             .undecided shouldBe false
+    }
+
+    @Test
+    fun aPlexSongAsksTheGateLikeAnyServerSong() = runTest {
+        serverAccess = ServerAccess.Refused
+
+        shouldThrow<ServerStreamNotAllowedException> { resolver.resolve(songAt(path = "plex:///library/metadata/1"), 0, playRequested = true) }
+        askedToStream shouldBe listOf("plex:///library/metadata/1")
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -21,8 +22,8 @@ import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
 
 /**
- * Exercises [PlexMediaInfoProvider] itself (not just [PlexAuthenticationManager.buildPlexPath],
- * already covered by [PlexAuthenticationTest]). Asserts on [PlexMediaInfoProvider.buildDownloadStream]
+ * Exercises [PlexMediaInfoProvider]'s downloads (its streams are [PlexStreamUrlProvider]'s, covered by
+ * [PlexStreamUrlProviderTest]). Asserts on [PlexMediaInfoProvider.buildDownloadStream]
  * rather than [PlexMediaInfoProvider.downloadInfo] directly, since the latter calls `String.toUri()`,
  * which needs a mocked `android.net.Uri` and would pull Robolectric into this module for nothing else.
  */
@@ -44,7 +45,10 @@ class PlexMediaInfoProviderTest {
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
-    private val provider = PlexMediaInfoProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered })
+    private val provider = PlexMediaInfoProvider(
+        authenticationManager,
+        PlexStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered }, StreamProfile.Android)
+    )
 
     @Test
     fun `download stream is the same original part-file url used for streaming - with the song's mime type`() = runTest {
@@ -72,103 +76,6 @@ class PlexMediaInfoProviderTest {
         credentialStore.authenticatedCredentials = credentials
 
         provider.downloadFallbackUri("plex://item/107898", 403) shouldBe null
-    }
-
-    @Test
-    fun `stream is the original part file when there's no cap`() {
-        credentialStore.authenticatedCredentials = credentials
-
-        val stream = provider.buildStream(song(externalId = PART, bitRate = 1_411))
-
-        stream.path shouldStartWith "http://plex.local:32400$PART?"
-        stream.mimeType shouldBe "audio/mpeg"
-    }
-
-    @Test
-    fun `stream is the original part file when its bitrate is within the cap`() {
-        credentialStore.authenticatedCredentials = credentials
-        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
-
-        provider.buildStream(song(externalId = PART, bitRate = 256)).path shouldStartWith "http://plex.local:32400$PART?"
-    }
-
-    @Test
-    fun `stream is an HLS transcode at the cap when the song is over it`() {
-        credentialStore.authenticatedCredentials = credentials
-        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps192
-
-        val stream = provider.buildStream(song(externalId = PART, bitRate = 1_411))
-
-        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
-        stream.path shouldContain "&musicBitrate=192&"
-        stream.mimeType shouldBe "application/x-mpegURL"
-    }
-
-    @Test
-    fun `stream transcodes a song of unknown bitrate`() {
-        credentialStore.authenticatedCredentials = credentials
-        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
-
-        provider.buildStream(song(externalId = PART, bitRate = null)).path shouldContain "/transcode/universal/start.m3u8?"
-    }
-
-    @Test
-    fun `stream uses the metered cap on a metered network`() {
-        credentialStore.authenticatedCredentials = credentials
-        streamingSettings.meteredQuality.value = StreamingQuality.Kbps128
-        metered = true
-
-        provider.buildStream(song(externalId = PART, bitRate = 320)).path shouldContain "&musicBitrate=128&"
-    }
-
-    @Test
-    fun `stream transcodes a format the player can't decode - with no cap - issue 362`() {
-        credentialStore.authenticatedCredentials = credentials
-
-        val stream = provider.buildStream(song(externalId = "/library/parts/43/1600000000/file.wma", bitRate = 128))
-
-        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
-        stream.path shouldContain "&musicBitrate=320&"
-        stream.mimeType shouldBe "application/x-mpegURL"
-    }
-
-    @Test
-    fun `stream transcodes a format the player can't decode even within the cap`() {
-        credentialStore.authenticatedCredentials = credentials
-        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps192
-
-        val stream = provider.buildStream(song(externalId = "/library/parts/44/1600000000/file.aiff", bitRate = 128))
-
-        stream.path shouldContain "/transcode/universal/start.m3u8?"
-        stream.path shouldContain "&musicBitrate=192&"
-    }
-
-    @Test
-    fun `stream is the original part file for each format the player decodes`() {
-        credentialStore.authenticatedCredentials = credentials
-
-        listOf("mp3", "m4a", "mp4", "flac", "ogg", "opus", "wav").forEach { extension ->
-            val part = "/library/parts/45/1600000000/file.$extension"
-            provider.buildStream(song(externalId = part, bitRate = 256)).path shouldStartWith "http://plex.local:32400$part?"
-        }
-    }
-
-    @Test
-    fun `stream transcodes ALAC even inside a container the player otherwise decodes - issue 567`() {
-        credentialStore.authenticatedCredentials = credentials
-
-        val stream = provider.buildStream(song(externalId = "/library/parts/46/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))
-
-        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
-        stream.path shouldContain "&musicBitrate=320&"
-        stream.mimeType shouldBe "application/x-mpegURL"
-    }
-
-    @Test
-    fun `stream plays a song whose codec is known and decodable`() {
-        credentialStore.authenticatedCredentials = credentials
-
-        provider.buildStream(song(externalId = PART, bitRate = 1_000, audioCodec = "flac")).path shouldStartWith "http://plex.local:32400$PART?"
     }
 
     @Test

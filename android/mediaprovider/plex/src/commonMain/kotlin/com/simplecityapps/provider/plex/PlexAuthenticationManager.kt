@@ -131,6 +131,38 @@ class PlexAuthenticationManager(
         song: Song,
         authenticatedCredentials: AuthenticatedCredentials,
         bitrateKbps: Int
+    ): String? = progressiveTranscodePath(song, authenticatedCredentials, bitrateKbps, context = "static")
+
+    /**
+     * A single-file MP3 stream of [song] transcoded at up to [maxBitrateKbps], starting [startPositionMs] into it, for a
+     * player with no HLS (iOS's engine). A progressive transcode has no length to seek in, so a seek opens a new one at
+     * the position (Plex's `offset`, in seconds). Each has its own [session], so opening the next song ahead of time
+     * doesn't end the one playing. Null when the address or the song's ratingKey is missing.
+     */
+    fun buildPlexProgressiveStreamPath(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int,
+        startPositionMs: Long = 0,
+        session: String = Uuid.random().toString()
+    ): String? = progressiveTranscodePath(
+        song = song,
+        authenticatedCredentials = authenticatedCredentials,
+        bitrateKbps = maxBitrateKbps,
+        context = "streaming",
+        extra = buildMap {
+            if (startPositionMs > 0) put("offset", offsetSeconds(startPositionMs))
+            put("session", session)
+            put("X-Plex-Session-Identifier", session)
+        }
+    )
+
+    private fun progressiveTranscodePath(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials,
+        bitrateKbps: Int,
+        context: String,
+        extra: Map<String, String> = emptyMap()
     ): String? {
         val address = credentialStore.address ?: run {
             logger.warn { "Invalid plex address (null)" }
@@ -145,11 +177,15 @@ class PlexAuthenticationManager(
             "protocol" to "http",
             "directPlay" to "0",
             "directStream" to "0",
-            "musicBitrate" to bitrateKbps.toString(),
-            "X-Plex-Client-Profile-Extra" to "add-transcode-target(type=musicProfile&context=static&protocol=http&container=mp3&audioCodec=mp3)"
+            "musicBitrate" to bitrateKbps.toString()
+        ) + extra + mapOf(
+            "X-Plex-Client-Profile-Extra" to "add-transcode-target(type=musicProfile&context=$context&protocol=http&container=mp3&audioCodec=mp3)"
         ) + plexClientHeaders(clientIdentity) + (PLEX_TOKEN to authenticatedCredentials.accessToken)
 
         return "$address/music/:/transcode/universal/start.mp3?" +
             query.entries.joinToString("&") { (name, value) -> "$name=${formUrlEncode(value)}" }
     }
+
+    /** [positionMs] as the seconds Plex's `offset` takes, to the millisecond. */
+    private fun offsetSeconds(positionMs: Long): String = "${positionMs / 1000}.${(positionMs % 1000).toString().padStart(3, '0')}"
 }

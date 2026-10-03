@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.platform
 
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.server.ServerStrings
+import com.simplecityapps.provider.plex.PlexStrings
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.platform.AppVersion
 import com.simplecityapps.shuttle.platform.BundledText
@@ -52,6 +53,11 @@ class BundleServerStrings @Inject constructor() : ServerStrings {
     override val addressMissing: String get() = localized("media_provider_address_missing", "Server address missing")
     override val authenticationError: String get() = localized("media_provider_authentication_error", "Failed to authenticate")
     override val unknownName: String get() = localized("unknown", "Unknown")
+}
+
+@ContributesBinding(AppScope::class)
+class BundlePlexStrings @Inject constructor() : PlexStrings {
+    override val musicLibraryMissing: String get() = localized("media_provider_plex_music_library_missing", "No Plex music library found")
 }
 
 @ContributesBinding(AppScope::class)

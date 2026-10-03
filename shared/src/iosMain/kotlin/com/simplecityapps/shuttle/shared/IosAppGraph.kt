@@ -133,10 +133,10 @@ interface IosAppGraph : ViewModelGraph {
     val smartPlaylistDetailViewModelFactory: SmartPlaylistDetailViewModel.Factory
     val songInfoViewModelFactory: SongInfoViewModel.Factory
 
-    /** A Jellyfin or Emby server's sign-in form, including Jellyfin Quick Connect. Plex joins with its provider. */
+    /** A Jellyfin, Emby or Plex server's sign-in form, including Jellyfin Quick Connect and Plex's two-factor code. */
     val serverSignInViewModelFactory: ServerSignInViewModel.Factory
 
-    /** A signed-in Jellyfin or Emby server's saved address and user, for its row and detail in Sources. */
+    /** A signed-in Jellyfin, Emby or Plex server's saved address and user, for its row and detail in Sources. */
     val readServerLogin: ReadServerLogin
 
     /**
