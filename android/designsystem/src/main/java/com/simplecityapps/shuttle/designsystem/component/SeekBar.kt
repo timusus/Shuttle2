@@ -110,10 +110,14 @@ fun S2SeekBar(
             }
             val shownMs = if (dragging) (fraction * durationMs).toLong() else positionMs
             Text(
-                text = if (showRemaining) "-" + formatDuration((durationMs - shownMs).coerceAtLeast(0L)) else formatDuration(durationMs),
+                text = when {
+                    durationMs <= 0 -> UnknownDurationLabel
+                    showRemaining -> "-" + formatDuration((durationMs - shownMs).coerceAtLeast(0L))
+                    else -> formatDuration(durationMs)
+                },
                 style = MaterialTheme.typography.time,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = if (onToggleRemaining != null) {
+                modifier = if (onToggleRemaining != null && durationMs > 0) {
                     Modifier
                         .minimumInteractiveComponentSize()
                         .clickable(onClickLabel = stringResource(if (showRemaining) R.string.ds_show_total_time else R.string.ds_show_remaining_time), role = Role.Button, onClick = onToggleRemaining)
@@ -124,6 +128,9 @@ fun S2SeekBar(
         }
     }
 }
+
+/** The end label while the duration is unknown or the stream is live. */
+private const val UnknownDurationLabel = "--:--"
 
 /** The track's thickness at rest, and while dragged. */
 private val SeekTrackHeight = 16.dp
