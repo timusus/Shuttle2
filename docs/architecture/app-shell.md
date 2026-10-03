@@ -315,7 +315,13 @@ The start tab (Home or Library by `showHomeOnLaunch`) comes from `ShellViewModel
 activity, so a change in Settings applies from the next launch.
 
 The settings drawer (`BottomDrawerSettingsFragment`) is gone: Settings is a gear action in the Home
-and Library top bars at every width (#485), not a nav item or rail entry. Screen dialogs (tag
+and Library top bars at every width (#485), not a nav item or rail entry. Its routes, the paywall
+it opens and every page under it implement `UtilityRoute`: they push onto the selected tab's stack
+like any route, but while one is on top (`AppNavigator.showsNavigation`) the shell slides the nav
+bar or rail away with the player pane's motion and lights no tab, and the mini player (or the pane)
+stays; on a phone it drops to the bottom edge where the bar was. Back pops to the tab as it was
+(#791). The tag editor and song info keep the chrome: they are panes and sheets of a tab's content,
+not places of their own. Screen dialogs (tag
 editor, song info, create playlist, delete confirmations) are Compose dialogs owned by the screen
 that raises them; `DialogSceneStrategy` is only for a dialog that must survive as its own back
 stack entry, and none does yet.

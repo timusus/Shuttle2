@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -18,6 +19,7 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -843,6 +845,54 @@ class AppShellTest {
 
         robot.actions.setPlaybackSpeed(1f)
         robot.assertReachable("Playback & sound, Playback speed 1×", reachable = false)
+    }
+
+    @Test
+    fun `a settings screen hides the nav bar and lights no tab, keeping the mini player docked, and back restores the tab`() {
+        robot.setContent()
+        robot.tapText("Library")
+        robot.tapText(SampleLibrary.albums.first().title)
+        robot.miniPlayerGapToBottom() shouldBeGreaterThan 0.dp
+
+        robot.openSoundSettings()
+        robot.assertTextDisplayed("Settings: PlaybackAndSound")
+        robot.assertSelectedTab(null)
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.miniPlayerGapToBottom() shouldBe 0.dp
+
+        robot.pressBack()
+        robot.assertSelectedTab("Library")
+        robot.assertTextDisplayed(SampleLibrary.albums.first().title)
+        robot.miniPlayerGapToBottom() shouldBeGreaterThan 0.dp
+    }
+
+    @Test
+    fun `at Medium width a settings screen hides the rail, and back brings it back`() {
+        robot.setContent(window = MediumWindow)
+        robot.assertSelectedTab("Home")
+
+        robot.openSoundSettings()
+        robot.assertTextDisplayed("Settings: PlaybackAndSound")
+        robot.assertSelectedTab(null)
+
+        robot.pressBack()
+        robot.assertSelectedTab("Home")
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h900dp")
+    fun `at pane width a settings screen hides the rail and leaves the pane open`() {
+        robot.setContent(window = PaneWindow)
+        robot.openSoundSettings()
+        robot.assertTextDisplayed("Settings: PlaybackAndSound")
+        robot.assertSelectedTab(null)
+        robot.assertPaneShown()
+
+        // The pane's Playback & sound panel is still open, and back closes it first.
+        robot.pressBack()
+        robot.assertSelectedTab(null)
+        robot.pressBack()
+        robot.assertSelectedTab("Home")
     }
 
     @Test

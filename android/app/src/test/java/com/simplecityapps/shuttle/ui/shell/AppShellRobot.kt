@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -26,7 +27,9 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.down
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -39,6 +42,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -48,6 +52,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
@@ -674,6 +679,29 @@ class AppShellRobot(
     ) {
         val nodes = rule.onAllNodes(hasText(text) or hasContentDescription(text))
         if (reachable) nodes.onFirst().assertExists() else nodes.assertCountEquals(0)
+    }
+
+    /** Opens Playback & sound's settings page, a utility destination, from the player's panel. */
+    fun openSoundSettings() {
+        tapMiniPlayer()
+        tapPanelButton(NowPlayingPanel.PlaybackSound)
+        scrollToAndTapText("More sound settings")
+    }
+
+    /** The tab the nav bar or rail lights, or, for null, no tab shown at all. */
+    fun assertSelectedTab(label: String?) {
+        val tab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
+        if (label == null) {
+            rule.onAllNodes(tab).assertCountEquals(0)
+        } else {
+            rule.onNode(tab and hasText(label)).assertIsSelected()
+        }
+    }
+
+    /** The space below the docked mini player: the nav bar, or nothing once it has slid away. */
+    fun miniPlayerGapToBottom(): Dp {
+        val bottom = rule.onNodeWithTag(PlayerTestTags.MiniPlayer).getBoundsInRoot().bottom
+        return rule.onRoot().getBoundsInRoot().bottom - bottom
     }
 
     /** Opens song info from the Now Playing menu, which answers with the playing song's info route. */

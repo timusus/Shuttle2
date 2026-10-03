@@ -105,6 +105,27 @@ class ShellScreenshotTest {
         libraryDetail("phone")
     }
 
+    /** A settings page over the shell: no nav bar or rail, the mini player (or pane) still there (#791). */
+    private fun settings(
+        prefix: String,
+        paneOpen: Boolean = false,
+    ) {
+        if (paneOpen) {
+            robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
+            robot.scrollToAndTapText("More sound settings")
+        } else {
+            robot.openSoundSettings()
+        }
+        shot("$prefix-settings")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneSettings() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)
+        settings("phone")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneSongInfoSheet() {
@@ -163,6 +184,7 @@ class ShellScreenshotTest {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(700, 840))
         levels("foldable-unfolded-medium")
         libraryDetail("foldable-unfolded-medium")
+        settings("foldable-unfolded-medium")
     }
 
     @Test
@@ -179,6 +201,8 @@ class ShellScreenshotTest {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(1280, 800))
         levels("tablet")
         libraryDetail("tablet")
+        // levels() leaves the pane open.
+        settings("tablet", paneOpen = true)
     }
 
     @Test

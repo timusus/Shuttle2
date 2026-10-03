@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -150,12 +152,14 @@ fun AppShell(
 
     // The player's links into Settings (Equalizer, Playback & sound) settle it to Mini like any other navigation.
     val playerContent = PlayerContent(playerUi, progress, actions, openRoute = { route -> navigate { navigator.open(route) } })
+    // No tab is lit, and the nav bar or rail slides away, while a utility destination shows.
+    val selectedTab = navigator.selectedTab.takeIf { navigator.showsNavigation }
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Box(Modifier.fillMaxSize()) {
             when (layout.playerMode) {
-                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, destinations)
-                PlayerMode.Sheet -> RailSheetShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, destinations)
-                PlayerMode.Pane -> PaneShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, destinations)
+                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, selectedTab, onSelectTab, destinations)
+                PlayerMode.Sheet -> RailSheetShell(player, playerContent, layout, selectedTab, onSelectTab, destinations)
+                PlayerMode.Pane -> PaneShell(player, playerContent, layout, selectedTab, onSelectTab, destinations)
             }
             S2SnackbarHost(
                 snackbarHostState,
@@ -223,19 +227,26 @@ private fun rememberContentBottomPadding(player: PlayerSheetState) = with(LocalD
     padding.toDp()
 }
 
-/** Below 600 dp: bottom bar, one pane, and the player sheet, which opens to full screen as the bar slides away under it. */
+/**
+ * Below 600 dp: bottom bar, one pane, and the player sheet, which opens to full screen as the bar slides away under it.
+ * With no [selectedTab] the bar slides away and the mini player drops to the bottom edge in its place.
+ */
 @Composable
 private fun CompactShell(
     player: PlayerSheetState,
     content: PlayerContent,
     layout: ShellLayout,
-    selectedTab: ShellTab,
+    selectedTab: ShellTab?,
     onSelectTab: (ShellTab) -> Unit,
     destinations: @Composable () -> Unit,
 ) {
-    val miniHeight = with(LocalDensity.current) { s2MiniPlayerHeight().toPx() }
+    val density = LocalDensity.current
+    val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
+    val miniHeight = with(density) { s2MiniPlayerHeight().toPx() }
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
+    val navigationShown = rememberNavigationShown(selectedTab != null)
+    val navBarComposed by remember { derivedStateOf { navigationShown.value > 0f } }
 
     Layout(
         contents = listOf(
@@ -243,11 +254,15 @@ private fun CompactShell(
             { PlayerScrim(player) },
             { if (sheetVisible) PlayerSheet(player, content.state, content.progress, content.actions, layout, onOpenRoute = content.openRoute) },
             {
-                ShellNavigationBar(
-                    selectedTab = selectedTab,
-                    onSelectTab = onSelectTab,
-                    modifier = Modifier.graphicsLayer { translationY = player.geometry.navBarTranslation(player.offset) },
-                )
+                if (navBarComposed) {
+                    ShellNavigationBar(
+                        selectedTab = selectedTab,
+                        onSelectTab = onSelectTab,
+                        modifier = Modifier.graphicsLayer {
+                            translationY = player.geometry.navBarTranslation(player.offset, barHeight = size.height, shown = navigationShown.value)
+                        },
+                    )
+                }
             },
         ),
     ) { (destination, scrim, sheet, navBar), constraints ->
@@ -258,7 +273,8 @@ private fun CompactShell(
         player.onMeasured(
             PlayerSheetGeometry(
                 height = height.toFloat(),
-                navBarHeight = navBarHeight.toFloat(),
+                // The mini player docks on the nav bar, or on the system navigation bar as the nav bar slides away.
+                navBarHeight = lerp(navigationBarBottom.toFloat(), navBarHeight.toFloat(), navigationShown.value),
                 miniHeight = miniHeight,
             ),
         )
@@ -286,7 +302,7 @@ private fun RailSheetShell(
     player: PlayerSheetState,
     content: PlayerContent,
     layout: ShellLayout,
-    selectedTab: ShellTab,
+    selectedTab: ShellTab?,
     onSelectTab: (ShellTab) -> Unit,
     destinations: @Composable () -> Unit,
 ) {
@@ -301,7 +317,7 @@ private fun RailSheetShell(
 
     Layout(
         contents = listOf(
-            { ShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab) },
+            { AnimatedShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab) },
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
             { PlayerScrim(player) },
             {
@@ -375,7 +391,7 @@ private fun PaneShell(
     player: PlayerSheetState,
     content: PlayerContent,
     layout: ShellLayout,
-    selectedTab: ShellTab,
+    selectedTab: ShellTab?,
     onSelectTab: (ShellTab) -> Unit,
     destinations: @Composable () -> Unit,
 ) {
@@ -384,7 +400,7 @@ private fun PaneShell(
     val docked = player.level == PlayerLevel.Mini
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
     Row(Modifier.fillMaxSize()) {
-        ShellRail(selectedTab, expanded = layout.railExpanded, onSelectTab = onSelectTab)
+        AnimatedShellRail(selectedTab, expanded = layout.railExpanded, onSelectTab = onSelectTab)
         Column(Modifier.weight(1f)) {
             Box(
                 Modifier
@@ -436,23 +452,41 @@ private fun ShellTab.navItem(): S2NavItem {
 @Composable
 private fun tabItems(): List<S2NavItem> = ShellTab.entries.map { it.navItem() }
 
+/** 1 with the nav bar shown, 0 with it hidden, moving between them with the player pane's motion. */
+@Composable
+private fun rememberNavigationShown(shown: Boolean): State<Float> = animateFloatAsState(if (shown) 1f else 0f, MaterialTheme.motionScheme.slowSpatialSpec(), label = "navigation")
+
+/** The nav bar, lighting no tab without a [selectedTab]. */
 @Composable
 private fun ShellNavigationBar(
-    selectedTab: ShellTab,
+    selectedTab: ShellTab?,
     onSelectTab: (ShellTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     S2NavigationBar(
         items = tabItems(),
-        selectedIndex = selectedTab.ordinal,
+        selectedIndex = selectedTab?.ordinal ?: -1,
         onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         modifier = modifier,
     )
 }
 
+/** The rail, which slides away without a [selectedTab] the way the player pane does. */
+@Composable
+private fun AnimatedShellRail(
+    selectedTab: ShellTab?,
+    expanded: Boolean,
+    onSelectTab: (ShellTab) -> Unit,
+) {
+    val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
+    AnimatedVisibility(visible = selectedTab != null, enter = expandHorizontally(spec), exit = shrinkHorizontally(spec)) {
+        ShellRail(selectedTab, expanded, onSelectTab)
+    }
+}
+
 @Composable
 private fun ShellRail(
-    selectedTab: ShellTab,
+    selectedTab: ShellTab?,
     expanded: Boolean,
     onSelectTab: (ShellTab) -> Unit,
 ) {
@@ -460,7 +494,7 @@ private fun ShellRail(
     LaunchedEffect(state, expanded) { if (expanded) state.expand() else state.collapse() }
     S2NavigationRail(
         items = tabItems(),
-        selectedIndex = selectedTab.ordinal,
+        selectedIndex = selectedTab?.ordinal ?: -1,
         onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         state = state,
     )

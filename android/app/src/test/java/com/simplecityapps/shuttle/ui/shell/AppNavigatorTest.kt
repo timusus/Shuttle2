@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.navigation3.runtime.NavKey
+import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
@@ -23,6 +24,25 @@ class AppNavigatorTest {
 
         navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute, album)
         navigator.stack(ShellTab.Home) shouldBe listOf(HomeRoute)
+    }
+
+    @Test
+    fun `a utility route on top hides the navigation until it is popped, keeping the tab's stack beneath it`() {
+        val navigator = navigator()
+        navigator.selectTab(ShellTab.Library)
+        navigator.open(album)
+        navigator.showsNavigation shouldBe true
+
+        navigator.open(SettingsRoute)
+        navigator.open(EqualizerRoute)
+        navigator.showsNavigation shouldBe false
+
+        navigator.back()
+        navigator.showsNavigation shouldBe false
+        navigator.back()
+        navigator.showsNavigation shouldBe true
+        navigator.selectedTab shouldBe ShellTab.Library
+        navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute, album)
     }
 
     @Test

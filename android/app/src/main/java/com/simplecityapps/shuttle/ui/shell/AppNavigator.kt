@@ -38,6 +38,10 @@ class AppNavigator(
     val visibleTabs: List<ShellTab>
         get() = if (selectedTab == startTab) listOf(startTab) else listOf(startTab, selectedTab)
 
+    /** False while the selected tab's top route is a [UtilityRoute], which shows without the navigation bar or rail. */
+    val showsNavigation: Boolean
+        get() = stack(selectedTab).last() !is UtilityRoute
+
     /** Pushes [route] onto the selected tab's stack. */
     fun open(route: NavKey) {
         stacks.getValue(selectedTab).add(route)

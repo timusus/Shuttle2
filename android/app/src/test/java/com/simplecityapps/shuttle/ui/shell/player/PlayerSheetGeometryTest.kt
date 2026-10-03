@@ -32,10 +32,17 @@ class PlayerSheetGeometryTest {
     }
 
     @Test
+    fun `a hidden nav bar stays away whatever the sheet does`() {
+        geometry.navBarTranslation(1700f, barHeight = 200f, shown = 0.5f) shouldBe 100f
+        geometry.navBarTranslation(1700f, barHeight = 200f, shown = 0f) shouldBe 200f
+        geometry.navBarTranslation(850f, barHeight = 200f, shown = 0f) shouldBe 200f
+    }
+
+    @Test
     fun `nav bar, mini player and scrim track expand`() {
-        geometry.navBarTranslation(1700f) shouldBe 0f
-        geometry.navBarTranslation(850f) shouldBe 100f
-        geometry.navBarTranslation(0f) shouldBe 200f
+        geometry.navBarTranslation(1700f, barHeight = 200f, shown = 1f) shouldBe 0f
+        geometry.navBarTranslation(850f, barHeight = 200f, shown = 1f) shouldBe 100f
+        geometry.navBarTranslation(0f, barHeight = 200f, shown = 1f) shouldBe 200f
         geometry.miniAlpha(1700f) shouldBe 1f
         geometry.miniAlpha(0f) shouldBe 0f
         geometry.scrimAlpha(1700f) shouldBe 0f

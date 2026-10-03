@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
+import com.simplecityapps.shuttle.ui.shell.UtilityRoute
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
 import dev.zacsweers.metro.AppScope
@@ -43,7 +44,7 @@ import timber.log.Timber
 @Serializable
 data class PaywallRoute(
     val source: PaywallSource
-) : NavKey
+) : UtilityRoute
 
 /** The paywall's entry, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {

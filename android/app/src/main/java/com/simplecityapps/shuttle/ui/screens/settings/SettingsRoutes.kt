@@ -34,6 +34,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
+import com.simplecityapps.shuttle.ui.shell.UtilityRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 import timber.log.Timber
@@ -43,25 +44,25 @@ import timber.log.Timber
 @Serializable
 data class SettingsDestinationRoute(
     val destination: SettingsDestination
-) : NavKey
+) : UtilityRoute
 
 @Serializable
-data object EqualizerRoute : NavKey
+data object EqualizerRoute : UtilityRoute
 
 @Serializable
-data object ExcludedSongsRoute : NavKey
+data object ExcludedSongsRoute : UtilityRoute
 
 @Serializable
-data object WhatsNewRoute : NavKey
+data object WhatsNewRoute : UtilityRoute
 
 @Serializable
-data object LicencesRoute : NavKey
+data object LicencesRoute : UtilityRoute
 
 @Serializable
-data object LiveLogRoute : NavKey
+data object LiveLogRoute : UtilityRoute
 
 @Serializable
-data object FolderRulesRoute : NavKey
+data object FolderRulesRoute : UtilityRoute
 
 /** The Settings screens' entries, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {

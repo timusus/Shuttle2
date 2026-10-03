@@ -8,6 +8,9 @@ package com.simplecityapps.shuttle.ui.shell.player
  * - Hidden = [height], the sheet fully below the shell
  * - Mini = [height] - [navBarHeight] - [miniHeight], the mini player sitting on the nav bar
  * - Full = 0, the sheet filling the shell
+ *
+ * [navBarHeight] is whatever the mini player docks on: the nav bar, or just the system navigation bar where the shell
+ * has none (beside a rail, or while a [com.simplecityapps.shuttle.ui.shell.UtilityRoute] hides the nav bar).
  */
 data class PlayerSheetGeometry(
     val height: Float,
@@ -29,8 +32,15 @@ data class PlayerSheetGeometry(
     /** Where the sheet itself sits: it never rises above the shell's top edge. */
     fun sheetTop(offset: Float): Float = offset.coerceAtLeast(0f)
 
-    /** The nav bar slides down under the rising sheet. */
-    fun navBarTranslation(offset: Float): Float = navBarHeight * expand(offset)
+    /**
+     * The nav bar, [barHeight] px tall, slides down under the rising sheet, and away entirely as [shown] falls from 1 to 0
+     * for a destination without it.
+     */
+    fun navBarTranslation(
+        offset: Float,
+        barHeight: Float,
+        shown: Float,
+    ): Float = barHeight * maxOf(1f - shown, expand(offset))
 
     fun miniAlpha(offset: Float): Float = (1f - expand(offset) / 0.3f).coerceIn(0f, 1f)
 
