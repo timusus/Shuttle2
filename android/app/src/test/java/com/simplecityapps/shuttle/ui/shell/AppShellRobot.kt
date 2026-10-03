@@ -633,6 +633,17 @@ class AppShellRobot(
         }
     }
 
+    /** The song's artwork and title, which an open panel pushes up out of view and out of the semantics tree. */
+    fun assertNowPlayingSongReachable(reachable: Boolean) {
+        rule.onAllNodesWithTag(PlayerTestTags.NowPlayingArtwork).assertCountEquals(if (reachable) 1 else 0)
+    }
+
+    /** Closes the open panel from its grip, as an accessibility service would. */
+    fun dismissPanelByAccessibility() {
+        rule.onNodeWithContentDescription("Close panel").performSemanticsAction(SemanticsActions.Dismiss)
+        rule.waitForIdle()
+    }
+
     /** The seek bar and transport, which stay in view above an open panel. */
     fun assertTransportDisplayed() {
         rule.onNodeWithTag(PlayerTestTags.Transport).assertIsDisplayed()

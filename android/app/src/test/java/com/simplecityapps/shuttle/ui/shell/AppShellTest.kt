@@ -569,7 +569,22 @@ class AppShellTest {
         robot.tapPanelButtonMidAnimation(NowPlayingPanel.Queue)
         robot.assertReachable("Second song", reachable = true)
         robot.assertReachable("Collapse player", reachable = false)
+        // The song it pushes up is already out of the semantics tree; the transport stays.
+        robot.assertNowPlayingSongReachable(false)
         robot.settle()
+        robot.assertTransportDisplayed()
+    }
+
+    @Test
+    fun `an accessibility service closes a panel from its grip, bringing the song back`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+
+        robot.dismissPanelByAccessibility()
+        robot.panel shouldBe null
+        robot.assertLevel(PlayerLevel.Full)
+        robot.assertNowPlayingSongReachable(true)
     }
 
     @Test
