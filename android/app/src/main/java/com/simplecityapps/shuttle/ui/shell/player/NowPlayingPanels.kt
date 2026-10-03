@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Stop
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -106,7 +105,6 @@ private val ReplayGainModes = listOf(ReplayGainMode.Track, ReplayGainMode.Album,
  * timer, or a ruler of lengths, "End of song" and Start to begin one. The panel stays open either way,
  * so starting a timer shows its countdown in place.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun SleepTimerPanel(
     player: PlayerUiState,

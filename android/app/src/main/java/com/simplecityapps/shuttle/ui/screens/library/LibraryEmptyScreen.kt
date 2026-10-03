@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,7 +38,6 @@ import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
  * What the Library shows while it has no songs (#379): the way to let S2 read this device's music, the scan's
  * progress once it can, or "No music found" when the scan came back empty. "Connect a server" is on offer throughout.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LibraryEmptyScreen(
     state: LibraryAvailability.Empty,

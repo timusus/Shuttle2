@@ -25,7 +25,6 @@ import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -97,7 +96,6 @@ internal fun NowPlayingArtwork(
 }
 
 /** The title and artist beside the favourite toggle, sitting a small step above the seek bar. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun NowPlayingTitle(
     player: PlayerUiState,
