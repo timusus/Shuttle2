@@ -7,11 +7,9 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.genreLetterIndex
-import com.simplecityapps.shuttle.ui.actions.ObserveGenreCovers
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.screens.library.IndexedList
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
@@ -21,13 +19,10 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
 data class GenreListUiState(
@@ -37,19 +32,15 @@ data class GenreListUiState(
     val sortOrder: GenreSortOrder = GenreSortOrder.Default,
     /** The genres' letter sections when sorted by name ([genreLetterIndex]); null for any other sort. */
     val letterIndex: List<LetterSection>? = null,
-    /** Each genre's mosaic covers by genre name (#643): up to four songs from different albums; they fill in after the list shows. */
-    val covers: Map<String, List<Song>> = emptyMap(),
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @ViewModelKey(GenreListViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class GenreListViewModel @Inject constructor(
     observeGenres: ObserveGenres,
-    observeGenreCovers: ObserveGenreCovers,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider
@@ -62,19 +53,15 @@ class GenreListViewModel @Inject constructor(
         IndexedList(sorted, sortOrder, genreLetterIndex(sorted, sortOrder))
     }
 
-    private val covers = observeGenres().flatMapLatest { genres -> observeGenreCovers(genres) }.onStart { emit(emptyMap()) }
-
     val uiState: StateFlow<GenreListUiState> = combine(
         sortedGenres,
         mediaImportObserver.songImportState,
-        covers,
-    ) { sorted, songImportState, covers ->
+    ) { sorted, songImportState ->
         val sortedGenres = sorted.items
         GenreListUiState(
             genres = sortedGenres,
             sortOrder = sorted.sortOrder,
             letterIndex = sorted.letterIndex,
-            covers = covers,
             loadingState = when {
                 songImportState is SongImportState.ImportProgress -> GenreListUiState.LoadingState.Scanning
                 sortedGenres.isEmpty() -> GenreListUiState.LoadingState.Empty

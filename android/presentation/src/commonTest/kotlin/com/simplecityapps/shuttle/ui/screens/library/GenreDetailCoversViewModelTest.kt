@@ -1,13 +1,10 @@
-package com.simplecityapps.shuttle.ui.screens.library.genres
+package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.createGenre
+import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakeSongImportStateProvider
-import com.simplecityapps.fakes.FakeSortPreferences
-import com.simplecityapps.fakes.fakeLibraryViewPreferences
+import com.simplecityapps.shuttle.ui.actions.ObserveGenreCovers
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
-import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
-import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -22,7 +19,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class GenreListViewModelTest {
+class GenreDetailCoversViewModelTest {
 
     @BeforeTest
     fun setUp() {
@@ -35,24 +32,29 @@ class GenreListViewModelTest {
     }
 
     private val genreRepository = FakeGenreRepository()
-    private val preferences = fakeLibraryViewPreferences(sort = FakeSortPreferences())
 
-    private fun viewModel() = GenreListViewModel(
-        observeGenres = ObserveGenres(genreRepository),
-        readSetting = ReadLibraryViewSetting(preferences),
-        saveSetting = SaveLibraryViewSetting(preferences),
-        mediaImportObserver = FakeSongImportStateProvider(),
-    )
+    private fun viewModel(genreName: String) = GenreDetailCoversViewModel(genreName, ObserveGenres(genreRepository), ObserveGenreCovers(genreRepository))
 
+    // #652
     @Test
-    fun `the list alone runs no cover queries`() = runTest {
+    fun `covers are one song per album of the genre - as its Library row draws`() = runTest {
         genreRepository.setGenres(listOf(createGenre(name = "Jazz")))
+        genreRepository.setSongsForGenre("Jazz", listOf(createSong(id = 1, album = "A"), createSong(id = 2, album = "A"), createSong(id = 3, album = "B")))
 
-        val viewModel = viewModel()
+        val viewModel = viewModel("Jazz")
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.uiState.value.genres.map { it.name } shouldBe listOf("Jazz")
+        viewModel.uiState.value.map { it.id } shouldBe listOf(1L, 3L)
+    }
+
+    @Test
+    fun `a genre that doesn't exist has no covers and runs no query`() = runTest {
+        val viewModel = viewModel("Missing")
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value shouldBe emptyList()
         genreRepository.coverLimits shouldBe emptyList()
     }
 }

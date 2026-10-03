@@ -10,8 +10,10 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.shared.playback.FakeIosAudioPlayer
 import com.simplecityapps.shuttle.shared.settings.IosSettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
+import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
@@ -52,6 +54,7 @@ class IosAppGraphTest {
         graph.albumListViewModel
         graph.albumArtistListViewModel
         graph.genreListViewModel
+        graph.genreCoversViewModel
         graph.playlistListViewModel
         graph.mediaActionsViewModel
         graph.excludedSongsViewModel
@@ -65,6 +68,8 @@ class IosAppGraphTest {
         graph.albumArtistDetailViewModelFactory
         graph.genreDetailViewModelFactory
         graph.playlistDetailViewModelFactory
+        graph.genreDetailCoversViewModelFactory
+        graph.playlistDetailCoversViewModelFactory
         graph.smartPlaylistDetailViewModelFactory
         graph.songInfoViewModelFactory
         graph.serverSignInViewModelFactory
@@ -80,6 +85,8 @@ class IosAppGraphTest {
     fun theAssistedFactoriesCreateTheirViewModels() {
         graph.genreDetailViewModelFactory.create("Jazz").shouldBeInstanceOf<GenreDetailViewModel>()
         graph.playlistDetailViewModelFactory.create(1L).shouldBeInstanceOf<PlaylistDetailViewModel>()
+        graph.genreDetailCoversViewModelFactory.create("Jazz").shouldBeInstanceOf<GenreDetailCoversViewModel>()
+        graph.playlistDetailCoversViewModelFactory.create(1L).shouldBeInstanceOf<PlaylistDetailCoversViewModel>()
         graph.songInfoViewModelFactory.create(1L).shouldBeInstanceOf<SongInfoViewModel>()
         graph.serverSignInViewModelFactory.create(MediaProviderType.Jellyfin).shouldBeInstanceOf<ServerSignInViewModel>()
         graph.serverSignInViewModelFactory.create(MediaProviderType.Emby).shouldBeInstanceOf<ServerSignInViewModel>()

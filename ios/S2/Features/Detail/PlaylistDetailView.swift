@@ -15,10 +15,10 @@ struct PlaylistDetailView: View {
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             PlaylistDetailModels(graph: AppGraph.shared, playlistId: id)
         }
-        Observing(models.playlist.uiState, models.actions.uiState) { state, actions in
+        Observing(models.playlist.uiState, models.playlist.covers, models.actions.uiState) { state, covers, actions in
             PlaylistDetailContent(
                 state: state,
-                covers: state.covers,
+                covers: covers,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext))
@@ -68,7 +68,7 @@ final class PlaylistDetailModels: ViewModelGroup {
 /// The Playlist detail screen from a `PlaylistDetailUiState`, in a `DetailScaffold` tinted from its first song's cover.
 struct PlaylistDetailContent: View {
     let state: PlaylistDetailUiState
-    /// The songs whose covers make up its mosaic, as its Library row draws (`PlaylistDetailUiState.covers`).
+    /// The songs whose covers make up its mosaic, as its Library row draws (`PlaylistDetailViewModel.covers`).
     var covers: [Song] = []
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }

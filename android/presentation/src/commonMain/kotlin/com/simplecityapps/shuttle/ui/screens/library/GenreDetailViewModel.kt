@@ -12,7 +12,6 @@ import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
-import com.simplecityapps.shuttle.ui.actions.ObserveGenreCovers
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import dev.zacsweers.metro.AppScope
@@ -26,7 +25,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -38,8 +36,6 @@ data class GenreDetailUiState(
     val albums: List<Album> = emptyList(),
     val songs: List<Song> = emptyList(),
     val currentSong: Song? = null,
-    /** The songs whose covers make up the genre's mosaic (#652), the same ones its Library row draws: up to four from different albums. */
-    val covers: List<Song> = emptyList(),
     val loading: Boolean = true,
 ) {
     /** What playing this screen's songs starts the queue from (#633). */
@@ -54,7 +50,6 @@ class GenreDetailViewModel @AssistedInject constructor(
     observeSongsForGenre: ObserveSongsForGenre,
     observeAlbums: ObserveAlbums,
     observeCurrentSong: ObserveCurrentSong,
-    observeGenreCovers: ObserveGenreCovers,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -76,18 +71,11 @@ class GenreDetailViewModel @AssistedInject constructor(
 
     private val genre = observeGenres(GenreQuery.GenreName(genreName)).map { it.firstOrNull() }
 
-    private val covers = genre
-        .distinctUntilChanged { old, new -> old?.name == new?.name }
-        .flatMapLatest { genre ->
-            if (genre == null) flowOf(emptyList()) else observeGenreCovers(listOf(genre)).map { it[genre.name].orEmpty() }
-        }
-
     val uiState: StateFlow<GenreDetailUiState> = combine(
         genre,
         songsAndAlbums,
         observeCurrentSong(),
-        covers,
-    ) { genre, (songs, albums), currentSong, covers ->
-        GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, covers = covers, loading = false)
+    ) { genre, (songs, albums), currentSong ->
+        GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, loading = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GenreDetailUiState())
 }

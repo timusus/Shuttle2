@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
-import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
@@ -48,8 +47,6 @@ data class PlaylistDetailUiState(
     /** [PlaylistSong.id]s of the entries in the current multi-selection. */
     val selectedIds: Set<Long> = emptySet(),
     val currentSong: Song? = null,
-    /** The songs whose covers make up the playlist's mosaic (#652), the same ones its Library row draws: its first four from different albums, in the playlist's order. */
-    val covers: List<Song> = emptyList(),
     val loading: Boolean = true,
     val events: List<PendingEvent<PlaylistDetailEvent>> = emptyList(),
 ) {
@@ -92,7 +89,6 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     private val deletePlaylist: DeletePlaylist,
     private val exportPlaylist: ExportPlaylist,
     observeCurrentSong: ObserveCurrentSong,
-    observePlaylistCovers: ObservePlaylistCovers,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -115,25 +111,18 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         .flatMapLatest { playlist -> playlist?.let { observePlaylistSongs(it) } ?: flowOf(emptyList()) }
         .onEach { draggedOrder.value = null }
 
-    private val covers = playlist
-        .distinctUntilChanged { old, new -> old?.id == new?.id }
-        .flatMapLatest { playlist ->
-            if (playlist == null) flowOf(emptyList()) else observePlaylistCovers(listOf(playlist)).map { it[playlist.id].orEmpty() }
-        }
-
     val uiState: StateFlow<PlaylistDetailUiState> = combine(
         playlist,
         combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
         selectedIds,
-        combine(observeCurrentSong(), covers, ::Pair),
+        observeCurrentSong(),
         events.flow,
-    ) { playlist, songs, selected, (currentSong, covers), events ->
+    ) { playlist, songs, selected, currentSong, events ->
         PlaylistDetailUiState(
             playlist = playlist,
             songs = songs,
             selectedIds = selected.filterTo(mutableSetOf()) { id -> songs.any { it.id == id } },
             currentSong = currentSong,
-            covers = covers,
             loading = false,
             events = events,
         )

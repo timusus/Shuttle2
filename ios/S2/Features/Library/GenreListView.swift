@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 
 /// Library > Genres (P5-6b): `GenreListViewModel`'s genres as a list; a row pushes the genre's detail route. A genre
-/// has no artwork of its own, so each row draws a `CoverMosaic` of its albums' covers (`GenreListUiState.covers`,
+/// has no artwork of its own, so each row draws a `CoverMosaic` of its albums' covers (`GenreListViewModel.covers`,
 /// #643), which fill in after the list shows. A Shuffle row heads the list, shuffling every genre. Context menu plays
 /// or queues through the shared `MediaAction`s.
 struct GenreListView: View {
@@ -10,10 +10,10 @@ struct GenreListView: View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.genres).cacheKey) {
             GenreListModels(graph: AppGraph.shared)
         }
-        Observing(models.genres.uiState, models.actions.uiState) { state, actions in
+        Observing(models.genres.uiState, models.genres.covers, models.actions.uiState) { state, covers, actions in
             GenreListContent(
                 state: state,
-                covers: state.covers,
+                covers: covers,
                 onPlay: { genre in
                     models.actions.send(MediaActionPlay(selection: MediaSelectionGenres(genre: genre), position: 0))
                 },

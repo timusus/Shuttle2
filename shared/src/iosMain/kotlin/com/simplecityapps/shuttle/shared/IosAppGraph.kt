@@ -9,15 +9,18 @@ import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.home.HomeViewModel
+import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
+import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
+import com.simplecityapps.shuttle.ui.screens.library.genres.GenreCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
@@ -95,6 +98,9 @@ interface IosAppGraph : ViewModelGraph {
     val albumListViewModel: AlbumListViewModel
     val albumArtistListViewModel: AlbumArtistListViewModel
     val genreListViewModel: GenreListViewModel
+
+    /** The genre rows' mosaic covers, apart from `genreListViewModel` so Android's list never queries them. */
+    val genreCoversViewModel: GenreCoversViewModel
     val playlistListViewModel: PlaylistListViewModel
     val mediaActionsViewModel: MediaActionsViewModel
     val excludedSongsViewModel: ExcludedSongsViewModel
@@ -113,6 +119,8 @@ interface IosAppGraph : ViewModelGraph {
     val albumArtistDetailViewModelFactory: AlbumArtistDetailViewModel.Factory
     val genreDetailViewModelFactory: GenreDetailViewModel.Factory
     val playlistDetailViewModelFactory: PlaylistDetailViewModel.Factory
+    val genreDetailCoversViewModelFactory: GenreDetailCoversViewModel.Factory
+    val playlistDetailCoversViewModelFactory: PlaylistDetailCoversViewModel.Factory
     val smartPlaylistDetailViewModelFactory: SmartPlaylistDetailViewModel.Factory
     val songInfoViewModelFactory: SongInfoViewModel.Factory
 
