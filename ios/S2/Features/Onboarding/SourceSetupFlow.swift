@@ -181,8 +181,13 @@ enum SourceSetupImportState: Equatable {
 
 // MARK: - Welcome
 
-/// The first run's welcome: what S2 is, in one line and three honest rows, then Get Started, or Not Now.
+/// The first run's welcome: what S2 is, in one line and three honest rows, then Get Started, or Not Now. It also says
+/// that crash reports and usage data are on (#776): iOS has no upgraders to give Android's one-time Home notice to, so
+/// every install hears it here, where it can't be missed (`IosTelemetryStartup` marks that notice shown).
 struct SourceSetupWelcome: View {
+    static let telemetryDisclosure =
+        "Shuttle Music shares anonymous crash reports and usage data to help improve the app. You can turn this off in Settings."
+
     let onStart: () -> Void
     let onSkip: () -> Void
 
@@ -223,6 +228,11 @@ struct SourceSetupWelcome: View {
                         detail: "Shape the sound with the built-in equalizer."
                     )
                 }
+                Text(Self.telemetryDisclosure)
+                    .font(.s2Caption)
+                    .foregroundStyle(.s2TextSecondary)
+                    .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("onboarding.telemetryDisclosure")
             }
             .padding(.horizontal, Spacing.large)
             .padding(.top, Spacing.xlarge)

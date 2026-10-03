@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.logging.OsLogLogger
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.telemetry.TelemetryConsentGate
 import com.simplecityapps.shuttle.telemetry.TelemetryScrubber
@@ -23,6 +24,10 @@ import platform.Foundation.NSBundle
  * Starts iOS telemetry, once, at launch (`AppGraph.initialize()`): logged warnings and errors become Sentry
  * breadcrumbs, the consent gate applies the stored choices and follows them, and PostHog's super properties follow
  * the entitlement and the enabled sources.
+ *
+ * iOS never shipped without telemetry, so it has no upgraders for Home's one-time "analytics is now on" notice
+ * (`HomeEvent.AnalyticsNowOn`): the first run's welcome discloses it instead, and [start] marks the notice shown, as
+ * Android's `InstallDefaults` does for a new install.
  */
 @SingleIn(AppScope::class)
 class IosTelemetryStartup @Inject constructor(
@@ -30,6 +35,7 @@ class IosTelemetryStartup @Inject constructor(
     private val consentGate: TelemetryConsentGate,
     private val entitlements: StoreEntitlements,
     private val mediaSources: MediaSources,
+    private val analyticsConsentSettings: AnalyticsConsentSettings,
     @AppCoroutineScope private val scope: CoroutineScope,
 ) {
     private var started = false
@@ -37,6 +43,7 @@ class IosTelemetryStartup @Inject constructor(
     fun start() {
         if (started) return
         started = true
+        analyticsConsentSettings.noticeShown.value = true
         Logger.install { tag -> BreadcrumbLogger(OsLogLogger(tag), tag, telemetry.crashReporter) }
         consentGate.start()
         scope.launch {

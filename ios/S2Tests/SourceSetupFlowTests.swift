@@ -39,6 +39,13 @@ struct SourceSetupFlowTests {
         #expect(calls == ["start", "skip"])
     }
 
+    /// #776: iOS discloses crash reporting and analytics here, on every first run, instead of Android's upgrade notice.
+    @Test func theWelcomeSaysCrashReportsAndUsageDataAreOn() throws {
+        let sut = SourceSetupWelcome(onStart: {}, onSkip: {})
+        let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "onboarding.telemetryDisclosure").text().string()
+        #expect(disclosure == "Shuttle Music shares anonymous crash reports and usage data to help improve the app. You can turn this off in Settings.")
+    }
+
     // MARK: Server cards
 
     @Test func theCardsOfferTheTypesIOSCanSignInTo() throws {

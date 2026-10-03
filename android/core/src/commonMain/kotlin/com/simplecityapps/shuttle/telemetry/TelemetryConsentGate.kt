@@ -21,9 +21,10 @@ interface AnalyticsSdk {
 }
 
 /**
- * Each SDK runs only while its choice allows it. Both default to on for a user who never chose (#379, #481), and Home
- * says so once (`HomeEvent.AnalyticsNowOn`); turning either off in Settings > Privacy stops its SDK at once. [start]
- * applies the stored choices before anything can send an event or a crash, then follows every change to them.
+ * Each SDK runs only while its choice allows it. Both default to on for a user who never chose (#379, #481): Android's
+ * Home says so once to an upgrader (`HomeEvent.AnalyticsNowOn`), iOS's first-run welcome to everyone. Turning either
+ * off in Settings > Privacy stops its SDK at once. [start] applies the stored choices before anything can send an event
+ * or a crash, then follows every change to them.
  *
  * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
  * so each gates its own SDK. Shared by Android (`TelemetryInitializer`) and iOS (`IosTelemetryStartup`).
