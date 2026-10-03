@@ -13,8 +13,9 @@
 #     gapless         one album of 5 x 12 s sine tones played back to back: an MP3, two
 #                     FLAC-in-Matroska (.mka) tracks and two native FLACs, so gapless transitions
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
-#     library         the sample library the screenshot tests use: 16 invented albums (97 x 10 s
-#                     tracks) with their generated covers embedded, plus its 4 playlists as .m3u
+#     library         the sample library the screenshot tests use: 16 invented albums (97 x 32 s
+#                     tracks, long enough to count as plays) with their generated covers embedded,
+#                     plus its 4 playlists as .m3u
 #     podcast         one 60 s track pushed under a path containing "podcast", so Song.type
 #                     resolves to Type.Podcast (Song.kt matches on path, not a MediaStore flag)
 #     taglib          5 x 180 s tracks plus an .m3u listing the first 3 plus one line that can't
@@ -26,6 +27,8 @@
 #                         with the local (MediaStore) provider selected, skipping onboarding
 #                         and the launch changelog sheet (which would cover the UI under test).
 #                         Requires the debug APK already installed (run-as needs it resolvable).
+#     --generate-only     only build the fixture into its cache and print the directory: no adb,
+#                         no device (design-shots.sh copies the `library` files onto a simulator)
 #     --if-needed         skip pushing/scanning media when this fixture's content hash (and the
 #                         --skip-onboarding state) was already the last thing seeded on this device
 #                         -- tracked by a manifest file written to the fixture's own remote dir, so a
@@ -64,7 +67,7 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-sca
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
   library         the screenshot tests' sample library: 16 invented albums with embedded covers
-                  (97 x 10 s tracks) plus 4 .m3u playlists
+                  (97 x 32 s tracks, long enough to count as plays) plus 4 .m3u playlists
   podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
   taglib          5 x 180 s tracks + an .m3u (3 of them plus one unresolvable line), for the
                   Shuttle (TagLib) provider's SAF picker -- not scanned into MediaStore
@@ -73,6 +76,8 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-sca
                       provider selected (needs the debug APK already installed)
   --s2-scanner        with --skip-onboarding, select the S2 scanner (Shuttle) instead of the
                       Android (MediaStore) provider, so Settings > Sources' folders apply
+  --generate-only     only build the fixture into build/test-media/<fixture> and print that
+                      directory; needs no adb or device
   --if-needed         skip the push/scan/onboarding-prefs work when this fixture (and provider/
                       onboarding state) is already seeded on the device (cleared by `remote-emu.sh reset`)
 
@@ -94,18 +99,20 @@ shift
 SKIP_ONBOARDING=0
 PROVIDER_TYPES=1 # MediaProviderType.MediaStore; 0 is Shuttle
 IF_NEEDED=0
+GENERATE_ONLY=0
 for arg in "$@"; do
     case "$arg" in
         --skip-onboarding) SKIP_ONBOARDING=1 ;;
         --s2-scanner) PROVIDER_TYPES=0 ;;
         --if-needed) IF_NEEDED=1 ;;
+        --generate-only) GENERATE_ONLY=1 ;;
         *) echo "seed-test-media: unknown argument '$arg'" >&2; usage >&2; exit 2 ;;
     esac
 done
 
 command -v ffmpeg >/dev/null 2>&1 || { echo "seed-test-media: ffmpeg not found on PATH" >&2; exit 1; }
-command -v adb >/dev/null 2>&1 || { echo "seed-test-media: adb not found on PATH" >&2; exit 1; }
-[ -n "${ANDROID_SERIAL:-}" ] || { echo "seed-test-media: ANDROID_SERIAL not set -- eval \"\$(support/scripts/remote-emu.sh env)\" first" >&2; exit 1; }
+[ "$GENERATE_ONLY" = "1" ] || command -v adb >/dev/null 2>&1 || { echo "seed-test-media: adb not found on PATH" >&2; exit 1; }
+[ "$GENERATE_ONLY" = "1" ] || [ -n "${ANDROID_SERIAL:-}" ] || { echo "seed-test-media: ANDROID_SERIAL not set -- eval \"\$(support/scripts/remote-emu.sh env)\" first" >&2; exit 1; }
 
 radb() { adb -s "$ANDROID_SERIAL" "$@"; }
 
@@ -204,24 +211,32 @@ build_playback() {
 
 # The sample library (android/fixtures/src/main/resources/sample-library/library.json, the same
 # data the screenshot tests use): 16 invented albums by 10 artists plus a compilation, each track a
-# 10 s silent mp3 tagged from the manifest with its album's generated cover embedded as ID3 front
+# 32 s silent mp3 tagged from the manifest with its album's generated cover embedded as ID3 front
 # art, plus one .m3u per sample playlist. Files are flat (<album-id>-<track>.mp3), so each carries
-# its own art rather than sharing a folder.jpg.
+# its own art rather than sharing a folder.jpg. 32 s, not shorter: a song under 30 s never reaches
+# the listening history (PlayHistoryRepository.MIN_TRACK_MS), and design-shots.sh plays some of
+# these for Home's history sections. A cache built at another length is rebuilt.
+LIBRARY_SECONDS=32
 build_library() {
     local dir="$1" library="${REPO_ROOT}/android/fixtures/src/main/resources/sample-library"
+    local stamp="${CACHE_ROOT}/.library-seconds"
     command -v python3 >/dev/null 2>&1 || { echo "seed-test-media: python3 not found on PATH" >&2; exit 1; }
     mkdir -p "$dir"
+    if [ "$(cat "$stamp" 2>/dev/null)" != "$LIBRARY_SECONDS" ]; then
+        rm -f -- "$dir"/*.mp3 "$dir"/*.m3u
+        echo "$LIBRARY_SECONDS" >"$stamp"
+    fi
     local file title artist album_artist album track tracktotal year genre cover
     while IFS=$'\t' read -r file title artist album_artist album track tracktotal year genre cover; do
         [ -f "${dir}/${file}" ] && continue
         ffmpeg -nostdin -loglevel error -f lavfi -i "anullsrc=r=44100:cl=mono" -i "${library}/covers/${cover}.jpg" \
-            -t 10 -map 0:a -map 1:v -c:a libmp3lame -b:a 32k -c:v copy -id3v2_version 3 \
+            -t "$LIBRARY_SECONDS" -map 0:a -map 1:v -c:a libmp3lame -b:a 32k -c:v copy -id3v2_version 3 \
             -disposition:v attached_pic -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
             -metadata title="$title" -metadata artist="$artist" -metadata album_artist="$album_artist" \
             -metadata album="$album" -metadata track="${track}/${tracktotal}" -metadata disc="1/1" \
             -metadata date="$year" -metadata genre="$genre" \
             -y "${dir}/${file}" >/dev/null
-    done < <(python3 - "${library}/library.json" "$dir" <<'EOF'
+    done < <(python3 - "${library}/library.json" "$dir" "$LIBRARY_SECONDS" <<'EOF'
 import json, sys
 library = json.load(open(sys.argv[1]))
 files = {}
@@ -237,7 +252,7 @@ for playlist in library["playlists"]:
         m3u.write("#EXTM3U\n")
         for ref in playlist["tracks"]:
             name, title, artist = files[ref]
-            m3u.write("#EXTINF:10, %s - %s\n%s\n" % (artist, title, name))
+            m3u.write("#EXTINF:%s, %s - %s\n%s\n" % (sys.argv[3], artist, title, name))
 EOF
     )
 }
@@ -290,6 +305,10 @@ case "$FIXTURE" in
     podcast) build_podcast "$FIXTURE_DIR" ;;
     taglib) build_taglib "$FIXTURE_DIR" ;;
 esac
+if [ "$GENERATE_ONLY" = "1" ]; then
+    echo "$FIXTURE_DIR"
+    exit 0
+fi
 
 # The taglib fixture lives outside REMOTE_ROOT (a folder the Shuttle/TagLib provider's SAF picker
 # selects directly) and is never MediaStore-scanned -- see the comment further down.
