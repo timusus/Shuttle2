@@ -269,14 +269,26 @@ private fun LiveLogEntry(onNavigateUp: () -> Unit) {
     }
 }
 
-/** The restore snackbar text: counts of songs matched and playlists added or updated, or a note that nothing matched. */
+/**
+ * The restore snackbar text: counts of songs matched and playlists added or updated, or a note that nothing matched,
+ * then whether the backup's settings were restored.
+ */
 internal fun backupImportedMessage(
     resources: Resources,
     event: SettingsUiEvent.BackupImported
 ): String {
+    val settingsRestored = event.settingsRestored > 0
     if (event.songsMatched == 0 && event.playlistsRestored == 0) {
-        return resources.getString(R.string.settings_backup_import_nothing)
+        return resources.getString(if (settingsRestored) R.string.settings_backup_import_settings_only else R.string.settings_backup_import_nothing)
     }
+    val library = libraryRestoredMessage(resources, event)
+    return if (settingsRestored) resources.getString(R.string.settings_backup_import_with_settings, library) else library
+}
+
+private fun libraryRestoredMessage(
+    resources: Resources,
+    event: SettingsUiEvent.BackupImported
+): String {
     val songs = resources.getQuantityString(R.plurals.settings_backup_import_songs, event.songsMatched, event.songsMatched)
     val playlists = resources.getQuantityString(R.plurals.settings_backup_import_playlists, event.playlistsRestored, event.playlistsRestored)
     return if (event.songsUnmatched > 0) {

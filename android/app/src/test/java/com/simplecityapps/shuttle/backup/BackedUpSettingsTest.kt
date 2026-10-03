@@ -1,13 +1,16 @@
 package com.simplecityapps.shuttle.backup
 
+import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackup
-import io.kotest.matchers.maps.shouldContainKey
+import io.kotest.assertions.withClue
 import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
@@ -49,26 +52,59 @@ class BackedUpSettingsTest {
 
     @Test
     fun `secrets and per-device state are never exported`() {
+        val excluded = mapOf(
+            "credentials and tokens" to listOf("jellyfin_access_token", "jellyfin_address", "jellyfin_username", "jellyfin_pass", "jellyfin_user_id", "plex_token"),
+            "billing and trial" to listOf("app_purchased_date", "server_trial_started_at", "cached_pro_seen_at"),
+            "SAF URIs and paths" to listOf("scanner_included_folders", "scanner_excluded_folders", "scanner_extra_folders"),
+            "onboarding flags" to listOf("onboarding_completed", "changelog_show_on_launch", "last_viewed_changelog_version", "pref_analytics_consent_asked", "pref_analytics_notice_shown"),
+            "analytics ids" to listOf("client_id", "user_id"),
+            "per-device state" to listOf("queue_ids", "search_recent", "library_tab_current")
+        )
         val store = InMemoryKeyValueStore()
         store.edit {
             putBoolean("pref_theme_extra_dark", true)
-            putString("jellyfin_access_token", "secret")
-            putString("plex_token", "secret")
-            putString("client_id", "abc")
-            putString("pref_scanner_included_folders", "content://tree")
-            putBoolean("pref_crash_reporting", false)
-            putBoolean("pref_analytics_consent_asked", true)
-            putBoolean("source_setup_completed", true)
-            putString("queue_ids", "1,2,3")
-            putString("search_recent", "abba")
-            putLong("app_purchased_date", 1L)
+            excluded.values.flatten().forEach { key -> putString(key, "content://tree/secret") }
         }
 
         val exported = BackedUpSettings.export(store)
 
-        exported shouldContainKey "pref_theme_extra_dark"
+        excluded.forEach { (group, keys) ->
+            withClue(group) { keys.forEach { key -> exported shouldNotContainKey key } }
+        }
         exported.keys shouldBe setOf("pref_theme_extra_dark")
-        exported shouldNotContainKey "client_id"
+    }
+
+    @Test
+    fun `the equalizer's preset and band gains are backed up`() {
+        val source = InMemoryKeyValueStore()
+        source.edit {
+            putString(KeyValueEqualizerPresetStore.PresetKey, "Bass Boost")
+            putString(KeyValueEqualizerPresetStore.CustomPresetBandsKey, "[]")
+        }
+
+        val target = InMemoryKeyValueStore()
+        BackedUpSettings.restore(target, BackedUpSettings.export(source))
+
+        target.getString(KeyValueEqualizerPresetStore.PresetKey, null) shouldBe "Bass Boost"
+        target.getString(KeyValueEqualizerPresetStore.CustomPresetBandsKey, null) shouldBe "[]"
+    }
+
+    @Test
+    fun `restored library tabs keep only the tabs this version knows, and none at all leaves the default`() {
+        val store = InMemoryKeyValueStore()
+
+        BackedUpSettings.restore(
+            store,
+            mapOf(
+                "pref_library_tabs_all" to JsonPrimitive("Podcasts,Albums,,Songs,Albums"),
+                "pref_library_tabs_enabled" to JsonPrimitive("")
+            )
+        )
+
+        store.getString("pref_library_tabs_all", null) shouldBe "Albums,Songs"
+        store.contains("pref_library_tabs_enabled") shouldBe false
+        GeneralPreferenceManager(store).allLibraryTabs.first() shouldBe LibraryTab.Albums
+        GeneralPreferenceManager(store).enabledLibraryTabs shouldBe LibraryTab.defaultEnabled
     }
 
     @Test

@@ -51,7 +51,12 @@ sealed interface SettingsUiEvent {
     /** The UI should open a file picker for a backup to restore. */
     data object BackupImportPickerRequested : SettingsUiEvent
 
-    data class BackupImported(val songsMatched: Int, val playlistsRestored: Int, val songsUnmatched: Int) : SettingsUiEvent
+    data class BackupImported(
+        val songsMatched: Int,
+        val playlistsRestored: Int,
+        val songsUnmatched: Int,
+        val settingsRestored: Int = 0
+    ) : SettingsUiEvent
 
     data object BackupImportFailed : SettingsUiEvent
 
@@ -188,7 +193,7 @@ class SettingsViewModel @Inject constructor(
                 if (report == null) {
                     SettingsUiEvent.BackupImportFailed
                 } else {
-                    SettingsUiEvent.BackupImported(report.songsMatched, report.playlistsRestored, report.songsUnmatched)
+                    SettingsUiEvent.BackupImported(report.songsMatched, report.playlistsRestored, report.songsUnmatched, report.settingsRestored)
                 }
             )
         }

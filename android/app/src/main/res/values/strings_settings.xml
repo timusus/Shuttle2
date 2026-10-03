@@ -223,6 +223,10 @@
     <string name="settings_backup_import_done_unmatched">Restore complete: %1$s, %2$s; %3$s</string>
     <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
     <string name="settings_backup_import_nothing">Nothing in this backup matched your library</string>
+    <!-- Settings: Snackbar shown when a library backup restore restored the backup's settings but matched no songs and added no playlists -->
+    <string name="settings_backup_import_settings_only">Settings restored; no songs or playlists in this backup matched your library</string>
+    <!-- Settings: Snackbar summarising a library backup restore that also restored the backup's settings; %1$s is the songs and playlists summary (settings_backup_import_done or settings_backup_import_done_unmatched) -->
+    <string name="settings_backup_import_with_settings">%1$s; settings restored</string>
     <!-- Settings: Count of backup songs that matched the library during a restore -->
     <plurals name="settings_backup_import_songs">
         <item quantity="one">%1$d song matched</item>

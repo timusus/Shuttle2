@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.backup
 
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
+import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -53,8 +55,13 @@ internal object BackedUpSettings {
         DownloadSettings.WifiOnly
     )
 
-    /** Preferences with no [Setting]: the library's view modes, tabs and search filters, and the sleep timer's default. */
+    /**
+     * Preferences with no [Setting]: the equalizer's preset and Custom band gains, the library's view modes, tabs and
+     * search filters, and the sleep timer's default.
+     */
     private val otherKeys: List<Pair<String, Storage>> = listOf(
+        KeyValueEqualizerPresetStore.PresetKey to Storage.String,
+        KeyValueEqualizerPresetStore.CustomPresetBandsKey to Storage.String,
         "pref_artist_view_mode" to Storage.String,
         "pref_album_view_mode" to Storage.String,
         "pref_library_tabs_all" to Storage.String,
@@ -68,6 +75,19 @@ internal object BackedUpSettings {
     )
 
     private val allowedKeys: Map<String, Storage> = settings.associate { it.key to it.storage } + otherKeys.toMap()
+
+    /** What a string preference holds once checked, or null to leave it at its default: one this app version can't read would break it. */
+    private val validators: Map<String, (String) -> String?> = mapOf(
+        "pref_library_tabs_all" to ::knownLibraryTabs,
+        "pref_library_tabs_enabled" to ::knownLibraryTabs
+    )
+
+    /** The comma-separated [LibraryTab] names this app knows, in order and once each; null when none are left. */
+    private fun knownLibraryTabs(value: String): String? = value.split(",")
+        .filter { name -> LibraryTab.entries.any { it.name == name } }
+        .distinct()
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString(",")
 
     /** What [store] holds under each allowlisted key; a key never written is left out. */
     fun export(store: KeyValueStore): Map<String, JsonPrimitive> = buildMap {
@@ -86,8 +106,9 @@ internal object BackedUpSettings {
     }
 
     /**
-     * Replaces every allowlisted key with [values]: a key the backup doesn't hold goes back to its default, and keys
-     * outside the allowlist, or holding the wrong type, are ignored. Returns the number of keys written.
+     * Replaces every allowlisted key with [values]: a key the backup doesn't hold, or holds a value this app can't read
+     * (an unknown library tab), goes back to its default, and keys outside the allowlist, or holding the wrong type, are
+     * ignored. Returns the number of keys written.
      */
     fun restore(
         store: KeyValueStore,
@@ -96,7 +117,8 @@ internal object BackedUpSettings {
         var written = 0
         store.edit {
             allowedKeys.forEach { (key, storage) ->
-                val value = values[key]
+                val validate = validators[key]
+                val value = values[key]?.let { value -> if (validate == null) value else value.validatedWith(validate) }
                 if (value == null) {
                     remove(key)
                     return@forEach
@@ -112,4 +134,6 @@ internal object BackedUpSettings {
         }
         return written
     }
+
+    private fun JsonPrimitive.validatedWith(validate: (String) -> String?): JsonPrimitive? = if (isString) validate(content)?.let(::JsonPrimitive) else this
 }

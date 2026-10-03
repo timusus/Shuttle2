@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * Versioned library backup: per-song stats, playlists and the allowlisted preferences ([BackedUpSettings]).
+ * Versioned library backup: per-song stats, playlists and the allowlisted preferences ([com.simplecityapps.shuttle.backup.BackedUpSettings]).
  * Version 1 had no [settings]; those backups still import, leaving preferences alone.
  *
  * Identity is (provider, path) first, (provider, externalId) for remote items, and a tag

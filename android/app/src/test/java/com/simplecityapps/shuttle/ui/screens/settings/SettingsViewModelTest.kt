@@ -255,12 +255,12 @@ class SettingsViewModelTest {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
-        backupFlow.report = RestoreReport(songsMatched = 9, songsUnmatched = 3, statsWritten = 7, playlistsRestored = 2, playlistsUnresolved = emptyList(), membersSkipped = 0)
+        backupFlow.report = RestoreReport(songsMatched = 9, songsUnmatched = 3, statsWritten = 7, playlistsRestored = 2, playlistsUnresolved = emptyList(), membersSkipped = 0, settingsRestored = 14)
 
         viewModel.importBackupFrom("content://src")
         runCurrent()
 
-        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupImported(songsMatched = 9, playlistsRestored = 2, songsUnmatched = 3))
+        events(viewModel) shouldBe listOf(SettingsUiEvent.BackupImported(songsMatched = 9, playlistsRestored = 2, songsUnmatched = 3, settingsRestored = 14))
     }
 
     @Test

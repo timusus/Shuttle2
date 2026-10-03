@@ -15,8 +15,9 @@ class BackupImportedMessageTest {
     private fun message(
         songsMatched: Int,
         playlistsRestored: Int,
-        songsUnmatched: Int = 0
-    ) = backupImportedMessage(resources, SettingsUiEvent.BackupImported(songsMatched, playlistsRestored, songsUnmatched))
+        songsUnmatched: Int = 0,
+        settingsRestored: Int = 0
+    ) = backupImportedMessage(resources, SettingsUiEvent.BackupImported(songsMatched, playlistsRestored, songsUnmatched, settingsRestored))
 
     @Test
     fun `pluralises both counts`() {
@@ -34,5 +35,15 @@ class BackupImportedMessageTest {
     fun `says nothing matched when no songs matched and no playlists were added`() {
         message(songsMatched = 0, playlistsRestored = 0) shouldBe "Nothing in this backup matched your library"
         message(songsMatched = 0, playlistsRestored = 0, songsUnmatched = 12) shouldBe "Nothing in this backup matched your library"
+    }
+
+    @Test
+    fun `says the settings were restored`() {
+        message(songsMatched = 0, playlistsRestored = 0, songsUnmatched = 12, settingsRestored = 20) shouldBe
+            "Settings restored; no songs or playlists in this backup matched your library"
+        message(songsMatched = 3, playlistsRestored = 1, settingsRestored = 20) shouldBe
+            "Restore complete: 3 songs matched, 1 playlist added or updated; settings restored"
+        message(songsMatched = 9, playlistsRestored = 2, songsUnmatched = 3, settingsRestored = 1) shouldBe
+            "Restore complete: 9 songs matched, 2 playlists added or updated; 3 songs not found; settings restored"
     }
 }

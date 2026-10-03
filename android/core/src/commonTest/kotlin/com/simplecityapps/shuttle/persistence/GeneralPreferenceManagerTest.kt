@@ -128,4 +128,13 @@ class GeneralPreferenceManagerTest {
         saved.allLibraryTabs shouldBe listOf(LibraryTab.Songs, LibraryTab.Albums) + (LibraryTab.entries - LibraryTab.Songs - LibraryTab.Albums)
         saved.enabledLibraryTabs shouldBe listOf(LibraryTab.Songs)
     }
+
+    @Test
+    fun `unknown or empty saved tab names are skipped rather than failing`() {
+        val saved = GeneralPreferenceManager(InMemoryKeyValueStore(mapOf("pref_library_tabs_all" to "Removed,,Albums,Albums")))
+        val empty = GeneralPreferenceManager(InMemoryKeyValueStore(mapOf("pref_library_tabs_all" to "")))
+
+        saved.allLibraryTabs shouldBe listOf(LibraryTab.Albums) + (LibraryTab.entries - LibraryTab.Albums)
+        empty.allLibraryTabs shouldBe LibraryTab.entries
+    }
 }

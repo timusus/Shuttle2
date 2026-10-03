@@ -11,8 +11,6 @@ import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import com.simplecityapps.shuttle.ui.screens.settings.backup.BackedUpPlaylist
 import com.simplecityapps.shuttle.ui.screens.settings.backup.BackedUpSong
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackup
@@ -31,7 +29,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromStream
 import timber.log.Timber
 
@@ -51,7 +48,7 @@ class LibraryBackupManager @Inject constructor(
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
     private val keyValueStore: KeyValueStore,
-    private val effects: SettingsEffects,
+    private val settingsRestorer: BackedUpSettingsRestorer,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : LibraryBackupFlow {
     private val json = Json {
@@ -130,20 +127,7 @@ class LibraryBackupManager @Inject constructor(
     private suspend fun restore(backup: LibraryBackup): RestoreReport {
         val library = songRepository.loadSongs(SongQuery.All(includeExcluded = true))
         val report = LibraryBackupRestorer(playlistRepository, { database.songDataDao().restoreStats(it) }).restore(backup, library)
-        return backup.settings?.let { report.copy(settingsRestored = restoreSettings(it)) } ?: report
-    }
-
-    /** Replaces the preferences, then runs each changed setting's side effect, so it applies without a restart. */
-    private fun restoreSettings(values: Map<String, JsonPrimitive>): Int {
-        val before = BackedUpSettings.settings.associateWith { it.read(keyValueStore) }
-        val written = BackedUpSettings.restore(keyValueStore, values)
-        BackedUpSettings.settings.forEach { setting -> applyIfChanged(setting, before[setting]) }
-        return written
-    }
-
-    private fun <T> applyIfChanged(setting: Setting<T>, previous: Any?) {
-        val current = setting.read(keyValueStore)
-        if (current != previous) effects.onSettingChanged(setting, current)
+        return report.copy(settingsRestored = settingsRestorer.restore(backup))
     }
 
     private fun Song.toIdentity(): SongIdentity = SongIdentity(

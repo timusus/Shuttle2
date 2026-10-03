@@ -501,14 +501,14 @@
     },
     {
       "text": "With the phone held sideways, the mini player and Now Playing no longer sit under the camera cutout, and pages no longer jump as the bottom bar or side bar slides in or out",
-        "commits": []
-      },
-      {
+      "commits": []
+    },
+    {
       "text": "Library backups now include your settings, such as theme, playback, equalizer and library options, and restoring one asks before it replaces the settings on your device. Server sign-ins are never backed up",
       "commits": []
     },
     {
-      "text": "New Minimum song length setting in Settings, Library hides short songs like ringtones and voice notes from your songs, albums, artists, genres and search. Playlists still show them",
+      "text": "A new Minimum song length setting, in Settings, Library, hides short songs like ringtones and voice notes from your songs, albums, artists, genres and search. Playlists still show them",
       "commits": []
     }
   ]

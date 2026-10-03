@@ -143,8 +143,7 @@ class GeneralPreferenceManager @Inject constructor(
         }
         get() {
             return store.getString("pref_library_tabs_all", null)
-                ?.split(",")
-                ?.map { LibraryTab.valueOf(it) }
+                ?.let(::libraryTabs)
                 // Tabs added since the user last reordered go at the end
                 ?.let { stored -> stored + (LibraryTab.entries - stored.toSet()) }
                 ?: LibraryTab.entries.toList()
@@ -156,16 +155,12 @@ class GeneralPreferenceManager @Inject constructor(
         }
         get() {
             return store.getString("pref_library_tabs_enabled", LibraryTab.defaultEnabled.joinToString(","))
-                ?.split(",")
-                ?.mapNotNull {
-                    try {
-                        LibraryTab.valueOf(it)
-                    } catch (e: IllegalArgumentException) {
-                        null
-                    }
-                }
+                ?.let(::libraryTabs)
                 .orEmpty()
         }
+
+    /** The tabs named in comma-separated [names], once each; a name this version doesn't know (a newer backup's) is skipped. */
+    private fun libraryTabs(names: String): List<LibraryTab> = names.split(",").mapNotNull { name -> LibraryTab.entries.firstOrNull { it.name == name } }.distinct()
 
     /**
      * The version of the tags (`MediaImporter.SONG_TAGS_VERSION`) the songs of [source] (a media provider type's name) were
