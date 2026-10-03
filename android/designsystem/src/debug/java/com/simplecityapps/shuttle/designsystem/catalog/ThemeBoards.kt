@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.designsystem.catalog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,9 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,13 +29,33 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
+import com.simplecityapps.shuttle.designsystem.theme.S2ContentWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Contrast
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.accentColorScheme
 import com.simplecityapps.shuttle.designsystem.theme.artworkColorScheme
+import com.simplecityapps.shuttle.designsystem.theme.groupHeader
+import com.simplecityapps.shuttle.designsystem.theme.heroSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.heroTitle
+import com.simplecityapps.shuttle.designsystem.theme.leadSectionTitle
+import com.simplecityapps.shuttle.designsystem.theme.playerSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.playerTitle
+import com.simplecityapps.shuttle.designsystem.theme.rowMeta
+import com.simplecityapps.shuttle.designsystem.theme.rowSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.rowTitle
+import com.simplecityapps.shuttle.designsystem.theme.screenTitle
+import com.simplecityapps.shuttle.designsystem.theme.sectionTitle
+import com.simplecityapps.shuttle.designsystem.theme.supporting
+import com.simplecityapps.shuttle.designsystem.theme.tileSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.tileTitle
+import com.simplecityapps.shuttle.designsystem.theme.time
 
 private class RolePair(val name: String, val color: Color, val onColor: Color)
 
@@ -135,6 +160,17 @@ private val emphasizedStyles: @Composable () -> List<Pair<String, TextStyle>> = 
     )
 }
 
+private val roleStyles: @Composable () -> List<Pair<String, TextStyle>> = {
+    val t = MaterialTheme.typography
+    listOf(
+        "heroTitle" to t.heroTitle, "heroSubtitle" to t.heroSubtitle,
+        "playerTitle" to t.playerTitle, "playerSubtitle" to t.playerSubtitle,
+        "screenTitle" to t.screenTitle, "leadSectionTitle" to t.leadSectionTitle, "sectionTitle" to t.sectionTitle,
+        "groupHeader" to t.groupHeader, "rowTitle" to t.rowTitle, "rowSubtitle" to t.rowSubtitle, "rowMeta" to t.rowMeta,
+        "tileTitle" to t.tileTitle, "tileSubtitle" to t.tileSubtitle, "supporting" to t.supporting, "time" to t.time,
+    )
+}
+
 @Composable
 private fun TypeSamples(styles: List<Pair<String, TextStyle>>) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -146,11 +182,13 @@ private fun TypeSamples(styles: List<Pair<String, TextStyle>>) {
 fun ThemeTypeBoard(width: BoardWidth) {
     val regular = typeStyles()
     val emphasized = emphasizedStyles()
+    val roles = roleStyles()
     Board(
         width,
         listOf(
             BoardSection("Type scale") { TypeSamples(regular) },
             BoardSection("Emphasized") { TypeSamples(emphasized) },
+            BoardSection("Roles") { TypeSamples(roles) },
         ),
     )
 }
@@ -207,6 +245,68 @@ fun ThemeShapeBoard(width: BoardWidth) {
                             "Top only" to RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                         ),
                     )
+                }
+            },
+        ),
+    )
+}
+
+@Composable
+private fun DimensionBar(name: String, value: Dp) {
+    Column {
+        Box(Modifier.widthIn(max = value).fillMaxWidth().height(8.dp).background(MaterialTheme.colorScheme.primary))
+        Caption("$name ${value.value.toInt()} dp")
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun ThemeDimensionBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Spacing") {
+                Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+                    listOf(
+                        "tiny" to S2Spacing.tiny,
+                        "xsmall" to S2Spacing.xsmall,
+                        "small" to S2Spacing.small,
+                        "smallMedium" to S2Spacing.smallMedium,
+                        "medium" to S2Spacing.medium,
+                        "large" to S2Spacing.large,
+                        "xlarge" to S2Spacing.xlarge,
+                    ).forEach { (name, value) -> DimensionBar(name, value) }
+                }
+            },
+            BoardSection("Icon size") {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(S2Spacing.large), verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+                    listOf("small" to S2IconSize.small, "medium" to S2IconSize.medium, "hero" to S2IconSize.hero).forEach { (name, size) ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(size))
+                            Caption("$name ${size.value.toInt()} dp")
+                        }
+                    }
+                }
+            },
+            BoardSection("Touch target") {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        Modifier.size(S2TouchTarget.minimum).border(1.dp, MaterialTheme.colorScheme.outline),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(S2IconSize.medium))
+                    }
+                    Caption("minimum ${S2TouchTarget.minimum.value.toInt()} dp")
+                }
+            },
+            BoardSection("Content width (capped at the board)") {
+                Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+                    listOf(
+                        "dialogMinimum" to S2ContentWidth.dialogMinimum,
+                        "readable" to S2ContentWidth.readable,
+                        "dialogMaximum" to S2ContentWidth.dialogMaximum,
+                        "maximum" to S2ContentWidth.maximum,
+                    ).forEach { (name, value) -> DimensionBar(name, value) }
                 }
             },
         ),

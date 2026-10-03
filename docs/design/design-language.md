@@ -126,12 +126,29 @@ screens never see it.
 - **One emphasized element per region**: the now-playing title (`headlineMediumEmphasized` at every size, over a `titleLarge` artist line,
   so a tall phone fills with type rather than gaps), detail screen titles, the flexible top bar title. Body
   text, rows and metadata are never emphasized.
-- **Row hierarchy**: title `bodyLarge` on `onSurface`; secondary line `bodyMedium` on
-  `onSurfaceVariant`; trailing meta (duration, count) `labelMedium` on `onSurfaceVariant`. Section
-  headers `titleSmall` on `primary`.
+- **Row hierarchy**: title `rowTitle` (`bodyLarge`) on `onSurface`; secondary line `rowSubtitle` (`bodyMedium`) on
+  `onSurfaceVariant`; trailing meta (duration, count) `rowMeta` (`labelMedium`) on `onSurfaceVariant`. Group
+  headers `groupHeader` (`titleSmall`) on `primary`.
 - **Home hierarchy** (#660): the large title bar, as on Library and Settings; the lead section's header
   `headlineSmall`, every shelf after it `titleLarge`; a Jump back in cell's title one line of `titleSmall`, its kind
   `labelMedium`.
+
+### Semantic tokens
+
+Screens name what a thing is, not which M3 style or dp it happens to use (#753). The tokens live in
+`designsystem/theme/` and mirror the iOS app's (`ios/S2/Theme/Spacing.swift`, `Typography.swift`) names
+where the apps have the same thing. The `theme-type` board shows the roles, `theme-dimension` the rest.
+
+| Token | Values |
+|---|---|
+| Type roles, `MaterialTheme.typography.<role>` (`S2TypeRoles.kt`) | `heroTitle` headlineSmall, `heroSubtitle` bodyMedium; `playerTitle` headlineMediumEmphasized, `playerSubtitle` titleLarge; `screenTitle` titleLarge; `leadSectionTitle` headlineSmall, `sectionTitle` titleLarge, `groupHeader` titleSmall; `rowTitle` bodyLarge, `rowSubtitle` bodyMedium, `rowMeta` labelMedium; `tileTitle` titleSmall, `tileSubtitle` bodyMedium; `supporting` bodyMedium; `time` labelMedium |
+| `S2Spacing` | `tiny` 2, `xsmall` 4, `small` 8, `smallMedium` 12, `medium` 16, `large` 24, `xlarge` 32 dp |
+| `S2IconSize` (`S2Dimensions.kt`) | `small` 16 (inline with text), `medium` 24 (the M3 icon), `hero` 40 dp (state glyph); an icon inside an M3 component keeps that component's size |
+| `S2TouchTarget` | `minimum` 48 dp |
+| `S2ContentWidth` | `readable` 360 (centred prose), `dialogMinimum` 280, `dialogMaximum` 560, `maximum` 1000 dp (single-pane scrolling content) |
+
+A value a component owns as geometry (the seek track's height, the player controls' sizes, an artwork size)
+stays a named constant in that component; a gap, icon, hit area or width a screen picks is a token.
 
 ### Emphasis and containment
 
@@ -189,7 +206,8 @@ catalogue — #553).
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
 | `theme-colour` | `ColorScheme` roles | root accents ×7, dynamic, 1 artwork seed | Default and High contrast; every role swatch with its `on` pair |
-| `theme-type` | `Typography` + emphasized | — | all 30 styles with sample text, at font scale 1.0 and 2.0 |
+| `theme-type` | `Typography` + emphasized | — | all 30 styles and the semantic roles with sample text, at font scale 1.0 and 2.0 |
+| `theme-dimension` | `S2Spacing`, `S2IconSize`, `S2TouchTarget`, `S2ContentWidth` | — | static |
 | `theme-shape` | `Shapes`, `ContinuousRoundedCornerShape` | scale tokens; continuous against circular corners | static |
 | `theme-motion` | `MotionScheme` | 6 specs | curve plots; live in the catalogue screen only |
 

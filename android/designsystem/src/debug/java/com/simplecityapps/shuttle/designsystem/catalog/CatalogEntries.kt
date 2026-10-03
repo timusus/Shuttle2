@@ -25,7 +25,7 @@ val CatalogEntries = listOf(
     CatalogEntry(
         "theme-type",
         "Type",
-        listOf("the 15 styles", "the 15 emphasized styles", "font scale 1.0 and 2.0"),
+        listOf("the 15 styles", "the 15 emphasized styles", "the semantic roles", "font scale 1.0 and 2.0"),
         schemeSensitive = false,
         fontScales = listOf(1f, 2f),
     ) { ThemeTypeBoard(it) },
@@ -35,6 +35,12 @@ val CatalogEntries = listOf(
         listOf("continuous shape scale with the Expressive tokens", "continuous against circular corners"),
         schemeSensitive = false,
     ) { ThemeShapeBoard(it) },
+    CatalogEntry(
+        "theme-dimension",
+        "Dimensions",
+        listOf("spacing scale", "icon sizes", "minimum touch target", "content widths"),
+        schemeSensitive = false,
+    ) { ThemeDimensionBoard(it) },
     CatalogEntry(
         "button",
         "Button",

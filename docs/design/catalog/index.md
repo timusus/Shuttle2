@@ -11,6 +11,7 @@ existing lines as they are.
 - [x] `theme-colour`: [boards](theme-colour.md) · approved: 2026-09-25 @ 0713114f · boards hash: 7348c8c89d9a
 - [x] `theme-type`: [boards](theme-type.md) · approved: 2026-09-25 @ 0713114f · boards hash: 80cd4bced94d
 - [ ] `theme-shape`: [boards](theme-shape.md) · approved: — · boards hash: —
+- [ ] `theme-dimension`: [boards](theme-dimension.md) · approved: — · boards hash: —
 - [x] `button`: [boards](button.md) · approved: 2026-09-25 @ 0713114f · boards hash: efc47f5fc7e4
 - [x] `button-group`: [boards](button-group.md) · approved: 2026-09-25 @ 0713114f · boards hash: 14aa91033ca4
 - [x] `icon-button`: [boards](icon-button.md) · approved: 2026-09-25 @ 0713114f · boards hash: e2a8a9519caa

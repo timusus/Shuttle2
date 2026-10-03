@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: the 15 styles; the 15 emphasized styles; font scale 1.0 and 2.0.
+States: the 15 styles; the 15 emphasized styles; the semantic roles; font scale 1.0 and 2.0.
 
 ## Compact, light
 
