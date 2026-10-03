@@ -1,5 +1,5 @@
-# Opens the Shuttle Music Pro paywall from Settings (capture.sh opens the Settings sheet with a hook first) and waits
-# for the App Store's price.
+# Opens the Shuttle Music Pro paywall from Settings (capture.sh opens the Settings sheet with a hook first, after the
+# `paywall` hook has set the price the paywall shows).
 appId: com.simplecityapps.shuttle.dev
 ---
 - extendedWaitUntil:
@@ -8,9 +8,5 @@ appId: com.simplecityapps.shuttle.dev
     timeout: 15000
 - tapOn:
     id: "settings.pro"
-- extendedWaitUntil:
-    notVisible: "Loading price…"
-    timeout: 30000
-    optional: true
 - waitForAnimationToEnd:
     timeout: 5000

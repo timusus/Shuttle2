@@ -47,6 +47,32 @@ final class StoreKitManager: ObservableObject {
     var trial: Product? { products[AppStoreProducts.shared.TRIAL] }
     var lifetime: Product? { products[AppStoreProducts.shared.LIFETIME] }
 
+    /// Pro's localized price once the products load, nil before.
+    var lifetimePrice: String? {
+        #if DEBUG
+        if let screenshotPrice { return screenshotPrice }
+        #endif
+        return lifetime?.displayPrice
+    }
+
+    /// Whether the free trial can be started: its product loaded.
+    var trialOffered: Bool {
+        #if DEBUG
+        if screenshotPrice != nil { return true }
+        #endif
+        return trial != nil
+    }
+
+    #if DEBUG
+    /// The store screenshots' stand-in for the products loading: StoreKit's test configuration only applies under
+    /// Xcode, so a capture would otherwise show "Loading price…" (`ScreenshotHooks`' `paywall` action).
+    @Published private(set) var screenshotPrice: String?
+
+    func showScreenshotPrice(_ price: String?) {
+        screenshotPrice = price
+    }
+    #endif
+
     /// Listens for transactions, reads the entitlements and loads the products. Call once at launch. The entitlements
     /// come from StoreKit's on-device cache, so they're read first and on their own: an App Store that can't be reached
     /// only holds up the products, never whether the user may stream.

@@ -16,9 +16,17 @@ import SwiftUI
 ///     settings?open=1|0                      the Settings sheet
 ///     player?open=1|0[&fullScreen=1]         Now Playing; fullScreen=1 covers the screen on iPad too, rather than
 ///                                            a form sheet over a dimmed library
+///     paywall?price=$9.99                    show the paywall's loaded state with this price (omit price to undo)
+///     miniplayer?hidden=1|0                  hide the mini player (set before opening the screen it would cover)
 ///     reset                                  close every sheet and pop the selected root
 ///
 /// What a hook can't reach (the queue sheet, the first album) the capture flows tap through Maestro.
+/// What a hook switches that the screens read as they are built.
+@MainActor
+enum ScreenshotState {
+    static var hidesMiniPlayer = false
+}
+
 @MainActor
 struct ScreenshotHooksModifier: ViewModifier {
     let navigator: Navigator
@@ -72,11 +80,17 @@ struct ScreenshotHooksModifier: ViewModifier {
         case "player":
             NowPlayingPresentationStyle.forcesFullScreenCover = query["fullScreen"] == "1"
             showNowPlaying = query["open"] == "1"
+        case "paywall":
+            AppGraph.dependencies.storeKit.showScreenshotPrice(query["price"])
+        case "miniplayer":
+            ScreenshotState.hidesMiniPlayer = query["hidden"] == "1"
         case "reset":
             showNowPlaying = false
             NowPlayingPresentationStyle.forcesFullScreenCover = false
             navigator.showsSettings = false
             navigator.selection = navigator.selection
+            AppGraph.dependencies.storeKit.showScreenshotPrice(nil)
+            ScreenshotState.hidesMiniPlayer = false
         default:
             Self.log.error("unknown hook \(url.absoluteString, privacy: .public)")
         }

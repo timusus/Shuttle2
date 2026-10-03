@@ -1,0 +1,9 @@
+# Scrolls the Equalizer down so every band slider is on screen. Swipes along the left margin, outside the cards, so no
+# slider is dragged.
+appId: com.simplecityapps.shuttle.dev
+---
+- swipe:
+    start: 3%, 75%
+    end: 3%, 45%
+- waitForAnimationToEnd:
+    timeout: 3000

@@ -344,8 +344,16 @@ private struct MiniPlayerInsetModifier: ViewModifier {
     @Environment(\.miniPlayerInAccessory) private var inAccessory
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    private var hiddenForScreenshots: Bool {
+        #if DEBUG
+        ScreenshotState.hidesMiniPlayer
+        #else
+        false
+        #endif
+    }
+
     func body(content: Content) -> some View {
-        let isShown = binding.isMiniPlayerVisible && !inAccessory
+        let isShown = binding.isMiniPlayerVisible && !inAccessory && !hiddenForScreenshots
         content
             .dockedAtBottom {
                 if isShown {

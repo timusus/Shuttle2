@@ -48,18 +48,19 @@ changes), and git-ignored, as are `raw/` and `ios/store/screenshots/`.
 ## Slots
 
 `slots.json`: `steps` are `hook:<action>` (written to `Documents/screenshot_hook.url`, polled by the Debug build;
-actions in `ScreenshotHooks.swift`: `tab`, `library`, `route`, `settings`, `player`, `reset`),
+actions in `ScreenshotHooks.swift`: `tab`, `library`, `route`, `settings`, `player`, `paywall`, `miniplayer`, `reset`),
 `maestro:<flow>` (`maestro/`, for what a hook can't reach: the album, the queue, the paywall), `entitlement:<name>`
 (the debug entitlement override, applied by relaunching) and `sleep:<seconds>`. A slot's `ipad_steps`, when present,
-replace its `steps` on the iPad: there Sources and the Equalizer are pushed in Library rather than shown in the
+replace its `steps` on the iPad: there the Equalizer is pushed in Library rather than shown in the
 Settings sheet, and the player opens full screen (`player?fullScreen=1`) rather than as a form sheet, so every frame
-fills the screen. Seven slots: Sources, Home, Albums, Album detail, Now Playing, Queue, Equalizer. The headlines only
+fills the screen. The iPhone's Equalizer slot hides the mini player (`miniplayer?hidden=1`), which would cover the bands, and scrolls them into view (`eq-bands.yaml`). Six slots: Albums (under the server headline), Home, Album detail, Now Playing, Queue, Equalizer. The headlines only
 claim what iOS has today.
 
 `paywall` is App Store Connect's in-app purchase review screenshot: the Pro paywall as a free user, captured on the
 iPhone after the slots and written by `render.py` unframed, scaled to the 6.9" canvas, to
 `ios/store/screenshots/en-AU/iap-review/paywall.png`. StoreKit's test configuration (`S2.storekit`) only applies
-when Xcode runs the app, so the price reads "Loading price…" in this capture.
+when Xcode runs the app, so the capture's `paywall?price=$9.99` hook gives `StoreKitManager` a stand-in price, which
+the paywall shows as it does once the products load.
 
 ## Artwork
 

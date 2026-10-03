@@ -78,8 +78,8 @@ private struct PaywallActions: View {
     var body: some View {
         PaywallContent(
             status: status,
-            lifetimePrice: store.lifetime?.displayPrice,
-            trialAvailable: store.trial != nil,
+            lifetimePrice: store.lifetimePrice,
+            trialAvailable: store.trialOffered,
             busy: store.purchasing != nil || store.isRestoring,
             onStartTrial: { buy(AppStoreProducts.shared.TRIAL) },
             onBuy: { buy(AppStoreProducts.shared.LIFETIME) },
