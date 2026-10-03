@@ -8,7 +8,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.screens.library.GenreRoute
@@ -52,7 +51,7 @@ private fun SearchDestination(
                 onGenreClick = { open(GenreRoute(it.name)) },
                 onPlaylistClick = { open(PlaylistRoute(it.id)) },
                 onShowActions = actions::showActions,
-                onPlay = { actions.dispatch(MediaAction.Play(it)) },
+                onPlay = { actions.dispatch(viewModel.play(it)) },
             ),
         )
     }

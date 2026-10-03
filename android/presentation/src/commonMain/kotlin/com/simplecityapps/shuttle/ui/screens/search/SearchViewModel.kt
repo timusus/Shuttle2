@@ -113,6 +113,12 @@ class SearchViewModel @Inject constructor(
         return MediaAction.Play(MediaSelection.Songs(results.songs.map { it.item }), position = index)
     }
 
+    /** Playing a top result is choosing it: the query is kept as a recent search. */
+    fun play(selection: MediaSelection): MediaAction {
+        onResultChosen()
+        return MediaAction.Play(selection)
+    }
+
     companion object {
         val SearchDebounce = 100.milliseconds
     }

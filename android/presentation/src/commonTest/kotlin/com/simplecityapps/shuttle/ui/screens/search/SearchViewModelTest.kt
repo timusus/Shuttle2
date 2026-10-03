@@ -262,4 +262,14 @@ class SearchViewModelTest {
         viewModel.playSong(1) shouldBe MediaAction.Play(MediaSelection.Songs(results), position = 1)
         preferenceManager.recentSearches shouldBe listOf("juniper")
     }
+
+    @Test
+    fun `playing a top result records the query as a recent search`() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+        type(viewModel, "juniper")
+        val selection = MediaSelection.Songs(emptyList())
+
+        viewModel.play(selection) shouldBe MediaAction.Play(selection)
+        preferenceManager.recentSearches shouldBe listOf("juniper")
+    }
 }
