@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -35,15 +34,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
-import dev.zacsweers.metro.AppScope
-import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
-import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import java.util.Optional
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -207,21 +198,6 @@ private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
         onInclude = viewModel::onInclude,
         onIncludeAll = viewModel::onIncludeAll
     )
-}
-
-data class LiveLogGateUiState(val entryPoint: LiveLogEntryPoint? = null)
-
-/**
- * Resolves the debug-only [LiveLogEntryPoint] via an optional binding, so this file never imports a
- * class that only exists in the debug build. Absent in release, where the row that opens this route is also
- * hidden (see [com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog]).
- */
-@ViewModelKey(LiveLogGateViewModel::class)
-@ContributesIntoMap(AppScope::class)
-class LiveLogGateViewModel @Inject constructor(
-    entryPoint: Optional<LiveLogEntryPoint> = Optional.empty()
-) : ViewModel() {
-    val uiState: StateFlow<LiveLogGateUiState> = MutableStateFlow(LiveLogGateUiState(entryPoint.orElse(null))).asStateFlow()
 }
 
 @Composable
