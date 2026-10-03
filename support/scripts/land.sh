@@ -49,6 +49,19 @@ SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "land.sh: not a git repo" >&2; exit 2; }
 cd "$REPO_ROOT" || exit 2
 
+# Sessions that skip ~/.zshrc (Remote Control, headless workers) lack /usr/sbin on PATH (#718).
+export PATH="/usr/sbin:/sbin:$PATH"
+
+# No ssh-agent in those sessions either: when SSH to origin fails, use HTTPS through gh for this run
+# only, via env-var git config (nothing written to any config file). Children inherit it.
+if [ "${1:-}" != "--verify-only" ] && ! git ls-remote -q origin HEAD >/dev/null 2>&1 \
+   && command -v gh >/dev/null 2>&1; then
+  export GIT_CONFIG_COUNT=2
+  export GIT_CONFIG_KEY_0="url.https://github.com/.insteadOf" GIT_CONFIG_VALUE_0="git@github.com:"
+  export GIT_CONFIG_KEY_1="credential.https://github.com.helper" GIT_CONFIG_VALUE_1="!gh auth git-credential"
+  echo "land.sh: SSH to origin failed, using HTTPS via gh for this run" >&2
+fi
+
 # ios_tests_for <file>...: print the S2Tests classes (one per line, sorted, unique) that the
 # changed files map to, per the rule in the header, plus "--package" when ios/Playback changed.
 # Needs REPO_ROOT as the cwd.
@@ -267,7 +280,14 @@ run_verify() {
   fi
   log "verify: touches_ios=$touches_ios ios_tests=${ios_tests[*]-}"
 
+  local from
+  from=$(( $(wc -c < "$LOG") + 1 ))
   if ! machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} >> "$LOG" 2>&1; then
+    # Gradle dying in configuration or a transform says nothing about the branch (#717).
+    if tail -c +"$from" "$LOG" | grep -Eq 'Configuration cache state could not be cached|Failed to transform|Could not resolve all files for configuration|Execution failed for JdkImageTransform'; then
+      log "verify: environment failure (see above)"
+      return 2
+    fi
     log "verify: failed (see above)"
     return 1
   fi
@@ -279,7 +299,12 @@ while IFS= read -r x; do [ -n "$x" ] && LANDED_IDX+=("$x"); done < <(landed_indi
 
 if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
   say "land.sh: running verify over ${#LANDED_IDX[@]} landed branch(es)"
-  if ! run_verify; then
+  run_verify; vrc=$?
+  if [ "$vrc" -eq 2 ]; then
+    say "land.sh: verify environment failure, branch kept (log: $LOG)"
+    exit 1
+  fi
+  if [ "$vrc" -ne 0 ]; then
     if [ "${#LANDED_IDX[@]}" -eq 1 ]; then
       drop_branch "${LANDED_IDX[0]}"
     else
@@ -292,7 +317,12 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
         say "land.sh: retrying verify without ${BRANCHES[$drop_idx]}"
         unset 'remaining[last]'
         remaining=("${remaining[@]}")
-        if run_verify; then passed=1; break; fi
+        run_verify; vrc=$?
+        if [ "$vrc" -eq 2 ]; then
+          say "land.sh: verify environment failure, branch kept (log: $LOG)"
+          exit 1
+        fi
+        if [ "$vrc" -eq 0 ]; then passed=1; break; fi
       done
       if [ "$passed" -eq 0 ] && [ "${#remaining[@]}" -eq 1 ]; then
         drop_branch "${remaining[0]}"
