@@ -59,6 +59,8 @@ import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.R as PlaybackR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.accentColorScheme
 import com.simplecityapps.shuttle.ui.MainActivity
 
@@ -304,7 +306,7 @@ private fun HeroContent(
 private fun IdleContent(layout: WidgetLayout) {
     val context = LocalContext.current
     val compact = layout.mode == WidgetMode.Row
-    val iconSize = if (compact) 32.dp else 48.dp
+    val iconSize = if (compact) S2Spacing.xlarge else S2TouchTarget.minimum
     val content: @Composable () -> Unit = {
         Image(
             provider = ImageProvider(CoreR.drawable.ic_shuttle_logo),
@@ -584,7 +586,7 @@ private fun CompactPlayButton(
             provider = ImageProvider(if (state.isPlaying) PlaybackR.drawable.ic_pause_black_24dp else PlaybackR.drawable.ic_play_arrow_black_24dp),
             contentDescription = null,
             colorFilter = ColorFilter.tint(colors.playContent),
-            modifier = GlanceModifier.size(24.dp)
+            modifier = GlanceModifier.size(S2Spacing.large)
         )
     }
 }
@@ -677,7 +679,7 @@ private fun ToggleButton(
                     provider = ImageProvider(R.drawable.widget_toggle_dot),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(colors.toggleOn),
-                    modifier = GlanceModifier.size(4.dp)
+                    modifier = GlanceModifier.size(S2Spacing.xsmall)
                 )
             }
         }

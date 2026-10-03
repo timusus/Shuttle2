@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.changelog.Changeset
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 import java.text.DateFormat
@@ -43,7 +44,7 @@ private fun ChangesetCard(changeset: Changeset) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            changeset.notes.forEach { note -> Text(note, Modifier.padding(top = 12.dp), style = MaterialTheme.typography.bodyMedium) }
+            changeset.notes.forEach { note -> Text(note, Modifier.padding(top = S2Spacing.smallMedium), style = MaterialTheme.typography.bodyMedium) }
             ChangeList(stringResource(R.string.changelog_features), changeset.features)
             ChangeList(stringResource(R.string.changelog_improvements), changeset.improvements)
             ChangeList(stringResource(R.string.changelog_bug_fixes), changeset.fixes)
@@ -57,6 +58,6 @@ private fun ChangeList(
     changes: List<String>
 ) {
     if (changes.isEmpty()) return
-    Text(title, Modifier.padding(top = 16.dp, bottom = 4.dp), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
-    changes.forEach { change -> Text("• $change", Modifier.padding(vertical = 2.dp), style = MaterialTheme.typography.bodyMedium) }
+    Text(title, Modifier.padding(top = S2Spacing.medium, bottom = S2Spacing.xsmall), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+    changes.forEach { change -> Text("• $change", Modifier.padding(vertical = S2Spacing.tiny), style = MaterialTheme.typography.bodyMedium) }
 }

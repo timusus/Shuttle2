@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.SettingProgress
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.MediaProviderType
 import java.text.NumberFormat
 import kotlin.time.Clock
@@ -234,7 +235,7 @@ fun SourcesDialogHost(
                         onSignIn(dialog.type)
                     },
                     style = S2ButtonStyle.Text,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = S2Spacing.small),
                 )
             }
         }

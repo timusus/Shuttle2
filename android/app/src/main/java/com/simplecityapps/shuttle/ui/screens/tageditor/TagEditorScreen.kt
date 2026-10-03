@@ -56,6 +56,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.text.stringResource
@@ -152,7 +153,7 @@ fun TagEditorScreen(
                             onClick = onSave,
                             enabled = hasChanges && !writing,
                             icon = Icons.Rounded.Check,
-                            modifier = Modifier.padding(end = 8.dp),
+                            modifier = Modifier.padding(end = S2Spacing.small),
                         )
                     }
                 },
@@ -220,15 +221,15 @@ private fun TagEditorForm(
 ) {
     val fields = remember(state.fields) { state.fields.associateBy { it.field } }
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         if (state.songCount > 1) {
             Text(
                 text = pluralStringResource(R.plurals.edit_tags_editing_count_songs, state.songCount, state.songCount),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = S2Spacing.medium),
             )
         }
         if (state.skipped.isNotEmpty()) SkippedSongs(state)
@@ -237,7 +238,7 @@ private fun TagEditorForm(
             if (rows.isNotEmpty()) {
                 TagSectionCard(stringResource(section.title)) {
                     rows.forEach { row ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                             row.forEach { field ->
                                 TagTextField(field, onFieldChange, onFieldReset, enabled, Modifier.weight(1f))
                             }
@@ -259,7 +260,7 @@ private fun TagSectionCard(
         SectionHeader(title, containerColor = Color.Transparent)
 
         Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+            Column(Modifier.padding(start = S2Spacing.medium, end = S2Spacing.medium, top = S2Spacing.small, bottom = S2Spacing.medium), verticalArrangement = Arrangement.spacedBy(S2Spacing.small), content = content)
         }
     }
 }
@@ -267,7 +268,7 @@ private fun TagSectionCard(
 @Composable
 private fun SkippedSongs(state: TagEditorUiState.Editing) {
     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth().testTag("tag-editor-skipped")) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.padding(S2Spacing.medium), verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall)) {
             Text(
                 text = pluralStringResource(R.plurals.edit_tags_skipped, state.skipped.size, state.skipped.size),
                 style = MaterialTheme.typography.bodyMedium,

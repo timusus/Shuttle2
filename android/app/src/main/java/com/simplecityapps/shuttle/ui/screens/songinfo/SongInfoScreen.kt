@@ -46,6 +46,8 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2InfoChip
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
@@ -109,8 +111,8 @@ fun SongInfoScreen(
     ) { padding ->
         when {
             song != null -> SongInfoContent(song, Modifier.padding(padding))
-            uiState.loading -> LoadingState(Modifier.padding(padding).padding(vertical = 48.dp))
-            else -> EmptyState(title = stringResource(R.string.song_info_not_found), modifier = Modifier.padding(padding).padding(vertical = 48.dp))
+            uiState.loading -> LoadingState(Modifier.padding(padding).padding(vertical = S2TouchTarget.minimum))
+            else -> EmptyState(title = stringResource(R.string.song_info_not_found), modifier = Modifier.padding(padding).padding(vertical = S2TouchTarget.minimum))
         }
     }
 }
@@ -125,8 +127,8 @@ private fun SongInfoContent(
     SelectionContainer(modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().testTag("song-info-list"),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
         ) {
             item(key = "header") { SongInfoHero(song, unknown) }
             items(sections, key = { it.title.key }) { section ->
@@ -151,11 +153,11 @@ private fun SongInfoHero(
     unknown: String,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = S2Spacing.small),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
     ) {
-        LibraryArtwork(song, ArtworkPlaceholder.Song, size = if (LocalInShellSheet.current) ArtworkSize.Grid else ArtworkSize.Hero, modifier = Modifier.padding(bottom = 12.dp))
+        LibraryArtwork(song, ArtworkPlaceholder.Song, size = if (LocalInShellSheet.current) ArtworkSize.Grid else ArtworkSize.Hero, modifier = Modifier.padding(bottom = S2Spacing.smallMedium))
         Text(song.name ?: unknown, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
         song.friendlyArtistName?.let {
             Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -163,8 +165,8 @@ private fun SongInfoHero(
         val chips = song.infoChips()
         if (chips.isNotEmpty()) {
             FlowRow(
-                modifier = Modifier.padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                modifier = Modifier.padding(top = S2Spacing.small),
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.small, Alignment.CenterHorizontally),
             ) {
                 chips.forEach { S2InfoChip(it) }
             }

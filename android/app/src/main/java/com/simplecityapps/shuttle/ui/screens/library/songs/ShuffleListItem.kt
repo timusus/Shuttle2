@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 
@@ -27,7 +28,7 @@ fun ShuffleListItem(
 ) {
     Row(
         modifier = modifier
-            .padding(all = 8.dp)
+            .padding(all = S2Spacing.small)
             .clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -39,7 +40,7 @@ fun ShuffleListItem(
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp),
+                .padding(start = S2Spacing.large),
             text = stringResource(com.simplecityapps.shuttle.R.string.btn_shuffle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground,

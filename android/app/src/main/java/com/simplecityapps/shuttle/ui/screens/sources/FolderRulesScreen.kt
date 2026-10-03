@@ -25,6 +25,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.SettingIconStyle
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
 /** A confirmation Folder rules is asking for. */
@@ -144,7 +145,7 @@ fun FolderRulesDialogHost(
                         onGrantAccess(dialog.kind)
                     },
                     style = S2ButtonStyle.Text,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = S2Spacing.small),
                 )
             }
         }

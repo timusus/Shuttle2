@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 
 @Composable
 fun LoadingStatusIndicator(
@@ -34,7 +35,7 @@ fun LoadingStatusIndicator(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(S2Spacing.medium)
             .wrapContentHeight(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -59,7 +60,7 @@ fun LoadingStatusIndicator(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(S2Spacing.small))
 
         Text(
             text = state.message,
@@ -71,7 +72,7 @@ fun LoadingStatusIndicator(
         )
 
         if (state is CircularLoadingState.Retry) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(S2Spacing.medium))
 
             OutlinedButton(
                 onClick = onRetryClicked
@@ -94,8 +95,8 @@ sealed class CircularLoadingState(open val message: String) {
 private fun CircularLoadingViewPreview() {
     MaterialTheme {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.padding(S2Spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.medium)
         ) {
             // Loading state
             LoadingStatusIndicator(

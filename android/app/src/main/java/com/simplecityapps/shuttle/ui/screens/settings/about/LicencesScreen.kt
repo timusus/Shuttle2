@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.InfoSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
 /** The bundled open source libraries; a row with a website opens it. */
@@ -25,8 +26,8 @@ fun LicencesScreen(
         title = stringResource(R.string.pref_view_licenses_title),
         onNavigateUp = onNavigateUp,
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        contentPadding = PaddingValues(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny)
     ) {
         if (uiState.loading) {
             item(key = "loading") { LoadingState() }

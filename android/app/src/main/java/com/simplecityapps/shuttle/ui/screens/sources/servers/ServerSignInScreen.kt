@@ -43,6 +43,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.MediaProviderType
 
 /** What the sign-in form asks its host to do. */
@@ -103,7 +104,7 @@ internal fun ServerSignInForm(
                     text = stringResource(R.string.dialog_button_retry),
                     onClick = actions.onRetry,
                     style = S2ButtonStyle.Outlined,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = S2Spacing.small),
                 )
             }
         }
@@ -119,7 +120,7 @@ private fun SignInFields(
     val required = stringResource(R.string.validation_field_required)
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
     ) {
         if (uiState.showProDisclosure) {
             Text(stringResource(R.string.paywall_server_disclosure))
@@ -170,7 +171,7 @@ private fun SignInFields(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(R.string.media_provider_config_switch_remember_password))
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(S2Spacing.medium))
             Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
         }
         if (uiState.quickConnectEnabled) {
@@ -193,9 +194,9 @@ private fun QuickConnectCode(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = S2Spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         Text(stringResource(R.string.media_provider_quick_connect_instructions), textAlign = TextAlign.Center)
         Text(code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
@@ -250,9 +251,9 @@ private fun Progress(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = S2Spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         if (showSpinner) CircularProgressIndicator()
         Text(message, textAlign = TextAlign.Center)

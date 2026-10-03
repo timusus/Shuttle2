@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypes
 import com.simplecityapps.trial.PaywallOffers
@@ -86,8 +87,8 @@ fun PaywallScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            contentPadding = PaddingValues(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.medium)
         ) {
             item(key = "status") { StatusCard(uiState.status, uiState.explainsTrialEnd) }
             item(key = "benefits") { Benefits() }
@@ -115,7 +116,7 @@ fun PaywallScreen(
                     }
                 }
                 item(key = "purchase") {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                         when (uiState.primaryAction) {
                             PaywallPrimaryAction.StartTrial -> {
                                 S2Button(
@@ -184,12 +185,12 @@ private fun StatusCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(S2Spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Rounded.WorkspacePremium, contentDescription = null, modifier = Modifier.size(32.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(Icons.Rounded.WorkspacePremium, contentDescription = null, modifier = Modifier.size(S2Spacing.xlarge))
+            Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                 Text(text, style = MaterialTheme.typography.bodyLarge)
                 if (explainsTrialEnd) Text(stringResource(R.string.paywall_trial_terms), style = MaterialTheme.typography.bodyMedium)
             }
@@ -199,7 +200,7 @@ private fun StatusCard(
 
 @Composable
 private fun Benefits() {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium)) {
         SectionTitle(stringResource(R.string.paywall_benefits_heading))
         Benefit(stringResource(R.string.paywall_benefit_streaming)) { ServerMarks() }
         Benefit(stringResource(R.string.paywall_benefit_downloads)) { BenefitIcon(Icons.Rounded.CloudDownload) }
@@ -213,7 +214,7 @@ private fun Benefit(
     text: String,
     leading: @Composable () -> Unit
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(BenefitLeadingWidth), contentAlignment = Alignment.Center) { leading() }
         Text(text, style = MaterialTheme.typography.bodyLarge)
     }
@@ -252,7 +253,7 @@ private fun Plans(
     val offers = uiState.offers
     val plans = if (offers is PaywallOffers.Available) offers.offers.map { it.plan } else PaywallPlan.entries
     val selected = uiState.selectedOffer?.plan
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         SectionTitle(stringResource(R.string.paywall_plans_heading))
         plans.forEach { plan ->
             val price = uiState.available.firstOrNull { it.plan == plan }?.formattedPrice
@@ -272,7 +273,7 @@ private fun Plans(
                     stringResource(R.string.paywall_annual_terms),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = S2Spacing.medium)
                 )
             }
         }
@@ -291,10 +292,10 @@ private fun PlanCard(
         Row(
             modifier = Modifier
                 .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .padding(horizontal = S2Spacing.small, vertical = S2Spacing.smallMedium),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            RadioButton(selected = selected, onClick = null, enabled = enabled, modifier = Modifier.padding(horizontal = 8.dp))
+            RadioButton(selected = selected, onClick = null, enabled = enabled, modifier = Modifier.padding(horizontal = S2Spacing.small))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(plan.title), style = MaterialTheme.typography.titleMedium)
                 Text(price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -304,12 +305,12 @@ private fun PlanCard(
                     color = MaterialTheme.colorScheme.tertiaryContainer,
                     contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                     shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = S2Spacing.small)
                 ) {
                     Text(
                         stringResource(R.string.paywall_plan_best_value),
                         style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(horizontal = S2Spacing.small, vertical = S2Spacing.xsmall)
                     )
                 }
             }
@@ -318,7 +319,7 @@ private fun PlanCard(
     if (selected) {
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+            border = BorderStroke(S2Spacing.tiny, MaterialTheme.colorScheme.primary),
             modifier = Modifier.fillMaxWidth()
         ) { content() }
     } else {

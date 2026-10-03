@@ -1,0 +1,21 @@
+# Use S2Spacing, S2IconSize, S2TouchTarget or another designsystem token instead of a literal N.dp in :android:app; add a token when none fits. Entries are path|dp|count; the count may only go down
+# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/AlphabetFastScroller.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/FastScroller.kt|dp|5
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|dp|7
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryComponents.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryPages.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|dp|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|dp|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/FullPlayer.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/MiniPlayer.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlaying.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlayingPanels.kt|dp|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerContent.kt|dp|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerPane.kt|dp|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|dp|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/widgets/NowPlayingWidget.kt|dp|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/widgets/WidgetLayout.kt|dp|17

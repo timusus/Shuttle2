@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import kotlinx.collections.immutable.ImmutableList
@@ -102,7 +103,7 @@ fun LibraryOverflowMenu(
         onClick = { isMenuOpened = true },
     ) {
         Icon(
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(S2Spacing.medium),
             imageVector = Icons.Default.MoreVert,
             contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.onBackground,
@@ -142,7 +143,7 @@ fun <T, R : PlaylistData> LibraryOverflowMenu(
         onClick = { isMenuOpened = true },
     ) {
         Icon(
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(S2Spacing.medium),
             imageVector = Icons.Default.MoreVert,
             contentDescription = contentDescription,
             tint = MaterialTheme.colorScheme.onBackground,

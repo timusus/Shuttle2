@@ -133,7 +133,7 @@ internal fun LazyListScope.queueItems(
     val reorder = queue.reorder
     if (items.isEmpty()) {
         item(key = "queue_empty") {
-            Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxWidth().padding(vertical = S2Spacing.xlarge), contentAlignment = Alignment.Center) {
                 Text(stringResource(R.string.queue_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -247,7 +247,7 @@ private fun QueueItem(
         backgroundContent = {
             val alignment = if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
             Box(
-                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = 24.dp),
+                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = S2Spacing.large),
                 contentAlignment = alignment,
             ) {
                 Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)

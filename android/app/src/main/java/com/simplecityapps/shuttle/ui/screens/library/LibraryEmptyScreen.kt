@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 
@@ -53,10 +54,10 @@ fun LibraryEmptyScreen(
         scan != null -> Column(
             modifier = modifier.testTag("library-scanning"),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
         ) {
             EmptyState(title = stringResource(R.string.sources_scanning_title), icon = Icons.Rounded.Search)
-            val progressModifier = Modifier.widthIn(max = 320.dp).fillMaxWidth().padding(horizontal = 24.dp)
+            val progressModifier = Modifier.widthIn(max = 320.dp).fillMaxWidth().padding(horizontal = S2Spacing.large)
             val fraction = scan.fraction
             if (fraction != null) {
                 LinearWavyProgressIndicator(progress = { fraction }, modifier = progressModifier)
@@ -70,7 +71,7 @@ fun LibraryEmptyScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     maxLines = 1,
-                    modifier = Modifier.padding(horizontal = 24.dp),
+                    modifier = Modifier.padding(horizontal = S2Spacing.large),
                 )
             }
         }

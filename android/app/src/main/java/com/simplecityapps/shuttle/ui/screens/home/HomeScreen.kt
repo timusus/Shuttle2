@@ -49,6 +49,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
+import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -142,10 +143,6 @@ val HomeSectionId.hasSeeAll: Boolean
 /** At this font scale and above, text needs the width: the grid is one column and shelf tiles wrap their titles. */
 private const val LARGE_TEXT_FONT_SCALE = 1.5f
 
-/** Shelf tiles: about two and a half fit a phone, so the cut-off one says the row scrolls (#490); larger when wider. */
-private val ShelfTileWidthCompact = 150.dp
-private val ShelfTileWidthWide = 180.dp
-
 @Composable
 private fun HomeContent(
     content: HomeUiState.Content,
@@ -155,7 +152,7 @@ private fun HomeContent(
     val wide = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
     val largeText = LocalDensity.current.fontScale >= LARGE_TEXT_FONT_SCALE
     val columns = jumpBackInColumns(widthAtLeastMedium = wide, largeText = largeText)
-    val shelfTileWidth = if (wide) ShelfTileWidthWide else ShelfTileWidthCompact
+    val shelfTileWidth = if (wide) S2ShelfTileWidth.wide else S2ShelfTileWidth.compact
     // The lead section's header is a headline; the rest are shelf titles, set apart by a wider gap.
     val leadSection = content.sections.firstOrNull { it.id != HomeSectionId.ShuffleAll && it.items.isNotEmpty() }?.id
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {

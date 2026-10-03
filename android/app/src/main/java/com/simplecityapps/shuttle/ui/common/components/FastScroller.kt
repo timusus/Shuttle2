@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import kotlin.math.roundToInt
@@ -160,7 +162,7 @@ fun FastScroller(
             // Draw the thumb with drag gesture handling.
             Box(
                 modifier = Modifier
-                    .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                    .sizeIn(minWidth = S2TouchTarget.minimum, minHeight = S2TouchTarget.minimum)
                     .offset { IntOffset(x = 0, y = thumbOffsetPx.roundToInt()) }
                     .onGloballyPositioned { coordinates ->
                         measuredThumbSize = coordinates.size
@@ -240,7 +242,7 @@ fun DefaultTrack(
 ) {
     Box(
         modifier = modifier
-            .padding(top = 16.dp, bottom = 16.dp)
+            .padding(top = S2Spacing.medium, bottom = S2Spacing.medium)
             .clip(RoundedCornerShape(percent = 50))
             .width(trackWidth)
             .background(trackColor)
@@ -250,7 +252,7 @@ fun DefaultTrack(
 @Composable
 fun DefaultThumb(
     modifier: Modifier = Modifier,
-    thumbWidth: Dp = 8.dp,
+    thumbWidth: Dp = S2Spacing.small,
     thumbHeight: Dp = 52.dp,
     thumbColor: Color = MaterialTheme.colorScheme.primary
 ) {
@@ -281,7 +283,7 @@ fun DefaultPopup(
                         bottomEndPercent = 0
                     )
                 )
-                .padding(start = 16.dp, end = 16.dp),
+                .padding(start = S2Spacing.medium, end = S2Spacing.medium),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -306,7 +308,7 @@ fun noPopupText(index: Int): String? = null
 private fun FastScrollPreview() {
     S2AppTheme(AppThemeState()) {
         val state = rememberLazyListState(initialFirstVisibleItemIndex = 2)
-        Box(modifier = Modifier.padding(vertical = 16.dp)) {
+        Box(modifier = Modifier.padding(vertical = S2Spacing.medium)) {
             LazyColumn(
                 state = state
             ) {
@@ -314,7 +316,7 @@ private fun FastScrollPreview() {
                     Text(
                         modifier = Modifier
                             .sizeIn(minHeight = 56.dp)
-                            .padding(horizontal = 16.dp),
+                            .padding(horizontal = S2Spacing.medium),
                         text = "Item $it"
                     )
                 }
@@ -322,7 +324,7 @@ private fun FastScrollPreview() {
             FastScroller(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(vertical = 16.dp),
+                    .padding(vertical = S2Spacing.medium),
                 state = state,
                 getPopupText = { (it).toString() }
             )

@@ -35,6 +35,24 @@ class DesignSystemRules {
         )
     }
 
+    @Test
+    fun `app sources use spacing and size tokens rather than literal dp values`() {
+        val literal = Regex("(?<![\\w.])(?!0\\.dp)\\d+(?:\\.\\d+)?\\.dp\\b")
+        val violations = Production.scope.files
+            .filter { it.module == ":android:app" && "/src/main/" in it.relativePath }
+            .mapNotNull { file ->
+                val count = literal.findAll(DesignSystemMatching.stripNonCode(file.text)).count()
+                if (count > 0) file.violation("${file.relativePath}|dp|$count") else null
+            }
+        Baseline.assertMatches(
+            "literal-dp-values",
+            "Use S2Spacing, S2IconSize, S2TouchTarget or another designsystem token instead of a literal N.dp in " +
+                ":android:app; add a token when none fits. Entries are path|dp|count; the count may only go down",
+            violations,
+            counted = true,
+        )
+    }
+
     private companion object {
         const val DESIGN_SYSTEM_MODULE = ":android:designsystem"
     }

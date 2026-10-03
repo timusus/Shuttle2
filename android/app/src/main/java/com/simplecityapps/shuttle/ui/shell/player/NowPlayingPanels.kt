@@ -75,6 +75,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ConnectedButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
@@ -113,8 +114,8 @@ internal fun SleepTimerPanel(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().testTag(PlayerTestTags.SleepTimerPanel).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier.fillMaxWidth().testTag(PlayerTestTags.SleepTimerPanel).padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PanelHeading(stringResource(R.string.player_sleep_timer))
@@ -143,7 +144,7 @@ private fun RunningSleepTimer(
             Text(stringResource(R.string.sleep_timer_play_to_track_end), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         S2Button(
             text = stringResource(R.string.player_sleep_timer_extend, formatMinutes(ExtendMinutes)),
             onClick = { actions.startSleepTimer((remaining ?: 0) + ExtendMinutes * DateUtils.MINUTE_IN_MILLIS, player.sleepTimerPlayToEnd) },
@@ -191,7 +192,7 @@ private fun NewSleepTimer(
             },
         ),
     )
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         S2Button(
             text = stringResource(R.string.player_sleep_timer_track_end),
             onClick = { actions.startSleepTimer(0, playToEnd = true) },
@@ -223,8 +224,8 @@ internal fun PlaybackSoundPanel(
 ) {
     val formatSpeed = rememberSpeedFormat()
     Column(
-        modifier = modifier.fillMaxWidth().testTag(PlayerTestTags.PlaybackSoundPanel).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier.fillMaxWidth().testTag(PlayerTestTags.PlaybackSoundPanel).padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PanelHeading(stringResource(R.string.settings_destination_playback_and_sound))
@@ -360,7 +361,7 @@ internal fun RulerSlider(
                     val labels = List(count) { index -> tickLabel(index)?.let { textMeasurer.measure(it, labelStyle) } }
                     val tickHeight = RulerTickHeight.toPx()
                     val tickWidth = RulerTickWidth.toPx()
-                    val labelGap = 4.dp.toPx()
+                    val labelGap = S2Spacing.xsmall.toPx()
                     onDrawBehind {
                         val offset = state.offset.takeUnless { it.isNaN() } ?: 0f
                         val half = size.width / 2

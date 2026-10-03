@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseChart
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 import com.simplecityapps.shuttle.ui.text.stringResource
@@ -72,16 +73,16 @@ fun EqualizerScreen(
         }
         item(key = "bands") {
             Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.largeIncreased) {
-                Column(Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(vertical = S2Spacing.medium)) {
                     FrequencyResponseChart(
                         points = uiState.frequencyResponse,
-                        modifier = Modifier.fillMaxWidth().height(140.dp).padding(start = 4.dp, end = 16.dp),
+                        modifier = Modifier.fillMaxWidth().height(140.dp).padding(start = S2Spacing.xsmall, end = S2Spacing.medium),
                         enabled = uiState.enabled
                     )
                     if (uiState.headroomAttenuationDb < -0.05f) {
                         Caption(stringResource(R.string.settings_equalizer_headroom, String.format(Locale.getDefault(), "%.1f", -uiState.headroomAttenuationDb)))
                     }
-                    Row(Modifier.fillMaxWidth().padding(start = 8.dp, top = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().padding(start = S2Spacing.small, top = S2Spacing.medium, end = S2Spacing.small), verticalAlignment = Alignment.CenterVertically) {
                         EqBand(
                             frequency = stringResource(R.string.dsp_preamp_short),
                             gainDb = uiState.preampGainDb,
@@ -131,7 +132,7 @@ fun EqualizerScreen(
 private fun Caption(text: String) {
     Text(
         text = text,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
