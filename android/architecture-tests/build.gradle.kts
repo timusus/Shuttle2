@@ -36,23 +36,39 @@ val testDebugUnitTest = tasks.register<Test>("testDebugUnitTest") {
     classpath = sourceSets.test.get().runtimeClasspath
 }
 
+// Konsist parses and caches every Kotlin file under the project root it detects (the nearest ancestor of the
+// test JVM's working dir holding `gradlew`), whatever scope a rule asks for. Run against the real checkout that
+// takes in `.claude/worktrees/` copies of the whole repo and runs out of heap, so the rules run against a
+// private root holding only the production sources, at their repo-relative paths.
+val konsistRoot = layout.buildDirectory.dir("konsist-root")
+val syncKonsistRoot = tasks.register<Sync>("syncKonsistRoot") {
+    description = "Copies the production sources the rules read into a private Konsist project root."
+    from(rootDir.resolve("android")) {
+        include("**/src/**/*.kt")
+        exclude("**/build/**", "architecture-tests/**", "**/.*/**")
+        // No test source sets (`test`, `androidTest`, `testFixtures`, ...), as the rules only check production code.
+        exclude { it.relativePath.segments.getOrNull(it.relativePath.segments.indexOf("src") + 1)?.contains("test", ignoreCase = true) == true }
+        eachFile { relativePath = RelativePath(true, "android", *relativePath.segments) }
+        includeEmptyDirs = false
+    }
+    from(rootDir.resolve("gradlew")) // Konsist's root marker
+    into(konsistRoot)
+}
+
 tasks.withType<Test>().configureEach {
     // Konsist parses every module's sources; the default 512 MB test heap runs out in the full sweep.
     maxHeapSize = "2g"
     // The module layer rules (root `verifyModuleLayers`, #443) gate landings alongside the Konsist rules.
     dependsOn(":verifyModuleLayers")
-    // The rules read sources outside this module, so declare them as inputs to keep up-to-date checks honest.
-    inputs.files(
-        fileTree(rootDir.resolve("android")) {
-            include("**/src/**/*.kt")
-            exclude("**/build/**", "architecture-tests/**")
-        },
-    ).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("productionSources")
+    dependsOn(syncKonsistRoot)
+    // The rules read the synced sources, so they are inputs: up-to-date checks stay honest.
+    inputs.dir(konsistRoot).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("productionSources")
     inputs.dir(baselineDir).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("baselines")
     inputs.property("updateBaselines", updateBaselines)
     val reportDir = layout.buildDirectory.dir("reports/architecture/$name")
     outputs.dir(reportDir).withPropertyName("violationReport")
-    systemProperty("architecture.rootDir", rootDir.absolutePath)
+    workingDir = konsistRoot.get().asFile
+    systemProperty("architecture.rootDir", konsistRoot.get().asFile.absolutePath)
     systemProperty("architecture.baselineDir", baselineDir.asFile.absolutePath)
     systemProperty("architecture.reportDir", reportDir.get().asFile.absolutePath)
     systemProperty("architecture.updateBaselines", updateBaselines.get().toString())

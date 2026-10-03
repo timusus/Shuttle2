@@ -6,22 +6,12 @@ import com.lemonappdev.konsist.api.declaration.KoClassDeclaration
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
 import java.io.File
 
-/** The production sources of every module under `android/`: no test source sets, no generated code. */
+/**
+ * The production sources of every module under `android/`: no test source sets, no generated code. The build
+ * copies exactly those into `architecture.rootDir` (`syncKonsistRoot`), so the scope is everything under it.
+ */
 object Production {
-    // Pick the files before Konsist parses them: `scopeFromDirectory` parses everything, generated code under
-    // `build/` included, and after a full build that alone runs the test JVM out of heap.
-    val scope: KoScope by lazy {
-        val root = File(requireNotNull(System.getProperty("architecture.rootDir")))
-        val files = root.resolve("android").walkTopDown()
-            .onEnter { it.name != "build" && it.name != "architecture-tests" && !it.name.startsWith(".") }
-            .filter { it.isFile && it.extension == "kt" }
-            .map { it.relativeTo(root).invariantSeparatorsPath }
-            .filter { path ->
-                "/src/" in path && !path.substringAfter("/src/").substringBefore('/').contains("test", ignoreCase = true)
-            }
-            .toList()
-        Konsist.scopeFromFiles(files)
-    }
+    val scope: KoScope by lazy { Konsist.scopeFromProject() }
 
     val classes: List<KoClassDeclaration> by lazy { scope.classes(includeNested = true, includeLocal = false) }
 
