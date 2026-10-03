@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -50,8 +49,8 @@ import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /**
- * Artist detail (inventory §1): Appears On (#637), a row of others' albums crediting them, each opening its album, then the
- * songs in the artist sort order. Grouped by album, the song list is the albums (#678): each album's row unfolds its tracks
+ * Artist detail (inventory §1): the songs in the artist sort order, with Appears On (#637), a shelf of others' albums
+ * crediting them, after the artist's own albums (#788). Grouped by album, the song list is the albums (#678): each album's row unfolds its tracks
  * inline when tapped (its thumbnail opens the album), and songs on none of their albums trail as Other Songs. Flat, their own albums newest first come
  * first, unfolding the same way, and every song follows in one list. Play / Shuffle play all of them in that order; the
  * overflow holds the artist's actions plus Shuffle albums.
@@ -107,19 +106,29 @@ fun AlbumArtistDetailScreen(
                     albumWithSongs(uiState, album, albumSongs, unknown, onToggleAlbum, onOpenAlbum, onAlbumMore, onSongMore) { song -> onPlay(albumSongs, albumSongs.indexOf(song)) }
                 }
             }
-            if (uiState.appearsOn.isNotEmpty()) {
-                albumShelf("artist-appears-on", appearsOnTitle, uiState.appearsOn, unknown, onAppearsOnClick, onAlbumMore)
+            // Appears On follows the artist's own albums (#788): after the Albums section when it shows, else after the
+            // song list's album sections, ahead of the songs on none of them.
+            val appearsOn: LazyListScope.() -> Unit = {
+                if (uiState.appearsOn.isNotEmpty()) {
+                    albumShelf("artist-appears-on", appearsOnTitle, uiState.appearsOn, unknown, onAppearsOnClick, onAlbumMore)
+                }
             }
+            if (uiState.showAlbumsShelf) appearsOn()
             if (uiState.songs.isNotEmpty()) {
                 val title = if (uiState.hasAlbumSections) R.string.artist_detail_albums_and_songs else R.string.artist_detail_songs
                 item(key = "songs-header", contentType = "header") { SectionHeader(title = stringResource(title)) }
             }
             // Each section's songs start at its offset in the play order, which runs across every section
             var offset = 0
+            var appearsOnPlaced = uiState.showAlbumsShelf
             uiState.sections.forEach { section ->
                 val startIndex = offset
                 offset += section.songs.size
                 val album = section.album
+                if (album == null && !appearsOnPlaced) {
+                    appearsOn()
+                    appearsOnPlaced = true
+                }
                 if (album != null) {
                     albumWithSongs(uiState, album, section.songs, unknown, onToggleAlbum, onOpenAlbum, onAlbumMore, onSongMore) { song ->
                         onPlay(uiState.songs, startIndex + section.songs.indexOf(song))
@@ -141,6 +150,7 @@ fun AlbumArtistDetailScreen(
                     }
                 }
             }
+            if (!appearsOnPlaced) appearsOn()
         }
     }
 }
@@ -187,7 +197,7 @@ private fun LazyListScope.albumWithSongs(
         items(songs, key = { "album-${album.groupKey}-song-${it.id}" }, contentType = { "song" }) { song ->
             SongRow(
                 title = song.name ?: unknown,
-                subtitle = song.friendlyArtistName.orEmpty(),
+                subtitle = song.artistUnlessAlbumArtist(album),
                 onClick = { onPlaySong(song) },
                 trackNumber = song.track,
                 duration = formatDuration(song.duration.toLong()),

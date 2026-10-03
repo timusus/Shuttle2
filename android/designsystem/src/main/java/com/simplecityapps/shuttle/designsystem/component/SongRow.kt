@@ -32,12 +32,13 @@ enum class SongOfflineState { None, Downloading, Offline }
 
 /**
  * A song in a list. Leading is the [artwork] slot, or the [trackNumber] on an album's track list.
- * [playing] marks the current song; [enabled] false greys out a song whose file is missing.
+ * [playing] marks the current song; [enabled] false greys out a song whose file is missing. A null [subtitle] drops
+ * the secondary line, as an album's track list does for its own artist, unless a playing or offline mark needs it.
  */
 @Composable
 fun SongRow(
     title: String,
-    subtitle: String,
+    subtitle: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     artwork: (@Composable () -> Unit)? = null,
@@ -51,7 +52,7 @@ fun SongRow(
     onMore: (() -> Unit)? = null,
 ) = SongRow(
     AnnotatedString(title),
-    AnnotatedString(subtitle),
+    subtitle?.let(::AnnotatedString),
     onClick,
     modifier,
     artwork,
@@ -69,7 +70,7 @@ fun SongRow(
 @Composable
 fun SongRow(
     title: AnnotatedString,
-    subtitle: AnnotatedString,
+    subtitle: AnnotatedString?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     artwork: (@Composable () -> Unit)? = null,
@@ -86,7 +87,8 @@ fun SongRow(
         title = title,
         onClick = onClick,
         modifier = modifier,
-        supporting = subtitle,
+        // The playing and offline marks sit on the secondary line, so it stays for them even without a subtitle
+        supporting = subtitle ?: AnnotatedString("").takeIf { playing || offlineState != SongOfflineState.None },
         meta = duration,
         leading = when {
             artwork != null -> artwork

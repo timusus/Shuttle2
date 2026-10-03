@@ -76,7 +76,7 @@ fun AlbumDetailScreen(
                 items(discSongs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
                     SongRow(
                         title = song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                        subtitle = song.friendlyArtistName.orEmpty(),
+                        subtitle = song.artistUnlessAlbumArtist(album),
                         onClick = { onPlay(songs, songs.indexOf(song)) },
                         trackNumber = song.track,
                         duration = formatDuration(song.duration.toLong()),
@@ -98,6 +98,9 @@ fun AlbumDetailScreen(
         }
     }
 }
+
+/** The song's artist when it isn't [album]'s own (a guest, a compilation's track), else null: the hero already names it (#739). */
+internal fun Song.artistUnlessAlbumArtist(album: Album?): String? = friendlyArtistName?.takeIf { it.isNotBlank() && it != (album?.albumArtist ?: album?.friendlyArtistName) }
 
 /** "Artist · year · N songs · duration". */
 @Composable
