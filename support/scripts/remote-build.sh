@@ -94,6 +94,7 @@ FAIL_MARKER="$(mktemp -t remote-build-marker)"
 trap 'rm -rf "$LOCK" "$FAIL_MARKER"' EXIT
 
 # ---- local load -----------------------------------------------------------------------------
+export PATH="/usr/sbin:/sbin:$PATH" # sessions that skip ~/.zshrc lack it (#718)
 CORES="$(sysctl -n hw.ncpu 2>/dev/null || nproc)"
 if [ -r /proc/loadavg ]; then
     LOAD="$(cut -d' ' -f1 /proc/loadavg)"
