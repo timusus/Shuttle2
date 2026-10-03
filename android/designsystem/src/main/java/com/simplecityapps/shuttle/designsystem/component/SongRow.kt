@@ -23,6 +23,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** Offline state of a remote song, shown ahead of the secondary line. */
@@ -128,8 +130,8 @@ private fun TrackNumber(trackNumber: Int, playing: Boolean) {
 
 @Composable
 internal fun SupportingIcon(icon: ImageVector, contentDescription: String, tint: Color = LocalContentColor.current) {
-    Icon(icon, contentDescription, Modifier.size(16.dp), tint = tint)
-    Spacer(Modifier.width(4.dp))
+    Icon(icon, contentDescription, Modifier.size(S2IconSize.small), tint = tint)
+    Spacer(Modifier.width(S2Spacing.xsmall))
 }
 
 @Preview

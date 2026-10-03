@@ -30,8 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2ContentWidth
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
+import com.simplecityapps.shuttle.designsystem.theme.rowTitle
 
 /**
  * A dialog: [title], an optional hero [icon], the [content] (a message, a [S2ChoiceList], a text
@@ -84,19 +87,19 @@ fun S2DialogContent(
     content: @Composable () -> Unit,
 ) {
     Surface(
-        modifier = modifier.sizeIn(minWidth = 280.dp, maxWidth = 560.dp),
+        modifier = modifier.sizeIn(minWidth = S2ContentWidth.dialogMinimum, maxWidth = S2ContentWidth.dialogMaximum),
         shape = AlertDialogDefaults.shape,
         color = AlertDialogDefaults.containerColor,
         tonalElevation = AlertDialogDefaults.TonalElevation,
     ) {
-        Column(Modifier.padding(24.dp)) {
+        Column(Modifier.padding(S2Spacing.large)) {
             if (icon != null) {
                 Icon(
                     icon,
                     contentDescription = null,
                     tint = if (destructive) MaterialTheme.colorScheme.error else AlertDialogDefaults.iconContentColor,
                     modifier = Modifier
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = S2Spacing.medium)
                         .align(Alignment.CenterHorizontally),
                 )
             }
@@ -105,7 +108,7 @@ fun S2DialogContent(
                 style = MaterialTheme.typography.headlineSmall,
                 color = AlertDialogDefaults.titleContentColor,
                 modifier = Modifier
-                    .padding(bottom = 16.dp)
+                    .padding(bottom = S2Spacing.medium)
                     .align(if (icon != null) Alignment.CenterHorizontally else Alignment.Start),
             )
             CompositionLocalProvider(LocalContentColor provides AlertDialogDefaults.textContentColor) {
@@ -114,8 +117,8 @@ fun S2DialogContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    .padding(top = S2Spacing.large),
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.small, Alignment.End),
             ) {
                 if (dismissLabel != null) S2Button(dismissLabel, onDismiss, style = S2ButtonStyle.Text)
                 if (confirmLabel != null) {
@@ -147,13 +150,13 @@ fun S2ChoiceList(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 48.dp)
+                    .heightIn(min = S2TouchTarget.minimum)
                     .selectable(selected = index == selectedIndex, onClick = { onSelect(index) }, role = Role.RadioButton),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             ) {
                 RadioButton(selected = index == selectedIndex, onClick = null)
-                Text(option, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text(option, style = MaterialTheme.typography.rowTitle, color = MaterialTheme.colorScheme.onSurface)
             }
         }
     }

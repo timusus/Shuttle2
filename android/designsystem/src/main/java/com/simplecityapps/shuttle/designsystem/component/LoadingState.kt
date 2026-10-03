@@ -17,9 +17,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.supporting
 
 /**
  * A screen or section waiting on content: the M3 loading indicator with an optional [message].
@@ -36,16 +37,16 @@ fun LoadingState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(24.dp)
+            .padding(S2Spacing.large)
             .semantics(mergeDescendants = true) { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         if (progress != null) LoadingIndicator(progress = progress) else LoadingIndicator()
         if (message != null) {
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.supporting,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )

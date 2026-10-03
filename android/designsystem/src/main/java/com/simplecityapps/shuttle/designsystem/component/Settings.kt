@@ -32,6 +32,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.supporting
 
 /*
  * Settings rows are `SegmentedListItem`s. A [SettingsGroup] stacks them with the segmented gap and
@@ -53,7 +56,7 @@ fun SettingsHeader(title: String, modifier: Modifier = Modifier) {
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = S2Spacing.medium, top = S2Spacing.medium, end = S2Spacing.medium, bottom = S2Spacing.small),
     )
 }
 
@@ -144,9 +147,9 @@ fun ActionsSetting(
         modifier = modifier,
         colors = settingColors(),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            summary?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, content = content)
+        Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+            summary?.let { Text(it, style = MaterialTheme.typography.supporting, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small), verticalAlignment = Alignment.CenterVertically, content = content)
         }
     }
 }
@@ -240,7 +243,7 @@ private fun settingSummary(summary: String?, progress: SettingProgress?): (@Comp
     return {
         Column {
             summary?.let { Text(it) }
-            val modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("setting-progress")
+            val modifier = Modifier.fillMaxWidth().padding(top = S2Spacing.small).testTag("setting-progress")
             val fraction = progress.fraction
             if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
         }
@@ -272,7 +275,7 @@ private fun settingColors(): ListItemColors {
 @Composable
 private fun SettingIcon(icon: ImageVector, style: SettingIconStyle, enabled: Boolean) {
     if (style == SettingIconStyle.Plain) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
+        Icon(icon, contentDescription = null, modifier = Modifier.size(S2IconSize.medium))
         return
     }
     TonalIconContainer(
@@ -280,7 +283,7 @@ private fun SettingIcon(icon: ImageVector, style: SettingIconStyle, enabled: Boo
         containerColor = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         size = 40.dp,
-        iconSize = 24.dp,
+        iconSize = S2IconSize.medium,
         modifier = Modifier.alpha(if (enabled) 1f else 0.38f),
     )
 }

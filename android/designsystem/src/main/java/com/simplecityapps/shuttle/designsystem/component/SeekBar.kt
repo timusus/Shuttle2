@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.time
 import com.simplecityapps.shuttle.format.formatDuration
 
 /**
@@ -74,14 +76,14 @@ fun S2SeekBar(
                 SliderDefaults.Track(sliderState = sliderState, modifier = Modifier.height(trackHeight), enabled = enabled)
             },
         )
-        Row(Modifier.padding(horizontal = 4.dp)) {
+        Row(Modifier.padding(horizontal = S2Spacing.xsmall)) {
             Text(
                 formatDuration(if (dragging) (fraction * durationMs).toLong() else positionMs),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.time,
                 color = if (dragging) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.weight(1f))
-            Text(formatDuration(durationMs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(formatDuration(durationMs), style = MaterialTheme.typography.time, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

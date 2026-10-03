@@ -18,6 +18,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2ContentWidth
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.screenTitle
+import com.simplecityapps.shuttle.designsystem.theme.supporting
 
 /** A button a state message offers, such as "Add a music folder" or "Retry". */
 class StateAction(val label: String, val onClick: () -> Unit)
@@ -59,26 +64,26 @@ internal fun StateMessage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(24.dp),
+            .padding(S2Spacing.large),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
-        TonalIconContainer(icon, iconContainerColor, iconColor, size = 96.dp, iconSize = 40.dp)
+        TonalIconContainer(icon, iconContainerColor, iconColor, size = 96.dp, iconSize = S2IconSize.hero)
         Column(
-            modifier = Modifier.widthIn(max = 360.dp),
+            modifier = Modifier.widthIn(max = S2ContentWidth.readable),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.screenTitle,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
             )
             if (message != null) {
                 Text(
                     text = message,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.supporting,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )

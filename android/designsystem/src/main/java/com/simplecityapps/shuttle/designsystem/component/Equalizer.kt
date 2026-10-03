@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -66,7 +67,7 @@ fun EqBand(
     state.value = gainDb
     val interactionSource = remember { MutableInteractionSource() }
     val labelColor = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         Text(formatGain(gainDb), style = MaterialTheme.typography.labelSmall, color = labelColor, maxLines = 1)
         VerticalSlider(
             state = state,

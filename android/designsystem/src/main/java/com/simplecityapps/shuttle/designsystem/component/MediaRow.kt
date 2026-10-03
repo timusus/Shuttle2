@@ -17,10 +17,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import com.simplecityapps.shuttle.designsystem.R
+import com.simplecityapps.shuttle.designsystem.theme.rowMeta
 
 /**
- * The `ListItem` every library row shares: title `bodyLarge` on `onSurface`, secondary
- * `bodyMedium` on `onSurfaceVariant` (both from the M3 defaults), meta `labelMedium`, selection
+ * The `ListItem` every library row shares: title `rowTitle` (`bodyLarge`) on `onSurface`, secondary
+ * `rowSubtitle` (`bodyMedium`) on `onSurfaceVariant` (both the M3 defaults), meta `rowMeta`, selection
  * on `secondaryContainer`, and an optional overflow button. The unselected container is
  * transparent, so a row takes the colour of what it sits on: a screen, a sheet or the search view.
  * The text is styled so a row can show spans, such as a search query's matches in bold.
@@ -61,7 +62,7 @@ internal fun MediaRow(
         trailingContent = if (meta != null || onMore != null || dragHandle != null) {
             {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    meta?.let { Text(it, style = MaterialTheme.typography.labelMedium) }
+                    meta?.let { Text(it, style = MaterialTheme.typography.rowMeta) }
                     onMore?.let {
                         S2IconButton(
                             icon = Icons.Rounded.MoreVert,

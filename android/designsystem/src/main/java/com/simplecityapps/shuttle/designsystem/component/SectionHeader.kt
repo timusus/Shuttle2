@@ -16,18 +16,23 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
+import com.simplecityapps.shuttle.designsystem.theme.groupHeader
+import com.simplecityapps.shuttle.designsystem.theme.leadSectionTitle
+import com.simplecityapps.shuttle.designsystem.theme.rowSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.sectionTitle
 
 /** How prominent a [SectionHeader] is. */
 enum class SectionHeaderStyle {
-    /** `titleSmall` on `primary`: a list's subheading, or a sticky letter. */
+    /** `groupHeader` on `primary`: a list's subheading, or a sticky letter. */
     Label,
 
-    /** `titleLarge` on `onSurface`: a screen's own sections, such as Home's shelves. */
+    /** `sectionTitle` on `onSurface`: a screen's own sections, such as Home's shelves. */
     Title,
 
-    /** `headlineSmall` on `onSurface`: the lead section of a screen, over its [Title] sections, such as Home's first. */
+    /** `leadSectionTitle` on `onSurface`: the lead section of a screen, over its [Title] sections, such as Home's first. */
     Headline,
 }
 
@@ -50,17 +55,17 @@ fun SectionHeader(
         modifier = modifier
             .fillMaxWidth()
             .background(containerColor)
-            .heightIn(min = 48.dp)
-            .padding(start = 16.dp, end = 4.dp),
+            .heightIn(min = S2TouchTarget.minimum)
+            .padding(start = S2Spacing.medium, end = S2Spacing.xsmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = when (style) {
-                    SectionHeaderStyle.Label -> MaterialTheme.typography.titleSmall
-                    SectionHeaderStyle.Title -> MaterialTheme.typography.titleLarge
-                    SectionHeaderStyle.Headline -> MaterialTheme.typography.headlineSmall
+                    SectionHeaderStyle.Label -> MaterialTheme.typography.groupHeader
+                    SectionHeaderStyle.Title -> MaterialTheme.typography.sectionTitle
+                    SectionHeaderStyle.Headline -> MaterialTheme.typography.leadSectionTitle
                 },
                 color = when (style) {
                     SectionHeaderStyle.Label -> MaterialTheme.colorScheme.primary
@@ -71,7 +76,7 @@ fun SectionHeader(
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.rowSubtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

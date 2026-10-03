@@ -23,8 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 
 /**
  * One verb in a menu or an actions sheet. [destructive] draws it in `error` (Delete, Remove);
@@ -95,7 +95,7 @@ private fun MenuItem(
             text = { Text(action.label) },
             shapes = shapes,
             // An empty slot keeps unchecked choices aligned with the checked one.
-            leadingIcon = leadingIcon ?: { Spacer(Modifier.size(24.dp)) },
+            leadingIcon = leadingIcon ?: { Spacer(Modifier.size(S2IconSize.medium)) },
             selectedLeadingIcon = { Icon(Icons.Rounded.Check, contentDescription = null) },
         )
     } else {

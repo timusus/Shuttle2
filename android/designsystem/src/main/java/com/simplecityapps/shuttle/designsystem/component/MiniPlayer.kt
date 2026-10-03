@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
@@ -51,8 +52,8 @@ fun S2MiniPlayer(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(start = S2Spacing.smallMedium, end = S2Spacing.small, top = S2Spacing.small, bottom = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 artwork?.invoke()
@@ -74,7 +75,7 @@ fun S2MiniPlayer(
                 playing = playing,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(horizontal = S2Spacing.smallMedium)
                     .padding(bottom = 6.dp),
             )
         }

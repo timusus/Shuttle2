@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
@@ -69,8 +69,8 @@ fun ActionsSheetContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             artwork?.invoke()
@@ -87,11 +87,11 @@ fun ActionsSheetContent(
                 }
             }
         }
-        HorizontalDivider(Modifier.padding(top = 8.dp))
+        HorizontalDivider(Modifier.padding(top = S2Spacing.small))
         Column(
             Modifier
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 8.dp),
+                .padding(vertical = S2Spacing.small),
         ) {
             actions.forEach { action ->
                 val tint = if (action.destructive) MaterialTheme.colorScheme.error else Color.Unspecified

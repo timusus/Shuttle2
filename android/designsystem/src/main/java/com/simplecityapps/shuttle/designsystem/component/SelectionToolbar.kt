@@ -25,9 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 
 /**
  * The actions for a multi-selection: a clear button, the [selectedCount], an icon button per
@@ -74,11 +74,11 @@ private fun RowScope.SelectionContent(
         pluralStringResource(R.plurals.ds_selected_count, selectedCount, selectedCount),
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
-            .padding(start = 4.dp)
+            .padding(start = S2Spacing.xsmall)
             .align(Alignment.CenterVertically)
             .then(if (fill) Modifier.weight(1f) else Modifier),
     )
-    if (!fill) Spacer(Modifier.width(12.dp))
+    if (!fill) Spacer(Modifier.width(S2Spacing.smallMedium))
     actions.forEach { action ->
         S2IconButton(requireNotNull(action.icon) { "Selection actions need an icon" }, action.label, action.onClick)
     }

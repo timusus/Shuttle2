@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
 
@@ -64,7 +65,7 @@ fun QueueRow(
             titleEmphasis = current,
             onLongClick = onLongClick,
             dragHandle = {
-                Box(dragHandleModifier.size(48.dp), contentAlignment = Alignment.Center) {
+                Box(dragHandleModifier.size(S2TouchTarget.minimum), contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.DragHandle, contentDescription = stringResource(R.string.ds_reorder))
                 }
             },

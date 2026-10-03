@@ -38,6 +38,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.tileSubtitle
+import com.simplecityapps.shuttle.designsystem.theme.tileTitle
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** How far a selected tile's artwork shrinks, leaving a margin that marks it as picked (as Google Photos does). */
@@ -99,22 +103,22 @@ fun GridTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 4.dp, top = 8.dp, end = 4.dp, bottom = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+                .padding(start = S2Spacing.xsmall, top = S2Spacing.small, end = S2Spacing.xsmall, bottom = S2Spacing.xsmall),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (playing) {
                     Icon(
                         Icons.Rounded.GraphicEq,
                         stringResource(R.string.ds_now_playing),
-                        Modifier.size(16.dp),
+                        Modifier.size(S2IconSize.small),
                         tint = MaterialTheme.colorScheme.primary,
                     )
-                    Spacer(Modifier.width(4.dp))
+                    Spacer(Modifier.width(S2Spacing.xsmall))
                 }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.tileTitle,
                     color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -123,7 +127,7 @@ fun GridTile(
             if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.tileSubtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -142,7 +146,7 @@ private fun SelectedBadge(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.primary),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
+        Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(S2IconSize.small))
     }
 }
 

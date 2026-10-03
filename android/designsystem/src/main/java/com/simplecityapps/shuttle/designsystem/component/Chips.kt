@@ -22,9 +22,9 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 
 /** A toggleable list filter ("Downloaded", "Favourites"): a `FilterChip` that shows a check while [selected]. */
 @Composable
@@ -113,7 +113,7 @@ fun S2InfoChip(
 @Composable
 private fun ChipsPreview() {
     S2Preview {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
             S2FilterChip("Downloaded", selected = true, onClick = {})
             S2InputChip("Jellyfin", onRemove = {})
             S2InfoChip("FLAC")
