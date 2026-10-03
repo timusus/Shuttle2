@@ -47,21 +47,22 @@ fi
 [[ "$ISSUER_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]] \
     || { echo "Issuer ID does not look like a UUID: $ISSUER_ID" >&2; exit 1; }
 
-REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO_ROOT"
 gh auth status >/dev/null 2>&1 || { echo "gh is not authenticated; run: gh auth login" >&2; exit 1; }
 
-echo "==> Storing secrets for $(gh repo view --json nameWithOwner -q .nameWithOwner)"
-gh secret set ASC_KEY_ID --body "$KEY_ID"
-gh secret set ASC_ISSUER_ID --body "$ISSUER_ID"
-base64 -i "$P8" | tr -d '\n' | gh secret set ASC_API_KEY_P8
-gh secret list | grep -E '^ASC_(KEY_ID|ISSUER_ID|API_KEY_P8)\b'
+REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
+echo "==> Storing secrets for $REPO"
+gh secret set ASC_KEY_ID --repo "$REPO" --body "$KEY_ID"
+gh secret set ASC_ISSUER_ID --repo "$REPO" --body "$ISSUER_ID"
+base64 -i "$P8" | tr -d '\n' | gh secret set ASC_API_KEY_P8 --repo "$REPO"
+gh secret list --repo "$REPO" | grep -E '^ASC_(KEY_ID|ISSUER_ID|API_KEY_P8)\b'
 
 echo "==> Secrets stored. Keep the .p8 somewhere safe (or delete it: the runner only needs the secret)."
 
 if [[ "$SMOKE" -eq 1 ]]; then
     echo "==> Triggering the no-upload smoke run"
-    gh workflow run ios-deploy.yml
+    gh workflow run ios-deploy.yml --repo "$REPO"
     sleep 5
-    gh run list --workflow ios-deploy.yml --limit 1 --json url,status -q '.[0] | "\(.status) \(.url)"'
+    gh run list --repo "$REPO" --workflow ios-deploy.yml --limit 1 --json url,status -q '.[0] | "\(.status) \(.url)"'
 fi
