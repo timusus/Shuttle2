@@ -135,11 +135,8 @@ private fun SettingsDestinationEntry(
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         when (event) {
             is SettingsUiEvent.BackupExportRequested -> exportLauncher.launch(event.suggestedName)
-
             is SettingsUiEvent.BackupImportPickerRequested -> importLauncher.launch(arrayOf("application/json"))
-
             is SettingsUiEvent.BackupImported -> snackbarHostState.showSnackbar(backupImportedMessage(context.resources, event))
-
             else -> snackbarHostState.showSnackbar(context.getString(checkNotNull(event.message)))
         }
     }
