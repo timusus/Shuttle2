@@ -12,6 +12,8 @@ import com.simplecityapps.shuttle.persistence.KeyValueStore
 class Setting<T> private constructor(
     val key: String,
     val default: T,
+    /** The primitive type [key] holds in the store, whatever [T] decodes it into. */
+    val storage: Storage,
     private val reader: KeyValueStore.(key: String, default: T) -> T,
     private val writer: KeyValueStore.Editor.(key: String, value: T) -> Unit
 ) {
@@ -28,23 +30,25 @@ class Setting<T> private constructor(
         editor.writer(key, value)
     }
 
+    enum class Storage { Boolean, Int, Float, String }
+
     override fun toString(): String = "Setting($key, default=$default)"
 
     companion object {
         fun boolean(
             key: String,
             default: Boolean
-        ): Setting<Boolean> = Setting(key, default, { k, d -> getBoolean(k, d) }, { k, v -> putBoolean(k, v) })
+        ): Setting<Boolean> = Setting(key, default, Storage.Boolean, { k, d -> getBoolean(k, d) }, { k, v -> putBoolean(k, v) })
 
         fun int(
             key: String,
             default: Int
-        ): Setting<Int> = Setting(key, default, { k, d -> getInt(k, d) }, { k, v -> putInt(k, v) })
+        ): Setting<Int> = Setting(key, default, Storage.Int, { k, d -> getInt(k, d) }, { k, v -> putInt(k, v) })
 
         fun float(
             key: String,
             default: Float
-        ): Setting<Float> = Setting(key, default, { k, d -> getFloat(k, d) }, { k, v -> putFloat(k, v) })
+        ): Setting<Float> = Setting(key, default, Storage.Float, { k, d -> getFloat(k, d) }, { k, v -> putFloat(k, v) })
 
         /** A value stored as a string, decoded with [decode]; a string [decode] rejects (returns null for) reads as [default]. */
         fun <T> string(
@@ -55,6 +59,7 @@ class Setting<T> private constructor(
         ): Setting<T> = Setting(
             key = key,
             default = default,
+            storage = Storage.String,
             reader = { k, d -> getString(k, null)?.let(decode) ?: d },
             writer = { k, v -> putString(k, encode(v)) }
         )
@@ -79,6 +84,7 @@ class Setting<T> private constructor(
         ): Setting<E> = Setting(
             key = key,
             default = default,
+            storage = Storage.Int,
             reader = { k, d -> entries.getOrNull(getInt(k, d.ordinal)) ?: d },
             writer = { k, v -> putInt(k, v.ordinal) }
         )

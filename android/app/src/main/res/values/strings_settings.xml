@@ -8,6 +8,12 @@
     <string name="settings_dialog_button_clear_artwork">Clear</string>
     <!-- Dialog warning shown when user selects option to clear (delete) existing artwork -->
     <string name="settings_dialog_message_clear_artwork">This will permanently remove all cached artwork</string>
+    <!-- Dialog title shown before restoring a library backup -->
+    <string name="settings_dialog_title_restore_backup">Restore backup</string>
+    <!-- Dialog message shown before restoring a library backup: what will be replaced and what is kept -->
+    <string name="settings_dialog_message_restore_backup">Your settings will be replaced with the ones saved in the backup. Play counts, favourites and playlists are merged, and newer data on this device is kept. Server sign-ins are not part of a backup.</string>
+    <!-- Button shown to confirm restoring a library backup, which opens the file picker -->
+    <string name="settings_dialog_button_restore_backup">Choose file</string>
     <!-- Settings option to download all artwork (album/artist images)-->
     <string name="settings_dialog_title_download_artwork">Download All Artwork</string>
     <!-- Shown when user selects option to download all artwork (album/artist images) -->
@@ -47,11 +53,11 @@
     <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
     <string name="pref_backup_export_title">Back up library</string>
     <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
-    <string name="pref_backup_export_summary">Save play counts, favourites, exclusions and playlists to a file</string>
+    <string name="pref_backup_export_summary">Save play counts, favourites, exclusions, playlists and your settings to a file</string>
     <!-- Settings: Title for the option to restore a library backup from a file -->
     <string name="pref_backup_import_title">Restore library backup</string>
     <!-- Settings: Description for the option to restore a library backup from a file -->
-    <string name="pref_backup_import_summary">Merge a backup into your library. Newer data on this device is kept</string>
+    <string name="pref_backup_import_summary">Merge a backup into your library and replace your settings with the ones it holds</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Excluded</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->

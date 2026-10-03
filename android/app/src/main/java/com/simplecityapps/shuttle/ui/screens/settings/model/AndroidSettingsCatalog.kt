@@ -230,6 +230,11 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         action = SettingsAction.ImportBackup,
                         title = StringKey.PREF_BACKUP_IMPORT_TITLE,
                         summary = StringKey.PREF_BACKUP_IMPORT_SUMMARY,
+                        confirmation = Confirmation(
+                            title = StringKey.SETTINGS_DIALOG_TITLE_RESTORE_BACKUP,
+                            message = StringKey.SETTINGS_DIALOG_MESSAGE_RESTORE_BACKUP,
+                            confirm = StringKey.SETTINGS_DIALOG_BUTTON_RESTORE_BACKUP
+                        ),
                         key = "pref_backup_import"
                     )
                 )

@@ -90,9 +90,12 @@
 "pref_media_rescan_title" = "Rescan";
 "pref_media_rescan_summary" = "Rescan the selected media providers";
 "pref_backup_export_title" = "Back up library";
-"pref_backup_export_summary" = "Save play counts, favourites, exclusions and playlists to a file";
+"pref_backup_export_summary" = "Save play counts, favourites, exclusions, playlists and your settings to a file";
 "pref_backup_import_title" = "Restore library backup";
-"pref_backup_import_summary" = "Merge a backup into your library. Newer data on this device is kept";
+"pref_backup_import_summary" = "Merge a backup into your library and replace your settings with the ones it holds";
+"settings_dialog_title_restore_backup" = "Restore backup";
+"settings_dialog_message_restore_backup" = "Your settings will be replaced with the ones saved in the backup. Play counts, favourites and playlists are merged, and newer data on this device is kept. Server sign-ins are not part of a backup.";
+"settings_dialog_button_restore_backup" = "Choose file";
 "pref_rescan_frequency_title" = "Rescan frequency";
 "pref_rescan_frequency_never" = "Never";
 "pref_rescan_frequency_daily" = "Daily";

@@ -15,7 +15,7 @@ interface LibraryBackupFlow {
     /** Writes staged [backupJson] to [destinationUri]. */
     suspend fun writeBackup(destinationUri: String, backupJson: String): Boolean
 
-    /** Reads the backup at [sourceUri] and merges it, or null when it can't be read or is too new. */
+    /** Reads the backup at [sourceUri], merges its stats and playlists and replaces its preferences, or null when it can't be read or is too new. */
     suspend fun readAndRestore(sourceUri: String): RestoreReport?
 }
 
@@ -25,5 +25,7 @@ data class RestoreReport(
     val statsWritten: Int,
     val playlistsRestored: Int,
     val playlistsUnresolved: List<String>,
-    val membersSkipped: Int
+    val membersSkipped: Int,
+    /** Preferences written from the backup; 0 for a backup that holds none. */
+    val settingsRestored: Int = 0
 )

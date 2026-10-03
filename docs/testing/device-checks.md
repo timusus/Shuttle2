@@ -350,3 +350,9 @@ previous and new outputs, and where each pause came from.
 - [ ] Phone with a display cutout, held in landscape with the cutout on the left, then on the right: the mini player's artwork and controls, and the full player's content, clear the cutout while their background still runs to the screen edge. Open Settings (the rail slides away) and check the mini player and full player again.
 - [ ] Phone in portrait: open Settings and press back. As the bottom bar slides away and back, the page's bottom edge moves with the mini player, with no jump and no gap or overlap at the end.
 - [ ] Phone in landscape (rail): open Settings and press back. As the rail slides out and in, the page's left edge moves with it, never jumping past the cutout.
+
+## Settings in library backups (#769)
+- [ ] Settings, Library, Back up library: save the file. Then change several settings (theme and accent, pure black, crossfade, replay gain mode, equalizer on, which tabs show, rescan frequency, minimum track length).
+- [ ] Settings, Library, Restore library backup: a dialog says your settings will be replaced; Cancel does nothing, Choose file opens the picker. Pick the saved file: every setting you changed comes back, the theme changes straight away without restarting, and the Library, Playback and Appearance screens show the restored values.
+- [ ] After the restore you are still signed in to any Jellyfin, Emby or Plex server, and the music folders you had added are unchanged.
+- [ ] Restore a backup made before this version (no settings in it): play counts and playlists merge as before and your settings are left alone.

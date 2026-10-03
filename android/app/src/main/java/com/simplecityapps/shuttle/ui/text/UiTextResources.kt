@@ -124,6 +124,9 @@ val StringKey.resId: Int
         StringKey.PREF_BACKUP_EXPORT_SUMMARY -> R.string.pref_backup_export_summary
         StringKey.PREF_BACKUP_IMPORT_TITLE -> R.string.pref_backup_import_title
         StringKey.PREF_BACKUP_IMPORT_SUMMARY -> R.string.pref_backup_import_summary
+        StringKey.SETTINGS_DIALOG_TITLE_RESTORE_BACKUP -> R.string.settings_dialog_title_restore_backup
+        StringKey.SETTINGS_DIALOG_MESSAGE_RESTORE_BACKUP -> R.string.settings_dialog_message_restore_backup
+        StringKey.SETTINGS_DIALOG_BUTTON_RESTORE_BACKUP -> R.string.settings_dialog_button_restore_backup
         StringKey.PREF_RESCAN_FREQUENCY_TITLE -> R.string.pref_rescan_frequency_title
         StringKey.PREF_RESCAN_FREQUENCY_NEVER -> R.string.pref_rescan_frequency_never
         StringKey.PREF_RESCAN_FREQUENCY_DAILY -> R.string.pref_rescan_frequency_daily

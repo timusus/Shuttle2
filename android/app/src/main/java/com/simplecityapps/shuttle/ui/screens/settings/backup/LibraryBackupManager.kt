@@ -9,7 +9,10 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import dev.zacsweers.metro.Inject
 import java.io.FilterInputStream
 import java.io.IOException
@@ -20,13 +23,15 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromStream
 import timber.log.Timber
 
 /**
  * Library backup export/import (Settings -> Library). Backs up per-song stats (play counts,
- * positions, favourites, exclusions, dates) plus playlists; restore merges them into the library,
- * keeping whatever the device already has (see [LibraryBackupRestorer]).
+ * positions, favourites, exclusions, dates), playlists and the allowlisted preferences ([BackedUpSettings]).
+ * Restore merges stats and playlists into the library, keeping whatever the device already has (see
+ * [LibraryBackupRestorer]); preferences are replaced.
  *
  * Never backed up: Room ids, credentials/tokens, SAF grant URIs, transient queue/session state,
  * artwork caches and aggregates. Restored favourites go through the same DAO path as the UI's, so remote-provider
@@ -37,6 +42,8 @@ class LibraryBackupManager @Inject constructor(
     private val database: MediaDatabase,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
+    private val keyValueStore: KeyValueStore,
+    private val effects: SettingsEffects,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : LibraryBackupFlow {
     private val json = Json {
@@ -64,7 +71,8 @@ class LibraryBackupManager @Inject constructor(
                 LibraryBackup(
                     exportedAt = Clock.System.now().toEpochMilliseconds(),
                     songs = songs.map { it.toBackedUp() },
-                    playlists = backedPlaylists
+                    playlists = backedPlaylists,
+                    settings = BackedUpSettings.export(keyValueStore)
                 )
             )
         } catch (e: CancellationException) {
@@ -113,7 +121,21 @@ class LibraryBackupManager @Inject constructor(
 
     private suspend fun restore(backup: LibraryBackup): RestoreReport {
         val library = songRepository.loadSongs(SongQuery.All(includeExcluded = true))
-        return LibraryBackupRestorer(playlistRepository, { database.songDataDao().restoreStats(it) }).restore(backup, library)
+        val report = LibraryBackupRestorer(playlistRepository, { database.songDataDao().restoreStats(it) }).restore(backup, library)
+        return backup.settings?.let { report.copy(settingsRestored = restoreSettings(it)) } ?: report
+    }
+
+    /** Replaces the preferences, then runs each changed setting's side effect, so it applies without a restart. */
+    private fun restoreSettings(values: Map<String, JsonPrimitive>): Int {
+        val before = BackedUpSettings.settings.associateWith { it.read(keyValueStore) }
+        val written = BackedUpSettings.restore(keyValueStore, values)
+        BackedUpSettings.settings.forEach { setting -> applyIfChanged(setting, before[setting]) }
+        return written
+    }
+
+    private fun <T> applyIfChanged(setting: Setting<T>, previous: Any?) {
+        val current = setting.read(keyValueStore)
+        if (current != previous) effects.onSettingChanged(setting, current)
     }
 
     private fun Song.toIdentity(): SongIdentity = SongIdentity(

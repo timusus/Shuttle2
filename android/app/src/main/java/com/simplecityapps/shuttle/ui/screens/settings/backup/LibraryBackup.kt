@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.settings.backup
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
- * Versioned library backup: per-song stats plus playlists, nothing else.
+ * Versioned library backup: per-song stats, playlists and the allowlisted preferences ([BackedUpSettings]).
+ * Version 1 had no [settings]; those backups still import, leaving preferences alone.
  *
  * Identity is (provider, path) first, (provider, externalId) for remote items, and a tag
  * fingerprint as fallback. Room ids, MediaStore ids-as-primary, credentials, SAF grant URIs and
@@ -17,10 +19,12 @@ data class LibraryBackup(
     /** Epoch millis the backup was written. */
     val exportedAt: Long,
     val songs: List<BackedUpSong>,
-    val playlists: List<BackedUpPlaylist>
+    val playlists: List<BackedUpPlaylist>,
+    /** Preference key to value, null in a version 1 backup. Keys this app doesn't know are ignored on import. */
+    val settings: Map<String, JsonPrimitive>? = null
 ) {
     companion object {
-        const val CURRENT_SCHEMA_VERSION = 1
+        const val CURRENT_SCHEMA_VERSION = 2
     }
 }
 
