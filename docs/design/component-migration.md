@@ -108,10 +108,10 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.screens.tageditor.TagEditorScreen` | OutlinedTextField, Scaffold, Surface, Text |
 | [ ] | `ui.shell.AppShell` | Surface |
 | [ ] | `ui.shell.ShellSheetSceneStrategy` | ModalBottomSheet |
-| [ ] | `ui.shell.player.FullPlayer` | Surface, Text |
+| [x] | `ui.shell.player.FullPlayer` | Surface, Text |
 | [ ] | `ui.shell.player.NowPlaying` | Text |
 | [ ] | `ui.shell.player.NowPlayingPanels` | Icon, Text |
-| [ ] | `ui.shell.player.PlayerContent` | Text |
+| [x] | `ui.shell.player.PlayerContent` | Text |
 | [ ] | `ui.shell.player.PlayerPane` | Surface |
 | [ ] | `ui.shell.player.PlayerSheet` | Surface |
 | [ ] | `ui.shell.player.QueueList` | Icon, SwipeToDismissBox, Text |

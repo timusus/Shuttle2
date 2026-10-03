@@ -18,7 +18,6 @@ com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator -> androi
 com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost -> androidx.compose.material3.OutlinedTextField
 com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseChart -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.home.HomeItemTile -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.ElevatedCard
 com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.Icon
 com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.Scaffold
@@ -82,12 +81,10 @@ com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorScreen -> androidx.comp
 com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorScreen -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.shell.AppShell -> androidx.compose.material3.Surface
 com.simplecityapps.shuttle.ui.shell.ShellSheetSceneStrategy -> androidx.compose.material3.ModalBottomSheet
-com.simplecityapps.shuttle.ui.shell.player.FullPlayer -> androidx.compose.material3.Surface
 com.simplecityapps.shuttle.ui.shell.player.FullPlayer -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.shell.player.NowPlaying -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanels -> androidx.compose.material3.Icon
 com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanels -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.shell.player.PlayerContent -> androidx.compose.material3.Text
 com.simplecityapps.shuttle.ui.shell.player.PlayerPane -> androidx.compose.material3.Surface
 com.simplecityapps.shuttle.ui.shell.player.PlayerSheet -> androidx.compose.material3.Surface
 com.simplecityapps.shuttle.ui.shell.player.QueueList -> androidx.compose.material3.Icon
