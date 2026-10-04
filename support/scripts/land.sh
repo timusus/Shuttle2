@@ -249,9 +249,11 @@ validate_close_specs || exit 2
 
 https_fallback
 
-# Untracked files are fine (#713: an untracked dir in the primary checkout must not block landing) --
-# the reset and the picks only touch tracked files, and a pick that would clobber an untracked file
-# fails its own cherry-pick and is reported as that branch's conflict.
+# Untracked files don't block a landing from the primary checkout (#713: an untracked dir there must
+# not block it). A hard reset can still overwrite an untracked file that collides with a tracked path,
+# but a pick that would clobber one fails its own cherry-pick and is reported as that branch's
+# conflict. In place (below) untracked, non-ignored files are refused instead: verify would test a
+# tree that differs from the one pushed.
 if [ -n "$(git status --porcelain -uno)" ]; then
   echo "land.sh: working tree has tracked changes; commit or stash before landing" >&2
   exit 1
@@ -278,6 +280,11 @@ if [ "${#BRANCHES[@]}" -eq 1 ] && [ "${BRANCHES[0]}" = "$CUR_BRANCH" ] \
    && [ "$(git merge-base "$ORIGIN_MAIN_SHA" HEAD)" = "$ORIGIN_MAIN_SHA" ] \
    && [ "$(git rev-parse HEAD)" != "$ORIGIN_MAIN_SHA" ]; then
   IN_PLACE=1
+  if [ -n "$(git status --porcelain --untracked-files=normal | grep '^??')" ]; then
+    say "land.sh: refusing to land $CUR_BRANCH in place: untracked files that are not ignored (verify would test a tree that differs from the pushed one); commit, remove or ignore them:"
+    git status --porcelain --untracked-files=normal | grep '^??' | head -10 >&2
+    exit 1
+  fi
   say "land.sh: landing $CUR_BRANCH in place (it is ahead of origin/main)"
 else
   # Data-loss guard: the reset below discards anything on HEAD that origin/main lacks, and a
