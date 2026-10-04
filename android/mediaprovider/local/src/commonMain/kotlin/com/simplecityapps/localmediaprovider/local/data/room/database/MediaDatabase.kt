@@ -36,7 +36,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         ResumePointData::class,
         IdentityGenerationData::class
     ],
-    version = 52,
+    version = 53,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

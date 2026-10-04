@@ -104,7 +104,7 @@ class FavouriteSenderTest {
 
         sender()
 
-        eventually { dao.getPendingFavourites().map { it.externalId } == listOf("a") }
+        eventually { dao.getPendingFavourites().map { it.songId } == listOf(failing.id) }
         writer.calls.first() shouldBe "a true"
         writer.calls.contains("b true") shouldBe true
     }
@@ -161,7 +161,7 @@ class FavouriteSenderTest {
 
         sender()
 
-        eventually { dao.getPendingFavourites().map { it.externalId } == listOf("a") }
+        eventually { dao.getPendingFavourites().map { it.songId } == listOf(failing.id) }
         delay(200)
         writer.calls shouldBe listOf("a true", "b true")
     }

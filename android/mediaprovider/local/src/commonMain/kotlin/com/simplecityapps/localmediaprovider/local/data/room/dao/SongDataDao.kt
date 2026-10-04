@@ -13,6 +13,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTIT
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -80,17 +81,47 @@ abstract class SongDataDao {
     @Delete
     abstract suspend fun delete(songData: List<SongData>): Int
 
+    /**
+     * Stores an import's diff in one transaction. [updates] are written without their favourite (see [SongDataUpdate]);
+     * a remote-provider song's favourite, as its server reports it, is then merged in by [mergeServerFavourites]. An
+     * insert is a song new to the library, so it has no `pending_favourites` row and is stored with the server's state.
+     */
     @Transaction
     open suspend fun insertUpdateAndDelete(
         inserts: List<SongData>,
-        updates: List<SongDataUpdate>,
+        updates: List<SongData>,
         deletes: List<SongData>
     ): Triple<Int, Int, Int> {
         val insertCount = insert(inserts)
-        val updateCount = update(updates)
+        val updateCount = update(updates.map { it.toSongDataUpdate() })
+        mergeServerFavourites(updates.filter { it.mediaProvider.remote })
         val deleteCount = delete(deletes)
         return Triple(insertCount.size, updateCount, deleteCount)
     }
+
+    /**
+     * Takes each of [songs]' favourite from its server (#497): a server favourite keeps the time it already has, or takes
+     * the server's ([SongData.favouritedAt]); anything else is cleared. A song with a `pending_favourites` row is skipped:
+     * the local toggle not yet sent wins over the server's older state. Read inside the caller's transaction, so a toggle
+     * can't land between the outbox check and the write.
+     */
+    private suspend fun mergeServerFavourites(songs: List<SongData>) {
+        val (favourites, others) = songs.partition { it.favouritedAt != null }
+        others.map { it.id }.chunked(MAX_BOUND_VARIABLES).forEach { chunk -> clearServerUnfavourites(chunk) }
+        // Grouped by time: a Jellyfin or Emby sync stamps all its favourites with one
+        favourites.groupBy { it.favouritedAt!! }.forEach { (favouritedAt, group) ->
+            group.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).forEach { chunk -> stampServerFavourites(chunk, favouritedAt) }
+        }
+    }
+
+    @Query("UPDATE songs SET favouritedAt = NULL WHERE id IN (:ids) AND favouritedAt IS NOT NULL AND id NOT IN (SELECT songId FROM pending_favourites)")
+    abstract suspend fun clearServerUnfavourites(ids: List<Long>): Int
+
+    @Query("UPDATE songs SET favouritedAt = :favouritedAt WHERE id IN (:ids) AND favouritedAt IS NULL AND id NOT IN (SELECT songId FROM pending_favourites)")
+    abstract suspend fun stampServerFavourites(
+        ids: List<Long>,
+        favouritedAt: Instant
+    ): Int
 
     @Query("SELECT id FROM songs WHERE path = :path AND mediaProvider = :mediaProvider")
     abstract suspend fun idForPath(
@@ -236,8 +267,8 @@ abstract class SongDataDao {
      * [favourite] or [unfavourite] [songs], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a
      * statement. A song that already carries a [Song.favouritedAt] (an Undo restoring one just removed) is set to that
      * exact time rather than now, so it keeps its original place in the list (#564). Every remote-provider song among
-     * [songs] also gets a `pending_favourites` row recording the desired state, in the same transaction, for a later
-     * slice to push to its server (#497); local songs never enqueue.
+     * [songs] also gets a `pending_favourites` row recording the desired state, in the same transaction, for
+     * `FavouriteSender` to push to its server (#497); local songs never enqueue.
      */
     @Transaction
     open suspend fun setFavourite(
@@ -268,7 +299,7 @@ abstract class SongDataDao {
     ) {
         val changedAt = Clock.System.now()
         songs.distinctBy { it.id }.filter { it.mediaProvider.remote }.forEach { song ->
-            enqueuePendingFavourite(PendingFavouriteData(song.id, song.mediaProvider, song.externalId, favourite, changedAt))
+            enqueuePendingFavourite(PendingFavouriteData(song.id, favourite, changedAt))
         }
     }
 

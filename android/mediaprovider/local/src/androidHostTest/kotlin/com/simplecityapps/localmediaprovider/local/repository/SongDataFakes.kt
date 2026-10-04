@@ -65,6 +65,13 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
 
     override suspend fun delete(songData: List<SongData>): Int = throw NotImplementedError()
 
+    override suspend fun clearServerUnfavourites(ids: List<Long>): Int = throw NotImplementedError()
+
+    override suspend fun stampServerFavourites(
+        ids: List<Long>,
+        favouritedAt: Instant
+    ): Int = throw NotImplementedError()
+
     override suspend fun idForPath(
         path: String,
         mediaProvider: MediaProviderType

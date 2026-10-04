@@ -133,7 +133,7 @@ class LocalSongRepository(
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int> = songDataDao
-        .insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
+        .insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongData(mediaProviderType), deletes.toSongData(mediaProviderType))
         .also { (inserted, updated) -> logger.info { "insertUpdateAndDelete(inserts: $inserted inserted, $updated updated)" } }
         .also { publishUpdated(updates) }
 

@@ -38,11 +38,7 @@ class SongDataDaoFavouriteOutboxTest {
 
         val pending = dao.getPendingFavourites()
         pending.map { it.songId } shouldBe listOf(song.id)
-        pending.single().run {
-            mediaProvider shouldBe MediaProviderType.Jellyfin
-            externalId shouldBe "item-1"
-            favourite shouldBe true
-        }
+        pending.single().favourite shouldBe true
     }
 
     @Test
@@ -121,10 +117,10 @@ class SongDataDaoFavouriteOutboxTest {
         dao.observePendingFavourites().first().shouldBeEmpty()
         dao.setFavourite(listOf(first), true)
         dao.setFavourite(listOf(second), true)
-        dao.observePendingFavourites().first().map { it.externalId } shouldBe listOf("a", "b")
+        dao.observePendingFavourites().first().map { it.songId } shouldBe listOf(first.id, second.id)
 
         dao.ackPendingFavourite(dao.getPendingFavourites().first())
-        dao.observePendingFavourites().first().map { it.externalId } shouldBe listOf("b")
+        dao.observePendingFavourites().first().map { it.songId } shouldBe listOf(second.id)
     }
 
     private suspend fun insertSong(
