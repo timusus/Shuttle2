@@ -8,7 +8,9 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
+import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
+import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
 import com.simplecityapps.localmediaprovider.local.provider.scannerUnreadableRoots
 import com.simplecityapps.localmediaprovider.local.provider.toSong
@@ -92,7 +94,8 @@ class TaglibMediaProvider(
                 files.map { file -> file to folderImageReader.imagesNear(file.path) }
             }
         val songs = mutableListOf<Song>()
-        merge(getSongs(filesWithImages), getExtraSongs(extraDocuments))
+        val merger = LocalFileTagMerger(existingSongs)
+        merge(getSongs(filesWithImages, merger), getExtraSongs(extraDocuments, merger))
             .collectIndexed { index, song ->
                 emit(
                     FlowEvent.Progress(
@@ -109,7 +112,7 @@ class TaglibMediaProvider(
                 )
                 songs.add(song)
             }
-        Timber.i("Read ${songs.size} of ${files.size} MediaStore audio files and ${extraDocuments.size} extra folder files in ${System.currentTimeMillis() - startTime}ms")
+        Timber.i("Found ${songs.size} of ${files.size} MediaStore audio files and ${extraDocuments.size} extra folder files in ${System.currentTimeMillis() - startTime}ms")
         emit(FlowEvent.Success(songs))
     }
 
@@ -158,7 +161,13 @@ class TaglibMediaProvider(
         val excludes = FolderFilter(excludes = folders.filter.excludes)
         val statuses =
             folders.extraTrees
-                .map { treeUri -> SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri) }
+                .map { treeUri ->
+                    // An excluded folder covers everything beneath it, so it isn't walked at all
+                    SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri) { folder ->
+                        val path = externalStorageTreeFolder(folder.uri.authority, folder.documentId, primaryStoragePath)
+                        path != null && !excludes.accepts("$path/")
+                    }
+                }
                 .merge()
                 .toList()
         val documents =
@@ -178,16 +187,30 @@ class TaglibMediaProvider(
     private fun primaryStoragePath(): String = Environment.getExternalStorageDirectory().path
 
     /** Songs read from SAF documents keep their document URI as their path, which the tag editor writes through. */
-    private fun getExtraSongs(documents: List<DocumentNode>): Flow<Song> = documents
+    private fun getExtraSongs(
+        documents: List<DocumentNode>,
+        merger: LocalFileTagMerger
+    ): Flow<Song> = documents
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { node ->
-            fileScanner.getAudioFile(context, kTagLib, node.uri)?.toSong(type, emptyList())
+            // SAF reports 0 for a modified date it doesn't have, which can't say whether the file changed
+            node.takeIf { it.lastModified > 0 }?.let { merger.unchangedSong(it.uri.toString(), it.size, it.lastModified) }
+                ?: fileScanner.getAudioFile(context, kTagLib, node)?.toSong(type, emptyList())
         }.mapNotNull { it }
 
-    private fun getSongs(files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>): Flow<Song> = files
+    private fun getSongs(
+        files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>,
+        merger: LocalFileTagMerger
+    ): Flow<Song> = files
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (file, folderImages) ->
-            readAudioFile(file)?.toSong(type, folderImages)
+            val unchanged = merger.unchangedSong(file.path, file.size, file.lastModified)
+            if (unchanged != null) {
+                // The file's tags are unchanged, but a cover next to it may not be
+                unchanged.copy(id = 0, artworkVersion = localArtworkVersion(file.lastModified, folderImages))
+            } else {
+                readAudioFile(file)?.toSong(type, folderImages)
+            }
         }.mapNotNull { it }
 
     private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {

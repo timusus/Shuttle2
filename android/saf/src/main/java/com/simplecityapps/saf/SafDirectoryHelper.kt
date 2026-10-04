@@ -21,18 +21,21 @@ object SafDirectoryHelper {
      * Ends with [TreeStatus.Complete], or [TreeStatus.Unavailable] if any folder of the tree can't be listed (its access
      * was revoked, its volume isn't mounted): a partial tree would look like one whose files were deleted.
      *
+     * A folder [skipFolder] returns true for is left out of the tree, and its contents aren't queried.
+     *
      * This task is resource intensive. Should be called from a background thread.
      */
     fun buildFolderNodeTree(
         contentResolver: ContentResolver,
-        rootUri: Uri
+        rootUri: Uri,
+        skipFolder: (DocumentNodeTree) -> Boolean = { false }
     ): Flow<TreeStatus> = flow {
         val tree =
             try {
                 val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
                 val rootDocumentNode = retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull() ?: throw FileNotFoundException("No root document")
                 DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType).also { tree ->
-                    traverseDocumentNodes(tree, contentResolver, rootUri)
+                    traverseDocumentNodes(tree, contentResolver, rootUri, skipFolder)
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -47,12 +50,13 @@ object SafDirectoryHelper {
     private suspend fun traverseDocumentNodes(
         parent: DocumentNodeTree,
         contentResolver: ContentResolver,
-        rootUri: Uri
+        rootUri: Uri,
+        skipFolder: (DocumentNodeTree) -> Boolean
     ) {
         val documentNodes = retrieveDocumentNodes(contentResolver, DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, parent.documentId), rootUri)
         for (documentNode in documentNodes) {
             when (documentNode) {
-                is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
+                is DocumentNodeTree -> if (!skipFolder(documentNode)) traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri, skipFolder)
 
                 else -> {
                     if (documentNode.mimeType.startsWith("audio")) {

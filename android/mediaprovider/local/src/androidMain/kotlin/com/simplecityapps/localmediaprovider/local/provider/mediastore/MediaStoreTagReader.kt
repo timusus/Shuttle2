@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FileTags
+import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.Song
@@ -60,30 +61,11 @@ internal fun List<Song>.withFileTags(
     readUnchanged: Boolean,
     concurrency: Int = (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
 ): Flow<Song> {
-    val existingSongsByPath = existingSongs.associateBy { it.path }
+    val merger = LocalFileTagMerger(existingSongs, readUnchanged)
     return asFlow().concurrentMap(concurrency) { song ->
-        val existingSong = existingSongsByPath[song.path]
-        if (!readUnchanged && existingSong != null && existingSong.lastModified == song.lastModified && existingSong.size == song.size) {
-            song.copy(
-                name = existingSong.name,
-                artists = existingSong.artists,
-                albumArtist = existingSong.albumArtist,
-                album = existingSong.album,
-                track = existingSong.track,
-                disc = existingSong.disc,
-                date = existingSong.date,
-                replayGainTrack = existingSong.replayGainTrack,
-                replayGainAlbum = existingSong.replayGainAlbum,
-                albumArtists = existingSong.albumArtists,
-                artistsTag = existingSong.artistsTag,
-                artistDisplay = existingSong.artistDisplay,
-                compilation = existingSong.compilation,
-                mbTrackId = existingSong.mbTrackId,
-                mbAlbumId = existingSong.mbAlbumId,
-                mbReleaseGroupId = existingSong.mbReleaseGroupId,
-                mbArtistIds = existingSong.mbArtistIds,
-                mbAlbumArtistIds = existingSong.mbAlbumArtistIds
-            )
+        val existingSong = song.lastModified?.let { merger.unchangedSong(song.path, song.size, it.toEpochMilliseconds()) }
+        if (existingSong != null) {
+            with(merger) { song.withStoredTags(existingSong) }
         } else {
             song.withFileTags(reader)
         }
