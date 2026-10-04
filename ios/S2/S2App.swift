@@ -28,8 +28,11 @@ struct S2App: App {
                     case .active:
                         LibraryImport.syncIfStale()
                         Task { await LibraryImport.whenLocalFilesChange() }
+                        // Scrobbles queued while offline or suspended
+                        AppGraph.shared.scrobbleFlushScheduler.scheduleFlush()
                     case .background:
                         BackgroundRefresh.schedule()
+                        ScrobbleFlush.schedule()
                     default:
                         break
                     }
@@ -37,6 +40,9 @@ struct S2App: App {
         }
         .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
             await BackgroundRefresh.run()
+        }
+        .backgroundTask(.appRefresh(ScrobbleFlush.identifier)) {
+            await ScrobbleFlush.run()
         }
     }
 }

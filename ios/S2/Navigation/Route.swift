@@ -52,6 +52,8 @@ enum Route: Hashable, Codable {
     case server(type: String)
     /// The equalizer (Android's `EqualizerRoute`), pushed from Settings' Equalizer row.
     case equalizer
+    /// Last.fm scrobbling (Android's `ScrobblingRoute`), pushed from Settings' Scrobbling row.
+    case scrobbling
 
     /// The `ViewModelCache` key for the screen this route resolves to (`ios.md`, "Swift ↔ Kotlin").
     var cacheKey: String {
@@ -65,6 +67,7 @@ enum Route: Hashable, Codable {
         case .sources: "sources"
         case .server(let type): "server:\(type)"
         case .equalizer: "equalizer"
+        case .scrobbling: "scrobbling"
         }
     }
 }

@@ -50,12 +50,13 @@ targets:
         product: Sentry
       - package: PostHog
         product: PostHog
-    # The telemetry keys: Config/Telemetry.xcconfig includes the gitignored file
-    # scripts/generate-telemetry-config.sh writes (build-framework.sh runs it). Without it the keys are empty and
-    # neither SDK starts.
+    # The telemetry and Last.fm keys: Config/S2.xcconfig includes Telemetry.xcconfig and LastFm.xcconfig, which
+    # include the gitignored files scripts/generate-telemetry-config.sh and generate-lastfm-config.sh write
+    # (build-framework.sh runs both). Without them the keys are empty: neither telemetry SDK starts, and scrobbling
+    # is off.
     configFiles:
-      Debug: Config/Telemetry.xcconfig
-      Release: Config/Telemetry.xcconfig
+      Debug: Config/S2.xcconfig
+      Release: Config/S2.xcconfig
     # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
     # generated keys below (GENERATE_INFOPLIST_FILE stays on).
     info:
@@ -67,7 +68,7 @@ targets:
         # Keep playing with the screen locked or the app in the background (#588), and sync the servers daily in the
         # background (#771, BackgroundRefresh.swift).
         UIBackgroundModes: [audio, fetch]
-        BGTaskSchedulerPermittedIdentifiers: [com.simplecityapps.shuttle.sync]
+        BGTaskSchedulerPermittedIdentifiers: [com.simplecityapps.shuttle.sync, com.simplecityapps.shuttle.scrobble]
         # This device's music (#590): Documents shows in Files ("On My iPhone > Shuttle Music") and Finder's file
         # sharing, so music can be copied in, and files opened there are read in place.
         UIFileSharingEnabled: true
@@ -89,6 +90,10 @@ targets:
         S2SentryDSN: $(S2_SENTRY_DSN)
         S2PostHogAPIKey: $(S2_POSTHOG_API_KEY)
         S2PostHogHost: $(S2_POSTHOG_HOST)
+        # Read by IosScrobblingModule (#503); empty unless the generated Config/LastFm.local.xcconfig sets them, and
+        # then the Scrobbling settings row is hidden.
+        S2LastFmApiKey: $(S2_LASTFM_API_KEY)
+        S2LastFmSharedSecret: $(S2_LASTFM_SHARED_SECRET)
     settings:
       base:
         # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).

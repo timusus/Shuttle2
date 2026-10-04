@@ -16,3 +16,17 @@
 "settings_debug_generated_artwork" = "Use generated artwork";
 "settings_debug_generated_artwork_footer" = "Replaces covers with generated artwork, for screenshots. Covers already on screen change when they next load.";
 "settings_cancel" = "Cancel";
+"settings_ok" = "OK";
+"scrobbling_lastfm" = "Last.fm";
+"scrobbling_lastfm_signed_out" = "Not signed in";
+"scrobbling_lastfm_signed_in" = "Signed in as %@";
+"scrobbling_lastfm_awaiting" = "Approve Shuttle Music on last.fm, then come back here";
+"scrobbling_sign_in" = "Sign in";
+"scrobbling_finish_sign_in" = "I've approved it";
+"scrobbling_sign_out" = "Sign out";
+"scrobbling_server_streams_title" = "Scrobble server streams too";
+"scrobbling_server_streams_summary" = "Also scrobble Jellyfin, Emby and Plex songs, even when your server already does. This can count a play twice.";
+"scrobbling_not_approved" = "Last.fm hasn't seen your approval yet";
+"scrobbling_expired" = "That sign-in expired. Please try again";
+"scrobbling_failed" = "Couldn't reach Last.fm. Check your connection and try again";
+"scrobbling_attribution" = "Scrobbling powered by AudioScrobbler";

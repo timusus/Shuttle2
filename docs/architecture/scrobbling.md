@@ -81,6 +81,25 @@ LASTFM_SHARED_SECRET=...
 Register an API account at <https://www.last.fm/api/account/create> to get both. A build without them has empty
 values: `LastFmAccountState.Unavailable`, and Settings hides the Scrobbling row.
 
+On iOS, `ios/scripts/generate-lastfm-config.sh` (run by `build-framework.sh`) reads the same two names from the
+environment, `local.properties` (the primary checkout's, from a worktree), the Gradle user home's
+`gradle.properties`, or `~/.config/s2-lastfm/ios.env`, and writes the gitignored `ios/Config/LastFm.local.xcconfig`.
+`project.yml` puts them in Info.plist as `S2LastFmApiKey` and `S2LastFmSharedSecret`, which :shared's
+`IosScrobblingModule` reads.
+
+## iOS
+
+`:android:scrobbling` is a KMP module: the planner, `PlaybackScrobbling` (the wiring to playback that
+`ScrobblingInitializer` starts on Android), the Last.fm client and sign-in, the Room queue and the flush logic
+(`ScrobbleFlusher`) are commonMain. Android flushes through `WorkManagerScrobbleFlushScheduler` and the thin
+`ScrobbleFlushWorker`; iOS binds `InProcessScrobbleFlushScheduler` (:shared's `IosScrobblingModule`), which sends
+after each queued scrobble while online, retries with backoff, and never runs two sends at once. The app also
+sends on every return to the foreground and from a `BGAppRefreshTask` (`ScrobbleFlush`,
+`com.simplecityapps.shuttle.scrobble`) asked for each time it leaves the foreground. The session lives in the
+Keychain (`SecurePreferenceLastFmSessionStore` over :shared's Keychain-backed `SecurePreferenceManager`). `ScrobblingView` is the screen, pushed from Settings
+and the player's Playback Settings; it finishes sign-in on the first activation after the app went to the
+background while awaiting approval.
+
 ## Slices
 
 Each lands with JVM tests, verified by `unit-test --changed` and `assembleDebug`.
@@ -90,7 +109,7 @@ Each lands with JVM tests, verified by `unit-test --changed` and `assembleDebug`
    `QueuedScrobbleEntity`; one row per service, unique on service, startedAt, track), capped at
    `ScrobbleQueue.MAX_QUEUE_SIZE` (5,000 rows, oldest dropped on enqueue via
    `ScrobbleDao.trimToNewest`). `ScrobbleFlushWorker` (a unique WorkManager job,
-   `NetworkType.CONNECTED`, exponential backoff) drains it oldest first, 50 per `track.scrobble`
+   `NetworkType.CONNECTED`, exponential backoff) runs `ScrobbleFlusher`, which drains it oldest first, 50 per `track.scrobble`
    call for Last.fm. It deletes accepted rows and rows Last.fm permanently rejects
    (`ignoredMessage.code != "0"`), leaves rows alone and asks WorkManager to retry on a transient
    error code or HTTP failure, drops rows on an unrecoverable error code, and drops rows older than

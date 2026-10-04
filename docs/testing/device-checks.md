@@ -393,3 +393,10 @@ previous and new outputs, and where each pause came from.
 - [ ] Download a song, Remove Download, then at once Download it again. It ends up Downloaded exactly once and plays offline; the removed copy does not reappear or cancel the new one.
 - [ ] Download a song that is already downloaded again (or Download from an album that contains it). The song stays playable throughout, with no duplicate or empty file, and plays offline afterwards.
 - [ ] With a song downloaded, let the trial lapse (or use a sandbox account without Pro) and play it: it plays, offline too. A song that is not downloaded opens the paywall (#858).
+
+## iOS Last.fm scrobbling (#503)
+- [ ] iOS build with the Last.fm keys: Settings > Playback & sound shows Scrobbling; a build without them hides the row.
+- [ ] Scrobbling > Sign in opens last.fm in Safari. Approve, switch back: the screen reads "Signed in as <name>" without tapping anything. Pulling down Notification Centre while awaiting approval does not try to finish.
+- [ ] Play a song past half its length (or 4 minutes): it appears on the last.fm profile within a minute, and Now Playing shows there while it plays.
+- [ ] In airplane mode, play two songs through, then turn the network back on and reopen the app: both scrobbles arrive once, with their original times.
+- [ ] Sign out: the screen reads "Not signed in", and later plays don't reach last.fm.

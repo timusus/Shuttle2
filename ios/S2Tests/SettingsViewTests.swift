@@ -50,6 +50,18 @@ struct SettingsViewTests {
         #expect(equalizer.rows == [.link(id: "settings.equalizer", title: "Equalizer", systemImage: "slider.vertical.3", route: .equalizer, summary: "Flat")])
     }
 
+    /// #503: the Scrobbling row pushes the Scrobbling screen, in its own section after Replay Gain, and a build without
+    /// Last.fm keys leaves it out.
+    @Test func theScrobblingRowShowsOnlyWhenLastFmIsConfigured() throws {
+        func sections(lastFmConfigured: Bool) -> [SettingsSection] {
+            SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, lastFmConfigured: lastFmConfigured, events: []))
+        }
+        let scrobbling = try #require(sections(lastFmConfigured: true).dropFirst(3).first)
+
+        #expect(scrobbling.rows == [.link(id: "settings.scrobbling", title: "Scrobbling", systemImage: "dot.radiowaves.up.forward", route: .scrobbling)])
+        #expect(!sections(lastFmConfigured: false).flatMap(\.rows).contains { $0.id == "settings.scrobbling" })
+    }
+
     @Test func aSectionsFooterShowsBeneathIt() throws {
         let sut = SettingsContent(sections: [SettingsSection(id: "rg", title: "Replay Gain", rows: [], footer: "Explained")])
         #expect((try? sut.inspect().find(text: "Explained")) != nil)

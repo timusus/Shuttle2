@@ -17,3 +17,5 @@ TestResults/
 
 # Telemetry keys, written by scripts/generate-telemetry-config.sh (#776)
 Config/Telemetry.local.xcconfig
+# Last.fm API key and secret, written by scripts/generate-lastfm-config.sh (#503)
+Config/LastFm.local.xcconfig

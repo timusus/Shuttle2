@@ -37,6 +37,8 @@ struct RouteDestinationView: View {
             SmartPlaylistDetailView(id: id)
         case .equalizer:
             EqualizerView()
+        case .scrobbling:
+            ScrobblingView()
         }
     }
 }

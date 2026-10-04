@@ -73,6 +73,7 @@ struct ScreenshotHooksModifier: ViewModifier {
             switch query["to"] {
             case "sources": navigator.open(.sources)
             case "equalizer": navigator.open(.equalizer)
+            case "scrobbling": navigator.open(.scrobbling)
             default: Self.log.error("unknown route \(query["to"] ?? "", privacy: .public)")
             }
         case "settings":

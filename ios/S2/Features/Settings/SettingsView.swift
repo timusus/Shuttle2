@@ -5,7 +5,8 @@ import SwiftUI
 /// Presented as a sheet from the gear on the Home and Library roots (`AppShell`), with its own `NavigationStack`
 /// on `Navigator.settingsPath`, so the Sources row pushes Sources (and its sign-in) inside the sheet. The catalog
 /// holds only the rows iOS acts on; what it leaves out, and why, is on `IosSettingsCatalog`. The Equalizer row pushes
-/// `EqualizerView` the same way. ReplayGain's pre-amp is its own section, labelled and explained apart from the
+/// `EqualizerView` the same way, and the Scrobbling row `ScrobblingView` (left out of a build without Last.fm keys,
+/// `SettingsUiState.lastFmConfigured`). ReplayGain's pre-amp is its own section, labelled and explained apart from the
 /// Equalizer's Preamp (#645).
 struct SettingsView: View {
     /// The shared view model's cache key, and the catalog screens to show (nil: all of them, with About). The Audio
@@ -83,7 +84,7 @@ struct SettingsSection: Equatable, Identifiable {
 
 /// One row, in plain values: what it draws and the key its callback carries back.
 enum SettingsRow: Equatable, Identifiable {
-    /// Pushes another screen: Sources, from the Sources section, and the Equalizer.
+    /// Pushes another screen: Sources, from the Sources section, the Equalizer and Scrobbling.
     case link(id: String, title: String, systemImage: String, route: Route, summary: String? = nil)
     case toggle(key: String, title: String, summary: String?, isOn: Bool, isEnabled: Bool)
     case choice(key: String, title: String, options: [String], selected: Int, isEnabled: Bool)
@@ -110,14 +111,16 @@ extension SettingsSection {
     /// The catalog's screens as sections: each screen opens with a section under its own title (holding its first
     /// group, if that group is untitled), and every titled group is a section of its own. The Sources screen's
     /// opening section leads with the row that pushes Sources. A Navigate row is a link when iOS has its screen (the
-    /// Equalizer) and left out otherwise, rather than drawn as a row that does nothing.
+    /// Equalizer, Scrobbling) and left out otherwise, rather than drawn as a row that does nothing. Scrobbling is left
+    /// out too in a build without Last.fm keys.
     static func sections(
         catalog: SettingsCatalog,
         state: SettingsUiState,
         rescanStarted: Bool = false,
         destinations: Set<SettingsDestination>? = nil
     ) -> [SettingsSection] {
-        catalog.screens.flatMap { screen -> [SettingsSection] in
+        catalog.screens.flatMap { catalogScreen -> [SettingsSection] in
+            let screen = state.lastFmConfigured ? catalogScreen : catalogScreen.withoutScrobbling()
             let destination = screen.destination
             guard destinations?.contains(destination) ?? true else { return [] }
             var opening = SettingsSection(id: destination.name, title: destination.title.localized(), rows: [])
@@ -191,6 +194,8 @@ extension SettingsSection {
             )
         case let link as SettingItemNavigate where link.target == .equalizer:
             return .link(id: "settings.equalizer", title: title, systemImage: "slider.vertical.3", route: .equalizer, summary: state.equalizerSummary.localized())
+        case let link as SettingItemNavigate where link.target == .scrobbling:
+            return .link(id: "settings.scrobbling", title: title, systemImage: "dot.radiowaves.up.forward", route: .scrobbling)
         default:
             return nil
         }
@@ -374,6 +379,7 @@ struct SettingsIcon: Equatable {
         (systemImage, color) = switch id {
         case "settings.sources": ("server.rack", .blue)
         case "settings.equalizer": ("slider.vertical.3", .pink)
+        case "settings.scrobbling": ("dot.radiowaves.up.forward", .red)
         case "pref_retain_shuffle_on_new_queue": ("shuffle", .orange)
         case "replaygain_mode": ("waveform", .purple)
         case "preamp_gain": ("speaker.wave.2.fill", .indigo)

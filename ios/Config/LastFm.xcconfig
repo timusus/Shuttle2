@@ -1,0 +1,8 @@
+// The Last.fm API key and shared secret the S2 target's Info.plist reads (S2LastFmApiKey, S2LastFmSharedSecret; #503).
+// Empty here, so a checkout without them builds with scrobbling off and its Settings row hidden.
+// ios/scripts/generate-lastfm-config.sh writes the real values into LastFm.local.xcconfig, which is gitignored and
+// never committed.
+S2_LASTFM_API_KEY =
+S2_LASTFM_SHARED_SECRET =
+
+#include? "LastFm.local.xcconfig"

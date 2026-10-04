@@ -5,6 +5,7 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.simplecityapps.shuttle.sync</string>
+		<string>com.simplecityapps.shuttle.scrobble</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
@@ -33,6 +34,10 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Shuttle Music uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network.</string>
+	<key>S2LastFmApiKey</key>
+	<string>$(S2_LASTFM_API_KEY)</string>
+	<key>S2LastFmSharedSecret</key>
+	<string>$(S2_LASTFM_SHARED_SECRET)</string>
 	<key>S2PostHogAPIKey</key>
 	<string>$(S2_POSTHOG_API_KEY)</string>
 	<key>S2PostHogHost</key>

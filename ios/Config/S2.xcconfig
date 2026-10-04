@@ -1,0 +1,4 @@
+// The S2 target's base configuration: each file below holds one service's keys, empty unless its gitignored
+// *.local.xcconfig (written by build-framework.sh's generate-*-config.sh scripts) sets them.
+#include "Telemetry.xcconfig"
+#include "LastFm.xcconfig"

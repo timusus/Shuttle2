@@ -23,7 +23,7 @@ import platform.Foundation.NSBundle
  * The queue's database sits next to the library's (in memory for an isolated graph, like it), the client is Darwin's,
  * and flushes run in-process ([InProcessScrobbleFlushScheduler]): Swift also asks for one on foreground and from a
  * `BGAppRefreshTask`. The API key and secret come from Info.plist (`S2LastFmApiKey`, `S2LastFmSharedSecret`, set from
- * `ios/Config/LastFm.xcconfig`); a build without them hides the Scrobbling row. The session sits in the Keychain
+ * `ios/Config/LastFm.xcconfig`, filled by `ios/scripts/generate-lastfm-config.sh`); a build without them hides the Scrobbling row. The session sits in the Keychain
  * through `SecurePreferenceManager`, as on Android.
  */
 @ContributesTo(AppScope::class)

@@ -21,7 +21,8 @@ enum AppGraph {
     }
 
     /// Builds the graph, applies the crash reporting and analytics choices before anything else runs, then starts the
-    /// playback system, the recording of plays and their reporting to the server. Call once, from `S2App.init`.
+    /// playback system, the recording of plays, their reporting to the server and their scrobbling to Last.fm. Call
+    /// once, from `S2App.init`.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
@@ -29,6 +30,7 @@ enum AppGraph {
         dependencies.graph.telemetryStartup.start()
         dependencies.playbackSystem.start()
         dependencies.graph.recordPlays.start()
+        dependencies.graph.playbackScrobbling.start()
         dependencies.graph.recordResumePoints.start()
         dependencies.graph.playbackReporting.start()
         dependencies.graph.favouriteSender.start()

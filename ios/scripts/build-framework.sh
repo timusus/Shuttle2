@@ -2,7 +2,7 @@
 # Links Shared.framework (the :shared KMP module) for the Xcode project in ios/. Run it before every
 # Xcode build that follows a Kotlin change: Xcode links whatever framework is on disk and never rebuilds it.
 # It installs the FFmpeg frameworks first (ios/scripts/build-ffmpeg.sh), which S2Playback needs, and writes the
-# telemetry keys' xcconfig (ios/scripts/generate-telemetry-config.sh).
+# telemetry and Last.fm keys' xcconfigs (ios/scripts/generate-telemetry-config.sh, generate-lastfm-config.sh).
 #
 #   ios/scripts/build-framework.sh              # Debug, simulator (the default dev loop)
 #   ios/scripts/build-framework.sh --device     # Debug, device (iosArm64)
@@ -38,5 +38,7 @@ cd "$repo_root"
 ios/scripts/build-ffmpeg.sh
 # The Sentry and PostHog keys, from the environment or ~/.config/s2-telemetry/ios.env, into a gitignored xcconfig
 ios/scripts/generate-telemetry-config.sh
+# The Last.fm API key and secret, from the environment, local.properties or ~/.config/s2-lastfm/ios.env
+ios/scripts/generate-lastfm-config.sh
 echo "==> ./gradlew ${tasks[*]}"
 ./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}

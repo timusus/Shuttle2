@@ -86,6 +86,7 @@
 "settings_crossfade_seconds" = "%1$d s";
 "settings_state_off" = "Off";
 "pref_report_playback_title" = "Report playback to server";
+"settings_scrobbling_title" = "Scrobbling";
 "pref_report_playback_summary" = "Show what you're playing on your Jellyfin, Emby or Plex server, and count plays in its history";
 "pref_download_wifi_only_title" = "Download on Wi-Fi only";
 "pref_download_wifi_only_summary" = "Offline downloads wait for Wi-Fi";
