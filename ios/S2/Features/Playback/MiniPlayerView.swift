@@ -289,6 +289,9 @@ private struct MiniPlayerAccessoryContent: View {
         bar.row(coverSize: MiniPlayerBar.accessoryCover, showsArtist: !isInline, showsNext: !isInline)
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
+            // The glass is clear over what scrolls under it: over pale art it went pale and the primary label
+            // washed out. A thin material under the row gives it a steady ground (#786).
+            .background(.thinMaterial, in: Capsule())
     }
 }
 
