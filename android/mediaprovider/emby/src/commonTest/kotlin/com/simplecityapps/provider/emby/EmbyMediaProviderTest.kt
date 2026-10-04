@@ -307,7 +307,31 @@ class EmbyMediaProviderTest {
 
         provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
-        server.requestsTo(ITEMS).single().url.parameters["MinDateLastSaved"] shouldBe "2026-10-01T08:00:00Z"
+        server.requestsTo(ITEMS).filter { it.url.parameters["Filters"] == null }.single().url.parameters["MinDateLastSaved"] shouldBe "2026-10-01T08:00:00Z"
+    }
+
+    @Test
+    fun `an incremental sync brings the favourites changed on the server, which don't count as a change to the song`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        val stored = sync().map { song -> if (song.path == "emby://item/101") song.copy(favouritedAt = Instant.parse("2026-09-01T00:00:00Z")) else song }
+        server.respond(ITEMS, "empty.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, "favourites.json", query = mapOf("Filters" to "IsFavorite"))
+
+        val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        songs.associate { song -> song.path to (song.favouritedAt != null) } shouldBe mapOf("emby://item/101" to false, "emby://item/102" to true)
+    }
+
+    @Test
+    fun `an incremental sync whose favourites fail to load leaves them as they are`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        val stored = sync()
+        server.respond(ITEMS, "empty.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, code = 500, query = mapOf("Filters" to "IsFavorite"))
+
+        provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.shouldBeEmpty()
     }
 
     @Test

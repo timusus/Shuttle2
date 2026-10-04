@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
+import com.simplecityapps.mediaprovider.server.withFavouriteChanges
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
@@ -19,6 +20,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -39,15 +41,22 @@ class PlexMediaProvider(
 
     private val logger = Logger.tagged("PlexMediaProvider")
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since = null)
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since = null)
 
     override fun findSongsChangedSince(
         existingSongs: List<Song>,
         since: Instant
-    ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since)
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since)
 
-    /** Every track of every music section, or with [since] only those updated on the server at or after it. */
-    private fun findSongs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    /**
+     * Every track of every music section, or with [since] only those updated on the server at or after it, plus those
+     * of [existingSongs] whose favourite changed on the server: rating a track doesn't change its updatedAt (#497).
+     */
+    private fun findSongs(
+        existingSongs: List<Song>,
+        since: Instant?
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        val syncedAt = Clock.System.now()
         when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
                 // A server can hold several music libraries, whatever they're called; they're the sections of type "artist"
@@ -59,8 +68,17 @@ class PlexMediaProvider(
                     emitAll(
                         queryAllSections(address, credentials, sections, since).map { event ->
                             when (event) {
-                                is FlowEvent.Success -> FlowEvent.Success(event.result.map { metadata -> metadata.toSong(type) })
+                                is FlowEvent.Success -> {
+                                    val songs = event.result.map { metadata -> metadata.toSong(type, syncedAt) }
+                                    if (since == null) {
+                                        FlowEvent.Success(songs)
+                                    } else {
+                                        FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favourites(address, credentials, sections, syncedAt)))
+                                    }
+                                }
+
                                 is FlowEvent.Progress -> FlowEvent.Progress(event.data)
+
                                 is FlowEvent.Failure -> FlowEvent.Failure(event.message)
                             }
                         }
@@ -134,17 +152,30 @@ class PlexMediaProvider(
         ?: authenticationManager.getLoginCredentials()
             ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() }
 
+    /** When each of the user's favourite tracks in [sections] was favourited, by song path, or null if they couldn't be fetched. */
+    private suspend fun favourites(
+        address: String,
+        credentials: AuthenticatedCredentials,
+        sections: List<String>,
+        syncedAt: Instant
+    ): Map<String, Instant>? {
+        val event = queryAllSections(address, credentials, sections, since = null, favouritesOnly = true).last()
+        // Checked again here, so a server that ignored the filter can't make every track a favourite
+        return (event as? FlowEvent.Success)?.result?.mapNotNull { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } }?.toMap()
+    }
+
     /** Every track of every one of [sections], emitted as one [FlowEvent.Success] after the sections' progress. A failed section ends the flow. */
     private fun queryAllSections(
         address: String,
         credentials: AuthenticatedCredentials,
         sections: List<String>,
-        since: Instant?
+        since: Instant?,
+        favouritesOnly: Boolean = false
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = flow {
         val items = mutableListOf<Metadata>()
         for (section in sections) {
             var failed = false
-            queryItems(address, credentials, section, since).collect { event ->
+            queryItems(address, credentials, section, since, favouritesOnly).collect { event ->
                 when (event) {
                     is FlowEvent.Success -> items.addAll(event.result)
 
@@ -165,7 +196,8 @@ class PlexMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         section: String,
-        since: Instant?
+        since: Instant?,
+        favouritesOnly: Boolean
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow { offset, limit ->
         authenticationManager.checkSession(
             credentials,
@@ -175,7 +207,8 @@ class PlexMediaProvider(
                 section = section,
                 offset = offset,
                 limit = limit,
-                updatedSince = since
+                updatedSince = since,
+                favouritesOnly = favouritesOnly
             )
         ).map { it.toPage() }
     }
@@ -183,7 +216,11 @@ class PlexMediaProvider(
 
 private fun QueryResult.toPage() = Page(mediaContainer.metadata.orEmpty(), mediaContainer.totalSize)
 
-internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
+/** [syncedAt] is when the sync that read the track started: a favourite's time when the server sends none. */
+internal fun Metadata.toSong(
+    type: MediaProviderType,
+    syncedAt: Instant
+): Song = Song(
     id = guid.hashCode().toLong(),
     name = title,
     albumArtist = grandparentTitle,
@@ -195,7 +232,7 @@ internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     duration = duration?.toInt() ?: 0,
     date = year?.let { LocalDate(it, 1, 1) },
     genres = emptyList(),
-    path = "plex://$key",
+    path = songPath,
     size = media.firstOrNull()?.parts?.firstOrNull()?.size ?: 0L,
     mimeType = "Audio/*",
     // When the song was added, like the Jellyfin and Emby DateCreated; updatedAt moves on every metadata refresh
@@ -230,6 +267,13 @@ internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     serverAlbumId = parentRatingKey,
     // The track's own artist (originalTitle) has no id of its own; without one, the track's artist is the album's
     serverArtistIds = if (originalTitle == null) listOfNotNull(grandparentRatingKey) else emptyList(),
-    serverAlbumArtistIds = listOfNotNull(grandparentRatingKey)
+    serverAlbumArtistIds = listOfNotNull(grandparentRatingKey),
+    favouritedAt = favouritedAt(syncedAt)
     // No artworkVersion: Plex songs have no server artwork loader, only the S2 artwork API, whose cache is keyed by URL
 )
+
+internal val Metadata.songPath: String
+    get() = "plex://$key"
+
+/** A track rated 10 (5 stars) is a favourite, from when it was rated, or [syncedAt] if the server doesn't say. */
+private fun Metadata.favouritedAt(syncedAt: Instant): Instant? = if (userRating == 10.0) lastRatedAt?.let(Instant::fromEpochSeconds) ?: syncedAt else null

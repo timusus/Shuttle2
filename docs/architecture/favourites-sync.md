@@ -13,8 +13,6 @@ enqueue.
 | Column | Meaning |
 |---|---|
 | `songId` (PK) | The local song row. Foreign key to `songs.id`, `ON DELETE CASCADE` — a row is removed with its song. |
-| `mediaProvider` | Copied from the song at write time, so a later push knows which server API to call. |
-| `externalId` | The server's item id for the song, copied at write time so the writer doesn't need to look the song back up. |
 | `favourite` | The desired state to push: `true` to favourite, `false` to unfavourite. |
 | `changedAt` | When the toggle was made locally. |
 
@@ -27,20 +25,26 @@ The write happens inside `SongDataDao.setFavourite`, in the same `@Transaction` 
 song's original `favouritedAt` rather than stamping now) — so the outbox can never disagree with
 the column it describes.
 
+## Pull and merge (Room v53)
+
+Each provider's `toSong()` maps the server's favourite into `favouritedAt`: Jellyfin and Emby
+`UserData.IsFavorite` (the items listing asks for user data), at the sync's start time since the
+server keeps none; Plex `userRating == 10`, at `lastRatedAt`. `SongDataDao.insertUpdateAndDelete`
+merges it for remote-provider updates in the same transaction: a song with a `pending_favourites`
+row keeps its local value; otherwise the server wins, and a server favourite keeps an existing
+local timestamp. Inserts take the server value as is. MediaStore and TagLib songs are never
+touched. v53 dropped `pending_favourites.mediaProvider` and `externalId`, which nothing read.
+
+A favourite change doesn't move what the incremental listing filters on (Jellyfin/Emby
+`DateLastSaved`: user data lives apart from the item; Plex `updatedAt`), so each incremental pass
+also fetches the favourites alone (Jellyfin/Emby `Filters=IsFavorite`, Plex `userRating=10`) and
+`withFavouriteChanges` (`mediaprovider:server`) adds the stored songs whose favourite differs
+from that set. If the fetch fails the pass goes on without it; the next one fetches the whole set
+again. A full pass reads every song's favourite from the listing itself.
+
 ## Remaining slices
 
-1. **Writers.** A `FavouriteWriter` interface in `mediaprovider:core` (`handles(song)`,
-   `suspend fun set(song, favourite): Result` — Ok/Gone/Retry), modelled on `PlaybackReporter`,
-   with Jellyfin/Emby/Plex implementations and an aggregate. A `FavouriteSender` in `app`,
-   modelled on `PlaybackReportSender`, drains `pending_favourites` on app start, on the table
-   changing, and at the start of each library import; a 2xx or 404 deletes the row, anything else
-   is retried on the next trigger.
-2. **Pull + merge.** Each provider's `toSong()` maps the server's favourite (Jellyfin/Emby
-   `UserData.IsFavorite`, Plex `userRating == 10`) into `favouritedAt`. The merge in
-   `insertUpdateAndDelete` runs for remote-provider updates only: a pending local toggle wins over
-   the server value; otherwise the server wins. `favouritedAt` for a server favourite keeps an
-   existing local timestamp, or uses Plex's `lastRatedAt` / the sync time for Jellyfin and Emby.
-3. **(Optional) UI.** A heart on song rows and in the actions sheet, plus a settings/empty-state
+1. **(Optional) UI.** A heart on song rows and in the actions sheet, plus a settings/empty-state
    line noting favourites sync to the server, and device checks in
    `docs/testing/device-checks.md`.
 

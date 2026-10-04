@@ -10,23 +10,23 @@ import kotlin.time.Instant
 class ItemToSongTest {
     @Test
     fun `the album's image tag becomes the song's artwork version`() {
-        parse(albumPrimaryImageTag = "tag-1").toSong().artworkVersion shouldBe "tag-1"
+        parse(albumPrimaryImageTag = "tag-1").toSong(SYNCED_AT).artworkVersion shouldBe "tag-1"
     }
 
     @Test
     fun `the artwork version is stable across identical syncs and changes with the image tag`() {
-        parse(albumPrimaryImageTag = "tag-1").toSong().artworkVersion shouldBe parse(albumPrimaryImageTag = "tag-1").toSong().artworkVersion
-        parse(albumPrimaryImageTag = "tag-1").toSong().artworkVersion shouldNotBe parse(albumPrimaryImageTag = "tag-2").toSong().artworkVersion
+        parse(albumPrimaryImageTag = "tag-1").toSong(SYNCED_AT).artworkVersion shouldBe parse(albumPrimaryImageTag = "tag-1").toSong(SYNCED_AT).artworkVersion
+        parse(albumPrimaryImageTag = "tag-1").toSong(SYNCED_AT).artworkVersion shouldNotBe parse(albumPrimaryImageTag = "tag-2").toSong(SYNCED_AT).artworkVersion
     }
 
     @Test
     fun `an album without an image has no artwork version`() {
-        parse(albumPrimaryImageTag = null).toSong().artworkVersion shouldBe null
+        parse(albumPrimaryImageTag = null).toSong(SYNCED_AT).artworkVersion shouldBe null
     }
 
     @Test
     fun `the song's dates are when it was added to the server`() {
-        val song = parse(dateCreated = "2024-03-01T12:34:56.1234567Z").toSong()
+        val song = parse(dateCreated = "2024-03-01T12:34:56.1234567Z").toSong(SYNCED_AT)
 
         song.dateAdded shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
         song.lastModified shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
@@ -34,8 +34,8 @@ class ItemToSongTest {
 
     @Test
     fun `a missing or unreadable date is left for the importer to fill in`() {
-        parse(dateCreated = null).toSong().run { lastModified to dateAdded } shouldBe (null to null)
-        parse(dateCreated = "not a date").toSong().run { lastModified to dateAdded } shouldBe (null to null)
+        parse(dateCreated = null).toSong(SYNCED_AT).run { lastModified to dateAdded } shouldBe (null to null)
+        parse(dateCreated = "not a date").toSong(SYNCED_AT).run { lastModified to dateAdded } shouldBe (null to null)
     }
 
     @Test
@@ -57,7 +57,7 @@ class ItemToSongTest {
                 """.trimIndent()
             )
 
-        val song = item.toSong()
+        val song = item.toSong(SYNCED_AT)
 
         song.artistsTag shouldBe listOf("A", "B")
         song.albumArtists shouldBe listOf("Various Artists")
@@ -75,7 +75,7 @@ class ItemToSongTest {
 
     @Test
     fun `an item without MusicBrainz tags has no MusicBrainz ids`() {
-        val song = parse().toSong()
+        val song = parse().toSong(SYNCED_AT)
 
         song.mbTrackId shouldBe null
         song.mbAlbumArtistIds shouldBe emptyList()
@@ -85,25 +85,37 @@ class ItemToSongTest {
     @Test
     fun `a lossless audio stream's bit depth becomes the song's`() {
         parse(mediaStreams = """[{"Type": "Video", "Codec": "mjpeg", "BitDepth": 8}, {"Type": "Audio", "Codec": "flac", "BitDepth": 24}]""")
-            .toSong().bitDepth shouldBe 24
+            .toSong(SYNCED_AT).bitDepth shouldBe 24
     }
 
     @Test
     fun `a lossy audio stream has no bit depth even when the server reports one`() {
-        parse(mediaStreams = """[{"Type": "Audio", "Codec": "mp3", "BitDepth": 16}]""").toSong().bitDepth shouldBe null
-        parse(mediaStreams = """[{"Type": "Audio", "Codec": "opus", "BitDepth": 32}]""").toSong().bitDepth shouldBe null
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "mp3", "BitDepth": 16}]""").toSong(SYNCED_AT).bitDepth shouldBe null
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "opus", "BitDepth": 32}]""").toSong(SYNCED_AT).bitDepth shouldBe null
     }
 
     @Test
     fun `a song without streams or a bit depth has none`() {
-        parse().toSong().bitDepth shouldBe null
-        parse(mediaStreams = """[{"Type": "Audio", "Codec": "flac"}]""").toSong().bitDepth shouldBe null
+        parse().toSong(SYNCED_AT).bitDepth shouldBe null
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "flac"}]""").toSong(SYNCED_AT).bitDepth shouldBe null
+    }
+
+    @Test
+    fun `a favourite on the server is a favourite as of the sync`() {
+        parse(isFavorite = true).toSong(SYNCED_AT).favouritedAt shouldBe SYNCED_AT
+    }
+
+    @Test
+    fun `a song the server doesn't hold as a favourite isn't one`() {
+        parse(isFavorite = false).toSong(SYNCED_AT).favouritedAt shouldBe null
+        parse(isFavorite = null).toSong(SYNCED_AT).favouritedAt shouldBe null
     }
 
     private fun parse(
         albumPrimaryImageTag: String? = "tag-1",
         dateCreated: String? = "2024-03-01T12:34:56.0000000Z",
-        mediaStreams: String? = null
+        mediaStreams: String? = null,
+        isFavorite: Boolean? = null
     ): Item {
         val fields =
             listOfNotNull(
@@ -120,8 +132,13 @@ class ItemToSongTest {
                 "\"Genres\": [\"Rock\"]",
                 albumPrimaryImageTag?.let { tag -> "\"AlbumPrimaryImageTag\": \"$tag\"" },
                 dateCreated?.let { date -> "\"DateCreated\": \"$date\"" },
-                mediaStreams?.let { streams -> "\"MediaStreams\": $streams" }
+                mediaStreams?.let { streams -> "\"MediaStreams\": $streams" },
+                isFavorite?.let { favourite -> "\"UserData\": {\"IsFavorite\": $favourite}" }
             )
         return S2Json.decodeFromString<Item>(fields.joinToString(separator = ",", prefix = "{", postfix = "}"))
+    }
+
+    private companion object {
+        val SYNCED_AT = Instant.parse("2026-10-04T09:00:00Z")
     }
 }

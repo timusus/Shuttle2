@@ -52,7 +52,10 @@ data class Metadata(
     @SerialName("parentRatingKey") val parentRatingKey: String? = null,
     @SerialName("grandparentRatingKey") val grandparentRatingKey: String? = null,
     // Only with includeGuids: the track's external ids, such as "mbid://<recording id>"
-    @SerialName("Guid") val guids: List<Guid> = emptyList()
+    @SerialName("Guid") val guids: List<Guid> = emptyList(),
+    // The user's rating out of 10 (5 stars), and when they gave it in epoch seconds; a favourite is a 10
+    @SerialName("userRating") val userRating: Double? = null,
+    @SerialName("lastRatedAt") val lastRatedAt: Long? = null
 )
 
 @Serializable

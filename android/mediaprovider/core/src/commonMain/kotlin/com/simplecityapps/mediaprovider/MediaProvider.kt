@@ -35,7 +35,10 @@ interface MediaProvider {
  * leaves the library at the next full [findSongs].
  */
 interface IncrementalMediaProvider : MediaProvider {
-    /** The songs added to the source or changed on it at or after [since]; songs it no longer has aren't reported. */
+    /**
+     * The songs added to the source or changed on it at or after [since], plus those of [existingSongs] whose favourite
+     * changed on it, which a server doesn't count as a change to the song; songs it no longer has aren't reported.
+     */
     fun findSongsChangedSince(
         existingSongs: List<Song>,
         since: Instant

@@ -1,0 +1,9 @@
+{
+  "MediaContainer": {
+    "totalSize": 2,
+    "Metadata": [
+      {"key": "/library/metadata/2", "guid": "plex://track/2", "userRating": 10.0, "lastRatedAt": 1759305600},
+      {"key": "/library/metadata/3", "guid": "plex://track/3", "userRating": 6.0, "lastRatedAt": 1759305600}
+    ]
+  }
+}

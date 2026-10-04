@@ -10,6 +10,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlin.time.Instant
 
 /** The DTOs decode what a real Plex server and plex.tv send: the fixtures, extra fields, and fields left out or null. */
 class PlexDtoTest {
@@ -41,7 +42,7 @@ class PlexDtoTest {
 
         metadata.media.shouldBeEmpty()
         metadata.duration.shouldBeNull()
-        with(metadata.toSong(MediaProviderType.Plex)) {
+        with(metadata.toSong(MediaProviderType.Plex, syncedAt = Instant.fromEpochSeconds(0))) {
             name.shouldBeNull()
             artists.shouldBeEmpty()
             duration shouldBe 0
@@ -56,7 +57,7 @@ class PlexDtoTest {
             """{"key":"/library/metadata/1","guid":"plex://track/1","Media":[{"id":1,"Part":[{"id":1,"key":"/library/parts/1/file.flac","size":3000000000}]}]}"""
         )
 
-        metadata.toSong(MediaProviderType.Plex).size shouldBe 3_000_000_000
+        metadata.toSong(MediaProviderType.Plex, syncedAt = Instant.fromEpochSeconds(0)).size shouldBe 3_000_000_000
     }
 
     @Test

@@ -293,7 +293,35 @@ class PlexMediaProviderTest {
 
         provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
-        server.requestsTo(ITEMS).single().url.parameters["updatedAt>>"] shouldBe "${Instant.parse("2026-10-01T08:00:00Z").epochSeconds - 1}"
+        server.requestsTo(ITEMS).filter { it.url.parameters["userRating"] == null }.single().url.parameters["updatedAt>>"] shouldBe
+            "${Instant.parse("2026-10-01T08:00:00Z").epochSeconds - 1}"
+    }
+
+    @Test
+    fun `an incremental sync brings the tracks rated 5 stars or unrated since, which don't count as a change to the song`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        val stored = sync().map { song -> if (song.name == "Opening") song.copy(favouritedAt = Instant.parse("2026-09-01T00:00:00Z")) else song }
+        server.respond(ITEMS, "empty.json")
+        server.respond(ITEMS, "favourites.json", query = mapOf("userRating" to "10"))
+
+        val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        // B-Side, rated 6, is in the reply as a server ignoring the filter would send it, and stays unfavourited
+        songs.associate { song -> song.name to song.favouritedAt } shouldBe mapOf("Opening" to null, "Duet" to Instant.fromEpochSeconds(1_759_305_600))
+    }
+
+    @Test
+    fun `an incremental sync whose favourites fail to load leaves them as they are`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        val stored = sync()
+        server.respond(ITEMS, "empty.json")
+        server.respond(ITEMS, code = 500, query = mapOf("userRating" to "10"))
+
+        provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.shouldBeEmpty()
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
+import com.simplecityapps.mediaprovider.server.withFavouriteChanges
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
@@ -21,6 +22,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDate
@@ -41,15 +44,23 @@ class JellyfinMediaProvider(
 
     override val type = MediaProviderType.Jellyfin
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since = null)
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since = null)
 
     override fun findSongsChangedSince(
         existingSongs: List<Song>,
         since: Instant
-    ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since)
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since)
 
-    /** Every song, or with [since] only those saved on the server (added or changed) at or after it. */
-    private fun findSongs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    /**
+     * Every song, or with [since] only those saved on the server (added or changed) at or after it, plus those of
+     * [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved (#497).
+     */
+    private fun findSongs(
+        existingSongs: List<Song>,
+        since: Instant?
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
+        val syncedAt = Clock.System.now()
         emitAll(
             queryItems(
                 address = address,
@@ -58,7 +69,12 @@ class JellyfinMediaProvider(
             ).map { event ->
                 when (event) {
                     is FlowEvent.Success -> {
-                        FlowEvent.Success(event.result.map { it.toSong() })
+                        val songs = event.result.map { item -> item.toSong(syncedAt) }
+                        if (since == null) {
+                            FlowEvent.Success(songs)
+                        } else {
+                            FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favouritePaths(address, credentials)?.associateWith { syncedAt }))
+                        }
                     }
 
                     is FlowEvent.Progress -> {
@@ -106,6 +122,27 @@ class JellyfinMediaProvider(
                     loginCredentials
                 ).getOrNull()
             }
+
+    /** The paths of the user's favourite songs, or null if they couldn't be fetched. */
+    private suspend fun favouritePaths(
+        address: String,
+        credentials: AuthenticatedCredentials
+    ): Set<String>? {
+        val event =
+            pagedFlow { offset, limit ->
+                authenticationManager.checkSession(
+                    credentials,
+                    itemsService.favouriteAudioItems(
+                        url = address,
+                        authorization = authenticationManager.authorizationHeader(credentials),
+                        userId = credentials.userId,
+                        limit = limit,
+                        startIndex = offset
+                    )
+                ).map { it.toPage() }
+            }.last()
+        return (event as? FlowEvent.Success)?.result?.mapTo(HashSet()) { item -> item.songPath }
+    }
 
     private fun queryItems(
         address: String,
@@ -175,7 +212,8 @@ class JellyfinMediaProvider(
 
 private fun QueryResult.toPage() = Page(items, totalRecordCount)
 
-internal fun Item.toSong(): Song = Song(
+/** [syncedAt] is when the sync that read the item started: a favourite's time, as the server keeps none. */
+internal fun Item.toSong(syncedAt: Instant): Song = Song(
     id = 0,
     name = name,
     albumArtist = albumArtist,
@@ -186,7 +224,7 @@ internal fun Item.toSong(): Song = Song(
     duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
     date = productionYear?.let { year -> LocalDate(year, 1, 1) },
     genres = genres,
-    path = "jellyfin://item/$id",
+    path = songPath,
     size = 0,
     mimeType = "Audio/*",
     // The server has no modified date for items; DateCreated (when the song was added) is the closest, and keeps the
@@ -222,8 +260,12 @@ internal fun Item.toSong(): Song = Song(
     mbAlbumArtistIds = musicBrainzIds(providerIds["MusicBrainzAlbumArtist"]),
     serverAlbumId = albumId,
     serverArtistIds = artistItems.mapNotNull(ArtistItem::id),
-    serverAlbumArtistIds = albumArtists.mapNotNull(ArtistItem::id)
+    serverAlbumArtistIds = albumArtists.mapNotNull(ArtistItem::id),
+    favouritedAt = syncedAt.takeIf { userData?.isFavorite == true }
 )
+
+internal val Item.songPath: String
+    get() = "jellyfin://item/$id"
 
 private val Item.createdAt: Instant?
     get() = dateCreated?.let { date -> runCatching { Instant.parse(date) }.getOrNull() }

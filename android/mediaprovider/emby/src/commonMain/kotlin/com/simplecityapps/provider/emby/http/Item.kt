@@ -19,6 +19,12 @@ data class MediaStream(
     @SerialName("BitDepth") val bitDepth: Int? = null
 )
 
+/** The signed-in user's own state for an item. */
+@Serializable
+data class UserData(
+    @SerialName("IsFavorite") val isFavorite: Boolean = false
+)
+
 @Serializable
 data class Item(
     @SerialName("Name") val name: String? = null,
@@ -43,5 +49,7 @@ data class Item(
     // "MusicBrainzArtist" and "MusicBrainzAlbumArtist"
     @SerialName("ProviderIds") val providerIds: Map<String, String> = emptyMap(),
     // Only returned when requested in 'fields': the file's streams, of which the audio one carries its codec and bit depth
-    @SerialName("MediaStreams") val mediaStreams: List<MediaStream> = emptyList()
+    @SerialName("MediaStreams") val mediaStreams: List<MediaStream> = emptyList(),
+    // The signed-in user's state for the item, sent by /Users/{id}/Items unless enableUserData is false
+    @SerialName("UserData") val userData: UserData? = null
 )

@@ -308,7 +308,31 @@ class JellyfinMediaProviderTest {
 
         provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
-        server.requestsTo(ITEMS).single().url.parameters["minDateLastSaved"] shouldBe "2026-10-01T08:00:00Z"
+        server.requestsTo(ITEMS).filter { it.url.parameters["filters"] == null }.single().url.parameters["minDateLastSaved"] shouldBe "2026-10-01T08:00:00Z"
+    }
+
+    @Test
+    fun `an incremental sync brings the favourites changed on the server, which don't count as a change to the song`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+        val stored = sync().map { song -> if (song.path == "jellyfin://item/song-1") song.copy(favouritedAt = Instant.parse("2026-09-01T00:00:00Z")) else song }
+        server.respond(ITEMS, "empty.json", query = mapOf("includeItemTypes" to "Audio"))
+        server.respond(ITEMS, "favourites.json", query = mapOf("filters" to "IsFavorite"))
+
+        val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        songs.associate { song -> song.path to (song.favouritedAt != null) } shouldBe mapOf("jellyfin://item/song-1" to false, "jellyfin://item/song-2" to true)
+    }
+
+    @Test
+    fun `an incremental sync whose favourites fail to load leaves them as they are`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+        val stored = sync()
+        server.respond(ITEMS, "empty.json", query = mapOf("includeItemTypes" to "Audio"))
+        server.respond(ITEMS, code = 500, query = mapOf("filters" to "IsFavorite"))
+
+        provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.shouldBeEmpty()
     }
 
     @Test

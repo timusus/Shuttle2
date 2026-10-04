@@ -26,7 +26,29 @@ class ItemsService(private val client: HttpClient) {
         fields = "Genres,DateCreated,ProviderIds,MediaStreams",
         limit = limit,
         startIndex = startIndex,
-        minDateLastSaved = minDateLastSaved
+        minDateLastSaved = minDateLastSaved,
+        // Each song's UserData, which holds whether it's a favourite
+        enableUserData = true
+    )
+
+    /**
+     * The user's favourite songs, by id alone (no fields, no user data): an incremental sync's favourites list, since a
+     * favourite toggled on the server doesn't change the song's DateLastSaved.
+     */
+    suspend fun favouriteAudioItems(
+        url: String,
+        authorization: String,
+        userId: String,
+        limit: Int = 2500,
+        startIndex: Int = 0
+    ): NetworkResult<QueryResult> = items(
+        url = "$url/Users/$userId/Items",
+        authorization = authorization,
+        itemTypes = "Audio",
+        limit = limit,
+        startIndex = startIndex,
+        filters = "IsFavorite",
+        enableUserData = false
     )
 
     suspend fun playlists(
@@ -78,7 +100,9 @@ class ItemsService(private val client: HttpClient) {
         limit: Int,
         startIndex: Int,
         userId: String? = null,
-        minDateLastSaved: Instant? = null
+        minDateLastSaved: Instant? = null,
+        filters: String? = null,
+        enableUserData: Boolean? = null
     ): NetworkResult<QueryResult> = client.networkResult {
         get(url) {
             header(HttpHeaders.Authorization, authorization)
@@ -89,6 +113,8 @@ class ItemsService(private val client: HttpClient) {
             parameter("startIndex", startIndex)
             parameter("userId", userId)
             parameter("minDateLastSaved", minDateLastSaved?.toString())
+            parameter("filters", filters)
+            parameter("enableUserData", enableUserData)
         }
     }
 }

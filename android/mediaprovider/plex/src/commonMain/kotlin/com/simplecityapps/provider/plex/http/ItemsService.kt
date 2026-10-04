@@ -21,7 +21,9 @@ class ItemsService(private val client: HttpClient) {
         offset: Int,
         limit: Int,
         /** Only the tracks updated on the server (added, or their metadata changed) at or after this time; all of them if null. */
-        updatedSince: Instant? = null
+        updatedSince: Instant? = null,
+        /** Only the tracks the user rated 5 stars (10), which is what a favourite is on Plex. */
+        favouritesOnly: Boolean = false
     ): NetworkResult<QueryResult> = query("$url/library/sections/$section/all", token) {
         parameter("type", 10)
         parameter("includeCollections", 1)
@@ -31,6 +33,7 @@ class ItemsService(private val client: HttpClient) {
         parameter("includeGuids", 1)
         // Plex's filter syntax: `field>>=value` is "greater than" (as python-plexapi sends it), in epoch seconds
         updatedSince?.let { since -> parameter("updatedAt>>", since.epochSeconds - 1) }
+        if (favouritesOnly) parameter("userRating", 10)
         parameter("X-Plex-Container-Start", offset)
         parameter("X-Plex-Container-Size", limit)
     }
