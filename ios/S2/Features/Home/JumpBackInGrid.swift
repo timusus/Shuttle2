@@ -11,8 +11,7 @@ struct JumpBackInGrid: View {
     var progress: [String: HomeItemProgress] = [:]
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
-    /// The tile the last tap came from, so only it is the zoom source for the screen it opens.
-    var zoomSourceKey: String?
+    /// A tile's tap, by its key, before it opens: the tapped tile is the zoom source for the screen it opens.
     var onTapped: (String) -> Void = { _ in }
     /// The item whose play is under way (`PlayIntent.loadingKey`), by key.
     var pendingKey: String?
@@ -40,7 +39,6 @@ struct JumpBackInGrid: View {
                     item: first,
                     progress: progress[first.key],
                     tileKey: "jumpBackIn|\(first.key)",
-                    zoomSourceKey: zoomSourceKey,
                     perform: perform,
                     open: open,
                     pending: first.key == pendingKey,
@@ -53,8 +51,7 @@ struct JumpBackInGrid: View {
                         item: item,
                         progress: progress[item.key],
                         tileKey: "jumpBackIn|\(item.key)",
-                        zoomSourceKey: zoomSourceKey,
-                        perform: perform,
+                            perform: perform,
                         open: open,
                         play: play
                     )
@@ -131,7 +128,6 @@ struct JumpBackInResumeCard: View {
     let item: HomeItem
     let progress: HomeItemProgress?
     let tileKey: String
-    let zoomSourceKey: String?
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
     /// Its play is under way (`PlayIntent.loadingKey`): the play button shows a spinner.
@@ -176,7 +172,7 @@ struct JumpBackInResumeCard: View {
             .buttonStyle(.pressScale)
             .accessibilityLabel(JumpBackInText.accessibilityLabel(item: item, progress: progress, now: now))
             .accessibilityIdentifier("homeGrid.card")
-            .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
+            .zoomSource(for: item, tileKey: tileKey)
             .homeItemActions(HomeItemActions(item: item, perform: performTracked, open: open, resumes: true))
 
             playButton
@@ -280,7 +276,6 @@ struct JumpBackInCell: View {
     let item: HomeItem
     let progress: HomeItemProgress?
     let tileKey: String
-    let zoomSourceKey: String?
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
     /// Performs an action that plays the item, following it through; nil performs it as any other.
@@ -334,7 +329,7 @@ struct JumpBackInCell: View {
         .buttonStyle(.pressScale)
         .accessibilityLabel(JumpBackInText.accessibilityLabel(item: item, progress: progress))
         .accessibilityIdentifier("homeGrid.cell")
-        .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
+        .zoomSource(for: item, tileKey: tileKey)
         .homeItemActions(HomeItemActions(item: item, perform: performTracked, open: open, resumes: true))
         // Every tile is the slot's height, so the artwork sits the same in each; at the accessibility sizes the text
         // sets it.
@@ -395,14 +390,14 @@ extension HomeItem {
 }
 
 extension View {
-    /// The zoom source for the screen an album or artist tile opens (`zoomSource(id:tileKey:activeKey:)`); a
+    /// The zoom source for the screen an album or artist tile opens (`zoomSource(id:tileKey:)`); a
     /// playlist or genre pushes without a zoom.
     @ViewBuilder
-    func zoomSource(for item: HomeItem, tileKey: String, activeKey: String?) -> some View {
+    func zoomSource(for item: HomeItem, tileKey: String) -> some View {
         switch onEnum(of: item) {
-        case .albumItem(let it): zoomSource(id: Route.album(it.album).cacheKey, tileKey: tileKey, activeKey: activeKey)
+        case .albumItem(let it): zoomSource(id: Route.album(it.album).cacheKey, tileKey: tileKey)
         case .artistItem(let it):
-            zoomSource(id: Route.albumArtist(albumArtistKey: it.albumArtist.groupKey.key).cacheKey, tileKey: tileKey, activeKey: activeKey)
+            zoomSource(id: Route.albumArtist(albumArtistKey: it.albumArtist.groupKey.key).cacheKey, tileKey: tileKey)
         default: self
         }
     }

@@ -47,7 +47,9 @@ extension View {
     /// SwiftUI ignores it and no `NavigationLink` pushes.
     ///
     /// It also gives the stack its zoom namespace (`\.zoomNamespace`), shared by the root and every pushed screen so
-    /// a tile on either zooms into the screen it opens; one set higher up (`ContentView`) wins.
+    /// a tile on either zooms into the screen it opens; one set higher up (`ContentView`) wins. With it goes the
+    /// stack's one zoom source (`\.zoomTiles`): each screen's tiles are keyed under the screen (its route's
+    /// `cacheKey`, or the stack's root), and the last tap anywhere in the stack picks the one tile that's a source.
     ///
     /// `insetsMiniPlayer: false` for a stack in a sheet (Settings), which covers the shell and its mini player:
     /// the bar would otherwise draw over the sheet's pushed screens (#682).
@@ -61,16 +63,24 @@ private struct RouteDestinationsModifier: ViewModifier {
     let insetsMiniPlayer: Bool
 
     @Environment(\.zoomNamespace) private var inheritedNamespace
+    @Environment(\.zoomTiles) private var inheritedZoomTiles
     @Namespace private var stackNamespace
+    @State private var stackSelection = ZoomSourceSelection()
+    /// The root screen's key: unique, as a stack inside another (a sheet's) shares the outer one's namespace.
+    @State private var rootKey = "root|\(UUID().uuidString)"
 
     func body(content: Content) -> some View {
         let namespace = inheritedNamespace ?? stackNamespace
+        // Sources in one namespace share one selection, so a nested stack takes the outer one's with its namespace.
+        let selection = inheritedNamespace.flatMap { _ in inheritedZoomTiles?.selection } ?? stackSelection
         content
             .environment(\.zoomNamespace, namespace)
+            .environment(\.zoomTiles, ZoomTiles(selection: selection, screen: rootKey))
             .navigationDestination(for: Route.self) { route in
                 RouteDestinationView(route: route)
                     .modifier(OptionalMiniPlayerInset(showNowPlaying: showNowPlaying, isEnabled: insetsMiniPlayer))
                     .environment(\.zoomNamespace, namespace)
+                    .environment(\.zoomTiles, ZoomTiles(selection: selection, screen: route.cacheKey))
             }
     }
 }

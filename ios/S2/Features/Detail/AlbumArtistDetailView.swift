@@ -529,7 +529,8 @@ struct DetailAlbumActions {
 
 /// A detail screen's shelf of album tiles under a `SectionHeader`, as one `List` section: a tap opens the tile's
 /// album (`onAlbumTap`), and the tapped tile is the zoom source for it. Only the tapped one, as on Home
-/// (`ZoomTile`): the album can also be on a Home shelf still live under this screen in the stack. A long press opens
+/// (`ZoomSourceSelection`): the album can also be on a Home shelf or another screen's shelf still live under this
+/// screen in the stack. A long press opens
 /// `albumActions`, when given.
 struct DetailAlbumShelf: View {
     let title: String
@@ -540,7 +541,7 @@ struct DetailAlbumShelf: View {
     var tileIdentifier = "detailTile.album"
 
     @Environment(\.layoutTier) private var layoutTier
-    @State private var zoomSourceKey: String?
+    @Environment(\.zoomTiles) private var zoomTiles
 
     var body: some View {
         let inset = AdaptiveLayout.contentInset(layoutTier)
@@ -552,13 +553,13 @@ struct DetailAlbumShelf: View {
                     ForEach(albums, id: \.stableId) { album in
                         let tileKey = "detailShelf|\(album.stableId)"
                         Button {
-                            zoomSourceKey = tileKey
+                            zoomTiles?.select(tileKey)
                             onAlbumTap(album)
                         } label: {
                             AlbumTileLabel(album: album, subtitle: subtitle(album))
                         }
                         .buttonStyle(.pressScale)
-                        .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
+                        .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey)
                         .modifier(DetailAlbumMenu(album: album, subtitle: subtitle(album), actions: albumActions))
                         .accessibilityIdentifier(tileIdentifier)
                     }

@@ -104,9 +104,9 @@ struct HomeContent: View {
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    /// The tile the last tap came from, the one zoom source for its route. An album can be in more than one section,
-    /// and a zoom from a tile the user didn't touch would be wrong.
-    @State private var zoomSourceKey: String?
+    /// The stack's zoom source: a tap makes its tile the one source for the route it opens. An album can be in more
+    /// than one section, and a zoom from a tile the user didn't touch would be wrong.
+    @Environment(\.zoomTiles) private var zoomTiles
 
     var body: some View {
         switch onEnum(of: state) {
@@ -178,8 +178,7 @@ struct HomeContent: View {
                     progress: section.progress,
                     perform: onAction,
                     open: onOpen,
-                    zoomSourceKey: zoomSourceKey,
-                    onTapped: { zoomSourceKey = $0 },
+                    onTapped: { zoomTiles?.select($0) },
                     pendingKey: pendingPlayKey,
                     play: onPlay ?? { onAction($1) }
                 )
@@ -216,7 +215,7 @@ struct HomeContent: View {
     /// A shelf tile. A tap opens the item, or for a genre shuffles it (a Genre Pick is something to put on).
     private func shelfTile(_ item: HomeItem, mixed: Bool, tileKey: String) -> some View {
         let open: (HomeItem) -> Void = { item in
-            zoomSourceKey = tileKey
+            zoomTiles?.select(tileKey)
             onOpen(item)
         }
         return Button {
@@ -229,7 +228,7 @@ struct HomeContent: View {
             HomeShelfTileLabel(item: item, mixed: mixed)
         }
         .buttonStyle(.pressScale)
-        .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
+        .zoomSource(for: item, tileKey: tileKey)
         .accessibilityIdentifier(item.tileIdentifier)
         .homeItemActions(HomeItemActions(item: item, perform: onAction, open: open))
     }
@@ -320,24 +319,5 @@ struct AlbumTileLabel: View {
         }
         .frame(width: size, alignment: .leading)
         .contentShape(Rectangle())
-    }
-}
-
-/// Which of several tiles showing one item is the zoom source for its screen. An item can be in more than one Home
-/// section (or an artist's albums pushed over Home), and a zoom from a tile the user didn't touch would be wrong, as
-/// would two live sources sharing one id.
-enum ZoomTile {
-    /// `id` for the tile last tapped (`activeKey`); otherwise an id of the tile's own, which no screen zooms to.
-    static func sourceID(_ id: String, tileKey: String, activeKey: String?) -> String {
-        activeKey == tileKey ? id : "tile|\(tileKey)"
-    }
-}
-
-extension View {
-    /// The zoom source for `id` while this tile (`tileKey`) is the last one tapped (`activeKey`), per
-    /// `ZoomTile.sourceID`. The id changes rather than the modifier coming and going, so the tile keeps its identity
-    /// (and its loaded cover) when it's tapped.
-    func zoomSource(id: String, tileKey: String, activeKey: String?) -> some View {
-        zoomSource(id: ZoomTile.sourceID(id, tileKey: tileKey, activeKey: activeKey))
     }
 }

@@ -133,7 +133,7 @@ struct HomeViewTests {
         let item = HomeItemAlbumItem(album: album("OK Computer"))
         let now = Date(timeIntervalSince1970: 1_000_000 + 26 * 3600)
         let card = JumpBackInResumeCard(
-            item: item, progress: progress(), tileKey: "jumpBackIn|album", zoomSourceKey: nil, perform: { _ in }, open: { _ in }, now: now
+            item: item, progress: progress(), tileKey: "jumpBackIn|album", perform: { _ in }, open: { _ in }, now: now
         )
         let sut = try card.inspect()
         #expect((try? sut.find(text: "Album · Yesterday")) != nil)
@@ -147,7 +147,7 @@ struct HomeViewTests {
     @Test func aShuffledCardShowsTheShuffleGlyphInPlaceOfTheBar() throws {
         let card = JumpBackInResumeCard(
             item: HomeItemAlbumItem(album: album("OK Computer")), progress: progress(shuffled: true),
-            tileKey: "a", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
+            tileKey: "a", perform: { _ in }, open: { _ in }
         )
         let sut = try card.inspect()
         #expect((try? sut.find(viewWithAccessibilityIdentifier: "homeGrid.shuffled")) != nil)
@@ -158,7 +158,7 @@ struct HomeViewTests {
     @Test func aFinishedCardOffersToPlayAgain() throws {
         let card = JumpBackInResumeCard(
             item: HomeItemAlbumItem(album: album("OK Computer")), progress: progress(finished: true),
-            tileKey: "a", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
+            tileKey: "a", perform: { _ in }, open: { _ in }
         )
         let sut = try card.inspect()
         #expect((try? sut.find(text: "Finished · Play again")) != nil)
@@ -177,7 +177,7 @@ struct HomeViewTests {
     @Test func aGridCellIsAsTallAsItsArtworkSlot() throws {
         let cell = JumpBackInCell(
             item: HomeItemAlbumItem(album: album("OK Computer")), progress: progress(),
-            tileKey: "jumpBackIn|album", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
+            tileKey: "jumpBackIn|album", perform: { _ in }, open: { _ in }
         )
         #expect(try cell.inspect().find(ViewType.Button.self).fixedHeight() == ArtworkSize.albumRow)
         #expect(JumpBackInCell.artworkSide(for: HomeItemAlbumItem(album: album("OK Computer"))) == ArtworkSize.albumRow)
@@ -185,10 +185,10 @@ struct HomeViewTests {
 
     @Test func aPlaylistsOrGenresCoversCarryItsGlyph() throws {
         let genreItem = HomeItemGenreItem(genre: genre("Trip Hop"))
-        let cell = JumpBackInCell(item: genreItem, progress: nil, tileKey: "jumpBackIn|genre", zoomSourceKey: nil, perform: { _ in }, open: { _ in })
+        let cell = JumpBackInCell(item: genreItem, progress: nil, tileKey: "jumpBackIn|genre", perform: { _ in }, open: { _ in })
         let covered = try cell.environment(\.homeCovers, [genreItem.key: [TestSongs.demo[0]]]).inspect()
         #expect((try? covered.find(ViewType.Image.self, where: { (try? $0.actualImage().name()) == GeneratedArtwork.genreSymbol })) != nil)
-        let album = JumpBackInCell(item: HomeItemAlbumItem(album: album("OK Computer")), progress: nil, tileKey: "a", zoomSourceKey: nil, perform: { _ in }, open: { _ in })
+        let album = JumpBackInCell(item: HomeItemAlbumItem(album: album("OK Computer")), progress: nil, tileKey: "a", perform: { _ in }, open: { _ in })
         #expect((try? album.inspect().find(ViewType.Image.self, where: { (try? $0.actualImage().name()) == GeneratedArtwork.playlistSymbol })) == nil)
     }
 
