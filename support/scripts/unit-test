@@ -413,7 +413,7 @@ run_changed_mode() {
   # Roborazzi trigger: docs/design/** changed, a changed main source (src/main, src/commonMain,
   # src/androidMain) in a module that applies the roborazzi plugin (non-composable code can change
   # rendered text too, #830), or any changed file that currently contains a @Composable function.
-  local roborazzi=0 f rdir rpath rel_f
+  local roborazzi=0 f rdir rpath rel_f rbuild
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
     case "${f}" in
@@ -424,7 +424,10 @@ run_changed_mode() {
           rel_f="${f#"${rdir}"/}"
           case "${rel_f}" in
             src/main/* | src/commonMain/* | src/androidMain/*)
-              [ -n "${rdir}" ] && grep -q 'roborazzi' "${REPO_ROOT}/${rdir}/build.gradle.kts" 2>/dev/null && roborazzi=1 ;;
+              if [ -n "${rdir}" ]; then
+                rbuild="$(module_build_file "${rpath}")"
+                [ -n "${rbuild}" ] && grep -q 'roborazzi' "${rbuild}" 2>/dev/null && roborazzi=1
+              fi ;;
           esac
         fi ;;
     esac
