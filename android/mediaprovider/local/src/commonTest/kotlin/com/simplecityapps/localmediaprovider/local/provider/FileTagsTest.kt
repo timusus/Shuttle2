@@ -1,5 +1,10 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
+import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
+import com.simplecityapps.shuttle.model.AlbumIdentityRule
+import com.simplecityapps.shuttle.model.AlbumIdentityTags
+import com.simplecityapps.shuttle.model.ArtistCredits
+import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -232,9 +237,61 @@ class FileTagsTest {
         artists("A;B") shouldBe listOf("A", "B")
         artists("A | B|C") shouldBe listOf("A", "B", "C")
         artists("A / B") shouldBe listOf("A", "B")
-        artists(" A ;; a ; ") shouldBe listOf("A")
+        // Repeats stay, so the list stays paired with MUSICBRAINZ_ARTISTID
+        artists(" A ;; a ; ") shouldBe listOf("A", "a")
         artists("AC/DC") shouldBe listOf("AC/DC")
         artists("Bob Marley & the Wailers") shouldBe listOf("Bob Marley & the Wailers")
         artists("Earth, Wind & Fire") shouldBe listOf("Earth, Wind & Fire")
+    }
+
+    /** The credits' artist pages for a file tagged album "Duets" by album artist B (MusicBrainz id [B_ID]). */
+    private fun creditKeys(artist: String, mbArtistIds: List<String>): List<AlbumArtistGroupKey> {
+        val fileTags =
+            mapOf(
+                "ALBUM" to listOf("Duets"),
+                "ALBUMARTIST" to listOf("B"),
+                "ARTIST" to listOf(artist),
+                "MUSICBRAINZ_ARTISTID" to mbArtistIds,
+                "MUSICBRAINZ_ALBUMARTISTID" to listOf(B_ID)
+            ).toFileTags()
+        val tags =
+            AlbumIdentityTags(
+                songId = 1,
+                album = fileTags.album,
+                albumArtist = fileTags.albumArtist,
+                albumArtists = fileTags.albumArtists,
+                artists = fileTags.artists,
+                compilation = fileTags.compilation,
+                mbAlbumId = fileTags.mbAlbumId,
+                serverAlbumId = null,
+                mediaProvider = MediaProviderType.Shuttle,
+                path = "/music/Duets/1.flac",
+                artistsTag = fileTags.artistsTag,
+                mbArtistIds = fileTags.mbArtistIds,
+                mbAlbumArtistIds = fileTags.mbAlbumArtistIds
+            )
+        return ArtistCredits.credits(tags, AlbumIdentityRule.resolve(listOf(tags)).getValue(1)).map { it.groupKey }
+    }
+
+    private fun key(name: String) = AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name))
+
+    @Test
+    fun `each artist split from one ARTIST value keeps its own MusicBrainz id`() {
+        // "Bee" carries the album artist's id, so it's B's own credit, not an appearance under another spelling
+        creditKeys("A; Bee", listOf(A_ID, B_ID)) shouldBe listOf(key("A"), key("B"))
+        creditKeys("Bee | A", listOf(B_ID, A_ID)) shouldBe listOf(key("B"), key("A"))
+    }
+
+    @Test
+    fun `a repeated artist in one ARTIST value is credited once and never takes another's id`() {
+        creditKeys("A; B; a", listOf(A_ID, B_ID)) shouldBe listOf(key("A"), key("B"))
+        // The ids are read without repeats, so three names and two ids don't pair: "Bee" isn't given B's id by position
+        creditKeys("A; Bee; a", listOf(A_ID, B_ID, A_ID)) shouldBe listOf(key("A"), key("Bee"))
+        creditKeys("A; a; Bee", listOf(A_ID, B_ID)) shouldBe listOf(key("A"), key("Bee"))
+    }
+
+    private companion object {
+        const val A_ID = "a1b2c3d4-0000-4000-8000-00000000000a"
+        const val B_ID = "a1b2c3d4-0000-4000-8000-00000000000b"
     }
 }

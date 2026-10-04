@@ -105,26 +105,4 @@ class ArtistCreditsTest {
         index.songIds(key("André 3000")) shouldBe listOf(blonde.songId)
         index.songIds(key(AlbumIdentityRule.VARIOUS_ARTISTS)) shouldBe listOf(nowAdele.songId, nowColdplay.songId)
     }
-
-    @Test
-    fun `a combined album artist tag credits each of its artists`() {
-        val credits = credits(tags(album = "Duets", artists = listOf("A"), albumArtist = "A; B"))
-
-        credits.map { it.groupKey } shouldBe listOf(key("A"), key("B"))
-    }
-
-    @Test
-    fun `an album artist with one artist adds no credit`() {
-        val credits = credits(tags(album = "Solo", artists = listOf("A"), albumArtist = "AC/DC"))
-
-        credits.map { it.groupKey } shouldBe listOf(key("A"))
-    }
-
-    @Test
-    fun `splitMultiArtist splits on semicolons pipes and spaced slashes`() {
-        splitMultiArtist("A;B | C / D") shouldBe listOf("A", "B", "C", "D")
-        splitMultiArtist("AC/DC") shouldBe listOf("AC/DC")
-        splitMultiArtist("Earth, Wind & Fire") shouldBe listOf("Earth, Wind & Fire")
-        splitMultiArtist(" ; A ;a; ") shouldBe listOf("A")
-    }
 }

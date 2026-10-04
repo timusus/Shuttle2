@@ -11,6 +11,7 @@ import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
+import com.simplecityapps.localmediaprovider.local.provider.splitArtistTag
 import com.simplecityapps.localmediaprovider.local.provider.unmountedRoots
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
@@ -21,7 +22,6 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.splitMultiArtist
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlin.math.abs
 import kotlin.time.Instant
@@ -111,7 +111,7 @@ class MediaStoreMediaProvider(
                                     MediaStore.Audio.Media.TITLE
                                 )
                             ),
-                        artists = artist?.let(::splitMultiArtist).orEmpty(),
+                        artists = artist?.let(::splitArtistTag).orEmpty(),
                         albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
                         album =
                             songCursor.getStringOrNull(

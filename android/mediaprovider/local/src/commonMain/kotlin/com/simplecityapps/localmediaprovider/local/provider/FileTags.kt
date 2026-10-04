@@ -1,7 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
 import com.simplecityapps.shuttle.model.musicBrainzIds
-import com.simplecityapps.shuttle.model.splitMultiArtist
 
 /**
  * The values of a file's tags, as TagLib (Android) or FFmpeg (iOS) read them. A null or empty field wasn't tagged: no
@@ -50,7 +49,7 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST
         albumArtist = first(TagLibProperty.AlbumArtist) ?: get(MATROSKA_ALBUM_ARTIST)?.firstOrNull(),
         artists =
-            get(TagLibProperty.Artist.key).orEmpty().flatMap(::splitMultiArtist).distinctBy { it.lowercase() },
+            get(TagLibProperty.Artist.key).orEmpty().flatMap(::splitArtistTag),
         album = first(TagLibProperty.Album),
         track = trackTag?.substringBefore('/')?.trim()?.toIntOrNull(),
         trackTotal = trackTag?.substringAfter('/', "")?.trim()?.toIntOrNull(),
@@ -82,6 +81,15 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         mbAlbumArtistIds = musicBrainzIds(TagLibProperty.MusicBrainzAlbumArtistId)
     )
 }
+
+/**
+ * One ARTIST tag value's artists, for files that put several in one tag (#880): ";" and "|" separate wherever they stand,
+ * "/" only with whitespace either side (" / "), so "AC/DC" stays whole; "&" and "," never separate ("Earth, Wind & Fire").
+ * Repeats are kept, so the artists stay paired 1:1 with MUSICBRAINZ_ARTISTID; ArtistCredits credits each artist once.
+ */
+internal fun splitArtistTag(value: String): List<String> = ARTIST_SEPARATOR.split(value).map { it.trim() }.filter { it.isNotEmpty() }
+
+private val ARTIST_SEPARATOR = Regex("[;|]|\\s+/\\s+")
 
 /** The non-blank values of the tag [key], trimmed and otherwise as written: a multi-value tag keeps its values, none split. */
 private fun Map<String, List<String>>.values(key: String): List<String> = get(key).orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
