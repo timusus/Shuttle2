@@ -12,10 +12,13 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.shuttle.scrobbling.lastfm.LASTFM_BASE_URL
+import com.simplecityapps.shuttle.scrobbling.lastfm.FakeLastFmSessionStore
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmClient
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmError
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSession
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbleResponse
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSessionStore
 import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase
@@ -46,9 +49,9 @@ class ScrobbleFlushWorkerTest {
         .build()
     private val dao = database.scrobbleDao()
     private val fakeEngine = FakeLastFmEngine()
-    private val api = LastFmApi(createHttpClient(fakeEngine.engine))
-    private val sessionStore = FakeLastFmSessionStore(sessionKey = "session-key")
     private val credentials = LastFmCredentials(apiKey = "api-key", sharedSecret = "shared-secret")
+    private val client = LastFmClient(LastFmApi(createHttpClient(fakeEngine.engine)), credentials)
+    private val sessionStore = FakeLastFmSessionStore(LastFmSession(key = "session-key", username = "user"))
 
     @Before
     fun setUp() {
@@ -80,14 +83,14 @@ class ScrobbleFlushWorkerTest {
                     appContext: Context,
                     workerClassName: String,
                     workerParameters: WorkerParameters
-                ): ListenableWorker = ScrobbleFlushWorker(appContext, workerParameters, dao, api, sessionStore, credentials)
+                ): ListenableWorker = ScrobbleFlushWorker(appContext, workerParameters, dao, client, sessionStore)
             }
         )
         .build()
 
     @Test
     fun `no session key is a no-op, the queue is left untouched`() = runTest {
-        sessionStore.sessionKey = null
+        sessionStore.signOut()
         dao.enqueue(entity(1))
 
         val result = buildWorker().doWork()
@@ -195,12 +198,12 @@ class ScrobbleFlushWorkerTest {
     @Test
     fun `an invalid session signs the user out and stops without retrying`() = runTest {
         dao.enqueue(entity(1))
-        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = LastFmScrobbleResponse.ERROR_INVALID_SESSION))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = LastFmError.INVALID_SESSION))
 
         val result = buildWorker().doWork()
 
         result shouldBe ListenableWorker.Result.failure()
-        sessionStore.sessionKey shouldBe null
+        sessionStore.session.value shouldBe null
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
     }
 
@@ -252,13 +255,5 @@ private class FakeLastFmEngine {
             status = status,
             headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
         )
-    }
-}
-
-private class FakeLastFmSessionStore(sessionKey: String?) : LastFmSessionStore {
-    override var sessionKey: String? = sessionKey
-
-    override fun signOut() {
-        sessionKey = null
     }
 }

@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.appinitializers.FavouriteSyncInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackReportingInitializer
+import com.simplecityapps.shuttle.appinitializers.ScrobblingInitializer
 import com.simplecityapps.shuttle.appinitializers.SearchIndexInitializer
 import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
 import com.simplecityapps.shuttle.appinitializers.TelemetryInitializer
@@ -57,6 +58,10 @@ abstract class AppBindsModule {
     @Binds
     @IntoSet
     abstract fun providePlaybackReportingInitializer(bind: PlaybackReportingInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun provideScrobblingInitializer(bind: ScrobblingInitializer): AppInitializer
 
     @Binds
     @IntoSet

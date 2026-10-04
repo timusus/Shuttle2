@@ -3,14 +3,12 @@ package com.simplecityapps.shuttle.scrobbling.worker
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.di.WorkerInstanceFactory
 import com.simplecityapps.shuttle.di.WorkerKey
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbleResponse
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmClient
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmError
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmResult
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSessionStore
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSigner
 import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
@@ -36,9 +34,8 @@ constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val scrobbleDao: ScrobbleDao,
-    private val lastFmApi: LastFmApi,
-    private val lastFmSessionStore: LastFmSessionStore,
-    private val lastFmCredentials: LastFmCredentials
+    private val lastFmClient: LastFmClient,
+    private val lastFmSessionStore: LastFmSessionStore
 ) : CoroutineWorker(appContext, workerParams) {
     @WorkerKey(ScrobbleFlushWorker::class)
     @ContributesIntoMap(AppScope::class, binding = binding<WorkerInstanceFactory<*>>())
@@ -49,7 +46,7 @@ constructor(
         val cutoffEpochSec = (System.currentTimeMillis() - ScrobbleQueue.MAX_AGE) / 1000
         scrobbleDao.deleteOlderThan(cutoffEpochSec)
 
-        val sessionKey = lastFmSessionStore.sessionKey ?: return Result.success()
+        val sessionKey = lastFmSessionStore.session.value?.key ?: return Result.success()
 
         while (true) {
             val batch = scrobbleDao.oldestBatch(QueuedScrobbleEntity.SERVICE_LASTFM, ScrobbleQueue.BATCH_SIZE)
@@ -79,34 +76,16 @@ constructor(
         batch: List<QueuedScrobbleEntity>,
         sessionKey: String
     ): Outcome {
-        val result = lastFmApi.scrobble(buildParams(batch, sessionKey))
-        val body = (result as? NetworkResult.Success)?.body ?: return Outcome.Retry
+        return when (val result = lastFmClient.scrobble(batch, sessionKey)) {
+            is LastFmResult.Success -> Outcome.Cleared
 
-        return when (body.error) {
-            null -> Outcome.Cleared
-            LastFmScrobbleResponse.ERROR_INVALID_SESSION -> Outcome.SignedOut
-            in LastFmScrobbleResponse.RETRYABLE_ERRORS -> Outcome.Retry
-            else -> Outcome.Cleared
-        }
-    }
+            is LastFmResult.Error -> when (result.code) {
+                LastFmError.INVALID_SESSION -> Outcome.SignedOut
+                in LastFmError.RETRYABLE -> Outcome.Retry
+                else -> Outcome.Cleared
+            }
 
-    private fun buildParams(
-        batch: List<QueuedScrobbleEntity>,
-        sessionKey: String
-    ): Map<String, String> {
-        val params = mutableMapOf(
-            "method" to "track.scrobble",
-            "api_key" to lastFmCredentials.apiKey,
-            "sk" to sessionKey
-        )
-        batch.forEachIndexed { index, entity ->
-            params["artist[$index]"] = entity.artist
-            params["track[$index]"] = entity.track
-            params["timestamp[$index]"] = entity.startedAtEpochSec.toString()
-            entity.album?.let { params["album[$index]"] = it }
-            entity.albumArtist?.let { params["albumArtist[$index]"] = it }
+            LastFmResult.Unreachable -> Outcome.Retry
         }
-        val signature = LastFmSigner.sign(params, lastFmCredentials.sharedSecret)
-        return params + ("api_sig" to signature) + ("format" to "json")
     }
 }

@@ -36,14 +36,6 @@ data class LastFmScrobbleResponse(
     data class IgnoredMessage(
         val code: String = "0"
     )
-
-    companion object {
-        /** `error` code: the session key is invalid or expired; sign the user out rather than retry. */
-        const val ERROR_INVALID_SESSION = 9
-
-        /** `error` codes retried with backoff: service offline, temporarily unavailable, or rate limit exceeded. */
-        val RETRYABLE_ERRORS = setOf(11, 16, 29)
-    }
 }
 
 /** Normalises Last.fm's bare-object-or-array `scrobble` field into a list; see [LastFmScrobbleResponse.Scrobbles]. */

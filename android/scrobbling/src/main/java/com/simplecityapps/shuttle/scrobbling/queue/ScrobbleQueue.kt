@@ -40,7 +40,25 @@ constructor(
             )
         )
         scrobbleDao.trimToNewest(QueuedScrobbleEntity.SERVICE_LASTFM, MAX_QUEUE_SIZE)
-        scheduleFlush(context)
+        scheduleFlush()
+    }
+
+    /** Drops every queued Last.fm scrobble: signing out means they're never sent. */
+    suspend fun clear() {
+        scrobbleDao.deleteAll(QueuedScrobbleEntity.SERVICE_LASTFM)
+    }
+
+    /** (Re-)schedules the flush job, at start-up and after a sign-in, for anything queued while it couldn't send. */
+    fun scheduleFlush() {
+        val request = OneTimeWorkRequestBuilder<ScrobbleFlushWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
+            .build()
+        WorkManager.getInstance(context).enqueueUniqueWork(UNIQUE_WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
     companion object {
@@ -54,17 +72,5 @@ constructor(
 
         /** A queue that never flushes (offline, or signed out) still shouldn't grow without bound; the oldest go first. */
         const val MAX_QUEUE_SIZE = 5_000
-
-        fun scheduleFlush(context: Context) {
-            val request = OneTimeWorkRequestBuilder<ScrobbleFlushWorker>()
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
-                )
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, WorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(UNIQUE_WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
-        }
     }
 }

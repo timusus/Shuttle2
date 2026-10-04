@@ -23,6 +23,9 @@ abstract class ScrobbleDao {
     @Query("DELETE FROM queued_scrobbles WHERE id IN (:ids)")
     abstract suspend fun deleteByIds(ids: List<Long>)
 
+    @Query("DELETE FROM queued_scrobbles WHERE service = :service")
+    abstract suspend fun deleteAll(service: String)
+
     /** Last.fm rejects scrobbles this old ([com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue.MAX_AGE]). */
     @Query("DELETE FROM queued_scrobbles WHERE startedAtEpochSec < :cutoffEpochSec")
     abstract suspend fun deleteOlderThan(cutoffEpochSec: Long): Int
