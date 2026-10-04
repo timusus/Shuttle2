@@ -118,4 +118,9 @@ final class AudioFileTagsTests: XCTestCase {
         XCTAssertEqual(tags.compilation, false)
         XCTAssertNil(AudioFileTags(tags: [("date", "unknown")]).year)
     }
+
+    func testOriginalDateBeatsReissueDate() {
+        XCTAssertEqual(AudioFileTags(tags: [("date", "2017-06-30"), ("originaldate", "2002-01-28")]).year, 2002)
+        XCTAssertEqual(AudioFileTags(tags: [("date", "2017"), ("year", "2002")]).year, 2017)
+    }
 }

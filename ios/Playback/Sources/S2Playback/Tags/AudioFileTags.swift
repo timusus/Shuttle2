@@ -8,7 +8,7 @@ import Foundation
 ///
 /// The mapping follows Android's (`AudioFileExt.kt`'s `toFileTags`): ARTIST is split on ';' into `artists`
 /// and kept whole as `artistDisplay`; GENRE is split on ',', ';' and '/'; TRACK and DISC read "3/12"; the
-/// year comes from DATE, then ORIGINALDATE, then YEAR. A missing tag stays nil or empty, with no fallback.
+/// year comes from ORIGINALDATE (so a remaster or reissue keeps the album's original year), then DATE, then YEAR. A missing tag stays nil or empty, with no fallback.
 public struct AudioFileTags: Equatable, Sendable {
     public var title: String?
     public var artists: [String] = []
@@ -71,7 +71,7 @@ public struct AudioFileTags: Equatable, Sendable {
         album = first("album")
         (track, trackTotal) = Self.numberAndTotal(first("track", "tracknumber"))
         (disc, discTotal) = Self.numberAndTotal(first("disc", "discnumber"))
-        year = [first("date"), first("originaldate"), first("year")].lazy.compactMap { $0.flatMap(Self.year) }.first
+        year = [first("originaldate"), first("date"), first("year")].lazy.compactMap { $0.flatMap(Self.year) }.first
         genres = first("genre").map { Self.split($0, on: [",", ";", "/"]) } ?? []
         replayGainTrack = first("replaygaintrackgain").flatMap(Self.decibels)
         replayGainAlbum = first("replaygainalbumgain").flatMap(Self.decibels)
