@@ -225,10 +225,9 @@ struct JumpBackInResumeCard: View {
 
     private var playButton: some View {
         let shuffles = item is HomeItemGenreItem && (progress == nil || progress?.finished == true)
-        return ResumePlayDisc(shuffles: shuffles, pending: pending) { performTracked(item.resumeAction()) }
-            .accessibilityLabel(Self.playLabel(item: item, progress: progress))
-            .accessibilityValue(pending ? "Starting" : "")
-            .accessibilityIdentifier("homeGrid.play")
+        return ResumePlayDisc(shuffles: shuffles, pending: pending, label: Self.playLabel(item: item, progress: progress)) {
+            performTracked(item.resumeAction())
+        }
     }
 
     private func performTracked(_ action: MediaAction) {
@@ -242,6 +241,7 @@ struct JumpBackInResumeCard: View {
 private struct ResumePlayDisc: View {
     let shuffles: Bool
     let pending: Bool
+    let label: String
     let action: () -> Void
 
     @Environment(\.artworkTint) private var tint
@@ -272,6 +272,9 @@ private struct ResumePlayDisc: View {
         }
         .buttonStyle(.pressScale)
         .disabled(pending)
+        .accessibilityLabel(label)
+        .accessibilityValue(pending ? "Starting" : "")
+        .accessibilityIdentifier("homeGrid.play")
     }
 }
 
