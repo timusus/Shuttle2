@@ -13,7 +13,9 @@ import kotlin.time.Instant
     tableName = "songs",
     indices = [
         Index(value = ["path", "mediaProvider"], unique = true),
-        Index(value = ["mediaProvider", "path"])
+        Index(value = ["mediaProvider", "path"]),
+        Index(value = ["lastCompleted"]),
+        Index(value = ["dateAdded"])
     ]
 )
 data class SongData(
