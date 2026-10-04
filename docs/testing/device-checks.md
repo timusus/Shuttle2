@@ -234,7 +234,7 @@ Set Settings → Sources → Streaming quality → On mobile data to 128 kbps an
 
 - [ ] Jellyfin: on Wi-Fi a FLAC plays as the original (the server's dashboard shows Direct Play). On mobile data the next song transcodes (the dashboard shows Transcode at about 128 kbps) and sounds right; seeking forward and back while it transcodes lands at the right position and keeps playing. A song already under 128 kbps direct-plays.
 - [ ] Emby: the same as Jellyfin. On mobile data the dashboard shows the stream transcoding at about 128 kbps (the parameter is untested against Emby), and seeking while it transcodes works.
-- [ ] Plex: on Wi-Fi a FLAC plays as the original file. On mobile data the next song plays through Plex's transcoder (Plex Web → Dashboard shows a transcode at about 128 kbps); seeking while it transcodes lands at the right position, and a song whose bitrate is already under the cap plays the original.
+- [ ] Plex: on Wi-Fi a FLAC plays as the original file. On mobile data the next song plays through Plex's transcoder (Plex Web → Dashboard shows a transcode at about 128 kbps); seeking while it transcodes lands at the right position, and a song whose bitrate is already under the cap plays the original. Server side verified against the Plex test server, 2026-10-05: the transcode session is stopped by `/video/:/transcode/universal/stop` and a seek (same session id, new `offset`) replaces it at the new position; the capped transcode's bitrate is not checked (the test tracks are synthetic, so the VBR output sits far below 128 kbps). Plex also answers 400 to a second, different session id for the same track (`support/scripts/plex-transcode-probe.sh`).
 
 ## Crossfade clipping and the equalizer preamp (#544, #545, #236)
 
@@ -376,11 +376,11 @@ previous and new outputs, and where each pause came from.
 
 ## Favourites reach the server (#497)
 - [ ] Jellyfin and Emby: heart a song in the app, then check the web UI shows it as a favourite; unheart it and the web UI clears it.
-- [ ] Plex: heart a track and Plex Web shows it rated 5 stars. Unheart it and the rating clears (the clear sends `rating=-1`, which is unverified against a real server). A track you rated 3 stars yourself is left alone when unhearted from a non-favourite state.
+- [ ] Plex: heart a track and Plex Web shows it rated 5 stars. Unheart it and the rating clears (the clear sends `rating=-1`, which is unverified against a real server). A track you rated 3 stars yourself is left alone when unhearted from a non-favourite state. Server side verified against the Plex test server, 2026-10-05: `rating=10` sets 5 stars and `rating=-1` clears it. The 3-star guard is client logic, not exercised on the server.
 - [ ] Heart a song in airplane mode, then go back online: the favourite reaches the server within a few minutes, without relaunching or toggling anything else.
 
 ## Incremental library sync (#771)
-- [ ] Plex: with the Plex server's library already synced, add or retag one track on the server, return to the app after 15+ minutes: the change appears, and the server's request log (or a proxy) shows the items request carried `updatedAt>>=` and returned only the changed tracks, not the whole library.
+- [ ] Plex: with the Plex server's library already synced, add or retag one track on the server, return to the app after 15+ minutes: the change appears, and the server's request log (or a proxy) shows the items request carried `updatedAt>>=` and returned only the changed tracks, not the whole library. Server side verified against the Plex test server, 2026-10-05: `updatedAt>>=<ts>` filters the items request (inclusive, and returns nothing past the newest), but the Plex API can't bump a track's updatedAt (title edits, refresh and rating don't), so "only the changed track" is not proven.
 - [ ] Jellyfin and Emby: the same check; the change appears on returning to the app without a manual scan.
 
 ## Share diagnostics (#768)
