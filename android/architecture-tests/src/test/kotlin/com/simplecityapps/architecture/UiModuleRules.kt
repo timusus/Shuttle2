@@ -87,6 +87,7 @@ class UiModuleRules {
             ":android:imageloader",
             ":android:networking",
             ":android:playback",
+            ":android:playback:core",
             ":android:saf",
             ":android:scrobbling",
             ":android:trial",
