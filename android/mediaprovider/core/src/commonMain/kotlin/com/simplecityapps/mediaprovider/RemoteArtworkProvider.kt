@@ -10,6 +10,12 @@ interface RemoteArtworkProvider {
     suspend fun getAlbumArtworkUrl(song: Song): String?
 
     suspend fun getArtistArtworkUrl(song: Song): String?
+
+    /**
+     * The headers a request for [url], one of this provider's artwork urls, must carry to be authenticated: none by default.
+     * Artwork urls stay free of credentials, so a loader that can't intercept requests (iOS's) asks for them here.
+     */
+    fun requestHeaders(url: String): Map<String, String> = emptyMap()
 }
 
 /** Routes each call to the first of [providers] that handles the song's uri; each provider module contributes its own via `@IntoSet`. */
@@ -19,6 +25,9 @@ class AggregateRemoteArtworkProvider(private val providers: Set<RemoteArtworkPro
     override suspend fun getAlbumArtworkUrl(song: Song): String? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.getAlbumArtworkUrl(song)
 
     override suspend fun getArtistArtworkUrl(song: Song): String? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.getArtistArtworkUrl(song)
+
+    /** Each provider adds headers only for its own server's urls, so the union is the headers for [url]'s. */
+    override fun requestHeaders(url: String): Map<String, String> = providers.fold(emptyMap()) { headers, provider -> headers + provider.requestHeaders(url) }
 }
 
 /**

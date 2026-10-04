@@ -66,6 +66,14 @@ struct ArtworkLoaderTests {
         #expect(!requests[1].allowsExpensiveNetworkAccess)
     }
 
+    /// A Plex server's artwork urls carry no token (#720); Kotlin hands it over as a header.
+    @Test func aCandidateSendsItsHeaders() {
+        let request = ArtworkCandidate(url: Self.server, headers: ["X-Plex-Token": "token-1"]).request
+
+        #expect(request.value(forHTTPHeaderField: "X-Plex-Token") == "token-1")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+    }
+
     @MainActor @Test func theFirstCandidateThatLoadsWinsAndTheRestAreNotAsked() async {
         let fetcher = StubFetcher(responses: [Self.server: (200, Self.pngData(width: 40, height: 40))])
         let loader = ArtworkLoader(fetch: fetcher.fetch)

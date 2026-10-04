@@ -195,10 +195,13 @@ struct ArtworkCandidate: Hashable, Sendable {
     let url: URL
     var authorization: String?
     var unmeteredOnly = false
+    /// Further headers the request needs, such as a Plex server's `X-Plex-Token`.
+    var headers: [String: String] = [:]
 
     var request: URLRequest {
         var request = URLRequest(url: url)
         if let authorization { request.setValue(authorization, forHTTPHeaderField: "Authorization") }
+        for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
         if unmeteredOnly { request.allowsExpensiveNetworkAccess = false }
         return request
     }

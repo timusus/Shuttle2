@@ -81,7 +81,7 @@ extension ArtworkCandidate {
     /// Kotlin's request as a value; nil for a url Foundation can't parse.
     init?(_ request: ArtworkRequest) {
         guard let url = URL(string: request.url) else { return nil }
-        self.init(url: url, authorization: request.authorization, unmeteredOnly: request.unmeteredOnly)
+        self.init(url: url, authorization: request.authorization, unmeteredOnly: request.unmeteredOnly, headers: request.headers)
     }
 }
 

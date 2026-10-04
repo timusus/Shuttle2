@@ -15,12 +15,14 @@ import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * One place an item's artwork may be, and how to ask for it. [authorization] is an `Authorization` header value, so urls
- * stay free of credentials; [unmeteredOnly] means the request must not go over a metered (cellular) network.
+ * stay free of credentials; [headers] are any others it needs, such as a Plex server's `X-Plex-Token`; [unmeteredOnly] means the request must
+ * not go over a metered (cellular) network.
  */
 data class ArtworkRequest(
     val url: String,
     val authorization: String? = null,
-    val unmeteredOnly: Boolean = false
+    val unmeteredOnly: Boolean = false,
+    val headers: Map<String, String> = emptyMap()
 )
 
 /**
@@ -85,7 +87,7 @@ class ArtworkUrls(
 
     /** The server's url, or none when the lookup fails; as on Android, a failing source falls through to the next. */
     private suspend fun serverRequest(url: suspend () -> String?): ArtworkRequest? = try {
-        url()?.let(::ArtworkRequest)
+        url()?.let { ArtworkRequest(it, headers = remoteArtworkProvider.requestHeaders(it)) }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {

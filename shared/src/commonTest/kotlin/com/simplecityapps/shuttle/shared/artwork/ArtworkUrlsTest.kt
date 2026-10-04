@@ -26,6 +26,16 @@ class ArtworkUrlsTest {
     private val artworkUrls = ArtworkUrls(artworkSettings, remoteArtworkProvider, songRepository)
 
     @Test
+    fun `the server's request carries the headers its provider asks for - the S2 API's does not`() = runTest {
+        remoteArtworkProvider.headers = mapOf("X-Token" to "secret")
+
+        artworkUrls.requests(song("song-1")) shouldBe listOf(
+            ArtworkRequest("https://example.com/song-1/album", headers = mapOf("X-Token" to "secret")),
+            s2("$S2_URL?artist=The+Artist&album=Album+%26+Co")
+        )
+    }
+
+    @Test
     fun `song artwork is the remote provider's album artwork and then the S2 API's by album artist and album`() = runTest {
         val song = song("song-1")
 
@@ -194,6 +204,10 @@ class ArtworkUrlsTest {
         val artistArtworkRequests = mutableListOf<Song>()
         var hasArtwork = true
         var failure: Exception? = null
+
+        var headers = emptyMap<String, String>()
+
+        override fun requestHeaders(url: String): Map<String, String> = if (url.startsWith("https://example.com/")) headers else emptyMap()
 
         override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 

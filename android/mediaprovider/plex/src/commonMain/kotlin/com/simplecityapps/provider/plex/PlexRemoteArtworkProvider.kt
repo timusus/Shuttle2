@@ -4,10 +4,11 @@ import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.Metadata
+import com.simplecityapps.provider.plex.http.PLEX_TOKEN
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 
-/** Artwork urls on the signed-in Plex server; they carry no token, which [PlexArtworkTokenInterceptor] adds at request time. */
+/** Artwork urls on the signed-in Plex server; they carry no token, which [PlexArtworkTokenInterceptor] (Android) or [requestHeaders] (iOS) adds at request time. */
 class PlexRemoteArtworkProvider
 @Inject
 constructor(
@@ -19,6 +20,11 @@ constructor(
     override suspend fun getAlbumArtworkUrl(song: Song): String? = artworkUrl(song) { metadata -> metadata.parentThumb ?: metadata.thumb }
 
     override suspend fun getArtistArtworkUrl(song: Song): String? = artworkUrl(song) { metadata -> metadata.grandparentThumb }
+
+    override fun requestHeaders(url: String): Map<String, String> {
+        val token = plexArtworkToken(url, authenticationManager.getAddress(), authenticationManager.getAuthenticatedCredentials()?.accessToken)
+        return if (token == null) emptyMap() else mapOf(PLEX_TOKEN to token)
+    }
 
     private suspend fun artworkUrl(
         song: Song,

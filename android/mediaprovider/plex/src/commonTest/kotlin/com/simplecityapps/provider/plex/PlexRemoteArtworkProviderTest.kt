@@ -54,6 +54,23 @@ class PlexRemoteArtworkProviderTest {
     }
 
     @Test
+    fun `requests to the signed-in server carry its token as a header`() {
+        provider.requestHeaders("${server.address}/library/metadata/107898/thumb/1") shouldBe mapOf("X-Plex-Token" to "token123")
+    }
+
+    @Test
+    fun `requests to any other host carry no token`() {
+        provider.requestHeaders("https://api.shuttlemusicplayer.app/v1/artwork") shouldBe emptyMap()
+    }
+
+    @Test
+    fun `signed out, requests carry no token`() {
+        credentialStore.authenticatedCredentials = null
+
+        provider.requestHeaders("${server.address}/library/metadata/1/thumb/1") shouldBe emptyMap()
+    }
+
+    @Test
     fun `album artwork falls back to the item's own thumb when it has no parent thumb`() = runTest {
         respond(metadata(parentThumb = null, thumb = "/library/metadata/107898/thumb/1700000000"))
 
