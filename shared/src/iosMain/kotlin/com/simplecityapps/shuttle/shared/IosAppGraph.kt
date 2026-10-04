@@ -45,6 +45,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewModel
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
@@ -72,13 +73,14 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  *
  * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters (phase-6-playback.md).
  *
- * One shared ViewModel is excluded until iOS binds what it needs (phase-4-viewmodels.md, "Wave 4"):
+ * Shared ViewModels are excluded until iOS binds what they need (phase-4-viewmodels.md, "Wave 4"):
+ * `ScrobblingViewModel` needs the Last.fm use cases only `:android:scrobbling` binds; iOS has no scrobbling.
  * `TagEditorViewModel` needs a `TagFileAccess`, a tag writer iOS doesn't have: it reads local files' tags with FFmpeg,
  * which doesn't write them in place. Until then nothing offers tag editing on iOS.
  */
 @DependencyGraph(
     AppScope::class,
-    excludes = [TagEditorViewModel.Factory::class],
+    excludes = [TagEditorViewModel.Factory::class, ScrobblingViewModel::class],
 )
 interface IosAppGraph : ViewModelGraph {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
