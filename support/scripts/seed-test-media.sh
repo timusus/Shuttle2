@@ -44,7 +44,8 @@
 set -euo pipefail
 
 # Headless worker shells can start without the SDK platform-tools (adb) on PATH (same as remote-emu.sh).
-PATH="$PATH:/usr/sbin:/sbin:$HOME/Library/Android/sdk/platform-tools"
+# shellcheck source=support/scripts/_adb-path.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_adb-path.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"

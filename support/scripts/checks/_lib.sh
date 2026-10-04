@@ -14,6 +14,9 @@ CHECK_START=$(date +%s)
 
 # shellcheck source=support/scripts/checks/_timeout_fallback.sh
 source "$(dirname "${BASH_SOURCE[0]}")/_timeout_fallback.sh"
+# adb (and lsof) on PATH for headless worker shells (#723): every check, and s2-debug.sh below, call adb.
+# shellcheck source=support/scripts/_adb-path.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../_adb-path.sh"
 
 s2() { "${CHECKS_ROOT}/support/scripts/s2-debug.sh" "$@"; }
 

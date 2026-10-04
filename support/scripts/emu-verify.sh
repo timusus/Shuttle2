@@ -65,6 +65,9 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
 CHECKS_DIR="${SCRIPT_DIR}/checks"
+# adb (and lsof) on PATH for headless worker shells (#723): the checks this script runs call adb too.
+# shellcheck source=support/scripts/_adb-path.sh
+source "${SCRIPT_DIR}/_adb-path.sh"
 # shellcheck source=support/scripts/checks/_suite_names.sh
 source "${CHECKS_DIR}/_suite_names.sh"
 # shellcheck source=support/scripts/checks/_timeout_fallback.sh

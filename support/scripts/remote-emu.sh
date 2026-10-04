@@ -89,7 +89,8 @@ set -euo pipefail
 
 # Headless worker shells can start without /usr/sbin (lsof, for the tunnel listener check) or the SDK
 # platform-tools (adb) on PATH; without lsof every tunnel reads as listen-timeout even when it is up.
-PATH="$PATH:/usr/sbin:/sbin:$HOME/Library/Android/sdk/platform-tools"
+# shellcheck source=support/scripts/_adb-path.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_adb-path.sh"
 
 BOX="tim@192.168.50.131"
 AVD_ATD="pixel_9_pro_atd_api36"  # opt-in lightweight image: android-36 google_atd x86_64, no Play services, `start --api 36`
