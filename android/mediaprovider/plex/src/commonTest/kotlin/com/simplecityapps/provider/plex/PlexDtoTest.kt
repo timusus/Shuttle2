@@ -37,8 +37,9 @@ class PlexDtoTest {
     }
 
     @Test
-    fun `a track with only a key and guid decodes - and maps to a song`() {
-        val metadata = S2Json.decodeFromString<Metadata>("""{"key":"/library/metadata/1","guid":"plex://track/1"}""")
+    fun `a track with only a key decodes - and maps to a song`() {
+        // No guid either: a track without one must import, not fail its page (#844)
+        val metadata = S2Json.decodeFromString<Metadata>("""{"key":"/library/metadata/1"}""")
 
         metadata.media.shouldBeEmpty()
         metadata.duration.shouldBeNull()
@@ -49,6 +50,15 @@ class PlexDtoTest {
             size shouldBe 0
             externalId.shouldBeNull()
         }
+    }
+
+    @Test
+    fun `a page with a track missing its guid keeps every track`() {
+        val page = S2Json.decodeFromString<QueryResult>(
+            """{"MediaContainer":{"totalSize":2,"Metadata":[{"key":"/library/metadata/1","guid":"plex://track/1"},{"key":"/library/metadata/2"}]}}"""
+        )
+
+        page.mediaContainer.metadata.orEmpty().map { it.key } shouldBe listOf("/library/metadata/1", "/library/metadata/2")
     }
 
     @Test
