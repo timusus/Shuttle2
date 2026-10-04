@@ -276,6 +276,10 @@ ORIGIN_MAIN_SHA=$(git rev-parse origin/main)
 # already on HEAD -- verify and push in place instead of refusing, and never reset or clean up the
 # session's own worktree. A drop marks the branch "broke verify" but leaves its commits alone.
 IN_PLACE=0
+if [ "$CUR_BRANCH" = main ] && [ "${#BRANCHES[@]}" -eq 1 ] && [ "${BRANCHES[0]}" = main ]; then
+  say "land.sh: refusing to land main itself; land a worktree branch"
+  exit 2
+fi
 if [ "${#BRANCHES[@]}" -eq 1 ] && [ "${BRANCHES[0]}" = "$CUR_BRANCH" ] \
    && [ "$(git merge-base "$ORIGIN_MAIN_SHA" HEAD)" = "$ORIGIN_MAIN_SHA" ] \
    && [ "$(git rev-parse HEAD)" != "$ORIGIN_MAIN_SHA" ]; then
