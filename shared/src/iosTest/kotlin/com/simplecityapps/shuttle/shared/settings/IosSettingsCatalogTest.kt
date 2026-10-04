@@ -5,6 +5,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
@@ -38,6 +39,7 @@ class IosSettingsCatalogTest {
     fun theStoredSettingsAreExactlyTheOnesIosReads() {
         catalog.settings.map { it.key } shouldContainExactly listOf(
             PlaybackSettings.RetainShuffleOnNewQueue.key,
+            EqualizerSettings.Enabled.key,
             PlaybackSettings.ReplayGain.key,
             PlaybackSettings.PreAmpGain.key,
             StreamingSettings.UnmeteredQuality.key,

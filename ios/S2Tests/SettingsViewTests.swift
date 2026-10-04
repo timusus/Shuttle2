@@ -40,6 +40,16 @@ struct SettingsViewTests {
         #expect(replayGain.footer?.contains("separate from the Equalizer's Preamp") == true)
     }
 
+    /// #765: the Equalizer row reads Off until the equalizer is enabled, then names the preset in use.
+    @Test func theEqualizerRowNamesThePresetInUseOnceEnabled() throws {
+        let link = try #require(catalog.playbackAndSound.items.compactMap { $0 as? SettingItemNavigate }.first)
+        let enabledKey = try #require(link.stateSetting).key
+        let state = SettingsUiState(values: [enabledKey: KotlinBoolean(bool: true)], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.flat, events: [])
+        let equalizer = try #require(SettingsSection.sections(catalog: catalog, state: state).dropFirst().first)
+
+        #expect(equalizer.rows == [.link(id: "settings.equalizer", title: "Equalizer", systemImage: "slider.vertical.3", route: .equalizer, summary: "Flat")])
+    }
+
     @Test func aSectionsFooterShowsBeneathIt() throws {
         let sut = SettingsContent(sections: [SettingsSection(id: "rg", title: "Replay Gain", rows: [], footer: "Explained")])
         #expect((try? sut.inspect().find(text: "Explained")) != nil)
