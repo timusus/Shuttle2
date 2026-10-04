@@ -326,6 +326,14 @@ START_SHA=()    # HEAD before this branch's cherry-picks
 rollback_pick() {
   git cherry-pick --abort >> "$LOG" 2>&1 \
     || { git cherry-pick --quit >> "$LOG" 2>&1 || true; git reset --hard "$1" >> "$LOG" 2>&1 || true; }
+  # A swallowed failure must not leave a half-picked tree to be verified and pushed: HEAD has to be
+  # back at <sha>, else abort the whole run.
+  local now
+  now=$(git rev-parse HEAD 2>/dev/null)
+  if [ "$now" != "$1" ]; then
+    say "land.sh: ABORT: rollback failed, HEAD is ${now:-unknown} but should be $1; nothing verified or pushed, inspect $REPO_ROOT (log: $LOG)"
+    exit 4
+  fi
 }
 
 pick_branch() {  # $1 = index into BRANCHES
