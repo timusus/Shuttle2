@@ -24,10 +24,10 @@ import dev.zacsweers.metro.binding
  * Last.fm accepts is deleted whether each scrobble was accepted or permanently ignored - both are done with.
  * A transient failure (HTTP failure, or error 11/16) keeps the whole batch queued and asks WorkManager to
  * retry with backoff. An invalid session (error 9) signs the user out and stops without retrying forever,
- * leaving the queue intact (a different account signing in clears it, see [ScrobbleQueue.clear]). Any other
- * top-level error (a bad or suspended API key or signature, or one we don't know) says nothing about the
- * scrobbles themselves, so the queue is held and the run ends without a retry; only a per-scrobble rejection in
- * a successful response is ever dropped. Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
+ * leaving the queue intact (a different account signing in clears it, see [ScrobbleQueue.clear]). A bad or suspended
+ * API key or signature ([LastFmError.HOLD]) says nothing about the scrobbles themselves, so the queue is held
+ * and the run ends without a retry. Any other error is one Last.fm won't accept for this batch however often
+ * it is sent, so the batch is dropped rather than blocking the queue until it ages out. Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
  * rejects their timestamp regardless.
  */
 class ScrobbleFlushWorker
@@ -85,7 +85,8 @@ constructor(
         is LastFmResult.Error -> when (result.code) {
             LastFmError.INVALID_SESSION -> Outcome.SignedOut
             in LastFmError.RETRYABLE -> Outcome.Retry
-            else -> Outcome.Hold
+            in LastFmError.HOLD -> Outcome.Hold
+            else -> Outcome.Cleared
         }
 
         LastFmResult.Unreachable -> Outcome.Retry

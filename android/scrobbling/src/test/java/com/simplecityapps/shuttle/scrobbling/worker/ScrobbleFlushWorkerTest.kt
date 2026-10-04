@@ -234,14 +234,14 @@ class ScrobbleFlushWorkerTest {
     }
 
     @Test
-    fun `an unknown top-level error holds the queue rather than dropping the scrobbles`() = runTest {
+    fun `an unknown top-level error drops that batch so the queue keeps flowing`() = runTest {
         dao.enqueue(entity(1))
-        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 99))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 6))
 
         val result = buildWorker().doWork()
 
-        result shouldBe ListenableWorker.Result.failure()
-        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+        result shouldBe ListenableWorker.Result.success()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
     }
 
     @Test
