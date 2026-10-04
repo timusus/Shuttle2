@@ -70,6 +70,17 @@
     <string name="media_provider_address_missing">Endereço do servidor em falta</string>
     <!-- Shown when the media importer is searching for existing songs -->
     <!-- Shown when the media importer is searching for existing playlists -->
+    <!-- Import progress: signing in to a media server; the argument is its kind (Jellyfin, Emby or Plex) -->
+    <string name="media_import_connecting">A ligar a %1$s…</string>
+    <!-- Import progress: asking the library for its songs, before it has said how many there are -->
+    <string name="media_import_fetching">A obter a sua biblioteca…</string>
+    <!-- Import progress: asking the library for its songs, with how many so far of how many (numbers already formatted) -->
+    <string name="media_import_fetching_songs">A obter %1$s de %2$s músicas</string>
+    <!-- Import progress: writing the songs found to the library (number already formatted) -->
+    <plurals name="media_import_saving_songs">
+        <item quantity="one">A guardar %1$s música…</item>
+        <item quantity="other">A guardar %1$s músicas…</item>
+    </plurals>
     <!-- Shown when the media importer fails to import songs -->
     <string name="media_import_error">Ocorreu um erro ao importar músicas</string>
     <!-- Shown when the Shuttle Music scanner fails to find any folders to scan -->

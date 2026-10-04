@@ -68,6 +68,16 @@
     <string name="media_provider_authentication_error">认证失败</string>
     <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
     <string name="media_provider_address_missing">缺少服务器地址</string>
+    <!-- Import progress: signing in to a media server; the argument is its kind (Jellyfin, Emby or Plex) -->
+    <string name="media_import_connecting">正在连接 %1$s…</string>
+    <!-- Import progress: asking the library for its songs, before it has said how many there are -->
+    <string name="media_import_fetching">正在获取您的曲库…</string>
+    <!-- Import progress: asking the library for its songs, with how many so far of how many (numbers already formatted) -->
+    <string name="media_import_fetching_songs">正在获取 %2$s 首歌曲中的 %1$s 首</string>
+    <!-- Import progress: writing the songs found to the library (number already formatted) -->
+    <plurals name="media_import_saving_songs">
+        <item quantity="other">正在保存 %1$s 首歌曲…</item>
+    </plurals>
     <!-- Shown when the media importer fails to import songs -->
     <string name="media_import_error">导入歌曲时发生错误</string>
     <!-- Shown when the Shuttle Music scanner fails to find any folders to scan -->

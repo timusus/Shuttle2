@@ -68,6 +68,17 @@
     <string name="media_provider_authentication_error">Anmeldung fehlgeschlagen</string>
     <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
     <string name="media_provider_address_missing">Server Adresse fehlt</string>
+    <!-- Import progress: signing in to a media server; the argument is its kind (Jellyfin, Emby or Plex) -->
+    <string name="media_import_connecting">Verbindung zu %1$s wird hergestellt…</string>
+    <!-- Import progress: asking the library for its songs, before it has said how many there are -->
+    <string name="media_import_fetching">Deine Bibliothek wird abgerufen…</string>
+    <!-- Import progress: asking the library for its songs, with how many so far of how many (numbers already formatted) -->
+    <string name="media_import_fetching_songs">%1$s von %2$s Songs werden abgerufen</string>
+    <!-- Import progress: writing the songs found to the library (number already formatted) -->
+    <plurals name="media_import_saving_songs">
+        <item quantity="one">%1$s Song wird gespeichert…</item>
+        <item quantity="other">%1$s Songs werden gespeichert…</item>
+    </plurals>
     <!-- Shown when the media importer fails to import songs -->
     <string name="media_import_error">Ein Fehler ist beim Importieren von Songs aufgetreten</string>
     <!-- Shown when the Shuttle Music scanner fails to find any folders to scan -->
