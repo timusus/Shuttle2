@@ -208,12 +208,18 @@ resolve_module() {
 # --changed mode
 ##############################################################################
 
+# A module's directory from its Gradle path: ":android:mediaprovider:core" -> android/mediaprovider/core,
+# ":shared" -> shared.
+module_dir_for_path() {
+  printf '%s' "${1#:}" | tr ':' '/'
+}
+
 # Prints "<module-dir>\t<gradle-path>" for every declared module, e.g.
 # "android/mediaprovider/core\t:android:mediaprovider:core".
 module_dir_path_pairs() {
   local p dir
   while IFS= read -r p; do
-    dir="android$(printf '%s' "${p#:android}" | tr ':' '/')"
+    dir="$(module_dir_for_path "${p}")"
     printf '%s\t%s\n' "${dir}" "${p}"
   done < <(all_module_paths)
 }
@@ -246,7 +252,7 @@ module_id() {
 # The module's build file (build.gradle.kts or build.gradle), or nothing if it has none.
 module_build_file() {
   local mpath="$1" dir build_file
-  dir="android$(printf '%s' "${mpath#:android}" | tr ':' '/')"
+  dir="$(module_dir_for_path "${mpath}")"
   for build_file in "${REPO_ROOT}/${dir}/build.gradle.kts" "${REPO_ROOT}/${dir}/build.gradle"; do
     [ -f "${build_file}" ] && { echo "${build_file}"; return; }
   done
@@ -332,26 +338,26 @@ run_changed_mode() {
     fi
   done <<< "${changed_files}"
 
-  # Classify each changed android/** file against its module: a src/test
+  # Classify each changed android/** or shared/** file against its module: a src/test
   # file contributes its own class name as a filter candidate (only if it
   # still exists — a deletion contributes nothing); a main file contributes
   # its corresponding *Test class only if exactly one exists, otherwise (and
   # for any non-.kt change, or an androidTest change) the module falls back
-  # to a whole run. Any main-source change outside :android:app marks
+  # to a whole run. Any main-source change outside :android:app (or :shared, which app doesn't depend on) marks
   # :android:app as downstream-affected, since it depends on nearly every
-  # other module. A file under android/** that isn't part of any registered
+  # other module. A file under android/** or shared/** that isn't part of any registered
   # module is skipped with a printed note.
   local mdir mpath id rel cls matches match_count
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
     case "${f}" in
-      android/*) ;;
+      android/* | shared/*) ;;
       *) continue ;;
     esac
 
     IFS=$'\t' read -r mdir mpath <<< "$(module_dir_and_path_for_file "${f}")"
     if [ -z "${mpath}" ]; then
-      echo "note: '${f}' is under android/ but isn't part of a registered module; skipping"
+      echo "note: '${f}' is under android/ or shared/ but isn't part of a registered module; skipping"
       continue
     fi
     id="$(module_id "${mpath}")"
@@ -389,7 +395,7 @@ run_changed_mode() {
           touch "${WORK_DIR}/${id}.unmappable"
         fi
         touch "${WORK_DIR}/${id}.main"
-        [ "${mpath}" != ":android:app" ] && touch "${WORK_DIR}/app_downstream_triggered"
+        [ "${mpath}" != ":android:app" ] && [ "${mpath}" != ":shared" ] && touch "${WORK_DIR}/app_downstream_triggered"
         ;;
       src/test/*|src/commonTest/*|src/androidHostTest/*|src/androidTest/*)
         # Non-.kt test-source change (e.g. resources): run the module whole.
@@ -400,7 +406,7 @@ run_changed_mode() {
         # run the module whole, and treat it like a main-source change.
         touch "${WORK_DIR}/${id}.unmappable"
         touch "${WORK_DIR}/${id}.main"
-        [ "${mpath}" != ":android:app" ] && touch "${WORK_DIR}/app_downstream_triggered"
+        [ "${mpath}" != ":android:app" ] && [ "${mpath}" != ":shared" ] && touch "${WORK_DIR}/app_downstream_triggered"
         ;;
     esac
   done <<< "${changed_files}"
@@ -604,13 +610,13 @@ run_changed_tests_mode() {
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
     case "${f}" in
-      android/*) ;;
+      android/* | shared/*) ;;
       *) continue ;;
     esac
 
     IFS=$'\t' read -r mdir mpath <<< "$(module_dir_and_path_for_file "${f}")"
     if [ -z "${mpath}" ]; then
-      echo "note: '${f}' is under android/ but isn't part of a registered module; skipping"
+      echo "note: '${f}' is under android/ or shared/ but isn't part of a registered module; skipping"
       continue
     fi
     id="$(module_id "${mpath}")"
