@@ -9,7 +9,9 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
+import com.simplecityapps.localmediaprovider.local.provider.LARGE_TAG_READ_BYTES
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
+import com.simplecityapps.localmediaprovider.local.provider.TagReadLimiter
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
@@ -76,6 +78,9 @@ class TaglibMediaProvider(
     private val folders: () -> ScannerFolders
 ) : IndexedMediaProvider {
     override val type = MediaProviderType.Shuttle
+
+    // One cap on the native reads of every flow findSongs merges, which would otherwise each run as many at once
+    private val tagReads = TagReadLimiter()
 
     @Volatile
     override var unreadableRoots: Set<String> = emptySet()
@@ -464,7 +469,7 @@ class TaglibMediaProvider(
         merger: LocalFileTagMerger,
         folderImages: List<FolderImage>
     ): Song? = merger.unchangedSong(path, node.size, node.lastModified)?.reused(node.lastModified, folderImages)
-        ?: fileScanner.getAudioFile(context, kTagLib, node, path)?.toSong(type, folderImages)
+        ?: tagReads.withPermits(all = node.size > LARGE_TAG_READ_BYTES) { fileScanner.getAudioFile(context, kTagLib, node, path) }?.toSong(type, folderImages)
         // A file imported before that can't be read now keeps its song, which removing would take its play history with it
         ?: merger.existingSong(path)?.reused(node.lastModified, folderImages)
 
@@ -485,7 +490,9 @@ class TaglibMediaProvider(
         folderImages: List<FolderImage>
     ): Song = copy(id = 0, artworkVersion = localArtworkVersion(lastModified, folderImages))
 
-    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
+    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = tagReads.withPermits(all = file.size > LARGE_TAG_READ_BYTES) { readNow(file) }
+
+    private suspend fun readNow(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->
                 kTagLib.getAudioFile(pfd.fd, file.path, file.displayName, file.lastModified, file.size, file.mimeType)
