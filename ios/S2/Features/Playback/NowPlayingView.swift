@@ -263,9 +263,19 @@ struct NowPlayingContent: View {
     /// An artist or album line: a button to its screen when the song offers `action`, plain text otherwise.
     @ViewBuilder
     private func detailLine(_ text: String, font: Font, opens action: NowPlayingSongAction, id: String) -> some View {
-        let line = MarqueeText(text)
-            .font(font)
-            .foregroundStyle(secondaryInk)
+        // At the accessibility sizes the line wraps to two instead of scrolling, so no part of it is clipped.
+        let line = Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                Text(text)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                MarqueeText(text)
+            }
+        }
+        .font(font)
+        .foregroundStyle(secondaryInk)
         if state.songActions.contains(action) {
             Button { perform(action) } label: {
                 line.contentShape(Rectangle())
@@ -539,11 +549,7 @@ private extension View {
 
     /// A glyph in the top bar (close, favourite, more): on a material disc in a 44 pt target.
     func topBarGlyph(_ ink: Color) -> some View {
-        font(.body.weight(.semibold))
-            .foregroundStyle(ink)
-            .frame(width: TouchTarget.disc, height: TouchTarget.disc)
-            .glassSurface(in: Circle(), fallback: .disc)
-            .touchTarget()
+        modifier(TopBarGlyph(ink: ink))
     }
 
     /// Hands the player's tint on to a sheet it presents, which sits outside the screen's environment.
@@ -552,6 +558,22 @@ private extension View {
             .environment(\.artworkTintInk, ink)
             .environment(\.isArtworkTinted, isTinted)
             .tint(tint)
+    }
+}
+
+/// `topBarGlyph`: the disc scales with the text size, so a larger glyph never overflows it.
+private struct TopBarGlyph: ViewModifier {
+    let ink: Color
+
+    @ScaledMetric(relativeTo: .body) private var disc = TouchTarget.disc
+
+    func body(content: Content) -> some View {
+        content
+            .font(.body.weight(.semibold))
+            .foregroundStyle(ink)
+            .frame(width: disc, height: disc)
+            .glassSurface(in: Circle(), fallback: .disc)
+            .touchTarget()
     }
 }
 
