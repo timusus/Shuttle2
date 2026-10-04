@@ -82,7 +82,38 @@ class MediaImporter(
         }
 
         rescanRequested.store(true)
+        runRequestedImports()?.let { throw it }
+    }
 
+    /**
+     * Brings each source up to date as [SyncPolicy] says for [trigger] (#771): only what changed on a server since its last
+     * sync, all of it now and then, and nothing for a source synced in the last few minutes. Quiet, unlike [import]: it
+     * shows no progress, which would replace the library with the scanning state, only how each source's sync ended. An
+     * import or sync already running makes it return at once; an [import] asked for while it runs follows it.
+     */
+    suspend fun sync(trigger: SyncTrigger) {
+        if (mediaProviders.isEmpty()) return
+
+        if (!importLock.tryLock()) {
+            logger.debug { "Import already in progress, skipping the $trigger sync" }
+            return
+        }
+        try {
+            syncAll(trigger)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error(e) { "Sync failed" }
+        } finally {
+            importLock.unlock()
+        }
+        // An import asked for while this ran found the lock held and left its request for whoever unlocks next; it logs its
+        // own failure
+        runRequestedImports()
+    }
+
+    /** Runs a full import for as long as one is requested and no other import holds [importLock]; the last pass's failure. */
+    private suspend fun runRequestedImports(): Exception? {
         var failure: Exception? = null
         // Checked again after each unlock: a request made between the last check and the unlock found the lock still held,
         // so whichever import sees it next runs it
@@ -110,43 +141,85 @@ class MediaImporter(
                 importLock.unlock()
             }
         }
-        failure?.let { throw it }
+        return failure
     }
 
     private suspend fun importAll() {
         logger.debug { "Starting import.." }
+        preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
+        importProviders(mediaProviders.map { mediaProvider -> mediaProvider to SyncPlan.Full }, showProgress = true) { _, _ -> true }
+    }
+
+    private suspend fun syncAll(trigger: SyncTrigger) {
+        val now = clock.now()
+        val plans =
+            mediaProviders.mapNotNull { mediaProvider ->
+                SyncPolicy.plan(
+                    trigger = trigger,
+                    incremental = mediaProvider is IncrementalMediaProvider,
+                    lastSyncStart = preferenceManager.lastSyncStart(mediaProvider.type.name),
+                    lastFullSyncStart = preferenceManager.lastFullSyncStart(mediaProvider.type.name),
+                    songTagsOutdated = preferenceManager.songTagsOutdated(mediaProvider.type),
+                    now = now
+                )?.let { plan -> mediaProvider to plan }
+            }
+        if (plans.isEmpty()) {
+            logger.debug { "Every source synced recently, skipping the $trigger sync" }
+            return
+        }
+        logger.debug { "Starting $trigger sync: ${plans.joinToString { (mediaProvider, plan) -> "${mediaProvider.type} $plan" }}" }
+        // A delta that changed nothing leaves the playlists as they were, bar the daily sync, which catches a playlist
+        // edited on the server without touching its songs
+        importProviders(plans, showProgress = false) { plan, result ->
+            result != null && (plan == SyncPlan.Full || trigger == SyncTrigger.Periodic || result.inserts + result.updates > 0)
+        }
+    }
+
+    /**
+     * Fetches and stores the songs of each provider in [plans], all at once, then the playlists of those [playlistsDue]
+     * says, given the provider's plan and its stored songs (null when that failed). Shows each fetch's progress only if
+     * [showProgress]; how each ends is always shown.
+     */
+    private suspend fun importProviders(
+        plans: List<Pair<MediaProvider, SyncPlan>>,
+        showProgress: Boolean,
+        playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
+    ) {
         val time = TimeSource.Monotonic.markNow()
 
-        mediaProviders.forEach { mediaProvider ->
-            val start = MessageProgress(if (mediaProvider.type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)
-            publish(mediaProvider.type, mediaProvider.importProgress(start))
+        if (showProgress) {
+            plans.forEach { (mediaProvider, _) ->
+                val start = MessageProgress(if (mediaProvider.type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)
+                publish(mediaProvider.type, mediaProvider.importProgress(start))
+            }
         }
 
-        preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
         withContext(Dispatchers.IO) {
-            mediaProviders.map { mediaProvider ->
-                async {
-                    importSongs(mediaProvider, SyncPlan.Full).collect { event ->
-                        when (event) {
-                            is FlowEvent.Progress -> {
-                                publish(mediaProvider.type, mediaProvider.importProgress(event.data))
-                            }
+            val playlistProviders =
+                plans.map { (mediaProvider, plan) ->
+                    async {
+                        var stored: SongImportResult? = null
+                        importSongs(mediaProvider, plan).collect { event ->
+                            when (event) {
+                                is FlowEvent.Progress -> {
+                                    if (showProgress) publish(mediaProvider.type, mediaProvider.importProgress(event.data))
+                                }
 
-                            is FlowEvent.Success -> {
-                                // Stored, so this source's songs hold every tag this build reads
-                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
-                                publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
-                            }
+                                is FlowEvent.Success -> {
+                                    stored = event.result
+                                    publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
+                                }
 
-                            is FlowEvent.Failure -> {
-                                publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, event.message))
+                                is FlowEvent.Failure -> {
+                                    publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, event.message))
+                                }
                             }
                         }
+                        mediaProvider.takeIf { playlistsDue(plan, stored) }
                     }
-                }
-            }.awaitAll()
+                }.awaitAll().filterNotNull()
 
-            mediaProviders.map { mediaProvider ->
+            playlistProviders.map { mediaProvider ->
                 async {
                     importPlaylists(mediaProvider).collect { event ->
                         if (event is FlowEvent.Failure) logger.warn { "${mediaProvider.type} playlist import failed: ${event.message}" }
@@ -179,13 +252,13 @@ class MediaImporter(
     )
 
     /**
-     * Fetches [mediaProvider]'s songs as [plan] says and stores them: a full listing replaces what's stored, removing what
-     * it no longer holds; an incremental one is stored over it. Once stored, the sync's start is noted for the next
-     * incremental sync to ask from.
+     * Fetches [mediaProvider]'s songs as [requested] says and stores them: a full listing replaces what's stored, removing
+     * what it no longer holds; an incremental one is stored over it, or is made full when nothing is stored. Once stored,
+     * the sync's start is noted for the next incremental sync to ask from.
      */
     private fun importSongs(
         mediaProvider: MediaProvider,
-        plan: SyncPlan
+        requested: SyncPlan
     ): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         // Before the request, so whatever changes on the source while it runs is fetched again next time
         val start = clock.now()
@@ -203,6 +276,8 @@ class MediaImporter(
                 return@flow
             }
 
+        // Nothing stored (a source signed into again, or a sync that never stored), so nothing for a delta to apply to
+        val plan = if (storedSongs.isEmpty()) SyncPlan.Full else requested
         val songs =
             when (plan) {
                 SyncPlan.Full -> mediaProvider.findSongs(existingSongs)
@@ -227,7 +302,11 @@ class MediaImporter(
                             )
                         mediaProvider.songsStored()
                         preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
-                        if (plan == SyncPlan.Full) preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
+                        if (plan == SyncPlan.Full) {
+                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
+                            // Every song read again, so this source's songs hold every tag this build reads
+                            preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
+                        }
                         emit(
                             FlowEvent.Success(
                                 SongImportResult(

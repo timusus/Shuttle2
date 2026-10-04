@@ -33,6 +33,12 @@ class FakeMediaSources(vararg enabled: MediaProviderType) : MediaSources {
         hasScanned = true
         songTagsOutdated = false
     }
+
+    var syncs = 0
+
+    override fun syncIfStale() {
+        syncs++
+    }
 }
 
 class FakeScannerFolderStore : ScannerFolderStore {

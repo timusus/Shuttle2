@@ -4,6 +4,7 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.SyncTrigger
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
@@ -72,6 +73,10 @@ class DefaultMediaSources @Inject constructor(
 
     override fun scan() {
         appCoroutineScope.launch { mediaImporter.import() }
+    }
+
+    override fun syncIfStale() {
+        appCoroutineScope.launch { mediaImporter.sync(SyncTrigger.Foreground) }
     }
 
     private fun save(types: List<MediaProviderType>) {

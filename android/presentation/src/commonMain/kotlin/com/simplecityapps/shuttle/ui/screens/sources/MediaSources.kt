@@ -22,6 +22,12 @@ interface MediaSources {
     /** Imports from every enabled provider, outliving the screen that asked; a no-op while an import runs. */
     fun scan()
 
+    /**
+     * Brings the servers up to date with what changed on them, quietly and outliving the screen that asked, unless they
+     * synced in the last few minutes or an import runs (`MediaImporter.sync`): what returning to the app starts (#771).
+     */
+    fun syncIfStale()
+
     /** Scans, turning the S2 scanner on first if no source on this device is: what a music permission grant starts. */
     fun scanThisDevice() {
         if (enabledTypes.value.none { it.isLocal }) enable(MediaProviderType.Shuttle)

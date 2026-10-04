@@ -16,6 +16,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -37,10 +41,12 @@ class MediaImporterTest {
     private val provider = GatedProvider()
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
     private val clock = FakeClock(Instant.parse("2026-10-04T09:00:00Z"))
+    private val songRepository = FakeSongRepository()
+    private val server = ServerProvider()
     private val importer =
         MediaImporter(
             strings = FakeMediaImportStrings,
-            songRepository = EmptySongRepository,
+            songRepository = songRepository,
             playlistStore = object : ImportedPlaylistStore {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
             },
@@ -268,6 +274,114 @@ class MediaImporterTest {
         preferences.lastFullSyncStart(provider.type.name) shouldBe clock.time
     }
 
+    @Test
+    fun `a sync on return to the app asks a server only for what changed since its last sync, and leaves this device alone`() = runBlocking<Unit> {
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.requests shouldBe listOf(clock.time - 1.hours - SyncPolicy.OVERLAP)
+        provider.scans.load() shouldBe 0
+        preferences.lastSyncStart(server.type.name) shouldBe clock.time
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time - 1.days
+        // Nothing changed, so the playlists are as they were
+        server.playlistRequests shouldBe 0
+    }
+
+    @Test
+    fun `a sync shows no progress, which would replace the library with the scanning state, only how it ended`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        val states = mutableListOf<SongImportState>()
+        val collecting = launch(Dispatchers.Unconfined) { importer.songImportState.toList(states) }
+
+        importer.sync(SyncTrigger.Foreground)
+        collecting.cancel()
+
+        states shouldBe listOf(SongImportState.Idle, SongImportState.ImportComplete(server.type, error = null))
+    }
+
+    @Test
+    fun `a server synced in the last few minutes is left alone`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
+
+        importer.sync(SyncTrigger.Periodic)
+
+        server.requests shouldBe emptyList()
+    }
+
+    @Test
+    fun `a server with nothing stored is synced in full, whenever it last synced`() = runBlocking<Unit> {
+        importer.mediaProviders += server
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.requests shouldBe listOf(null)
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time
+    }
+
+    @Test
+    fun `the daily sync reads this device in full and fetches every source's playlists`() = runBlocking<Unit> {
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.days)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+        provider.gate.trySend(Unit)
+
+        importer.sync(SyncTrigger.Periodic)
+
+        provider.scans.load() shouldBe 1
+        server.requests shouldBe listOf(clock.time - 1.days - SyncPolicy.OVERLAP)
+        server.playlistRequests shouldBe 1
+    }
+
+    @Test
+    fun `a sync asked for while an import runs returns at once`() = runBlocking<Unit> {
+        val running = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+
+        // A scan of its own would wait on the gate
+        importer.sync(SyncTrigger.Periodic)
+
+        provider.gate.trySend(Unit)
+        running.join()
+        provider.scans.load() shouldBe 1
+    }
+
+    /** A server that records the time each song request asked from (null for every song) and finds no songs. */
+    private class ServerProvider : IncrementalMediaProvider {
+        override val type = MediaProviderType.Jellyfin
+
+        val requests = mutableListOf<Instant?>()
+        var playlistRequests = 0
+
+        override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = songs(since = null)
+
+        override fun findSongsChangedSince(
+            existingSongs: List<Song>,
+            since: Instant
+        ): Flow<FlowEvent<List<Song>, MessageProgress>> = songs(since)
+
+        private fun songs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+            requests += since
+            emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, progress = null)))
+            emit(FlowEvent.Success(emptyList()))
+        }
+
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
+            playlistRequests++
+        }
+    }
+
     /**
      * Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext]
      * is set, reports [scanFailure] if that's set, or else finds no songs.
@@ -304,6 +418,37 @@ class MediaImporterTest {
         const val IMPORTS = 8
     }
 
+    private fun song() = Song(
+        id = 1,
+        name = "Song",
+        albumArtist = "Artist",
+        artists = listOf("Artist"),
+        album = "Album",
+        track = 1,
+        disc = 1,
+        duration = 180_000,
+        date = null,
+        genres = emptyList(),
+        path = "jellyfin://item/1",
+        size = 0,
+        mimeType = "Audio/*",
+        lastModified = null,
+        lastPlayed = null,
+        lastCompleted = null,
+        playCount = 0,
+        playbackPosition = 0,
+        blacklisted = false,
+        mediaProvider = MediaProviderType.Jellyfin,
+        lyrics = null,
+        grouping = null,
+        bitRate = null,
+        bitDepth = null,
+        sampleRate = null,
+        channelCount = null,
+        artworkVersion = null,
+        dateAdded = null
+    )
+
     private class FakeClock(var time: Instant) : Clock {
         override fun now(): Instant = time
     }
@@ -319,9 +464,11 @@ class MediaImporterTest {
         override val importError = "Import failed"
     }
 
-    /** A repository whose queries all return an empty list; anything else fails the test. */
-    private object EmptySongRepository : SongRepository {
-        override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(emptyList())
+    /** A repository whose queries all return [stored]; anything else fails the test. */
+    private class FakeSongRepository : SongRepository {
+        var stored: List<Song> = emptyList()
+
+        override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(stored)
 
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
 
