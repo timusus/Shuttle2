@@ -72,6 +72,24 @@ class Migration45To46Test {
     }
 
     @Test
+    fun `migrate 45 to 46 removes every copy of an empty Favorites playlist`() {
+        helper.createDatabase(TEST_DB, 45).apply {
+            insertSong(1)
+            insertPlaylist(id = 1, name = "Música en MP3", externalId = "content://tree/Musica en MP3.m3u")
+            insertEntries(playlistId = 1, songIds = listOf(1))
+            // Created twice, empty, under a Spanish locale by a build that looked the playlist up by name (#879)
+            insertPlaylist(id = 2, name = "Favoritos")
+            insertPlaylist(id = 3, name = "Favoritos")
+            close()
+        }
+
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 46, true, MIGRATION_45_46)
+
+        migrated.longs("SELECT id FROM playlists ORDER BY id") shouldContainExactly listOf(1L)
+        migrated.favouritedAt() shouldBe mapOf(1L to null)
+    }
+
+    @Test
     fun `migrate 45 to 46 without a Favorites playlist favourites nothing`() {
         helper.createDatabase(TEST_DB, 45).apply {
             insertSong(1)
