@@ -57,11 +57,24 @@ class SongDiffTest {
         SongDiff(listOf(existing), listOf(retagged)).update(existing, retagged).dateAdded shouldBe firstImport
     }
 
+    @Test
+    fun `a re-import updates a song stored without a bit depth to the one the provider now reports`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, bitDepth = null)
+
+        val reimported = SongDiff(listOf(existing), listOf(createSong(id = 0, lastModified = firstImport, bitDepth = 24))).apply()
+
+        reimported.updates.single().run {
+            id shouldBe 7
+            bitDepth shouldBe 24
+        }
+    }
+
     private fun createSong(
         id: Long,
         lastModified: Instant?,
         artworkVersion: String? = null,
-        dateAdded: Instant? = null
+        dateAdded: Instant? = null,
+        bitDepth: Int? = null
     ) = Song(
         id = id,
         name = "Song",
@@ -86,7 +99,7 @@ class SongDiffTest {
         lyrics = null,
         grouping = null,
         bitRate = null,
-        bitDepth = null,
+        bitDepth = bitDepth,
         sampleRate = null,
         channelCount = null,
         artworkVersion = artworkVersion,

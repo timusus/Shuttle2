@@ -41,7 +41,9 @@ data class SongDataUpdate(
     @ColumnInfo(name = "mbAlbumArtistIds") var mbAlbumArtistIds: List<String>? = null,
     @ColumnInfo(name = "serverAlbumId") var serverAlbumId: String? = null,
     @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
-    @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null
+    @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null,
+    // Written on every update, so a rescan or sync fills it in for a song stored before providers reported it (#798)
+    @ColumnInfo(name = "bitDepth") var bitDepth: Int? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
@@ -76,7 +78,8 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     mbAlbumArtistIds = mbAlbumArtistIds,
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
-    serverAlbumArtistIds = serverAlbumArtistIds
+    serverAlbumArtistIds = serverAlbumArtistIds,
+    bitDepth = bitDepth
 )
 
 fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()

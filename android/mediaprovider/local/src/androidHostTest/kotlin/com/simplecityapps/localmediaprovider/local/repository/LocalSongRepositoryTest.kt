@@ -297,6 +297,17 @@ class LocalSongRepositoryTest {
         }
     }
 
+    @Test
+    fun `a rescan or sync fills in the bit depth of a song stored without one`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
+        val song = insertSongs(listOf("Song")).single()
+        song.bitDepth shouldBe null
+
+        repository.insertUpdateAndDelete(inserts = emptyList(), updates = listOf(song.copy(bitDepth = 24)), deletes = emptyList(), mediaProviderType = MediaProviderType.Shuttle)
+
+        repository.loadSongs(SongQuery.All()).single().bitDepth shouldBe 24
+    }
+
     private suspend fun insertSongs(names: List<String>): List<Song> {
         database.songDataDao().insert(names.map(::songData))
         return database.songDataDao().get().map { songData -> songData.toSong() }.sortedBy(Song::id)
