@@ -281,7 +281,15 @@ class IosPlayerController(
         val abandoned = resolvedPlays.filterKeys { it !in live }
         abandoned.forEach { (playId, song) ->
             resolvedPlays.remove(playId)
-            scope.launch { resolver.endPlay(song, playId) }
+            scope.launch {
+                // Best effort: a provider that fails to end a play must not take playback down with it
+                try {
+                    resolver.endPlay(song, playId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                }
+            }
         }
     }
 
