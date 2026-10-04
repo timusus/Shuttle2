@@ -154,6 +154,23 @@ LOG="$REPO_ROOT/.claude/land-logs/$STAMP.log"
 log()  { printf '%s\n' "$*" >> "$LOG"; }
 say()  { printf '%s\n' "$*"; printf '%s\n' "$*" >> "$LOG"; }
 
+# run_git <args...>: git with retries on a transient index.lock (#666). A concurrent `git status`
+# from the session or the harness can hold the worktree's index.lock for a moment; failing the
+# landing on that race is wrong. Output goes to the log; returns git's exit code.
+run_git() {
+  local attempt=1 out rc=1
+  while :; do
+    out=$(git "$@" 2>&1); rc=$?
+    [ -n "$out" ] && printf '%s\n' "$out" >> "$LOG"
+    [ "$rc" -eq 0 ] && return 0
+    printf '%s\n' "$out" | grep -q 'index\.lock' || return "$rc"
+    [ "$attempt" -ge 5 ] && return "$rc"
+    say "land.sh: transient index.lock during 'git $*' (attempt $attempt/5); retrying in ${attempt}s"
+    sleep "$attempt"
+    attempt=$((attempt + 1))
+  done
+}
+
 NO_PUSH=0
 DEVICE_INSTALL=1
 [ "${LAND_SKIP_DEVICE_INSTALL:-0}" = 1 ] && DEVICE_INSTALL=0
@@ -278,7 +295,7 @@ else
   done
 
   log "hard-resetting $CUR_BRANCH ($(git rev-parse HEAD)) onto origin/main ($ORIGIN_MAIN_SHA)"
-  if ! git reset --hard origin/main >> "$LOG" 2>&1; then
+  if ! run_git reset --hard origin/main; then
     say "land.sh: git reset --hard origin/main failed"
     exit 1
   fi
@@ -303,8 +320,16 @@ STATUS=()       # landed | conflict | dropped, one per BRANCHES index
 REASON=()
 START_SHA=()    # HEAD before this branch's cherry-picks
 
+# rollback_pick <sha>: leave no partially-picked state behind (#666). --abort returns to the
+# pre-pick HEAD; when it cannot run (nothing in progress, or the same lock raced it), --quit
+# clears the sequencer and an explicit reset restores <sha>.
+rollback_pick() {
+  git cherry-pick --abort >> "$LOG" 2>&1 \
+    || { git cherry-pick --quit >> "$LOG" 2>&1 || true; git reset --hard "$1" >> "$LOG" 2>&1 || true; }
+}
+
 pick_branch() {  # $1 = index into BRANCHES
-  local i=$1 b base
+  local i=$1 b base attempt out rc
   b=${BRANCHES[$i]}
   START_SHA[$i]=$(git rev-parse HEAD)
   base=$(git merge-base origin/main "$b" 2>/dev/null)
@@ -314,13 +339,27 @@ pick_branch() {  # $1 = index into BRANCHES
     return
   fi
   log "$b: cherry-picking ${base}..$b"
-  if git cherry-pick "$base..$b" >> "$LOG" 2>&1; then
-    STATUS[$i]=landed; REASON[$i]=""
+  for attempt in 1 2 3 4 5; do
+    out=$(git cherry-pick "$base..$b" 2>&1); rc=$?
+    printf '%s\n' "$out" >> "$LOG"
+    if [ "$rc" -eq 0 ]; then
+      STATUS[$i]=landed; REASON[$i]=""
+      return
+    fi
+    printf '%s\n' "$out" | grep -q 'index\.lock' || break
+    say "land.sh: transient index.lock while picking $b (attempt $attempt/5); rolling back and retrying"
+    sleep "$attempt"
+    rollback_pick "${START_SHA[$i]}"
+  done
+  # A real conflict, or a lock that never cleared. Roll back cleanly either way (#666: a bare
+  # --abort left partial picks and sequencer state behind, which the next run then tripped over).
+  rollback_pick "${START_SHA[$i]}"
+  if printf '%s\n' "$out" | grep -q 'index\.lock'; then
+    STATUS[$i]=conflict; REASON[$i]="index.lock contention (a concurrent git process held the lock); retry the landing"
   else
-    git cherry-pick --abort >> "$LOG" 2>&1
     STATUS[$i]=conflict; REASON[$i]="cherry-pick conflict"
-    log "$b: cherry-pick conflict, aborted"
   fi
+  log "$b: pick failed: ${REASON[$i]}"
 }
 
 if [ "$IN_PLACE" = 1 ]; then
@@ -329,6 +368,13 @@ if [ "$IN_PLACE" = 1 ]; then
   START_SHA[0]=$ORIGIN_MAIN_SHA
   STATUS[0]=landed; REASON[0]=""
 else
+  # An earlier run killed mid-pick can leave sequencer state behind (#666); that makes the first
+  # pick fail with "a cherry-pick or revert is already in progress", reported as a conflict.
+  if git rev-parse -q --verify CHERRY_PICK_HEAD >/dev/null 2>&1 \
+     || [ -e "$(git rev-parse --git-dir)/sequencer" ]; then
+    say "land.sh: clearing a cherry-pick left in progress by an earlier run"
+    git cherry-pick --quit >> "$LOG" 2>&1 || true
+  fi
   for i in "${!BRANCHES[@]}"; do
     pick_branch "$i"
   done
@@ -344,7 +390,7 @@ landed_indices() {
 drop_branch() {  # $1 = index; resets HEAD back to before this branch's picks
   local i=$1
   if [ "$IN_PLACE" != 1 ]; then
-    git reset --hard "${START_SHA[$i]}" >> "$LOG" 2>&1
+    run_git reset --hard "${START_SHA[$i]}"
   fi
   STATUS[$i]=dropped; REASON[i]="broke verify"
   log "${BRANCHES[$i]}: dropped to isolate a verify failure"
@@ -398,7 +444,7 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
   say "land.sh: running verify over ${#LANDED_IDX[@]} landed branch(es)"
   run_verify; vrc=$?
   if [ "$vrc" -eq 2 ]; then
-    git reset -q --hard "$ORIGIN_MAIN_SHA"
+    run_git reset -q --hard "$ORIGIN_MAIN_SHA"
     say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
     exit 3
   fi
@@ -417,7 +463,7 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
         remaining=("${remaining[@]}")
         run_verify; vrc=$?
         if [ "$vrc" -eq 2 ]; then
-          git reset -q --hard "$ORIGIN_MAIN_SHA"
+          run_git reset -q --hard "$ORIGIN_MAIN_SHA"
           say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
           exit 3
         fi
