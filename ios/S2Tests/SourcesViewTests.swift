@@ -15,6 +15,7 @@ struct SourcesViewTests {
         lastImport: KotlinInstant? = nil,
         deviceUpdated: KotlinInstant? = nil,
         serverUpdated: KotlinInstant? = nil,
+        listingShortfall: Int = 0,
         thisDevice: Bool = false,
         extras: [SourceFolder] = [],
         deviceSongs: Int? = nil
@@ -28,7 +29,7 @@ struct SourcesViewTests {
             deviceStatus: SourceStatusIdle.shared,
             deviceSongs: deviceSongs.map { KotlinInt(int: Int32($0)) },
             deviceUpdated: deviceUpdated,
-            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: serverUpdated, listingShortfall: 0) },
+            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: serverUpdated, listingShortfall: Int32(listingShortfall)) },
             lastImport: lastImport,
             events: []
         )
@@ -103,7 +104,7 @@ struct SourcesViewTests {
         #expect(state.thisDevice)
         #expect(state.folders == [SourcesState.DeviceFolder(id: "f1", name: "Music", path: "/Music", hasAccess: false)])
         #expect(state.deviceSongs == 12)
-        #expect(state.deviceFooter == "12 songs on this iPhone.")
+        #expect(state.deviceFooter() == "12 songs")
     }
 
     @Test func thisDeviceOffShowsOnlyItsSwitchAndNoScan() throws {
@@ -125,13 +126,13 @@ struct SourcesViewTests {
         #expect((try? sut.inspect().find(text: "Music")) != nil)
         #expect((try? sut.inspect().find(text: "Can't Be Read. Tap to Choose It Again.")) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.addFolder")) != nil)
-        #expect((try? sut.inspect().find(text: "1 song on this iPhone.")) != nil)
+        #expect((try? sut.inspect().find(text: "1 song")) != nil)
         #expect((try? sut.inspect().find(text: "Scan Now")) != nil)
         #expect((try? sut.inspect().find(text: "Looks for new and changed music on this iPhone.")) != nil)
     }
 
     @Test func thisDeviceWithoutSongsSaysHowToAddThem() {
-        #expect(SourcesState(thisDevice: true, deviceSongs: 0, servers: []).deviceFooter.hasPrefix("Copy music into Shuttle Music"))
+        #expect(SourcesState(thisDevice: true, deviceSongs: 0, servers: []).deviceFooter().hasPrefix("Copy music into Shuttle Music"))
     }
 
     @Test func scanIsItsOwnSectionWithTheLastUpdate() throws {
@@ -206,11 +207,42 @@ struct SourcesViewTests {
         #expect(SourcesState(uiState()).deviceUpdated == nil)
     }
 
-    @Test func serverRowAndDetailShowTheirUpdatedTime() throws {
-        let row = ServerRow(type: .jellyfin, host: nil, status: .connected, updated: Date().addingTimeInterval(-3600))
-        #expect((try? row.inspect().find(text: "Updated 1 hour ago")) != nil || (try? row.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("Updated") })) != nil)
-        let detail = ServerDetailContent(type: .jellyfin, login: ServerLogin(), status: .connected, scan: .idle, updated: Date().addingTimeInterval(-3600))
-        #expect((try? detail.inspect().find(viewWithAccessibilityIdentifier: "serverDetail.updated")) != nil)
+    private static let now = Date(timeIntervalSince1970: 1_700_000_000)
+
+    @Test func updatedTextSaysJustNowInsideTheFirstMinuteElseHowLongAgo() {
+        #expect(updatedText(Self.now.addingTimeInterval(-59), now: Self.now) == "Updated just now")
+        #expect(updatedText(Self.now.addingTimeInterval(-300), now: Self.now) == "Updated 5 minutes ago")
+        #expect(updatedText(Self.now.addingTimeInterval(-3600), now: Self.now) == "Updated 1 hour ago")
+    }
+
+    @Test func serverRowShowsItsUpdatedTimeAndShortfall() throws {
+        let row = ServerRow(type: .jellyfin, host: nil, status: .connected, updated: Self.now.addingTimeInterval(-3600), shortfall: 3, now: Self.now)
+        #expect((try? row.inspect().find(text: "Updated 1 hour ago")) != nil)
+        #expect((try? row.inspect().find(text: "3 items the server counts but doesn't return")) != nil)
+        let single = ServerRow(type: .jellyfin, host: nil, status: .connected, shortfall: 1)
+        #expect((try? single.inspect().find(text: "1 item the server counts but doesn't return")) != nil)
+        #expect((try? ServerRow(type: .jellyfin, host: nil, status: .connected).inspect().find(ViewType.Text.self, where: { try $0.string().contains("counts") })) == nil)
+    }
+
+    @Test func serverDetailShowsItsUpdatedTimeAndShortfall() throws {
+        let detail = ServerDetailContent(type: .jellyfin, login: ServerLogin(), status: .connected, scan: .idle, updated: Self.now.addingTimeInterval(-300), shortfall: 2, now: Self.now)
+        #expect((try? detail.inspect().find(text: "Updated 5 minutes ago")) != nil)
+        #expect((try? detail.inspect().find(text: "2 items the server counts but doesn't return")) != nil)
+        let none = ServerDetailContent(type: .jellyfin, login: ServerLogin(), status: .connected, scan: .idle, updated: nil)
+        #expect((try? none.inspect().find(viewWithAccessibilityIdentifier: "serverDetail.updated")) == nil)
+        #expect((try? none.inspect().find(viewWithAccessibilityIdentifier: "serverDetail.shortfall")) == nil)
+    }
+
+    @Test func deviceFooterJoinsTheSongCountAndUpdatedTime() {
+        let updated = Self.now.addingTimeInterval(-300)
+        #expect(SourcesState(thisDevice: true, deviceSongs: 3, servers: [], deviceUpdated: updated).deviceFooter(now: Self.now) == "3 songs · Updated 5 minutes ago")
+        #expect(SourcesState(thisDevice: true, deviceSongs: 1, servers: []).deviceFooter(now: Self.now) == "1 song")
+        #expect(SourcesState(thisDevice: true, deviceSongs: 0, servers: [], deviceUpdated: updated).deviceFooter(now: Self.now) == "Updated 5 minutes ago")
+    }
+
+    @Test func mapsEachServersListingShortfall() {
+        #expect(SourcesState(uiState(connected: [.jellyfin], listingShortfall: 7)).serverShortfall[.jellyfin] == 7)
+        #expect(SourcesState(uiState(connected: [.jellyfin])).serverShortfall[.jellyfin] == 0)
     }
 
     @Test func mapsTheLastImport() {

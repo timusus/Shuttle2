@@ -25,6 +25,7 @@ struct ServerDetailView: View {
                     status: sources.status(of: type),
                     scan: sources.scan,
                     updated: sources.serverUpdated[type],
+                    shortfall: sources.serverShortfall[type] ?? 0,
                     onRescan: { models.sources.onRescan() },
                     onSignIn: { setup = .signIn(type) },
                     onRemove: {
@@ -52,6 +53,8 @@ struct ServerDetailContent: View {
     let status: SourcesState.ServerStatus
     let scan: SourcesState.Scan
     let updated: Date?
+    var shortfall = 0
+    var now = Date()
     var onRescan: () -> Void = {}
     var onSignIn: () -> Void = {}
     var onRemove: () -> Void = {}
@@ -77,10 +80,12 @@ struct ServerDetailContent: View {
                 }
                 .accessibilityIdentifier("serverDetail.status")
                 if let updated {
-                    LabeledContent("Updated") {
-                        Text(updated, format: .relative(presentation: .named))
-                    }
-                    .accessibilityIdentifier("serverDetail.updated")
+                    Text(updatedText(updated, now: now))
+                        .accessibilityIdentifier("serverDetail.updated")
+                }
+                if shortfall > 0 {
+                    Text(listingShortfallText(shortfall)).font(.subheadline).foregroundStyle(.s2TextSecondary)
+                        .accessibilityIdentifier("serverDetail.shortfall")
                 }
                 if case .failed(let error) = status {
                     Text(error).font(.subheadline).foregroundStyle(.s2TextSecondary)
@@ -98,7 +103,6 @@ struct ServerDetailContent: View {
             }
             ScanSection(
                 scan: scan,
-                lastImport: nil,
                 onRescan: onRescan,
                 footer: "Looks for new and changed music on every server you've connected."
             )

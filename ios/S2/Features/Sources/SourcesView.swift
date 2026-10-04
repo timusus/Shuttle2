@@ -105,6 +105,8 @@ struct SourcesState: Equatable {
     /// When this device's music, and each connected server, last finished importing.
     var deviceUpdated: Date?
     var serverUpdated: [MediaProviderType: Date]
+    /// How many items each server counts but doesn't return when listed.
+    var serverShortfall: [MediaProviderType: Int]
     var logins: [MediaProviderType: ServerLogin]
 
     /// A folder picked in Files: [hasAccess] is false while its bookmark won't resolve, until it's picked again.
@@ -148,6 +150,7 @@ struct SourcesState: Equatable {
         lastImport: Date? = nil,
         deviceUpdated: Date? = nil,
         serverUpdated: [MediaProviderType: Date] = [:],
+        serverShortfall: [MediaProviderType: Int] = [:],
         logins: [MediaProviderType: ServerLogin] = [:]
     ) {
         self.thisDevice = thisDevice
@@ -159,6 +162,7 @@ struct SourcesState: Equatable {
         self.lastImport = lastImport
         self.deviceUpdated = deviceUpdated
         self.serverUpdated = serverUpdated
+        self.serverShortfall = serverShortfall
         self.logins = logins
     }
 
@@ -182,6 +186,7 @@ struct SourcesState: Equatable {
         serverUpdated = Dictionary(uniqueKeysWithValues: state.servers.compactMap { server in
             server.updated.map { (server.type, Date(kotlin: $0)) }
         })
+        serverShortfall = Dictionary(uniqueKeysWithValues: state.servers.map { ($0.type, Int($0.listingShortfall)) })
         self.logins = logins
     }
 
@@ -202,8 +207,16 @@ extension Date {
 }
 
 /// When a source last updated, as Android words it: "Updated just now" inside the first minute, else "Updated 5 minutes ago".
-func updatedText(_ date: Date, now: Date = Date()) -> Text {
-    now.timeIntervalSince(date) < 60 ? Text("Updated just now") : Text("Updated \(date, format: .relative(presentation: .named))")
+func updatedText(_ date: Date, now: Date = Date()) -> String {
+    guard now.timeIntervalSince(date) >= 60 else { return "Updated just now" }
+    let formatter = RelativeDateTimeFormatter()
+    formatter.dateTimeStyle = .named
+    return "Updated \(formatter.localizedString(for: date, relativeTo: now))"
+}
+
+/// A server's listing shortfall, as Android words it: "3 items the server counts but doesn't return".
+func listingShortfallText(_ count: Int) -> String {
+    "\(count.formatted()) \(count == 1 ? "item" : "items") the server counts but doesn't return"
 }
 
 extension MediaProviderType {
@@ -267,7 +280,7 @@ struct SourcesContent: View {
             Section {
                 ForEach(state.servers, id: \.self) { type in
                     NavigationLink(value: Route.server(type: type.name)) {
-                        ServerRow(type: type, host: state.logins[type]?.host, status: state.status(of: type), updated: state.serverUpdated[type])
+                        ServerRow(type: type, host: state.logins[type]?.host, status: state.status(of: type), updated: state.serverUpdated[type], shortfall: state.serverShortfall[type] ?? 0)
                     }
                     .accessibilityIdentifier("sources.server.\(type.name)")
                     .swipeActions {
@@ -346,11 +359,7 @@ struct DeviceSection: View {
         } header: {
             Text("On This iPhone")
         } footer: {
-            if state.thisDevice, let updated = state.deviceUpdated {
-                Text("\(state.deviceFooter) \(updatedText(updated)).")
-            } else {
-                Text(state.deviceFooter)
-            }
+            Text(state.deviceFooter())
         }
         .fileImporter(isPresented: $picking, allowedContentTypes: [.folder]) { result in
             if case .success(let url) = result { onAddFolder(url) }
@@ -388,6 +397,8 @@ struct ServerRow: View {
     let host: String?
     let status: SourcesState.ServerStatus
     var updated: Date?
+    var shortfall = 0
+    var now = Date()
 
     var body: some View {
         LabeledContent {
@@ -400,7 +411,10 @@ struct ServerRow: View {
                         Text(host).font(.subheadline).foregroundStyle(.s2TextSecondary).lineLimit(1).truncationMode(.middle)
                     }
                     if let updated {
-                        updatedText(updated).font(.subheadline).foregroundStyle(.s2TextSecondary).lineLimit(1)
+                        Text(updatedText(updated, now: now)).font(.subheadline).foregroundStyle(.s2TextSecondary)
+                    }
+                    if shortfall > 0 {
+                        Text(listingShortfallText(shortfall)).font(.subheadline).foregroundStyle(.s2TextSecondary)
                     }
                 }
             } icon: {
@@ -409,7 +423,7 @@ struct ServerRow: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([type.title, host].compactMap { $0 }.joined(separator: ", "))
-        .accessibilityValue([status.text, updated.map { "Updated \($0.formatted(.relative(presentation: .named)))" }].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityValue([status.text, updated.map { updatedText($0, now: now) }, shortfall > 0 ? listingShortfallText(shortfall) : nil].compactMap { $0 }.joined(separator: ", "))
     }
 }
 
@@ -432,7 +446,7 @@ struct ServerStatusLabel: View {
 /// and when the library last finished importing, in the standard label colours.
 struct ScanSection: View {
     let scan: SourcesState.Scan
-    let lastImport: Date?
+    var lastImport: Date?
     let onRescan: () -> Void
     var footer = "Looks for new and changed music on your servers."
 
@@ -494,13 +508,13 @@ struct ScanSection: View {
 }
 
 extension SourcesState {
-    /// On This iPhone's footer: how many songs came from this device, or how to add some.
-    var deviceFooter: String {
+    /// On This iPhone's footer: how many songs came from this device and when it last updated ("3 songs · Updated 5
+    /// minutes ago", as Android's status line), or how to add some.
+    func deviceFooter(now: Date = Date()) -> String {
         guard thisDevice else { return "Play music stored on this iPhone, copied in through the Files app or Finder." }
-        switch deviceSongs {
-        case let count? where count > 0: return "\(count.formatted()) \(count == 1 ? "song" : "songs") on this iPhone."
-        default: return "Copy music into Shuttle Music in the Files app or Finder, or add a folder from Files."
-        }
+        let songs = deviceSongs.flatMap { $0 > 0 ? "\($0.formatted()) \($0 == 1 ? "song" : "songs")" : nil }
+        let parts = [songs, deviceUpdated.map { updatedText($0, now: now) }].compactMap { $0 }
+        return parts.isEmpty ? "Copy music into Shuttle Music in the Files app or Finder, or add a folder from Files." : parts.joined(separator: " · ")
     }
 
     /// What Scan Now looks through.
