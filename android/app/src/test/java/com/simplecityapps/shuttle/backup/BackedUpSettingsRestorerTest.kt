@@ -11,7 +11,7 @@ import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.ThemeMode
-import com.simplecityapps.shuttle.ui.screens.settings.CopyDebugLogsResult
+import com.simplecityapps.shuttle.ui.screens.settings.ShareDebugLogsResult
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackup
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -64,7 +64,7 @@ class BackedUpSettingsRestorerTest {
 
         override fun downloadAllArtwork() = Unit
 
-        override suspend fun copyDebugLogs() = CopyDebugLogsResult.Empty
+        override suspend fun shareDebugLogs() = ShareDebugLogsResult.Empty
     }
 
     private val store = InMemoryKeyValueStore()

@@ -1,10 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.os.TransactionTooLargeException
+import androidx.core.content.FileProvider
 import com.simplecityapps.imageloading.ArtworkDownloadService
 import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -31,8 +29,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
-/** The Android [SettingsEffects]: live audio processors, WorkManager, widgets, the clipboard and services. */
+/** The Android [SettingsEffects]: live audio processors, WorkManager, widgets, the log share sheet and services. */
 class AndroidSettingsEffects @Inject constructor(
     @ApplicationContext private val context: Context,
     @AppCoroutineScope private val appScope: CoroutineScope,
@@ -67,19 +66,26 @@ class AndroidSettingsEffects @Inject constructor(
         context.startService(Intent(context, ArtworkDownloadService::class.java))
     }
 
-    override suspend fun copyDebugLogs(): CopyDebugLogsResult {
-        val logs = withContext(Dispatchers.IO) {
-            context.getFileStreamPath(DebugLoggingTree.FILE_NAME).takeIf { it.exists() }?.readText()
-        }
-        if (logs.isNullOrEmpty()) return CopyDebugLogsResult.Empty
-        val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        return try {
-            clipboardManager.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.settings_logging_clipboard_name), logs))
-            CopyDebugLogsResult.Copied
-        } catch (e: Exception) {
-            // The system server rethrows a clip over the binder limit wrapped in a RuntimeException
-            if (e is TransactionTooLargeException || e.cause is TransactionTooLargeException) CopyDebugLogsResult.TooLarge else throw e
-        }
+    override suspend fun shareDebugLogs(): ShareDebugLogsResult {
+        val shared = withContext(Dispatchers.IO) {
+            val log = context.getFileStreamPath(DebugLoggingTree.FILE_NAME).takeIf { it.exists() && it.length() > 0 } ?: return@withContext null
+            File(context.cacheDir, SHARED_LOGS_DIR).apply { mkdirs() }
+                .resolve(SHARED_LOG_NAME)
+                .also { log.copyTo(it, overwrite = true) }
+        } ?: return ShareDebugLogsResult.Empty
+        val send = Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", shared))
+            .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.settings_logging_clipboard_name))
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        return ShareDebugLogsResult.Shared
+    }
+
+    private companion object {
+        /** A subdirectory of the cache, named in `res/xml/file_paths.xml`. */
+        const val SHARED_LOGS_DIR = "shared_logs"
+        const val SHARED_LOG_NAME = "shuttle-debug-log.txt"
     }
 }
 

@@ -12,7 +12,7 @@ class FakeSettingsEffects : SettingsEffects {
         private set
     var artworkDownloads = 0
         private set
-    var copyResult = CopyDebugLogsResult.Copied
+    var shareResult = ShareDebugLogsResult.Shared
 
     override fun <T> onSettingChanged(
         setting: Setting<T>,
@@ -33,5 +33,5 @@ class FakeSettingsEffects : SettingsEffects {
         artworkDownloads++
     }
 
-    override suspend fun copyDebugLogs(): CopyDebugLogsResult = copyResult
+    override suspend fun shareDebugLogs(): ShareDebugLogsResult = shareResult
 }

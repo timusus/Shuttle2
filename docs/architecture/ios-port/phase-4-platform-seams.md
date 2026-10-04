@@ -81,7 +81,7 @@ changed setting (`ThemeManager.setDayNightMode()`, `WidgetManager.onBackgroundOp
 `rescan()`s through `MediaImporter` in the app scope, `clearArtworkCache()`, starts `ArtworkDownloadService`,
 and `copyDebugLogs()` to `ClipboardManager` (mapping `TransactionTooLargeException` to `TooLarge`).
 
-**commonMain** (`presentation`, same package): the interface and `CopyDebugLogsResult` move as-is except
+**commonMain** (`presentation`, same package): the interface and `ShareDebugLogsResult` move as-is except
 `fun lastScanDate(): Instant?` (`java.util.Date` → `kotlin.time.Instant`; `SettingsViewModel` converts for
 display). All six methods stay injected calls, not route effects: none needs a presenting UI, and the
 clipboard is app-level on both platforms. `SettingsUiEvent` stays typed by outcome

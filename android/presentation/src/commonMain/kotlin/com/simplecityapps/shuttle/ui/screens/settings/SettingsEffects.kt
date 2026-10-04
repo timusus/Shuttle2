@@ -21,7 +21,7 @@ interface SettingsEffects {
 
     fun downloadAllArtwork()
 
-    suspend fun copyDebugLogs(): CopyDebugLogsResult
+    suspend fun shareDebugLogs(): ShareDebugLogsResult
 }
 
-enum class CopyDebugLogsResult { Copied, TooLarge, Empty }
+enum class ShareDebugLogsResult { Shared, Empty }

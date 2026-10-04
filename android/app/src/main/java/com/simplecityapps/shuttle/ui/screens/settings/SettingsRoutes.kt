@@ -220,10 +220,9 @@ private val SettingsUiEvent.message: Int?
 
         SettingsUiEvent.ArtworkDownloadStarted -> R.string.settings_artwork_download_started
 
-        is SettingsUiEvent.DebugLogsCopied -> when (result) {
-            CopyDebugLogsResult.Copied -> R.string.settings_logging_clipboard_logs_copied
-            CopyDebugLogsResult.TooLarge -> R.string.settings_logging_clipboard_logs_too_large
-            CopyDebugLogsResult.Empty -> R.string.settings_logging_clipboard_logs_empty
+        is SettingsUiEvent.DebugLogsShared -> when (result) {
+            ShareDebugLogsResult.Shared -> null
+            ShareDebugLogsResult.Empty -> R.string.settings_logging_clipboard_logs_empty
         }
     }
 

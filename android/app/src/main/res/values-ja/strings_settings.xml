@@ -16,10 +16,6 @@
     <string name="settings_dialog_button_download_artwork">ダウンロード</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">デバッグログ</string>
-    <!-- Shown when the debug logs have been copied to the clipboard -->
-    <string name="settings_logging_clipboard_logs_copied">ログがクリップボードにコピーされました</string>
-    <!-- Error message shown when copying debug logs failed, because the log file is too large -->
-    <string name="settings_logging_clipboard_logs_too_large">ログファイルがクリップボードには大きすぎます</string>
     <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">ログファイルが空です</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
@@ -108,8 +104,6 @@
     <string name="pref_file_logging_title">デバッグログをファイルに記録</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
     <string name="pref_file_logging_subtitle">デバッグログをデバイス内のファイルに書き込みます</string>
-    <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
-    <string name="pref_copy_debug_logs_subtitle">デバッグログをコピー</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_title">メディアセッションのアートワーク</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

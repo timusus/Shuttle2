@@ -199,18 +199,18 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `copying logs is disabled until debug logging is on`() {
+    fun `sharing logs is disabled until debug logging is on`() {
         robot.setDestinationContent(SettingsDestination.About, SettingsScenarios.fileLoggingOff)
-        robot.assertNotEnabled("Copy debug logs")
+        robot.assertNotEnabled("Share debug logs")
     }
 
     @Test
-    fun `copying logs is enabled with debug logging on`() {
+    fun `sharing logs is enabled with debug logging on`() {
         robot.setDestinationContent(SettingsDestination.About, SettingsScenarios.fileLoggingOn)
-        robot.assertEnabled("Copy debug logs")
-        robot.tapText("Copy debug logs")
+        robot.assertEnabled("Share debug logs")
+        robot.tapText("Share debug logs")
 
-        robot.actions shouldBe listOf(SettingsAction.CopyDebugLogs)
+        robot.actions shouldBe listOf(SettingsAction.ShareDebugLogs)
     }
 
     @Test

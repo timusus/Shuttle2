@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- The debug log, copied here to share from Settings -->
+    <cache-path
+        name="shared_logs"
+        path="shared_logs/" />
+</paths>

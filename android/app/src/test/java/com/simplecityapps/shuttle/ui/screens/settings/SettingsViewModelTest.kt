@@ -187,15 +187,15 @@ class SettingsViewModelTest {
 
     @Test
     fun `copying debug logs reports the result`() = runTest(mainDispatcherRule.testDispatcher) {
-        effects.copyResult = CopyDebugLogsResult.TooLarge
+        effects.shareResult = ShareDebugLogsResult.Empty
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
-        viewModel.onAction(SettingsAction.CopyDebugLogs)
+        viewModel.onAction(SettingsAction.ShareDebugLogs)
         runCurrent()
 
-        viewModel.uiState.value.events.map { it.value } shouldBe listOf(SettingsUiEvent.DebugLogsCopied(CopyDebugLogsResult.TooLarge))
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(SettingsUiEvent.DebugLogsShared(ShareDebugLogsResult.Empty))
     }
 
     @Test

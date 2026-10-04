@@ -45,7 +45,7 @@ enum class SettingsAction {
     ImportBackup,
     ClearArtworkCache,
     DownloadAllArtwork,
-    CopyDebugLogs
+    ShareDebugLogs
 }
 
 /** A confirmation dialog shown before a destructive or costly action runs. */

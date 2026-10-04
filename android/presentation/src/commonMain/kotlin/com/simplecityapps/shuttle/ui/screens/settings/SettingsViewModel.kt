@@ -73,7 +73,7 @@ sealed interface SettingsUiEvent {
 
     data object ArtworkDownloadStarted : SettingsUiEvent
 
-    data class DebugLogsCopied(val result: CopyDebugLogsResult) : SettingsUiEvent
+    data class DebugLogsShared(val result: ShareDebugLogsResult) : SettingsUiEvent
 }
 
 /** Backs every settings destination: reads and writes the catalog's settings. */
@@ -167,8 +167,8 @@ class SettingsViewModel @Inject constructor(
                 events.post(SettingsUiEvent.ArtworkDownloadStarted)
             }
 
-            SettingsAction.CopyDebugLogs -> viewModelScope.launch {
-                events.post(SettingsUiEvent.DebugLogsCopied(effects.copyDebugLogs()))
+            SettingsAction.ShareDebugLogs -> viewModelScope.launch {
+                events.post(SettingsUiEvent.DebugLogsShared(effects.shareDebugLogs()))
             }
         }
     }

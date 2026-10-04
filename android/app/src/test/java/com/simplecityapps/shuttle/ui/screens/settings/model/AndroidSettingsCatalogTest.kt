@@ -89,7 +89,7 @@ class AndroidSettingsCatalogTest {
             "pref_download_artwork",
             "media_session_artwork",
             "pref_file_logging",
-            "pref_copy_debug_logs",
+            "pref_share_debug_logs",
             "pref_media_provider",
             "pref_report_playback",
             "pref_media_rescan",

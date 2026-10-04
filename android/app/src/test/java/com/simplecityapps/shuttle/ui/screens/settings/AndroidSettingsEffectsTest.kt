@@ -1,8 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import android.app.Application
-import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import com.simplecityapps.imageloading.ArtworkDownloadService
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
@@ -24,7 +25,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
-/** What a settings change reaches beyond the stored value: the live processor, widgets, theme, services and clipboard. */
+/** What a settings change reaches beyond the stored value: the live processor, widgets, theme, services and the log share sheet. */
 @RunWith(RobolectricTestRunner::class)
 class AndroidSettingsEffectsTest {
     private val context: Application = RuntimeEnvironment.getApplication()
@@ -78,17 +79,23 @@ class AndroidSettingsEffectsTest {
     }
 
     @Test
-    fun `copying debug logs puts the log file on the clipboard`() = runTest {
+    fun `sharing debug logs offers a copy of the log file to share`() = runTest {
         context.openFileOutput(DebugLoggingTree.FILE_NAME, Context.MODE_PRIVATE).use { it.write("Playback started".toByteArray()) }
 
-        effects.copyDebugLogs() shouldBe CopyDebugLogsResult.Copied
+        effects.shareDebugLogs() shouldBe ShareDebugLogsResult.Shared
 
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        clipboard.primaryClip?.getItemAt(0)?.text?.toString() shouldBe "Playback started"
+        val chooser = shadowOf(context).nextStartedActivity
+        chooser.action shouldBe Intent.ACTION_CHOOSER
+        val send = chooser.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
+        send.action shouldBe Intent.ACTION_SEND
+        val uri = send.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)!!
+        uri.authority shouldBe "${context.packageName}.fileprovider"
+        context.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() } shouldBe "Playback started"
     }
 
     @Test
-    fun `copying debug logs with no log file says there are none`() = runTest {
-        effects.copyDebugLogs() shouldBe CopyDebugLogsResult.Empty
+    fun `sharing debug logs with no log file says there are none`() = runTest {
+        effects.shareDebugLogs() shouldBe ShareDebugLogsResult.Empty
+        shadowOf(context).nextStartedActivity shouldBe null
     }
 }

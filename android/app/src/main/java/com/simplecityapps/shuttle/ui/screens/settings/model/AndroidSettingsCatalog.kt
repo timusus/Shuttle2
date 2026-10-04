@@ -345,9 +345,9 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         summary = StringKey.PREF_FILE_LOGGING_SUBTITLE
                     ),
                     SettingItem.Action(
-                        action = SettingsAction.CopyDebugLogs,
-                        title = StringKey.PREF_COPY_DEBUG_LOGS_SUBTITLE,
-                        key = "pref_copy_debug_logs",
+                        action = SettingsAction.ShareDebugLogs,
+                        title = StringKey.PREF_SHARE_DEBUG_LOGS_TITLE,
+                        key = "pref_share_debug_logs",
                         dependsOn = DebugSettings.FileLogging
                     ),
                     // Debug builds only: the live view of DebugLoggingTree's output (#433). The row itself

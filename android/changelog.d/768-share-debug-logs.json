@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Debug logs are now shared as a file from Settings, so even very large logs can be sent, instead of being copied to the clipboard.", "commits": [] }

@@ -139,7 +139,7 @@
 "settings_group_scanning" = "Scanning";
 "pref_file_logging_title" = "Debug logging";
 "pref_file_logging_subtitle" = "Writes debug logs to a file on disk";
-"pref_copy_debug_logs_subtitle" = "Copy debug logs";
+"pref_share_debug_logs_title" = "Share debug logs";
 "pref_view_live_log_title" = "Live log";
 "edit_tags_hint_title" = "Title";
 "edit_tags_hint_artist" = "Artist";

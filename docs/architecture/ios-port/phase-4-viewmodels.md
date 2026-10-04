@@ -154,7 +154,7 @@ unchanged.
   `:android:mediaprovider:core` to `:android:domain` first (same package), then the ViewModel, its use cases and
   `RecentSearches` to `:android:presentation`. `SearchResults.sections(expanded)` lays out the result groups
   (top result, per-type limits, "See all") for both platforms' screens.
-- **S1 `SettingsEffects`.** The interface and `CopyDebugLogsResult` moved as they were, minus
+- **S1 `SettingsEffects`.** The interface and `ShareDebugLogsResult` moved as they were, minus
   `lastScanDate()`: a preference read, not an effect, so it became the `ReadLastScanDate` use case over
   `GeneralPreferenceManager`, and `SettingsUiState.lastScanDate` is an `Instant` (the screen converts it for
   `DateFormat`). `AndroidSettingsEffects` (Context, clipboard, `Intent`, WorkManager) and its binding stay in

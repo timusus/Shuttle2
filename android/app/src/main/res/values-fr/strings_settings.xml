@@ -16,10 +16,6 @@
     <string name="settings_dialog_button_download_artwork">Télécharger</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">Journaux de Shuttle Music</string>
-    <!-- Shown when the debug logs have been copied to the clipboard -->
-    <string name="settings_logging_clipboard_logs_copied">Journaux copiés dans le presse-papiers</string>
-    <!-- Error message shown when copying debug logs failed, because the log file is too large -->
-    <string name="settings_logging_clipboard_logs_too_large">Le fichier journal est trop volumineux pour le presse-papiers</string>
     <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">Fichier journal vide</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
@@ -109,8 +105,6 @@
     <string name="pref_file_logging_title">Journalisation des fichiers</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
     <string name="pref_file_logging_subtitle">Écrit les journaux dans un fichier sur le disque</string>
-    <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
-    <string name="pref_copy_debug_logs_subtitle">Copier les journaux de débogage</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_title">Pochette de la session médiatique</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.shared.settings
 
 import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.ui.screens.settings.CopyDebugLogsResult
+import com.simplecityapps.shuttle.ui.screens.settings.ShareDebugLogsResult
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import dev.zacsweers.metro.AppScope
@@ -30,5 +30,5 @@ class IosSettingsEffects @Inject constructor(
 
     override fun downloadAllArtwork() = Unit
 
-    override suspend fun copyDebugLogs(): CopyDebugLogsResult = CopyDebugLogsResult.Empty
+    override suspend fun shareDebugLogs(): ShareDebugLogsResult = ShareDebugLogsResult.Empty
 }

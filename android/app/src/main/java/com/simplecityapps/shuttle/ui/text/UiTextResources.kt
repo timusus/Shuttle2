@@ -170,7 +170,7 @@ val StringKey.resId: Int
         StringKey.SETTINGS_GROUP_SCANNING -> R.string.settings_group_scanning
         StringKey.PREF_FILE_LOGGING_TITLE -> R.string.pref_file_logging_title
         StringKey.PREF_FILE_LOGGING_SUBTITLE -> R.string.pref_file_logging_subtitle
-        StringKey.PREF_COPY_DEBUG_LOGS_SUBTITLE -> R.string.pref_copy_debug_logs_subtitle
+        StringKey.PREF_SHARE_DEBUG_LOGS_TITLE -> R.string.pref_share_debug_logs_title
         StringKey.PREF_VIEW_LIVE_LOG_TITLE -> R.string.pref_view_live_log_title
         StringKey.EDIT_TAGS_HINT_TITLE -> R.string.edit_tags_hint_title
         StringKey.EDIT_TAGS_HINT_ARTIST -> R.string.edit_tags_hint_artist
