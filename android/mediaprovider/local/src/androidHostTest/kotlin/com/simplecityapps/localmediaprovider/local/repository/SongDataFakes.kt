@@ -129,6 +129,14 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
 
     override suspend fun getPendingFavourites(): List<PendingFavouriteData> = throw NotImplementedError()
 
+    override fun observePendingFavourites(): Flow<List<PendingFavouriteData>> = throw NotImplementedError()
+
+    override suspend fun deletePendingFavourite(
+        songId: Long,
+        favourite: Boolean,
+        changedAt: Instant
+    ): Int = throw NotImplementedError()
+
     override fun getFavouriteIds(): Flow<List<Long>> = throw NotImplementedError()
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = throw NotImplementedError()

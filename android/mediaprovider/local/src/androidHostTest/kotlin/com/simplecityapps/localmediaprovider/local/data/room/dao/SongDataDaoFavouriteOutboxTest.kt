@@ -10,12 +10,13 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** #497 slice 1: a remote-provider song's favourite/unfavourite enqueues a `pending_favourites` row, in the same transaction. */
+/** #497 slice 1: a remote-provider song's favourite/unfavourite enqueues a `pending_favourites` row, in the same transaction, and acking deletes it. */
 @RunWith(AndroidJUnit4::class)
 class SongDataDaoFavouriteOutboxTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
@@ -90,9 +91,46 @@ class SongDataDaoFavouriteOutboxTest {
         dao.getPendingFavourites().shouldBeEmpty()
     }
 
+    @Test
+    fun `acking a pending favourite deletes its row`() = runTest {
+        val song = insertSong(MediaProviderType.Jellyfin, externalId = "item-5")
+        dao.setFavourite(listOf(song), true)
+
+        dao.ackPendingFavourite(dao.getPendingFavourites().single()) shouldBe true
+
+        dao.getPendingFavourites().shouldBeEmpty()
+    }
+
+    @Test
+    fun `acking a row that was replaced while it was being sent keeps the newer row`() = runTest {
+        val song = insertSong(MediaProviderType.Jellyfin, externalId = "item-6")
+        dao.setFavourite(listOf(song), true)
+        val sent = dao.getPendingFavourites().single()
+
+        dao.setFavourite(listOf(song), false)
+
+        dao.ackPendingFavourite(sent) shouldBe false
+        dao.getPendingFavourites().single().favourite shouldBe false
+    }
+
+    @Test
+    fun `observing the outbox emits on enqueue and on ack, oldest change first`() = runTest {
+        val first = insertSong(MediaProviderType.Jellyfin, externalId = "a", path = "/music/a.mp3")
+        val second = insertSong(MediaProviderType.Jellyfin, externalId = "b", path = "/music/b.mp3")
+
+        dao.observePendingFavourites().first().shouldBeEmpty()
+        dao.setFavourite(listOf(first), true)
+        dao.setFavourite(listOf(second), true)
+        dao.observePendingFavourites().first().map { it.externalId } shouldBe listOf("a", "b")
+
+        dao.ackPendingFavourite(dao.getPendingFavourites().first())
+        dao.observePendingFavourites().first().map { it.externalId } shouldBe listOf("b")
+    }
+
     private suspend fun insertSong(
         mediaProvider: MediaProviderType,
-        externalId: String?
+        externalId: String?,
+        path: String = "/music/${mediaProvider.name}.mp3"
     ): com.simplecityapps.shuttle.model.Song {
         dao.insert(
             listOf(
@@ -103,7 +141,7 @@ class SongDataDaoFavouriteOutboxTest {
                     duration = 180_000,
                     year = null,
                     genres = emptyList(),
-                    path = "/music/${mediaProvider.name}.mp3",
+                    path = path,
                     albumArtist = "Artist",
                     artists = listOf("Artist"),
                     album = "Album",
@@ -121,6 +159,6 @@ class SongDataDaoFavouriteOutboxTest {
                 )
             )
         )
-        return dao.get().single().toSong()
+        return dao.get().first { it.path == path }.toSong()
     }
 }

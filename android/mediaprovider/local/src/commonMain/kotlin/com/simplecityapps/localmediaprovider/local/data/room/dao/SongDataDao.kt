@@ -275,8 +275,28 @@ abstract class SongDataDao {
     @Insert(onConflict = REPLACE)
     abstract suspend fun enqueuePendingFavourite(pendingFavourite: PendingFavouriteData)
 
-    @Query("SELECT * FROM pending_favourites")
+    /** The outbox, oldest change first, so the writer sends in the order the user made them. */
+    @Query("SELECT * FROM pending_favourites ORDER BY changedAt, songId")
     abstract suspend fun getPendingFavourites(): List<PendingFavouriteData>
+
+    /** The outbox, re-emitted whenever a row is added, replaced or acked. */
+    @Query("SELECT * FROM pending_favourites ORDER BY changedAt, songId")
+    abstract fun observePendingFavourites(): Flow<List<PendingFavouriteData>>
+
+    /**
+     * Acks [pendingFavourite] once the server has taken it: deletes its row, but only while the row is still that exact
+     * entry. A toggle made while it was being sent replaced the row with a newer [PendingFavouriteData.changedAt], and
+     * that newer state hasn't been sent yet, so it stays. Returns whether a row was deleted.
+     */
+    @Transaction
+    open suspend fun ackPendingFavourite(pendingFavourite: PendingFavouriteData): Boolean = deletePendingFavourite(pendingFavourite.songId, pendingFavourite.favourite, pendingFavourite.changedAt) > 0
+
+    @Query("DELETE FROM pending_favourites WHERE songId = :songId AND favourite = :favourite AND changedAt = :changedAt")
+    abstract suspend fun deletePendingFavourite(
+        songId: Long,
+        favourite: Boolean,
+        changedAt: Instant
+    ): Int
 
     @Query("SELECT id FROM songs WHERE favouritedAt IS NOT NULL")
     abstract fun getFavouriteIds(): Flow<List<Long>>
