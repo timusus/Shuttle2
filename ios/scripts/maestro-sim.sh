@@ -46,6 +46,15 @@ print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{state})", file=sys.stderr)
 '
 }
 
+# Before anything leases a simulator: a missing Maestro CLI is an install problem to fix, not a
+# reason to fall back to adb-driven poking (#594).
+maestro_bin="$(command -v maestro || echo "$HOME/.maestro/bin/maestro")"
+[ -x "$maestro_bin" ] || {
+  echo "maestro-sim: the Maestro CLI is not installed (looked on PATH and at $HOME/.maestro/bin/maestro)" >&2
+  echo "maestro-sim: install it: brew install mobile-dev-inc/tap/maestro (the homebrew-cask 'maestro' is an unrelated app)" >&2
+  exit 1
+}
+
 lease_rc=0
 udid="${S2_SIMULATOR_UDID:-}"
 if [ -z "$udid" ]; then
@@ -69,4 +78,4 @@ echo "==> Running $(basename "$flow") on $udid against the Jellyfin test server"
 export MAESTRO_SERVER_URL="${URL%/}"
 export MAESTRO_API_KEY="$API_KEY"
 export MAESTRO_SERVER_USER="${SERVER_USER:-shuttle-test}"
-maestro --udid "$udid" test --test-output-dir "${OUT:-/tmp/s2-ios-e2e/maestro}" "$flow"
+"$maestro_bin" --udid "$udid" test --test-output-dir "${OUT:-/tmp/s2-ios-e2e/maestro}" "$flow"

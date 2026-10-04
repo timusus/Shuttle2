@@ -72,17 +72,30 @@ emu_lane_up() {
     fi
 }
 
+# maestro_bin: the Maestro CLI path, or a loud failure (#594). A missing Maestro must stop the run
+# with an install hint, not surface as "no such file" mid-flow or invite a uiautomator fallback.
+maestro_bin() {
+    local bin="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}"
+    if [ ! -x "$bin" ]; then
+        echo "emu-lane: maestro not found at '$bin' (tried \$MAESTRO, PATH and $HOME/.maestro/bin/maestro)" >&2
+        echo "emu-lane: install the mobile.dev Maestro: brew install mobile-dev-inc/tap/maestro" >&2
+        echo "emu-lane: (the homebrew-cask 'maestro' is an unrelated app)" >&2
+        return 1
+    fi
+    printf '%s\n' "$bin"
+}
+
 maestro_run() {
-    local flow="$1" out="$2" maestro_bin
+    local flow="$1" out="$2" maestro
     shift 2
     case "$flow" in /*) ;; *) flow="${REPO_ROOT}/${flow}" ;; esac
+    maestro="$(maestro_bin)" || return 1
     rm -rf -- "$out"
     mkdir -p "$out"
-    maestro_bin="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}"
     (
         cd "$out" || exit 1
         MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-            "$maestro_bin" ${MAESTRO_DEVICE_ARGS[@]+"${MAESTRO_DEVICE_ARGS[@]}"} test --test-output-dir "$out" "$@" "$flow" 2>&1
+            "$maestro" ${MAESTRO_DEVICE_ARGS[@]+"${MAESTRO_DEVICE_ARGS[@]}"} test --test-output-dir "$out" "$@" "$flow" 2>&1
     )
 }
 

@@ -144,6 +144,10 @@ restore_playback_fixture() {
 # so the scanner reads them through the folder grant). Call `trap restore_playback_fixture EXIT` right after, so
 # a later check's start_playback (queueSize == 5 on the `playback` fixture) still holds.
 setup_taglib_provider() {
+    local maestro_bin="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}"
+    # Before the reset/seed below spend a lane cycle: a missing Maestro is an install problem to
+    # fix, never something to work around (#594).
+    [ -x "$maestro_bin" ] || fail "maestro not found at '$maestro_bin' (tried \$MAESTRO, PATH and $HOME/.maestro/bin/maestro); install it: brew install mobile-dev-inc/tap/maestro (the homebrew-cask 'maestro' is an unrelated app)"
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
     "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" taglib --skip-onboarding --s2-scanner >/dev/null
     local device out
@@ -151,7 +155,7 @@ setup_taglib_provider() {
     out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
     mkdir -p "$out"
     MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
+        "$maestro_bin" --device "$device" test --test-output-dir "$out" \
         -e FOLDER_NAME=taglib-seed \
         "${CHECKS_ROOT}/support/maestro/nav/setup-taglib-provider.yaml" \
         || fail "adding the Shuttle/TagLib provider failed (output in ${out})"
