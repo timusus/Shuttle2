@@ -462,22 +462,21 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `an import after the user changed folders removes this device's songs at once, but keeps those under an unreadable root and a server's`() =
-        runBlocking<Unit> {
-            val device = ServerProvider(MediaProviderType.Shuttle)
-            val deviceSongs = (1L..30L).map { id -> song(id = id, path = "/storage/emulated/0/Music/$id.mp3") }
-            val cardSongs = (31L..32L).map { id -> song(id = id, path = "/storage/CARD/Music/$id.mp3") }
-            songRepository.stored = deviceSongs + cardSongs
-            device.found = deviceSongs.take(5)
-            device.unreadableRoots = setOf("/storage/CARD/")
-            server.found = emptyList()
-            val importer = serverImporter().apply { mediaProviders += device }
+    fun `an import after the user changed folders removes this device's songs at once, but keeps those under an unreadable root and a server's`() = runBlocking<Unit> {
+        val device = ServerProvider(MediaProviderType.Shuttle)
+        val deviceSongs = (1L..30L).map { id -> song(id = id, path = "/storage/emulated/0/Music/$id.mp3") }
+        val cardSongs = (31L..32L).map { id -> song(id = id, path = "/storage/CARD/Music/$id.mp3") }
+        songRepository.stored = deviceSongs + cardSongs
+        device.found = deviceSongs.take(5)
+        device.unreadableRoots = setOf("/storage/CARD/")
+        server.found = emptyList()
+        val importer = serverImporter().apply { mediaProviders += device }
 
-            importer.import(foldersChanged = true)
+        importer.import(foldersChanged = true)
 
-            songRepository.deleted[device.type].orEmpty().map { song -> song.id } shouldBe (6L..30L).toList()
-            songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
-        }
+        songRepository.deleted[device.type].orEmpty().map { song -> song.id } shouldBe (6L..30L).toList()
+        songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
+    }
 
     @Test
     fun `a full sync that holds back a mass removal makes the next sync full, to apply it`() = runBlocking<Unit> {
