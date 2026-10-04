@@ -19,7 +19,6 @@ data class MediaContainer(
 @Serializable
 data class Directory(
     @SerialName("key") val key: String,
-    @SerialName("title") val title: String? = null,
     @SerialName("type") val type: String? = null
 )
 
@@ -82,5 +81,17 @@ data class Part(
     @SerialName("file") val file: String? = null,
     // Bytes; a Long, since a hi-res file can pass 2 GB
     @SerialName("size") val size: Long? = null,
-    @SerialName("container") val container: String? = null
+    @SerialName("container") val container: String? = null,
+    // Only on a track's own metadata (or a listing asked for streams): the part's audio, video and subtitle streams
+    @SerialName("Stream") val streams: List<Stream> = emptyList()
 )
+
+/** One stream of a [Part]; the audio one ([STREAM_TYPE_AUDIO]) holds the bit depth. */
+@Serializable
+data class Stream(
+    @SerialName("streamType") val streamType: Int? = null,
+    @SerialName("codec") val codec: String? = null,
+    @SerialName("bitDepth") val bitDepth: Int? = null
+)
+
+const val STREAM_TYPE_AUDIO = 2

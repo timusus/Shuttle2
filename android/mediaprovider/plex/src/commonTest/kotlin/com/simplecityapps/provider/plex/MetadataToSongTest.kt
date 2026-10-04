@@ -54,6 +54,24 @@ class MetadataToSongTest {
     }
 
     @Test
+    fun `the bit depth is the audio stream's, for a lossless codec only`() {
+        fun bitDepth(codec: String) = S2Json.decodeFromString<Metadata>(
+            """
+            {"key": "/library/metadata/101", "guid": "plex://track/1", "Media": [{"audioCodec": "$codec", "Part": [{"key": "/p", "Stream": [
+              {"streamType": 1, "bitDepth": 8}, {"streamType": 2, "codec": "$codec", "bitDepth": 24}]}]}]}
+            """.trimIndent()
+        ).toSong(MediaProviderType.Plex, SYNCED_AT).bitDepth
+
+        bitDepth("flac") shouldBe 24
+        bitDepth("mp3") shouldBe null
+    }
+
+    @Test
+    fun `a track without streams has no bit depth`() {
+        parse(addedAt = null, updatedAt = null).toSong(MediaProviderType.Plex, SYNCED_AT).bitDepth shouldBe null
+    }
+
+    @Test
     fun `the song's dates are when it was added to the server`() {
         val song = parse(addedAt = 1_700_000_000, updatedAt = 1_800_000_000).toSong(MediaProviderType.Plex, SYNCED_AT)
 

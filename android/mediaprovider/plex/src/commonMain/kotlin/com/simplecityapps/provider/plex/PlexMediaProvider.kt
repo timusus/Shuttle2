@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.IncrementalMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerStrings
@@ -16,6 +17,7 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.provider.plex.http.QueryResult
+import com.simplecityapps.provider.plex.http.STREAM_TYPE_AUDIO
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -247,7 +249,8 @@ internal fun Metadata.toSong(
     lyrics = null,
     grouping = null,
     bitRate = media.firstOrNull()?.bitrate,
-    bitDepth = null,
+    bitDepth = media.firstOrNull()?.parts?.firstOrNull()?.streams?.firstOrNull { it.streamType == STREAM_TYPE_AUDIO }
+        ?.let { stream -> losslessBitDepth(media.first().audioCodec ?: stream.codec, stream.bitDepth) },
     sampleRate = null,
     channelCount = media.firstOrNull()?.audioChannels,
     audioCodec = media.firstOrNull()?.audioCodec,
