@@ -237,7 +237,8 @@ struct JumpBackInResumeCard: View {
 }
 
 /// The resume card's Play button: a disc in the item's artwork tint (`\.artworkTint`, scheme-safe) with the ink that
-/// clears AA on it, the accent with no artwork (#741). Its own view so it reads the tint the card provides.
+/// clears AA on it, the accent with no artwork (#741). Its own view so it reads the tint the card provides. The disc
+/// grows with the glyph's text size, up to `maximumScale` times the 44 pt target, so the glyph never outgrows it.
 private struct ResumePlayDisc: View {
     let shuffles: Bool
     let pending: Bool
@@ -245,8 +246,14 @@ private struct ResumePlayDisc: View {
 
     @Environment(\.artworkTint) private var tint
     @Environment(\.artworkTintInk) private var ink
+    @ScaledMetric(relativeTo: .body) private var scaledDisc = TouchTarget.minimum
+
+    /// The glyph's text size is capped where the disc stops growing: `accessibility1`'s body is about 1.6 times the
+    /// default's, so at the cap the glyph fills the disc about as the default glyph fills 44 pt.
+    static let maximumScale: CGFloat = 1.6
 
     var body: some View {
+        let disc = min(scaledDisc, TouchTarget.minimum * Self.maximumScale)
         Button(action: action) {
             ZStack {
                 if pending {
@@ -256,9 +263,10 @@ private struct ResumePlayDisc: View {
                     Image(systemName: shuffles ? "shuffle" : "play.fill")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(ink)
+                        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 }
             }
-            .frame(width: TouchTarget.minimum, height: TouchTarget.minimum)
+            .frame(width: disc, height: disc)
             .background(tint, in: Circle())
             .contentShape(Circle())
         }
@@ -268,11 +276,13 @@ private struct ResumePlayDisc: View {
 }
 
 private extension HomeItem {
-    /// The cover the resume card tints from (#741); nil for an item with no single cover, which keeps the accent.
+    /// The cover the resume card tints from (#741); nil for an item with no single cover, which keeps the accent. An
+    /// artist tints from the artist page's hero source (`AlbumArtistDetailView`, before its view model has picked an
+    /// online image or a fallback album), so the two share a cache key and a colour.
     var tintSource: ArtworkSource? {
         switch onEnum(of: self) {
         case .albumItem(let it): .album(it.album)
-        case .artistItem(let it): .albumArtist(it.albumArtist)
+        case .artistItem(let it): .artistHero(ArtistHeroArtwork(artist: it.albumArtist, onlineLookup: false, fallbackAlbum: nil))
         case .playlistItem, .smartPlaylistItem, .genreItem: nil
         }
     }

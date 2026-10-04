@@ -46,6 +46,15 @@ struct DetailSupportTests {
         #expect(DetailHeroLayout.stacked.artworkSize == ArtworkSize.hero)
     }
 
+    @Test func theHeroCoverShrinksAtTheAccessibilitySizes() {
+        let cap = DetailHeroLayout.accessibilityArtworkSize
+        #expect(DetailHeroLayout.stacked.artworkSize(isAccessibilitySize: true) == cap)
+        #expect(DetailHeroLayout.column(width: 500).artworkSize(isAccessibilitySize: true) == cap)
+        #expect(DetailHeroLayout.column(width: 100).artworkSize(isAccessibilitySize: true) == 100)
+        #expect(DetailHeroLayout.stacked.artworkSize(isAccessibilitySize: false) == ArtworkSize.hero)
+        #expect(DetailHeroLayout.column(width: 500).artworkSize(isAccessibilitySize: false) == ArtworkSize.heroRegular)
+    }
+
     // MARK: - Full-bleed backdrop
 
     @Test func theBackdropIsSquareOnCompactWhileTheAppIsTallEnough() {

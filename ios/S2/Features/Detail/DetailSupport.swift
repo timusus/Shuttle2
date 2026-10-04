@@ -66,6 +66,16 @@ enum DetailHeroLayout: Equatable {
         case .column(let width): min(ArtworkSize.heroRegular, width)
         }
     }
+
+    /// The cover at the accessibility text sizes: `accessibilityArtworkSize` at most, so the title, the eyebrow lines
+    /// and the Play/Shuffle row, all much taller there, still land on the first screen above the mini player
+    /// rather than below it (#782). The other sizes keep `artworkSize`.
+    func artworkSize(isAccessibilitySize: Bool) -> CGFloat {
+        isAccessibilitySize ? min(artworkSize, Self.accessibilityArtworkSize) : artworkSize
+    }
+
+    /// Half the compact hero.
+    static let accessibilityArtworkSize = ArtworkSize.hero / 2
 }
 
 /// A full-bleed hero's geometry: the backdrop's height from the top of the screen, along whose bottom the hero's title
@@ -108,9 +118,6 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.artworkTint) private var tint
     @Environment(\.rootContainerSize) private var rootContainerSize
-    /// Room under the content for the mini-player tab accessory, which grows with the text size: a hero's Play row
-    /// and the last rows can always scroll clear of it.
-    @ScaledMetric(relativeTo: .body) private var accessoryClearance = Spacing.xlarge
     @State private var heroVisible = true
     /// Where the navigation bar ends, in global coordinates. The hero's title hides under the bar above this line,
     /// and the inset hero's wash reaches up past it. It never sizes a row: see `singleColumn`.
@@ -171,7 +178,6 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { listWidth = $0 }
-        .contentMargins(.bottom, accessoryClearance, for: .scrollContent)
         .modifier(BleedNavigationBar(isActive: backdrop != nil, isOverBackdrop: heroVisible))
     }
 
@@ -236,7 +242,6 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
             List { rows() }
                 .listStyle(.plain)
                 .contentMargins(.trailing, inset, for: .scrollContent)
-                .contentMargins(.bottom, accessoryClearance, for: .scrollContent)
         }
         // The hero is always on screen here; clear a `false` left by a scrolled single column.
         .onAppear { heroVisible = true }
@@ -362,7 +367,7 @@ struct DetailHero<Artwork: View>: View {
 
     var body: some View {
         VStack(alignment: alignment, spacing: Spacing.medium) {
-            artwork(layout.artworkSize)
+            artwork(layout.artworkSize(isAccessibilitySize: dynamicTypeSize.isAccessibilitySize))
                 .artworkShadow(.hero)
                 .padding(.bottom, Spacing.xsmall)
             VStack(alignment: alignment, spacing: Spacing.xsmall) {
@@ -403,8 +408,9 @@ struct DetailHero<Artwork: View>: View {
 }
 
 /// Play and Shuffle as two capsules sharing the width, in the tint in scope: Play filled with the tint, Shuffle a
-/// tonal capsule (a light wash of the tint); glass on iOS 26, bordered below. Stacked at the accessibility sizes,
-/// where side by side they'd truncate.
+/// tonal capsule (a light wash of the tint); glass on iOS 26, bordered below. At the accessibility sizes the
+/// capsules show their glyphs only (the titles stay their accessibility labels): side by side the titles truncate,
+/// and stacked the second capsule fell below the first screen, under the mini player (#782).
 struct HeroActions: View {
     let onPlay: () -> Void
     let onShuffle: () -> Void
@@ -412,10 +418,7 @@ struct HeroActions: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: Spacing.smallMedium))
-            : AnyLayout(HStackLayout(spacing: Spacing.smallMedium))
-        layout {
+        HStack(spacing: Spacing.smallMedium) {
             Button(action: onPlay) {
                 Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity)
             }
@@ -425,9 +428,24 @@ struct HeroActions: View {
                 Label("Shuffle", systemImage: "shuffle").frame(maxWidth: .infinity)
             }
             .capsuleButton(prominent: false)
+            .accessibilityLabel("Shuffle")
         }
+        .labelStyle(GlyphOnlyAtAccessibilitySizes(isAccessibilitySize: dynamicTypeSize.isAccessibilitySize))
         .fontWeight(.semibold)
         .controlSize(.large)
+    }
+}
+
+/// `HeroActions`' labels: the glyph alone at the accessibility sizes, glyph and title otherwise.
+private struct GlyphOnlyAtAccessibilitySizes: LabelStyle {
+    let isAccessibilitySize: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        if isAccessibilitySize {
+            configuration.icon
+        } else {
+            Label(configuration)
+        }
     }
 }
 

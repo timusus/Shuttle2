@@ -156,6 +156,8 @@ struct NowPlayingContent: View {
             }
         }
         .padding(.horizontal, Spacing.small)
+        // Capped like the transport: past the first accessibility size the discs crowd the bar (`TopBarGlyph`).
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
     private var isTwoColumn: Bool {
@@ -263,7 +265,8 @@ struct NowPlayingContent: View {
     /// An artist or album line: a button to its screen when the song offers `action`, plain text otherwise.
     @ViewBuilder
     private func detailLine(_ text: String, font: Font, opens action: NowPlayingSongAction, id: String) -> some View {
-        // At the accessibility sizes the line wraps to two instead of scrolling, so no part of it is clipped.
+        // At the accessibility sizes the line wraps to two lines instead of scrolling; a name longer than that is
+        // truncated at the end of the second line (VoiceOver still reads it whole).
         let line = Group {
             if dynamicTypeSize.isAccessibilitySize {
                 Text(text)
@@ -547,7 +550,7 @@ private extension View {
             .touchTarget()
     }
 
-    /// A glyph in the top bar (close, favourite, more): on a material disc in a 44 pt target.
+    /// A glyph in the top bar (close, favourite, more): on a material disc in a target at least 44 pt.
     func topBarGlyph(_ ink: Color) -> some View {
         modifier(TopBarGlyph(ink: ink))
     }
@@ -561,7 +564,9 @@ private extension View {
     }
 }
 
-/// `topBarGlyph`: the disc scales with the text size, so a larger glyph never overflows it.
+/// `topBarGlyph`: the disc scales with the text size, so a larger glyph never overflows it, and the touch target
+/// grows with it, so the bar lays the discs out at the size they draw rather than overlapping. The top bar caps the
+/// text size at `accessibility1`, which bounds both.
 private struct TopBarGlyph: ViewModifier {
     let ink: Color
 
@@ -573,7 +578,7 @@ private struct TopBarGlyph: ViewModifier {
             .foregroundStyle(ink)
             .frame(width: disc, height: disc)
             .glassSurface(in: Circle(), fallback: .disc)
-            .touchTarget()
+            .touchTarget(disc)
     }
 }
 
