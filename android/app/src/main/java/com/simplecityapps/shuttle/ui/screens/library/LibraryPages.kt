@@ -458,7 +458,7 @@ fun PlaylistsPage(
         // Smart playlists are always there, so an empty list still shows them and "New playlist".
         PlaylistListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress, controls, hasItems = state.playlists.isNotEmpty()) {
+    LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress, controls, hasItems = true) {
         val listState = rememberLazyListState()
         val headerCount = controlsItemCount(controls) + 1 + state.smartPlaylists.size + 1
         Box(modifier.fillMaxSize()) {

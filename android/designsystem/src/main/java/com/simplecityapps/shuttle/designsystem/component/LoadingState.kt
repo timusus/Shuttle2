@@ -43,7 +43,7 @@ fun LoadingState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
-        if (progress != null) LoadingIndicator(progress = progress) else LoadingIndicator()
+        if (progress != null) LoadingIndicator(progress = progress.asFraction()) else LoadingIndicator()
         if (message != null) {
             Text(
                 text = message,
@@ -67,11 +67,14 @@ fun BarLoadingIndicator(
 ) {
     val semanticsModifier = modifier.semantics { contentDescription = description }
     if (progress != null) {
-        LinearProgressIndicator(progress = progress, modifier = semanticsModifier)
+        LinearProgressIndicator(progress = progress.asFraction(), modifier = semanticsModifier)
     } else {
         LinearProgressIndicator(modifier = semanticsModifier)
     }
 }
+
+/** [this] clamped to 0..1, with NaN or infinity (a progress over a total of 0) read as 0. */
+private fun (() -> Float).asFraction(): () -> Float = { this().takeIf { it.isFinite() }?.coerceIn(0f, 1f) ?: 0f }
 
 /**
  * The small contained indicator for inline loading (the end of a paged list) and pull to refresh,

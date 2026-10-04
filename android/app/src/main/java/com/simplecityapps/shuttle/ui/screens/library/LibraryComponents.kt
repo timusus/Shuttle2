@@ -77,18 +77,18 @@ fun LibraryContent(
     hasItems: Boolean = false,
     content: @Composable () -> Unit,
 ) {
-    if (state == LibraryContentState.Ready) {
-        content()
-        return
-    }
-    if (state == LibraryContentState.Scanning && hasItems) {
-        Box(modifier.fillMaxSize()) {
+    // Ready and a scan over existing items share one call site for [content], so its remembered list state (the
+    // scroll position) survives the scan starting and finishing.
+    if (state == LibraryContentState.Ready || (state == LibraryContentState.Scanning && hasItems)) {
+        Box {
             content()
-            BarLoadingIndicator(
-                description = stringResource(R.string.library_scan_in_progress),
-                modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
-                progress = scanProgress?.let { progress -> { progress.asFloat() } },
-            )
+            if (state == LibraryContentState.Scanning) {
+                BarLoadingIndicator(
+                    description = stringResource(R.string.library_scan_in_progress),
+                    modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+                    progress = scanProgress?.indicatorProgress(),
+                )
+            }
         }
         return
     }
@@ -101,7 +101,7 @@ fun LibraryContent(
             LibraryContentState.Scanning -> LoadingState(
                 modifier = fill,
                 message = stringResource(R.string.library_scan_in_progress),
-                progress = scanProgress?.let { progress -> { progress.asFloat() } },
+                progress = scanProgress?.indicatorProgress(),
             )
 
             LibraryContentState.Empty -> EmptyState(title = emptyTitle, modifier = fill)
@@ -109,6 +109,13 @@ fun LibraryContent(
             LibraryContentState.Ready -> Unit
         }
     }
+}
+
+/** The fraction done, for a determinate indicator; null (indeterminate) while the total isn't known. */
+private fun Progress.indicatorProgress(): (() -> Float)? = if (total > 0) {
+    { asFloat() }
+} else {
+    null
 }
 
 /** A count plural, formatted. */
