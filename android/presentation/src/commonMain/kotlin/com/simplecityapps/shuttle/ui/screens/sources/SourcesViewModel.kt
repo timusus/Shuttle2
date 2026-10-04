@@ -31,6 +31,8 @@ data class ServerSource(
     val songs: Int? = null,
     /** When an import from it last completed, if one has. */
     val updated: Instant? = null,
+    /** How many songs the server counts but doesn't return on a full listing, if it comes up short. */
+    val listingShortfall: Int = 0,
 )
 
 data class SourcesUiState(
@@ -83,11 +85,12 @@ class SourcesViewModel @Inject constructor(
     observeSongCounts: ObserveSongCounts,
     observeSourceReachability: ObserveSourceReachability,
     observeSourceUpdated: ObserveSourceUpdated,
+    observeListingShortfalls: ObserveListingShortfalls,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
     private val imports: Flow<Imports> =
-        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), observeSourceReachability(), observeSourceUpdated(), ::Imports)
+        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), combine(observeSourceReachability(), observeSourceUpdated(), observeListingShortfalls(), ::Stored), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
         combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate(), events.flow) { types, folders, imports, lastImport, events ->
@@ -102,7 +105,7 @@ class SourcesViewModel @Inject constructor(
                 deviceSongs = imports.songCounts?.filterKeys { it.isLocal }?.values?.sum(),
                 deviceUpdated = imports.updated.filterKeys { it.isLocal }.values.filterNotNull().maxOrNull(),
                 servers = ServerTypes.map { type ->
-                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type])
+                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type], listingShortfall = imports.shortfalls[type] ?: 0)
                 },
                 lastImport = lastImport,
                 events = events,
@@ -151,12 +154,22 @@ class SourcesViewModel @Inject constructor(
 
     fun onEventHandled(id: Long) = events.consume(id)
 
-    /** The importer's latest state, each provider's own, the library's songs per provider, how each server's last import ended, and when each source last updated. */
+    /** The importer's latest state, each provider's own, the library's songs per provider, how each server's last import ended, when each source last updated, and each server's listing shortfall. */
     private data class Imports(
         val latest: SongImportState,
         val byProvider: Map<MediaProviderType, SongImportState>,
         val songCounts: Map<MediaProviderType, Int>?,
+        val stored: Stored,
+    ) {
+        val reachability get() = stored.reachability
+        val updated get() = stored.updated
+        val shortfalls get() = stored.shortfalls
+    }
+
+    /** What each source's imports left in preferences: how the last one ended, when one last completed, and the server's listing shortfall. */
+    private data class Stored(
         val reachability: Map<MediaProviderType, SourceReachability?>,
         val updated: Map<MediaProviderType, Instant?>,
+        val shortfalls: Map<MediaProviderType, Int>,
     )
 }

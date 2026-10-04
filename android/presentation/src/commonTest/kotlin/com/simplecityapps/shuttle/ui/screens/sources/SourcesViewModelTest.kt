@@ -62,10 +62,11 @@ class SourcesViewModelTest {
         TryAddServer { serverAllowed },
         ConnectServer(mediaSources),
         ObserveLastScanDate(preferences),
-        ForgetServer(mapOf(MediaProviderType.Emby to emby)),
+        ForgetServer(mapOf(MediaProviderType.Emby to emby), preferences),
         ObserveSongCounts(songs),
         ObserveSourceReachability(preferences),
         ObserveSourceUpdated(preferences),
+        ObserveListingShortfalls(preferences),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -182,6 +183,38 @@ class SourcesViewModelTest {
 
         emby.savedLogin() shouldBe SavedServerLogin()
         emby.forgottenServer shouldBe 1
+    }
+
+    @Test
+    fun `removing a server clears its stored reachability, updated time and listing shortfall`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Emby, MediaProviderType.Plex))
+        val at = Instant.fromEpochMilliseconds(1_000)
+        for (source in listOf("Emby", "Plex")) {
+            preferences.setSourceReachability(source, SourceReachability("Can't reach the server", at))
+            preferences.setSourceUpdated(source, at)
+            preferences.setListingShortfall(source, 3)
+        }
+
+        viewModel.onRemoveServer(MediaProviderType.Emby)
+
+        preferences.sourceReachability("Emby") shouldBe null
+        preferences.sourceUpdated("Emby") shouldBe null
+        preferences.listingShortfall("Emby") shouldBe 0
+        preferences.sourceReachability("Plex") shouldBe SourceReachability("Can't reach the server", at)
+        preferences.sourceUpdated("Plex") shouldBe at
+        preferences.listingShortfall("Plex") shouldBe 3
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Emby }.listingShortfall shouldBe 0
+    }
+
+    @Test
+    fun `a server's listing shortfall shows - and goes when it's cleared`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Jellyfin))
+
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.listingShortfall shouldBe 0
+        preferences.setListingShortfall("Jellyfin", 4)
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.listingShortfall shouldBe 4
+        preferences.setListingShortfall("Jellyfin", 0)
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.listingShortfall shouldBe 0
     }
 
     @Test

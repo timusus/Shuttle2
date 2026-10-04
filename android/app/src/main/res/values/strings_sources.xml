@@ -25,6 +25,10 @@
     </plurals>
     <!-- A source's status line: its song count, then when the library last finished updating -->
     <string name="sources_status_songs_updated">%1$s · %2$s</string>
+    <plurals name="sources_server_listing_shortfall">
+        <item quantity="one">%1$s item the server counts but doesn\'t return</item>
+        <item quantity="other">%1$s items the server counts but doesn\'t return</item>
+    </plurals>
     <string name="sources_updated">Updated %1$s</string>
     <string name="sources_updated_just_now">Updated just now</string>
     <string name="sources_scanning">Scanning…</string>

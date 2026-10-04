@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Sources now tells you when a server counts songs it does not return, and removing a server no longer leaves an old Can't reach message behind.", "commits": [] }

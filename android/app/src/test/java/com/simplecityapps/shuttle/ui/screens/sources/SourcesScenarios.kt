@@ -36,5 +36,10 @@ object SourcesScenarios {
         servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle, MediaProviderType.Plex to SourceStatus.Failed("Couldn't reach the server")),
     )
 
+    /** Jellyfin counts 3 songs it doesn't return, next to a Plex that lists everything. */
+    val serverShortfall = configured.copy(
+        servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle, MediaProviderType.Plex to SourceStatus.Idle).map { if (it.type == MediaProviderType.Jellyfin) it.copy(listingShortfall = 3) else it },
+    )
+
     val noActions = SourcesActions(onThisDeviceChange = {}, onRescan = {}, onOpenFolderRules = {}, onServerClick = {}, onAddServer = {}, onShowDialog = {})
 }

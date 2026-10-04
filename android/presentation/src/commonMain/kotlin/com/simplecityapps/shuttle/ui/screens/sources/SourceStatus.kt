@@ -44,6 +44,15 @@ class ObserveSourceUpdated @Inject constructor(
     }
 }
 
+/** How many songs each server counts but doesn't return, now and each time a full listing changes it (#868). */
+class ObserveListingShortfalls @Inject constructor(
+    private val generalPreferenceManager: GeneralPreferenceManager
+) {
+    operator fun invoke(): Flow<Map<MediaProviderType, Int>> = combine(ServerTypes.map { type -> generalPreferenceManager.observeListingShortfall(type.name) }) { shortfalls ->
+        ServerTypes.zip(shortfalls.toList()).toMap()
+    }
+}
+
 /** How each server's last import ended, now and each time one ends (#668). */
 class ObserveSourceReachability @Inject constructor(
     private val generalPreferenceManager: GeneralPreferenceManager

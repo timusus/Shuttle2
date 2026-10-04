@@ -157,7 +157,7 @@ private fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = wh
     }
 }
 
-/** A server's status: syncing with its progress, unreachable, or connected with its songs and when it last updated. */
+/** A server's status: syncing with its progress, unreachable, or connected with its songs, when it last updated and any listing shortfall. */
 @Composable
 private fun serverStatusLine(server: ServerSource, now: Instant): String = when (val status = server.status) {
     is SourceStatus.Importing -> status.progress?.let { progress ->
@@ -169,7 +169,12 @@ private fun serverStatusLine(server: ServerSource, now: Instant): String = when 
     SourceStatus.Idle -> {
         val connected = stringResource(R.string.sources_server_connected)
         val withSongs = server.songs?.let { stringResource(R.string.sources_status_songs_updated, connected, songsLabel(it)) } ?: connected
-        server.updated?.let { stringResource(R.string.sources_status_songs_updated, withSongs, updatedLabel(it, now)) } ?: withSongs
+        val withUpdated = server.updated?.let { stringResource(R.string.sources_status_songs_updated, withSongs, updatedLabel(it, now)) } ?: withSongs
+        if (server.listingShortfall > 0) {
+            stringResource(R.string.sources_status_songs_updated, withUpdated, pluralStringResource(R.plurals.sources_server_listing_shortfall, server.listingShortfall, server.listingShortfall.formatted()))
+        } else {
+            withUpdated
+        }
     }
 }
 

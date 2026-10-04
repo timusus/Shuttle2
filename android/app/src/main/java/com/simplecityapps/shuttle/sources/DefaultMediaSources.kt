@@ -70,6 +70,7 @@ class DefaultMediaSources @Inject constructor(
             songDownloader.removeAll(type)
             songRepository.removeAll(type)
             playlistRepository.deleteAll(type)
+            generalPreferences.clearSourceState(type.name)
         }
     }
 

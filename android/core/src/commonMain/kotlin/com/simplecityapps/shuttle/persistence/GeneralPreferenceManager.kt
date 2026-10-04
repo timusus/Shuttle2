@@ -235,6 +235,9 @@ class GeneralPreferenceManager @Inject constructor(
         missing: Int
     ) = store.putInt("listing_shortfall_$source", missing)
 
+    /** [listingShortfall] now and each time it changes. */
+    fun observeListingShortfall(source: String): Flow<Int> = store.changes("listing_shortfall_$source").map { listingShortfall(source) }.distinctUntilChanged()
+
     /**
      * The album key version the stored album keys (play history, pinned downloads) were last moved to (#637): 0 before
      * the album identity rule, so they're moved once, after the first import that leaves every source's tags current.
@@ -299,6 +302,16 @@ class GeneralPreferenceManager @Inject constructor(
 
     /** [sourceUpdated] now and each time it changes. */
     fun observeSourceUpdated(source: String): Flow<Instant?> = store.changes("source_updated_$source").map { sourceUpdated(source) }.distinctUntilChanged()
+
+    /** Forgets what Sources kept of [source]'s imports (reachability, updated time, listing shortfall), once it's removed or forgotten (#870, #868). */
+    fun clearSourceState(source: String) {
+        store.edit {
+            remove("source_error_$source")
+            remove("source_checked_at_$source")
+            remove("source_updated_$source")
+            remove("listing_shortfall_$source")
+        }
+    }
 
     /** The first-run source setup (iOS) was finished or skipped, so it never opens by itself again. */
     var sourceSetupCompleted: Boolean

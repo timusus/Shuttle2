@@ -114,6 +114,14 @@ class OnboardingTest {
     }
 
     @Test
+    fun `a server's listing shortfall shows on its row`() {
+        robot.setSources(SourcesScenarios.serverShortfall)
+
+        robot.assertTextDisplayed("Connected · 1,842 songs · Updated 2 hours ago · 3 items the server counts but doesn't return")
+        robot.assertTextDisplayed("Connected · 1,842 songs · Updated 2 hours ago")
+    }
+
+    @Test
     fun `turning this device off asks first`() {
         robot.setSources(SourcesUiState(thisDevice = true))
 
