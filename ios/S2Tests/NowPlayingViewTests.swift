@@ -109,7 +109,7 @@ struct NowPlayingViewTests {
         }).compactMap { try? $0.accessibilityIdentifier() }
         #expect(ids == ["nowPlaying.audio", "nowPlaying.sleepTimer", "nowPlaying.airPlay", "nowPlaying.queue"])
         #expect(ids.count <= 5)
-        // Superseded: the overflow menu and the speed menu.
+        // Superseded here: the bottom bar's overflow menu (now the top bar's More) and the speed menu.
         #expect((try? bar.find(viewWithAccessibilityLabel: "More")) == nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Playback Speed")) == nil)
     }
