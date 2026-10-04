@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Removing a Jellyfin, Emby or Plex server, or signing in to a different one, now removes the previous server's offline downloads instead of playing them for the new server's songs.", "commits": [] }

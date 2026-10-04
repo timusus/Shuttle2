@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dev.zacsweers.metro.AppScope
@@ -84,17 +85,19 @@ sealed interface ServerSignInEvent {
 
 /**
  * A Jellyfin, Emby or Plex server's sign-in: the address and login, starting from the saved ones, then the
- * authentication's progress and outcome.
+ * authentication's progress and outcome. Signing in to a different server (another address or user) than the saved one
+ * removes the downloads of the old server's songs: their paths don't say which server they came from.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ServerSignInViewModel @AssistedInject constructor(
     @Assisted private val type: MediaProviderType,
-    readServerLogin: ReadServerLogin,
+    private val readServerLogin: ReadServerLogin,
     private val signInToServer: SignInToServer,
     private val forgetServerLogin: ForgetServerLogin,
     observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
     checkQuickConnectAvailable: CheckQuickConnectAvailable,
     private val signInWithQuickConnect: SignInWithQuickConnect,
+    private val songDownloader: SongDownloader,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -159,9 +162,11 @@ class ServerSignInViewModel @AssistedInject constructor(
         }
         step.value = ServerSignInStep.Authenticating
         val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password, form.authCode.takeIf { uiState.value.asksForAuthCode })
+        val saved = readServerLogin(type)
         viewModelScope.launch {
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
+                    if (saved.address != login.address || !saved.username.equals(login.username, ignoreCase = true)) songDownloader.removeAll(type)
                     step.value = ServerSignInStep.Connected
                     events.post(ServerSignInEvent.Connected)
                     delay(SUCCESS_SHOWN_MILLIS)
@@ -185,12 +190,15 @@ class ServerSignInViewModel @AssistedInject constructor(
             form.update { it.copy(missing = it.missing + ServerSignInField.Address) }
             return
         }
+        val saved = readServerLogin(type)
         quickConnectJob = viewModelScope.launch {
             signInWithQuickConnect(type, address).collect { state ->
                 when (state) {
                     is SignInWithQuickConnect.State.AwaitingApproval -> step.value = ServerSignInStep.AwaitingCode(state.code)
 
                     SignInWithQuickConnect.State.Success -> {
+                        // Quick Connect doesn't take a username, so only a different address tells it's another server
+                        if (saved.address != address) songDownloader.removeAll(type)
                         step.value = ServerSignInStep.Connected
                         events.post(ServerSignInEvent.Connected)
                         delay(SUCCESS_SHOWN_MILLIS)

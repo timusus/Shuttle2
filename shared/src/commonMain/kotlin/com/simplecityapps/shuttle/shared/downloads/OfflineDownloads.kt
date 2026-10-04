@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.downloads
 
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.forPath
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
@@ -81,6 +82,15 @@ class OfflineDownloads(
         removedPaths.update { it + song.path }
         _downloads.update { it - song.path }
         transport.remove(song.path)
+    }
+
+    override suspend fun removeAll(type: MediaProviderType) {
+        val prefix = type.pathScheme?.let { "$it://" } ?: return
+        _downloads.value.keys.filter { it.startsWith(prefix) }.forEach { path ->
+            removedPaths.update { it + path }
+            _downloads.update { it - path }
+            transport.remove(path)
+        }
     }
 
     /** Running and completed downloads: [SongDownloader]'s held paths. A failed one isn't held, so it offers Download again. */

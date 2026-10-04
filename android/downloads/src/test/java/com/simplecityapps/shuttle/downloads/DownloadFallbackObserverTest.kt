@@ -177,6 +177,8 @@ private class RecordingSongDownloadManager : SongDownloadManager {
 
     override fun remove(song: Song) = Unit
 
+    override fun remove(path: String) = Unit
+
     override fun removeAll() = Unit
 
     override fun setRequirements(wifiOnly: Boolean) = Unit

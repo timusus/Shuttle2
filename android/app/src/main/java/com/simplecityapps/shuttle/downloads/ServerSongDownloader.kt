@@ -2,12 +2,14 @@ package com.simplecityapps.shuttle.downloads
 
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /** Downloads a remote song from its server: the provider gives the URL and type, the downloads module fetches it. */
@@ -24,6 +26,11 @@ class ServerSongDownloader @Inject constructor(
     }
 
     override fun remove(song: Song) = songDownloadManager.remove(song)
+
+    override suspend fun removeAll(type: MediaProviderType) {
+        val prefix = type.pathScheme?.let { "$it://" } ?: return
+        songDownloadRepository.observeDownloads().first().filter { it.path.startsWith(prefix) }.forEach { songDownloadManager.remove(it.path) }
+    }
 
     override fun observeHeldPaths(): Flow<Set<String>> = songDownloadRepository.observeDownloads().map { downloads -> downloads.filter { it.state in HELD_STATES }.mapTo(mutableSetOf()) { it.path } }
 

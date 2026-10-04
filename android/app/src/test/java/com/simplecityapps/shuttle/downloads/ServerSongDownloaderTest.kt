@@ -15,7 +15,8 @@ class ServerSongDownloaderTest {
 
     private val songDownloadManager = FakeSongDownloadManager()
     private val mediaInfoProvider = FakeMediaInfoProvider()
-    private val downloader = ServerSongDownloader(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), FakeSongDownloadRepository())
+    private val songDownloadRepository = FakeSongDownloadRepository()
+    private val downloader = ServerSongDownloader(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), songDownloadRepository)
     private val song = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
     @Test
@@ -46,5 +47,28 @@ class ServerSongDownloaderTest {
         downloader.remove(song)
 
         songDownloadManager.removed shouldBe listOf(song)
+    }
+
+    @Test
+    fun `removing all of a type drops that server's downloads in any state - and leaves the others`() = runTest {
+        songDownloadRepository.downloads.value = listOf(
+            "jellyfin://item/1" to SongDownload.State.Completed,
+            "jellyfin://item/2" to SongDownload.State.Failed,
+            "emby://item/3" to SongDownload.State.Completed,
+            "/music/4.flac" to SongDownload.State.Completed,
+        ).map { (path, state) -> SongDownload(path, state, 1f, 0, 0) }
+
+        downloader.removeAll(MediaProviderType.Jellyfin)
+
+        songDownloadManager.removedPaths shouldBe listOf("jellyfin://item/1", "jellyfin://item/2")
+    }
+
+    @Test
+    fun `removing all of a local type removes nothing`() = runTest {
+        songDownloadRepository.downloads.value = listOf(SongDownload("/music/4.flac", SongDownload.State.Completed, 1f, 0, 0))
+
+        downloader.removeAll(MediaProviderType.Shuttle)
+
+        songDownloadManager.removedPaths.shouldBeEmpty()
     }
 }

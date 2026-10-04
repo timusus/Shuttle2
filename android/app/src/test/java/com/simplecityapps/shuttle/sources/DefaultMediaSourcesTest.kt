@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.sources
 
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
@@ -40,6 +41,7 @@ class DefaultMediaSourcesTest {
     private val playlistRepository = mockk<PlaylistRepository>(relaxed = true)
     private val queueOperations = mockk<QueueOperations>(relaxed = true)
     private val playbackOperations = mockk<PlaybackOperations>(relaxed = true)
+    private val songDownloader = FakeSongDownloader()
     private val scope = TestScope(StandardTestDispatcher())
 
     private val mediaSources = DefaultMediaSources(
@@ -55,6 +57,7 @@ class DefaultMediaSourcesTest {
         playlistRepository = playlistRepository,
         queueOperations = queueOperations,
         playbackOperations = playbackOperations,
+        songDownloader = songDownloader,
         appCoroutineScope = scope,
     )
 
@@ -81,6 +84,7 @@ class DefaultMediaSourcesTest {
             songRepository.removeAll(MediaProviderType.Jellyfin)
         }
         coVerify { playlistRepository.deleteAll(MediaProviderType.Jellyfin) }
+        songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin)
     }
 
     @Test

@@ -109,6 +109,17 @@ class OfflineDownloadsTest {
     }
 
     @Test
+    fun removingAllOfATypeDeletesItsFilesAndLeavesTheOthers() = runTest {
+        val transport = FakeTransport(onDevice = setOf("jellyfin://item/1", "jellyfin://item/2", "emby://item/3", "plex://library/4"))
+        val downloads = OfflineDownloads(listOf(jellyfin), transport)
+
+        downloads.removeAll(MediaProviderType.Jellyfin)
+
+        transport.removed.toSet() shouldBe setOf("jellyfin://item/1", "jellyfin://item/2")
+        downloads.downloads.value.keys shouldBe setOf("emby://item/3", "plex://library/4")
+    }
+
+    @Test
     fun aDownloadThatFinishesAfterItsRemovalIsDeletedAgain() = runTest {
         downloads.download(remote(2))
         downloads.remove(remote(2))

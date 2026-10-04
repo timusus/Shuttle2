@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.shared.local.IosLocalMediaProvider
+import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
@@ -47,6 +48,7 @@ class IosMediaSources @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val queueOperations: QueueOperations,
     private val playbackOperations: PlaybackOperations,
+    private val songDownloader: SongDownloader,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : MediaSources {
     private val _enabledTypes = MutableStateFlow(savedTypes())
@@ -71,6 +73,7 @@ class IosMediaSources @Inject constructor(
         // so none it read are stored after them
         appCoroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
             type.provider()?.let { mediaImporter.removeProvider(it) }
+            songDownloader.removeAll(type)
             songRepository.removeAll(type)
             playlistRepository.deleteAll(type)
         }

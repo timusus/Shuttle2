@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.RecordingAnalytics
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
@@ -43,6 +44,7 @@ class ServerSignInViewModelTest {
     private val server = FakeServerAuthentication()
     private val quickConnect = FakeQuickConnectAuthentication()
     private val analytics = RecordingAnalytics()
+    private val songDownloader = FakeSongDownloader()
     private val needsPro = MutableStateFlow(false)
 
     /** [address] is typed over the saved or default one, unless it's null. */
@@ -62,6 +64,7 @@ class ServerSignInViewModelTest {
             ObserveServerStreamingNeedsPro { needsPro },
             CheckQuickConnectAvailable(quickConnects),
             SignInWithQuickConnect(quickConnects, monetisation, classifyFailure),
+            songDownloader,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             address?.let(viewModel::onAddressChange)
@@ -166,6 +169,56 @@ class ServerSignInViewModelTest {
 
         viewModel.onEventHandled(viewModel.uiState.value.events.first().id)
         viewModel.events shouldBe listOf(ServerSignInEvent.Finished)
+    }
+
+    @Test
+    fun `signing in to the saved server again keeps its downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "Sam", "secret")
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+
+        viewModel.onAuthenticate()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `signing in to a different address or as a different user removes the old server's downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
+        viewModel(address = "http://other:8096").onAuthenticate()
+        songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin)
+
+        val asAnotherUser = viewModel()
+        asAnotherUser.onUsernameChange("alex")
+        asAnotherUser.onAuthenticate()
+        songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin, MediaProviderType.Jellyfin)
+    }
+
+    @Test
+    fun `a failed sign-in to a different server keeps the downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
+        server.failure = IllegalStateException("no")
+
+        viewModel(address = "http://other:8096").onAuthenticate()
+
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `Quick Connect to a different address removes the old server's downloads - to the same one keeps them`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
+        quickConnect.pollState = QuickConnectPollState.Authenticated
+
+        viewModel().onUseQuickConnect()
+        advanceTimeBy(5_001)
+        runCurrent()
+        songDownloader.removedAll shouldBe emptyList()
+
+        viewModel(address = "http://other:8096").onUseQuickConnect()
+        advanceTimeBy(5_001)
+        runCurrent()
+        songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin)
     }
 
     @Test

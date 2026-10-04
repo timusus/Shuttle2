@@ -1,5 +1,6 @@
 package com.simplecityapps.fakes
 
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import kotlinx.coroutines.flow.Flow
@@ -10,6 +11,7 @@ class FakeSongDownloader : SongDownloader {
     val unavailable = mutableSetOf<String>()
     val downloaded = mutableListOf<Song>()
     val removed = mutableListOf<Song>()
+    val removedAll = mutableListOf<MediaProviderType>()
     val heldPaths = MutableStateFlow<Set<String>>(emptySet())
 
     override suspend fun download(song: Song): Boolean {
@@ -20,6 +22,10 @@ class FakeSongDownloader : SongDownloader {
 
     override fun remove(song: Song) {
         removed += song
+    }
+
+    override suspend fun removeAll(type: MediaProviderType) {
+        removedAll += type
     }
 
     override fun observeHeldPaths(): Flow<Set<String>> = heldPaths

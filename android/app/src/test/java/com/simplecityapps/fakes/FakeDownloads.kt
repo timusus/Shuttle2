@@ -26,6 +26,7 @@ class FakeSongDownloadManager : SongDownloadManager {
     val downloaded = mutableListOf<Pair<Song, Uri>>()
     val downloadedMimeTypes = mutableListOf<String>()
     val removed = mutableListOf<Song>()
+    val removedPaths = mutableListOf<String>()
 
     override fun download(song: Song, uri: Uri, mimeType: String) {
         downloaded += song to uri
@@ -36,6 +37,10 @@ class FakeSongDownloadManager : SongDownloadManager {
 
     override fun remove(song: Song) {
         removed += song
+    }
+
+    override fun remove(path: String) {
+        removedPaths += path
     }
 
     override fun removeAll() {}
