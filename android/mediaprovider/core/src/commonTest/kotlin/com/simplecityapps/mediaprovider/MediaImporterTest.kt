@@ -484,6 +484,24 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `an incremental sync that came up short leaves the next full sync where it was`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+        server.found = listOf(song().copy(id = 2, path = "/added"))
+        server.missing = 1
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.requests shouldBe listOf(clock.time - 1.hours - SyncPolicy.OVERLAP)
+        preferences.lastSyncStart(server.type.name) shouldBe clock.time
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time - 1.days
+    }
+
+    @Test
     fun `a server with nothing stored is synced in full, whenever it last synced`() = runBlocking<Unit> {
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)

@@ -426,7 +426,8 @@ class MediaImporter(
      * what it no longer holds but for what [deleteGuard] holds back (a mass removal only if it isn't a [userRemoval], or all
      * of it for a listing that came up short); an incremental one is stored over it, or is made full when nothing is stored.
      * Once stored, the sync's start is noted for the next incremental sync to ask from, and a full sync's for the next full
-     * one, unless the guard is waiting on a full pass. A [thorough] full listing of an [IndexedMediaProvider] looks past its index.
+     * one, unless the guard is waiting on another full pass after it: then that's the next sync. A [thorough] full listing of an
+     * [IndexedMediaProvider] looks past its index.
      */
     private fun importSongs(
         mediaProvider: MediaProvider,
@@ -482,14 +483,18 @@ class MediaImporter(
                         timings.dbWrite = dbWriteMark.elapsedNow()
                         mediaProvider.songsStored()
                         preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
-                        if (guarded.awaitsFullPass) {
-                            // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's the
-                            // next sync rather than a week on. The songs it held weren't read, so the tags version stays as it was.
-                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
-                        } else if (plan == SyncPlan.Full) {
-                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
-                            // Every song read again, so this source's songs hold every tag this build reads
-                            preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
+                        if (plan == SyncPlan.Full) {
+                            if (guarded.awaitsFullPass) {
+                                // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
+                                // the next sync rather than a week on. The songs it held weren't read, so the tags version stays
+                                // as it was. Not after an incremental pass: it deletes nothing, and what its listing left out a full
+                                // one leaves out too, so bringing the full sync forward gains nothing.
+                                preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
+                            } else {
+                                preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
+                                // Every song read again, so this source's songs hold every tag this build reads
+                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
+                            }
                         }
                         emit(
                             FlowEvent.Success(
