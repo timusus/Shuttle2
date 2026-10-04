@@ -115,7 +115,9 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
                            individual test class(es) that exercise it, for
                            the fastest iteration loop; falls back to a whole
                            module run (or the full suite) the same way
-                           --changed does. See "unit-test --changed-tests" in
+                           --changed does. *BenchmarkTest classes are never
+                           selected (the default sweep excludes them, #680).
+                           See "unit-test --changed-tests" in
                            .claude/rules/testing.md. Run the full suite once
                            at the end via --changed or a plain run.
     --base <ref>           Diff base. Defaults to origin/main.
@@ -620,8 +622,15 @@ run_changed_tests_mode() {
         # A screenshot test belongs to the final verify (Roborazzi runs in
         # verify mode there), not a --tests run here; treat it like any
         # other change that maps to no runnable class.
+        # A benchmark test is excluded from the default sweep (build.gradle.kts,
+        # -Ps2.runBenchmarks=true opts in), so a --tests filter on it dies with
+        # "No tests found" (#680); skip it instead of a whole-module run, which
+        # excludes benchmarks too.
         cls="$(basename "${rel}" .kt)"
-        if [ -f "${REPO_ROOT}/${f}" ] && [ "${cls%ScreenshotTest}" = "${cls}" ]; then
+        if [ -f "${REPO_ROOT}/${f}" ] && [ "${cls%BenchmarkTest}" != "${cls}" ]; then
+          echo "note: '${f}' is a benchmark test, outside the default sweep (opt in with -Ps2.runBenchmarks=true); skipping"
+          touch "${WORK_DIR}/${id}.benchmark"
+        elif [ -f "${REPO_ROOT}/${f}" ] && [ "${cls%ScreenshotTest}" = "${cls}" ]; then
           echo "${cls}" >> "${WORK_DIR}/${id}.classes"
         elif [ -f "${REPO_ROOT}/${f}" ]; then
           echo "note: '${f}' is a screenshot test; falling back to a whole run of ${mpath}"
@@ -639,6 +648,7 @@ run_changed_tests_mode() {
         while IFS= read -r name; do
           [ -z "${name}" ] && continue
           [ "${name%ScreenshotTest}" != "${name}" ] && continue
+          [ "${name%BenchmarkTest}" != "${name}" ] && { touch "${WORK_DIR}/${id}.benchmark"; continue; }
           echo "${name}" >> "${WORK_DIR}/${id}.classes"
           found=1
         done < <(classes_for_main_file "${REPO_ROOT}/${f}" "${REPO_ROOT}/${mdir}/src/test" "${REPO_ROOT}/${mdir}/src/commonTest" "${REPO_ROOT}/${mdir}/src/androidHostTest")
@@ -669,7 +679,16 @@ run_changed_tests_mode() {
     unmappable_file="${WORK_DIR}/${mid}.unmappable"
     classes_file="${WORK_DIR}/${mid}.classes"
 
-    if [ -f "${unmappable_file}" ] || [ ! -s "${classes_file}" ]; then
+    if [ -f "${unmappable_file}" ]; then
+      echo "${m}: running whole (no class-level mapping)"
+      whole_batch+=("${m}:testDebugUnitTest")
+      continue
+    fi
+    if [ ! -s "${classes_file}" ]; then
+      if [ -f "${WORK_DIR}/${mid}.benchmark" ]; then
+        echo "${m}: only benchmark tests map to the changes, and they're outside the default sweep; nothing to run"
+        continue
+      fi
       echo "${m}: running whole (no class-level mapping)"
       whole_batch+=("${m}:testDebugUnitTest")
       continue

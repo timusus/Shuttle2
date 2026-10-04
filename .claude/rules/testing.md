@@ -46,12 +46,16 @@ same diff `--changed` uses down to individual test classes, one Gradle invocatio
 
 Rules:
 - A changed `src/test/*Test.kt` file selects its own class, unless it's a screenshot test (any
-  `*ScreenshotTest.kt`) — those run under `verifyRoborazziDebug` in the final verify, not here.
+  `*ScreenshotTest.kt`) — those run under `verifyRoborazziDebug` in the final verify, not here — or a
+  benchmark test (any `*BenchmarkTest.kt`) — the default sweep excludes those
+  (`-Ps2.runBenchmarks=true` opts in), so a `--tests` filter on one dies with "No tests found"; a
+  change that maps only to benchmarks runs nothing (#680).
 - A changed test helper (`src/test/*.kt` not ending in `Test`: a Robot, Scenarios, a fake) has no
   `@Test` methods, so it maps like a main file below: the `*Test.kt` classes that reference it.
 - A changed `src/main/*.kt` file's class `Foo` selects `FooTest` (if it exists anywhere under the
   module's `src/test`), plus any `*Test.kt` that references `Foo` by name — a plain, case-sensitive
-  substring grep over the module's test sources, kept simple and predictable. A `FooViewModel` also
+  substring grep over the module's test sources, kept simple and predictable (benchmark matches are
+  skipped, as above). A `FooViewModel` also
   matches on `Foo` (the name with the `ViewModel` suffix stripped), to catch a screen's Robot-based test
   that exercises it without naming the ViewModel class directly (e.g. `LibraryScreenTest` for
   `SongListViewModel`, since `SongList` is part of the Library screen rather than its own). Screenshot
