@@ -20,7 +20,7 @@ class ItemsService(private val client: HttpClient) {
         url = "$url/Users/$userId/Items",
         authorization = authorization,
         itemTypes = "Audio",
-        fields = "Genres,DateCreated,ProviderIds",
+        fields = "Genres,DateCreated,ProviderIds,MediaStreams",
         limit = limit,
         startIndex = startIndex
     )

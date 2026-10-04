@@ -61,6 +61,7 @@ class MediaStoreMediaProvider(
             )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             projection.add(MediaStore.Audio.Media.DISC_NUMBER)
+            projection.add(MediaStore.Audio.Media.BITS_PER_SAMPLE)
         }
         val songCursor =
             context.contentResolver.query(
@@ -76,6 +77,12 @@ class MediaStoreMediaProvider(
             val discNumberColumnIndex =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     songCursor.getColumnIndex(MediaStore.Audio.Media.DISC_NUMBER)
+                } else {
+                    -1
+                }
+            val bitsPerSampleColumnIndex =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    songCursor.getColumnIndex(MediaStore.Audio.Media.BITS_PER_SAMPLE)
                 } else {
                     -1
                 }
@@ -134,7 +141,11 @@ class MediaStoreMediaProvider(
                         lyrics = null,
                         grouping = null,
                         bitRate = null,
-                        bitDepth = null,
+                        bitDepth =
+                            mediaStoreBitDepth(
+                                mimeType = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
+                                bitsPerSample = if (bitsPerSampleColumnIndex != -1) songCursor.getIntOrNull(bitsPerSampleColumnIndex) else null
+                            ),
                         sampleRate = null,
                         channelCount = null,
                         artworkVersion = localArtworkVersion(lastModified, folderImageReader.imagesNear(path)),
@@ -336,3 +347,14 @@ class MediaStoreMediaProvider(
         }
     }
 }
+
+private val losslessMimeSubtypes = setOf("flac", "x-flac", "wav", "x-wav", "wave", "vnd.wave", "aiff", "x-aiff", "x-ape", "x-wavpack")
+
+/**
+ * The bit depth MediaStore reports (API 30 and up), kept only for a lossless format. The MIME type is all it has to go
+ * on, so an ambiguous one like audio/mp4 (AAC or ALAC) is treated as lossy, and a lossy file's 16 or 32 is dropped.
+ */
+internal fun mediaStoreBitDepth(
+    mimeType: String?,
+    bitsPerSample: Int?
+): Int? = bitsPerSample?.takeIf { it > 0 && mimeType?.lowercase()?.substringAfter('/') in losslessMimeSubtypes }

@@ -104,6 +104,10 @@
   ],
   "improvements": [
     {
+      "text": "Lossless songs from Jellyfin and Emby now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
+      "commits": []
+    },
+    {
       "text": "Settings, Edit Tags and the player's sound panel now use the same section heading style as the rest of the app",
       "commits": []
     },

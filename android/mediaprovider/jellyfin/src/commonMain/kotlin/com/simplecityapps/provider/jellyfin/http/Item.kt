@@ -12,6 +12,13 @@ data class ArtistItem(
 )
 
 @Serializable
+data class MediaStream(
+    @SerialName("Type") val type: String? = null,
+    @SerialName("Codec") val codec: String? = null,
+    @SerialName("BitDepth") val bitDepth: Int? = null
+)
+
+@Serializable
 data class Item(
     @SerialName("Name") val name: String? = null,
     @SerialName("Id") val id: String,
@@ -33,5 +40,7 @@ data class Item(
     // Only returned when requested in 'fields': the file's MusicBrainz tags, keyed "MusicBrainzRecording" (the recording,
     // which is what a file's MUSICBRAINZ_TRACKID holds), "MusicBrainzTrack" (the release track), "MusicBrainzAlbum",
     // "MusicBrainzReleaseGroup", "MusicBrainzArtist" and "MusicBrainzAlbumArtist"
-    @SerialName("ProviderIds") val providerIds: Map<String, String> = emptyMap()
+    @SerialName("ProviderIds") val providerIds: Map<String, String> = emptyMap(),
+    // Only returned when requested in 'fields': the file's streams, of which the audio one carries its codec and bit depth
+    @SerialName("MediaStreams") val mediaStreams: List<MediaStream> = emptyList()
 )

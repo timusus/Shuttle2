@@ -356,3 +356,7 @@ previous and new outputs, and where each pause came from.
 - [ ] Settings, Library, Restore library backup: a dialog says your settings will be replaced; Cancel does nothing, Choose file opens the picker. Pick the saved file: every setting you changed comes back, the theme changes straight away without restarting, and the Library, Playback and Appearance screens show the restored values.
 - [ ] After the restore you are still signed in to any Jellyfin, Emby or Plex server, and the music folders you had added are unchanged.
 - [ ] Restore a backup made before this version (no settings in it): play counts and playlists merge as before and your settings are left alone.
+
+## Bit depth in Now Playing (#798)
+- [ ] Play a 24-bit FLAC from the local library (Android 11 or later), after a rescan: note whether Now Playing and Song info show "24-bit" (MediaStore may leave it blank; local files read by TagLib stay blank, see #798).
+- [ ] Play a 24-bit FLAC from Jellyfin after a library sync: Now Playing's quality line and Song info show "24-bit". An MP3 from the same server shows no bit depth.

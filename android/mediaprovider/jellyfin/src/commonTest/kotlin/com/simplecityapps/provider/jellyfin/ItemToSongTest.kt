@@ -87,9 +87,28 @@ class ItemToSongTest {
         song.serverAlbumId shouldBe "album-1"
     }
 
+    @Test
+    fun `a lossless audio stream's bit depth becomes the song's`() {
+        parse(mediaStreams = """[{"Type": "Video", "Codec": "mjpeg", "BitDepth": 8}, {"Type": "Audio", "Codec": "flac", "BitDepth": 24}]""")
+            .toSong().bitDepth shouldBe 24
+    }
+
+    @Test
+    fun `a lossy audio stream has no bit depth even when the server reports one`() {
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "mp3", "BitDepth": 16}]""").toSong().bitDepth shouldBe null
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "opus", "BitDepth": 32}]""").toSong().bitDepth shouldBe null
+    }
+
+    @Test
+    fun `a song without streams or a bit depth has none`() {
+        parse().toSong().bitDepth shouldBe null
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "flac"}]""").toSong().bitDepth shouldBe null
+    }
+
     private fun parse(
         albumPrimaryImageTag: String? = "tag-1",
-        dateCreated: String? = "2024-03-01T12:34:56.0000000Z"
+        dateCreated: String? = "2024-03-01T12:34:56.0000000Z",
+        mediaStreams: String? = null
     ): Item {
         val fields =
             listOfNotNull(
@@ -105,7 +124,8 @@ class ItemToSongTest {
                 "\"ProductionYear\": 2024",
                 "\"Genres\": [\"Rock\"]",
                 albumPrimaryImageTag?.let { tag -> "\"AlbumPrimaryImageTag\": \"$tag\"" },
-                dateCreated?.let { date -> "\"DateCreated\": \"$date\"" }
+                dateCreated?.let { date -> "\"DateCreated\": \"$date\"" },
+                mediaStreams?.let { streams -> "\"MediaStreams\": $streams" }
             )
         return S2Json.decodeFromString<Item>(fields.joinToString(separator = ",", prefix = "{", postfix = "}"))
     }

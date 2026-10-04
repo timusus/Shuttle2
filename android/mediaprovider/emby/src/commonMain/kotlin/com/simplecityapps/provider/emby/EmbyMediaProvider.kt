@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerStrings
@@ -191,7 +192,7 @@ internal fun Item.toSong(): Song = Song(
     lyrics = null,
     grouping = null,
     bitRate = null,
-    bitDepth = null,
+    bitDepth = mediaStreams.firstOrNull { it.type == "Audio" }?.let { losslessBitDepth(it.codec, it.bitDepth) },
     sampleRate = null,
     channelCount = null,
     // Artwork for songs and albums is the album's primary image

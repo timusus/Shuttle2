@@ -84,7 +84,7 @@ class EmbyMediaProviderTest {
 
         val request = server.requestsTo(ITEMS).single()
         request.url.parameters["Recursive"] shouldBe "true"
-        request.url.parameters["Fields"] shouldBe "Genres,ProductionYear,DateCreated,ProviderIds"
+        request.url.parameters["Fields"] shouldBe "Genres,ProductionYear,DateCreated,ProviderIds,MediaStreams"
         request.url.parameters["StartIndex"] shouldBe "0"
         request.url.parameters["Limit"] shouldBe "500"
         request.headers["X-Emby-Token"] shouldBe "token-1"
