@@ -159,8 +159,10 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         trackTotal = trackTag?.substringAfter('/', "")?.toIntOrNull(),
         disc = discTag?.substringBefore('/')?.toIntOrNull(),
         discTotal = discTag?.substringAfter('/', "")?.toIntOrNull(),
+        // The original release's year beats a reissue's date; TagLib maps ID3's TDOR/TORY to ORIGINALDATE.
         year =
-            (first(TagLibProperty.Date) ?: first(TagLibProperty.OriginalDate))?.parseDate()
+            first(TagLibProperty.OriginalDate)?.parseDate()
+                ?: first(TagLibProperty.Date)?.parseDate()
                 ?: first(TagLibProperty.Year)?.parseDate(),
         genres =
             get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
@@ -232,13 +234,6 @@ private const val MATROSKA_ALBUM_ARTIST = "ALBUM_ARTIST"
 
 private fun String.parseReplayGain(): Double? = replace(oldValue = "db", newValue = "", ignoreCase = true).toDoubleOrNull()
 
-fun String.parseDate(): String? {
-    if (length < 4) {
-        return null
-    } else if (length > 4) {
-        return substring(0, 4)
-    }
-    return this
-}
+fun String.parseDate(): String? = take(4).takeIf { it.length == 4 && it.all { char -> char in '0'..'9' } }
 
 fun <V> Map<String, V>.getCaseInsensitive(key: String): V? = get(key) ?: get(key.lowercase(Locale.US))

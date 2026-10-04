@@ -234,6 +234,10 @@
   ],
   "fixes": [
     {
+      "text": "Albums that were remastered or reissued now show the year they were first released, and a year tag that isn't a number no longer hides a valid one",
+      "commits": []
+    },
+    {
       "text": "Songs you've downloaded from Jellyfin, Emby or Plex now play from your device, so they work offline instead of trying to stream",
       "commits": []
     },

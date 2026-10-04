@@ -175,5 +175,14 @@ class FileTagsTest {
         "2010-00-00".parseDate() shouldBe "2010"
         "2020-04-03T07:00:00Z".parseDate() shouldBe "2020"
         "99".parseDate() shouldBe null
+        "unknown".parseDate() shouldBe null
+    }
+
+    @Test
+    fun `the original release year beats a reissue's date`() {
+        mapOf("DATE" to listOf("2017"), "ORIGINALDATE" to listOf("2002-01-28")).toFileTags().year shouldBe "2002"
+        mapOf("DATE" to listOf("2017"), "YEAR" to listOf("2002")).toFileTags().year shouldBe "2017"
+        mapOf("DATE" to listOf("unknown"), "YEAR" to listOf("2002")).toFileTags().year shouldBe "2002"
+        mapOf("ORIGINALDATE" to listOf("n/a"), "DATE" to listOf("2017")).toFileTags().year shouldBe "2017"
     }
 }
