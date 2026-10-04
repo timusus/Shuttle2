@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
+private val logger = Logger.tagged("FavouriteSender")
+
 /**
  * Drains the `pending_favourites` outbox (#497) to [writer]: every favourite or unfavourite made on a remote-provider
  * song reaches its server, so a heart isn't local-only.
@@ -31,8 +33,6 @@ import kotlinx.coroutines.withTimeoutOrNull
  * One collector handles both the outbox and the retry timer, so drains never overlap. The retry delay uses [scope]'s
  * dispatcher, so it runs on virtual time in tests.
  */
-private val logger = Logger.tagged("FavouriteSender")
-
 class FavouriteSender(
     private val dao: SongDataDao,
     private val writer: FavouriteWriter,
@@ -63,8 +63,10 @@ class FavouriteSender(
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
-                        // Whatever went wrong (a database error, say), the next trigger or retry tries again.
+                        // Whatever went wrong (a database error, say), a retry tries again, so the outbox isn't left
+                        // waiting for the next toggle.
                         logger.warn(e) { "Draining the favourites outbox failed" }
+                        if (retryJob?.isActive != true) scheduleRetry(retries)
                     }
                 }
         }

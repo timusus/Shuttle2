@@ -119,6 +119,47 @@ class FavouriteSenderRetryTest {
         database.close()
     }
 
+    @Test
+    fun `a drain that throws is retried after the backoff without waiting for a new toggle`() = runTest {
+        val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
+            .allowMainThreadQueries()
+            .setQueryCoroutineContext(StandardTestDispatcher(testScheduler))
+            .build()
+        val dao = database.songDataDao()
+        val writer = object : FavouriteWriter {
+            val calls = mutableListOf<String>()
+            var explodeInHandles = true
+
+            override fun handles(song: Song): Boolean {
+                if (explodeInHandles) error("boom")
+                return true
+            }
+
+            override suspend fun setFavourite(
+                song: Song,
+                favourite: Boolean
+            ): Boolean {
+                calls += "${song.externalId} $favourite"
+                return true
+            }
+        }
+        dao.insert(listOf(songData("a")))
+        val a = dao.get().single().toSong()
+        dao.setFavourite(listOf(a), true)
+
+        FavouriteSender(dao, writer, backgroundScope).start()
+        runCurrent()
+        writer.calls shouldBe emptyList()
+
+        writer.explodeInHandles = false
+        advanceTimeBy(FavouriteSender.INITIAL_BACKOFF_MS + 1)
+        runCurrent()
+
+        writer.calls shouldBe listOf("a true")
+        dao.getPendingFavourites() shouldBe emptyList()
+        database.close()
+    }
+
     private fun songData(externalId: String) = SongData(
         name = "Song $externalId",
         track = 1,
