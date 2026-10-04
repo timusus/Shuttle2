@@ -169,7 +169,21 @@ class PlaybackReportPlannerTest {
         planner.onTrackEnded(remoteSong)
 
         planner.onProgress(positionMs = 200_000, nowMs = 200_000).shouldBeEmpty()
-        planner.onProgress(positionMs = 100, nowMs = 200_100) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 100))
+        // The reset tick could still be the next item's, so a repeat starts once the position advances.
+        planner.onProgress(positionMs = 100, nowMs = 200_100).shouldBeEmpty()
+        planner.onProgress(positionMs = 1_100, nowMs = 201_100) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 1_100))
+    }
+
+    @Test
+    fun `auto-advance with the next item's progress before its item change starts the ended song only once the next one`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong) shouldBe listOf(Call.Stop(firstSession, remoteSong.duration, playedThrough = true))
+
+        planner.onProgress(positionMs = 0, nowMs = 200_000).shouldBeEmpty()
+        planner.onCurrentItemChanged(uid = 11, song = otherRemoteSong, nowMs = 200_010) shouldBe
+            listOf(Call.Start(PlaybackSession(otherRemoteSong, "session-2"), 0))
+        planner.onProgress(positionMs = 500, nowMs = 200_510).shouldBeEmpty()
     }
 
     @Test

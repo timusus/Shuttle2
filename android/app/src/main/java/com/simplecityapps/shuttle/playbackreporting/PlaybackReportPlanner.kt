@@ -63,6 +63,10 @@ class PlaybackReportPlanner(
     // on repeat. A new play starts only once its position goes back, not on a late tick of the old one.
     private var playedThrough = false
 
+    // The tick after a played-through track's position went back is either the next item's start, whose
+    // item change is still to come, or a repeat. Only a further advance confirms a repeat.
+    private var repeatTickMs: Int? = null
+
     fun onEnabledChanged(
         enabled: Boolean,
         nowMs: Long
@@ -93,6 +97,7 @@ class PlaybackReportPlanner(
         positionMs = 0
         positionAtMs = nowMs
         playedThrough = false
+        repeatTickMs = null
         startIfPlaying(nowMs)?.let { calls += it }
         return calls
     }
@@ -124,7 +129,17 @@ class PlaybackReportPlanner(
 
         val reporting = reporting
         if (reporting == null) {
-            if (playedThrough && !movedBack) return emptyList()
+            if (playedThrough) {
+                val resetMs = repeatTickMs
+                if (resetMs == null) {
+                    if (movedBack) repeatTickMs = positionMs
+                    return emptyList()
+                }
+                if (positionMs <= resetMs) {
+                    repeatTickMs = positionMs
+                    return emptyList()
+                }
+            }
             return listOfNotNull(startIfPlaying(nowMs))
         }
         val seeked = abs(positionMs - expectedMs) > SEEK_THRESHOLD_MS
@@ -136,6 +151,7 @@ class PlaybackReportPlanner(
         val reporting = reporting?.takeIf { it.session.song.id == song.id } ?: return emptyList()
         this.reporting = null
         playedThrough = true
+        repeatTickMs = null
         return listOf(Call.Stop(reporting.session, song.duration, playedThrough = true))
     }
 
@@ -143,6 +159,7 @@ class PlaybackReportPlanner(
         val song = song ?: return null
         if (!enabled || state != State.Playing || !isReportable(song)) return null
         playedThrough = false
+        repeatTickMs = null
         val session = PlaybackSession(song, newSessionId())
         reporting = Reporting(session, paused = false, lastReportAtMs = nowMs)
         return Call.Start(session, positionMs)
