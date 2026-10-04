@@ -281,7 +281,7 @@ class MediaStoreMediaProvider(
 
                     songs.add(
                         MediaStoreSong(
-                            playOrder = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Playlists.Members.PLAY_ORDER)),
+                            playOrder = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.PLAY_ORDER)),
                             title = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
                             album = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
                             artist = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),

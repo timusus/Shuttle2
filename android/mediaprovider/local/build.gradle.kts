@@ -6,6 +6,9 @@ import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtensi
 
 plugins {
     id("s2.kmp-library")
+    // Android lint on the main sources (NewApi, Range, ...); the KMP Android plugin registers no lint
+    // tasks of its own (#804).
+    id("com.android.lint")
     alias(libs.plugins.ksp)
     alias(libs.plugins.metro)
     alias(libs.plugins.androidx.room)

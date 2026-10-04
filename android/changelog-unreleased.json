@@ -104,7 +104,7 @@
   ],
   "improvements": [
     {
-      "text": "Lossless songs from Jellyfin and Emby now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
+      "text": "Lossless songs from Jellyfin, Emby and local files on Android 13 and newer now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
       "commits": []
     },
     {
