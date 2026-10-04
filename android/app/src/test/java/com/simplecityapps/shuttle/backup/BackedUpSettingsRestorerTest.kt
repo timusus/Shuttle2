@@ -11,8 +11,8 @@ import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.ThemeMode
-import com.simplecityapps.shuttle.ui.screens.settings.ShareDebugLogsResult
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
+import com.simplecityapps.shuttle.ui.screens.settings.ShareDebugLogsResult
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackup
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain

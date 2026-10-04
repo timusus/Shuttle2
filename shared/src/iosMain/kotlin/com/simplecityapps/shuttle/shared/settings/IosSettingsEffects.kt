@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.shared.settings
 
 import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.ui.screens.settings.ShareDebugLogsResult
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
+import com.simplecityapps.shuttle.ui.screens.settings.ShareDebugLogsResult
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
