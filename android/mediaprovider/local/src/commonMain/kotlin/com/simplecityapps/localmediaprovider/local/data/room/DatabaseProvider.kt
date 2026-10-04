@@ -14,7 +14,7 @@ private const val OLDEST_MIGRATABLE_VERSION = 23
 /**
  * Opens [MediaDatabase] from a platform's [builder] (see `databaseBuilder`): every migration registered. A missing
  * migration fails loudly rather than wiping play history, favourites and playlists; only databases older than
- * [OLDEST_MIGRATABLE_VERSION], which have no migration path, are recreated empty.
+ * [OLDEST_MIGRATABLE_VERSION], which have no migration path, and downgrades are recreated empty.
  */
 class DatabaseProvider(
     private val builder: RoomDatabase.Builder<MediaDatabase>
@@ -23,6 +23,8 @@ class DatabaseProvider(
         builder
             .addMigrations(*ALL_MIGRATIONS)
             .fallbackToDestructiveMigrationFrom(false, *(1 until OLDEST_MIGRATABLE_VERSION).toList().toIntArray())
+            // A newer on-disk database than the app knows (e.g. sideloaded older APK) is recreated, not crash-looped.
+            .fallbackToDestructiveMigrationOnDowngrade(false)
             .trackingIdentityChanges()
             .build()
     }

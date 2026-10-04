@@ -39,9 +39,9 @@ in `.../data/room/migrations/`), schemas exported to `android/mediaprovider/loca
   set via `.setDriver(BundledSQLiteDriver())` (androidMain can also opt into the bundled driver, or keep
   the platform default — decide during the worker run based on FTS/extension needs; none of the 6 entities
   use FTS today so bundled driver on both platforms is the simpler option, one code path instead of two).
-- **`DatabaseProvider.kt`** (historical: once gated on `!BuildConfig.DEBUG`) was
-  Android-`BuildConfig`-specific; replace `BuildConfig.DEBUG` with an injected `isDebug: Boolean` (or a
-  common `BuildKonfig`/expect val) so the same builder code compiles in commonMain.
+- **`DatabaseProvider.kt`**: registers every migration (23→53); a missing migration fails loudly
+  on open instead of wiping play history, favourites and playlists. Destructive recreation only for
+  versions 1..22, which predate the migration chain, and on downgrade.
 - **KSP for two targets**: `ksp libs.androidx.room.compiler` today is single-target KSP (JVM). Under
   `s2.kmp-library`, KSP must run per Kotlin target (`kotlin { sourceSets { commonMain { ... } } }` +
   `dependencies { add("kspCommonMainMetadata", ...); add("kspAndroid", ...); add("kspIosSimulatorArm64",
