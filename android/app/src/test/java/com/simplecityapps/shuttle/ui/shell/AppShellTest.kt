@@ -974,6 +974,45 @@ class AppShellTest {
     }
 
     @Test
+    fun `while the nav bar slides back the snackbar rides the mini player up with it`() {
+        robot.setContent(systemBars = PhoneSystemBars)
+        robot.openSoundSettings()
+        robot.showSnackbar("Saved")
+        robot.settle()
+        val gap = robot.miniPlayerTop() - robot.snackbarBottom("Saved")
+        robot.pressBackHoldingTheSlide()
+
+        val bottoms = (1..6).map {
+            robot.advanceFrames(2)
+            (robot.miniPlayerTop() - robot.snackbarBottom("Saved")).value shouldBe (gap.value plusOrMinus 1f)
+            robot.snackbarBottom("Saved")
+        }
+        bottoms.distinct().size shouldBeGreaterThan 2
+        robot.settle()
+        (robot.miniPlayerTop() - robot.snackbarBottom("Saved")).value shouldBe (gap.value plusOrMinus 1f)
+    }
+
+    @Test
+    fun `at Medium width the rail's own content clears a cutout at its start while its fill runs under it`() {
+        robot.setContent(window = MediumWindow, systemBars = SystemBars(statusBarDp = 0, navigationBarDp = 0, leftCutoutDp = 48))
+
+        robot.railLeft().value shouldBe (0f plusOrMinus 1f)
+        robot.railContentLeft() shouldBeGreaterThanOrEqualTo 48.dp
+        robot.miniPlayerLeft() shouldBeGreaterThanOrEqualTo robot.railRight()
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h900dp")
+    fun `at Pane width the docked mini player sits beside a rail that clears the cutout, and opens the pane`() {
+        robot.setContent(window = PaneWindow, systemBars = SystemBars(statusBarDp = 0, navigationBarDp = 0, leftCutoutDp = 48))
+
+        robot.railContentLeft() shouldBeGreaterThanOrEqualTo 48.dp
+        robot.miniPlayerLeft() shouldBeGreaterThanOrEqualTo robot.railRight()
+        robot.tapMiniPlayer()
+        robot.assertPaneShown()
+    }
+
+    @Test
     fun `below 600 dp the mini player clears a side cutout while its sheet runs under it`() {
         robot.setContent(systemBars = SystemBars(leftCutoutDp = 48))
 

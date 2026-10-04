@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -39,6 +40,7 @@ import androidx.compose.material3.rememberWideNavigationRailState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
@@ -61,6 +63,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -159,8 +162,10 @@ fun AppShell(
     val selectedTab = navigator.selectedTab.takeIf { navigator.showsNavigation }
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Box(Modifier.fillMaxSize()) {
+            // The compact shell reports how far up the docked chrome has slid this frame, for the snackbar to ride.
+            val compactDockedHeight = remember { mutableIntStateOf(0) }
             when (layout.playerMode) {
-                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, selectedTab, onSelectTab, destinations)
+                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, selectedTab, onSelectTab, destinations, compactDockedHeight)
                 PlayerMode.Sheet -> RailSheetShell(player, playerContent, layout, selectedTab, onSelectTab, destinations)
                 PlayerMode.Pane -> PaneShell(player, playerContent, layout, selectedTab, onSelectTab, destinations)
             }
@@ -168,7 +173,13 @@ fun AppShell(
                 snackbarHostState,
                 Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = rememberSnackbarBottomPadding(player)),
+                    .then(
+                        if (layout.playerMode == PlayerMode.CompactSheet) {
+                            Modifier.offset { IntOffset(0, -compactDockedHeight.intValue) }
+                        } else {
+                            Modifier.padding(bottom = rememberSnackbarBottomPadding(player))
+                        },
+                    ),
             )
         }
     }
@@ -182,7 +193,10 @@ private class PlayerContent(
     val openRoute: (NavKey) -> Unit,
 )
 
-/** Snackbars sit above whatever is docked at the bottom: the nav bar and mini player, or the pane shell's docked mini player. */
+/**
+ * Snackbars sit above whatever is docked at the bottom: the pane shell's docked mini player, or the rail shell's mini player.
+ * The compact shell's nav bar and mini player slide, so it reports their height each frame instead.
+ */
 @Composable
 private fun rememberSnackbarBottomPadding(player: PlayerSheetState): Dp = if (player.mode == PlayerMode.Pane) {
     val navigationBars = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
@@ -237,7 +251,8 @@ private fun rememberContentBottomPadding(player: PlayerSheetState) = with(LocalD
  * Below 600 dp: bottom bar, one pane, and the player sheet, which opens to full screen as the bar slides away under it.
  * With no [selectedTab] the bar slides away and the mini player follows its top edge down to the system navigation bar,
  * where it stops. The sheet's anchors take the new dock at once, so only the drawing moves; the destination's bottom
- * padding follows the same slide, so its bottom edge stays on the chrome's top edge.
+ * padding follows the same slide, so its bottom edge stays on the chrome's top edge. That height is also written to
+ * [dockedHeight] each frame, which the snackbar rides.
  */
 @Composable
 private fun CompactShell(
@@ -247,6 +262,7 @@ private fun CompactShell(
     selectedTab: ShellTab?,
     onSelectTab: (ShellTab) -> Unit,
     destinations: @Composable () -> Unit,
+    dockedHeight: MutableIntState,
 ) {
     val density = LocalDensity.current
     val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
@@ -293,6 +309,7 @@ private fun CompactShell(
         val fill = Constraints.fixed(width, height)
         // The page ends where the docked chrome starts this frame: the slide that moves the bar and mini player pads it.
         val bottomPadding = player.geometry.contentBottomPadding(reveal, dock = dock(navigationShown.value)).roundToInt()
+        dockedHeight.intValue = bottomPadding
         val destinationPlaceables = destination.map { it.measure(Constraints.fixed(width, (height - bottomPadding).coerceAtLeast(0))) }
         val scrimPlaceables = scrim.map { it.measure(fill) }
         val sheetPlaceables = sheet.map { it.measure(fill) }

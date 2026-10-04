@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell
 
 import androidx.activity.ComponentActivity
 import androidx.activity.ComponentDialog
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
@@ -89,11 +90,13 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
 import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
 import com.simplecityapps.shuttle.ui.shell.player.description
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import org.robolectric.shadows.ShadowDialog
 
 /** A queue of [titles], each on "Phase Garden" by "Juniper Static", three minutes long, playing the one at [playing]. */
@@ -337,6 +340,7 @@ class AppShellRobot(
     val calls: List<String> get() = actions.calls
 
     private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
+    private var snackbarHostState: SnackbarHostState? = null
 
     /** Each visibility Home has reported, in order. */
     val homeVisibility = mutableListOf<Boolean>()
@@ -364,7 +368,7 @@ class AppShellRobot(
             val currentWindow by windowState
             val currentProgress by progressState
             val currentEvents by actions.events.flow.collectAsState()
-            val snackbarHostState = remember { SnackbarHostState() }
+            val snackbarHostState = remember { SnackbarHostState().also { this.snackbarHostState = it } }
             val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
             WithSystemBars(systemBars) {
                 S2Theme {
@@ -780,6 +784,22 @@ class AppShellRobot(
     fun railRight(): Dp = rule.onAllNodesWithTag(ShellTestTags.NavigationRail).fetchSemanticsNodes().firstOrNull()?.let { node ->
         with(rule.density) { node.boundsInRoot.right.toDp() }
     } ?: 0.dp
+
+    /** Shows [message] in the shell's snackbar, until it is dismissed. */
+    fun showSnackbar(message: String) {
+        val host = checkNotNull(snackbarHostState) { "setContent first" }
+        rule.runOnUiThread { MainScope().launch { host.showSnackbar(message, duration = SnackbarDuration.Indefinite) } }
+        rule.waitForIdle()
+    }
+
+    /** The bottom edge of the snackbar showing [message]. */
+    fun snackbarBottom(message: String): Dp = rule.onNodeWithText(message).getBoundsInRoot().bottom
+
+    /** The rail's navigation toggle's left edge, where its content starts: the first thing in the rail the cutout could cover. */
+    fun railContentLeft(): Dp = rule.onNodeWithContentDescription("Expand navigation").getBoundsInRoot().left
+
+    /** The rail's own left edge, where its fill starts. */
+    fun railLeft(): Dp = rule.onNodeWithTag(ShellTestTags.NavigationRail).getBoundsInRoot().left
 
     /** The player sheet's left edge, where its background starts. */
     fun sheetLeft(): Dp = rule.onNodeWithTag(PlayerTestTags.Sheet).getBoundsInRoot().left

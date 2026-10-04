@@ -1,6 +1,12 @@
 package com.simplecityapps.shuttle.designsystem.component
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
 import androidx.compose.material.icons.outlined.Home
@@ -75,12 +81,14 @@ fun S2NavigationRail(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
     state: WideNavigationRailState = rememberWideNavigationRailState(),
+    windowInsets: WindowInsets = railWindowInsets(),
 ) {
     val scope = rememberCoroutineScope()
     val expanded = state.targetValue == WideNavigationRailValue.Expanded
     WideNavigationRail(
         modifier = modifier,
         state = state,
+        windowInsets = windowInsets,
         header = {
             S2IconButton(
                 icon = if (expanded) Icons.AutoMirrored.Rounded.MenuOpen else Icons.Rounded.Menu,
@@ -102,6 +110,10 @@ fun S2NavigationRail(
         }
     }
 }
+
+/** The system bars at the rail's top, bottom and start edges, and a display cutout at its start: the rail's fill runs under it, its items clear it. */
+@Composable
+private fun railWindowInsets(): WindowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Vertical + WindowInsetsSides.Start)
 
 @Composable
 private fun NavIcon(item: S2NavItem, selected: Boolean) {
