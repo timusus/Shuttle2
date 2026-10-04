@@ -18,7 +18,7 @@ struct SettingsViewTests {
     // MARK: Section mapping
 
     @Test func mapsEachScreenToItsTitledSectionsInCatalogOrder() {
-        let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, events: []))
+        let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, events: []))
         #expect(sections.map(\.title) == ["Playback & sound", nil, "Replay Gain", "Sources", "Streaming quality", "Library", "Artwork", "Appearance", "Privacy"])
     }
 
@@ -27,12 +27,12 @@ struct SettingsViewTests {
     @Test func theEqualizerAndReplayGainWithItsPreampAreSeparateSections() throws {
         let preampKey = key(catalog.playbackAndSound, 3)
         #expect(preampKey == SettingsSection.replayGainPreampKey)
-        let state = SettingsUiState(values: [preampKey: KotlinFloat(float: -2.5)], lastScanDate: nil, events: [])
+        let state = SettingsUiState(values: [preampKey: KotlinFloat(float: -2.5)], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, events: [])
         let sections = SettingsSection.sections(catalog: catalog, state: state)
         let equalizer = try #require(sections.dropFirst().first)
         let replayGain = try #require(sections.dropFirst(2).first)
 
-        #expect(equalizer.rows == [.link(id: "settings.equalizer", title: "Equalizer", systemImage: "slider.vertical.3", route: .equalizer)])
+        #expect(equalizer.rows == [.link(id: "settings.equalizer", title: "Equalizer", systemImage: "slider.vertical.3", route: .equalizer, summary: "Off")])
         #expect(equalizer.footer == nil)
         #expect(replayGain.title == "Replay Gain")
         #expect(replayGain.rows.first?.id == key(catalog.playbackAndSound, 2))
@@ -46,14 +46,14 @@ struct SettingsViewTests {
     }
 
     @Test func theSourcesSectionLeadsWithTheRowThatPushesSources() {
-        let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, events: []))
+        let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, events: []))
         let sources = sections.first { $0.title == "Sources" }
         #expect(sources?.rows == [.link(id: "settings.sources", title: "Sources", systemImage: "server.rack", route: .sources)])
     }
 
     @Test func mapsSwitchesChoicesAndActionsWithTheirStoredValues() {
         let shuffleKey = key(catalog.playbackAndSound, 0)
-        let state = SettingsUiState(values: [shuffleKey: KotlinBoolean(bool: true)], lastScanDate: nil, events: [])
+        let state = SettingsUiState(values: [shuffleKey: KotlinBoolean(bool: true)], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, events: [])
         let rows = SettingsSection.sections(catalog: catalog, state: state).flatMap(\.rows)
 
         #expect(rows.contains(.toggle(
@@ -84,7 +84,7 @@ struct SettingsViewTests {
     @Test func privacyHasTheCrashReportingAndAnalyticsSwitches() throws {
         let crashKey = key(catalog.privacy, 0)
         let analyticsKey = key(catalog.privacy, 1)
-        let state = SettingsUiState(values: [crashKey: KotlinBoolean(bool: true), analyticsKey: KotlinBoolean(bool: false)], lastScanDate: nil, events: [])
+        let state = SettingsUiState(values: [crashKey: KotlinBoolean(bool: true), analyticsKey: KotlinBoolean(bool: false)], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, events: [])
         let privacy = try #require(SettingsSection.sections(catalog: catalog, state: state).first { $0.title == "Privacy" })
 
         #expect(privacy.rows == [
@@ -110,7 +110,7 @@ struct SettingsViewTests {
     @Test func aStartedRescanShowsOnItsRow() {
         let rows = SettingsSection.sections(
             catalog: catalog,
-            state: SettingsUiState(values: [:], lastScanDate: nil, events: []),
+            state: SettingsUiState(values: [:], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, events: []),
             rescanStarted: true
         ).flatMap(\.rows)
         guard case .action(_, _, let summary, _, _)? = rows.first(where: { $0.id == "pref_media_rescan" }) else {

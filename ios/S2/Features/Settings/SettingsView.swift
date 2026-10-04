@@ -84,7 +84,7 @@ struct SettingsSection: Equatable, Identifiable {
 /// One row, in plain values: what it draws and the key its callback carries back.
 enum SettingsRow: Equatable, Identifiable {
     /// Pushes another screen: Sources, from the Sources section, and the Equalizer.
-    case link(id: String, title: String, systemImage: String, route: Route)
+    case link(id: String, title: String, systemImage: String, route: Route, summary: String? = nil)
     case toggle(key: String, title: String, summary: String?, isOn: Bool, isEnabled: Bool)
     case choice(key: String, title: String, options: [String], selected: Int, isEnabled: Bool)
     case action(key: String, title: String, summary: String?, confirmation: Confirmation?, isEnabled: Bool)
@@ -99,7 +99,7 @@ enum SettingsRow: Equatable, Identifiable {
 
     var id: String {
         switch self {
-        case .link(let id, _, _, _): id
+        case .link(let id, _, _, _, _): id
         case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _), .action(let key, _, _, _, _),
              .slider(let key, _, _, _, _, _): key
         }
@@ -190,7 +190,7 @@ extension SettingsSection {
                 isEnabled: enabled
             )
         case let link as SettingItemNavigate where link.target == .equalizer:
-            return .link(id: "settings.equalizer", title: title, systemImage: "slider.vertical.3", route: .equalizer)
+            return .link(id: "settings.equalizer", title: title, systemImage: "slider.vertical.3", route: .equalizer, summary: state.equalizerSummary.localized())
         default:
             return nil
         }
@@ -294,9 +294,9 @@ struct SettingsContent: View {
     private func rowView(_ row: SettingsRow) -> some View {
         let icon = SettingsIcon(id: row.id)
         switch row {
-        case .link(let id, let title, let systemImage, let route):
+        case .link(let id, let title, let systemImage, let route, let summary):
             NavigationLink(value: route) {
-                Label { Text(title) } icon: { IconSquare(systemImage: systemImage, style: .filled(icon.color)) }
+                Label { RowLabel(title: title, summary: summary) } icon: { IconSquare(systemImage: systemImage, style: .filled(icon.color)) }
             }
             .accessibilityIdentifier(id)
         case .toggle(let key, let title, let summary, let isOn, let isEnabled):
