@@ -3,7 +3,8 @@
 # once under machine-lock, push, close issues and clean up the worktrees. Meant to run as
 #   support/scripts/longjob.sh start land -- support/scripts/land.sh <branch>... [options]
 # from the orchestrator's primary checkout (not a feature worktree), so `git push origin
-# HEAD:main` pushes the right ref.
+# HEAD:main` pushes the right ref. The one exception (#712): a batch of exactly the current
+# checkout's own branch, ahead of origin/main, verifies and pushes in place.
 #
 #   support/scripts/land.sh <branch>... [--close N|BRANCH:N ...] [--no-push] [--dry-run]
 #
@@ -249,26 +250,38 @@ if ! git fetch -q origin main >> "$LOG" 2>&1; then
 fi
 
 CUR_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+ORIGIN_MAIN_SHA=$(git rev-parse origin/main)
 
-# Data-loss guard: the reset below discards anything on HEAD that origin/main lacks, and a
-# branch being landed must not be the checkout that gets reset.
-UNPUSHED=$(git rev-list origin/main..HEAD | wc -l | tr -d ' ')
-if [ "$UNPUSHED" -gt 0 ]; then
-  say "land.sh: refusing to reset $CUR_BRANCH: HEAD has $UNPUSHED commit(s) not on origin/main (land or push them first)"
-  exit 2
-fi
-for b in "${BRANCHES[@]}"; do
-  if [ "$b" = "$CUR_BRANCH" ]; then
-    say "land.sh: refusing to land $b from its own checkout; run from the primary checkout"
+# Landing the session's own branch in place (#712): when the batch is exactly the current checkout's
+# branch, ahead of origin/main with origin/main as its ancestor (a fast-forward), the picks are
+# already on HEAD -- verify and push in place instead of refusing, and never reset or clean up the
+# session's own worktree. A drop marks the branch "broke verify" but leaves its commits alone.
+IN_PLACE=0
+if [ "${#BRANCHES[@]}" -eq 1 ] && [ "${BRANCHES[0]}" = "$CUR_BRANCH" ] \
+   && [ "$(git merge-base "$ORIGIN_MAIN_SHA" HEAD)" = "$ORIGIN_MAIN_SHA" ] \
+   && [ "$(git rev-parse HEAD)" != "$ORIGIN_MAIN_SHA" ]; then
+  IN_PLACE=1
+  say "land.sh: landing $CUR_BRANCH in place (it is ahead of origin/main)"
+else
+  # Data-loss guard: the reset below discards anything on HEAD that origin/main lacks, and a
+  # branch being landed must not be the checkout that gets reset.
+  UNPUSHED=$(git rev-list origin/main..HEAD | wc -l | tr -d ' ')
+  if [ "$UNPUSHED" -gt 0 ]; then
+    say "land.sh: refusing to reset $CUR_BRANCH: HEAD has $UNPUSHED commit(s) not on origin/main (land or push them first)"
     exit 2
   fi
-done
+  for b in "${BRANCHES[@]}"; do
+    if [ "$b" = "$CUR_BRANCH" ]; then
+      say "land.sh: refusing to land $b from its own checkout; run from the primary checkout (or land it alone)"
+      exit 2
+    fi
+  done
 
-ORIGIN_MAIN_SHA=$(git rev-parse origin/main)
-log "hard-resetting $CUR_BRANCH ($(git rev-parse HEAD)) onto origin/main ($ORIGIN_MAIN_SHA)"
-if ! git reset --hard origin/main >> "$LOG" 2>&1; then
-  say "land.sh: git reset --hard origin/main failed"
-  exit 1
+  log "hard-resetting $CUR_BRANCH ($(git rev-parse HEAD)) onto origin/main ($ORIGIN_MAIN_SHA)"
+  if ! git reset --hard origin/main >> "$LOG" 2>&1; then
+    say "land.sh: git reset --hard origin/main failed"
+    exit 1
+  fi
 fi
 
 # --- environment guard (#699): the Gradle verify needs the gitignored local.properties (sdk.dir) ---
@@ -310,9 +323,16 @@ pick_branch() {  # $1 = index into BRANCHES
   fi
 }
 
-for i in "${!BRANCHES[@]}"; do
-  pick_branch "$i"
-done
+if [ "$IN_PLACE" = 1 ]; then
+  # The branch's commits are already HEAD; nothing to pick. START_SHA is origin/main so a
+  # verify-driven drop means "keep the commits, don't push" (see drop_branch).
+  START_SHA[0]=$ORIGIN_MAIN_SHA
+  STATUS[0]=landed; REASON[0]=""
+else
+  for i in "${!BRANCHES[@]}"; do
+    pick_branch "$i"
+  done
+fi
 
 landed_indices() {
   local i
@@ -323,7 +343,9 @@ landed_indices() {
 
 drop_branch() {  # $1 = index; resets HEAD back to before this branch's picks
   local i=$1
-  git reset --hard "${START_SHA[$i]}" >> "$LOG" 2>&1
+  if [ "$IN_PLACE" != 1 ]; then
+    git reset --hard "${START_SHA[$i]}" >> "$LOG" 2>&1
+  fi
   STATUS[$i]=dropped; REASON[i]="broke verify"
   log "${BRANCHES[$i]}: dropped to isolate a verify failure"
 }
@@ -466,6 +488,10 @@ done
 
 for i in "${LANDED_IDX[@]}"; do
   b=${BRANCHES[$i]}
+  if [ "$IN_PLACE" = 1 ]; then
+    say "land.sh: $b landed from its own checkout; leaving its worktree to the session"
+    continue
+  fi
   wt_path=$(git worktree list --porcelain | awk -v b="$b" '
     /^worktree /{p=substr($0,10)}
     /^branch /{br=substr($0,8); sub("refs/heads/","",br); if (br==b) print p}')
