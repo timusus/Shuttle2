@@ -509,12 +509,17 @@ struct ScanSection: View {
 
 extension SourcesState {
     /// On This iPhone's footer: how many songs came from this device and when it last updated ("3 songs · Updated 5
-    /// minutes ago", as Android's status line), or how to add some.
+    /// minutes ago", as Android's status line), or, while there are none (or none counted yet), how to add some and
+    /// when it last updated.
     func deviceFooter(now: Date = Date()) -> String {
         guard thisDevice else { return "Play music stored on this iPhone, copied in through the Files app or Finder." }
+        let hint = "Copy music into Shuttle Music in the Files app or Finder, or add a folder from Files."
         let songs = deviceSongs.flatMap { $0 > 0 ? "\($0.formatted()) \($0 == 1 ? "song" : "songs")" : nil }
-        let parts = [songs, deviceUpdated.map { updatedText($0, now: now) }].compactMap { $0 }
-        return parts.isEmpty ? "Copy music into Shuttle Music in the Files app or Finder, or add a folder from Files." : parts.joined(separator: " · ")
+        let updated = deviceUpdated.map { updatedText($0, now: now) }
+        if let songs {
+            return [songs, updated].compactMap { $0 }.joined(separator: " · ")
+        }
+        return updated.map { "\(hint) · \($0)" } ?? hint
     }
 
     /// What Scan Now looks through.

@@ -235,9 +235,11 @@ struct SourcesViewTests {
 
     @Test func deviceFooterJoinsTheSongCountAndUpdatedTime() {
         let updated = Self.now.addingTimeInterval(-300)
+        let hint = "Copy music into Shuttle Music in the Files app or Finder, or add a folder from Files."
         #expect(SourcesState(thisDevice: true, deviceSongs: 3, servers: [], deviceUpdated: updated).deviceFooter(now: Self.now) == "3 songs · Updated 5 minutes ago")
         #expect(SourcesState(thisDevice: true, deviceSongs: 1, servers: []).deviceFooter(now: Self.now) == "1 song")
-        #expect(SourcesState(thisDevice: true, deviceSongs: 0, servers: [], deviceUpdated: updated).deviceFooter(now: Self.now) == "Updated 5 minutes ago")
+        #expect(SourcesState(thisDevice: true, deviceSongs: 0, servers: [], deviceUpdated: updated).deviceFooter(now: Self.now) == "\(hint) · Updated 5 minutes ago")
+        #expect(SourcesState(thisDevice: true, servers: [], deviceUpdated: updated).deviceFooter(now: Self.now) == "\(hint) · Updated 5 minutes ago")
     }
 
     @Test func mapsEachServersListingShortfall() {
