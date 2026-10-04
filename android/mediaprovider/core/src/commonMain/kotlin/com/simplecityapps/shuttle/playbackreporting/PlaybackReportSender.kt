@@ -43,6 +43,8 @@ class PlaybackReportSender(
     // Set by a failed call, so the next successful one knows the server just became reachable again.
     private var failedSinceReplay = false
 
+    private val logger = Logger.tagged("PlaybackReportSender")
+
     init {
         scope.launch {
             for (item in work) {
@@ -103,8 +105,6 @@ class PlaybackReportSender(
         logger.warn(e) { "Playback report failed" }
         false
     }
-
-    private val logger = Logger.tagged("PlaybackReportSender")
 
     companion object {
         const val TIMEOUT_MS = 5_000L

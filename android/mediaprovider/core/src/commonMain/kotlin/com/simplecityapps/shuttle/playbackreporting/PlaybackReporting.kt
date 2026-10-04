@@ -32,8 +32,13 @@ constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) {
     private val clock = TimeSource.Monotonic.markNow()
+    private var started = false
 
+    /** Starts reporting once: a second call is a no-op, rather than re-sending the current state as a new play. */
     fun start() {
+        if (started) return
+        started = true
+
         val planner = PlaybackReportPlanner(
             isReportable = playbackReporter::handles,
             newSessionId = { Uuid.random().toString() }
