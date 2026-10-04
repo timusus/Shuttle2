@@ -42,4 +42,17 @@ struct LibraryGridTests {
         let tile = LibraryTile(title: "Radiohead", subtitle: nil, artwork: .albumArtist(artist), placeholderSymbol: "music.mic")
         #expect(try tile.inspect().find(ViewType.Color.self).clipShape(S2Shape.self) == .artist)
     }
+
+    /// The playing indicator overlays the cover (#850), so a playing tile's title sits where a quiet one's does.
+    @Test(arguments: [MediaRowPlayback.playing, .paused])
+    func aPlayingTileKeepsItsTitleUnindented(playback: MediaRowPlayback) throws {
+        let artist = AlbumArtist(
+            name: "Radiohead", artists: ["Radiohead"], albumCount: 2, songCount: 2, playCount: 0,
+            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
+        )
+        let tile = LibraryTile(title: "Kid A", subtitle: nil, artwork: .albumArtist(artist), playback: playback)
+        let title = try tile.inspect().find(text: "Kid A")
+        _ = try title.parent().vStack()
+        _ = try tile.inspect().find(NowPlayingIndicator.self)
+    }
 }

@@ -94,18 +94,10 @@ struct LibraryTile: View {
         VStack(alignment: .leading, spacing: Spacing.small) {
             cover
             VStack(alignment: .leading, spacing: Spacing.tiny) {
-                HStack(spacing: Spacing.xsmall) {
-                    if playback != .none {
-                        NowPlayingIndicator(isAnimating: playback == .playing)
-                            .foregroundStyle(tint)
-                            .frame(width: Spacing.smallMedium, height: Spacing.smallMedium)
-                            .accessibilityHidden(true)
-                    }
-                    Text(title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
-                        .lineLimit(1)
-                                        }
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
+                    .lineLimit(1)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.footnote)
@@ -128,6 +120,15 @@ struct LibraryTile: View {
             .overlay {
                 RemoteArtwork(artwork, points: ArtworkSize.gridMinimum * 1.5) {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
+                }
+            }
+            .overlay {
+                if playback != .none {
+                    NowPlayingIndicator(isAnimating: playback == .playing)
+                        .padding(ArtworkSize.gridMinimum * 0.375)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(.black.opacity(0.35))
+                        .accessibilityHidden(true)
                 }
             }
             .artworkStyle(.artwork(.artworkTile, for: artwork))
