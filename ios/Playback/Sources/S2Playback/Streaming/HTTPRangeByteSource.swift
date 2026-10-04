@@ -131,7 +131,10 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// Where fetched bytes are kept between sessions. Nil in tests that want the network only.
     private let runStore: CachedRunStore?
     /// The run's key: the URL as given, so a later play of the same enclosure finds it.
+    /// S2: less its per-play session id and token (``StreamCacheKey``), which change on every play (#822).
     private let runKey: String
+    /// S2: what ``resolvedURLs`` is keyed by, the URL less its per-play parameters, as ``runKey`` is.
+    private let resolvedKey: URL
     /// Where the chain's end is kept between plays. Nil in tests that want every hop walked.
     private let resolvedURLs: ResolvedURLCache?
 
@@ -379,10 +382,11 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         self.policy = readAhead
         self.tee = tee
         self.runStore = runStore
-        self.runKey = url.absoluteString
+        self.resolvedKey = StreamCacheKey.stableURL(for: url)
+        self.runKey = resolvedKey.absoluteString
         self.resolvedURLs = resolvedURLs
         // Before any transaction: the first one is the whole point of remembering.
-        if let remembered = resolvedURLs?.resolved(for: url) {
+        if let remembered = resolvedURLs?.resolved(for: resolvedKey) {
             resolvedURL = remembered
             resolutionUnproven = true
         }
@@ -848,7 +852,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         )
         resolutionUnproven = false
         resolvedURL = nil
-        resolvedURLs?.invalidate(url)
+        resolvedURLs?.invalidate(resolvedKey)
         // Whatever hops the remembered URL took before failing are not the chain the first
         // response will report.
         withLock {
@@ -1447,7 +1451,7 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
             // Once per source: later transactions reuse the same end.
             if let resolvedURL, !resolutionRecorded {
                 resolutionRecorded = true
-                resolvedURLs?.record(original: url, resolved: resolvedURL)
+                resolvedURLs?.record(original: resolvedKey, resolved: resolvedURL)
             }
             if let contentRange = http.value(forHTTPHeaderField: "Content-Range"),
                let total = contentRange.split(separator: "/").last.flatMap({ Int64($0) }) {

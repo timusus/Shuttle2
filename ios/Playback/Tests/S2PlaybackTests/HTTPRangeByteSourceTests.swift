@@ -541,6 +541,39 @@ final class HTTPRangeByteSourceTests: XCTestCase {
 
     // MARK: - Remembered resolved URL (#193)
 
+    /// S2: a server stream's URL carries a fresh session id and the token on every play (#822): the
+    /// next play of the same song still reads the bytes the last one kept.
+    func testARunIsFoundAgainUnderANewSessionIdAndToken() throws {
+        let body = makeMediaBody(128 * 1024)
+        let runEnd: Int64 = 32 * 1024
+        let server = try startServer(body: body)
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("byte-source-key-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = CachedRunStore(directory: directory)
+        func played(session: String, token: String) -> URL {
+            URL(string: "\(server.url.absoluteString)?UserId=u&PlaySessionId=\(session)&AudioCodec=mp3&ApiKey=\(token)")!
+        }
+        let key = StreamCacheKey.key(for: played(session: "first", token: "t1"))
+        store.replace(key, startingAt: 0, totalLength: Int64(body.count))
+        XCTAssertTrue(store.append(key, body.prefix(Int(runEnd))))
+
+        let made = HTTPRangeByteSource(
+            url: played(session: "second", token: "t2"),
+            authHeaders: [:],
+            readAhead: policy(windowBytes: 64 * 1024),
+            session: Self.testSession,
+            tee: nil,
+            runStore: store,
+            resolvedURLs: nil
+        )
+        source = made
+
+        XCTAssertEqual(try read(made, upTo: 4096), body.prefix(4096))
+        let fromStart = server.requestHeads.filter { $0.contains("Range: bytes=0-") }
+        XCTAssertTrue(fromStart.isEmpty, "the kept run was fetched again: \(fromStart)")
+    }
+
     /// A play that walked the chain leaves its end in the cache, and the next play opens straight
     /// there: no `/redirect/*` request at all, and the first response says so.
     func testARememberedResolvedURLSkipsTheChainOnTheNextPlay() throws {
@@ -565,6 +598,32 @@ final class HTTPRangeByteSourceTests: XCTestCase {
         XCTAssertEqual(first.status, 206)
         XCTAssertEqual(first.redirects, 0)
         XCTAssertEqual(secondPlay.resolvedURLForTesting, server.url)
+    }
+
+    /// S2: the chain's end is remembered under the URL less its session id and token (#822), so the
+    /// next play, with new ones, opens straight there.
+    func testARememberedResolvedURLIsFoundAgainUnderANewSessionIdAndToken() throws {
+        let body = makeBody(64 * 1024)
+        let server = try startServer(body: body)
+        let chain = server.redirectingURL(hops: 2).absoluteString
+        let cache = ResolvedURLCache(fileURL: nil)
+        func walks() -> Int { server.requestHeads.filter { $0.hasPrefix("GET /redirect/2/") }.count }
+
+        let firstPlay = makeSource(
+            server, policy: policy(windowBytes: 1024 * 1024),
+            url: URL(string: "\(chain)?PlaySessionId=a&api_key=t1")!, resolvedURLs: cache
+        )
+        _ = try read(firstPlay, upTo: 4096)
+        firstPlay.cancel()
+        XCTAssertEqual(walks(), 1)
+
+        let secondPlay = makeSource(
+            server, policy: policy(windowBytes: 1024 * 1024),
+            url: URL(string: "\(chain)?PlaySessionId=b&api_key=t2")!, resolvedURLs: cache
+        )
+        XCTAssertEqual(try read(secondPlay, upTo: 4096), body.prefix(4096))
+        XCTAssertEqual(walks(), 1, "the chain was walked again")
+        XCTAssertEqual(secondPlay.firstResponse?.remembered, true)
     }
 
     /// The signed CDN URL whose signature ran out: `403` from the remembered end is not a retry
