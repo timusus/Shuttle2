@@ -15,6 +15,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpda
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.SongPathRemap
+import com.simplecityapps.mediaprovider.repository.songs.SongStatsRestore
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
@@ -399,16 +400,4 @@ fun SongData.toSong(): Song = Song(
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
     serverAlbumArtistIds = serverAlbumArtistIds
-)
-
-/** One song's merged stats for [SongDataDao.restoreStats]: [song] is the on-device state they were merged against. */
-data class SongStatsRestore(
-    val song: Song,
-    val playCount: Int,
-    val lastPlayed: Instant?,
-    val lastCompleted: Instant?,
-    val playbackPosition: Int,
-    val dateAdded: Instant?,
-    val excluded: Boolean,
-    val favouritedAt: Instant?
 )

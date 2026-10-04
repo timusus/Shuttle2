@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.settings.backup
 
-import com.simplecityapps.localmediaprovider.local.data.room.dao.SongStatsRestore
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongStatsRestore
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song

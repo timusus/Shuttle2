@@ -2,10 +2,10 @@ package com.simplecityapps.shuttle.backup
 
 import android.content.Context
 import android.net.Uri
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongStatsStore
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
@@ -44,7 +44,7 @@ import timber.log.Timber
  */
 class LibraryBackupManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val database: MediaDatabase,
+    private val songStatsStore: SongStatsStore,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
     private val keyValueStore: KeyValueStore,
@@ -126,7 +126,7 @@ class LibraryBackupManager @Inject constructor(
 
     private suspend fun restore(backup: LibraryBackup): RestoreReport {
         val library = songRepository.loadSongs(SongQuery.All(includeExcluded = true))
-        val report = LibraryBackupRestorer(playlistRepository, { database.songDataDao().restoreStats(it) }).restore(backup, library)
+        val report = LibraryBackupRestorer(playlistRepository, songStatsStore::restoreStats).restore(backup, library)
         return report.copy(settingsRestored = settingsRestorer.restore(backup))
     }
 
