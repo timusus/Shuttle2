@@ -1,7 +1,9 @@
 package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import android.os.ext.SdkExtensions
 import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
@@ -41,28 +43,10 @@ class MediaStoreMediaProvider(
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         val rawSongs = mutableListOf<Song>()
         val projection =
-            mutableListOf(
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST_ID,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ALBUM_ID,
-                MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.SIZE,
-                MediaStore.Audio.Media.YEAR,
-                MediaStore.Audio.Media.TRACK,
-                MediaStore.Audio.Media.DATE_MODIFIED,
-                MediaStore.Audio.Media.IS_PODCAST,
-                MediaStore.Audio.Media.BOOKMARK,
-                MediaStore.Audio.Media.MIME_TYPE,
-                "album_artist"
+            mediaStoreSongProjection(
+                hasDiscNumber = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R,
+                hasBitsPerSample = hasBitsPerSampleColumn()
             )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            projection.add(MediaStore.Audio.Media.DISC_NUMBER)
-            projection.add(MediaStore.Audio.Media.BITS_PER_SAMPLE)
-        }
         val songCursor =
             context.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -80,12 +64,8 @@ class MediaStoreMediaProvider(
                 } else {
                     -1
                 }
-            val bitsPerSampleColumnIndex =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    songCursor.getColumnIndex(MediaStore.Audio.Media.BITS_PER_SAMPLE)
-                } else {
-                    -1
-                }
+            // -1 when the projection left it out
+            val bitsPerSampleColumnIndex = songCursor.getColumnIndex(BITS_PER_SAMPLE)
             while (currentCoroutineContext().isActive && songCursor.moveToNext()) {
                 val rawTrack =
                     songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
@@ -348,10 +328,56 @@ class MediaStoreMediaProvider(
     }
 }
 
-private val losslessMimeSubtypes = setOf("flac", "x-flac", "wav", "x-wav", "wave", "vnd.wave", "aiff", "x-aiff", "x-ape", "x-wavpack")
+/**
+ * MediaStore.Audio.Media.BITS_PER_SAMPLE, spelled out so [mediaStoreSongProjection] can name it without a version check
+ * of its own: the caller decides whether the column exists ([hasBitsPerSampleColumn]).
+ */
+private const val BITS_PER_SAMPLE = "bits_per_sample"
 
 /**
- * The bit depth MediaStore reports (API 30 and up), kept only for a lossless format. The MIME type is all it has to go
+ * Whether MediaStore has [BITS_PER_SAMPLE]. The column is new in API 36 and was backported in SDK extension 15 to API
+ * 33 to 35 (api-versions.xml: since 36, sdks "33:15"). Querying a column the provider lacks throws, failing the whole
+ * scan, so anything older leaves it out.
+ */
+private fun hasBitsPerSampleColumn(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+    hasBitsPerSampleColumn(Build.VERSION.SDK_INT, SdkExtensions.getExtensionVersion(Build.VERSION_CODES.TIRAMISU))
+
+internal fun hasBitsPerSampleColumn(
+    sdkInt: Int,
+    tiramisuExtensionVersion: Int
+): Boolean = sdkInt >= Build.VERSION_CODES.BAKLAVA || (sdkInt >= Build.VERSION_CODES.TIRAMISU && tiramisuExtensionVersion >= 15)
+
+/** The columns the song scan reads; [hasDiscNumber] (API 30) and [hasBitsPerSample] say which optional ones exist. */
+@SuppressLint("InlinedApi")
+internal fun mediaStoreSongProjection(
+    hasDiscNumber: Boolean,
+    hasBitsPerSample: Boolean
+): List<String> = buildList {
+    add(MediaStore.Audio.Media._ID)
+    add(MediaStore.Audio.Media.DATA)
+    add(MediaStore.Audio.Media.TITLE)
+    add(MediaStore.Audio.Media.ARTIST_ID)
+    add(MediaStore.Audio.Media.ARTIST)
+    add(MediaStore.Audio.Media.ALBUM_ID)
+    add(MediaStore.Audio.Media.ALBUM)
+    add(MediaStore.Audio.Media.DURATION)
+    add(MediaStore.Audio.Media.SIZE)
+    add(MediaStore.Audio.Media.YEAR)
+    add(MediaStore.Audio.Media.TRACK)
+    add(MediaStore.Audio.Media.DATE_MODIFIED)
+    add(MediaStore.Audio.Media.IS_PODCAST)
+    add(MediaStore.Audio.Media.BOOKMARK)
+    add(MediaStore.Audio.Media.MIME_TYPE)
+    add("album_artist")
+    if (hasDiscNumber) add(MediaStore.Audio.Media.DISC_NUMBER)
+    if (hasBitsPerSample) add(BITS_PER_SAMPLE)
+}
+
+private val losslessMimeSubtypes =
+    setOf("flac", "x-flac", "wav", "x-wav", "wave", "vnd.wave", "aiff", "x-aiff", "ape", "x-ape", "wavpack", "x-wavpack")
+
+/**
+ * The bit depth MediaStore reports (where it has the column), kept only for a lossless format. The MIME type is all it has to go
  * on, so an ambiguous one like audio/mp4 (AAC or ALAC) is treated as lossy, and a lossy file's 16 or 32 is dropped.
  */
 internal fun mediaStoreBitDepth(

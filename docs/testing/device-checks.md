@@ -358,5 +358,6 @@ previous and new outputs, and where each pause came from.
 - [ ] Restore a backup made before this version (no settings in it): play counts and playlists merge as before and your settings are left alone.
 
 ## Bit depth in Now Playing (#798)
-- [ ] Play a 24-bit FLAC from the local library (Android 11 or later), after a rescan: note whether Now Playing and Song info show "24-bit" (MediaStore may leave it blank; local files read by TagLib stay blank, see #798).
-- [ ] Play a 24-bit FLAC from Jellyfin after a library sync: Now Playing's quality line and Song info show "24-bit". An MP3 from the same server shows no bit depth.
+- [ ] On Android 16, or Android 13 to 15 with SDK extension 15 (`adb shell getprop build.version.extensions.t`), play a 24-bit FLAC that was already in the local library before this version, after a rescan: note whether Now Playing and Song info show "24-bit" (MediaStore may leave it blank; local files read by TagLib stay blank, see #798).
+- [ ] On Android 11 or 12 (no bits-per-sample column), a local rescan still completes and imports every song; bit depth stays blank.
+- [ ] Play a 24-bit FLAC from Jellyfin that was synced before this version, after a library sync: Now Playing's quality line and Song info show "24-bit". An MP3 from the same server shows no bit depth.
