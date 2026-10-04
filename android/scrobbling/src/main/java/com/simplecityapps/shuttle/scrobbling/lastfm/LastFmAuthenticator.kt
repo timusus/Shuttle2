@@ -55,6 +55,9 @@ constructor(
         val token = sessionStore.pendingToken.value ?: return@withLock LastFmSignInResult.NotStarted
         when (val result = client.getSession(token)) {
             is LastFmResult.Success -> {
+                // A forced sign-out (error 9) keeps the queue; another account must not inherit those scrobbles.
+                val previous = sessionStore.lastUsername
+                if (previous != null && previous != result.value.username) scrobbleQueue.clear()
                 sessionStore.signIn(result.value)
                 scrobbleQueue.scheduleFlush()
                 LastFmSignInResult.SignedIn

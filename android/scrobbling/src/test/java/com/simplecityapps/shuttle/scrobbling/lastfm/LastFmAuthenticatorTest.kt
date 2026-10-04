@@ -137,4 +137,30 @@ class LastFmAuthenticatorTest {
         sessionStore.session.value shouldBe null
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
     }
+
+    @Test
+    fun `the same account signing back in after a forced sign-out keeps its queue`() = runTest {
+        sessionStore.signIn(LastFmSession(key = "old", username = "tim"))
+        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        sessionStore.signOut()
+        sessionStore.savePendingToken("tok")
+        server.enqueue("""{"session":{"name":"tim","key":"sk"}}""")
+
+        authenticator().finishSignIn() shouldBe LastFmSignInResult.SignedIn
+
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
+
+    @Test
+    fun `a different account signing in after a forced sign-out does not inherit the queue`() = runTest {
+        sessionStore.signIn(LastFmSession(key = "old", username = "tim"))
+        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        sessionStore.signOut()
+        sessionStore.savePendingToken("tok")
+        server.enqueue("""{"session":{"name":"someone-else","key":"sk"}}""")
+
+        authenticator().finishSignIn() shouldBe LastFmSignInResult.SignedIn
+
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+    }
 }

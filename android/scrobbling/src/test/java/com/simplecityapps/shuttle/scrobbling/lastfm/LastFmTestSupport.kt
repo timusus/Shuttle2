@@ -23,11 +23,15 @@ class FakeLastFmSessionStore(session: LastFmSession? = null) : LastFmSessionStor
     private val _pendingToken = MutableStateFlow<String?>(null)
     override val pendingToken: StateFlow<String?> = _pendingToken
 
+    override var lastUsername: String? = session?.username
+        private set
+
     override fun savePendingToken(token: String?) {
         _pendingToken.value = token
     }
 
     override fun signIn(session: LastFmSession) {
+        lastUsername = session.username
         _session.value = session
         _pendingToken.value = null
     }

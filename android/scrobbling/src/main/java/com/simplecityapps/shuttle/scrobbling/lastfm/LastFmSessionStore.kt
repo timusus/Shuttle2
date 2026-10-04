@@ -24,12 +24,18 @@ interface LastFmSessionStore {
 
     val pendingToken: StateFlow<String?>
 
+    /**
+     * The username of the last account that signed in, kept through [signOut] so a forced sign-out (error 9) leaves
+     * a trace of whose scrobbles are still queued; the next sign-in compares against it.
+     */
+    val lastUsername: String?
+
     fun savePendingToken(token: String?)
 
     /** Stores [session] and drops the pending token it came from. */
     fun signIn(session: LastFmSession)
 
-    /** Forgets the session and any pending token. Queued scrobbles are the caller's to keep or drop. */
+    /** Forgets the session and any pending token, but not [lastUsername]. Queued scrobbles are the caller's to keep or drop. */
     fun signOut()
 }
 
@@ -45,6 +51,8 @@ constructor(
     private val _pendingToken = MutableStateFlow(securePreferenceManager.getString(KEY_PENDING_TOKEN))
     override val pendingToken: StateFlow<String?> = _pendingToken.asStateFlow()
 
+    override val lastUsername: String? get() = securePreferenceManager.getString(KEY_LAST_USERNAME)
+
     override fun savePendingToken(token: String?) {
         securePreferenceManager.putString(KEY_PENDING_TOKEN, token)
         _pendingToken.value = token
@@ -53,6 +61,7 @@ constructor(
     override fun signIn(session: LastFmSession) {
         securePreferenceManager.putString(KEY_SESSION, session.key)
         securePreferenceManager.putString(KEY_USERNAME, session.username)
+        securePreferenceManager.putString(KEY_LAST_USERNAME, session.username)
         _session.value = session
         savePendingToken(null)
     }
@@ -72,6 +81,7 @@ constructor(
     companion object {
         private const val KEY_SESSION = "lastfm_session_key"
         private const val KEY_USERNAME = "lastfm_username"
+        private const val KEY_LAST_USERNAME = "lastfm_last_username"
         private const val KEY_PENDING_TOKEN = "lastfm_pending_token"
     }
 }
