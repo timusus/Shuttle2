@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +24,7 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
+import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
@@ -206,6 +209,15 @@ fun SectionHeaderBoard(width: BoardWidth) {
         listOf(
             BoardSection("With action") { SectionHeader("Recently added", action = "See all") },
             BoardSection("Plain") { SectionHeader("Albums") },
+            BoardSection("Title, play and See all") {
+                SectionHeader(
+                    "Recently added",
+                    subtitle = "New in your library",
+                    action = "See all",
+                    style = SectionHeaderStyle.Title,
+                    trailingContent = { S2IconButton(Icons.Rounded.PlayArrow, "Play Recently added", onClick = {}) },
+                )
+            },
             BoardSection("Title, long title with an action") {
                 SectionHeader("A section title long enough that it has to share its row with See all", action = "See all", style = SectionHeaderStyle.Title)
             },

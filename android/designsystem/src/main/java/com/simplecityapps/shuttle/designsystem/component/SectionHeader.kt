@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -38,7 +39,7 @@ enum class SectionHeaderStyle {
 
 /**
  * A section heading, a [SectionHeaderStyle.Label] unless [style] says otherwise, with an optional trailing [action]
- * ("See all") and an optional one-line [subtitle] under the title saying what the section is. It sits on an opaque [containerColor] (`surface`), so it also works as a sticky letter header;
+ * ("See all"), an optional [trailingContent] after it (an icon button, such as Home's play for the whole shelf), and an optional one-line [subtitle] under the title saying what the section is. It sits on an opaque [containerColor] (`surface`), so it also works as a sticky letter header;
  * pass the container's colour when it heads a list on another surface, such as the search view, and pass [Color.Transparent] for
  * group headers inside cards and lists.
  */
@@ -51,6 +52,7 @@ fun SectionHeader(
     onAction: () -> Unit = {},
     containerColor: Color = MaterialTheme.colorScheme.surface,
     style: SectionHeaderStyle = SectionHeaderStyle.Label,
+    trailingContent: (@Composable RowScope.() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
@@ -79,6 +81,7 @@ fun SectionHeader(
             if (action != null) {
                 S2Button(text = action, onClick = onAction, style = S2ButtonStyle.Text)
             }
+            trailingContent?.invoke(this)
         }
         if (subtitle != null) {
             Text(
