@@ -62,7 +62,10 @@ struct LibrarySortMenuTests {
 
     @Test func aSongRowShowsItsPlayCountUnderThatSort() throws {
         let song = TestSongs.demo[0]
-        #expect((try? SongRow(song: song, sortOrder: .playCount).inspect().find(text: "Radiohead · OK Computer · 0 plays")) != nil)
-        #expect((try? SongRow(song: song, sortOrder: .songName).inspect().find(text: "Radiohead · OK Computer")) != nil)
+        let played = TestSongs.song(1, "Paranoid Android", artist: "Radiohead", album: "OK Computer", durationMs: 386_000, playCount: 12)
+        #expect((try? SongRow(song: played, sortOrder: .playCount).inspect().find(text: "Radiohead · OK Computer · 12 plays")) != nil)
+        #expect((try? SongRow(song: played, sortOrder: .songName).inspect().find(text: "Radiohead · OK Computer")) != nil)
+        // A song never played has no count to show (#702).
+        #expect((try? SongRow(song: song, sortOrder: .playCount).inspect().find(text: "Radiohead · OK Computer")) != nil)
     }
 }
