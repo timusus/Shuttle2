@@ -15,6 +15,14 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MediaStoreFileTagsTest {
     @Test
+    fun `playlist entry with a multi-artist tag matches the split artists`() {
+        val existing = createMediaStoreSong(name = "T", album = "Al", artists = listOf("A", "B"), albumArtist = "Other")
+        val entry = MediaStoreMediaProvider.MediaStoreSong(1, "T", "Al", "A; B", null, 1000, null, 1, "audio/mpeg", "/x.mp3")
+
+        existing.matchesPlaylistEntry(entry) shouldBe true
+    }
+
+    @Test
     fun `song gets ReplayGain values from the tag reader`() {
         val reader = MediaStoreTagReader { _, _ -> fileTags(replayGainTrack = -3.5, replayGainAlbum = -4.2) }
 

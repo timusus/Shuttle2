@@ -241,14 +241,7 @@ class MediaStoreMediaProvider(
                 // Associate Media Store songs with Shuttle's songs
                 val matchingSongs =
                     mediaStoreSongs.mapNotNull { mediaStoreSong ->
-                        existingSongs.firstOrNull { existingSong ->
-                            // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
-                            // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
-                            existingSong.name.equals(mediaStoreSong.title, ignoreCase = true) &&
-                                existingSong.album.equals(mediaStoreSong.album, ignoreCase = true) &&
-                                (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
-                                abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
-                        }
+                        existingSongs.firstOrNull { existingSong -> existingSong.matchesPlaylistEntry(mediaStoreSong) }
                     }
 
                 val updateData =
@@ -408,4 +401,15 @@ internal fun mediaStoreBitDepth(
 /** Each song with the MediaStore genres [genresBySongId] holds for its id ([Song.externalId]) added after its own. */
 internal fun List<Song>.withGenres(genresBySongId: Map<String, List<String>>): List<Song> = map { song ->
     genresBySongId[song.externalId]?.let { genres -> song.copy(genres = song.genres + genres) } ?: song
+}
+
+// We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
+// MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner. MediaStore's artist is the
+// raw tag, so it is split like Shuttle's own (#880) and any shared artist counts: one side may list fewer of them.
+internal fun Song.matchesPlaylistEntry(mediaStoreSong: MediaStoreMediaProvider.MediaStoreSong): Boolean {
+    val mediaStoreArtists = mediaStoreSong.artist?.let(::splitArtistTag).orEmpty()
+    return name.equals(mediaStoreSong.title, ignoreCase = true) &&
+        album.equals(mediaStoreSong.album, ignoreCase = true) &&
+        (artists.any { artist -> mediaStoreArtists.any { it.equals(artist, ignoreCase = true) } } || albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
+        abs(duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
 }
