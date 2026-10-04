@@ -20,6 +20,8 @@
 #
 # Env:
 #   LAND_SKIP_DEVICE_INSTALL=1   same as --no-device-install.
+#   LAND_VERIFY_TIMEOUT=N   wall-clock limit in seconds for the whole verify (default 1800). On expiry
+#                        the verify's process group is killed, nothing is pushed, exit 3 (#779).
 #   LAND_SKIP_VERIFY=1   skip the machine-lock verify step entirely. Plumbing tests only —
 #                        never use this to land real work.
 #
@@ -434,6 +436,30 @@ verify_env_failure() {
   printf '%s\n' "$out" | grep -Eq 'JdkImageTransform|jlink|No matching toolchain|Cannot find a Java installation|Cannot find a (Java|JDK)|daemon JVM|SDK location not found|Failed to install the following Android SDK|No installed JDK'
 }
 
+# run_with_timeout <seconds> <cmd>...: run <cmd> with output appended to $LOG, in its own process group,
+# and kill the whole group (TERM, then KILL after 10s) if it outlives <seconds> (#779). Portable: macOS
+# has no `timeout`. Sets VERIFY_TIMED_OUT=1 on a timeout; returns the command's status.
+VERIFY_TIMEOUT=${LAND_VERIFY_TIMEOUT:-1800}   # seconds; override with LAND_VERIFY_TIMEOUT
+VERIFY_TIMED_OUT=0
+run_with_timeout() {
+  local secs=$1 pid wpid rc flag
+  shift
+  VERIFY_TIMED_OUT=0
+  flag=$(mktemp "${TMPDIR:-/tmp}/land-timeout.XXXXXX") || return 1
+  rm -f "$flag"
+  set -m  # job control: each background job gets its own process group (pgid == pid)
+  "$@" >> "$LOG" 2>&1 &
+  pid=$!
+  ( sleep "$secs"; : > "$flag"; kill -TERM -- "-$pid" 2>/dev/null; sleep 10; kill -KILL -- "-$pid" 2>/dev/null ) &
+  wpid=$!
+  set +m
+  wait "$pid" 2>/dev/null; rc=$?
+  kill -TERM -- "-$wpid" 2>/dev/null
+  wait "$wpid" 2>/dev/null
+  if [ -e "$flag" ]; then VERIFY_TIMED_OUT=1; rm -f "$flag"; [ "$rc" -eq 0 ] && rc=124; fi
+  return "$rc"
+}
+
 run_verify() {
   if [ "${LAND_SKIP_VERIFY:-0}" = 1 ]; then
     log "verify: LAND_SKIP_VERIFY=1, skipping"
@@ -452,7 +478,11 @@ run_verify() {
 
   local from
   from=$(( $(wc -c < "$LOG") + 1 ))
-  if ! machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} >> "$LOG" 2>&1; then
+  if ! run_with_timeout "$VERIFY_TIMEOUT" machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"}; then
+    if [ "$VERIFY_TIMED_OUT" = 1 ]; then
+      say "land.sh: verify timed out after ${VERIFY_TIMEOUT}s (#779); killed it, treating as an environment failure"
+      return 2
+    fi
     if verify_env_failure "$LOG" "$from"; then
       log "verify: environment failure (see above)"
       return 2
