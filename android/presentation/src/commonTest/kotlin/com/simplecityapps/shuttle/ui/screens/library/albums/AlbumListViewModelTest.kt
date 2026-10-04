@@ -14,7 +14,10 @@ import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
@@ -160,6 +163,20 @@ class AlbumListViewModelTest {
         viewModel.uiState.value.albums.map { it.name } shouldBe listOf("New", "Mid", "Old", "Undated")
         viewModel.uiState.value.letterIndex shouldBe null
         fakeSortPreferences.sortOrderAlbumList shouldBe AlbumSortOrder.DateAdded
+    }
+
+    @Test
+    fun `an import in progress keeps the albums already imported`() = runTest {
+        val album = createAlbum(name = "Kept")
+        fakeAlbumRepository.setAlbums(listOf(album))
+        fakeImportState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe AlbumListUiState.LoadingState.Scanning
+        viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
+        viewModel.uiState.value.albums.map { it.name } shouldBe listOf("Kept")
     }
 
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {

@@ -5,6 +5,9 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
+import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
@@ -38,11 +41,13 @@ class AlbumArtistListViewModelTest {
     private val sortPreferences = FakeSortPreferences()
     private val preferences = fakeLibraryViewPreferences(sort = sortPreferences)
 
+    private val importState = FakeSongImportStateProvider()
+
     private fun viewModel() = AlbumArtistListViewModel(
         observeArtists = ObserveArtists(repository),
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
-        mediaImportObserver = FakeSongImportStateProvider(),
+        mediaImportObserver = importState,
     )
 
     @Test
@@ -93,5 +98,18 @@ class AlbumArtistListViewModelTest {
         advanceUntilIdle()
 
         viewModel.uiState.value.sortOrder shouldBe AlbumArtistSortOrder.PlayCount
+    }
+
+    @Test
+    fun `an import in progress keeps the artists already imported`() = runTest {
+        repository.setAlbumArtists(listOf(createAlbumArtist(name = "Kept")))
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe AlbumArtistListUiState.LoadingState.Scanning
+        viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
+        viewModel.uiState.value.albumArtists.map { it.name } shouldBe listOf("Kept")
     }
 }

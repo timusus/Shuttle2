@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,6 +52,24 @@ fun LoadingState(
                 textAlign = TextAlign.Center,
             )
         }
+    }
+}
+
+/**
+ * A thin bar for work running behind content that stays visible (a rescan over the library lists). Determinate with
+ * [progress], otherwise indeterminate; [description] is what accessibility services announce.
+ */
+@Composable
+fun BarLoadingIndicator(
+    description: String,
+    modifier: Modifier = Modifier,
+    progress: (() -> Float)? = null,
+) {
+    val semanticsModifier = modifier.semantics { contentDescription = description }
+    if (progress != null) {
+        LinearProgressIndicator(progress = progress, modifier = semanticsModifier)
+    } else {
+        LinearProgressIndicator(modifier = semanticsModifier)
     }
 }
 

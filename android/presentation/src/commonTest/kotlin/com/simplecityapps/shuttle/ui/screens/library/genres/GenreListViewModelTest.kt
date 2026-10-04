@@ -5,6 +5,9 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
+import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -37,11 +40,13 @@ class GenreListViewModelTest {
     private val genreRepository = FakeGenreRepository()
     private val preferences = fakeLibraryViewPreferences(sort = FakeSortPreferences())
 
+    private val importState = FakeSongImportStateProvider()
+
     private fun viewModel() = GenreListViewModel(
         observeGenres = ObserveGenres(genreRepository),
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
-        mediaImportObserver = FakeSongImportStateProvider(),
+        mediaImportObserver = importState,
     )
 
     @Test
@@ -54,5 +59,18 @@ class GenreListViewModelTest {
 
         viewModel.uiState.value.genres.map { it.name } shouldBe listOf("Jazz")
         genreRepository.coverLimits shouldBe emptyList()
+    }
+
+    @Test
+    fun `an import in progress keeps the genres already imported`() = runTest {
+        genreRepository.setGenres(listOf(createGenre(name = "Kept")))
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe GenreListUiState.LoadingState.Scanning
+        viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
+        viewModel.uiState.value.genres.map { it.name } shouldBe listOf("Kept")
     }
 }

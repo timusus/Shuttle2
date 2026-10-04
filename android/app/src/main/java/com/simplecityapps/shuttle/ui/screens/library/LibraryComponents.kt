@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholderGlyph
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
+import com.simplecityapps.shuttle.designsystem.component.BarLoadingIndicator
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.model.Song
@@ -63,7 +64,8 @@ enum class LibraryContentState { Loading, Scanning, Empty, Ready }
 
 /**
  * Shows [content] once [state] is Ready; otherwise the matching loading, scan progress or [emptyTitle] state, under the
- * tab's [controls] row when it has one (the Ready content shows that row as its list's first item).
+ * tab's [controls] row when it has one (the Ready content shows that row as its list's first item). A scan with
+ * [hasItems] keeps showing [content] under a thin progress bar instead of the full-screen placeholder (#625).
  */
 @Composable
 fun LibraryContent(
@@ -72,10 +74,22 @@ fun LibraryContent(
     modifier: Modifier = Modifier,
     scanProgress: Progress? = null,
     controls: LibraryTabControls? = null,
+    hasItems: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     if (state == LibraryContentState.Ready) {
         content()
+        return
+    }
+    if (state == LibraryContentState.Scanning && hasItems) {
+        Box(modifier.fillMaxSize()) {
+            content()
+            BarLoadingIndicator(
+                description = stringResource(R.string.library_scan_in_progress),
+                modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+                progress = scanProgress?.let { progress -> { progress.asFloat() } },
+            )
+        }
         return
     }
     Column(modifier.fillMaxSize()) {

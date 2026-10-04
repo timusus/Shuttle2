@@ -147,7 +147,7 @@ fun SongsPage(
         SongListUiState.LoadingState.Empty -> LibraryContentState.Empty
         SongListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.song_list_empty), modifier, state.scanProgress, controls) {
+    LibraryContent(content, stringResource(R.string.song_list_empty), modifier, state.scanProgress, controls, hasItems = state.songs.isNotEmpty()) {
         val listState = rememberLazyListState()
         val byAlbum = state.sortOrder == SongSortOrder.AlbumGroupKey || state.sortOrder == SongSortOrder.Default
         val entries = remember(state.songs, byAlbum) { songEntries(state.songs, byAlbum) }
@@ -279,7 +279,7 @@ fun AlbumsPage(
         AlbumListUiState.LoadingState.Empty -> LibraryContentState.Empty
         AlbumListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress, controls) {
+    LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress, controls, hasItems = state.albums.isNotEmpty()) {
         val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
             LibraryFastScroller(state.albums, state.letterIndex, scrollableState, thumbLabel = albumThumbLabel(state.sortOrder), controls = controls)
         }
@@ -346,7 +346,7 @@ fun ArtistsPage(
         AlbumArtistListUiState.LoadingState.Empty -> LibraryContentState.Empty
         AlbumArtistListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress, controls) {
+    LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress, controls, hasItems = state.albumArtists.isNotEmpty()) {
         val artists = state.albumArtists
         val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
             LibraryFastScroller(artists, state.letterIndex, scrollableState, thumbLabel = artistThumbLabel(state.sortOrder), controls = controls)
@@ -418,7 +418,7 @@ fun GenresPage(
         GenreListUiState.LoadingState.Empty -> LibraryContentState.Empty
         GenreListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.genre_list_empty), modifier, state.scanProgress, controls) {
+    LibraryContent(content, stringResource(R.string.genre_list_empty), modifier, state.scanProgress, controls, hasItems = state.genres.isNotEmpty()) {
         val listState = rememberLazyListState()
         val leadingItems = controlsItemCount(controls)
         Box(modifier.fillMaxSize()) {
@@ -458,7 +458,7 @@ fun PlaylistsPage(
         // Smart playlists are always there, so an empty list still shows them and "New playlist".
         PlaylistListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress, controls) {
+    LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress, controls, hasItems = state.playlists.isNotEmpty()) {
         val listState = rememberLazyListState()
         val headerCount = controlsItemCount(controls) + 1 + state.smartPlaylists.size + 1
         Box(modifier.fillMaxSize()) {
