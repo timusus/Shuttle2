@@ -1,0 +1,25 @@
+{
+  "MediaContainer": {
+    "totalSize": 1,
+    "Metadata": [
+      {
+        "key": "/library/metadata/audio-1",
+        "type": "track",
+        "guid": "plex://track/audio-1",
+        "index": 1,
+        "parentIndex": 1,
+        "title": "Second Library Song",
+        "duration": 180000,
+        "parentTitle": "Other Album",
+        "grandparentTitle": "Artist Two",
+        "parentYear": 2021,
+        "Media": [
+          { "id": 9, "duration": 180000, "bitrate": 320, "audioChannels": 2, "audioCodec": "mp3", "container": "mp3", "Part": [
+            { "id": 9, "key": "/library/parts/9/file.mp3", "duration": 180000, "file": "/audio/9.mp3", "size": 4200000, "container": "mp3" }
+          ] }
+        ],
+        "addedAt": 1709299200
+      }
+    ]
+  }
+}

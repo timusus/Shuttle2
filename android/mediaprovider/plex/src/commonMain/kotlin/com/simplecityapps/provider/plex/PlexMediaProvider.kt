@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
@@ -40,13 +41,14 @@ class PlexMediaProvider(
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
-                val section = sectionsResult.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key
-                if (section == null) {
-                    logger.error { "Failed to find 'music' section" }
+                // A server can hold several music libraries, whatever they're called; they're the sections of type "artist"
+                val sections = sectionsResult.body.mediaContainer.directories.orEmpty().filter { it.type == "artist" }.map { it.key }
+                if (sections.isEmpty()) {
+                    logger.error { "Failed to find a music section" }
                     emit(FlowEvent.Failure(plexStrings.musicLibraryMissing))
                 } else {
                     emitAll(
-                        queryItems(address, credentials, section).map { event ->
+                        queryAllSections(address, credentials, sections).map { event ->
                             when (event) {
                                 is FlowEvent.Success -> FlowEvent.Success(event.result.map { metadata -> metadata.toSong(type) })
                                 is FlowEvent.Progress -> FlowEvent.Progress(event.data)
@@ -69,6 +71,32 @@ class PlexMediaProvider(
     private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
         ?: authenticationManager.getLoginCredentials()
             ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() }
+
+    /** Every track of every one of [sections], emitted as one [FlowEvent.Success] after the sections' progress. A failed section ends the flow. */
+    private fun queryAllSections(
+        address: String,
+        credentials: AuthenticatedCredentials,
+        sections: List<String>
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = flow {
+        val items = mutableListOf<Metadata>()
+        for (section in sections) {
+            var failed = false
+            queryItems(address, credentials, section).collect { event ->
+                when (event) {
+                    is FlowEvent.Success -> items.addAll(event.result)
+
+                    is FlowEvent.Progress -> emit(FlowEvent.Progress(event.data))
+
+                    is FlowEvent.Failure -> {
+                        failed = true
+                        emit(FlowEvent.Failure(event.message))
+                    }
+                }
+            }
+            if (failed) return@flow
+        }
+        emit(FlowEvent.Success(items))
+    }
 
     private fun queryItems(
         address: String,

@@ -82,6 +82,40 @@ class PlexMediaProviderTest {
     }
 
     @Test
+    fun `a music library with any name is synced`() {
+        signedIn()
+        server.respond(SECTIONS, "sections_renamed_music.json")
+        server.respond(ITEMS, "songs.json")
+
+        sync().map { it.name } shouldContainExactly listOf("Opening", "Duet", "B-Side")
+    }
+
+    @Test
+    fun `every music library is synced - and the songs come as one result`() {
+        signedIn()
+        server.respond(SECTIONS, "sections_two_music.json")
+        server.respond(ITEMS, "songs.json")
+        server.respond("/library/sections/4/all", "songs_second_library.json")
+
+        val events = provider.findSongs(emptyList()).events()
+
+        events.filterIsInstance<FlowEvent.Success<*>>().size shouldBe 1
+        events.last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.map { it.name } shouldContainExactly
+            listOf("Opening", "Duet", "B-Side", "Second Library Song")
+        server.requestsTo("/library/sections/1/all").shouldBeEmpty()
+    }
+
+    @Test
+    fun `a failing second library fails the sync`() {
+        signedIn()
+        server.respond(SECTIONS, "sections_two_music.json")
+        server.respond(ITEMS, "songs.json")
+        server.respond("/library/sections/4/all", code = 500)
+
+        provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>()
+    }
+
+    @Test
     fun `an empty library syncs to no songs`() {
         signedIn()
         server.respond(SECTIONS, "sections.json")

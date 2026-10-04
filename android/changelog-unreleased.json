@@ -522,6 +522,10 @@
     {
       "text": "A new Minimum song length setting, in Settings, Library, hides short songs like ringtones and voice notes from your songs, albums, artists, genres and search. Playlists still show them",
       "commits": []
+    },
+    {
+      "text": "Plex libraries now sync whatever they are named, and every music library on your server is included, not only one called Music",
+      "commits": []
     }
   ]
 }
