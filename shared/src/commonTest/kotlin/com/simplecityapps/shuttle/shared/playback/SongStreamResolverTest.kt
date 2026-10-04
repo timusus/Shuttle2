@@ -92,8 +92,19 @@ class SongStreamResolverTest {
     }
 
     @Test
-    fun aDownloadedServerSongStillAsksTheGate() = runTest {
+    fun aDownloadedServerSongPlaysWithoutAskingTheGateWhateverItsAnswer() = runTest {
         downloaded["jellyfin://item/abc"] = "file:///Downloads/amVsbHlmaW46Ly9pdGVtL2FiYw.flac"
+        for (access in listOf(ServerAccess.Undecided, ServerAccess.Refused)) {
+            serverAccess = access
+            resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true) shouldBe
+                IosStream(url = "file:///Downloads/amVsbHlmaW46Ly9pdGVtL2FiYw.flac", opensAtPosition = false)
+        }
+        askedToStream shouldBe emptyList()
+    }
+
+    @Test
+    fun aServerSongWithNoDownloadedFileIsRefusedWhenTheGateRefuses() = runTest {
+        downloaded["jellyfin://item/other"] = "file:///Downloads/other.flac"
         serverAccess = ServerAccess.Refused
 
         shouldThrow<ServerStreamNotAllowedException> { resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true) }

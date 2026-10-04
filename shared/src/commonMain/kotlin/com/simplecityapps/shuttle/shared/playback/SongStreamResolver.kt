@@ -27,8 +27,8 @@ import com.simplecityapps.shuttle.shared.percentEncodedPath
  * [serverStreamAccess] is never asked about it.
  *
  * A server song that's been downloaded ([downloadedFile], `OfflineDownloads.fileUrl`) plays from its file, so it plays
- * offline and opens at the start. It's still a server song: [serverStreamAccess] is asked as for its stream, as Android's
- * `ServerStreamPolicy` is asked before a download plays. One whose file has gone or is empty has no [downloadedFile]
+ * offline and opens at the start. [serverStreamAccess] isn't asked: a song already downloaded never disappears when the
+ * trial lapses, as Android's `EntitledServerStreamPolicy` allows a completed download before it asks the gate. One whose file has gone or is empty has no [downloadedFile]
  * (`OfflineDownloads` forgets it), so it streams.
  */
 class SongStreamResolver(
@@ -47,14 +47,14 @@ class SongStreamResolver(
         val provider = streamUrls.forPath(song.path)
         val gainDb = replayGainDb(replayGainMode(), preAmpGainDb().toDouble(), song.replayGain).toFloat()
         val localFile = listOfNotNull(localFiles).forPath(song.path)
-        if (localFile == null && provider != null) {
+        val downloaded = if (localFile == null && provider != null) downloadedFile(song.path) else null
+        if (localFile == null && downloaded == null && provider != null) {
             when (serverStreamAccess(song, playRequested)) {
                 ServerAccess.Allowed -> Unit
                 ServerAccess.Refused -> throw ServerStreamNotAllowedException(song, undecided = false)
                 ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
             }
         }
-        val downloaded = if (localFile == null && provider != null) downloadedFile(song.path) else null
         return when {
             localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs), gainDb = gainDb)
             downloaded != null -> IosStream(url = downloaded, gainDb = gainDb)

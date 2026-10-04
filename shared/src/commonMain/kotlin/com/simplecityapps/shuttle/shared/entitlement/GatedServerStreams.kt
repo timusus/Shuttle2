@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  * Server streaming on iOS needs Pro or the trial, as Android's `EntitledServerStreamPolicy` decides it; the stream
- * resolver asks [access] before it builds a server song's URL. iOS has no offline downloads yet, so there's no
- * downloaded copy to play past the gate. One instance for the graph, so [gatedSongs] sees every refusal.
+ * resolver asks [access] before it builds a server song's stream URL. A song with a completed download plays from its
+ * file without asking, so a lapsed trial keeps what was downloaded. One instance for the graph, so [gatedSongs] sees every refusal.
  */
 class GatedServerStreams(
     private val gate: ServerAccessGate
