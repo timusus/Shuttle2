@@ -79,4 +79,16 @@ class PagedFlowTest {
         requests shouldBe listOf(0 to 4, 4 to 4)
         events shouldBe listOf(progress(4, 10), Event.Failure("An unknown error occurred."))
     }
+
+    @Test
+    fun `a server that ignores the offset and reports no total ends at the repeated page`() = runTest {
+        var requestCount = 0
+        val events = pagedFlow<Int>(pageSize = 2) { _, _ ->
+            requestCount++
+            NetworkResult.Success(Page(listOf(0, 1), null))
+        }.toList().described()
+
+        requestCount shouldBe 2
+        events.last() shouldBe Event.Success(listOf(0, 1))
+    }
 }

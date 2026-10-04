@@ -30,7 +30,8 @@ const val DEFAULT_PAGE_SIZE = 500
  * With a [Page.totalCount], each page starts [pageSize] on from the last, whatever it returned (offsets count the
  * server's items, some of which it may leave out of a page), and paging stops at the total. Without one, each page
  * starts after the items received and paging stops at the first empty page, so a server that returns fewer items
- * than asked for isn't mistaken for the end of the listing.
+ * than asked for isn't mistaken for the end of the listing. A page identical to the one before it ends the listing too,
+ * since a server that ignores the offset would otherwise repeat it forever.
  */
 fun <T> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
@@ -39,11 +40,18 @@ fun <T> pagedFlow(
     val items = mutableListOf<T>()
     var offset = 0
     var limit = pageSize
+    var previous: List<T>? = null
     while (true) {
         when (val result = fetchPage(offset, limit)) {
             is NetworkResult.Success -> {
                 val page = result.body
                 val totalCount = page.totalCount
+                if (totalCount == null && page.items.isNotEmpty() && page.items == previous) {
+                    logger.error { "A page repeated the one before it; the server is ignoring the offset" }
+                    emit(FlowEvent.Success(items))
+                    return@flow
+                }
+                previous = page.items
                 val end = if (totalCount != null) offset + limit else offset + page.items.size
                 emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, totalCount?.let { total -> Progress(min(end, total), total) })))
                 items.addAll(page.items)
