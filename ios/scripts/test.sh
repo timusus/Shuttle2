@@ -8,8 +8,8 @@
 # The simulator is $S2_SIMULATOR_UDID if set; else, if the shared lease pool's device.sh exists, this
 # session's leased device (set $S2_SIM_HOLDER to lease as a different holder, e.g. for a parallel
 # worker, or $S2_SIM_PROFILE=ios26 to lease from the iOS 26 pool — see ios/scripts/lease-sim.sh;
-# an unknown profile aborts with exit 2 before anything builds); else a booted iPhone, or the
-# iPhone on the newest iOS runtime. Other arguments go to
+# an unknown profile aborts with exit 2 before anything builds); else an iPhone on a released iOS
+# runtime, a booted one first, else the newest (a beta only when there's no other). Other arguments go to
 # xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingControllerTests`,
 # `--filter MusicPlaybackFormatsTests`).
 set -euo pipefail
@@ -20,7 +20,7 @@ args=()
 for arg in "$@"; do
   case "$arg" in
     --package) package=1 ;;
-    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) args+=("$arg") ;;
   esac
 done
@@ -37,27 +37,30 @@ if [[ ! -d "$ios_dir/../shared/build/bin/iosSimulatorArm64/debugFramework/Shared
   exit 1
 fi
 
+# A beta runtime's build ends in a letter (27.2 beta is 24B5084k) and fails tests a release passes (#601),
+# so a released runtime's iPhone wins even over a booted beta one; a beta only when there's no other.
 pick_simulator() {
-  xcrun simctl list devices available -j | python3 -c '
+  xcrun simctl list -j devices available runtimes | python3 -c '
 import json, re, sys
-devices = json.load(sys.stdin)["devices"]
+listing = json.load(sys.stdin)
+beta = {r["identifier"]: r["buildversion"][-1:].isalpha() for r in listing["runtimes"]}
 def version(runtime):
     m = re.search(r"iOS-(\d+)-(\d+)", runtime)
     return (int(m.group(1)), int(m.group(2))) if m else None
 candidates = []
-for runtime, entries in devices.items():
+for runtime, entries in listing["devices"].items():
     v = version(runtime)
     if v is None:
         continue
     for d in entries:
         if d["name"].startswith("iPhone"):
-            candidates.append((d["state"] == "Booted", v, d["name"], d["udid"]))
+            candidates.append((not beta.get(runtime, False), d["state"] == "Booted", v, d["name"], d["udid"]))
 if not candidates:
     sys.exit("no available iPhone simulator; create one in Xcode > Devices and Simulators")
-booted, v, name, udid = max(candidates)
+released, booted, v, name, udid = max(candidates)
 print(udid)
-state = ", booted" if booted else ""
-print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{state})", file=sys.stderr)
+notes = ("" if released else ", beta") + (", booted" if booted else "")
+print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{notes})", file=sys.stderr)
 '
 }
 

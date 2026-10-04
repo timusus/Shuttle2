@@ -38,7 +38,7 @@ cd ios && xcodebuild build -project S2.xcodeproj -scheme S2 \
   -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
 
 # 4. Tests. The S2 scheme (swift-testing + ViewInspector) on this session's leased simulator (the
-#    shared ios-sim lease pool, if set up), else a booted iPhone, else the newest iOS runtime's;
+#    shared ios-sim lease pool, if set up), else an iPhone on a released runtime (booted, else newest);
 #    S2_SIMULATOR_UDID=<udid> picks one. Extra args go to xcodebuild (-only-testing:S2Tests/AppShellTests)
 ios/scripts/test.sh
 ios/scripts/test.sh --package                  # swift test in ios/Playback (the engine), on the Mac;
@@ -54,9 +54,12 @@ pool is iPhone 16 on iOS 18.5. That lease is taken under a `-ios26`-suffixed hol
 `ios/scripts/lease-sim.sh --holder` prints it; release with
 `CLAUDE_CODE_SESSION_ID="$(ios/scripts/lease-sim.sh --holder)" ~/.claude/scripts/ios-sim/sim-lease.sh release`
 (land.sh does). The spike was verified on `iPhone 16` (iOS 18.5) and
-`iPad Pro 11-inch (M5)` (iOS 27.2) with Xcode 27.2 beta. On an iPhone with iOS 27.2 (the newest
-runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabView lookups fail;
-`iPhone 16` (iOS 18.5) passes everything.
+`iPad Pro 11-inch (M5)` (iOS 27.2) with Xcode 27.2 beta. On an iPhone with the iOS 27.2 beta
+`AppShellTests`' two TabView lookups fail, so `test.sh`'s no-pool fallback skips beta runtimes (a build
+number ending in a letter) unless nothing else has an iPhone (#601); `iPhone 16` (iOS 18.5) and the iOS 26
+pool pass everything. ViewInspector can't see into iOS 26's `safeAreaBar`, so a pinned bar is its own
+property for tests (`LibraryRootContent.categoryRail`, `SearchContentView.typeChips`), and its `findAll`
+skips what's inside an iOS 26 `LibraryRowLink`: use `findAllBreadthFirst` (`S2Tests`) for views in rows.
 
 **Verification split:** a worker's own brief only needs the Swift package build/tests for the files it
 touched, and gives up on a simulator lease after ~5 minutes rather than wait on it. Landing is light:
