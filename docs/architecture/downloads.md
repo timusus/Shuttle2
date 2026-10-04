@@ -74,8 +74,9 @@ Android's Media3 index has the same key. Removing a server should remove its dow
 yet).
 
 **Playback.** `SongStreamResolver` asks `OfflineDownloads.fileUrl(path)` for a server song. A completed
-download plays from its `file://` URL, from the start, offline. It still asks the Pro gate
-(`serverStreamAccess`) first, as Android's `ServerStreamPolicy` is asked before a download plays. A
+download plays from its `file://` URL, from the start, offline, without asking the Pro gate
+(`serverStreamAccess`): songs already downloaded never disappear when the trial lapses, as Android's
+`EntitledServerStreamPolicy` allows a completed download before it asks the gate. Streaming still asks. A
 completed download whose file has gone or is empty is forgotten, and the song streams instead.
 
 **Pro.** Starting a download is gated the same way on both platforms: `DownloadSongs` asks

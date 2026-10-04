@@ -386,3 +386,10 @@ previous and new outputs, and where each pause came from.
 ## Share diagnostics (#768)
 - [ ] iOS device build, Settings → Share diagnostics: the share sheet offers shuttle-diagnostics.txt; save it (Files) or mail it to yourself and open the file: the Swift `Logger` lines are readable text, not `<private>` (unified-log redaction must not have stripped the message bodies).
 - [ ] Android, Settings → Share debug logs (with debug logging on and something played first): the chooser opens with a log file attached, and the receiving app (e.g. Files or Gmail) can read its contents. With nothing logged, "Log file empty" shows instead and no chooser opens.
+
+## iOS offline downloads (#759, #858)
+- [ ] iOS, signed in to a server with Pro or the trial: start downloading an album, swipe the app away mid-download, then relaunch. The downloads that were running finish or resume, none is stuck as downloading, and the finished songs play offline.
+- [ ] Start downloading an album, then lock the phone or switch to another app until it would finish. Return: the songs show Downloaded without reopening the album, and play in airplane mode.
+- [ ] Download a song, Remove Download, then at once Download it again. It ends up Downloaded exactly once and plays offline; the removed copy does not reappear or cancel the new one.
+- [ ] Download a song that is already downloaded again (or Download from an album that contains it). The song stays playable throughout, with no duplicate or empty file, and plays offline afterwards.
+- [ ] With a song downloaded, let the trial lapse (or use a sandbox account without Pro) and play it: it plays, offline too. A song that is not downloaded opens the paywall (#858).
