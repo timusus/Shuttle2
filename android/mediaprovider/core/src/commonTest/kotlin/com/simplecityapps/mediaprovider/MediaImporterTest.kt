@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicInt
@@ -24,6 +25,7 @@ import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -620,6 +622,35 @@ class MediaImporterTest {
         import.join()
 
         importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, error = null)
+    }
+
+    @Test
+    fun `a cancelled import reports no completion, and its source goes back to how it stood`() = runBlocking<Unit> {
+        provider.scanFailure = "Server unreachable"
+        provider.gate.trySend(Unit)
+        importer.import()
+        provider.started.receive() // the first import's
+        val completions = importer.importsCompleted.value
+
+        provider.scanFailure = null
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        importer.songImportState.value.shouldBeInstanceOf<SongImportState.ImportProgress>()
+        import.cancelAndJoin()
+
+        importer.importsCompleted.value shouldBe completions
+        importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, "Server unreachable")
+    }
+
+    @Test
+    fun `a cancelled first import leaves the source with no state rather than scanning`() = runBlocking<Unit> {
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        import.cancelAndJoin()
+
+        importer.importsCompleted.value shouldBe 0
+        importer.providerImportStates.value shouldBe emptyMap()
+        importer.songImportState.value shouldBe SongImportState.Idle
     }
 
     @Test

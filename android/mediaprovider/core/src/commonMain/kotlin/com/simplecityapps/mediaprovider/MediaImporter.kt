@@ -298,6 +298,9 @@ class MediaImporter(
         playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
     ): Exception? {
         val type = mediaProvider.type
+        // What a cancelled import puts back: it didn't end, so it says nothing of how the source stands
+        val before = _providerImportStates.value[type]?.takeUnless { it is SongImportState.ImportProgress }
+        var cancelled = false
         try {
             if (showProgress) {
                 publish(type, mediaProvider.importProgress(MessageProgress(if (type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)))
@@ -335,15 +338,23 @@ class MediaImporter(
             }
             return null
         } catch (e: CancellationException) {
+            cancelled = true
             throw e
         } catch (e: Exception) {
             logger.error(e) { "$type import failed" }
             if (!quietFailures) complete(type, strings.importError)
             return e
         } finally {
-            // Cancelled, or ended without saying how: the library doesn't stay scanning for it
+            // The library doesn't stay scanning for it. Cancelled, it goes back to how it stood, rather than reading as a
+            // success that reloads what shows the library; ended without saying how, it's done
             withContext(NonCancellable) {
-                updateStates { states -> if (states[type] is SongImportState.ImportProgress) states + (type to SongImportState.ImportComplete(type, error = null)) else states }
+                if (_providerImportStates.value[type] is SongImportState.ImportProgress) {
+                    when {
+                        !cancelled -> complete(type, error = null)
+                        before == null -> updateStates { states -> states - type }
+                        else -> updateStates { states -> states + (type to before) }
+                    }
+                }
             }
         }
     }
