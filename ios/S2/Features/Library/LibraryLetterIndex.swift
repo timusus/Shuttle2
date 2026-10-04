@@ -52,6 +52,12 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
     let sections: [LetterIndexSection]?
     @ViewBuilder let row: (Int, Item) -> Row
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// The strip's width the rows keep clear inside themselves, so a row's background (the playing highlight) runs
+    /// under the strip rather than stopping short of it; none when the index is hidden.
+    private var indexWidth: CGFloat { dynamicTypeSize.isAccessibilitySize ? 0 : LetterIndexStrip.baseWidth }
+
     init(
         items: [Item],
         id: KeyPath<Item, ID>,
@@ -72,13 +78,14 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
                         Section {
                             ForEach(section.rows.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
                                 row($0.index, $0.item)
+                                    .padding(.trailing, indexWidth)
                                     .rowSeparator(.none)
                             }
                         }
                     }
                 }
                 .listStyle(.plain)
-                .letterIndex(sections) { proxy.scrollTo($0.anchor, anchor: .top) }
+                .letterIndex(sections, reservesWidth: false) { proxy.scrollTo($0.anchor, anchor: .top) }
             }
         } else {
             List {
@@ -130,11 +137,13 @@ private struct IndexedItem<Item, ID: Hashable> {
 
 extension View {
     /// The index for `sections` down the trailing edge, a `LetterIndexStrip`, which calls `scrollTo` with the section
-    /// picked. No index without sections.
+    /// picked. No index without sections, or at accessibility text sizes, where its width is better spent on the
+    /// content (#782). `reservesWidth` false leaves the content's width to the caller (a list's rows pad themselves,
+    /// so their backgrounds run full width).
     @ViewBuilder
-    func letterIndex(_ sections: [LetterIndexSection]?, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
+    func letterIndex(_ sections: [LetterIndexSection]?, reservesWidth: Bool = true, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
         if let sections {
-            modifier(LetterIndexModifier(sections: sections.filter(\.isIndexed), scrollTo: scrollTo))
+            modifier(LetterIndexModifier(sections: sections.filter(\.isIndexed), reservesWidth: reservesWidth, scrollTo: scrollTo))
         } else {
             self
         }
@@ -147,8 +156,10 @@ extension View {
 /// (the mini player) moves in beside it (#674).
 private struct LetterIndexModifier: ViewModifier {
     let sections: [LetterIndexSection]
+    let reservesWidth: Bool
     let scrollTo: (LetterIndexSection) -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.isMiniPlayerVisible) private var isMiniPlayerVisible
     @State private var clearance = LetterIndexClearance()
     @State private var size: CGSize = .zero
@@ -156,10 +167,19 @@ private struct LetterIndexModifier: ViewModifier {
     /// Long enough for the mini player to slide in or out, or the accessory to appear, before the clearance holds.
     private static let settleDelay: Duration = .milliseconds(600)
 
+    @ViewBuilder
     func body(content: Content) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            content
+        } else {
+            indexed(content)
+        }
+    }
+
+    private func indexed(_ content: Content) -> some View {
         content
             .safeAreaInset(edge: .trailing, spacing: 0) {
-                Color.clear.frame(width: LetterIndexStrip.baseWidth).accessibilityHidden(true)
+                Color.clear.frame(width: reservesWidth ? LetterIndexStrip.baseWidth : 0).accessibilityHidden(true)
             }
             .onGeometryChange(for: Measure.self) { Measure(size: $0.size, bottomInset: $0.safeAreaInsets.bottom) } action: {
                 size = $0.size

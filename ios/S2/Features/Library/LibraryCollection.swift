@@ -73,7 +73,7 @@ struct LibraryGrid<Content: View>: View {
             }
             // The strip takes its width from the trailing edge (`letterIndex`); the leading edge gives up the same, so
             // the tiles sit centred rather than off to one side (#750).
-            .safeAreaPadding(.leading, index == nil ? 0 : LetterIndexStrip.baseWidth)
+            .safeAreaPadding(.leading, index == nil || dynamicTypeSize.isAccessibilitySize ? 0 : LetterIndexStrip.baseWidth)
             .letterIndex(index) { proxy.scrollTo($0.anchor, anchor: .top) }
         }
     }
