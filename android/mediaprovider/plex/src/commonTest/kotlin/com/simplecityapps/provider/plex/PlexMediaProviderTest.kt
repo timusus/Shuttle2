@@ -365,6 +365,49 @@ class PlexMediaProviderTest {
         songs.map { it.bitDepth } shouldContainExactly listOf(null, null)
     }
 
+    @Test
+    fun `lossless tracks share one metadata request and each takes the bit depth of its own ratingKey`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs_two_flac.json")
+        server.respond("/library/metadata/31,32", "metadata_31_32.json")
+
+        val songs = sync()
+
+        songs.map { it.bitDepth } shouldContainExactly listOf(24, 16)
+        metadataRequests() shouldContainExactly listOf("/library/metadata/31,32")
+    }
+
+    @Test
+    fun `more lossless tracks than a chunk hold are asked for in more than one request`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs_101_flac.json")
+        server.respond("/library/metadata/${(1..100).joinToString(",")}", "empty.json")
+        server.respond("/library/metadata/101", "metadata_101.json")
+
+        val songs = sync()
+
+        metadataRequests() shouldContainExactly listOf("/library/metadata/${(1..100).joinToString(",")}", "/library/metadata/101")
+        songs.map { it.bitDepth } shouldBe List(100) { null } + 24
+    }
+
+    @Test
+    fun `a failed chunk leaves its tracks without a bit depth while the other chunks keep theirs`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs_101_flac.json")
+        server.respond("/library/metadata/${(1..100).joinToString(",")}", code = 500)
+        server.respond("/library/metadata/101", "metadata_101.json")
+
+        val songs = sync()
+
+        songs.size shouldBe 101
+        songs.map { it.bitDepth } shouldBe List(100) { null } + 24
+    }
+
+    private fun metadataRequests() = server.requests.map { it.url.encodedPath }.filter { it.startsWith("/library/metadata/") }
+
     private fun signedIn() {
         credentialStore.address = server.address
         credentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")

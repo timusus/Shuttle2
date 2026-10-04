@@ -1,0 +1,57 @@
+{
+ "MediaContainer": {
+  "totalSize": 2,
+  "Metadata": [
+   {
+    "key": "/library/metadata/31",
+    "ratingKey": "31",
+    "type": "track",
+    "title": "Hi-Res",
+    "Media": [
+     {
+      "id": "31",
+      "audioCodec": "flac",
+      "Part": [
+       {
+        "id": "31",
+        "key": "/library/parts/31/file.flac",
+        "Stream": [
+         {
+          "streamType": 2,
+          "codec": "flac",
+          "bitDepth": 24
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "/library/metadata/32",
+    "ratingKey": "32",
+    "type": "track",
+    "title": "CD",
+    "Media": [
+     {
+      "id": "32",
+      "audioCodec": "flac",
+      "Part": [
+       {
+        "id": "32",
+        "key": "/library/parts/32/file.flac",
+        "Stream": [
+         {
+          "streamType": 2,
+          "codec": "flac",
+          "bitDepth": 16
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

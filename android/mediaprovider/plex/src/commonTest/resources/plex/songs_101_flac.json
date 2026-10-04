@@ -1,0 +1,2431 @@
+{
+ "MediaContainer": {
+  "totalSize": 101,
+  "Metadata": [
+   {
+    "key": "/library/metadata/1",
+    "ratingKey": "1",
+    "type": "track",
+    "title": "Track 1",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 1,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 1,
+        "key": "/library/parts/1/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/2",
+    "ratingKey": "2",
+    "type": "track",
+    "title": "Track 2",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 2,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 2,
+        "key": "/library/parts/2/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/3",
+    "ratingKey": "3",
+    "type": "track",
+    "title": "Track 3",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 3,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 3,
+        "key": "/library/parts/3/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/4",
+    "ratingKey": "4",
+    "type": "track",
+    "title": "Track 4",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 4,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 4,
+        "key": "/library/parts/4/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/5",
+    "ratingKey": "5",
+    "type": "track",
+    "title": "Track 5",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 5,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 5,
+        "key": "/library/parts/5/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/6",
+    "ratingKey": "6",
+    "type": "track",
+    "title": "Track 6",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 6,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 6,
+        "key": "/library/parts/6/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/7",
+    "ratingKey": "7",
+    "type": "track",
+    "title": "Track 7",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 7,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 7,
+        "key": "/library/parts/7/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/8",
+    "ratingKey": "8",
+    "type": "track",
+    "title": "Track 8",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 8,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 8,
+        "key": "/library/parts/8/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/9",
+    "ratingKey": "9",
+    "type": "track",
+    "title": "Track 9",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 9,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 9,
+        "key": "/library/parts/9/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/10",
+    "ratingKey": "10",
+    "type": "track",
+    "title": "Track 10",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 10,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 10,
+        "key": "/library/parts/10/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/11",
+    "ratingKey": "11",
+    "type": "track",
+    "title": "Track 11",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 11,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 11,
+        "key": "/library/parts/11/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/12",
+    "ratingKey": "12",
+    "type": "track",
+    "title": "Track 12",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 12,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 12,
+        "key": "/library/parts/12/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/13",
+    "ratingKey": "13",
+    "type": "track",
+    "title": "Track 13",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 13,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 13,
+        "key": "/library/parts/13/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/14",
+    "ratingKey": "14",
+    "type": "track",
+    "title": "Track 14",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 14,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 14,
+        "key": "/library/parts/14/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/15",
+    "ratingKey": "15",
+    "type": "track",
+    "title": "Track 15",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 15,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 15,
+        "key": "/library/parts/15/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/16",
+    "ratingKey": "16",
+    "type": "track",
+    "title": "Track 16",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 16,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 16,
+        "key": "/library/parts/16/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/17",
+    "ratingKey": "17",
+    "type": "track",
+    "title": "Track 17",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 17,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 17,
+        "key": "/library/parts/17/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/18",
+    "ratingKey": "18",
+    "type": "track",
+    "title": "Track 18",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 18,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 18,
+        "key": "/library/parts/18/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/19",
+    "ratingKey": "19",
+    "type": "track",
+    "title": "Track 19",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 19,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 19,
+        "key": "/library/parts/19/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/20",
+    "ratingKey": "20",
+    "type": "track",
+    "title": "Track 20",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 20,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 20,
+        "key": "/library/parts/20/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/21",
+    "ratingKey": "21",
+    "type": "track",
+    "title": "Track 21",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 21,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 21,
+        "key": "/library/parts/21/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/22",
+    "ratingKey": "22",
+    "type": "track",
+    "title": "Track 22",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 22,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 22,
+        "key": "/library/parts/22/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/23",
+    "ratingKey": "23",
+    "type": "track",
+    "title": "Track 23",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 23,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 23,
+        "key": "/library/parts/23/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/24",
+    "ratingKey": "24",
+    "type": "track",
+    "title": "Track 24",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 24,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 24,
+        "key": "/library/parts/24/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/25",
+    "ratingKey": "25",
+    "type": "track",
+    "title": "Track 25",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 25,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 25,
+        "key": "/library/parts/25/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/26",
+    "ratingKey": "26",
+    "type": "track",
+    "title": "Track 26",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 26,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 26,
+        "key": "/library/parts/26/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/27",
+    "ratingKey": "27",
+    "type": "track",
+    "title": "Track 27",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 27,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 27,
+        "key": "/library/parts/27/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/28",
+    "ratingKey": "28",
+    "type": "track",
+    "title": "Track 28",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 28,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 28,
+        "key": "/library/parts/28/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/29",
+    "ratingKey": "29",
+    "type": "track",
+    "title": "Track 29",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 29,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 29,
+        "key": "/library/parts/29/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/30",
+    "ratingKey": "30",
+    "type": "track",
+    "title": "Track 30",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 30,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 30,
+        "key": "/library/parts/30/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/31",
+    "ratingKey": "31",
+    "type": "track",
+    "title": "Track 31",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 31,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 31,
+        "key": "/library/parts/31/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/32",
+    "ratingKey": "32",
+    "type": "track",
+    "title": "Track 32",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 32,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 32,
+        "key": "/library/parts/32/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/33",
+    "ratingKey": "33",
+    "type": "track",
+    "title": "Track 33",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 33,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 33,
+        "key": "/library/parts/33/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/34",
+    "ratingKey": "34",
+    "type": "track",
+    "title": "Track 34",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 34,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 34,
+        "key": "/library/parts/34/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/35",
+    "ratingKey": "35",
+    "type": "track",
+    "title": "Track 35",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 35,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 35,
+        "key": "/library/parts/35/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/36",
+    "ratingKey": "36",
+    "type": "track",
+    "title": "Track 36",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 36,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 36,
+        "key": "/library/parts/36/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/37",
+    "ratingKey": "37",
+    "type": "track",
+    "title": "Track 37",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 37,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 37,
+        "key": "/library/parts/37/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/38",
+    "ratingKey": "38",
+    "type": "track",
+    "title": "Track 38",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 38,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 38,
+        "key": "/library/parts/38/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/39",
+    "ratingKey": "39",
+    "type": "track",
+    "title": "Track 39",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 39,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 39,
+        "key": "/library/parts/39/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/40",
+    "ratingKey": "40",
+    "type": "track",
+    "title": "Track 40",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 40,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 40,
+        "key": "/library/parts/40/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/41",
+    "ratingKey": "41",
+    "type": "track",
+    "title": "Track 41",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 41,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 41,
+        "key": "/library/parts/41/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/42",
+    "ratingKey": "42",
+    "type": "track",
+    "title": "Track 42",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 42,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 42,
+        "key": "/library/parts/42/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/43",
+    "ratingKey": "43",
+    "type": "track",
+    "title": "Track 43",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 43,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 43,
+        "key": "/library/parts/43/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/44",
+    "ratingKey": "44",
+    "type": "track",
+    "title": "Track 44",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 44,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 44,
+        "key": "/library/parts/44/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/45",
+    "ratingKey": "45",
+    "type": "track",
+    "title": "Track 45",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 45,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 45,
+        "key": "/library/parts/45/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/46",
+    "ratingKey": "46",
+    "type": "track",
+    "title": "Track 46",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 46,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 46,
+        "key": "/library/parts/46/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/47",
+    "ratingKey": "47",
+    "type": "track",
+    "title": "Track 47",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 47,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 47,
+        "key": "/library/parts/47/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/48",
+    "ratingKey": "48",
+    "type": "track",
+    "title": "Track 48",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 48,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 48,
+        "key": "/library/parts/48/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/49",
+    "ratingKey": "49",
+    "type": "track",
+    "title": "Track 49",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 49,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 49,
+        "key": "/library/parts/49/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/50",
+    "ratingKey": "50",
+    "type": "track",
+    "title": "Track 50",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 50,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 50,
+        "key": "/library/parts/50/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/51",
+    "ratingKey": "51",
+    "type": "track",
+    "title": "Track 51",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 51,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 51,
+        "key": "/library/parts/51/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/52",
+    "ratingKey": "52",
+    "type": "track",
+    "title": "Track 52",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 52,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 52,
+        "key": "/library/parts/52/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/53",
+    "ratingKey": "53",
+    "type": "track",
+    "title": "Track 53",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 53,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 53,
+        "key": "/library/parts/53/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/54",
+    "ratingKey": "54",
+    "type": "track",
+    "title": "Track 54",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 54,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 54,
+        "key": "/library/parts/54/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/55",
+    "ratingKey": "55",
+    "type": "track",
+    "title": "Track 55",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 55,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 55,
+        "key": "/library/parts/55/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/56",
+    "ratingKey": "56",
+    "type": "track",
+    "title": "Track 56",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 56,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 56,
+        "key": "/library/parts/56/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/57",
+    "ratingKey": "57",
+    "type": "track",
+    "title": "Track 57",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 57,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 57,
+        "key": "/library/parts/57/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/58",
+    "ratingKey": "58",
+    "type": "track",
+    "title": "Track 58",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 58,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 58,
+        "key": "/library/parts/58/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/59",
+    "ratingKey": "59",
+    "type": "track",
+    "title": "Track 59",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 59,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 59,
+        "key": "/library/parts/59/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/60",
+    "ratingKey": "60",
+    "type": "track",
+    "title": "Track 60",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 60,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 60,
+        "key": "/library/parts/60/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/61",
+    "ratingKey": "61",
+    "type": "track",
+    "title": "Track 61",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 61,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 61,
+        "key": "/library/parts/61/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/62",
+    "ratingKey": "62",
+    "type": "track",
+    "title": "Track 62",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 62,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 62,
+        "key": "/library/parts/62/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/63",
+    "ratingKey": "63",
+    "type": "track",
+    "title": "Track 63",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 63,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 63,
+        "key": "/library/parts/63/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/64",
+    "ratingKey": "64",
+    "type": "track",
+    "title": "Track 64",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 64,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 64,
+        "key": "/library/parts/64/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/65",
+    "ratingKey": "65",
+    "type": "track",
+    "title": "Track 65",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 65,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 65,
+        "key": "/library/parts/65/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/66",
+    "ratingKey": "66",
+    "type": "track",
+    "title": "Track 66",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 66,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 66,
+        "key": "/library/parts/66/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/67",
+    "ratingKey": "67",
+    "type": "track",
+    "title": "Track 67",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 67,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 67,
+        "key": "/library/parts/67/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/68",
+    "ratingKey": "68",
+    "type": "track",
+    "title": "Track 68",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 68,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 68,
+        "key": "/library/parts/68/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/69",
+    "ratingKey": "69",
+    "type": "track",
+    "title": "Track 69",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 69,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 69,
+        "key": "/library/parts/69/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/70",
+    "ratingKey": "70",
+    "type": "track",
+    "title": "Track 70",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 70,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 70,
+        "key": "/library/parts/70/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/71",
+    "ratingKey": "71",
+    "type": "track",
+    "title": "Track 71",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 71,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 71,
+        "key": "/library/parts/71/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/72",
+    "ratingKey": "72",
+    "type": "track",
+    "title": "Track 72",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 72,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 72,
+        "key": "/library/parts/72/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/73",
+    "ratingKey": "73",
+    "type": "track",
+    "title": "Track 73",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 73,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 73,
+        "key": "/library/parts/73/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/74",
+    "ratingKey": "74",
+    "type": "track",
+    "title": "Track 74",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 74,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 74,
+        "key": "/library/parts/74/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/75",
+    "ratingKey": "75",
+    "type": "track",
+    "title": "Track 75",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 75,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 75,
+        "key": "/library/parts/75/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/76",
+    "ratingKey": "76",
+    "type": "track",
+    "title": "Track 76",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 76,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 76,
+        "key": "/library/parts/76/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/77",
+    "ratingKey": "77",
+    "type": "track",
+    "title": "Track 77",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 77,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 77,
+        "key": "/library/parts/77/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/78",
+    "ratingKey": "78",
+    "type": "track",
+    "title": "Track 78",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 78,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 78,
+        "key": "/library/parts/78/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/79",
+    "ratingKey": "79",
+    "type": "track",
+    "title": "Track 79",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 79,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 79,
+        "key": "/library/parts/79/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/80",
+    "ratingKey": "80",
+    "type": "track",
+    "title": "Track 80",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 80,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 80,
+        "key": "/library/parts/80/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/81",
+    "ratingKey": "81",
+    "type": "track",
+    "title": "Track 81",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 81,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 81,
+        "key": "/library/parts/81/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/82",
+    "ratingKey": "82",
+    "type": "track",
+    "title": "Track 82",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 82,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 82,
+        "key": "/library/parts/82/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/83",
+    "ratingKey": "83",
+    "type": "track",
+    "title": "Track 83",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 83,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 83,
+        "key": "/library/parts/83/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/84",
+    "ratingKey": "84",
+    "type": "track",
+    "title": "Track 84",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 84,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 84,
+        "key": "/library/parts/84/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/85",
+    "ratingKey": "85",
+    "type": "track",
+    "title": "Track 85",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 85,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 85,
+        "key": "/library/parts/85/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/86",
+    "ratingKey": "86",
+    "type": "track",
+    "title": "Track 86",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 86,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 86,
+        "key": "/library/parts/86/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/87",
+    "ratingKey": "87",
+    "type": "track",
+    "title": "Track 87",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 87,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 87,
+        "key": "/library/parts/87/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/88",
+    "ratingKey": "88",
+    "type": "track",
+    "title": "Track 88",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 88,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 88,
+        "key": "/library/parts/88/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/89",
+    "ratingKey": "89",
+    "type": "track",
+    "title": "Track 89",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 89,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 89,
+        "key": "/library/parts/89/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/90",
+    "ratingKey": "90",
+    "type": "track",
+    "title": "Track 90",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 90,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 90,
+        "key": "/library/parts/90/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/91",
+    "ratingKey": "91",
+    "type": "track",
+    "title": "Track 91",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 91,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 91,
+        "key": "/library/parts/91/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/92",
+    "ratingKey": "92",
+    "type": "track",
+    "title": "Track 92",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 92,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 92,
+        "key": "/library/parts/92/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/93",
+    "ratingKey": "93",
+    "type": "track",
+    "title": "Track 93",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 93,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 93,
+        "key": "/library/parts/93/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/94",
+    "ratingKey": "94",
+    "type": "track",
+    "title": "Track 94",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 94,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 94,
+        "key": "/library/parts/94/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/95",
+    "ratingKey": "95",
+    "type": "track",
+    "title": "Track 95",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 95,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 95,
+        "key": "/library/parts/95/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/96",
+    "ratingKey": "96",
+    "type": "track",
+    "title": "Track 96",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 96,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 96,
+        "key": "/library/parts/96/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/97",
+    "ratingKey": "97",
+    "type": "track",
+    "title": "Track 97",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 97,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 97,
+        "key": "/library/parts/97/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/98",
+    "ratingKey": "98",
+    "type": "track",
+    "title": "Track 98",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 98,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 98,
+        "key": "/library/parts/98/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/99",
+    "ratingKey": "99",
+    "type": "track",
+    "title": "Track 99",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 99,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 99,
+        "key": "/library/parts/99/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/100",
+    "ratingKey": "100",
+    "type": "track",
+    "title": "Track 100",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 100,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 100,
+        "key": "/library/parts/100/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/101",
+    "ratingKey": "101",
+    "type": "track",
+    "title": "Track 101",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": 101,
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": 101,
+        "key": "/library/parts/101/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   }
+  ]
+ }
+}

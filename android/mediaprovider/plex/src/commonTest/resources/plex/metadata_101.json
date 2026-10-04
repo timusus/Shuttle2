@@ -1,0 +1,32 @@
+{
+ "MediaContainer": {
+  "totalSize": 1,
+  "Metadata": [
+   {
+    "key": "/library/metadata/101",
+    "ratingKey": "101",
+    "type": "track",
+    "title": "Track 101",
+    "Media": [
+     {
+      "id": 101,
+      "audioCodec": "flac",
+      "Part": [
+       {
+        "id": 101,
+        "key": "/library/parts/101/file.flac",
+        "Stream": [
+         {
+          "streamType": 2,
+          "codec": "flac",
+          "bitDepth": 24
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

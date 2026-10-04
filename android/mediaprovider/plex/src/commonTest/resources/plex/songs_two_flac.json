@@ -1,0 +1,55 @@
+{
+ "MediaContainer": {
+  "totalSize": 2,
+  "Metadata": [
+   {
+    "key": "/library/metadata/31",
+    "ratingKey": "31",
+    "type": "track",
+    "title": "Hi-Res",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": "31",
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": "31",
+        "key": "/library/parts/31/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   },
+   {
+    "key": "/library/metadata/32",
+    "ratingKey": "32",
+    "type": "track",
+    "title": "CD",
+    "parentTitle": "First Album",
+    "grandparentTitle": "Artist One",
+    "Media": [
+     {
+      "id": "32",
+      "audioCodec": "flac",
+      "container": "flac",
+      "Part": [
+       {
+        "id": "32",
+        "key": "/library/parts/32/file.flac",
+        "size": 1,
+        "container": "flac"
+       }
+      ]
+     }
+    ],
+    "addedAt": 1709299200
+   }
+  ]
+ }
+}
