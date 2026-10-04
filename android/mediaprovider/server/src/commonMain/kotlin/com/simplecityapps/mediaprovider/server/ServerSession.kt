@@ -7,6 +7,7 @@ import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.shuttle.logging.Logger
 import io.ktor.http.HttpStatusCode
+import kotlin.concurrent.Volatile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
@@ -25,6 +26,7 @@ class ServerSession<C : Any>(
     private val reauthenticate: suspend () -> C?
 ) {
     /** The credentials requests are made with: the sign-in the sync started with, or the one that replaced it after a 401. */
+    @Volatile
     var credentials: C = credentials
         private set
 
@@ -65,10 +67,12 @@ private fun NetworkResult<*>.isUnauthorized(): Boolean = ((this as? NetworkResul
  * The skeleton a server sync runs in: fails straight away when no server [address] is set, otherwise reports that
  * it's connecting, signs in with [authenticate] and runs [body] with the session, or fails when signing in
  * does. The session signs in again with [authenticate] the first time the server rejects a [ServerSession.request] with a
- * 401, which finds the stored session cleared ([checkSession]) and so signs in with the saved login.
+ * 401, which finds the stored session cleared ([checkSession]) and so signs in with the saved login. The sync runs
+ * under [ServerCredentialStore.deferringExpiry], so the user is told they were signed out only if that sign-in didn't work.
  */
 fun <C : Any, T> withServerSession(
     strings: ServerStrings,
+    credentialStore: ServerCredentialStore,
     address: String?,
     authenticate: suspend (address: String) -> C?,
     body: suspend FlowCollector<FlowEvent<T, MessageProgress>>.(address: String, session: ServerSession<C>) -> Unit
@@ -79,11 +83,13 @@ fun <C : Any, T> withServerSession(
 
     return flow {
         emit(FlowEvent.Progress(MessageProgress(ImportPhase.Connecting, progress = null)))
-        val credentials = authenticate(address)
-        if (credentials == null) {
-            emit(FlowEvent.Failure(strings.authenticationError))
-        } else {
-            body(address, ServerSession(credentials) { authenticate(address) })
+        credentialStore.deferringExpiry {
+            val credentials = authenticate(address)
+            if (credentials == null) {
+                emit(FlowEvent.Failure(strings.authenticationError))
+            } else {
+                body(address, ServerSession(credentials) { authenticate(address) })
+            }
         }
     }
 }

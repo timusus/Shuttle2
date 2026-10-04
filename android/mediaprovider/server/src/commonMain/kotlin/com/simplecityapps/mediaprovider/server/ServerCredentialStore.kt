@@ -97,16 +97,45 @@ class ServerCredentialStore(
      */
     val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
 
+    // Guarded by [lock]: the syncs running now, and whether one of their 401s cleared the session while they ran
+    private var syncs = 0
+    private var expiryPending = false
+
     /**
      * Clears the stored session and signals [sessionExpired], because the server answered a request made with
      * [rejected] with a 401. Does nothing, and returns false, when the stored session is no longer [rejected]: a
      * newer sign-in has replaced it, or another rejected request already cleared it. So a 401 that arrives late
-     * never signs out a fresh session, and requests rejected together signal once.
+     * never signs out a fresh session, and requests rejected together signal once. While a sync runs under
+     * [deferringExpiry] the signal waits until it ends, and is dropped if the sync signed in again by then.
      */
     fun expireSession(rejected: AuthenticatedCredentials): Boolean {
         if (!compareAndSetAuthenticatedCredentials(expected = rejected, new = null)) return false
-        _sessionExpired.tryEmit(Unit)
+        val deferred =
+            lock.withLock {
+                if (syncs > 0) expiryPending = true
+                syncs > 0
+            }
+        if (!deferred) _sessionExpired.tryEmit(Unit)
         return true
+    }
+
+    /**
+     * Runs [block], a sync that signs in again when the server rejects its session, holding back [sessionExpired]
+     * until it ends: it signals then only if the session is still cleared, so a session the sync renewed doesn't
+     * tell the user they were signed out.
+     */
+    suspend fun <T> deferringExpiry(block: suspend () -> T): T {
+        lock.withLock { syncs++ }
+        try {
+            return block()
+        } finally {
+            val settled =
+                lock.withLock {
+                    syncs--
+                    (syncs == 0 && expiryPending).also { if (it) expiryPending = false }
+                }
+            if (settled && authenticatedCredentials == null) _sessionExpired.tryEmit(Unit)
+        }
     }
 }
 

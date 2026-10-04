@@ -59,7 +59,7 @@ class EmbyMediaProvider(
     private fun findSongs(
         existingSongs: List<Song>,
         since: Instant?
-    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now()
         emitAll(
@@ -73,7 +73,7 @@ class EmbyMediaProvider(
         )
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (
             val queryResult =
                 session.request { credentials ->

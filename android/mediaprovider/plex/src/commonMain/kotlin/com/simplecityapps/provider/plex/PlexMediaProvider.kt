@@ -58,7 +58,7 @@ class PlexMediaProvider(
     private fun findSongs(
         existingSongs: List<Song>,
         since: Instant?
-    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val syncedAt = Clock.System.now()
         when (val sectionsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
@@ -87,7 +87,7 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (val playlistsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 val songsByPart = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }

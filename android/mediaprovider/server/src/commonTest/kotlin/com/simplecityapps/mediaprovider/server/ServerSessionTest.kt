@@ -5,6 +5,8 @@ import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 import kotlin.test.Test
@@ -22,6 +24,7 @@ class ServerSessionTest {
             override val unknownName = "Unknown"
         }
     private val authenticatedAt = mutableListOf<String>()
+    private val store = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "test")
 
     private val querying = Event.Progress(MessageProgress(ImportPhase.Connecting, progress = null))
 
@@ -30,6 +33,7 @@ class ServerSessionTest {
         credentials: String?
     ) = withServerSession<String, String>(
         strings = strings,
+        credentialStore = store,
         address = address,
         authenticate = {
             authenticatedAt += it

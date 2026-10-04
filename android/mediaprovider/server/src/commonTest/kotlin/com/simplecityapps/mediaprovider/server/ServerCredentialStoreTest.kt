@@ -155,6 +155,43 @@ class ServerCredentialStoreTest {
         signals.size shouldBe 1
     }
 
+    private val unauthorized = NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Unauthorized))
+
+    @Test
+    fun `a 401 in a sync that signs in again signals nothing`() = runTest {
+        val (store, signals) = signedIn()
+
+        store.deferringExpiry {
+            store.checkSession(session, unauthorized)
+            signals.size shouldBe 0
+            store.authenticatedCredentials = session.copy(accessToken = "token-2")
+        }
+
+        signals.size shouldBe 0
+    }
+
+    @Test
+    fun `a 401 in a sync that can't sign in again signals once, when the sync ends`() = runTest {
+        val (store, signals) = signedIn()
+
+        store.deferringExpiry {
+            store.checkSession(session, unauthorized)
+            store.checkSession(session, unauthorized)
+            signals.size shouldBe 0
+        }
+
+        signals.size shouldBe 1
+    }
+
+    @Test
+    fun `a sync that sees no 401 signals nothing`() = runTest {
+        val (store, signals) = signedIn()
+
+        store.deferringExpiry { }
+
+        signals.size shouldBe 0
+    }
+
     @Test
     fun `other failures leave the session alone`() = runTest {
         val (store, signals) = signedIn()

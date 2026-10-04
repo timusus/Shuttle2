@@ -19,7 +19,7 @@ import kotlin.uuid.Uuid
 
 class JellyfinAuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: ServerCredentialStore,
+    val credentialStore: ServerCredentialStore,
     private val clientIdentity: ClientIdentity,
     private val streamProfile: StreamProfile
 ) {
