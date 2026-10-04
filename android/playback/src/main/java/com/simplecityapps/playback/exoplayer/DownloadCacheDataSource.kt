@@ -49,6 +49,7 @@ private class CompleteDownloadsOnlyDataSource(
     }
 
     override fun open(dataSpec: DataSpec): Long {
+        close()
         val source = (if (isFullyCached(dataSpec)) cachedFactory else upstreamFactory).createDataSource()
         listeners.forEach(source::addTransferListener)
         opened = source

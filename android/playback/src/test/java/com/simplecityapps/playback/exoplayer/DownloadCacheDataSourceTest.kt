@@ -106,4 +106,27 @@ class DownloadCacheDataSourceTest {
 
         read(partial).contentEquals(streamedBytes) shouldBe true
     }
+
+    @Test
+    fun `a completed download of unknown length plays from the cache without opening upstream`() {
+        // A chunked transcode: the server sends no Content-Length, so the cache only learns it at end of input.
+        val chunked = Uri.parse("jellyfin://server/Audio/chunked")
+        val bytes = ByteArray(3000) { 3 }
+        val source = CacheDataSource.Factory().setCache(cache).setUpstreamDataSourceFactory {
+            FakeDataSource(FakeDataSet().newData(chunked).setSimulateUnknownLength(true).appendReadData(bytes).endData())
+        }.createDataSource()
+        CacheWriter(source, DataSpec.Builder().setUri(chunked).setKey(chunked.toString()).build(), null, null).cache()
+
+        read(chunked).contentEquals(bytes) shouldBe true
+        upstreamOpens() shouldBe 0
+    }
+
+    @Test
+    fun `opening twice closes the source opened first`() {
+        val source = downloadCacheDataSourceFactory(cache, upstream).createDataSource()
+        source.open(DataSpec(streamed))
+        source.open(DataSpec(streamed))
+        source.close()
+        upstreams.all { it.isOpened.not() } shouldBe true
+    }
 }
