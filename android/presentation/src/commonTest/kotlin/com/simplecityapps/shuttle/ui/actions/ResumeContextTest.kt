@@ -10,11 +10,11 @@ import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
-import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
