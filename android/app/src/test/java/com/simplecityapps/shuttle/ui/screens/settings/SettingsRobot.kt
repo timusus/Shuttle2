@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -10,6 +11,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -113,6 +115,13 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
     fun assertDisplayed(text: String) {
         scrollTo(text)
         rule.onNodeWithText(text).assertIsDisplayed()
+    }
+
+    fun assertTextCount(
+        text: String,
+        count: Int
+    ) {
+        rule.onAllNodesWithText(text).assertCountEquals(count)
     }
 
     fun assertDialogDisplayed(text: String) {

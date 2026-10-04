@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "New Crossfade setting in Playback settings fades one song into the next, from off up to 12 seconds. Songs from the same album still play gaplessly",
+      "commits": []
+    },
+    {
       "text": "The app icon's long-press menu now has Shuffle all and Search next to Play/Pause",
       "commits": []
     },

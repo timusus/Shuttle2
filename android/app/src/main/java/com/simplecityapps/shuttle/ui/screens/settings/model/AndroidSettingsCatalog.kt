@@ -145,6 +145,13 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         range = -MAX_REPLAY_GAIN_PREAMP_DB.toFloat()..MAX_REPLAY_GAIN_PREAMP_DB.toFloat(),
                         steps = 0,
                         fromFloat = { it }
+                    ),
+                    SettingItem.Slider(
+                        setting = PlaybackSettings.CrossfadeDuration,
+                        title = StringKey.PREF_CROSSFADE_TITLE,
+                        range = 0f..12_000f,
+                        steps = 11,
+                        fromFloat = { it.roundToInt() }
                     )
                 )
             )

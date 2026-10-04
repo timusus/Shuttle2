@@ -280,6 +280,25 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `crossfade reads Off at zero`() {
+        robot.setDestinationContent(SettingsDestination.PlaybackAndSound)
+
+        robot.assertDisplayed("Crossfade")
+        robot.assertTextCount("Off", 3)
+    }
+
+    @Test
+    fun `crossfade shows its length in seconds`() {
+        robot.setDestinationContent(
+            SettingsDestination.PlaybackAndSound,
+            SettingsUiState(values = mapOf(PlaybackSettings.CrossfadeDuration.key to 6000))
+        )
+
+        robot.assertDisplayed("6 s")
+        robot.assertTextCount("Off", 2)
+    }
+
+    @Test
     fun `playback opens the equalizer`() {
         robot.setDestinationContent(SettingsDestination.PlaybackAndSound)
 

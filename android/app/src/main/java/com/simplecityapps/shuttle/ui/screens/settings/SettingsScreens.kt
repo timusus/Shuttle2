@@ -396,6 +396,7 @@ private fun sliderValueLabel(
     value: Float
 ): String? = when (item.setting) {
     PlaybackSettings.PreAmpGain -> String.format(Locale.getDefault(), "%+.1f dB", value)
+    PlaybackSettings.CrossfadeDuration -> if (value < 500f) "Off" else "${(value / 1000f).roundToInt()} s"
     AppearanceSettings.WidgetBackgroundOpacity -> "${value.roundToInt()}%"
     else -> null
 }

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -118,6 +119,17 @@ class SettingsViewModelTest {
         advanceTimeBy(SettingsViewModel.SLIDER_SETTLE_MILLIS + 1)
 
         effects.changes shouldBe listOf(AppearanceSettings.WidgetBackgroundOpacity.key to 61)
+    }
+
+    @Test
+    fun `the crossfade slider stores whole seconds in milliseconds`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        val slider = item<SettingItem.Slider<*>>(PlaybackSettings.CrossfadeDuration.key)
+
+        viewModel.onSliderChange(slider, 6000f)
+        runCurrent()
+
+        store.preference(PlaybackSettings.CrossfadeDuration).value shouldBe 6000
     }
 
     @Test

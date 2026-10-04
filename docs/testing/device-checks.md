@@ -366,3 +366,9 @@ previous and new outputs, and where each pause came from.
 - [ ] Signed in to a Jellyfin, Emby or Plex server, download a song and wait for it to complete. Turn on airplane mode (Wi-Fi and mobile data off), then play the downloaded song: it starts and plays to the end, and seeking within it works. Repeat for a song queued after it that is also downloaded, to check the next track starts.
 - [ ] Still in airplane mode, play a song that was not downloaded: it fails to play with the usual error and the queue skips on, rather than hanging.
 - [ ] Back online, play the downloaded song again and a non-downloaded one: both play, and the downloads list shows the same size as before (streaming adds nothing to the download cache).
+
+## Crossfade (#570)
+- [ ] Settings, Playback: set Crossfade to 6 s and play two songs from different albums: the first fades out as the second fades in near the end. Songs that are consecutive on the same album still play gaplessly with no fade. While casting, no fade happens.
+
+## iOS Now Playing (#747)
+- [ ] iOS Now Playing More button press highlight matches the heart (#747)
