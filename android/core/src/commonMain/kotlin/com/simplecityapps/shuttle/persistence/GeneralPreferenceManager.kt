@@ -267,6 +267,28 @@ class GeneralPreferenceManager @Inject constructor(
     /** [lastMediaImportDate] now and each time it changes, so a screen shows an import's end as it's written (#648). */
     fun observeLastMediaImportDate(): Flow<Instant?> = store.changes(LAST_MEDIA_IMPORT_DATE).map { lastMediaImportDate }.distinctUntilChanged()
 
+    /**
+     * How the last import of [source] (a media provider type's name) ended and when, kept across restarts so Sources
+     * still says a server couldn't be reached until an import gets through (#668). Null before any import has ended.
+     */
+    fun sourceReachability(source: String): SourceReachability? {
+        val checkedAt = store.getInstant("source_checked_at_$source") ?: return null
+        return SourceReachability(error = store.getString("source_error_$source", null), checkedAt = checkedAt)
+    }
+
+    fun setSourceReachability(
+        source: String,
+        reachability: SourceReachability
+    ) {
+        store.edit {
+            if (reachability.error == null) remove("source_error_$source") else putString("source_error_$source", reachability.error)
+            putLong("source_checked_at_$source", reachability.checkedAt.toEpochMilliseconds())
+        }
+    }
+
+    /** [sourceReachability] now and each time an import of [source] ends. */
+    fun observeSourceReachability(source: String): Flow<SourceReachability?> = store.changes("source_checked_at_$source").map { sourceReachability(source) }.distinctUntilChanged()
+
     /** The first-run source setup (iOS) was finished or skipped, so it never opens by itself again. */
     var sourceSetupCompleted: Boolean
         set(value) {
@@ -280,6 +302,12 @@ class GeneralPreferenceManager @Inject constructor(
         const val LAST_MEDIA_IMPORT_DATE = "pref_media_last_rescan_date"
     }
 }
+
+/** How a source's import ended at [checkedAt]: [error] is its message when the source couldn't be imported from, null when it went through. */
+data class SourceReachability(
+    val error: String?,
+    val checkedAt: Instant
+)
 
 enum class LibraryTab {
     Songs,

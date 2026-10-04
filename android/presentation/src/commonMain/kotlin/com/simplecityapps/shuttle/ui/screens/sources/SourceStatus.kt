@@ -4,9 +4,12 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /** How a source's import is going, for its card in Sources (#663). */
@@ -21,11 +24,23 @@ sealed interface SourceStatus {
     data class Failed(val error: String) : SourceStatus
 }
 
-/** [state] as a source's status: a finished import with no error is [SourceStatus.Idle] again. */
-internal fun sourceStatus(state: SongImportState?): SourceStatus = when (state) {
+/**
+ * [state] as a source's status: a finished import with no error is [SourceStatus.Idle] again. Before this session has
+ * imported from the source, [stored] (how its last import ended, kept across restarts) stands in (#668).
+ */
+internal fun sourceStatus(state: SongImportState?, stored: SourceReachability? = null): SourceStatus = when (state) {
     is SongImportState.ImportProgress -> SourceStatus.Importing(state.progress)
     is SongImportState.ImportComplete -> state.error?.let(SourceStatus::Failed) ?: SourceStatus.Idle
-    SongImportState.Idle, null -> SourceStatus.Idle
+    SongImportState.Idle, null -> stored?.error?.let(SourceStatus::Failed) ?: SourceStatus.Idle
+}
+
+/** How each server's last import ended, now and each time one ends (#668). */
+class ObserveSourceReachability @Inject constructor(
+    private val generalPreferenceManager: GeneralPreferenceManager
+) {
+    operator fun invoke(): Flow<Map<MediaProviderType, SourceReachability?>> = combine(ServerTypes.map { type -> generalPreferenceManager.observeSourceReachability(type.name) }) { reachabilities ->
+        ServerTypes.zip(reachabilities.toList()).toMap()
+    }
 }
 
 /** How many songs the library holds from each source, as it changes; null until the library has loaded. */

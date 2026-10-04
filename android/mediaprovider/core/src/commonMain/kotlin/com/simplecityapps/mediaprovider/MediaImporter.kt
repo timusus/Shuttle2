@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SourceReachability
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -331,6 +332,7 @@ class MediaImporter(
 
                     is FlowEvent.Success -> {
                         stored = event.result
+                        preferenceManager.setSourceReachability(type.name, SourceReachability(error = null, checkedAt = clock.now()))
                         val changed = event.result.inserts + event.result.updates + event.result.deletes > 0
                         // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
                         val clearsError = (_providerImportStates.value[type] as? SongImportState.ImportComplete)?.error != null
@@ -343,6 +345,7 @@ class MediaImporter(
                         if (quietFailures) {
                             logger.warn { "$type sync failed, leaving its status as it was: ${event.message}" }
                         } else {
+                            preferenceManager.setSourceReachability(type.name, SourceReachability(error = event.message, checkedAt = clock.now()))
                             complete(type, event.message)
                         }
                     }

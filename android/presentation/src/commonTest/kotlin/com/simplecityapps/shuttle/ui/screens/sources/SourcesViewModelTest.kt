@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import io.kotest.matchers.shouldBe
@@ -63,6 +64,7 @@ class SourcesViewModelTest {
         ObserveLastScanDate(preferences),
         ForgetServer(mapOf(MediaProviderType.Emby to emby)),
         ObserveSongCounts(songs),
+        ObserveSourceReachability(preferences),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -190,6 +192,19 @@ class SourcesViewModelTest {
 
         importState.setState(SongImportState.ImportProgress(MediaProviderType.Shuttle, null, null))
         viewModel.uiState.value.scanError shouldBe null
+    }
+
+    @Test
+    fun `a server that couldn't be reached last session still shows as failed - until an import gets through`() = runTest {
+        preferences.setSourceReachability("Jellyfin", SourceReachability("Can't reach the server", Instant.fromEpochMilliseconds(1_000)))
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Jellyfin))
+
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.status shouldBe SourceStatus.Failed("Can't reach the server")
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Plex }.status shouldBe SourceStatus.Idle
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, null))
+        preferences.setSourceReachability("Jellyfin", SourceReachability(null, Instant.fromEpochMilliseconds(2_000)))
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.status shouldBe SourceStatus.Idle
     }
 
     @Test

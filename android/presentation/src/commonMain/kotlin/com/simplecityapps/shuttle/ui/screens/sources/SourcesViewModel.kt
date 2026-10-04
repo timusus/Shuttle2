@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
@@ -76,11 +77,12 @@ class SourcesViewModel @Inject constructor(
     observeLastScanDate: ObserveLastScanDate,
     private val forgetServer: ForgetServer,
     observeSongCounts: ObserveSongCounts,
+    observeSourceReachability: ObserveSourceReachability,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
     private val imports: Flow<Imports> =
-        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), ::Imports)
+        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), observeSourceReachability(), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
         combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate(), events.flow) { types, folders, imports, lastImport, events ->
@@ -94,7 +96,7 @@ class SourcesViewModel @Inject constructor(
                 deviceStatus = sourceStatus(types.firstOrNull { it.isLocal }?.let(imports.byProvider::get)),
                 deviceSongs = imports.songCounts?.filterKeys { it.isLocal }?.values?.sum(),
                 servers = ServerTypes.map { type ->
-                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type]), songs = imports.songCounts?.let { it[type] ?: 0 })
+                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 })
                 },
                 lastImport = lastImport,
                 events = events,
@@ -143,10 +145,11 @@ class SourcesViewModel @Inject constructor(
 
     fun onEventHandled(id: Long) = events.consume(id)
 
-    /** The importer's latest state, each provider's own, and the library's songs per provider. */
+    /** The importer's latest state, each provider's own, the library's songs per provider, and how each server's last import ended. */
     private data class Imports(
         val latest: SongImportState,
         val byProvider: Map<MediaProviderType, SongImportState>,
         val songCounts: Map<MediaProviderType, Int>?,
+        val reachability: Map<MediaProviderType, SourceReachability?>,
     )
 }

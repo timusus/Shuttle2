@@ -37,6 +37,20 @@ class GeneralPreferenceManagerTest {
         preferences.lastMediaImportDate.shouldBeNull()
         preferences.lastSyncStart("Jellyfin").shouldBeNull()
         preferences.lastFullSyncStart("Jellyfin").shouldBeNull()
+        preferences.sourceReachability("Jellyfin").shouldBeNull()
+    }
+
+    @Test
+    fun `a source's reachability is kept per source - a success clears its error`() {
+        val failed = SourceReachability("Can't reach the server", Instant.fromEpochMilliseconds(1_000))
+        preferences.setSourceReachability("Jellyfin", failed)
+
+        preferences.sourceReachability("Jellyfin") shouldBe failed
+        preferences.sourceReachability("Plex").shouldBeNull()
+
+        val reached = SourceReachability(null, Instant.fromEpochMilliseconds(2_000))
+        preferences.setSourceReachability("Jellyfin", reached)
+        preferences.sourceReachability("Jellyfin") shouldBe reached
     }
 
     @Test
