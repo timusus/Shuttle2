@@ -318,7 +318,8 @@ strings and the route mirrors it; an album with no group key cannot open detail 
 `rememberNavBackStack(tabRoot)`, and the selected tab. `NavDisplay` shows the start tab's stack
 followed by the selected tab's, so back at the root of a non-start tab returns to the start tab, as
 `NavigationUI` does today; re-selecting a tab restores its stack; re-selecting the current tab pops
-it to its root. Its API is `open(route)`, `selectTab(tab)`, `back()`. Screens never see it: route
+it to its root, or, already at the root, emits on `reselects` (provided as `LocalTabReselects`) so
+the tab's visible list scrolls to the top (`ScrollToTopOnReselect`). Its API is `open(route)`, `selectTab(tab)`, `back()`. Screens never see it: route
 composables take lambdas (`onOpenAlbum`) that the entry provider wires to it. The rules are unit
 tests on the navigator, with no Compose.
 
