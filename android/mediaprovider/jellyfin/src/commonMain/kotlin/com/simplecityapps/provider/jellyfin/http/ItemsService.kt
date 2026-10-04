@@ -48,7 +48,9 @@ class ItemsService(private val client: HttpClient) {
         limit = limit,
         startIndex = startIndex,
         filters = "IsFavorite",
-        enableUserData = false
+        enableUserData = false,
+        // A total order, so a favourite can't slip between pages when the list is paged by offset
+        sortBy = "SortName,DateCreated"
     )
 
     suspend fun playlists(
@@ -102,7 +104,8 @@ class ItemsService(private val client: HttpClient) {
         userId: String? = null,
         minDateLastSaved: Instant? = null,
         filters: String? = null,
-        enableUserData: Boolean? = null
+        enableUserData: Boolean? = null,
+        sortBy: String? = null
     ): NetworkResult<QueryResult> = client.networkResult {
         get(url) {
             header(HttpHeaders.Authorization, authorization)
@@ -115,6 +118,7 @@ class ItemsService(private val client: HttpClient) {
             parameter("minDateLastSaved", minDateLastSaved?.toString())
             parameter("filters", filters)
             parameter("enableUserData", enableUserData)
+            parameter("sortBy", sortBy)
         }
     }
 }

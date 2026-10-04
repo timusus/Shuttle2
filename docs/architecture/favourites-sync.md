@@ -34,6 +34,9 @@ merges it for remote-provider updates in the same transaction: a song with a `pe
 row keeps its local value; otherwise the server wins, and a server favourite keeps an existing
 local timestamp. Inserts take the server value as is. MediaStore and TagLib songs are never
 touched. v53 dropped `pending_favourites.mediaProvider` and `externalId`, which nothing read.
+The 52→53 migration also backfills the outbox with every remote-provider favourite that had no
+pending row (hearts made before the outbox existed), at its `favouritedAt`, so the first sync
+pushes them rather than clearing them.
 
 A favourite change doesn't move what the incremental listing filters on (Jellyfin/Emby
 `DateLastSaved`: user data lives apart from the item; Plex `updatedAt`), so each incremental pass

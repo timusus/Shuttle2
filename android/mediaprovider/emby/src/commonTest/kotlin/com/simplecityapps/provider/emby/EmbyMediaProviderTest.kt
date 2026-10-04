@@ -321,6 +321,7 @@ class EmbyMediaProviderTest {
         val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
 
         songs.associate { song -> song.path to (song.favouritedAt != null) } shouldBe mapOf("emby://item/101" to false, "emby://item/102" to true)
+        server.requestsTo(ITEMS).single { it.url.parameters["Filters"] == "IsFavorite" }.url.parameters["SortBy"] shouldBe "SortName,DateCreated"
     }
 
     @Test

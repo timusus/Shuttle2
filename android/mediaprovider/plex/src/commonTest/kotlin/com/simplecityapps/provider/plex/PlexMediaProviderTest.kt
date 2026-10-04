@@ -310,6 +310,7 @@ class PlexMediaProviderTest {
 
         // B-Side, rated 6, is in the reply as a server ignoring the filter would send it, and stays unfavourited
         songs.associate { song -> song.name to song.favouritedAt } shouldBe mapOf("Opening" to null, "Duet" to Instant.fromEpochSeconds(1_759_305_600))
+        server.requestsTo(ITEMS).single { it.url.parameters["userRating"] == "10" }.url.parameters["sort"] shouldBe "titleSort,addedAt"
     }
 
     @Test

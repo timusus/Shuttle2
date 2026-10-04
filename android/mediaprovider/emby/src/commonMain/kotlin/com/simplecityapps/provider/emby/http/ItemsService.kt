@@ -47,7 +47,9 @@ class ItemsService(private val client: HttpClient) {
         limit = limit,
         startIndex = startIndex,
         filters = "IsFavorite",
-        enableUserData = false
+        enableUserData = false,
+        // A total order, so a favourite can't slip between pages when the list is paged by offset
+        sortBy = "SortName,DateCreated"
     )
 
     suspend fun playlists(
@@ -101,7 +103,8 @@ class ItemsService(private val client: HttpClient) {
         userId: String? = null,
         minDateLastSaved: Instant? = null,
         filters: String? = null,
-        enableUserData: Boolean? = null
+        enableUserData: Boolean? = null,
+        sortBy: String? = null
     ): NetworkResult<QueryResult> = client.networkResult {
         get(url) {
             header(EMBY_TOKEN, token)
@@ -114,6 +117,7 @@ class ItemsService(private val client: HttpClient) {
             parameter("MinDateLastSaved", minDateLastSaved?.toString())
             parameter("Filters", filters)
             parameter("EnableUserData", enableUserData)
+            parameter("SortBy", sortBy)
         }
     }
 }

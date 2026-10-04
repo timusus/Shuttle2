@@ -322,6 +322,7 @@ class JellyfinMediaProviderTest {
         val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
 
         songs.associate { song -> song.path to (song.favouritedAt != null) } shouldBe mapOf("jellyfin://item/song-1" to false, "jellyfin://item/song-2" to true)
+        server.requestsTo(ITEMS).single { it.url.parameters["filters"] == "IsFavorite" }.url.parameters["sortBy"] shouldBe "SortName,DateCreated"
     }
 
     @Test
