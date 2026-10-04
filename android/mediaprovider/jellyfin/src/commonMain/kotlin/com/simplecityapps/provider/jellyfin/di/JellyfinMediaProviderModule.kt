@@ -2,6 +2,7 @@ package com.simplecityapps.provider.jellyfin.di
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
+import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
@@ -10,9 +11,11 @@ import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
+import com.simplecityapps.provider.jellyfin.JellyfinFavouriteWriter
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
+import com.simplecityapps.provider.jellyfin.http.FavouriteService
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
@@ -67,6 +70,14 @@ class JellyfinMediaProviderModule {
         authenticationManager: JellyfinAuthenticationManager,
         itemsService: ItemsService
     ): JellyfinMediaProvider = JellyfinMediaProvider(strings, authenticationManager, itemsService)
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideFavouriteService(@Named("JellyfinHttpClient") httpClient: HttpClient): FavouriteService = FavouriteService(httpClient)
+
+    @Provides
+    @IntoSet
+    fun provideFavouriteWriter(writer: JellyfinFavouriteWriter): FavouriteWriter = writer
 
     @Provides
     @IntoSet

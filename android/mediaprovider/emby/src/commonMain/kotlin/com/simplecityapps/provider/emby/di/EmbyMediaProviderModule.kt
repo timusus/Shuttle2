@@ -2,6 +2,7 @@ package com.simplecityapps.provider.emby.di
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
+import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
@@ -10,10 +11,12 @@ import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
+import com.simplecityapps.provider.emby.EmbyFavouriteWriter
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyServerAuthentication
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
+import com.simplecityapps.provider.emby.http.FavouriteService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.UserService
@@ -67,6 +70,14 @@ class EmbyMediaProviderModule {
         authenticationManager: EmbyAuthenticationManager,
         itemsService: ItemsService
     ): EmbyMediaProvider = EmbyMediaProvider(strings, authenticationManager, itemsService)
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideFavouriteService(@Named("EmbyHttpClient") httpClient: HttpClient): FavouriteService = FavouriteService(httpClient)
+
+    @Provides
+    @IntoSet
+    fun provideFavouriteWriter(writer: EmbyFavouriteWriter): FavouriteWriter = writer
 
     @Provides
     @IntoSet
