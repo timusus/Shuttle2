@@ -10,9 +10,12 @@ since=$(tr -d '[:space:]' < SINCE)
 if [ ${#files[@]} -eq 0 ]; then
   jq -n --arg since "$since" '{since: $since, features: [], improvements: [], fixes: []}'
 else
-  jq -s --arg since "$since" '
-    . as $all | {since: $since}
-    + ([ "features", "improvements", "fixes" ][] as $t
-       | {($t): [$all[] | select(.type == $t) | {text, commits}]}) ' "${files[@]}" \
-  | jq -s 'add'
+  # One jq pass, buffered, so a malformed fragment or unknown type prints nothing and fails.
+  out=$(jq -s --arg since "$since" '
+    (map(select(.type | IN("features", "improvements", "fixes") | not)) | length) as $bad
+    | if $bad > 0 then error("\($bad) fragment(s) with a type other than features/improvements/fixes")
+      else . as $all | reduce ("features", "improvements", "fixes") as $t ({since: $since};
+        .[$t] = [$all[] | select(.type == $t) | {text, commits: (.commits // [])}])
+      end' "${files[@]}")
+  printf '%s\n' "$out"
 fi
