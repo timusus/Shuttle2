@@ -28,6 +28,7 @@ import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
+import com.simplecityapps.playback.exoplayer.emptyDownloadCache
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
@@ -213,6 +214,7 @@ class PlaybackHarness(
                 replayGain,
                 AudioTrackMonitor(),
                 songUriResolver,
+                emptyDownloadCache(context),
                 { playbackSettings.crossfadeDurationMs.value.toLong() },
                 crossfadeSkips::add
             ) { renderersFactory, mediaSourceFactory ->

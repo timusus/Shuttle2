@@ -52,6 +52,9 @@ dependencies {
     // Shuttle Media Provider
     implementation project(path: ':android:mediaprovider:core')
 
+    // The download cache downloaded songs play from
+    implementation project(path: ':android:downloads')
+
     // Shuttle Image Loader
     implementation project(path: ':android:imageloader')
 

@@ -7,6 +7,7 @@ import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.cache.Cache
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.ExoPlayer
@@ -30,7 +31,7 @@ import com.simplecityapps.playback.engine.SongUriResolver
 /**
  * Builds the app's ExoPlayer, on the main looper: the extension renderers (FLAC, Opus) enabled, a [DefaultAudioSink]
  * running the ReplayGain, crossfade and equalizer processors (see [Crossfade]), and a [StreamSniffingMediaSourceFactory] so extensionless HLS
- * streams play, reading through [songUriResolver] so remote songs resolve their stream when they're opened. The
+ * streams play, reading downloaded songs from [downloadCache] and the rest through [songUriResolver], so remote songs resolve their stream when they're opened. The
  * player reports the AudioTracks it opens to [audioTrackMonitor].
  *
  * The player handles audio focus and headphones being unplugged itself: it pauses when unplugged and on a permanent
@@ -44,6 +45,8 @@ class ExoPlayerFactory(
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val audioTrackMonitor: AudioTrackMonitor,
     private val songUriResolver: SongUriResolver,
+    /** Where downloaded songs live; they play from it, and everything else streams. */
+    private val downloadCache: Cache,
     /** The crossfade length, 0 when it's off; read whenever the queue or the current item changes. */
     private val crossfadeDurationMs: () -> Long = { 0 },
     /** Told of each song that should have crossfaded into the next but didn't, and why. */
@@ -76,7 +79,7 @@ class ExoPlayerFactory(
     }
 
     private val mediaSourceFactory by lazy {
-        StreamSniffingMediaSourceFactory(songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context)))
+        StreamSniffingMediaSourceFactory(downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context))))
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())
     }
 

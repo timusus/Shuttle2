@@ -5,6 +5,7 @@ import androidx.core.content.getSystemService
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.RemoteCastPlayer
 import androidx.media3.common.Player
+import androidx.media3.datasource.cache.Cache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.tracing.trace
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
@@ -39,6 +40,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.downloads.di.DownloadCache
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -101,6 +103,7 @@ class PlaybackEngineModule {
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         audioTrackMonitor: AudioTrackMonitor,
         songUriResolver: SongUriResolver,
+        @DownloadCache downloadCache: Cache,
         playbackSettings: PlaybackSettings,
         analytics: Analytics
     ): ExoPlayerFactory = ExoPlayerFactory(
@@ -109,6 +112,7 @@ class PlaybackEngineModule {
         replayGainAudioProcessor,
         audioTrackMonitor,
         songUriResolver,
+        downloadCache,
         { playbackSettings.crossfadeDurationMs.value.toLong() },
         analytics::crossfadeSkipped
     )

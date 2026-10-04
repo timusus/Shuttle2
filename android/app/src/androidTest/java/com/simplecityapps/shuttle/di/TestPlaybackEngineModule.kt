@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import androidx.media3.common.Player
+import androidx.media3.datasource.cache.Cache
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AppPlayer
@@ -26,6 +27,7 @@ import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.downloads.di.DownloadCache
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -73,8 +75,9 @@ class TestPlaybackEngineModule {
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         audioTrackMonitor: AudioTrackMonitor,
-        songUriResolver: SongUriResolver
-    ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
+        songUriResolver: SongUriResolver,
+        @DownloadCache downloadCache: Cache
+    ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver, downloadCache).create()
 
     // No Cast player in tests: the app plays through the ExoPlayer, and attaching Cast does nothing.
     @SingleIn(AppScope::class)

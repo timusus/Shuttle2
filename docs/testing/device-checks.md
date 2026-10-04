@@ -361,3 +361,8 @@ previous and new outputs, and where each pause came from.
 - [ ] On Android 16, or Android 13 to 15 with SDK extension 15 (`adb shell getprop build.version.extensions.t`), play a 24-bit FLAC that was already in the local library before this version, after a rescan: note whether Now Playing and Song info show "24-bit" (MediaStore may leave it blank; local files read by TagLib stay blank, see #798).
 - [ ] On Android 11 or 12 (no bits-per-sample column), a local rescan still completes and imports every song; bit depth stays blank.
 - [ ] Play a 24-bit FLAC from Jellyfin that was synced before this version, after a library sync: Now Playing's quality line and Song info show "24-bit". An MP3 from the same server shows no bit depth.
+
+## Downloaded songs play offline (#573)
+- [ ] Signed in to a Jellyfin, Emby or Plex server, download a song and wait for it to complete. Turn on airplane mode (Wi-Fi and mobile data off), then play the downloaded song: it starts and plays to the end, and seeking within it works. Repeat for a song queued after it that is also downloaded, to check the next track starts.
+- [ ] Still in airplane mode, play a song that was not downloaded: it fails to play with the usual error and the queue skips on, rather than hanging.
+- [ ] Back online, play the downloaded song again and a non-downloaded one: both play, and the downloads list shows the same size as before (streaming adds nothing to the download cache).

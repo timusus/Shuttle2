@@ -234,6 +234,10 @@
   ],
   "fixes": [
     {
+      "text": "Songs you've downloaded from Jellyfin, Emby or Plex now play from your device, so they work offline instead of trying to stream",
+      "commits": []
+    },
+    {
       "text": "Albums whose songs are by several artists, but have no album artist tag, now show as one Various Artists album instead of one album per artist, and albums that share a name are no longer merged when their tags tell them apart. Your play history and downloaded albums carry over",
       "commits": []
     },
