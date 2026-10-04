@@ -76,7 +76,9 @@ class PlayBilling(
 
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
+            // An update resolves the flow that was launched, so the next one isn't attributed to this product
             outcomes.onPurchasesUpdated(billingResult.responseCode, purchases.orEmpty(), launchedProductId)
+            launchedProductId = null
             when (billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
                     Timber.v("onPurchasesUpdated: found ${purchases.orEmpty().size} purchases")
@@ -123,12 +125,12 @@ class PlayBilling(
     }
 
     override fun launchPurchaseFlow(
-        activity: Activity,
+        activity: Activity?,
         offer: PaywallOffer
     ): Boolean {
         val details = productDetails[offer.productId]
-        if (!billingClient.isReady || details == null) {
-            Timber.e("Failed to launch purchase flow: BillingClient not ready, or no details for ${offer.productId}")
+        if (activity == null || !billingClient.isReady || details == null) {
+            Timber.e("Failed to launch purchase flow: no activity, BillingClient not ready, or no details for ${offer.productId}")
             analytics.purchaseFailed(offer.productId, PurchaseFailureReason.Failed)
             return false
         }

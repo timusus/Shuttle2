@@ -36,6 +36,13 @@ class PurchaseOutcomeReporterTest {
     }
 
     @Test
+    fun `a cancel or error with no launched product has nothing to report against`() {
+        reporter.onPurchasesUpdated(BillingClient.BillingResponseCode.USER_CANCELED, emptyList(), null)
+        reporter.onPurchasesUpdated(BillingClient.BillingResponseCode.ERROR, emptyList(), null)
+        verify(exactly = 0) { analytics.purchaseFailed(any(), any()) }
+    }
+
+    @Test
     fun `a purchase waiting on payment is pending`() {
         reporter.onPurchasesUpdated(
             BillingClient.BillingResponseCode.OK,

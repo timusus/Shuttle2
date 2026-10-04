@@ -32,7 +32,7 @@ class FakeBilling(
     override suspend fun restorePurchases(): RestoreResult = restoreResult
 
     override fun launchPurchaseFlow(
-        activity: Activity,
+        activity: Activity?,
         offer: PaywallOffer
     ): Boolean {
         launchedOffers += offer

@@ -12,7 +12,9 @@ internal class PurchaseOutcomeReporter(
     /**
      * Reports what a purchase update means for [launchedProductId], the product whose sheet was open. A user who
      * backs out is a cancel; a purchase waiting on payment is pending; any other refusal is an error. A product
-     * the user already owns is not a failure: the owned products are refreshed instead.
+     * the user already owns is not a failure: the owned products are refreshed instead. A cancel or error with no
+     * [launchedProductId] has no product to report against ([MonetisationAnalytics.purchaseFailed] needs one), so it
+     * isn't reported; iOS likewise reports a failure only for the product being bought.
      */
     fun onPurchasesUpdated(
         responseCode: Int,
@@ -37,4 +39,7 @@ internal class PurchaseOutcomeReporter(
 }
 
 /** The owned Pro product a restore reports: the one granting the best [com.simplecityapps.shuttle.entitlement.ProSource]. */
-internal fun Set<String>.restoredProductId(): String? = filter { ProductIds.proSource(it) != null }.minByOrNull { ProductIds.proSource(it)!! }
+internal fun Set<String>.restoredProductId(): String? {
+    val best = proSource() ?: return null
+    return first { ProductIds.proSource(it) == best }
+}

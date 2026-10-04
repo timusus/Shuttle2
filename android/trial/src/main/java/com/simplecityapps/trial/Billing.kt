@@ -23,9 +23,9 @@ interface Billing {
     /** Asks Play for the user's purchases now and reports whether any of them grants Pro. */
     suspend fun restorePurchases(): RestoreResult
 
-    /** Opens Play's purchase sheet for [offer]. Returns false if it couldn't be opened. */
+    /** Opens Play's purchase sheet for [offer]; a null [activity] can't open it. Returns false if it couldn't be opened. */
     fun launchPurchaseFlow(
-        activity: Activity,
+        activity: Activity?,
         offer: PaywallOffer
     ): Boolean
 }
