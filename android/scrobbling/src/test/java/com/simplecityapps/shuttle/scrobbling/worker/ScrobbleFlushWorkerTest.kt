@@ -254,6 +254,61 @@ class ScrobbleFlushWorkerTest {
     }
 
     @Test
+    fun `a single-row queue that gets error 6 is held, not dropped`() = runTest {
+        dao.enqueue(entity(1))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = LastFmError.INVALID_PARAMETERS))
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.failure()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
+
+    @Test
+    fun `error 6 on every row deletes nothing`() = runTest {
+        repeat(6) { dao.enqueue(entity(it, startedAtEpochSec = System.currentTimeMillis() / 1000 - 100 + it)) }
+        fakeEngine.responder = { LastFmScrobbleResponse(error = LastFmError.INVALID_PARAMETERS) }
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.failure()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 6
+    }
+
+    @Test
+    fun `a poison row first in the queue is dropped once a later row is accepted`() = runTest {
+        repeat(4) { dao.enqueue(entity(it, startedAtEpochSec = System.currentTimeMillis() / 1000 - 100 + it)) }
+        fakeEngine.responder = { request -> poisonedBy(request, "track-0") }
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.success()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+    }
+
+    @Test
+    fun `the drop budget holds the queue once a run has dropped too many rows`() = runTest {
+        repeat(20) { dao.enqueue(entity(it, startedAtEpochSec = System.currentTimeMillis() / 1000 - 100 + it)) }
+        val poison = listOf(1, 4, 7, 10, 13, 16).map { "track-$it" }
+        fakeEngine.responder = { request -> poisonedBy(request, *poison.toTypedArray()) }
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.failure()
+        val remaining = dao.oldestBatch(QueuedScrobbleEntity.SERVICE_LASTFM, 50).map { it.track }
+        (poison.take(ScrobbleFlushWorker.MAX_DROPS_PER_RUN).intersect(remaining.toSet())) shouldBe emptySet()
+        remaining.contains("track-16") shouldBe true
+    }
+
+    private fun poisonedBy(
+        request: HttpRequestData,
+        vararg tracks: String
+    ): LastFmScrobbleResponse? {
+        val sent = formData(request).entries().filter { it.key.startsWith("track[") }.map { it.value.first() }
+        return if (sent.any { it in tracks }) LastFmScrobbleResponse(error = LastFmError.INVALID_PARAMETERS) else null
+    }
+
+    @Test
     fun `a transient failure while isolating a poison row keeps the rows not yet accepted`() = runTest {
         repeat(2) { dao.enqueue(entity(it, startedAtEpochSec = System.currentTimeMillis() / 1000 - 100 + it)) }
         fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = LastFmError.INVALID_PARAMETERS))
@@ -300,6 +355,9 @@ class ScrobbleFlushWorkerTest {
 
 private class FakeLastFmEngine {
     val requests = mutableListOf<HttpRequestData>()
+
+    /** Answers a request itself when it returns non-null, ahead of the enqueued responses. */
+    var responder: ((HttpRequestData) -> LastFmScrobbleResponse?)? = null
     private val responses = ArrayDeque<Pair<HttpStatusCode, LastFmScrobbleResponse>>()
 
     fun enqueueSuccess(response: LastFmScrobbleResponse = LastFmScrobbleResponse()) {
@@ -312,7 +370,9 @@ private class FakeLastFmEngine {
 
     val engine = MockEngine { request ->
         requests += request
-        val (status, body) = responses.removeFirstOrNull() ?: (HttpStatusCode.OK to LastFmScrobbleResponse())
+        val (status, body) = responder?.let { it(request)?.let { r -> HttpStatusCode.OK to r } }
+            ?: responses.removeFirstOrNull()
+            ?: (HttpStatusCode.OK to LastFmScrobbleResponse())
         respond(
             content = S2Json.encodeToString(LastFmScrobbleResponse.serializer(), body),
             status = status,
