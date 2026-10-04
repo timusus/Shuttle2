@@ -139,14 +139,14 @@ struct SearchViewTests {
             query: "radio", results: results(artists: [artist("Radiohead", albums: 3, songs: 42)], top: .artists),
             onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
         )
-        try artistResults.inspect().find(viewWithAccessibilityIdentifier: "search.topResult.play").find(ViewType.Button.self, relation: .parent).tap()
+        try artistResults.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "search.topResult.play" }).tap()
         #expect(selections.count == 1)
         #expect(played == nil)
         let songResults = SearchResultList(
             query: "radio", results: results(songs: TestSongs.demo, top: .songs),
             onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
         )
-        try songResults.inspect().find(viewWithAccessibilityIdentifier: "search.topResult.play").find(ViewType.Button.self, relation: .parent).tap()
+        try songResults.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "search.topResult.play" }).tap()
         #expect(played == 0)
         #expect(selections.count == 1)
     }
