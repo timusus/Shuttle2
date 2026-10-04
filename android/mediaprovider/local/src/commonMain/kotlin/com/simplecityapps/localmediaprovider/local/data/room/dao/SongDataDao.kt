@@ -259,7 +259,7 @@ abstract class SongDataDao {
 
     /**
      * One `pending_favourites` row per remote-provider song among [songs], overwriting any row already pending for it
-     * so only the latest desired state survives to be sent (#497): a favourite then an unfavourite before a flush
+     * so only the latest desired state survives to be sent (#497): a favourite then an unfavourite before it is sent
      * leaves a single row with the final state, not two queued operations.
      */
     private suspend fun enqueuePendingFavourites(

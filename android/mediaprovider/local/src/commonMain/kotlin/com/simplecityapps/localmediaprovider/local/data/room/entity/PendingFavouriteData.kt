@@ -8,10 +8,9 @@ import kotlin.time.Instant
 
 /**
  * A favourite/unfavourite made on a remote-provider song, not yet pushed to its server (#497): the local outbox. Keyed
- * by [songId] alone, so a later toggle before this row is flushed (a later slice) replaces it rather than piling up -
- * only the latest desired state is ever sent. [mediaProvider] and [externalId] are copied from the song at write time
- * so the writer that drains this table doesn't need to look the song back up, and so a row survives even if the song
- * itself is later removed from a different provider context. Deleted along with its song ([ForeignKey.CASCADE]).
+ * by [songId] alone, so a later toggle before this row is sent replaces it rather than piling up -
+ * only the latest desired state is ever sent. [mediaProvider] and [externalId] are a copy of the song's at write time;
+ * the sender looks the song up by [songId] and doesn't read them. Deleted along with its song ([ForeignKey.CASCADE]).
  */
 @Entity(
     tableName = "pending_favourites",

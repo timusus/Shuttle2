@@ -11,6 +11,9 @@ import dev.zacsweers.metro.Inject
  * Plex has no favourite flag on a track, only a 0 to 10 rating, so a favourite is a rating of 10 (a full five stars in
  * Plex's own apps) through `/:/rate`.
  *
+ * Hearting a track replaces any other rating the user gave it (a 6, say) with 10: that is the price of mapping a
+ * favourite onto a rating, and the owner's decision.
+ *
  * Unfavouriting clears the rating only if it is still 10: a track the user has since rated 6 elsewhere isn't a favourite
  * any more in the sense we wrote, and wiping their rating would destroy something we didn't put there. A track that
  * isn't rated at all needs nothing sent.
