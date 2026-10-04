@@ -24,8 +24,12 @@ interface SongDownloadManager {
         mimeType: String
     )
 
-    /** Downloads the song at [path] from [uri], e.g. to retry a failed download with a fallback URL. */
-    fun download(
+    /**
+     * Downloads the song at [path] again from [uri], discarding whatever an earlier attempt cached first: the new
+     * URL may serve a different stream (the static stream rather than the original, or a transcode), and bytes
+     * from the two stitched together are corrupt.
+     */
+    fun restart(
         path: String,
         mimeType: String,
         uri: Uri
@@ -58,13 +62,17 @@ class DefaultSongDownloadManager @Inject constructor(
         song: Song,
         uri: Uri,
         mimeType: String
-    ) = download(song.path, mimeType, uri)
+    ) = send("download") {
+        DownloadService.sendAddDownload(context, SongDownloadService::class.java, downloadRequest(song.path, mimeType, uri), true)
+    }
 
-    override fun download(
+    override fun restart(
         path: String,
         mimeType: String,
         uri: Uri
-    ) = send("download") {
+    ) = send("restart") {
+        // Media3 restarts a download re-added while it is being removed, once its cached spans are gone.
+        DownloadService.sendRemoveDownload(context, SongDownloadService::class.java, path, true)
         DownloadService.sendAddDownload(context, SongDownloadService::class.java, downloadRequest(path, mimeType, uri), true)
     }
 

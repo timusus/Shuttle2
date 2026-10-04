@@ -80,7 +80,7 @@ private class FakeSongDownloadManager : SongDownloadManager {
         mimeType: String
     ) = Unit
 
-    override fun download(
+    override fun restart(
         path: String,
         mimeType: String,
         uri: Uri

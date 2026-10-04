@@ -54,8 +54,19 @@ class DownloadFallbackObserverTest {
         observer.onDownloadChanged(failedDownload(responseCode = 403), invalidResponseCode(403), backgroundScope)
         runCurrent()
 
-        songDownloadManager.downloaded shouldBe listOf(Triple(PATH, "audio/flac", Uri.parse("https://server/stream/abc123")))
+        songDownloadManager.restarted shouldBe listOf(Triple(PATH, "audio/flac", Uri.parse("https://server/stream/abc123")))
         fallbackProvider.disableCalled shouldBe true
+    }
+
+    @Test
+    fun `the retry restarts the download rather than resuming the failed attempt's bytes`() = runTest {
+        fallbackProvider.fallbackUri = Uri.parse("https://server/stream/abc123")
+
+        observer.onDownloadChanged(failedDownload(responseCode = 403), invalidResponseCode(403), backgroundScope)
+        runCurrent()
+
+        songDownloadManager.restarted.map { it.first } shouldBe listOf(PATH)
+        songDownloadManager.downloaded shouldBe emptyList()
     }
 
     @Test
@@ -65,7 +76,7 @@ class DownloadFallbackObserverTest {
         observer.onDownloadChanged(failedDownload(responseCode = 401), invalidResponseCode(401), backgroundScope)
         runCurrent()
 
-        songDownloadManager.downloaded shouldBe listOf(Triple(PATH, "audio/flac", Uri.parse("https://server/stream/abc123")))
+        songDownloadManager.restarted shouldBe listOf(Triple(PATH, "audio/flac", Uri.parse("https://server/stream/abc123")))
     }
 
     @Test
@@ -77,7 +88,7 @@ class DownloadFallbackObserverTest {
         observer.onDownloadChanged(failedDownload(responseCode = 403), invalidResponseCode(403), backgroundScope)
         runCurrent()
 
-        songDownloadManager.downloaded.size shouldBe 1
+        songDownloadManager.restarted.size shouldBe 1
     }
 
     @Test
@@ -87,7 +98,7 @@ class DownloadFallbackObserverTest {
         observer.onDownloadChanged(failedDownload(responseCode = 403), java.io.IOException("wrapped", invalidResponseCode(403)), backgroundScope)
         runCurrent()
 
-        songDownloadManager.downloaded shouldBe listOf(Triple(PATH, "audio/flac", Uri.parse("https://server/stream/abc123")))
+        songDownloadManager.restarted shouldBe listOf(Triple(PATH, "audio/flac", Uri.parse("https://server/stream/abc123")))
     }
 
     @Test
@@ -97,7 +108,7 @@ class DownloadFallbackObserverTest {
         observer.onDownloadChanged(failedDownload(responseCode = 500), invalidResponseCode(500), backgroundScope)
         runCurrent()
 
-        songDownloadManager.downloaded shouldBe emptyList()
+        songDownloadManager.restarted shouldBe emptyList()
     }
 
     @Test
@@ -107,7 +118,7 @@ class DownloadFallbackObserverTest {
         observer.onDownloadChanged(queuedDownload(), null, backgroundScope)
         runCurrent()
 
-        songDownloadManager.downloaded shouldBe emptyList()
+        songDownloadManager.restarted shouldBe emptyList()
     }
 
     private fun failedDownload(responseCode: Int) = Download(
@@ -145,20 +156,23 @@ class DownloadFallbackObserverTest {
 }
 
 private class RecordingSongDownloadManager : SongDownloadManager {
-    val downloaded = mutableListOf<Triple<String, String, Uri>>()
+    val downloaded = mutableListOf<Song>()
+    val restarted = mutableListOf<Triple<String, String, Uri>>()
 
     override fun download(
         song: Song,
         uri: Uri,
         mimeType: String
-    ) = Unit
+    ) {
+        downloaded += song
+    }
 
-    override fun download(
+    override fun restart(
         path: String,
         mimeType: String,
         uri: Uri
     ) {
-        downloaded += Triple(path, mimeType, uri)
+        restarted += Triple(path, mimeType, uri)
     }
 
     override fun remove(song: Song) = Unit

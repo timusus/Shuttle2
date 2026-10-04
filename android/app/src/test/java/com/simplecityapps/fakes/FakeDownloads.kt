@@ -32,7 +32,7 @@ class FakeSongDownloadManager : SongDownloadManager {
         downloadedMimeTypes += mimeType
     }
 
-    override fun download(path: String, mimeType: String, uri: Uri) {}
+    override fun restart(path: String, mimeType: String, uri: Uri) {}
 
     override fun remove(song: Song) {
         removed += song

@@ -18,7 +18,8 @@ import timber.log.Timber
  * Retries a failed download once with [AggregateMediaInfoProvider.downloadFallbackUri] when Media3
  * reports an HTTP 401/403 from the Download URL (#322) — the server admin turned off download
  * permission after the URL was cached, or (401 only) the cached session simply expired. The
- * fallback is the static stream URL, which stays available in both cases; resolving it also
+ * fallback is the static stream URL, which stays available in both cases; the retry restarts from
+ * nothing, since the failed attempt's cached bytes may be from a different stream. Resolving it also
  * persists the permission change on a 403, so later downloads go straight to the stream URL.
  *
  * Keeps its own retried-path set rather than relying on Media3's retry count: a download that
@@ -68,7 +69,7 @@ constructor(
                 return@launch
             }
             Timber.i("Download for $path got HTTP $responseCode; retrying once with the fallback URL")
-            songDownloadManager.download(path, download.request.mimeType ?: MimeTypes.AUDIO_UNKNOWN, fallbackUri)
+            songDownloadManager.restart(path, download.request.mimeType ?: MimeTypes.AUDIO_UNKNOWN, fallbackUri)
         }
     }
 
