@@ -60,7 +60,16 @@ val syncKonsistRoot = tasks.register<Sync>("syncKonsistRoot") {
     into(konsistRoot)
 }
 
+// Kotlin/Native rejects some characters in backtick test names (#821), so `NativeTestNameRules` reads the real
+// commonTest sources, which the production-only Konsist root above leaves out.
+val commonTestSources = fileTree(rootDir) {
+    include("android/**/src/commonTest/**/*.kt", "shared/src/commonTest/**/*.kt")
+    exclude("**/build/**", "**/.*/**")
+}
+
 tasks.withType<Test>().configureEach {
+    inputs.files(commonTestSources).withPathSensitivity(PathSensitivity.RELATIVE).withPropertyName("commonTestSources")
+    systemProperty("architecture.repoRoot", rootDir.absolutePath)
     // Konsist parses every module's sources; the default 512 MB test heap runs out in the full sweep.
     maxHeapSize = "2g"
     // The module layer rules (root `verifyModuleLayers`, #443) gate landings alongside the Konsist rules.
