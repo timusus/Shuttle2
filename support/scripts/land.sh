@@ -231,8 +231,11 @@ validate_close_specs || exit 2
 
 https_fallback
 
-if [ -n "$(git status --porcelain)" ]; then
-  echo "land.sh: working tree is dirty; commit or stash before landing" >&2
+# Untracked files are fine (#713: an untracked dir in the primary checkout must not block landing) --
+# the reset and the picks only touch tracked files, and a pick that would clobber an untracked file
+# fails its own cherry-pick and is reported as that branch's conflict.
+if [ -n "$(git status --porcelain -uno)" ]; then
+  echo "land.sh: working tree has tracked changes; commit or stash before landing" >&2
   exit 1
 fi
 
