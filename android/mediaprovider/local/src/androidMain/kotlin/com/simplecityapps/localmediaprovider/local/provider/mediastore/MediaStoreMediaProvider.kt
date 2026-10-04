@@ -405,11 +405,13 @@ internal fun List<Song>.withGenres(genresBySongId: Map<String, List<String>>): L
 
 // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
 // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner. MediaStore's artist is the
-// raw tag, so it is split like Shuttle's own (#880) and any shared artist counts: one side may list fewer of them.
+// raw tag, so both sides are split like Shuttle's own (#880; a song scanned before then may still hold the raw tag) and
+// any shared artist counts: one side may list fewer of them.
 internal fun Song.matchesPlaylistEntry(mediaStoreSong: MediaStoreMediaProvider.MediaStoreSong): Boolean {
     val mediaStoreArtists = mediaStoreSong.artist?.let(::splitArtistTag).orEmpty()
+    val songArtists = artists.flatMap(::splitArtistTag)
     return name.equals(mediaStoreSong.title, ignoreCase = true) &&
         album.equals(mediaStoreSong.album, ignoreCase = true) &&
-        (artists.any { artist -> mediaStoreArtists.any { it.equals(artist, ignoreCase = true) } } || albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
+        (songArtists.any { artist -> mediaStoreArtists.any { it.equals(artist, ignoreCase = true) } } || albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
         abs(duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
 }
