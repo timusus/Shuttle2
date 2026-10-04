@@ -382,3 +382,7 @@ previous and new outputs, and where each pause came from.
 ## Incremental library sync (#771)
 - [ ] Plex: with the Plex server's library already synced, add or retag one track on the server, return to the app after 15+ minutes: the change appears, and the server's request log (or a proxy) shows the items request carried `updatedAt>>=` and returned only the changed tracks, not the whole library.
 - [ ] Jellyfin and Emby: the same check; the change appears on returning to the app without a manual scan.
+
+## Share diagnostics (#768)
+- [ ] iOS device build, Settings → Share diagnostics: the share sheet offers shuttle-diagnostics.txt; save it (Files) or mail it to yourself and open the file: the Swift `Logger` lines are readable text, not `<private>` (unified-log redaction must not have stripped the message bodies).
+- [ ] Android, Settings → Share debug logs (with debug logging on and something played first): the chooser opens with a log file attached, and the receiving app (e.g. Files or Gmail) can read its contents. With nothing logged, "Log file empty" shows instead and no chooser opens.

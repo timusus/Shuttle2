@@ -79,13 +79,15 @@ filters `WidgetBackgroundOpacity`, "download all artwork" and `RescanFrequency` 
 changed setting (`ThemeManager.setDayNightMode()`, `WidgetManager.onBackgroundOpacityChanged`,
 `ReplayGainAudioProcessor.mode`/`preAmpGain`, `MediaImportWorker.updateWork`), reads `lastScanDate()`,
 `rescan()`s through `MediaImporter` in the app scope, `clearArtworkCache()`, starts `ArtworkDownloadService`,
-and `copyDebugLogs()` to `ClipboardManager` (mapping `TransactionTooLargeException` to `TooLarge`).
+and `shareDebugLogs()` copies the log file into the cache and offers it through a `FileProvider`
+`ACTION_SEND` chooser (`ShareDebugLogsResult.Empty` when there are no logs; the clipboard and its
+`TransactionTooLargeException` are gone).
 
 **commonMain** (`presentation`, same package): the interface and `ShareDebugLogsResult` move as-is except
 `fun lastScanDate(): Instant?` (`java.util.Date` → `kotlin.time.Instant`; `SettingsViewModel` converts for
 display). All six methods stay injected calls, not route effects: none needs a presenting UI, and the
-clipboard is app-level on both platforms. `SettingsUiEvent` stays typed by outcome
-(`DebugLogsCopied(result)`). No split into smaller interfaces: every method has one caller and one
+log share is app-level on both platforms. `SettingsUiEvent` stays typed by outcome
+(`DebugLogsShared(result)`). No split into smaller interfaces: every method has one caller and one
 implementation per platform, so splitting buys nothing for the port.
 
 **Android**: `AndroidSettingsEffects` and `SettingsEffectsModule` stay in `:android:app`, one-line change
@@ -96,9 +98,10 @@ implementation per platform, so splitting buys nothing for the port.
 `ReplayGain`/`PreAmpGain` → no-op until phase 6, then the `IosPlayerController`'s gain stage;
 `WidgetBackgroundOpacity`, `RescanFrequency` → no-op, rows hidden by S0; `lastScanDate`/`rescan` → the shared
 prefs/`MediaImporter` from phases 2–3; `clearArtworkCache` → no-op until phase 5 picks the image pipeline;
-`downloadAllArtwork` → hidden by S0; `copyDebugLogs` → `UIPasteboard.generalPasteboard.string = logs` from the
-shared logger's file (phase 2), `TooLarge` never returned. Phase 7 (Settings screen) is when any of this is
-visible; the stub is fine for phases 5–6.
+`downloadAllArtwork` → hidden by S0; `shareDebugLogs` → unused: iOS keeps no log file, so the Settings
+row is a SwiftUI `ShareLink` over `DiagnosticsLog`, which reads this run's `Logger` entries from the
+unified log (`OSLogStore`) and exports them lazily to a temporary file; `IosSettingsEffects` returns
+`Empty`. Phase 7 (Settings screen) is when any of this is visible; the stub is fine for phases 5–6.
 
 **Tests**: `SettingsViewModelTest`, `PlayerViewModelTest` move with `FakeSettingsEffects`; `AndroidSettingsEffectsTest` stays.
 
