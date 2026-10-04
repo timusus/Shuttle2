@@ -154,6 +154,15 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         fromFloat = { it.roundToInt() }
                     )
                 )
+            ),
+            SettingsGroup(
+                title = null,
+                items = listOf(
+                    SettingItem.Navigate(
+                        target = SettingsLink.Scrobbling,
+                        title = StringKey.SETTINGS_SCROBBLING_TITLE
+                    )
+                )
             )
         )
     )

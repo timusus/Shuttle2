@@ -37,6 +37,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsView
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingScreen
+import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
@@ -59,6 +61,9 @@ data object EqualizerRoute : UtilityRoute
 
 @Serializable
 data object ExcludedSongsRoute : UtilityRoute
+
+@Serializable
+data object ScrobblingRoute : UtilityRoute
 
 @Serializable
 data object WhatsNewRoute : UtilityRoute
@@ -111,6 +116,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     entry<FolderRulesRoute>(metadata = SettingsDetailPane) { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
     entry<EqualizerRoute>(metadata = SettingsDetailPane) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
     entry<ExcludedSongsRoute>(metadata = SettingsDetailPane) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
+    entry<ScrobblingRoute>(metadata = SettingsDetailPane) { ScrobblingEntry(onNavigateUp = { navigateUp() }) }
     entry<LiveLogRoute>(metadata = SettingsDetailPane) { LiveLogEntry(onNavigateUp = { navigateUp() }) }
     entry<WhatsNewRoute>(metadata = SettingsDetailPane) {
         val viewModel: WhatsNewViewModel = metroViewModel()
@@ -250,6 +256,22 @@ private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
         onNavigateUp = onNavigateUp,
         onInclude = viewModel::onInclude,
         onIncludeAll = viewModel::onIncludeAll
+    )
+}
+
+@Composable
+private fun ScrobblingEntry(onNavigateUp: () -> Unit) {
+    val viewModel: ScrobblingViewModel = metroViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    ScrobblingScreen(
+        uiState = uiState,
+        onNavigateUp = onNavigateUp,
+        onSignIn = viewModel::onSignIn,
+        onFinishSignIn = viewModel::onFinishSignIn,
+        onSignOut = viewModel::onSignOut,
+        onServerStreamsChange = viewModel::onServerStreamsChange,
+        onApprovalUrlOpened = viewModel::onApprovalUrlOpened,
+        onMessageShown = viewModel::onMessageShown
     )
 }
 

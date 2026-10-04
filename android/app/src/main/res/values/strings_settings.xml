@@ -36,6 +36,21 @@
     <string name="pref_theme_title">Theme</string>
     <!-- Settings: Title for changing the accent colour -->
     <string name="pref_theme_accent_title">Accent</string>
+    <!-- Settings: Title of the Last.fm scrobbling screen, and its row in Playback & sound -->
+    <string name="settings_scrobbling_title">Scrobbling</string>
+    <string name="scrobbling_lastfm">Last.fm</string>
+    <string name="scrobbling_lastfm_signed_out">Not signed in</string>
+    <string name="scrobbling_lastfm_signed_in">Signed in as %1$s</string>
+    <string name="scrobbling_lastfm_awaiting">Approve Shuttle Music on last.fm, then come back here</string>
+    <string name="scrobbling_sign_in">Sign in</string>
+    <string name="scrobbling_finish_sign_in">I\'ve approved it</string>
+    <string name="scrobbling_sign_out">Sign out</string>
+    <string name="scrobbling_server_streams_title">Scrobble server streams too</string>
+    <string name="scrobbling_server_streams_summary">Also scrobble Jellyfin, Emby and Plex songs, even when your server already does. This can count a play twice.</string>
+    <string name="scrobbling_not_approved">Last.fm hasn\'t seen your approval yet</string>
+    <string name="scrobbling_expired">That sign-in expired. Please try again</string>
+    <string name="scrobbling_failed">Couldn\'t reach Last.fm. Check your connection and try again</string>
+    <string name="scrobbling_attribution">Scrobbling powered by AudioScrobbler</string>
     <!-- Settings: Title for the option to report what's playing to the Jellyfin, Emby or Plex server -->
     <string name="pref_report_playback_title">Report playback to server</string>
     <!-- Settings: Description for the option to report what's playing to the Jellyfin, Emby or Plex server -->

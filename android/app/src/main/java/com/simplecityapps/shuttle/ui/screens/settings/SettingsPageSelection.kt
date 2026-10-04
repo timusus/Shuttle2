@@ -19,6 +19,7 @@ val SettingsLink.route: NavKey
         SettingsLink.WhatsNew -> WhatsNewRoute
         SettingsLink.Licences -> LicencesRoute
         SettingsLink.LiveLog -> LiveLogRoute
+        SettingsLink.Scrobbling -> ScrobblingRoute
     }
 
 /**

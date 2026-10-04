@@ -35,7 +35,8 @@ enum class SettingsLink {
     ExcludedSongs,
     WhatsNew,
     Licences,
-    LiveLog
+    LiveLog,
+    Scrobbling
 }
 
 /** What a [SettingItem.Action] row does. The UI step maps each to a handler. */

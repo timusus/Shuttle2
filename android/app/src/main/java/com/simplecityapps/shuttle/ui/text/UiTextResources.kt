@@ -117,6 +117,7 @@ val StringKey.resId: Int
         StringKey.SETTINGS_CROSSFADE_SECONDS -> R.string.settings_crossfade_seconds
         StringKey.SETTINGS_STATE_OFF -> R.string.settings_state_off
         StringKey.PREF_REPORT_PLAYBACK_TITLE -> R.string.pref_report_playback_title
+        StringKey.SETTINGS_SCROBBLING_TITLE -> R.string.settings_scrobbling_title
         StringKey.PREF_REPORT_PLAYBACK_SUMMARY -> R.string.pref_report_playback_summary
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE -> R.string.pref_download_wifi_only_title
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY -> R.string.pref_download_wifi_only_summary

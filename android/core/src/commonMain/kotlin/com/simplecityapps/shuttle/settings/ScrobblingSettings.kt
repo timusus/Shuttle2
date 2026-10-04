@@ -1,7 +1,5 @@
-package com.simplecityapps.shuttle.scrobbling
+package com.simplecityapps.shuttle.settings
 
-import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.settings.SettingsStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn

@@ -9,9 +9,9 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.scrobbling.ScrobblePlanner
-import com.simplecityapps.shuttle.scrobbling.ScrobblingSettings
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbler
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
+import com.simplecityapps.shuttle.settings.ScrobblingSettings
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
