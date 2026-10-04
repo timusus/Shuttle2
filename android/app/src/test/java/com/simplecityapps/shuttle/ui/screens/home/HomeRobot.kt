@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
@@ -40,6 +41,7 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     val actions = mutableListOf<MediaAction>()
     val shownActions = mutableListOf<MediaActionsTarget>()
     val seeAlls = mutableListOf<HomeSectionId>()
+    val playedSections = mutableListOf<HomeSectionId>()
 
     fun setContent(
         uiState: HomeUiState,
@@ -68,6 +70,7 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         onAction = { actions += it },
         onShowActions = { shownActions += it },
         onSeeAll = { seeAlls += it },
+        onPlaySection = { playedSections += it },
     )
 
     fun scrollTo(text: String) {
@@ -94,6 +97,19 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     fun longPressText(text: String) {
         scrollTo(text)
         rule.onAllNodesWithText(text)[0].performTouchInput { longClick() }
+    }
+
+    /** Whether the shelf titled [title] has its header play button, wide enough to touch. */
+    fun hasShelfPlay(title: String): Boolean {
+        scrollTo(title)
+        val buttons = rule.onAllNodesWithContentDescription("Play $title")
+        val node = buttons.fetchSemanticsNodes().firstOrNull() ?: return false
+        return node.touchBoundsInRoot.let { it.height >= with(rule.density) { S2TouchTarget.minimum.toPx() } && it.width >= with(rule.density) { S2TouchTarget.minimum.toPx() } }
+    }
+
+    fun tapShelfPlay(title: String) {
+        scrollTo(title)
+        rule.onNodeWithContentDescription("Play $title").performClick()
     }
 
     fun tapDescription(description: String) {

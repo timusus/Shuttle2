@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ElevatedCard
@@ -70,6 +71,8 @@ class HomeCallbacks(
     val onShowActions: (MediaActionsTarget) -> Unit = {},
     /** A section's "See all", shown only for a section with somewhere to go ([HomeSectionId.hasSeeAll]). */
     val onSeeAll: (HomeSectionId) -> Unit = {},
+    /** A shelf's play button: plays every song of the shelf, in order ([HomeSection.playable]). */
+    val onPlaySection: (HomeSectionId) -> Unit = {},
 )
 
 /**
@@ -197,6 +200,18 @@ private fun LazyListScope.header(
             style = if (lead) SectionHeaderStyle.Headline else SectionHeaderStyle.Title,
             action = if (section.id.hasSeeAll) stringResource(R.string.home_see_all) else null,
             onAction = { callbacks.onSeeAll(section.id) },
+            trailingContent = if (section.playable) {
+                {
+                    val title = stringResource(section.title.stringRes)
+                    S2IconButton(
+                        icon = Icons.Rounded.PlayArrow,
+                        contentDescription = stringResource(R.string.home_play_item, title),
+                        onClick = { callbacks.onPlaySection(section.id) },
+                    )
+                }
+            } else {
+                null
+            },
             modifier = Modifier.animateItem().padding(top = if (lead) S2Spacing.xsmall else S2Spacing.medium),
         )
     }

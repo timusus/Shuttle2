@@ -6,7 +6,9 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSuggestionsRepository
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
@@ -25,6 +27,8 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.shuttle.ui.screens.settings.about.IsWhatsNewPending
 import com.simplecityapps.shuttle.ui.screens.settings.about.MarkChangelogViewed
 import com.simplecityapps.shuttle.ui.text.StringKey
@@ -115,6 +119,7 @@ class HomeViewModelTest {
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
             LoadHomeCovers(FakePlaylistRepository(), genres),
+            PlayHomeSection(ResolveSongs(FakeSongRepository(), genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(FakeSongRepository()))),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.onVisibilityChanged(visible)

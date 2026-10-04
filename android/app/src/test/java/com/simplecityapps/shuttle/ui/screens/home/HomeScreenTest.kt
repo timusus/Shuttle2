@@ -274,6 +274,20 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `playable shelves have a play button in their header that plays the shelf, and the others don't`() {
+        robot.setContent(HomeScenarios.content)
+
+        listOf("Heavy rotation", "Rediscover", "Recently added").forEach { robot.hasShelfPlay(it) shouldBe true }
+        // Jump back in's tiles each resume their own queue; Genre picks' tiles shuffle their genre.
+        listOf("Jump back in", "Genre picks").forEach { robot.hasShelfPlay(it) shouldBe false }
+
+        robot.tapShelfPlay("Rediscover")
+
+        robot.playedSections shouldContainExactly listOf(HomeSectionId.Rediscover)
+        robot.actions shouldBe emptyList()
+    }
+
+    @Test
     fun `shuffle all and settings are wired from the top bar`() {
         robot.setContent(HomeScenarios.content)
 

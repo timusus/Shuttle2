@@ -61,6 +61,7 @@ class HomeViewModel @Inject constructor(
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
     loadHomeCovers: LoadHomeCovers,
+    private val playHomeSection: PlayHomeSection,
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
     private val events = PendingEvents<HomeEvent>()
@@ -137,6 +138,12 @@ class HomeViewModel @Inject constructor(
 
     /** Shuffles the whole library, resolved as it plays; null before the library has loaded or while it's empty. */
     fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All())) }
+
+    /** Plays the whole shelf of [id] in order; null when it's not on screen or has no songs. */
+    suspend fun playSection(id: HomeSectionId): MediaAction? {
+        val section = (uiState.value as? HomeUiState.Content)?.sections?.firstOrNull { it.id == id }?.takeIf { it.playable } ?: return null
+        return playHomeSection(section)
+    }
 
     /** Opening the changelog or dismissing the card marks this version's notes as seen. */
     fun onWhatsNewHandled() {

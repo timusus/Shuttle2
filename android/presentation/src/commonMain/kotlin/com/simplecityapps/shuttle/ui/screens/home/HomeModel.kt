@@ -50,7 +50,14 @@ data class HomeSection(
     val items: List<HomeItem>,
     /** Where each item's queue was left, by [HomeItem.key]: Jump back in's items played from before (#670). */
     val progress: Map<String, HomeItemProgress> = emptyMap(),
-)
+) {
+    /**
+     * Whether the section's header offers to play the whole shelf: not the Jump back in grid, whose tiles each resume
+     * their own queue, nor Genre picks, whose tiles shuffle and would otherwise queue every song of every genre.
+     */
+    val playable: Boolean
+        get() = items.isNotEmpty() && id != HomeSectionId.JumpBackIn && id != HomeSectionId.ShuffleAll && items.none { it is HomeItem.GenreItem }
+}
 
 /**
  * Where an item's queue was left (#670, #706): on the song [songName] (null once it's no longer in the library),
