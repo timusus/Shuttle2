@@ -25,13 +25,18 @@ import com.simplecityapps.shuttle.shared.percentEncodedPath
  * A song from this device's library (`s2local://...`) plays from the file [localFiles] finds for it, which seeks like any
  * file, so it opens at the start; a file that's out of reach throws, failing the song. It isn't a server stream, so
  * [serverStreamAccess] is never asked about it.
+ *
+ * A server song that's been downloaded ([downloadedFile], `OfflineDownloads.fileUrl`) plays from its file, so it plays
+ * offline and opens at the start. It's still a server song: [serverStreamAccess] is asked as for its stream, as Android's
+ * `ServerStreamPolicy` is asked before a download plays.
  */
 class SongStreamResolver(
     private val streamUrls: Collection<StreamUrlProvider>,
     private val replayGainMode: () -> ReplayGainMode,
     private val preAmpGainDb: () -> Float,
     private val serverStreamAccess: suspend (song: Song, playRequested: Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed },
-    private val localFiles: StreamUrlProvider? = null
+    private val localFiles: StreamUrlProvider? = null,
+    private val downloadedFile: (path: String) -> String? = { null }
 ) : IosStreamResolver {
     override suspend fun resolve(
         song: Song,
@@ -48,8 +53,10 @@ class SongStreamResolver(
                 ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
             }
         }
+        val downloaded = if (localFile == null && provider != null) downloadedFile(song.path) else null
         return when {
             localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs), gainDb = gainDb)
+            downloaded != null -> IosStream(url = downloaded, gainDb = gainDb)
             provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs), gainDb = gainDb, opensAtPosition = true)
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
             else -> IosStream(url = song.path, gainDb = gainDb)

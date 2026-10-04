@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Keeps a remote song on the device for offline playback (S4 in docs/architecture/ios-port/phase-4-platform-seams.md):
  * Android's `ServerSongDownloader` asks the song's provider for a download URL and queues it with the downloads
- * module. iOS has no downloads yet; `PlatformFeatures.offlineDownloads` hides the actions there.
+ * module; iOS's `OfflineDownloads` (:shared) fetches it with a background `URLSession` (docs/architecture/downloads.md).
  */
 interface SongDownloader {
     /** Queues [song]'s download; false if its provider couldn't give a download URL (e.g. the server's auth failed). */

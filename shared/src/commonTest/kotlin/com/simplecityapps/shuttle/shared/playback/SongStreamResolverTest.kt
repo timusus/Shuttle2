@@ -30,6 +30,7 @@ class SongStreamResolverTest {
     private var preAmpGainDb = 0f
     private var serverAccess = ServerAccess.Allowed
     private val askedToStream = mutableListOf<String>()
+    private val downloaded = mutableMapOf<String, String>()
 
     private val resolver = SongStreamResolver(
         listOf(FakeStreamUrls("jellyfin"), FakeStreamUrls("emby"), FakeStreamUrls("plex")),
@@ -46,7 +47,8 @@ class SongStreamResolverTest {
                 song: Song,
                 startPositionMs: Long
             ): String = if (song.name == "gone") throw IllegalStateException("Out of reach") else "file:///Documents/a%20b.flac"
-        }
+        },
+        downloadedFile = { path -> downloaded[path] }
     )
 
     @Test
@@ -79,6 +81,23 @@ class SongStreamResolverTest {
     fun aServerStreamOpensAtThePositionAskedFor() = runTest {
         resolver.resolve(songAt(path = "jellyfin://item/abc"), 30_000, playRequested = true).url shouldBe
             "https://jellyfin.example/Audio/abc/universal?StartTimeTicks=300000000"
+    }
+
+    @Test
+    fun aDownloadedServerSongPlaysFromItsFileFromTheStart() = runTest {
+        downloaded["jellyfin://item/abc"] = "file:///Downloads/amVsbHlmaW46Ly9pdGVtL2FiYw.flac"
+
+        resolver.resolve(songAt(path = "jellyfin://item/abc", name = "signed out"), 30_000, playRequested = true) shouldBe
+            IosStream(url = "file:///Downloads/amVsbHlmaW46Ly9pdGVtL2FiYw.flac", opensAtPosition = false)
+    }
+
+    @Test
+    fun aDownloadedServerSongStillAsksTheGate() = runTest {
+        downloaded["jellyfin://item/abc"] = "file:///Downloads/amVsbHlmaW46Ly9pdGVtL2FiYw.flac"
+        serverAccess = ServerAccess.Refused
+
+        shouldThrow<ServerStreamNotAllowedException> { resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true) }
+        askedToStream shouldBe listOf("jellyfin://item/abc")
     }
 
     @Test

@@ -66,15 +66,19 @@ class AvailableMediaActions @Inject constructor(
         }
     }
 
-    private fun downloadActions(songs: List<Song>, heldPaths: Set<String>): List<MediaActionType> {
-        val remotePaths = songs.filter { it.mediaProvider.remote }.map { it.path }
-        if (remotePaths.isEmpty()) return emptyList()
-        return buildList {
-            if (remotePaths.any { it !in heldPaths }) add(MediaActionType.Download)
-            if (remotePaths.any { it in heldPaths }) add(MediaActionType.RemoveDownload)
-        }
-    }
-
     private val Song.isDeletable: Boolean
         get() = canBeDeleted() && !mediaProvider.remote
+}
+
+/**
+ * Download when any of [songs]' remote songs isn't in [heldPaths] (downloaded or on its way), Remove download when any
+ * is; neither for local songs.
+ */
+fun downloadActions(songs: List<Song>, heldPaths: Set<String>): List<MediaActionType> {
+    val remotePaths = songs.filter { it.mediaProvider.remote }.map { it.path }
+    if (remotePaths.isEmpty()) return emptyList()
+    return buildList {
+        if (remotePaths.any { it !in heldPaths }) add(MediaActionType.Download)
+        if (remotePaths.any { it in heldPaths }) add(MediaActionType.RemoveDownload)
+    }
 }
