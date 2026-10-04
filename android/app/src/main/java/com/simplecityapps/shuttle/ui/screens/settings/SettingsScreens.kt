@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.settings.PlaybackSettings
@@ -61,6 +62,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
+import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.UiText
 import com.simplecityapps.shuttle.ui.text.stringResource
 import java.text.DateFormat
 import java.util.Date
@@ -343,7 +346,8 @@ private fun SettingRow(
         )
 
         is SettingItem.Slider<*> -> {
-            val value = uiState.value(item.setting).toFloat()
+            // A restored preference can sit outside the range; the row shows the clamped position.
+            val value = uiState.value(item.setting).toFloat().coerceIn(item.range.start, item.range.endInclusive)
             SliderSetting(
                 title = stringResource(item.title),
                 value = value,
@@ -352,6 +356,7 @@ private fun SettingRow(
                 steps = item.steps,
                 valueLabel = sliderValueLabel(item, value),
                 enabled = enabled,
+                modifier = Modifier.testTag(item.key),
                 shapes = shapes
             )
         }
@@ -391,12 +396,20 @@ private fun choiceValueLabel(
     return "$label ${resources.getString(R.string.pref_last_scan_date, date)}"
 }
 
+@Composable
 private fun sliderValueLabel(
     item: SettingItem.Slider<*>,
     value: Float
 ): String? = when (item.setting) {
     PlaybackSettings.PreAmpGain -> String.format(Locale.getDefault(), "%+.1f dB", value)
-    PlaybackSettings.CrossfadeDuration -> if (value < 500f) "Off" else "${(value / 1000f).roundToInt()} s"
+
+    PlaybackSettings.CrossfadeDuration -> if (value < 500f) {
+        stringResource(StringKey.DSP_REPLAY_GAIN_OFF)
+    } else {
+        stringResource(UiText.Resource(StringKey.SETTINGS_CROSSFADE_SECONDS, listOf((value / 1000f).roundToInt())))
+    }
+
     AppearanceSettings.WidgetBackgroundOpacity -> "${value.roundToInt()}%"
+
     else -> null
 }

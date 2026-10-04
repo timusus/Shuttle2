@@ -1,17 +1,17 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -117,11 +117,13 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
         rule.onNodeWithText(text).assertIsDisplayed()
     }
 
-    fun assertTextCount(
-        text: String,
-        count: Int
+    /** The row keyed [key] is a slider showing [text] as its value label. */
+    fun assertSliderLabel(
+        key: String,
+        text: String
     ) {
-        rule.onAllNodesWithText(text).assertCountEquals(count)
+        rule.onNode(hasScrollAction()).performScrollToNode(hasTestTag(key))
+        rule.onNode(hasText(text) and hasAnyAncestor(hasTestTag(key)), useUnmergedTree = true).assertIsDisplayed()
     }
 
     fun assertDialogDisplayed(text: String) {

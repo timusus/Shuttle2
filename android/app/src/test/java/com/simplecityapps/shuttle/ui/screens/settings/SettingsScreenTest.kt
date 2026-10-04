@@ -284,7 +284,7 @@ class SettingsScreenTest {
         robot.setDestinationContent(SettingsDestination.PlaybackAndSound)
 
         robot.assertDisplayed("Crossfade")
-        robot.assertTextCount("Off", 3)
+        robot.assertSliderLabel(PlaybackSettings.CrossfadeDuration.key, "Off")
     }
 
     @Test
@@ -294,8 +294,17 @@ class SettingsScreenTest {
             SettingsUiState(values = mapOf(PlaybackSettings.CrossfadeDuration.key to 6000))
         )
 
-        robot.assertDisplayed("6 s")
-        robot.assertTextCount("Off", 2)
+        robot.assertSliderLabel(PlaybackSettings.CrossfadeDuration.key, "6 s")
+    }
+
+    @Test
+    fun `crossfade clamps a stored length the slider can't show`() {
+        robot.setDestinationContent(
+            SettingsDestination.PlaybackAndSound,
+            SettingsUiState(values = mapOf(PlaybackSettings.CrossfadeDuration.key to 15_000))
+        )
+
+        robot.assertSliderLabel(PlaybackSettings.CrossfadeDuration.key, "12 s")
     }
 
     @Test

@@ -11,6 +11,8 @@
     <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->
     <string name="dsp_preamp">Preamp</string>
     <string name="pref_crossfade_title">Crossfade</string>
+    <!-- The crossfade length as a value label; %1$d is the number of seconds -->
+    <string name="settings_crossfade_seconds">%1$d s</string>
     <!-- Short label under the Equalizer's preamp slider, which sits beside the band sliders labelled "32", "1k", "16k"; keep it to about three characters -->
     <string name="dsp_preamp_short">Pre</string>
     <!-- Title of the 'Equalizer'-->

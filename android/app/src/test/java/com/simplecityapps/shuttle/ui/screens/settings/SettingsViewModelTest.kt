@@ -133,6 +133,17 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `the crossfade slider rounds to whole seconds`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        val slider = item<SettingItem.Slider<*>>(PlaybackSettings.CrossfadeDuration.key)
+
+        viewModel.onSliderChange(slider, 5999.6f)
+        runCurrent()
+
+        store.preference(PlaybackSettings.CrossfadeDuration).value shouldBe 6000
+    }
+
+    @Test
     fun `rescan starts an import and says so`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
