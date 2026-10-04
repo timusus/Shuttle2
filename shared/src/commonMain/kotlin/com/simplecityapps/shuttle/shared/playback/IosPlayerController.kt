@@ -19,6 +19,8 @@ import kotlin.concurrent.Volatile
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +51,11 @@ import kotlinx.coroutines.withContext
  * Such a stream is resolved again to start at the position (`StartTimeTicks`) and loaded from its beginning; positions
  * are then the stream's start plus what the engine has played of it. A direct-play stream seeks in the engine.
  *
+ * Each handing of a queue item to the engine is a play, under an id its stream is resolved with: kept when a seek
+ * re-opens the stream or a skip starts what the engine pre-opened, and new otherwise, even for the same song (repeat
+ * one's next). A play no longer current or next is ended ([IosStreamResolver.endPlay]), so a server stops its transcode
+ * (#722).
+ *
  * Main thread only inside; callable from any thread by the domain interfaces' rule. [scope] runs on the main thread
  * (`Dispatchers.Main.immediate` on iOS): a call that changes playback made on it runs straight away, else it's posted
  * to it. The Swift engine adapter calls back on the main thread.
@@ -69,10 +76,11 @@ class IosPlayerController(
 ) : PlaybackOperations {
     private val queue = QueueModel(random)
 
-    /** A queue item as handed to the engine, under an id unique to that handing. */
+    /** A queue item as handed to the engine, under an id unique to that handing, as part of the play [playId]. */
     private class Feed(
         val id: String,
-        var item: QueueItem
+        var item: QueueItem,
+        val playId: String
     ) {
         /** Handed to the engine (its stream is resolved). */
         var sent = false
@@ -117,12 +125,27 @@ class IosPlayerController(
 
     /** The engine's current track, or the one being resolved to replace it; null when nothing is loaded. */
     private var current: Feed? = null
+        set(value) {
+            field = value
+            endAbandonedPlays()
+        }
 
     /** The queue's next item, as last fed (handed over, being resolved, or failed to resolve). */
     private var next: Feed? = null
+        set(value) {
+            field = value
+            endAbandonedPlays()
+        }
 
     /** The next track the engine was last handed; it may trail [next] while that resolves. */
     private var engineNext: Feed? = null
+        set(value) {
+            field = value
+            endAbandonedPlays()
+        }
+
+    /** The plays a stream was resolved for that haven't been ended, with their songs. */
+    private val resolvedPlays = mutableMapOf<String, Song>()
 
     /** The engine's last reported state for [current]. */
     private var engineState = IosAudioPlayerState.Idle
@@ -226,18 +249,40 @@ class IosPlayerController(
 
     // Engine feeding
 
-    private fun newFeed(item: QueueItem) = Feed("${item.uid}-${++feedSerial}", item)
+    @OptIn(ExperimentalUuidApi::class)
+    private fun newFeed(
+        item: QueueItem,
+        playId: String = Uuid.random().toString()
+    ) = Feed("${item.uid}-${++feedSerial}", item, playId)
 
-    /** [song]'s stream, or why it has none; a refusal opens the paywall only while the user is waiting to play. */
+    /**
+     * [feed]'s song's stream, or why it has none; a refusal opens the paywall only while the user is waiting to play. A
+     * play [feed] is no longer part of by the time its stream is resolved is ended straight away.
+     */
     private suspend fun resolve(
-        song: Song,
+        feed: Feed,
         startPositionMs: Int = 0
     ): Result<IosStream> = try {
-        Result.success(resolver.resolve(song, startPositionMs.toLong(), playRequested = playWhenReady))
+        val song = feed.item.song
+        Result.success(resolver.resolve(song, startPositionMs.toLong(), playRequested = playWhenReady, playId = feed.playId)).also {
+            resolvedPlays[feed.playId] = song
+            endAbandonedPlays()
+        }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
         Result.failure(e)
+    }
+
+    /** Ends each resolved play that's no longer the current track's or the next's. */
+    private fun endAbandonedPlays() {
+        if (resolvedPlays.isEmpty()) return
+        val live = setOfNotNull(current?.playId, next?.playId, engineNext?.playId)
+        val abandoned = resolvedPlays.filterKeys { it !in live }
+        abandoned.forEach { (playId, song) ->
+            resolvedPlays.remove(playId)
+            scope.launch { resolver.endPlay(song, playId) }
+        }
     }
 
     /** StoreKit hadn't answered whether the user may stream it: not the song's fault, so it isn't failed for it. */
@@ -270,10 +315,13 @@ class IosPlayerController(
         reopen: Boolean = false
     ) {
         loadJob?.cancel()
-        val preopened = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }?.stream
+        val preopenedFeed = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }
+        val preopened = preopenedFeed?.stream
         val keepNext = reopen && next?.failed == false
         if (!keepNext) nextJob?.cancel()
-        val feed = newFeed(item)
+        // A re-open carries on the play it re-opens, and a pre-opened stream the play it was opened for.
+        val playId = if (reopen) current?.playId else preopenedFeed?.playId
+        val feed = if (playId != null) newFeed(item, playId) else newFeed(item)
         feed.startMs = startMs
         if (reopen) {
             feed.offsetMs = startMs
@@ -293,7 +341,7 @@ class IosPlayerController(
             return
         }
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val resolved = resolve(item.song, feed.offsetMs)
+            val resolved = resolve(feed, feed.offsetMs)
             if (current !== feed) return@launch
             val stream = resolved.getOrNull()
             if (stream == null) {
@@ -341,7 +389,7 @@ class IosPlayerController(
         val feed = newFeed(want)
         next = feed
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val resolved = resolve(want.song)
+            val resolved = resolve(feed)
             if (next !== feed) return@launch
             val stream = resolved.getOrNull()
             if (stream == null) {

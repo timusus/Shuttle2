@@ -38,7 +38,8 @@ class OfflineDownloadsTest {
 
         override fun streamUrl(
             song: Song,
-            startPositionMs: Long
+            startPositionMs: Long,
+            playId: String?
         ): String = error("Not streamed")
 
         override fun downloadSource(song: Song): DownloadSource? = if (song.name == "signed out") null else DownloadSource("https://jellyfin.example/${song.id}/download", song.mimeType)

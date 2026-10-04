@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.playback
 
+import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.shuttle.model.Song
 
 /**
@@ -160,11 +161,19 @@ fun interface IosStreamResolver {
     /**
      * [startPositionMs] asks a stream that [IosStream.opensAtPosition] to start that far into the song (a transcode
      * started there); 0 is the whole song. Any other stream ignores it. [playRequested] is whether the user is waiting
-     * to hear it: only then may a refusal open the paywall, so a queue restored at launch never does.
+     * to hear it: only then may a refusal open the paywall, so a queue restored at launch never does. [playId] names
+     * this play of the song, the same when a seek resolves it again ([StreamUrlProvider.streamUrl]).
      */
     suspend fun resolve(
         song: Song,
         startPositionMs: Long,
-        playRequested: Boolean
+        playRequested: Boolean,
+        playId: String
     ): IosStream
+
+    /** [playId], a play of [song], is over: the server can drop what it holds for it ([StreamUrlProvider.endPlay]). */
+    suspend fun endPlay(
+        song: Song,
+        playId: String
+    ) = Unit
 }

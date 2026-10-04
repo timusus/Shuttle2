@@ -54,6 +54,12 @@ class IosPlayerControllerTest {
     /** The ids of the songs resolved, in order. */
     private val resolved = mutableListOf<Long>()
 
+    /** The play each resolution was for, by song id, in order. */
+    private val plays = mutableListOf<Pair<Long, String>>()
+
+    /** The plays the controller ended, in order. */
+    private val endedPlays = mutableListOf<String>()
+
     /** Songs on a server, whose streams open at a position (`StartTimeTicks`). */
     private val server = mutableSetOf<Long>()
 
@@ -76,20 +82,35 @@ class IosPlayerControllerTest {
         val dispatcher = if (unconfined) UnconfinedTestDispatcher(testScheduler) else StandardTestDispatcher(testScheduler)
         val controller = IosPlayerController(
             player = engine,
-            resolver = { song, startPositionMs, playRequested ->
-                resolved += song.id
-                resolveGate?.await()
-                if (song.id in server) {
-                    when (serverAccess(song, playRequested)) {
-                        ServerAccess.Allowed -> Unit
-                        ServerAccess.Refused -> throw ServerStreamNotAllowedException(song, undecided = false)
-                        ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
+            resolver = object : IosStreamResolver {
+                override suspend fun resolve(
+                    song: Song,
+                    startPositionMs: Long,
+                    playRequested: Boolean,
+                    playId: String
+                ): IosStream {
+                    resolved += song.id
+                    plays += song.id to playId
+                    resolveGate?.await()
+                    if (song.id in server) {
+                        when (serverAccess(song, playRequested)) {
+                            ServerAccess.Allowed -> Unit
+                            ServerAccess.Refused -> throw ServerStreamNotAllowedException(song, undecided = false)
+                            ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
+                        }
+                    }
+                    return when {
+                        song.id in unresolvable -> error("No stream for ${song.name}")
+                        song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true)
+                        else -> IosStream(url(song), opensAtPosition = song.id in server)
                     }
                 }
-                when {
-                    song.id in unresolvable -> error("No stream for ${song.name}")
-                    song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true)
-                    else -> IosStream(url(song), opensAtPosition = song.id in server)
+
+                override suspend fun endPlay(
+                    song: Song,
+                    playId: String
+                ) {
+                    endedPlays += playId
                 }
             },
             scope = CoroutineScope(dispatcher),
@@ -746,6 +767,69 @@ class IosPlayerControllerTest {
         engine.next shouldBe next
         engine.finishTrack()
         controller.currentSong shouldBe b
+    }
+
+    // Plays: the session a server's transcode runs under (#722)
+
+    @Test
+    fun `re-opening a transcode for a seek carries on its play`() = test { controller ->
+        server += a.id
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+
+        controller.seekTo(30_000)
+        engine.settle()
+        controller.seekTo(10_000)
+        engine.settle()
+
+        val playsOfA = plays.filter { it.first == a.id }.map { it.second }
+        playsOfA.size shouldBe 3
+        playsOfA.toSet().size shouldBe 1
+        endedPlays shouldBe emptyList()
+    }
+
+    @Test
+    fun `under repeat one the next play of the same song is a play of its own`() = test { controller ->
+        controller.start(listOf(a, b))
+
+        controller.queueOperations.setRepeatMode(RepeatMode.One)
+
+        val playsOfA = plays.filter { it.first == a.id }.map { it.second }
+        playsOfA.size shouldBe 2
+        playsOfA.toSet().size shouldBe 2
+        endedPlays shouldBe listOf(plays.single { it.first == b.id }.second)
+    }
+
+    @Test
+    fun `skipping on ends the play it leaves and carries on the next one`() = test { controller ->
+        controller.start(listOf(a, b, c))
+        val playOfA = plays.single { it.first == a.id }.second
+
+        controller.skipToNext()
+        engine.settle()
+
+        endedPlays shouldBe listOf(playOfA)
+        plays.count { it.first == b.id } shouldBe 1
+        controller.currentSong shouldBe b
+    }
+
+    @Test
+    fun `playing a track out ends its play`() = test { controller ->
+        controller.start(listOf(a, b))
+        val playOfA = plays.single { it.first == a.id }.second
+
+        engine.finishTrack()
+
+        endedPlays shouldBe listOf(playOfA)
+    }
+
+    @Test
+    fun `emptying the queue ends the current and next plays`() = test { controller ->
+        controller.start(listOf(a, b))
+
+        controller.queueOperations.clear()
+
+        endedPlays.toSet() shouldBe plays.map { it.second }.toSet()
     }
 
     @Test

@@ -66,7 +66,7 @@ class IosPlaybackStoreTest {
         val scope = CoroutineScope(backgroundScope.coroutineContext + job + UnconfinedTestDispatcher(testScheduler) + exceptionHandler)
         val controller = IosPlayerController(
             player = engine,
-            resolver = { song, _, _ -> IosStream("song:${song.id}") },
+            resolver = { song, _, _, _ -> IosStream("song:${song.id}") },
             scope = scope,
             random = Random(1),
             resumePosition = manager::resumePosition

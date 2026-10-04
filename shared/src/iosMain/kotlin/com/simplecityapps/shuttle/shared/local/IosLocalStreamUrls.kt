@@ -13,6 +13,7 @@ class IosLocalStreamUrls(
 
     override fun streamUrl(
         song: Song,
-        startPositionMs: Long
+        startPositionMs: Long,
+        playId: String?
     ): String = localFiles.fileUrl(song.path) ?: throw IllegalStateException("${song.path} is out of reach")
 }

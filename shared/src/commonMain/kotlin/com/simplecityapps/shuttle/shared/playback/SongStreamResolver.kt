@@ -42,7 +42,8 @@ class SongStreamResolver(
     override suspend fun resolve(
         song: Song,
         startPositionMs: Long,
-        playRequested: Boolean
+        playRequested: Boolean,
+        playId: String
     ): IosStream {
         val provider = streamUrls.forPath(song.path)
         val gainDb = replayGainDb(replayGainMode(), preAmpGainDb().toDouble(), song.replayGain).toFloat()
@@ -58,10 +59,17 @@ class SongStreamResolver(
         return when {
             localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs), gainDb = gainDb)
             downloaded != null -> IosStream(url = downloaded, gainDb = gainDb)
-            provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs), gainDb = gainDb, opensAtPosition = true)
+            provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs, playId), gainDb = gainDb, opensAtPosition = true)
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
             else -> IosStream(url = song.path, gainDb = gainDb)
         }
+    }
+
+    override suspend fun endPlay(
+        song: Song,
+        playId: String
+    ) {
+        streamUrls.forPath(song.path)?.endPlay(playId)
     }
 
     /** The engine parses the URL, so the path's spaces and reserved characters are escaped, each segment on its own. */
