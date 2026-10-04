@@ -26,7 +26,7 @@ class PlaybackReportingModule {
     // Each provider module contributes its reporter to the set.
     @Provides
     @SingleIn(AppScope::class)
-    fun provideAggregatePlaybackReporter(reporters: Set<@JvmSuppressWildcards PlaybackReporter>): AggregatePlaybackReporter = AggregatePlaybackReporter(reporters)
+    fun provideAggregatePlaybackReporter(reporters: Set<PlaybackReporter>): AggregatePlaybackReporter = AggregatePlaybackReporter(reporters)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -42,6 +42,6 @@ class PlaybackReportingModule {
         findSongs = { songIds -> songRepository.getSongs(SongQuery.SongIds(songIds)).filterNotNull().firstOrNull().orEmpty() },
         isEnabled = { librarySettings.reportPlaybackToServer.value },
         now = { Clock.System.now() },
-        scope = appCoroutineScope + Dispatchers.IO
+        scope = appCoroutineScope + Dispatchers.Default
     )
 }

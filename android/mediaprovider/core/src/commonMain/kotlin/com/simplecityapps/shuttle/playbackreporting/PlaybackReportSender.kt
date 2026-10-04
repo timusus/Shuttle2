@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.playbackreporting
 
 import com.simplecityapps.mediaprovider.PlaybackReporter
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner.Call
 import kotlin.coroutines.cancellation.CancellationException
@@ -9,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import timber.log.Timber
 
 /**
  * Sends [PlaybackReportPlanner]'s calls to [reporter] one at a time, in order, on [scope], so
@@ -100,9 +100,11 @@ class PlaybackReportSender(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        Timber.w(e, "Playback report failed")
+        logger.warn(e) { "Playback report failed" }
         false
     }
+
+    private val logger = Logger.tagged("PlaybackReportSender")
 
     companion object {
         const val TIMEOUT_MS = 5_000L

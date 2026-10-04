@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
+import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
@@ -95,6 +96,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Authenticated artwork urls for songs, albums and album artists; Swift's `ArtworkLoader` fetches and decodes. */
     val artworkUrls: ArtworkUrls
+
+    /** Reports plays to Jellyfin, Emby and Plex (and replays missed ones); Swift starts it at launch. */
+    val playbackReporting: PlaybackReporting
 
     /** The user's entitlement, fed from StoreKit by Swift's `StoreKitManager`. */
     val storeEntitlements: StoreEntitlements

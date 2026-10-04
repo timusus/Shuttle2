@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.playbackreporting.PendingPlays
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
+import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -57,19 +58,21 @@ class PlaybackReportingInitializerTest {
     // Lazy, so the sender starts its work loop once MainDispatcherRule has set the main dispatcher.
     private val initializer by lazy {
         PlaybackReportingInitializer(
-            playbackOperations = playbackOperations,
-            queueOperations = queueOperations,
-            playbackReporter = playbackReporter,
-            sender = PlaybackReportSender(
-                reporter = playbackReporter,
-                pendingPlays = PendingPlays(SharedPreferencesKeyValueStore(application.getSharedPreferences("playback_reporting_initializer_test_plays", Context.MODE_PRIVATE))),
-                findSongs = { emptyList() },
-                isEnabled = { librarySettings.reportPlaybackToServer.value },
-                now = { Instant.fromEpochMilliseconds(0) },
-                scope = appCoroutineScope
-            ),
-            librarySettings = librarySettings,
-            appCoroutineScope = appCoroutineScope
+            PlaybackReporting(
+                playbackOperations = playbackOperations,
+                queueOperations = queueOperations,
+                playbackReporter = playbackReporter,
+                sender = PlaybackReportSender(
+                    reporter = playbackReporter,
+                    pendingPlays = PendingPlays(SharedPreferencesKeyValueStore(application.getSharedPreferences("playback_reporting_initializer_test_plays", Context.MODE_PRIVATE))),
+                    findSongs = { emptyList() },
+                    isEnabled = { librarySettings.reportPlaybackToServer.value },
+                    now = { Instant.fromEpochMilliseconds(0) },
+                    scope = appCoroutineScope
+                ),
+                librarySettings = librarySettings,
+                appCoroutineScope = appCoroutineScope
+            )
         )
     }
 

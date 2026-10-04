@@ -21,7 +21,7 @@ enum AppGraph {
     }
 
     /// Builds the graph, applies the crash reporting and analytics choices before anything else runs, then starts the
-    /// playback system and the recording of plays. Call once, from `S2App.init`.
+    /// playback system, the recording of plays and their reporting to the server. Call once, from `S2App.init`.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
@@ -30,6 +30,7 @@ enum AppGraph {
         dependencies.playbackSystem.start()
         dependencies.graph.recordPlays.start()
         dependencies.graph.recordResumePoints.start()
+        dependencies.graph.playbackReporting.start()
         dependencies.graph.librarySearchIndex.warmUp()
         #if DEBUG
         if let override = UserDefaults.standard.string(forKey: DebugEntitlement.defaultsKey) {
