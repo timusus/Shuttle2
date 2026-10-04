@@ -219,6 +219,7 @@ android {
 
         // AndroidX Lifecycle
         implementation(libs.androidx.lifecycle.runtime.ktx)
+        implementation(libs.androidx.lifecycle.process)
 
         // Media3 ExoPlayer
         implementation(libs.media3.exoplayer)

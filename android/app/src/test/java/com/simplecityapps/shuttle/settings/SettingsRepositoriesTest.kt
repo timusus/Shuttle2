@@ -65,7 +65,7 @@ class SettingsRepositoriesTest {
             "equalizer_enabled" to false,
             "replaygain_mode" to ReplayGainMode.Off,
             "preamp_gain" to 0f,
-            "pref_media_rescan_frequency" to ImportFrequency.Never,
+            "pref_media_rescan_frequency" to ImportFrequency.Daily,
             "pref_report_playback" to true,
             "pref_download_wifi_only" to true
         )
@@ -100,6 +100,32 @@ class SettingsRepositoriesTest {
         PlaybackSettings(reread).playbackSpeed.value shouldBe 1.25f
         LibrarySettings(reread).rescanFrequency.value shouldBe ImportFrequency.Weekly
         LibrarySettings(reread).reportPlaybackToServer.value shouldBe false
+    }
+
+    @Test
+    fun `never, the old default, moves to the daily sync once, and a later choice of never stays`() {
+        prefs.edit(commit = true) { putString("pref_media_rescan_frequency", "0") }
+        val library = LibrarySettings(store)
+
+        library.migrateRescanFrequency()
+        library.rescanFrequency.value shouldBe ImportFrequency.Daily
+
+        library.rescanFrequency.value = ImportFrequency.Never
+        val relaunched = LibrarySettings(SettingsStore(SharedPreferencesKeyValueStore(prefs)))
+        relaunched.migrateRescanFrequency()
+        relaunched.rescanFrequency.value shouldBe ImportFrequency.Never
+    }
+
+    @Test
+    fun `a weekly sync, or none chosen, is left as it is`() {
+        prefs.edit(commit = true) { putString("pref_media_rescan_frequency", "2") }
+        LibrarySettings(store).migrateRescanFrequency()
+        LibrarySettings(store).rescanFrequency.value shouldBe ImportFrequency.Weekly
+
+        prefs.edit(commit = true) { clear() }
+        LibrarySettings(store).migrateRescanFrequency()
+        LibrarySettings(store).rescanFrequency.value shouldBe ImportFrequency.Daily
+        prefs.contains("pref_media_rescan_frequency") shouldBe false
     }
 
     @Test

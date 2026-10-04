@@ -10,6 +10,10 @@
       "commits": []
     },
     {
+      "text": "Jellyfin, Emby and Plex libraries now keep up to date by themselves: songs added or changed on your server show up when you come back to the app, and your library refreshes once a day in the background. Anyone who had background rescans turned off is moved to daily, which you can change in Settings, Library",
+      "commits": []
+    },
+    {
       "text": "The app icon's long-press menu now has Shuffle all and Search next to Play/Pause",
       "commits": []
     },

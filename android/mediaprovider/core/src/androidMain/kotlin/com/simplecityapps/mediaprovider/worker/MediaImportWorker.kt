@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.SyncTrigger
 import com.simplecityapps.shuttle.di.WorkerInstanceFactory
 import com.simplecityapps.shuttle.di.WorkerKey
 import dev.zacsweers.metro.AppScope
@@ -18,6 +20,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.binding
 import java.util.concurrent.TimeUnit
 
+/** The background sync (#771): brings every source up to date as [MediaImporter.sync] does, at the [ImportFrequency] chosen. */
 class MediaImportWorker
 @AssistedInject
 constructor(
@@ -31,7 +34,7 @@ constructor(
     interface Factory : WorkerInstanceFactory<MediaImportWorker>
 
     override suspend fun doWork(): Result {
-        mediaImporter.import()
+        mediaImporter.sync(SyncTrigger.Periodic)
 
         return Result.success()
     }
@@ -54,7 +57,8 @@ constructor(
                         .setConstraints(
                             Constraints.Builder()
                                 .setRequiresBatteryNotLow(true)
-                                .setRequiresDeviceIdle(true)
+                                // A server needs a connection; this device's files are read in the same run
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
                                 .build()
                         )
                         .addTag(TAG_MEDIA_IMPORT)

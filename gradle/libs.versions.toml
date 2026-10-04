@@ -96,6 +96,7 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit-version" }
 androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycle-common-java8" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
+androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle-runtime-ktx" }
 androidx-lifecycle-viewmodel-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle-viewmodel-kmp" }
 androidx-lifecycle-viewmodel-savedstate-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle-viewmodel-kmp" }
 androidx-compose-runtime-annotation = { module = "androidx.compose.runtime:runtime-annotation", version.ref = "compose-runtime-annotation" }
