@@ -16,7 +16,7 @@ enum LibraryImport {
         atLaunch(
             hasScanned: graph.mediaSources.hasScanned,
             songTagsOutdated: graph.mediaSources.songTagsOutdated,
-            scan: graph.mediaSources.scan
+            scan: { graph.mediaSources.scan(foldersChanged: false) }
         )
     }
 
@@ -33,7 +33,7 @@ enum LibraryImport {
         await whenLocalFilesChange(
             deviceEnabled: graph.mediaSources.enabledTypes.value.contains(.shuttle),
             changed: { await Task.detached(priority: .utility) { localLibrary.changedSinceLastImport() }.value },
-            scan: graph.mediaSources.scan
+            scan: { graph.mediaSources.scan(foldersChanged: false) }
         )
     }
 
