@@ -33,6 +33,11 @@ abstract class SongDataDao {
     @Query("SELECT * FROM songs")
     abstract suspend fun get(): List<SongData>
 
+    /** One provider's songs as stored, whatever the user's filters, for the importer to diff against. */
+    @Transaction
+    @Query("SELECT * FROM songs WHERE mediaProvider = :mediaProvider")
+    abstract suspend fun getByProvider(mediaProvider: MediaProviderType): List<SongData>
+
     @Transaction
     @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
     abstract fun getAllSongData(): Flow<List<SongData>>
@@ -97,7 +102,7 @@ abstract class SongDataDao {
         val updateCount = update(updates.map { it.toSongDataUpdate() })
         mergeServerFavourites(updates.filter { it.mediaProvider.remote })
         val deleteCount = delete(deletes)
-        return Triple(insertCount.size, updateCount, deleteCount)
+        return Triple(insertCount.count { id -> id != -1L }, updateCount, deleteCount)
     }
 
     /**

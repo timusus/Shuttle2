@@ -6,7 +6,6 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
@@ -280,7 +279,7 @@ class MediaImporter(
     ): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         // Before the request, so whatever changes on the source while it runs is fetched again next time
         val start = clock.now()
-        val storedSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
+        val storedSongs = songRepository.loadProviderSongs(mediaProvider.type)
 
         val existingSongs =
             try {
@@ -369,7 +368,7 @@ class MediaImporter(
 
     private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
         // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
-        val existingSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
+        val existingSongs = songRepository.loadProviderSongs(mediaProvider.type)
 
         mediaProvider.findPlaylists(existingSongs).collect { event ->
             when (event) {

@@ -7,10 +7,32 @@ class SongDiff(
     newData: List<Song>,
     deleteMissing: Boolean = true
 ) : Diff<Song>(existingData, newData, deleteMissing) {
-    override fun isEqual(
-        a: Song,
-        b: Song
-    ): Boolean = a.path == b.path
+    override fun key(item: Song): Any = item.path
+
+    /**
+     * Whether [updated] differs from [oldData] in a field the update writes. What it doesn't write (play stats, exclusion,
+     * stream properties, the album identity) is taken from [oldData] before comparing; a remote song's favourite is
+     * written from its server, so it counts there.
+     */
+    override fun isChanged(
+        oldData: Song,
+        updated: Song
+    ): Boolean = updated.copy(
+        lastPlayed = oldData.lastPlayed,
+        lastCompleted = oldData.lastCompleted,
+        playCount = oldData.playCount,
+        playbackPosition = oldData.playbackPosition,
+        blacklisted = oldData.blacklisted,
+        mediaProvider = oldData.mediaProvider,
+        bitRate = oldData.bitRate,
+        sampleRate = oldData.sampleRate,
+        channelCount = oldData.channelCount,
+        audioCodec = oldData.audioCodec,
+        albumIdentity = oldData.albumIdentity,
+        // Stored as a year only
+        date = if (updated.date?.year == oldData.date?.year) oldData.date else updated.date,
+        favouritedAt = if (oldData.mediaProvider.remote) updated.favouritedAt else oldData.favouritedAt
+    ) != oldData
 
     override fun update(
         oldData: Song,

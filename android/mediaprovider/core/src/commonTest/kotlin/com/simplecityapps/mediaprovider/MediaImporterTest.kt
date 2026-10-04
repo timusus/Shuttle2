@@ -297,6 +297,18 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `an import that finds the stored songs unchanged writes no rows`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song(), song().copy(id = 2, path = "jellyfin://item/2"))
+        server.found = songRepository.stored.map { it.copy(id = 0) }
+
+        importer.import()
+
+        songRepository.writes shouldBe listOf(0)
+    }
+
+    @Test
     fun `a sync shows no progress, which would replace the library with the scanning state, only how it ended`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
@@ -549,6 +561,9 @@ class MediaImporterTest {
     private class FakeSongRepository : SongRepository {
         var stored: List<Song> = emptyList()
 
+        /** The rows each [insertUpdateAndDelete] was asked to write. */
+        val writes = mutableListOf<Int>()
+
         override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(stored)
 
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
@@ -568,7 +583,10 @@ class MediaImporterTest {
             updates: List<Song>,
             deletes: List<Song>,
             mediaProviderType: MediaProviderType
-        ): Triple<Int, Int, Int> = Triple(inserts.size, updates.size, deletes.size)
+        ): Triple<Int, Int, Int> {
+            writes += inserts.size + updates.size + deletes.size
+            return Triple(inserts.size, updates.size, deletes.size)
+        }
 
         override suspend fun remapPaths(remaps: List<SongPathRemap>, mediaProviderType: MediaProviderType): List<SongPathRemap> = notFaked()
 

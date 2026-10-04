@@ -12,7 +12,8 @@ import kotlin.time.Instant
 @Entity(
     tableName = "songs",
     indices = [
-        Index(value = ["path", "mediaProvider"], unique = true)
+        Index(value = ["path", "mediaProvider"], unique = true),
+        Index(value = ["mediaProvider", "path"])
     ]
 )
 data class SongData(

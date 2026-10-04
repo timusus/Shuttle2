@@ -86,6 +86,10 @@ class LocalSongRepository(
             .matching(query)
     }
 
+    override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> = withContext(Dispatchers.IO) {
+        songDataDao.getByProvider(mediaProviderType).map { songData -> songData.toSong() }.withAlbumIdentities(albumIndex.albumIndex().identities)
+    }
+
     /** The ids of the songs [query] can match, when the index knows them: null to read every song. */
     private fun AlbumIndex.songIdsFor(query: SongQuery): List<Long>? = when (query) {
         is SongQuery.SongIds -> query.songIds

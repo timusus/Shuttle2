@@ -41,7 +41,7 @@ class SongDiffTest {
         val imported = SongDiff(emptyList(), listOf(createSong(id = 0, lastModified = serverDate, dateAdded = serverDate))).apply()
             .inserts.single().copy(id = 7)
 
-        val reimported = SongDiff(listOf(imported), listOf(createSong(id = 0, lastModified = serverDate, dateAdded = serverDate))).apply()
+        val reimported = SongDiff(listOf(imported), listOf(createSong(id = 0, lastModified = serverDate, dateAdded = serverDate).copy(name = "Renamed"))).apply()
 
         reimported.updates.single().run {
             id shouldBe 7
@@ -100,6 +100,60 @@ class SongDiffTest {
         val stored = createSong(id = 1, lastModified = firstImport)
 
         SongDiff(listOf(stored), emptyList(), deleteMissing = false).apply().deletes shouldBe emptyList()
+    }
+
+    @Test
+    fun `a diff sorts songs into inserts, updates, unchanged and deletes by path`() = runTest {
+        val unchanged = createSong(id = 1, lastModified = firstImport, path = "a")
+        val changed = createSong(id = 2, lastModified = firstImport, path = "b")
+        val gone = createSong(id = 3, lastModified = firstImport, path = "c")
+        val added = createSong(id = 0, lastModified = firstImport, path = "d")
+
+        val diff = SongDiff(listOf(unchanged, changed, gone), listOf(unchanged.copy(id = 0), changed.copy(id = 0, name = "Renamed"), added)).apply()
+
+        diff.inserts shouldBe listOf(added)
+        diff.updates shouldBe listOf(changed.copy(name = "Renamed"))
+        diff.deletes shouldBe listOf(gone)
+    }
+
+    @Test
+    fun `a song differing only in what an update doesn't write is not an update`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 12, lastPlayed = firstImport, blacklisted = true, bitRate = 320)
+
+        SongDiff(listOf(stored), listOf(createSong(id = 0, lastModified = firstImport))).apply().updates shouldBe emptyList()
+    }
+
+    @Test
+    fun `a remote song whose server favourite changed is an update`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport)
+
+        val diff = SongDiff(listOf(stored), listOf(createSong(id = 0, lastModified = firstImport).copy(favouritedAt = firstImport))).apply()
+
+        diff.updates.single().favouritedAt shouldBe firstImport
+    }
+
+    @Test
+    fun `songs sharing a path are one song, the last listed winning`() = runTest {
+        val first = createSong(id = 0, lastModified = firstImport, path = "a").copy(name = "First")
+        val last = createSong(id = 0, lastModified = firstImport, path = "a").copy(name = "Last")
+
+        SongDiff(emptyList(), listOf(first, last)).apply().inserts shouldBe listOf(last)
+
+        val stored = createSong(id = 7, lastModified = firstImport, path = "a")
+        val diff = SongDiff(listOf(stored), listOf(first, last)).apply()
+        diff.updates.single().name shouldBe "Last"
+        diff.inserts shouldBe emptyList()
+    }
+
+    @Test
+    fun `a re-import of unchanged songs has nothing to write`() = runTest {
+        val stored = (1..50).map { createSong(id = it.toLong(), lastModified = firstImport, path = "p$it") }
+
+        val diff = SongDiff(stored, stored.map { it.copy(id = 0) }).apply()
+
+        diff.inserts shouldBe emptyList()
+        diff.updates shouldBe emptyList()
+        diff.deletes shouldBe emptyList()
     }
 
     private fun createSong(

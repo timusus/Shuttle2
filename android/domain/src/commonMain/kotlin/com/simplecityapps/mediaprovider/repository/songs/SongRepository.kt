@@ -20,6 +20,12 @@ interface SongRepository {
     suspend fun loadSongs(query: SongQuery): List<Song> = getSongs(query).filterNotNull().first()
 
     /**
+     * Every song stored for [mediaProviderType], unfiltered: what an import diffs against, so it sees the songs a minimum
+     * track length hides in the library.
+     */
+    suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> = loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProviderType))
+
+    /**
      * The ids of the songs whose stored metadata a write has just replaced ([update], and the updates of
      * [insertUpdateAndDelete]: a tag edit, a rescan, a remote sync), once per write, after it's stored. Play counts,
      * positions, exclusion and removals aren't reported here.
