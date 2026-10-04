@@ -16,6 +16,7 @@ import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
+import com.simplecityapps.shuttle.analytics.PurchaseFailureReason
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -67,8 +68,15 @@ class PlayBilling(
             }
         }
 
+    private val outcomes = PurchaseOutcomeReporter(analytics)
+
+    /** The product whose purchase sheet is open, so a cancel or failure can say what was being bought. */
+    @Volatile
+    private var launchedProductId: String? = null
+
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
+            outcomes.onPurchasesUpdated(billingResult.responseCode, purchases.orEmpty(), launchedProductId)
             when (billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
                     Timber.v("onPurchasesUpdated: found ${purchases.orEmpty().size} purchases")
@@ -121,6 +129,7 @@ class PlayBilling(
         val details = productDetails[offer.productId]
         if (!billingClient.isReady || details == null) {
             Timber.e("Failed to launch purchase flow: BillingClient not ready, or no details for ${offer.productId}")
+            analytics.purchaseFailed(offer.productId, PurchaseFailureReason.Failed)
             return false
         }
 
@@ -137,8 +146,10 @@ class PlayBilling(
         )
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
             Timber.e("launchBillingFlow failed (code: ${result.responseCode}, message: ${result.debugMessage})")
+            analytics.purchaseFailed(offer.productId, PurchaseFailureReason.Failed)
             return false
         }
+        launchedProductId = offer.productId
         analytics.purchaseStarted(offer.productId)
         return true
     }
@@ -173,7 +184,13 @@ class PlayBilling(
 
     override suspend fun restorePurchases(): RestoreResult {
         val owned = queryOwnedProducts() ?: return RestoreResult.Failed
-        return if (owned.proSource() != null) RestoreResult.Restored else RestoreResult.NothingToRestore
+        val restored = owned.restoredProductId()
+        return if (restored != null) {
+            analytics.purchaseRestored(restored)
+            RestoreResult.Restored
+        } else {
+            RestoreResult.NothingToRestore
+        }
     }
 
     /** Asks Play for every owned product and publishes them. Returns null if Play couldn't answer for every product type. */

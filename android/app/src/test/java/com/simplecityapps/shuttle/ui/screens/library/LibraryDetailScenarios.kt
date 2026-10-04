@@ -8,8 +8,8 @@ import com.simplecityapps.createSmartPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong

@@ -89,10 +89,10 @@ sealed interface PaywallUiEvent {
 
 /** The S2 Pro paywall: the user's entitlement, the plans Play sells and their prices, purchase and restore. */
 class PaywallViewModel @AssistedInject constructor(
-    @Assisted source: PaywallSource,
-    entitlement: @JvmSuppressWildcards StateFlow<Entitlement>,
+    @Assisted private val source: PaywallSource,
+    private val entitlement: @JvmSuppressWildcards StateFlow<Entitlement>,
     private val billing: Billing,
-    analytics: MonetisationAnalytics
+    private val analytics: MonetisationAnalytics
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -113,6 +113,8 @@ class PaywallViewModel @AssistedInject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = PaywallUiState(entitlement.value.toStatus(), billing.offers.value, selectedPlan.value)
     )
+
+    private val openedAsPro = entitlement.value is Entitlement.Pro
 
     init {
         analytics.paywallShown(source)
@@ -152,6 +154,12 @@ class PaywallViewModel @AssistedInject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    /** Leaving the paywall without having bought Pro is a dismissal; a purchase made here is not. */
+    override fun onCleared() {
+        if (openedAsPro || entitlement.value is Entitlement.Pro) return
+        analytics.paywallDismissed(source)
+    }
 }
 
 private fun Entitlement.toStatus(): PaywallStatus = when (this) {

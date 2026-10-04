@@ -1,5 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.paywall
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.simplecityapps.fakes.FakeBilling
 import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.Entitlement
@@ -12,6 +16,7 @@ import com.simplecityapps.trial.RestoreResult
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.reflect.KClass
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -43,6 +48,44 @@ class PaywallViewModelTest {
         viewModel(PaywallSource.ServerPlayback)
 
         verify { analytics.paywallShown(PaywallSource.ServerPlayback) }
+    }
+
+    /** Closes the paywall as navigating away does, which clears its view model. */
+    private fun clearedViewModel(): PaywallViewModel {
+        val store = ViewModelStore()
+        val viewModel = ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel(PaywallSource.Settings) as T
+            }
+        )[PaywallViewModel::class]
+        store.clear()
+        return viewModel
+    }
+
+    @Test
+    fun `closing the paywall without buying logs a dismissal`() {
+        clearedViewModel()
+
+        verify(exactly = 1) { analytics.paywallDismissed(PaywallSource.Settings) }
+    }
+
+    @Test
+    fun `closing the paywall after buying Pro is not a dismissal`() {
+        val store = ViewModelStore()
+        val viewModel = viewModel(PaywallSource.Settings)
+        entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+        ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel as T
+            }
+        )[PaywallViewModel::class]
+        store.clear()
+
+        verify(exactly = 0) { analytics.paywallDismissed(any()) }
     }
 
     @Test
