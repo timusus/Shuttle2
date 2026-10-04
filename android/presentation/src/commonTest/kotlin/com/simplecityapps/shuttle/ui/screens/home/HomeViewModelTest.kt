@@ -67,6 +67,7 @@ class HomeViewModelTest {
     private val playHistory = FakePlayHistoryRepository()
     private val importState = FakeSongImportStateProvider()
     private val genres = FakeGenreRepository()
+    private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val appVersion = AppVersion { VERSION_NAME }
 
     private val start = Instant.parse("2026-09-23T08:30:00Z")
@@ -119,7 +120,7 @@ class HomeViewModelTest {
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
             LoadHomeCovers(FakePlaylistRepository(), genres),
-            PlayHomeSection(ResolveSongs(FakeSongRepository(), genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(FakeSongRepository()))),
+            PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository))),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.onVisibilityChanged(visible)
@@ -464,6 +465,85 @@ class HomeViewModelTest {
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
         content.events.shouldBeEmpty()
+    }
+
+    private fun HomeViewModel.pendingEvents() = (uiState.value as HomeUiState.Content).events.map { it.value }.filterIsInstance<HomeEvent.PlayShelf>()
+
+    /** Songs for the albums of the suggestions, so a shelf of them has something to play. */
+    private fun shelfSongs() {
+        songRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "a", album = "phase garden", albumArtist = "juniper static"),
+                createSong(id = 2, name = "b", album = "dust choir", albumArtist = "juniper static"),
+            ),
+        )
+    }
+
+    /** A library whose Recently added shelf has songs to play, shown beside the not playable Shuffle all card. */
+    private fun TestScope.shelfLibrary(): HomeViewModel {
+        shelfSongs()
+        suggestions.recentlyAdded = listOf(phaseGarden.groupKey!!, dustChoir.groupKey!!)
+        suggestions.songCount.value = 2
+        return viewModel()
+    }
+
+    @Test
+    fun `playing a playable shelf posts a play event with its songs`() = runTest(testDispatcher) {
+        val viewModel = shelfLibrary()
+
+        viewModel.playSection(HomeSectionId.RecentlyAdded)
+        runCurrent()
+
+        val action = viewModel.pendingEvents().single().action
+        action.shouldBeInstanceOf<MediaAction.Play>().selection.shouldBeInstanceOf<MediaSelection.Songs>().songs.map { it.id } shouldBe listOf(1L, 2L)
+    }
+
+    @Test
+    fun `playing a shelf that is not playable does nothing`() = runTest(testDispatcher) {
+        val viewModel = shelfLibrary()
+        viewModel.sectionIds.contains(HomeSectionId.ShuffleAll) shouldBe true
+
+        viewModel.playSection(HomeSectionId.ShuffleAll)
+        runCurrent()
+
+        viewModel.pendingEvents().shouldBeEmpty()
+    }
+
+    @Test
+    fun `playing a shelf that is not on screen does nothing`() = runTest(testDispatcher) {
+        val viewModel = shelfLibrary()
+
+        viewModel.playSection(HomeSectionId.HeavyRotation)
+        runCurrent()
+
+        viewModel.pendingEvents().shouldBeEmpty()
+    }
+
+    @Test
+    fun `playing a shelf without content does nothing`() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+        viewModel.uiState.value shouldBe HomeUiState.Empty
+
+        viewModel.playSection(HomeSectionId.RecentlyAdded)
+        runCurrent()
+
+        viewModel.uiState.value shouldBe HomeUiState.Empty
+    }
+
+    @Test
+    fun `a second tap on a shelf still resolving is ignored`() = runTest(testDispatcher) {
+        val viewModel = shelfLibrary()
+
+        viewModel.playSection(HomeSectionId.RecentlyAdded)
+        viewModel.playSection(HomeSectionId.RecentlyAdded)
+        runCurrent()
+
+        viewModel.pendingEvents().size shouldBe 1
+
+        // Once resolved, the shelf can be played again.
+        viewModel.playSection(HomeSectionId.RecentlyAdded)
+        runCurrent()
+        viewModel.pendingEvents().size shouldBe 2
     }
 
     private companion object {

@@ -5,7 +5,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -38,7 +37,6 @@ import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.launch
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
     entry<HomeRoute> {
@@ -65,18 +63,19 @@ private fun HomeDestination(
     if (connectingServer) {
         ServerTypePickerRoute(onDismissRequest = { connectingServer = false })
     }
-    (uiState as? HomeUiState.Content)?.let { content ->
-        ConsumeEvents(content.events, onConsumed = viewModel::onEventHandled) { event ->
-            when (event) {
-                HomeEvent.AnalyticsNowOn -> {
-                    val result = snackbarHostState.showSnackbar(analyticsNoticeMessage, actionLabel = analyticsNoticeAction, duration = SnackbarDuration.Long)
-                    if (result == SnackbarResult.ActionPerformed) onOpen(SettingsDestinationRoute(SettingsDestination.Privacy))
+    MediaActionsHost(onNavigate = onNavigate) { actions ->
+        (uiState as? HomeUiState.Content)?.let { content ->
+            ConsumeEvents(content.events, onConsumed = viewModel::onEventHandled) { event ->
+                when (event) {
+                    is HomeEvent.PlayShelf -> actions.dispatch(event.action)
+
+                    HomeEvent.AnalyticsNowOn -> {
+                        val result = snackbarHostState.showSnackbar(analyticsNoticeMessage, actionLabel = analyticsNoticeAction, duration = SnackbarDuration.Long)
+                        if (result == SnackbarResult.ActionPerformed) onOpen(SettingsDestinationRoute(SettingsDestination.Privacy))
+                    }
                 }
             }
         }
-    }
-    val scope = rememberCoroutineScope()
-    MediaActionsHost(onNavigate = onNavigate) { actions ->
         HomeScreen(
             uiState = uiState,
             callbacks = HomeCallbacks(
@@ -99,7 +98,7 @@ private fun HomeDestination(
                 onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,
                 onShowActions = actions::showActions,
-                onPlaySection = { id -> scope.launch { viewModel.playSection(id)?.let(actions::dispatch) } },
+                onPlaySection = viewModel::playSection,
                 onSeeAll = { section ->
                     // Only Recently added has a See all (HomeSectionId.hasSeeAll): the smart playlist of the same name.
                     if (section == HomeSectionId.RecentlyAdded) onOpen(SmartPlaylistRoute(SmartPlaylistId.RecentlyAdded.id))

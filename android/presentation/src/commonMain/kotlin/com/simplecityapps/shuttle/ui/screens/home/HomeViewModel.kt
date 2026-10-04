@@ -47,9 +47,12 @@ sealed interface HomeUiState {
 }
 
 /** An event Home's UI must handle once, whose loss would be a bug. */
-enum class HomeEvent {
+sealed interface HomeEvent {
     /** Analytics just turned on for this upgrader who never chose (#481); shown once. */
-    AnalyticsNowOn,
+    data object AnalyticsNowOn : HomeEvent
+
+    /** A shelf's songs are resolved: the UI hands [action] to the media actions to play them. */
+    data class PlayShelf(val action: MediaAction) : HomeEvent
 }
 
 @ViewModelKey(HomeViewModel::class)
@@ -68,6 +71,7 @@ class HomeViewModel @Inject constructor(
     private val visible = MutableStateFlow(false)
     private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val refreshing = MutableStateFlow(false)
+    private val resolvingSections = mutableSetOf<HomeSectionId>()
 
     init {
         if (!readSetting(AnalyticsConsentSettings.NoticeShown)) {
@@ -139,10 +143,20 @@ class HomeViewModel @Inject constructor(
     /** Shuffles the whole library, resolved as it plays; null before the library has loaded or while it's empty. */
     fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All())) }
 
-    /** Plays the whole shelf of [id] in order; null when it's not on screen or has no songs. */
-    suspend fun playSection(id: HomeSectionId): MediaAction? {
-        val section = (uiState.value as? HomeUiState.Content)?.sections?.firstOrNull { it.id == id }?.takeIf { it.playable } ?: return null
-        return playHomeSection(section)
+    /**
+     * Plays the whole shelf of [id] in order, posting [HomeEvent.PlayShelf] once its songs are resolved. Does nothing
+     * when it's not on screen, isn't [HomeSection.playable] or has no songs, or while the same shelf is still resolving.
+     */
+    fun playSection(id: HomeSectionId) {
+        val section = (uiState.value as? HomeUiState.Content)?.sections?.firstOrNull { it.id == id }?.takeIf { it.playable } ?: return
+        if (!resolvingSections.add(id)) return
+        viewModelScope.launch {
+            try {
+                playHomeSection(section)?.let { events.post(HomeEvent.PlayShelf(it)) }
+            } finally {
+                resolvingSections.remove(id)
+            }
+        }
     }
 
     /** Opening the changelog or dismissing the card marks this version's notes as seen. */

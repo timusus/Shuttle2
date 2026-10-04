@@ -243,7 +243,7 @@ catalogue — #553).
 | `row-genre` | `ListItem` | with song count | default, selected |
 | `row-folder` | `ListItem` | folder, file | default, selected |
 | `grid-tile` | `Card` (outlined/filled) + `Artwork` | album, artist, playlist; Home shelf item | default, pressed, selected, placeholder |
-| `section-header` | `ListItem` headline slot, `titleSmall` | with action (See all), sticky letter header | default |
+| `section-header` | `ListItem` headline slot, `titleSmall` | with action (See all, or an icon action such as Home shelf play), sticky letter header | default |
 | `chip-sort-filter` | `FilterChip`, `InputChip`, sort as `AssistChip` + `DropdownMenu`, read-only info as a `SuggestionChip` | sort field and order, filters (downloaded, source), file facts (format, bit rate, sample rate) | selected, unselected, disabled |
 | `fast-scroller` | custom (§2) | alphabet, position | idle, dragging with letter bubble |
 

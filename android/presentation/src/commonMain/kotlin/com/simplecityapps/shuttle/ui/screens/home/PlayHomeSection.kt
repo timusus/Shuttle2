@@ -8,7 +8,8 @@ import dev.zacsweers.metro.Inject
 /**
  * The play action for a whole Home shelf: every song of its items in shelf order, each item's songs in its own order,
  * to replace the queue and start at the first. Null when the shelf has no songs, so there's nothing to do. The
- * [MediaAction] is dispatched like any other, so a failure to play is reported the same way.
+ * [MediaAction] is dispatched like any other, so a failure to play is reported the same way. Deliberately, a song in
+ * two of the shelf's items is queued twice, and no PlayContext is recorded.
  */
 class PlayHomeSection @Inject constructor(
     private val resolveSongs: ResolveSongs,
