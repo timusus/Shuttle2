@@ -25,11 +25,11 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 /** The Android [SettingsEffects]: live audio processors, WorkManager, widgets, the log share sheet and services. */
 class AndroidSettingsEffects @Inject constructor(
@@ -76,7 +76,7 @@ class AndroidSettingsEffects @Inject constructor(
         val send = Intent(Intent.ACTION_SEND)
             .setType("text/plain")
             .putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", shared))
-            .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.settings_logging_clipboard_name))
+            .putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.settings_logging_name))
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         context.startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         return ShareDebugLogsResult.Shared

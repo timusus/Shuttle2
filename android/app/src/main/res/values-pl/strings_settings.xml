@@ -14,10 +14,10 @@
     <string name="settings_dialog_message_download_artwork">Spowoduje to pobranie całej grafiki, niezależnie od połączenia sieciowego (WiFi/dane/inne)</string>
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Ściągnij</string>
-    <!-- Settings option to copy debug logs to clipboard -->
-    <string name="settings_logging_clipboard_name">Dzienniki debugowania</string>
-    <!-- Error message shown when copying debug logs failed, because there are no logs -->
-    <string name="settings_logging_clipboard_logs_empty">Plik dziennika jest pusty</string>
+    <!-- The name of the debug logs, as the share subject and the live log's clip label -->
+    <string name="settings_logging_name">Dzienniki debugowania</string>
+    <!-- Error message shown when sharing debug logs failed, because there are no logs -->
+    <string name="settings_logging_logs_empty">Plik dziennika jest pusty</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
     <string name="pref_category_title_display">Pokaż</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
@@ -111,6 +111,8 @@
     <string name="pref_file_logging_title">Rejestrowanie debugowania</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
     <string name="pref_file_logging_subtitle">Zapisuje dzienniki do pliku na dysku</string>
+    <!-- Settings: Title for the option to share the debug log file -->
+    <string name="pref_share_debug_logs_title">Udostępnij dzienniki debugowania</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_title">Grafika z sesji medialnych</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

@@ -222,7 +222,7 @@ private val SettingsUiEvent.message: Int?
 
         is SettingsUiEvent.DebugLogsShared -> when (result) {
             ShareDebugLogsResult.Shared -> null
-            ShareDebugLogsResult.Empty -> R.string.settings_logging_clipboard_logs_empty
+            ShareDebugLogsResult.Empty -> R.string.settings_logging_logs_empty
         }
     }
 

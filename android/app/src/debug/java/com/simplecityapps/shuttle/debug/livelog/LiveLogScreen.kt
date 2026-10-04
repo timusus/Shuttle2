@@ -107,5 +107,5 @@ private fun copyToClipboard(
     lines: List<LiveLogLine>
 ) {
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    clipboardManager.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.settings_logging_clipboard_name), lines.formatAll()))
+    clipboardManager.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.settings_logging_name), lines.formatAll()))
 }

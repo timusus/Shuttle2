@@ -14,10 +14,10 @@
     <string name="settings_dialog_message_download_artwork">Hiermee download je alle illustraties, ongeacht je netwerkverbinding (wifi/data/overig)</string>
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Downloaden</string>
-    <!-- Settings option to copy debug logs to clipboard -->
-    <string name="settings_logging_clipboard_name">Debug-logs</string>
-    <!-- Error message shown when copying debug logs failed, because there are no logs -->
-    <string name="settings_logging_clipboard_logs_empty">Logbestand leeg</string>
+    <!-- The name of the debug logs, as the share subject and the live log's clip label -->
+    <string name="settings_logging_name">Debug-logs</string>
+    <!-- Error message shown when sharing debug logs failed, because there are no logs -->
+    <string name="settings_logging_logs_empty">Logbestand leeg</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
     <string name="pref_category_title_display">Weergave</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
@@ -107,6 +107,8 @@
     <string name="pref_file_logging_title">Logboekregistratie foutopsporing</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
     <string name="pref_file_logging_subtitle">Schrijft logboeken naar een bestand op schijf</string>
+    <!-- Settings: Title for the option to share the debug log file -->
+    <string name="pref_share_debug_logs_title">Deel debug-logs</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_title">Mediasessie illustraties</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
