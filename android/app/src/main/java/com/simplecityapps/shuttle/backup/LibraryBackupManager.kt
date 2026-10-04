@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.backup.BackedUpSong
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackup
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupFlow
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupMatcher
+import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupRestorer
 import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
 import com.simplecityapps.shuttle.ui.screens.settings.backup.SongIdentity
 import dev.zacsweers.metro.Inject

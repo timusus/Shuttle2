@@ -22,6 +22,7 @@ com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.sim
 com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.simplecityapps.shuttle.ui.widgets.WidgetManager (app-only)
 com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> com.simplecityapps.mediaprovider.settings.LibrarySettings (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> com.simplecityapps.playback.settings.PlaybackSettings (:android:playback:core)
+com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupRestorer -> com.simplecityapps.localmediaprovider.local.data.room.dao.SongStatsRestore (:android:mediaprovider:local)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.settings.LibrarySettings (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.worker.ImportFrequency (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB (:android:playback:core)
