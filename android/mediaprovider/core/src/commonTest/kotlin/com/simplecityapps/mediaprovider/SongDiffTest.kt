@@ -89,6 +89,26 @@ class SongDiffTest {
     }
 
     @Test
+    fun `a re-import fills in the format of a song stored without one`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport)
+        val resynced = createSong(id = 0, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(sampleRate = 96000, channelCount = 2)
+
+        SongDiff(listOf(existing), listOf(resynced)).apply().updates.single().run {
+            audioCodec shouldBe "flac"
+            bitRate shouldBe 1411
+            sampleRate shouldBe 96000
+            channelCount shouldBe 2
+        }
+    }
+
+    @Test
+    fun `a re-import that reports no format keeps the stored one`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "mp3", bitRate = 320)
+
+        SongDiff(listOf(existing), listOf(createSong(id = 0, lastModified = firstImport))).apply().updates shouldBe emptyList()
+    }
+
+    @Test
     fun `a full listing deletes the songs it no longer holds`() = runTest {
         val kept = createSong(id = 1, lastModified = firstImport, path = "jellyfin://item/1")
         val gone = createSong(id = 2, lastModified = firstImport, path = "jellyfin://item/2")
@@ -205,7 +225,8 @@ class SongDiffTest {
         artworkVersion: String? = null,
         dateAdded: Instant? = null,
         bitDepth: Int? = null,
-        audioCodec: String? = null
+        audioCodec: String? = null,
+        bitRate: Int? = null
     ) = Song(
         id = id,
         name = "Song",
@@ -229,7 +250,7 @@ class SongDiffTest {
         mediaProvider = MediaProviderType.Jellyfin,
         lyrics = null,
         grouping = null,
-        bitRate = null,
+        bitRate = bitRate,
         bitDepth = bitDepth,
         sampleRate = null,
         channelCount = null,

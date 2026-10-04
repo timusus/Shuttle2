@@ -29,17 +29,13 @@ class SongDiff(
             favouritedAt = oldData.favouritedAt.atStoredPrecision()
         )
 
-        return updated.keepingStoredBitDepth(old).copy(
+        return updated.keepingStoredBitDepth(old).keepingStoredStreamProperties(old).copy(
             lastPlayed = old.lastPlayed,
             lastCompleted = old.lastCompleted,
             playCount = old.playCount,
             playbackPosition = old.playbackPosition,
             blacklisted = old.blacklisted,
             mediaProvider = old.mediaProvider,
-            bitRate = old.bitRate,
-            sampleRate = old.sampleRate,
-            channelCount = old.channelCount,
-            audioCodec = old.audioCodec,
             albumIdentity = old.albumIdentity,
             // Stored as a year only
             date = if (updated.date?.year == old.date?.year) old.date else updated.date,
@@ -58,13 +54,24 @@ class SongDiff(
     override fun update(
         oldData: Song,
         newData: Song
-    ): Song = newData.keepingStoredBitDepth(oldData).copy(
+    ): Song = newData.keepingStoredBitDepth(oldData).keepingStoredStreamProperties(oldData).copy(
         id = oldData.id,
         // A provider with no date for the song keeps the one from its first import, rather than looking newly added
         lastModified = newData.lastModified ?: oldData.lastModified,
         // The server's date for a remote song, which replaces an older import stamp; otherwise (local songs) the one
         // stamped when the song first reached the library, which a tag edit or rescan doesn't move
         dateAdded = newData.dateAdded ?: oldData.dateAdded
+    )
+
+    /**
+     * The stream properties a provider reports, else the stored ones: the MediaStore scan reports none, and a TagLib
+     * rescan's would otherwise be wiped by it.
+     */
+    private fun Song.keepingStoredStreamProperties(old: Song): Song = copy(
+        bitRate = bitRate ?: old.bitRate,
+        sampleRate = sampleRate ?: old.sampleRate,
+        channelCount = channelCount ?: old.channelCount,
+        audioCodec = audioCodec ?: old.audioCodec
     )
 
     /**

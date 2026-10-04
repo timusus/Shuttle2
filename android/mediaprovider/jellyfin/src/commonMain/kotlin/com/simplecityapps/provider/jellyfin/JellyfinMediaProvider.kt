@@ -206,56 +206,61 @@ class JellyfinMediaProvider(
 private fun QueryResult.toPage() = Page(items, totalRecordCount)
 
 /** [syncedAt] is when the sync that read the item started: a favourite's time, as the server keeps none. */
-internal fun Item.toSong(syncedAt: Instant): Song = Song(
-    id = 0,
-    name = name,
-    albumArtist = albumArtist,
-    artists = artists.filter { it.isNotEmpty() },
-    album = album,
-    track = indexNumber,
-    disc = parentIndexNumber,
-    duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
-    date = productionYear?.let { year -> LocalDate(year, 1, 1) },
-    genres = genres,
-    path = songPath,
-    size = 0,
-    mimeType = "Audio/*",
-    // The server has no modified date for items; DateCreated (when the song was added) is the closest, and keeps the
-    // Last Modified sort meaningful rather than falling back to our own import time
-    lastModified = createdAt,
-    lastPlayed = null,
-    lastCompleted = null,
-    playCount = 0,
-    playbackPosition = 0,
-    blacklisted = false,
-    externalId = id,
-    mediaProvider = MediaProviderType.Jellyfin,
-    lyrics = null,
-    grouping = null,
-    bitRate = null,
-    bitDepth = mediaStreams.firstOrNull { it.type == "Audio" }?.let { losslessBitDepth(it.codec, it.bitDepth) },
-    sampleRate = null,
-    channelCount = null,
-    // Artwork for songs and albums is the album's primary image
-    artworkVersion = albumPrimaryImageTag,
-    // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
-    dateAdded = createdAt,
-    // Jellyfin splits the file's ARTIST tag into Artists itself, so the raw credit string and COMPILATION aren't sent
-    albumArtists = albumArtists.mapNotNull { artist -> artist.name?.takeIf(String::isNotBlank) },
-    artistsTag = artists.filter { it.isNotEmpty() },
-    artistDisplay = null,
-    compilation = null,
-    // MusicBrainzTrack is the release track id; a file's MUSICBRAINZ_TRACKID is the recording
-    mbTrackId = musicBrainzIds(providerIds["MusicBrainzRecording"]).firstOrNull(),
-    mbAlbumId = musicBrainzIds(providerIds["MusicBrainzAlbum"]).firstOrNull(),
-    mbReleaseGroupId = musicBrainzIds(providerIds["MusicBrainzReleaseGroup"]).firstOrNull(),
-    mbArtistIds = musicBrainzIds(providerIds["MusicBrainzArtist"]),
-    mbAlbumArtistIds = musicBrainzIds(providerIds["MusicBrainzAlbumArtist"]),
-    serverAlbumId = albumId,
-    serverArtistIds = artistItems.mapNotNull(ArtistItem::id),
-    serverAlbumArtistIds = albumArtists.mapNotNull(ArtistItem::id),
-    favouritedAt = syncedAt.takeIf { userData?.isFavorite == true }
-)
+internal fun Item.toSong(syncedAt: Instant): Song {
+    val audioStream = mediaStreams.firstOrNull { it.type == "Audio" }
+    return Song(
+        id = 0,
+        name = name,
+        albumArtist = albumArtist,
+        artists = artists.filter { it.isNotEmpty() },
+        album = album,
+        track = indexNumber,
+        disc = parentIndexNumber,
+        duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
+        date = productionYear?.let { year -> LocalDate(year, 1, 1) },
+        genres = genres,
+        path = songPath,
+        size = 0,
+        mimeType = "Audio/*",
+        // The server has no modified date for items; DateCreated (when the song was added) is the closest, and keeps the
+        // Last Modified sort meaningful rather than falling back to our own import time
+        lastModified = createdAt,
+        lastPlayed = null,
+        lastCompleted = null,
+        playCount = 0,
+        playbackPosition = 0,
+        blacklisted = false,
+        externalId = id,
+        mediaProvider = MediaProviderType.Jellyfin,
+        lyrics = null,
+        grouping = null,
+        // Bits per second on the wire; a song stores kbps, like Plex and the local scan
+        bitRate = audioStream?.bitRate?.takeIf { it > 0 }?.let { bitsPerSecond -> (bitsPerSecond + 500) / 1000 },
+        bitDepth = audioStream?.let { losslessBitDepth(it.codec, it.bitDepth) },
+        sampleRate = audioStream?.sampleRate?.takeIf { it > 0 },
+        channelCount = audioStream?.channels?.takeIf { it > 0 },
+        audioCodec = audioStream?.codec?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
+        // Artwork for songs and albums is the album's primary image
+        artworkVersion = albumPrimaryImageTag,
+        // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
+        dateAdded = createdAt,
+        // Jellyfin splits the file's ARTIST tag into Artists itself, so the raw credit string and COMPILATION aren't sent
+        albumArtists = albumArtists.mapNotNull { artist -> artist.name?.takeIf(String::isNotBlank) },
+        artistsTag = artists.filter { it.isNotEmpty() },
+        artistDisplay = null,
+        compilation = null,
+        // MusicBrainzTrack is the release track id; a file's MUSICBRAINZ_TRACKID is the recording
+        mbTrackId = musicBrainzIds(providerIds["MusicBrainzRecording"]).firstOrNull(),
+        mbAlbumId = musicBrainzIds(providerIds["MusicBrainzAlbum"]).firstOrNull(),
+        mbReleaseGroupId = musicBrainzIds(providerIds["MusicBrainzReleaseGroup"]).firstOrNull(),
+        mbArtistIds = musicBrainzIds(providerIds["MusicBrainzArtist"]),
+        mbAlbumArtistIds = musicBrainzIds(providerIds["MusicBrainzAlbumArtist"]),
+        serverAlbumId = albumId,
+        serverArtistIds = artistItems.mapNotNull(ArtistItem::id),
+        serverAlbumArtistIds = albumArtists.mapNotNull(ArtistItem::id),
+        favouritedAt = syncedAt.takeIf { userData?.isFavorite == true }
+    )
+}
 
 internal val Item.songPath: String
     get() = "jellyfin://item/$id"

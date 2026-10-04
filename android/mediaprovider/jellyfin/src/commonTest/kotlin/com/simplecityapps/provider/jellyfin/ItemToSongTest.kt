@@ -100,6 +100,34 @@ class ItemToSongTest {
     }
 
     @Test
+    fun `the audio stream's codec, bit rate, sample rate and channels become the song's`() {
+        val song = parse(
+            mediaStreams = """[{"Type": "Video", "Codec": "mjpeg"}, {"Type": "Audio", "Codec": "FLAC", "BitRate": 1411000, "SampleRate": 96000, "Channels": 2}]"""
+        ).toSong(SYNCED_AT)
+
+        song.audioCodec shouldBe "flac"
+        song.bitRate shouldBe 1411
+        song.sampleRate shouldBe 96000
+        song.channelCount shouldBe 2
+    }
+
+    @Test
+    fun `a bit rate in bits per second is stored in rounded kbps`() {
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "mp3", "BitRate": 319999}]""").toSong(SYNCED_AT).bitRate shouldBe 320
+        parse(mediaStreams = """[{"Type": "Audio", "Codec": "mp3", "BitRate": 0}]""").toSong(SYNCED_AT).bitRate shouldBe null
+    }
+
+    @Test
+    fun `a song without streams has no format`() {
+        val song = parse().toSong(SYNCED_AT)
+
+        song.audioCodec shouldBe null
+        song.bitRate shouldBe null
+        song.sampleRate shouldBe null
+        song.channelCount shouldBe null
+    }
+
+    @Test
     fun `a song without streams or a bit depth has none`() {
         parse().toSong(SYNCED_AT).bitDepth shouldBe null
         parse(mediaStreams = """[{"Type": "Audio", "Codec": "flac"}]""").toSong(SYNCED_AT).bitDepth shouldBe null

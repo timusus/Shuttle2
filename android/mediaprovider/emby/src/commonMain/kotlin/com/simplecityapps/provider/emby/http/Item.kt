@@ -16,7 +16,11 @@ data class ArtistItem(
 data class MediaStream(
     @SerialName("Type") val type: String? = null,
     @SerialName("Codec") val codec: String? = null,
-    @SerialName("BitDepth") val bitDepth: Int? = null
+    @SerialName("BitDepth") val bitDepth: Int? = null,
+    // Bits per second
+    @SerialName("BitRate") val bitRate: Int? = null,
+    @SerialName("SampleRate") val sampleRate: Int? = null,
+    @SerialName("Channels") val channels: Int? = null
 )
 
 /** The signed-in user's own state for an item. */
