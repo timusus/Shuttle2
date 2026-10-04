@@ -5,11 +5,13 @@
 # maestro-sim.sh (in a command substitution, so nothing exports back to the caller).
 #
 # usage: ios/scripts/lease-sim.sh [--holder]
-#   --holder   print the holder a lease is taken under instead of leasing; release with
+#   --holder   print the holder a lease is taken under instead of leasing (asks
+#              `sim-lease.sh holder`, so it always matches the lease); release with
 #              CLAUDE_CODE_SESSION_ID="$(... lease-sim.sh --holder)" sim-lease.sh release
 #
 # env:
 #   S2_SIM_HOLDER   lease as this holder instead of the current session
+#   S2_SIM_DEVICE_SH  device.sh to lease through (tests; default the shared ios-sim pool's)
 #   S2_SIM_PROFILE  ios26 leases from the "S2 iPhone iOS 26" (runtime 26.5) pool instead of the
 #                   default iPhone 16 / iOS 18.5 one — iOS 26 tab-bar-minimise and bottom-accessory
 #                   behaviour doesn't exist on the default pool. The lease goes under a distinct
@@ -20,7 +22,7 @@
 set -euo pipefail
 
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 fi
 
@@ -30,20 +32,26 @@ case "${S2_SIM_PROFILE:-}" in
   *) echo "lease-sim: unknown S2_SIM_PROFILE '$S2_SIM_PROFILE' (want ios26)" >&2; exit 2 ;;
 esac
 
-# The holder sim-lease.sh leases and releases under: $S2_SIM_HOLDER, else the ambient session id.
-# Empty (no holder anywhere) leaves device.sh to derive its own, as before.
-holder="${S2_SIM_HOLDER:-${CLAUDE_CODE_SESSION_ID:-}}"
+device_sh="${S2_SIM_DEVICE_SH:-$HOME/.claude/scripts/ios-sim/device.sh}"
+sim_lease_sh="$(dirname "$device_sh")/sim-lease.sh"
+
+# The holder sim-lease.sh leases and releases under: $S2_SIM_HOLDER, else whatever sim-lease.sh
+# derives for this environment (`sim-lease.sh holder`: the session id, else claude-pid-N), plus the
+# profile suffix. Asking sim-lease.sh keeps this and the lease one id, so a release always matches.
+holder="${S2_SIM_HOLDER:-}"
+if [ -z "$holder" ] && [ -x "$sim_lease_sh" ]; then
+  holder="$("$sim_lease_sh" holder 2>/dev/null)" || holder=""
+fi
+[ -n "$holder" ] || holder="${CLAUDE_CODE_SESSION_ID:-}"
 
 if [ "${1:-}" = "--holder" ]; then
   [ -n "$holder" ] && echo "${holder}${suffix}"
   exit 0
 fi
 
-device_sh="$HOME/.claude/scripts/ios-sim/device.sh"
 [ -x "$device_sh" ] || exit 1
 # Reap leases whose holder died (a crashed worker leaves its simulator booted, #703) before taking one.
-sim_lease_sh="$(dirname "$device_sh")/sim-lease.sh"
-[ -x "$sim_lease_sh" ] && "$sim_lease_sh" gc >&2 || true
+"$sim_lease_sh" gc >&2 || true
 if [ -n "$holder" ]; then
   CLAUDE_CODE_SESSION_ID="${holder}${suffix}" "$device_sh"
 else
