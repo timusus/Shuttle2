@@ -10,8 +10,8 @@ import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
+import com.simplecityapps.localmediaprovider.local.provider.scannerUnreadableRoots
 import com.simplecityapps.localmediaprovider.local.provider.toSong
-import com.simplecityapps.localmediaprovider.local.provider.unmountedRoots
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.M3uEntryMatcher
@@ -66,17 +66,25 @@ class TaglibMediaProvider(
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         val startTime = System.currentTimeMillis()
         val folders = folders()
-        // Without MediaStore's listing, failing keeps the library as it was: an empty one would remove every song it holds
-        val files =
-            findAudioFiles(folders.filter) ?: run {
-                emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
-                return@flow
-            }
-        val (extraDocuments, unavailableTrees) = findExtraDocuments(folders, knownPaths = files.map { it.path.lowercase() }.toSet())
+        val mediaStoreFiles = findAudioFiles(folders.filter)
+        // Without MediaStore's listing (no audio permission, say), the files it would list are the stored ones: the extra
+        // folders' copies of them aren't new songs
+        val knownPaths = mediaStoreFiles?.map { file -> file.path } ?: existingSongs.map { song -> song.path }
+        val (extraDocuments, unavailableTrees) = findExtraDocuments(folders, knownPaths = knownPaths.map { path -> path.lowercase() }.toSet())
+        // With neither, failing keeps the library as it was: an empty listing would remove every song it holds
+        if (mediaStoreFiles == null && extraDocuments.isEmpty()) {
+            emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
+            return@flow
+        }
+        val files = mediaStoreFiles.orEmpty()
         // After the listing, so a volume unmounted while it ran counts too: MediaStore leaves its songs out until it's back.
         // Songs read from a tree keep a document URI under it as their path (getExtraSongs)
-        unreadableRoots = unmountedRoots(existingSongs.map { song -> song.path }, mountedVolumeRoots(context)) +
-            unavailableTrees.map { treeUri -> "$treeUri/document/" }
+        unreadableRoots = scannerUnreadableRoots(
+            songPaths = existingSongs.map { song -> song.path },
+            mountedRoots = mountedVolumeRoots(context),
+            mediaStoreListed = mediaStoreFiles != null,
+            unavailableTrees = unavailableTrees.map { treeUri -> treeUri.toString() }
+        )
         val total = files.size + extraDocuments.size
         val filesWithImages =
             withContext(Dispatchers.IO) {

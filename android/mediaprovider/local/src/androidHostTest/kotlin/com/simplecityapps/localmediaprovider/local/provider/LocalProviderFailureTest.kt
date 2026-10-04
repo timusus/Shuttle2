@@ -27,7 +27,8 @@ import org.robolectric.Robolectric
 
 /**
  * The MediaStore provider fails an import it can't list MediaStore for, rather than reporting no songs and so removing them
- * all. (The scanner's TaglibMediaProvider does the same, but needs KTagLib's native library, which doesn't load on the JVM.)
+ * all. (The scanner's TaglibMediaProvider does the same when it has no extra folders to read, but needs KTagLib's native
+ * library, which doesn't load on the JVM; what it keeps when it reads only those is in StorageVolumesTest.)
  */
 @RunWith(AndroidJUnit4::class)
 class LocalProviderFailureTest {
