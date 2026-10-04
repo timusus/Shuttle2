@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -54,9 +55,9 @@ fun fakeShellEntryProvider(
     entry<HomeRoute> {
         // The real Home's visibility effect, so the shell's tests see when it reloads
         HomeVisibilityEffect(onHomeVisibilityChanged)
-        FakeList("Recently played", SampleLibrary.albums.take(8), openAlbum)
+        FakeList("Recently played", SampleLibrary.albums.take(8), openAlbum, ShellTab.Home)
     }
-    entry<LibraryRoute>(metadata = ListDetailSceneStrategy.listPane()) { FakeList("Albums", SampleLibrary.albums, openAlbum) }
+    entry<LibraryRoute>(metadata = ListDetailSceneStrategy.listPane()) { FakeList("Albums", SampleLibrary.albums, openAlbum, ShellTab.Library) }
     entry<SearchRoute> { FakeList("Search", emptyList(), openAlbum) }
     entry<AlbumRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
         val album = SampleLibrary.albums.firstOrNull { it.toAlbum().route == route }
@@ -96,8 +97,11 @@ fun fakeShellEntryProvider(
 }
 
 @Composable
-private fun FakeList(header: String, albums: List<SampleAlbum>, onOpenAlbum: (SampleAlbum) -> Unit) {
-    LazyColumn {
+private fun FakeList(header: String, albums: List<SampleAlbum>, onOpenAlbum: (SampleAlbum) -> Unit, tab: ShellTab? = null) {
+    val listState = rememberLazyListState()
+    // The real screens' effect, on the tabs' roots
+    if (tab != null) ScrollToTopOnReselect(tab, listState)
+    LazyColumn(state = listState) {
         item { SectionHeader(title = header) }
         items(albums, key = { it.id }) { album ->
             AlbumRow(title = album.title, artist = album.artist, onClick = { onOpenAlbum(album) }, artwork = { LibraryArtwork(album.toAlbum(), ArtworkPlaceholder.Album) })

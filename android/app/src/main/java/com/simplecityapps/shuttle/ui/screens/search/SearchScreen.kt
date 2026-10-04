@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
@@ -45,6 +46,8 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
+import com.simplecityapps.shuttle.ui.shell.ShellTab
 
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
 class SearchCallbacks(
@@ -136,7 +139,9 @@ private fun RecentSearches(
         )
         return
     }
-    LazyColumn(Modifier.fillMaxSize()) {
+    val listState = rememberLazyListState()
+    ScrollToTopOnReselect(ShellTab.Search, listState)
+    LazyColumn(Modifier.fillMaxSize(), state = listState) {
         item(key = "header") { SectionHeader(stringResource(R.string.search_recent), style = SectionHeaderStyle.Title) }
         searches.forEach { query ->
             item(key = "recent:$query") { SearchRecentRow(query, onClick = { onSelect(query) }, onRemove = { onRemove(query) }) }
@@ -152,7 +157,9 @@ private fun SearchResultList(
 ) {
     var expanded by rememberSaveable(query) { mutableStateOf<SearchCategory?>(null) }
     val sections = results.sections(expanded)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = S2Spacing.medium)) {
+    val listState = rememberLazyListState()
+    ScrollToTopOnReselect(ShellTab.Search, listState)
+    LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = PaddingValues(bottom = S2Spacing.medium)) {
         // The best match of all leads, lifted out of its own section.
         results.top?.let { top ->
             item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result), style = SectionHeaderStyle.Title) }

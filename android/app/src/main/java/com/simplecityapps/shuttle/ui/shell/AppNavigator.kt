@@ -10,12 +10,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
  * One back stack per top-level tab plus the selected tab (docs/architecture/app-shell.md,
  * "Back stacks and the navigator"). The display shows the start tab's stack followed by the
  * selected tab's, so back at the root of another tab returns to the start tab; re-selecting a
- * tab restores its stack, and re-selecting the current tab pops it to its root. Leaving a tab
+ * tab restores its stack, and re-selecting the current tab pops it to its root, or, already there, announces it on
+ * [reselects] for the tab's screen to scroll to the top. Leaving a tab
  * dismisses any utility destinations ([UtilityRoute]) open on it, so coming back shows the tab's
  * own screens with the navigation in place.
  *
@@ -33,6 +37,11 @@ class AppNavigator(
     init {
         require(ShellTab.entries.all { stacks[it]?.firstOrNull() == it.root }) { "Every tab's stack must start at its root" }
     }
+
+    private val _reselects = MutableSharedFlow<ShellTab>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** The tab re-selected while at its root; nothing replays, so a tab with no screen listening drops it. */
+    val reselects: Flow<ShellTab> = _reselects
 
     fun stack(tab: ShellTab): List<NavKey> = stacks.getValue(tab)
 
@@ -65,7 +74,11 @@ class AppNavigator(
     fun selectTab(tab: ShellTab) {
         if (tab == selectedTab) {
             val stack = stacks.getValue(tab)
-            while (stack.size > 1) stack.removeAt(stack.lastIndex)
+            if (stack.size > 1) {
+                while (stack.size > 1) stack.removeAt(stack.lastIndex)
+            } else {
+                _reselects.tryEmit(tab)
+            }
         } else {
             leave(selectedTab)
             selectedTab = tab

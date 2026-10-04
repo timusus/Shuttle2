@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
@@ -55,6 +56,8 @@ import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
+import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.text.resId
 
 class HomeCallbacks(
@@ -155,7 +158,9 @@ private fun HomeContent(
     val shelfTileWidth = if (wide) S2ShelfTileWidth.wide else S2ShelfTileWidth.compact
     // The lead section's header is a headline; the rest are shelf titles, set apart by a wider gap.
     val leadSection = content.sections.firstOrNull { it.id != HomeSectionId.ShuffleAll && it.items.isNotEmpty() }?.id
-    LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {
+    val listState = rememberLazyListState()
+    ScrollToTopOnReselect(ShellTab.Home, listState)
+    LazyColumn(state = listState, modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks, Modifier.animateItem()) }
         }

@@ -151,7 +151,7 @@ fun AppShell(
     LaunchedEffect(tabRequests) { tabRequests.collect { tab -> onSelectTab(tab) } }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
     val destinations: @Composable () -> Unit = {
-        CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {
+        CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState, LocalTabReselects provides navigator.reselects) {
             ShellNavDisplay(navigator, layout, windowAdaptiveInfo, entryProvider)
         }
     }

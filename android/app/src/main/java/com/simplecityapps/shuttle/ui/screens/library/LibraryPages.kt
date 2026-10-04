@@ -69,6 +69,8 @@ import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.songThumbLabel
+import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
+import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
 // The library tabs' pages: state in, events out, restyled with catalogue rows. The ViewModels are the existing
@@ -149,6 +151,7 @@ fun SongsPage(
     }
     LibraryContent(content, stringResource(R.string.song_list_empty), modifier, state.scanProgress, controls, hasItems = state.songs.isNotEmpty()) {
         val listState = rememberLazyListState()
+        ScrollToTopOnReselect(ShellTab.Library, listState)
         val byAlbum = state.sortOrder == SongSortOrder.AlbumGroupKey || state.sortOrder == SongSortOrder.Default
         val entries = remember(state.songs, byAlbum) { songEntries(state.songs, byAlbum) }
         Box(modifier.fillMaxSize()) {
@@ -286,6 +289,7 @@ fun AlbumsPage(
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
+                ScrollToTopOnReselect(ShellTab.Library, gridState)
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
@@ -309,6 +313,7 @@ fun AlbumsPage(
                 fastScroller(rememberFastScrollableState(gridState))
             } else {
                 val listState = rememberLazyListState()
+                ScrollToTopOnReselect(ShellTab.Library, listState)
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-albums")) {
                     controlsItem(controls)
                     items(state.albums, key = { it.groupKey.toString() }) { album ->
@@ -354,6 +359,7 @@ fun ArtistsPage(
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
+                ScrollToTopOnReselect(ShellTab.Library, gridState)
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
@@ -377,6 +383,7 @@ fun ArtistsPage(
                 fastScroller(rememberFastScrollableState(gridState))
             } else {
                 val listState = rememberLazyListState()
+                ScrollToTopOnReselect(ShellTab.Library, listState)
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-artists")) {
                     controlsItem(controls)
                     items(artists, key = { it.groupKey.toString() }) { artist ->
@@ -420,6 +427,7 @@ fun GenresPage(
     }
     LibraryContent(content, stringResource(R.string.genre_list_empty), modifier, state.scanProgress, controls, hasItems = state.genres.isNotEmpty()) {
         val listState = rememberLazyListState()
+        ScrollToTopOnReselect(ShellTab.Library, listState)
         val leadingItems = controlsItemCount(controls)
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-genres")) {
@@ -460,6 +468,7 @@ fun PlaylistsPage(
     }
     LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress, controls, hasItems = true) {
         val listState = rememberLazyListState()
+        ScrollToTopOnReselect(ShellTab.Library, listState)
         val headerCount = controlsItemCount(controls) + 1 + state.smartPlaylists.size + 1
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-playlists")) {
@@ -512,7 +521,9 @@ fun FoldersPage(
         FolderListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
     LibraryContent(content, stringResource(R.string.folder_list_empty), modifier, state.scanProgress) {
-        LazyColumn(modifier = modifier.fillMaxSize().testTag("library-folders")) {
+        val listState = rememberLazyListState()
+        ScrollToTopOnReselect(ShellTab.Library, listState)
+        LazyColumn(state = listState, modifier = modifier.fillMaxSize().testTag("library-folders")) {
             state.currentFolder?.let { folder ->
                 item(key = "path") {
                     SectionHeader(

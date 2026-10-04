@@ -226,6 +226,39 @@ class AppShellTest {
     }
 
     @Test
+    fun `the nav bar lights the start tab the shell opens on`() {
+        robot.setContent(startTab = ShellTab.Home)
+        robot.assertSelectedTab("Home")
+    }
+
+    @Test
+    fun `the nav bar lights Library when the shell opens on it`() {
+        robot.setContent(startTab = ShellTab.Library)
+        robot.assertSelectedTab("Library")
+        robot.assertTextDisplayed("Albums")
+    }
+
+    @Test
+    fun `tapping the selected tab scrolls its list back to the top`() {
+        robot.setContent()
+        robot.scrollListTo(6)
+        robot.assertTextNotDisplayed("Recently played")
+
+        robot.tapText("Home")
+
+        robot.assertTextDisplayed("Recently played")
+    }
+
+    @Test
+    fun `tapping the selected tab with a screen open pops it rather than scrolling`() {
+        robot.setContent()
+        robot.tapText("Phase Garden")
+        robot.tapText("Home")
+
+        robot.assertTextDisplayed("Recently played")
+    }
+
+    @Test
     fun `back at Mini pops the destination instead`() {
         robot.setContent()
         robot.tapText("Phase Garden")

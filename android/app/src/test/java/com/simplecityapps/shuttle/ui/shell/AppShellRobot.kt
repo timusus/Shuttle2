@@ -39,6 +39,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
@@ -53,6 +54,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -363,6 +365,7 @@ class AppShellRobot(
         progress: PlayerProgress = progressState.value,
         systemBars: SystemBars? = null,
         layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        startTab: ShellTab = ShellTab.Home,
     ) {
         queueState.value = queue
         progressState.value = progress
@@ -389,6 +392,7 @@ class AppShellRobot(
                             progress = { currentProgress },
                             actions = actions,
                             snackbarHostState = snackbarHostState,
+                            startTab = startTab,
                             windowAdaptiveInfo = currentWindow,
                             entryProvider = entryProvider,
                             navigationRequests = remember(targets) { targets.receiveAsFlow() },
@@ -503,6 +507,16 @@ class AppShellRobot(
     ) {
         rule.onNodeWithContentDescription(description).performSemanticsAction(SemanticsActions.SetProgress) { it(index.toFloat()) }
         rule.waitForIdle()
+    }
+
+    /** Scrolls the one list on screen to its item [index]. */
+    fun scrollListTo(index: Int) {
+        rule.onNode(hasScrollAction()).performScrollToIndex(index)
+        rule.waitForIdle()
+    }
+
+    fun assertTextNotDisplayed(text: String) {
+        rule.onNodeWithText(text).assertIsNotDisplayed()
     }
 
     fun tapText(text: String) {

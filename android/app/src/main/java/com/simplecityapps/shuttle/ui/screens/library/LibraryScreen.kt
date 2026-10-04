@@ -36,6 +36,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,8 +93,10 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -222,7 +225,11 @@ private fun LibraryPager(
             selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
         )
-        HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index -> page(tabs[index]) }
+        HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index ->
+            // Only the visible section scrolls to the top on a re-select.
+            val reselects = if (index == pagerState.currentPage) LocalTabReselects.current else emptyFlow()
+            CompositionLocalProvider(LocalTabReselects provides reselects) { page(tabs[index]) }
+        }
     }
 }
 

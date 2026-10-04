@@ -7,6 +7,10 @@ import com.simplecityapps.shuttle.ui.screens.settings.FolderRulesRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class AppNavigatorTest {
@@ -195,5 +199,21 @@ class AppNavigatorTest {
         // With no anchor on the stack, the route is pushed over what is there.
         navigator.replaceAbove(SettingsRoute, privacy)
         navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute, sources, privacy)
+    }
+
+    @Test
+    fun `re-selecting a tab already at its root announces it, and one deeper only pops`() = runTest {
+        val navigator = navigator()
+        val reselects = mutableListOf<ShellTab>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { navigator.reselects.toList(reselects) }
+
+        navigator.selectTab(ShellTab.Library)
+        navigator.open(album)
+        navigator.selectTab(ShellTab.Library)
+        reselects shouldBe emptyList()
+        navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute)
+
+        navigator.selectTab(ShellTab.Library)
+        reselects shouldBe listOf(ShellTab.Library)
     }
 }
