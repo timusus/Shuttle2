@@ -41,12 +41,32 @@ Notes:
 - An earlier single-run foreground figure was 8.7 s / 496 MB peak, consistent with the MediaStore (a) range.
 - A process started only by the `IMPORT` broadcast (never launched in the foreground) is a cached background process: about 7x slower (63.9 s, 63.7 s; follow-up 56.3 s, 53.3 s) and Android once froze and killed it mid-import ("excessive binder traffic during cached"). Always launch `MainActivity` first.
 
+## TagLib hybrid discovery (2026-10-05)
+
+Build: debug APK from the `worktree-taglib-hybrid` branch (b2866d782 + the bench's `SYNC` path), same device, library and S2Bench folder.
+Routine imports (the scheduled sync, `s2-debug.sh SYNC`) list files through MediaStore only; the first import after a folder pick and a
+rescan (`s2-debug.sh IMPORT`, which is `MediaImporter.import()`) also walk the picked folder through SAF. The previous MediaStore-only
+TagLib discovery measured a 1.3 s, b 0.9 s, c 1.0 s (b and c were then `IMPORT`).
+
+| Scenario | Time | Peak PSS |
+|---|---|---|
+| (a) first import after `pm clear` + folder pick (walks) | 5.9 s (5.7-6.2) | 284 MB (281-289) |
+| (b) routine sync, nothing changed | 0.45 s (0.43-0.51) | not sampled (done before the first sample) |
+| (c) 50 files touched, routine sync | 0.52 s (0.43-0.55) | not sampled |
+| (d) rescan, nothing changed (walks) | 5.4 s (5.3-5.6) | 283 MB (282-290) |
+
+- The walk of 1090 files in 519 folders costs about 4.5-5 s, one SAF children query per folder; every file was reused, none re-read.
+- (c) touches files with `touch`, which MediaStore doesn't see until it rescans, so the sync reuses them; it measures the same as (b).
+- Correctness: a copy of one S2Bench mp3 in `S2Bench/zz-nomedia/` (with an empty `.nomedia`) was found by a rescan ("1 more in included
+  folders"), kept by the next routine sync (looked up on its own), and gone after deleting the folder, both by a rescan and, in a second pass,
+  by a routine sync (the documents provider reported it missing).
+
 ## Re-run
 
 ```bash
 export PATH=$PATH:~/Library/Android/sdk/platform-tools ANDROID_SERIAL=<serial>
 ./gradlew :android:app:assembleDebug && adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-support/bench/bench.sh taglib a 3; support/bench/bench.sh taglib b 3; support/bench/bench.sh taglib c 3
+support/bench/bench.sh taglib a 3; support/bench/bench.sh taglib b 3; support/bench/bench.sh taglib c 3; support/bench/bench.sh taglib d 3
 support/bench/bench.sh mediastore a 3; support/bench/bench.sh mediastore b 3; support/bench/bench.sh mediastore c 3
 ```
 
