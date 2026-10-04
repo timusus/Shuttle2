@@ -35,6 +35,11 @@ jobs:
       - name: "Lint Project"
         run: "support/scripts/lint"
 
+      # ios/S2/en.lproj/Localizable.strings is generated from Android's strings.xml
+      # (ios/scripts/generate-strings.py); without this it drifts silently (#618).
+      - name: "Check iOS strings"
+        run: "ios/scripts/generate-strings.py --check"
+
   unit_tests:
     name: "Unit Tests"
     runs-on: ubuntu-latest
