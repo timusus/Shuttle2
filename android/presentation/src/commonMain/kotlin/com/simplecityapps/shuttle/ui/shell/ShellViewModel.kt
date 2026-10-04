@@ -45,7 +45,7 @@ class ShellViewModel @Inject constructor(
 
     val uiState: StateFlow<ShellUiState> = events.flow
         .map { pending -> ShellUiState(startTab = startTab, events = pending) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, ShellUiState(startTab))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellUiState(startTab))
 
     init {
         viewModelScope.launch {

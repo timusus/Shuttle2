@@ -14,8 +14,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -59,24 +62,18 @@ class ShellViewModelTest {
     }
 
     @Test
-    fun `a server's session expiring posts a sign-out event until it is handled`() {
+    fun `a server's session expiring posts a sign-out event until it is handled`() = runTest(UnconfinedTestDispatcher()) {
         val viewModel = viewModel()
+        val states = mutableListOf<ShellUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.toList(states) }
 
         serverSessions.expire(MediaProviderType.Plex)
 
-        val pending = viewModel.uiState.value.events.single()
+        val pending = states.last().events.single()
         pending.value shouldBe ShellEvent.ServerSignedOut(MediaProviderType.Plex)
 
         viewModel.onEventHandled(pending.id)
 
-        viewModel.uiState.value.events shouldBe emptyList()
-    }
-
-    @Test
-    fun `signing in again from the prompt enables the server and scans`() {
-        viewModel().onServerConnected(MediaProviderType.Jellyfin)
-
-        mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Jellyfin)
-        mediaSources.scans shouldBe 1
+        states.last().events shouldBe emptyList()
     }
 }

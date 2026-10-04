@@ -1,28 +1,20 @@
 package com.simplecityapps.shuttle.shared.platform
 
-import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.shell.ServerSessions
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
-import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.emptyFlow
 
-/** The iOS counterpart of Android's `DefaultServerSessions`. */
+/**
+ * Never reports an expired session: iOS has no shell-level alert or server sign-in view yet, so the sign-out
+ * prompt (#595) is Android-only for now, and `ShellViewModel` has nothing to collect that nothing would consume.
+ */
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
-class IosServerSessions @Inject constructor(
-    @Named("JellyfinCredentialStore") jellyfin: ServerCredentialStore,
-    @Named("EmbyCredentialStore") emby: ServerCredentialStore,
-    @Named("PlexCredentialStore") plex: ServerCredentialStore
-) : ServerSessions {
-    override val expired: Flow<MediaProviderType> = merge(
-        jellyfin.sessionExpired.map { MediaProviderType.Jellyfin },
-        emby.sessionExpired.map { MediaProviderType.Emby },
-        plex.sessionExpired.map { MediaProviderType.Plex }
-    )
+class IosServerSessions @Inject constructor() : ServerSessions {
+    override val expired: Flow<MediaProviderType> = emptyFlow()
 }
