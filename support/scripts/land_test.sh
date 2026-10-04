@@ -10,8 +10,8 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 fails=0
 
-# Pull just the two matcher functions out of land.sh (the script itself runs a landing when sourced).
-eval "$(awk '/^(verify_env_failure|ic_failure)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
+# Pull just the matcher functions out of land.sh (the script itself runs a landing when sourced).
+eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
 
 check() { # <name> <expected-rc> <cmd...>
   local name=$1 want=$2 rc=0; shift 2
@@ -36,5 +36,20 @@ check "verify_env_failure matches env line ahead of 150KB" 0 verify_env_failure 
 echo "w: Incremental compilation failed" > "$TMP/raw.log"
 printf 'BUILD FAILED in 3s\nRaw log: %s\n' "$TMP/raw.log" > "$TMP/condensed.log"
 check "ic_failure follows build-brief Raw log path" 0 ic_failure "$TMP/condensed.log" 1
+
+# failure_sig (#829): failing tests, compiler errors, ktlint violations and the phase line, line numbers dropped.
+cat > "$TMP/sig.log" <<'LOG'
+noise before
+verify: android unit tests failed
+Failed tests:
+com.x.FooTest.bar: expected <a> but was <b>
+com.x.FooTest.baz: boom
++3 more
+e: file:///r/A.kt:10:5 Unresolved reference
+/r/B.kt:7:1: Unexpected blank line (no-blank-line)
+LOG
+want=$(printf '%s\n' "e: file:///r/A.kt Unresolved reference" "lint /r/B.kt: Unexpected blank line (no-blank-line)" "test com.x.FooTest.bar" "test com.x.FooTest.baz" "verify: android unit tests failed" | sort -u)
+check "failure_sig normalises the failures" 0 test "$(failure_sig "$TMP/sig.log" 1)" = "$want"
+check "failure_sig honours from-byte" 0 test -z "$(failure_sig "$TMP/sig.log" 99999)"
 
 [ "$fails" -eq 0 ] || { echo "$fails failed"; exit 1; }

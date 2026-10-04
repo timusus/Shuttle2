@@ -295,6 +295,12 @@ compile_test_task_for() {
 # line, deduplicated.
 changed_files_since() {
   local base="$1" merge_base
+  # UNIT_TEST_CHANGED_FILES=<file>: use the paths listed there (one per line) instead of the diff, so
+  # land.sh can run the same task set on origin/main (#829).
+  if [ -n "${UNIT_TEST_CHANGED_FILES:-}" ]; then
+    sort -u "${UNIT_TEST_CHANGED_FILES}"
+    return 0
+  fi
   merge_base="$(git -C "${REPO_ROOT}" merge-base "${base}" HEAD 2>/dev/null)" || return 1
   {
     git -C "${REPO_ROOT}" diff --name-only "${merge_base}" HEAD

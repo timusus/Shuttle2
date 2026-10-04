@@ -47,12 +47,18 @@
 #                                 *ViewModel, <name>UiState)
 #   ios/Playback/                 also `ios/scripts/test.sh --package`
 #   nothing mapped                build only, no simulator lease
-# If the verify fails and more than one branch landed, branches are
-# dropped one at a time from the end (each drop retried once) until it passes or none remain;
-# each dropped branch is reported as having broken verify. First, though, a verify whose output
-# says "Incremental compilation failed" (a Kotlin cache flake, #824) is retried once over the same
-# branches with -Pkotlin.incremental=false; the log notes the retry. The retry is per verify run, so
-# each bisect iteration below may retry once.
+# The verify also runs `support/scripts/lint` (check only) first, so a format slip fails at landing (#827).
+# A verify whose output says "Incremental compilation failed" (a Kotlin cache flake, #824) is retried
+# once over the same branches with -Pkotlin.incremental=false; the log notes the retry. The retry is
+# per verify run, so each isolation or bisect verify below may retry once.
+# If the verify fails (#829), origin/main is verified first for the same task set (the batch's changed
+# files, via UNIT_TEST_CHANGED_FILES). A failure that also occurs on origin/main (same failing test,
+# compile error or verify phase) is pre-existing: it is reported and no branch is dropped for it.
+# For failures new to the batch, each landed branch is verified alone (origin/main + that branch)
+# and only a branch whose own run shows a new failure is dropped and reported as having broken
+# verify. A branch whose changed files touch no verified module (android/, shared/, ios/, Gradle
+# build files; e.g. scripts or docs only) is never blamed. When no single branch reproduces the
+# failure (an interaction), branches are dropped from the end one at a time until it passes.
 # On a pass: push (retrying network
 # failures up to 3 times), close --close issues, then unlock and worktree-clean.sh each landed
 # branch's worktree.
@@ -172,6 +178,7 @@ fi
 verify_phases() {
   base_sha=${1:?} touches_ios=${2:-0}
   shift 2 || true
+  support/scripts/lint || { echo "verify: ktlint failed (#827)"; exit 1; }
   support/scripts/unit-test --changed --base "$base_sha" || { echo "verify: android unit tests failed"; exit 1; }
   support/scripts/unit-test --compile-dependents --base "$base_sha" || { echo "verify: dependent test sources failed to compile (#826)"; exit 1; }
   support/scripts/remote-build.sh --local -q :android:app:assembleDebug || { echo "verify: assembleDebug failed"; exit 1; }
@@ -520,6 +527,12 @@ ic_failure() {
   ! grep -q '^e: file://' <<< "$out"
 }
 
+# When set, a file listing the changed paths the verify's task set is computed from (instead of the
+# diff against origin/main): used to verify origin/main itself for the batch's tasks (#829).
+VERIFY_FILES_FILE=""
+# Start offset in $LOG of the last failed verify attempt's output, for failure_sig.
+LAST_FROM=1
+
 # verify_once <touches_ios> [<class>...]: one machine-lock hold running the verify phases; with
 # KOTLIN_IC_OFF=1 Gradle gets kotlin.incremental=false (via ORG_GRADLE_PROJECT_, inherited by every
 # gradle call in the phases). Returns the verify's exit status.
@@ -527,7 +540,14 @@ verify_once() {
   local touches_ios=$1; shift
   local env_args=()
   [ "${KOTLIN_IC_OFF:-0}" = 1 ] && env_args=("ORG_GRADLE_PROJECT_kotlin.incremental=false")
+  [ -n "$VERIFY_FILES_FILE" ] && env_args+=("UNIT_TEST_CHANGED_FILES=$VERIFY_FILES_FILE")
   run_in_group machine-lock --name verify -- env ${env_args[@]+"${env_args[@]}"} "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" "$@" >> "$LOG" 2>&1
+}
+
+# verify_changed_files: the paths the verify covers, one per line: the batch's diff against
+# origin/main, or the listed paths while verifying origin/main itself.
+verify_changed_files() {
+  if [ -n "$VERIFY_FILES_FILE" ]; then cat "$VERIFY_FILES_FILE"; else git diff --name-only "$ORIGIN_MAIN_SHA" HEAD; fi
 }
 
 run_verify() {
@@ -536,12 +556,12 @@ run_verify() {
     return 0
   fi
   local touches_ios=0
-  if git diff --name-only "$ORIGIN_MAIN_SHA" HEAD | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/)'; then
+  if verify_changed_files | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/)'; then
     touches_ios=1
   fi
   local ios_tests=() changed=() t
   if [ "$touches_ios" = 1 ]; then
-    while IFS= read -r -d '' t; do changed+=("$t"); done < <(git diff --name-only -z --diff-filter=d "$ORIGIN_MAIN_SHA" HEAD)
+    while IFS= read -r t; do [ -n "$t" ] && changed+=("$t"); done < <(verify_changed_files)
     while IFS= read -r t; do [ -n "$t" ] && ios_tests+=("$t"); done < <(ios_tests_for "${changed[@]}")
   fi
   log "verify: touches_ios=$touches_ios ios_tests=${ios_tests[*]-}"
@@ -568,45 +588,175 @@ run_verify() {
       return 2
     fi
     log "verify: failed (see above)"
+    LAST_FROM=$from
     return 1
   fi
   return 0
 }
 
+# failure_sig <log> <from-byte>: the failures in the verify output after <from-byte>, one per line,
+# sorted and unique, with line/column numbers dropped so they compare across trees: failing test
+# cases (the "Failed tests:" block), compiler errors, ktlint violations and the "verify: ... failed"
+# phase line. Two runs with the same signature failed the same way (#829).
+failure_sig() {
+  tail -c +"$2" "$1" | awk '
+    /^Failed tests:/ { inb = 1; next }
+    inb && (/^$/ || /^\+[0-9]+ more/) { inb = 0; next }
+    inb { s = $0; sub(/: .*/, "", s); print "test " s; next }
+    /^e: file:\/\// { s = $0; sub(/:[0-9]+:[0-9]+/, "", s); print s; next }
+    /^verify: .*(failed|rc=)/ { print; next }
+    /^[^ ]+\.kt:[0-9]+:[0-9]+: / { s = $0; sub(/:[0-9]+:[0-9]+:/, ":", s); print "lint " s }
+  ' | sort -u
+}
+
+# checkout_back <sha>: return to the branch (or detached sha) the run started on after a detached
+# look at origin/main; <sha> is the HEAD to come back to.
+checkout_back() {
+  if [ "$CUR_BRANCH" = HEAD ]; then git checkout -q --detach "$1" >> "$LOG" 2>&1
+  else git checkout -q "$CUR_BRANCH" >> "$LOG" 2>&1; fi
+  if [ "$(git rev-parse HEAD)" != "$1" ]; then
+    say "land.sh: ABORT: could not return to $1 after verifying origin/main; nothing pushed, inspect $REPO_ROOT (log: $LOG)"
+    exit 4
+  fi
+}
+
+BASE_SIG_DONE=0   # 1 once origin/main has been verified for the batch's task set
+BASE_SIG=""       # its failure signature (empty when it passed or could not be verified)
+NEW_SIG=""        # the signature lines of the last failed verify that origin/main does not have
+
+# ensure_base_sig: verify origin/main (detached) for the same task set as the batch, once, and record
+# what fails there (#829). The task set is the batch's changed files as of the first failure.
+ensure_base_sig() {
+  [ "$BASE_SIG_DONE" = 1 ] && return 0
+  BASE_SIG_DONE=1
+  local cur files brc=0
+  cur=$(git rev-parse HEAD)
+  files=$(mktemp "${TMPDIR:-/tmp}/land-files.XXXXXX") || return 0
+  git diff --name-only "$ORIGIN_MAIN_SHA" "$cur" > "$files"
+  say "land.sh: verify failed; verifying origin/main for the same tasks to tell pre-existing failures from the batch's"
+  git checkout -q --detach "$ORIGIN_MAIN_SHA" >> "$LOG" 2>&1 || { rm -f "$files"; return 0; }
+  VERIFY_FILES_FILE=$files
+  run_verify || brc=$?
+  VERIFY_FILES_FILE=""
+  [ "$brc" -eq 1 ] && BASE_SIG=$(failure_sig "$LOG" "$LAST_FROM")
+  rm -f "$files"
+  checkout_back "$cur"
+  if [ "$brc" -eq 1 ]; then
+    say "land.sh: origin/main itself fails verify for these tasks (pre-existing):"
+    printf '%s\n' "$BASE_SIG" | sed 's/^/  /' | while IFS= read -r l; do say "$l"; done
+  elif [ "$brc" -ne 0 ]; then
+    say "land.sh: origin/main could not be verified (rc=$brc); treating every failure as the batch's"
+  fi
+}
+
+# verify_blame: run_verify, then separate pre-existing failures from new ones (#829). Returns 0 on a
+# pass or when every failure also occurs on origin/main (reported, nothing to drop), 1 when the
+# verify shows failures origin/main lacks (NEW_SIG), 2 on an environment failure.
+verify_blame() {
+  local vrc=0
+  NEW_SIG=""
+  run_verify || vrc=$?
+  [ "$vrc" -ne 1 ] && return "$vrc"
+  ensure_base_sig
+  NEW_SIG=$(comm -23 <(failure_sig "$LOG" "$LAST_FROM") <(printf '%s\n' "$BASE_SIG" | sort -u))
+  if [ -z "$NEW_SIG" ]; then
+    say "land.sh: every verify failure also occurs on origin/main; not blaming any branch (later verify phases may not have run)"
+    return 0
+  fi
+  return 1
+}
+
+# branch_verifiable <branch>: succeed when the branch changes a file some verify phase covers
+# (android/, shared/, ios/, Gradle build files). Any other branch (scripts or docs only) cannot
+# cause a verify failure and is never blamed.
+branch_verifiable() {
+  local mb
+  mb=$(git merge-base "$ORIGIN_MAIN_SHA" "$1" 2>/dev/null) || return 1
+  git diff --name-only "$mb" "$1" | grep -Eq '^(android/|shared/|ios/|gradle/|[^/]+\.(gradle|kts|properties|toml)$)'
+}
+
+# isolate_verify <index>: verify origin/main + only this branch. Same return codes as verify_blame; a
+# branch that no longer picks cleanly on its own is treated as passing (it is not what broke verify).
+isolate_verify() {
+  local b=${BRANCHES[$1]} mb
+  run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+  mb=$(git merge-base "$ORIGIN_MAIN_SHA" "$b" 2>/dev/null)
+  if [ -z "$mb" ] || ! git cherry-pick "$mb..$b" >> "$LOG" 2>&1; then
+    rollback_pick "$ORIGIN_MAIN_SHA"
+    log "$b: does not pick cleanly on origin/main alone; skipping its isolated verify"
+    return 0
+  fi
+  say "land.sh: verifying $b alone on origin/main"
+  verify_blame
+}
+
 LANDED_IDX=()
 while IFS= read -r x; do [ -n "$x" ] && LANDED_IDX+=("$x"); done < <(landed_indices)
 
+env_exit() {
+  reset_after_env_failure
+  say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
+  exit 3
+}
+
 if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
   say "land.sh: running verify over ${#LANDED_IDX[@]} landed branch(es)"
-  run_verify; vrc=$?
-  if [ "$vrc" -eq 2 ]; then
-    reset_after_env_failure
-    say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
-    exit 3
-  fi
+  verify_blame; vrc=$?
+  [ "$vrc" -eq 2 ] && env_exit
   if [ "$vrc" -ne 0 ]; then
     if [ "${#LANDED_IDX[@]}" -eq 1 ]; then
       drop_branch "${LANDED_IDX[0]}"
     else
-      remaining=("${LANDED_IDX[@]}")
-      passed=0
-      while [ "${#remaining[@]}" -gt 1 ]; do
-        last=$(( ${#remaining[@]} - 1 ))
-        drop_idx=${remaining[$last]}
-        drop_branch "$drop_idx"
-        say "land.sh: retrying verify without ${BRANCHES[$drop_idx]}"
-        unset 'remaining[last]'
-        remaining=("${remaining[@]}")
-        run_verify; vrc=$?
-        if [ "$vrc" -eq 2 ]; then
-          reset_after_env_failure
-          say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
-          exit 3
+      # Verify each branch alone on origin/main; blame only those whose own run shows a new failure.
+      blamed=()
+      for i in "${LANDED_IDX[@]}"; do
+        if ! branch_verifiable "${BRANCHES[$i]}"; then
+          say "land.sh: ${BRANCHES[$i]} changes no verified module (scripts/docs only); it cannot be blamed"
+          continue
         fi
-        if [ "$vrc" -eq 0 ]; then passed=1; break; fi
+        isolate_verify "$i"; vrc=$?
+        [ "$vrc" -eq 2 ] && env_exit
+        if [ "$vrc" -eq 1 ]; then
+          blamed+=("$i")
+          say "land.sh: ${BRANCHES[$i]} fails verify on its own"
+        fi
       done
-      if [ "$passed" -eq 0 ] && [ "${#remaining[@]}" -eq 1 ]; then
-        drop_branch "${remaining[0]}"
+      # Rebuild the batch without the blamed branches (picks again, so START_SHA is right for them).
+      remaining=()
+      run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+      for i in "${LANDED_IDX[@]}"; do
+        is_blamed=0
+        for x in ${blamed[@]+"${blamed[@]}"}; do [ "$x" = "$i" ] && is_blamed=1; done
+        if [ "$is_blamed" = 1 ]; then
+          STATUS[$i]=dropped; REASON[$i]="broke verify"
+          log "${BRANCHES[$i]}: dropped, fails verify on its own"
+          continue
+        fi
+        pick_branch "$i"
+        [ "${STATUS[$i]}" = landed ] && remaining+=("$i")
+      done
+      if [ "${#remaining[@]}" -gt 0 ] && { [ "${#blamed[@]}" -gt 0 ] || [ "${#remaining[@]}" -gt 1 ]; }; then
+        if [ "${#blamed[@]}" -gt 0 ]; then
+          say "land.sh: retrying verify without ${#blamed[@]} blamed branch(es)"
+          verify_blame; vrc=$?
+          [ "$vrc" -eq 2 ] && env_exit
+        else
+          vrc=1  # no single branch reproduced it: an interaction, bisect from the end below
+        fi
+        # Failures that no branch shows alone (an interaction): drop from the end until it passes.
+        while [ "$vrc" -ne 0 ] && [ "${#remaining[@]}" -gt 1 ]; do
+          last=$(( ${#remaining[@]} - 1 ))
+          drop_idx=${remaining[$last]}
+          drop_branch "$drop_idx"
+          say "land.sh: failure not reproduced by any branch alone; retrying verify without ${BRANCHES[$drop_idx]}"
+          unset 'remaining[last]'
+          remaining=("${remaining[@]}")
+          verify_blame; vrc=$?
+          [ "$vrc" -eq 2 ] && env_exit
+        done
+        if [ "$vrc" -ne 0 ] && [ "${#remaining[@]}" -eq 1 ]; then
+          drop_branch "${remaining[0]}"
+        fi
       fi
     fi
   fi
