@@ -46,6 +46,9 @@ class MediaImporterTest {
     private val clock = FakeClock(Instant.parse("2026-10-04T09:00:00Z"))
     private val songRepository = FakeSongRepository()
     private val server = ServerProvider()
+
+    /** What each [MediaImporter] afterImport was told: whether every source's songs hold every tag. */
+    private val afterImports = mutableListOf<Boolean>()
     private val importer =
         MediaImporter(
             strings = FakeMediaImportStrings,
@@ -54,7 +57,7 @@ class MediaImporterTest {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
             },
             preferenceManager = preferences,
-            afterImport = {},
+            afterImport = { songTagsCurrent -> afterImports += songTagsCurrent },
             clock = clock
         ).apply { mediaProviders += provider }
 
@@ -602,6 +605,36 @@ class MediaImporterTest {
             MediaProviderType.Jellyfin to SongImportState.ImportComplete(MediaProviderType.Jellyfin, error = null),
         )
         importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, "Import failed")
+    }
+
+    @Test
+    fun `a source that throws still lets what the others stored count as imported`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += server
+        preferences.lastMediaImportDate = null
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+        server.gate.trySend(Unit)
+
+        runCatching { importer.import() }.exceptionOrNull() shouldBe provider.failure
+
+        preferences.lastMediaImportDate shouldBe clock.time
+        importer.importCount shouldBe 1
+        // The failing source stays outdated, so the album key move still waits on it
+        afterImports shouldBe listOf(false)
+    }
+
+    @Test
+    fun `an import where every source throws isn't recorded`() = runBlocking<Unit> {
+        preferences.lastMediaImportDate = null
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+
+        runCatching { importer.import() }.exceptionOrNull() shouldBe provider.failure
+
+        preferences.lastMediaImportDate shouldBe null
+        importer.importCount shouldBe 0
+        afterImports.shouldBeEmpty()
     }
 
     @Test

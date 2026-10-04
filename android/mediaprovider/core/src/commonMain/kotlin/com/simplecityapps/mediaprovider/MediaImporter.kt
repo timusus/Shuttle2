@@ -223,7 +223,8 @@ class MediaImporter(
 
     /**
      * Imports each provider in [plans], all at once and each on its own, so one failing or removed ([removeProvider]) leaves
-     * the others to finish. Throws the first provider's exception once they all have. See [importProvider].
+     * the others to finish. Once they all have, records the import if any of them finished, then throws the first provider's
+     * exception. See [importProvider].
      */
     private suspend fun importProviders(
         plans: List<Pair<MediaProvider, SyncPlan>>,
@@ -238,26 +239,36 @@ class MediaImporter(
         val timingsByProvider = plans.associate { (mediaProvider, _) -> mediaProvider.type to ImportTimings() }
 
         val failures = mutableListOf<Exception>()
-        withContext(Dispatchers.IO) {
-            supervisorScope {
-                plans.mapNotNull { (mediaProvider, plan) ->
-                    val job =
-                        launch(start = CoroutineStart.LAZY) {
-                            importProvider(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), showProgress, quietFailures, userRemoval = foldersChanged && !mediaProvider.type.remote, playlistsDue)
-                                ?.let { failure -> providerJobsLock.withLock { failures += failure } }
-                        }
-                    job.takeIf { track(mediaProvider, job) }?.apply { start() }
-                }.joinAll()
+        var finished = 0
+        try {
+            withContext(Dispatchers.IO) {
+                supervisorScope {
+                    plans.mapNotNull { (mediaProvider, plan) ->
+                        val job =
+                            launch(start = CoroutineStart.LAZY) {
+                                val failure = importProvider(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), showProgress, quietFailures, userRemoval = foldersChanged && !mediaProvider.type.remote, playlistsDue)
+                                providerJobsLock.withLock { if (failure != null) failures += failure else finished++ }
+                            }
+                        job.takeIf { track(mediaProvider, job) }?.apply { start() }
+                    }.joinAll()
+                }
             }
+        } finally {
+            withContext(NonCancellable) { providerJobsLock.withLock { providerJobs.clear() } }
         }
-        providerJobsLock.withLock { providerJobs.clear() }
+
+        // What the sources that finished stored counts as imported, though another threw: a source that failed stays
+        // outdated, so afterImport waits on it all the same
+        var afterImportTime = Duration.ZERO
+        if (finished > 0) {
+            preferenceManager.lastMediaImportDate = clock.now()
+            importCount++
+
+            val afterImportMark = TimeSource.Monotonic.markNow()
+            afterImport(providers.snapshot.none { preferenceManager.songTagsOutdated(it.type) })
+            afterImportTime = afterImportMark.elapsedNow()
+        }
         failures.firstOrNull()?.let { throw it }
-
-        preferenceManager.lastMediaImportDate = clock.now()
-        importCount++
-
-        val afterImportMark = TimeSource.Monotonic.markNow()
-        afterImport(providers.snapshot.none { preferenceManager.songTagsOutdated(it.type) })
 
         // One line per provider per run, so a slow import can be attributed to its phases (#866)
         timingsByProvider.forEach { (type, timings) ->
@@ -267,7 +278,7 @@ class MediaImporter(
                     "findPlaylists ${timings.findPlaylists.inWholeMilliseconds}ms"
             }
         }
-        logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms (afterImport ${afterImportMark.elapsedNow().inWholeMilliseconds}ms)" }
+        logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms (afterImport ${afterImportTime.inWholeMilliseconds}ms)" }
     }
 
     /**
