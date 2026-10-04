@@ -33,8 +33,6 @@
     <string name="library_scan_in_progress">Scanning your library</string>
     <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
     <string name="library_tabs_empty">No library tabs visible</string>
-    <!-- Content description the song context menu icon -->
-    <string name="song_context_menu">Song context menu</string>
     <!-- Library top bar subtitle on the Artists tab -->
     <plurals name="library_count_artists">
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> artist</item>
