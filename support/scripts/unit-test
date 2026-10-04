@@ -275,12 +275,14 @@ module_is_jvm_only() {
   [ -n "${build_file}" ] && ! grep -Eq 'com\.android\.(application|library)' "${build_file}"
 }
 
-# True (exit 0) if a module applies the Roborazzi plugin (its build file mentions
-# roborazzi): it has screenshot tests and a verifyRoborazziDebug task (#831).
+# True (exit 0) if a module applies the Roborazzi plugin (its build file applies
+# it by catalog alias or plugin id; a bare "roborazzi" grep would also match the
+# dependency and config-block lines): it has screenshot tests and a
+# verifyRoborazziDebug task (#831).
 module_has_roborazzi() {
   local build_file
   build_file="$(module_build_file "$1")"
-  [ -n "${build_file}" ] && grep -q 'roborazzi' "${build_file}"
+  [ -n "${build_file}" ] && grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "${build_file}"
 }
 
 # Every declared module path that applies the Roborazzi plugin, one per line.
@@ -614,7 +616,7 @@ run_changed_mode() {
   #    since none of them pass --tests), and run each filtered module in
   #    its own invocation so its --tests filter can't shadow another
   #    module's tests in the same build.
-  local overall_rc=0 whole_batch=() mid unmappable_file classes_file
+  local overall_rc=0 whole_batch=() mid unmappable_file classes_file app_robo_placed=0
   for m in "${modules[@]:-}"; do
     [ -z "${m}" ] && continue
     mid="$(module_id "${m}")"
@@ -630,9 +632,11 @@ run_changed_mode() {
 
     if [ "${whole}" -eq 1 ]; then
       whole_batch+=("${m}:testDebugUnitTest")
-      if [ "${roborazzi}" -eq 1 ] && module_has_roborazzi "${m}"; then
+      # Gated on the trigger, not on "app already placed": every changed
+      # screenshot module verifies its own baselines regardless of order.
+      if [ "${roborazzi}" -ne 0 ] && module_has_roborazzi "${m}"; then
         whole_batch+=("${m}:verifyRoborazziDebug")
-        [ "${m}" = "${app_path}" ] && roborazzi=2 # placed; 2 means "handled" so the solo run below is skipped
+        [ "${m}" = "${app_path}" ] && app_robo_placed=1
       fi
     else
       local filter_args=() cls_line
@@ -641,9 +645,9 @@ run_changed_mode() {
         filter_args+=(--tests "${cls_line}")
       done < <(sort -u "${classes_file}")
       local run_tasks=("${m}:testDebugUnitTest")
-      if [ "${roborazzi}" -eq 1 ] && module_has_roborazzi "${m}"; then
+      if [ "${roborazzi}" -ne 0 ] && module_has_roborazzi "${m}"; then
         run_tasks+=("${m}:verifyRoborazziDebug")
-        [ "${m}" = "${app_path}" ] && roborazzi=2
+        [ "${m}" = "${app_path}" ] && app_robo_placed=1
       fi
       print_and_run "${run_tasks[@]}" "${filter_args[@]}" || overall_rc=$?
     fi
@@ -653,9 +657,9 @@ run_changed_mode() {
     print_and_run "${whole_batch[@]}" || overall_rc=$?
   fi
 
-  # roborazzi still 1 here means :android:app wasn't otherwise scheduled
+  # app_robo_placed still 0 here means :android:app wasn't otherwise scheduled
   # (e.g. a docs/design-only change): run just the verify task.
-  if [ "${roborazzi}" -eq 1 ]; then
+  if [ "${roborazzi}" -ne 0 ] && [ "${app_robo_placed}" -eq 0 ]; then
     print_and_run "${app_path}:verifyRoborazziDebug" || overall_rc=$?
   fi
 
