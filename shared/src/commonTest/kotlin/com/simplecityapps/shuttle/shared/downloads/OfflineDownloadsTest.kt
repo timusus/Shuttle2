@@ -15,6 +15,7 @@ class OfflineDownloadsTest {
         override var listener: DownloadTransport.Listener? = null
         val started = mutableListOf<Pair<String, DownloadSource>>()
         val removed = mutableListOf<String>()
+        val missing = mutableSetOf<String>()
 
         override fun restore(): Set<String> = onDevice
 
@@ -29,7 +30,7 @@ class OfflineDownloadsTest {
             removed += path
         }
 
-        override fun fileUrl(path: String): String = "file:///Downloads/" + DownloadFileNames.fileName(path, "flac")
+        override fun fileUrl(path: String): String? = if (path in missing) null else "file:///Downloads/" + DownloadFileNames.fileName(path, "flac")
     }
 
     private val jellyfin = object : StreamUrlProvider {
@@ -155,6 +156,15 @@ class OfflineDownloadsTest {
         transport.listener!!.onRunning("jellyfin://item/2")
         transport.listener!!.onProgress("jellyfin://item/2", 50, 100)
         downloads.downloads.value["jellyfin://item/2"] shouldBe OfflineDownload(OfflineDownload.State.Downloading, 0.5f)
+    }
+
+    @Test
+    fun aDownloadWhoseFileHasGoneIsForgottenSoTheSongStreams() = runTest {
+        transport.missing += "jellyfin://item/1"
+
+        downloads.fileUrl("jellyfin://item/1") shouldBe null
+        downloads.downloads.value shouldBe emptyMap()
+        downloads.observeHeldPaths().first() shouldBe emptySet()
     }
 
     @Test

@@ -88,8 +88,16 @@ class OfflineDownloads(
         .map { downloads -> downloads.filterValues { it.state != OfflineDownload.State.Failed }.keys }
         .distinctUntilChanged()
 
-    /** The `file://` URL [path] (a `Song.path`) plays from when its download has completed, else null. */
-    fun fileUrl(path: String): String? = if (_downloads.value[path]?.state == OfflineDownload.State.Completed) transport.fileUrl(path) else null
+    /**
+     * The `file://` URL [path] (a `Song.path`) plays from when its download has completed, else null. A completed download
+     * whose file has gone, or is empty, is forgotten, so the song streams and offers Download again.
+     */
+    fun fileUrl(path: String): String? {
+        if (_downloads.value[path]?.state != OfflineDownload.State.Completed) return null
+        val url = transport.fileUrl(path)
+        if (url == null) update(path) { current -> current?.takeUnless { it.state == OfflineDownload.State.Completed } }
+        return url
+    }
 
     /** How far [songs]' downloads have got, read from [downloads]' current value, for a detail header's indicator and menu. */
     fun summary(songs: List<Song>): DownloadSummary {

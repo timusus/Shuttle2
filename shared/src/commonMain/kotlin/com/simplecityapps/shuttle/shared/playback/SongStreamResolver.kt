@@ -28,7 +28,8 @@ import com.simplecityapps.shuttle.shared.percentEncodedPath
  *
  * A server song that's been downloaded ([downloadedFile], `OfflineDownloads.fileUrl`) plays from its file, so it plays
  * offline and opens at the start. It's still a server song: [serverStreamAccess] is asked as for its stream, as Android's
- * `ServerStreamPolicy` is asked before a download plays.
+ * `ServerStreamPolicy` is asked before a download plays. One whose file has gone or is empty has no [downloadedFile]
+ * (`OfflineDownloads` forgets it), so it streams.
  */
 class SongStreamResolver(
     private val streamUrls: Collection<StreamUrlProvider>,

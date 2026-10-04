@@ -26,7 +26,7 @@ interface DownloadTransport {
     /** Stops [path]'s download if it's running and deletes its file. */
     fun remove(path: String)
 
-    /** The `file://` URL [path]'s completed download plays from, or null if it has none. */
+    /** The `file://` URL [path]'s completed download plays from, or null if it has none or its file is empty. */
     fun fileUrl(path: String): String?
 
     interface Listener {
