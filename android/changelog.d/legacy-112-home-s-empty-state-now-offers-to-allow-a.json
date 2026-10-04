@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Home's empty state now offers to allow access to your music or connect a server, like the Library tab does, and a permission granted from system settings while S2 is in the background now starts the scan as soon as you return",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed Jellyfin and Emby songs that the server converts for your phone, such as WMA or AIFF files, failing to play",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "The notification and progress bar now show the new song right away when one track ends and the next starts, instead of briefly showing the old one",
+  "commits": []
+}

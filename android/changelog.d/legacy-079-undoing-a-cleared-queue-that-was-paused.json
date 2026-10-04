@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Undoing a cleared queue that was paused on a song that can't be played now stays on that song too, instead of skipping ahead",
+  "commits": []
+}

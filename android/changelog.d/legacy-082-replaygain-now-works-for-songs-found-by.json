@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "ReplayGain now works for songs found by the media scanner, after a rescan",
+  "commits": []
+}

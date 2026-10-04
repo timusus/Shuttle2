@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "When a Jellyfin, Emby or Plex sign-in expires or is revoked, S2 now signs in again with your saved details instead of failing to sync",
+  "commits": []
+}

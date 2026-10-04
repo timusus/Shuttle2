@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Recently Added no longer fills up with every Jellyfin, Emby and Plex song after each sync",
+  "commits": []
+}

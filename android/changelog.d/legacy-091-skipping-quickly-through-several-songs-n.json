@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Skipping quickly through several songs no longer briefly plays one you already skipped past",
+  "commits": []
+}

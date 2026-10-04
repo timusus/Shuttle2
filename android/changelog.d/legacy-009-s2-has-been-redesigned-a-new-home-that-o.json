@@ -1,0 +1,12 @@
+{
+  "type": "features",
+  "text": "S2 has been redesigned: a new Home that opens quickly, showing each shelf as soon as it is ready, with a grid of what you played lately, where Play picks up where you left off and each tile names the song you were on, with Play from start in its menu, and shelves of the albums, artists, playlists and genres you play most or might rediscover, each with a line saying what it holds, and pull down to refresh it, plus a new Library, where sections are chips and sort and grid or list are always in view, a new Search, and a new Settings that opens full screen, with the player always a tap away. The layout now adapts to tablets and foldables, and the app turns to landscape",
+  "commits": [
+    "b9f88bcf4",
+    "976314a51",
+    "3985b7691",
+    "d2f59d401",
+    "3b98b404e",
+    "ab44531b2"
+  ]
+}

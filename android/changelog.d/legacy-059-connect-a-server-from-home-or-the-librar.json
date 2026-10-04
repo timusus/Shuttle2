@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "Connect a server from Home or the Library tab now asks which type straight away and signs you in, instead of sending you to Settings first",
+  "commits": []
+}

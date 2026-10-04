@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "A failed library scan now shows its error in Sources, with a tap to retry",
+  "commits": []
+}

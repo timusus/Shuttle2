@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Albums that were remastered or reissued now show the year they were first released, and a year tag that isn't a number no longer hides a valid one",
+  "commits": []
+}

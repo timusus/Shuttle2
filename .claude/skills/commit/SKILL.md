@@ -146,10 +146,10 @@ Skip the body for self-explanatory changes (typo fixes, simple renames, obvious 
 
 For `feat`/`fix`/`perf` commits, the `.githooks/commit-msg` hook requires one of:
 
-- **Stage `android/changelog-unreleased.json` together with the code** — when the commit changes what a user sees or experiences
+- **Stage a new `android/changelog.d/<issue>-<slug>.json` fragment together with the code** — when the commit changes what a user sees or experiences
 - **Add a `Changelog: none` trailer** to the message — when the change is internal (tests, refactors, tooling, CI, DI plumbing)
 
-Which rule decides is in `.claude/rules/changelog.md`: a change iterating on an unreleased fragment item edits that item rather than adding a new line, and internal changes take the trailer.
+Which rule decides is in `.claude/rules/changelog.md`: a change iterating on an unreleased fragment edits that fragment rather than adding a new one, and internal changes take the trailer.
 
 ### 6. Stage and commit each group
 

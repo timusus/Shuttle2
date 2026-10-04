@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Show Home on launch in Appearance settings now actually opens S2 on Home; it previously had no effect",
+  "commits": []
+}

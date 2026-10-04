@@ -1,8 +1,8 @@
 #!/bin/bash
 # Require changelog upkeep on user-facing commits.
 #
-# A feat/fix/perf commit changes what a user sees, so the unreleased fragment
-# (android/changelog-unreleased.json, rules in .claude/rules/changelog.md) must be updated in the
+# A feat/fix/perf commit changes what a user sees, so a changelog fragment
+# (a file in android/changelog.d/, rules in .claude/rules/changelog.md) must be updated in the
 # same commit, or the commit must declare itself internal with a `Changelog: none` trailer.
 # Release-time changelog generation cannot recover this from commit messages alone: commit
 # messages describe deltas between commits, not between what users of the last shipped build
@@ -20,12 +20,12 @@ case "$subject" in
   "fixup!"*|"squash!"*|"Merge "*) exit 0 ;;
 esac
 grep -Eq '^(feat|fix|perf)(\([a-z-]+\))?:' <<<"$subject" || exit 0
-git diff --cached --name-only | grep -Fxq "android/changelog-unreleased.json" && exit 0
+git diff --cached --name-only --diff-filter=AM | grep -Eq '^android/changelog\.d/[^/]+\.json$' && exit 0
 grep -q "^Changelog: none" "$1" && exit 0
 cat >&2 <<'EOF'
 commit-msg: user-facing commit without changelog upkeep.
 
-  Either stage the unreleased fragment:  git add android/changelog-unreleased.json
+  Either stage a changelog fragment:  git add android/changelog.d/<issue>-<slug>.json
   (what belongs in it: .claude/rules/changelog.md)
   Or mark the commit internal with a trailer in the message:  Changelog: none
 

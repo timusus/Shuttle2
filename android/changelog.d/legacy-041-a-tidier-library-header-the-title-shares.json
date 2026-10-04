@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "A tidier Library header: the title shares a row with settings, sort is a plain button, Play is a plain icon like Shuffle, and only the section chips stay pinned while the list scrolls",
+  "commits": []
+}

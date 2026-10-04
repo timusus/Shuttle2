@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Pausing now releases audio focus, so other apps can play sound again without you closing S2 first",
+  "commits": []
+}

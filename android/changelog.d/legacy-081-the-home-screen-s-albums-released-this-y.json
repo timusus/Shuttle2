@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "The home screen's \"Albums released this year\" now shows up to 100 albums instead of stopping at 20",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed a crash when fast-scrolling to the bottom of the Songs list",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Asking Google Assistant to play an artist, album, song, genre or playlist in S2 now plays the closest match, even when S2 isn't running, and asking it just to play music resumes where you left off",
+  "commits": []
+}

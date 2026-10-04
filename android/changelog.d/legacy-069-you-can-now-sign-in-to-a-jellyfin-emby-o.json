@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "You can now sign in to a Jellyfin, Emby or Plex server by its IPv6 address",
+  "commits": []
+}

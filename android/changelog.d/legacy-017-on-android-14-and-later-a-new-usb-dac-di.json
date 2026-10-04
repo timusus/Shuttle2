@@ -1,0 +1,5 @@
+{
+  "type": "features",
+  "text": "On Android 14 and later, a new USB DAC direct output option in Playback settings sends songs to a USB DAC at their own sample rate as 16-bit audio, without resampling, mixing in other sounds, or applying the equaliser and ReplayGain",
+  "commits": []
+}

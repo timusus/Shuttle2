@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed your phone's own sound effects staying attached to the app after switching to Chromecast",
+  "commits": []
+}

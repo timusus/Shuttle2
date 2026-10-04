@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Album artist art now shows on Android 13 and later when using the Android media scanner, matching album art",
+  "commits": []
+}

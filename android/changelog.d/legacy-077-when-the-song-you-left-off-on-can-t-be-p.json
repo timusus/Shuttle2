@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "When the song you left off on can't be played as S2 starts, for example because your server is out of reach, S2 now stays on it instead of moving on through your queue",
+  "commits": []
+}

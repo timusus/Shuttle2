@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "Sources now shows song counts, scan progress and server status at a glance, and folder settings have moved to their own Folder rules page",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Favorites can no longer be duplicated",
+  "commits": []
+}

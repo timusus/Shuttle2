@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed accented and non-Latin characters being corrupted when editing tags",
+  "commits": []
+}

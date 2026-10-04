@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "When Jellyfin, Emby or Plex signs you out mid-session, the app now says so and offers a Sign in button, instead of syncs quietly failing",
+  "commits": []
+}

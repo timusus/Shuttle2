@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Rescanning your music folders now updates a playlist to match its .m3u file, instead of keeping songs removed from the file, and leaves the file itself untouched",
+  "commits": []
+}

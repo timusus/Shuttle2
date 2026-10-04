@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "The server sign-in screen now says that streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro, free for 14 days, before you connect",
+  "commits": []
+}

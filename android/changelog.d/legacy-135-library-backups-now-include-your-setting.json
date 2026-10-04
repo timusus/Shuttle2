@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Library backups now include your settings, such as theme, playback, equalizer and library options, and restoring one asks before it replaces the settings on your device. Server sign-ins are never backed up",
+  "commits": []
+}

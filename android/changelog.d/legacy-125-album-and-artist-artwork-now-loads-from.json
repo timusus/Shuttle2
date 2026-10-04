@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Album and artist artwork now loads from your Plex server too, matching Jellyfin and Emby",
+  "commits": []
+}

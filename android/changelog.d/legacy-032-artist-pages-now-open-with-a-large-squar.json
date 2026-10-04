@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "Artist pages now open with a large, square picture of the artist, or the cover of their most played album when there is no confident match for one, and the page takes its colours from that picture",
+  "commits": []
+}

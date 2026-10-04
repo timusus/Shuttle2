@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "Skipping a song from Jellyfin, Emby or Plex in your queue because streaming needs Shuttle Music Pro now shows a message explaining why",
+  "commits": []
+}

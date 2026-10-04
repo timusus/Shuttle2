@@ -1,0 +1,7 @@
+{
+  "type": "fixes",
+  "text": "When Android closes S2 while you're casting, reopening it carries on from where the Cast device was, instead of skipping songs that no longer play",
+  "commits": [
+    "c578aac5b"
+  ]
+}

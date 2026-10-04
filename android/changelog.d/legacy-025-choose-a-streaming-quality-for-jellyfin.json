@@ -1,0 +1,7 @@
+{
+  "type": "features",
+  "text": "Choose a streaming quality for Jellyfin, Emby and Plex in Sources settings, separately for Wi-Fi and mobile data, to save data on the go",
+  "commits": [
+    "51d8a0807"
+  ]
+}

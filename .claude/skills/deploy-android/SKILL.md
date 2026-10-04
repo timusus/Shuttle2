@@ -99,18 +99,18 @@ Tell the user: "Version: **$VERSION_NAME** (code: `$VERSION_CODE`, tag: `$TAG`)"
 
 Invoke `/generate-changelog` with VERSION_NAME and TAG from step 4.
 
-This builds the entry from `android/changelog-unreleased.json` (audited against commits since its
-`since`), updates `android/app/src/main/assets/changelog.json` (in-app changelog), and resets the
-fragment to `since: $TAG` with empty arrays.
+This builds the entry from the fragments in `android/changelog.d/` (audited against commits since
+`SINCE`), updates `android/app/src/main/assets/changelog.json` (in-app changelog), deletes the
+consumed fragments and sets `SINCE` to `$TAG`.
 
-Before generating, check the fragment's `since` names the tag this release **replaces** (the last
-tag that actually shipped to users). If it disagrees with `git describe`, the fragment wins — a tag
+Before generating, check `android/changelog.d/SINCE` names the tag this release **replaces** (the last
+tag that actually shipped to users). If it disagrees with `git describe`, `SINCE` wins — a tag
 can point at a build that was withdrawn.
 
-**The changelog and fragment reset must be committed together before creating the tag**, so the
+**The changelog and fragment cleanup must be committed together before creating the tag**, so the
 tagged commit includes them:
 ```bash
-git add android/app/src/main/assets/changelog.json android/changelog-unreleased.json
+git add -A android/app/src/main/assets/changelog.json android/changelog.d
 git commit -m "docs(app): update changelog for $VERSION_NAME"
 ```
 

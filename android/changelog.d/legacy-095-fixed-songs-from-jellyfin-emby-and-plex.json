@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed songs from Jellyfin, Emby and Plex failing to play",
+  "commits": []
+}

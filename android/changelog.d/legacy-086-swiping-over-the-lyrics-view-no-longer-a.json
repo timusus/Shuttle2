@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Swiping over the lyrics view no longer accidentally skips to the next or previous song, and lyrics now scroll back to the top when the song changes",
+  "commits": []
+}

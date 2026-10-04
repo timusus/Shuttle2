@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Jellyfin and Emby playlists with more than 500 songs now sync the right songs after the first 500, instead of songs from elsewhere in your library",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Songs you've downloaded from Jellyfin, Emby or Plex now play from your device, so they work offline instead of trying to stream",
+  "commits": []
+}

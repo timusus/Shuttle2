@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Removing the playing song from the queue now moves playback on to the next song, and a song removed from the queue no longer plays anyway when the current one ends",
+  "commits": []
+}

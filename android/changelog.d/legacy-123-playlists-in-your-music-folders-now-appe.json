@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Playlists in your music folders now appear after the first scan, including on large libraries, instead of only after a rescan",
+  "commits": []
+}

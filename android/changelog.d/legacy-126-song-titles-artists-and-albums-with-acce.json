@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Song titles, artists and albums with accents or other alphabets no longer appear garbled, and with the Android media store source, .mka files now show their album, artist and track number",
+  "commits": []
+}

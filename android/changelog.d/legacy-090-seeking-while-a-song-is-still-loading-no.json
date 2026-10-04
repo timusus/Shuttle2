@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Seeking while a song is still loading now starts it from the spot you picked, instead of the seek being lost",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "The app icon now matches your other icons when themed icons are turned on in Android 13 and later",
+  "commits": []
+}

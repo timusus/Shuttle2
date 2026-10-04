@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed signing in to and playing music from Jellyfin 12 servers",
+  "commits": []
+}

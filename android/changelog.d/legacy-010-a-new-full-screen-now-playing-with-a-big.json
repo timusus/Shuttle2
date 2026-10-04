@@ -1,0 +1,5 @@
+{
+  "type": "features",
+  "text": "A new full screen Now Playing with a bigger seek bar and a round play button. Your queue sits behind its own Queue button, and the sleep timer and playback speed and sound settings open from the bar along the bottom, sliding up under the controls so you can still see the song and skip while they are open. The seek bar shows when a song is buffering. Now Playing and the mini player take their colours from the album art, changing smoothly from song to song",
+  "commits": []
+}

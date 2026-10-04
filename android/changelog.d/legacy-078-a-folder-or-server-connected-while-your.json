@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "A folder or server connected while your library was already scanning is no longer skipped until the next scan",
+  "commits": []
+}

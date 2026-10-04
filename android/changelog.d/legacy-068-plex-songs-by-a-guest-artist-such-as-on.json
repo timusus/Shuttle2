@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Plex songs by a guest artist, such as on a compilation, now show that artist rather than the album's",
+  "commits": []
+}

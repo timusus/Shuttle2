@@ -1,0 +1,7 @@
+{
+  "type": "features",
+  "text": "Playlists imported from an .m3u file now stay in sync with that file when you add, remove or reorder songs",
+  "commits": [
+    "234486a7"
+  ]
+}

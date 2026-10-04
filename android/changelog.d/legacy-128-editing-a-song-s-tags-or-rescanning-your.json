@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Editing a song's tags or rescanning your library now updates its title, artist and album in the queue, the notification and Now Playing straight away, without interrupting playback",
+  "commits": []
+}

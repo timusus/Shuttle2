@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Gapless albums no longer click or thump between songs when the equaliser is on",
+  "commits": []
+}

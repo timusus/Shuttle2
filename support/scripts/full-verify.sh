@@ -74,8 +74,9 @@ if [ "${1:-}" = "--steps" ]; then
   exit 0
 fi
 
-# Changelog files the deploy skill commits (step 5 of .claude/skills/deploy-android/SKILL.md).
-CHANGELOG_FILES=(android/app/src/main/assets/changelog.json android/changelog-unreleased.json)
+# Changelog files the deploy skill commits (step 5 of .claude/skills/deploy-android/SKILL.md), plus
+# everything under android/changelog.d/ (fragments and SINCE).
+CHANGELOG_FILES=(android/app/src/main/assets/changelog.json)
 
 if [ "${1:-}" = "--covers" ]; then
   target=$(git rev-parse --verify "${2:?usage: full-verify.sh --covers <sha>}^{commit}") \
@@ -85,7 +86,7 @@ if [ "${1:-}" = "--covers" ]; then
   [ "$w" = "$target" ] && { echo "covered: watermark is $(git rev-parse --short "$target")"; exit 0; }
   git merge-base --is-ancestor "$w" "$target" \
     || { echo "not covered: watermark $(git rev-parse --short "$w") is not an ancestor of $(git rev-parse --short "$target")"; exit 1; }
-  other=$(git diff --name-only "$w" "$target" | grep -vxF -f <(printf '%s\n' "${CHANGELOG_FILES[@]}") || true)
+  other=$(git diff --name-only "$w" "$target" | grep -vxF -f <(printf '%s\n' "${CHANGELOG_FILES[@]}") | grep -v '^android/changelog\.d/' || true)
   if [ -n "$other" ]; then
     echo "not covered: changed since watermark $(git rev-parse --short "$w"):"; echo "$other" | head -20
     exit 1

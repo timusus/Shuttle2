@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "On an artist page, tapping an album's cover opens the album, while tapping the rest of its row unfolds its songs",
+  "commits": []
+}

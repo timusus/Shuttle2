@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "A song no longer loses its selection mark in the Songs list when it starts or stops playing",
+  "commits": []
+}

@@ -1,13 +1,13 @@
 ---
 name: generate-changelog
-description: Generate a user-facing changelog entry for a new Android release from the unreleased changelog fragment, audited against git commits since the last shipped tag. Updates changelog.json and resets the fragment.
+description: Generate a user-facing changelog entry for a new Android release from the unreleased changelog fragments, audited against git commits since the last shipped tag. Updates changelog.json and consumes the fragments.
 user_invocable: true
 ---
 
 # Generate Changelog
 
-Generate a changelog entry for a new release from `android/changelog-unreleased.json`, the
-fragment maintained at commit time (rules in `.claude/rules/changelog.md`), audited against git
+Generate a changelog entry for a new release from the fragments in `android/changelog.d/`, maintained
+at commit time (rules in `.claude/rules/changelog.md`), audited against git
 commits since the last shipped tag.
 
 **This skill is invoked automatically by `/deploy-android`.** It can also be run standalone.
@@ -26,12 +26,13 @@ You need two values — either passed as arguments or calculated the same way `/
 git fetch origin main --quiet
 ```
 
-Read `android/changelog-unreleased.json`. This is the **primary source**: whoever made each
-change recorded it there when committing it.
+Run `support/scripts/changelog-gather.sh`, which merges the fragments (one `<issue>-<slug>.json`
+per change, plus `SINCE`) into one `{since, features, improvements, fixes}` document. This is the
+**primary source**: whoever made each change recorded it when committing it.
 
-- **`since`** — the last tag that actually shipped to users. This is the release baseline, **not**
-  `git describe`: a tag can exist on a build that was withdrawn before users saw it, and the
-  fragment's `since` is the only record of what really shipped.
+- **`since`** (from `android/changelog.d/SINCE`) — the last tag that actually shipped to users. This
+  is the release baseline, **not** `git describe`: a tag can exist on a build that was withdrawn
+  before users saw it, and `SINCE` is the only record of what really shipped.
 - **`features` / `improvements` / `fixes`** — the draft entry lines, each with the commits that
   contributed.
 
@@ -51,7 +52,7 @@ user-facing impact actually lives. A `perf(playback)` commit might be a fail-fas
 speed-up; a `fix(app)` commit might be internal hardening for a bug no user ever saw. Read the body
 of every commit you're considering including or dismissing.
 
-If the fragment has no `since` (bootstrap before the first tagged release under this scheme), fall
+If `SINCE` is empty (bootstrap before the first tagged release under this scheme), fall
 back to recent commits:
 ```bash
 git log origin/main --no-merges --stat -20 -- "android/"
@@ -126,7 +127,7 @@ Match the existing schema in `android/app/src/main/assets/changelog.json`:
 - `notes` is an optional freeform blurb array (existing entries use it for a short aside from the
   developer) — leave it as `[]` unless the user supplies one; don't invent a "voice" for them.
 
-### 4. Update changelog.json and reset the fragment
+### 4. Update changelog.json and consume the fragments
 
 Read `android/app/src/main/assets/changelog.json` (a JSON array of release entries, newest first).
 
@@ -135,23 +136,19 @@ Read `android/app/src/main/assets/changelog.json` (a JSON array of release entri
 
 Write the updated file. Ensure valid JSON with consistent formatting (2-space indent).
 
-Then reset `android/changelog-unreleased.json` to the new baseline with empty arrays:
+Then delete every consumed fragment and write the new baseline:
 
-```json
-{
-  "since": "<TAG>",
-  "features": [],
-  "improvements": [],
-  "fixes": []
-}
+```bash
+git rm -q android/changelog.d/*.json
+echo "<TAG>" > android/changelog.d/SINCE
 ```
 
-**Commit both files together** with the release: a changelog entry committed without its fragment
-reset makes the next release describe a delta against a fragment that still claims the old
+**Commit them together** with the release: a changelog entry committed without its fragments
+removed makes the next release describe a delta against fragments that still claim the old
 baseline.
 
 ```bash
-git add android/app/src/main/assets/changelog.json android/changelog-unreleased.json
+git add -A android/app/src/main/assets/changelog.json android/changelog.d
 git commit -m "docs(app): update changelog for $VERSION_NAME"
 ```
 

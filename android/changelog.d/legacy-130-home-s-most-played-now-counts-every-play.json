@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Home's Most Played now counts every play of an album's songs, so an album no longer stays off it because one of its songs was never played",
+  "commits": []
+}

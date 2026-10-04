@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Swiping the Now Playing artwork sideways now skips to the next or previous song, matching the mini player",
+  "commits": []
+}

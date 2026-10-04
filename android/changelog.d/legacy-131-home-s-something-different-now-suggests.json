@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Home's Something Different now suggests only artists you have never played, instead of any artist with one unplayed song",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "features",
+  "text": "Now Playing has an output button, which opens Android's output switcher (the Cast button, where Cast is available), so you can pick Bluetooth, wired and Cast outputs from one place",
+  "commits": []
+}

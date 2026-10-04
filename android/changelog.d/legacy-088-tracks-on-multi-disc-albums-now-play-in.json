@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Tracks on multi-disc albums now play in the right order when using the Android media scanner",
+  "commits": []
+}

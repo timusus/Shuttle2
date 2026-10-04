@@ -1,0 +1,7 @@
+{
+  "type": "fixes",
+  "text": "A purchase that is still waiting for payment no longer unlocks the full version early",
+  "commits": [
+    "d0d4a614"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "The seekbar now follows a seek made from another Chromecast sender even while playback is paused",
+  "commits": []
+}

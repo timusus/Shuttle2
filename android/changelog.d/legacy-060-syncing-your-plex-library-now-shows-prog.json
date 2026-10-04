@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "Syncing your Plex library now shows progress and translated error messages, matching Jellyfin and Emby",
+  "commits": []
+}

@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Plex libraries now sync whatever they are named, and every music library on your server is included, not only one called Music",
+  "commits": []
+}

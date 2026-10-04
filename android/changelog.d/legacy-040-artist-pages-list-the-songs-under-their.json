@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "Artist pages list the songs under their albums, which unfold in place, instead of showing the albums again above one long song list",
+  "commits": []
+}

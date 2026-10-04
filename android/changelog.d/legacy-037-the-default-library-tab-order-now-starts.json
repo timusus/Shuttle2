@@ -1,0 +1,5 @@
+{
+  "type": "improvements",
+  "text": "The default library tab order now starts with Songs, and the tabs share one row of count, Sort, Shuffle and Play, including Artists, and it stays readable at large text sizes",
+  "commits": []
+}

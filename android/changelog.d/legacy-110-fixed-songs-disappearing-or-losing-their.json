@@ -1,0 +1,5 @@
+{
+  "type": "fixes",
+  "text": "Fixed songs disappearing, or losing their play count, playlists and excluded status, when both the S2 and Android media scanners were turned on and found the same file",
+  "commits": []
+}
