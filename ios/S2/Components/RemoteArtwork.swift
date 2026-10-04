@@ -121,12 +121,20 @@ enum ArtworkHairline {
     static let width = Spacing.hairline
 }
 
-/// A stable identity for list rows and `RemoteArtwork`'s `id`: the group key Kotlin computed when
-/// present, else the display name, matching Android's own fallback for artists/albums it couldn't group.
+/// A stable identity for list rows and `RemoteArtwork`'s `id`. Kotlin's group key when it has one: for an album the
+/// whole key (name, album artist and identity), so same-named albums by different artists, or of different releases,
+/// stay apart. A model without one is told apart by every field that names it, so two nameless entries still differ
+/// unless they are the same in everything the model carries.
 extension AlbumArtist {
-    var stableId: String { groupKey.key ?? name ?? friendlyArtistName ?? "" }
+    var stableId: String {
+        if let key = groupKey.key { return "artist|\(key)" }
+        return ["artist", name, friendlyArtistName, "\(albumCount)", "\(songCount)"].map { $0 ?? "" }.joined(separator: "|")
+    }
 }
 
 extension Album {
-    var stableId: String { groupKey?.key ?? name ?? "" }
+    var stableId: String {
+        if let groupKey, groupKey.key != nil || groupKey.identity != nil { return "album|\(groupKey.encode())" }
+        return ["album", name, albumArtist, friendlyArtistName, year.map { "\($0.intValue)" }, "\(songCount)", "\(duration)"].map { $0 ?? "" }.joined(separator: "|")
+    }
 }

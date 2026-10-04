@@ -39,11 +39,21 @@ appId: com.simplecityapps.shuttle.dev
       - waitForAnimationToEnd:
           timeout: 5000
 - takeScreenshot: 3-albums-grid
-# The strip scrolls the grid too (#690): a tap on it picks the middle letter.
+# The strip scrolls the grid too (#690): a tap on it picks the middle letter, and the first tile has scrolled away.
+- extendedWaitUntil:
+    visible:
+      id: "libraryTile.title"
+    timeout: 60000
+- copyTextFrom:
+    id: "libraryTile.title"
 - tapOn:
     id: "library.sectionIndex"
 - waitForAnimationToEnd:
     timeout: 5000
+- assertNotVisible:
+    text: ${maestro.copiedText}
+- assertVisible:
+    id: "libraryTile.title"
 - takeScreenshot: 3b-albums-grid-scrubbed
 - tapOn:
     id: "libraryChip.albumArtists"
