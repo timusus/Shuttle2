@@ -24,7 +24,8 @@ import kotlinx.coroutines.flow.update
  *
  * A completion this hasn't heard of is kept: iOS finishes a background download while the app isn't running and reports
  * it at the next launch, before (or instead of) [DownloadTransport.Listener.onRunning]. Only a song the user removed
- * ([remove]) since it was last downloaded has its late file deleted again.
+ * ([remove]) since it was last downloaded has its late file deleted again, as does one of a provider whose downloads were
+ * all removed ([removeAll]) that hadn't been reported yet: an earlier launch's download the transport is still finding.
  *
  * The player plays a downloaded song from its file ([fileUrl]).
  */
@@ -37,6 +38,12 @@ class OfflineDownloads(
     /** The paths [remove]d since they were last downloaded, whose late reports change nothing and whose late files are deleted. */
     private val removedPaths = MutableStateFlow<Set<String>>(emptySet())
 
+    /**
+     * The path prefixes ([MediaProviderType.pathScheme]) of the providers whose downloads were all removed ([removeAll]):
+     * a report of a path this hasn't heard of under one is a download of the old server's, and is cancelled or deleted.
+     */
+    private val removedPrefixes = MutableStateFlow<Set<String>>(emptySet())
+
     /** Every song's download that's running, completed or failed, by `Song.path`. */
     val downloads: StateFlow<Map<String, OfflineDownload>> = _downloads.asStateFlow()
 
@@ -44,6 +51,7 @@ class OfflineDownloads(
         transport.listener = object : DownloadTransport.Listener {
             override fun onRunning(path: String) {
                 if (path in removedPaths.value) return
+                if (isRemovedUnknown(path)) return transport.remove(path)
                 update(path) { current -> current ?: OfflineDownload(OfflineDownload.State.Downloading, 0f) }
             }
 
@@ -58,7 +66,7 @@ class OfflineDownloads(
 
             override fun onCompleted(path: String) {
                 // Removed while it was finishing: the file arrived after the removal deleted it
-                if (path in removedPaths.value) return transport.remove(path)
+                if (path in removedPaths.value || isRemovedUnknown(path)) return transport.remove(path)
                 // Anything else is kept, including one finished while the app wasn't running, which nothing had reported
                 update(path) { OfflineDownload(OfflineDownload.State.Completed, 1f) }
             }
@@ -86,12 +94,16 @@ class OfflineDownloads(
 
     override suspend fun removeAll(type: MediaProviderType) {
         val prefix = type.pathScheme?.let { "$it://" } ?: return
+        removedPrefixes.update { it + prefix }
         _downloads.value.keys.filter { it.startsWith(prefix) }.forEach { path ->
             removedPaths.update { it + path }
             _downloads.update { it - path }
             transport.remove(path)
         }
     }
+
+    /** Whether [path] is one this hasn't heard of, of a provider whose downloads were all removed since launch. */
+    private fun isRemovedUnknown(path: String): Boolean = path !in _downloads.value && removedPrefixes.value.any(path::startsWith)
 
     /** Running and completed downloads: [SongDownloader]'s held paths. A failed one isn't held, so it offers Download again. */
     override fun observeHeldPaths(): Flow<Set<String>> = downloads

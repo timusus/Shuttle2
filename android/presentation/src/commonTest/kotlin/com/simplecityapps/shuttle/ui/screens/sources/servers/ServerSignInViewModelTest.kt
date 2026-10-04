@@ -189,10 +189,89 @@ class ServerSignInViewModelTest {
         viewModel(address = "http://other:8096").onAuthenticate()
         songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin)
 
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
         val asAnotherUser = viewModel()
         asAnotherUser.onUsernameChange("alex")
         asAnotherUser.onAuthenticate()
         songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin, MediaProviderType.Jellyfin)
+    }
+
+    @Test
+    fun `with no saved username - signing in to the saved address keeps its downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096")
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+
+        viewModel.onAuthenticate()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `turning off remember password then signing in to the same server keeps its downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
+        val viewModel = viewModel()
+        viewModel.onRememberPasswordChange(false)
+
+        viewModel.onAuthenticate()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `a failed sign-in to a mistyped address - then the saved server - keeps its downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
+        val viewModel = viewModel(address = "http://sever:8096")
+        server.failure = IllegalStateException("no")
+        viewModel.onAuthenticate()
+        viewModel.onRetry()
+
+        server.failure = null
+        viewModel.onAddressChange("http://server:8096")
+        viewModel.onAuthenticate()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `a failed sign-in to another server - then a successful one to it - removes the old server's downloads`() = runTest {
+        server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
+        val viewModel = viewModel(address = "http://other:8096")
+        server.failure = IllegalStateException("no")
+        viewModel.onAuthenticate()
+        viewModel.onRetry()
+
+        server.failure = null
+        viewModel.onAuthenticate()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin)
+    }
+
+    @Test
+    fun `the saved server typed with another case - scheme or trailing slash keeps its downloads`() = runTest {
+        server.saved = SavedServerLogin("http://Server.local:8096/jellyfin/", "sam", "secret")
+
+        viewModel(address = "https://server.LOCAL:8096/jellyfin").onAuthenticate()
+
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `addresses name the same server whatever the host's case - the scheme - a default port or trailing slashes`() {
+        isSameServerAddress("http://Server:8096", "https://server:8096/") shouldBe true
+        isSameServerAddress("server:8096", "http://server:8096") shouldBe true
+        isSameServerAddress("http://server", "http://server:80") shouldBe true
+        isSameServerAddress("https://server:443/", "https://SERVER") shouldBe true
+        isSameServerAddress("http://[FE80::1]:8096", "http://[fe80::1]:8096") shouldBe true
+
+        isSameServerAddress("http://server:8096", "http://server:8920") shouldBe false
+        isSameServerAddress("http://server:8096", "http://other:8096") shouldBe false
+        isSameServerAddress("http://server/jellyfin", "http://server/emby") shouldBe false
+        isSameServerAddress("http://", "http://") shouldBe false
     }
 
     @Test

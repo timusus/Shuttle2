@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -85,13 +86,14 @@ sealed interface ServerSignInEvent {
 
 /**
  * A Jellyfin, Emby or Plex server's sign-in: the address and login, starting from the saved ones, then the
- * authentication's progress and outcome. Signing in to a different server (another address or user) than the saved one
- * removes the downloads of the old server's songs: their paths don't say which server they came from.
+ * authentication's progress and outcome. Signing in to a different server (another address or user) than the one signed
+ * in when the sign-in opened removes the downloads of the old server's songs: their paths don't say which server they
+ * came from.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ServerSignInViewModel @AssistedInject constructor(
     @Assisted private val type: MediaProviderType,
-    private val readServerLogin: ReadServerLogin,
+    readServerLogin: ReadServerLogin,
     private val signInToServer: SignInToServer,
     private val forgetServerLogin: ForgetServerLogin,
     observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
@@ -106,8 +108,15 @@ class ServerSignInViewModel @AssistedInject constructor(
         fun create(type: MediaProviderType): ServerSignInViewModel
     }
 
+    /**
+     * The server whose songs any downloads came from: the saved login as the sign-in opened, then each successful
+     * sign-in. Read once up front, as every attempt saves its address before contacting the server, and turning off
+     * remember password forgets the username.
+     */
+    private var signedInServer: SavedServerLogin = readServerLogin(type)
+
     private val form = MutableStateFlow(
-        readServerLogin(type).let { saved ->
+        signedInServer.let { saved ->
             ServerSignInForm(
                 address = saved.address ?: DEFAULT_ADDRESS,
                 username = saved.username.orEmpty(),
@@ -162,11 +171,10 @@ class ServerSignInViewModel @AssistedInject constructor(
         }
         step.value = ServerSignInStep.Authenticating
         val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password, form.authCode.takeIf { uiState.value.asksForAuthCode })
-        val saved = readServerLogin(type)
         viewModelScope.launch {
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
-                    if (saved.address != login.address || !saved.username.equals(login.username, ignoreCase = true)) songDownloader.removeAll(type)
+                    onSignedIn(login.address, login.username)
                     step.value = ServerSignInStep.Connected
                     events.post(ServerSignInEvent.Connected)
                     delay(SUCCESS_SHOWN_MILLIS)
@@ -190,7 +198,6 @@ class ServerSignInViewModel @AssistedInject constructor(
             form.update { it.copy(missing = it.missing + ServerSignInField.Address) }
             return
         }
-        val saved = readServerLogin(type)
         quickConnectJob = viewModelScope.launch {
             signInWithQuickConnect(type, address).collect { state ->
                 when (state) {
@@ -198,7 +205,7 @@ class ServerSignInViewModel @AssistedInject constructor(
 
                     SignInWithQuickConnect.State.Success -> {
                         // Quick Connect doesn't take a username, so only a different address tells it's another server
-                        if (saved.address != address) songDownloader.removeAll(type)
+                        onSignedIn(address, username = null)
                         step.value = ServerSignInStep.Connected
                         events.post(ServerSignInEvent.Connected)
                         delay(SUCCESS_SHOWN_MILLIS)
@@ -230,6 +237,15 @@ class ServerSignInViewModel @AssistedInject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    /** Removes the downloads when [address] and [username] (if known) name another server than [signedInServer]. */
+    private suspend fun onSignedIn(address: String, username: String?) {
+        val previous = signedInServer
+        val otherAddress = previous.address?.let { !isSameServerAddress(it, address) } ?: true
+        val otherUser = username != null && previous.username != null && !previous.username.equals(username, ignoreCase = true)
+        if (otherAddress || otherUser) songDownloader.removeAll(type)
+        signedInServer = SavedServerLogin(address, username ?: previous.username.takeUnless { otherAddress })
+    }
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
         if (serverAddress(form.address) == null) add(ServerSignInField.Address)
@@ -273,4 +289,26 @@ fun serverAddress(typed: String): String? {
             else -> authority.takeIf { authority.substringBefore(':').isNotEmpty() }
         }
     return hostAndPort?.let { "$scheme://$it$path" }
+}
+
+/**
+ * Whether two server addresses name the same server: the host compared case-insensitively, then the port and path.
+ * The scheme (`http` → `https`), a default port and trailing slashes don't count.
+ */
+fun isSameServerAddress(a: String, b: String): Boolean = serverIdentity(a)?.let { it == serverIdentity(b) } ?: false
+
+private fun serverIdentity(address: String): String? {
+    val normalised = serverAddress(address) ?: return null
+    val scheme = normalised.substringBefore("://").lowercase()
+    val rest = normalised.substringAfter("://")
+    val authority = rest.substringBefore('/')
+    val path = rest.removePrefix(authority)
+    val host = if (authority.startsWith('[')) authority.substringBefore(']') + "]" else authority.substringBefore(':')
+    val port = authority.removePrefix(host).removePrefix(":")
+    val defaultPort = when (scheme) {
+        "http" -> "80"
+        "https" -> "443"
+        else -> null
+    }
+    return "${host.lowercase()}:${port.takeUnless { it == defaultPort }.orEmpty()}$path"
 }

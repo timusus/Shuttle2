@@ -120,6 +120,30 @@ class OfflineDownloadsTest {
     }
 
     @Test
+    fun anEarlierLaunchsDownloadReportedAfterRemovingAProvidersIsCancelledOrDeleted() = runTest {
+        downloads.removeAll(MediaProviderType.Jellyfin)
+
+        transport.listener!!.onRunning("jellyfin://item/8")
+        transport.listener!!.onCompleted("jellyfin://item/9")
+        transport.listener!!.onCompleted("emby://item/3")
+
+        downloads.downloads.value.keys shouldBe setOf("emby://item/3")
+        transport.removed shouldBe listOf("jellyfin://item/1", "jellyfin://item/8", "jellyfin://item/9")
+    }
+
+    @Test
+    fun aDownloadStartedAfterRemovingItsProvidersIsKept() = runTest {
+        downloads.removeAll(MediaProviderType.Jellyfin)
+
+        downloads.download(remote(2))
+        transport.listener!!.onRunning("jellyfin://item/2")
+        transport.listener!!.onCompleted("jellyfin://item/2")
+
+        downloads.downloads.value shouldBe mapOf("jellyfin://item/2" to OfflineDownload(OfflineDownload.State.Completed, 1f))
+        transport.removed shouldBe listOf("jellyfin://item/1")
+    }
+
+    @Test
     fun aDownloadThatFinishesAfterItsRemovalIsDeletedAgain() = runTest {
         downloads.download(remote(2))
         downloads.remove(remote(2))
