@@ -35,6 +35,7 @@ struct SearchView: View {
                     onPlaySong: { index in
                         if let action = models.search.playSong(index: Int32(index)) { models.actions.send(action) }
                     },
+                    onPlay: { models.actions.send(models.search.play(selection: $0)) },
                     onAction: { models.actions.send($0) }
                 )
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
@@ -79,6 +80,7 @@ struct SearchContentView: View {
     var onOpen: (Route) -> Void = { _ in }
     /// Plays the song results from this index.
     var onPlaySong: (Int) -> Void = { _ in }
+    var onPlay: (MediaSelection) -> Void = { _ in }
     /// Dispatches a long-press play or queue action.
     var onAction: (MediaAction) -> Void = { _ in }
 
@@ -125,6 +127,7 @@ struct SearchContentView: View {
                 nowPlaying: nowPlaying,
                 onOpen: onOpen,
                 onPlaySong: onPlaySong,
+                onPlay: onPlay,
                 onAction: onAction
             )
         }
@@ -230,6 +233,8 @@ struct SearchResultList: View {
     var nowPlaying: LibraryNowPlaying
     let onOpen: (Route) -> Void
     let onPlaySong: (Int) -> Void
+    /// Plays a top result that isn't a song, which keeps the query as a recent search (`SearchViewModel.play`).
+    let onPlay: (MediaSelection) -> Void
     let onAction: (MediaAction) -> Void
     /// The rows' items, read across the bridge once for these results.
     private let items: SearchResultItems
@@ -243,6 +248,7 @@ struct SearchResultList: View {
         nowPlaying: LibraryNowPlaying = .none,
         onOpen: @escaping (Route) -> Void,
         onPlaySong: @escaping (Int) -> Void,
+        onPlay: @escaping (MediaSelection) -> Void = { _ in },
         onAction: @escaping (MediaAction) -> Void
     ) {
         self.query = query
@@ -250,6 +256,7 @@ struct SearchResultList: View {
         self.nowPlaying = nowPlaying
         self.onOpen = onOpen
         self.onPlaySong = onPlaySong
+        self.onPlay = onPlay
         self.onAction = onAction
         items = SearchResultItems(results)
     }
@@ -258,15 +265,8 @@ struct SearchResultList: View {
         List {
             if let top = results.top {
                 Section {
-                    VStack(alignment: .leading, spacing: Spacing.xsmall) {
-                        Text(top.kindLabel)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.s2TextSecondary)
-                            .textCase(.uppercase)
-                            .accessibilityIdentifier("search.topResult.kind")
-                        row(top, index: 0)
-                    }
-                    .rowSeparator(.none)
+                    topResultCard(top)
+                        .rowSeparator(.none)
                 } header: {
                     SectionHeader("Top Result").textCase(nil).pinnedHeader()
                 }
@@ -287,6 +287,40 @@ struct SearchResultList: View {
         .accessibilityIdentifier("search.results")
     }
 
+    /// The best match as a card: its kind in the tint, a larger row, and a Play button that plays it without opening it.
+    private func topResultCard(_ top: SearchCategory) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.small) {
+            Text(top.kindLabel)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.tint)
+                .accessibilityIdentifier("search.topResult.kind")
+            HStack(spacing: Spacing.small) {
+                row(top, index: 0, artworkSize: Self.topResultArtwork)
+                Button { playTop(top) } label: {
+                    Label("Play", systemImage: "play.fill").labelStyle(.iconOnly)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.circle)
+                .controlSize(.large)
+                .accessibilityIdentifier("search.topResult.play")
+            }
+        }
+        .padding(Spacing.smallMedium)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private static let topResultArtwork: CGFloat = 96
+
+    private func playTop(_ category: SearchCategory) {
+        switch category {
+        case .artists: onPlay(MediaSelectionAlbumArtists(albumArtist: items.artists[0]))
+        case .albums: onPlay(MediaSelectionAlbums(album: items.albums[0]))
+        case .songs: onPlaySong(0)
+        case .genres: onPlay(MediaSelectionGenres(genre: items.genres[0]))
+        case .playlists: onPlay(MediaSelectionPlaylists(playlist: items.playlists[0]))
+        }
+    }
+
     @ViewBuilder
     private func header(_ section: SearchSection) -> some View {
         if section.hasMore {
@@ -298,7 +332,7 @@ struct SearchResultList: View {
 
     /// The `index`th hit of `category`'s group. Ids are the category and index, stable for a given result set.
     @ViewBuilder
-    private func row(_ category: SearchCategory, index: Int) -> some View {
+    private func row(_ category: SearchCategory, index: Int, artworkSize: CGFloat? = nil) -> some View {
         switch category {
         case .artists:
             let artist = items.artists[index]
@@ -307,6 +341,7 @@ struct SearchResultList: View {
                     AlbumArtistRow.title(artist),
                     subtitle: AlbumArtistRow.subtitle(artist),
                     artwork: .albumArtist(artist),
+                    artworkSize: artworkSize ?? ArtworkSize.row,
                     placeholderSymbol: "music.mic",
                     playback: nowPlaying.playback(albumArtist: artist)
                 )
@@ -314,11 +349,25 @@ struct SearchResultList: View {
             .contextMenu { menu(MediaSelectionAlbumArtists(albumArtist: artist)) }
         case .albums:
             let album = items.albums[index]
-            resultLink(.album(album), identifier: "search.result.album") { AlbumRow(album: album, playback: nowPlaying.playback(album: album)) }
+            resultLink(.album(album), identifier: "search.result.album") {
+                AlbumRow(album: album, playback: nowPlaying.playback(album: album), artworkSize: artworkSize ?? ArtworkSize.albumRow)
+            }
                 .contextMenu { menu(MediaSelectionAlbums(album: album)) }
         case .songs:
             let song = items.songs[index]
-            Button { onPlaySong(index) } label: { SongRow(song: song, playback: nowPlaying.playback(song: song)) }
+            Button { onPlaySong(index) } label: {
+                if let artworkSize {
+                    MediaRow(
+                        song.name ?? "Unknown",
+                        subtitle: SongRow.subtitle(song),
+                        artwork: .song(song),
+                        artworkSize: artworkSize,
+                        playback: nowPlaying.playback(song: song)
+                    )
+                } else {
+                    SongRow(song: song, playback: nowPlaying.playback(song: song))
+                }
+            }
                 .buttonStyle(.pressScale)
                 .accessibilityIdentifier("search.result.song")
                 .contextMenu {
@@ -332,11 +381,11 @@ struct SearchResultList: View {
                 }
         case .genres:
             let genre = items.genres[index]
-            resultLink(.genre(genre), identifier: "search.result.genre") { GenreRow(genre: genre) }
+            resultLink(.genre(genre), identifier: "search.result.genre") { GenreRow(genre: genre, artworkSize: artworkSize ?? ArtworkSize.row) }
                 .contextMenu { menu(MediaSelectionGenres(genre: genre)) }
         case .playlists:
             let playlist = items.playlists[index]
-            resultLink(.playlist(playlist), identifier: "search.result.playlist") { PlaylistRow(playlist: playlist) }
+            resultLink(.playlist(playlist), identifier: "search.result.playlist") { PlaylistRow(playlist: playlist, artworkSize: artworkSize ?? ArtworkSize.row) }
                 .contextMenu { menu(MediaSelectionPlaylists(playlist: playlist)) }
         }
     }

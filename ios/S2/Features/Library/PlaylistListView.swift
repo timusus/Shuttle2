@@ -260,12 +260,14 @@ private struct PlaylistListRow: View {
 struct PlaylistRow: View {
     let playlist: Playlist
     var covers: [Song] = []
+    var artworkSize: CGFloat = ArtworkSize.row
 
     var body: some View {
         MediaRow(
             playlist.name,
             subtitle: Self.subtitle(playlist),
-            mosaic: .playlist(playlist.name, covers: covers)
+            mosaic: .playlist(playlist.name, covers: covers),
+            artworkSize: artworkSize
         )
     }
 

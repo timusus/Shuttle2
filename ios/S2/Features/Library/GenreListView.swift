@@ -111,6 +111,7 @@ struct GenreListContent: View {
 struct GenreRow: View {
     let genre: Genre
     var covers: [Song] = []
+    var artworkSize: CGFloat = ArtworkSize.row
 
     var body: some View {
         // Trimmed for show only: a server's genre may keep the space after a tag's separator (" Folk"), which set
@@ -118,7 +119,8 @@ struct GenreRow: View {
         MediaRow(
             genre.name.trimmingCharacters(in: .whitespacesAndNewlines),
             subtitle: genre.songCount == 1 ? "1 song" : "\(genre.songCount) songs",
-            mosaic: .genre(genre.name, covers: covers)
+            mosaic: .genre(genre.name, covers: covers),
+            artworkSize: artworkSize
         )
     }
 }

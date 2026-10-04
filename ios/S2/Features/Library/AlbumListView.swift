@@ -142,9 +142,10 @@ struct AlbumRow: View {
     var playback: MediaRowPlayback = .none
     /// The Library's sort, which adds the date to the subtitle under a date-added sort (the year is always there).
     var sortOrder: AlbumSortOrder?
+    var artworkSize: CGFloat = ArtworkSize.albumRow
 
     var body: some View {
-        MediaRow(album.name ?? "Unknown", subtitle: subtitle, artwork: .album(album), artworkSize: ArtworkSize.albumRow, playback: playback)
+        MediaRow(album.name ?? "Unknown", subtitle: subtitle, artwork: .album(album), artworkSize: artworkSize, playback: playback)
     }
 
     private var subtitle: String {
