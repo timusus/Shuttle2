@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
+import com.simplecityapps.shuttle.shared.platform.BackgroundSync
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.telemetry.IosTelemetry
@@ -94,6 +95,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** The library's providers and the import that fills it: the Library's pull-to-refresh and launch import. */
     val mediaSources: MediaSources
+
+    /** The daily background sync, which Swift's `BGAppRefreshTask` runs. */
+    val backgroundSync: BackgroundSync
 
     /** The running import's progress, for the Library root. */
     val songImportStateProvider: SongImportStateProvider

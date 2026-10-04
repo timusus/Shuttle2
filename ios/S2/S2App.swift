@@ -19,11 +19,23 @@ struct S2App: App {
                 .tint(.s2Accent)
                 .task {
                     LibraryImport.atLaunch()
+                    LibraryImport.syncIfStale()
                     await LibraryImport.whenLocalFilesChange()
                 }
                 .onChange(of: scenePhase) { _, phase in
-                    if phase == .active { Task { await LibraryImport.whenLocalFilesChange() } }
+                    switch phase {
+                    case .active:
+                        LibraryImport.syncIfStale()
+                        Task { await LibraryImport.whenLocalFilesChange() }
+                    case .background:
+                        BackgroundRefresh.schedule()
+                    default:
+                        break
+                    }
                 }
+        }
+        .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
+            await BackgroundRefresh.run()
         }
     }
 }

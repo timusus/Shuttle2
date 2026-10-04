@@ -64,8 +64,10 @@ targets:
         # XcodeGen writes 1.0 / 1 otherwise, and the file wins over the build settings.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        # Keep playing with the screen locked or the app in the background (#588).
-        UIBackgroundModes: [audio]
+        # Keep playing with the screen locked or the app in the background (#588), and sync the servers daily in the
+        # background (#771, BackgroundRefresh.swift).
+        UIBackgroundModes: [audio, fetch]
+        BGTaskSchedulerPermittedIdentifiers: [com.simplecityapps.shuttle.sync]
         # This device's music (#590): Documents shows in Files ("On My iPhone > Shuttle Music") and Finder's file
         # sharing, so music can be copied in, and files opened there are read in place.
         UIFileSharingEnabled: true

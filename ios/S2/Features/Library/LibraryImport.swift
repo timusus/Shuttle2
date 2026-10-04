@@ -7,7 +7,8 @@ import Shared
 /// re-import on every launch blanked the lists for minutes (#623). This device's files are the exception: at launch
 /// and on every return to the foreground they're listed again, and the library imports when one was added, removed or
 /// changed since the last import (#590), as a file copied in through Files or Finder should show up without a pull to
-/// refresh. A periodic refresh is a `BGAppRefreshTask` in phase 9, where Android uses WorkManager.
+/// refresh. The servers are synced quietly, for what changed on them, at launch and on every return to the foreground
+/// (`syncIfStale`), and daily in the background (`BackgroundRefresh`), as on Android (#771).
 /// `MediaSources.scan` outlives the screen that asked and is a no-op while an import runs, or with no source.
 @MainActor
 enum LibraryImport {
@@ -40,6 +41,11 @@ enum LibraryImport {
     static func whenLocalFilesChange(deviceEnabled: Bool, changed: () async -> Bool, scan: () -> Void) async {
         guard deviceEnabled, await changed() else { return }
         scan()
+    }
+
+    /// At most every few minutes per server (`SyncPolicy`), and a no-op while an import runs.
+    static func syncIfStale(graph: IosAppGraph = AppGraph.shared) {
+        graph.mediaSources.syncIfStale()
     }
 
     static func refresh(graph: IosAppGraph = AppGraph.shared) {
