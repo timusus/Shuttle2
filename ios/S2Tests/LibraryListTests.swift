@@ -194,7 +194,9 @@ struct LibraryListTests {
         #expect((try? songRow.inspect().find(RemoteArtwork<ArtworkPlaceholder>.self)) != nil)
         let albumRow = AlbumRow(album: album("OK Computer", artist: "Radiohead", songs: 12, year: 1997))
         #expect((try? albumRow.inspect().find(RemoteArtwork<ArtworkPlaceholder>.self)) != nil)
-        #expect(ArtworkSource.album(albumRow.album) == ArtworkSource(id: "ok computer") { nil })
+        // Keyed by the album's whole group key (#693), so a same-named album by another artist draws its own cover.
+        #expect(ArtworkSource.album(albumRow.album) == ArtworkSource(id: albumRow.album.stableId) { nil })
+        #expect(albumRow.album.stableId != album("OK Computer", artist: "Someone Else", songs: 12, year: 1997).stableId)
     }
 
     @Test func emptyStatesUseTheSharedEmptyState() throws {
