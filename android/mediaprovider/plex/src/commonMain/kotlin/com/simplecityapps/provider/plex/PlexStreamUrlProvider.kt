@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.plex
 
+import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.StreamProfile
@@ -61,6 +62,23 @@ class PlexStreamUrlProvider(
             val path = authenticationManager.buildPlexProgressiveStreamPath(song, authenticatedCredentials, transcodeKbps, startPositionMs)
                 ?: throw IllegalStateException("Failed to build plex transcode path")
             PlexStream(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
+        }
+    }
+
+    /**
+     * The original part file (`song.externalId`) when the player decodes it; otherwise a progressive MP3 transcode at
+     * [UNCAPPED_TRANSCODE_KBPS], the same bitrate as an uncapped stream, so the download is one file of real, playable
+     * audio recorded under the type it actually is: not the HLS transcode Android streams, whose manifest would be saved
+     * as the "file" (#567). The cap doesn't apply: a download keeps the original.
+     */
+    override fun downloadSource(song: Song): DownloadSource? {
+        val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
+        return if (isDecodable(song)) {
+            val path = authenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials) ?: return null
+            DownloadSource(path, song.mimeType)
+        } else {
+            val path = authenticationManager.buildPlexProgressiveTranscodePath(song, authenticatedCredentials, UNCAPPED_TRANSCODE_KBPS) ?: return null
+            DownloadSource(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
         }
     }
 

@@ -23,9 +23,9 @@ import kotlinx.coroutines.test.runTest
 
 /**
  * Exercises [PlexMediaInfoProvider]'s downloads (its streams are [PlexStreamUrlProvider]'s, covered by
- * [PlexStreamUrlProviderTest]). Asserts on [PlexMediaInfoProvider.buildDownloadStream]
- * rather than [PlexMediaInfoProvider.downloadInfo] directly, since the latter calls `String.toUri()`,
- * which needs a mocked `android.net.Uri` and would pull Robolectric into this module for nothing else.
+ * [PlexStreamUrlProviderTest]). Asserts on [PlexStreamUrlProvider.downloadSource], which [PlexMediaInfoProvider.downloadInfo]
+ * wraps, rather than on `downloadInfo` directly, since that calls `String.toUri()`, which needs a mocked
+ * `android.net.Uri` and would pull Robolectric into this module for nothing else.
  */
 class PlexMediaInfoProviderTest {
     private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
@@ -45,19 +45,18 @@ class PlexMediaInfoProviderTest {
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
-    private val provider = PlexMediaInfoProvider(
-        authenticationManager,
-        PlexStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered }, StreamProfile.Android)
-    )
+    private val streamUrls = PlexStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered }, StreamProfile.Android)
+
+    private val provider = PlexMediaInfoProvider(streamUrls)
 
     @Test
     fun `download stream is the same original part-file url used for streaming - with the song's mime type`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         val song = song(externalId = "/library/parts/42/file.mp3")
 
-        val stream = provider.buildDownloadStream(song)!!
+        val stream = streamUrls.downloadSource(song)!!
 
-        stream.path shouldBe "http://plex.local:32400/library/parts/42/file.mp3" +
+        stream.url shouldBe "http://plex.local:32400/library/parts/42/file.mp3" +
             "?X-Plex-Token=token123" +
             "&X-Plex-Client-Identifier=${clientIdentity.id}" +
             "&X-Plex-Device=Android"
@@ -68,7 +67,7 @@ class PlexMediaInfoProviderTest {
     fun `download stream is null when not authenticated`() = runTest {
         val song = song(externalId = "/library/parts/42/file.mp3")
 
-        provider.buildDownloadStream(song) shouldBe null
+        streamUrls.downloadSource(song) shouldBe null
     }
 
     @Test
@@ -83,18 +82,18 @@ class PlexMediaInfoProviderTest {
         credentialStore.authenticatedCredentials = credentials
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
-        provider.buildDownloadStream(song(externalId = PART, bitRate = 1_411))!!.path shouldStartWith "http://plex.local:32400$PART?"
+        streamUrls.downloadSource(song(externalId = PART, bitRate = 1_411))!!.url shouldStartWith "http://plex.local:32400$PART?"
     }
 
     @Test
     fun `download stream transcodes a format the player can't decode into a single playable file - not HLS - issue 567`() = runTest {
         credentialStore.authenticatedCredentials = credentials
 
-        val stream = provider.buildDownloadStream(song(externalId = "/library/parts/47/1600000000/file.wma", bitRate = 128))!!
+        val stream = streamUrls.downloadSource(song(externalId = "/library/parts/47/1600000000/file.wma", bitRate = 128))!!
 
-        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.mp3?"
-        stream.path shouldContain "&protocol=http&"
-        stream.path shouldContain "&musicBitrate=320&"
+        stream.url shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.mp3?"
+        stream.url shouldContain "&protocol=http&"
+        stream.url shouldContain "&musicBitrate=320&"
         stream.mimeType shouldBe "audio/mpeg"
     }
 
@@ -102,10 +101,10 @@ class PlexMediaInfoProviderTest {
     fun `download stream transcodes ALAC even inside a container the player otherwise decodes - issue 567`() = runTest {
         credentialStore.authenticatedCredentials = credentials
 
-        val stream = provider.buildDownloadStream(song(externalId = "/library/parts/48/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))!!
+        val stream = streamUrls.downloadSource(song(externalId = "/library/parts/48/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))!!
 
-        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.mp3?"
-        stream.path shouldContain "&protocol=http&"
+        stream.url shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.mp3?"
+        stream.url shouldContain "&protocol=http&"
         stream.mimeType shouldBe "audio/mpeg"
     }
 

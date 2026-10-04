@@ -47,12 +47,7 @@ constructor(
         defaultMimeType: String
     ): String = jellyfinTranscodeService.contentType(path.toString()) ?: defaultMimeType
 
-    override suspend fun downloadInfo(song: Song): DownloadInfo? {
-        val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials() ?: return null
-        val itemId = Uri.parse(song.path).pathSegments.last()
-        val uri = jellyfinAuthenticationManager.buildDownloadPath(itemId, authenticatedCredentials)?.toUri() ?: return null
-        return DownloadInfo(uri, song.mimeType)
-    }
+    override suspend fun downloadInfo(song: Song): DownloadInfo? = streamUrls.downloadSource(song)?.let { DownloadInfo(it.url.toUri(), it.mimeType) }
 
     override suspend fun downloadFallbackUri(
         path: String,

@@ -10,7 +10,6 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.plex.PlexArtworkTokenInterceptor
-import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexStreamUrlProvider
 import com.simplecityapps.provider.plex.http.plexClientHeaders
@@ -60,10 +59,7 @@ class PlexAndroidModule {
     @SingleIn(AppScope::class)
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Plex)
-    fun providePlexMediaInfoProvider(
-        authenticationManager: PlexAuthenticationManager,
-        streamUrls: PlexStreamUrlProvider
-    ): MediaInfoProvider = PlexMediaInfoProvider(authenticationManager, streamUrls)
+    fun providePlexMediaInfoProvider(streamUrls: PlexStreamUrlProvider): MediaInfoProvider = PlexMediaInfoProvider(streamUrls)
 
     @Provides
     @IntoSet
