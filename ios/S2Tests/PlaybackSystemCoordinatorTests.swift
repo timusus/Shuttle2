@@ -121,7 +121,7 @@ struct PlaybackSystemCoordinatorTests {
     private func loadQueue(_ songs: [Song] = TestSongs.demo) async throws -> String {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty })
         let id = try #require(engine.loads.first?.current.id)
         engine.emit(.state(.paused, trackId: id))
@@ -223,7 +223,7 @@ struct PlaybackSystemCoordinatorTests {
         #expect(await waitUntil { info.value(MPMediaItemPropertyPlaybackDuration) == 200.0 })
     }
 
-    @Test func playActivatesTheSessionBeforeTheEnginePlays() async throws {
+    @Test func playActivatesTheSessionAsTheEngineTakesThePlay() async throws {
         _ = try await loadQueue()
 
         commands.fire(.play)
@@ -237,9 +237,10 @@ struct PlaybackSystemCoordinatorTests {
         session.failActivation = true
 
         commands.fire(.play)
-        // The lock screen's play reaches the player, which asks for the session; the engine never plays.
+        // The lock screen's play reaches the engine, which asks for the session as it takes it and stays paused.
         #expect(await waitUntil { session.failedActivations == 1 })
-        #expect(!engine.commands.contains("play"))
+        #expect(engine.activations == [false])
+        #expect(await waitUntil { !graph.playerController.playWhenReadyFlow.value.boolValue })
         #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Paused)
         #expect(info.playbackState == .paused)
         #expect(rate == 0)
@@ -275,7 +276,7 @@ struct PlaybackSystemCoordinatorTests {
             songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared
         )
         var completed = false
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in completed = true }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in completed = true }
         #expect(await waitUntil { !engine.loads.isEmpty })
 
         // The old engine's reports never come; the load carries over to the new one (#707).
@@ -304,7 +305,7 @@ struct PlaybackSystemCoordinatorTests {
     private func beginLoad(_ songs: [Song] = TestSongs.demo) async throws {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty && title == "Paranoid Android" })
     }
 

@@ -33,8 +33,9 @@ extension AVAudioSession: AudioSession {}
 /// - **Media services reset**: the session is configured again and the player's owner is told to
 ///   rebuild its engine and reload the current item at its position.
 ///
-/// `PlaybackSystemCoordinator` owns one: it calls `configure()` at launch, `activate()` before every
-/// play and `playbackPaused()` on every pause (through `EngineAudioPlayer`), `deactivate()` when the queue
+/// `PlaybackSystemCoordinator` owns one: it calls `configure()` at launch, `playRequested()` before every play and
+/// `activate()` as the engine readies its output for it, `playbackPaused()` on every pause (all through
+/// `EngineAudioPlayer`), `deactivate()` when the queue
 /// empties, and sends `onPause`/`onResume` to the Kotlin `IosPlayerController` so the queue's state follows.
 @MainActor
 final class AudioSessionController {
@@ -52,7 +53,9 @@ final class AudioSessionController {
     /// Media services were reset: every audio object is invalid. Rebuild the engine and reload.
     var onMediaServicesReset: () -> Void = {}
 
-    private let session: AudioSession
+    /// `nonisolated(unsafe)` for ``activate()``, which runs off the main actor: `AVAudioSession` is thread-safe (Apple
+    /// recommends activating it off the main thread), and this is never reassigned.
+    private nonisolated(unsafe) let session: AudioSession
     private let notificationCenter: NotificationCenter
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "AudioSession")
     private var observers: [NSObjectProtocol] = []
@@ -74,10 +77,15 @@ final class AudioSessionController {
         try session.setCategory(.playback, mode: .default, policy: .longFormAudio, options: [])
     }
 
-    /// Activates the session. Call before starting playback: it is what makes S2 the Now Playing app.
-    /// An explicit play also cancels a pending resume after an interruption.
-    func activate() throws {
+    /// An explicit play, about to be made: it cancels a pending resume after an interruption.
+    func playRequested() {
         resumeAfterInterruption = false
+    }
+
+    /// Activates the session. Call before starting playback: it is what makes S2 the Now Playing app. Any thread: the
+    /// engine calls it off the main thread while the track opens, as `setActive` can block for tens of milliseconds
+    /// (#687).
+    nonisolated func activate() throws {
         try session.setActive(true, options: [])
     }
 

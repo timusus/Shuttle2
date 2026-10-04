@@ -38,6 +38,9 @@ enum EngineEvent: Equatable {
 protocol AudioEngine: AnyObject {
     /// Where the engine reports, on the main queue; nil stops reporting.
     func setEventHandler(_ handler: ((EngineEvent) -> Void)?)
+    /// Readies the output for a play (the audio session), called off the main thread as a play or a load that plays
+    /// is made, while the track opens; false refuses the play, which stays paused and is reported paused.
+    var activateOutput: (() -> Bool)? { get set }
     func load(current: EngineTrack, next: EngineTrack?, startMs: Int64, playWhenReady: Bool)
     func setNext(_ track: EngineTrack?)
     func play()

@@ -311,7 +311,7 @@ struct PlayIntentTests {
         let controller = graph.playerController
         let sut = PlayIntent(following: controller)
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty })
         let id = try #require(engine.loads.first?.current.id)
         engine.emit(.state(.paused, trackId: id))
@@ -335,7 +335,7 @@ struct PlayIntentTests {
         let controller = graph.playerController
         let sut = PlayIntent(following: controller)
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty })
         let id = try #require(engine.loads.first?.current.id)
         engine.emit(.state(.playing, trackId: id))

@@ -20,7 +20,7 @@ struct PlayerBindingTests {
     private func loadQueue() async throws -> String {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty })
         let id = try #require(engine.loads.first?.current.id)
         engine.emit(.state(.paused, trackId: id))

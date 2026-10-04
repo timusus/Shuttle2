@@ -152,6 +152,15 @@ public final class MusicPlaybackController {
         set { callbackLock.withLock { callbacks.seekUnsupported = newValue } }
     }
 
+    /// Readies the output for a play: the owner activates its audio session. False refuses the play, which
+    /// then stays paused as a play the engine can't start does. Called on a queue of its own as a play or a
+    /// load that plays is made, so it runs while the load opens and seeks its track; the engine waits for it
+    /// only to start its output (#687).
+    public var activateOutput: (() -> Bool)? {
+        get { callbackLock.withLock { callbacks.activateOutput } }
+        set { callbackLock.withLock { callbacks.activateOutput = newValue } }
+    }
+
     // MARK: Engine
 
     let engine = AVAudioEngine()
@@ -172,6 +181,8 @@ public final class MusicPlaybackController {
     )
     /// Every open in flight on `prepareQueue`, for the tests to wait on.
     private let opening = DispatchGroup()
+    /// Where ``activateOutput`` runs. Serial: activations finish in the order the plays were made.
+    private let activationQueue = DispatchQueue(label: "com.simplecityapps.shuttle2.playback.activation", qos: .userInitiated)
     private let callbackQueue: DispatchQueue
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "MusicPlayback")
 
@@ -183,6 +194,9 @@ public final class MusicPlaybackController {
     /// How much of a current track of unknown length is read before the next is opened.
     private let steadyFrames: Int64
     private static let chunkFrames = 4096
+    /// How much is scheduled before a play starts the node; the rest of `scheduleAheadFrames` is decoded
+    /// while the first of it plays (#687).
+    private static let startFrames = Int64(chunkFrames * 2)
 
     // MARK: Engine-queue state
 
@@ -225,6 +239,9 @@ public final class MusicPlaybackController {
     /// The slot frames are being read from: `current`, then `next` once current's source ended.
     private var reading: Slot?
     private var playWhenReady = false
+    /// The activation the last play (or load that plays) asked for, until the engine starts on it or a pause,
+    /// paused load or stop drops it.
+    private var pendingActivation: OutputActivation?
     private var state: State = .idle
     /// Commands taken so far, stamped on each state report (``onStateChanged``).
     private var commandsTaken = 0
@@ -301,6 +318,28 @@ public final class MusicPlaybackController {
         var failed: ((String, Error) -> Void)?
         var position: ((String, Int64) -> Void)?
         var seekUnsupported: ((String, Int64) -> Void)?
+        var activateOutput: (() -> Bool)?
+    }
+
+    /// One ``activateOutput`` call in flight on `activationQueue`.
+    private final class OutputActivation {
+        private let done = DispatchGroup()
+        /// Written before `done` is left.
+        private var activated = true
+
+        init(on queue: DispatchQueue, _ activate: @escaping () -> Bool) {
+            done.enter()
+            queue.async { [self] in
+                activated = activate()
+                done.leave()
+            }
+        }
+
+        /// Whether the output was readied, once it's done.
+        func wait() -> Bool {
+            done.wait()
+            return activated
+        }
     }
 
     private let callbackLock = NSLock()
@@ -334,6 +373,9 @@ public final class MusicPlaybackController {
         if case let .offline(maximumFrameCount) = renderingMode {
             try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: maximumFrameCount)
             try engine.start()
+        } else {
+            // Allocates the output's resources now, so the first play only has to start it (#687).
+            engine.prepare()
         }
         // An offline engine never posts it; tests do, to stand in for a route change.
         NotificationCenter.default.addObserver(
@@ -356,8 +398,10 @@ public final class MusicPlaybackController {
     /// opened, and a stream re-opened for a seek hands its next back.
     public func load(current track: PlaybackTrack, next nextTrack: PlaybackTrack?, startMs: Int64 = 0, playWhenReady: Bool) {
         interruptActiveRead()
+        let activation = playWhenReady ? beginActivation() : nil
         engineQueue.async { [self] in
             commandsTaken += 1
+            pendingActivation = activation
             defer { answerCommand() }
             var reusable = next.flatMap { old in old.atStart && !old.failed && reading !== old ? old : nil }
             if reusable != nil { next = nil }
@@ -420,6 +464,11 @@ public final class MusicPlaybackController {
         }
     }
 
+    /// The owner's ``activateOutput``, started now on `activationQueue`; nil if there's none.
+    private func beginActivation() -> OutputActivation? {
+        activateOutput.map { OutputActivation(on: activationQueue, $0) }
+    }
+
     /// `slot` (cleared) relabelled as `track`, if it's `track`'s stream.
     private func take(_ slot: inout Slot?, for track: PlaybackTrack) -> Slot? {
         guard let taken = slot, taken.track.playsSameStream(as: track) else { return nil }
@@ -429,11 +478,13 @@ public final class MusicPlaybackController {
     }
 
     public func play() {
+        let activation = beginActivation()
         engineQueue.async { [self] in
             log.notice("play: \(self.state.rawValue, privacy: .public)")
             commandsTaken += 1
             defer { answerCommand() }
             playWhenReady = true
+            pendingActivation = activation
             guard current != nil, state != .ended else { return }
             guard startPlaying() else { return stayPaused() }
         }
@@ -445,6 +496,7 @@ public final class MusicPlaybackController {
             commandsTaken += 1
             defer { answerCommand() }
             playWhenReady = false
+            pendingActivation = nil
             let held = playedStreamIndex()
             player.pause()
             timelineLock.withLock { timeline.held = held }
@@ -477,6 +529,7 @@ public final class MusicPlaybackController {
         engineQueue.async { [self] in
             commandsTaken += 1
             defer { answerCommand() }
+            pendingActivation = nil
             teardown()
             setState(.idle)
         }
@@ -667,15 +720,24 @@ public final class MusicPlaybackController {
     /// whose output runs for one that is playing: the lock screen and Control Center would show it
     /// playing, with a pause button, after it paused or stopped (#691). `startEngineIfNeeded` starts
     /// it again before the node plays.
+    /// Paused, it's prepared again, so the next play's start has nothing to allocate (#687).
     private func pauseEngine() {
         guard case .realtime = renderingMode, engine.isRunning else { return }
         engine.pause()
+        engine.prepare()
     }
 
-    /// False (logged) if the engine is stopped and won't start: the audio session couldn't be
-    /// activated, in a call or with another app holding the hardware. The node must not play then;
-    /// on a stopped engine it raises.
+    /// False (logged) if the owner refused to ready the output (``activateOutput``), or the engine is
+    /// stopped and won't start: the audio session couldn't be activated, in a call or with another app
+    /// holding the hardware. The node must not play then; on a stopped engine it raises.
     private func startEngineIfNeeded() -> Bool {
+        if let activation = pendingActivation {
+            pendingActivation = nil
+            guard activation.wait() else {
+                log.error("output not activated; paused")
+                return false
+            }
+        }
         guard !engine.isRunning else { return true }
         do {
             try startEngine(engine)
@@ -687,14 +749,15 @@ public final class MusicPlaybackController {
     }
 
     /// Starts the engine and plays the node from where the stream is; false, with nothing played, if
-    /// the engine won't start.
+    /// the engine won't start. The node starts on `startFrames` and the rest is decoded as it plays.
     private func startPlaying() -> Bool {
         guard startEngineIfNeeded() else { return false }
-        fill()
+        fill(aheadFrames: Self.startFrames)
         player.play()
         releaseHold()
         setState(.playing)
         startTicker()
+        fill()
         return true
     }
 
@@ -903,8 +966,9 @@ public final class MusicPlaybackController {
             }
         }
         appendSegment(for: current, mediaStart: startFrame)
-        fill()
         if !playWhenReady {
+            pendingActivation = nil
+            fill()
             setState(.paused)
         } else if !startPlaying() {
             if retryingStart { retryStart() } else { stayPaused() }
@@ -961,16 +1025,17 @@ public final class MusicPlaybackController {
         timelineLock.withLock { timeline = Timeline() }
     }
 
-    /// Decode and schedule until `scheduleAheadFrames` are queued ahead of the playhead or the
-    /// queue's end is scheduled.
-    private func fill() {
+    /// Decode and schedule until `aheadFrames` are queued ahead of the playhead or the queue's end is
+    /// scheduled.
+    private func fill(aheadFrames: Int64? = nil) {
+        let aheadFrames = aheadFrames ?? scheduleAheadFrames
         guard current != nil else { return }
         prepareNextIfDue()
         if let pendingEqualizer {
             processor.setEqualizer(pendingEqualizer)
             self.pendingEqualizer = nil
         }
-        while !drained, outputIndex - playedStreamIndex() < scheduleAheadFrames {
+        while !drained, outputIndex - playedStreamIndex() < aheadFrames {
             guard let buffer = readChunk() else { return }
             if buffer.frameLength > 0 { schedule(buffer) }
         }

@@ -419,6 +419,78 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states, [.loading, .paused])
     }
 
+    // MARK: - Output activation (#687)
+
+    /// A load that plays asks the owner to ready the output as it's made, so the session activates while the
+    /// track opens rather than after it.
+    func testALoadThatPlaysActivatesTheOutputWhileItsTrackOpens() throws {
+        let (controller, log) = try makeController()
+        let activating = DispatchSemaphore(value: 0)
+        let activated = DispatchSemaphore(value: 0)
+        controller.activateOutput = {
+            activating.signal()
+            // Done only once the open has seen it start: run after the open, this would never return true.
+            return activated.wait(timeout: .now() + 2) == .success
+        }
+        var activationSeenByOpen = false
+        let samples = TestSignal.noise(frames: 12_000, seed: 1)
+        let track = PlaybackTrack(uid: "A") {
+            OpenHookTrackSource(InMemoryTrackSource(samples: samples)) {
+                activationSeenByOpen = activating.wait(timeout: .now() + 2) == .success
+                activated.signal()
+            }
+        }
+
+        controller.load(current: track, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        XCTAssertTrue(activationSeenByOpen)
+        XCTAssertEqual(log.states, [.loading, .playing])
+    }
+
+    /// An output the owner won't ready (a call holds the session) refuses the play as an engine that won't
+    /// start does: loaded paused, not failed, and the next play asks again.
+    func testALoadThatPlaysWhoseOutputIsRefusedLoadsPausedUntilTheNextPlay() throws {
+        let (controller, log) = try makeController()
+        var activations = 0
+        var refuse = true
+        controller.activateOutput = {
+            activations += 1
+            return !refuse
+        }
+
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused])
+        XCTAssertEqual(log.failures, [])
+
+        refuse = false
+        controller.play()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused, .playing])
+        XCTAssertEqual(activations, 2)
+    }
+
+    /// Only a play readies the output: a paused load, a pause and a stop ask nothing of the owner.
+    func testOnlyAPlayActivatesTheOutput() throws {
+        let (controller, log) = try makeController()
+        var activations = 0
+        controller.activateOutput = {
+            activations += 1
+            return true
+        }
+
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: false)
+        controller.pause()
+        controller.syncForTesting()
+        XCTAssertEqual(activations, 0)
+
+        controller.play()
+        controller.stop()
+        controller.syncForTesting()
+        XCTAssertEqual(activations, 1)
+        XCTAssertEqual(log.states, [.loading, .paused, .paused, .playing, .idle], "the pause while paused is answered too")
+    }
+
     // MARK: - Route change (an engine configuration change)
 
     /// What a route change does to the engine: it stops, and with it the node's clock.
@@ -640,4 +712,28 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertLessThanOrEqual(peak, ceiling + 1e-4)
         XCTAssertGreaterThan(peak, 0.9, "the boost is limited, not undone")
     }
+}
+
+/// Runs `onOpen` inside the open of the source it passes through, as a slow open would block.
+private final class OpenHookTrackSource: TrackPCMSource {
+    private let inner: TrackPCMSource
+    private let onOpen: () -> Void
+
+    init(_ inner: TrackPCMSource, onOpen: @escaping () -> Void) {
+        self.inner = inner
+        self.onOpen = onOpen
+    }
+
+    func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
+        onOpen()
+        return try inner.open(sampleRate: sampleRate, channelCount: channelCount)
+    }
+
+    func seek(toFrame frame: Int64) throws { try inner.seek(toFrame: frame) }
+    func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        try inner.read(into: buffer, maxFrames: maxFrames)
+    }
+
+    func cancel() { inner.cancel() }
+    func interrupt() { inner.interrupt() }
 }

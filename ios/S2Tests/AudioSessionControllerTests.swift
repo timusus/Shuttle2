@@ -136,6 +136,16 @@ struct AudioSessionControllerTests {
         #expect(h.resumes == 0)
     }
 
+    @Test func aPlayDuringTheInterruptionCancelsTheResume() {
+        let h = Harness()
+        h.playing = true
+        h.interruptionBegan()
+        h.controller.playRequested() // the listener played meanwhile, which asks for the session itself
+        h.interruptionEnded(shouldResume: true)
+        #expect(h.resumes == 0)
+        #expect(h.session.activations.isEmpty)
+    }
+
     @Test func resumeIsSkippedWhenTheSessionCannotBeReactivated() {
         let h = Harness()
         h.playing = true

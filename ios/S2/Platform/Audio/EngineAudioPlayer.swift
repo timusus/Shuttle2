@@ -10,14 +10,13 @@ import Shared
 /// A failure found here (a URL that doesn't parse) is posted to the main queue the same way, never reported inside
 /// the Kotlin call that caused it.
 ///
-/// **Audio session.** `onWillPlay` runs before anything plays (`play()`, or a load that plays) and `onPaused` on
-/// every pause; `PlaybackSystemCoordinator` points them at `AudioSessionController.activate()` and
-/// `playbackPaused()`. A session that won't activate (a call, another app holding the hardware) cancels the play:
-/// `play()` does nothing and a load loads paused. Both report paused for that track, on the calling thread, so Kotlin
-/// can drop the intent. A refused load's report is not the track becoming ready — the engine's own loading and paused
-/// reports, afterwards and in order, are. A refused play of a track that's already ready has no engine transition, so
-/// the paused report is the only one. A play while the engine is already playing is no change, so it asks nothing of
-/// the session and is never refused.
+/// **Audio session.** `onWillPlay` runs on the main thread before anything plays (`play()`, or a load that plays) and
+/// `onPaused` on every pause; `PlaybackSystemCoordinator` points them at `AudioSessionController.playRequested()` and
+/// `playbackPaused()`. `activateOutput` is the engine's: it calls it off the main thread as the play is made, so the
+/// session (`AudioSessionController.activate()`) activates while the track opens, and waits for it only to start its
+/// output (#687). A session that won't activate (a call, another app holding the hardware) is a play the engine can't
+/// start: it stays paused, or a load loads paused, and the engine reports paused at that command's count, as Kotlin
+/// takes a refusal. A play while the engine is already playing is no change, so it isn't sent.
 ///
 /// **Which play a report answers.** The engine stamps each state report with the commands it had taken (loads, plays,
 /// pauses, stops), and they're counted here as they're sent: a report made before the engine took the last of them is
@@ -27,10 +26,15 @@ import Shared
 /// report at its count, even one that changes nothing (a play reaching it already playing, before its playing report
 /// came back here), so Kotlin always hears where the engine is after the last command.
 final class EngineAudioPlayer: NSObject, IosAudioPlayer {
-    /// Called on the main thread before playback starts; false cancels it.
-    var onWillPlay: () -> Bool = { true }
+    /// Called on the main thread before playback starts.
+    var onWillPlay: () -> Void = {}
     /// Called on the main thread on every pause.
     var onPaused: () -> Void = {}
+    /// Readies the output for a play, off the main thread and while the track opens; false refuses the play. The
+    /// engine's own (``AudioEngine/activateOutput``), so a replacement engine gets it too.
+    var activateOutput: () -> Bool = { true } {
+        didSet { engine.activateOutput = activateOutput }
+    }
 
     private(set) var engine: AudioEngine
     /// Held strongly: Kotlin's listener is an object only the player refers to.
@@ -58,6 +62,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// on their way dropped, and the new one gets the equalizer; the caller reloads the current item into it.
     func replaceEngine(_ newEngine: AudioEngine) {
         engine.setEventHandler(nil)
+        engine.activateOutput = nil
         engine.stop()
         currentId = nil
         isPlaying = false
@@ -69,6 +74,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     private func attach(_ engine: AudioEngine) {
+        engine.activateOutput = activateOutput
         let generation = engineGeneration
         engine.setEventHandler { [weak self] event in
             guard let self, engineGeneration == generation else { return }
@@ -108,9 +114,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             engine.stop()
             return
         }
-        let plays = playWhenReady && onWillPlay()
-        engine.load(current: track, next: next.flatMap(engineTrack), startMs: startMs, playWhenReady: plays)
-        if playWhenReady && !plays { reportPaused(current.id) }
+        if playWhenReady { onWillPlay() }
+        engine.load(current: track, next: next.flatMap(engineTrack), startMs: startMs, playWhenReady: playWhenReady)
     }
 
     func setNext(next: IosAudioTrack?) {
@@ -119,18 +124,9 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
 
     func play() {
         guard !isPlaying else { return }
-        guard onWillPlay() else {
-            if let currentId { reportPaused(currentId) }
-            return
-        }
+        onWillPlay()
         commandsSent += 1
         engine.play()
-    }
-
-    /// The session refused playback of `trackId`. Synchronous, on the call's thread (the main thread): Kotlin is still
-    /// inside the load or play and can tell this from the engine's later ready-paused.
-    private func reportPaused(_ trackId: String) {
-        listener?.onStateChanged(trackId: trackId, state: .paused, superseded: false)
     }
 
     func pause() {

@@ -28,7 +28,7 @@ struct AppShellTests {
     private func queueASong() async throws {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         #expect(await waitUntil { playerBinding.isMiniPlayerVisible })
     }
 

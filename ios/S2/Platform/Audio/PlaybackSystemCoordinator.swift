@@ -65,15 +65,14 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             self?.intent.resume()
         }
         session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
-        player.onWillPlay = { [weak session] in
-            MainActor.assumeIsolated {
-                do {
-                    try session?.activate()
-                    return true
-                } catch {
-                    NSLog("S2: audio session activate failed, not playing: \(error)")
-                    return false
-                }
+        player.onWillPlay = { [weak session] in MainActor.assumeIsolated { session?.playRequested() } }
+        player.activateOutput = { [weak session] in
+            do {
+                try session?.activate()
+                return true
+            } catch {
+                NSLog("S2: audio session activate failed, not playing: \(error)")
+                return false
             }
         }
         player.onPaused = { [weak session] in MainActor.assumeIsolated { session?.playbackPaused() } }
@@ -89,8 +88,9 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         if let intentListener { intent.removeListener(intentListener) }
         intentListener = nil
         nowPlaying.stop()
-        player.onWillPlay = { true }
+        player.onWillPlay = {}
         player.onPaused = {}
+        player.activateOutput = { true }
     }
 
     /// The listener's intent, read straight from the player (`PlayIntent.wantsPlayback`), not `isPlaying`, which lags

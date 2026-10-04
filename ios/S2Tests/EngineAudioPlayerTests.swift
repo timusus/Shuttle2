@@ -100,10 +100,7 @@ struct EngineAudioPlayerTests {
 
     @Test func theSessionHooksRunBeforePlayingAndOnPausing() {
         var hooks: [String] = []
-        player.onWillPlay = {
-            hooks.append("willPlay \(engine.commands.count)")
-            return true
-        }
+        player.onWillPlay = { hooks.append("willPlay \(engine.commands.count)") }
         player.onPaused = { hooks.append("paused \(engine.commands.count)") }
 
         player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: false)
@@ -116,25 +113,40 @@ struct EngineAudioPlayerTests {
         #expect(engine.loads.count == 2)
     }
 
-    @Test func aSessionThatWontActivateCancelsThePlay() {
-        player.onWillPlay = { false }
+    @Test func aSessionThatWontActivateIsTheEnginesPausedReport() async {
+        player.activateOutput = { false }
 
         player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
         player.play()
 
-        // The load still happens, paused; the play never reaches the engine. Each refusal is a paused
-        // report for that track, delivered on the call so it stays ahead of the engine's own events.
-        #expect(engine.loads.map(\.playWhenReady) == [false])
-        #expect(engine.commands.isEmpty)
-        #expect(listener.calls == ["state a paused", "state a paused"])
+        // Both reach the engine, which asks for the output as it takes them and stays paused (#687). Nothing is
+        // reported inside the calls: each refusal is the engine's paused report at its command's count.
+        #expect(engine.loads.map(\.playWhenReady) == [true])
+        #expect(engine.commands == ["play"])
+        #expect(engine.activations == [false, false])
+        #expect(listener.calls.isEmpty)
+        #expect(await waitUntil { listener.calls == ["state a paused superseded", "state a paused"] })
     }
 
-    @Test func aPlayWhileTheEngineIsPlayingIsNotAskedOfTheSessionNorRefused() {
+    @Test func theOutputActivationIsHandedToTheEngineAndToAReplacement() {
         var asked = 0
-        player.onWillPlay = {
+        player.activateOutput = {
             asked += 1
-            return false
+            return true
         }
+        _ = engine.activateOutput?()
+
+        let replacement = FakeAudioEngine()
+        player.replaceEngine(replacement)
+        _ = replacement.activateOutput?()
+
+        #expect(asked == 2)
+        #expect(engine.activateOutput == nil)
+    }
+
+    @Test func aPlayWhileTheEngineIsPlayingIsNotSent() {
+        var asked = 0
+        player.onWillPlay = { asked += 1 }
         player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: false)
         engine.emit(.state(.playing, trackId: "a"))
 
@@ -144,11 +156,11 @@ struct EngineAudioPlayerTests {
         #expect(engine.commands.isEmpty)
         #expect(listener.calls == ["state a playing"])
 
-        // Once paused, a play is the session's to refuse again.
+        // Once paused, a play is sent again.
         player.pause()
         player.play()
         #expect(asked == 1)
-        #expect(listener.calls == ["state a playing", "state a paused"])
+        #expect(engine.commands == ["pause", "play"])
     }
 
     // MARK: - Which play a report answers
@@ -308,7 +320,7 @@ struct EngineAudioPlayerTests {
     private func queueDemoSongs(on graph: IosAppGraph, skipUnloadable: Bool) async throws {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: skipUnloadable) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: skipUnloadable, playWhenReady: false) { _ in }
     }
 
     @Test func theKotlinControllerFeedsTheNextSongAtEachTransition() async throws {
@@ -347,8 +359,8 @@ struct EngineAudioPlayerTests {
         controller.playWhenReadyFlow.value.boolValue
     }
 
-    @Test func aSessionRefusalClearsIntentWithoutFinishingTheLoadEarly() async throws {
-        player.onWillPlay = { false }
+    @Test func aSessionRefusalClearsIntentAsTheLoadBecomesReady() async throws {
+        player.activateOutput = { false }
         let graph = makeTestGraph(audioPlayer: player)
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
@@ -356,16 +368,9 @@ struct EngineAudioPlayerTests {
         controller.skipToNext(ignoreRepeat: true) { _ in completed = true }
 
         #expect(await waitUntil { engine.loads.count == 1 })
-        #expect(engine.loads.last?.playWhenReady == false)
-        #expect(!engine.commands.contains("play"))
-        #expect(!intendsToPlay(controller))
-        #expect(!completed)
-        #expect(controller.playbackStateFlow.value is PlaybackState.Loading)
-
-        let id = try #require(engine.loads.last?.current.id)
-        engine.emit(.state(.loading, trackId: id))
-        #expect(controller.playbackStateFlow.value is PlaybackState.Loading)
-        engine.emit(.state(.paused, trackId: id))
+        #expect(engine.loads.last?.playWhenReady == true)
+        #expect(engine.activations == [false])
+        // The engine's paused report at the load's count is both the song ready and the play refused.
         #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Paused })
         #expect(completed)
         #expect(!intendsToPlay(controller))
@@ -378,13 +383,13 @@ struct EngineAudioPlayerTests {
         #expect(engine.loads.last?.playWhenReady == false)
         #expect(!intendsToPlay(controller))
 
-        player.onWillPlay = { true }
+        player.activateOutput = { true }
         controller.play()
         #expect(await waitUntil { engine.commands.contains("play") })
         #expect(intendsToPlay(controller))
     }
 
-    @Test func aRefusedPlayOfAReadySongClearsIntentWithNoEngineTransition() async throws {
+    @Test func aRefusedPlayOfAReadySongClearsIntent() async throws {
         let graph = makeTestGraph(audioPlayer: player)
         let controller = graph.playerController
         try await queueDemoSongs(on: graph, skipUnloadable: false)
@@ -393,11 +398,12 @@ struct EngineAudioPlayerTests {
         engine.emit(.state(.paused, trackId: id))
         #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Paused })
 
-        player.onWillPlay = { false }
+        player.activateOutput = { false }
         controller.play()
 
-        #expect(!engine.commands.contains("play"))
-        #expect(!intendsToPlay(controller))
+        #expect(engine.commands.contains("play"))
+        #expect(await waitUntil { !intendsToPlay(controller) })
+        #expect(engine.activations == [false])
         #expect(controller.playbackStateFlow.value is PlaybackState.Paused)
     }
 
@@ -411,7 +417,7 @@ struct EngineAudioPlayerTests {
         engine.emit(.state(.playing, trackId: id))
         #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Playing })
 
-        player.onWillPlay = { false }
+        player.activateOutput = { false }
         controller.play()
 
         #expect(intendsToPlay(controller))
@@ -440,21 +446,16 @@ struct EngineAudioPlayerTests {
     }
 
     @Test func aLoadCompletionThatPlaysKeepsTheNewIntent() async throws {
-        player.onWillPlay = { false }
+        player.activateOutput = { false }
         let graph = makeTestGraph(audioPlayer: player)
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.skipToNext(ignoreRepeat: true) { _ in
-            player.onWillPlay = { true }
+            player.activateOutput = { true }
             controller.play()
         }
 
-        #expect(await waitUntil { engine.loads.count == 1 })
-        #expect(!intendsToPlay(controller))
-        let id = try #require(engine.loads.last?.current.id)
-        engine.emit(.state(.loading, trackId: id))
-        engine.emit(.state(.paused, trackId: id))
-
+        // The refused load's paused report completes it, and the completion's play is taken.
         #expect(await waitUntil { intendsToPlay(controller) && engine.commands.contains("play") })
         #expect(controller.queueOperations.queueStateFlow.value.currentItem?.song.name == "Hyperballad")
     }

@@ -143,9 +143,6 @@ class IosPlayerController(
             _playWhenReady.value = value
         }
 
-    /** Non-zero while a [player] call is on the stack, so a paused report it makes is its refusal of that call. */
-    private var engineCallDepth = 0
-
     /** The completion of the last [load] (or skip), called once its item is ready or nothing could load. */
     private var pendingLoad: PendingLoad? = null
 
@@ -320,8 +317,7 @@ class IosPlayerController(
         feed.sent = true
         feed.opensAtPosition = stream.opensAtPosition
         val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
-        // A session that refuses this load reports paused inside the call, before the engine is ready.
-        callEngine { player.load(feed.track(stream), handedBack, (feed.startMs - feed.offsetMs).toLong(), playWhenReady) }
+        player.load(feed.track(stream), handedBack, (feed.startMs - feed.offsetMs).toLong(), playWhenReady)
         feedNext()
     }
 
@@ -412,14 +408,6 @@ class IosPlayerController(
         val currentFeed = current ?: return
         // A failed track has been dealt with: skipped, or stopped at. So has a report for a track already replaced.
         if (trackId != currentFeed.id || currentFeed.failed) return
-        // A refusal delivered inside load or play: the session wouldn't activate, and the engine didn't move. Cancelling
-        // the intent here must not complete the load: the engine's own loading and paused reports, still to come, are
-        // what make it ready.
-        if (state == IosAudioPlayerState.Paused && engineCallDepth > 0) {
-            if (playWhenReady) playWhenReady = false
-            publishState()
-            return
-        }
         // Playing from before a pause (or a load) isn't playing now: the pause's report follows, and it stays paused.
         if (!(superseded && state == IosAudioPlayerState.Playing)) engineState = state
         when (state) {
@@ -449,15 +437,6 @@ class IosPlayerController(
         feed.ready = true
         loadFailures = 0
         completePending(Result.success(pendingLoad?.attempt == 1))
-    }
-
-    private inline fun callEngine(block: () -> Unit) {
-        engineCallDepth++
-        try {
-            block()
-        } finally {
-            engineCallDepth--
-        }
     }
 
     /** The engine moved on to its next track: the queue's current item follows. */
@@ -688,8 +667,9 @@ class IosPlayerController(
 
             else -> {
                 if (isNearEnd(getProgress() ?: 0, item.song)) seekNow(0)
-                // A session that refuses a track that's already ready reports paused even though the engine never moves.
-                callEngine { player.play() }
+                // A play the engine can't start (the session wouldn't activate) is answered with paused at its count, and the
+                // intent goes with it.
+                player.play()
             }
         }
         publishState()

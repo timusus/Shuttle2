@@ -905,30 +905,8 @@ class IosPlayerControllerTest {
     }
 
     @Test
-    fun `a session that refuses a playing load cancels the intent without finishing early or skipping`() = test { controller ->
+    fun `an engine that refuses a playing load clears intent when it becomes ready and does not skip`() = test { controller ->
         engine.acceptsPlay = false
-        controller.queueOperations.setQueue(listOf(a, b), null, 0)
-        var result: Result<Any?>? = null
-
-        controller.skipToNext { result = it }
-
-        // Reported inside the load, before the engine's paused report has made the song ready.
-        result shouldBe null
-        controller.playbackState() shouldBe PlaybackState.Loading
-        controller.playWhenReadyFlow.value shouldBe false
-        controller.currentSong shouldBe b
-
-        engine.settle()
-        result?.isSuccess shouldBe true
-        controller.playbackState() shouldBe PlaybackState.Paused
-        controller.playWhenReadyFlow.value shouldBe false
-        controller.currentSong shouldBe b
-    }
-
-    @Test
-    fun `an engine that pauses a playing load clears intent when it becomes ready and does not skip`() = test { controller ->
-        engine.acceptsPlay = false
-        engine.deferRefusal = true
         controller.queueOperations.setQueue(listOf(a, b, c), null, 0)
         var result: Result<Any?>? = null
 
@@ -949,7 +927,6 @@ class IosPlayerControllerTest {
     @Test
     fun `a refusal's load completion that plays keeps the new intent`() = test { controller ->
         engine.acceptsPlay = false
-        engine.deferRefusal = true
         controller.queueOperations.setQueue(listOf(a, b), null, 0)
 
         controller.skipToNext {
@@ -970,6 +947,7 @@ class IosPlayerControllerTest {
         engine.clearCalls()
 
         controller.play()
+        engine.settle()
         controller.playWhenReadyFlow.value shouldBe false
         controller.currentSong shouldBe a
 
@@ -992,7 +970,6 @@ class IosPlayerControllerTest {
     fun `an engine that is already paused and can't start reports it again and the queue stays put`() = test { controller ->
         controller.start(listOf(a, b), play = false)
         engine.acceptsPlay = false
-        engine.deferRefusal = true
         engine.clearCalls()
 
         controller.play()
@@ -1103,7 +1080,6 @@ class IosPlayerControllerTest {
 
         controller.pause()
         controller.play()
-        controller.playWhenReadyFlow.value shouldBe false
         engine.settle()
 
         controller.playWhenReadyFlow.value shouldBe false

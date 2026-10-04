@@ -30,6 +30,11 @@ final class FakeAudioEngine: AudioEngine {
     private var handler: ((EngineEvent) -> Void)?
     /// Loads, plays, pauses and stops taken, as the engine counts them for its state reports.
     private(set) var commandsTaken = 0
+    var activateOutput: (() -> Bool)?
+    /// What each play, or load that plays, got from `activateOutput`, in order.
+    private(set) var activations: [Bool] = []
+    /// The track last loaded, which a refused play reports paused.
+    private var currentId: String?
 
     var hasEventHandler: Bool { handler != nil }
 
@@ -52,7 +57,9 @@ final class FakeAudioEngine: AudioEngine {
 
     func load(current: EngineTrack, next: EngineTrack?, startMs: Int64, playWhenReady: Bool) {
         commandsTaken += 1
+        currentId = current.id
         loads.append(Load(current: current, next: next, startMs: startMs, playWhenReady: playWhenReady))
+        if playWhenReady { activate() }
     }
 
     func setNext(_ track: EngineTrack?) {
@@ -62,6 +69,18 @@ final class FakeAudioEngine: AudioEngine {
     func play() {
         commandsTaken += 1
         commands.append("play")
+        activate()
+    }
+
+    /// Asks `activateOutput`, as the engine does for a play. A refusal is the engine staying paused: reported paused
+    /// for the current track at this command's count, on the main queue.
+    private func activate() {
+        guard let activateOutput else { return }
+        let activated = activateOutput()
+        activations.append(activated)
+        guard !activated, let currentId else { return }
+        let report = EngineEvent.state(.paused, trackId: currentId, commands: commandsTaken)
+        DispatchQueue.main.async { [weak self] in self?.handler?(report) }
     }
 
     func pause() {
@@ -73,6 +92,7 @@ final class FakeAudioEngine: AudioEngine {
 
     func stop() {
         commandsTaken += 1
+        currentId = nil
         commands.append("stop")
     }
 

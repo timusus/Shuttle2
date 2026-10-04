@@ -213,8 +213,9 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   (`pausesOnRouteChange`, #715): a Bluetooth profile or codec switch plays on. Asks for an engine
   rebuild on a media-services reset. It ignores the route's sample rate: the engine renders at a fixed 48 kHz, the rate the shared EQ is designed at
   (`phase-6-playback.md`, step 8). `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call
-  `activate()` before any play and `playbackPaused()` on every pause; an activation that fails cancels the play
-  (the engine stays paused, as when its own start fails).
+  `playRequested()` before any play and `playbackPaused()` on every pause; the engine's `activateOutput` calls
+  `activate()` off the main thread as a play is made, so the session activates while the track opens (#687), and an
+  activation that fails refuses the play (the engine stays paused and reports it, as when its own start fails).
 - `NowPlayingController`: metadata on `setItem`, elapsed/rate through `updatePlayback`, which only writes
   on a state/speed change, a >1 s jump or every 10 s (safe per tick). Artwork via the `loadArtwork`
   closure, dropped if the item changed. `SkipMode.interval` swaps next/previous for skip ±N s.
