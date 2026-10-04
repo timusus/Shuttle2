@@ -29,9 +29,15 @@ data class TagReadFile(
  * read leaves a marker file in a slot of [markerDir] while it runs, written before and deleted after; a marker left
  * behind names a read the process died during. [recover] takes them at the start of the next import: if Android says
  * that process crashed natively ([crashedNatively]), a file read alone is quarantined, and files read alongside others
- * become suspects, each read alone next so a crash points at one. Where Android can't say (before 11), a file read alone
- * when the app died takes a strike, and a second strike quarantines it. The quarantine is kept in [preferences] until
- * Sources' retry clears it; [read] leaves those files unread.
+ * become suspects, each read alone next so a crash points at one. Where Android can't say (before 11, or 11+ with no
+ * record of that process), a file read alone when the app died takes a strike, and a second strike quarantines it. The
+ * quarantine is kept in [preferences] until Sources' retry clears it; [read] leaves those files unread.
+ *
+ * A marker says only that the process died during a read, not that the read killed it, so two cases quarantine a file
+ * that reads fine, accepted because Sources says how many files were left out and its retry reads them again:
+ * - a native crash elsewhere in the app (a decoder, another library) while that file's read ran alone;
+ * - before 11, two ordinary deaths (swiped away, killed for memory) each while that file's read ran alone, which is
+ *   likeliest for a file over [LARGE_TAG_READ_BYTES], always read alone and slowest to read.
  */
 class TagReadGuard(
     private val markerDir: File,

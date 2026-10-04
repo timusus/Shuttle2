@@ -184,7 +184,10 @@ class TagReadGuardTest {
         crashDuring(b, pid = 2)
         var asked = 0
 
-        guard(pid = 3, processExits = { asked++; listOf(exit(pid = 1), exit(pid = 2)) }).recover(source)
+        guard(pid = 3, processExits = {
+            asked++
+            listOf(exit(pid = 1), exit(pid = 2))
+        }).recover(source)
 
         asked shouldBe 1
         preferences.tagReadQuarantine() shouldBe setOf(a.key, b.key)
@@ -194,7 +197,10 @@ class TagReadGuardTest {
     fun `recovery with no markers doesn't ask Android how processes ended`() = runTest {
         var asked = 0
 
-        guard(pid = 3, processExits = { asked++; emptyList() }).recover(source)
+        guard(pid = 3, processExits = {
+            asked++
+            emptyList()
+        }).recover(source)
 
         asked shouldBe 0
     }
