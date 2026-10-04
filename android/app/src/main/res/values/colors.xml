@@ -49,33 +49,8 @@
     <color name="colorPrimarySemiTransparent">#300492ea</color>
     <color name="colorPrimaryTransparent">#200492ea</color>
 
-    <!-- Orange-->
-    <color name="colorPrimaryOrange">#F44336</color>
-    <color name="colorPrimaryOrangeDark">#B71C1C</color>
-    <color name="colorPrimaryOrangeSemiTransparent">#30B71C1C</color>
-    <color name="colorPrimaryOrangeTransparent">#20B71C1C</color>
 
-    <!-- Cyan-->
-    <color name="colorPrimaryCyan">#00FFFF</color>
-    <color name="colorPrimaryCyanDark">#00AFAF</color>
-    <color name="colorPrimaryCyanSemiTransparent">#3000FFFF</color>
-    <color name="colorPrimaryCyanTransparent">#2000FFFF</color>
 
-    <!-- Purple-->
-    <color name="colorPrimaryPurple">#DB17DF</color>
-    <color name="colorPrimaryPurpleDark">#8B0F8E</color>
-    <color name="colorPrimaryPurpleSemiTransparent">#30DB17DF</color>
-    <color name="colorPrimaryPurpleTransparent">#20DB17DF</color>
 
-    <!-- Green-->
-    <color name="colorPrimaryGreen">#4CAF50</color>
-    <color name="colorPrimaryGreenDark">#306E32</color>
-    <color name="colorPrimaryGreenSemiTransparent">#304CAF50</color>
-    <color name="colorPrimaryGreenTransparent">#204CAF50</color>
 
-    <!-- Amber-->
-    <color name="colorPrimaryAmber">#FF9800</color>
-    <color name="colorPrimaryAmberDark">#BA6F00</color>
-    <color name="colorPrimaryAmberSemiTransparent">#30FF9800</color>
-    <color name="colorPrimaryAmberTransparent">#20FF9800</color>
 </resources>
