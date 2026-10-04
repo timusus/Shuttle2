@@ -67,6 +67,20 @@ listening (`SystemClock.elapsedRealtime`); `currentTimeMs()` stamps a play's sta
 track ends (at most 100 ms, `ProgressTicker.INTERVAL_MS`) isn't counted, since `trackEndedFlow`
 carries no position. Neither can move a play across a threshold that matters.
 
+## Last.fm credentials
+
+`android/app/build.gradle.kts` reads `LASTFM_API_KEY` and `LASTFM_SHARED_SECRET` into `BuildConfig`, each from
+`local.properties`, else a Gradle property of the same name, else the environment variable of the same name:
+
+```
+# local.properties
+LASTFM_API_KEY=...
+LASTFM_SHARED_SECRET=...
+```
+
+Register an API account at <https://www.last.fm/api/account/create> to get both. A build without them has empty
+values: `LastFmAccountState.Unavailable`, and Settings hides the Scrobbling row.
+
 ## Slices
 
 Each lands with JVM tests, verified by `unit-test --changed` and `assembleDebug`.
