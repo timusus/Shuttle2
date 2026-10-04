@@ -19,6 +19,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.resume
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,7 +99,7 @@ constructor(
         if (!queueOperations.setQueue(songs = songs, position = position)) return false
         return suspendCancellableCoroutine { continuation ->
             playbackOperations.load { result ->
-                result.onFailure { error -> Timber.e(error, "Failed to load playback after $source") }
+                result.onFailure { error -> logLoadFailure(error, "playback after $source") }
                 continuation.resume(result.isSuccess)
             }
         }
@@ -117,6 +118,11 @@ constructor(
         }
     }
 
+    /** A load replaced by a later one was dropped, not failed: that's no error. */
+    private fun logLoadFailure(error: Throwable, what: String) {
+        if (error is CancellationException) Timber.d("Load of $what was replaced by a later one") else Timber.e(error, "Failed to load $what")
+    }
+
     /** Shuffles the whole library and plays it, once the saved queue is restored. */
     suspend fun shuffleAll() {
         queueOperations.queueStateFlow.awaitRestored()
@@ -127,7 +133,7 @@ constructor(
         }
         val loaded = CompletableDeferred<Result<Any?>>()
         playbackOperations.shuffle(songs, PlayContext.None) { loaded.complete(it) }
-        // A later load supersedes this one without calling back, so don't wait for it forever.
+        // A replaced load answers with a CancellationException; still, don't wait forever on one that never answers.
         val result = withTimeoutOrNull(SHUFFLE_ALL_LOAD_WAIT_MS) { loaded.await() }
         if (result == null) {
             Timber.w("shuffleAll: timed out waiting for playback to load")
@@ -135,7 +141,7 @@ constructor(
         }
         result
             .onSuccess { playbackOperations.play() }
-            .onFailure { error -> Timber.e(error, "Failed to load playback after shuffleAll") }
+            .onFailure { error -> logLoadFailure(error, "playback after shuffleAll") }
     }
 
     /** Plays the file at [uri] on its own, replacing the queue, or says it can't be opened. */

@@ -9,6 +9,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toRepeatMode
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -137,7 +138,9 @@ class SessionPlayer(
         scope.launch {
             if (queueOperations.setQueue(songs, position = startIndex.coerceIn(0, songs.lastIndex))) {
                 playbackOperations.load(seekPosition = startPositionMs.takeIf { it != C.TIME_UNSET }?.toInt()) { result ->
-                    result.onFailure { error -> Timber.e(error, "Failed to load the queue a controller set") }
+                    result.onFailure { error ->
+                        if (error is CancellationException) Timber.d("Load of the queue a controller set was replaced by a later one") else Timber.e(error, "Failed to load the queue a controller set")
+                    }
                 }
             }
         }

@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -79,6 +80,8 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             try {
                 val detail = handle(action, intent)
                 Log.i(TAG, if (action == "DUMP_STATE") detail!! else "$action ok${detail?.let { ": $it" }.orEmpty()}")
+            } catch (e: CancellationException) {
+                Log.i(TAG, "$action dropped: replaced by a later request")
             } catch (e: Exception) {
                 Log.e(TAG, "$action error: ${e.message}", e)
             } finally {
