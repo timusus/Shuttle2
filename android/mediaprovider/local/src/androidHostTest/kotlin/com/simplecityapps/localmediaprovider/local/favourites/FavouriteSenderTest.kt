@@ -56,7 +56,6 @@ class FavouriteSenderTest {
     private fun sender() = FavouriteSender(
         dao = dao,
         writer = writer,
-        findSongs = { ids -> dao.get().filter { it.id in ids }.map { it.toSong() } },
         scope = scope
     ).also { it.start() }
 
@@ -137,6 +136,34 @@ class FavouriteSenderTest {
 
         eventually { dao.getPendingFavourites().isEmpty() }
         writer.calls shouldBe emptyList()
+    }
+
+    @Test
+    fun `a song on the exclude list still has its favourite sent`(): Unit = runBlocking {
+        val song = insertSong("a")
+        dao.setFavourite(listOf(song), true)
+        dao.setExcluded(listOf(song.id), true)
+
+        sender()
+
+        eventually { dao.getPendingFavourites().isEmpty() }
+        writer.calls shouldBe listOf("a true")
+    }
+
+    @Test
+    fun `a row that fails is attempted once per trigger, not again by the acks of the rows after it`(): Unit = runBlocking {
+        val failing = insertSong("a")
+        val working = insertSong("b")
+        writer.succeeds = { it.externalId != "a" }
+        dao.setFavourite(listOf(failing), true)
+        delay(5)
+        dao.setFavourite(listOf(working), true)
+
+        sender()
+
+        eventually { dao.getPendingFavourites().map { it.externalId } == listOf("a") }
+        delay(200)
+        writer.calls shouldBe listOf("a true", "b true")
     }
 
     private suspend fun eventually(condition: suspend () -> Boolean) {

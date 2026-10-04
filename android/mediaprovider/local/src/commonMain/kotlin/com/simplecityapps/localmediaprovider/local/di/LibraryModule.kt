@@ -32,7 +32,6 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
@@ -42,8 +41,6 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 
@@ -105,12 +102,10 @@ abstract class LibraryModule {
         fun provideFavouriteSender(
             database: MediaDatabase,
             writer: AggregateFavouriteWriter,
-            songRepository: SongRepository,
             @AppCoroutineScope appCoroutineScope: CoroutineScope
         ): FavouriteSender = FavouriteSender(
             dao = database.songDataDao(),
             writer = writer,
-            findSongs = { songIds -> songRepository.getSongs(SongQuery.SongIds(songIds)).filterNotNull().firstOrNull().orEmpty() },
             scope = appCoroutineScope + Dispatchers.IO
         )
 
@@ -168,8 +163,8 @@ abstract class LibraryModule {
         @Provides
         @SingleIn(AppScope::class)
         fun provideGenreRepository(
-            songRepository: SongRepository,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            songRepository: SongRepository,
             albumIndex: LibraryAlbumIndex
         ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository, albumIndex)
     }
