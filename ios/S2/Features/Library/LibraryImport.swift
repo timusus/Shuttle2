@@ -49,6 +49,6 @@ enum LibraryImport {
     }
 
     static func refresh(graph: IosAppGraph = AppGraph.shared) {
-        graph.mediaSources.scan()
+        graph.mediaSources.scan(foldersChanged: false)
     }
 }
