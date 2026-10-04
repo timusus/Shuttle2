@@ -131,6 +131,9 @@ struct MiniPlayerBar: View {
     /// The progress ring's diameter and stroke, around the play/pause glyph inside its 44 pt target.
     static let progressRingDiameter: CGFloat = TouchTarget.disc
     static let progressRingWidth: CGFloat = 2.5
+    /// The transport glyphs stop growing here, like Now Playing's discs (#782): the targets stay 44 pt, so past it
+    /// the glyphs clipped off the trailing edge and squeezed the title to a word (#861).
+    static let maximumGlyphSize = DynamicTypeSize.accessibility1
 
     @Environment(\.artworkTint) private var tint
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -238,6 +241,7 @@ struct MiniPlayerBar: View {
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                             .contentTransition(.symbolEffect(.replace))
+                            .dynamicTypeSize(...MiniPlayerBar.maximumGlyphSize)
                     }
                 }
                 .background { MiniPlayerProgressRing(progress: progress, isPlaying: isPlaying, isLoading: isLoading) }
@@ -253,6 +257,7 @@ struct MiniPlayerBar: View {
                     Image(systemName: "forward.fill")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
+                        .dynamicTypeSize(...MiniPlayerBar.maximumGlyphSize)
                         .touchTarget()
                 }
                 .buttonStyle(.pressScale)
