@@ -80,7 +80,7 @@ struct ServerDetailContent: View {
                 }
                 .accessibilityIdentifier("serverDetail.status")
                 if let updated {
-                    Text(updatedText(updated, now: now))
+                    Text(updatedText(updated, now: now)).font(.subheadline).foregroundStyle(.s2TextSecondary)
                         .accessibilityIdentifier("serverDetail.updated")
                 }
                 if shortfall > 0 {
