@@ -659,7 +659,7 @@ failure_sig() {
         ift = 0
       }
       if (l ~ /^Failing tests:/) { ift = 1; return }
-      if (l ~ /^✘ Test .* failed/) { s = l; sub(/ after [0-9.]+ seconds.*/, "", s); add(s); return }
+      if (l ~ /^✘ Test .* failed/ && l !~ /^✘ Test run /) { s = l; sub(/ after [0-9.]+ seconds.*/, "", s); add(s); return }
       if (l ~ /^\* What went wrong:/) { wwr = 1; return }
       if (l ~ /^Failed tests:/) { inb = 1; return }
       if (l ~ /Execution failed for task /) { s = l; sub(/.*Execution failed for task /, "", s); add("task " s); return }
