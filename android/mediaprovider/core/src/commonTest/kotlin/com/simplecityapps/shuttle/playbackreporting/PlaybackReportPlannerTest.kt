@@ -168,9 +168,122 @@ class PlaybackReportPlannerTest {
         planner.onTrackEnded(remoteSong)
 
         planner.onProgress(positionMs = 200_000, nowMs = 200_000).shouldBeEmpty()
-        // The reset tick could still be the next item's, so a repeat starts once the position advances.
+        // The reset tick could still be the next item's, so a repeat starts once the position has stayed back a while,
+        // from where it went back to.
         planner.onProgress(positionMs = 100, nowMs = 200_100).shouldBeEmpty()
-        planner.onProgress(positionMs = 1_100, nowMs = 201_100) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 1_100))
+        planner.onProgress(positionMs = 600, nowMs = 200_600).shouldBeEmpty()
+        planner.onProgress(positionMs = 1_100, nowMs = 201_100) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 100))
+    }
+
+    @Test
+    fun `a repeat whose reset tick comes before its track end still starts`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onProgress(positionMs = 0, nowMs = 200_000) shouldBe listOf(Call.Progress(firstSession, 0, paused = false))
+        planner.onTrackEnded(remoteSong) shouldBe listOf(Call.Stop(firstSession, remoteSong.duration, playedThrough = true))
+
+        planner.onProgress(positionMs = 500, nowMs = 200_500).shouldBeEmpty()
+        planner.onProgress(positionMs = 1_000, nowMs = 201_000) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 0))
+    }
+
+    @Test
+    fun `a late tick slightly behind the end does not start the ended song`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+
+        planner.onProgress(positionMs = 200_000, nowMs = 200_000).shouldBeEmpty()
+        planner.onProgress(positionMs = 199_950, nowMs = 200_100).shouldBeEmpty()
+        planner.onProgress(positionMs = 200_000, nowMs = 201_500).shouldBeEmpty()
+    }
+
+    @Test
+    fun `several ticks of the next item before its item change do not start the ended song`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+
+        planner.onProgress(positionMs = 0, nowMs = 200_000).shouldBeEmpty()
+        planner.onProgress(positionMs = 5, nowMs = 200_005).shouldBeEmpty()
+        planner.onProgress(positionMs = 100, nowMs = 200_100).shouldBeEmpty()
+        planner.onCurrentItemChanged(uid = 11, song = otherRemoteSong, nowMs = 200_110) shouldBe
+            listOf(Call.Start(PlaybackSession(otherRemoteSong, "session-2"), 0))
+    }
+
+    @Test
+    fun `a playing state change between a track end and the next item change does not start the ended song`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+
+        planner.onStateChanged(State.Loading, nowMs = 200_000).shouldBeEmpty()
+        planner.onStateChanged(State.Playing, nowMs = 200_001).shouldBeEmpty()
+        planner.onProgress(positionMs = 0, nowMs = 200_002).shouldBeEmpty()
+        planner.onStateChanged(State.Loading, nowMs = 200_003).shouldBeEmpty()
+        planner.onStateChanged(State.Playing, nowMs = 200_004).shouldBeEmpty()
+        planner.onCurrentItemChanged(uid = 11, song = otherRemoteSong, nowMs = 200_010) shouldBe
+            listOf(Call.Start(PlaybackSession(otherRemoteSong, "session-2"), 0))
+    }
+
+    @Test
+    fun `seeking to the start after a track ends while playing starts it again from there`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+        planner.onProgress(positionMs = 200_000, nowMs = 200_000)
+
+        planner.onProgress(positionMs = 0, nowMs = 205_000).shouldBeEmpty()
+        planner.onProgress(positionMs = 1_000, nowMs = 206_000) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 0))
+    }
+
+    @Test
+    fun `seeking to the start after the queue plays out then playing starts it again from there`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+        planner.onStateChanged(State.Paused, nowMs = 200_000).shouldBeEmpty()
+
+        planner.onProgress(positionMs = 0, nowMs = 210_000).shouldBeEmpty()
+        planner.onStateChanged(State.Playing, nowMs = 215_000) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 0))
+    }
+
+    @Test
+    fun `seeking back after the queue plays out then playing starts it again from the position played from`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+        planner.onStateChanged(State.Paused, nowMs = 200_000)
+
+        planner.onProgress(positionMs = 0, nowMs = 210_000).shouldBeEmpty()
+        planner.onProgress(positionMs = 30_000, nowMs = 211_000).shouldBeEmpty()
+        planner.onStateChanged(State.Playing, nowMs = 215_000) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 30_000))
+    }
+
+    @Test
+    fun `playing after the queue plays out starts again from the start not the stale end`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+        planner.onStateChanged(State.Paused, nowMs = 200_000)
+        planner.onProgress(positionMs = 200_000, nowMs = 200_001)
+
+        // Play seeks back to the start; its state change can arrive before the position does.
+        planner.onStateChanged(State.Playing, nowMs = 300_000).shouldBeEmpty()
+        planner.onProgress(positionMs = 0, nowMs = 300_005).shouldBeEmpty()
+        planner.onProgress(positionMs = 500, nowMs = 300_505).shouldBeEmpty()
+        planner.onProgress(positionMs = 1_000, nowMs = 301_005) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 0))
+    }
+
+    @Test
+    fun `playing after the queue plays out with the position first starts again from the start`() {
+        playRemoteSong()
+        planner.onProgress(positionMs = 199_900, nowMs = 199_900)
+        planner.onTrackEnded(remoteSong)
+        planner.onStateChanged(State.Paused, nowMs = 200_000)
+
+        planner.onProgress(positionMs = 0, nowMs = 300_000).shouldBeEmpty()
+        planner.onStateChanged(State.Playing, nowMs = 300_005).shouldBeEmpty()
+        planner.onProgress(positionMs = 1_000, nowMs = 301_005) shouldBe listOf(Call.Start(PlaybackSession(remoteSong, "session-2"), 0))
     }
 
     @Test

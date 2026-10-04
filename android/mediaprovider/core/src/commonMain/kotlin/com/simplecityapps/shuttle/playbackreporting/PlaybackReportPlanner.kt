@@ -15,7 +15,9 @@ import kotlin.math.abs
  * - A pause or resume, and a jump of more than [SEEK_THRESHOLD_MS] from the expected position (a
  *   seek), report progress straight away; otherwise progress is reported every
  *   [PROGRESS_INTERVAL_MS] while playing.
- * - A track that plays through stops at its duration; an emptied queue stops at the last position.
+ * - A track that plays through stops at its duration; an emptied queue stops at the last position. It plays
+ *   again (a repeat, or play or a seek back after the queue played out) only once its position has jumped
+ *   back and stayed there for [RESTART_SETTLE_MS], from the position it went back to.
  * - Nothing is reported, and no play is kept, until [onEnabledChanged] turns reporting on. Turning it on
  *   mid-song starts a new play at the current position; turning it off stops the open play there.
  */
@@ -51,6 +53,12 @@ class PlaybackReportPlanner(
         var lastReportAtMs: Long
     )
 
+    /** A played-through item's position went back to [positionMs] at [atMs]. */
+    private class Restart(
+        var positionMs: Int,
+        val atMs: Long
+    )
+
     private var enabled = false
     private var itemUid: Long? = null
     private var song: Song? = null
@@ -59,13 +67,18 @@ class PlaybackReportPlanner(
     private var positionAtMs = 0L
     private var reporting: Reporting? = null
 
-    // After a track plays through, the item stays current until the queue moves on, or plays again
-    // on repeat. A new play starts only once its position goes back, not on a late tick of the old one.
+    // After a track plays through, the item stays current until the queue moves on, or plays again (on
+    // repeat, or when played or seeked back after the queue played out). A new play starts only once its
+    // position jumps back, not on a late tick of the old one.
     private var playedThrough = false
 
-    // The tick after a played-through track's position went back is either the next item's start, whose
-    // item change is still to come, or a repeat. Only a further advance confirms a repeat.
-    private var repeatTickMs: Int? = null
+    // Where a played-through item's position went back to. Right after a track ends, that's as likely the
+    // next item's start, whose item change (and any state change) is still on its way: only once it has
+    // stayed back for RESTART_SETTLE_MS is it the same item playing again.
+    private var restart: Restart? = null
+
+    // When the latest tick jumped back: the reset tick of a repeat can arrive just before its track end.
+    private var jumpedBackAtMs: Long? = null
 
     fun onEnabledChanged(
         enabled: Boolean,
@@ -97,7 +110,8 @@ class PlaybackReportPlanner(
         positionMs = 0
         positionAtMs = nowMs
         playedThrough = false
-        repeatTickMs = null
+        restart = null
+        jumpedBackAtMs = null
         startIfPlaying(nowMs)?.let { calls += it }
         return calls
     }
@@ -123,21 +137,21 @@ class PlaybackReportPlanner(
         nowMs: Long
     ): List<Call> {
         val expectedMs = if (state == State.Playing) this.positionMs + (nowMs - positionAtMs) else this.positionMs.toLong()
-        val movedBack = positionMs < this.positionMs
+        // Back to the start, or back by more than a late or jittery tick of the same position could be.
+        val jumpedBack = positionMs < this.positionMs && (positionMs < SEEK_THRESHOLD_MS || this.positionMs - positionMs > SEEK_THRESHOLD_MS)
         this.positionMs = positionMs
         positionAtMs = nowMs
+        jumpedBackAtMs = nowMs.takeIf { jumpedBack }
 
         val reporting = reporting
         if (reporting == null) {
             if (playedThrough) {
-                val resetMs = repeatTickMs
-                if (resetMs == null) {
-                    if (movedBack) repeatTickMs = positionMs
-                    return emptyList()
-                }
-                if (positionMs <= resetMs) {
-                    repeatTickMs = positionMs
-                    return emptyList()
+                val restart = restart
+                when {
+                    jumpedBack -> this.restart = Restart(positionMs, nowMs)
+
+                    // Not playing yet, so a seek moves where it plays again from.
+                    restart != null && state != State.Playing -> restart.positionMs = positionMs
                 }
             }
             return listOfNotNull(startIfPlaying(nowMs))
@@ -151,18 +165,24 @@ class PlaybackReportPlanner(
         val reporting = reporting?.takeIf { it.session.song.id == song.id } ?: return emptyList()
         this.reporting = null
         playedThrough = true
-        repeatTickMs = null
+        restart = jumpedBackAtMs?.let { Restart(positionMs, it) }
         return listOf(Call.Stop(reporting.session, song.duration, playedThrough = true))
     }
 
     private fun startIfPlaying(nowMs: Long): Call? {
         val song = song ?: return null
         if (!enabled || state != State.Playing || !isReportable(song)) return null
+        val startMs = if (playedThrough) {
+            val restart = restart?.takeIf { nowMs - it.atMs >= RESTART_SETTLE_MS } ?: return null
+            restart.positionMs
+        } else {
+            positionMs
+        }
         playedThrough = false
-        repeatTickMs = null
+        restart = null
         val session = PlaybackSession(song, newSessionId())
         reporting = Reporting(session, paused = false, lastReportAtMs = nowMs)
-        return Call.Start(session, positionMs)
+        return Call.Start(session, startMs)
     }
 
     private fun progress(
@@ -178,5 +198,6 @@ class PlaybackReportPlanner(
     companion object {
         const val PROGRESS_INTERVAL_MS = 10_000L
         const val SEEK_THRESHOLD_MS = 2_000L
+        const val RESTART_SETTLE_MS = 1_000L
     }
 }
