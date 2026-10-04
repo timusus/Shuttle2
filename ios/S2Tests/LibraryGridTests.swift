@@ -53,6 +53,15 @@ struct LibraryGridTests {
         let tile = LibraryTile(title: "Kid A", subtitle: nil, artwork: .albumArtist(artist), playback: playback)
         let title = try tile.inspect().find(text: "Kid A")
         _ = try title.parent().vStack()
-        _ = try tile.inspect().find(NowPlayingIndicator.self)
+        // The indicator is in the cover's overlay, not a sibling of the title.
+        _ = try tile.inspect().find(ViewType.GeometryReader.self).find(NowPlayingIndicator.self)
+    }
+
+    /// The indicator keeps a non-zero size at the narrowest tile.
+    @Test(arguments: [ArtworkSize.gridMinimumCompactIndexed, ArtworkSize.gridMinimumCompact, ArtworkSize.gridMinimum])
+    func theIndicatorKeepsRoomAtTheMinimumTileWidth(width: CGFloat) {
+        let padding = LibraryTile.indicatorPadding(tileWidth: width)
+        #expect(width - padding * 2 > 0)
+        #expect(padding * 2 < width)
     }
 }

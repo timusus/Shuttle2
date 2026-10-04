@@ -114,6 +114,11 @@ struct LibraryTile: View {
         .accessibilityValue(playback == .playing ? "Now playing" : playback == .paused ? "Paused" : "")
     }
 
+    /// The indicator's inset on each side of the cover: a quarter of the tile, as `MediaRow` does, so it keeps room at any width.
+    static func indicatorPadding(tileWidth: CGFloat) -> CGFloat {
+        tileWidth * 0.25
+    }
+
     private var cover: some View {
         Color.clear
             .aspectRatio(1, contentMode: .fit)
@@ -124,11 +129,13 @@ struct LibraryTile: View {
             }
             .overlay {
                 if playback != .none {
-                    NowPlayingIndicator(isAnimating: playback == .playing)
-                        .padding(ArtworkSize.gridMinimum * 0.375)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(.black.opacity(0.35))
-                        .accessibilityHidden(true)
+                    GeometryReader { proxy in
+                        NowPlayingIndicator(isAnimating: playback == .playing)
+                            .padding(Self.indicatorPadding(tileWidth: proxy.size.width))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(.black.opacity(0.35))
+                    }
+                    .accessibilityHidden(true)
                 }
             }
             .artworkStyle(.artwork(.artworkTile, for: artwork))
