@@ -216,7 +216,10 @@ class MediaImporter(
 
                                 is FlowEvent.Success -> {
                                     stored = event.result
-                                    if (showProgress || event.result.inserts + event.result.updates + event.result.deletes > 0) {
+                                    val changed = event.result.inserts + event.result.updates + event.result.deletes > 0
+                                    // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
+                                    val clearsError = (_providerImportStates.value[mediaProvider.type] as? SongImportState.ImportComplete)?.error != null
+                                    if (showProgress || changed || clearsError) {
                                         publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
                                     }
                                 }

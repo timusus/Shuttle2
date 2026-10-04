@@ -338,6 +338,24 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a quiet sync that stores nothing still clears an earlier failure`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+        server.failure = "Unreachable"
+        importer.sync(SyncTrigger.Periodic)
+        importer.providerImportStates.value[server.type] shouldBe SongImportState.ImportComplete(server.type, "Unreachable")
+
+        server.failure = null
+        server.found = emptyList()
+        importer.sync(SyncTrigger.Foreground)
+
+        importer.providerImportStates.value[server.type] shouldBe SongImportState.ImportComplete(server.type, error = null)
+    }
+
+    @Test
     fun `the daily sync fetches the playlists of a server synced in the last few minutes`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
