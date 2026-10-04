@@ -66,7 +66,7 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
                 ?: first(TagLibProperty.Year)?.parseDate(),
         genres =
             get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
-                genre.split(';')
+                genre.split(*GENRE_SEPARATORS)
                     .map { genre -> genre.trim() }
                     .filterNot { genre -> genre.isEmpty() }
             },
@@ -129,8 +129,11 @@ internal fun String.decodeMisreadUtf8(): String {
 
 private const val MATROSKA_ALBUM_ARTIST = "ALBUM_ARTIST"
 
-private const val R128_TRACK_GAIN = "R128_TRACK_GAIN"
-private const val R128_ALBUM_GAIN = "R128_ALBUM_GAIN"
+/** A genre tag splits on these; '/' is not one, so "R&B/Soul" stays whole. The tag editor's `Song.edited` repeats this list. */
+private val GENRE_SEPARATORS = charArrayOf(';', ',')
+
+internal const val R128_TRACK_GAIN = "R128_TRACK_GAIN"
+internal const val R128_ALBUM_GAIN = "R128_ALBUM_GAIN"
 
 /** An Opus R128 gain is a Q7.8 fixed-point dB offset from -23 LUFS; ReplayGain's reference is -18 LUFS, 5 dB louder. */
 private fun String.parseR128Gain(): Double? = trim().toIntOrNull()?.let { it / 256.0 + 5.0 }

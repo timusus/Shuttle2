@@ -205,9 +205,9 @@ class FileTagsTest {
     }
 
     @Test
-    fun `a genre is split on semicolons and multi-value entries but keeps slashes and commas`() {
+    fun `a genre is split on semicolons, commas and multi-value entries but keeps slashes`() {
         mapOf("GENRE" to listOf("R&B/Soul", "Rock; Pop", "Folk, World")).toFileTags().genres shouldBe
-            listOf("R&B/Soul", "Rock", "Pop", "Folk, World")
+            listOf("R&B/Soul", "Rock", "Pop", "Folk", "World")
     }
 
     @Test

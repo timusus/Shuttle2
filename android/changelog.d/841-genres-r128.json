@@ -1,1 +1,1 @@
-{ "type": "fixes", "text": "Genres like R&B/Soul are no longer split in two, and Opus files tagged with R128 loudness now get volume levelling.", "commits": [] }
+{ "type": "fixes", "text": "Genres like R&B/Soul are no longer split in two (genres separate on semicolons and commas), and Opus files tagged with R128 loudness now get volume levelling.", "commits": [] }

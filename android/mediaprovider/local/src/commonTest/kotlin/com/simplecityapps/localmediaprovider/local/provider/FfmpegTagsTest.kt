@@ -40,7 +40,7 @@ class FfmpegTagsTest {
         tags.disc shouldBe 1
         tags.discTotal shouldBe 2
         tags.year shouldBe "1997"
-        tags.genres shouldBe listOf("Rock", "Pop")
+        tags.genres shouldBe listOf("Rock/Pop")
         tags.replayGainTrack shouldBe -6.5
         tags.compilation shouldBe true
     }
@@ -135,6 +135,14 @@ class FfmpegTagsTest {
         tags.genres shouldBe listOf("Rock", "Indie", "Pop")
         tags.compilation shouldBe false
         tags.grouping shouldBe "Group"
+    }
+
+    @Test
+    fun `maps an Opus file's R128 gains`() {
+        val tags = fileTags("R128_TRACK_GAIN" to "-512", "r128_album_gain" to "256")
+
+        tags.replayGainTrack shouldBe 3.0
+        tags.replayGainAlbum shouldBe 6.0
     }
 
     @Test

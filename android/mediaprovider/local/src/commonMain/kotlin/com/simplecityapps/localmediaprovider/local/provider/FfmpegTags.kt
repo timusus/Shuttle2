@@ -21,12 +21,16 @@ fun ffmpegPropertyMap(tags: List<Pair<String, String>>): Map<String, List<String
         // ID3's USLT arrives as "lyrics-eng", one key per language.
         byName.getOrPut(if (name.startsWith("lyrics")) "lyrics" else name) { trimmed }
     }
-    return FFMPEG_NAMES.mapNotNull { (property, names) ->
+    val r128 = R128_NAMES.mapNotNull { (name, key) -> byName[name]?.let { key to listOf(it) } }
+    return r128.toMap() + FFMPEG_NAMES.mapNotNull { (property, names) ->
         val values = names.mapNotNull(byName::get)
             .flatMap { value -> if (property in MULTI_VALUE) value.split(';').map { it.trim() }.filter { it.isNotEmpty() } else listOf(value) }
         values.takeIf { it.isNotEmpty() }?.let { property.key to it }
     }.toMap()
 }
+
+/** Opus's R128 gains have no [TagLibProperty]; [toFileTags] reads them by their Vorbis keys. */
+private val R128_NAMES = listOf("r128trackgain" to R128_TRACK_GAIN, "r128albumgain" to R128_ALBUM_GAIN)
 
 private val MULTI_VALUE = setOf(TagLibProperty.Artists, TagLibProperty.AlbumArtists)
 

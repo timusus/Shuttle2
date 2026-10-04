@@ -81,7 +81,7 @@ private fun numberWithTotal(
 /** [this] song with [edits] applied, as the library stores it. */
 internal fun Song.edited(edits: Map<TagField, String>): Song {
     fun text(field: TagField, current: String?) = if (field in edits) edits.getValue(field).trim().ifEmpty { null } else current
-    fun list(field: TagField, current: List<String>) = if (field in edits) edits.getValue(field).split(",").map { it.trim() }.filter { it.isNotEmpty() } else current
+    fun list(field: TagField, current: List<String>, vararg separators: Char = charArrayOf(',')) = if (field in edits) edits.getValue(field).split(*separators).map { it.trim() }.filter { it.isNotEmpty() } else current
     fun number(field: TagField, current: Int?) = if (field in edits) edits.getValue(field).trim().toIntOrNull() else current
     return copy(
         name = text(TagField.Title, name),
@@ -93,7 +93,8 @@ internal fun Song.edited(edits: Map<TagField, String>): Song {
         date = if (TagField.Year in edits) edits.getValue(TagField.Year).trim().toIntOrNull()?.let { LocalDate(it, 1, 1) } else date,
         track = number(TagField.Track, track),
         disc = number(TagField.Disc, disc),
-        genres = list(TagField.Genres, genres),
+        // The same separators the library's tag reader splits a genre on (';' and ',', never '/').
+        genres = list(TagField.Genres, genres, ',', ';'),
         lyrics = text(TagField.Lyrics, lyrics),
     )
 }
