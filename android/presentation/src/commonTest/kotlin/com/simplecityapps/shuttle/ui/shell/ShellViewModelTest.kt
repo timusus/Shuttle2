@@ -1,34 +1,82 @@
 package com.simplecityapps.shuttle.ui.shell
 
+import com.simplecityapps.fakes.FakeMediaSources
+import com.simplecityapps.fakes.FakeServerSessions
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.ui.screens.sources.ConnectServer
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ShellViewModelTest {
     private val store = SettingsStore(InMemoryKeyValueStore())
     private val settings = AppearanceSettings(store)
+    private val serverSessions = FakeServerSessions()
+    private val mediaSources = FakeMediaSources()
+
+    private fun viewModel() = ShellViewModel(ReadSetting(store), serverSessions, ConnectServer(mediaSources))
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun `opens on Library by default as 1_0_10 did`() {
-        ShellViewModel(ReadSetting(store)).uiState.value.startTab shouldBe ShellTab.Library
+        viewModel().uiState.value.startTab shouldBe ShellTab.Library
     }
 
     @Test
     fun `opens on Home when Show Home on launch is on`() {
         settings.showHomeOnLaunch.value = true
 
-        ShellViewModel(ReadSetting(store)).uiState.value.startTab shouldBe ShellTab.Home
+        viewModel().uiState.value.startTab shouldBe ShellTab.Home
     }
 
     @Test
     fun `a change after launch waits for the next launch`() {
-        val viewModel = ShellViewModel(ReadSetting(store))
+        val viewModel = viewModel()
 
         settings.showHomeOnLaunch.value = true
 
         viewModel.uiState.value.startTab shouldBe ShellTab.Library
+    }
+
+    @Test
+    fun `a server's session expiring posts a sign-out event until it is handled`() {
+        val viewModel = viewModel()
+
+        serverSessions.expire(MediaProviderType.Plex)
+
+        val pending = viewModel.uiState.value.events.single()
+        pending.value shouldBe ShellEvent.ServerSignedOut(MediaProviderType.Plex)
+
+        viewModel.onEventHandled(pending.id)
+
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `signing in again from the prompt enables the server and scans`() {
+        viewModel().onServerConnected(MediaProviderType.Jellyfin)
+
+        mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Jellyfin)
+        mediaSources.scans shouldBe 1
     }
 }

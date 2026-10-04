@@ -51,4 +51,8 @@
     <string name="player_go_to_artist">Go to artist</string>
     <!-- Button that creates the playlist named in the New Playlist dialog -->
     <string name="player_create_playlist">Create</string>
+    <!-- Snackbar after a media server rejects the saved sign-in mid-session; %1$s is the server's name, such as Jellyfin -->
+    <string name="shell_server_signed_out">Signed out of %1$s</string>
+    <!-- Snackbar action that opens the server's sign-in dialog -->
+    <string name="shell_server_sign_in">Sign in</string>
 </resources>

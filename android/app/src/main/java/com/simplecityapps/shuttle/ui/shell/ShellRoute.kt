@@ -10,18 +10,24 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.text
 import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
+import com.simplecityapps.shuttle.ui.screens.sources.titleRes
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
@@ -48,8 +54,13 @@ fun ShellRoute(
     val playerUi by remember { derivedStateOf { playerState.value.player } }
     val shellUi by shellViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
     val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
     PlayerEventsEffect(playerState.value.events, viewModel::onEventHandled, snackbarHostState, actions = viewModel, onNavigate = { targets.trySend(it) })
+    ShellEventsEffect(shellUi.events, shellViewModel::onEventHandled, snackbarHostState, onSignIn = { signingIn = it })
+    signingIn?.let { type ->
+        ServerSignInRoute(type, onConnected = shellViewModel::onServerConnected, onDismiss = { signingIn = null })
+    }
     AppShell(
         playerUi = playerUi,
         progress = { playerState.value.progress },
@@ -60,6 +71,29 @@ fun ShellRoute(
         tabRequests = tabRequests,
         navigationRequests = remember(targets) { targets.receiveAsFlow() },
     )
+}
+
+/** Tells the user a server signed them out, with Sign in to open that server's dialog (#595). */
+@Composable
+internal fun ShellEventsEffect(
+    events: List<PendingEvent<ShellEvent>>,
+    onEventHandled: (Long) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onSignIn: (MediaProviderType) -> Unit,
+) {
+    val resources = LocalContext.current.resources
+    ConsumeEvents(events, onEventHandled) { event ->
+        when (event) {
+            is ShellEvent.ServerSignedOut -> {
+                val result = snackbarHostState.showSnackbar(
+                    resources.getString(R.string.shell_server_signed_out, resources.getString(event.type.titleRes)),
+                    actionLabel = resources.getString(R.string.shell_server_sign_in),
+                    duration = SnackbarDuration.Long,
+                )
+                if (result == SnackbarResult.ActionPerformed) onSignIn(event.type)
+            }
+        }
+    }
 }
 
 /**

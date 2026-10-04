@@ -108,6 +108,10 @@
   ],
   "improvements": [
     {
+      "text": "When Jellyfin, Emby or Plex signs you out mid-session, the app now says so and offers a Sign in button, instead of syncs quietly failing",
+      "commits": []
+    },
+    {
       "text": "Lossless songs from Jellyfin, Emby and music files on your device now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
       "commits": ["2388719fd"]
     },
