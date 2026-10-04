@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.di
 
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.favourites.FavouriteSender
 import com.simplecityapps.localmediaprovider.local.repository.AlbumKeyMigration
 import com.simplecityapps.localmediaprovider.local.repository.LibraryAlbumIndex
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
@@ -13,6 +14,8 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepositor
 import com.simplecityapps.localmediaprovider.local.repository.LocalSuggestionsRepository
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
 import com.simplecityapps.localmediaprovider.local.repository.libraryAlbumIndex
+import com.simplecityapps.mediaprovider.AggregateFavouriteWriter
+import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -29,6 +32,7 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
@@ -38,7 +42,10 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 
 /**
  * The library both platforms share: the repositories over the [MediaDatabase] and the [MediaImporter] that fills it.
@@ -86,6 +93,26 @@ abstract class LibraryModule {
             val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.pinnedCollectionDao(), preferenceManager)
             return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue)
         }
+
+        /** Each provider module contributes its writer to the set. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideAggregateFavouriteWriter(writers: Set<FavouriteWriter>): AggregateFavouriteWriter = AggregateFavouriteWriter(writers)
+
+        /** Sends the favourites made on remote songs to their servers (#497); each platform starts it once, at launch. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideFavouriteSender(
+            database: MediaDatabase,
+            writer: AggregateFavouriteWriter,
+            songRepository: SongRepository,
+            @AppCoroutineScope appCoroutineScope: CoroutineScope
+        ): FavouriteSender = FavouriteSender(
+            dao = database.songDataDao(),
+            writer = writer,
+            findSongs = { songIds -> songRepository.getSongs(SongQuery.SongIds(songIds)).filterNotNull().firstOrNull().orEmpty() },
+            scope = appCoroutineScope + Dispatchers.IO
+        )
 
         @Provides
         @SingleIn(AppScope::class)

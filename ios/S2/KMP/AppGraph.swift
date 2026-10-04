@@ -31,6 +31,7 @@ enum AppGraph {
         dependencies.graph.recordPlays.start()
         dependencies.graph.recordResumePoints.start()
         dependencies.graph.playbackReporting.start()
+        dependencies.graph.favouriteSender.start()
         dependencies.graph.librarySearchIndex.warmUp()
         #if DEBUG
         if let override = UserDefaults.standard.string(forKey: DebugEntitlement.defaultsKey) {

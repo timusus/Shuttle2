@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.SavedStateHandle
+import com.simplecityapps.localmediaprovider.local.favourites.FavouriteSender
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
@@ -84,6 +85,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Keeps where each play context was left (#670) from [playerController]'s events; Swift starts it once, at launch. */
     val recordResumePoints: RecordResumePoints
+
+    /** Sends the favourites made on Jellyfin, Emby and Plex songs to their servers (#497); Swift starts it once, at launch. */
+    val favouriteSender: FavouriteSender
 
     /** The search index; Swift warms it once, at launch, so the first search doesn't wait for the build. */
     val librarySearchIndex: LibrarySearchIndex
