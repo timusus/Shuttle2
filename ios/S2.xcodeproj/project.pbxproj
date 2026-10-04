@@ -26,6 +26,7 @@
 		1E4056BB6ED5BD70E4CF5E76 /* LibrarySortMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC13290DC486051BE47FF29 /* LibrarySortMenuTests.swift */; };
 		210B036A0CC1AF2D9E0E1286 /* ImportActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036F202686AE3731A4488CE1 /* ImportActivity.swift */; };
 		21285C07C55D398490CCF075 /* PlayerBinding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77DAB02A2B7331E3CA3C4332 /* PlayerBinding.swift */; };
+		214EA1E6B250A95E7367D433 /* ViewInspector+BreadthFirst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01EE6A1024391679E4219C13 /* ViewInspector+BreadthFirst.swift */; };
 		219A25DB3B9C7F1880CE3AB0 /* Spacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D2D56852BA79BF5517563F /* Spacing.swift */; };
 		21FE30A773E2FAFEEB422155 /* DetailSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346675B16296BE8F1612838A /* DetailSupport.swift */; };
 		22061B66DFCCC943591B60BA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB3130910D39D3EBAB25744C /* Assets.xcassets */; };
@@ -173,6 +174,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		01EE6A1024391679E4219C13 /* ViewInspector+BreadthFirst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ViewInspector+BreadthFirst.swift"; sourceTree = "<group>"; };
 		036F202686AE3731A4488CE1 /* ImportActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportActivity.swift; sourceTree = "<group>"; };
 		041ABAC56D609C794639DB1A /* FilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChip.swift; sourceTree = "<group>"; };
 		04C0F71158CC358E0E7CA2D8 /* PaywallViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewTests.swift; sourceTree = "<group>"; };
@@ -688,6 +690,7 @@
 				9617DD31BA89B09F9D5E6DDE /* SourcesViewTests.swift */,
 				E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */,
 				14BB2620441276D4E9C54BA6 /* TestSongs.swift */,
+				01EE6A1024391679E4219C13 /* ViewInspector+BreadthFirst.swift */,
 				81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */,
 			);
 			path = S2Tests;
@@ -985,6 +988,7 @@
 				F5A38E52E15457BCE9E4FE31 /* SourcesViewTests.swift in Sources */,
 				A26315901488642FD490FE9F /* TelemetryConfigTests.swift in Sources */,
 				4BB77D4A9957ED117DDCF31A /* TestSongs.swift in Sources */,
+				214EA1E6B250A95E7367D433 /* ViewInspector+BreadthFirst.swift in Sources */,
 				D15E8CB1C210263CFE0A4956 /* ViewModelCacheTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

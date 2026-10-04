@@ -53,11 +53,11 @@ struct PlaylistListTests {
         let playlists = [playlist(1, "Road Trip", songs: 12), playlist(2, "Empty", songs: 0)]
         let covers = [KotlinLong(value: 1): Array(TestSongs.demo.prefix(4))]
         let sut = PlaylistListContent(state: state(playlists, smartPlaylists: [SmartPlaylistId.favourites.smartPlaylist], covers: covers, .ready))
-        let mosaics = try sut.inspect().findAll(CoverMosaic.self).map { try $0.actualView() }
+        let mosaics = try sut.inspect().findAllBreadthFirst(CoverMosaic.self).map { try $0.actualView() }
         #expect(mosaics.map(\.isMosaic) == [true, false])
         #expect(mosaics.map(\.seed) == ["Road Trip", "Empty"])
         #expect(mosaics.last?.symbol == GeneratedArtwork.playlistSymbol)
-        let autoTiles = try sut.inspect().findAll(AutoPlaylistArtwork.self).map { try $0.actualView() }
+        let autoTiles = try sut.inspect().findAllBreadthFirst(AutoPlaylistArtwork.self).map { try $0.actualView() }
         #expect(autoTiles.map(\.symbol) == [SmartPlaylistId.favourites.symbol])
         #expect((try? sut.inspect().find(button: "New Playlist")) != nil)
     }

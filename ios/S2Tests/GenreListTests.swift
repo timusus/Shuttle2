@@ -36,7 +36,7 @@ struct GenreListTests {
             "Art Rock": [TestSongs.demo[4]],
         ]
         let mosaics = try GenreListContent(state: state(genres, .ready), covers: covers).inspect()
-            .findAll(CoverMosaic.self).map { try $0.actualView() }
+            .findAllBreadthFirst(CoverMosaic.self).map { try $0.actualView() }
         #expect(mosaics.map(\.covers.count) == [4, 1, 0])
         #expect(mosaics.map(\.isMosaic) == [true, false, false])
         #expect(mosaics.allSatisfy { $0.symbol == GeneratedArtwork.genreSymbol })
