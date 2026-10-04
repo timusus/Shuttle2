@@ -149,7 +149,11 @@ struct JumpBackInResumeCard: View {
 
     var body: some View {
         let artworkSide = min(scaledArtwork, ArtworkSize.resumeCard * 1.5)
-        HStack(spacing: Spacing.smallMedium) {
+        // At the accessibility sizes the card stacks, so the text has the full width and the Play disc sits under it.
+        let layout = accessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.smallMedium))
+            : AnyLayout(HStackLayout(spacing: Spacing.smallMedium))
+        layout {
             Button { open(item) } label: {
                 HStack(alignment: accessibilitySize ? .top : .center, spacing: Spacing.smallMedium) {
                     artwork(side: artworkSide)
@@ -180,6 +184,7 @@ struct JumpBackInResumeCard: View {
         .padding(Spacing.small)
         .background(.s2SurfaceContainer)
         .clipShape(S2Shape.card)
+        .artworkTint(from: item.tintSource)
     }
 
     /// The kind, then when the queue was left: "Album · Yesterday".
@@ -200,7 +205,7 @@ struct JumpBackInResumeCard: View {
                             .accessibilityIdentifier("homeGrid.shuffled")
                     }
                     Text(text)
-                        .lineLimit(1)
+                        .lineLimit(accessibilitySize ? nil : 1)
                 }
                 .font(.subheadline)
                 .foregroundStyle(.s2TextSecondary)
@@ -220,32 +225,56 @@ struct JumpBackInResumeCard: View {
 
     private var playButton: some View {
         let shuffles = item is HomeItemGenreItem && (progress == nil || progress?.finished == true)
-        return Button {
-            performTracked(item.resumeAction())
-        } label: {
-            ZStack {
-                if pending {
-                    ProgressView()
-                        .tint(.s2OnAccent)
-                } else {
-                    Image(systemName: shuffles ? "shuffle" : "play.fill")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.s2OnAccent)
-                }
-            }
-            .frame(width: TouchTarget.minimum, height: TouchTarget.minimum)
-            .background(.tint, in: Circle())
-            .contentShape(Circle())
-        }
-        .buttonStyle(.pressScale)
-        .accessibilityLabel(Self.playLabel(item: item, progress: progress))
-        .accessibilityValue(pending ? "Starting" : "")
-        .accessibilityIdentifier("homeGrid.play")
-        .disabled(pending)
+        return ResumePlayDisc(shuffles: shuffles, pending: pending) { performTracked(item.resumeAction()) }
+            .accessibilityLabel(Self.playLabel(item: item, progress: progress))
+            .accessibilityValue(pending ? "Starting" : "")
+            .accessibilityIdentifier("homeGrid.play")
     }
 
     private func performTracked(_ action: MediaAction) {
         item.perform(action, perform: perform, play: play)
+    }
+}
+
+/// The resume card's Play button: a disc in the item's artwork tint (`\.artworkTint`, scheme-safe) with the ink that
+/// clears AA on it, the accent with no artwork (#741). Its own view so it reads the tint the card provides.
+private struct ResumePlayDisc: View {
+    let shuffles: Bool
+    let pending: Bool
+    let action: () -> Void
+
+    @Environment(\.artworkTint) private var tint
+    @Environment(\.artworkTintInk) private var ink
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                if pending {
+                    ProgressView()
+                        .tint(ink)
+                } else {
+                    Image(systemName: shuffles ? "shuffle" : "play.fill")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(ink)
+                }
+            }
+            .frame(width: TouchTarget.minimum, height: TouchTarget.minimum)
+            .background(tint, in: Circle())
+            .contentShape(Circle())
+        }
+        .buttonStyle(.pressScale)
+        .disabled(pending)
+    }
+}
+
+private extension HomeItem {
+    /// The cover the resume card tints from (#741); nil for an item with no single cover, which keeps the accent.
+    var tintSource: ArtworkSource? {
+        switch onEnum(of: self) {
+        case .albumItem(let it): .album(it.album)
+        case .artistItem(let it): .albumArtist(it.albumArtist)
+        case .playlistItem, .smartPlaylistItem, .genreItem: nil
+        }
     }
 }
 
