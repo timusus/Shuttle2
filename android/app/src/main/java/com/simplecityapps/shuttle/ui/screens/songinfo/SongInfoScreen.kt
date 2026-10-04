@@ -138,7 +138,7 @@ private fun SongInfoContent(
                     title = stringResource(section.title),
                     rows = section.rows.map { row ->
                         { shapes: ListItemShapes ->
-                            InfoSetting(title = stringResource(row.label), summary = row.value?.takeIf { it.isNotBlank() } ?: unknown, shapes = shapes)
+                            InfoSetting(title = stringResource(row.label), summary = row.valueKey?.let { stringResource(it) } ?: row.value?.takeIf { it.isNotBlank() } ?: unknown, shapes = shapes)
                         }
                     },
                 )

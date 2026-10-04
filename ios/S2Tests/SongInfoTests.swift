@@ -88,8 +88,8 @@ struct SongInfoTests {
         let sections = SongInfoSections.make(for: song(bitDepth: 24, sampleRate: 96_000, bitRate: 2_304, size: 5 * 1024 * 1024))
         #expect(sections.map(\.title) == ["Tags", "File", "Playback"])
         #expect(sections[0].rows.map(\.label) == ["Title", "Artists", "Album"])
-        #expect(sections[1].rows.map(\.label) == ["Path", "MIME Type", "Size", "Duration", "Bit rate", "Bit depth", "Sample rate"])
-        #expect(sections[1].rows.map(\.value) == ["/Music/Teardrop.flac", "audio/flac", "5.00 MB", "5:30", "2304 kb/s", "24-bit", "96 kHz"])
+        #expect(sections[1].rows.map(\.label) == ["Source", "Path", "MIME Type", "Size", "Duration", "Bit rate", "Bit depth", "Sample rate"])
+        #expect(sections[1].rows.map(\.value) == ["This device", "/Music/Teardrop.flac", "audio/flac", "5.00 MB", "5:30", "2304 kb/s", "24-bit", "96 kHz"])
         #expect(sections[2].rows == [SongInfoRow(label: "Play count", value: "0")])
     }
 

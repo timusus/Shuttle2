@@ -73,11 +73,13 @@ class SongInfoViewModelTest {
 
     @Test
     fun `source row names the provider`() {
-        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections().flatMap { it.rows }.first { it.label == StringKey.SONG_INFO_SOURCE }.value
+        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections().flatMap { it.rows }.first { it.label == StringKey.SONG_INFO_SOURCE }
 
-        source(MediaProviderType.MediaStore) shouldBe "Local"
-        source(MediaProviderType.Jellyfin) shouldBe "Jellyfin"
-        source(MediaProviderType.Plex) shouldBe "Plex"
+        source(MediaProviderType.Shuttle) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
+        source(MediaProviderType.MediaStore) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
+        source(MediaProviderType.Jellyfin) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Jellyfin")
+        source(MediaProviderType.Emby) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Emby")
+        source(MediaProviderType.Plex) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Plex")
     }
 
     @Test
@@ -86,7 +88,8 @@ class SongInfoViewModelTest {
 
         sections.keys.toList() shouldBe listOf(StringKey.SONG_INFO_SECTION_TAGS, StringKey.SONG_INFO_SECTION_FILE, StringKey.SONG_INFO_SECTION_PLAYBACK)
         sections.getValue(StringKey.SONG_INFO_SECTION_TAGS) shouldContain StringKey.SONG_INFO_ALBUM
-        sections.getValue(StringKey.SONG_INFO_SECTION_FILE) shouldContain StringKey.SONG_INFO_PATH
+        val fileRows = sections.getValue(StringKey.SONG_INFO_SECTION_FILE)
+        fileRows.indexOf(StringKey.SONG_INFO_SOURCE) shouldBe fileRows.indexOf(StringKey.SONG_INFO_PATH) - 1
         sections.getValue(StringKey.SONG_INFO_SECTION_PLAYBACK) shouldContain StringKey.SONG_INFO_PLAY_COUNT
     }
 

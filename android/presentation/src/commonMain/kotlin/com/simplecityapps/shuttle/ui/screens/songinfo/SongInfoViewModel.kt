@@ -45,10 +45,14 @@ class SongInfoViewModel @AssistedInject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
 }
 
-/** One row of song info: a label and the value, or null when the song doesn't have one. */
+/**
+ * One row of song info: a label and the value, or null when the song doesn't have one. The value is a string the song
+ * carries, or — for the source's "This device" — [valueKey], a key each platform resolves; never both.
+ */
 data class SongInfoRow(
     val label: StringKey,
     val value: String?,
+    val valueKey: StringKey? = null,
 )
 
 /** A titled group of song info rows, shown as one card. */
@@ -76,7 +80,7 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
     SongInfoSection(
         StringKey.SONG_INFO_SECTION_FILE,
         listOf(
-            SongInfoRow(StringKey.SONG_INFO_SOURCE, mediaProvider.displayName),
+            mediaProvider.songInfoSourceRow(),
             SongInfoRow(StringKey.SONG_INFO_PATH, displayPath),
             SongInfoRow(StringKey.SONG_INFO_MIME_TYPE, mimeType),
             SongInfoRow(StringKey.SONG_INFO_SIZE, "${formatDecimal(size / 1024.0 / 1024.0, 2)} MB"),
@@ -97,14 +101,16 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
     ),
 )
 
-/** The provider a song comes from, as people know it; the song doesn't carry which server it came from. */
-internal val MediaProviderType.displayName: String
-    get() = when (this) {
-        MediaProviderType.Shuttle, MediaProviderType.MediaStore -> "Local"
-        MediaProviderType.Jellyfin -> "Jellyfin"
-        MediaProviderType.Emby -> "Emby"
-        MediaProviderType.Plex -> "Plex"
-    }
+/**
+ * The Source row: the provider a song comes from, as people know it. A local library reads "This device" (localised,
+ * as the Sources screen words it); a server keeps its brand name. The song doesn't carry which server it came from.
+ */
+internal fun MediaProviderType.songInfoSourceRow(): SongInfoRow = when (this) {
+    MediaProviderType.Shuttle, MediaProviderType.MediaStore -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
+    MediaProviderType.Jellyfin -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Jellyfin")
+    MediaProviderType.Emby -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Emby")
+    MediaProviderType.Plex -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Plex")
+}
 
 /** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */
 fun Song.infoChips(): List<String> = listOfNotNull(

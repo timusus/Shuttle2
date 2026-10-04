@@ -14,6 +14,7 @@
 "song_info_genres" = "Genres";
 "song_info_lyrics" = "Lyrics";
 "song_info_source" = "Source";
+"song_info_source_this_device" = "This device";
 "song_info_path" = "Path";
 "song_info_mime_type" = "MIME Type";
 "song_info_size" = "Size";

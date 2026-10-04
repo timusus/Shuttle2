@@ -1,1 +1,1 @@
-{ "type": "improvements", "text": "Song Info now shows where a song comes from: Local, Jellyfin, Emby or Plex.", "commits": [] }
+{ "type": "improvements", "text": "Song Info now shows where a song comes from: this device, Jellyfin, Emby or Plex.", "commits": [] }

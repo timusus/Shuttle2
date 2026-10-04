@@ -16,7 +16,7 @@ struct SongInfoSection: Equatable, Identifiable {
 }
 
 /// What Song Info shows for a song: the sections, labels and values of Android's, from the shared `infoSections()`,
-/// with the labels localised and the rows the song has no value for left out.
+/// with the labels and the source's value localised, and the rows the song has no value for left out.
 enum SongInfoSections {
     static func make(for song: Song) -> [SongInfoSection] {
         make(from: song.infoSections())
@@ -25,7 +25,8 @@ enum SongInfoSections {
     static func make(from shared: [Shared.SongInfoSection]) -> [SongInfoSection] {
         shared.compactMap { section in
             let rows = section.rows.compactMap { row -> SongInfoRow? in
-                guard let value = row.value, !value.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+                let resolved = row.valueKey?.localized() ?? row.value
+                guard let value = resolved, !value.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
                 return SongInfoRow(label: row.label.localized(), value: value)
             }
             return rows.isEmpty ? nil : SongInfoSection(title: section.title.localized(), rows: rows)
