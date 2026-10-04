@@ -627,7 +627,8 @@ run_verify() {
 # failed phases contribute. Each failed phase also gives "<phase><TAB>FAILED"; output with no
 # "verify: == end" (the verify was killed, or machine-lock or the harness died) gives
 # "verify<TAB>INCOMPLETE". A failure is: a failing test (the "Failed tests:" block and its "+N more"
-# count, Gradle's "X > y FAILED", xcodebuild's "Test Case ... failed"), a compiler error ("e: ",
+# count, Gradle's "X > y FAILED", xcodebuild's "Failing tests:" block and "Test Case ... failed",
+# Swift Testing's "✘ Test ... failed"), a compiler error ("e: ",
 # including KSP; javac; swiftc), a Gradle "Execution failed for task" and the "What went wrong" text,
 # an AAPT/resource or manifest-merger error, a Roborazzi *_compare.png, a ktlint violation.
 # build-brief's "Raw log: <path>" files are read in place, as the condensed console drops detail.
@@ -653,6 +654,12 @@ failure_sig() {
         if (l ~ /^\+[0-9]+ more/) { add("tests " l); inb = 0; return }
         s = l; sub(/: .*/, "", s); add("test " s); return
       }
+      if (ift) {
+        if (l ~ /^[ \t]+[^ \t]/) { s = l; sub(/^[ \t]+/, "", s); add("ios test " s); return }
+        ift = 0
+      }
+      if (l ~ /^Failing tests:/) { ift = 1; return }
+      if (l ~ /^✘ Test .* failed/) { s = l; sub(/ after [0-9.]+ seconds.*/, "", s); add(s); return }
       if (l ~ /^\* What went wrong:/) { wwr = 1; return }
       if (l ~ /^Failed tests:/) { inb = 1; return }
       if (l ~ /Execution failed for task /) { s = l; sub(/.*Execution failed for task /, "", s); add("task " s); return }
@@ -665,7 +672,7 @@ failure_sig() {
       if (l ~ /^[^ ]+\.kts?:[0-9]+:[0-9]+: /) { add("lint " l) }
     }
     /^verify: == end$/ { ended = 1; next }
-    /^verify: == / { ph = substr($0, 12); wwr = 0; inb = 0; next }
+    /^verify: == / { ph = substr($0, 12); wwr = 0; inb = 0; ift = 0; next }
     /^verify: -- / { s = substr($0, 12); sub(/ failed.*/, "", s); failed[s] = 1; next }
     /^Raw log: / {
       f = substr($0, 10); wwr = 0; inb = 0

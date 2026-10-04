@@ -74,6 +74,26 @@ check "failure_sig marks a run without 'verify: == end' incomplete" 0 test "$(fa
 printf 'com.x.BarTest > qux FAILED\nx/y/BarTest_qux_compare.png written\n' > "$TMP/rawsig.log"
 check "failure_sig reads build-brief Raw log files" 0 test "$(failure_sig "$TMP/brief.log" 1)" = "$(printf '%s\n' "unit-tests${T}FAILED" "unit-tests${T}roborazzi BarTest_qux" "unit-tests${T}test com.x.BarTest > qux FAILED" | sort -u)"
 
+# iOS: xcodebuild's "Failing tests:" block and Swift Testing's failure line give per-test signatures.
+cat > "$TMP/ios.log" <<'LOG'
+verify: == ios
+Failing tests:
+	LibraryListTests.songAndAlbumRowsDrawTheirArtwork()
+	LibrarySortMenuTests.aSongRowShowsItsPlayCountUnderThatSort()
+
+** TEST FAILED **
+✘ Test foo() failed after 0.012 seconds with 1 issue.
+verify: -- ios failed: ios build/tests
+verify: == end
+LOG
+want=$(printf '%s\n' "ios${T}FAILED" "ios${T}ios test LibraryListTests.songAndAlbumRowsDrawTheirArtwork()" \
+  "ios${T}ios test LibrarySortMenuTests.aSongRowShowsItsPlayCountUnderThatSort()" "ios${T}✘ Test foo() failed" | sort -u)
+got=$(failure_sig "$TMP/ios.log" 1)
+check "failure_sig reads iOS failing tests" 0 test "$got" = "$want"
+[ "$got" = "$want" ] || diff <(echo "$want") <(echo "$got")
+check "new_failures: iOS failures also on main are pre-existing" 0 test -z "$(new_failures "$got" "$got")"
+check "new_failures: a new iOS test failure is new" 0 test -n "$(new_failures "$got" "$(printf '%s\n' "ios${T}FAILED" "ios${T}ios test LibraryListTests.songAndAlbumRowsDrawTheirArtwork()")")"
+
 # verify_step (#829): a failed phase is recorded and the next one still runs.
 VERIFY_FAILED=0
 steps=$( { verify_step a "x" false; verify_step b "y" true; echo "rc=$VERIFY_FAILED"; } )
