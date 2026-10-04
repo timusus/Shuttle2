@@ -77,6 +77,18 @@ class TagReadGuardTest {
     }
 
     @Test
+    fun `a marker that can't be written leaves the read to run unguarded`() = runTest {
+        // A file where the marker folder should be, so writing a marker throws as a full disk would
+        val blocked = File.createTempFile("tag-reads", null)
+        val guard = testTagReadGuard(preferences, markerDir = blocked, pid = 7)
+
+        guard.recover()
+
+        guard.read(a) { "tags" } shouldBe "tags"
+        guard.read(b) { "more tags" } shouldBe "more tags"
+    }
+
+    @Test
     fun `a native crash with one read in flight quarantines its file`() = runTest {
         crashDuring(a)
         val guard = guard(pid = 2, crashedNatively = { pid -> pid == 1 })

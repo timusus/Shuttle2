@@ -7,7 +7,9 @@ import android.os.Build
 import android.os.Process
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import java.io.File
+import java.io.IOException
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -57,6 +59,9 @@ class TagReadGuard(
     private var suspects: Set<String> = emptySet()
 
     private val skipped: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
+
+    // Logs the first marker that couldn't be written, not one per read
+    private val markerWriteFailed = AtomicBoolean()
 
     /** The paths [read] left unread since the last [recover], being quarantined. */
     val skippedPaths: Set<String> get() = synchronized(skipped) { skipped.toSet() }
@@ -127,10 +132,7 @@ class TagReadGuard(
             val slot = synchronized(freeSlots) { freeSlots.removeFirst() }
             val marker = File(markerDir, "$SLOT_PREFIX$slot")
             try {
-                withContext(Dispatchers.IO) {
-                    markerDir.mkdirs()
-                    marker.writeText("$pid\n$key")
-                }
+                writeMarker(marker, "$pid\n$key")
                 read().also {
                     if (struck) {
                         strikes = strikes() - key
@@ -141,6 +143,19 @@ class TagReadGuard(
                 marker.delete()
                 synchronized(freeSlots) { freeSlots.addLast(slot) }
             }
+        }
+    }
+
+    private suspend fun writeMarker(
+        marker: File,
+        text: String
+    ) = withContext(Dispatchers.IO) {
+        try {
+            markerDir.mkdirs()
+            marker.writeText(text)
+        } catch (e: IOException) {
+            // Disk full or the folder gone: the read goes ahead unguarded, rather than one marker failing the import
+            if (!markerWriteFailed.getAndSet(true)) Timber.e(e, "Couldn't write a tag read marker; reading without one")
         }
     }
 
