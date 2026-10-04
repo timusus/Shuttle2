@@ -57,7 +57,7 @@ class SessionHarness(
         val albumRepository = FakeAlbumRepository(albums)
         val artistRepository = FakeAlbumArtistRepository()
         val playlistRepository = FakePlaylistRepository(playlists)
-        val mediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository) { AlbumIndex(emptyList()) }
+        val mediaIdHelper = MediaIdHelper(context, playlistRepository, artistRepository, albumRepository, songRepository) { AlbumIndex(emptyList()) }
         playRequests =
             PlayRequests(
                 context = context,

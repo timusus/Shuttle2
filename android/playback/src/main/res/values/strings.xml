@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android Auto browse folder: the artists in the library -->
+    <string name="auto_folder_artists">Artists</string>
+    <!-- Android Auto browse folder: the albums in the library -->
+    <string name="auto_folder_albums">Albums</string>
+    <!-- Android Auto browse folder: the playlists in the library -->
+    <string name="auto_folder_playlists">Playlists</string>
+    <!-- Android Auto browse item: plays the whole library shuffled -->
+    <string name="auto_shuffle_all">Shuffle All</string>
+    <!-- Android Auto browse folder: the songs marked as favourites -->
+    <string name="auto_folder_favorites">Favorites</string>
+</resources>

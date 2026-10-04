@@ -79,12 +79,13 @@ class PlaybackModule {
 
     @Provides
     fun provideMediaIdHelper(
+        @ApplicationContext context: Context,
         playlistRepository: PlaylistRepository,
         artistRepository: AlbumArtistRepository,
         albumRepository: AlbumRepository,
         songRepository: SongRepository,
         albumIndex: AlbumIndexProvider
-    ): MediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository, albumIndex)
+    ): MediaIdHelper = MediaIdHelper(context, playlistRepository, artistRepository, albumRepository, songRepository, albumIndex)
 
     @Provides
     fun provideUriSongResolver(

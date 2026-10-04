@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.androidauto
 
+import android.content.Context
 import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -10,6 +11,7 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.R
 import com.simplecityapps.playback.queue.toMediaMetadata
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -28,12 +30,33 @@ import timber.log.Timber
 class MediaIdHelper
 @Inject
 constructor(
+    context: Context,
     private val playlistRepository: PlaylistRepository,
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val albumIndex: AlbumIndexProvider
 ) {
+    private val rootChildren: List<MediaItem> = listOf(
+        browsableItem("media:/artist_root/", context.getString(R.string.auto_folder_artists), MediaMetadata.MEDIA_TYPE_FOLDER_ARTISTS),
+        browsableItem("media:/album_root/", context.getString(R.string.auto_folder_albums), MediaMetadata.MEDIA_TYPE_FOLDER_ALBUMS),
+        browsableItem("media:/playlist_root/", context.getString(R.string.auto_folder_playlists), MediaMetadata.MEDIA_TYPE_FOLDER_PLAYLISTS),
+        MediaItem.Builder()
+            .setMediaId(SHUFFLE_ALL_ID)
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(context.getString(R.string.auto_shuffle_all))
+                    .setIsBrowsable(false)
+                    .setIsPlayable(true)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_PLAYLIST)
+                    .build()
+            )
+            .build()
+    )
+
+    /** Listed first among the playlists, where the Favorites playlist used to be. */
+    private val favourites: MediaItem = browsableItem(FAVOURITES_ID, context.getString(R.string.auto_folder_favorites), MediaMetadata.MEDIA_TYPE_PLAYLIST)
+
     /** The children of the browsable item [mediaId]: empty for an id that isn't one. */
     suspend fun getChildren(mediaId: String): List<MediaItem> = withContext(Dispatchers.IO) {
         when (val mediaIdWrapper: MediaIdWrapper? = parseMediaId(mediaId)) {
@@ -288,26 +311,6 @@ constructor(
         const val FAVOURITES_ID = "media:/playlist_root/$FAVOURITES_SEGMENT/songs/"
 
         val root: MediaItem = browsableItem(ROOT_ID, title = null, mediaType = MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
-
-        private val rootChildren: List<MediaItem> = listOf(
-            browsableItem("media:/artist_root/", "Artists", MediaMetadata.MEDIA_TYPE_FOLDER_ARTISTS),
-            browsableItem("media:/album_root/", "Albums", MediaMetadata.MEDIA_TYPE_FOLDER_ALBUMS),
-            browsableItem("media:/playlist_root/", "Playlists", MediaMetadata.MEDIA_TYPE_FOLDER_PLAYLISTS),
-            MediaItem.Builder()
-                .setMediaId(SHUFFLE_ALL_ID)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle("Shuffle All")
-                        .setIsBrowsable(false)
-                        .setIsPlayable(true)
-                        .setMediaType(MediaMetadata.MEDIA_TYPE_PLAYLIST)
-                        .build()
-                )
-                .build()
-        )
-
-        /** Listed first among the playlists, where the Favorites playlist used to be. */
-        private val favourites: MediaItem = browsableItem(FAVOURITES_ID, "Favorites", MediaMetadata.MEDIA_TYPE_PLAYLIST)
 
         private fun browsableItem(mediaId: String, title: String?, mediaType: Int = MediaMetadata.MEDIA_TYPE_FOLDER_MIXED): MediaItem = MediaItem.Builder()
             .setMediaId(mediaId)
