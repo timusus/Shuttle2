@@ -6,8 +6,8 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlayContext
+import com.simplecityapps.shuttle.model.Playlist
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
