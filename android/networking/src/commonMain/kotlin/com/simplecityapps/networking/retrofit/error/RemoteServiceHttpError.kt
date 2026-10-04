@@ -7,7 +7,9 @@ import io.ktor.http.HttpStatusCode
  */
 open class RemoteServiceHttpError(
     val httpStatusCode: HttpStatusCode,
-    val body: String? = null
+    val body: String? = null,
+    /** The delay in seconds a `Retry-After` header asked for, when it gave one as a number of seconds. */
+    val retryAfterSeconds: Long? = null
 ) : RemoteServiceError() {
     val isClientError: Boolean
         get() = httpStatusCode.value in 400..499

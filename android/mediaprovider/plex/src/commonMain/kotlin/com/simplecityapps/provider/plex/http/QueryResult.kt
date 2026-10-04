@@ -22,12 +22,12 @@ data class Directory(
     @SerialName("type") val type: String? = null
 )
 
-/** A track. Only [key] and [guid] are always there: a track the server hasn't analysed yet has no duration or media, and a loose one no album or artist. */
+/** A track. Only [key] is always there: a track the server hasn't analysed yet has no duration or media, and a loose one no album or artist. */
 @Serializable
 data class Metadata(
     @SerialName("key") val key: String,
     @SerialName("type") val type: String? = null,
-    @SerialName("guid") val guid: String,
+    @SerialName("guid") val guid: String? = null,
     // This item's own id on the server: a playlist's, in /playlists/{ratingKey}/items
     @SerialName("ratingKey") val ratingKey: String? = null,
     @SerialName("index") val index: Int? = null,

@@ -4,10 +4,14 @@ import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.error.NetworkError
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import io.kotest.matchers.shouldBe
+import io.ktor.http.HttpStatusCode
 import kotlin.test.Test
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import kotlinx.io.IOException
 
 class PagedFlowTest {
     private val requests = mutableListOf<Pair<Int, Int>>()
@@ -90,5 +94,78 @@ class PagedFlowTest {
 
         requestCount shouldBe 2
         events.last() shouldBe Event.Success(listOf(0, 1))
+    }
+
+    private fun transient(status: HttpStatusCode = HttpStatusCode.ServiceUnavailable, retryAfterSeconds: Long? = null) =
+        NetworkResult.Failure(RemoteServiceHttpError(status, retryAfterSeconds = retryAfterSeconds))
+
+    @Test
+    fun `a page that fails transiently is retried and the listing carries on`() = runTest {
+        var attempts = 0
+        val events = pagedFlow<Int>(pageSize = 4) { offset, _ ->
+            attempts++
+            when (attempts) {
+                1 -> NetworkResult.Failure(NetworkError(true, IOException("reset")))
+                2 -> transient(HttpStatusCode.TooManyRequests, retryAfterSeconds = 2)
+                else -> NetworkResult.Success(Page(listOf(offset), totalCount = 1))
+            }
+        }.toList().described()
+
+        attempts shouldBe 3
+        events.last() shouldBe Event.Success(listOf(0))
+    }
+
+    @Test
+    fun `a page that keeps failing fails the listing after three attempts`() = runTest {
+        var attempts = 0
+        val events = pagedFlow<Int>(pageSize = 4) { _, _ ->
+            attempts++
+            transient()
+        }.toList().described()
+
+        attempts shouldBe 3
+        events.size shouldBe 1
+        (events.single() is Event.Failure) shouldBe true
+    }
+
+    @Test
+    fun `a client error other than 429 is not retried`() = runTest {
+        var attempts = 0
+        val events = pagedFlow<Int>(pageSize = 4) { _, _ ->
+            attempts++
+            transient(HttpStatusCode.NotFound)
+        }.toList().described()
+
+        attempts shouldBe 1
+        (events.single() is Event.Failure) shouldBe true
+    }
+
+    @Test
+    fun `an item repeated across pages is emitted once`() = runTest {
+        // The listing shifted by one between pages, so 3 shows up twice
+        val events = pagedFlow<Int>(pageSize = 4, key = { it }) { offset, _ ->
+            NetworkResult.Success(Page(if (offset == 0) listOf(0, 1, 2, 3) else listOf(3, 4, 5, 6), totalCount = 7))
+        }.toList().described()
+
+        events.last() shouldBe Event.Success(listOf(0, 1, 2, 3, 4, 5, 6))
+    }
+
+    @Test
+    fun `a listing that falls short of its total fails rather than emit a short list`() = runTest {
+        val events = pagedFlow<Int>(pageSize = 4, key = { it }) { offset, _ ->
+            NetworkResult.Success(Page(if (offset == 0) listOf(0, 1, 2, 3) else listOf(3, 3), totalCount = 8))
+        }.toList().described()
+
+        (events.last() is Event.Failure) shouldBe true
+        events.any { it is Event.Success } shouldBe false
+    }
+
+    @Test
+    fun `a shortfall within one percent of the total is allowed`() = runTest {
+        val events = pagedFlow<Int>(pageSize = 1000, key = { it }) { _, _ ->
+            NetworkResult.Success(Page((0 until 995).toList(), totalCount = 1000))
+        }.toList().described()
+
+        (events.last() is Event.Success) shouldBe true
     }
 }

@@ -200,7 +200,7 @@ class PlexMediaProvider(
         section: String,
         since: Instant?,
         favouritesOnly: Boolean
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow { offset, limit ->
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.items(
@@ -223,7 +223,7 @@ internal fun Metadata.toSong(
     type: MediaProviderType,
     syncedAt: Instant
 ): Song = Song(
-    id = guid.hashCode().toLong(),
+    id = 0,
     name = title,
     albumArtist = grandparentTitle,
     // Plex sends the track's own artist as originalTitle only when it differs from the album artist's

@@ -249,7 +249,8 @@ class PlexMediaProviderTest {
 
         val songs = sync()
 
-        songs.map { it.externalId } shouldContainExactly
+        songs.size shouldBe 502
+        songs.map { it.externalId }.let { ids -> ids.take(2) + ids.takeLast(2) } shouldContainExactly
             listOf("/library/parts/1/file.mp3", "/library/parts/2/file.mp3", "/library/parts/3/file.mp3", "/library/parts/4/file.mp3")
         server.requestsTo(ITEMS).map { it.url.parameters["X-Plex-Container-Start"] to it.url.parameters["X-Plex-Container-Size"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")
@@ -310,7 +311,7 @@ class PlexMediaProviderTest {
 
         // B-Side, rated 6, is in the reply as a server ignoring the filter would send it, and stays unfavourited
         songs.associate { song -> song.name to song.favouritedAt } shouldBe mapOf("Opening" to null, "Duet" to Instant.fromEpochSeconds(1_759_305_600))
-        server.requestsTo(ITEMS).single { it.url.parameters["userRating"] == "10" }.url.parameters["sort"] shouldBe "titleSort,addedAt"
+        server.requestsTo(ITEMS).single { it.url.parameters["userRating"] == "10" }.url.parameters["sort"] shouldBe "addedAt,titleSort"
     }
 
     @Test

@@ -129,7 +129,7 @@ class JellyfinMediaProvider(
         credentials: AuthenticatedCredentials
     ): Set<String>? {
         val event =
-            pagedFlow { offset, limit ->
+            pagedFlow(key = Item::id) { offset, limit ->
                 authenticationManager.checkSession(
                     credentials,
                     itemsService.favouriteAudioItems(
@@ -148,7 +148,7 @@ class JellyfinMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         since: Instant?
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.audioItems(

@@ -9,6 +9,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.io.IOException
@@ -40,7 +41,7 @@ internal suspend fun HttpResponse.toHttpError(): RemoteServiceHttpError {
     } catch (e: Exception) {
         null
     }
-    return RemoteServiceHttpError(status, body)
+    return RemoteServiceHttpError(status, body, retryAfterSeconds = headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull())
 }
 
 /** What a request that threw [throwable] failed with. */

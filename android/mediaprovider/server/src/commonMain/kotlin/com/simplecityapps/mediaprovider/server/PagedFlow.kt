@@ -5,9 +5,14 @@ import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.error.NetworkError
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.shuttle.logging.Logger
 import kotlin.math.min
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -22,6 +27,40 @@ private val logger = Logger.tagged("PagedFlow")
 /** The page size servers are asked for. */
 const val DEFAULT_PAGE_SIZE = 500
 
+/** How many times a page is requested before its failure ends the listing. */
+private const val MAX_ATTEMPTS = 3
+private const val BACKOFF_BASE_MS = 1_000L
+private const val MAX_RETRY_AFTER_SECONDS = 30L
+
+/** The share of a listing's total that may be missing from the deduped result before the listing is failed. */
+private const val MISSING_TOLERANCE = 0.01
+
+/** Whether a request that failed with this is worth repeating: the server couldn't be reached, errored, or asked us to slow down. */
+private fun Throwable.isTransient(): Boolean = when (this) {
+    is NetworkError -> true
+    is RemoteServiceHttpError -> isServerError || httpStatusCode.value == 429
+    else -> false
+}
+
+/** [fetchPage] up to [MAX_ATTEMPTS] times, waiting between attempts (exponential backoff with jitter, or the server's `Retry-After`) after a transient failure. */
+private suspend fun <T> retrying(fetchPage: suspend () -> NetworkResult<Page<T>>): NetworkResult<Page<T>> {
+    var attempt = 1
+    while (true) {
+        val result = fetchPage()
+        if (result !is NetworkResult.Failure || attempt >= MAX_ATTEMPTS || !result.error.isTransient()) return result
+        val retryAfter = (result.error as? RemoteServiceHttpError)?.retryAfterSeconds
+        val wait = if (retryAfter != null) {
+            min(retryAfter, MAX_RETRY_AFTER_SECONDS).seconds.inWholeMilliseconds
+        } else {
+            val backoff = BACKOFF_BASE_MS shl (attempt - 1)
+            backoff + Random.nextLong(backoff / 2 + 1)
+        }
+        logger.warn { "Page request failed (attempt $attempt of $MAX_ATTEMPTS), retrying in ${wait}ms: ${result.error.message}" }
+        delay(wait)
+        attempt++
+    }
+}
+
 /**
  * Every item of a paged server listing, fetched a page at a time with [fetchPage] (offset, limit) and emitted as one
  * [FlowEvent.Success], after a [FlowEvent.Progress] per page with the items so far of the total. A failed page ends the flow
@@ -32,17 +71,28 @@ const val DEFAULT_PAGE_SIZE = 500
  * starts after the items received and paging stops at the first empty page, so a server that returns fewer items
  * than asked for isn't mistaken for the end of the listing. A page identical to the one before it ends the listing too,
  * since a server that ignores the offset would otherwise repeat it forever.
+ *
+ * Each page is requested up to three times: a failure the server could clear (it couldn't be reached, it answered 5xx or
+ * 429) waits and tries again, any other failure ends the listing at once.
+ *
+ * With a [key], an item already received is dropped (a server whose listing shifts mid-paging repeats items across
+ * pages), and when the server gave a total and the result falls short of it by more than 1%, the listing fails rather
+ * than emit a list a sync would delete the rest against. The 1% allows for the items Jellyfin leaves out of a page; a
+ * listing that legitimately repeats an item (a playlist) passes no key and gets neither.
  */
 fun <T> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
+    key: ((T) -> Any)? = null,
     fetchPage: suspend (offset: Int, limit: Int) -> NetworkResult<Page<T>>
 ): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
     val items = mutableListOf<T>()
+    val seen = HashSet<Any>()
+    var reportedTotal: Int? = null
     var offset = 0
     var limit = pageSize
     var previous: List<T>? = null
     while (true) {
-        when (val result = fetchPage(offset, limit)) {
+        when (val result = retrying { fetchPage(offset, limit) }) {
             is NetworkResult.Success -> {
                 val page = result.body
                 val totalCount = page.totalCount
@@ -52,12 +102,18 @@ fun <T> pagedFlow(
                     return@flow
                 }
                 previous = page.items
+                reportedTotal = totalCount
                 val end = if (totalCount != null) offset + limit else offset + page.items.size
                 emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, totalCount?.let { total -> Progress(min(end, total), total) })))
-                items.addAll(page.items)
+                if (key == null) items.addAll(page.items) else page.items.filterTo(items) { item -> seen.add(key(item)) }
 
                 val hasMore = if (totalCount != null) end < totalCount else page.items.isNotEmpty()
                 if (!hasMore) {
+                    if (key != null && reportedTotal != null && items.size < reportedTotal * (1 - MISSING_TOLERANCE)) {
+                        logger.error { "A listing of $reportedTotal items came to ${items.size}" }
+                        emit(FlowEvent.Failure("The server's library changed while it was being read. Try again."))
+                        return@flow
+                    }
                     emit(FlowEvent.Success(items))
                     return@flow
                 }
