@@ -326,6 +326,33 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `overlapping cover loads of one run keep each other's covers`() = runTest(testDispatcher) {
+        // Jump back in's genre is too small to be picked by size, so its covers are the first load's alone
+        val small = createGenre("small", songCount = 1)
+        val large = (1..GENRE_PICKS_MIN).map { createGenre("large $it", songCount = GenrePicks.MIN_SONGS) }
+        suggestions.songCount.value = 4
+        suggestions.genres = listOf(small) + large
+        suggestions.genres.forEach { genres.setSongsForGenre(it.name, listOf(createSong(album = it.name))) }
+        genres.coverDelay = 5.seconds
+        suggestions.albums = listOf(phaseGarden, dustChoir)
+        suggestions.recentlyAdded = suggestions.albums.map { it.groupKey!! }
+        suggestions.extraLatency = mapOf("albumsToRediscover" to 1.seconds)
+        playHistory.eventCount.value = 1
+        playHistory.recentContexts = listOf(RecentContext(PlayContext.Genre(small.name), start), RecentContext(phaseGarden.playContext, start))
+        val viewModel = viewModel()
+
+        // The small genre's covers start loading; the later sections arrive a second on, with their own load overlapping it
+        advanceTimeBy(1.seconds)
+        runCurrent()
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn, HomeSectionId.GenrePicks)
+        advanceTimeBy(10.seconds)
+        runCurrent()
+
+        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().covers.keys shouldBe
+            (listOf(small) + large).map { HomeItem.GenreItem(it).key }.toSet()
+    }
+
+    @Test
     fun `an import completing reloads the sections while home is on screen`() = runTest(testDispatcher) {
         val viewModel = playedLibrary()
 

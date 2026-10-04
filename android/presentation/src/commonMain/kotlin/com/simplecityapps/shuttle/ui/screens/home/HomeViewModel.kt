@@ -18,6 +18,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +90,8 @@ class HomeViewModel @Inject constructor(
     private val sectionsWithCovers = channelFlow {
         var latest: List<HomeSection>? = null
         var loadedFor: List<HomeSection> = emptyList()
-        var coverLoad: Job? = null
+        // The cover loads still running for this run of sets; a restart cancels and joins them so none writes after it.
+        var coverLoads = emptyList<Job>()
         // The covers the loads of one run of extending sets have found; each load adds to it, then it becomes [loadedCovers].
         var fresh = emptyMap<String, List<Song>>()
 
@@ -97,19 +99,21 @@ class HomeViewModel @Inject constructor(
 
         observeHomeSections(visible, refreshes).collect { sections ->
             refreshing.value = false
-            val extension = sections != null && coverLoad?.isActive == true &&
+            val extension = sections != null && coverLoads.any { it.isActive } &&
                 sections.size >= loadedFor.size && sections.take(loadedFor.size) == loadedFor
             val toLoad = if (extension) sections.drop(loadedFor.size) else sections.orEmpty()
             if (!extension) {
-                coverLoad?.cancel()
+                coverLoads.forEach { it.cancelAndJoin() }
                 fresh = emptyMap()
             }
             latest = sections
             loadedFor = sections.orEmpty()
             send(current())
             if (sections != null) {
-                coverLoad = launch {
-                    fresh = fresh + loadHomeCovers(toLoad)
+                coverLoads = coverLoads.filter { it.isActive } + launch {
+                    val loaded = loadHomeCovers(toLoad)
+                    // Merge into what the loads that finished meanwhile found, so overlapping loads keep each other's covers.
+                    fresh = fresh + loaded
                     loadedCovers = fresh
                     send(current())
                 }
