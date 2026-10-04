@@ -31,6 +31,12 @@ class FakeSongImportStateProvider : SongImportStateProvider {
         _songImportState.value = overallImportState(states)
         if (state is SongImportState.ImportComplete) _importsCompleted.value++
     }
+
+    /** Drops [type]'s state, as the importer does when the source is removed. */
+    fun remove(type: MediaProviderType) {
+        _providerImportStates.value -= type
+        _songImportState.value = overallImportState(_providerImportStates.value)
+    }
 }
 
 fun importComplete(

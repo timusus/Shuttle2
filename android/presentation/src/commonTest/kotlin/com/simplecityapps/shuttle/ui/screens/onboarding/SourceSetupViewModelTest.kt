@@ -158,6 +158,17 @@ class SourceSetupViewModelTest {
     }
 
     @Test
+    fun `an import whose state goes with its source - removed mid-import - still finishes`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onServerConnected(MediaProviderType.Jellyfin)
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, null))
+
+        importState.remove(MediaProviderType.Jellyfin)
+
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Finished(MediaProviderType.Jellyfin, error = null)
+    }
+
+    @Test
     fun `a failed import says why`() = runTest {
         val viewModel = viewModel()
         viewModel.onServerConnected(MediaProviderType.Emby)

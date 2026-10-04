@@ -118,7 +118,7 @@ class SourceSetupViewModel @Inject constructor(
 
     private fun hasServer(types: List<MediaProviderType>) = types.any { !it.isLocal }
 
-    /** Follows the connected server's own import state in [states]; a stale result leaves it be. */
+    /** Follows the connected server's own import state in [states]; a stale result leaves it be, and its state going ends it. */
     private fun SourceSetupImport.next(states: Map<MediaProviderType, SongImportState>): SourceSetupImport {
         val type = when (this) {
             SourceSetupImport.NotStarted -> return this
@@ -133,6 +133,11 @@ class SourceSetupViewModel @Inject constructor(
 
             state is SongImportState.ImportComplete && this is SourceSetupImport.Running ->
                 SourceSetupImport.Finished(type, state.error)
+
+            // Its state went with it: the source was removed, or its first import cancelled. Over either way, so the setup
+            // doesn't wait on it
+            state == null && this is SourceSetupImport.Running ->
+                SourceSetupImport.Finished(type, error = null)
 
             else -> this
         }
