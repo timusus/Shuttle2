@@ -1,0 +1,35 @@
+{
+  "MediaContainer": {
+    "totalSize": 2,
+    "Metadata": [
+      {
+        "key": "/library/metadata/21",
+        "ratingKey": "21",
+        "type": "track",
+        "title": "Hi-Res",
+        "parentTitle": "First Album",
+        "grandparentTitle": "Artist One",
+        "Media": [
+          { "id": 21, "bitrate": 1411, "audioChannels": 2, "audioCodec": "flac", "container": "flac", "Part": [
+            { "id": 21, "key": "/library/parts/21/file.flac", "size": 30000000, "container": "flac" }
+          ] }
+        ],
+        "addedAt": 1709299200
+      },
+      {
+        "key": "/library/metadata/22",
+        "ratingKey": "22",
+        "type": "track",
+        "title": "Lossy",
+        "parentTitle": "First Album",
+        "grandparentTitle": "Artist One",
+        "Media": [
+          { "id": 22, "bitrate": 320, "audioChannels": 2, "audioCodec": "mp3", "container": "mp3", "Part": [
+            { "id": 22, "key": "/library/parts/22/file.mp3", "size": 5000000, "container": "mp3" }
+          ] }
+        ],
+        "addedAt": 1709299300
+      }
+    ]
+  }
+}

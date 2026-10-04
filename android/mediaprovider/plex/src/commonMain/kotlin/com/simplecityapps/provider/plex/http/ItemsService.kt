@@ -72,6 +72,13 @@ class ItemsService(private val client: HttpClient) {
         key: String
     ): NetworkResult<QueryResult> = query("$url$key", token)
 
+    /** The full metadata, Streams included, of the tracks with the given [ratingKeys] in one request (a listing has no Streams). */
+    suspend fun metadata(
+        url: String,
+        token: String,
+        ratingKeys: List<String>
+    ): NetworkResult<QueryResult> = query("$url/library/metadata/${ratingKeys.joinToString(",")}", token)
+
     private suspend fun query(
         url: String,
         token: String,

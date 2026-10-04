@@ -337,6 +337,34 @@ class PlexMediaProviderTest {
         server.requestsTo(ITEMS).single().url.parameters["updatedAt>>"] shouldBe null
     }
 
+    // Bit depth
+
+    @Test
+    fun `a lossless track gets its bit depth from a batched metadata request - a lossy one is never asked for`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs_flac_mp3.json")
+        server.respond("/library/metadata/21", "metadata_21.json")
+
+        val songs = sync()
+
+        songs.map { it.bitDepth } shouldContainExactly listOf(24, null)
+        server.requests.filter { it.url.encodedPath.startsWith("/library/metadata/") }.map { it.url.encodedPath } shouldContainExactly listOf("/library/metadata/21")
+    }
+
+    @Test
+    fun `a failed bit depth request leaves the songs without one`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs_flac_mp3.json")
+        server.respond("/library/metadata/21", code = 500)
+
+        val songs = sync()
+
+        songs.map { it.name } shouldContainExactly listOf("Hi-Res", "Lossy")
+        songs.map { it.bitDepth } shouldContainExactly listOf(null, null)
+    }
+
     private fun signedIn() {
         credentialStore.address = server.address
         credentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")

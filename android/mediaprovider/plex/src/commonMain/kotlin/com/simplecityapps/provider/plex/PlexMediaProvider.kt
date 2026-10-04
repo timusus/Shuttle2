@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.IncrementalMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.isLosslessCodec
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
@@ -19,6 +20,7 @@ import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.provider.plex.http.QueryResult
 import com.simplecityapps.provider.plex.http.STREAM_TYPE_AUDIO
+import com.simplecityapps.provider.plex.http.Stream
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -204,7 +206,7 @@ class PlexMediaProvider(
         favouritesOnly: Boolean,
         convert: (Metadata) -> R
     ): Flow<FlowEvent<List<R>, MessageProgress>> = pagedFlow(key = Metadata::key, convert = convert) { offset, limit ->
-        session.request { credentials ->
+        val result = session.request { credentials ->
             authenticationManager.checkSession(
                 credentials,
                 itemsService.items(
@@ -217,9 +219,56 @@ class PlexMediaProvider(
                     favouritesOnly = favouritesOnly
                 )
             )
-        }.map { it.toPage() }
+        }
+        when (result) {
+            is NetworkResult.Success<QueryResult> -> {
+                val page = result.body.toPage()
+                // A favourites listing only reads each track's rating
+                NetworkResult.Success(if (favouritesOnly) page else page.copy(items = withBitDepths(address, session, page.items)))
+            }
+
+            is NetworkResult.Failure -> result
+        }
+    }
+
+    /**
+     * [tracks] with the audio streams of those whose codec is lossless, which a listing leaves out. Fetched [BIT_DEPTH_CHUNK_SIZE]
+     * to a request; a failed request is logged and leaves its tracks without a bit depth, rather than failing the sync.
+     */
+    private suspend fun withBitDepths(
+        address: String,
+        session: ServerSession<AuthenticatedCredentials>,
+        tracks: List<Metadata>
+    ): List<Metadata> {
+        val streams = mutableMapOf<String, List<Stream>>()
+        tracks.filter { track -> isLosslessCodec(track.media.firstOrNull()?.audioCodec) }
+            .mapNotNull { track -> track.ratingKey }
+            .chunked(BIT_DEPTH_CHUNK_SIZE)
+            .forEach { ratingKeys ->
+                val result = session.request { credentials ->
+                    authenticationManager.checkSession(credentials, itemsService.metadata(address, credentials.accessToken, ratingKeys))
+                }
+                when (result) {
+                    is NetworkResult.Success<QueryResult> -> result.body.mediaContainer.metadata.orEmpty().forEach { full ->
+                        val key = full.ratingKey ?: return@forEach
+                        streams[key] = full.media.firstOrNull()?.parts?.firstOrNull()?.streams.orEmpty()
+                    }
+
+                    is NetworkResult.Failure -> logger.error(result.error) { "Failed to read bit depths: ${result.error.userDescription()}" }
+                }
+            }
+        if (streams.isEmpty()) return tracks
+        return tracks.map { track ->
+            val trackStreams = streams[track.ratingKey]?.takeIf { it.isNotEmpty() } ?: return@map track
+            val media = track.media.firstOrNull() ?: return@map track
+            val part = media.parts.firstOrNull() ?: return@map track
+            track.copy(media = listOf(media.copy(parts = listOf(part.copy(streams = trackStreams)) + media.parts.drop(1))) + track.media.drop(1))
+        }
     }
 }
+
+/** How many tracks' metadata one request asks for. */
+private const val BIT_DEPTH_CHUNK_SIZE = 100
 
 private fun QueryResult.toPage() = Page(mediaContainer.metadata.orEmpty(), mediaContainer.totalSize)
 

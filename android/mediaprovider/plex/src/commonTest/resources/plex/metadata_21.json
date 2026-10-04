@@ -1,0 +1,19 @@
+{
+  "MediaContainer": {
+    "Metadata": [
+      {
+        "key": "/library/metadata/21",
+        "ratingKey": "21",
+        "type": "track",
+        "title": "Hi-Res",
+        "Media": [
+          { "id": 21, "audioCodec": "flac", "Part": [
+            { "id": 21, "key": "/library/parts/21/file.flac", "Stream": [
+              { "streamType": 2, "codec": "flac", "bitDepth": 24 }
+            ] }
+          ] }
+        ]
+      }
+    ]
+  }
+}
