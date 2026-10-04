@@ -92,8 +92,11 @@ Each lands with JVM tests, verified by `unit-test --changed` and `assembleDebug`
 3. **ListenBrainz client and settings screen.** Token entry validated with `/1/validate-token`,
    `submit-listens` payloads, 401 signs out, 429 honours `X-RateLimit-Reset-In`.
 4. **`ScrobblingInitializer`** in `:android:app/appinitializers`, beside
-   `PlaybackReportingInitializer`: feeds the flows above to the planner and the decisions to the
-   clients and queue, and supplies `isServerSong`.
-5. **Last.fm**: browser sign-in (auth URL and callback deep link) and "powered by AudioScrobbler"
-   attribution. The key/secret `BuildConfig` wiring and signed `track.scrobble` calls landed in
-   slice 2 above.
+   `PlaybackReportingInitializer`. Done: feeds the flows above to the planner, sends now-playing and queues
+   scrobbles through `LastFmScrobbler`, supplies `isServerSong`, and schedules a flush at start-up.
+5. **Last.fm sign-in.** Done: `LastFmAuthenticator` fetches a token (`auth.getToken`), the user approves it in
+   the browser, and `auth.getSession` trades it for a session kept in `LastFmSessionStore` (encrypted prefs, with
+   the pending token so the process can die meanwhile). Settings > Playback & sound > Scrobbling opens last.fm and
+   finishes the sign-in when the user returns to the screen (or taps "I've approved it"); there is no callback
+   deep link. Signing out also drops the queued scrobbles. The "scrobble server streams too" switch is on the
+   same screen. Last.fm error codes are read from 4xx bodies as well as 200s (`LastFmClient`).
