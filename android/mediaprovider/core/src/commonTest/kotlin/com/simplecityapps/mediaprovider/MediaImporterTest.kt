@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -268,6 +269,77 @@ class MediaImporterTest {
         runCatching { importer.import() }
 
         preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
+    }
+
+    @Test
+    fun `an import that succeeds records the source as reachable and when it was updated`() = runBlocking<Unit> {
+        provider.gate.trySend(Unit)
+
+        importer.import()
+
+        preferences.sourceReachability(provider.type.name) shouldBe SourceReachability(error = null, checkedAt = clock.time)
+        preferences.sourceUpdated(provider.type.name) shouldBe clock.time
+    }
+
+    @Test
+    fun `an import whose source reports a failure records its message and leaves the updated time alone`() = runBlocking<Unit> {
+        val updated = clock.time - 1.days
+        preferences.setSourceUpdated(provider.type.name, updated)
+        provider.scanFailure = "Server unreachable"
+        provider.gate.trySend(Unit)
+
+        importer.import()
+
+        preferences.sourceReachability(provider.type.name) shouldBe SourceReachability(error = "Server unreachable", checkedAt = clock.time)
+        preferences.sourceUpdated(provider.type.name) shouldBe updated
+    }
+
+    @Test
+    fun `an import that throws records the failure and leaves the updated time alone`() = runBlocking<Unit> {
+        val updated = clock.time - 1.days
+        preferences.setSourceUpdated(provider.type.name, updated)
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+
+        runCatching { importer.import() }
+
+        preferences.sourceReachability(provider.type.name) shouldBe SourceReachability(error = "Import failed", checkedAt = clock.time)
+        preferences.sourceUpdated(provider.type.name) shouldBe updated
+    }
+
+    @Test
+    fun `a quiet sync that fails records nothing`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        server.failure = "Unreachable"
+
+        importer.sync(SyncTrigger.Foreground)
+
+        preferences.sourceReachability(server.type.name) shouldBe null
+        preferences.sourceUpdated(server.type.name) shouldBe null
+    }
+
+    @Test
+    fun `a quiet sync that succeeds clears an error stored earlier`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        preferences.setSourceReachability(server.type.name, SourceReachability(error = "Unreachable", checkedAt = clock.time - 1.hours))
+
+        importer.sync(SyncTrigger.Foreground)
+
+        preferences.sourceReachability(server.type.name) shouldBe SourceReachability(error = null, checkedAt = clock.time)
+        preferences.sourceUpdated(server.type.name) shouldBe clock.time
+    }
+
+    @Test
+    fun `an import cancelled mid-way records nothing`() = runBlocking<Unit> {
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+
+        import.cancelAndJoin()
+
+        preferences.sourceReachability(provider.type.name) shouldBe null
+        preferences.sourceUpdated(provider.type.name) shouldBe null
     }
 
     @Test

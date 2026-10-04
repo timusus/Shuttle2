@@ -364,7 +364,10 @@ class MediaImporter(
             throw e
         } catch (e: Exception) {
             logger.error(e) { "$type import failed" }
-            if (!quietFailures) complete(type, strings.importError)
+            if (!quietFailures) {
+                preferenceManager.setSourceReachability(type.name, SourceReachability(error = strings.importError, checkedAt = clock.now()))
+                complete(type, strings.importError)
+            }
             return e
         } finally {
             // The library doesn't stay scanning for it. Cancelled, it goes back to how it stood, rather than reading as a
