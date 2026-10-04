@@ -51,7 +51,8 @@
 # dropped one at a time from the end (each drop retried once) until it passes or none remain;
 # each dropped branch is reported as having broken verify. First, though, a verify whose output
 # says "Incremental compilation failed" (a Kotlin cache flake, #824) is retried once over the same
-# branches with -Pkotlin.incremental=false; the log notes the retry.
+# branches with -Pkotlin.incremental=false; the log notes the retry. The retry is per verify run, so
+# each bisect iteration below may retry once.
 # On a pass: push (retrying network
 # failures up to 3 times), close --close issues, then unlock and worktree-clean.sh each landed
 # branch's worktree.
@@ -499,18 +500,24 @@ reset_after_env_failure() {
 verify_env_failure() {
   local out
   out=$(tail -c +"$2" "$1")
-  if printf '%s\n' "$out" | grep -Eq '^e: file://|\.java:[0-9]+: error:'; then return 1; fi
-  printf '%s\n' "$out" | grep -Eq 'JdkImageTransform|jlink|No matching toolchain|Cannot find a Java installation|Cannot find a (Java|JDK)|daemon JVM|SDK location not found|Failed to install the following Android SDK|No installed JDK'
+  if grep -Eq '^e: file://|\.java:[0-9]+: error:' <<< "$out"; then return 1; fi
+  grep -Eq 'JdkImageTransform|jlink|No matching toolchain|Cannot find a Java installation|Cannot find a (Java|JDK)|daemon JVM|SDK location not found|Failed to install the following Android SDK|No installed JDK' <<< "$out"
 }
 
 # ic_failure <log> <from-byte>: succeed when the verify output after <from-byte> reports a Kotlin
 # incremental-compilation failure (#824), a stale-cache flake rather than a branch bug. A real
-# compiler error ("e: file://") in the same output means it is not just a flake.
+# compiler error ("e: file://") in the same output means it is not just a flake. build-brief
+# condenses the console output and drops the warning line, but prints "Raw log: <path>" for the
+# full Gradle log, so those files are searched too. grep reads a here-string, not a pipe: with
+# pipefail, grep -q exiting early on a >64KB log would SIGPIPE printf and read as a failure.
 ic_failure() {
-  local out
+  local out raw
   out=$(tail -c +"$2" "$1")
-  printf '%s\n' "$out" | grep -q 'Incremental compilation failed' || return 1
-  ! printf '%s\n' "$out" | grep -q '^e: file://'
+  while IFS= read -r raw; do
+    [ -f "$raw" ] && out="$out"$'\n'"$(cat "$raw")"
+  done < <(sed -n 's/^Raw log: //p' <<< "$out")
+  grep -q 'Incremental compilation failed' <<< "$out" || return 1
+  ! grep -q '^e: file://' <<< "$out"
 }
 
 # verify_once <touches_ios> [<class>...]: one machine-lock hold running the verify phases; with
@@ -543,7 +550,8 @@ run_verify() {
   from=$(( $(wc -c < "$LOG") + 1 ))
   verify_once "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} || vrc=$?
   # A Kotlin incremental-compilation flake says nothing about the branches (#824): retry the same
-  # set once with incremental compilation off before the caller bisects and drops anything.
+  # set once (per run_verify call, so once per bisect iteration) with incremental compilation off
+  # before the caller bisects and drops anything.
   if [ "$vrc" -eq 1 ] && ic_failure "$LOG" "$from"; then
     say "land.sh: verify hit 'Incremental compilation failed' (#824); retrying the same branches once with -Pkotlin.incremental=false"
     from=$(( $(wc -c < "$LOG") + 1 ))

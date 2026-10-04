@@ -91,7 +91,7 @@ usage() {
 Usage: support/scripts/unit-test [module ...] [--tests <filter>]
        support/scripts/unit-test --changed [--base <ref>] [--dry-run]
        support/scripts/unit-test --changed-tests [--base <ref>] [--dry-run]
-support/scripts/unit-test --compile-dependents [--base <ref>] [--dry-run]
+       support/scripts/unit-test --compile-dependents [--base <ref>] [--dry-run]
 
   (no args)              Run testDebugUnitTest across the whole project.
   <module> [module ...]  Run testDebugUnitTest for one or more modules only.
@@ -303,12 +303,12 @@ changed_files_since() {
   } | sort -u
 }
 
-# Gradle paths a module depends on directly, read from project(":x") in its build file.
+# Gradle paths a module depends on directly, read from project(":x"), project(':x') or project(path: ':x') in its build file.
 module_project_deps() {
   local build_file
   build_file="$(module_build_file "$1")"
   [ -n "${build_file}" ] || return 0
-  grep -Eo 'project\("(:[^"]+)"\)' "${build_file}" | sed -E 's/^project\("//; s/"\)$//' | sort -u
+  grep -Eo "project\((path: *)?[\"'](:[^\"']+)[\"']" "${build_file}" | sed -E "s/^project\((path: *)?[\"']//; s/[\"']$//" | sort -u
 }
 
 # Transitive dependents (excluding the inputs) of the Gradle paths given as arguments, one per
