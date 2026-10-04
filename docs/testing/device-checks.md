@@ -372,3 +372,12 @@ previous and new outputs, and where each pause came from.
 
 ## iOS Now Playing (#747)
 - [ ] iOS Now Playing More button press highlight matches the heart (#747)
+
+## Favourites reach the server (#497)
+- [ ] Jellyfin and Emby: heart a song in the app, then check the web UI shows it as a favourite; unheart it and the web UI clears it.
+- [ ] Plex: heart a track and Plex Web shows it rated 5 stars. Unheart it and the rating clears (the clear sends `rating=-1`, which is unverified against a real server). A track you rated 3 stars yourself is left alone when unhearted from a non-favourite state.
+- [ ] Heart a song in airplane mode, then go back online: the favourite reaches the server within a few minutes, without relaunching or toggling anything else.
+
+## Incremental library sync (#771)
+- [ ] Plex: with the Plex server's library already synced, add or retag one track on the server, return to the app after 15+ minutes: the change appears, and the server's request log (or a proxy) shows the items request carried `updatedAt>>=` and returned only the changed tracks, not the whole library.
+- [ ] Jellyfin and Emby: the same check; the change appears on returning to the app without a manual scan.
