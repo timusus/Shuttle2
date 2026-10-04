@@ -531,14 +531,19 @@ func eyebrow(_ parts: String?...) -> String {
 }
 
 /// The total running time of `songs`, "43 min" or "1 hr 3 min"; nil when unknown (zero).
-func totalDuration(_ songs: [Song]) -> String? {
-    runtime(ms: songs.reduce(Int64(0)) { $0 + Int64($1.duration) })
+func totalDuration(_ songs: [Song], locale: Locale = .current) -> String? {
+    runtime(ms: songs.reduce(Int64(0)) { $0 + Int64($1.duration) }, locale: locale)
 }
 
 /// A running time of `ms` milliseconds as "43 min" or "1 hr 3 min"; nil under a minute (unknown or negligible).
-func runtime(ms: Int64) -> String? {
+func runtime(ms: Int64, locale: Locale = .current) -> String? {
     guard ms >= 60_000 else { return nil }
-    return Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
+    return Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated).locale(locale))
+}
+
+/// A song's length as VoiceOver says it: "3 minutes, 20 seconds".
+func spokenDuration(ms: Int64, locale: Locale = .current) -> String {
+    Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide).locale(locale))
 }
 
 /// "1 song" / "N songs" (or any other noun), the pluralisation every detail hero's subtitle repeats.

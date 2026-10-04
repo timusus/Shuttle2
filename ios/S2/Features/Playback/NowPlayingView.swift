@@ -243,7 +243,7 @@ struct NowPlayingContent: View {
                     .font(.caption.weight(.medium))
                     .foregroundStyle(secondaryInk)
                     .padding(.top, Spacing.tiny)
-                    .accessibilityLabel("Audio quality, \(badge)")
+                    .accessibilityLabel("Audio quality, \(state.spokenQualityBadge ?? badge)")
                     .accessibilityIdentifier("nowPlaying.quality")
             }
         }
@@ -869,29 +869,37 @@ struct NowPlayingQueueList: View {
                 playback: item.isCurrent ? (isPlaying ? .playing : .paused) : .none
             ) {
                 if item.durationMs > 0 {
-                    Text(Duration.milliseconds(item.durationMs).formatted(.time(pattern: .minuteSecond)))
-                        .font(.s2RowMeta)
-                        .foregroundStyle(.s2TextSecondary)
+                    SongDurationText(durationMs: Int64(item.durationMs))
                 }
             }
         }
         .buttonStyle(.plain)
         .rowSeparator(.none)
-        .accessibilityLabel(item.isCurrent ? "\(item.title), now playing" : item.title)
+        .accessibilityLabel(Self.accessibilityLabel(for: item))
         .accessibilityIdentifier(item.isCurrent ? "queue.nowPlaying" : "queue.row")
         .contextMenu {
             NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove, exclude: actions.excludeQueueItem)
         }
     }
 
+    /// What VoiceOver reads for a row, which replaces its content: title, artist, whether it's playing, and its
+    /// length when known.
+    static func accessibilityLabel(for item: NowPlayingQueueRow, locale: Locale = .current) -> String {
+        [
+            item.title,
+            item.artist,
+            item.isCurrent ? "now playing" : nil,
+            item.durationMs > 0 ? spokenDuration(ms: Int64(item.durationMs), locale: locale) : nil,
+        ].compactMap { $0 }.joined(separator: ", ")
+    }
+
     // MARK: - Up Next summary
 
-    /// The time the songs in `rows` run for, in the locale's abbreviated units like every hero's total ("43 min", "1 hr, 12 min" in
-    /// English); nil under a minute or when durations are unknown.
+    /// The time the songs in `rows` run for, as every hero's total ("43 min", "1 hr, 12 min" in English); nil under
+    /// a minute, or when any song's length is unknown, since a total that skips it would undercount.
     static func remainingTime(_ rows: [NowPlayingQueueRow], locale: Locale = .current) -> String? {
-        let ms = rows.reduce(0) { $0 + $1.durationMs }
-        guard ms >= 60_000 else { return nil }
-        return Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated).locale(locale))
+        guard !rows.contains(where: { $0.durationMs <= 0 }) else { return nil }
+        return runtime(ms: rows.reduce(Int64(0)) { $0 + Int64($1.durationMs) }, locale: locale)
     }
 
     /// Up Next's header line, "3 songs · 12 min": the count, then the time left when known; nil with nothing up next.

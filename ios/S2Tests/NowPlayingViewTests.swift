@@ -262,9 +262,9 @@ struct NowPlayingViewTests {
         actions.selectQueueItem = { selected = $0 }
         let sut = NowPlayingQueueList(queue: queue, actions: actions)
         #expect((try? sut.inspect().find(text: "Hyperballad")) != nil)
-        try sut.inspect().find(viewWithAccessibilityLabel: "Hyperballad").button().tap()
+        try sut.inspect().find(viewWithAccessibilityLabel: "Hyperballad, Björk").button().tap()
         #expect(selected == 2)
-        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Paranoid Android, now playing")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Paranoid Android, Radiohead, now playing")) != nil)
     }
 
     @Test func theQueueHeadsNowPlayingUpNextAndPlayedAlike() throws {
@@ -287,8 +287,9 @@ struct NowPlayingViewTests {
         #expect((try? sut.inspect().find(text: "3:20")) != nil)
         #expect((try? sut.inspect().find(text: "2:05")) != nil)
         #expect((try? sut.inspect().find(text: "0:00")) == nil)
+        // An unknown length leaves the total out rather than undercounting it.
         let summary = try #require(NowPlayingQueueList.upNextSummary(Array(timed.dropFirst())))
-        #expect(summary.hasPrefix("2 songs · "))
+        #expect(summary == "2 songs")
         let subtitles = try sut.inspect().findAll(SectionHeader.self).map { try $0.actualView().subtitle }
         #expect(subtitles == [nil, summary])
     }
@@ -299,16 +300,34 @@ struct NowPlayingViewTests {
         }
         let en = Locale(identifier: "en_US")
         func time(_ durations: [Int]) -> String? {
-            NowPlayingQueueList.remainingTime(rows(durations), locale: en)?.replacingOccurrences(of: ",", with: "")
-                .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            NowPlayingQueueList.remainingTime(rows(durations), locale: en)
+        }
+        func formatted(_ ms: Int64) -> String {
+            Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated).locale(en))
         }
         #expect(NowPlayingQueueList.upNextSummary([]) == nil)
-        #expect(NowPlayingQueueList.upNextSummary(rows([240_000]), locale: en)?.hasPrefix("1 song · 4 min") == true)
-        #expect(time([2_400_000, 1_920_000]) == "1 hr 12 min")
-        #expect(time([2_580_000]) == "43 min")
-        // Unknown or sub-minute totals leave the time out.
+        #expect(NowPlayingQueueList.upNextSummary(rows([240_000]), locale: en) == "1 song · \(formatted(240_000))")
+        #expect(time([2_400_000, 1_920_000]) == formatted(4_320_000))
+        #expect(time([2_580_000]) == formatted(2_580_000))
+        // Sub-minute totals and any unknown length leave the time out.
         #expect(NowPlayingQueueList.upNextSummary(rows([0, 0])) == "2 songs")
         #expect(time([30_000]) == nil)
+        #expect(time([240_000, 0]) == nil)
+    }
+
+    @Test func aQueueRowsSpokenLabelIncludesItsArtistAndLength() {
+        let en = Locale(identifier: "en_US")
+        let playing = NowPlayingQueueRow(id: 1, title: "Airbag", artist: "Radiohead", isCurrent: true, durationMs: 200_000)
+        #expect(NowPlayingQueueList.accessibilityLabel(for: playing, locale: en) == "Airbag, Radiohead, now playing, 3 minutes, 20 seconds")
+        let untimed = NowPlayingQueueRow(id: 2, title: "Lucky", artist: nil, isCurrent: false)
+        #expect(NowPlayingQueueList.accessibilityLabel(for: untimed, locale: en) == "Lucky")
+    }
+
+    @Test func theQualityLineIsSpokenInWords() {
+        let en = Locale(identifier: "en_US")
+        #expect(AudioQuality(codec: "flac", bitDepth: 24, sampleRate: 96_000).spokenBadge(locale: en) == "FLAC, 24 bit, 96 kilohertz")
+        #expect(AudioQuality(mimeType: "audio/mpeg", bitRate: 320).spokenBadge(locale: en) == "MP3, 320 kilobits per second")
+        #expect(AudioQuality().spokenBadge(locale: en) == nil)
     }
 
     @Test func theQualityLineShowsTheFormatAndHidesWhenUnknown() throws {

@@ -52,6 +52,19 @@ struct AudioQuality: Equatable {
         return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
+    /// The badge as VoiceOver should say it: "FLAC, 24 bit, 96 kilohertz", "MP3, 320 kilobits per second"; nil when
+    /// `badge` is.
+    func spokenBadge(locale: Locale = .current) -> String? {
+        let detail: String?
+        if isLossless, let bitDepth, let sampleRate {
+            detail = "\(bitDepth) bit, " + Self.kilohertz(sampleRate, locale: locale) + " kilohertz"
+        } else {
+            detail = bitRate.map { "\($0) kilobits per second" }
+        }
+        let parts = [format, detail].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
     /// The badge the songs share, for an album's header: nil when they're mixed (or any has no format), so a header
     /// never claims a quality only some of the tracks have.
     static func sharedBadge(of songs: [Song], locale: Locale = .current) -> String? {

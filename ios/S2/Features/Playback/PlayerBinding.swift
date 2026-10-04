@@ -37,6 +37,9 @@ struct NowPlayingState: Equatable {
     /// The quality line, "FLAC 24/96" or "MP3 320"; nil when the format is unknown.
     var qualityBadge: String? { quality?.badge() }
 
+    /// The quality line as VoiceOver says it: "FLAC, 24 bit, 96 kilohertz".
+    var spokenQualityBadge: String? { quality?.spokenBadge() }
+
     /// Nothing queued.
     static let idle = NowPlayingState()
 }
