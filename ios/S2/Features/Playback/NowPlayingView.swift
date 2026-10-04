@@ -136,7 +136,7 @@ struct NowPlayingContent: View {
 
     // MARK: - Layout
 
-    /// Close on the leading edge and the favourite heart on the trailing one, each on a material disc: the backdrop's
+    /// Close on the leading edge and the favourite heart and More menu on the trailing one, each on a material disc: the backdrop's
     /// top edge can be as dark as the cover, whatever the scheme.
     private var topBar: some View {
         HStack {
@@ -149,7 +149,10 @@ struct NowPlayingContent: View {
             .accessibilityIdentifier("nowPlaying.close")
             Spacer()
             if state.title != nil {
-                favouriteButton
+                HStack(spacing: Spacing.small) {
+                    favouriteButton
+                    moreButton
+                }
             }
         }
         .padding(.horizontal, Spacing.small)
@@ -436,6 +439,18 @@ struct NowPlayingContent: View {
         .accessibilityIdentifier("nowPlaying.favourite")
     }
 
+    /// The song's menu behind a visible ellipsis; the long press on the cover or title stays as a shortcut.
+    private var moreButton: some View {
+        Menu {
+            songMenu
+        } label: {
+            Image(systemName: "ellipsis")
+                .topBarGlyph(.primary)
+        }
+        .accessibilityLabel("More")
+        .accessibilityIdentifier("nowPlaying.more")
+    }
+
     /// Opens the Audio sheet: the playback speed, and the Equalizer & Playback Settings screen it pushes. Tinted while
     /// the speed isn't normal.
     private var audioButton: some View {
@@ -522,7 +537,7 @@ private extension View {
             .touchTarget()
     }
 
-    /// A glyph in the top bar (close, favourite): on a material disc in a 44 pt target.
+    /// A glyph in the top bar (close, favourite, more): on a material disc in a 44 pt target.
     func topBarGlyph(_ ink: Color) -> some View {
         font(.body.weight(.semibold))
             .foregroundStyle(ink)

@@ -110,7 +110,7 @@ struct NowPlayingViewTests {
         #expect(ids == ["nowPlaying.audio", "nowPlaying.sleepTimer", "nowPlaying.airPlay", "nowPlaying.queue"])
         #expect(ids.count <= 5)
         // Superseded: the overflow menu and the speed menu.
-        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "More")) == nil)
+        #expect((try? bar.find(viewWithAccessibilityLabel: "More")) == nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Playback Speed")) == nil)
     }
 
@@ -240,6 +240,11 @@ struct NowPlayingViewTests {
     @Test func theFavouriteSitsInTheTopBarAndIsGoneWhenNothingPlays() throws {
         #expect((try? NowPlayingContent(state: state()).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.favourite")) != nil)
         #expect((try? NowPlayingContent(state: .idle).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.favourite")) == nil)
+    }
+
+    @Test func theMoreMenuSitsInTheTopBarAndIsGoneWhenNothingPlays() throws {
+        #expect((try? NowPlayingContent(state: state()).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.more")) != nil)
+        #expect((try? NowPlayingContent(state: .idle).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.more")) == nil)
     }
 
     @Test func showsTheAirPlayRoutePicker() throws {
