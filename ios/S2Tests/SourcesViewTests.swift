@@ -26,7 +26,7 @@ struct SourcesViewTests {
             deviceStatus: SourceStatusIdle.shared,
             deviceSongs: deviceSongs.map { KotlinInt(int: Int32($0)) },
             deviceUpdated: nil,
-            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: nil) },
+            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: nil, listingShortfall: 0) },
             lastImport: lastImport,
             events: []
         )
