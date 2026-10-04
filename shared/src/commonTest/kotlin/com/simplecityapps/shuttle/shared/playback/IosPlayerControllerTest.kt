@@ -1052,6 +1052,53 @@ class IosPlayerControllerTest {
         controller.playbackState() shouldBe PlaybackState.Paused
     }
 
+    // A replaced engine
+
+    @Test
+    fun `a skip in flight when the engine is replaced completes once the new engine has its song`() = test { controller ->
+        controller.start(listOf(a, b, c), play = false)
+        var result: Result<Any?>? = null
+        controller.skipToNext { result = it }
+
+        // A media-services reset: the old engine's reports never come, and the song is handed to the new one (#707).
+        engine.clearCalls()
+        controller.reloadEngine(0)
+        result shouldBe null
+        engine.calls.first() shouldBe "load song:2@0 playing"
+
+        engine.settle()
+        result?.isSuccess shouldBe true
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a load whose completion plays still plays when the engine is replaced mid-load`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.load { result -> result.onSuccess { controller.play() } }
+
+        controller.reloadEngine(0)
+        engine.settle()
+
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a replaced engine gets a paused song where it was - and nothing when nothing is loaded`() = test { controller ->
+        controller.reloadEngine(0)
+        engine.calls shouldBe emptyList()
+
+        controller.start(listOf(a, b), play = false)
+        controller.reloadEngine(42_000)
+        engine.settle()
+
+        engine.calls.first() shouldBe "load song:1@42000"
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+        controller.progressFlow.value?.position shouldBe 42_000
+    }
 
     // Seeking while loading
 

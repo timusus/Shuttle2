@@ -269,6 +269,27 @@ struct PlaybackSystemCoordinatorTests {
         #expect(engine.commands.last == "stop")
     }
 
+    @Test func aLoadInFlightAcrossAResetCompletesOnceTheNewEngineHasItsSong() async throws {
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(
+            songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared
+        )
+        var completed = false
+        controller.load(seekPosition: nil, skipUnloadable: false) { _ in completed = true }
+        #expect(await waitUntil { !engine.loads.isEmpty })
+
+        // The old engine's reports never come; the load carries over to the new one (#707).
+        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
+        let rebuilt = try #require(rebuiltEngines.first)
+        #expect(await waitUntil { !rebuilt.loads.isEmpty })
+        await drainMainQueue()
+        #expect(!completed)
+
+        let id = try #require(rebuilt.loads.first?.current.id)
+        rebuilt.emit(.state(.paused, trackId: id))
+        #expect(await waitUntil { completed })
+    }
+
     @Test func stopClearsNowPlaying() async throws {
         _ = try await loadQueue()
         #expect(await waitUntil { title != nil })

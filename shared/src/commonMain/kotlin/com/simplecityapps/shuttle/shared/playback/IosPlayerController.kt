@@ -674,6 +674,17 @@ class IosPlayerController(
         }
     }
 
+    /**
+     * Hands the current track to a replaced engine (a media-services reset rebuilt it) at [positionMs], as it was: the
+     * intent and a load in flight (a skip, or a load whose completion plays) carry over, and that load completes once the
+     * new engine has the track ready (#707). A track still resolving reaches the new engine anyway; nothing loaded, or a
+     * failed track, has nothing to hand over, and the next play loads it.
+     */
+    fun reloadEngine(positionMs: Int) = onMain {
+        val feed = current?.takeIf { it.sent && !it.failed } ?: return@onMain
+        startLoad(feed.item, positionMs, reopen = feed.seeksByReopening && feed.opensAtPosition)
+    }
+
     override fun play() = onMain { playNow() }
 
     /**

@@ -175,19 +175,16 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         )
     }
 
-    /// Every audio object died with the media server: a new engine, and the current item loaded into it
-    /// where it was. Playing — or still loading with the intent to play — resumes; paused stays paused.
-    /// Now Playing is written in full even when the item and state didn't change: the system copy was wiped
-    /// with the server, and `updatePlayback` would throttle an unchanged paused or loading item.
+    /// Every audio object died with the media server: a new engine, and the current item handed to it where
+    /// it was (`reloadEngine`). The player's intent carries over — playing, or loading with the intent to play,
+    /// resumes; paused stays paused — and so does a load in flight, whose completion runs once the new engine
+    /// has the item (#707). Now Playing is written in full even when the item and state didn't change: the
+    /// system copy was wiped with the server, and `updatePlayback` would throttle an unchanged paused or loading item.
     private func rebuildEngine() {
         guard let engine = makeEngine() else { return }
-        let resume = playerIsPlaying
-        let position = playback.getProgress()
+        let position = playback.getProgress()?.int32Value ?? 0
         player.replaceEngine(engine)
-        playback.load(seekPosition: position, skipUnloadable: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.publish(force: true) }
-        }
-        if resume { intent.resume() }
+        playback.reloadEngine(positionMs: position)
         publish(force: true)
     }
 
