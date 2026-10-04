@@ -26,6 +26,13 @@ interface MediaProvider {
      */
     suspend fun songsStored() {}
 
+    /**
+     * The roots the last [findSongs] couldn't read, as path prefixes each ending in a separator: a volume that isn't
+     * mounted, a folder whose access was lost. The import keeps the stored songs under them rather than deleting them as
+     * missing ([DeleteGuard]).
+     */
+    val unreadableRoots: Set<String> get() = emptySet()
+
     fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
 }
 

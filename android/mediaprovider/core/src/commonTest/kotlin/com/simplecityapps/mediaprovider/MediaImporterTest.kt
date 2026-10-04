@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlin.concurrent.Volatile
 import kotlin.concurrent.atomics.AtomicBoolean
@@ -446,6 +447,43 @@ class MediaImporterTest {
         provider.scans.load() shouldBe 1
     }
 
+    @Test
+    fun `a full import that would remove most of a source's songs keeps them until the next one finds them gone too`() = runBlocking<Unit> {
+        val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
+        songRepository.stored = songs
+        server.found = songs.take(5)
+        val importer = serverImporter()
+
+        importer.import()
+        songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
+
+        importer.import()
+        songRepository.deleted[server.type].orEmpty().map { song -> song.id } shouldBe (6L..30L).toList()
+    }
+
+    @Test
+    fun `a full import keeps the songs under a root the source couldn't read`() = runBlocking<Unit> {
+        songRepository.stored = listOf(song(id = 1, path = "jellyfin://library/a/1"), song(id = 2, path = "jellyfin://library/b/2"), song(id = 3))
+        server.found = listOf(song(id = 3))
+        server.unreadableRoots = setOf("jellyfin://library/a/")
+
+        serverImporter().import()
+
+        songRepository.deleted[server.type].orEmpty().map { song -> song.id } shouldBe listOf(2L)
+    }
+
+    /** An importer of [server] alone. */
+    private fun serverImporter() = MediaImporter(
+        strings = FakeMediaImportStrings,
+        songRepository = songRepository,
+        playlistStore = object : ImportedPlaylistStore {
+            override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
+        },
+        preferenceManager = preferences,
+        afterImport = {},
+        clock = clock
+    ).apply { mediaProviders += server }
+
     /** A server that records the time each song request asked from (null for every song) and finds no songs. */
     private class ServerProvider : IncrementalMediaProvider {
         override val type = MediaProviderType.Jellyfin
@@ -456,6 +494,8 @@ class MediaImporterTest {
         /** What it finds, or the failure it reports instead. */
         var found: List<Song> = emptyList()
         var failure: String? = null
+
+        override var unreadableRoots: Set<String> = emptySet()
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = songs(since = null)
 
@@ -511,8 +551,11 @@ class MediaImporterTest {
         const val IMPORTS = 8
     }
 
-    private fun song() = Song(
-        id = 1,
+    private fun song(
+        id: Long = 1,
+        path: String = "jellyfin://item/1"
+    ) = Song(
+        id = id,
         name = "Song",
         albumArtist = "Artist",
         artists = listOf("Artist"),
@@ -522,7 +565,7 @@ class MediaImporterTest {
         duration = 180_000,
         date = null,
         genres = emptyList(),
-        path = "jellyfin://item/1",
+        path = path,
         size = 0,
         mimeType = "Audio/*",
         lastModified = null,
@@ -564,6 +607,9 @@ class MediaImporterTest {
         /** The rows each [insertUpdateAndDelete] was asked to write. */
         val writes = mutableListOf<Int>()
 
+        /** The songs each provider's imports deleted. */
+        val deleted = mutableMapOf<MediaProviderType, List<Song>>()
+
         override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(stored)
 
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
@@ -585,6 +631,7 @@ class MediaImporterTest {
             mediaProviderType: MediaProviderType
         ): Triple<Int, Int, Int> {
             writes += inserts.size + updates.size + deletes.size
+            deleted[mediaProviderType] = deleted[mediaProviderType].orEmpty() + deletes
             return Triple(inserts.size, updates.size, deletes.size)
         }
 

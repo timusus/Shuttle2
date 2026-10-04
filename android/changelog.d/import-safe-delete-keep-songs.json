@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "A library scan no longer removes your songs, with their play counts and playlist places, when a storage card is out, folder access is lost or the scan fails part way.", "commits": [] }

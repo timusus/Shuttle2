@@ -62,6 +62,9 @@ class MediaImporter(
 
     val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
 
+    /** Holds back the deletes of a full import that look like a source failing rather than shrinking. */
+    private val deleteGuard = DeleteGuard()
+
     var importCount: Int = 0
 
     /**
@@ -270,8 +273,8 @@ class MediaImporter(
 
     /**
      * Fetches [mediaProvider]'s songs as [requested] says and stores them: a full listing replaces what's stored, removing
-     * what it no longer holds; an incremental one is stored over it, or is made full when nothing is stored. Once stored,
-     * the sync's start is noted for the next incremental sync to ask from.
+     * what it no longer holds but for what [deleteGuard] holds back; an incremental one is stored over it, or is made full
+     * when nothing is stored. Once stored, the sync's start is noted for the next incremental sync to ask from.
      */
     private fun importSongs(
         mediaProvider: MediaProvider,
@@ -310,11 +313,12 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
+                        val deletes = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes)
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
                                 updates = songDiff.updates,
-                                deletes = songDiff.deletes,
+                                deletes = deletes,
                                 mediaProviderType = mediaProvider.type
                             )
                         mediaProvider.songsStored()
@@ -346,6 +350,26 @@ class MediaImporter(
             }
         }
     }.flowOn(Dispatchers.IO)
+
+    /** Of [deletes], those [deleteGuard] lets [mediaProvider]'s import apply, logging what it held back. */
+    private fun guardDeletes(
+        mediaProvider: MediaProvider,
+        existingCount: Int,
+        foundCount: Int,
+        deletes: List<Song>
+    ): List<Song> {
+        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots)
+        if (decision.heldUnreadable > 0) {
+            logger.info { "Keeping ${decision.heldUnreadable} ${mediaProvider.type} songs under roots it couldn't read: ${mediaProvider.unreadableRoots}" }
+        }
+        if (decision.heldMassRemoval.isNotEmpty()) {
+            logger.warn {
+                "${mediaProvider.type} found $foundCount songs, which would remove ${decision.heldMassRemoval.size + decision.apply.size} of " +
+                    "its $existingCount; keeping ${decision.heldMassRemoval.size} until the next full import finds them gone too"
+            }
+        }
+        return decision.apply
+    }
 
     /**
      * Moves songs the provider stored under an old identity to their current path before the diff, so the diff updates
