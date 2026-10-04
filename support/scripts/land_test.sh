@@ -11,7 +11,7 @@ trap 'rm -rf "$TMP"' EXIT
 fails=0
 
 # Pull just the matcher functions out of land.sh (the script itself runs a landing when sourced).
-eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
+eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
 
 check() { # <name> <expected-rc> <cmd...>
   local name=$1 want=$2 rc=0; shift 2
@@ -93,6 +93,24 @@ check "failure_sig reads iOS failing tests" 0 test "$got" = "$want"
 [ "$got" = "$want" ] || diff <(echo "$want") <(echo "$got")
 check "new_failures: iOS failures also on main are pre-existing" 0 test -z "$(new_failures "$got" "$got")"
 check "new_failures: a new iOS test failure is new" 0 test -n "$(new_failures "$got" "$(printf '%s\n' "ios${T}FAILED" "ios${T}ios test LibraryListTests.songAndAlbumRowsDrawTheirArtwork()")")"
+
+# iOS test mapping (#857): changed shared sources also select tests that mention a type they declare.
+IOS_TESTS_MAX=15
+FX="$TMP/fx"; mkdir -p "$FX/ios/S2Tests" "$FX/ios/S2/Artwork" "$FX/shared/src/commonMain"
+printf 'import S2\nfinal class LibraryListTests { let a: Album }\n' > "$FX/ios/S2Tests/LibraryListTests.swift"
+printf 'final class OtherTests { let r = RemoteArtwork() }\n' > "$FX/ios/S2Tests/OtherTests.swift"
+printf 'final class UnrelatedTests {}\n' > "$FX/ios/S2Tests/UnrelatedTests.swift"
+printf 'package x\ndata class Album(val id: String)\nenum class Kind { A }\n' > "$FX/shared/src/commonMain/Album.kt"
+printf 'package x\nfun helper() = 1\n' > "$FX/shared/src/commonMain/Helpers.kt"
+printf 'struct RemoteArtwork {}\nextension Album {}\n' > "$FX/ios/S2/Artwork/RemoteArtwork.swift"
+ios_map() { (cd "$FX" && ios_tests_for "$@" | paste -sd, -); }
+check "ios map: shared model selects tests that mention its type" 0 test "$(ios_map shared/src/commonMain/Album.kt)" = "LibraryListTests"
+check "ios map: shared Swift helper selects tests by its declared types" 0 test "$(ios_map ios/S2/Artwork/RemoteArtwork.swift)" = "LibraryListTests,OtherTests"
+check "ios map: shared source declaring no type runs the whole target" 0 test "$(ios_map shared/src/commonMain/Helpers.kt)" = "--all"
+check "ios map: a deleted shared file falls back to its stem" 0 test "$(ios_map shared/src/commonMain/Gone.kt)" = ""
+check "ios map: Playback adds the package run" 0 test "$(ios_map shared/src/commonMain/Album.kt ios/Playback/X.swift)" = "LibraryListTests,--package"
+for i in $(seq 1 16); do printf 'final class T%dTests { let a: Album }\n' "$i" > "$FX/ios/S2Tests/T${i}Tests.swift"; done
+check "ios map: more than 15 mapped classes runs the whole target" 0 test "$(ios_map shared/src/commonMain/Album.kt)" = "--all"
 
 # verify_step (#829): a failed phase is recorded and the next one still runs.
 VERIFY_FAILED=0

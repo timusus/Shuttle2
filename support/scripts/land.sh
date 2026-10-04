@@ -45,6 +45,8 @@
 #                                 S2Tests/*Tests.swift named <stem>* or mentioning <stem> as a word
 #   shared/, android/domain|presentation|core .kt   the same word match on the stem (and, for
 #                                 *ViewModel, <name>UiState)
+#   (shared/ and ios/S2 sources also match every test mentioning a type the file declares, #857;
+#   more than 15 classes, or no declared type to match on, runs the whole S2Tests target: `--all`)
 #   ios/Playback/                 also `ios/scripts/test.sh --package`
 #   nothing mapped                build only, no simulator lease
 # The verify also runs `support/scripts/lint` (check only) first, so a format slip fails at landing (#827).
@@ -89,11 +91,21 @@ https_fallback() {
   echo "land.sh: SSH to origin failed, using HTTPS via gh for this run" >&2
 }
 
+# decl_names <file>: the type names a .kt or .swift file declares (class, interface, object, struct,
+# enum, protocol, typealias, actor, extension), one per line, unique. Empty when it declares none.
+decl_names() {
+  grep -E '^[[:space:]]*([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor|extension)[[:space:]]+[A-Z][A-Za-z0-9_]*' "$1" 2>/dev/null \
+    | sed -E 's/^[[:space:]]*([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor|extension)[[:space:]]+([A-Z][A-Za-z0-9_]*).*/\3/' | sort -u
+}
+
 # ios_tests_for <file>...: print the S2Tests classes (one per line, sorted, unique) that the
 # changed files map to, per the rule in the header, plus "--package" when ios/Playback changed.
-# Needs REPO_ROOT as the cwd.
-ios_tests_for() {
-  local f stem s t
+# Prints "--all" (plus "--package") instead of the classes for the whole S2Tests target: when more
+# than IOS_TESTS_MAX classes map, or a shared source that still exists declares no type to match on.
+# Needs REPO_ROOT as the cwd. ios_tests_raw prints the unfiltered matches (ios_tests_for folds them).
+IOS_TESTS_MAX=15
+ios_tests_raw() {
+  local f stem s t names
   for f in "$@"; do
     case "$f" in
       ios/S2Tests/*Tests.swift) [ -e "$f" ] && basename "${f%.swift}"; continue ;;
@@ -109,13 +121,34 @@ ios_tests_for() {
                [ -n "$s" ] && [ "$s" != "$stem" ] && stems+=("$s") ;;
       *.kt)    case "$stem" in *ViewModel) stems+=("${stem%ViewModel}UiState") ;; esac ;;
     esac
+    # Shared sources also select every test that mentions a type they declare (#857).
+    case "$f" in
+      ios/S2Tests/*) ;;
+      *) if [ -e "$f" ]; then
+           names=$(decl_names "$f")
+           if [ -z "$names" ]; then echo "--all"; continue; fi
+           for s in $names; do stems+=("$s"); done
+         fi ;;
+    esac
     for s in "${stems[@]}"; do
       case "$f" in
         *.swift) for t in ios/S2Tests/"$s"*Tests.swift; do [ -e "$t" ] && basename "${t%.swift}"; done ;;
       esac
       for t in $(grep -lw -- "$s" ios/S2Tests/*Tests.swift 2>/dev/null); do basename "${t%.swift}"; done
     done
-  done | sort -u
+  done
+}
+
+ios_tests_for() {
+  local all=0 pkg=0 out
+  out=$(ios_tests_raw "$@" | sort -u)
+  case "$out" in *--package*) pkg=1 ;; esac
+  case "$out" in *--all*) all=1 ;; esac
+  out=$(printf '%s\n' "$out" | grep -v -e '^--' -e '^$')
+  [ -n "$out" ] && [ "$(printf '%s\n' "$out" | wc -l)" -gt "$IOS_TESTS_MAX" ] && all=1
+  if [ "$all" = 1 ]; then echo "--all"; elif [ -n "$out" ]; then printf '%s\n' "$out"; fi
+  [ "$pkg" = 1 ] && echo "--package"
+  return 0
 }
 
 # Wall-clock limit for the verify phases once they hold machine-lock; overridable with LAND_VERIFY_TIMEOUT.
@@ -197,15 +230,22 @@ verify_step() {  # <phase> <what failed> <cmd>...
 # verify_ios [<S2Tests class>|--package ...]: the light iOS check. Explicit `|| return`, not `set -e`:
 # verify_step runs it in an && context, where set -e is ignored (it was, and iOS failures passed).
 verify_ios() {
-  local rc=0 c classes=() pkg=0 only=()
+  local rc=0 c classes=() pkg=0 all=0 only=()
   for c in "$@"; do
-    if [ "$c" = "--package" ]; then pkg=1; else classes+=("$c"); fi
+    case "$c" in
+      --package) pkg=1 ;;
+      --all) all=1 ;;
+      *) classes+=("$c") ;;
+    esac
   done
   (
     cd ios || exit 1
     xcodegen -q || exit 1
     scripts/build-framework.sh || exit 1
-    if [ "${#classes[@]}" -gt 0 ]; then
+    if [ "$all" = 1 ]; then
+      echo "verify: ios whole S2Tests target (many classes map, or a shared source declares no type to match)"
+      S2_SIM_HOLDER=land scripts/test.sh || exit 1
+    elif [ "${#classes[@]}" -gt 0 ]; then
       echo "verify: ios test classes: ${classes[*]}"
       for c in "${classes[@]}"; do only+=("-only-testing:S2Tests/$c"); done
       S2_SIM_HOLDER=land scripts/test.sh "${only[@]}" || exit 1
