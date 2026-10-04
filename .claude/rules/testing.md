@@ -32,9 +32,11 @@ Rules, in order:
 - A change under `buildSrc/`, `gradle/` (including `gradle/libs.versions.toml`), or the root
   `build.gradle*`, `settings.gradle*` or `gradle.properties` runs the full suite instead of mapping by
   module, since it can affect any module's classpath or task graph.
-- `docs/design/**` or any changed file containing `@Composable` also runs
-  `:android:app:verifyRoborazziDebug` (plus designsystem's on a full-suite run), in the same Gradle
-  invocation as the tests so each suite runs once, in verify mode (#552). Other paths outside
+- `docs/design/**` or any changed file containing `@Composable` also runs `verifyRoborazziDebug`
+  for `:android:app` (whose screenshots render the other modules' components) and for every changed
+  module that applies the Roborazzi plugin (detected from its build file — today `:android:app` and
+  `:android:designsystem`; all such modules on a full-suite run), in the same Gradle invocation as
+  that module's tests so each suite runs once, in verify mode (#552, #831). Other paths outside
   `android/` (docs, scripts) run nothing.
 
 ## `unit-test --changed-tests`
