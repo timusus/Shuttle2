@@ -131,6 +131,20 @@ class GeneralPreferenceManagerTest {
     }
 
     @Test
+    fun `held deletes are saved per source as sorted base-36 gaps, and an unreadable value holds none`() {
+        preferences.setHeldDeletes("Shuttle", setOf(40L, 3L, 1_000_000L))
+        store.getString("held_deletes_Shuttle", null) shouldBe "3,11,lfko"
+        preferences.heldDeletes("Shuttle") shouldBe setOf(3L, 40L, 1_000_000L)
+        preferences.heldDeletes("Jellyfin") shouldBe emptySet()
+
+        preferences.setHeldDeletes("Shuttle", emptySet())
+        store.contains("held_deletes_Shuttle") shouldBe false
+
+        store.edit { putString("held_deletes_Shuttle", "3,!,4") }
+        preferences.heldDeletes("Shuttle") shouldBe emptySet()
+    }
+
+    @Test
     fun `saved tabs gain the tabs added since and unknown enabled tabs are dropped`() {
         val saved = GeneralPreferenceManager(
             InMemoryKeyValueStore(

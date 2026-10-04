@@ -452,13 +452,35 @@ class MediaImporterTest {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.take(5)
-        val importer = serverImporter()
 
-        importer.import()
+        serverImporter().import()
         songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
 
-        importer.import()
+        // The next import runs in a new process, as the periodic one usually does: only the preferences carry over
+        serverImporter().import()
         songRepository.deleted[server.type].orEmpty().map { song -> song.id } shouldBe (6L..30L).toList()
+    }
+
+    @Test
+    fun `a full sync that holds back a mass removal makes the next sync full, to apply it`() = runBlocking<Unit> {
+        val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
+        songRepository.stored = songs
+        server.found = songs.take(5)
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 8.days)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 8.days)
+        val importer = serverImporter()
+
+        importer.sync(SyncTrigger.Periodic)
+        songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
+        preferences.lastSyncStart(server.type.name) shouldBe clock.time
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
+
+        clock.time += 1.hours
+        importer.sync(SyncTrigger.Foreground)
+        server.requests shouldBe listOf(null, null)
+        songRepository.deleted[server.type].orEmpty().map { song -> song.id } shouldBe (6L..30L).toList()
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time
     }
 
     @Test

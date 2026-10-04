@@ -63,7 +63,7 @@ class MediaImporter(
     val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
 
     /** Holds back the deletes of a full import that look like a source failing rather than shrinking. */
-    private val deleteGuard = DeleteGuard()
+    private val deleteGuard = DeleteGuard(preferenceManager)
 
     var importCount: Int = 0
 
@@ -313,20 +313,24 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
-                        val deletes = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes)
+                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes)
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
                                 updates = songDiff.updates,
-                                deletes = deletes,
+                                deletes = guarded.apply,
                                 mediaProviderType = mediaProvider.type
                             )
                         mediaProvider.songsStored()
                         preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
-                        if (plan == SyncPlan.Full) {
+                        if (plan == SyncPlan.Full && guarded.heldMassRemoval.isEmpty()) {
                             preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
                             // Every song read again, so this source's songs hold every tag this build reads
                             preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
+                        } else if (plan == SyncPlan.Full) {
+                            // A held mass removal waits on the next full sync, so that's the next sync rather than a week on.
+                            // Its songs weren't read, so MediaStore, finding them unchanged after all, reads their tags again.
+                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
                         }
                         emit(
                             FlowEvent.Success(
@@ -351,13 +355,13 @@ class MediaImporter(
         }
     }.flowOn(Dispatchers.IO)
 
-    /** Of [deletes], those [deleteGuard] lets [mediaProvider]'s import apply, logging what it held back. */
+    /** Which of [deletes] [deleteGuard] lets [mediaProvider]'s import apply, logging what it held back. */
     private fun guardDeletes(
         mediaProvider: MediaProvider,
         existingCount: Int,
         foundCount: Int,
         deletes: List<Song>
-    ): List<Song> {
+    ): DeleteGuard.Decision {
         val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots)
         if (decision.heldUnreadable > 0) {
             logger.info { "Keeping ${decision.heldUnreadable} ${mediaProvider.type} songs under roots it couldn't read: ${mediaProvider.unreadableRoots}" }
@@ -368,7 +372,7 @@ class MediaImporter(
                     "its $existingCount; keeping ${decision.heldMassRemoval.size} until the next full import finds them gone too"
             }
         }
-        return decision.apply
+        return decision
     }
 
     /**

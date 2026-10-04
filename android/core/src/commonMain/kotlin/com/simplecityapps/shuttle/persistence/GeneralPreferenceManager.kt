@@ -197,6 +197,33 @@ class GeneralPreferenceManager @Inject constructor(
     ) = store.putInstant("last_full_sync_start_$source", start)
 
     /**
+     * The ids of the songs of [source] (a media provider type's name) its last full import held back as a mass removal
+     * (`DeleteGuard`), which the next full import deletes if it finds them gone too. Kept across restarts: that import
+     * usually runs in another process. Stored sorted, as base-36 gaps between ids, so a large removal stays small.
+     */
+    fun heldDeletes(source: String): Set<Long> {
+        val gaps = store.getString(heldDeletesKey(source), null)?.split(",")?.map { gap -> gap.toLongOrNull(36) } ?: return emptySet()
+        // Unreadable, it holds nothing: a mass removal is held one more pass rather than a wrong song deleted
+        if (gaps.any { it == null }) return emptySet()
+        return gaps.filterNotNull().runningReduce(Long::plus).toSet()
+    }
+
+    fun setHeldDeletes(
+        source: String,
+        songIds: Set<Long>
+    ) {
+        store.edit {
+            if (songIds.isEmpty()) {
+                remove(heldDeletesKey(source))
+            } else {
+                putString(heldDeletesKey(source), (listOf(0L) + songIds.sorted()).zipWithNext { previous, id -> (id - previous).toString(36) }.joinToString(","))
+            }
+        }
+    }
+
+    private fun heldDeletesKey(source: String) = "held_deletes_$source"
+
+    /**
      * The album key version the stored album keys (play history, pinned downloads) were last moved to (#637): 0 before
      * the album identity rule, so they're moved once, after the first import that leaves every source's tags current.
      */

@@ -3,11 +3,16 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.mediaprovider.DeleteGuard.Companion.decide
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class DeleteGuardTest {
+    private val store = InMemoryKeyValueStore()
+    private val preferences = GeneralPreferenceManager(store)
+
     @Test
     fun `a few songs gone are deleted`() {
         val deletes = songs(1L..3L)
@@ -77,7 +82,7 @@ class DeleteGuardTest {
 
     @Test
     fun `the guard holds a mass removal for one pass per source`() {
-        val guard = DeleteGuard()
+        val guard = DeleteGuard(preferences)
         val deletes = songs(1L..30L)
 
         guard.deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
@@ -89,13 +94,22 @@ class DeleteGuardTest {
 
     @Test
     fun `a pass that removes nothing much forgets what the last one held back`() {
-        val guard = DeleteGuard()
+        val guard = DeleteGuard(preferences)
         val deletes = songs(1L..30L)
 
         guard.deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet())
         guard.deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 40, deletes = emptyList(), unreadableRoots = emptySet())
 
         guard.deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a held mass removal outlives the guard, and the next guard's pass applies it`() {
+        val deletes = songs(1L..30L)
+        DeleteGuard(preferences).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
+
+        // A new process: only the preferences are left
+        DeleteGuard(GeneralPreferenceManager(store)).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
     }
 
     private fun songs(

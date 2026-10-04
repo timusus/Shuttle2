@@ -2,8 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 
 /**
  * Which of a full import's deletes [MediaImporter] applies. Deleting a song takes its play history and playlist places
@@ -13,10 +12,10 @@ import kotlinx.coroutines.flow.update
  *   of every one when it found none. It's held for one pass: the next full pass that finds the same songs gone removes
  *   them, so a library the user really did shrink catches up an import later, while a source that failed once doesn't.
  */
-class DeleteGuard {
-    /** The ids of the songs each source's last full pass held back as a mass removal. */
-    private val held = MutableStateFlow<Map<MediaProviderType, Set<Long>>>(emptyMap())
-
+class DeleteGuard(
+    /** Where the songs each source's last full pass held back as a mass removal are kept, across restarts. */
+    private val preferenceManager: GeneralPreferenceManager
+) {
     /** [decide]s which of [type]'s [deletes] to apply, and remembers the mass removal it held back for the next pass. */
     fun deletesToApply(
         type: MediaProviderType,
@@ -25,11 +24,8 @@ class DeleteGuard {
         deletes: List<Song>,
         unreadableRoots: Set<String>
     ): Decision {
-        lateinit var decision: Decision
-        held.update { held ->
-            decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = held[type].orEmpty())
-            held + (type to decision.heldMassRemoval.map { song -> song.id }.toSet())
-        }
+        val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = preferenceManager.heldDeletes(type.name))
+        preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
         return decision
     }
 
