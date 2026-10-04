@@ -69,7 +69,7 @@ class SettingsScreenTest {
     fun `the root shows the equalizer on`() {
         robot.setRootContent(SettingsScenarios.equalizerOn)
 
-        robot.assertDisplayed("Equalizer on")
+        robot.assertDisplayed("Equalizer · Bass boost")
     }
 
     @Test
@@ -314,5 +314,11 @@ class SettingsScreenTest {
         robot.tapText("Equalizer")
 
         robot.openedLinks shouldBe listOf(SettingsLink.Equalizer)
+    }
+
+    @Test
+    fun `the playback page's Equalizer row shows the preset while it is on`() {
+        robot.setDestinationContent(SettingsDestination.PlaybackAndSound, uiState = SettingsScenarios.equalizerOn)
+        robot.assertDisplayed("Bass boost")
     }
 }

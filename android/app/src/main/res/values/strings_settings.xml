@@ -199,12 +199,10 @@
     <string name="pref_streaming_quality_128">128 kbps</string>
     <!-- Settings: Name of the amber accent colour -->
     <string name="theme_accent_entry_amber">Amber</string>
-    <!-- Settings: a row's summary when the switch it leads to is on -->
-    <string name="settings_state_on">On</string>
     <!-- Settings: a row's summary when the switch it leads to is off -->
     <string name="settings_state_off">Off</string>
-    <!-- Settings root: summary of Playback and sound while the equalizer is on -->
-    <string name="settings_playback_summary_equalizer_on">Equalizer on</string>
+    <!-- Settings root: summary of Playback and sound while the equalizer is on; %1$s is the preset's name, such as Bass Boost -->
+    <string name="settings_playback_summary_equalizer_preset">Equalizer · %1$s</string>
     <!-- Settings root: summary of Playback and sound while the equalizer is off -->
     <string name="settings_playback_summary_equalizer_off">Equalizer off</string>
     <!-- Settings: Title of the row showing the app's version number, on the About screen -->

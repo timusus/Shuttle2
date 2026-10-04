@@ -6,7 +6,13 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class KeyValueEqualizerPresetStoreTest {
     private val keyValues = InMemoryKeyValueStore()
     private val store = KeyValueEqualizerPresetStore(keyValues)
@@ -30,6 +36,17 @@ class KeyValueEqualizerPresetStoreTest {
 
         keyValues.getString("preset_name", null) shouldBe "Bass Boost"
         KeyValueEqualizerPresetStore(keyValues).preset shouldBe Equalizer.Presets.bassBoost
+    }
+
+    @Test
+    fun observingThePresetEmitsItNowAndAgainWhenItChanges() = runTest {
+        val seen = mutableListOf<Equalizer.Presets.Preset>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { store.observePreset().toList(seen) }
+
+        store.preset = Equalizer.Presets.bassBoost
+        job.cancel()
+
+        seen shouldBe listOf(Equalizer.Presets.custom, Equalizer.Presets.bassBoost)
     }
 
     @Test

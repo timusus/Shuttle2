@@ -80,6 +80,9 @@
 "dsp_replay_gain_album" = "Album Gain";
 "dsp_replay_gain_off" = "Off";
 "dsp_preamp" = "Preamp";
+"pref_crossfade_title" = "Crossfade";
+"settings_crossfade_seconds" = "%1$d s";
+"settings_state_off" = "Off";
 "pref_report_playback_title" = "Report playback to server";
 "pref_report_playback_summary" = "Show what you're playing on your Jellyfin, Emby or Plex server, and count plays in its history";
 "pref_download_wifi_only_title" = "Download on Wi-Fi only";

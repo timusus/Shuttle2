@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -19,7 +20,7 @@ object SettingsScenarios {
         )
     )
 
-    val equalizerOn = SettingsUiState(values = mapOf(EqualizerSettings.Enabled.key to true))
+    val equalizerOn = SettingsUiState(values = mapOf(EqualizerSettings.Enabled.key to true), equalizerPreset = Equalizer.Presets.bassBoost)
 
     val dynamicColourOn = SettingsUiState(values = mapOf(AppearanceSettings.DynamicColour.key to true))
 

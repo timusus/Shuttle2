@@ -4,6 +4,9 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.putString
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
@@ -33,6 +36,8 @@ class KeyValueEqualizerPresetStore(
                 json.decodeFromString(equalizerBandsSerializer, bands)
             }
         }
+
+    override fun observePreset(): Flow<Equalizer.Presets.Preset> = store.changes(PresetKey).map { preset }.distinctUntilChanged()
 
     companion object {
         const val PresetKey = "preset_name"

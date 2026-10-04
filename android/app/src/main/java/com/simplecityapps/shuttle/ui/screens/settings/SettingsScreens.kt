@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import android.os.Build
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -177,9 +176,11 @@ private fun destinationSummary(
     SettingsDestination.Library -> choiceLabel(destination, uiState, LibrarySettings.RescanFrequency)
         ?.let { stringResource(R.string.settings_library_summary_rescan, it) }
 
-    SettingsDestination.PlaybackAndSound -> stringResource(
-        if (uiState.value(EqualizerSettings.Enabled)) R.string.settings_playback_summary_equalizer_on else R.string.settings_playback_summary_equalizer_off
-    )
+    SettingsDestination.PlaybackAndSound -> if (uiState.value(EqualizerSettings.Enabled)) {
+        stringResource(R.string.settings_playback_summary_equalizer_preset, stringResource(uiState.equalizerSummary))
+    } else {
+        stringResource(R.string.settings_playback_summary_equalizer_off)
+    }
 
     else -> null
 }
@@ -364,7 +365,7 @@ private fun SettingRow(
         is SettingItem.Navigate -> LinkSetting(
             title = stringResource(item.title),
             onClick = { onOpenLink(item.target) },
-            summary = item.stateSetting?.let { stringResource(onOffLabel(uiState.value(it))) } ?: summary,
+            summary = if (item.target == SettingsLink.Equalizer) stringResource(uiState.equalizerSummary) else summary,
             enabled = enabled,
             shapes = shapes
         )
@@ -378,9 +379,6 @@ private fun SettingRow(
         )
     }
 }
-
-@StringRes
-private fun onOffLabel(on: Boolean): Int = if (on) R.string.settings_state_on else R.string.settings_state_off
 
 @Composable
 private fun choiceValueLabel(

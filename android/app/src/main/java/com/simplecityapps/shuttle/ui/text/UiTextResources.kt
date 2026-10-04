@@ -113,6 +113,7 @@ val StringKey.resId: Int
         StringKey.DSP_PREAMP -> R.string.dsp_preamp
         StringKey.PREF_CROSSFADE_TITLE -> R.string.pref_crossfade_title
         StringKey.SETTINGS_CROSSFADE_SECONDS -> R.string.settings_crossfade_seconds
+        StringKey.SETTINGS_STATE_OFF -> R.string.settings_state_off
         StringKey.PREF_REPORT_PLAYBACK_TITLE -> R.string.pref_report_playback_title
         StringKey.PREF_REPORT_PLAYBACK_SUMMARY -> R.string.pref_report_playback_summary
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE -> R.string.pref_download_wifi_only_title

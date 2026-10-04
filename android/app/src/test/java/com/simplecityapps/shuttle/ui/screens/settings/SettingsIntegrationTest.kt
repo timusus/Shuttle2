@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
@@ -51,6 +52,7 @@ class SettingsIntegrationTest {
         SaveSetting(store),
         ReadLastScanDate(preferences),
         ObserveLastScanDate(preferences),
+        KeyValueEqualizerPresetStore(InMemoryKeyValueStore()),
         effects,
         AndroidSettingsCatalog,
         backupFlow

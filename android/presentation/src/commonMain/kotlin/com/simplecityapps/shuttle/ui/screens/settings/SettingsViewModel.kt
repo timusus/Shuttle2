@@ -2,7 +2,10 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -10,9 +13,11 @@ import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupFlow
+import com.simplecityapps.shuttle.ui.screens.settings.equalizer.nameKey
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -32,10 +37,15 @@ import kotlinx.coroutines.launch
 data class SettingsUiState(
     val values: Map<String, Any?> = emptyMap(),
     val lastScanDate: Instant? = null,
+    val equalizerPreset: Equalizer.Presets.Preset = Equalizer.Presets.custom,
     val events: List<PendingEvent<SettingsUiEvent>> = emptyList()
 ) {
     @Suppress("UNCHECKED_CAST")
     fun <T> value(setting: Setting<T>): T = if (values.containsKey(setting.key)) values[setting.key] as T else setting.default
+
+    /** What the Equalizer row shows: Off, or the preset in use. */
+    val equalizerSummary: StringKey
+        get() = if (value(EqualizerSettings.Enabled)) equalizerPreset.nameKey else StringKey.SETTINGS_STATE_OFF
 }
 
 sealed interface SettingsUiEvent {
@@ -76,6 +86,7 @@ class SettingsViewModel @Inject constructor(
     private val saveSetting: SaveSetting,
     readLastScanDate: ReadLastScanDate,
     observeLastScanDate: ObserveLastScanDate,
+    private val equalizerPresetStore: EqualizerPresetStore,
     private val effects: SettingsEffects,
     catalog: SettingsCatalog,
     private val backupFlow: LibraryBackupFlow
@@ -87,12 +98,13 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(catalogSettings.map { setting -> observeSetting(setting).map { setting.key to it } }) { it.toMap() },
         observeLastScanDate(),
+        equalizerPresetStore.observePreset(),
         events.flow
-    ) { values, lastScan, events -> SettingsUiState(values = values, lastScanDate = lastScan, events = events) }
+    ) { values, lastScan, preset, events -> SettingsUiState(values = values, lastScanDate = lastScan, equalizerPreset = preset, events = events) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate())
+            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate(), equalizerPreset = equalizerPresetStore.preset)
         )
 
     private val sliderEffects = mutableMapOf<String, Job>()

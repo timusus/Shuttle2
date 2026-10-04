@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -20,6 +22,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatal
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.text.StringKey
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -50,7 +53,7 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), effects, AndroidSettingsCatalog, backupFlow)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), KeyValueEqualizerPresetStore(prefs), effects, AndroidSettingsCatalog, backupFlow)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
@@ -236,6 +239,29 @@ class SettingsViewModelTest {
         store.preference(EqualizerSettings.Enabled).value = true
 
         viewModel().uiState.value.value(EqualizerSettings.Enabled) shouldBe true
+    }
+
+    @Test
+    fun `the Equalizer summary is Off while it is off, whatever the preset`() {
+        KeyValueEqualizerPresetStore(prefs).preset = Equalizer.Presets.bassBoost
+
+        viewModel().uiState.value.equalizerSummary shouldBe StringKey.SETTINGS_STATE_OFF
+    }
+
+    @Test
+    fun `the Equalizer summary is the preset's name while it is on, and follows a new preset`() = runTest {
+        store.preference(EqualizerSettings.Enabled).value = true
+        val presets = KeyValueEqualizerPresetStore(prefs)
+        presets.preset = Equalizer.Presets.bassBoost
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
+        viewModel.uiState.value.equalizerSummary shouldBe StringKey.EQ_PRESET_BASS_BOOST
+
+        presets.preset = Equalizer.Presets.custom
+        runCurrent()
+
+        viewModel.uiState.value.equalizerSummary shouldBe StringKey.EQ_PRESET_CUSTOM
     }
 
     private fun TestScope.events(viewModel: SettingsViewModel) = viewModel.uiState.value.events.map { it.value }
