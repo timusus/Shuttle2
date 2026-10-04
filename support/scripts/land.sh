@@ -251,7 +251,9 @@ verify_ios() {
     # Every KMP module's commonTest on the Kotlin/Native simulator target (#821): names and runtime
     # behaviour the JVM run can't catch. Incremental, so a no-op for modules the batch didn't touch.
     echo "verify: ios KMP commonTest (iosSimulatorArm64Test)"
-    (cd .. && ./gradlew iosSimulatorArm64Test -q) || exit 1
+    # On the leased simulator (released below), not one the Kotlin/Native task boots outside the pool.
+    udid="$(S2_SIM_HOLDER=land scripts/lease-sim.sh)" || udid=""
+    (cd .. && ./gradlew iosSimulatorArm64Test -q ${udid:+-Ps2.iosSimulatorUdid="$udid"}) || exit 1
     if [ "$all" = 1 ]; then
       echo "verify: ios whole S2Tests target (many classes map, or a shared source declares no type to match)"
       S2_SIM_HOLDER=land scripts/test.sh || exit 1

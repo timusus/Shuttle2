@@ -65,10 +65,15 @@ if [ "${1:-}" = "--steps" ]; then
   step "ios: framework build"
   (cd ios && xcodegen -q && scripts/build-framework.sh)
   step "ios: KMP commonTest (iosSimulatorArm64Test)"
-  ./gradlew iosSimulatorArm64Test
-  step "ios: full test.sh"
+  # Lease the pool's simulator (held through the test.sh step below, released after it) instead of letting the
+  # Kotlin/Native task boot its own.
+  udid="$(S2_SIM_HOLDER=full-verify ios/scripts/lease-sim.sh)" || udid=""
   rc=0
-  (cd ios && S2_SIM_HOLDER=full-verify scripts/test.sh) || rc=$?
+  ./gradlew iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"} || rc=$?
+  if [ "$rc" -eq 0 ]; then
+    step "ios: full test.sh"
+    (cd ios && S2_SIM_HOLDER=full-verify scripts/test.sh) || rc=$?
+  fi
   CLAUDE_CODE_SESSION_ID="$(S2_SIM_HOLDER=full-verify ios/scripts/lease-sim.sh --holder)" \
     "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release || true
   [ "$rc" -eq 0 ] || exit "$rc"

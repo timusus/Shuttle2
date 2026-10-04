@@ -47,7 +47,9 @@ tasks.register<Test>("testDebugUnitTest") {
 
 // Kotlin/Native bundles no test resources, so iOS simulator tests read commonTest's from the source tree, which the
 // simulator shares with the host (FixtureServer does). simctl hands a SIMCTL_CHILD_ variable to the test process
-// without the prefix.
+// without the prefix. -Ps2.iosSimulatorUdid=<udid> runs them on that simulator (the landing and full verify pass
+// their leased one, so the shared pool stays the only thing that boots simulators) instead of the task's own pick.
 tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest>().configureEach {
+    providers.gradleProperty("s2.iosSimulatorUdid").orNull?.let { device.set(it) }
     environment("SIMCTL_CHILD_S2_TEST_RESOURCES", layout.projectDirectory.dir("src/commonTest/resources").asFile.absolutePath)
 }
