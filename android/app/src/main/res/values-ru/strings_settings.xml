@@ -38,6 +38,53 @@
     <string name="pref_media_rescan_title">Повторное сканирование</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">Повторно просканируйте выбранных медиа-провайдеров</string>
+    <!-- Settings: Title for the category holding library backup and restore -->
+    <string name="pref_category_title_backup">Резервная копия</string>
+    <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_title">Создать резервную копию библиотеки</string>
+    <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_summary">Сохранить счётчики прослушиваний, избранное, исключённые композиции, плейлисты и настройки в файл</string>
+    <!-- Settings: Title for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_title">Восстановить резервную копию библиотеки</string>
+    <!-- Settings: Description for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_summary">Объединить резервную копию с библиотекой и заменить настройки теми, что в ней</string>
+    <!-- Settings: Snackbar shown once a library backup has been saved to a file -->
+    <string name="settings_backup_export_saved">Резервная копия библиотеки сохранена</string>
+    <!-- Settings: Snackbar shown when saving a library backup fails -->
+    <string name="settings_backup_export_failed">Не удалось создать резервную копию библиотеки</string>
+    <!-- Settings: Snackbar shown when reading a library backup file fails -->
+    <string name="settings_backup_import_failed">Не удалось прочитать файл резервной копии</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$s is the songs matched count (settings_backup_import_songs), %2$s the playlists added or updated count (settings_backup_import_playlists) -->
+    <string name="settings_backup_import_done">Восстановление завершено: %1$s, %2$s</string>
+    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$s is the songs matched count, %2$s the playlists count, %3$s the backup songs not found count -->
+    <string name="settings_backup_import_done_unmatched">Восстановление завершено: %1$s, %2$s; %3$s</string>
+    <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
+    <string name="settings_backup_import_nothing">В этой резервной копии нет ничего, что совпало бы с вашей библиотекой</string>
+    <!-- Settings: Snackbar shown when a library backup restore restored the backup's settings but matched no songs and added no playlists -->
+    <string name="settings_backup_import_settings_only">Настройки восстановлены; в этой копии нет песен или плейлистов, совпавших с вашей библиотекой</string>
+    <!-- Settings: Snackbar summarising a library backup restore that also restored the backup's settings; %1$s is the songs and playlists summary (settings_backup_import_done or settings_backup_import_done_unmatched) -->
+    <string name="settings_backup_import_with_settings">%1$s; настройки восстановлены</string>
+    <!-- Settings: Count of backup songs that matched the library during a restore -->
+    <plurals name="settings_backup_import_songs">
+        <item quantity="one">Совпала %1$d композиция</item>
+        <item quantity="few">Совпало %1$d композиции</item>
+        <item quantity="many">Совпало %1$d композиций</item>
+        <item quantity="other">Совпало %1$d композиций</item>
+    </plurals>
+    <!-- Settings: Count of playlists added or updated during a restore -->
+    <plurals name="settings_backup_import_playlists">
+        <item quantity="one">Добавлен или обновлён %1$d плейлист</item>
+        <item quantity="few">Добавлено или обновлено %1$d плейлиста</item>
+        <item quantity="many">Добавлено или обновлено %1$d плейлистов</item>
+        <item quantity="other">Добавлено или обновлено %1$d плейлистов</item>
+    </plurals>
+    <!-- Settings: Count of backup songs not found in the library during a restore -->
+    <plurals name="settings_backup_import_unmatched">
+        <item quantity="one">Не найдена %1$d композиция</item>
+        <item quantity="few">Не найдено %1$d композиции</item>
+        <item quantity="many">Не найдено %1$d композиций</item>
+        <item quantity="other">Не найдено %1$d композиций</item>
+    </plurals>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Исключено</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->

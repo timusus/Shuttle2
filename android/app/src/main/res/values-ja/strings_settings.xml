@@ -38,6 +38,44 @@
     <string name="pref_media_rescan_title">再スキャン</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">選択されているメディアプロバイダーを再スキャンします</string>
+    <!-- Settings: Title for the category holding library backup and restore -->
+    <string name="pref_category_title_backup">バックアップ</string>
+    <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_title">ライブラリをバックアップ</string>
+    <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_summary">再生回数、お気に入り、除外項目、プレイリスト、設定をファイルに保存します</string>
+    <!-- Settings: Title for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_title">ライブラリのバックアップを復元</string>
+    <!-- Settings: Description for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_summary">バックアップをライブラリに統合し、設定をバックアップの内容に置き換えます</string>
+    <!-- Settings: Snackbar shown once a library backup has been saved to a file -->
+    <string name="settings_backup_export_saved">ライブラリのバックアップを保存しました</string>
+    <!-- Settings: Snackbar shown when saving a library backup fails -->
+    <string name="settings_backup_export_failed">ライブラリのバックアップに失敗しました</string>
+    <!-- Settings: Snackbar shown when reading a library backup file fails -->
+    <string name="settings_backup_import_failed">そのバックアップファイルを読み込めませんでした</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$s is the songs matched count (settings_backup_import_songs), %2$s the playlists added or updated count (settings_backup_import_playlists) -->
+    <string name="settings_backup_import_done">復元が完了しました: %1$s、%2$s</string>
+    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$s is the songs matched count, %2$s the playlists count, %3$s the backup songs not found count -->
+    <string name="settings_backup_import_done_unmatched">復元が完了しました: %1$s、%2$s、%3$s</string>
+    <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
+    <string name="settings_backup_import_nothing">このバックアップでライブラリに一致した項目はありません</string>
+    <!-- Settings: Snackbar shown when a library backup restore restored the backup's settings but matched no songs and added no playlists -->
+    <string name="settings_backup_import_settings_only">設定を復元しました。このバックアップでライブラリに一致した曲やプレイリストはありません</string>
+    <!-- Settings: Snackbar summarising a library backup restore that also restored the backup's settings; %1$s is the songs and playlists summary (settings_backup_import_done or settings_backup_import_done_unmatched) -->
+    <string name="settings_backup_import_with_settings">%1$s。設定を復元しました</string>
+    <!-- Settings: Count of backup songs that matched the library during a restore -->
+    <plurals name="settings_backup_import_songs">
+        <item quantity="other">%1$d 曲が一致</item>
+    </plurals>
+    <!-- Settings: Count of playlists added or updated during a restore -->
+    <plurals name="settings_backup_import_playlists">
+        <item quantity="other">%1$d 件のプレイリストを追加または更新</item>
+    </plurals>
+    <!-- Settings: Count of backup songs not found in the library during a restore -->
+    <plurals name="settings_backup_import_unmatched">
+        <item quantity="other">%1$d 曲が見つかりませんでした</item>
+    </plurals>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">非表示</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->

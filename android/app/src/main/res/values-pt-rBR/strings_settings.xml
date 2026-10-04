@@ -38,6 +38,47 @@
     <string name="pref_media_rescan_title">Verificar novamente</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">Verifique novamente os provedores de mídia selecionados</string>
+    <!-- Settings: Title for the category holding library backup and restore -->
+    <string name="pref_category_title_backup">Backup</string>
+    <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_title">Fazer backup da biblioteca</string>
+    <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_summary">Salva contagens de reprodução, favoritos, exclusões, playlists e suas configurações em um arquivo</string>
+    <!-- Settings: Title for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_title">Restaurar backup da biblioteca</string>
+    <!-- Settings: Description for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_summary">Combina um backup com sua biblioteca e substitui suas configurações pelas que ele contém</string>
+    <!-- Settings: Snackbar shown once a library backup has been saved to a file -->
+    <string name="settings_backup_export_saved">Backup da biblioteca salvo</string>
+    <!-- Settings: Snackbar shown when saving a library backup fails -->
+    <string name="settings_backup_export_failed">Falha ao fazer backup da biblioteca</string>
+    <!-- Settings: Snackbar shown when reading a library backup file fails -->
+    <string name="settings_backup_import_failed">Não foi possível ler esse arquivo de backup</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$s is the songs matched count (settings_backup_import_songs), %2$s the playlists added or updated count (settings_backup_import_playlists) -->
+    <string name="settings_backup_import_done">Restauração concluída: %1$s, %2$s</string>
+    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$s is the songs matched count, %2$s the playlists count, %3$s the backup songs not found count -->
+    <string name="settings_backup_import_done_unmatched">Restauração concluída: %1$s, %2$s; %3$s</string>
+    <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
+    <string name="settings_backup_import_nothing">Nada neste backup correspondeu à sua biblioteca</string>
+    <!-- Settings: Snackbar shown when a library backup restore restored the backup's settings but matched no songs and added no playlists -->
+    <string name="settings_backup_import_settings_only">Configurações restauradas; nenhuma música ou playlist deste backup correspondeu à sua biblioteca</string>
+    <!-- Settings: Snackbar summarising a library backup restore that also restored the backup's settings; %1$s is the songs and playlists summary (settings_backup_import_done or settings_backup_import_done_unmatched) -->
+    <string name="settings_backup_import_with_settings">%1$s; configurações restauradas</string>
+    <!-- Settings: Count of backup songs that matched the library during a restore -->
+    <plurals name="settings_backup_import_songs">
+        <item quantity="one">%1$d música encontrada</item>
+        <item quantity="other">%1$d músicas encontradas</item>
+    </plurals>
+    <!-- Settings: Count of playlists added or updated during a restore -->
+    <plurals name="settings_backup_import_playlists">
+        <item quantity="one">%1$d playlist adicionada ou atualizada</item>
+        <item quantity="other">%1$d playlists adicionadas ou atualizadas</item>
+    </plurals>
+    <!-- Settings: Count of backup songs not found in the library during a restore -->
+    <plurals name="settings_backup_import_unmatched">
+        <item quantity="one">%1$d música não encontrada</item>
+        <item quantity="other">%1$d músicas não encontradas</item>
+    </plurals>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Excluído</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->

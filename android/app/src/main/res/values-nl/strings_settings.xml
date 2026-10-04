@@ -38,6 +38,47 @@
     <string name="pref_media_rescan_title">Opnieuw scannen</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">Scan de geselecteerde mediaproviders opnieuw</string>
+    <!-- Settings: Title for the category holding library backup and restore -->
+    <string name="pref_category_title_backup">Back-up</string>
+    <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_title">Back-up van bibliotheek maken</string>
+    <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_summary">Sla afspeelstatistieken, favorieten, uitgesloten nummers, afspeellijsten en je instellingen op in een bestand</string>
+    <!-- Settings: Title for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_title">Back-up van bibliotheek terugzetten</string>
+    <!-- Settings: Description for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_summary">Voegt een back-up samen met je bibliotheek en vervangt je instellingen door die uit de back-up</string>
+    <!-- Settings: Snackbar shown once a library backup has been saved to a file -->
+    <string name="settings_backup_export_saved">Back-up van bibliotheek opgeslagen</string>
+    <!-- Settings: Snackbar shown when saving a library backup fails -->
+    <string name="settings_backup_export_failed">Back-up van bibliotheek mislukt</string>
+    <!-- Settings: Snackbar shown when reading a library backup file fails -->
+    <string name="settings_backup_import_failed">Kon dat back-upbestand niet lezen</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$s is the songs matched count (settings_backup_import_songs), %2$s the playlists added or updated count (settings_backup_import_playlists) -->
+    <string name="settings_backup_import_done">Terugzetten voltooid: %1$s, %2$s</string>
+    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$s is the songs matched count, %2$s the playlists count, %3$s the backup songs not found count -->
+    <string name="settings_backup_import_done_unmatched">Terugzetten voltooid: %1$s, %2$s; %3$s</string>
+    <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
+    <string name="settings_backup_import_nothing">Niets in deze back-up kwam overeen met je bibliotheek</string>
+    <!-- Settings: Snackbar shown when a library backup restore restored the backup's settings but matched no songs and added no playlists -->
+    <string name="settings_backup_import_settings_only">Instellingen teruggezet; geen nummers of afspeellijsten in deze back-up kwamen overeen met je bibliotheek</string>
+    <!-- Settings: Snackbar summarising a library backup restore that also restored the backup's settings; %1$s is the songs and playlists summary (settings_backup_import_done or settings_backup_import_done_unmatched) -->
+    <string name="settings_backup_import_with_settings">%1$s; instellingen teruggezet</string>
+    <!-- Settings: Count of backup songs that matched the library during a restore -->
+    <plurals name="settings_backup_import_songs">
+        <item quantity="one">%1$d nummer kwam overeen</item>
+        <item quantity="other">%1$d nummers kwamen overeen</item>
+    </plurals>
+    <!-- Settings: Count of playlists added or updated during a restore -->
+    <plurals name="settings_backup_import_playlists">
+        <item quantity="one">%1$d afspeellijst toegevoegd of bijgewerkt</item>
+        <item quantity="other">%1$d afspeellijsten toegevoegd of bijgewerkt</item>
+    </plurals>
+    <!-- Settings: Count of backup songs not found in the library during a restore -->
+    <plurals name="settings_backup_import_unmatched">
+        <item quantity="one">%1$d nummer niet gevonden</item>
+        <item quantity="other">%1$d nummers niet gevonden</item>
+    </plurals>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Uitgesloten</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->

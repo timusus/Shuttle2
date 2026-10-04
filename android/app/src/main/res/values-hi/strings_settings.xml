@@ -38,6 +38,47 @@
     <string name="pref_media_rescan_title">पुन: स्कैन</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">चयनित मीडिया प्रदाताओं को फिर से रिस्कैन करें</string>
+    <!-- Settings: Title for the category holding library backup and restore -->
+    <string name="pref_category_title_backup">बैकअप</string>
+    <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_title">लाइब्रेरी का बैकअप लें</string>
+    <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_summary">प्ले काउंट, पसंदीदा, बाहर रखे गए गाने, प्लेलिस्ट और आपकी सेटिंग फ़ाइल में सहेजें</string>
+    <!-- Settings: Title for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_title">लाइब्रेरी का बैकअप पुनर्स्थापित करें</string>
+    <!-- Settings: Description for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_summary">बैकअप को आपकी लाइब्रेरी में मिलाएं और आपकी सेटिंग उसमें मौजूद सेटिंग से बदलें</string>
+    <!-- Settings: Snackbar shown once a library backup has been saved to a file -->
+    <string name="settings_backup_export_saved">लाइब्रेरी का बैकअप सहेजा गया</string>
+    <!-- Settings: Snackbar shown when saving a library backup fails -->
+    <string name="settings_backup_export_failed">लाइब्रेरी का बैकअप विफल रहा</string>
+    <!-- Settings: Snackbar shown when reading a library backup file fails -->
+    <string name="settings_backup_import_failed">यह बैकअप फ़ाइल पढ़ी नहीं जा सकी</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$s is the songs matched count (settings_backup_import_songs), %2$s the playlists added or updated count (settings_backup_import_playlists) -->
+    <string name="settings_backup_import_done">पुनर्स्थापना पूरी हुई: %1$s, %2$s</string>
+    <!-- Settings: Snackbar summarising a library backup restore when some songs were not found; %1$s is the songs matched count, %2$s the playlists count, %3$s the backup songs not found count -->
+    <string name="settings_backup_import_done_unmatched">पुनर्स्थापना पूरी हुई: %1$s, %2$s; %3$s</string>
+    <!-- Settings: Snackbar shown when a library backup restore matched no songs and added no playlists -->
+    <string name="settings_backup_import_nothing">इस बैकअप में कुछ भी आपकी लाइब्रेरी से मेल नहीं खाया</string>
+    <!-- Settings: Snackbar shown when a library backup restore restored the backup's settings but matched no songs and added no playlists -->
+    <string name="settings_backup_import_settings_only">सेटिंग पुनर्स्थापित हुईं; इस बैकअप में कोई गाना या प्लेलिस्ट आपकी लाइब्रेरी से मेल नहीं खाया</string>
+    <!-- Settings: Snackbar summarising a library backup restore that also restored the backup's settings; %1$s is the songs and playlists summary (settings_backup_import_done or settings_backup_import_done_unmatched) -->
+    <string name="settings_backup_import_with_settings">%1$s; सेटिंग पुनर्स्थापित हुईं</string>
+    <!-- Settings: Count of backup songs that matched the library during a restore -->
+    <plurals name="settings_backup_import_songs">
+        <item quantity="one">%1$d गाना मेल खाया</item>
+        <item quantity="other">%1$d गाने मेल खाए</item>
+    </plurals>
+    <!-- Settings: Count of playlists added or updated during a restore -->
+    <plurals name="settings_backup_import_playlists">
+        <item quantity="one">%1$d प्लेलिस्ट जोड़ी गई या अपडेट की गई</item>
+        <item quantity="other">%1$d प्लेलिस्ट जोड़ी गईं या अपडेट की गईं</item>
+    </plurals>
+    <!-- Settings: Count of backup songs not found in the library during a restore -->
+    <plurals name="settings_backup_import_unmatched">
+        <item quantity="one">%1$d गाना नहीं मिला</item>
+        <item quantity="other">%1$d गाने नहीं मिले</item>
+    </plurals>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">निकाले गए</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
