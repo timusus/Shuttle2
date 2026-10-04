@@ -16,7 +16,7 @@ class DocumentIdForPathTest {
     }
 
     @Test
-    fun `a file outside the folder, or in a sibling that shares its prefix, doesn't map`() {
+    fun `a file outside the folder - or in a sibling that shares its prefix - doesn't map`() {
         documentIdForPath("/storage/emulated/0/Podcasts/01.mp3", "primary:Music", "/storage/emulated/0/Music") shouldBe null
         documentIdForPath("/storage/emulated/0/Music2/01.mp3", "primary:Music", "/storage/emulated/0/Music") shouldBe null
     }

@@ -299,7 +299,7 @@ class PlexMediaProviderTest {
     }
 
     @Test
-    fun `an incremental sync brings the tracks rated 5 stars or unrated since, which don't count as a change to the song`() {
+    fun `an incremental sync brings the tracks rated 5 stars or unrated since - which don't count as a change to the song`() {
         signedIn()
         server.respond(SECTIONS, "sections.json")
         server.respond(ITEMS, "songs.json")

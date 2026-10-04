@@ -57,7 +57,7 @@ class PlexFavouriteWriterTest {
     }
 
     @Test
-    fun `favouriting rates the track 10 by its ratingKey, without reading it first`() = runTest {
+    fun `favouriting rates the track 10 by its ratingKey - without reading it first`() = runTest {
         server.respond(rate, method = "PUT")
 
         writer.setFavourite(song, favourite = true) shouldBe true
@@ -72,7 +72,7 @@ class PlexFavouriteWriterTest {
     }
 
     @Test
-    fun `unfavouriting a track rated 10 reads its rating, then clears it`() = runTest {
+    fun `unfavouriting a track rated 10 reads its rating - then clears it`() = runTest {
         server.respond(metadata, fixture = "track_rated_10.json")
         server.respond(rate, method = "PUT")
 

@@ -369,7 +369,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `a second source's import completing reloads the sections too, though the overall state stays the same`() = runTest(testDispatcher) {
+    fun `a second source's import completing reloads the sections too - though the overall state stays the same`() = runTest(testDispatcher) {
         val viewModel = playedLibrary()
         importState.setState(importComplete(MediaProviderType.Shuttle))
         runCurrent()

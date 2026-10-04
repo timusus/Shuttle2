@@ -41,7 +41,7 @@ class NetworkResultTest {
     private fun NetworkResult<*>.error() = (this as NetworkResult.Failure).error
 
     @Test
-    fun `a 2xx decodes the body, ignoring keys it doesn't know`() = runTest {
+    fun `a 2xx decodes the body - ignoring keys it doesn't know`() = runTest {
         val result = client(respond = responding(HttpStatusCode.OK, """{"name":"tim","added":"later"}"""))
             .networkResult<User> { get("https://server/user") }
 
@@ -92,7 +92,7 @@ class NetworkResultTest {
     }
 
     @Test
-    fun `an IOException is a network error, telling offline from unreachable`() = runTest {
+    fun `an IOException is a network error - telling offline from unreachable`() = runTest {
         val unreachable = client(connected = true, respond = throwing(IOException("refused"))).networkResult<User> { get("https://server/user") }.error()
         val offline = client(connected = false, respond = throwing(IOException("no route"))).networkResult<User> { get("https://server/user") }.error()
 
@@ -118,7 +118,7 @@ class NetworkResultTest {
     }
 
     @Test
-    fun `a JSON body decodes regardless of the response's declared Content-Type, as Moshi did`() = runTest {
+    fun `a JSON body decodes regardless of the response's declared Content-Type - as Moshi did`() = runTest {
         val plainText = headersOf(HttpHeaders.ContentType, "text/plain")
         val result = client(respond = MockEngine { respond("""{"name":"tim"}""", HttpStatusCode.OK, plainText) })
             .networkResult<User> { get("https://server/user") }

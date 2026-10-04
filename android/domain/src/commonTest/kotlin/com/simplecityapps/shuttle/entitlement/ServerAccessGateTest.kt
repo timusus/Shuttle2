@@ -45,7 +45,7 @@ class ServerAccessGateTest {
     private val consentGate = ServerAccessGate(entitlement, startTrial = null)
 
     @Test
-    fun `adding a server doesn't start the trial, so a cancelled sign-in doesn't use it up`() {
+    fun `adding a server doesn't start the trial - so a cancelled sign-in doesn't use it up`() {
         assertEquals(emptyList<PaywallSource>(), requests { assertTrue(gate.tryAddServer()) })
         assertEquals(0, trialStarts)
     }
@@ -63,7 +63,7 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `while Play hasn't answered, a user may add a server but not stream from one, and neither the trial nor the paywall starts`() {
+    fun `while Play hasn't answered - a user may add a server but not stream from one - and neither the trial nor the paywall starts`() {
         entitlement.value = Entitlement.Unknown
         val requests = requests {
             assertTrue(gate.tryAddServer())
@@ -76,7 +76,7 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `a stream waits for the store's first answer, then decides`() {
+    fun `a stream waits for the store's first answer - then decides`() {
         entitlement.value = Entitlement.Unknown
         val waitingGate = ServerAccessGate(entitlement, startTrial = null, storeAnswerWait = 5.seconds)
         val requests = requests(waitingGate) {
@@ -89,7 +89,7 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `a store that doesn't answer in time leaves a stream undecided, without the paywall`() {
+    fun `a store that doesn't answer in time leaves a stream undecided - without the paywall`() {
         entitlement.value = Entitlement.Unknown
         val waitingGate = ServerAccessGate(entitlement, startTrial = null, storeAnswerWait = 5.seconds)
         val requests = requests(waitingGate) {
@@ -114,7 +114,7 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `trial and Pro users may add servers, stream and download, without starting a trial`() {
+    fun `trial and Pro users may add servers - stream and download - without starting a trial`() {
         listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.LegacyLifetime)).forEach {
             entitlement.value = it
             val requests = requests {
@@ -146,7 +146,7 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `where only the paywall can start the trial, the first stream or download opens it instead`() {
+    fun `where only the paywall can start the trial - the first stream or download opens it instead`() {
         val requests = requests(consentGate) {
             assertFalse(consentGate.tryStreamFromServer())
             assertFalse(consentGate.tryDownloadFromServer())
@@ -155,12 +155,12 @@ class ServerAccessGateTest {
     }
 
     @Test
-    fun `where only the paywall can start the trial, a user who hasn't had it may still add a server`() {
+    fun `where only the paywall can start the trial - a user who hasn't had it may still add a server`() {
         assertEquals(emptyList<PaywallSource>(), requests(consentGate) { assertTrue(consentGate.tryAddServer()) })
     }
 
     @Test
-    fun `where only the paywall can start the trial, trial and Pro users stream and a user whose trial ended doesn't`() {
+    fun `where only the paywall can start the trial - trial and Pro users stream and a user whose trial ended doesn't`() {
         listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.Lifetime)).forEach {
             entitlement.value = it
             assertEquals(emptyList<PaywallSource>(), requests(consentGate) { assertTrue(consentGate.tryStreamFromServer()) })

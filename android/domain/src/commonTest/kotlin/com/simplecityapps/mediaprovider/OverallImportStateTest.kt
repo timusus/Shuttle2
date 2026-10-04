@@ -22,7 +22,7 @@ class OverallImportStateTest {
     }
 
     @Test
-    fun `the progress is that of every running source, unknown while any of them doesn't know its own`() {
+    fun `the progress is that of every running source - unknown while any of them doesn't know its own`() {
         val local = SongImportState.ImportProgress(MediaProviderType.Shuttle, "Scanning", Progress(10, 100))
         overallImportState(
             mapOf(

@@ -25,7 +25,7 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
-    fun `an album artist tag names the album, as before the rule`() {
+    fun `an album artist tag names the album - as before the rule`() {
         val (song) = resolve(tags("The Bends", artists = listOf("Radiohead"), albumArtist = "Radiohead"))
 
         song.groupKey shouldBe AlbumGroupKey("bends", AlbumArtistGroupKey("radiohead"))
@@ -41,7 +41,7 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
-    fun `songs of one MusicBrainz release are one album, however their tags differ`() {
+    fun `songs of one MusicBrainz release are one album - however their tags differ`() {
         val songs = resolve(
             tags("OK Computer", albumArtist = "Radiohead", mbAlbumId = "0B6B4BA0"),
             tags("OK Computer", albumArtist = "Radiohead", mbAlbumId = "0b6b4ba0"),
@@ -63,7 +63,7 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
-    fun `a server's album id keys the album, scoped to its source`() {
+    fun `a server's album id keys the album - scoped to its source`() {
         val songs = resolve(
             tags("Blue", albumArtist = "Joni Mitchell", serverAlbumId = "42", mediaProvider = MediaProviderType.Jellyfin),
             tags("Blue", albumArtist = "Joni Mitchell", serverAlbumId = "42", mediaProvider = MediaProviderType.Jellyfin)
@@ -84,7 +84,7 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
-    fun `an untagged album whose tracks agree on the artist is theirs, features and disc folders aside`() {
+    fun `an untagged album whose tracks agree on the artist is theirs - features and disc folders aside`() {
         val songs = resolve(
             tags("Blonde", artists = listOf("Frank Ocean"), path = "/music/Blonde/CD1/1.mp3"),
             tags("Blonde", artists = listOf("Frank Ocean feat. André 3000"), path = "/music/Blonde/CD1/2.mp3"),
@@ -96,7 +96,7 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
-    fun `an untagged album of several artists is Various Artists', told apart by its folder`() {
+    fun `an untagged album of several artists is Various Artists' - told apart by its folder`() {
         val songs = resolve(
             tags("Drive OST", artists = listOf("Kavinsky"), path = "/music/Drive/1.mp3"),
             tags("Drive OST", artists = listOf("College"), path = "/music/Drive/2.mp3"),
@@ -122,7 +122,7 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
-    fun `a mixed album, where only some tracks have an id, stays one album on the name rule`() {
+    fun `a mixed album - where only some tracks have an id - stays one album on the name rule`() {
         val songs = resolve(
             tags("In Rainbows", albumArtist = "Radiohead", mbAlbumId = "r1", serverAlbumId = "9"),
             tags("In Rainbows", albumArtist = "Radiohead", mbAlbumId = "r1"),

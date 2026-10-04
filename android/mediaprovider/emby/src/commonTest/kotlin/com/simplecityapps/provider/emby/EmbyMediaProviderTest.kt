@@ -340,7 +340,7 @@ class EmbyMediaProviderTest {
     }
 
     @Test
-    fun `an incremental sync brings the favourites changed on the server, which don't count as a change to the song`() {
+    fun `an incremental sync brings the favourites changed on the server - which don't count as a change to the song`() {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
         val stored = sync().map { song -> if (song.path == "emby://item/101") song.copy(favouritedAt = Instant.parse("2026-09-01T00:00:00Z")) else song }

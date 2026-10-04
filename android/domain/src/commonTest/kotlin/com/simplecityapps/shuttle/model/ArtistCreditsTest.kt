@@ -41,7 +41,7 @@ class ArtistCreditsTest {
     private fun key(name: String) = AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name))
 
     @Test
-    fun `an ARTIST value splits on featuring credits, semicolons and a spaced slash`() {
+    fun `an ARTIST value splits on featuring credits - semicolons and a spaced slash`() {
         ArtistCredits.split("Kanye West feat. Chris Martin") shouldBe listOf("Kanye West", "Chris Martin")
         ArtistCredits.split("Mark Ronson (feat. Bruno Mars)") shouldBe listOf("Mark Ronson", "Bruno Mars")
         ArtistCredits.split("Calvin Harris ft. Rihanna") shouldBe listOf("Calvin Harris", "Rihanna")
@@ -51,7 +51,7 @@ class ArtistCreditsTest {
     }
 
     @Test
-    fun `an ampersand, a bare slash and a name holding 'ft' never split`() {
+    fun `an ampersand - a bare slash and a name holding 'ft' never split`() {
         ArtistCredits.split("Simon & Garfunkel") shouldBe listOf("Simon & Garfunkel")
         ArtistCredits.split("AC/DC") shouldBe listOf("AC/DC")
         ArtistCredits.split("Daft Punk") shouldBe listOf("Daft Punk")
@@ -59,14 +59,14 @@ class ArtistCreditsTest {
     }
 
     @Test
-    fun `the ARTISTS multi-value tag names the credits, each value whole`() {
+    fun `the ARTISTS multi-value tag names the credits - each value whole`() {
         val song = tags("Watch the Throne", listOf("Jay-Z & Kanye West feat. Frank Ocean"), albumArtists = listOf("Jay-Z", "Kanye West"), artistsTag = listOf("Jay-Z", "Kanye West", "Frank Ocean / Friends"))
 
         credits(song).map { it.name } shouldBe listOf("Jay-Z", "Kanye West", "Frank Ocean / Friends")
     }
 
     @Test
-    fun `a credit is the album artist's when it carries their MusicBrainz id, however it's spelt`() {
+    fun `a credit is the album artist's when it carries their MusicBrainz id - however it's spelt`() {
         val song = tags(
             "Lemonade",
             listOf("Beyonce feat. Jack White"),
@@ -79,7 +79,7 @@ class ArtistCreditsTest {
     }
 
     @Test
-    fun `a credit is the album artist's when it carries their server id, and ids that don't pair with names are ignored`() {
+    fun `a credit is the album artist's when it carries their server id - and ids that don't pair with names are ignored`() {
         val paired = tags("Lemonade", listOf("Beyonce"), albumArtist = "Beyoncé", serverArtistIds = listOf("s1"), serverAlbumArtistIds = listOf("s1"), mediaProvider = MediaProviderType.Jellyfin)
         val unpaired = tags("Lemonade", listOf("Beyonce feat. Jack White"), albumArtist = "Beyoncé", serverArtistIds = listOf("s1"), serverAlbumArtistIds = listOf("s1"), mediaProvider = MediaProviderType.Jellyfin)
 

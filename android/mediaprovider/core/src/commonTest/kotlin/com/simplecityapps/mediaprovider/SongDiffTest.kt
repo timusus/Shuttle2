@@ -122,7 +122,7 @@ class SongDiffTest {
     }
 
     @Test
-    fun `a diff sorts songs into inserts, updates, unchanged and deletes by path`() = runTest {
+    fun `a diff sorts songs into inserts - updates - unchanged and deletes by path`() = runTest {
         val unchanged = createSong(id = 1, lastModified = firstImport, path = "a")
         val changed = createSong(id = 2, lastModified = firstImport, path = "b")
         val gone = createSong(id = 3, lastModified = firstImport, path = "c")
@@ -175,7 +175,7 @@ class SongDiffTest {
     }
 
     @Test
-    fun `songs sharing a path are one song, the last listed winning`() = runTest {
+    fun `songs sharing a path are one song - the last listed winning`() = runTest {
         val first = createSong(id = 0, lastModified = firstImport, path = "a").copy(name = "First")
         val last = createSong(id = 0, lastModified = firstImport, path = "a").copy(name = "Last")
 

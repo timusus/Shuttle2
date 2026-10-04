@@ -50,7 +50,7 @@ class PlaybackPreferenceManagerTest {
     }
 
     @Test
-    fun `the queue's play context reads back as saved, and as none when nothing is`() {
+    fun `the queue's play context reads back as saved - and as none when nothing is`() {
         manager.playContext shouldBe PlayContext.None
 
         manager.playContext = PlayContext.Playlist(4)

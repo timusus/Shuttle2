@@ -186,7 +186,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `removing a server clears its stored reachability, updated time and listing shortfall`() = runTest {
+    fun `removing a server clears its stored reachability - updated time and listing shortfall`() = runTest {
         val viewModel = viewModel(FakeMediaSources(MediaProviderType.Emby, MediaProviderType.Plex))
         val at = Instant.fromEpochMilliseconds(1_000)
         for (source in listOf("Emby", "Plex")) {

@@ -41,7 +41,7 @@ class DeleteGuardTest {
     }
 
     @Test
-    fun `most of a small library gone is deleted, being no more than the threshold`() {
+    fun `most of a small library gone is deleted - being no more than the threshold`() {
         val deletes = songs(1L..DeleteGuard.MIN_GUARDED_DELETES.toLong())
 
         decide(existingCount = 25, foundCount = 5, deletes = deletes, unreadableRoots = emptySet(), heldLastPass = emptySet()).apply shouldBe deletes
@@ -68,7 +68,7 @@ class DeleteGuardTest {
     }
 
     @Test
-    fun `songs under an unreadable root are kept, and don't count towards a mass removal`() {
+    fun `songs under an unreadable root are kept - and don't count towards a mass removal`() {
         val unreadable = songs(1L..30L, root = "/storage/0000-0000/")
         val readable = songs(31L..32L)
 
@@ -104,7 +104,7 @@ class DeleteGuardTest {
     }
 
     @Test
-    fun `a held mass removal outlives the guard, and the next guard's pass applies it`() {
+    fun `a held mass removal outlives the guard - and the next guard's pass applies it`() {
         val deletes = songs(1L..30L)
         DeleteGuard(preferences).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
 

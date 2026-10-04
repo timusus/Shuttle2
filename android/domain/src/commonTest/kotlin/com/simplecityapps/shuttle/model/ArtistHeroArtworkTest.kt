@@ -21,7 +21,7 @@ class ArtistHeroArtworkTest {
     }
 
     @Test
-    fun `the online lookup isn't trusted without a MusicBrainz id, however exactly the name matches`() {
+    fun `the online lookup isn't trusted without a MusicBrainz id - however exactly the name matches`() {
         val songs = listOf(song("Airbag", albumArtist = "Radiohead"))
 
         ArtistHeroArtwork.of(radiohead, albums = emptyList(), songs = songs).onlineLookup shouldBe false

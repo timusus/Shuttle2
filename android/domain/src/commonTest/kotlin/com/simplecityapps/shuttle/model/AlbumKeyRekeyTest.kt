@@ -25,7 +25,7 @@ class AlbumKeyRekeyTest {
     }
 
     @Test
-    fun `a current key is kept, and one no song had is null`() {
+    fun `a current key is kept - and one no song had is null`() {
         rekey.album(AlbumGroupKey("low", AlbumArtistGroupKey("david bowie"))) shouldBe AlbumGroupKey("low", AlbumArtistGroupKey("david bowie"))
         rekey.album(drive) shouldBe drive
         rekey.album(AlbumGroupKey("gone", AlbumArtistGroupKey("nobody"))) shouldBe null
@@ -38,7 +38,7 @@ class AlbumKeyRekeyTest {
     }
 
     @Test
-    fun `a stored context moves, and other contexts are kept`() {
+    fun `a stored context moves - and other contexts are kept`() {
         val stored = PlayContext.decode(PlayContext.TYPE_ALBUM, "=kavinsky\u001F=drive ost")
 
         rekey.context(stored) shouldBe PlayContext.Album(drive)

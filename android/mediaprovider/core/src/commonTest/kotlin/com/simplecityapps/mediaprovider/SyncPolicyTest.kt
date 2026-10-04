@@ -28,7 +28,7 @@ class SyncPolicyTest {
     )
 
     @Test
-    fun `a server synced a while ago asks for what changed since, less the overlap`() {
+    fun `a server synced a while ago asks for what changed since - less the overlap`() {
         plan() shouldBe SyncPlan.Incremental(since = now - 1.hours - 10.minutes)
         plan(trigger = SyncTrigger.Periodic) shouldBe SyncPlan.Incremental(since = now - 1.hours - 10.minutes)
     }
@@ -46,7 +46,7 @@ class SyncPolicyTest {
     }
 
     @Test
-    fun `a last sync in the future, from a clock set back, is synced in full rather than throttled`() {
+    fun `a last sync in the future - from a clock set back - is synced in full rather than throttled`() {
         plan(lastSync = (-2).hours) shouldBe SyncPlan.Full
         plan(lastSync = (-2).hours, trigger = SyncTrigger.Periodic) shouldBe SyncPlan.Full
         plan(lastFullSync = (-2).hours) shouldBe SyncPlan.Full
@@ -59,7 +59,7 @@ class SyncPolicyTest {
     }
 
     @Test
-    fun `a server never synced, or not in full for a week, is synced in full`() {
+    fun `a server never synced - or not in full for a week - is synced in full`() {
         plan(lastSync = null, lastFullSync = null) shouldBe SyncPlan.Full
         plan(lastFullSync = null) shouldBe SyncPlan.Full
         plan(lastFullSync = 7.days) shouldBe SyncPlan.Full

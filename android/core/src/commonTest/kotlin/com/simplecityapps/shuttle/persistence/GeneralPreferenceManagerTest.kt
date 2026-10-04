@@ -154,7 +154,7 @@ class GeneralPreferenceManagerTest {
     }
 
     @Test
-    fun `held deletes are saved per source as sorted base-36 gaps, and an unreadable value holds none`() {
+    fun `held deletes are saved per source as sorted base-36 gaps - and an unreadable value holds none`() {
         preferences.setHeldDeletes("Shuttle", setOf(40L, 3L, 1_000_000L))
         store.getString("held_deletes_Shuttle", null) shouldBe "3,11,lfko"
         preferences.heldDeletes("Shuttle") shouldBe setOf(3L, 40L, 1_000_000L)

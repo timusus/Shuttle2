@@ -27,7 +27,7 @@ class PlayHomeSectionTest {
     private fun section(vararg items: HomeItem) = HomeSection(HomeSectionId.HeavyRotation, HomeSectionTitle.HeavyRotation, subtitle = null, items.toList())
 
     @Test
-    fun `plays every song of the shelf in item order, each item's songs in its own order`() = runTest {
+    fun `plays every song of the shelf in item order - each item's songs in its own order`() = runTest {
         val first = createPlaylist(id = 1, name = "First")
         val second = createPlaylist(id = 2, name = "Second")
         val albumSongs = listOf(
@@ -56,7 +56,7 @@ class PlayHomeSectionTest {
     }
 
     @Test
-    fun `only shelves of albums, artists and playlists are playable`() {
+    fun `only shelves of albums - artists and playlists are playable`() {
         section(HomeItem.AlbumItem(createAlbum())).playable shouldBe true
         section().playable shouldBe false
         section(HomeItem.GenreItem(createGenre(name = "Jazz"))).playable shouldBe false

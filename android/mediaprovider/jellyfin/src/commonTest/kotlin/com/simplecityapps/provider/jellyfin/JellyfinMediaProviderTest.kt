@@ -143,7 +143,7 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `a listing short of the server's total is incomplete, and the next sync's full listing complete`() {
+    fun `a listing short of the server's total is incomplete - and the next sync's full listing complete`() {
         signedIn()
         // The server counts 5 items but returns 3, as Jellyfin's total counts rows it can't read
         server.respond(ITEMS, "songs_short.json", query = mapOf("includeItemTypes" to "Audio"))
@@ -363,7 +363,7 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `an incremental sync brings the favourites changed on the server, which don't count as a change to the song`() {
+    fun `an incremental sync brings the favourites changed on the server - which don't count as a change to the song`() {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
         val stored = sync().map { song -> if (song.path == "jellyfin://item/song-1") song.copy(favouritedAt = Instant.parse("2026-09-01T00:00:00Z")) else song }
@@ -377,7 +377,7 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `an incremental sync short of the server's total says how many it's missing, alongside the favourites`() {
+    fun `an incremental sync short of the server's total says how many it's missing - alongside the favourites`() {
         signedIn()
         server.respond(ITEMS, "songs_short.json", query = mapOf("includeItemTypes" to "Audio"))
         server.respond(ITEMS, "favourites.json", query = mapOf("filters" to "IsFavorite"))

@@ -65,7 +65,7 @@ class ArtworkUrlsTest {
     }
 
     @Test
-    fun `album artist artwork is the hero's - the server's artist image at a minimum size, then their top album's cover`() = runTest {
+    fun `album artist artwork is the hero's - the server's artist image at a minimum size - then their top album's cover`() = runTest {
         val song = song("song-1")
         library(song)
 

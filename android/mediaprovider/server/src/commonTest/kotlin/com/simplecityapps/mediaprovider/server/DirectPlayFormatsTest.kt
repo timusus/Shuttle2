@@ -29,7 +29,7 @@ class DirectPlayFormatsTest {
     }
 
     @Test
-    fun `transcodes codecs the iOS FFmpeg build has no decoder for, even in a container it demuxes`() {
+    fun `transcodes codecs the iOS FFmpeg build has no decoder for - even in a container it demuxes`() {
         listOf("ac3", "EAC3", "dts", "truehd", "wmav2", "wmapro", "ape", "wavpack", "adpcm_ima_wav").forEach { codec ->
             DirectPlayFormats.Ios.isDecodable("mka", codec) shouldBe false
         }

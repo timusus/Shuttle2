@@ -54,7 +54,7 @@ class ServerCredentialStoreTest {
     }
 
     @Test
-    fun `clearing forgets the address, the login and the session`() {
+    fun `clearing forgets the address - the login and the session`() {
         writeLegacyKeys("plex", "plex_host")
         val store = store("plex", addressKey = "plex_host")
 
@@ -171,7 +171,7 @@ class ServerCredentialStoreTest {
     }
 
     @Test
-    fun `a 401 in a sync that can't sign in again signals once, when the sync ends`() = runTest {
+    fun `a 401 in a sync that can't sign in again signals once - when the sync ends`() = runTest {
         val (store, signals) = signedIn()
 
         store.deferringExpiry {

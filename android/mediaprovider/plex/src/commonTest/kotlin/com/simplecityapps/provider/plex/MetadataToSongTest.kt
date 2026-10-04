@@ -9,7 +9,7 @@ import kotlin.time.Instant
 
 class MetadataToSongTest {
     @Test
-    fun `a track with its own artist credits it, with the album's artist and ids and its MusicBrainz recording`() {
+    fun `a track with its own artist credits it - with the album's artist and ids and its MusicBrainz recording`() {
         // As a Plex Media Server sends a track fetched with includeGuids=1
         val metadata =
             S2Json.decodeFromString<Metadata>(
@@ -37,7 +37,7 @@ class MetadataToSongTest {
     }
 
     @Test
-    fun `a track by its album's artist is credited to it, with the album artist's id`() {
+    fun `a track by its album's artist is credited to it - with the album artist's id`() {
         val metadata =
             S2Json.decodeFromString<Metadata>(
                 """{"key": "/library/metadata/101", "guid": "plex://track/1", "grandparentTitle": "Radiohead", "parentRatingKey": "100", "grandparentRatingKey": "99"}"""
@@ -54,7 +54,7 @@ class MetadataToSongTest {
     }
 
     @Test
-    fun `the bit depth is the audio stream's, for a lossless codec only`() {
+    fun `the bit depth is the audio stream's - for a lossless codec only`() {
         fun bitDepth(codec: String) = S2Json.decodeFromString<Metadata>(
             """
             {"key": "/library/metadata/101", "guid": "plex://track/1", "Media": [{"audioCodec": "$codec", "Part": [{"key": "/p", "Stream": [

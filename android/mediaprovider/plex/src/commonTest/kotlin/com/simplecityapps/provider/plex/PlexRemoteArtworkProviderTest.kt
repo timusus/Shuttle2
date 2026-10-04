@@ -64,7 +64,7 @@ class PlexRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `signed out, requests carry no token`() {
+    fun `signed out - requests carry no token`() {
         credentialStore.authenticatedCredentials = null
 
         provider.requestHeaders("${server.address}/library/metadata/1/thumb/1") shouldBe emptyMap()

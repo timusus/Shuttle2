@@ -225,7 +225,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `each source's import ending counts as a completion, though the overall state is the same after the second`() = runBlocking<Unit> {
+    fun `each source's import ending counts as a completion - though the overall state is the same after the second`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
         provider.gate.trySend(Unit)
@@ -370,7 +370,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a sync on return to the app asks a server only for what changed since its last sync, and leaves this device alone`() = runBlocking<Unit> {
+    fun `a sync on return to the app asks a server only for what changed since its last sync - and leaves this device alone`() = runBlocking<Unit> {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
         preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
@@ -400,7 +400,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a sync shows no progress, which would replace the library with the scanning state, only how it ended`() = runBlocking<Unit> {
+    fun `a sync shows no progress - which would replace the library with the scanning state - only how it ended`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         val states = mutableListOf<SongImportState>()
@@ -414,7 +414,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a sync that stored a change says so, so what shows the library reloads`() = runBlocking<Unit> {
+    fun `a sync that stored a change says so - so what shows the library reloads`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         server.found = listOf(song())
@@ -428,7 +428,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `an import the user asks for looks past a source's index, a scheduled sync trusts it`() = runBlocking<Unit> {
+    fun `an import the user asks for looks past a source's index - a scheduled sync trusts it`() = runBlocking<Unit> {
         val indexed = IndexedProvider()
         importer.mediaProviders -= provider
         importer.mediaProviders += indexed
@@ -442,7 +442,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a server that can't be reached on return to the app keeps its status, but the daily sync reports it`() = runBlocking<Unit> {
+    fun `a server that can't be reached on return to the app keeps its status - but the daily sync reports it`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         server.failure = "Unreachable"
@@ -486,7 +486,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a sync waits for the first import, and for the one a build with new tags is due`() = runBlocking<Unit> {
+    fun `a sync waits for the first import - and for the one a build with new tags is due`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
 
@@ -511,7 +511,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a listing that came up short deletes nothing and makes the next sync full, which deletes as usual`() = runBlocking<Unit> {
+    fun `a listing that came up short deletes nothing and makes the next sync full - which deletes as usual`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -535,7 +535,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a server short by as many songs every full sync deletes from the second, and keeps its full-sync time`() = runBlocking<Unit> {
+    fun `a server short by as many songs every full sync deletes from the second - and keeps its full-sync time`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
@@ -574,7 +574,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a server with nothing stored is synced in full, whenever it last synced`() = runBlocking<Unit> {
+    fun `a server with nothing stored is synced in full - whenever it last synced`() = runBlocking<Unit> {
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
@@ -629,7 +629,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `an import after the user changed folders removes this device's songs at once, but keeps those under an unreadable root and a server's`() = runBlocking<Unit> {
+    fun `an import after the user changed folders removes this device's songs at once - but keeps those under an unreadable root and a server's`() = runBlocking<Unit> {
         val device = ServerProvider(MediaProviderType.Shuttle)
         val deviceSongs = (1L..30L).map { id -> song(id = id, path = "/storage/emulated/0/Music/$id.mp3") }
         val cardSongs = (31L..32L).map { id -> song(id = id, path = "/storage/CARD/Music/$id.mp3") }
@@ -646,7 +646,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a full sync that holds back a mass removal makes the next sync full, to apply it`() = runBlocking<Unit> {
+    fun `a full sync that holds back a mass removal makes the next sync full - to apply it`() = runBlocking<Unit> {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.take(5)
@@ -679,7 +679,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a source added while an import runs is read by the follow-up pass, and changing the sources never disturbs one`() = runBlocking<Unit> {
+    fun `a source added while an import runs is read by the follow-up pass - and changing the sources never disturbs one`() = runBlocking<Unit> {
         val import = launch(Dispatchers.Default) { importer.import() }
         provider.started.receive()
 
@@ -710,7 +710,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a source that throws leaves the others to finish, and says how it ended rather than staying in progress`() = runBlocking<Unit> {
+    fun `a source that throws leaves the others to finish - and says how it ended rather than staying in progress`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
         val result = CompletableDeferred<Result<Unit>>()
@@ -763,7 +763,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `the overall progress is every running source's, not whichever reported last`() = runBlocking<Unit> {
+    fun `the overall progress is every running source's - not whichever reported last`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += server
         val import = launch(Dispatchers.Default) { importer.import() }
@@ -783,7 +783,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a cancelled import reports no completion, and its source goes back to how it stood`() = runBlocking<Unit> {
+    fun `a cancelled import reports no completion - and its source goes back to how it stood`() = runBlocking<Unit> {
         provider.scanFailure = "Server unreachable"
         provider.gate.trySend(Unit)
         importer.import()
@@ -812,7 +812,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a source removed while its import runs stores nothing after, and the others finish`() = runBlocking<Unit> {
+    fun `a source removed while its import runs stores nothing after - and the others finish`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { found = listOf(song()) }
         importer.mediaProviders += server
         val import = launch(Dispatchers.Default) { importer.import() }

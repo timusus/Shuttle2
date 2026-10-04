@@ -39,7 +39,7 @@ class ItemToSongTest {
     }
 
     @Test
-    fun `maps the album artists, the server's artist and album ids and the MusicBrainz ids`() {
+    fun `maps the album artists - the server's artist and album ids and the MusicBrainz ids`() {
         // As an Emby 4.9 server sends a track fetched with Fields=ProviderIds
         val item =
             S2Json.decodeFromString<Item>(
