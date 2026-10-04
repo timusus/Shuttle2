@@ -463,6 +463,27 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a server short by as many songs every full sync deletes from the second, and keeps its full-sync time`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        server.found = listOf(song().copy(id = 2, path = "/added"))
+        server.missing = 2
+
+        importer.sync(SyncTrigger.Periodic)
+
+        songRepository.changes shouldBe Triple(1, 0, 0)
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
+
+        importer.sync(SyncTrigger.Periodic)
+
+        server.requests shouldBe listOf(null, null)
+        songRepository.changes shouldBe Triple(1, 0, 1)
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time
+        preferences.songTagsOutdated(server.type) shouldBe false
+    }
+
+    @Test
     fun `a server with nothing stored is synced in full, whenever it last synced`() = runBlocking<Unit> {
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)

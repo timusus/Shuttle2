@@ -12,16 +12,21 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
  *   of every one when it found none. It's held for one pass: the next full pass that finds the same songs gone removes
  *   them, so a library the user really did shrink catches up an import later, while a source that failed once doesn't.
  *   A removal the user asked for (by changing which folders are read) isn't held;
- * - every one, when the listing came to less than the source said it holds ([FlowEvent.Success.complete]): what it left
+ * - every one, when the listing came to less than the source said it holds ([FlowEvent.Success.missing]): what it left
  *   out can't be told from what's gone. The next full pass decides, and until then the mass removal held before stays
- *   as it was, neither confirmed nor replaced.
+ *   as it was, neither confirmed nor replaced. A listing short by as many as the last full pass's isn't held, though:
+ *   a server whose total counts items it never returns (Jellyfin's, rows it can't read) comes up short by the same
+ *   number every time, and would otherwise never delete.
  * A pass that held a mass removal or listed incompletely [awaitsFullPass][Decision.awaitsFullPass].
  */
 class DeleteGuard(
     /** Where the songs each source's last full pass held back as a mass removal are kept, across restarts. */
     private val preferenceManager: GeneralPreferenceManager
 ) {
-    /** [decide]s which of [type]'s [deletes] to apply, and remembers the mass removal it held back for the next pass. */
+    /**
+     * [decide]s which of [type]'s [deletes] to apply, from a listing [missing] as many songs as it did. A [fullPass]
+     * remembers how many that was, and the mass removal it held back, for the next one.
+     */
     fun deletesToApply(
         type: MediaProviderType,
         existingCount: Int,
@@ -29,10 +34,15 @@ class DeleteGuard(
         deletes: List<Song>,
         unreadableRoots: Set<String>,
         userRemoval: Boolean = false,
-        listingComplete: Boolean = true
+        missing: Int = 0,
+        fullPass: Boolean = true
     ): Decision {
+        val listingComplete = missing == 0 || missing == preferenceManager.listingShortfall(type.name)
         val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = preferenceManager.heldDeletes(type.name), userRemoval, listingComplete)
-        if (listingComplete) preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
+        if (fullPass) {
+            preferenceManager.setListingShortfall(type.name, missing)
+            if (listingComplete) preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
+        }
         return decision
     }
 
@@ -41,7 +51,8 @@ class DeleteGuard(
      * @property heldUnreadable how many deletes were held back for being under an unreadable root
      * @property heldMassRemoval the deletes held back as a mass removal, which the next pass applies if they're still gone
      * @property heldIncomplete how many deletes were held back for the listing being incomplete
-     * @property listingComplete whether the listing held everything the source said it holds
+     * @property listingComplete whether the listing held everything the source said it holds, or came as short of it as the
+     *   last full pass did
      */
     data class Decision(
         val apply: List<Song>,

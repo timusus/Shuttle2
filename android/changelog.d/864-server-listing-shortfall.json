@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "A Jellyfin server holding a few songs it can't describe no longer stops songs removed from it leaving your library, or makes every sync a full one.", "commits": [] }

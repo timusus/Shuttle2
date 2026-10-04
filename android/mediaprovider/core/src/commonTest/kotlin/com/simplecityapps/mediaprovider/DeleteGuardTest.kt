@@ -130,9 +130,59 @@ class DeleteGuardTest {
         val deletes = songs(1L..30L)
 
         guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
-        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet(), listingComplete = false).apply.shouldBeEmpty()
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet(), missing = 3).apply.shouldBeEmpty()
 
         guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
+    }
+
+    @Test
+    fun `a full pass short by as many as the last one deletes as usual`() {
+        val guard = DeleteGuard(preferences)
+        val deletes = songs(1L..3L)
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 2).apply.shouldBeEmpty()
+        val decision = guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 2)
+
+        decision.apply shouldBe deletes
+        decision.listingComplete shouldBe true
+        decision.awaitsFullPass shouldBe false
+    }
+
+    @Test
+    fun `a full pass short by a different number than the last one holds its deletes`() {
+        val guard = DeleteGuard(preferences)
+        val deletes = songs(1L..3L)
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 2)
+
+        val decision = guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 3)
+
+        decision.apply.shouldBeEmpty()
+        decision.awaitsFullPass shouldBe true
+        // A complete pass in between: the next short one is held again
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet())
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 3).apply.shouldBeEmpty()
+    }
+
+    @Test
+    fun `each source's shortfall is its own`() {
+        val guard = DeleteGuard(preferences)
+        val deletes = songs(1L..3L)
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 2)
+
+        guard.deletesToApply(MediaProviderType.Emby, existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = emptySet(), missing = 2).apply.shouldBeEmpty()
+    }
+
+    @Test
+    fun `an incremental pass neither records its shortfall nor forgets the mass removal held before it`() {
+        val guard = DeleteGuard(preferences)
+        val deletes = songs(1L..30L)
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 3, deletes = emptyList(), unreadableRoots = emptySet(), missing = 2, fullPass = false)
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 3, deletes = emptyList(), unreadableRoots = emptySet(), fullPass = false)
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = songs(1L..3L), unreadableRoots = emptySet(), missing = 2).apply.shouldBeEmpty()
     }
 
     private fun songs(

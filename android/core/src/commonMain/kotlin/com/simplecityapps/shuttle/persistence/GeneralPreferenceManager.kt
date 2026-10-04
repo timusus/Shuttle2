@@ -224,6 +224,18 @@ class GeneralPreferenceManager @Inject constructor(
     private fun heldDeletesKey(source: String) = "held_deletes_$source"
 
     /**
+     * How many songs short of its own total the last full listing of [source] (a media provider type's name) came to:
+     * a server that comes up short by as many every time (Jellyfin counts rows it can't read) is still listing everything
+     * it can (`DeleteGuard`).
+     */
+    fun listingShortfall(source: String): Int = store.getInt("listing_shortfall_$source", 0)
+
+    fun setListingShortfall(
+        source: String,
+        missing: Int
+    ) = store.putInt("listing_shortfall_$source", missing)
+
+    /**
      * The album key version the stored album keys (play history, pinned downloads) were last moved to (#637): 0 before
      * the album identity rule, so they're moved once, after the first import that leaves every source's tags current.
      */

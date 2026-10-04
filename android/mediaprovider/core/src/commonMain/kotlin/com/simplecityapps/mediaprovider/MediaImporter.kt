@@ -471,7 +471,7 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
-                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, listingComplete = event.complete)
+                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, event.missing, fullPass = plan == SyncPlan.Full)
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
@@ -524,9 +524,13 @@ class MediaImporter(
         foundCount: Int,
         deletes: List<Song>,
         userRemoval: Boolean,
-        listingComplete: Boolean
+        missing: Int,
+        fullPass: Boolean
     ): DeleteGuard.Decision {
-        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots, userRemoval, listingComplete)
+        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots, userRemoval, missing, fullPass)
+        if (missing > 0 && decision.listingComplete) {
+            logger.info { "${mediaProvider.type} listed $missing fewer songs than it holds, as its last full import did; taking the listing as complete" }
+        }
         if (!decision.listingComplete) {
             logger.warn { "${mediaProvider.type} listed fewer songs than it holds; keeping ${decision.heldIncomplete} it didn't list until a full import lists them all" }
         }
