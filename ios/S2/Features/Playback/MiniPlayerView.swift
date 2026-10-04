@@ -240,7 +240,7 @@ struct MiniPlayerBar: View {
                             .contentTransition(.symbolEffect(.replace))
                     }
                 }
-                .background { MiniPlayerProgressRing(progress: progress, isPlaying: isPlaying) }
+                .background { MiniPlayerProgressRing(progress: progress, isPlaying: isPlaying, isLoading: isLoading) }
                 .touchTarget()
             }
             .buttonStyle(.pressScale)
@@ -296,18 +296,20 @@ private struct MiniPlayerAccessoryContent: View {
 }
 
 /// The song's progress as a ring around the mini player's play/pause glyph, in the player's tint over a faint track,
-/// starting at 12 o'clock; absent while idle or paused at zero. It reads the position itself (`progress`), so the bar around it isn't redrawn on every
-/// tick.
+/// starting at 12 o'clock; absent while idle, loading, or paused at zero. It reads the position itself (`progress`),
+/// so the bar around it isn't redrawn on every tick.
 struct MiniPlayerProgressRing: View {
     let progress: () -> Double
     var isPlaying = false
+    var isLoading = false
 
     var body: some View {
         let fraction = progress()
         // Nothing drawn for a paused song at zero: the empty track alone read as a constant loading ring around
-        // Play (#638). A playing song shows its track, even while its duration is unknown.
+        // Play (#638), so neither is it drawn around the loading spinner. A playing song shows its track, even while
+        // its duration is unknown.
         ZStack {
-            if fraction > 0 || isPlaying {
+            if fraction > 0 || (isPlaying && !isLoading) {
                 Circle()
                     .stroke(.tint.opacity(0.2), lineWidth: MiniPlayerBar.progressRingWidth)
                 Circle()
