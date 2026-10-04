@@ -82,7 +82,7 @@ fun KTagLib.getAudioFile(
         lyrics = tags.lyrics,
         grouping = tags.grouping,
         bitRate = metadata?.audioProperties?.bitrate,
-        bitDepth = null,
+        bitDepth = taglibBitDepth(fileName, metadata?.audioProperties?.bitsPerSample),
         sampleRate = metadata?.audioProperties?.sampleRate,
         channelCount = metadata?.audioProperties?.channelCount,
         albumArtists = tags.albumArtists,
