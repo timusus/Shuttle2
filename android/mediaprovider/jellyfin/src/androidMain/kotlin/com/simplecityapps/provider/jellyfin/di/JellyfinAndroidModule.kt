@@ -5,9 +5,7 @@ import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
-import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
-import com.simplecityapps.mediaprovider.server.isDebuggable
 import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
@@ -50,16 +48,8 @@ class JellyfinAndroidModule {
     @SingleIn(AppScope::class)
     @Named("JellyfinCredentialStore")
     fun provideCredentialStore(
-        @ApplicationContext context: Context,
         securePreferenceManager: SecurePreferenceManager
-    ): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "jellyfin").apply {
-        if (context.isDebuggable()) {
-            if (loginCredentials == null) {
-                loginCredentials = LoginCredentials("tim", "")
-                address = "https://jellyfin.mediaserver.timmalseed.dev"
-            }
-        }
-    }
+    ): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "jellyfin")
 
     @Provides
     @SingleIn(AppScope::class)
