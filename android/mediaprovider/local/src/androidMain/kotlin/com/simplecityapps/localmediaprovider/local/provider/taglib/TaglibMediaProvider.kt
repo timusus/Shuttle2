@@ -121,7 +121,7 @@ class TaglibMediaProvider(
         // First, so an import that fails part way doesn't leave the last one's walk for findPlaylists to use
         walkedPlaylistFiles = emptyMap()
         skippedFiles = emptySet()
-        tagReadGuard.recover()
+        tagReadGuard.recover(type)
         val startTime = System.currentTimeMillis()
         val folders = folders()
         val primaryStoragePath = primaryStoragePath()
@@ -204,7 +204,7 @@ class TaglibMediaProvider(
             "Found ${songs.size} of ${files.size} MediaStore audio files, ${walkedFiles.size} more in included folders, ${extraDocuments.size} extra folder " +
                 "files and ${unlisted.size} stored songs MediaStore didn't list (thorough: $thorough) in ${System.currentTimeMillis() - startTime}ms"
         )
-        skippedFiles = tagReadGuard.skippedPaths
+        skippedFiles = tagReadGuard.skippedPaths(type)
         emit(FlowEvent.Success(songs))
     }
 
@@ -475,7 +475,7 @@ class TaglibMediaProvider(
         merger: LocalFileTagMerger,
         folderImages: List<FolderImage>
     ): Song? = merger.unchangedSong(path, node.size, node.lastModified)?.reused(node.lastModified, folderImages)
-        ?: tagReadGuard.read(TagReadFile(path, node.size, node.lastModified)) { fileScanner.getAudioFile(context, kTagLib, node, path) }?.toSong(type, folderImages)
+        ?: tagReadGuard.read(TagReadFile(path, node.size, node.lastModified), type) { fileScanner.getAudioFile(context, kTagLib, node, path) }?.toSong(type, folderImages)
         // A file imported before that can't be read now keeps its song, which removing would take its play history with it
         ?: merger.existingSong(path)?.reused(node.lastModified, folderImages)
 
@@ -496,7 +496,7 @@ class TaglibMediaProvider(
         folderImages: List<FolderImage>
     ): Song = copy(id = 0, artworkVersion = localArtworkVersion(lastModified, folderImages))
 
-    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = tagReadGuard.read(TagReadFile(file.path, file.size, file.lastModified)) {
+    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = tagReadGuard.read(TagReadFile(file.path, file.size, file.lastModified), type) {
         withContext(Dispatchers.IO) {
             try {
                 context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->

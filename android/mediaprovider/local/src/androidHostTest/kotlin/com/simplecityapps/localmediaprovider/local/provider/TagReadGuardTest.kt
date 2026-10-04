@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -32,6 +33,7 @@ class TagReadGuardTest {
     private val markerDir: File = Files.createTempDirectory("tag-reads").toFile()
     private val a = TagReadFile("/music/a.flac", 100, 1_000)
     private val b = TagReadFile("/music/b.flac", 200, 2_000)
+    private val source = MediaProviderType.Shuttle
 
     private fun guard(
         pid: Int,
@@ -47,7 +49,7 @@ class TagReadGuardTest {
     ) = runBlocking {
         val guard = guard(pid)
         val started = files.map { CompletableDeferred<Unit>() }
-        val jobs = files.mapIndexed { index, file -> launch { guard.read(file) { started[index].complete(Unit).also { CompletableDeferred<Unit>().await() } } } }
+        val jobs = files.mapIndexed { index, file -> launch { guard.read(file, source) { started[index].complete(Unit).also { CompletableDeferred<Unit>().await() } } } }
         started.awaitAll()
         // The process is gone: its reads never finish, so their markers stay where the next one finds them
         val left = markerDir.listFiles().orEmpty().associateWith { it.readText() }
@@ -60,10 +62,10 @@ class TagReadGuardTest {
         val guard = guard(pid = 7)
         var during = emptyList<String>()
 
-        val tags = guard.read(a) { "tags".also { during = markers() } }
+        val tags = guard.read(a, source) { "tags".also { during = markers() } }
 
         tags shouldBe "tags"
-        during shouldContainExactly listOf("7\n${a.key}")
+        during shouldContainExactly listOf(a.key)
         markers().shouldBeEmpty()
     }
 
@@ -71,7 +73,7 @@ class TagReadGuardTest {
     fun `a read that throws takes its marker with it`() = runTest {
         val guard = guard(pid = 7)
 
-        runCatching { guard.read(a) { error("corrupt") } }
+        runCatching { guard.read(a, source) { error("corrupt") } }
 
         markers().shouldBeEmpty()
     }
@@ -82,10 +84,10 @@ class TagReadGuardTest {
         val blocked = File.createTempFile("tag-reads", null)
         val guard = testTagReadGuard(preferences, markerDir = blocked, pid = 7)
 
-        guard.recover()
+        guard.recover(source)
 
-        guard.read(a) { "tags" } shouldBe "tags"
-        guard.read(b) { "more tags" } shouldBe "more tags"
+        guard.read(a, source) { "tags" } shouldBe "tags"
+        guard.read(b, source) { "more tags" } shouldBe "more tags"
     }
 
     @Test
@@ -93,13 +95,13 @@ class TagReadGuardTest {
         crashDuring(a)
         val guard = guard(pid = 2, crashedNatively = { pid -> pid == 1 })
 
-        guard.recover()
+        guard.recover(source)
         var read = false
-        val tags = guard.read(a) { "tags".also { read = true } }
+        val tags = guard.read(a, source) { "tags".also { read = true } }
 
         tags shouldBe null
         read shouldBe false
-        guard.skippedPaths shouldBe setOf(a.path)
+        guard.skippedPaths(source) shouldBe setOf(a.path)
         preferences.tagReadQuarantine() shouldBe setOf(a.key)
         markers().shouldBeEmpty()
     }
@@ -108,7 +110,7 @@ class TagReadGuardTest {
     fun `a native crash with several reads in flight reads each alone and quarantines the one that crashes again`() = runTest {
         crashDuring(a, b)
         val suspicious = guard(pid = 2, crashedNatively = { true })
-        suspicious.recover()
+        suspicious.recover(source)
 
         preferences.tagReadQuarantine().shouldBeEmpty()
         // Read alone: nothing else runs beside either
@@ -117,7 +119,7 @@ class TagReadGuardTest {
         listOf(a, b, TagReadFile("/music/c.mp3", 1, 1), TagReadFile("/music/d.mp3", 1, 1))
             .map { file ->
                 async {
-                    suspicious.read(file) {
+                    suspicious.read(file, source) {
                         val now = running.incrementAndGet()
                         if (file == a || file == b) alongside.accumulateAndGet(now - 1) { x, y -> maxOf(x, y) }
                         delay(10)
@@ -128,7 +130,7 @@ class TagReadGuardTest {
         alongside.get() shouldBe 0
 
         crashDuring(b, pid = 2)
-        guard(pid = 3, crashedNatively = { true }).recover()
+        guard(pid = 3, crashedNatively = { true }).recover(source)
 
         preferences.tagReadQuarantine() shouldBe setOf(b.key)
     }
@@ -138,24 +140,24 @@ class TagReadGuardTest {
         crashDuring(a)
         val guard = guard(pid = 2, crashedNatively = { false })
 
-        guard.recover()
+        guard.recover(source)
 
         preferences.tagReadQuarantine().shouldBeEmpty()
         preferences.tagReadStrikes().shouldBeEmpty()
-        guard.read(a) { "tags" } shouldBe "tags"
+        guard.read(a, source) { "tags" } shouldBe "tags"
         markers().shouldBeEmpty()
     }
 
     @Test
     fun `where Android can't say a file takes two strikes to be quarantined`() = runTest {
         crashDuring(a)
-        guard(pid = 2).recover()
+        guard(pid = 2).recover(source)
 
         preferences.tagReadStrikes() shouldBe setOf(a.key)
         preferences.tagReadQuarantine().shouldBeEmpty()
 
         crashDuring(a, pid = 2)
-        guard(pid = 3).recover()
+        guard(pid = 3).recover(source)
 
         preferences.tagReadQuarantine() shouldBe setOf(a.key)
         preferences.tagReadStrikes().shouldBeEmpty()
@@ -165,9 +167,9 @@ class TagReadGuardTest {
     fun `a struck file read without a crash loses its strike`() = runTest {
         crashDuring(a)
         val guard = guard(pid = 2)
-        guard.recover()
+        guard.recover(source)
 
-        guard.read(a) { "tags" } shouldBe "tags"
+        guard.read(a, source) { "tags" } shouldBe "tags"
 
         preferences.tagReadStrikes().shouldBeEmpty()
     }
@@ -176,10 +178,10 @@ class TagReadGuardTest {
     fun `a quarantined file that changed since is read again`() = runTest {
         preferences.quarantineTagRead(a.key)
         val guard = guard(pid = 2)
-        guard.recover()
+        guard.recover(source)
 
-        guard.read(a.copy(size = 101)) { "tags" } shouldBe "tags"
-        guard.skippedPaths.shouldBeEmpty()
+        guard.read(a.copy(size = 101), source) { "tags" } shouldBe "tags"
+        guard.skippedPaths(source).shouldBeEmpty()
     }
 
     @Test
@@ -187,25 +189,68 @@ class TagReadGuardTest {
         val guard = guard(pid = 7)
         var during = emptyList<String>()
 
-        guard.read(a) {
-            guard.recover()
+        guard.read(a, source) {
+            guard.recover(source)
             during = markers()
         }
 
-        during shouldContainExactly listOf("7\n${a.key}")
+        during shouldContainExactly listOf(a.key)
+    }
+
+    @Test
+    fun `recovery leaves a marker this process is still writing`() = runTest {
+        val guard = guard(pid = 7)
+        var during = emptyList<String>()
+
+        guard.read(a, source) {
+            // Caught between creating the marker and writing its key, as the other provider's recovery could see it
+            markerDir.listFiles().orEmpty().single().writeText("")
+            guard.recover(MediaProviderType.MediaStore)
+            during = markerDir.listFiles().orEmpty().map { it.name }
+        }
+
+        during.size shouldBe 1
+        markers().shouldBeEmpty()
+    }
+
+    @Test
+    fun `an unreadable marker of another process is left while fresh and removed once old`() = runTest {
+        val marker = File(markerDir, "slot-9-0").apply { writeText("") }
+        val guard = guard(pid = 7)
+
+        guard.recover(source)
+        marker.exists() shouldBe true
+
+        marker.setLastModified(System.currentTimeMillis() - 5 * 60_000)
+        guard.recover(source)
+        marker.exists() shouldBe false
+        preferences.tagReadStrikes().shouldBeEmpty()
+    }
+
+    @Test
+    fun `one source's recovery keeps another's skipped files`() = runTest {
+        preferences.quarantineTagRead(a.key)
+        val guard = guard(pid = 2)
+        guard.recover(source)
+        guard.read(a, source) { "tags" } shouldBe null
+
+        guard.recover(MediaProviderType.MediaStore)
+
+        guard.skippedPaths(source) shouldBe setOf(a.path)
+        guard.skippedPaths(MediaProviderType.MediaStore).shouldBeEmpty()
     }
 
     @Test
     fun `clearing the quarantine reads its files again at the next recovery`() = runTest {
         preferences.quarantineTagRead(a.key)
         val guard = guard(pid = 2)
-        guard.recover()
-        guard.read(a) { "tags" } shouldBe null
+        guard.recover(source)
+        guard.read(a, source) { "tags" } shouldBe null
 
         preferences.clearTagReadQuarantine()
-        guard.recover()
+        guard.recover(source)
 
-        guard.read(a) { "tags" } shouldBe "tags"
-        guard.skippedPaths.shouldBeEmpty()
+        guard.read(a, source) { "tags" } shouldBe "tags"
+        guard.skippedPaths(source).shouldBeEmpty()
     }
 }

@@ -51,7 +51,7 @@ class MediaStoreMediaProvider(
     // Songs
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
-        tagReadGuard.recover()
+        tagReadGuard.recover(type)
         val rawSongs = mutableListOf<Song>()
         val projection =
             mediaStoreSongProjection(

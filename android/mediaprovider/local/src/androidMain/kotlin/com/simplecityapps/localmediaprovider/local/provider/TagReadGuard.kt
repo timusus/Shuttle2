@@ -5,10 +5,11 @@ import android.app.ApplicationExitInfo
 import android.content.Context
 import android.os.Build
 import android.os.Process
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import java.io.File
 import java.io.IOException
-import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -55,33 +56,46 @@ class TagReadGuard(
     @Volatile
     private var strikes: Set<String>? = null
 
-    @Volatile
-    private var suspects: Set<String> = emptySet()
+    // Files a crash came during alongside others, read alone until one reads without crashing
+    private val suspects: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
-    private val skipped: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
+    // Each source's own, so one provider's recovery doesn't clear what another's import left unread
+    private val skipped = ConcurrentHashMap<MediaProviderType, MutableSet<String>>()
 
     // Logs the first marker that couldn't be written, not one per read
     private val markerWriteFailed = AtomicBoolean()
 
-    /** The paths [read] left unread since the last [recover], being quarantined. */
-    val skippedPaths: Set<String> get() = synchronized(skipped) { skipped.toSet() }
+    /** The paths [read] left unread for [source] since its last [recover], being quarantined. */
+    fun skippedPaths(source: MediaProviderType): Set<String> = skipped[source].orEmpty().toSet()
 
     /**
      * Takes the markers a process that died left, and quarantines or suspects the files they name; called at the start of
-     * each import, so the quarantine Sources' retry cleared is read again too.
+     * each of [source]'s imports, so the quarantine Sources' retry cleared is read again too.
      */
-    suspend fun recover() = withContext(Dispatchers.IO) {
-        skipped.clear()
+    suspend fun recover(source: MediaProviderType) = withContext(Dispatchers.IO) {
+        skipped.remove(source)
         var quarantine = preferences.tagReadQuarantine()
         var strikes = preferences.tagReadStrikes()
         val suspects = mutableSetOf<String>()
+        val now = System.currentTimeMillis()
         val markers =
             markerDir.listFiles { file -> file.name.startsWith(SLOT_PREFIX) }.orEmpty().mapNotNull { file ->
-                val (owner, key) = file.readText().split('\n', limit = 2).takeIf { it.size == 2 }.let { it?.get(0)?.toIntOrNull() to it?.get(1) }
-                // This process's own are reads running now
+                // Whose it is comes from its name, so a read of this process's still writing its marker is never taken
+                val owner = MARKER_NAME.matchEntire(file.name)?.groupValues?.get(1)?.toIntOrNull()
                 if (owner == pid) return@mapNotNull null
+                val key =
+                    try {
+                        file.readText().takeIf { it.isNotEmpty() }
+                    } catch (e: IOException) {
+                        null
+                    }
+                if (owner == null || key == null) {
+                    // Unreadable: a fresh one may be a marker another process is writing now, an old one names nothing
+                    if (now - file.lastModified() > FRESH_MARKER_MILLIS) file.delete()
+                    return@mapNotNull null
+                }
                 file.delete()
-                if (owner == null || key == null) null else owner to key
+                owner to key
             }
         markers.groupBy({ it.first }, { it.second }).forEach { (owner, keys) ->
             when (crashedNatively(owner)) {
@@ -110,30 +124,32 @@ class TagReadGuard(
         }
         this@TagReadGuard.quarantine = quarantine
         this@TagReadGuard.strikes = strikes
-        this@TagReadGuard.suspects = suspects
+        this@TagReadGuard.suspects += suspects
     }
 
     /**
-     * [read]'s result for [file], or null without reading it if it's quarantined. A large file, a suspect or one with a
-     * strike is read alone.
+     * [read]'s result for [file], or null without reading it if it's quarantined, which counts among [source]'s
+     * [skippedPaths]. A large file, a suspect or one with a strike is read alone.
      */
     suspend fun <T : Any> read(
         file: TagReadFile,
+        source: MediaProviderType,
         read: suspend () -> T?
     ): T? {
         val key = file.key
         if (key in quarantine()) {
             Timber.w("Not reading quarantined file ${file.path}")
-            skipped += file.path
+            skipped.getOrPut(source) { ConcurrentHashMap.newKeySet() } += file.path
             return null
         }
         val struck = key in strikes()
         return limiter.withPermits(all = file.size > LARGE_TAG_READ_BYTES || struck || key in suspects) {
             val slot = synchronized(freeSlots) { freeSlots.removeFirst() }
-            val marker = File(markerDir, "$SLOT_PREFIX$slot")
+            val marker = File(markerDir, "$SLOT_PREFIX$pid-$slot")
             try {
-                writeMarker(marker, "$pid\n$key")
+                writeMarker(marker, key)
                 read().also {
+                    suspects -= key
                     if (struck) {
                         strikes = strikes() - key
                         preferences.setTagReadStrikes(strikes())
@@ -165,6 +181,12 @@ class TagReadGuard(
 
     private companion object {
         const val SLOT_PREFIX = "slot-"
+
+        // slot-<pid>-<slot>: the process whose read it marks, and which of its slots
+        val MARKER_NAME = Regex("$SLOT_PREFIX(\\d+)-\\d+")
+
+        // How long an unreadable marker of another process is left, in case it's being written now
+        const val FRESH_MARKER_MILLIS = 60_000L
     }
 }
 

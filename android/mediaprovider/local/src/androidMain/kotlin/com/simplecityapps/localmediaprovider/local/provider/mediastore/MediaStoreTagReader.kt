@@ -11,6 +11,7 @@ import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
 import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.shuttle.coroutines.concurrentMap
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +40,7 @@ class KTagLibMediaStoreTagReader(
     override suspend fun read(
         uri: Uri,
         file: TagReadFile
-    ): FileTags? = tagReadGuard.read(file) {
+    ): FileTags? = tagReadGuard.read(file, MediaProviderType.MediaStore) {
         withContext(Dispatchers.IO) {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 kTagLib.getMetadata(pfd.fd, file.path.substringAfterLast('/'))?.propertyMap?.toFileTags()
