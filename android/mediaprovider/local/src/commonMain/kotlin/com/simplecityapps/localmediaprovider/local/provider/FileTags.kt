@@ -66,12 +66,12 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
                 ?: first(TagLibProperty.Year)?.parseDate(),
         genres =
             get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
-                genre.split(',', ';', '/')
+                genre.split(';')
                     .map { genre -> genre.trim() }
                     .filterNot { genre -> genre.isEmpty() }
             },
-        replayGainTrack = getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.parseReplayGain(),
-        replayGainAlbum = getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.parseReplayGain(),
+        replayGainTrack = getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.parseReplayGain() ?: getCaseInsensitive(R128_TRACK_GAIN)?.firstOrNull()?.parseR128Gain(),
+        replayGainAlbum = getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.parseReplayGain() ?: getCaseInsensitive(R128_ALBUM_GAIN)?.firstOrNull()?.parseR128Gain(),
         lyrics = first(TagLibProperty.Lyrics),
         grouping = first(TagLibProperty.Grouping),
         albumArtists = values(TagLibProperty.AlbumArtists.key),
@@ -128,6 +128,12 @@ internal fun String.decodeMisreadUtf8(): String {
 }
 
 private const val MATROSKA_ALBUM_ARTIST = "ALBUM_ARTIST"
+
+private const val R128_TRACK_GAIN = "R128_TRACK_GAIN"
+private const val R128_ALBUM_GAIN = "R128_ALBUM_GAIN"
+
+/** An Opus R128 gain is a Q7.8 fixed-point dB offset from -23 LUFS; ReplayGain's reference is -18 LUFS, 5 dB louder. */
+private fun String.parseR128Gain(): Double? = trim().toIntOrNull()?.let { it / 256.0 + 5.0 }
 
 private fun String.parseReplayGain(): Double? = replace(oldValue = "db", newValue = "", ignoreCase = true).trim().toDoubleOrNull()
 

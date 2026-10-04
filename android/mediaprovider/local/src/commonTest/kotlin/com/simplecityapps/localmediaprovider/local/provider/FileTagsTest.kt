@@ -203,4 +203,24 @@ class FileTagsTest {
         tags.discTotal shouldBe 2
         tags.replayGainAlbum shouldBe 1.25
     }
+
+    @Test
+    fun `a genre is split on semicolons and multi-value entries but keeps slashes and commas`() {
+        mapOf("GENRE" to listOf("R&B/Soul", "Rock; Pop", "Folk, World")).toFileTags().genres shouldBe
+            listOf("R&B/Soul", "Rock", "Pop", "Folk, World")
+    }
+
+    @Test
+    fun `an Opus R128 gain reads as ReplayGain when the ReplayGain tags are absent`() {
+        val tags = mapOf("R128_TRACK_GAIN" to listOf("-512"), "R128_ALBUM_GAIN" to listOf("256")).toFileTags()
+
+        tags.replayGainTrack shouldBe 3.0
+        tags.replayGainAlbum shouldBe 6.0
+    }
+
+    @Test
+    fun `a ReplayGain tag beats an R128 gain`() {
+        mapOf("REPLAYGAIN_TRACK_GAIN" to listOf("-7.5 dB"), "R128_TRACK_GAIN" to listOf("-512")).toFileTags().replayGainTrack shouldBe -7.5
+        mapOf("R128_TRACK_GAIN" to listOf("loud")).toFileTags().replayGainTrack shouldBe null
+    }
 }
