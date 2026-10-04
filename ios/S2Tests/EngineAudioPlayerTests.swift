@@ -11,8 +11,8 @@ struct EngineAudioPlayerTests {
     private final class RecordingListener: NSObject, IosAudioPlayerListener {
         var calls: [String] = []
 
-        func onStateChanged(trackId: String, state: IosAudioPlayerState) {
-            calls.append("state \(trackId) \(Self.name(state))")
+        func onStateChanged(trackId: String, state: IosAudioPlayerState, superseded: Bool) {
+            calls.append("state \(trackId) \(Self.name(state))\(superseded ? " superseded" : "")")
         }
 
         func onTransition(trackId: String) {
@@ -149,6 +149,43 @@ struct EngineAudioPlayerTests {
         player.play()
         #expect(asked == 1)
         #expect(listener.calls == ["state a playing", "state a paused"])
+    }
+
+    // MARK: - Which play a report answers
+
+    @Test func aPausedReportFromBeforeAPlayIsSupersededAndOneAfterItIsNot() {
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: false)
+        player.play()
+        // The load's ready-paused, made before the engine took the play (#708).
+        engine.emit(.state(.paused, trackId: "a", commands: 1))
+        // A paused after it: the play refused, or the engine pausing itself (#716).
+        engine.emit(.state(.paused, trackId: "a"))
+
+        #expect(listener.calls == ["state a paused superseded", "state a paused"])
+    }
+
+    @Test func aPlayAfterAPauseIsSentWhileThePlayingReportFromBeforeThePauseArrives() {
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
+        player.pause()
+        // Made before the engine took the pause: it isn't playing now.
+        engine.emit(.state(.playing, trackId: "a", commands: 1))
+
+        player.play()
+
+        #expect(engine.commands == ["pause", "play"])
+        #expect(listener.calls == ["state a playing superseded"])
+    }
+
+    @Test func aReplacedEngineCountsCommandsFromItsFirst() {
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
+        player.play()
+        let rebuilt = FakeAudioEngine()
+        player.replaceEngine(rebuilt)
+
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: false)
+        rebuilt.emit(.state(.paused, trackId: "a"))
+
+        #expect(listener.calls == ["state a paused"])
     }
 
     @Test func positionAndDurationOnlyCountForTheTrackKotlinThinksIsCurrent() {

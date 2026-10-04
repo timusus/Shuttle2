@@ -18,6 +18,12 @@ import Shared
 /// reports, afterwards and in order, are. A refused play of a track that's already ready has no engine transition, so
 /// the paused report is the only one. A play while the engine is already playing is no change, so it asks nothing of
 /// the session and is never refused.
+///
+/// **Which play a report answers.** The engine stamps each state report with the commands it had taken (loads, plays,
+/// pauses, stops), and they're counted here as they're sent: a report made before the engine took the last of them is
+/// forwarded as superseded. Kotlin doesn't take a pause's or a load's paused, queued before a play reached the engine,
+/// for that play's refusal (#708); any other paused while it intends to play is a refusal, or the engine pausing itself
+/// (#716). Nor is a playing report from before a pause playing now.
 final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// Called on the main thread before playback starts; false cancels it.
     var onWillPlay: () -> Bool = { true }
@@ -32,6 +38,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     private var currentId: String?
     /// The engine's last report for `currentId` was playing, and nothing asked it to pause, load or stop since.
     private var isPlaying = false
+    /// Commands sent to the engine that it counts in its state reports (loads, plays, pauses, stops).
+    private var commandsSent = 0
     /// The equalizer Kotlin last set, handed to a replacement engine too.
     private var equalizer: EngineEqualizer?
 
@@ -48,6 +56,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         engine.stop()
         currentId = nil
         isPlaying = false
+        commandsSent = 0
         engine = newEngine
         attach(newEngine)
         equalizer?.apply(to: newEngine)
@@ -59,9 +68,10 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
 
     private func forward(_ event: EngineEvent) {
         switch event {
-        case let .state(state, trackId):
-            isPlaying = state == .playing && trackId == currentId
-            listener?.onStateChanged(trackId: trackId ?? "", state: IosAudioPlayerState(state))
+        case let .state(state, trackId, commands):
+            let superseded = commands < commandsSent
+            isPlaying = state == .playing && trackId == currentId && !superseded
+            listener?.onStateChanged(trackId: trackId ?? "", state: IosAudioPlayerState(state), superseded: superseded)
         case let .transition(trackId):
             currentId = trackId
             listener?.onTransition(trackId: trackId)
@@ -83,6 +93,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     func load(current: IosAudioTrack, next: IosAudioTrack?, startMs: Int64, playWhenReady: Bool) {
         currentId = current.id
         isPlaying = false
+        commandsSent += 1
         guard let track = engineTrack(current) else {
             engine.stop()
             return
@@ -102,17 +113,19 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             if let currentId { reportPaused(currentId) }
             return
         }
+        commandsSent += 1
         engine.play()
     }
 
     /// The session refused playback of `trackId`. Synchronous, on the call's thread (the main thread): Kotlin is still
     /// inside the load or play and can tell this from the engine's later ready-paused.
     private func reportPaused(_ trackId: String) {
-        listener?.onStateChanged(trackId: trackId, state: .paused)
+        listener?.onStateChanged(trackId: trackId, state: .paused, superseded: false)
     }
 
     func pause() {
         isPlaying = false
+        commandsSent += 1
         engine.pause()
         onPaused()
     }
@@ -124,6 +137,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     func stop() {
         currentId = nil
         isPlaying = false
+        commandsSent += 1
         engine.stop()
     }
 

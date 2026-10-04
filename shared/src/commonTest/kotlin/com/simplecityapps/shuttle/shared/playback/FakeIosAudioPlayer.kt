@@ -35,6 +35,9 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     private var playWhenReady = false
 
+    /** Loads, plays, pauses and stops taken, as the engine stamps them on its state reports. */
+    private var commands = 0
+
     /**
      * When false, [play] (unless already playing, which changes nothing) and a load that asked to play are refused:
      * the track is still prepared, ending paused, and a paused state is reported for its id. [deferRefusal] posts that play refusal for [settle], as an engine that
@@ -62,8 +65,9 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         this.next = next
         val starts = playWhenReady && acceptsPlay
         this.playWhenReady = starts
+        commands++
         position = startMs
-        if (playWhenReady && !starts && !deferRefusal) listener?.onStateChanged(current.id, IosAudioPlayerState.Paused)
+        if (playWhenReady && !starts && !deferRefusal) listener?.onStateChanged(current.id, IosAudioPlayerState.Paused, false)
         setState(IosAudioPlayerState.Loading)
         if (startMs > 0 && current.isUnseekable()) {
             // The engine starts it at its beginning instead, and says so before its state.
@@ -92,12 +96,14 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             current?.id?.let(::refuse)
             return
         }
+        commands++
         playWhenReady = true
         if (current != null && state == IosAudioPlayerState.Paused) setState(IosAudioPlayerState.Playing)
     }
 
     override fun pause() {
         calls += "pause"
+        commands++
         playWhenReady = false
         if (state == IosAudioPlayerState.Playing) setState(IosAudioPlayerState.Paused)
     }
@@ -114,6 +120,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun stop() {
         calls += "stop"
+        commands++
         current = null
         next = null
         state = IosAudioPlayerState.Idle
@@ -167,6 +174,17 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         settle()
     }
 
+    /**
+     * The engine pauses on its own, as `MusicPlaybackController` does when it can't start again after a route change:
+     * loading while it retries, then paused, with its own intent dropped.
+     */
+    fun pauseItself() {
+        playWhenReady = false
+        setState(IosAudioPlayerState.Loading)
+        setState(IosAudioPlayerState.Paused)
+        settle()
+    }
+
     /** A position tick while playing. */
     fun tick(positionMs: Long) {
         position = positionMs
@@ -187,12 +205,10 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     fun emitState(
         state: IosAudioPlayerState,
         trackId: String
-    ) {
-        post { listener?.onStateChanged(trackId, state) }
-    }
+    ) = report(trackId, state)
 
     private fun refuse(trackId: String) {
-        val report: () -> Unit = { listener?.onStateChanged(trackId, IosAudioPlayerState.Paused) }
+        val report: () -> Unit = { listener?.onStateChanged(trackId, IosAudioPlayerState.Paused, false) }
         if (deferRefusal) post(report) else report()
     }
 
@@ -213,7 +229,16 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     private fun setState(state: IosAudioPlayerState) {
         this.state = state
         val id = current?.id ?: return
-        post { listener?.onStateChanged(id, state) }
+        report(id, state)
+    }
+
+    /** Posts [state] for [trackId], stamped with the commands taken so far, as the engine does. */
+    private fun report(
+        trackId: String,
+        state: IosAudioPlayerState
+    ) {
+        val stamp = commands
+        post { listener?.onStateChanged(trackId, state, stamp < commands) }
     }
 
     private fun post(event: () -> Unit) {

@@ -18,8 +18,9 @@ enum EngineState: Equatable {
 
 /// What the engine reports, on the main queue, in the order it happened.
 enum EngineEvent: Equatable {
-    /// The state changed while `trackId` was the current track (nil: nothing is loaded).
-    case state(EngineState, trackId: String?)
+    /// The state changed while `trackId` was the current track (nil: nothing is loaded), after the engine had taken
+    /// `commands` commands (loads, plays, pauses and stops, counted from its first).
+    case state(EngineState, trackId: String?, commands: Int)
     /// The next track became current: its first frame is being heard.
     case transition(trackId: String)
     /// The track couldn't be opened or decoded; the engine carries on as if it had ended.

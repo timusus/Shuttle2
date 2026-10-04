@@ -345,6 +345,29 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states, [.loading, .paused, .paused, .playing])
     }
 
+    /// Each report carries the commands taken before it, so the owner can tell a paused report made before a play
+    /// (a pause's, a load's) from that play's refusal (#708), and a playing one made before a pause from now.
+    func testEachStateReportCountsTheCommandsTakenBeforeIt() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: false)
+        controller.play()
+        controller.pause()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused, .playing, .paused])
+        XCTAssertEqual(log.stateCommands, [1, 1, 2, 3])
+
+        controller.engine.stop()
+        controller.startEngine = { _ in throw TrackSourceError.failed("session not active") }
+        controller.play()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states.last, .paused)
+        XCTAssertEqual(log.stateCommands.last, 4, "a refusal answers the play")
+
+        controller.stop()
+        controller.syncForTesting()
+        XCTAssertEqual(log.stateCommands.last, 5)
+    }
+
     func testPausingWhileAlreadyPausedDoesNotRepeatTheReport() throws {
         let (controller, log) = try makeController()
         controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: false)

@@ -28,12 +28,19 @@ final class FakeAudioEngine: AudioEngine {
     /// Every `setEqualizer`, in order.
     private(set) var equalizers: [Equalizer] = []
     private var handler: ((EngineEvent) -> Void)?
+    /// Loads, plays, pauses and stops taken, as the engine counts them for its state reports.
+    private(set) var commandsTaken = 0
 
     var hasEventHandler: Bool { handler != nil }
 
-    /// Reports `event` as the engine would, on the main queue.
+    /// Reports `event` as the engine would, on the main queue. A state made with `.state(_:trackId:)` is stamped with
+    /// the commands taken so far: a report the engine makes now.
     func emit(_ event: EngineEvent) {
-        handler?(event)
+        if case .state(let state, let trackId, EngineEvent.now) = event {
+            handler?(.state(state, trackId: trackId, commands: commandsTaken))
+        } else {
+            handler?(event)
+        }
     }
 
     func setEventHandler(_ handler: ((EngineEvent) -> Void)?) {
@@ -41,6 +48,7 @@ final class FakeAudioEngine: AudioEngine {
     }
 
     func load(current: EngineTrack, next: EngineTrack?, startMs: Int64, playWhenReady: Bool) {
+        commandsTaken += 1
         loads.append(Load(current: current, next: next, startMs: startMs, playWhenReady: playWhenReady))
     }
 
@@ -48,14 +56,37 @@ final class FakeAudioEngine: AudioEngine {
         nexts.append(track)
     }
 
-    func play() { commands.append("play") }
-    func pause() { commands.append("pause") }
+    func play() {
+        commandsTaken += 1
+        commands.append("play")
+    }
+
+    func pause() {
+        commandsTaken += 1
+        commands.append("pause")
+    }
+
     func seek(toMs ms: Int64) { commands.append("seek \(ms)") }
-    func stop() { commands.append("stop") }
+
+    func stop() {
+        commandsTaken += 1
+        commands.append("stop")
+    }
+
     func setSpeed(_ speed: Float) { commands.append("speed \(speed)") }
 
     func setEqualizer(enabled: Bool, preampDb: Float, coefficients: [Double]) {
         equalizers.append(Equalizer(enabled: enabled, preampDb: preampDb, coefficients: coefficients))
+    }
+}
+
+extension EngineEvent {
+    /// Stands for the commands the engine has taken when `FakeAudioEngine.emit` reports it.
+    static let now = -1
+
+    /// A state the fake engine reports as of now (`FakeAudioEngine.emit`).
+    static func state(_ state: EngineState, trackId: String?) -> EngineEvent {
+        .state(state, trackId: trackId, commands: now)
     }
 }
 

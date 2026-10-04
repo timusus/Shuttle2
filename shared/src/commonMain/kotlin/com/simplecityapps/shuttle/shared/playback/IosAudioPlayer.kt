@@ -70,10 +70,13 @@ interface IosAudioPlayerListener {
     /**
      * The engine's state changed, while [trackId] was its current track. The id tells a state change for the track
      * just loaded from one the engine made for the track before, which can arrive after the new load was asked for.
+     * [superseded]: the engine made it before it took a load, play, pause or stop asked of it since, so it isn't the
+     * answer to that: a paused one isn't a later play's refusal (#708), and a playing one isn't playing after a pause.
      */
     fun onStateChanged(
         trackId: String,
-        state: IosAudioPlayerState
+        state: IosAudioPlayerState,
+        superseded: Boolean
     )
 
     /** The next track became current: its first frame is being heard. [trackId] is its id. */

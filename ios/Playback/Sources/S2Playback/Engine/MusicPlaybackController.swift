@@ -112,8 +112,11 @@ public final class MusicPlaybackController {
     // MARK: Callbacks (set before use; read under `callbackLock`)
 
     /// The playing state changed, with the uid of the current track then (nil when there is none), so
-    /// a listener can tell a late report for a track it has since replaced.
-    public var onStateChanged: ((State, String?) -> Void)? {
+    /// a listener can tell a late report for a track it has since replaced, and the number of commands
+    /// (``load(current:next:startMs:playWhenReady:)``, ``play()``, ``pause()``, ``stop()``) taken before it.
+    /// Commands are taken in the order they're made, so the count tells a report made before a command
+    /// from its answer: a paused report from before a play doesn't refuse it.
+    public var onStateChanged: ((State, String?, Int) -> Void)? {
         get { callbackLock.withLock { callbacks.state } }
         set { callbackLock.withLock { callbacks.state = newValue } }
     }
@@ -220,6 +223,8 @@ public final class MusicPlaybackController {
     private var reading: Slot?
     private var playWhenReady = false
     private var state: State = .idle
+    /// Commands taken so far, stamped on each state report (``onStateChanged``).
+    private var commandsTaken = 0
     private let processor: PCMProcessor
     private var pendingEqualizer: EqualizerSettings?
     private var pendingLimiter: LimiterSettings?
@@ -286,7 +291,7 @@ public final class MusicPlaybackController {
     private var activeSource: TrackPCMSource?
 
     private struct Callbacks {
-        var state: ((State, String?) -> Void)?
+        var state: ((State, String?, Int) -> Void)?
         var transition: ((String) -> Void)?
         var failed: ((String, Error) -> Void)?
         var position: ((String, Int64) -> Void)?
@@ -347,6 +352,7 @@ public final class MusicPlaybackController {
     public func load(current track: PlaybackTrack, next nextTrack: PlaybackTrack?, startMs: Int64 = 0, playWhenReady: Bool) {
         interruptActiveRead()
         engineQueue.async { [self] in
+            commandsTaken += 1
             var reusable = next.flatMap { old in old.atStart && !old.failed && reading !== old ? old : nil }
             if reusable != nil { next = nil }
             teardown()
@@ -419,6 +425,7 @@ public final class MusicPlaybackController {
     public func play() {
         engineQueue.async { [self] in
             log.notice("play: \(self.state.rawValue, privacy: .public)")
+            commandsTaken += 1
             playWhenReady = true
             guard current != nil, state != .ended else { return }
             guard startPlaying() else { return stayPaused() }
@@ -428,6 +435,7 @@ public final class MusicPlaybackController {
     public func pause() {
         engineQueue.async { [self] in
             log.notice("pause: \(self.state.rawValue, privacy: .public)")
+            commandsTaken += 1
             playWhenReady = false
             let held = playedStreamIndex()
             player.pause()
@@ -459,6 +467,7 @@ public final class MusicPlaybackController {
     public func stop() {
         interruptActiveRead()
         engineQueue.async { [self] in
+            commandsTaken += 1
             teardown()
             setState(.idle)
         }
@@ -583,8 +592,9 @@ public final class MusicPlaybackController {
     /// engine was already paused: `setState` would otherwise drop it, and the owner would never hear the refusal.
     private func reportState(_ newState: State) {
         let uid = current?.track.uid
+        let commands = commandsTaken
         let callback = callbackLock.withLock { callbacks.state }
-        if let callback { callbackQueue.async { callback(newState, uid) } }
+        if let callback { callbackQueue.async { callback(newState, uid, commands) } }
     }
 
     private func reportFailure(_ slot: Slot, _ error: Error) {

@@ -133,6 +133,8 @@ final class CallbackLog {
     let queue = DispatchQueue(label: "test.callbacks")
     private(set) var transitions: [String] = []
     private(set) var states: [MusicPlaybackController.State] = []
+    /// The commands taken before each of `states`.
+    private(set) var stateCommands: [Int] = []
     private(set) var failures: [String] = []
     private(set) var seeksUnsupported: [String] = []
     /// Frames rendered when each transition was seen, filled in by ``OfflineRenderer``.
@@ -140,7 +142,10 @@ final class CallbackLog {
 
     func attach(to controller: MusicPlaybackController) {
         controller.onTransition = { [weak self] in self?.transitions.append($0) }
-        controller.onStateChanged = { [weak self] state, _ in self?.states.append(state) }
+        controller.onStateChanged = { [weak self] state, _, commands in
+            self?.states.append(state)
+            self?.stateCommands.append(commands)
+        }
         controller.onFailed = { [weak self] uid, _ in self?.failures.append(uid) }
         controller.onSeekUnsupported = { [weak self] uid, ms in self?.seeksUnsupported.append("\(uid) \(ms)") }
     }

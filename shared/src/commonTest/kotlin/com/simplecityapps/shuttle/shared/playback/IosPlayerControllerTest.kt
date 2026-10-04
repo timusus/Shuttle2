@@ -971,10 +971,63 @@ class IosPlayerControllerTest {
         controller.playWhenReadyFlow.value shouldBe true
         controller.playbackState() shouldBe PlaybackState.Playing
 
-        // A later paused report is not taken for that play's refusal.
-        engine.emitState(IosAudioPlayerState.Paused, checkNotNull(engine.current).id)
-        engine.settle()
+        // A later tick is not taken for that play's answer.
+        engine.tick(1_000)
         controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a play within the round trip of a pause keeps its intent through the pause's report`() = test { controller ->
+        controller.start(listOf(a, b))
+
+        // Both reach the engine before its paused report for the pause comes back (#708).
+        controller.pause()
+        controller.play()
+        controller.playWhenReadyFlow.value shouldBe true
+        engine.settle()
+
+        engine.state shouldBe IosAudioPlayerState.Playing
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+
+        // The engine's later paused report is not that pause's: it's answered.
+        controller.pause()
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `a play, pause and play while a playing report is in flight keep the last intent`() = test { controller ->
+        controller.start(listOf(a, b), play = false)
+
+        controller.play()
+        controller.pause()
+        controller.play()
+        engine.settle()
+
+        engine.state shouldBe IosAudioPlayerState.Playing
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `an engine that pauses itself clears intent - and the next toggle plays`() = test { controller ->
+        controller.start(listOf(a, b))
+
+        // A route change stopped the engine and it wouldn't start again (#716).
+        engine.pauseItself()
+
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+        engine.clearCalls()
+
+        controller.togglePlayback()
+        engine.settle()
+        engine.calls shouldBe listOf("play")
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
     }
 
     @Test
