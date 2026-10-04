@@ -43,7 +43,8 @@ struct ArtworkTintModifier: ViewModifier {
     /// mode re-derives at once instead of waiting for the next cover.
     @State private var extracted: ContrastSafeTint.RGB?
 
-    /// Settings' Colour from artwork (`AppearanceSettings.ColourFromArtwork`, on by default). Off, the tint stays the accent.
+    /// Settings' Colour from artwork (`AppearanceSettings.ColourFromArtwork`, on by default). Off, the tint stays
+    /// the accent and nothing is extracted.
     @AppStorage("pref_theme_colour_from_artwork") private var colourFromArtwork = true
 
     @Environment(\.colorScheme) private var colorScheme
@@ -56,7 +57,10 @@ struct ArtworkTintModifier: ViewModifier {
             .environment(\.artworkTintInk, tint.ink)
             .environment(\.isArtworkTinted, tint.isTinted)
             .environment(\.artworkTintSource, colourFromArtwork ? extracted : nil)
-            .task(id: source?.id) {
+            // The id is nil while Colour from artwork is off, so the task below returns without extracting
+            // and runs again (with the source's id) as soon as the setting comes back on.
+            .task(id: colourFromArtwork ? source?.id : nil) {
+                guard colourFromArtwork else { return }
                 // The old tint stays until the new one is known, so a skip doesn't flash the accent.
                 let found: ContrastSafeTint.RGB? = if let source { await (extractor ?? .shared).color(for: source) } else { nil }
                 if Task.isCancelled || found == extracted { return }
