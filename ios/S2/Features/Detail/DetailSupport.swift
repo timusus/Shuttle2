@@ -108,6 +108,9 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.artworkTint) private var tint
     @Environment(\.rootContainerSize) private var rootContainerSize
+    /// Room under the content for the mini-player tab accessory, which grows with the text size: a hero's Play row
+    /// and the last rows can always scroll clear of it.
+    @ScaledMetric(relativeTo: .body) private var accessoryClearance = Spacing.xlarge
     @State private var heroVisible = true
     /// Where the navigation bar ends, in global coordinates. The hero's title hides under the bar above this line,
     /// and the inset hero's wash reaches up past it. It never sizes a row: see `singleColumn`.
@@ -168,6 +171,7 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.size.width
         } action: { listWidth = $0 }
+        .contentMargins(.bottom, accessoryClearance, for: .scrollContent)
         .modifier(BleedNavigationBar(isActive: backdrop != nil, isOverBackdrop: heroVisible))
     }
 
@@ -232,6 +236,7 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
             List { rows() }
                 .listStyle(.plain)
                 .contentMargins(.trailing, inset, for: .scrollContent)
+                .contentMargins(.bottom, accessoryClearance, for: .scrollContent)
         }
         // The hero is always on screen here; clear a `false` left by a scrolled single column.
         .onAppear { heroVisible = true }
