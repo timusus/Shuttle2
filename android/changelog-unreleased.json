@@ -108,8 +108,8 @@
   ],
   "improvements": [
     {
-      "text": "Lossless songs from Jellyfin, Emby and local files on Android 13 and newer now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
-      "commits": []
+      "text": "Lossless songs from Jellyfin, Emby and music files on your device now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
+      "commits": ["2388719fd"]
     },
     {
       "text": "Settings, Edit Tags and the player's sound panel now use the same section heading style as the rest of the app",

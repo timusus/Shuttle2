@@ -290,7 +290,7 @@ class MediaImporter(
          * Raised when the importer starts storing a tag it didn't before, so the songs stored already are read again once
          * ([songTagsOutdated]). 1: the raw artist and album tags and ids of #637.
          */
-        const val SONG_TAGS_VERSION = 1
+        const val SONG_TAGS_VERSION = 2
 
         /** Whether [type]'s songs were last imported before [SONG_TAGS_VERSION]: recorded when its import is stored. */
         fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < SONG_TAGS_VERSION
