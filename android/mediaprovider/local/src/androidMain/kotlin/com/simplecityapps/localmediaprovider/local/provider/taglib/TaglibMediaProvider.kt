@@ -93,8 +93,9 @@ class TaglibMediaProvider(
     /**
      * MediaStore's audio files and those of the include trees walked this time: every one if [thorough] or if MediaStore
      * can't be listed, else those on a volume MediaStore indexes that it lists nothing in. A file both find is one song,
-     * keyed by its file path. A stored song in an include tree that neither found nor walked is looked up on its own, so a
-     * song only a walk found stays until its file is gone.
+     * matched by its file path; a song only a walk found keeps its document URI as its path, which is how it's read (a
+     * file MediaStore skips can't be opened by its path). A stored song in an include tree that neither found nor walked is
+     * looked up on its own, so a song only a walk found stays until its file is gone.
      */
     private fun findSongs(
         existingSongs: List<Song>,
@@ -111,10 +112,10 @@ class TaglibMediaProvider(
         val walk = walkTrees(includeTreesToWalk(includeTrees, mediaStoreFiles, thorough, primaryStoragePath), folders, primaryStoragePath)
         val mediaStorePaths = mediaStoreFiles?.mapTo(HashSet()) { file -> file.path.lowercase() }
         // A file MediaStore lists is read from its listing, so the walk adds only those it left out
-        val walkedFiles = walk.includeFiles.filter { file -> mediaStorePaths?.contains(file.path.lowercase()) != true }
+        val walkedFiles = walk.includeFiles.filter { file -> mediaStorePaths?.contains(file.key.lowercase()) != true }
         // Without MediaStore's listing (no audio permission, say), the files it would list are the stored ones: the extra
         // folders' copies of them aren't new songs
-        val knownPaths = (mediaStorePaths ?: existingSongs.mapTo(HashSet()) { song -> song.path.lowercase() }) + walk.includeFiles.map { file -> file.path.lowercase() }
+        val knownPaths = (mediaStorePaths ?: existingSongs.mapTo(HashSet()) { song -> song.path.lowercase() }) + walk.includeFiles.map { file -> file.key.lowercase() }
         val extraDocuments =
             walk.extraDocuments.filter { node ->
                 val path = externalStorageTreeFolder(node.uri.authority, node.documentId, primaryStoragePath) ?: return@filter true
@@ -136,14 +137,17 @@ class TaglibMediaProvider(
             unavailableTrees = walk.unavailableExtraTrees.map { treeUri -> treeUri.toString() }
         )
         val unwalkedTrees = includeTrees.filter { tree -> treeKey(tree) !in walk.completeTrees }
-        val listedPaths = mediaStorePaths.orEmpty() + walkedFiles.map { file -> file.path.lowercase() }
+        val listedPaths = mediaStorePaths.orEmpty() + walkedFiles.map { file -> file.key.lowercase() }
         val unlisted =
             existingSongs.mapNotNull { song ->
+                val filePath = songFilePath(song.path, primaryStoragePath)
                 // A song under a root that couldn't be read is kept as it is by the delete guard
-                if (song.path.lowercase() in listedPaths || unreadableRoots.any { root -> song.path.startsWith(root) }) return@mapNotNull null
-                if (song.path.startsWith("/") && !folders.filter.accepts(song.path)) return@mapNotNull null
-                includeDocumentUri(song.path, unwalkedTrees, primaryStoragePath)?.let { documentUri -> song to documentUri }
+                if ((filePath ?: song.path).lowercase() in listedPaths || unreadableRoots.any { root -> song.path.startsWith(root) }) return@mapNotNull null
+                if (filePath != null && !folders.filter.accepts(filePath)) return@mapNotNull null
+                includeDocument(song.path, unwalkedTrees, primaryStoragePath)?.let { document -> song to document }
             }
+        // The include trees a lookup found this app can no longer read, whose songs the delete guard keeps
+        val lostTrees: MutableSet<Uri> = Collections.synchronizedSet(mutableSetOf())
         val total = files.size + walkedFiles.size + extraDocuments.size + unlisted.size
         val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
         val filesWithImages = withContext(Dispatchers.IO) { files.map { file -> file to folderImageReader.imagesNear(file.path) } }
@@ -153,7 +157,7 @@ class TaglibMediaProvider(
             getSongs(filesWithImages, merger),
             getWalkedSongs(walkedFiles, merger, folderImageReader),
             getExtraSongs(extraDocuments, merger),
-            getLookedUpSongs(unlisted, merger, folderImageReader)
+            getLookedUpSongs(unlisted, merger, folderImageReader, lostTrees)
         ).collectIndexed { index, song ->
             emit(
                 FlowEvent.Progress(
@@ -170,6 +174,10 @@ class TaglibMediaProvider(
             )
             songs.add(song)
         }
+        if (lostTrees.isNotEmpty()) {
+            Timber.w("Lost access to ${lostTrees.size} included folders: $lostTrees")
+            unreadableRoots = unreadableRoots + lostTrees.flatMap { tree -> treeRoots(tree, primaryStoragePath) }
+        }
         Timber.i(
             "Found ${songs.size} of ${files.size} MediaStore audio files, ${walkedFiles.size} more in included folders, ${extraDocuments.size} extra folder " +
                 "files and ${unlisted.size} stored songs MediaStore didn't list (thorough: $thorough) in ${System.currentTimeMillis() - startTime}ms"
@@ -178,17 +186,46 @@ class TaglibMediaProvider(
     }
 
     /**
-     * Songs this provider stored under a SAF document URI before it found files through MediaStore, mapped to their
-     * file paths. Once none are left, which is after the first import following the upgrade, it doesn't query MediaStore.
+     * Stored songs moved to the path [findSongs] gives their file now, so they keep their history: a song under a SAF
+     * document URI that MediaStore lists, to its file path (the scanner before #370 stored every song so, and a walk stores
+     * every file MediaStore skips so), and a song under a file path that MediaStore no longer lists (its folder took a
+     * `.nomedia`, say) but an include tree still holds, to its document URI, which is the only way left to read it.
      */
     override suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> {
-        val legacySongs = existingSongs.filter { song -> legacyLocation(song.path) != null }
-        if (legacySongs.isEmpty()) return emptyList()
-        // Without MediaStore, findSongs fails too, so nothing is diffed and the songs keep their history until next time
-        val files = findAudioFiles(folders().filter) ?: return emptyList()
-        return LegacySafSongs(primaryStoragePath()).remaps(legacySongs, files)
-            .also { remaps -> Timber.i("Matched ${remaps.size} of ${legacySongs.size} songs stored under SAF document URIs to MediaStore files") }
+        val folders = folders()
+        val primaryStoragePath = primaryStoragePath()
+        val extraKeys = folders.extraTrees.map { tree -> treeKey(tree) }.toSet()
+        val includeTrees = folders.includeTrees.filter { tree -> treeKey(tree) !in extraKeys }
+        val documentSongs = existingSongs.filter { song -> legacyLocation(song.path) != null }
+        val fileSongs = if (includeTrees.isEmpty()) emptyList() else existingSongs.filter { song -> song.path.startsWith("/") && folders.filter.accepts(song.path) }
+        if (documentSongs.isEmpty() && fileSongs.isEmpty()) return emptyList()
+        // Without MediaStore, none of the files are listed, so each one the trees hold is read through them
+        val files = findAudioFiles(folders.filter)
+        val toFiles = files?.let { LegacySafSongs(primaryStoragePath).remaps(documentSongs, files) }.orEmpty()
+        val listedPaths = files?.mapTo(HashSet()) { file -> file.path.lowercase() }.orEmpty()
+        val toDocuments = documentRemaps(fileSongs.filter { song -> song.path.lowercase() !in listedPaths }, includeTrees, primaryStoragePath)
+        if (toFiles.isNotEmpty() || toDocuments.isNotEmpty()) {
+            Timber.i("Matched ${toFiles.size} of ${documentSongs.size} songs stored under SAF document URIs to MediaStore files, and ${toDocuments.size} MediaStore no longer lists to their documents")
+        }
+        return toFiles + toDocuments
     }
+
+    /** Of the stored [songs] under a file path, those whose document one of the include [trees] still holds, moved to its document URI. */
+    private suspend fun documentRemaps(
+        songs: List<Song>,
+        trees: List<Uri>,
+        primaryStoragePath: String
+    ): List<SongPathRemap> = songs
+        .mapNotNull { song -> includeDocument(song.path, trees, primaryStoragePath)?.let { document -> song to document } }
+        .asFlow()
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (song, document) ->
+            // A song that can't be found or read keeps its path, for findSongs to look up again
+            (SafDirectoryHelper.findDocument(context.contentResolver, document.uri) as? SafDirectoryHelper.DocumentLookup.Found)?.let { found ->
+                SongPathRemap(songId = song.id, path = DocumentsContract.buildDocumentUriUsingTree(document.tree, found.node.documentId).toString())
+            }
+        }
+        .mapNotNull { it }
+        .toList()
 
     /**
      * The audio files MediaStore has indexed, on every volume, limited by [folderFilter].
@@ -272,11 +309,11 @@ class TaglibMediaProvider(
                 includeWalks
                     .flatMap(audioFiles)
                     .mapNotNull { node ->
-                        // A file in shared storage is the same song as MediaStore's row for it, so it's keyed by its file path
+                        // A file in shared storage is the same song as MediaStore's row for it, so it's matched by its file path
                         val path = externalStorageTreeFolder(node.uri.authority, node.documentId, primaryStoragePath) ?: return@mapNotNull WalkedFile(node.uri.toString(), node)
                         WalkedFile(path, node.atSecondPrecision()).takeIf { excludes.accepts(path) }
                     }
-                    .distinctBy { file -> file.path.lowercase() },
+                    .distinctBy { file -> file.key.lowercase() },
             extraDocuments =
                 extraWalks
                     .flatMap(audioFiles)
@@ -289,27 +326,38 @@ class TaglibMediaProvider(
     }
 
     /**
-     * The document a stored song's [path] names in one of the include [trees]: a file path's document under the tree that
-     * holds it, or for a tree outside shared storage, which has no file paths, the document URI the song is stored under.
-     * Null if none of [trees] holds it.
+     * The document a stored song's [path] names in one of the include [trees]: the document URI the song is stored under, or
+     * a file path's document under the tree that holds it. Null if none of [trees] holds it.
      */
-    private fun includeDocumentUri(
+    private fun includeDocument(
         path: String,
         trees: List<Uri>,
         primaryStoragePath: String
-    ): Uri? = trees.firstNotNullOfOrNull { tree ->
+    ): IncludeDocument? = trees.firstNotNullOfOrNull { tree ->
+        if (path.startsWith("$tree/document/")) return@firstNotNullOfOrNull IncludeDocument(tree, Uri.parse(path), songFilePath(path, primaryStoragePath))
+        if (!path.startsWith("/")) return@firstNotNullOfOrNull null
         val treeDocumentId =
             try {
                 DocumentsContract.getTreeDocumentId(tree)
             } catch (e: IllegalArgumentException) {
                 return@firstNotNullOfOrNull null
             }
-        val treePath = externalStorageTreeFolder(tree.authority, treeDocumentId, primaryStoragePath)
-        when {
-            treePath != null -> documentIdForPath(path, treeDocumentId, treePath)?.let { documentId -> DocumentsContract.buildDocumentUriUsingTree(tree, documentId) }
-            path.startsWith("$tree/document/") -> Uri.parse(path)
-            else -> null
-        }
+        val treePath = externalStorageTreeFolder(tree.authority, treeDocumentId, primaryStoragePath) ?: return@firstNotNullOfOrNull null
+        documentIdForPath(path, treeDocumentId, treePath)?.let { documentId -> IncludeDocument(tree, DocumentsContract.buildDocumentUriUsingTree(tree, documentId), path) }
+    }
+
+    /** The prefixes of the songs under [tree]: document URIs under it and, on shared storage, file paths in its folder. */
+    private fun treeRoots(
+        tree: Uri,
+        primaryStoragePath: String
+    ): List<String> {
+        val folder =
+            try {
+                externalStorageTreeFolder(tree.authority, DocumentsContract.getTreeDocumentId(tree), primaryStoragePath)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        return listOfNotNull("$tree/document/", folder?.let { it.trimEnd('/') + "/" })
     }
 
     @Suppress("DEPRECATION")
@@ -324,35 +372,42 @@ class TaglibMediaProvider(
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { node -> walkedSong(node.uri.toString(), node, merger, emptyList()) }
         .mapNotNull { it }
 
-    /** Songs an include tree's walk found that MediaStore didn't list, read through their document URI. */
+    /** Songs an include tree's walk found that MediaStore didn't list, read through and stored under their document URI. */
     private fun getWalkedSongs(
         files: List<WalkedFile>,
         merger: LocalFileTagMerger,
         folderImageReader: FolderImageReader
     ): Flow<Song> = files
         .asFlow()
-        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { file -> walkedSong(file.path, file.node, merger, folderImagesNear(file.path, folderImageReader)) }
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { file -> walkedSong(file.node.uri.toString(), file.node, merger, folderImagesNear(file.key, folderImageReader)) }
         .mapNotNull { it }
 
     /**
      * The stored [songs] MediaStore didn't list, each looked up by its document: still there, it's reused or read again like
-     * a walked file; gone, it's left out; and if that can't be told, it's kept as it was.
+     * a walked file; gone, it's left out; if its tree can't be read any more, it's left out and the tree added to
+     * [lostTrees], whose songs the delete guard keeps; and if the lookup failed otherwise, it's kept as it was.
      */
     private fun getLookedUpSongs(
-        songs: List<Pair<Song, Uri>>,
+        songs: List<Pair<Song, IncludeDocument>>,
         merger: LocalFileTagMerger,
-        folderImageReader: FolderImageReader
+        folderImageReader: FolderImageReader,
+        lostTrees: MutableSet<Uri>
     ): Flow<Song> = songs
         .asFlow()
-        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (song, documentUri) ->
-            when (val lookup = SafDirectoryHelper.findDocument(context.contentResolver, documentUri)) {
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (song, document) ->
+            when (val lookup = SafDirectoryHelper.findDocument(context.contentResolver, document.uri)) {
                 is SafDirectoryHelper.DocumentLookup.Found -> {
-                    val node = if (song.path.startsWith("/")) lookup.node.atSecondPrecision() else lookup.node
-                    walkedSong(song.path, node, merger, folderImagesNear(song.path, folderImageReader))
+                    val node = if (document.filePath != null) lookup.node.atSecondPrecision() else lookup.node
+                    walkedSong(song.path, node, merger, document.filePath?.let { path -> folderImagesNear(path, folderImageReader) }.orEmpty())
                 }
 
                 // The documents provider's word, unless the file can still be seen at its path
                 SafDirectoryHelper.DocumentLookup.Missing -> song.copy(id = 0).takeIf { song.path.startsWith("/") && fileExists(song.path) }
+
+                SafDirectoryHelper.DocumentLookup.Unreadable -> {
+                    lostTrees += document.tree
+                    null
+                }
 
                 SafDirectoryHelper.DocumentLookup.Unknown -> song.copy(id = 0)
             }
@@ -548,8 +603,14 @@ class TaglibMediaProvider(
 
 private data class PlaylistFile(val uri: Uri, val displayName: String)
 
-/** An audio document an include tree's walk found, as the song at [path]: its file path, or its document URI outside shared storage. */
-private data class WalkedFile(val path: String, val node: DocumentNode)
+/**
+ * An audio document an include tree's walk found, matched against MediaStore's listing and the stored songs by [key]: its
+ * file path, or its document URI outside shared storage. Its song is stored under the document URI either way.
+ */
+private data class WalkedFile(val key: String, val node: DocumentNode)
+
+/** The document [uri] under the include [tree] a stored song names, and the file path it has on shared storage ([filePath]). */
+private data class IncludeDocument(val tree: Uri, val uri: Uri, val filePath: String?)
 
 /** What [TaglibMediaProvider]'s walk of the include and extra trees found, and which trees it read in full ([completeTrees], by [treeKey]). */
 private data class TreeWalk(
@@ -560,8 +621,9 @@ private data class TreeWalk(
 )
 
 /**
- * [this] with its modified date cut to whole seconds, which is all MediaStore keeps: a file's song is compared against
- * whichever of the two listed it last, so both must give the same date for an unchanged file.
+ * [this] with its modified date cut to whole seconds, which is all MediaStore keeps: a shared storage file's song moves
+ * between MediaStore's listing and a walk's (MediaStore stops or starts listing it, and the song's path moves with it), so
+ * both must give the same date for an unchanged file.
  */
 private fun DocumentNode.atSecondPrecision() = DocumentNode(uri, documentId, displayName, mimeType, lastModified = lastModified / 1000 * 1000, size = size)
 
@@ -570,6 +632,27 @@ private data class IndexedPlaylistFile(val path: String, val displayName: String
 private fun DocumentNode.isPlaylist() = ext == "m3u" || ext == "m3u8"
 
 private fun DocumentNode.toPlaylistFile() = PlaylistFile(uri, displayName)
+
+/**
+ * The file path of the song stored at [path]: [path] itself, or the file a shared storage document URI names; null for a
+ * document with no file path.
+ */
+private fun songFilePath(
+    path: String,
+    primaryStoragePath: String
+): String? = when {
+    path.startsWith("/") -> path
+
+    path.startsWith("content://") ->
+        try {
+            val uri = Uri.parse(path)
+            externalStorageTreeFolder(uri.authority, DocumentsContract.getDocumentId(uri), primaryStoragePath)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+
+    else -> null
+}
 
 /** A tree by its authority and document id, which is the same however the grant that names it was encoded. */
 private fun treeKey(tree: Uri): String = "${tree.authority}/${try {

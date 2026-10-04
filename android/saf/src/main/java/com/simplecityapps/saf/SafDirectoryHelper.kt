@@ -66,8 +66,9 @@ object SafDirectoryHelper {
 
     /**
      * The document at [documentUri] (a file's, under a tree this app holds a grant to) as of now: [DocumentLookup.Found] with
-     * its listing, [DocumentLookup.Missing] if the documents provider says there's no such document, or
-     * [DocumentLookup.Unknown] if it can't be asked (the grant was revoked, the provider failed), which says nothing either way.
+     * its listing, [DocumentLookup.Missing] if the documents provider says there's no such document,
+     * [DocumentLookup.Unreadable] if this app has lost access to the tree (the grant was revoked), or [DocumentLookup.Unknown]
+     * if the provider failed, which says nothing either way.
      *
      * Costs one query, so it suits checking a few files rather than listing a folder.
      */
@@ -100,6 +101,9 @@ object SafDirectoryHelper {
             // throws this for one whose file is gone
             Timber.w(e, "No document at $documentUri")
             DocumentLookup.Missing
+        } catch (e: SecurityException) {
+            Timber.w(e, "No access to $documentUri")
+            DocumentLookup.Unreadable
         } catch (e: Exception) {
             Timber.e(e, "Failed to look up $documentUri")
             DocumentLookup.Unknown
@@ -110,6 +114,8 @@ object SafDirectoryHelper {
         data class Found(val node: DocumentNode) : DocumentLookup
 
         data object Missing : DocumentLookup
+
+        data object Unreadable : DocumentLookup
 
         data object Unknown : DocumentLookup
     }

@@ -13,6 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -74,7 +75,7 @@ class TaglibHybridScanTest {
         Documents.files += listOf("primary:Music/a.mp3", "primary:Music/Hidden/b.mp3", "primary:Music/Hidden/x.m3u")
         Documents.listed.clear()
         Documents.lookedUp.clear()
-        Documents.lookupFails = false
+        Documents.lookupError = null
     }
 
     @Test
@@ -91,24 +92,41 @@ class TaglibHybridScanTest {
 
         val songs = provider().findSongs(emptyList()).songs()
 
-        songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", "$primary/Music/Hidden/b.mp3")
+        songs.map { it.path } shouldContainExactlyInAnyOrder listOf(document("a.mp3"), document("Hidden/b.mp3"))
+    }
+
+    @Test
+    fun `a song only a walk found is stored under its document URI, which is how it's played and read`() {
+        val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"))).songs()
+
+        val walked = songs.single { it.name == "Read b.mp3" }
+        // Not a file path, which playback and artwork would open directly and a .nomedia folder's file denies
+        walked.path shouldBe document("Hidden/b.mp3")
+        walked.path.startsWith("content://") shouldBe true
     }
 
     @Test
     fun `a thorough import walks the folder and finds a file MediaStore and the walk both list once`() {
         val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"))).songs()
 
-        songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", "$primary/Music/Hidden/b.mp3")
+        songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", document("Hidden/b.mp3"))
         // a.mp3 is MediaStore's, unchanged, so only the file the walk added is read
         read.toList() shouldBe listOf("b.mp3")
         Documents.listed.toList() shouldContainExactlyInAnyOrder listOf("primary:Music", "primary:Music/Hidden")
     }
 
     @Test
-    fun `an unchanged file a walk found is reused, compared at the whole seconds MediaStore keeps`() {
-        TaglibMediaProviderTest.FakeMediaProvider.rows = emptyList()
+    fun `an unchanged song only a walk found is reused, compared at the whole seconds MediaStore keeps`() {
+        val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))).songs()
 
-        val songs = provider().findSongsThoroughly(listOf(stored("a.mp3"), stored("Hidden/b.mp3"))).songs()
+        songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Stored a.mp3", "Stored Hidden/b.mp3")
+        songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", document("Hidden/b.mp3"))
+        read.toList() shouldBe emptyList()
+    }
+
+    @Test
+    fun `an unchanged song only a walk found is reused when a routine import looks it up`() {
+        val songs = provider().findSongs(listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))).songs()
 
         songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Stored a.mp3", "Stored Hidden/b.mp3")
         read.toList() shouldBe emptyList()
@@ -116,7 +134,7 @@ class TaglibHybridScanTest {
 
     @Test
     fun `a song only a walk found stays through routine imports until its file is gone`() {
-        val existing = listOf(stored("a.mp3"), stored("Hidden/b.mp3"))
+        val existing = listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))
 
         provider().findSongs(existing).songs().map { it.path } shouldContainExactlyInAnyOrder existing.map { it.path }
         // Looked up on its own, not by walking the folder
@@ -129,11 +147,59 @@ class TaglibHybridScanTest {
     }
 
     @Test
-    fun `a song only a walk found is kept when its document can't be looked up`() {
-        Documents.lookupFails = true
-        val existing = listOf(stored("a.mp3"), stored("Hidden/b.mp3"))
+    fun `a song only a walk found is kept when its document can't be looked up this time`() {
+        Documents.lookupError = IllegalStateException("Provider failed")
+        val existing = listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))
 
         provider().findSongs(existing).songs().map { it.path } shouldContainExactlyInAnyOrder existing.map { it.path }
+    }
+
+    @Test
+    fun `a tree this app lost access to is unreadable, so the delete guard holds its songs rather than keeping them for good`() {
+        Documents.lookupError = SecurityException("Access revoked")
+        val existing = listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))
+        val provider = provider()
+
+        provider.findSongs(existing).songs().map { it.path } shouldBe listOf("$primary/Music/a.mp3")
+        provider.unreadableRoots shouldContainExactlyInAnyOrder setOf("$tree/document/", "$primary/Music/")
+    }
+
+    @Test
+    fun `a song MediaStore stops listing is moved to its document URI, keeping its row`() {
+        TaglibMediaProviderTest.FakeMediaProvider.rows = emptyList()
+        val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
+        Documents.files -= "primary:Music/a.mp3"
+
+        val remaps = runBlocking { provider().remapLegacySongs(existing) }
+
+        // a.mp3 is gone, so it keeps its path for the import to remove
+        remaps shouldBe listOf(SongPathRemap(songId = 2, path = document("Hidden/b.mp3")))
+    }
+
+    @Test
+    fun `a song only a walk found is moved to its file path once MediaStore lists it, and found once`() {
+        TaglibMediaProviderTest.FakeMediaProvider.rows += listOf(arrayOf(2L, "$primary/Music/Hidden/b.mp3", "b.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
+        val provider = provider()
+        val walked = storedDocument("Hidden/b.mp3", id = 2)
+
+        val remaps = runBlocking { provider.remapLegacySongs(listOf(stored("a.mp3", id = 1), walked)) }
+        remaps shouldBe listOf(SongPathRemap(songId = 2, path = "$primary/Music/Hidden/b.mp3"))
+
+        val existing = listOf(stored("a.mp3", id = 1), walked.copy(path = "$primary/Music/Hidden/b.mp3"))
+        val songs = provider.findSongsThoroughly(existing).songs()
+        songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", "$primary/Music/Hidden/b.mp3")
+        read.toList() shouldBe emptyList()
+    }
+
+    @Test
+    fun `a song only a walk found that MediaStore lists isn't found twice, even before it's moved`() {
+        TaglibMediaProviderTest.FakeMediaProvider.rows += listOf(arrayOf(2L, "$primary/Music/Hidden/b.mp3", "b.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
+
+        val songs = provider().findSongs(listOf(stored("a.mp3"), storedDocument("Hidden/b.mp3"))).songs()
+
+        // MediaStore's listing reads it (which this test's MediaStore can't open); the stored document isn't looked up as well
+        songs.none { it.path == document("Hidden/b.mp3") } shouldBe true
+        Documents.lookedUp.toList() shouldBe emptyList()
     }
 
     @Test
@@ -166,8 +232,18 @@ class TaglibHybridScanTest {
         return unsafe.allocateInstance(KTagLib::class.java) as KTagLib
     }
 
-    private fun stored(name: String) = Song(
-        id = 5,
+    private fun document(name: String) = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/$name").toString()
+
+    private fun storedDocument(
+        name: String,
+        id: Long = 5
+    ) = stored(name, id).copy(path = document(name))
+
+    private fun stored(
+        name: String,
+        id: Long = 5
+    ) = Song(
+        id = id,
         name = "Stored $name",
         albumArtist = null,
         artists = emptyList(),
@@ -233,9 +309,9 @@ class TaglibHybridScanTest {
             val listed: MutableList<String> = Collections.synchronizedList(mutableListOf())
             val lookedUp: MutableList<String> = Collections.synchronizedList(mutableListOf())
 
-            // A lookup fails as it does when access to the tree was lost
+            // What a lookup throws: a SecurityException once access to the tree was lost, or another failure
             @Volatile
-            var lookupFails = false
+            var lookupError: RuntimeException? = null
         }
 
         override fun onCreate() = true
@@ -257,7 +333,7 @@ class TaglibHybridScanTest {
                 cursor.addRow(row(projection!!, documentId, dir = true))
             } else {
                 lookedUp += documentId
-                if (lookupFails) throw SecurityException("Access revoked")
+                lookupError?.let { error -> throw error }
                 // As the real provider does for a document whose file is gone
                 if (documentId !in files) return null
                 cursor.addRow(row(projection!!, documentId, dir = false))
