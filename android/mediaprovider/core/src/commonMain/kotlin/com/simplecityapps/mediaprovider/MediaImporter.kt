@@ -329,7 +329,7 @@ class MediaImporter(
                 is FlowEvent.Success -> {
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
-                        val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
+                        val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full && mediaProvider.lastListingComplete()).apply()
                         val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval)
                         val result =
                             songRepository.insertUpdateAndDelete(

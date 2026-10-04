@@ -41,7 +41,7 @@ internal suspend fun HttpResponse.toHttpError(): RemoteServiceHttpError {
     } catch (e: Exception) {
         null
     }
-    return RemoteServiceHttpError(status, body, retryAfterSeconds = headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull())
+    return RemoteServiceHttpError(status, body, retryAfterSeconds = headers[HttpHeaders.RetryAfter]?.trim()?.toLongOrNull()?.coerceAtLeast(0))
 }
 
 /** What a request that threw [throwable] failed with. */

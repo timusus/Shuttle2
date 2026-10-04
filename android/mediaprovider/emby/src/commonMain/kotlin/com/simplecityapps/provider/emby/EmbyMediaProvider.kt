@@ -40,6 +40,11 @@ class EmbyMediaProvider(
     private val authenticationManager: EmbyAuthenticationManager,
     private val itemsService: ItemsService
 ) : IncrementalMediaProvider {
+    // Set when a listing came to fewer items than the server said it holds, so the import stores it without deleting
+    @Volatile private var listingComplete = true
+
+    override fun lastListingComplete() = listingComplete
+
     override val type = MediaProviderType.Emby
 
     private val logger = Logger.tagged("EmbyMediaProvider")
@@ -59,6 +64,7 @@ class EmbyMediaProvider(
         existingSongs: List<Song>,
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        listingComplete = true
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now()
         emitAll(
@@ -148,7 +154,7 @@ class EmbyMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         since: Instant?
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id) { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id, onShortListing = { _, _ -> listingComplete = false }) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.audioItems(

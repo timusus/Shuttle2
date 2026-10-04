@@ -34,7 +34,7 @@ class ItemsService(private val client: HttpClient) {
         // Plex's filter syntax: `field>>=value` is "greater than" (as python-plexapi sends it), in epoch seconds
         updatedSince?.let { since -> parameter("updatedAt>>", since.epochSeconds - 1) }
         if (favouritesOnly) parameter("userRating", 10)
-        // A stable order, so a track can't slip between pages when the list is paged by offset
+        // A stable order, so a track is unlikely to slip between pages when the list is paged by offset
         parameter("sort", "addedAt,titleSort")
         parameter("X-Plex-Container-Start", offset)
         parameter("X-Plex-Container-Size", limit)

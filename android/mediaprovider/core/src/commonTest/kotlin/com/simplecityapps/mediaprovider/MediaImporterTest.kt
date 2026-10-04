@@ -407,6 +407,33 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a full listing that came up short stores what it found but deletes nothing`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        val stored = song()
+        val added = song().copy(id = 2, path = "/added")
+        songRepository.stored = listOf(stored)
+        server.found = listOf(added)
+        server.listingComplete = false
+
+        importer.sync(SyncTrigger.Periodic)
+
+        songRepository.changes shouldBe Triple(1, 0, 0)
+    }
+
+    @Test
+    fun `a complete full listing deletes the songs it no longer holds`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        server.found = listOf(song().copy(id = 2, path = "/added"))
+
+        importer.sync(SyncTrigger.Periodic)
+
+        songRepository.changes shouldBe Triple(1, 0, 1)
+    }
+
+    @Test
     fun `a server with nothing stored is synced in full, whenever it last synced`() = runBlocking<Unit> {
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
@@ -534,6 +561,9 @@ class MediaImporterTest {
         /** What it finds, or the failure it reports instead. */
         var found: List<Song> = emptyList()
         var failure: String? = null
+        var listingComplete = true
+
+        override fun lastListingComplete() = listingComplete
 
         override var unreadableRoots: Set<String> = emptySet()
 
@@ -650,6 +680,9 @@ class MediaImporterTest {
         /** The songs each provider's imports deleted. */
         val deleted = mutableMapOf<MediaProviderType, List<Song>>()
 
+        /** The inserts, updates and deletes of the last [insertUpdateAndDelete]. */
+        var changes = Triple(0, 0, 0)
+
         override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(stored)
 
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
@@ -672,7 +705,7 @@ class MediaImporterTest {
         ): Triple<Int, Int, Int> {
             writes += inserts.size + updates.size + deletes.size
             deleted[mediaProviderType] = deleted[mediaProviderType].orEmpty() + deletes
-            return Triple(inserts.size, updates.size, deletes.size)
+            return Triple(inserts.size, updates.size, deletes.size).also { changes = it }
         }
 
         override suspend fun remapPaths(remaps: List<SongPathRemap>, mediaProviderType: MediaProviderType): List<SongPathRemap> = notFaked()

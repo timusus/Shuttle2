@@ -42,6 +42,11 @@ class JellyfinMediaProvider(
 ) : IncrementalMediaProvider {
     private val logger = Logger.tagged("JellyfinMediaProvider")
 
+    // Set when a listing came to fewer items than the server said it holds, so the import stores it without deleting
+    @Volatile private var listingComplete = true
+
+    override fun lastListingComplete() = listingComplete
+
     override val type = MediaProviderType.Jellyfin
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since = null)
@@ -59,6 +64,7 @@ class JellyfinMediaProvider(
         existingSongs: List<Song>,
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        listingComplete = true
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now()
         emitAll(
@@ -148,7 +154,7 @@ class JellyfinMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         since: Instant?
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id) { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id, onShortListing = { _, _ -> listingComplete = false }) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.audioItems(

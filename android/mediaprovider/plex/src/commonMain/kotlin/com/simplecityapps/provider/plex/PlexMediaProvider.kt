@@ -43,6 +43,11 @@ class PlexMediaProvider(
 
     private val logger = Logger.tagged("PlexMediaProvider")
 
+    // Set when a listing came to fewer items than the server said it holds, so the import stores it without deleting
+    @Volatile private var listingComplete = true
+
+    override fun lastListingComplete() = listingComplete
+
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since = null)
 
     override fun findSongsChangedSince(
@@ -58,6 +63,7 @@ class PlexMediaProvider(
         existingSongs: List<Song>,
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        listingComplete = true
         val syncedAt = Clock.System.now()
         when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
@@ -200,7 +206,7 @@ class PlexMediaProvider(
         section: String,
         since: Instant?,
         favouritesOnly: Boolean
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key) { offset, limit ->
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key, onShortListing = { _, _ -> listingComplete = false }) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.items(

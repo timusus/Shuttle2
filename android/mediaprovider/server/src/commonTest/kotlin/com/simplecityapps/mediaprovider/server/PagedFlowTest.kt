@@ -151,21 +151,32 @@ class PagedFlowTest {
     }
 
     @Test
-    fun `a listing that falls short of its total fails rather than emit a short list`() = runTest {
-        val events = pagedFlow<Int>(pageSize = 4, key = { it }) { offset, _ ->
+    fun `a listing that falls short of its total is emitted and reported short`() = runTest {
+        var short: Pair<Int, Int>? = null
+        val events = pagedFlow<Int>(pageSize = 4, key = { it }, onShortListing = { expected, received -> short = expected to received }) { offset, _ ->
             NetworkResult.Success(Page(if (offset == 0) listOf(0, 1, 2, 3) else listOf(3, 3), totalCount = 8))
         }.toList().described()
 
-        (events.last() is Event.Failure) shouldBe true
-        events.any { it is Event.Success } shouldBe false
+        events.last() shouldBe Event.Success(listOf(0, 1, 2, 3))
+        short shouldBe (8 to 4)
     }
 
     @Test
-    fun `a shortfall within one percent of the total is allowed`() = runTest {
-        val events = pagedFlow<Int>(pageSize = 1000, key = { it }) { _, _ ->
-            NetworkResult.Success(Page((0 until 995).toList(), totalCount = 1000))
-        }.toList().described()
+    fun `a complete listing is not reported short`() = runTest {
+        var short = false
+        pagedFlow<Int>(pageSize = 4, key = { it }, onShortListing = { _, _ -> short = true }, fetchPage = server(total = 10)).toList()
 
-        (events.last() is Event.Success) shouldBe true
+        short shouldBe false
+    }
+
+    @Test
+    fun `a 501 is not retried`() = runTest {
+        var attempts = 0
+        pagedFlow<Int>(pageSize = 4) { _, _ ->
+            attempts++
+            transient(HttpStatusCode.NotImplemented)
+        }.toList()
+
+        attempts shouldBe 1
     }
 }

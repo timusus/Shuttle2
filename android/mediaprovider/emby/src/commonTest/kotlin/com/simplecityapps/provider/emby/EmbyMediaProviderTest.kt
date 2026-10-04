@@ -133,6 +133,7 @@ class EmbyMediaProviderTest {
         val songs = sync()
 
         songs.size shouldBe 502
+        provider.lastListingComplete() shouldBe true
         songs.map { it.externalId }.let { ids -> ids.take(2) + ids.takeLast(2) } shouldContainExactly listOf("501", "502", "503", "504")
         server.requestsTo(ITEMS).map { it.url.parameters["StartIndex"] to it.url.parameters["Limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")
@@ -322,7 +323,7 @@ class EmbyMediaProviderTest {
         val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
 
         songs.associate { song -> song.path to (song.favouritedAt != null) } shouldBe mapOf("emby://item/101" to false, "emby://item/102" to true)
-        server.requestsTo(ITEMS).single { it.url.parameters["Filters"] == "IsFavorite" }.url.parameters["SortBy"] shouldBe "DateCreated,SortName,Id"
+        server.requestsTo(ITEMS).single { it.url.parameters["Filters"] == "IsFavorite" }.url.parameters["SortBy"] shouldBe "DateCreated,SortName"
     }
 
     @Test

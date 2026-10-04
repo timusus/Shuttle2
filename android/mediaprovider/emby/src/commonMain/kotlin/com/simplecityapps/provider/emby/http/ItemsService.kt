@@ -28,8 +28,8 @@ class ItemsService(private val client: HttpClient) {
         minDateLastSaved = minDateLastSaved,
         // Each song's UserData, which holds whether it's a favourite
         enableUserData = true,
-        // A total order (Id breaks ties), so a song can't slip between pages when the list is paged by offset
-        sortBy = "DateCreated,SortName,Id"
+        // A stable order (the server has no unique sort key to break ties), so a song is unlikely to slip between pages when the list is paged by offset
+        sortBy = "DateCreated,SortName"
     )
 
     /**
@@ -50,8 +50,8 @@ class ItemsService(private val client: HttpClient) {
         startIndex = startIndex,
         filters = "IsFavorite",
         enableUserData = false,
-        // A total order, so a favourite can't slip between pages when the list is paged by offset
-        sortBy = "DateCreated,SortName,Id"
+        // A stable order (the server has no unique sort key to break ties), so a favourite is unlikely to slip between pages when the list is paged by offset
+        sortBy = "DateCreated,SortName"
     )
 
     suspend fun playlists(

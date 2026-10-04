@@ -32,13 +32,13 @@ private const val MAX_ATTEMPTS = 3
 private const val BACKOFF_BASE_MS = 1_000L
 private const val MAX_RETRY_AFTER_SECONDS = 30L
 
-/** The share of a listing's total that may be missing from the deduped result before the listing is failed. */
-private const val MISSING_TOLERANCE = 0.01
+/** 501 and 505 are 5xx a server answers the same way every time. */
+private val NOT_RETRIABLE_SERVER_ERRORS = setOf(501, 505)
 
 /** Whether a request that failed with this is worth repeating: the server couldn't be reached, errored, or asked us to slow down. */
 private fun Throwable.isTransient(): Boolean = when (this) {
     is NetworkError -> true
-    is RemoteServiceHttpError -> isServerError || httpStatusCode.value == 429
+    is RemoteServiceHttpError -> (isServerError && httpStatusCode.value !in NOT_RETRIABLE_SERVER_ERRORS) || httpStatusCode.value == 429
     else -> false
 }
 
@@ -76,13 +76,15 @@ private suspend fun <T> retrying(fetchPage: suspend () -> NetworkResult<Page<T>>
  * 429) waits and tries again, any other failure ends the listing at once.
  *
  * With a [key], an item already received is dropped (a server whose listing shifts mid-paging repeats items across
- * pages), and when the server gave a total and the result falls short of it by more than 1%, the listing fails rather
- * than emit a list a sync would delete the rest against. The 1% allows for the items Jellyfin leaves out of a page; a
- * listing that legitimately repeats an item (a playlist) passes no key and gets neither.
+ * pages), and when the server gave a total and the result falls short of it, [onShortListing] is called (expected, received)
+ * before the listing is emitted, so the caller can keep a sync from deleting against it: a server's total can count
+ * items it never returns (Jellyfin's, with access filtering), so a short listing is still a listing, just not a
+ * complete one. A listing that legitimately repeats an item (a playlist) passes no key and gets neither.
  */
 fun <T> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
     key: ((T) -> Any)? = null,
+    onShortListing: (expected: Int, received: Int) -> Unit = { _, _ -> },
     fetchPage: suspend (offset: Int, limit: Int) -> NetworkResult<Page<T>>
 ): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
     val items = mutableListOf<T>()
@@ -109,10 +111,9 @@ fun <T> pagedFlow(
 
                 val hasMore = if (totalCount != null) end < totalCount else page.items.isNotEmpty()
                 if (!hasMore) {
-                    if (key != null && reportedTotal != null && items.size < reportedTotal * (1 - MISSING_TOLERANCE)) {
-                        logger.error { "A listing of $reportedTotal items came to ${items.size}" }
-                        emit(FlowEvent.Failure("The server's library changed while it was being read. Try again."))
-                        return@flow
+                    if (key != null && reportedTotal != null && items.size < reportedTotal) {
+                        logger.warn { "The server reported $reportedTotal items but the listing came to ${items.size}; treating it as incomplete" }
+                        onShortListing(reportedTotal, items.size)
                     }
                     emit(FlowEvent.Success(items))
                     return@flow
