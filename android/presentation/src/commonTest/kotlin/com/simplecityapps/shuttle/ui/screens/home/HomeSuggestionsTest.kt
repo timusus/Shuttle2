@@ -47,7 +47,7 @@ class HomeSuggestionsTest {
     private fun context(key: AlbumGroupKey?) = PlayContext.Album(key!!)
 
     @Test
-    fun `contexts resolve to items in order, dropping what the library no longer has`() = runTest {
+    fun `contexts resolve to items in order dropping what the library no longer has`() = runTest {
         val contexts =
             listOf(
                 context(kidA.groupKey),
@@ -71,7 +71,7 @@ class HomeSuggestionsTest {
     }
 
     @Test
-    fun `each item plays its own context, a genre shuffling and a smart playlist by query`() {
+    fun `each item plays its own context a genre shuffling and a smart playlist by query`() {
         HomeItem.AlbumItem(blue).playAction() shouldBe MediaAction.Play(MediaSelection.Albums(blue))
         HomeItem.GenreItem(jazz).playAction() shouldBe MediaAction.Shuffle(MediaSelection.Genres(jazz))
         HomeItem.SmartPlaylistItem(SmartPlaylistId.MostPlayed).playAction() shouldBe
@@ -108,7 +108,7 @@ class HomeSuggestionsTest {
     ) = AlbumDay(album!!, day, songs, trackCount, lastCompletedAt = now - (today - day).days)
 
     @Test
-    fun `heavy rotation counts the days with three songs of an album, over twenty eight days`() = runTest {
+    fun `heavy rotation counts the days with three songs of an album over twenty eight days`() = runTest {
         playHistory.albumDays = listOf(day(blue.groupKey, today, 3), day(blue.groupKey, today - 1, 5), day(blue.groupKey, today - 9, 12), day(blue.groupKey, today - 2, 2))
 
         HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
@@ -141,7 +141,7 @@ class HomeSuggestionsTest {
     }
 
     @Test
-    fun `an artist's day counts three songs across their albums, ranked above fewer days`() = runTest {
+    fun `an artist's day counts three songs across their albums ranked above fewer days`() = runTest {
         val court = createAlbum("court and spark", "joni mitchell")
         suggestions.albums = listOf(blue, kidA, court)
         playHistory.albumDays = listOf(
@@ -159,7 +159,7 @@ class HomeSuggestionsTest {
     }
 
     @Test
-    fun `rediscover asks for its window, and recently added for the newest albums with none`() = runTest {
+    fun `rediscover asks for its window and recently added for the newest albums with none`() = runTest {
         suggestions.toRediscover = listOf(blue.groupKey!!)
         suggestions.recentlyAdded = listOf(kidA.groupKey!!)
 
@@ -169,7 +169,7 @@ class HomeSuggestionsTest {
     }
 
     @Test
-    fun `genre picks resolve the played genres and the largest with twenty songs, from one read of the genres`() = runTest {
+    fun `genre picks resolve the played genres and the largest with twenty songs from one read of the genres`() = runTest {
         val soul = createGenre("Soul", songCount = 40)
         suggestions.genres += listOf(soul, createGenre("Funk", songCount = 60))
         playHistory.genrePlays = listOf(GenrePlays("Polka", plays = 3, score = 2.0), GenrePlays("Gone", plays = 1, score = 1.0))

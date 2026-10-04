@@ -24,7 +24,7 @@ class LoadHomeCoversTest {
     private fun section(vararg items: HomeItem) = HomeSection(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, subtitle = null, items.toList())
 
     @Test
-    fun `a playlist's and a genre's covers are four songs from different albums, keyed by the item`() = runTest {
+    fun `a playlist's and a genre's covers are four songs from different albums keyed by the item`() = runTest {
         val playlist = createPlaylist(id = 7, name = "Road Trip")
         playlistRepository.setSongsForPlaylist(playlist, songsOn(1, "A", "A", "B", "C", "D", "E"))
         val genre = createGenre(name = "Jazz")
@@ -37,7 +37,7 @@ class LoadHomeCoversTest {
     }
 
     @Test
-    fun `the genre's covers are limited in the query, not after loading the genre`() = runTest {
+    fun `the genre's covers are limited in the query not after loading the genre`() = runTest {
         genreRepository.setSongsForGenre("Jazz", songsOn(1, "A", "B", "C", "D", "E", "F"))
 
         loadHomeCovers(listOf(section(HomeItem.GenreItem(createGenre(name = "Jazz")))))
@@ -46,7 +46,7 @@ class LoadHomeCoversTest {
     }
 
     @Test
-    fun `items without covers, and albums and artists, are left out`() = runTest {
+    fun `items without covers and albums and artists are left out`() = runTest {
         val emptyPlaylist = createPlaylist(id = 8, name = "Empty")
         playlistRepository.setSongsForPlaylist(emptyPlaylist, emptyList())
 

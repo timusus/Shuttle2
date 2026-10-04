@@ -106,7 +106,7 @@ class SongListViewModelTest {
     }
 
     @Test
-    fun `a sort that isn't by name, like Recently Added, has no letter index`() = runTest {
+    fun `a sort that isn't by name like Recently Added has no letter index`() = runTest {
         fakeSortPreferences.sortOrderSongList = SongSortOrder.DateAdded
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "beta")))
         fakeImportState.setState(importComplete())

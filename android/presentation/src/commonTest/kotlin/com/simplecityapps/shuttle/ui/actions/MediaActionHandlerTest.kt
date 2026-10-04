@@ -58,7 +58,7 @@ class MediaActionHandlerTest {
     }
 
     @Test
-    fun `an action's context is its selection's, when that's a single album, artist, genre or playlist`() {
+    fun `an action's context is its selection's when that's a single album artist genre or playlist`() {
         val album = createAlbum(name = "Blue", albumArtist = "Joni Mitchell")
 
         MediaAction.Play(MediaSelection.Albums(album)).context shouldBe PlayContext.Album(album.groupKey!!)

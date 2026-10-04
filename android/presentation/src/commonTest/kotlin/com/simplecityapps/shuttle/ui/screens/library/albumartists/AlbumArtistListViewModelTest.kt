@@ -63,7 +63,7 @@ class AlbumArtistListViewModelTest {
     }
 
     @Test
-    fun `sorting by album count lists the most albums first, drops the letter index and saves the choice`() = runTest {
+    fun `sorting by album count lists the most albums first drops the letter index and saves the choice`() = runTest {
         repository.setAlbumArtists(
             listOf(
                 createAlbumArtist(name = "Beta", albumCount = 5),

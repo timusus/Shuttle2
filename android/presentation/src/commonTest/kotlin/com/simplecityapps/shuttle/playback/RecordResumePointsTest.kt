@@ -61,7 +61,7 @@ class RecordResumePointsTest {
     }
 
     @Test
-    fun `a song saves its place in the queue once it plays, not as it becomes current`() {
+    fun `a song saves its place in the queue once it plays not as it becomes current`() {
         recordResumePoints.start()
 
         setCurrent(2)
@@ -72,7 +72,7 @@ class RecordResumePointsTest {
     }
 
     @Test
-    fun `while it plays the position is saved every ten seconds, a seek within two seconds and a pause straight away`() {
+    fun `while it plays the position is saved every ten seconds a seek within two seconds and a pause straight away`() {
         recordResumePoints.start()
         setCurrent(0)
 
@@ -105,7 +105,7 @@ class RecordResumePointsTest {
     }
 
     @Test
-    fun `the last song playing through marks the context finished, until it plays again`() {
+    fun `the last song playing through marks the context finished until it plays again`() {
         recordResumePoints.start()
         setCurrent(3)
         playTo(190_000, from = 180_000)
@@ -133,7 +133,7 @@ class RecordResumePointsTest {
     }
 
     @Test
-    fun `a song ending mid queue, or on repeat, doesn't finish the context`() {
+    fun `a song ending mid queue or on repeat doesn't finish the context`() {
         recordResumePoints.start()
         setCurrent(1)
         playTo(10_000)
@@ -149,7 +149,7 @@ class RecordResumePointsTest {
     }
 
     @Test
-    fun `a new context mid play leaves the old one where it got to, and takes the new one's place`() {
+    fun `a new context mid play leaves the old one where it got to and takes the new one's place`() {
         recordResumePoints.start()
         setCurrent(1)
         playTo(30_000)

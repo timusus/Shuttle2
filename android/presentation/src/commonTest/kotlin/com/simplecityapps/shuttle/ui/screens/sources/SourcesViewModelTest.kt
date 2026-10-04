@@ -190,7 +190,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `last updated shows an import's end when it's saved, after the import's last state (#648)`() = runTest {
+    fun `last updated shows an import's end when it's saved after the import's last state`() = runTest {
         val viewModel = viewModel(FakeMediaSources(MediaProviderType.Jellyfin))
         viewModel.uiState.value.lastImport shouldBe null
 

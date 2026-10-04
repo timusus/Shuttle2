@@ -71,7 +71,7 @@ class LoadHomeSectionsTest {
     }
 
     @Test
-    fun `every section loads side by side, and they come out as one after another would give them`() = runTest {
+    fun `every section loads side by side and they come out as one after another would give them`() = runTest {
         val (jumpBackIn, jumpBackInTime) = timed { jumpBackIn() }
         val (aroundThisTime, aroundThisTimeTime) = timed { aroundThisTime(now, TimeZone.UTC) }
         val (heavyRotation, heavyRotationTime) = timed { heavyRotation(now) }
@@ -99,7 +99,7 @@ class LoadHomeSectionsTest {
     }
 
     @Test
-    fun `sections come out as they load, each after every one before it, without changing once out (#688)`() = runTest {
+    fun `sections come out as they load each after every one before it without changing once out`() = runTest {
         suggestions.extraLatency = mapOf("genres" to 1.seconds)
         val all = load(hasHistory = true).last()
 
@@ -113,7 +113,7 @@ class LoadHomeSectionsTest {
     }
 
     @Test
-    fun `a slow first section holds back the ones after it, so none moves when it comes`() = runTest {
+    fun `a slow first section holds back the ones after it so none moves when it comes`() = runTest {
         suggestions.extraLatency = mapOf("recentlyCompletedAlbums" to 1.seconds)
 
         val emissions = load(hasHistory = true).toList()

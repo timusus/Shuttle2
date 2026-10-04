@@ -40,7 +40,7 @@ class ResumeContextTest {
     }
 
     @Test
-    fun `a context played through, or with no context at all, starts over`() = runTest {
+    fun `a context played through or with no context at all starts over`() = runTest {
         playHistory.resumePoints[album] = point(track = 4, finished = true)
 
         resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver()
@@ -62,7 +62,7 @@ class ResumeContextTest {
     }
 
     @Test
-    fun `another context is queued again from its song and position, in order`() = runTest {
+    fun `another context is queued again from its song and position in order`() = runTest {
         queueOperations.shuffleModeFlow.value = ShuffleMode.On
         playHistory.resumePoints[album] = point(track = 2, positionMs = 45_000)
 
@@ -79,7 +79,7 @@ class ResumeContextTest {
     }
 
     @Test
-    fun `a shuffled context is shuffled again, with its song where it was`() = runTest {
+    fun `a shuffled context is shuffled again with its song where it was`() = runTest {
         playHistory.resumePoints[album] = point(track = 3, positionMs = 10_000, songIndex = 0, shuffled = true)
 
         resumeContext(selection, album) shouldBe ResumeContext.Result.Resumed

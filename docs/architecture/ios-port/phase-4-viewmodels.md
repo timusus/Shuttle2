@@ -270,8 +270,8 @@ The other assisted ViewModels are exposed as factory properties (`albumDetailVie
 `PlayerViewModel` moved to `presentation`'s `commonMain`. Its package is still `ui.shell.player`, so the Compose
 player files in `:android:app` import it unchanged. `PlayerUiState` and the player use cases moved with it:
 `ObserveQueue`/`ObservePlayback`/`ObserveProgress`, `ControlPlayback`, `EditQueue`, `ControlSleepTimer` and its
-readers, `SetReplayGainMode`, and `ClearQueue`/`RestoreQueue`. `FolderListViewModel` stays in app until iOS has
-local files (phase 8).
+readers, `SetReplayGainMode`, and `ClearQueue`/`RestoreQueue`. `FolderListViewModel` moved later (#812) and is bound
+in `IosAppGraph`; iOS has no Folders screen until it has local files (phase 8).
 
 **What moved down to `:android:domain`, and why.** Presentation sees only core and domain, and domain has no
 project dependencies. The same packages are kept, so no import changed:

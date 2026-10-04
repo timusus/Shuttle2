@@ -139,7 +139,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `jump back in says where each item's queue was left, and which played through`() = runTest(testDispatcher) {
+    fun `jump back in says where each item's queue was left and which played through`() = runTest(testDispatcher) {
         suggestions.songCount.value = 2
         playHistory.eventCount.value = 1
         playHistory.recentContexts = twoRecentContexts
@@ -156,7 +156,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `an item's progress is its song's place in the queue, without the song's own share when its length is unknown`() {
+    fun `an item's progress is its song's place in the queue without the song's own share when its length is unknown`() {
         HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 3, trackCount = 4)).fraction shouldBe 0.75f
         HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 7, trackCount = 4, songDurationMs = 60_000)).fraction shouldBe 0.875f
         HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 0, trackCount = 0)).fraction shouldBe 0f
@@ -164,7 +164,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `a jump back in item resumes, falling back to its play action`() {
+    fun `a jump back in item resumes falling back to its play action`() {
         val item = HomeItem.AlbumItem(phaseGarden)
 
         item.resumeAction() shouldBe MediaAction.Resume(item.playAction(), phaseGarden.playContext)
@@ -202,7 +202,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `plays don't reload the sections while home is on screen (#672)`() = runTest(testDispatcher) {
+    fun `plays don't reload the sections while home is on screen`() = runTest(testDispatcher) {
         val viewModel = playedLibrary()
         advanceTimeBy(1.hours)
         runCurrent()
@@ -239,7 +239,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `the first load shows sections as they come, and a reload swaps them in at once (#688)`() = runTest(testDispatcher) {
+    fun `the first load shows sections as they come and a reload swaps them in at once`() = runTest(testDispatcher) {
         val tidePool = createAlbum("tide pool", "juniper static")
         suggestions.albums = listOf(phaseGarden, dustChoir, saltMarsh, tidePool)
         suggestions.recentlyAdded = listOf(saltMarsh.groupKey!!, tidePool.groupKey!!)

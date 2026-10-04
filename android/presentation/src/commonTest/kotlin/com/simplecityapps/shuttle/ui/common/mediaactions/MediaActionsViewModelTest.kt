@@ -64,7 +64,7 @@ class MediaActionsViewModelTest {
     }
 
     @Test
-    fun `a dispatched action's own result is handed to its caller, None included`() = runTest {
+    fun `a dispatched action's own result is handed to its caller None included`() = runTest {
         val viewModel = viewModel()
         val results = mutableListOf<MediaActionResult>()
 

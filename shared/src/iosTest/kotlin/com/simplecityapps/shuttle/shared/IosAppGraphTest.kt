@@ -76,6 +76,7 @@ class IosAppGraphTest {
         graph.playlistDetailCoversViewModelFactory
         graph.smartPlaylistDetailViewModelFactory
         graph.songInfoViewModelFactory
+        graph.folderListViewModelFactory
         graph.serverSignInViewModelFactory
         graph.playerViewModelFactory
         graph.mediaSources

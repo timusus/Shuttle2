@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistLis
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
+import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
@@ -153,6 +154,7 @@ interface IosAppGraph : ViewModelGraph {
     val playlistDetailCoversViewModelFactory: PlaylistDetailCoversViewModel.Factory
     val smartPlaylistDetailViewModelFactory: SmartPlaylistDetailViewModel.Factory
     val songInfoViewModelFactory: SongInfoViewModel.Factory
+    val folderListViewModelFactory: FolderListViewModel.Factory
 
     /** A Jellyfin, Emby or Plex server's sign-in form, including Jellyfin Quick Connect and Plex's two-factor code. */
     val serverSignInViewModelFactory: ServerSignInViewModel.Factory

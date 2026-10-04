@@ -83,7 +83,7 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `while candidates load, the sections stop at the first still loading, each as it will be once all have (#688)`() {
+    fun `while candidates load the sections stop at the first still loading each as it will be once all have`() {
         val loaded = empty.copy(
             jumpBackIn = JumpBackInCandidates(albums.take(2), emptyList()),
             aroundThisTime = albums.subList(1, 5).map { around(it, days = 3) },
@@ -103,7 +103,7 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `a cold start waits on jump back in to choose, then shows recently added before genre picks and shuffle all load`() {
+    fun `a cold start waits on jump back in to choose then shows recently added before genre picks and shuffle all load`() {
         val loaded = empty.copy(hasHistory = false, recentlyAdded = albums.take(4), genrePicks = GenrePickCandidates(emptyList(), genres))
 
         assemble(loaded.copy(jumpBackIn = null)) shouldBe emptyList()
@@ -164,7 +164,7 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `cold start shows recently added, the largest genres and shuffle all`() {
+    fun `cold start shows recently added the largest genres and shuffle all`() {
         val candidates = empty.copy(
             hasHistory = false,
             rediscover = albums.take(3),
@@ -263,7 +263,7 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `recently added shows the newest albums, on a first import too (#649)`() {
+    fun `recently added shows the newest albums on a first import too`() {
         val items = albums.take(3)
 
         assemble(empty.copy(recentlyAdded = items)).section(HomeSectionId.RecentlyAdded).items shouldBe items
@@ -271,7 +271,7 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `genre picks choose played genres first, fill with the largest, and need four`() {
+    fun `genre picks choose played genres first fill with the largest and need four`() {
         val played = listOf(genre("jazz"), genres[1])
 
         val picks = assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres))).section(HomeSectionId.GenrePicks)
@@ -292,7 +292,7 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `genre picks hold their order through a day however the plays rank them (#672)`() {
+    fun `genre picks hold their order through a day however the plays rank them`() {
         val morning = assemble(empty.copy(genrePicks = GenrePickCandidates(listOf(genres[0], genres[1]), genres))).section(HomeSectionId.GenrePicks).items
         val evening = assemble(empty.copy(genrePicks = GenrePickCandidates(listOf(genres[1], genres[0]), genres)), at = wednesdayMorning + 12.hours)
             .section(HomeSectionId.GenrePicks).items

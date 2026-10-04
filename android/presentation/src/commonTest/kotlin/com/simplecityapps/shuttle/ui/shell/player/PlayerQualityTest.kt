@@ -8,7 +8,7 @@ class PlayerQualityTest {
     private val bare = createSong().copy(mimeType = "audio/flac", audioCodec = null, bitRate = null, bitDepth = null, sampleRate = null)
 
     @Test
-    fun `a song with a bit depth reads codec, depth and sample rate`() {
+    fun `a song with a bit depth reads codec depth and sample rate`() {
         bare.copy(bitDepth = 24, sampleRate = 96000).qualityLine() shouldBe "FLAC · 24-bit / 96 kHz"
         bare.copy(bitDepth = 16, sampleRate = 44100).qualityLine() shouldBe "FLAC · 16-bit / 44.1 kHz"
         bare.copy(bitDepth = 24).qualityLine() shouldBe "FLAC"

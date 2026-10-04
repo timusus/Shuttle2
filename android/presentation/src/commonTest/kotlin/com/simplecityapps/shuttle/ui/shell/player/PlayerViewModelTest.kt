@@ -348,7 +348,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the end label shows the time left until it is switched to the song's length, and the choice is stored`() = runTest {
+    fun `the end label shows the time left until it is switched to the song's length and the choice is stored`() = runTest {
         val viewModel = viewModel()
         viewModel.uiState.value.player.showRemainingTime shouldBe true
 

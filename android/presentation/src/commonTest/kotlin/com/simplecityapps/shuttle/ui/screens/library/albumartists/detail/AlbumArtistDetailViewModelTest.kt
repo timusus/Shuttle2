@@ -121,7 +121,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
-    fun `albums they only appear on follow in Appears On, and their songs there are in the song list`() = runTest {
+    fun `albums they only appear on follow in Appears On and their songs there are in the song list`() = runTest {
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
         fakeSongRepository.applyQueryPredicates = true
         fakeAlbumRepository.applyQueryPredicates = true
@@ -308,7 +308,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
-    fun `the hero's image tints the screen - the artist's own, else their top album's cover`() = runTest {
+    fun `the hero's image tints the screen - the artist's own else their top album's cover`() = runTest {
         val lanternHours = createSong(id = 1, album = "Lantern Hours", albumArtist = "The Tin Orchards")
         val looseChange = createSong(id = 2, album = "Loose Change", albumArtist = "The Tin Orchards")
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
@@ -539,7 +539,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
-    fun `no albums, no shelf`() = runTest {
+    fun `no albums no shelf`() = runTest {
         val viewModel = loadedViewModel(albums = emptyList(), songs = listOf(song(1, "Stray", "Loose Tracks")))
 
         viewModel.onSortOrderSelected(ArtistSongSortOrder.SongTitle)

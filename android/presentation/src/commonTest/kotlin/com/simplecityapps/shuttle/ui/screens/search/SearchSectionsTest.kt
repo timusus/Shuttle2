@@ -18,7 +18,7 @@ class SearchSectionsTest {
     private val artists = hits(2) { createAlbumArtist(name = "Artist $it") }
 
     @Test
-    fun `each section is capped at its limit, with more to see`() {
+    fun `each section is capped at its limit with more to see`() {
         SearchResults(artists = artists, albums = albums, songs = songs).sections() shouldBe listOf(
             SearchSection(SearchCategory.Artists, from = 0, until = 2, total = 2),
             SearchSection(SearchCategory.Albums, from = 0, until = 3, total = 4),

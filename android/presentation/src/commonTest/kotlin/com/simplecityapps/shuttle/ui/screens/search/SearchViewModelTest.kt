@@ -151,7 +151,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `a fresh search has All selected, with no type chips`() = runTest(testDispatcher) {
+    fun `a fresh search has All selected with no type chips`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "juniper")
 

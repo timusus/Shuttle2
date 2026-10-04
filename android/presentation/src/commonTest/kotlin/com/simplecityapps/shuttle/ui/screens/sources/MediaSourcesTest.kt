@@ -26,7 +26,7 @@ class MediaSourcesTest {
     }
 
     @Test
-    fun `a library imported before this build's tags imports again, once`() {
+    fun `a library imported before this build's tags imports again once`() {
         mediaSources.scan()
         mediaSources.songTagsOutdated = true
 

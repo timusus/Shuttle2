@@ -14,8 +14,10 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -23,11 +25,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
 
-@ExperimentalCoroutinesApi
 class FolderListViewModelTest {
     private val fakeSongRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val fakePlaylistRepository = FakePlaylistRepository()
@@ -45,14 +43,14 @@ class FolderListViewModelTest {
     private val music = Folder(listOf("primary", "Music"), songCount = 3)
     private val juniperStatic = Folder(listOf("primary", "Music", "Juniper Static"), songCount = 2)
 
-    @Before
+    @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeSongRepository.setSongs(listOf(podcast, loose, paranoid, chlorophyllLoop))
         fakeImportState.setState(importComplete())
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
     }
