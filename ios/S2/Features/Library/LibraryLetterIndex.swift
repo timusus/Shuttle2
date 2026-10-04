@@ -56,7 +56,7 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
 
     /// The strip's width the rows keep clear inside themselves, so a row's background (the playing highlight) runs
     /// under the strip rather than stopping short of it; none when the index is hidden.
-    private var indexWidth: CGFloat { dynamicTypeSize.isAccessibilitySize ? 0 : LetterIndexStrip.baseWidth }
+    private var indexWidth: CGFloat { dynamicTypeSize.letterIndexWidth }
 
     init(
         items: [Item],
@@ -135,6 +135,12 @@ private struct IndexedItem<Item, ID: Hashable> {
     let id: ID
 }
 
+extension DynamicTypeSize {
+    /// The width the letter index takes down the trailing edge at this text size: none at accessibility sizes, where
+    /// its width is better spent on the content (#782). The one place that rule lives.
+    var letterIndexWidth: CGFloat { isAccessibilitySize ? 0 : LetterIndexStrip.baseWidth }
+}
+
 extension View {
     /// The index for `sections` down the trailing edge, a `LetterIndexStrip`, which calls `scrollTo` with the section
     /// picked. No index without sections, or at accessibility text sizes, where its width is better spent on the
@@ -150,7 +156,8 @@ extension View {
     }
 }
 
-/// `letterIndex`: the list gives up the strip's width with a clear inset, and the strip is an overlay centred in
+/// `letterIndex`: unless the caller reserves the width itself (`reservesWidth` false), the content gives up the
+/// strip's width with a clear inset, and the strip is an overlay centred in
 /// the visible height (below the navigation bar, above the clearance) that ignores the bottom safe area and keeps its
 /// own clearance above the bottom edge instead (`LetterIndexClearance`), so it doesn't move when scrolling minimises the iOS 26 tab bar and the bottom accessory
 /// (the mini player) moves in beside it (#674).
@@ -169,18 +176,26 @@ private struct LetterIndexModifier: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if dynamicTypeSize.isAccessibilitySize {
+        if dynamicTypeSize.letterIndexWidth == 0 {
             content
         } else {
             indexed(content)
         }
     }
 
-    private func indexed(_ content: Content) -> some View {
-        content
-            .safeAreaInset(edge: .trailing, spacing: 0) {
-                Color.clear.frame(width: reservesWidth ? LetterIndexStrip.baseWidth : 0).accessibilityHidden(true)
+    @ViewBuilder
+    private func reserving(_ content: Content) -> some View {
+        if reservesWidth {
+            content.safeAreaInset(edge: .trailing, spacing: 0) {
+                Color.clear.frame(width: dynamicTypeSize.letterIndexWidth).accessibilityHidden(true)
             }
+        } else {
+            content
+        }
+    }
+
+    private func indexed(_ content: Content) -> some View {
+        reserving(content)
             .onGeometryChange(for: Measure.self) { Measure(size: $0.size, bottomInset: $0.safeAreaInsets.bottom) } action: {
                 size = $0.size
                 clearance.measure($0.bottomInset)

@@ -66,7 +66,7 @@ struct MediaRow<Trailing: View>: View {
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
                     .font(.s2RowTitle)
-                    .lineLimit(1)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                     .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                     .fontWeight(playback == .none ? nil : .semibold)
                     .accessibilityIdentifier(ifPresent: titleIdentifier)

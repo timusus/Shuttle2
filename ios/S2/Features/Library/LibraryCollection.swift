@@ -73,7 +73,7 @@ struct LibraryGrid<Content: View>: View {
             }
             // The strip takes its width from the trailing edge (`letterIndex`); the leading edge gives up the same, so
             // the tiles sit centred rather than off to one side (#750).
-            .safeAreaPadding(.leading, index == nil || dynamicTypeSize.isAccessibilitySize ? 0 : LetterIndexStrip.baseWidth)
+            .safeAreaPadding(.leading, index == nil ? 0 : dynamicTypeSize.letterIndexWidth)
             .letterIndex(index) { proxy.scrollTo($0.anchor, anchor: .top) }
         }
     }
@@ -152,6 +152,8 @@ struct LibraryListSkeleton: View {
     var artworkShape: S2Shape = .artworkRow
     var rows = 12
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         List {
             ForEach(0 ..< rows, id: \.self) { _ in
@@ -160,7 +162,7 @@ struct LibraryListSkeleton: View {
         }
         .listStyle(.plain)
         .scrollDisabled(true)
-        .safeAreaPadding(.trailing, LetterIndexStrip.baseWidth)
+        .safeAreaPadding(.trailing, dynamicTypeSize.letterIndexWidth)
         .accessibilityElement()
         .accessibilityLabel("Loading")
         .accessibilityIdentifier("library.loading")
@@ -190,6 +192,7 @@ struct LibraryGridSkeleton: View {
     var artworkShape: S2Shape = .artworkTile
     var tiles = 12
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .subheadline) private var titleHeight: CGFloat = 12
     @ScaledMetric(relativeTo: .footnote) private var subtitleHeight: CGFloat = 10
     @ScaledMetric(relativeTo: .subheadline) private var titleLine: CGFloat = 18
@@ -210,7 +213,7 @@ struct LibraryGridSkeleton: View {
                 }
             }
         }
-        .safeAreaPadding(.horizontal, LetterIndexStrip.baseWidth)
+        .safeAreaPadding(.horizontal, dynamicTypeSize.letterIndexWidth)
         .shimmer()
         .scrollDisabled(true)
         .accessibilityElement()
