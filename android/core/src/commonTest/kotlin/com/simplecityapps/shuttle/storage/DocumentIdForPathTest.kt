@@ -1,7 +1,7 @@
-package com.simplecityapps.localmediaprovider.local.provider.taglib
+package com.simplecityapps.shuttle.storage
 
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class DocumentIdForPathTest {
     @Test

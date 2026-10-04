@@ -32,6 +32,7 @@ import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.storage.documentIdForPath
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException

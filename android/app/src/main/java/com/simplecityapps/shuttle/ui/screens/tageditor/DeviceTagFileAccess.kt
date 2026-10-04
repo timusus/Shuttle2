@@ -11,11 +11,11 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
-import com.simplecityapps.localmediaprovider.local.provider.taglib.documentIdForPath
 import com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.storage.documentIdForPath
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
