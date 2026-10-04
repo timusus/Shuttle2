@@ -311,6 +311,10 @@ public final class MusicPlaybackController {
     private var timeline = Timeline()
     private let activeSourceLock = NSLock()
     private var activeSource: TrackPCMSource?
+    /// Configuration changes posted so far (any thread). A route change can post several in a row;
+    /// only the last one queued rebuilds (#813).
+    private let configurationChangeLock = NSLock()
+    private var configurationChanges = 0
 
     private struct Callbacks {
         var state: ((State, String?, Int) -> Void)?
@@ -619,6 +623,11 @@ public final class MusicPlaybackController {
         }
         if awaitingOpens { awaitOpensForTesting() }
         callbackQueue.sync {}
+    }
+
+    /// Runs `body` on the engine queue: whatever it asks of the controller waits until it returns.
+    func onEngineQueueForTesting(_ body: () -> Void) {
+        engineQueue.sync(execute: body)
     }
 
     /// Wait for everything already asked of the controller, a next track's open included.
@@ -1195,9 +1204,16 @@ public final class MusicPlaybackController {
 
     /// The route or device changed and the engine stopped: rebuild from where the listener was. The
     /// node's clock stopped with the engine, so that is the last tick's reading (#714). An engine that
-    /// won't start while the route settles is tried again (#715).
+    /// won't start while the route settles is tried again (#715). Changes posted before the queue gets
+    /// to them are one rebuild, the last's: each would re-seek the track, and a transcode's owner would
+    /// re-open the stream for every one (#813).
     @objc private func engineConfigurationChanged(_ notification: Notification) {
+        let change = configurationChangeLock.withLock {
+            configurationChanges += 1
+            return configurationChanges
+        }
         engineQueue.async { [self] in
+            guard change == configurationChangeLock.withLock({ configurationChanges }) else { return }
             guard current != nil else { return }
             let renderTime = player.lastRenderTime == nil ? "nil" : "valid"
             updateTimeline()

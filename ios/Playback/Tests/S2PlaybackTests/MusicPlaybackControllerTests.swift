@@ -567,6 +567,31 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(Double(reported), 500, accuracy: 15)
     }
 
+    /// #813: a route change can post several changes in a row. Those queued together are one
+    /// rebuild, so a transcode's owner re-opens the stream once.
+    func testRouteChangesPostedTogetherRebuildOnce() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 96_000, seed: 26)
+        controller.load(current: transcode("A", a), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 24_000)
+        let before = log.seeksUnsupported.count
+
+        controller.engine.stop()
+        controller.onEngineQueueForTesting {
+            for _ in 0..<3 {
+                NotificationCenter.default.post(name: .AVAudioEngineConfigurationChange, object: controller.engine)
+            }
+        }
+        controller.syncForTesting()
+        XCTAssertEqual(log.seeksUnsupported.count, before + 1)
+        XCTAssertEqual(log.states, [.loading, .playing])
+
+        changeRoute(controller)
+        XCTAssertEqual(log.seeksUnsupported.count, before + 2, "a later change still rebuilds")
+    }
+
     /// #715: the engine won't start while the route settles. It shows loading and plays once a retry
     /// starts it, from where it was heard.
     func testAStartThatFailsAfterARouteChangeIsRetried() throws {
