@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Playlist files (M3U) now pick the right song when several albums have tracks with the same file name.", "commits": [] }
