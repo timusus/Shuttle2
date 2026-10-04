@@ -1024,7 +1024,7 @@ class IosPlayerControllerTest {
     }
 
     @Test
-    fun `a play, pause and play while a playing report is in flight keep the last intent`() = test { controller ->
+    fun `a play pause and play while a playing report is in flight keep the last intent`() = test { controller ->
         controller.start(listOf(a, b), play = false)
 
         controller.play()
