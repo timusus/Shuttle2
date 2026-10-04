@@ -97,14 +97,9 @@ struct SongRowTests {
         #expect((try? SongRow(song: TestSongs.demo[0]).inspect().find(viewWithAccessibilityIdentifier: "songRow.favourite")) == nil)
     }
 
-    @Test func aServerSongShowsItsServerGlyphAndALocalOneDoesNot() throws {
+    @Test func aServerSongShowsNoServerGlyph() throws {
         let remote = TestSongs.song(1, "A", artist: "X", album: "Y", durationMs: 1, provider: .plex)
-        #expect(SongRow.serverName(remote) == "Plex")
-        #expect((try? SongRow(song: remote).inspect().find(viewWithAccessibilityIdentifier: "songRow.server")) != nil)
-        #expect(SongRow.serverName(TestSongs.demo[0]) == nil)
-        #expect((try? SongRow(song: TestSongs.demo[0]).inspect().find(viewWithAccessibilityIdentifier: "songRow.server")) == nil)
-        #expect(SongRow.serverName(TestSongs.song(1, "A", artist: "X", album: "Y", durationMs: 1, provider: .jellyfin)) == "Jellyfin")
-        #expect(SongRow.serverName(TestSongs.song(1, "A", artist: "X", album: "Y", durationMs: 1, provider: .emby)) == "Emby")
+        #expect((try? SongRow(song: remote).inspect().find(viewWithAccessibilityIdentifier: "songRow.server")) == nil)
     }
 
     // MARK: - Menu

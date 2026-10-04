@@ -63,7 +63,7 @@ private extension RelativeDateTimeFormatter {
 /// - `omittingArtist` drops the screen's own artist from the credits (artist detail), leaving the album, or only
 ///   the other artists credited when they differ;
 /// - `key` adds the sort key where it's the point (`SongRowKey`);
-/// - the trailing side holds a small heart for a favourite and a server glyph for a remote song, then the duration.
+/// - the trailing side holds a small heart for a favourite, then the duration (under the title at accessibility text sizes).
 struct SongRow: View {
     let song: Song
     var playback: MediaRowPlayback = .none
@@ -91,11 +91,6 @@ struct SongRow: View {
                     Image(systemName: "heart.fill")
                         .accessibilityLabel("Favourite")
                         .accessibilityIdentifier("songRow.favourite")
-                }
-                if let provider = Self.serverName(song) {
-                    Image(systemName: "server.rack")
-                        .accessibilityLabel(provider)
-                        .accessibilityIdentifier("songRow.server")
                 }
                 SongDurationText(durationMs: Int64(song.duration))
             }
@@ -127,15 +122,5 @@ struct SongRow: View {
     private static func sameArtistKey(_ name: String) -> String {
         let key = name.trimmingCharacters(in: .whitespaces).lowercased()
         return key.hasPrefix("the ") ? String(key.dropFirst(4)).trimmingCharacters(in: .whitespaces) : key
-    }
-
-    /// "Jellyfin", "Emby" or "Plex" for a song from a server; nil for local ones.
-    static func serverName(_ song: Song) -> String? {
-        switch song.mediaProvider {
-        case .jellyfin: "Jellyfin"
-        case .emby: "Emby"
-        case .plex: "Plex"
-        default: nil
-        }
     }
 }
