@@ -46,6 +46,12 @@ object LastFmError {
     /** The token expired before it was approved. */
     const val TOKEN_EXPIRED = 15
 
-    /** Retried with backoff: service offline, temporarily unavailable, or rate limit exceeded. */
-    val RETRYABLE = setOf(11, 16, 29)
+    /** Retried with backoff: operation failed, service offline, temporarily unavailable, or rate limit exceeded. */
+    val RETRYABLE = setOf(8, 11, 16, 29)
+
+    /**
+     * Invalid API key, invalid method signature or suspended API key: nothing wrong with the scrobbles themselves,
+     * so the queue is kept and not retried until something else (the next play, the next start) schedules a flush.
+     */
+    val HOLD = setOf(10, 13, 26)
 }

@@ -24,8 +24,10 @@ import dev.zacsweers.metro.binding
  * Last.fm accepts is deleted whether each scrobble was accepted or permanently ignored - both are done with.
  * A transient failure (HTTP failure, or error 11/16) keeps the whole batch queued and asks WorkManager to
  * retry with backoff. An invalid session (error 9) signs the user out and stops without retrying forever,
- * leaving the queue intact for the next sign-in. Any other top-level error is unrecoverable and drops the
- * batch. Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
+ * leaving the queue intact (a different account signing in clears it, see [ScrobbleQueue.clear]). Any other
+ * top-level error (a bad or suspended API key or signature, or one we don't know) says nothing about the
+ * scrobbles themselves, so the queue is held and the run ends without a retry; only a per-scrobble rejection in
+ * a successful response is ever dropped. Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
  * rejects their timestamp regardless.
  */
 class ScrobbleFlushWorker
@@ -61,6 +63,8 @@ constructor(
                     return Result.failure()
                 }
 
+                Outcome.Hold -> return Result.failure()
+
                 Outcome.Cleared -> {
                     scrobbleDao.deleteByIds(batch.map { it.id })
                     if (batch.size < ScrobbleQueue.BATCH_SIZE) return Result.success()
@@ -69,8 +73,8 @@ constructor(
         }
     }
 
-    /** [Cleared]: the batch is done with, accepted or not - its rows are deleted either way. */
-    private enum class Outcome { Cleared, Retry, SignedOut }
+    /** [Cleared]: the batch is done with, accepted or ignored - its rows are deleted either way. [Hold]: keep it, stop. */
+    private enum class Outcome { Cleared, Retry, SignedOut, Hold }
 
     private suspend fun sendBatch(
         batch: List<QueuedScrobbleEntity>,
@@ -81,7 +85,7 @@ constructor(
         is LastFmResult.Error -> when (result.code) {
             LastFmError.INVALID_SESSION -> Outcome.SignedOut
             in LastFmError.RETRYABLE -> Outcome.Retry
-            else -> Outcome.Cleared
+            else -> Outcome.Hold
         }
 
         LastFmResult.Unreachable -> Outcome.Retry

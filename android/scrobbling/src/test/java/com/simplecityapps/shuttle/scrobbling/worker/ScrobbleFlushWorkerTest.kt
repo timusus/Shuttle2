@@ -208,14 +208,40 @@ class ScrobbleFlushWorkerTest {
     }
 
     @Test
-    fun `an unrecoverable error code drops the batch rather than retrying forever`() = runTest {
+    fun `an operation-failed error code keeps the queue and asks WorkManager to retry`() = runTest {
+        dao.enqueue(entity(1))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 8))
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.retry()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
+
+    @Test
+    fun `key, signature and suspended-key errors hold the queue without retrying`() = runTest {
+        listOf(10, 13, 26).forEach { code ->
+            dao.deleteAll(QueuedScrobbleEntity.SERVICE_LASTFM)
+            dao.enqueue(entity(1))
+            fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = code))
+
+            val result = buildWorker().doWork()
+
+            result shouldBe ListenableWorker.Result.failure()
+            dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+            sessionStore.session.value?.key shouldBe "session-key"
+        }
+    }
+
+    @Test
+    fun `an unknown top-level error holds the queue rather than dropping the scrobbles`() = runTest {
         dao.enqueue(entity(1))
         fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 99))
 
         val result = buildWorker().doWork()
 
-        result shouldBe ListenableWorker.Result.success()
-        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+        result shouldBe ListenableWorker.Result.failure()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
     }
 
     @Test
