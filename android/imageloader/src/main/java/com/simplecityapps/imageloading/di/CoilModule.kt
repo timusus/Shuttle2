@@ -12,11 +12,13 @@ import coil3.serviceLoaderEnabled
 import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.imageloading.coil.AlbumArtistArtworkKeyer
 import com.simplecityapps.imageloading.coil.AlbumArtworkKeyer
+import com.simplecityapps.imageloading.coil.ArtistHeroArtworkKeyer
 import com.simplecityapps.imageloading.coil.ArtworkFetcher
 import com.simplecityapps.imageloading.coil.ArtworkSource
 import com.simplecityapps.imageloading.coil.CoilArtworkImageLoader
 import com.simplecityapps.imageloading.coil.SongArtworkKeyer
 import com.simplecityapps.imageloading.coil.artworkCacheKey
+import com.simplecityapps.imageloading.coil.on
 import com.simplecityapps.imageloading.coil.source.EmbeddedAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.EmbeddedSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.FolderAlbumArtistArtworkSource
@@ -39,6 +41,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import dev.zacsweers.metro.AppScope
@@ -110,6 +113,16 @@ object CoilModule {
                 add(S2AlbumArtistArtworkSource(artworkSettings))
             }
 
+        // An artist page's hero (#781): the artist's own image, the online one only when their tags pin them down, else their
+        // top album's cover. MediaStore's artist "image" is an album thumbnail, which the fallback album covers properly.
+        val artistHeroSources =
+            buildList<ArtworkSource<ArtistHeroArtwork>> {
+                add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages).on { it.artist })
+                add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider).on { it.artist })
+                add(S2AlbumArtistArtworkSource(artworkSettings).on { hero -> hero.artist.takeIf { hero.onlineLookup } })
+                addAll(albumSources.map { source -> source.on { it.fallbackAlbum } })
+            }
+
         return ImageLoader.Builder(context)
             // Every component is registered here, so a stray library can't add fetchers or decoders behind our back
             .serviceLoaderEnabled(false)
@@ -118,9 +131,11 @@ object CoilModule {
                 add(SongArtworkKeyer)
                 add(AlbumArtworkKeyer)
                 add(AlbumArtistArtworkKeyer)
+                add(ArtistHeroArtworkKeyer)
                 add(ArtworkFetcher.Factory(Song::artworkCacheKey, songSources))
                 add(ArtworkFetcher.Factory(Album::artworkCacheKey, albumSources))
                 add(ArtworkFetcher.Factory(AlbumArtist::artworkCacheKey, albumArtistSources))
+                add(ArtworkFetcher.Factory(ArtistHeroArtwork::artworkCacheKey, artistHeroSources))
             }
             .memoryCache {
                 MemoryCache.Builder()

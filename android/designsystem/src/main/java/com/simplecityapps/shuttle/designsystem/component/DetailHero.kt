@@ -3,7 +3,11 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -14,7 +18,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -67,6 +73,70 @@ fun DetailHero(
     }
 }
 
+/**
+ * The head of an artist page (#781): [image] full-bleed, square on a phone and 4:3 from [WideBleedWidth], running up
+ * behind the pinned bar, with a scrim at the top for the bar's icons and one at the bottom behind the white [title] and
+ * [subtitle]. The Play / Shuffle [actions] and any [extra] follow below it. The scheme's `surfaceContainerHighest`
+ * shows while the image loads, or when there's none: no placeholder glyph.
+ */
+@Composable
+fun DetailBleedHero(
+    title: String,
+    subtitle: String?,
+    image: @Composable () -> Unit,
+    actions: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    extra: @Composable () -> Unit = {},
+) {
+    Column(modifier.fillMaxWidth().testTag("detail-hero")) {
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(if (maxWidth >= WideBleedWidth) 4f / 3f else 1f)
+                    .clipToBounds()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .testTag("detail-hero-image"),
+            ) {
+                Box(Modifier.fillMaxSize()) { image() }
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.3f)
+                        .align(Alignment.TopCenter)
+                        .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.45f), Color.Transparent))),
+                )
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.5f)
+                        .align(Alignment.BottomCenter)
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)))),
+                )
+                Column(
+                    modifier = Modifier.align(Alignment.BottomStart).padding(S2Spacing.medium),
+                    verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
+                ) {
+                    Text(title, style = MaterialTheme.typography.heroTitle, color = Color.White)
+                    if (subtitle != null) {
+                        Text(subtitle, style = MaterialTheme.typography.heroSubtitle, color = Color.White.copy(alpha = 0.85f))
+                    }
+                }
+            }
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.smallMedium),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
+        ) {
+            actions()
+            extra()
+        }
+    }
+}
+
+/** From this width, a tablet's or an unfolded phone's, [DetailBleedHero] is 4:3 rather than square, so it leaves room for the list. */
+private val WideBleedWidth = 600.dp
+
 @Preview
 @Composable
 private fun DetailHeroPreview() {
@@ -75,6 +145,24 @@ private fun DetailHeroPreview() {
             title = "Night Bus Frequencies",
             subtitle = "Oda Kestrel Quartet · 2024 · 9 songs · 41:12",
             artwork = { Artwork(model = null, placeholder = ArtworkPlaceholder.Album, size = ArtworkSize.Hero) },
+            actions = {
+                S2ButtonGroup(
+                    primary = S2GroupAction("Play", {}, Icons.Rounded.PlayArrow),
+                    secondary = listOf(S2GroupAction("Shuffle", {}, Icons.Rounded.Shuffle)),
+                )
+            },
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DetailBleedHeroPreview() {
+    S2Preview {
+        DetailBleedHero(
+            title = "Oda Kestrel Quartet",
+            subtitle = "3 albums · 27 songs",
+            image = {},
             actions = {
                 S2ButtonGroup(
                     primary = S2GroupAction("Play", {}, Icons.Rounded.PlayArrow),

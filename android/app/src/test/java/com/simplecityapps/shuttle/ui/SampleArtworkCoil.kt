@@ -14,6 +14,7 @@ import coil3.request.allowHardware
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import java.io.FileNotFoundException
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,8 @@ object SampleArtworkCoil {
                 add(SampleCoverFetcher.Factory { song: Song -> albumCover(song.album) })
                 add(SampleCoverFetcher.Factory { album: Album -> albumCover(album.name) })
                 add(SampleCoverFetcher.Factory { artist: AlbumArtist -> artistCover(artist.name) })
+                // Sample artists have no image of their own, so an artist page's hero shows its fallback album's cover (#781)
+                add(SampleCoverFetcher.Factory { hero: ArtistHeroArtwork -> albumCover(hero.fallbackAlbum?.name) })
             }
             .build()
         SingletonImageLoader.setUnsafe(imageLoader)

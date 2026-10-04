@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
@@ -97,17 +98,23 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         .map { it.firstOrNull() }
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
 
+    /** What the hero shows, from the artist, their albums and their songs' tags (#781). */
+    private val hero: Flow<ArtistHeroArtwork?> = combine(artist, albumsAndSongs, artistAlbums) { artist, (albums, songs), artistAlbums ->
+        artist?.let { ArtistHeroArtwork.of(it, albums, songs, artistAlbums.appearsOn) }
+    }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
-        artist,
+        combine(artist, hero, ::Pair),
         combine(albumsAndSongs, songList, artistAlbums) { albumsAndSongs, songList, artistAlbums -> Triple(albumsAndSongs, songList, artistAlbums.appearsOn) },
         observeCurrentSong(),
         combine(expandedAlbums, events.flow, ::Pair),
-        // The hero shows the artist's own artwork, so that's what seeds the tint (#735)
-        observeArtistArtworkSeed(artist),
-    ) { albumArtist, (albumsAndSongs, songList, appearsOn), currentSong, (expanded, events), seed ->
+        // Whatever image the hero shows is what seeds the tint (#735, #781)
+        observeArtistArtworkSeed(hero),
+    ) { (albumArtist, hero), (albumsAndSongs, songList, appearsOn), currentSong, (expanded, events), seed ->
         val (albums, songs) = albumsAndSongs
         AlbumArtistDetailUiState(
             albumArtist = albumArtist,
+            hero = hero,
             albums = albums,
             appearsOn = appearsOn,
             songs = songList.songs,

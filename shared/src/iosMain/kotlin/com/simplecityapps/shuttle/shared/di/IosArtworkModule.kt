@@ -5,7 +5,7 @@ import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
-import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
@@ -42,5 +42,5 @@ class IosArtworkModule {
 private object NoArtworkSeedSource : ArtworkSeedSource {
     override suspend fun seedFor(song: Song): ArtworkSeed = ArtworkSeed.None
 
-    override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed = ArtworkSeed.None
+    override suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed = ArtworkSeed.None
 }

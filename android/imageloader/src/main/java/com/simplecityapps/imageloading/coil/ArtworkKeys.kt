@@ -4,6 +4,7 @@ import coil3.key.Keyer
 import coil3.request.Options
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 
 /**
@@ -15,6 +16,9 @@ fun Song.artworkCacheKey(): String = "song:${albumArtist ?: friendlyArtistName}_
 internal fun Album.artworkCacheKey(): String = "album:${albumArtist ?: friendlyArtistName}_$name".withArtworkVersion(artworkVersion)
 
 fun AlbumArtist.artworkCacheKey(): String = "artist:${name ?: friendlyArtistName ?: "Unknown"}".withArtworkVersion(artworkVersion)
+
+/** Keys an artist page's hero: the artist, whether it may use the online lookup, and the album it falls back to (#781). */
+fun ArtistHeroArtwork.artworkCacheKey(): String = "artistHero:${artist.artworkCacheKey()}|online=$onlineLookup|${fallbackAlbum?.artworkCacheKey()}"
 
 /**
  * Appends the provider's artwork version, so the key changes exactly when the artwork does. Without a version
@@ -39,6 +43,13 @@ internal object AlbumArtworkKeyer : Keyer<Album> {
 internal object AlbumArtistArtworkKeyer : Keyer<AlbumArtist> {
     override fun key(
         data: AlbumArtist,
+        options: Options
+    ): String = data.artworkCacheKey()
+}
+
+internal object ArtistHeroArtworkKeyer : Keyer<ArtistHeroArtwork> {
+    override fun key(
+        data: ArtistHeroArtwork,
         options: Options
     ): String = data.artworkCacheKey()
 }

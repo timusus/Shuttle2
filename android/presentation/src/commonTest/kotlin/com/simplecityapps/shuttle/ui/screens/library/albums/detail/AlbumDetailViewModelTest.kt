@@ -12,10 +12,10 @@ import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -63,7 +63,7 @@ class AlbumDetailViewModelTest {
             return ArtworkSeed.Available(RED)
         }
 
-        override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed = error("An album page seeds from its songs")
+        override suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed = error("An album page seeds from its songs")
     }
     private val settingsStore = SettingsStore(InMemoryKeyValueStore())
 

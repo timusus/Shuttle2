@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -18,12 +19,14 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import coil3.compose.AsyncImage
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
+import com.simplecityapps.shuttle.designsystem.component.DetailBleedHero
 import com.simplecityapps.shuttle.designsystem.component.DetailHero
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.GridTile
@@ -32,6 +35,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.previewArtwork
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Album
@@ -44,8 +48,8 @@ import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 enum class DetailContentState { Loading, NotFound, Ready }
 
 /**
- * A library detail screen: [DetailScaffold] with a [DetailHero] (the artwork, title and Play / Shuffle, then [header])
- * and an overflow that opens the item's actions sheet, after any screen-specific [actions]. [content] follows the hero.
+ * A library detail screen: [DetailScaffold] with a [DetailHero] (the artwork, title and Play / Shuffle, then [header]),
+ * or with [bleed] a [DetailBleedHero] showing [artwork] full-bleed (an artist page's, #781), and an overflow that opens the item's actions sheet, after any screen-specific [actions]. [content] follows the hero.
  */
 @Composable
 fun LibraryDetailScaffold(
@@ -59,7 +63,7 @@ fun LibraryDetailScaffold(
     onShuffle: () -> Unit,
     onMore: () -> Unit,
     modifier: Modifier = Modifier,
-    artworkShape: ArtworkShape = ArtworkShape.Rounded,
+    bleed: Boolean = false,
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -80,20 +84,26 @@ fun LibraryDetailScaffold(
             onNavigateUp = onNavigateUp,
             modifier = modifier,
             listState = listState,
+            heroBleeds = bleed,
             hero = { topInset ->
-                DetailHero(
-                    title = title,
-                    subtitle = subtitle,
-                    topInset = topInset,
-                    artwork = { LibraryArtwork(model = artwork, placeholder = placeholder, size = ArtworkSize.Hero, shape = artworkShape) },
-                    actions = {
-                        S2ButtonGroup(
-                            primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
-                            secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), onShuffle, Icons.Rounded.Shuffle)),
-                        )
-                    },
-                    extra = header,
-                )
+                val playShuffle: @Composable () -> Unit = {
+                    S2ButtonGroup(
+                        primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
+                        secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), onShuffle, Icons.Rounded.Shuffle)),
+                    )
+                }
+                if (bleed) {
+                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork) }, actions = playShuffle, extra = header)
+                } else {
+                    DetailHero(
+                        title = title,
+                        subtitle = subtitle,
+                        topInset = topInset,
+                        artwork = { LibraryArtwork(model = artwork, placeholder = placeholder, size = ArtworkSize.Hero) },
+                        actions = playShuffle,
+                        extra = header,
+                    )
+                }
             },
             actions = {
                 actions()
@@ -106,6 +116,16 @@ fun LibraryDetailScaffold(
             },
             content = content,
         )
+    }
+}
+
+/** [model]'s image filling a [DetailBleedHero]: nothing while it loads or when there's none, so the hero's own fill shows. */
+@Composable
+private fun BleedArtwork(model: Any?) {
+    val preview = previewArtwork(model)
+    when {
+        preview != null -> Image(preview, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        model != null -> AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
     }
 }
 

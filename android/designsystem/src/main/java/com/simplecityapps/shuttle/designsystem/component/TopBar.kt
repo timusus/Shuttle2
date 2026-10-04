@@ -79,7 +79,8 @@ fun S2TopBar(
 /**
  * The pinned bar over an artwork detail screen's [DetailHero] (album, artist, genre, playlist). Until [collapsed] it is
  * transparent and untitled, so the hero's wash runs up behind its icons; once the hero's title has scrolled under it,
- * it takes the regular bar colour and fades in [title] and [subtitle].
+ * it takes the regular bar colour and fades in [title] and [subtitle]. [overImage]: it sits over a [DetailBleedHero],
+ * so its icons are white until then.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,9 +92,14 @@ fun S2DetailTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null,
+    overImage: Boolean = false,
 ) {
     val defaults = TopAppBarDefaults.topAppBarColors()
     val containerColor by animateColorAsState(if (collapsed) defaults.containerColor else Color.Transparent, label = "detailTopBarContainer")
+    // Over a full-bleed image (and its scrim) the icons are white until the bar fills in.
+    val onImage = overImage && !collapsed
+    val navigationColor by animateColorAsState(if (onImage) Color.White else defaults.navigationIconContentColor, label = "detailTopBarNavigation")
+    val actionColor by animateColorAsState(if (onImage) Color.White else defaults.actionIconContentColor, label = "detailTopBarActions")
     TopAppBar(
         title = {
             AnimatedVisibility(visible = collapsed, enter = fadeIn(), exit = fadeOut()) {
@@ -115,7 +121,12 @@ fun S2DetailTopBar(
         navigationIcon = { onBack?.let { BackButton(it) } },
         actions = actions,
         // The pinned scroll behaviour would otherwise swap in its own colour as soon as the list moves.
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor, scrolledContainerColor = containerColor),
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = containerColor,
+            scrolledContainerColor = containerColor,
+            navigationIconContentColor = navigationColor,
+            actionIconContentColor = actionColor,
+        ),
         scrollBehavior = scrollBehavior,
     )
 }

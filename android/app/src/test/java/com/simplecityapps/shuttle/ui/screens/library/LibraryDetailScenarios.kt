@@ -8,6 +8,7 @@ import com.simplecityapps.createSmartPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
@@ -68,6 +69,7 @@ fun readyAlbumArtistDetail(
     }
     return AlbumArtistDetailUiState(
         albumArtist = artist,
+        hero = ArtistHeroArtwork.of(artist, albums, songs, appearsOn),
         albums = albums,
         appearsOn = appearsOn,
         songs = sections.flatMap { it.songs },

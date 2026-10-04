@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -73,13 +74,13 @@ class AlbumArtistDetailViewModelTest {
 
     /** How long the fake artwork source takes to extract a seed, in virtual time. */
     private var seedDelayMs = 0L
-    private val seededArtists = mutableListOf<String?>()
+    private val seededHeroes = mutableListOf<ArtistHeroArtwork>()
     private val seedSource = object : ArtworkSeedSource {
-        override suspend fun seedFor(song: Song): ArtworkSeed = error("An artist page seeds from the artist's own artwork, which its hero shows")
+        override suspend fun seedFor(song: Song): ArtworkSeed = error("An artist page seeds from the image its hero shows")
 
-        override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed {
+        override suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed {
             delay(seedDelayMs)
-            seededArtists += artist.name
+            seededHeroes += hero
             return ArtworkSeed.Available(RED)
         }
     }
@@ -307,7 +308,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
-    fun `the artist's own artwork, which the hero shows, tints the screen`() = runTest {
+    fun `the hero's image tints the screen - the artist's own, else their top album's cover`() = runTest {
         val lanternHours = createSong(id = 1, album = "Lantern Hours", albumArtist = "The Tin Orchards")
         val looseChange = createSong(id = 2, album = "Loose Change", albumArtist = "The Tin Orchards")
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
@@ -322,8 +323,13 @@ class AlbumArtistDetailViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
+        val hero = viewModel.uiState.value.hero
+        hero?.artist?.name shouldBe "The Tin Orchards"
+        // Untagged with a MusicBrainz id, so the online lookup isn't trusted; nothing played, so the newest album
+        hero?.onlineLookup shouldBe false
+        hero?.fallbackAlbum?.name shouldBe "Loose Change"
         viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(RED)
-        seededArtists shouldBe listOf("The Tin Orchards")
+        seededHeroes shouldBe listOf(hero)
     }
 
     @Test

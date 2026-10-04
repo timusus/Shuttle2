@@ -24,7 +24,6 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.S2Action
@@ -89,9 +88,10 @@ fun AlbumArtistDetailScreen(
                     pluralString(R.plurals.songsPlural, uiState.songs.size),
                 ).joinToString(" · ")
             },
-            artwork = artist,
+            // The shared rule's image (#781): the artist's own, else their top album's cover, full-bleed and square.
+            artwork = uiState.hero,
             placeholder = ArtworkPlaceholder.Artist,
-            artworkShape = ArtworkShape.Circle,
+            bleed = true,
             onNavigateUp = onNavigateUp,
             onPlay = { onPlay(uiState.songs, 0) },
             onShuffle = onShuffle,

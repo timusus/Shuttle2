@@ -116,6 +116,10 @@
       "commits": []
     },
     {
+      "text": "Artist pages now open with a large, square picture of the artist, or the cover of their most played album when there is no confident match for one, and the page takes its colours from that picture",
+      "commits": []
+    },
+    {
       "text": "Lossless songs from Jellyfin, Emby and music files on your device, including ALAC in .m4a files, now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
       "commits": ["2388719fd"]
     },

@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
@@ -30,7 +31,9 @@ data class AlbumArtistDetailUiState(
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     val loadingState: LoadingState = LoadingState.Loading,
     val events: List<PendingEvent<AlbumArtistDetailEvent>> = emptyList(),
-    /** The artist's own artwork seed (the hero's image), which tints the screen when Colour from artwork is on; it never holds up the content, which shows at [ArtworkSeed.Loading] while it's extracted. */
+    /** What the hero shows (#781): the artist's image if it's confidently theirs, else their top album's cover. */
+    val hero: ArtistHeroArtwork? = null,
+    /** The seed of the hero's image, which tints the screen when Colour from artwork is on; it never holds up the content, which shows at [ArtworkSeed.Loading] while it's extracted. */
     val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
     /**

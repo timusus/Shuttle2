@@ -17,3 +17,34 @@ sealed interface ArtworkSource<T : Any> {
         suspend fun url(model: T): String?
     }
 }
+
+/**
+ * This source, tried for the [part] of a model it stands for: an artist hero's artist or fallback album. It has nothing
+ * for a model whose part is null.
+ */
+internal fun <T : Any, R : Any> ArtworkSource<T>.on(part: (R) -> T?): ArtworkSource<R> = when (this) {
+    is ArtworkSource.Local -> LocalPart(this, part)
+    is ArtworkSource.Remote -> RemotePart(this, part)
+}
+
+private class LocalPart<T : Any, R : Any>(
+    private val source: ArtworkSource.Local<T>,
+    private val part: (R) -> T?,
+) : ArtworkSource.Local<R> {
+    override fun handles(model: R): Boolean = part(model)?.let(source::handles) ?: false
+
+    override suspend fun open(model: R): InputStream? = part(model)?.let { source.open(it) }
+
+    override fun toString(): String = "${source::class.simpleName}"
+}
+
+private class RemotePart<T : Any, R : Any>(
+    private val source: ArtworkSource.Remote<T>,
+    private val part: (R) -> T?,
+) : ArtworkSource.Remote<R> {
+    override fun handles(model: R): Boolean = part(model)?.let(source::handles) ?: false
+
+    override suspend fun url(model: R): String? = part(model)?.let { source.url(it) }
+
+    override fun toString(): String = "${source::class.simpleName}"
+}

@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.fixtures.SamplePlaylist
 import com.simplecityapps.shuttle.fixtures.SampleSong
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -31,13 +32,15 @@ import kotlinx.datetime.LocalDate
 // verifyFixturesNotInReleaseClasspath, which fails if any module's release runtime classpath reaches the fixtures;
 // still, only call these from @Preview functions or test code, never from a code path a release build can execute.
 
-/** Covers for the app's [Song]s, [Album]s and [AlbumArtist]s named after sample ones, and for the sample models themselves. */
+/** Covers for the app's [Song]s, [Album]s, [AlbumArtist]s and [ArtistHeroArtwork]s named after sample ones, and for the sample models themselves. */
 object SampleAppCovers : PreviewArtwork {
     override fun image(model: Any): ImageBitmap? {
         val sample = when (model) {
             is Song -> model.album?.let(SampleLibrary::albumNamed)
             is Album -> model.name?.let(SampleLibrary::albumNamed)
             is AlbumArtist -> SampleLibrary.artists.firstOrNull { it.name == model.name }
+            // Sample artists have no image of their own, so a hero shows its fallback album's cover (#781)
+            is ArtistHeroArtwork -> model.fallbackAlbum?.name?.let(SampleLibrary::albumNamed)
             else -> model
         }
         return sample?.let(SampleCovers::image)

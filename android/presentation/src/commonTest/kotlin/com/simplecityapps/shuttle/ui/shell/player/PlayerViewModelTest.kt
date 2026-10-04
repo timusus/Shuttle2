@@ -20,7 +20,7 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
-import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -82,7 +82,7 @@ class PlayerViewModelTest {
             return ArtworkSeed.Available(RED)
         }
 
-        override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed = error("The player seeds from songs")
+        override suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed = error("The player seeds from songs")
     }
     private val gatedSongs = MutableSharedFlow<Song>()
     private val replayGainModeSetting = ReplayGainModeSetting { PlaybackSettings.ReplayGain }

@@ -33,6 +33,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2DetailTopBar
  * and the hero is its first item, given the bar's height as its top inset so its wash runs up behind the bar's icons.
  * It scrolls with the list: no parallax, no scrim. The bar shows [title] and [subtitle] once the hero has scrolled
  * under it. Without one (loading, not found), the list sits below the bar and the bar shows the title throughout.
+ * [heroBleeds]: the hero is a `DetailBleedHero`, whose image runs up behind the bar, so the bar's icons are white over it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +44,7 @@ fun DetailScaffold(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     hero: (@Composable (topInset: Dp) -> Unit)? = null,
+    heroBleeds: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
     content: LazyListScope.() -> Unit,
 ) {
@@ -66,6 +68,7 @@ fun DetailScaffold(
                 actions = actions,
                 modifier = Modifier.onSizeChanged { topBarHeightPx = it.height },
                 scrollBehavior = scrollBehavior,
+                overImage = heroBleeds,
             )
         },
     ) { innerPadding ->
