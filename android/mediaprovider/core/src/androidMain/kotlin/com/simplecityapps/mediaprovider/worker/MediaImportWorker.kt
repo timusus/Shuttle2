@@ -43,11 +43,13 @@ constructor(
         private const val TAG_MEDIA_IMPORT = "MEDIA_IMPORT"
 
         /**
-         * Enqueues or removes work, depending on the [ImportFrequency]
+         * Enqueues or removes work, depending on the [ImportFrequency]; [hasRemoteSource] is whether a server is set up, which
+         * needs a connection (this device's files alone don't, and shouldn't wait for one).
          */
         fun updateWork(
             context: Context,
-            importFrequency: ImportFrequency
+            importFrequency: ImportFrequency,
+            hasRemoteSource: Boolean
         ) {
             if (importFrequency == ImportFrequency.Never) {
                 WorkManager.getInstance(context).cancelAllWorkByTag(TAG_MEDIA_IMPORT)
@@ -57,8 +59,7 @@ constructor(
                         .setConstraints(
                             Constraints.Builder()
                                 .setRequiresBatteryNotLow(true)
-                                // A server needs a connection; this device's files are read in the same run
-                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .setRequiredNetworkType(if (hasRemoteSource) NetworkType.CONNECTED else NetworkType.NOT_REQUIRED)
                                 .build()
                         )
                         .addTag(TAG_MEDIA_IMPORT)

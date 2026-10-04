@@ -51,7 +51,7 @@ class AndroidSettingsEffects @Inject constructor(
             AppearanceSettings.WidgetBackgroundOpacity -> widgetManager.onBackgroundOpacityChanged(value as Int)
             PlaybackSettings.ReplayGain -> replayGainAudioProcessor.mode = value as ReplayGainMode
             PlaybackSettings.PreAmpGain -> replayGainAudioProcessor.preAmpGain = (value as Float).toDouble()
-            LibrarySettings.RescanFrequency -> MediaImportWorker.updateWork(context, value as ImportFrequency)
+            LibrarySettings.RescanFrequency -> MediaImportWorker.updateWork(context, value as ImportFrequency, hasRemoteSource = mediaImporter.mediaProviders.any { it.type.remote })
         }
     }
 

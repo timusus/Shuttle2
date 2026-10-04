@@ -27,7 +27,8 @@ constructor(
         librarySettings.migrateRescanFrequency()
         MediaImportWorker.updateWork(
             context = context,
-            importFrequency = librarySettings.rescanFrequency.value
+            importFrequency = librarySettings.rescanFrequency.value,
+            hasRemoteSource = mediaSources.enabledTypes.value.any { it.remote }
         )
 
         // Each return to the app brings the servers up to date, at most every few minutes (#771)
