@@ -39,8 +39,8 @@ struct LibraryGrid<Content: View>: View {
         return [GridItem(.adaptive(minimum: minimum), spacing: AdaptiveLayout.gridSpacing, alignment: .top)]
     }
 
-    /// The narrowest a tile gets. Compact width takes `ArtworkSize.gridMinimumCompact`, so two fit beside the index
-    /// on a 320 pt screen; wider tiers `ArtworkSize.gridMinimum`. Twice that at the accessibility text sizes, whose
+    /// The narrowest a tile gets. Compact width takes `ArtworkSize.gridMinimumCompact`, so two fit with the index's
+    /// width kept clear on both edges of a 320 pt screen; wider tiers `ArtworkSize.gridMinimum`. Twice that at the accessibility text sizes, whose
     /// titles two narrow tiles can't hold: one full-width column can.
     static func minimumTile(_ tier: LayoutTier, accessibilitySize: Bool = false) -> CGFloat {
         let minimum = tier == .compact ? ArtworkSize.gridMinimumCompact : ArtworkSize.gridMinimum
@@ -48,8 +48,9 @@ struct LibraryGrid<Content: View>: View {
     }
 
     /// The columns the grid lays out in a container `width` wide, with an index strip `indexWidth` wide down its
-    /// trailing edge, and the same width kept clear on the leading edge so the margins match (#750): the width left inside the content insets (and `AdaptiveLayout.contentMaxWidth`), filled as
-    /// SwiftUI fills an adaptive `GridItem`, with as many `minimumTile`s as fit `gridSpacing` apart.
+    /// trailing edge and the same width kept clear on the leading edge so the margins match (#750). The width left
+    /// inside the content insets (and `AdaptiveLayout.contentMaxWidth`) is filled as SwiftUI fills an adaptive
+    /// `GridItem`: with as many `minimumTile`s as fit `gridSpacing` apart.
     static func columnCount(width: CGFloat, tier: LayoutTier, indexWidth: CGFloat = LetterIndexStrip.baseWidth, accessibilitySize: Bool = false) -> Int {
         let spacing = AdaptiveLayout.gridSpacing
         let available = min(width - indexWidth * 2, AdaptiveLayout.contentMaxWidth) - AdaptiveLayout.contentInset(tier) * 2
@@ -102,8 +103,7 @@ struct LibraryTile: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                         .lineLimit(1)
-                        .accessibilityIdentifier("libraryTile.title")
-                }
+                                        }
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.footnote)
@@ -115,6 +115,7 @@ struct LibraryTile: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("libraryTile")
         .accessibilityAddTraits(playback == .none ? [] : .isSelected)
         .accessibilityValue(playback == .playing ? "Now playing" : playback == .paused ? "Paused" : "")
     }

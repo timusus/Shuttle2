@@ -8,8 +8,8 @@ import ViewInspector
 /// landscape, more on an iPad; and an artist tile's corners, the same as an album's.
 @MainActor
 struct LibraryGridTests {
-    // 320 pt (no current iPhone) would need the index's width on both edges, so it falls to one column (#750).
-    @Test(arguments: [375, 393, 430] as [CGFloat])
+    // 320 pt is the narrowest: an SE, or a mini in Display Zoom (#750).
+    @Test(arguments: [320, 375, 393, 430] as [CGFloat])
     func everyIPhoneInPortraitHasTwoColumns(width: CGFloat) {
         #expect(LibraryGrid<EmptyView>.columnCount(width: width, tier: .compact) == 2)
     }

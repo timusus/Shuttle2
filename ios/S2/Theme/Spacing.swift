@@ -80,9 +80,9 @@ enum ArtworkSize {
 
     /// The smallest cell of an adaptive grid: `GridItem(.adaptive(minimum: ArtworkSize.gridMinimum))`.
     static let gridMinimum: CGFloat = 160
-    /// The smallest Library grid tile at compact width: small enough that two fit beside the letter index on the
-    /// narrowest iPhone (`LibraryGrid.minimumTile`).
-    static let gridMinimumCompact: CGFloat = 120
+    /// The smallest Library grid tile at compact width (`LibraryGrid.minimumTile`): small enough that two fit, with the
+    /// letter index's width kept clear on both edges, on a 320 pt iPhone, yet more than a third of a 430 pt one.
+    static let gridMinimumCompact: CGFloat = 108
 
     /// A detail screen's hero at compact width.
     static let hero: CGFloat = 240
