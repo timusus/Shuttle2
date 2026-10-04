@@ -122,6 +122,23 @@ class OnboardingTest {
     }
 
     @Test
+    fun `files this device couldn't read show with a retry`() {
+        robot.setSources(SourcesScenarios.configured.copy(deviceSkippedFiles = 2))
+
+        robot.assertTextDisplayed("2 files couldn't be read and were left out")
+        robot.clickText("Try again")
+
+        robot.retrySkippedClicks shouldBe 1
+    }
+
+    @Test
+    fun `no files left unread shows no retry`() {
+        robot.setSources(SourcesScenarios.configured)
+
+        robot.assertTextNotDisplayed("Try again")
+    }
+
+    @Test
     fun `turning this device off asks first`() {
         robot.setSources(SourcesUiState(thisDevice = true))
 

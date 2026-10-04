@@ -67,6 +67,8 @@ class SourcesViewModelTest {
         ObserveSourceReachability(preferences),
         ObserveSourceUpdated(preferences),
         ObserveListingShortfalls(preferences),
+        ObserveDeviceSkippedFiles(preferences),
+        ClearSkippedFiles(preferences),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -215,6 +217,23 @@ class SourcesViewModelTest {
         viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.listingShortfall shouldBe 4
         preferences.setListingShortfall("Jellyfin", 0)
         viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.listingShortfall shouldBe 0
+    }
+
+    @Test
+    fun `files this device's import couldn't read show and a retry reads them again in a rescan`() = runTest {
+        val mediaSources = FakeMediaSources(MediaProviderType.Shuttle)
+        val viewModel = viewModel(mediaSources)
+        preferences.quarantineTagRead("/music/a.flac|100|1000")
+
+        viewModel.uiState.value.deviceSkippedFiles shouldBe 0
+        preferences.setSkippedFiles("Shuttle", 2)
+        viewModel.uiState.value.deviceSkippedFiles shouldBe 2
+
+        viewModel.onRetrySkippedFiles()
+
+        viewModel.uiState.value.deviceSkippedFiles shouldBe 0
+        preferences.tagReadQuarantine() shouldBe emptySet()
+        mediaSources.scans shouldBe 1
     }
 
     @Test

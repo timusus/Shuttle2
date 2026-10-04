@@ -41,5 +41,5 @@ object SourcesScenarios {
         servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle, MediaProviderType.Plex to SourceStatus.Idle).map { if (it.type == MediaProviderType.Jellyfin) it.copy(listingShortfall = 3) else it },
     )
 
-    val noActions = SourcesActions(onThisDeviceChange = {}, onRescan = {}, onOpenFolderRules = {}, onServerClick = {}, onAddServer = {}, onShowDialog = {})
+    val noActions = SourcesActions(onThisDeviceChange = {}, onRescan = {}, onRetrySkippedFiles = {}, onOpenFolderRules = {}, onServerClick = {}, onAddServer = {}, onShowDialog = {})
 }

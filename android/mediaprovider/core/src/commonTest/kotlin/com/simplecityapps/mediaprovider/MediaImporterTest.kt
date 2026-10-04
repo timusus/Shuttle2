@@ -442,6 +442,21 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a full import records how many files the source left unread`() = runBlocking<Unit> {
+        val indexed = IndexedProvider()
+        importer.mediaProviders -= provider
+        importer.mediaProviders += indexed
+
+        indexed.skippedFiles = setOf("/music/a.flac", "/music/b.flac")
+        importer.import()
+        preferences.skippedFiles(indexed.type.name) shouldBe 2
+
+        indexed.skippedFiles = emptySet()
+        importer.import()
+        preferences.skippedFiles(indexed.type.name) shouldBe 0
+    }
+
+    @Test
     fun `a server that can't be reached on return to the app keeps its status - but the daily sync reports it`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
@@ -884,6 +899,8 @@ class MediaImporterTest {
         override val type = MediaProviderType.Shuttle
 
         val listings = mutableListOf<String>()
+
+        override var skippedFiles: Set<String> = emptySet()
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = listing("index")
 

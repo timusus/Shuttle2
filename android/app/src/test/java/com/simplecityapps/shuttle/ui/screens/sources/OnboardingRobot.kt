@@ -26,6 +26,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var scanClicks = 0
     var connectServerClicks = 0
     var rescanClicks = 0
+    var retrySkippedClicks = 0
     var folderRulesClicks = 0
     var addServerClicks = 0
     var lastThisDevice: Boolean? = null
@@ -52,6 +53,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
         val actions = SourcesActions(
             onThisDeviceChange = { lastThisDevice = it },
             onRescan = { rescanClicks++ },
+            onRetrySkippedFiles = { retrySkippedClicks++ },
             onOpenFolderRules = { folderRulesClicks++ },
             onServerClick = { lastServer = it },
             onAddServer = { addServerClicks++ },

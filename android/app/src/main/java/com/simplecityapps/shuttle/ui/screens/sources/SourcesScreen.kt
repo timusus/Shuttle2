@@ -48,6 +48,8 @@ sealed interface SourcesDialog {
 class SourcesActions(
     val onThisDeviceChange: (Boolean) -> Unit,
     val onRescan: () -> Unit,
+    /** Reads the files this device's import couldn't read again (#840). */
+    val onRetrySkippedFiles: () -> Unit,
     val onOpenFolderRules: () -> Unit,
     val onServerClick: (ServerSource) -> Unit,
     val onAddServer: () -> Unit,
@@ -56,8 +58,8 @@ class SourcesActions(
 
 /**
  * Settings > Sources' own rows (#379), ahead of the catalog's switches: a card per source with its status (#663). This
- * device has its switch, its songs and when the library last updated (or a scan's progress), its folder rules and a
- * rescan; each connected server has its status and songs, and opens its options; "Add a server" picks a type to sign
+ * device has its switch, its songs and when the library last updated (or a scan's progress), its folder rules, a
+ * rescan and any files its last scan couldn't read, with a retry; each connected server has its status and songs, and opens its options; "Add a server" picks a type to sign
  * in to. [now] is when "Updated 2 hours ago" counts from.
  */
 fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesActions, now: Instant = Clock.System.now()) {
@@ -103,6 +105,23 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
                         enabled = uiState.deviceStatus !is SourceStatus.Importing,
                         modifier = Modifier.testTag("sources-rescan"),
                     )
+                }
+            }
+            if (uiState.deviceSkippedFiles > 0) {
+                rows += { shapes ->
+                    ActionsSetting(
+                        summary = pluralStringResource(R.plurals.sources_skipped_files, uiState.deviceSkippedFiles, uiState.deviceSkippedFiles.formatted()),
+                        shapes = shapes,
+                        modifier = Modifier.testTag("sources-skipped-files"),
+                    ) {
+                        S2Button(
+                            text = stringResource(R.string.sources_skipped_files_retry),
+                            onClick = actions.onRetrySkippedFiles,
+                            style = S2ButtonStyle.Tonal,
+                            enabled = uiState.deviceStatus !is SourceStatus.Importing,
+                            modifier = Modifier.testTag("sources-retry-skipped-files"),
+                        )
+                    }
                 }
             }
         }

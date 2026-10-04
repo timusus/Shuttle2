@@ -492,6 +492,8 @@ class MediaImporter(
                         mediaProvider.songsStored()
                         preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
                         if (plan == SyncPlan.Full) {
+                            // A full pass tries every file it hasn't stored, so its count of files left unread is the whole of it (#840)
+                            if (mediaProvider is IndexedMediaProvider) preferenceManager.setSkippedFiles(mediaProvider.type.name, mediaProvider.skippedFiles.size)
                             if (guarded.awaitsFullPass) {
                                 // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
                                 // the next sync rather than a week on. The songs it held weren't read, so the tags version stays

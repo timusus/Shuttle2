@@ -51,6 +51,8 @@ data class SourcesUiState(
     val deviceSongs: Int? = null,
     /** When an import of this device's music last completed, if one has. */
     val deviceUpdated: Instant? = null,
+    /** How many files this device's last full import couldn't read (#840): each crashed a tag read, so it's left unread until a retry. */
+    val deviceSkippedFiles: Int = 0,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
     /** When any import last finished, if one ever has: iOS's scan row shows it. */
     val lastImport: Instant? = null,
@@ -86,11 +88,13 @@ class SourcesViewModel @Inject constructor(
     observeSourceReachability: ObserveSourceReachability,
     observeSourceUpdated: ObserveSourceUpdated,
     observeListingShortfalls: ObserveListingShortfalls,
+    observeDeviceSkippedFiles: ObserveDeviceSkippedFiles,
+    private val clearSkippedFiles: ClearSkippedFiles,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
     private val imports: Flow<Imports> =
-        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), combine(observeSourceReachability(), observeSourceUpdated(), observeListingShortfalls(), ::Stored), ::Imports)
+        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), combine(observeSourceReachability(), observeSourceUpdated(), observeListingShortfalls(), observeDeviceSkippedFiles(), ::Stored), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
         combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate(), events.flow) { types, folders, imports, lastImport, events ->
@@ -104,6 +108,7 @@ class SourcesViewModel @Inject constructor(
                 deviceStatus = sourceStatus(types.firstOrNull { it.isLocal }?.let(imports.byProvider::get)),
                 deviceSongs = imports.songCounts?.filterKeys { it.isLocal }?.values?.sum(),
                 deviceUpdated = imports.updated.filterKeys { it.isLocal }.values.filterNotNull().maxOrNull(),
+                deviceSkippedFiles = imports.stored.deviceSkippedFiles,
                 servers = ServerTypes.map { type ->
                     ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type], listingShortfall = imports.shortfalls[type] ?: 0)
                 },
@@ -140,6 +145,12 @@ class SourcesViewModel @Inject constructor(
 
     fun onRescan() = mediaSources.scan()
 
+    /** Reads the files this device's import left unread again, in a rescan. */
+    fun onRetrySkippedFiles() {
+        clearSkippedFiles()
+        mediaSources.scan()
+    }
+
     /** Whether a server's sign-in may open: once the trial is over without Pro, the gate opens the paywall instead. */
     fun onAddServer(): Boolean = tryAddServer()
 
@@ -166,10 +177,11 @@ class SourcesViewModel @Inject constructor(
         val shortfalls get() = stored.shortfalls
     }
 
-    /** What each source's imports left in preferences: how the last one ended, when one last completed, and the server's listing shortfall. */
+    /** What each source's imports left in preferences: how the last one ended, when one last completed, the server's listing shortfall, and the files this device's left unread. */
     private data class Stored(
         val reachability: Map<MediaProviderType, SourceReachability?>,
         val updated: Map<MediaProviderType, Instant?>,
         val shortfalls: Map<MediaProviderType, Int>,
+        val deviceSkippedFiles: Int,
     )
 }

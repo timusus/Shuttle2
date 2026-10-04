@@ -67,6 +67,7 @@ fun sourcesRows(onOpenFolderRules: () -> Unit): LazyListScope.() -> Unit {
         SourcesActions(
             onThisDeviceChange = viewModel::onThisDeviceChange,
             onRescan = viewModel::onRescan,
+            onRetrySkippedFiles = viewModel::onRetrySkippedFiles,
             onOpenFolderRules = onOpenFolderRules,
             onServerClick = { server -> dialog = SourcesDialog.Server(server.type) },
             onAddServer = { pickingServer = true },

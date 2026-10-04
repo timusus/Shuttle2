@@ -53,6 +53,25 @@ class ObserveListingShortfalls @Inject constructor(
     }
 }
 
+/** How many files this device's last full import couldn't read and left unread (#840), now and each time one ends. */
+class ObserveDeviceSkippedFiles @Inject constructor(
+    private val generalPreferenceManager: GeneralPreferenceManager
+) {
+    operator fun invoke(): Flow<Int> = combine(LocalTypes.map { type -> generalPreferenceManager.observeSkippedFiles(type.name) }) { counts -> counts.sum() }
+}
+
+/** Lets the next import read again the files that crashed a tag read (#840), and clears the count Sources shows until it has. */
+class ClearSkippedFiles @Inject constructor(
+    private val generalPreferenceManager: GeneralPreferenceManager
+) {
+    operator fun invoke() {
+        generalPreferenceManager.clearTagReadQuarantine()
+        LocalTypes.forEach { type -> generalPreferenceManager.setSkippedFiles(type.name, 0) }
+    }
+}
+
+private val LocalTypes = MediaProviderType.entries.filter { it.isLocal }
+
 /** How each server's last import ended, now and each time one ends (#668). */
 class ObserveSourceReachability @Inject constructor(
     private val generalPreferenceManager: GeneralPreferenceManager
