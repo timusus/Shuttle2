@@ -48,13 +48,17 @@ extension View {
     ///
     /// It also gives the stack its zoom namespace (`\.zoomNamespace`), shared by the root and every pushed screen so
     /// a tile on either zooms into the screen it opens; one set higher up (`ContentView`) wins.
-    func routeDestinations(showNowPlaying: Binding<Bool>) -> some View {
-        modifier(RouteDestinationsModifier(showNowPlaying: showNowPlaying))
+    ///
+    /// `insetsMiniPlayer: false` for a stack in a sheet (Settings), which covers the shell and its mini player:
+    /// the bar would otherwise draw over the sheet's pushed screens (#682).
+    func routeDestinations(showNowPlaying: Binding<Bool>, insetsMiniPlayer: Bool = true) -> some View {
+        modifier(RouteDestinationsModifier(showNowPlaying: showNowPlaying, insetsMiniPlayer: insetsMiniPlayer))
     }
 }
 
 private struct RouteDestinationsModifier: ViewModifier {
     let showNowPlaying: Binding<Bool>
+    let insetsMiniPlayer: Bool
 
     @Environment(\.zoomNamespace) private var inheritedNamespace
     @Namespace private var stackNamespace
@@ -65,8 +69,22 @@ private struct RouteDestinationsModifier: ViewModifier {
             .environment(\.zoomNamespace, namespace)
             .navigationDestination(for: Route.self) { route in
                 RouteDestinationView(route: route)
-                    .miniPlayerInset(showNowPlaying: showNowPlaying)
+                    .modifier(OptionalMiniPlayerInset(showNowPlaying: showNowPlaying, isEnabled: insetsMiniPlayer))
                     .environment(\.zoomNamespace, namespace)
             }
+    }
+}
+
+private struct OptionalMiniPlayerInset: ViewModifier {
+    let showNowPlaying: Binding<Bool>
+    let isEnabled: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.miniPlayerInset(showNowPlaying: showNowPlaying)
+        } else {
+            content
+        }
     }
 }

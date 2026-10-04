@@ -267,7 +267,7 @@ struct SettingsSheet: View {
         @Bindable var navigator = navigator
         NavigationStack(path: $navigator.settingsPath) {
             SettingsView()
-                .routeDestinations(showNowPlaying: $showNowPlaying)
+                .routeDestinations(showNowPlaying: $showNowPlaying, insetsMiniPlayer: false)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Done") { navigator.showsSettings = false }
