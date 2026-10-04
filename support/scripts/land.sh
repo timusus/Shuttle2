@@ -31,7 +31,9 @@
 # branch whose cherry-pick conflicts is aborted and marked "conflict"; later branches still get
 # a chance. Verify runs once, in a single `machine-lock --name verify` hold (land.sh re-invokes
 # itself with an internal --verify-only mode), over everything landed so far:
-# `unit-test --changed`, an assembleDebug, and — only if the picked commits touch ios/, shared/
+# `unit-test --changed`, a compile (not run) of the test sources of every module depending on a
+# changed :android:domain/:shared/:android:core/commonMain source (`unit-test --compile-dependents`,
+# #826), an assembleDebug, and — only if the picked commits touch ios/, shared/
 # or android/domain|presentation|core — a light iOS check: the framework build, an app build
 # (`xcodebuild build`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
 # changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
@@ -47,7 +49,10 @@
 #   nothing mapped                build only, no simulator lease
 # If the verify fails and more than one branch landed, branches are
 # dropped one at a time from the end (each drop retried once) until it passes or none remain;
-# each dropped branch is reported as having broken verify. On a pass: push (retrying network
+# each dropped branch is reported as having broken verify. First, though, a verify whose output
+# says "Incremental compilation failed" (a Kotlin cache flake, #824) is retried once over the same
+# branches with -Pkotlin.incremental=false; the log notes the retry.
+# On a pass: push (retrying network
 # failures up to 3 times), close --close issues, then unlock and worktree-clean.sh each landed
 # branch's worktree.
 set -uo pipefail
@@ -167,6 +172,7 @@ verify_phases() {
   base_sha=${1:?} touches_ios=${2:-0}
   shift 2 || true
   support/scripts/unit-test --changed --base "$base_sha" || { echo "verify: android unit tests failed"; exit 1; }
+  support/scripts/unit-test --compile-dependents --base "$base_sha" || { echo "verify: dependent test sources failed to compile (#826)"; exit 1; }
   support/scripts/remote-build.sh --local -q :android:app:assembleDebug || { echo "verify: assembleDebug failed"; exit 1; }
   if [ "$touches_ios" = 1 ]; then
     rc=0
@@ -497,6 +503,26 @@ verify_env_failure() {
   printf '%s\n' "$out" | grep -Eq 'JdkImageTransform|jlink|No matching toolchain|Cannot find a Java installation|Cannot find a (Java|JDK)|daemon JVM|SDK location not found|Failed to install the following Android SDK|No installed JDK'
 }
 
+# ic_failure <log> <from-byte>: succeed when the verify output after <from-byte> reports a Kotlin
+# incremental-compilation failure (#824), a stale-cache flake rather than a branch bug. A real
+# compiler error ("e: file://") in the same output means it is not just a flake.
+ic_failure() {
+  local out
+  out=$(tail -c +"$2" "$1")
+  printf '%s\n' "$out" | grep -q 'Incremental compilation failed' || return 1
+  ! printf '%s\n' "$out" | grep -q '^e: file://'
+}
+
+# verify_once <touches_ios> [<class>...]: one machine-lock hold running the verify phases; with
+# KOTLIN_IC_OFF=1 Gradle gets kotlin.incremental=false (via ORG_GRADLE_PROJECT_, inherited by every
+# gradle call in the phases). Returns the verify's exit status.
+verify_once() {
+  local touches_ios=$1; shift
+  local env_args=()
+  [ "${KOTLIN_IC_OFF:-0}" = 1 ] && env_args=("ORG_GRADLE_PROJECT_kotlin.incremental=false")
+  run_in_group machine-lock --name verify -- env ${env_args[@]+"${env_args[@]}"} "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" "$@" >> "$LOG" 2>&1
+}
+
 run_verify() {
   if [ "${LAND_SKIP_VERIFY:-0}" = 1 ]; then
     log "verify: LAND_SKIP_VERIFY=1, skipping"
@@ -513,10 +539,17 @@ run_verify() {
   fi
   log "verify: touches_ios=$touches_ios ios_tests=${ios_tests[*]-}"
 
-  local from
+  local from vrc=0
   from=$(( $(wc -c < "$LOG") + 1 ))
-  local vrc=0
-  run_in_group machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} >> "$LOG" 2>&1 || vrc=$?
+  verify_once "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} || vrc=$?
+  # A Kotlin incremental-compilation flake says nothing about the branches (#824): retry the same
+  # set once with incremental compilation off before the caller bisects and drops anything.
+  if [ "$vrc" -eq 1 ] && ic_failure "$LOG" "$from"; then
+    say "land.sh: verify hit 'Incremental compilation failed' (#824); retrying the same branches once with -Pkotlin.incremental=false"
+    from=$(( $(wc -c < "$LOG") + 1 ))
+    vrc=0
+    KOTLIN_IC_OFF=1 verify_once "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} || vrc=$?
+  fi
   if [ "$vrc" -ne 0 ]; then
     if [ "$vrc" -eq "$TIMED_OUT_RC" ]; then
       say "land.sh: verify timed out after ${VERIFY_TIMEOUT}s holding machine-lock (#779); killed it, treating as an environment failure"
