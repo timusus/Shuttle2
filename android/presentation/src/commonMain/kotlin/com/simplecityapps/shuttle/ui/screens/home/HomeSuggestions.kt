@@ -12,12 +12,9 @@ import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.CoroutineContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -33,10 +30,11 @@ class HomeTime(
 }
 
 /**
- * The whole-list reads (genres, playlists) the sections of one Home load share, put in the load's coroutine context so
- * each is read once however many sections need it (#820). Outside a load, each caller reads for itself.
+ * The whole-list reads (genres, playlists) the sections of one Home load share, so each is read once however many
+ * sections need it (#820). [LoadHomeSections] makes one per load and passes it to each section; a caller with none
+ * reads for itself.
  */
-class HomeLoadReads : AbstractCoroutineContextElement(Key) {
+class HomeReads {
     private val mutex = Mutex()
     private var genres: List<Genre>? = null
     private var playlists: List<Playlist>? = null
@@ -44,11 +42,7 @@ class HomeLoadReads : AbstractCoroutineContextElement(Key) {
     suspend fun genres(read: suspend () -> List<Genre>): List<Genre> = mutex.withLock { genres ?: read().also { genres = it } }
 
     suspend fun playlists(read: suspend () -> List<Playlist>): List<Playlist> = mutex.withLock { playlists ?: read().also { playlists = it } }
-
-    companion object Key : CoroutineContext.Key<HomeLoadReads>
 }
-
-private suspend fun SuggestionsRepository.homeGenres(): List<Genre> = currentCoroutineContext()[HomeLoadReads]?.genres { genres() } ?: genres()
 
 /**
  * Turns play contexts into the items Home shows, in the same order, dropping any the library no longer has. Albums and
@@ -60,15 +54,17 @@ class ResolveHomeItems @Inject constructor(
     private val playlistRepository: PlaylistRepository,
 ) {
     /** The item each of [contexts] resolves to, reading each kind once; callers pick their lists out with [resolvedIn]. */
-    suspend operator fun invoke(contexts: List<PlayContext>): Map<PlayContext, HomeItem> {
+    suspend operator fun invoke(
+        contexts: List<PlayContext>,
+        reads: HomeReads = HomeReads(),
+    ): Map<PlayContext, HomeItem> {
         val albums = contexts.filterIsInstance<PlayContext.Album>().map { it.groupKey }
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albums(it) }.orEmpty().associateBy { it.groupKey }
         val artists = contexts.filterIsInstance<PlayContext.AlbumArtist>().map { it.groupKey }
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albumArtists(it) }.orEmpty().associateBy { it.groupKey }
-        val genres = if (contexts.any { it is PlayContext.Genre }) suggestionsRepository.homeGenres().associateBy { it.name } else emptyMap()
+        val genres = if (contexts.any { it is PlayContext.Genre }) reads.genres { suggestionsRepository.genres() }.associateBy { it.name } else emptyMap()
         val playlists = if (contexts.any { it is PlayContext.Playlist }) {
-            val read: suspend () -> List<Playlist> = { playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first() }
-            (currentCoroutineContext()[HomeLoadReads]?.playlists(read) ?: read()).associateBy { it.id }
+            reads.playlists { playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first() }.associateBy { it.id }
         } else {
             emptyMap()
         }
@@ -99,10 +95,10 @@ class JumpBackIn @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(): JumpBackInCandidates {
+    suspend operator fun invoke(reads: HomeReads = HomeReads()): JumpBackInCandidates {
         val fromHistory = playHistoryRepository.recentContexts(CANDIDATES).map { it.context }
         val lastCompleted = suggestionsRepository.recentlyCompletedAlbums(CANDIDATES).map { PlayContext.Album(it) }
-        val items = resolveHomeItems(fromHistory + lastCompleted)
+        val items = resolveHomeItems(fromHistory + lastCompleted, reads)
         return JumpBackInCandidates(fromHistory.resolvedIn(items), lastCompleted.resolvedIn(items))
     }
 
@@ -125,10 +121,11 @@ class AroundThisTime @Inject constructor(
     suspend operator fun invoke(
         now: Instant,
         timeZone: TimeZone,
+        reads: HomeReads = HomeReads(),
     ): List<AroundThisTimeCandidate> {
         val hour = now.toLocalDateTime(timeZone).hour
         val contexts = playHistoryRepository.contextsAroundHour(hour, WINDOW_MINUTES, since = now - WINDOW_DAYS.days, limit = CANDIDATES)
-        val items = resolveHomeItems(contexts.map { it.context })
+        val items = resolveHomeItems(contexts.map { it.context }, reads)
         return contexts.mapNotNull { context ->
             items[context.context]?.let { AroundThisTimeCandidate(it, context.days, context.weekendDays) }
         }
@@ -164,7 +161,10 @@ class HeavyRotation @Inject constructor(
         val lastPlayedAt: Instant,
     )
 
-    suspend operator fun invoke(now: Instant): List<HeavyRotationCandidate> {
+    suspend operator fun invoke(
+        now: Instant,
+        reads: HomeReads = HomeReads(),
+    ): List<HeavyRotationCandidate> {
         val albumDays = playHistoryRepository.albumDays(since = now - WINDOW_DAYS.days)
         val albums = albumDays.groupBy { it.groupKey }.map { (key, days) ->
             Tally(PlayContext.Album(key), days.count { it.counts }, days.maxOf { it.lastCompletedAt })
@@ -177,7 +177,7 @@ class HeavyRotation @Inject constructor(
             .filter { it.days > 0 }
             .sortedWith(compareByDescending<Tally> { it.days }.thenByDescending { it.lastPlayedAt })
             .take(CANDIDATES)
-        val items = resolveHomeItems(tallies.map { it.context })
+        val items = resolveHomeItems(tallies.map { it.context }, reads)
         return tallies.mapNotNull { tally -> items[tally.context]?.let { HeavyRotationCandidate(it, tally.days, tally.lastPlayedAt) } }
     }
 
@@ -198,9 +198,12 @@ class Rediscover @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(now: Instant): List<HomeItem> {
+    suspend operator fun invoke(
+        now: Instant,
+        reads: HomeReads = HomeReads(),
+    ): List<HomeItem> {
         val contexts = suggestionsRepository.albumsToRediscover(MIN_PLAYS, playedBefore = now - UNPLAYED_DAYS.days, limit = CANDIDATES).map { PlayContext.Album(it) }
-        return contexts.resolvedIn(resolveHomeItems(contexts))
+        return contexts.resolvedIn(resolveHomeItems(contexts, reads))
     }
 
     companion object {
@@ -215,9 +218,9 @@ class RecentlyAdded @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(): List<HomeItem> {
+    suspend operator fun invoke(reads: HomeReads = HomeReads()): List<HomeItem> {
         val contexts = suggestionsRepository.recentlyAddedAlbums(CANDIDATES).map { PlayContext.Album(it) }
-        return contexts.resolvedIn(resolveHomeItems(contexts))
+        return contexts.resolvedIn(resolveHomeItems(contexts, reads))
     }
 
     private companion object {
@@ -235,9 +238,12 @@ class GenrePicks @Inject constructor(
     private val playHistoryRepository: PlayHistoryRepository,
     private val suggestionsRepository: SuggestionsRepository,
 ) {
-    suspend operator fun invoke(now: Instant): GenrePickCandidates {
+    suspend operator fun invoke(
+        now: Instant,
+        reads: HomeReads = HomeReads(),
+    ): GenrePickCandidates {
         val played = playHistoryRepository.genrePlays(since = now - WINDOW_DAYS.days, halfLife = HALF_LIFE_DAYS.days, limit = CANDIDATES)
-        val genres = suggestionsRepository.homeGenres()
+        val genres = reads.genres { suggestionsRepository.genres() }
         val byName = genres.associateBy { it.name }
         return GenrePickCandidates(
             played = played.map { it.genre }.distinct().mapNotNull { byName[it] }.map { HomeItem.GenreItem(it) },

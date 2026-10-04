@@ -222,22 +222,22 @@ class LoadHomeSections @Inject constructor(
         val now = homeTime.clock.now()
         val timeZone = homeTime.timeZone()
         val candidates = MutableStateFlow(HomeCandidates(hasHistory))
-        val reads = HomeLoadReads()
+        val reads = HomeReads()
 
         fun <T> load(
             stage: String,
             block: suspend () -> T,
             set: HomeCandidates.(T) -> HomeCandidates,
-        ) = launch(reads) {
+        ) = launch {
             val loaded = timed(stage) { block() }
             candidates.update { it.set(loaded) }
         }
-        load("Jump back in", { jumpBackIn() }) { copy(jumpBackIn = it) }
-        load("Around this time", { if (hasHistory) aroundThisTime(now, timeZone) else emptyList() }) { copy(aroundThisTime = it) }
-        load("Heavy rotation", { if (hasHistory) heavyRotation(now) else emptyList() }) { copy(heavyRotation = it) }
-        load("Rediscover", { rediscover(now) }) { copy(rediscover = it) }
-        load("Recently added", { recentlyAdded() }) { copy(recentlyAdded = it) }
-        load("Genre picks", { genrePicks(now) }) { copy(genrePicks = it) }
+        load("Jump back in", { jumpBackIn(reads) }) { copy(jumpBackIn = it) }
+        load("Around this time", { if (hasHistory) aroundThisTime(now, timeZone, reads) else emptyList() }) { copy(aroundThisTime = it) }
+        load("Heavy rotation", { if (hasHistory) heavyRotation(now, reads) else emptyList() }) { copy(heavyRotation = it) }
+        load("Rediscover", { rediscover(now, reads) }) { copy(rediscover = it) }
+        load("Recently added", { recentlyAdded(reads) }) { copy(recentlyAdded = it) }
+        load("Genre picks", { genrePicks(now, reads) }) { copy(genrePicks = it) }
 
         var jumpBackInProgress: Map<String, HomeItemProgress>? = null
         var last: List<HomeSection>? = null
