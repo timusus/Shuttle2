@@ -25,7 +25,8 @@ struct SourcesViewTests {
             scanError: scanError,
             deviceStatus: SourceStatusIdle.shared,
             deviceSongs: deviceSongs.map { KotlinInt(int: Int32($0)) },
-            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil) },
+            deviceUpdated: nil,
+            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: nil) },
             lastImport: lastImport,
             events: []
         )
