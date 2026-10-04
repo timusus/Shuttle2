@@ -1013,6 +1013,28 @@ class IosPlayerControllerTest {
     }
 
     @Test
+    fun `a play reaching an engine already playing a load is answered - and shows playing`() = test { controller ->
+        controller.start(listOf(a, b), play = false)
+
+        // The skip's load plays; a media-key play follows before its playing report comes back. The engine is already
+        // playing, so the play changes nothing there, and the load's reports are superseded by it.
+        controller.skipToNext()
+        controller.play()
+        engine.calls shouldContain "play"
+        engine.settle()
+
+        engine.state shouldBe IosAudioPlayerState.Playing
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+
+        // And the engine is known to play: the next toggle pauses it.
+        controller.togglePlayback()
+        engine.settle()
+        engine.state shouldBe IosAudioPlayerState.Paused
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
     fun `an engine that pauses itself clears intent - and the next toggle plays`() = test { controller ->
         controller.start(listOf(a, b))
 

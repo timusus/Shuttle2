@@ -38,6 +38,16 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     /** Loads, plays, pauses and stops taken, as the engine stamps them on its state reports. */
     private var commands = 0
 
+    /** [commands] when the last state report was made: a command with no report of its own is answered. */
+    private var commandsReported = 0
+
+    /**
+     * The last report delivered was playing, for the current track, and not superseded; nothing asked to pause, load or
+     * stop since. As `EngineAudioPlayer` does, a play then isn't sent: the engine's playing report is what it knows, and
+     * one still in flight doesn't count.
+     */
+    private var reportedPlaying = false
+
     /**
      * When false, [play] (unless already playing, which changes nothing) and a load that asked to play are refused:
      * the track is still prepared, ending paused, and a paused state is reported for its id. [deferRefusal] posts that play refusal for [settle], as an engine that
@@ -66,6 +76,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         val starts = playWhenReady && acceptsPlay
         this.playWhenReady = starts
         commands++
+        reportedPlaying = false
         position = startMs
         if (playWhenReady && !starts && !deferRefusal) listener?.onStateChanged(current.id, IosAudioPlayerState.Paused, false)
         setState(IosAudioPlayerState.Loading)
@@ -91,7 +102,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun play() {
         calls += "play"
-        if (state == IosAudioPlayerState.Playing) return
+        if (reportedPlaying) return
         if (!acceptsPlay) {
             current?.id?.let(::refuse)
             return
@@ -99,13 +110,16 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         commands++
         playWhenReady = true
         if (current != null && state == IosAudioPlayerState.Paused) setState(IosAudioPlayerState.Playing)
+        answer()
     }
 
     override fun pause() {
         calls += "pause"
         commands++
+        reportedPlaying = false
         playWhenReady = false
         if (state == IosAudioPlayerState.Playing) setState(IosAudioPlayerState.Paused)
+        answer()
     }
 
     override fun seek(positionMs: Long) {
@@ -121,6 +135,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     override fun stop() {
         calls += "stop"
         commands++
+        reportedPlaying = false
         current = null
         next = null
         state = IosAudioPlayerState.Idle
@@ -232,13 +247,24 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         report(id, state)
     }
 
+    /** A command that changed no state is answered with the state it left, but for an end, which is said once. */
+    private fun answer() {
+        if (commandsReported == commands || state == IosAudioPlayerState.Ended) return
+        current?.id?.let { report(it, state) }
+    }
+
     /** Posts [state] for [trackId], stamped with the commands taken so far, as the engine does. */
     private fun report(
         trackId: String,
         state: IosAudioPlayerState
     ) {
         val stamp = commands
-        post { listener?.onStateChanged(trackId, state, stamp < commands) }
+        commandsReported = stamp
+        post {
+            val superseded = stamp < commands
+            reportedPlaying = state == IosAudioPlayerState.Playing && trackId == current?.id && !superseded
+            listener?.onStateChanged(trackId, state, superseded)
+        }
     }
 
     private fun post(event: () -> Unit) {

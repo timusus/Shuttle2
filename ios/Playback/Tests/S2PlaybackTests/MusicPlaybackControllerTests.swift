@@ -368,14 +368,38 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.stateCommands.last, 5)
     }
 
-    func testPausingWhileAlreadyPausedDoesNotRepeatTheReport() throws {
+    /// A command that changes nothing is still answered at its count, or the owner would only hear reports from
+    /// before it, superseded: a play reaching an engine already playing (a load that plays, then a play sent
+    /// before its playing report came back) would leave the owner never hearing it play.
+    func testACommandThatChangesNothingIsAnsweredWithTheStateItLeft() throws {
         let (controller, log) = try makeController()
-        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: false)
+        controller.load(current: track("A", TestSignal.noise(frames: 6_000, seed: 1)), next: nil, playWhenReady: true)
+        controller.play()
         controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .playing, .playing])
+        XCTAssertEqual(log.stateCommands, [1, 1, 2])
 
         controller.pause()
+        controller.pause()
         controller.syncForTesting()
-        XCTAssertEqual(log.states, [.loading, .paused])
+        XCTAssertEqual(log.states.suffix(2), [.paused, .paused])
+        XCTAssertEqual(log.stateCommands.suffix(2), [3, 4])
+    }
+
+    /// The end of a track is said once: a command after it that changes nothing doesn't end it again.
+    func testACommandAfterTheEndDoesNotRepeatIt() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: track("A", TestSignal.noise(frames: 6_000, seed: 1)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 6_000 + 4_096, log: log)
+        controller.syncForTesting()
+        XCTAssertEqual(log.states.last, .ended)
+        let reports = log.states.count
+
+        controller.play()
+        controller.pause()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states.count, reports)
     }
 
     func testALoadThatPlaysWhenTheEngineCantStartLoadsPausedAndStaysPaused() throws {

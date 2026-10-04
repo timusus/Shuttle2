@@ -115,7 +115,10 @@ public final class MusicPlaybackController {
     /// a listener can tell a late report for a track it has since replaced, and the number of commands
     /// (``load(current:next:startMs:playWhenReady:)``, ``play()``, ``pause()``, ``stop()``) taken before it.
     /// Commands are taken in the order they're made, so the count tells a report made before a command
-    /// from its answer: a paused report from before a play doesn't refuse it.
+    /// from its answer: a paused report from before a play doesn't refuse it. Every command is answered with a
+    /// report at its count, even one that changes nothing (a play while playing, a pause while paused), so the
+    /// last report always says where the engine is after the last command; but for the end of a track, which
+    /// is reported once.
     public var onStateChanged: ((State, String?, Int) -> Void)? {
         get { callbackLock.withLock { callbacks.state } }
         set { callbackLock.withLock { callbacks.state = newValue } }
@@ -225,6 +228,8 @@ public final class MusicPlaybackController {
     private var state: State = .idle
     /// Commands taken so far, stamped on each state report (``onStateChanged``).
     private var commandsTaken = 0
+    /// `commandsTaken` when the last state report was made: a command with no report of its own is answered.
+    private var commandsReported = 0
     private let processor: PCMProcessor
     private var pendingEqualizer: EqualizerSettings?
     private var pendingLimiter: LimiterSettings?
@@ -353,6 +358,7 @@ public final class MusicPlaybackController {
         interruptActiveRead()
         engineQueue.async { [self] in
             commandsTaken += 1
+            defer { answerCommand() }
             var reusable = next.flatMap { old in old.atStart && !old.failed && reading !== old ? old : nil }
             if reusable != nil { next = nil }
             teardown()
@@ -426,6 +432,7 @@ public final class MusicPlaybackController {
         engineQueue.async { [self] in
             log.notice("play: \(self.state.rawValue, privacy: .public)")
             commandsTaken += 1
+            defer { answerCommand() }
             playWhenReady = true
             guard current != nil, state != .ended else { return }
             guard startPlaying() else { return stayPaused() }
@@ -436,6 +443,7 @@ public final class MusicPlaybackController {
         engineQueue.async { [self] in
             log.notice("pause: \(self.state.rawValue, privacy: .public)")
             commandsTaken += 1
+            defer { answerCommand() }
             playWhenReady = false
             let held = playedStreamIndex()
             player.pause()
@@ -468,6 +476,7 @@ public final class MusicPlaybackController {
         interruptActiveRead()
         engineQueue.async { [self] in
             commandsTaken += 1
+            defer { answerCommand() }
             teardown()
             setState(.idle)
         }
@@ -588,13 +597,22 @@ public final class MusicPlaybackController {
         reportState(newState)
     }
 
-    /// The current track's state, on the callback queue. Repeated by ``stayPaused()`` when a play fails and the
-    /// engine was already paused: `setState` would otherwise drop it, and the owner would never hear the refusal.
+    /// The current track's state, on the callback queue.
     private func reportState(_ newState: State) {
         let uid = current?.track.uid
         let commands = commandsTaken
+        commandsReported = commands
         let callback = callbackLock.withLock { callbacks.state }
         if let callback { callbackQueue.async { callback(newState, uid, commands) } }
+    }
+
+    /// A command that changed nothing `setState` reports (a play while playing, a pause while paused, a play
+    /// refused while paused) still has its answer: the state it left, at its count. Otherwise the owner would
+    /// only have reports from before it, which it takes as superseded, and never hear where the engine is. The
+    /// end of a track isn't repeated: it's an event, said once, and nothing but a load moves the engine on.
+    private func answerCommand() {
+        guard commandsReported < commandsTaken, state != .ended else { return }
+        reportState(state)
     }
 
     private func reportFailure(_ slot: Slot, _ error: Error) {
@@ -702,17 +720,13 @@ public final class MusicPlaybackController {
     }
 
     /// A play the engine couldn't start: paused, as if it had been asked to pause, so the owner and
-    /// Now Playing show it paused. Nothing plays until the next play. Reported again when already
-    /// paused — the state didn't change, but the owner still has to hear that this play was refused.
+    /// Now Playing show it paused. Nothing plays until the next play. A play refused while already
+    /// paused changes no state, and is answered with paused all the same (``answerCommand()``).
     /// Not a decode failure: the track stays put.
     private func stayPaused() {
         playWhenReady = false
         stopTicker()
-        if state == .paused {
-            reportState(.paused)
-        } else {
-            setState(.paused)
-        }
+        setState(.paused)
     }
 
     /// Opens `slot`'s source, or waits for the open already under way; false (after reporting it)

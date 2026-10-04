@@ -23,7 +23,9 @@ import Shared
 /// pauses, stops), and they're counted here as they're sent: a report made before the engine took the last of them is
 /// forwarded as superseded. Kotlin doesn't take a pause's or a load's paused, queued before a play reached the engine,
 /// for that play's refusal (#708); any other paused while it intends to play is a refusal, or the engine pausing itself
-/// (#716). Nor is a playing report from before a pause playing now.
+/// (#716). Nor is a playing report from before a pause playing now. The engine answers every command it counts with a
+/// report at its count, even one that changes nothing (a play reaching it already playing, before its playing report
+/// came back here), so Kotlin always hears where the engine is after the last command.
 final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// Called on the main thread before playback starts; false cancels it.
     var onWillPlay: () -> Bool = { true }
