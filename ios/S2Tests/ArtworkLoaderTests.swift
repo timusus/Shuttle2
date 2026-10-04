@@ -7,6 +7,28 @@ import UIKit
 /// server's image, then the S2 artwork API's) against a stubbed network.
 struct ArtworkLoaderTests {
 
+    @Test func aRedirectToAnotherHostLosesThePlexToken() {
+        var request = URLRequest(url: URL(string: "https://cdn.example.com/a.jpg?X-Plex-Token=abc&w=300")!)
+        request.setValue("abc", forHTTPHeaderField: "X-Plex-Token")
+        let origin = URL(string: "http://plex.local:32400/library/metadata/1/thumb/1")
+
+        let redirected = PlexTokenRedirectGuard.redirected(request, from: origin)
+
+        #expect(redirected.value(forHTTPHeaderField: "X-Plex-Token") == nil)
+        #expect(redirected.url?.absoluteString == "https://cdn.example.com/a.jpg?w=300")
+    }
+
+    @Test func aRedirectWithinTheServerKeepsThePlexToken() {
+        var request = URLRequest(url: URL(string: "http://plex.local:32400/other?X-Plex-Token=abc")!)
+        request.setValue("abc", forHTTPHeaderField: "X-Plex-Token")
+        let origin = URL(string: "http://plex.local:32400/library/metadata/1/thumb/1")
+
+        let redirected = PlexTokenRedirectGuard.redirected(request, from: origin)
+
+        #expect(redirected.value(forHTTPHeaderField: "X-Plex-Token") == "abc")
+        #expect(redirected.url == request.url)
+    }
+
     @Test func downsampleClampsToTheRequestedMaxPixelSize() {
         let data = Self.pngData(width: 400, height: 200)
         let image = ArtworkLoader.downsample(data, maxPixelSize: 100)

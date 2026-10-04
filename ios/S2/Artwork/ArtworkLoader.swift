@@ -61,7 +61,7 @@ actor ArtworkLoader {
         configuration.requestCachePolicy = .returnCacheDataElseLoad
         configuration.httpMaximumConnectionsPerHost = 6
         configuration.timeoutIntervalForRequest = 20
-        let session = URLSession(configuration: configuration)
+        let session = URLSession(configuration: configuration, delegate: PlexTokenRedirectGuard(), delegateQueue: nil)
         self.init(fetch: { request in
             // This device's songs (#590): the picture in the file, or an image beside it.
             if let url = request.url, url.scheme == LocalLibrary.scheme {
@@ -204,6 +204,51 @@ struct ArtworkCandidate: Hashable, Sendable {
         for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
         if unmeteredOnly { request.allowsExpensiveNetworkAccess = false }
         return request
+    }
+}
+
+/// Keeps a Plex server's `X-Plex-Token` from following a redirect to another host: `URLSession` carries a request's
+/// custom headers, and its query, over a redirect, so the server could otherwise send the token anywhere.
+final class PlexTokenRedirectGuard: NSObject, URLSessionTaskDelegate, Sendable {
+    static let tokenName = "X-Plex-Token"
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Void
+    ) {
+        completionHandler(Self.redirected(request, from: task.originalRequest?.url))
+    }
+
+    /// `request` without the Plex token when it is bound for a different scheme, host or port than `origin`.
+    static func redirected(_ request: URLRequest, from origin: URL?) -> URLRequest {
+        guard let url = request.url, let origin, !sameServer(url, origin) else { return request }
+        var request = request
+        request.setValue(nil, forHTTPHeaderField: tokenName)
+        if var components = URLComponents(url: url, resolvingAgainstBaseURL: false), let items = components.queryItems {
+            let kept = items.filter { $0.name.caseInsensitiveCompare(tokenName) != .orderedSame }
+            if kept.count != items.count {
+                components.queryItems = kept.isEmpty ? nil : kept
+                request.url = components.url
+            }
+        }
+        return request
+    }
+
+    private static func sameServer(_ a: URL, _ b: URL) -> Bool {
+        a.scheme?.lowercased() == b.scheme?.lowercased()
+            && a.host?.lowercased() == b.host?.lowercased()
+            && (a.port ?? defaultPort(a)) == (b.port ?? defaultPort(b))
+    }
+
+    private static func defaultPort(_ url: URL) -> Int? {
+        switch url.scheme?.lowercased() {
+        case "http": 80
+        case "https": 443
+        default: nil
+        }
     }
 }
 
