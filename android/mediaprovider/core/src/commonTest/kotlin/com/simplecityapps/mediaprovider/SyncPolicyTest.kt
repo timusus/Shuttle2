@@ -34,11 +34,28 @@ class SyncPolicyTest {
     }
 
     @Test
-    fun `a source synced in the last 15 minutes is left alone, whatever asks`() {
+    fun `a source synced in the last 15 minutes is left alone on return to the app`() {
         plan(lastSync = 14.minutes).shouldBeNull()
-        plan(lastSync = 14.minutes, trigger = SyncTrigger.Periodic).shouldBeNull()
-        plan(lastSync = 14.minutes, incremental = false, trigger = SyncTrigger.Periodic).shouldBeNull()
         plan(lastSync = 15.minutes) shouldBe SyncPlan.Incremental(since = now - 15.minutes - 10.minutes)
+    }
+
+    @Test
+    fun `the daily sync isn't throttled`() {
+        plan(lastSync = 14.minutes, trigger = SyncTrigger.Periodic) shouldBe SyncPlan.Incremental(since = now - 14.minutes - 10.minutes)
+        plan(lastSync = 14.minutes, incremental = false, trigger = SyncTrigger.Periodic) shouldBe SyncPlan.Full
+    }
+
+    @Test
+    fun `a last sync in the future, from a clock set back, is synced in full rather than throttled`() {
+        plan(lastSync = (-2).hours) shouldBe SyncPlan.Full
+        plan(lastSync = (-2).hours, trigger = SyncTrigger.Periodic) shouldBe SyncPlan.Full
+        plan(lastFullSync = (-2).hours) shouldBe SyncPlan.Full
+    }
+
+    @Test
+    fun `a last sync a hair in the future is read as now`() {
+        plan(lastSync = (-1).minutes).shouldBeNull()
+        plan(lastSync = (-1).minutes, trigger = SyncTrigger.Periodic) shouldBe SyncPlan.Incremental(since = now - 10.minutes)
     }
 
     @Test

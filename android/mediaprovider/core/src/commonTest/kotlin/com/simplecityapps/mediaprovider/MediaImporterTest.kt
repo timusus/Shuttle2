@@ -58,6 +58,9 @@ class MediaImporterTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        // The library has been imported under this build, so a sync has nothing waiting on the first import
+        preferences.lastMediaImportDate = clock.time
+        preferences.songTagsRescanVersion = MediaImporter.SONG_TAGS_VERSION
     }
 
     @AfterTest
@@ -218,6 +221,7 @@ class MediaImporterTest {
     fun `a source that fails stays outdated while the others are marked current and the launch re-import runs once`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
         importer.mediaProviders += server
+        preferences.songTagsRescanVersion = 0
         importer.songTagsOutdated shouldBe true
 
         provider.gate.trySend(Unit)
@@ -302,7 +306,62 @@ class MediaImporterTest {
         importer.sync(SyncTrigger.Foreground)
         collecting.cancel()
 
+        // The server had nothing new, so there's nothing to say
+        states shouldBe listOf(SongImportState.Idle)
+    }
+
+    @Test
+    fun `a sync that stored a change says so, so what shows the library reloads`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        server.found = listOf(song())
+        val states = mutableListOf<SongImportState>()
+        val collecting = launch(Dispatchers.Unconfined) { importer.songImportState.toList(states) }
+
+        importer.sync(SyncTrigger.Foreground)
+        collecting.cancel()
+
         states shouldBe listOf(SongImportState.Idle, SongImportState.ImportComplete(server.type, error = null))
+    }
+
+    @Test
+    fun `a server that can't be reached on return to the app keeps its status, but the daily sync reports it`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        server.failure = "Unreachable"
+
+        importer.sync(SyncTrigger.Foreground)
+        importer.providerImportStates.value[server.type] shouldBe null
+
+        importer.sync(SyncTrigger.Periodic)
+        importer.providerImportStates.value[server.type] shouldBe SongImportState.ImportComplete(server.type, "Unreachable")
+    }
+
+    @Test
+    fun `the daily sync fetches the playlists of a server synced in the last few minutes`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+
+        importer.sync(SyncTrigger.Periodic)
+
+        server.playlistRequests shouldBe 1
+    }
+
+    @Test
+    fun `a sync waits for the first import, and for the one a build with new tags is due`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+
+        preferences.lastMediaImportDate = null
+        importer.sync(SyncTrigger.Periodic)
+        preferences.lastMediaImportDate = clock.time
+        preferences.songTagsRescanVersion = MediaImporter.SONG_TAGS_VERSION - 1
+        importer.sync(SyncTrigger.Periodic)
+
+        server.requests shouldBe emptyList()
     }
 
     @Test
@@ -311,7 +370,7 @@ class MediaImporterTest {
         importer.mediaProviders += server
         preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
 
-        importer.sync(SyncTrigger.Periodic)
+        importer.sync(SyncTrigger.Foreground)
 
         server.requests shouldBe emptyList()
     }
@@ -364,6 +423,10 @@ class MediaImporterTest {
         val requests = mutableListOf<Instant?>()
         var playlistRequests = 0
 
+        /** What it finds, or the failure it reports instead. */
+        var found: List<Song> = emptyList()
+        var failure: String? = null
+
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = songs(since = null)
 
         override fun findSongsChangedSince(
@@ -374,7 +437,7 @@ class MediaImporterTest {
         private fun songs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             requests += since
             emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, progress = null)))
-            emit(FlowEvent.Success(emptyList()))
+            failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found))
         }
 
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {

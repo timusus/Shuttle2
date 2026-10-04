@@ -14,11 +14,11 @@ enum class SyncTrigger {
 }
 
 /**
- * When and how a sync brings a source up to date (#771): at most once per [MIN_INTERVAL] per source, incrementally where
+ * When and how a sync brings a source up to date (#771): at most once per [MIN_INTERVAL] per source for a return to the app, incrementally where
  * the source can, and in full at least every [FULL_SYNC_INTERVAL] so songs deleted on the server leave the library.
  */
 object SyncPolicy {
-    /** A source synced more recently than this is left alone. */
+    /** A source synced more recently than this is left alone by a return to the app. */
     val MIN_INTERVAL = 15.minutes
 
     /** How long an incremental source goes without a full sync, which is what removes songs the server no longer has. */
@@ -44,9 +44,13 @@ object SyncPolicy {
         now: Instant
     ): SyncPlan? {
         if (!incremental && trigger == SyncTrigger.Foreground) return null
-        if (lastSyncStart != null && now - lastSyncStart < MIN_INTERVAL) return null
+        // A time in the future means the clock was set back since: it can't say how long ago the last sync was, so a full one
+        // (which stores a time that can) replaces it. A hair ahead (drift) is read as now.
+        if ((lastSyncStart != null && lastSyncStart - now > OVERLAP) || (lastFullSyncStart != null && lastFullSyncStart - now > OVERLAP)) return SyncPlan.Full
+        // The daily sync isn't throttled: it runs at most daily already, and is what refreshes the playlists
+        if (trigger == SyncTrigger.Foreground && lastSyncStart != null && now - lastSyncStart < MIN_INTERVAL) return null
         if (!incremental || songTagsOutdated) return SyncPlan.Full
         if (lastSyncStart == null || lastFullSyncStart == null || now - lastFullSyncStart >= FULL_SYNC_INTERVAL) return SyncPlan.Full
-        return SyncPlan.Incremental(since = lastSyncStart - OVERLAP)
+        return SyncPlan.Incremental(since = minOf(lastSyncStart, now) - OVERLAP)
     }
 }

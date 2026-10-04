@@ -87,12 +87,19 @@ class MediaImporter(
 
     /**
      * Brings each source up to date as [SyncPolicy] says for [trigger] (#771): only what changed on a server since its last
-     * sync, all of it now and then, and nothing for a source synced in the last few minutes. Quiet, unlike [import]: it
-     * shows no progress, which would replace the library with the scanning state, only how each source's sync ended. An
-     * import or sync already running makes it return at once; an [import] asked for while it runs follows it.
+     * sync, all of it now and then, and nothing on return to the app for a source synced in the last few minutes. Quiet,
+     * unlike [import]: it shows no progress, which would replace the library with the scanning state, only that a source
+     * changed or (but for a return to the app, which finds a server offline too often to say so) failed. An import or sync
+     * already running makes it return at once; an [import] asked for while it runs follows it. Nothing is synced before the
+     * library's first import, or while one is due for new tags: the launch asks for that import itself, and a sync that got
+     * the lock first would only read every source in full a second time.
      */
     suspend fun sync(trigger: SyncTrigger) {
         if (mediaProviders.isEmpty()) return
+        if (preferenceManager.lastMediaImportDate == null || songTagsOutdated) {
+            logger.debug { "A full import is due, skipping the $trigger sync" }
+            return
+        }
 
         if (!importLock.tryLock()) {
             logger.debug { "Import already in progress, skipping the $trigger sync" }
@@ -147,7 +154,7 @@ class MediaImporter(
     private suspend fun importAll() {
         logger.debug { "Starting import.." }
         preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
-        importProviders(mediaProviders.map { mediaProvider -> mediaProvider to SyncPlan.Full }, showProgress = true) { _, _ -> true }
+        importProviders(mediaProviders.map { mediaProvider -> mediaProvider to SyncPlan.Full }, showProgress = true, quietFailures = false) { _, _ -> true }
     }
 
     private suspend fun syncAll(trigger: SyncTrigger) {
@@ -170,7 +177,7 @@ class MediaImporter(
         logger.debug { "Starting $trigger sync: ${plans.joinToString { (mediaProvider, plan) -> "${mediaProvider.type} $plan" }}" }
         // A delta that changed nothing leaves the playlists as they were, bar the daily sync, which catches a playlist
         // edited on the server without touching its songs
-        importProviders(plans, showProgress = false) { plan, result ->
+        importProviders(plans, showProgress = false, quietFailures = trigger == SyncTrigger.Foreground) { plan, result ->
             result != null && (plan == SyncPlan.Full || trigger == SyncTrigger.Periodic || result.inserts + result.updates > 0)
         }
     }
@@ -178,11 +185,13 @@ class MediaImporter(
     /**
      * Fetches and stores the songs of each provider in [plans], all at once, then the playlists of those [playlistsDue]
      * says, given the provider's plan and its stored songs (null when that failed). Shows each fetch's progress only if
-     * [showProgress]; how each ends is always shown.
+     * [showProgress]. A fetch that stores nothing new is reported only if [showProgress], which is what reloads what shows
+     * the library; one that fails is, unless [quietFailures], which logs it and leaves the source's status as it was.
      */
     private suspend fun importProviders(
         plans: List<Pair<MediaProvider, SyncPlan>>,
         showProgress: Boolean,
+        quietFailures: Boolean,
         playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
     ) {
         val time = TimeSource.Monotonic.markNow()
@@ -207,11 +216,17 @@ class MediaImporter(
 
                                 is FlowEvent.Success -> {
                                     stored = event.result
-                                    publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
+                                    if (showProgress || event.result.inserts + event.result.updates + event.result.deletes > 0) {
+                                        publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
+                                    }
                                 }
 
                                 is FlowEvent.Failure -> {
-                                    publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, event.message))
+                                    if (quietFailures) {
+                                        logger.warn { "${mediaProvider.type} sync failed, leaving its status as it was: ${event.message}" }
+                                    } else {
+                                        publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, event.message))
+                                    }
                                 }
                             }
                         }
