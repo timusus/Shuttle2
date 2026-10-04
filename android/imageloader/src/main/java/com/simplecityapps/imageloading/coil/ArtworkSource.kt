@@ -7,6 +7,9 @@ sealed interface ArtworkSource<T : Any> {
     /** Whether to try this source for [model]. Checked per request, so a settings change applies to the next load. */
     fun handles(model: T): Boolean = true
 
+    /** The smallest an image from here may be on its shorter side, in pixels; a smaller one counts as absent and the next source is tried. 0 takes any size. */
+    val minimumSize: Int get() = 0
+
     /** Artwork read from the device. A null stream means this source has nothing for the model. */
     interface Local<T : Any> : ArtworkSource<T> {
         suspend fun open(model: T): InputStream?
@@ -19,16 +22,20 @@ sealed interface ArtworkSource<T : Any> {
 }
 
 /**
- * This source, tried for the [part] of a model it stands for: an artist hero's artist or fallback album. It has nothing
- * for a model whose part is null.
+ * This source, tried for the [part] of a model it stands for: an artist hero's artist or fallback album, taking only
+ * images at least [minimumSize] pixels on their shorter side. It has nothing for a model whose part is null.
  */
-internal fun <T : Any, R : Any> ArtworkSource<T>.on(part: (R) -> T?): ArtworkSource<R> = when (this) {
-    is ArtworkSource.Local -> LocalPart(this, part)
-    is ArtworkSource.Remote -> RemotePart(this, part)
+internal fun <T : Any, R : Any> ArtworkSource<T>.on(
+    minimumSize: Int = 0,
+    part: (R) -> T?,
+): ArtworkSource<R> = when (this) {
+    is ArtworkSource.Local -> LocalPart(this, minimumSize, part)
+    is ArtworkSource.Remote -> RemotePart(this, minimumSize, part)
 }
 
 private class LocalPart<T : Any, R : Any>(
     private val source: ArtworkSource.Local<T>,
+    override val minimumSize: Int,
     private val part: (R) -> T?,
 ) : ArtworkSource.Local<R> {
     override fun handles(model: R): Boolean = part(model)?.let(source::handles) ?: false
@@ -40,6 +47,7 @@ private class LocalPart<T : Any, R : Any>(
 
 private class RemotePart<T : Any, R : Any>(
     private val source: ArtworkSource.Remote<T>,
+    override val minimumSize: Int,
     private val part: (R) -> T?,
 ) : ArtworkSource.Remote<R> {
     override fun handles(model: R): Boolean = part(model)?.let(source::handles) ?: false

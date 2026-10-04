@@ -1,5 +1,6 @@
 package com.simplecityapps.imageloading.coil
 
+import android.graphics.BitmapFactory
 import coil3.ImageLoader
 import coil3.decode.DataSource
 import coil3.decode.ImageSource
@@ -14,11 +15,13 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import okio.Buffer
+import okio.BufferedSource
 import okio.source
 import timber.log.Timber
 
 /**
- * Loads a model's artwork from the first of its [sources] that has any, falling through the rest when one has nothing or fails.
+ * Loads a model's artwork from the first of its [sources] that has any, falling through the rest when one has nothing, fails,
+ * or has only an image smaller than its [ArtworkSource.minimumSize].
  *
  * Coil picks a single fetcher per model, so this is where the source chain lives. Whatever a source returns is stored in the
  * disk cache under the model's key: local artwork is written there once read, and remote artwork is cached by the network
@@ -61,6 +64,10 @@ internal class ArtworkFetcher<T : Any>(
             }
         }
         if (buffer.size == 0L) return null
+        if (!buffer.isAtLeast(source.minimumSize)) {
+            Timber.v("${source::class.simpleName}'s image is under ${source.minimumSize}px for $diskCacheKey")
+            return null
+        }
         return SourceFetchResult(
             source = writeDiskCache(buffer) ?: ImageSource(buffer, options.fileSystem),
             mimeType = null,
@@ -71,7 +78,24 @@ internal class ArtworkFetcher<T : Any>(
     private suspend fun fetchRemote(source: ArtworkSource.Remote<T>): FetchResult? {
         val url = source.url(model) ?: return null
         val (fetcher, _) = imageLoader.components.newFetcher(url.toUri(), options.copy(diskCacheKey = diskCacheKey), imageLoader) ?: return null
-        return fetcher.fetch()
+        val result = fetcher.fetch()
+        if (source.minimumSize > 0 && result is SourceFetchResult && !result.source.source().peek().isAtLeast(source.minimumSize)) {
+            // The network fetcher has cached it under the model's key already; drop it, or the next load would read it back
+            Timber.v("${source::class.simpleName}'s image is under ${source.minimumSize}px for $diskCacheKey")
+            result.source.close()
+            imageLoader.diskCache?.remove(diskCacheKey)
+            return null
+        }
+        return result
+    }
+
+    /** Whether this image is at least [minimumSize] pixels on its shorter side; one whose size can't be read passes, for the decoder to judge. */
+    private fun BufferedSource.isAtLeast(minimumSize: Int): Boolean {
+        if (minimumSize <= 0) return true
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        peek().inputStream().use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return true
+        return minOf(bounds.outWidth, bounds.outHeight) >= minimumSize
     }
 
     private fun readDiskCache(): FetchResult? {

@@ -10,6 +10,7 @@ import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.serviceLoaderEnabled
 import com.simplecityapps.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.coil.AlbumArtistArtworkFetcher
 import com.simplecityapps.imageloading.coil.AlbumArtistArtworkKeyer
 import com.simplecityapps.imageloading.coil.AlbumArtworkKeyer
 import com.simplecityapps.imageloading.coil.ArtistHeroArtworkKeyer
@@ -27,7 +28,6 @@ import com.simplecityapps.imageloading.coil.source.FolderSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaServerAlbumArtistArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaServerAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaServerSongArtworkSource
-import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtistArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.S2AlbumArtistArtworkSource
@@ -40,10 +40,10 @@ import com.simplecityapps.mediaprovider.S2ArtworkApi
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.ui.actions.LoadArtistArtwork
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -79,6 +79,7 @@ object CoilModule {
         songRepository: SongRepository,
         kTagLib: KTagLib,
         remoteArtworkProvider: AggregateRemoteArtworkProvider,
+        loadArtistArtwork: LoadArtistArtwork,
         @RemoteArtworkInterceptor remoteArtworkInterceptors: Set<@JvmSuppressWildcards Interceptor>
     ): ImageLoader {
         val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings, remoteArtworkInterceptors)
@@ -105,23 +106,18 @@ object CoilModule {
                 add(MediaServerAlbumArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
                 add(S2AlbumArtworkSource(artworkSettings))
             }
-        val albumArtistSources =
-            buildList<ArtworkSource<AlbumArtist>> {
-                add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages))
-                if (!sharedStorageListsImages) add(MediaStoreAlbumArtistArtworkSource(context, songRepository))
-                add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
-                add(S2AlbumArtistArtworkSource(artworkSettings))
-            }
-
-        // An artist page's hero (#781): the artist's own image, the online one only when their tags pin them down, else their
-        // top album's cover. MediaStore's artist "image" is an album thumbnail, which the fallback album covers properly.
+        // An artist's image (#781, #823), on their page's hero and their rows alike: their own image, the online one only when
+        // their tags pin them down, else their top album's cover. An artist image under the rule's minimum size counts as
+        // absent. MediaStore's artist "image" is an album thumbnail, which the fallback album covers properly.
         val artistHeroSources =
             buildList<ArtworkSource<ArtistHeroArtwork>> {
-                add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages).on { it.artist })
-                add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider).on { it.artist })
-                add(S2AlbumArtistArtworkSource(artworkSettings).on { hero -> hero.artist.takeIf { hero.onlineLookup } })
+                val minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE
+                add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages).on(minimumSize) { it.artist })
+                add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider).on(minimumSize) { it.artist })
+                add(S2AlbumArtistArtworkSource(artworkSettings).on(minimumSize) { hero -> hero.artist.takeIf { hero.onlineLookup } })
                 addAll(albumSources.map { source -> source.on { it.fallbackAlbum } })
             }
+        val artistHeroFetcher = ArtworkFetcher.Factory(ArtistHeroArtwork::artworkCacheKey, artistHeroSources)
 
         return ImageLoader.Builder(context)
             // Every component is registered here, so a stray library can't add fetchers or decoders behind our back
@@ -134,8 +130,8 @@ object CoilModule {
                 add(ArtistHeroArtworkKeyer)
                 add(ArtworkFetcher.Factory(Song::artworkCacheKey, songSources))
                 add(ArtworkFetcher.Factory(Album::artworkCacheKey, albumSources))
-                add(ArtworkFetcher.Factory(AlbumArtist::artworkCacheKey, albumArtistSources))
-                add(ArtworkFetcher.Factory(ArtistHeroArtwork::artworkCacheKey, artistHeroSources))
+                add(AlbumArtistArtworkFetcher.Factory(loadArtistArtwork::invoke, artistHeroFetcher))
+                add(artistHeroFetcher)
             }
             .memoryCache {
                 MemoryCache.Builder()

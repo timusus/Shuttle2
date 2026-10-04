@@ -5,8 +5,6 @@ import android.os.ParcelFileDescriptor
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -23,7 +21,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
-/** [MediaStoreAlbumArtworkSource] and [MediaStoreAlbumArtistArtworkSource]'s choice of which song's thumbnail to fetch. */
+/** [MediaStoreAlbumArtworkSource]'s choice of which song's thumbnail to fetch. */
 @RunWith(RobolectricTestRunner::class)
 class MediaStoreArtworkSourceTest {
     @get:Rule
@@ -53,24 +51,10 @@ class MediaStoreArtworkSourceTest {
     }
 
     @Test
-    fun `album artist art comes from the artist's first song with a MediaStore id`() = runBlocking<Unit> {
-        val songs =
-            listOf(
-                createSong(MediaProviderType.Jellyfin, externalId = "remote"),
-                createSong(MediaProviderType.MediaStore, externalId = "12")
-            )
-        val source = MediaStoreAlbumArtistArtworkSource(context, FakeSongRepository(songs))
-
-        source.open(createAlbumArtist()) shouldNotBe null
-        FakeMediaAudioProvider.requestedIds shouldBe listOf(12L)
-    }
-
-    @Test
     fun `nothing is fetched when no song has a MediaStore id`() = runBlocking<Unit> {
         val songs = listOf(createSong(MediaProviderType.Jellyfin, externalId = "remote"))
 
         MediaStoreAlbumArtworkSource(context, FakeSongRepository(songs)).open(createAlbum()) shouldBe null
-        MediaStoreAlbumArtistArtworkSource(context, FakeSongRepository(songs)).open(createAlbumArtist()) shouldBe null
         FakeMediaAudioProvider.requestedIds shouldBe emptyList()
     }
 
@@ -85,17 +69,6 @@ class MediaStoreArtworkSourceTest {
         lastSongPlayed = null,
         lastSongCompleted = null,
         groupKey = null,
-        mediaProviders = listOf(MediaProviderType.MediaStore),
-        artworkVersion = null
-    )
-
-    private fun createAlbumArtist() = AlbumArtist(
-        name = "Artist",
-        artists = listOf("Artist"),
-        albumCount = 1,
-        songCount = 1,
-        playCount = 0,
-        groupKey = AlbumArtistGroupKey("Artist"),
         mediaProviders = listOf(MediaProviderType.MediaStore),
         artworkVersion = null
     )

@@ -17,8 +17,11 @@ internal fun Album.artworkCacheKey(): String = "album:${albumArtist ?: friendlyA
 
 fun AlbumArtist.artworkCacheKey(): String = "artist:${name ?: friendlyArtistName ?: "Unknown"}".withArtworkVersion(artworkVersion)
 
-/** Keys an artist page's hero: the artist, whether it may use the online lookup, and the album it falls back to (#781). */
-fun ArtistHeroArtwork.artworkCacheKey(): String = "artistHero:${artist.artworkCacheKey()}|online=$onlineLookup|${fallbackAlbum?.artworkCacheKey()}"
+/**
+ * Keys an artist's image by the shared rule (#781, #823): the artist, whether it may use the online lookup, the album it falls
+ * back to, and the smallest artist image it takes, so an image cached under an older minimum is looked up again.
+ */
+fun ArtistHeroArtwork.artworkCacheKey(): String = "artistHero:${artist.artworkCacheKey()}|online=$onlineLookup|${fallbackAlbum?.artworkCacheKey()}|min=${ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE}"
 
 /**
  * Appends the provider's artwork version, so the key changes exactly when the artwork does. Without a version
