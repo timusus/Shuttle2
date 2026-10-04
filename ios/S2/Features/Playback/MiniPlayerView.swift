@@ -293,20 +293,24 @@ private struct MiniPlayerAccessoryContent: View {
 }
 
 /// The song's progress as a ring around the mini player's play/pause glyph, in the player's tint over a faint track,
-/// starting at 12 o'clock. It reads the position itself (`progress`), so the bar around it isn't redrawn on every
+/// starting at 12 o'clock; absent at zero. It reads the position itself (`progress`), so the bar around it isn't redrawn on every
 /// tick.
 struct MiniPlayerProgressRing: View {
     let progress: () -> Double
 
     var body: some View {
         let fraction = progress()
+        // Nothing drawn until the song has progressed: the empty track alone read as a constant loading ring
+        // around Play on a paused or just-started song (#638).
         ZStack {
-            Circle()
-                .stroke(.tint.opacity(0.2), lineWidth: MiniPlayerBar.progressRingWidth)
-            Circle()
-                .trim(from: 0, to: fraction)
-                .stroke(.tint, style: StrokeStyle(lineWidth: MiniPlayerBar.progressRingWidth, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+            if fraction > 0 {
+                Circle()
+                    .stroke(.tint.opacity(0.2), lineWidth: MiniPlayerBar.progressRingWidth)
+                Circle()
+                    .trim(from: 0, to: fraction)
+                    .stroke(.tint, style: StrokeStyle(lineWidth: MiniPlayerBar.progressRingWidth, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
         }
         .frame(width: MiniPlayerBar.progressRingDiameter, height: MiniPlayerBar.progressRingDiameter)
         .accessibilityHidden(true)
