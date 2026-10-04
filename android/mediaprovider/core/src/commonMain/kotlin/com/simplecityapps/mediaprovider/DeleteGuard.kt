@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
  * - a mass removal, of more than [MAX_DELETED_FRACTION] of the source's songs (and more than [MIN_GUARDED_DELETES]) or
  *   of every one when it found none. It's held for one pass: the next full pass that finds the same songs gone removes
  *   them, so a library the user really did shrink catches up an import later, while a source that failed once doesn't.
+ *   A removal the user asked for (by changing which folders are read) isn't held.
  */
 class DeleteGuard(
     /** Where the songs each source's last full pass held back as a mass removal are kept, across restarts. */
@@ -22,9 +23,10 @@ class DeleteGuard(
         existingCount: Int,
         foundCount: Int,
         deletes: List<Song>,
-        unreadableRoots: Set<String>
+        unreadableRoots: Set<String>,
+        userRemoval: Boolean = false
     ): Decision {
-        val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = preferenceManager.heldDeletes(type.name))
+        val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = preferenceManager.heldDeletes(type.name), userRemoval)
         preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
         return decision
     }
@@ -50,18 +52,21 @@ class DeleteGuard(
         /**
          * Of [deletes], those a full pass that found [foundCount] songs, of a source holding [existingCount], applies:
          * none under [unreadableRoots] (path prefixes, each ending in a separator), and, of a mass removal, only those
-         * [heldLastPass] held back too.
+         * [heldLastPass] held back too, unless it's a [userRemoval]: the user took those songs out of what's read, so they go
+         * at once.
          */
         fun decide(
             existingCount: Int,
             foundCount: Int,
             deletes: List<Song>,
             unreadableRoots: Set<String>,
-            heldLastPass: Set<Long>
+            heldLastPass: Set<Long>,
+            userRemoval: Boolean = false
         ): Decision {
             val (unreadable, readable) = deletes.partition { song -> unreadableRoots.any { root -> song.path.startsWith(root) } }
             val massRemoval =
-                readable.isNotEmpty() &&
+                !userRemoval &&
+                    readable.isNotEmpty() &&
                     (foundCount == 0 || (readable.size > MIN_GUARDED_DELETES && readable.size > existingCount * MAX_DELETED_FRACTION))
             if (!massRemoval) return Decision(apply = readable, heldUnreadable = unreadable.size, heldMassRemoval = emptyList())
             val (confirmed, unconfirmed) = readable.partition { song -> song.id in heldLastPass }

@@ -90,6 +90,7 @@ class SourcesViewModelTest {
 
         mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Shuttle)
         mediaSources.scans shouldBe 1
+        mediaSources.folderChangeScans shouldBe 0
     }
 
     @Test
@@ -114,6 +115,7 @@ class SourcesViewModelTest {
         viewModel.onFolderPicked(FolderKind.Extra, "content://tree/Hidden")
         viewModel.uiState.value.folders.extras.map { it.name } shouldBe listOf("Hidden")
         mediaSources.scans shouldBe 1
+        mediaSources.folderChangeScans shouldBe 1
     }
 
     @Test
@@ -150,7 +152,8 @@ class SourcesViewModelTest {
         viewModel.onRemoveFolder(FolderKind.Include, viewModel.uiState.value.folders.includes.single())
 
         viewModel.uiState.value.folders.includes shouldBe emptyList()
-        mediaSources.scans shouldBe 2
+        // Each a folder change: the songs it takes out go at once, however many
+        mediaSources.folderChangeScans shouldBe 2
     }
 
     @Test

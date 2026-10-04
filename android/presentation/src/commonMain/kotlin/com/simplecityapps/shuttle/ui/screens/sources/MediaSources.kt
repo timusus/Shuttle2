@@ -19,8 +19,12 @@ interface MediaSources {
     /** Whether an import has ever finished on this install. */
     val hasScanned: Boolean
 
-    /** Imports from every enabled provider, outliving the screen that asked; a no-op while an import runs. */
-    fun scan()
+    /**
+     * Imports from every enabled provider, outliving the screen that asked; a no-op while an import runs. [foldersChanged]
+     * says the user just changed which folders are read, so the songs that takes out of the library go at once, however
+     * many (`MediaImporter.import`).
+     */
+    fun scan(foldersChanged: Boolean = false)
 
     /**
      * Brings the servers up to date with what changed on them, quietly and outliving the screen that asked, unless they

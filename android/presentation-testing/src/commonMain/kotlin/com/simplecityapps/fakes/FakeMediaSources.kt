@@ -28,8 +28,12 @@ class FakeMediaSources(vararg enabled: MediaProviderType) : MediaSources {
         _enabledTypes.value -= type
     }
 
-    override fun scan() {
+    /** How many [scans] said the user changed which folders are read. */
+    var folderChangeScans = 0
+
+    override fun scan(foldersChanged: Boolean) {
         scans++
+        if (foldersChanged) folderChangeScans++
         hasScanned = true
         songTagsOutdated = false
     }

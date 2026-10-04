@@ -45,6 +45,9 @@ class MediaImporter(
     /** Set by every [import] before it tries [importLock], so an import already running runs one more pass once it's done. */
     private val rescanRequested = AtomicBoolean(false)
 
+    /** Set by an [import] the user's folder change asked for, before [rescanRequested], and taken by the pass that runs it. */
+    private val foldersChangedRequested = AtomicBoolean(false)
+
     /** Test seam: runs after the last pass has found no request pending, just before [importLock] is released. */
     @VisibleForTesting
     internal var beforeUnlock: (suspend () -> Unit)? = null
@@ -77,12 +80,17 @@ class MediaImporter(
     val songTagsOutdated: Boolean
         get() = preferenceManager.songTagsRescanVersion < SONG_TAGS_VERSION && mediaProviders.any { preferenceManager.songTagsOutdated(it.type) }
 
-    suspend fun import() {
+    /**
+     * Reads every source in full. [foldersChanged] says the user just changed which of this device's folders are read, so
+     * a mass removal of this device's songs is theirs and applies at once rather than waiting on the next import.
+     */
+    suspend fun import(foldersChanged: Boolean = false) {
         if (mediaProviders.isEmpty()) {
             logger.debug { "Import failed, media providers empty" }
             return
         }
 
+        if (foldersChanged) foldersChangedRequested.store(true)
         rescanRequested.store(true)
         runRequestedImports()?.let { throw it }
     }
@@ -135,7 +143,7 @@ class MediaImporter(
                 while (rescanRequested.exchange(false)) {
                     failure =
                         try {
-                            importAll()
+                            importAll(foldersChanged = foldersChangedRequested.exchange(false))
                             null
                         } catch (e: CancellationException) {
                             throw e
@@ -153,10 +161,15 @@ class MediaImporter(
         return failure
     }
 
-    private suspend fun importAll() {
+    private suspend fun importAll(foldersChanged: Boolean) {
         logger.debug { "Starting import.." }
         preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
-        importProviders(mediaProviders.map { mediaProvider -> mediaProvider to SyncPlan.Full }, showProgress = true, quietFailures = false) { _, _ -> true }
+        importProviders(
+            mediaProviders.map { mediaProvider -> mediaProvider to SyncPlan.Full },
+            showProgress = true,
+            quietFailures = false,
+            foldersChanged = foldersChanged
+        ) { _, _ -> true }
     }
 
     private suspend fun syncAll(trigger: SyncTrigger) {
@@ -179,7 +192,7 @@ class MediaImporter(
         logger.debug { "Starting $trigger sync: ${plans.joinToString { (mediaProvider, plan) -> "${mediaProvider.type} $plan" }}" }
         // A delta that changed nothing leaves the playlists as they were, bar the daily sync, which catches a playlist
         // edited on the server without touching its songs
-        importProviders(plans, showProgress = false, quietFailures = trigger == SyncTrigger.Foreground) { plan, result ->
+        importProviders(plans, showProgress = false, quietFailures = trigger == SyncTrigger.Foreground, foldersChanged = false) { plan, result ->
             result != null && (plan == SyncPlan.Full || trigger == SyncTrigger.Periodic || result.inserts + result.updates > 0)
         }
     }
@@ -189,11 +202,13 @@ class MediaImporter(
      * says, given the provider's plan and its stored songs (null when that failed). Shows each fetch's progress only if
      * [showProgress]. A fetch that stores nothing new is reported only if [showProgress], which is what reloads what shows
      * the library; one that fails is, unless [quietFailures], which logs it and leaves the source's status as it was.
+     * [foldersChanged] applies a mass removal of this device's songs at once ([import]).
      */
     private suspend fun importProviders(
         plans: List<Pair<MediaProvider, SyncPlan>>,
         showProgress: Boolean,
         quietFailures: Boolean,
+        foldersChanged: Boolean,
         playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
     ) {
         val time = TimeSource.Monotonic.markNow()
@@ -210,7 +225,7 @@ class MediaImporter(
                 plans.map { (mediaProvider, plan) ->
                     async {
                         var stored: SongImportResult? = null
-                        importSongs(mediaProvider, plan).collect { event ->
+                        importSongs(mediaProvider, plan, userRemoval = foldersChanged && !mediaProvider.type.remote).collect { event ->
                             when (event) {
                                 is FlowEvent.Progress -> {
                                     if (showProgress) publish(mediaProvider.type, mediaProvider.importProgress(event.data))
@@ -273,12 +288,14 @@ class MediaImporter(
 
     /**
      * Fetches [mediaProvider]'s songs as [requested] says and stores them: a full listing replaces what's stored, removing
-     * what it no longer holds but for what [deleteGuard] holds back; an incremental one is stored over it, or is made full
-     * when nothing is stored. Once stored, the sync's start is noted for the next incremental sync to ask from.
+     * what it no longer holds but for what [deleteGuard] holds back (a mass removal only if it isn't a [userRemoval]); an
+     * incremental one is stored over it, or is made full when nothing is stored. Once stored, the sync's start is noted for
+     * the next incremental sync to ask from.
      */
     private fun importSongs(
         mediaProvider: MediaProvider,
-        requested: SyncPlan
+        requested: SyncPlan,
+        userRemoval: Boolean
     ): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         // Before the request, so whatever changes on the source while it runs is fetched again next time
         val start = clock.now()
@@ -313,7 +330,7 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
-                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes)
+                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval)
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
@@ -360,9 +377,10 @@ class MediaImporter(
         mediaProvider: MediaProvider,
         existingCount: Int,
         foundCount: Int,
-        deletes: List<Song>
+        deletes: List<Song>,
+        userRemoval: Boolean
     ): DeleteGuard.Decision {
-        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots)
+        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots, userRemoval)
         if (decision.heldUnreadable > 0) {
             logger.info { "Keeping ${decision.heldUnreadable} ${mediaProvider.type} songs under roots it couldn't read: ${mediaProvider.unreadableRoots}" }
         }

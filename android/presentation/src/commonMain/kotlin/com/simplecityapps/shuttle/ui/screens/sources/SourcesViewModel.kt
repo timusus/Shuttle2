@@ -116,7 +116,7 @@ class SourcesViewModel @Inject constructor(
     fun onFolderPicked(kind: FolderKind, treeUri: String?) {
         if (treeUri == null) return
         if (addScannerFolder(kind, treeUri)) {
-            mediaSources.scan()
+            mediaSources.scan(foldersChanged = true)
         } else {
             events.post(SourcesEvent.FolderNotOnDevice)
         }
@@ -124,7 +124,7 @@ class SourcesViewModel @Inject constructor(
 
     fun onRemoveFolder(kind: FolderKind, folder: SourceFolder) {
         removeScannerFolder(kind, folder)
-        mediaSources.scan()
+        mediaSources.scan(foldersChanged = true)
     }
 
     fun onRescan() = mediaSources.scan()
