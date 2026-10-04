@@ -413,30 +413,10 @@ final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
 }
 
 extension IosLocalTags {
-    /// The engine's reading of a file's tags, as the Kotlin provider maps them to a song.
+    /// The engine's reading of a file: its raw tags, which the Kotlin provider maps to a song, and audio properties.
     convenience init(_ tags: AudioFileTags) {
         self.init(
-            title: tags.title,
-            artists: tags.artists,
-            artistDisplay: tags.artistDisplay,
-            artistsTag: tags.artistsTag,
-            albumArtist: tags.albumArtist,
-            albumArtists: tags.albumArtists,
-            album: tags.album,
-            track: tags.track.map { KotlinInt(int: Int32(clamping: $0)) },
-            disc: tags.disc.map { KotlinInt(int: Int32(clamping: $0)) },
-            year: tags.year.map { KotlinInt(int: Int32(clamping: $0)) },
-            genres: tags.genres,
-            replayGainTrack: tags.replayGainTrack.map { KotlinDouble(double: $0) },
-            replayGainAlbum: tags.replayGainAlbum.map { KotlinDouble(double: $0) },
-            lyrics: tags.lyrics,
-            grouping: tags.grouping,
-            compilation: tags.compilation.map { KotlinBoolean(bool: $0) },
-            mbTrackId: tags.mbTrackId,
-            mbAlbumId: tags.mbAlbumId,
-            mbReleaseGroupId: tags.mbReleaseGroupId,
-            mbArtistIds: tags.mbArtistIds,
-            mbAlbumArtistIds: tags.mbAlbumArtistIds,
+            tags: tags.tags.map { IosLocalTag(key: $0.key, value: $0.value) },
             durationMs: tags.durationMs.map { KotlinLong(longLong: $0) },
             sampleRate: tags.sampleRate.map { KotlinInt(int: Int32(clamping: $0)) },
             channelCount: tags.channelCount.map { KotlinInt(int: Int32(clamping: $0)) },

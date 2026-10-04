@@ -10,21 +10,17 @@ final class AudioFileTagsTests: XCTestCase {
         return try XCTUnwrap(AudioFileTags.read(fileAt: url))
     }
 
+    // Each container's tags arrive raw, as libavformat names them; the Kotlin FfmpegTagsTest maps these same tags.
+
     func testID3InMP3() throws {
         let tags = try read("tagged", "mp3")
-        XCTAssertEqual(tags.title, "Tagged Chirp")
-        XCTAssertEqual(tags.artists, ["Artist A", "Artist B"])
-        XCTAssertEqual(tags.artistDisplay, "Artist A; Artist B")
-        XCTAssertEqual(tags.albumArtist, "The Album Artist")
-        XCTAssertEqual(tags.album, "The Album")
-        XCTAssertEqual(tags.track, 3)
-        XCTAssertEqual(tags.trackTotal, 12)
-        XCTAssertEqual(tags.disc, 1)
-        XCTAssertEqual(tags.discTotal, 2)
-        XCTAssertEqual(tags.year, 1997)
-        XCTAssertEqual(tags.genres, ["Rock", "Pop"])
-        XCTAssertEqual(tags.replayGainTrack, -6.5)
-        XCTAssertEqual(tags.compilation, true)
+        XCTAssertEqual(tags.value("title"), "Tagged Chirp")
+        XCTAssertEqual(tags.value("artist"), "Artist A; Artist B")
+        XCTAssertEqual(tags.value("album_artist"), "The Album Artist")
+        XCTAssertEqual(tags.value("track"), "3/12")
+        XCTAssertEqual(tags.value("date"), "1997-05-21")
+        XCTAssertEqual(tags.value("REPLAYGAIN_TRACK_GAIN"), "-6.50 dB")
+        XCTAssertEqual(tags.value("compilation"), "1")
         XCTAssertEqual(tags.codec, "mp3")
         XCTAssertEqual(tags.sampleRate, 44100)
         XCTAssertNotNil(tags.durationMs)
@@ -33,17 +29,10 @@ final class AudioFileTagsTests: XCTestCase {
 
     func testVorbisCommentsInFLAC() throws {
         let tags = try read("tagged", "flac")
-        XCTAssertEqual(tags.title, "Tagged Tone")
-        XCTAssertEqual(tags.artists, ["Flac Artist"])
-        XCTAssertEqual(tags.albumArtist, "Flac Album Artist")
-        XCTAssertEqual(tags.album, "Flac Album")
-        XCTAssertEqual(tags.track, 7)
-        XCTAssertNil(tags.trackTotal)
-        XCTAssertEqual(tags.disc, 2)
-        XCTAssertEqual(tags.year, 2004)
-        XCTAssertEqual(tags.genres, ["Jazz"])
-        XCTAssertEqual(tags.replayGainAlbum, 1.25)
-        XCTAssertEqual(tags.mbTrackId, "11111111-2222-3333-4444-555555555555")
+        XCTAssertEqual(tags.value("title"), "Tagged Tone")
+        XCTAssertEqual(tags.value("DATE"), "2004")
+        XCTAssertEqual(tags.value("REPLAYGAIN_ALBUM_GAIN"), "+1.25 dB")
+        XCTAssertEqual(tags.value("MUSICBRAINZ_TRACKID"), "11111111-2222-3333-4444-555555555555")
         XCTAssertEqual(tags.codec, "flac")
         XCTAssertEqual(tags.bitDepth, 16)
         XCTAssertEqual(tags.channelCount, 2)
@@ -51,29 +40,31 @@ final class AudioFileTagsTests: XCTestCase {
 
     func testStreamTagsInOpus() throws {
         let tags = try read("tagged", "opus")
-        XCTAssertEqual(tags.title, "Tagged Opus")
-        XCTAssertEqual(tags.artists, ["Opus Artist"])
-        XCTAssertEqual(tags.album, "Opus Album")
-        XCTAssertEqual(tags.track, 1)
-        XCTAssertEqual(tags.trackTotal, 9)
+        XCTAssertEqual(tags.value("title"), "Tagged Opus")
+        XCTAssertEqual(tags.value("track"), "1/9")
         XCTAssertEqual(tags.codec, "opus")
         XCTAssertNotNil(tags.durationMs)
     }
 
     func testAtomsInMP4() throws {
         let tags = try read("tagged-alac", "m4a")
-        XCTAssertEqual(tags.title, "Tagged Alac")
-        XCTAssertEqual(tags.albumArtist, "Alac Album Artist")
-        XCTAssertEqual(tags.track, 4)
-        XCTAssertEqual(tags.trackTotal, 10)
-        XCTAssertEqual(tags.year, 2011)
+        XCTAssertEqual(tags.value("title"), "Tagged Alac")
+        XCTAssertEqual(tags.value("album_artist"), "Alac Album Artist")
+        XCTAssertEqual(tags.value("track"), "4/10")
+        XCTAssertEqual(tags.value("date"), "2011")
         XCTAssertEqual(tags.codec, "alac")
+    }
+
+    func testOriginalReleaseDateInID3() throws {
+        // TDRC=2017 (the remaster) with TDOR=2002, as ffmpeg wrote them: TDOR comes through under its frame id.
+        let tags = try read("reissue", "mp3")
+        XCTAssertEqual(tags.value("date"), "2017")
+        XCTAssertEqual(tags.value("TDOR"), "2002")
     }
 
     func testUntaggedFileHasPropertiesOnly() throws {
         let tags = try read("tone-44k", "aiff")
-        XCTAssertNil(tags.title)
-        XCTAssertEqual(tags.artists, [])
+        XCTAssertEqual(tags.tags, [])
         XCTAssertEqual(tags.bitDepth, 16)
         XCTAssertEqual(tags.sampleRate, 44100)
     }
@@ -94,39 +85,5 @@ final class AudioFileTagsTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         XCTAssertNil(AudioFileTags.read(fileAt: url))
         XCTAssertNil(AudioFileTags.read(fileAt: URL(fileURLWithPath: "/nonexistent/file.flac")))
-    }
-
-    func testMappingSpellings() {
-        let tags = AudioFileTags(tags: [
-            ("ALBUMARTIST", "AA"),
-            ("TRACKNUMBER", "05"),
-            ("ORIGINALDATE", "1980-01-01"),
-            ("MusicBrainz Album Artist Id", "a1/a2"),
-            ("lyrics-eng", "la la"),
-            ("title", "From the container"),
-            ("TITLE", "From the stream"),
-            ("GENRE", "Rock, Indie; Pop"),
-            ("compilation", "0"),
-        ])
-        XCTAssertEqual(tags.albumArtist, "AA")
-        XCTAssertEqual(tags.track, 5)
-        XCTAssertEqual(tags.year, 1980)
-        XCTAssertEqual(tags.mbAlbumArtistIds, ["a1", "a2"])
-        XCTAssertEqual(tags.lyrics, "la la")
-        XCTAssertEqual(tags.title, "From the container")
-        XCTAssertEqual(tags.genres, ["Rock", "Indie", "Pop"])
-        XCTAssertEqual(tags.compilation, false)
-        XCTAssertNil(AudioFileTags(tags: [("date", "unknown")]).year)
-    }
-
-    func testOriginalReleaseYearBeatsReissueInID3() throws {
-        // TDRC=2017 (the remaster) with TDOR=2002, as ffmpeg wrote them.
-        XCTAssertEqual(try read("reissue", "mp3").year, 2002)
-        XCTAssertEqual(AudioFileTags(tags: [("TYER", "2017"), ("TORY", "2002")]).year, 2002)
-    }
-
-    func testOriginalDateBeatsReissueDate() {
-        XCTAssertEqual(AudioFileTags(tags: [("date", "2017-06-30"), ("originaldate", "2002-01-28")]).year, 2002)
-        XCTAssertEqual(AudioFileTags(tags: [("date", "2017"), ("year", "2002")]).year, 2017)
     }
 }

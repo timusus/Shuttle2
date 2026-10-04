@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.shared.local
 
+import com.simplecityapps.localmediaprovider.local.provider.ffmpegPropertyMap
+import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -84,20 +86,24 @@ class IosLocalMediaProvider(
 /** The folder id in song [path] (`s2local://<folder id>/...`), or null for a path that isn't a local song's. */
 private fun folderIdOf(path: String): String? = path.removePrefix("${IosLocalFiles.SCHEME}://").takeIf { it != path }?.substringBefore('/', "")?.ifEmpty { null }
 
-/** As Android's `AudioFile.toSong`: an untitled file is named after itself, and its artwork follows its modification time. */
+/**
+ * As Android's `AudioFile.toSong`: the tags are mapped by the rules Android's TagLib reader uses, an untitled file is named
+ * after itself, and its artwork follows its modification time.
+ */
 internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
     val fileName = file.path.substringAfterLast('/')
+    val fileTags = ffmpegPropertyMap(tags.map { it.key to it.value }).toFileTags()
     return Song(
         id = 0,
-        name = title ?: fileName.substringBeforeLast('.'),
-        albumArtist = albumArtist,
-        artists = artists,
-        album = album,
-        track = track,
-        disc = disc,
+        name = fileTags.title ?: fileName.substringBeforeLast('.'),
+        albumArtist = fileTags.albumArtist,
+        artists = fileTags.artists,
+        album = fileTags.album,
+        track = fileTags.track,
+        disc = fileTags.disc,
         duration = durationMs?.toInt() ?: 0,
-        date = year?.let { LocalDate(it, 1, 1) },
-        genres = genres,
+        date = fileTags.year?.toIntOrNull()?.let { LocalDate(it, 1, 1) },
+        genres = fileTags.genres,
         path = file.path,
         size = file.size,
         mimeType = mimeTypeOf(fileName),
@@ -108,25 +114,25 @@ internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
         playbackPosition = 0,
         blacklisted = false,
         mediaProvider = MediaProviderType.Shuttle,
-        replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum,
-        lyrics = lyrics,
-        grouping = grouping,
+        replayGainTrack = fileTags.replayGainTrack,
+        replayGainAlbum = fileTags.replayGainAlbum,
+        lyrics = fileTags.lyrics,
+        grouping = fileTags.grouping,
         bitRate = bitRate,
         bitDepth = bitDepth,
         sampleRate = sampleRate,
         channelCount = channelCount,
         audioCodec = codec,
         artworkVersion = file.lastModifiedMs.toString(),
-        albumArtists = albumArtists,
-        artistsTag = artistsTag,
-        artistDisplay = artistDisplay,
-        compilation = compilation,
-        mbTrackId = mbTrackId,
-        mbAlbumId = mbAlbumId,
-        mbReleaseGroupId = mbReleaseGroupId,
-        mbArtistIds = mbArtistIds,
-        mbAlbumArtistIds = mbAlbumArtistIds
+        albumArtists = fileTags.albumArtists,
+        artistsTag = fileTags.artistsTag,
+        artistDisplay = fileTags.artistDisplay,
+        compilation = fileTags.compilation,
+        mbTrackId = fileTags.mbTrackId,
+        mbAlbumId = fileTags.mbAlbumId,
+        mbReleaseGroupId = fileTags.mbReleaseGroupId,
+        mbArtistIds = fileTags.mbArtistIds,
+        mbAlbumArtistIds = fileTags.mbAlbumArtistIds
     )
 }
 

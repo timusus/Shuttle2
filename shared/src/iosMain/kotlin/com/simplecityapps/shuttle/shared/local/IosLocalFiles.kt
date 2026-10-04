@@ -103,31 +103,12 @@ data class IosLocalFileRef(
 )
 
 /**
- * A file's tags and audio properties, as the S2Playback package's `AudioFileTags` reads them with FFmpeg: null or empty
- * where the file has no such tag, mapped as Android's TagLib reader maps them.
+ * A file's tags and audio properties, as the S2Playback package's `AudioFileTags` reads them with FFmpeg. The [tags] are
+ * libavformat's, raw and in reading order (the container's, then the audio stream's); the provider maps them as Android
+ * maps TagLib's (`ffmpegPropertyMap`, then `toFileTags`). A property is null where the file doesn't say.
  */
 data class IosLocalTags(
-    val title: String?,
-    val artists: List<String>,
-    val artistDisplay: String?,
-    val artistsTag: List<String>,
-    val albumArtist: String?,
-    val albumArtists: List<String>,
-    val album: String?,
-    val track: Int?,
-    val disc: Int?,
-    val year: Int?,
-    val genres: List<String>,
-    val replayGainTrack: Double?,
-    val replayGainAlbum: Double?,
-    val lyrics: String?,
-    val grouping: String?,
-    val compilation: Boolean?,
-    val mbTrackId: String?,
-    val mbAlbumId: String?,
-    val mbReleaseGroupId: String?,
-    val mbArtistIds: List<String>,
-    val mbAlbumArtistIds: List<String>,
+    val tags: List<IosLocalTag>,
     val durationMs: Long?,
     val sampleRate: Int?,
     val channelCount: Int?,
@@ -136,4 +117,10 @@ data class IosLocalTags(
     val bitRate: Int?,
     /** libavcodec's name for the codec: "flac", "alac", "mp3". */
     val codec: String?
+)
+
+/** One tag as libavformat names it ("album_artist", "TDOR", "MusicBrainz Album Id"), with its value. */
+data class IosLocalTag(
+    val key: String,
+    val value: String
 )

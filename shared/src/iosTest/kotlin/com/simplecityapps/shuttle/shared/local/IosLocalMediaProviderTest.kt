@@ -100,7 +100,7 @@ class IosLocalMediaProviderTest {
         song.bitDepth shouldBe 16
         song.sampleRate shouldBe 44_100
         song.artworkVersion shouldBe "1700000000000"
-        song.mbTrackId shouldBe "mbid"
+        song.mbTrackId shouldBe "11111111-2222-3333-4444-555555555555"
     }
 
     @Test
@@ -234,6 +234,7 @@ class IosLocalMediaProviderTest {
         store.folders.value.extras shouldBe emptyList()
     }
 
+    /** A file's tags as libavformat names them: a FLAC's Vorbis comments. */
     private fun tags(
         title: String? = "Title",
         artists: List<String> = listOf("Artist"),
@@ -242,27 +243,19 @@ class IosLocalMediaProviderTest {
         disc: Int? = null,
         durationMs: Long? = 1_000
     ) = IosLocalTags(
-        title = title,
-        artists = artists,
-        artistDisplay = artists.joinToString("; "),
-        artistsTag = emptyList(),
-        albumArtist = "Album Artist",
-        albumArtists = emptyList(),
-        album = "Album",
-        track = track,
-        disc = disc,
-        year = year,
-        genres = listOf("Rock"),
-        replayGainTrack = -6.5,
-        replayGainAlbum = null,
-        lyrics = null,
-        grouping = null,
-        compilation = null,
-        mbTrackId = "mbid",
-        mbAlbumId = null,
-        mbReleaseGroupId = null,
-        mbArtistIds = emptyList(),
-        mbAlbumArtistIds = emptyList(),
+        tags =
+            listOfNotNull(
+                title?.let { IosLocalTag("title", it) },
+                IosLocalTag("artist", artists.joinToString("; ")),
+                IosLocalTag("album_artist", "Album Artist"),
+                IosLocalTag("album", "Album"),
+                track?.let { IosLocalTag("track", "$it") },
+                disc?.let { IosLocalTag("disc", "$it") },
+                year?.let { IosLocalTag("DATE", "$it") },
+                IosLocalTag("GENRE", "Rock"),
+                IosLocalTag("REPLAYGAIN_TRACK_GAIN", "-6.50 dB"),
+                IosLocalTag("MUSICBRAINZ_TRACKID", "11111111-2222-3333-4444-555555555555")
+            ),
         durationMs = durationMs,
         sampleRate = 44_100,
         channelCount = 2,
