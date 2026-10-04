@@ -84,12 +84,17 @@ struct SearchContentView: View {
 
     var body: some View {
         content
-            .pinnedTopBar {
-                if showsChips {
-                    SearchCategoryChips(selected: state.categories, onSelectAll: onSelectAll, onToggle: onToggleCategory)
-                        .pinnedBarBackground()
-                }
-            }
+            .pinnedTopBar { typeChips }
+    }
+
+    /// The type chips pinned over the content. Their own property so tests can reach them: they can't see into
+    /// iOS 26's `safeAreaBar`.
+    @ViewBuilder
+    var typeChips: some View {
+        if showsChips {
+            SearchCategoryChips(selected: state.categories, onSelectAll: onSelectAll, onToggle: onToggleCategory)
+                .pinnedBarBackground()
+        }
     }
 
     /// The type chips narrow a query, so they're shown once there is one.

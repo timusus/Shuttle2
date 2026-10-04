@@ -38,8 +38,8 @@ struct LibraryViewTests {
             categories: [], availability: .empty,
             importStatus: .importing(provider: "Jellyfin", message: "Reading songs", fraction: 0.5)
         )
-        #expect((try? sut.inspect().find(text: "Importing from Jellyfin…")) != nil)
-        #expect((try? sut.inspect().find(text: "Reading songs")) != nil)
+        #expect((try? sut.categoryRail.inspect().find(text: "Importing from Jellyfin…")) != nil)
+        #expect((try? sut.categoryRail.inspect().find(text: "Reading songs")) != nil)
         #expect((try? sut.inspect().find(text: "No Music")) == nil)
     }
 
@@ -47,7 +47,7 @@ struct LibraryViewTests {
         let sut = LibraryRootContent(
             categories: [.songs], availability: .hasMusic, importStatus: .failed(provider: "Emby", error: "timed out")
         )
-        #expect((try? sut.inspect().find(text: "Emby import failed: timed out")) != nil)
+        #expect((try? sut.categoryRail.inspect().find(text: "Emby import failed: timed out")) != nil)
     }
 
     @Test func importStatusFollowsTheSongImportState() {

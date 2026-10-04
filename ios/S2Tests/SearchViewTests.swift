@@ -44,7 +44,7 @@ struct SearchViewTests {
     @Test func nothingTypedAndNoRecentSearchesInvitesASearch() throws {
         let sut = SearchContentView(state: state(SearchContentRecent(searches: [])))
         #expect((try? sut.inspect().find(text: "Search Your Library")) != nil)
-        #expect((try? sut.inspect().find(FilterChip.self)) == nil)
+        #expect((try? sut.typeChips.inspect().find(FilterChip.self)) == nil)
     }
 
     @Test func aRecentSearchFillsTheField() throws {
@@ -58,7 +58,7 @@ struct SearchViewTests {
     @Test func searchingShowsProgressAndTheTypeChips() throws {
         let sut = SearchContentView(state: state(SearchContentSearching.shared))
         #expect((try? sut.inspect().find(ViewType.ProgressView.self)) != nil)
-        #expect(try sut.inspect().findAll(FilterChip.self).count == 1 + SearchCategory.allCases.count)
+        #expect(try sut.typeChips.inspect().findAll(FilterChip.self).count == 1 + SearchCategory.allCases.count)
     }
 
     @Test func aTypeChipToggles() throws {
@@ -69,8 +69,8 @@ struct SearchViewTests {
             onSelectAll: { all = true },
             onToggleCategory: { toggled = $0 }
         )
-        try sut.inspect().find(button: "Albums").tap()
-        try sut.inspect().find(button: "All").tap()
+        try sut.typeChips.inspect().find(button: "Albums").tap()
+        try sut.typeChips.inspect().find(button: "All").tap()
         #expect(toggled == .albums)
         #expect(all)
     }
