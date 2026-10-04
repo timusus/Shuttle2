@@ -35,6 +35,9 @@ import platform.darwin.NSObject
  * there. A path's wanted task is the one [tasks] holds: a removal cancels it there and then, and a task the session still
  * runs for a removed or restarted path is cancelled and ignored, never mistaken for the one that replaced it.
  *
+ * iOS relaunches the app in the background when the session's downloads finish while it isn't running; the app delegate
+ * hands that over with [handleBackgroundEvents]. The session must already exist by then, so the app builds this at launch.
+ *
  * [isolatedName] (a test graph) gives a plain session and its own directory under tmp, so tests never touch the app's
  * downloads or its background session.
  */
@@ -71,6 +74,9 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
 
     /** Each path's wanted task: the one [start] made, or one [restore] found still running from an earlier launch. */
     private val tasks = mutableMapOf<String, NSURLSessionTask>()
+
+    /** The app delegate's completion handler for the session's background events, until they've all been delivered. */
+    private var backgroundEventsCompletion: (() -> Unit)? = null
 
     override fun restore(): Set<String> {
         // A move into place that the app didn't live to finish
@@ -130,6 +136,19 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
             return null
         }
         return file.absoluteString
+    }
+
+    /**
+     * Takes the app delegate's `handleEventsForBackgroundURLSession` call: [completionHandler] is called on the main queue
+     * once the session has delivered every event iOS woke the app for. False if [identifier] is another session's.
+     */
+    fun handleBackgroundEvents(
+        identifier: String,
+        completionHandler: () -> Unit
+    ): Boolean {
+        if (identifier != backgroundIdentifier) return false
+        backgroundEventsCompletion = completionHandler
+        return true
     }
 
     private fun directoryContents(): List<NSURL> = fileManager
@@ -234,6 +253,12 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
             // Cancelled by a removal (which forgot it) or a restart; a cancelled task that's still wanted has failed
             if (wanted == null && error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled) return
             listener?.onFailed(path)
+        }
+
+        override fun URLSessionDidFinishEventsForBackgroundURLSession(session: NSURLSession) {
+            val completion = backgroundEventsCompletion ?: return
+            backgroundEventsCompletion = null
+            NSOperationQueue.mainQueue.addOperationWithBlock { completion() }
         }
     }
 

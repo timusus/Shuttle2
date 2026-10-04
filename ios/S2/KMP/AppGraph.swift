@@ -33,6 +33,9 @@ enum AppGraph {
         dependencies.graph.playbackReporting.start()
         dependencies.graph.favouriteSender.start()
         dependencies.graph.librarySearchIndex.warmUp()
+        // Reattaches offline downloads' background session, so a download that finished while the app wasn't running
+        // is delivered, and is there for a background relaunch's events (AppDelegate)
+        _ = dependencies.graph.offlineDownloads
         #if DEBUG
         if let override = UserDefaults.standard.string(forKey: DebugEntitlement.defaultsKey) {
             dependencies.graph.storeEntitlements.setDebugOverrideNamed(name: override)

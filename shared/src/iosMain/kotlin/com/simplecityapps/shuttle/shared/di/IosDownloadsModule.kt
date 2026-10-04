@@ -17,14 +17,19 @@ import dev.zacsweers.metro.SingleIn
 @ContributesTo(AppScope::class)
 @BindingContainer
 class IosDownloadsModule {
+    /** One per app: iOS allows only one session with the background identifier. */
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideUrlSessionDownloads(storage: IosStorage): UrlSessionDownloads = UrlSessionDownloads(storage.isolatedName)
+
     @Provides
     @SingleIn(AppScope::class)
     fun provideOfflineDownloads(
         jellyfin: JellyfinStreamUrlProvider,
         emby: EmbyStreamUrlProvider,
         plex: PlexStreamUrlProvider,
-        storage: IosStorage
-    ): OfflineDownloads = OfflineDownloads(listOf(jellyfin, emby, plex), UrlSessionDownloads(storage.isolatedName))
+        transport: UrlSessionDownloads
+    ): OfflineDownloads = OfflineDownloads(listOf(jellyfin, emby, plex), transport)
 
     @Provides
     fun provideSongDownloader(downloads: OfflineDownloads): SongDownloader = downloads

@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct S2App: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     /// Read once at launch, as Android's shell does: a change in Settings applies from the next launch.
     private let startTab: AppTab
     @Environment(\.scenePhase) private var scenePhase
@@ -36,6 +37,22 @@ struct S2App: App {
         }
         .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
             await BackgroundRefresh.run()
+        }
+    }
+}
+
+/// The UIKit callbacks SwiftUI has no modifier for.
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    /// iOS relaunched (or woke) the app because offline downloads' background session has events (#759): the session,
+    /// recreated by `AppGraph.initialize()`, delivers them, then calls `completionHandler` so iOS can suspend the app
+    /// again and refresh its snapshot.
+    func application(
+        _ application: UIApplication,
+        handleEventsForBackgroundURLSession identifier: String,
+        completionHandler: @escaping () -> Void
+    ) {
+        if !AppGraph.shared.urlSessionDownloads.handleBackgroundEvents(identifier: identifier, completionHandler: completionHandler) {
+            completionHandler()
         }
     }
 }
