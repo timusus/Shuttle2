@@ -404,13 +404,23 @@ run_changed_mode() {
 
   WORK_DIR="$(mktemp -d -t unit-test-changed)"
 
-  # Roborazzi trigger: docs/design/** changed, or any changed file that
-  # currently contains a @Composable function.
-  local roborazzi=0 f
+  # Roborazzi trigger: docs/design/** changed, a changed main source (src/main, src/commonMain,
+  # src/androidMain) in a module that applies the roborazzi plugin (non-composable code can change
+  # rendered text too, #830), or any changed file that currently contains a @Composable function.
+  local roborazzi=0 f rdir rpath rel_f
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
     case "${f}" in
       docs/design/*) roborazzi=1 ;;
+      android/* | shared/*)
+        if [ "${roborazzi}" -eq 0 ]; then
+          IFS=$'\t' read -r rdir rpath <<< "$(module_dir_and_path_for_file "${f}")"
+          rel_f="${f#"${rdir}"/}"
+          case "${rel_f}" in
+            src/main/* | src/commonMain/* | src/androidMain/*)
+              [ -n "${rdir}" ] && grep -q 'roborazzi' "${REPO_ROOT}/${rdir}/build.gradle.kts" 2>/dev/null && roborazzi=1 ;;
+          esac
+        fi ;;
     esac
     if [ "${roborazzi}" -eq 0 ] && [ "${f%.kt}" != "${f}" ] && [ -f "${REPO_ROOT}/${f}" ]; then
       grep -q '@Composable' "${REPO_ROOT}/${f}" 2>/dev/null && roborazzi=1
@@ -550,7 +560,7 @@ run_changed_mode() {
   echo "Base: ${base}"
   echo "Changed files: $(printf '%s\n' "${changed_files}" | grep -c .)"
   echo "Affected modules: ${modules[*]:-(none)}"
-  [ "${roborazzi}" -eq 1 ] && echo "Roborazzi: verifyRoborazziDebug will run (docs/design or @Composable change)"
+  [ "${roborazzi}" -eq 1 ] && echo "Roborazzi: verifyRoborazziDebug will run (docs/design, @Composable or screenshot-module source change)"
   echo
 
   # 1. Compile unit-test sources for every affected module first; stop here
