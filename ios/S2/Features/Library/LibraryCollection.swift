@@ -48,11 +48,11 @@ struct LibraryGrid<Content: View>: View {
     }
 
     /// The columns the grid lays out in a container `width` wide, with an index strip `indexWidth` wide down its
-    /// trailing edge: the width left inside the content insets (and `AdaptiveLayout.contentMaxWidth`), filled as
+    /// trailing edge, and the same width kept clear on the leading edge so the margins match (#750): the width left inside the content insets (and `AdaptiveLayout.contentMaxWidth`), filled as
     /// SwiftUI fills an adaptive `GridItem`, with as many `minimumTile`s as fit `gridSpacing` apart.
     static func columnCount(width: CGFloat, tier: LayoutTier, indexWidth: CGFloat = LetterIndexStrip.baseWidth, accessibilitySize: Bool = false) -> Int {
         let spacing = AdaptiveLayout.gridSpacing
-        let available = min(width - indexWidth, AdaptiveLayout.contentMaxWidth) - AdaptiveLayout.contentInset(tier) * 2
+        let available = min(width - indexWidth * 2, AdaptiveLayout.contentMaxWidth) - AdaptiveLayout.contentInset(tier) * 2
         let minimum = minimumTile(tier, accessibilitySize: accessibilitySize)
         return max(1, Int(((available + spacing) / (minimum + spacing)).rounded(.down)))
     }
@@ -68,6 +68,9 @@ struct LibraryGrid<Content: View>: View {
                 .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
                 .frame(maxWidth: .infinity)
             }
+            // The strip takes its width from the trailing edge (`letterIndex`); the leading edge gives up the same, so
+            // the tiles sit centred rather than off to one side (#750).
+            .safeAreaPadding(.leading, index == nil ? 0 : LetterIndexStrip.baseWidth)
             .letterIndex(index) { proxy.scrollTo($0.anchor, anchor: .top) }
         }
     }
@@ -99,6 +102,7 @@ struct LibraryTile: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                         .lineLimit(1)
+                        .accessibilityIdentifier("libraryTile.title")
                 }
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
@@ -203,7 +207,7 @@ struct LibraryGridSkeleton: View {
                 }
             }
         }
-        .safeAreaPadding(.trailing, LetterIndexStrip.baseWidth)
+        .safeAreaPadding(.horizontal, LetterIndexStrip.baseWidth)
         .shimmer()
         .scrollDisabled(true)
         .accessibilityElement()
