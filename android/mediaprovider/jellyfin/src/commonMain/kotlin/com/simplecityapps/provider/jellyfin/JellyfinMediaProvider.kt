@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
+import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
@@ -58,13 +59,13 @@ class JellyfinMediaProvider(
     private fun findSongs(
         existingSongs: List<Song>,
         since: Instant?
-    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now()
         emitAll(
             queryItems(
                 address = address,
-                credentials = credentials,
+                session = session,
                 since = since
             ).map { event ->
                 when (event) {
@@ -73,7 +74,7 @@ class JellyfinMediaProvider(
                         if (since == null) {
                             FlowEvent.Success(songs, event.complete)
                         } else {
-                            FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favouritePaths(address, credentials)?.associateWith { syncedAt }), event.complete)
+                            FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.complete)
                         }
                     }
 
@@ -89,20 +90,22 @@ class JellyfinMediaProvider(
         )
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (
             val queryResult =
-                authenticationManager.checkSession(
-                    credentials,
-                    itemsService.playlists(
-                        url = address,
-                        authorization = authenticationManager.authorizationHeader(credentials),
-                        userId = credentials.userId
+                session.request { credentials ->
+                    authenticationManager.checkSession(
+                        credentials,
+                        itemsService.playlists(
+                            url = address,
+                            authorization = authenticationManager.authorizationHeader(credentials),
+                            userId = credentials.userId
+                        )
                     )
-                )
+                }
         ) {
             is NetworkResult.Success<QueryResult> -> {
-                val updateData = findSongsForPlaylists(address, credentials, queryResult.body.items, existingSongs).toList()
+                val updateData = findSongsForPlaylists(address, session, queryResult.body.items, existingSongs).toList()
                 emit(FlowEvent.Success(updateData))
             }
 
@@ -126,52 +129,56 @@ class JellyfinMediaProvider(
     /** The paths of the user's favourite songs, or null if they couldn't be fetched. */
     private suspend fun favouritePaths(
         address: String,
-        credentials: AuthenticatedCredentials
+        session: ServerSession<AuthenticatedCredentials>
     ): Set<String>? {
         val event =
             pagedFlow(key = Item::id) { offset, limit ->
-                authenticationManager.checkSession(
-                    credentials,
-                    itemsService.favouriteAudioItems(
-                        url = address,
-                        authorization = authenticationManager.authorizationHeader(credentials),
-                        userId = credentials.userId,
-                        limit = limit,
-                        startIndex = offset
+                session.request { credentials ->
+                    authenticationManager.checkSession(
+                        credentials,
+                        itemsService.favouriteAudioItems(
+                            url = address,
+                            authorization = authenticationManager.authorizationHeader(credentials),
+                            userId = credentials.userId,
+                            limit = limit,
+                            startIndex = offset
+                        )
                     )
-                ).map { it.toPage() }
+                }.map { it.toPage() }
             }.last()
         return (event as? FlowEvent.Success)?.result?.mapTo(HashSet()) { item -> item.songPath }
     }
 
     private fun queryItems(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         since: Instant?
     ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id) { offset, limit ->
-        authenticationManager.checkSession(
-            credentials,
-            itemsService.audioItems(
-                url = address,
-                authorization = authenticationManager.authorizationHeader(credentials),
-                userId = credentials.userId,
-                limit = limit,
-                startIndex = offset,
-                minDateLastSaved = since
+        session.request { credentials ->
+            authenticationManager.checkSession(
+                credentials,
+                itemsService.audioItems(
+                    url = address,
+                    authorization = authenticationManager.authorizationHeader(credentials),
+                    userId = credentials.userId,
+                    limit = limit,
+                    startIndex = offset,
+                    minDateLastSaved = since
+                )
             )
-        ).map { it.toPage() }
+        }.map { it.toPage() }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun findSongsForPlaylists(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         playlistItems: List<Item>,
         existingSongs: List<Song>
     ): Flow<MediaImporter.PlaylistUpdateData> = playlistItems
         .asFlow()
         .flatMapConcat { playlistItem ->
-            queryPlaylistItems(address, credentials, playlistItem.id)
+            queryPlaylistItems(address, session, playlistItem.id)
                 .map { event ->
                     when (event) {
                         is FlowEvent.Success -> {
@@ -193,20 +200,22 @@ class JellyfinMediaProvider(
 
     private fun queryPlaylistItems(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         playlistId: String
     ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow { offset, limit ->
-        authenticationManager.checkSession(
-            credentials,
-            itemsService.playlistItems(
-                url = address,
-                authorization = authenticationManager.authorizationHeader(credentials),
-                playlistId = playlistId,
-                limit = limit,
-                startIndex = offset,
-                userId = credentials.userId
+        session.request { credentials ->
+            authenticationManager.checkSession(
+                credentials,
+                itemsService.playlistItems(
+                    url = address,
+                    authorization = authenticationManager.authorizationHeader(credentials),
+                    playlistId = playlistId,
+                    limit = limit,
+                    startIndex = offset,
+                    userId = credentials.userId
+                )
             )
-        ).map { it.toPage() }
+        }.map { it.toPage() }
     }
 }
 

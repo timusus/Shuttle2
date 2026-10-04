@@ -21,6 +21,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.ktor.client.request.HttpRequestData
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.time.Instant
@@ -274,6 +275,33 @@ class EmbyMediaProviderTest {
     }
 
     @Test
+    fun `a session the server rejects mid-sync signs in again with the saved login and carries on`() {
+        signedIn()
+        credentialStore.loginCredentials = LoginCredentials("shuttle-test", "secret")
+        server.respond("/Users/AuthenticateByName", "authenticate.json", method = "POST")
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, code = 401, query = mapOf("IncludeItemTypes" to "Audio"), where = { request -> request.token == "token-1" })
+
+        sync().size shouldBe 3
+
+        server.requestsTo(ITEMS).map { request -> request.token } shouldBe listOf("token-1", "token-2")
+        authenticationManager.getAuthenticatedCredentials()?.accessToken shouldBe "token-2"
+    }
+
+    @Test
+    fun `a session the server rejects again after signing in again fails the sync`() {
+        signedIn()
+        credentialStore.loginCredentials = LoginCredentials("shuttle-test", "secret")
+        server.respond("/Users/AuthenticateByName", "authenticate.json", method = "POST")
+        server.respond(ITEMS, code = 401, query = mapOf("IncludeItemTypes" to "Audio"))
+
+        val events = provider.findSongs(emptyList()).events()
+
+        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe "An error occurred. (401)"
+        server.requestsTo(ITEMS).map { request -> request.token } shouldBe listOf("token-1", "token-2")
+    }
+
+    @Test
     fun `a session the server rejects mid-sync signs out and fails the sync with the server's error`() {
         signedIn()
         server.respond(ITEMS, code = 401, query = mapOf("IncludeItemTypes" to "Audio"))
@@ -358,6 +386,9 @@ class EmbyMediaProviderTest {
         .shouldBeInstanceOf<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>().result
 
     private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
+
+    private val HttpRequestData.token: String?
+        get() = headers["X-Emby-Token"]
 
     private companion object {
         const val ITEMS = "/Users/user-1/Items"

@@ -24,7 +24,8 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
         val path: String,
         val query: Map<String, String>,
         val code: Int,
-        val fixture: String?
+        val fixture: String?,
+        val where: (HttpRequestData) -> Boolean
     )
 
     private val routes = AtomicReference(emptyList<Route>())
@@ -38,7 +39,8 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
                 routes.load().lastOrNull { route ->
                     route.method == request.method &&
                         route.path == request.url.encodedPath &&
-                        route.query.all { (name, value) -> request.url.parameters[name] == value }
+                        route.query.all { (name, value) -> request.url.parameters[name] == value } &&
+                        route.where(request)
                 } ?: return@MockEngine respond("", HttpStatusCode.NotFound)
             respond(
                 content = route.fixture?.let(loadFixture).orEmpty(),
@@ -53,15 +55,19 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
     /** Every request the server received, in order. */
     val requests: List<HttpRequestData> get() = received.load()
 
-    /** Answers GET [path] (with at least the given [query] parameters) with [fixture], or an empty body with [code]. */
+    /**
+     * Answers GET [path] (with at least the given [query] parameters, and only the requests [where] accepts: those made
+     * with a given token, say) with [fixture], or an empty body with [code].
+     */
     fun respond(
         path: String,
         fixture: String? = null,
         code: Int = 200,
         method: String = "GET",
-        query: Map<String, String> = emptyMap()
+        query: Map<String, String> = emptyMap(),
+        where: (HttpRequestData) -> Boolean = { true }
     ) {
-        routes.update { routes -> routes + Route(HttpMethod.parse(method), path, query, code, fixture) }
+        routes.update { routes -> routes + Route(HttpMethod.parse(method), path, query, code, fixture, where) }
     }
 
     /** The requests made to [path], in order. */

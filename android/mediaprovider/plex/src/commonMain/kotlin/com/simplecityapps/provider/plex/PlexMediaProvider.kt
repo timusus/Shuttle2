@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
+import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
@@ -57,9 +58,9 @@ class PlexMediaProvider(
     private fun findSongs(
         existingSongs: List<Song>,
         since: Instant?
-    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val syncedAt = Clock.System.now()
-        when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
+        when (val sectionsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 // A server can hold several music libraries, whatever they're called; they're the sections of type "artist"
                 val sections = sectionsResult.body.mediaContainer.directories.orEmpty().filter { it.type == "artist" }.map { it.key }
@@ -68,14 +69,14 @@ class PlexMediaProvider(
                     emit(FlowEvent.Failure(plexStrings.musicLibraryMissing))
                 } else {
                     emitAll(
-                        queryAllSections(address, credentials, sections, since).map { event ->
+                        queryAllSections(address, session, sections, since).map { event ->
                             when (event) {
                                 is FlowEvent.Success -> {
                                     val songs = event.result.map { metadata -> metadata.toSong(type, syncedAt) }
                                     if (since == null) {
                                         FlowEvent.Success(songs, event.complete)
                                     } else {
-                                        FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favourites(address, credentials, sections, syncedAt)), event.complete)
+                                        FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.complete)
                                     }
                                 }
 
@@ -95,11 +96,11 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
-        when (val playlistsResult = authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken))) {
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, session ->
+        when (val playlistsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 val songsByPart = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
-                val updateData = findSongsForPlaylists(address, credentials, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart).toList()
+                val updateData = findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart).toList()
                 emit(FlowEvent.Success(updateData))
             }
 
@@ -113,13 +114,13 @@ class PlexMediaProvider(
     /** A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items fail to load is left out. */
     private fun findSongsForPlaylists(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         playlists: List<Metadata>,
         songsByPart: Map<String?, Song>
     ): Flow<MediaImporter.PlaylistUpdateData> = flow {
         for (playlist in playlists) {
             val ratingKey = playlist.ratingKey ?: continue
-            val event = queryPlaylistItems(address, credentials, ratingKey).last()
+            val event = queryPlaylistItems(address, session, ratingKey).last()
             if (event is FlowEvent.Success) {
                 emit(
                     MediaImporter.PlaylistUpdateData(
@@ -135,19 +136,21 @@ class PlexMediaProvider(
 
     private fun queryPlaylistItems(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         playlist: String
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow { offset, limit ->
-        authenticationManager.checkSession(
-            credentials,
-            itemsService.playlistItems(
-                url = address,
-                token = credentials.accessToken,
-                playlist = playlist,
-                offset = offset,
-                limit = limit
+        session.request { credentials ->
+            authenticationManager.checkSession(
+                credentials,
+                itemsService.playlistItems(
+                    url = address,
+                    token = credentials.accessToken,
+                    playlist = playlist,
+                    offset = offset,
+                    limit = limit
+                )
             )
-        ).map { it.toPage() }
+        }.map { it.toPage() }
     }
 
     private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
@@ -157,11 +160,11 @@ class PlexMediaProvider(
     /** When each of the user's favourite tracks in [sections] was favourited, by song path, or null if they couldn't be fetched. */
     private suspend fun favourites(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         sections: List<String>,
         syncedAt: Instant
     ): Map<String, Instant>? {
-        val event = queryAllSections(address, credentials, sections, since = null, favouritesOnly = true).last()
+        val event = queryAllSections(address, session, sections, since = null, favouritesOnly = true).last()
         // Checked again here, so a server that ignored the filter can't make every track a favourite
         return (event as? FlowEvent.Success)?.result?.mapNotNull { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } }?.toMap()
     }
@@ -172,7 +175,7 @@ class PlexMediaProvider(
      */
     private fun queryAllSections(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         sections: List<String>,
         since: Instant?,
         favouritesOnly: Boolean = false
@@ -181,7 +184,7 @@ class PlexMediaProvider(
         var complete = true
         for (section in sections) {
             var failed = false
-            queryItems(address, credentials, section, since, favouritesOnly).collect { event ->
+            queryItems(address, session, section, since, favouritesOnly).collect { event ->
                 when (event) {
                     is FlowEvent.Success -> {
                         items.addAll(event.result)
@@ -203,23 +206,25 @@ class PlexMediaProvider(
 
     private fun queryItems(
         address: String,
-        credentials: AuthenticatedCredentials,
+        session: ServerSession<AuthenticatedCredentials>,
         section: String,
         since: Instant?,
         favouritesOnly: Boolean
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key) { offset, limit ->
-        authenticationManager.checkSession(
-            credentials,
-            itemsService.items(
-                url = address,
-                token = credentials.accessToken,
-                section = section,
-                offset = offset,
-                limit = limit,
-                updatedSince = since,
-                favouritesOnly = favouritesOnly
+        session.request { credentials ->
+            authenticationManager.checkSession(
+                credentials,
+                itemsService.items(
+                    url = address,
+                    token = credentials.accessToken,
+                    section = section,
+                    offset = offset,
+                    limit = limit,
+                    updatedSince = since,
+                    favouritesOnly = favouritesOnly
+                )
             )
-        ).map { it.toPage() }
+        }.map { it.toPage() }
     }
 }
 

@@ -1,1 +1,1 @@
-{ "type": "fixes", "text": "Syncing a Jellyfin, Emby or Plex library now retries brief server errors and no longer skips songs, or removes them from your library, when the server changes during a sync.", "commits": [] }
+{ "type": "fixes", "text": "Syncing a Jellyfin, Emby or Plex library now retries brief server errors, signs in again with your saved login when the server ends your session partway through, and no longer skips songs, or removes them from your library, when the server changes during a sync.", "commits": [] }
