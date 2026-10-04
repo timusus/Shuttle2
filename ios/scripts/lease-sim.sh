@@ -41,6 +41,9 @@ fi
 
 device_sh="$HOME/.claude/scripts/ios-sim/device.sh"
 [ -x "$device_sh" ] || exit 1
+# Reap leases whose holder died (a crashed worker leaves its simulator booted, #703) before taking one.
+sim_lease_sh="$(dirname "$device_sh")/sim-lease.sh"
+[ -x "$sim_lease_sh" ] && "$sim_lease_sh" gc >&2 || true
 if [ -n "$holder" ]; then
   CLAUDE_CODE_SESSION_ID="${holder}${suffix}" "$device_sh"
 else
