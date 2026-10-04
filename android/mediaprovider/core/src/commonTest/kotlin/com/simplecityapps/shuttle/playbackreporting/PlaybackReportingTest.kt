@@ -174,7 +174,7 @@ private class FakePlaybackOperations : PlaybackOperations {
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
 
-    override fun load(seekPosition: Int?, skipUnloadable: Boolean, completion: (Result<Boolean>) -> Unit) = unused()
+    override fun load(seekPosition: Int?, skipUnloadable: Boolean, playWhenReady: Boolean, completion: (Result<Boolean>) -> Unit) = unused()
     override fun play() = unused()
     override fun pause() = unused()
     override fun togglePlayback() = unused()
