@@ -20,8 +20,9 @@
 #
 # Env:
 #   LAND_SKIP_DEVICE_INSTALL=1   same as --no-device-install.
-#   LAND_VERIFY_TIMEOUT=N   wall-clock limit in seconds for the whole verify (default 1800). On expiry
-#                        the verify's process group is killed, nothing is pushed, exit 3 (#779).
+#   LAND_VERIFY_TIMEOUT=N   wall-clock limit in seconds for the verify once it holds machine-lock (default
+#                        1800; time queued behind another holder does not count). On expiry the verify's
+#                        process group is killed, nothing is pushed, exit 3 (#779, #806).
 #   LAND_SKIP_VERIFY=1   skip the machine-lock verify step entirely. Plumbing tests only —
 #                        never use this to land real work.
 #
@@ -100,6 +101,45 @@ ios_tests_for() {
   done | sort -u
 }
 
+# Wall-clock limit for the verify phases once they hold machine-lock; overridable with LAND_VERIFY_TIMEOUT.
+VERIFY_TIMEOUT=${LAND_VERIFY_TIMEOUT:-1800}
+# Exit status of run_in_group when --timeout expired (124 is machine-lock's own "timed out waiting for the lock").
+TIMED_OUT_RC=125
+
+# run_in_group [--timeout <seconds>] <cmd>...: run <cmd> (stdin from /dev/null, stdout/stderr inherited) in its
+# own process group. With --timeout, kill the whole group (TERM, then KILL after 10s) if it outlives
+# <seconds> and return TIMED_OUT_RC (#779). If this shell is TERMed/INTed/HUPed or exits meanwhile, the group
+# and its watchdog are killed too, so a dead land.sh never leaves a verify holding the lock (#806). Portable:
+# macOS has no `timeout`. Otherwise returns the command's status.
+GROUP_PID="" WATCHDOG_PID=""
+kill_groups() {
+  [ -n "$WATCHDOG_PID" ] && kill -TERM -- "-$WATCHDOG_PID" 2>/dev/null
+  [ -n "$GROUP_PID" ] && kill -TERM -- "-$GROUP_PID" 2>/dev/null
+  WATCHDOG_PID="" GROUP_PID=""
+}
+run_in_group() {
+  local secs=0 rc flag=""
+  if [ "$1" = --timeout ]; then secs=$2; shift 2; fi
+  trap kill_groups EXIT
+  trap 'exit 143' TERM INT HUP
+  set -m  # job control: each background job gets its own process group (pgid == pid)
+  "$@" < /dev/null &
+  GROUP_PID=$!
+  if [ "$secs" -gt 0 ]; then
+    flag=$(mktemp "${TMPDIR:-/tmp}/land-timeout.XXXXXX") || return 1
+    rm -f "$flag"
+    local pid=$GROUP_PID
+    ( trap - TERM INT HUP EXIT; sleep "$secs"; : > "$flag"; kill -TERM -- "-$pid" 2>/dev/null; sleep 10; kill -KILL -- "-$pid" 2>/dev/null ) &
+    WATCHDOG_PID=$!
+  fi
+  set +m
+  wait "$GROUP_PID" 2>/dev/null; rc=$?
+  [ -n "$WATCHDOG_PID" ] && kill -TERM -- "-$WATCHDOG_PID" 2>/dev/null && wait "$WATCHDOG_PID" 2>/dev/null
+  WATCHDOG_PID="" GROUP_PID=""
+  if [ -n "$flag" ] && [ -e "$flag" ]; then rm -f "$flag"; return "$TIMED_OUT_RC"; fi
+  return "$rc"
+}
+
 # Dry-check of the mapping: land.sh --print-ios-tests <files...>
 if [ "${1:-}" = "--print-ios-tests" ]; then
   shift
@@ -110,9 +150,9 @@ fi
 # Internal mode: the Android and iOS verify phases, run by run_verify below under one
 # `machine-lock --name verify` hold. Not for direct use.
 #   land.sh --verify-only <origin-main-sha> <touches_ios 0|1> [<S2Tests class>...]
-if [ "${1:-}" = "--verify-only" ]; then
-  base_sha=${2:?} touches_ios=${3:-0}
-  shift 3 || true
+verify_phases() {
+  base_sha=${1:?} touches_ios=${2:-0}
+  shift 2 || true
   support/scripts/unit-test --changed --base "$base_sha" || { echo "verify: android unit tests failed"; exit 1; }
   support/scripts/remote-build.sh --local -q :android:app:assembleDebug || { echo "verify: assembleDebug failed"; exit 1; }
   if [ "$touches_ios" = 1 ]; then
@@ -146,7 +186,13 @@ if [ "${1:-}" = "--verify-only" ]; then
       "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release || true
     [ "$rc" -eq 0 ] || { echo "verify: ios step failed (rc=$rc)"; exit 1; }
   fi
-  exit 0
+  return 0
+}
+
+if [ "${1:-}" = "--verify-only" ]; then
+  shift
+  run_in_group --timeout "$VERIFY_TIMEOUT" verify_phases "$@"
+  exit $?
 fi
 
 mkdir -p .claude/land-logs
@@ -438,30 +484,6 @@ verify_env_failure() {
   printf '%s\n' "$out" | grep -Eq 'JdkImageTransform|jlink|No matching toolchain|Cannot find a Java installation|Cannot find a (Java|JDK)|daemon JVM|SDK location not found|Failed to install the following Android SDK|No installed JDK'
 }
 
-# run_with_timeout <seconds> <cmd>...: run <cmd> with output appended to $LOG, in its own process group,
-# and kill the whole group (TERM, then KILL after 10s) if it outlives <seconds> (#779). Portable: macOS
-# has no `timeout`. Sets VERIFY_TIMED_OUT=1 on a timeout; returns the command's status.
-VERIFY_TIMEOUT=${LAND_VERIFY_TIMEOUT:-1800}   # seconds; override with LAND_VERIFY_TIMEOUT
-VERIFY_TIMED_OUT=0
-run_with_timeout() {
-  local secs=$1 pid wpid rc flag
-  shift
-  VERIFY_TIMED_OUT=0
-  flag=$(mktemp "${TMPDIR:-/tmp}/land-timeout.XXXXXX") || return 1
-  rm -f "$flag"
-  set -m  # job control: each background job gets its own process group (pgid == pid)
-  "$@" >> "$LOG" 2>&1 &
-  pid=$!
-  ( sleep "$secs"; : > "$flag"; kill -TERM -- "-$pid" 2>/dev/null; sleep 10; kill -KILL -- "-$pid" 2>/dev/null ) &
-  wpid=$!
-  set +m
-  wait "$pid" 2>/dev/null; rc=$?
-  kill -TERM -- "-$wpid" 2>/dev/null
-  wait "$wpid" 2>/dev/null
-  if [ -e "$flag" ]; then VERIFY_TIMED_OUT=1; rm -f "$flag"; [ "$rc" -eq 0 ] && rc=124; fi
-  return "$rc"
-}
-
 run_verify() {
   if [ "${LAND_SKIP_VERIFY:-0}" = 1 ]; then
     log "verify: LAND_SKIP_VERIFY=1, skipping"
@@ -480,9 +502,11 @@ run_verify() {
 
   local from
   from=$(( $(wc -c < "$LOG") + 1 ))
-  if ! run_with_timeout "$VERIFY_TIMEOUT" machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"}; then
-    if [ "$VERIFY_TIMED_OUT" = 1 ]; then
-      say "land.sh: verify timed out after ${VERIFY_TIMEOUT}s (#779); killed it, treating as an environment failure"
+  local vrc=0
+  run_in_group machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} >> "$LOG" 2>&1 || vrc=$?
+  if [ "$vrc" -ne 0 ]; then
+    if [ "$vrc" -eq "$TIMED_OUT_RC" ]; then
+      say "land.sh: verify timed out after ${VERIFY_TIMEOUT}s holding machine-lock (#779); killed it, treating as an environment failure"
       return 2
     fi
     if verify_env_failure "$LOG" "$from"; then
