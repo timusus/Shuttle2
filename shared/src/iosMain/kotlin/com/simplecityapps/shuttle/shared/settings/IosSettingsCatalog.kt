@@ -28,8 +28,9 @@ import dev.zacsweers.metro.Provides
  * `SettingsView` renders it as one grouped `Form`, with a Sources row of its own above the Sources rows.
  *
  * Left out, with why (`docs/architecture/ios-port/phase-5-ios-app.md`, "Settings"):
- * - Appearance: theme, dynamic colour, accent, colour from artwork and pure black restyle Android's Material
- *   theme, which iOS doesn't draw; widget opacity has no widget. Show Home on launch stays: the shell starts on
+ * - Appearance: theme, dynamic colour, accent and pure black restyle Android's Material theme, which iOS doesn't
+ *   draw; widget opacity has no widget. Colour from artwork stays: `ArtworkTintModifier` falls back to the accent
+ *   when it's off. Show Home on launch stays: the shell starts on
  *   `ShellViewModel`'s start tab (on by default on iOS, [IosSettingDefaults]).
  * - Playback & sound: USB DAC direct output is Android's mixer. The equalizer, ReplayGain and its pre-amp are Android's
  *   rows, run by the S2Playback engine (phase 6, #604); ReplayGain and its pre-amp are a group of their own, apart
@@ -144,6 +145,11 @@ object IosSettingsCatalog : SettingsCatalog {
             SettingsGroup(
                 title = null,
                 items = listOf(
+                    SettingItem.Switch(
+                        setting = AppearanceSettings.ColourFromArtwork,
+                        title = StringKey.PREF_COLOUR_FROM_ARTWORK_TITLE,
+                        summary = StringKey.PREF_COLOUR_FROM_ARTWORK_SUMMARY
+                    ),
                     SettingItem.Switch(
                         setting = AppearanceSettings.ShowHomeOnLaunch,
                         title = StringKey.PREF_SHOW_HOME_ON_LAUNCH_TITLE

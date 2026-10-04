@@ -12,7 +12,7 @@ struct SettingsView: View {
     /// sheet's Playback Settings screen is this same view over the Playback & Sound screen alone.
     var cacheKey = Navigator.settingsCacheKey
     var destinations: Set<SettingsDestination>?
-    var title = "Settings"
+    var title = String(localized: "settings_title", table: "Settings")
 
     var body: some View {
         let viewModel = ViewModelCache.shared.viewModel(cacheKey) { AppGraph.shared.settingsViewModel }
@@ -122,7 +122,7 @@ extension SettingsSection {
             guard destinations?.contains(destination) ?? true else { return [] }
             var opening = SettingsSection(id: destination.name, title: destination.title.localized(), rows: [])
             if destination == .sources {
-                opening.rows.append(.link(id: "settings.sources", title: "Sources", systemImage: "server.rack", route: .sources))
+                opening.rows.append(.link(id: "settings.sources", title: SettingsSection.sourcesTitle, systemImage: "server.rack", route: .sources))
             }
             var sections: [SettingsSection] = []
             for (index, group) in screen.groups.enumerated() {
@@ -143,9 +143,9 @@ extension SettingsSection {
     /// ReplayGain's pre-amp (`PlaybackSettings.PreAmpGain`): named for ReplayGain, so it doesn't read as a second
     /// Equalizer Preamp, and explained beneath its section.
     static let replayGainPreampKey = "preamp_gain"
-    static let replayGainPreampTitle = "Replay Gain Pre-amp"
-    static let replayGainPreampFooter =
-        "The pre-amp adjusts songs with Replay Gain tags, on top of their Replay Gain. It's separate from the Equalizer's Preamp, which applies to everything."
+    static let replayGainPreampTitle = String(localized: "settings_replaygain_preamp_title", table: "Settings")
+    static let replayGainPreampFooter = String(localized: "settings_replaygain_preamp_footer", table: "Settings")
+    static let sourcesTitle = String(localized: "settings_sources", table: "Settings")
 
     private static func row(
         for item: any SettingItem,
@@ -173,7 +173,7 @@ extension SettingsSection {
             return .action(
                 key: key,
                 title: title,
-                summary: started ? "Scanning your music" : summary,
+                summary: started ? String(localized: "settings_rescan_started", table: "Settings") : summary,
                 confirmation: action.confirmation.map {
                     SettingsRow.Confirmation(title: $0.title.localized(), message: $0.message.localized(), confirm: $0.confirm.localized())
                 },
@@ -200,7 +200,7 @@ extension SettingsSection {
 /// Settings from plain values.
 struct SettingsContent: View {
     let sections: [SettingsSection]
-    var title = "Settings"
+    var title = String(localized: "settings_title", table: "Settings")
     var showsAbout = true
     /// The Shuttle Music Pro section, which reads the app's graph; off for tests of the catalog rows.
     var showsPro = false
@@ -240,36 +240,43 @@ struct SettingsContent: View {
                     LabeledContent {
                         Text(Self.appVersion)
                     } label: {
-                        Label { Text("Version") } icon: { IconSquare(systemImage: "info", style: .filled(.gray)) }
+                        Label { Text("settings_version", tableName: "Settings") } icon: { IconSquare(systemImage: "info", style: .filled(.gray)) }
                     }
                     .accessibilityIdentifier("settings.version")
                     // The licences (FFmpeg's LGPL notice) live in the app's Settings bundle, the iOS place for them.
                     Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                     } label: {
-                        Label { Text("Acknowledgements") } icon: { IconSquare(systemImage: "doc.text.fill", style: .filled(.gray)) }
+                        Label { Text("settings_acknowledgements", tableName: "Settings") } icon: { IconSquare(systemImage: "doc.text.fill", style: .filled(.gray)) }
                     }
                     .tint(.primary)
                     .accessibilityIdentifier("settings.acknowledgements")
                     // FFmpeg is LGPL-2.1+: the matching source is a release asset on our public repository.
                     Link(destination: Self.ffmpegSourceURL) {
-                        Label { Text("FFmpeg source code") } icon: { IconSquare(systemImage: "chevron.left.forwardslash.chevron.right", style: .filled(.gray)) }
+                        Label { Text("settings_ffmpeg_source", tableName: "Settings") } icon: { IconSquare(systemImage: "chevron.left.forwardslash.chevron.right", style: .filled(.gray)) }
                     }
                     .tint(.primary)
                     .accessibilityIdentifier("settings.ffmpegSource")
+                    ShareLink(item: DiagnosticsLog(), preview: SharePreview(String(localized: "settings_share_diagnostics", table: "Settings"))) {
+                        Label { RowLabel(title: String(localized: "settings_share_diagnostics", table: "Settings"), summary: String(localized: "settings_share_diagnostics_summary", table: "Settings")) } icon: { IconSquare(systemImage: "square.and.arrow.up", style: .filled(.gray)) }
+                    }
+                    .tint(.primary)
+                    .accessibilityIdentifier("settings.shareDiagnostics")
                 } header: {
-                    Text("About")
+                    Text("settings_about", tableName: "Settings")
                 }
             }
             #if DEBUG
             if showsAbout {
                 Section {
-                    Toggle("Use generated artwork", isOn: $generatedArtwork)
-                        .accessibilityIdentifier("settings.debug.generatedArtwork")
+                    Toggle(isOn: $generatedArtwork) {
+                        Text("settings_debug_generated_artwork", tableName: "Settings")
+                    }
+                    .accessibilityIdentifier("settings.debug.generatedArtwork")
                 } header: {
-                    Text("Debug")
+                    Text("settings_debug", tableName: "Settings")
                 } footer: {
-                    Text("Replaces covers with generated artwork, for screenshots. Covers already on screen change when they next load.")
+                    Text("settings_debug_generated_artwork_footer", tableName: "Settings")
                 }
             }
             #endif
@@ -284,7 +291,7 @@ struct SettingsContent: View {
             if let confirming {
                 Button(confirming.confirmation.confirm) { onAction(confirming.key) }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "settings_cancel", table: "Settings"), role: .cancel) {}
         } message: {
             if let confirming { Text(confirming.confirmation.message) }
         }
@@ -375,6 +382,7 @@ struct SettingsIcon: Equatable {
         case "pref_media_rescan": ("arrow.clockwise", .teal)
         case "artwork_local_only": ("photo.fill", .mint)
         case "pref_show_home_on_launch": ("house.fill", .red)
+        case "pref_theme_colour_from_artwork": ("paintpalette.fill", .pink)
         case "pref_crash_reporting": ("ladybug.fill", .red)
         case "pref_firebase_analytics": ("chart.bar.fill", .blue)
         default: ("gearshape.fill", .gray)

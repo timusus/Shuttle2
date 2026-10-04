@@ -106,6 +106,7 @@
 		9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467103A9C583DD5E8967EABF /* LayoutTier.swift */; };
 		A0D212754B15BC66F9CBE7EB /* PlayerPaletteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9188F0A66E8159B42084CA4B /* PlayerPaletteTests.swift */; };
 		A12FAD75FAC331471138D9B0 /* PlaybackSystemCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F97906E25504493A67DA322 /* PlaybackSystemCoordinatorTests.swift */; };
+		A204971796190252B0805D9F /* Settings.strings in Resources */ = {isa = PBXBuildFile; fileRef = ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */; };
 		A26315901488642FD490FE9F /* TelemetryConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */; };
 		A3179AE8E95F6FFCE330C21B /* PaywallPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B05D5F83A9F5B5AFF04D36F /* PaywallPresenter.swift */; };
 		A4DB8F671CB561F475D9337B /* Navigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89689E4CDFC9350CB0EFB888 /* Navigator.swift */; };
@@ -127,6 +128,7 @@
 		BC96C3A8656E42ADB2A47476 /* PlayerPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EABE937DFDA953B4A4F31C /* PlayerPalette.swift */; };
 		C0540805B66A09FDE6557DB9 /* AlbumDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D8F50EA0F4508C11C2A23D /* AlbumDetailTests.swift */; };
 		C06F838DD291958251D1AA51 /* Shape.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97E968C1BD5C9BA155566A5 /* Shape.swift */; };
+		C0A0FEA3ABED0F11FE3E2B43 /* DiagnosticsLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 522B0F85DA4C5C40F316E809 /* DiagnosticsLog.swift */; };
 		C49D068C77F250C823A5A2A9 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = B8D3D385DF619051CF4D4D12 /* ViewInspector */; };
 		C59FBDB9E91FA89CBA2B6386 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2105451B4A503DA93D9DAC70 /* Colors.swift */; };
 		C6F8C2F04E379EB42828F981 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F718CDD54F88ED9434F689 /* SettingsView.swift */; };
@@ -230,6 +232,7 @@
 		4F97906E25504493A67DA322 /* PlaybackSystemCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackSystemCoordinatorTests.swift; sourceTree = "<group>"; };
 		4FC13290DC486051BE47FF29 /* LibrarySortMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibrarySortMenuTests.swift; sourceTree = "<group>"; };
 		4FC86FB5219FFA411079E834 /* ArtworkBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkBackground.swift; sourceTree = "<group>"; };
+		522B0F85DA4C5C40F316E809 /* DiagnosticsLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsLog.swift; sourceTree = "<group>"; };
 		528C6644D4642CD20178A704 /* MiniPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerView.swift; sourceTree = "<group>"; };
 		52BE27ECE8E19F5960E66097 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		52FDEC92D75DB433244B1C2E /* LibraryImport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryImport.swift; sourceTree = "<group>"; };
@@ -313,6 +316,7 @@
 		D4D0ADAACD85DDF0E48DF557 /* TelemetryConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryConfig.swift; sourceTree = "<group>"; };
 		D679F550BBE525E21437DE0B /* SongRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongRow.swift; sourceTree = "<group>"; };
 		D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPresentation.swift; sourceTree = "<group>"; };
+		DB04BA19C3A256E1B0383B7F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Settings.strings; sourceTree = "<group>"; };
 		DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryConfigTests.swift; sourceTree = "<group>"; };
 		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -439,6 +443,7 @@
 		2A697C9CE99C874FCD3F5C98 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				522B0F85DA4C5C40F316E809 /* DiagnosticsLog.swift */,
 				CFFFB17EF4036829CFD54688 /* EqualizerView.swift */,
 				56B6E8E6934F436F7FDF2343 /* PlaybackSettingsView.swift */,
 				77F718CDD54F88ED9434F689 /* SettingsView.swift */,
@@ -724,6 +729,7 @@
 				94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */,
 				20E688A48CB9963C2F8837D2 /* S2App.swift */,
 				FCBFC3688D06BC30635B00FA /* Settings.bundle */,
+				ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */,
 				B802D8A89AD0B7B3EF631EF3 /* Artwork */,
 				1EB42041EB717398B02B90EE /* Components */,
 				DD5DB5A20F79A8EF2EF01494 /* Debug */,
@@ -833,6 +839,7 @@
 				842361F9758C975E8AAB0BDB /* Localizable.strings in Resources */,
 				D3F60B96084F2A27FEDB1EB9 /* PrivacyInfo.xcprivacy in Resources */,
 				52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */,
+				A204971796190252B0805D9F /* Settings.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -867,6 +874,7 @@
 				2ABA345B8D63E42DA6D413BF /* CoverMosaic.swift in Sources */,
 				28BC962B531FFE397879547B /* DebugArtwork.swift in Sources */,
 				21FE30A773E2FAFEEB422155 /* DetailSupport.swift in Sources */,
+				C0A0FEA3ABED0F11FE3E2B43 /* DiagnosticsLog.swift in Sources */,
 				A63A662503830912A4762A65 /* EmptyState.swift in Sources */,
 				A8A521383C88462C5210FEF1 /* EngineAudioPlayer.swift in Sources */,
 				0478BEC87E6005E259F62AE4 /* EqualizerView.swift in Sources */,
@@ -1012,6 +1020,14 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				DB04BA19C3A256E1B0383B7F /* en */,
+			);
+			name = Settings.strings;
+			sourceTree = "<group>";
+		};
 		CB2C91FE8406D6ED46243D9D /* Localizable.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

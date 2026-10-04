@@ -45,6 +45,7 @@ class IosSettingsCatalogTest {
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
             ArtworkSettings.LocalOnly.key,
+            AppearanceSettings.ColourFromArtwork.key,
             AppearanceSettings.ShowHomeOnLaunch.key,
             PrivacySettings.CrashReporting.key,
             PrivacySettings.Analytics.key

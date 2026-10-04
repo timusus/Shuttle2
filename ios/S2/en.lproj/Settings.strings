@@ -1,0 +1,18 @@
+/* Settings text that only iOS shows (the shared rows' text is in Localizable.strings, generated from StringKey).
+   Read with `Text(_:tableName: "Settings")` or `String(localized:table: "Settings")`. */
+
+"settings_title" = "Settings";
+"settings_sources" = "Sources";
+"settings_about" = "About";
+"settings_version" = "Version";
+"settings_acknowledgements" = "Acknowledgements";
+"settings_ffmpeg_source" = "FFmpeg source code";
+"settings_rescan_started" = "Scanning your music";
+"settings_replaygain_preamp_title" = "Replay Gain Pre-amp";
+"settings_replaygain_preamp_footer" = "The pre-amp adjusts songs with Replay Gain tags, on top of their Replay Gain. It's separate from the Equalizer's Preamp, which applies to everything.";
+"settings_share_diagnostics" = "Share diagnostics";
+"settings_share_diagnostics_summary" = "Send the app's recent log as a file";
+"settings_debug" = "Debug";
+"settings_debug_generated_artwork" = "Use generated artwork";
+"settings_debug_generated_artwork_footer" = "Replaces covers with generated artwork, for screenshots. Covers already on screen change when they next load.";
+"settings_cancel" = "Cancel";

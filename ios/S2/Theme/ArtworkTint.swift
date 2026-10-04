@@ -43,16 +43,19 @@ struct ArtworkTintModifier: ViewModifier {
     /// mode re-derives at once instead of waiting for the next cover.
     @State private var extracted: ContrastSafeTint.RGB?
 
+    /// Settings' Colour from artwork (`AppearanceSettings.ColourFromArtwork`, on by default). Off, the tint stays the accent.
+    @AppStorage("pref_theme_colour_from_artwork") private var colourFromArtwork = true
+
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        let tint = ArtworkTintValues(extracted: extracted, isDarkScheme: colorScheme == .dark)
+        let tint = ArtworkTintValues(extracted: colourFromArtwork ? extracted : nil, isDarkScheme: colorScheme == .dark)
         content
             .environment(\.artworkTint, tint.tint)
             .environment(\.artworkTintInk, tint.ink)
             .environment(\.isArtworkTinted, tint.isTinted)
-            .environment(\.artworkTintSource, extracted)
+            .environment(\.artworkTintSource, colourFromArtwork ? extracted : nil)
             .task(id: source?.id) {
                 // The old tint stays until the new one is known, so a skip doesn't flash the accent.
                 let found: ContrastSafeTint.RGB? = if let source { await (extractor ?? .shared).color(for: source) } else { nil }
