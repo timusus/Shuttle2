@@ -90,6 +90,44 @@ jobs:
           path: |
             **/build/reports/**/*
 
+  ios_kmp_tests:
+    name: "KMP iOS Tests"
+    runs-on: macos-latest
+    if: ${{ !github.event.pull_request.draft }}
+    timeout-minutes: 60
+
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Copy CI gradle.properties
+        run: mkdir -p ~/.gradle ; cp .github/ci-gradle.properties ~/.gradle/gradle.properties
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Kotlin/Native compiles and runs every KMP module's commonTest (#821); the JVM run misses
+      # illegal test names and native-only runtime differences.
+      - name: "Run KMP iOS Simulator Tests"
+        run: "./gradlew iosSimulatorArm64Test"
+
+      - name: "KMP iOS Test Results"
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-kmp-test-results
+          path: |
+            **/build/reports/**/*
+
   instrumented_tests:
     name: "Instrumented Tests"
     runs-on: ubuntu-latest

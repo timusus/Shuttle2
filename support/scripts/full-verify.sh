@@ -16,7 +16,8 @@
 #              changelog files the deploy skill commits changed since; else exit 1 and say why
 #
 # Runs in a temporary detached worktree under `machine-lock --name verify`: testDebugUnitTest,
-# assembleDebug and both verifyRoborazziDebug, then the iOS framework build + the whole `test.sh`
+# assembleDebug and both verifyRoborazziDebug, then the iOS framework build, `iosSimulatorArm64Test` (every KMP module's commonTest on
+# Kotlin/Native, #821) + the whole `test.sh`
 # (simulator leased as S2_SIM_HOLDER=full-verify, released afterwards), then `test.sh --package`.
 # An explicit <sha> must be an ancestor of origin/main. On a pass the sha is written atomically to
 # $(git rev-parse --git-common-dir)/s2-full-verified (shared by every worktree), but only if it
@@ -63,6 +64,8 @@ if [ "${1:-}" = "--steps" ]; then
     :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
   step "ios: framework build"
   (cd ios && xcodegen -q && scripts/build-framework.sh)
+  step "ios: KMP commonTest (iosSimulatorArm64Test)"
+  ./gradlew iosSimulatorArm64Test
   step "ios: full test.sh"
   rc=0
   (cd ios && S2_SIM_HOLDER=full-verify scripts/test.sh) || rc=$?

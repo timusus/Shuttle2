@@ -34,7 +34,8 @@
 # `unit-test --changed`, a compile (not run) of the test sources of every module depending on a
 # changed :android:domain/:shared/:android:core/commonMain source (`unit-test --compile-dependents`,
 # #826), the layer rules (:android:architecture-tests, always, #871), an assembleDebug, and — only if the picked commits touch ios/, shared/
-# or android/domain|presentation|core — a light iOS check: the framework build, an app build
+# or android/domain|presentation|core|networking|playback/core|mediaprovider/* commonMain/commonTest — a light iOS check: the framework build,
+# `./gradlew iosSimulatorArm64Test` (every KMP module's commonTest on Kotlin/Native, #821), an app build
 # (`xcodebuild build`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
 # changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
 # suite and the full Android verify run less often, in support/scripts/full-verify.sh (watermark,
@@ -247,6 +248,10 @@ verify_ios() {
     cd ios || exit 1
     xcodegen -q || exit 1
     scripts/build-framework.sh || exit 1
+    # Every KMP module's commonTest on the Kotlin/Native simulator target (#821): names and runtime
+    # behaviour the JVM run can't catch. Incremental, so a no-op for modules the batch didn't touch.
+    echo "verify: ios KMP commonTest (iosSimulatorArm64Test)"
+    (cd .. && ./gradlew iosSimulatorArm64Test -q) || exit 1
     if [ "$all" = 1 ]; then
       echo "verify: ios whole S2Tests target (many classes map, or a shared source declares no type to match)"
       S2_SIM_HOLDER=land scripts/test.sh || exit 1
@@ -630,7 +635,7 @@ run_verify() {
     return 0
   fi
   local touches_ios=0
-  if verify_changed_files "$files" | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/)'; then
+  if verify_changed_files "$files" | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/|android/(networking|playback/core|mediaprovider/[a-z]+)/src/common)'; then
     touches_ios=1
   fi
   local ios_tests=() changed=() t

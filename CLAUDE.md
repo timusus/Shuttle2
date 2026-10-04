@@ -33,11 +33,11 @@ S2 Music Player — an Android app for local music playback and streaming via Je
   lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
   cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
   (Android: `lint` (check only), `unit-test --changed`, `:android:architecture-tests:testDebugUnitTest` (always, so a layer violation fails the batch that adds it), a compile of dependent modules' test sources when domain/shared/core/commonMain sources changed, + assembleDebug; one automatic retry per verify run (so per bisect iteration) with `-Pkotlin.incremental=false` on an `Incremental compilation failed` flake; iOS, only when the picked commits touch `ios/`,
-  `shared/`, or `android/domain|presentation|core`: framework + app build and just the `S2Tests` classes
+  `shared/`, `android/domain|presentation|core`, or a KMP module's commonMain/commonTest: framework build, `./gradlew iosSimulatorArm64Test` (all KMP commonTest on Kotlin/Native) + app build and just the `S2Tests` classes
   mapped from the changed files), pushes, closes issues and cleans up the landed worktrees (`--close
   BRANCH:N` closes only when BRANCH landed; a bare `--close N` only when every branch landed). Run it as a
   `longjob.sh` batch, never twice for the same batch. `support/scripts/full-verify.sh` (via `longjob.sh
-  start full-verify -- ...`) runs the whole suites at `origin/main` and records the sha as the watermark;
+  start full-verify -- ...`) runs the whole suites (including `iosSimulatorArm64Test`) at `origin/main` and records the sha as the watermark;
   `--status` shows how far main is past it, SessionStart prints the same, and `/deploy-android` runs it
   before tagging if the watermark isn't the release commit.
 - `support/scripts/worktree-report.sh` prints a one-line worktree count/size; `--prune` removes the
