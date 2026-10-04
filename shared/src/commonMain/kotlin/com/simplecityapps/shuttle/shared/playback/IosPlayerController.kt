@@ -632,16 +632,22 @@ class IosPlayerController(
 
     // PlaybackOperations
 
+    /**
+     * A load that [playWhenReady] hands the engine its track to play once it's ready, so the engine gets its output ready
+     * (the audio session, its start) while the track opens rather than after (#687). It completes when the track is
+     * playing, or paused if the play was refused.
+     */
     override fun load(
         seekPosition: Int?,
         skipUnloadable: Boolean,
+        playWhenReady: Boolean,
         completion: (Result<Boolean>) -> Unit
     ) = onMain {
         val item = queue.currentItem
         if (item == null) {
             completion(Result.failure(IllegalStateException("Queue empty")))
         } else {
-            playWhenReady = false
+            this.playWhenReady = playWhenReady
             replacePending(PendingLoad(completion, skipUnloadable))
             loadFailures = 0
             startLoad(item, seekPosition ?: PlaybackPolicy.startOf(item.song))
@@ -771,7 +777,7 @@ class IosPlayerController(
 
     /** Plays a queue just set by adding songs to an empty one. */
     private fun playNewQueue() {
-        load { result -> result.onSuccess { play() } }
+        load(playWhenReady = true) {}
     }
 
     override suspend fun shuffle(

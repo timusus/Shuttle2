@@ -447,7 +447,7 @@ class IosPlayerControllerTest {
         controller.addToQueue(listOf(a, b))
         engine.settle()
 
-        engine.calls.take(2) shouldBe listOf("load song:1@0", "next song:2")
+        engine.calls.take(2) shouldBe listOf("load song:1@0 playing", "next song:2")
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
@@ -870,6 +870,25 @@ class IosPlayerControllerTest {
         controller.playWhenReadyFlow.value shouldBe true
         controller.playbackState() shouldBe PlaybackState.Playing
         controller.currentSong shouldBe a
+    }
+
+    @Test
+    fun `a load that plays hands the engine its track to play and completes once it's playing`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        engine.clearCalls()
+        var result: Result<Boolean>? = null
+
+        controller.load(seekPosition = 5_000, playWhenReady = true) { result = it }
+
+        controller.playWhenReadyFlow.value shouldBe true
+        result shouldBe null
+        engine.settle()
+
+        // One load that plays, so the engine readies its output while the track opens (#687); no separate play.
+        engine.calls.first { it.startsWith("load") } shouldBe "load ${url(a)}@5000 playing"
+        engine.calls.none { it == "play" } shouldBe true
+        result?.isSuccess shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
     }
 
     @Test

@@ -39,9 +39,15 @@ class FakePlaybackOperations : PlaybackOperations {
     /** The [skipUnloadable] argument of each [load] call, in order. */
     val loadedSkipUnloadable = mutableListOf<Boolean>()
 
-    override fun load(seekPosition: Int?, skipUnloadable: Boolean, completion: (Result<Boolean>) -> Unit) {
+    /** The [playWhenReady] argument of each [load] call, in order. */
+    val loadedPlayWhenReady = mutableListOf<Boolean>()
+
+    /** A load that plays and loads is recorded in [calls] as a play, as it plays then. */
+    override fun load(seekPosition: Int?, skipUnloadable: Boolean, playWhenReady: Boolean, completion: (Result<Boolean>) -> Unit) {
         loadedPositions += seekPosition
         loadedSkipUnloadable += skipUnloadable
+        loadedPlayWhenReady += playWhenReady
+        if (playWhenReady && loadResult.isSuccess) calls += "play()"
         completion(loadResult)
     }
 

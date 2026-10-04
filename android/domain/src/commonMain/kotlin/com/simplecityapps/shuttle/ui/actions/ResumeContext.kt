@@ -5,6 +5,7 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.PlayContext
+import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CancellationException
@@ -15,7 +16,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
  * is still that context's; otherwise the context's songs are queued again from its resume point's song and position,
  * with shuffle on again if it was; a queue that fails leaves the shuffle mode as it was. [Result.StartOver] says to play
  * it from the start instead: it has no resume point, its songs played through, or the point's song is no longer among
- * them.
+ * them. Then it carries the songs if it read them, so the start over doesn't read them again (#687).
  */
 @Inject
 class ResumeContext(
@@ -26,21 +27,22 @@ class ResumeContext(
 ) {
     sealed interface Result {
         data object Resumed : Result
-        data object StartOver : Result
+        /** Play it from the start: [songs] are the selection's, if they were read, else null. */
+        data class StartOver(val songs: List<Song>? = null) : Result
         data class Failure(val message: String?) : Result
     }
 
     suspend operator fun invoke(selection: MediaSelection, context: PlayContext): Result {
-        if (context == PlayContext.None) return Result.StartOver
+        if (context == PlayContext.None) return Result.StartOver()
         val point = playHistoryRepository.resumePoint(context)
-        if (point?.finished == true) return Result.StartOver
+        if (point?.finished == true) return Result.StartOver()
         if (queueOperations.playContext == context && queueOperations.getCurrentItem() != null) {
             playbackOperations.play()
             return Result.Resumed
         }
-        if (point == null) return Result.StartOver
+        if (point == null) return Result.StartOver()
         val songs = resolveSongs(selection)
-        val song = songs.find { it.mediaProvider == point.mediaProvider && it.path == point.songPath } ?: return Result.StartOver
+        val song = songs.find { it.mediaProvider == point.mediaProvider && it.path == point.songPath } ?: return Result.StartOver()
 
         // The shuffle mode goes first, as the queue's position is into the order it picks; a queue that fails puts it back.
         val shuffleMode = queueOperations.getShuffleMode()
@@ -59,11 +61,8 @@ class ResumeContext(
             return Result.Failure(null)
         }
         return suspendCancellableCoroutine { cont ->
-            playbackOperations.load(seekPosition = point.positionMs.toInt()) { result ->
-                result.onSuccess {
-                    playbackOperations.play()
-                    cont.resume(Result.Resumed)
-                }
+            playbackOperations.load(seekPosition = point.positionMs.toInt(), playWhenReady = true) { result ->
+                result.onSuccess { cont.resume(Result.Resumed) }
                 result.onFailure { error ->
                     // A later load replaced this one: the play it was for was dropped, not failed.
                     if (error is CancellationException) cont.cancel(error) else cont.resume(Result.Failure(error.message))

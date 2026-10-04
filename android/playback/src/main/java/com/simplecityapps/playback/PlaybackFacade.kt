@@ -250,13 +250,14 @@ class PlaybackFacade(
     // PlaybackOperations
 
     /**
-     * Loads the current item, paused, at [seekPosition] (or the song's own start position). [completion] gets
-     * whether it loaded at the first attempt once it's ready to play, or the failure if nothing could load (see
-     * [ItemLoader.load]).
+     * Loads the current item, paused, at [seekPosition] (or the song's own start position), and plays it once it's
+     * ready if [playWhenReady]. [completion] gets whether it loaded at the first attempt once it's ready to play, or the
+     * failure if nothing could load (see [ItemLoader.load]).
      */
     override fun load(
         seekPosition: Int?,
         skipUnloadable: Boolean,
+        playWhenReady: Boolean,
         completion: (Result<Boolean>) -> Unit
     ) = playerThread.run {
         val entry = currentEntry
@@ -267,7 +268,10 @@ class PlaybackFacade(
             Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
             callHold.cancel()
             player.playWhenReady = false
-            loadCurrent(seekPosition ?: PlaybackPolicy.startOf(entry.song), skipUnloadable, completion)
+            loadCurrent(seekPosition ?: PlaybackPolicy.startOf(entry.song), skipUnloadable) { result ->
+                if (playWhenReady) result.onSuccess { play() }
+                completion(result)
+            }
         }
     }
 

@@ -23,6 +23,8 @@ class PlaySongsTest {
         val result = playSongs(songs, position = 1)
 
         result.shouldBeInstanceOf<PlaySongs.Result.Success>()
+        // One load that plays once ready, not a load and then a play (#687).
+        fakePlaybackOperations.loadedPlayWhenReady shouldBe listOf(true)
     }
 
     @Test

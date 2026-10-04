@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import dev.zacsweers.metro.Inject
 
@@ -33,9 +34,9 @@ class MediaActionHandler @Inject constructor(
     private val restorePlaylistSongs: RestorePlaylistSongs,
 ) {
     suspend fun handle(action: MediaAction): MediaActionResult = when (action) {
-        is MediaAction.Play -> play(action)
+        is MediaAction.Play -> play(action, resolveSongs(action.selection))
 
-        is MediaAction.Shuffle -> shuffle(action)
+        is MediaAction.Shuffle -> shuffle(action, resolveSongs(action.selection))
 
         is MediaAction.Resume -> resume(action)
 
@@ -86,8 +87,7 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.RemoveDownload -> removeDownload(action.selection)
     }
 
-    private suspend fun play(action: MediaAction.Play): MediaActionResult {
-        val songs = resolveSongs(action.selection)
+    private suspend fun play(action: MediaAction.Play, songs: List<Song>): MediaActionResult {
         if (songs.isEmpty()) return Message(MediaActionMessage.NoSongs)
         return when (val result = playSongs(songs, action.position.coerceIn(0, songs.lastIndex), action.context)) {
             is PlaySongs.Result.Success -> MediaActionResult.None
@@ -95,8 +95,7 @@ class MediaActionHandler @Inject constructor(
         }
     }
 
-    private suspend fun shuffle(action: MediaAction.Shuffle): MediaActionResult {
-        val songs = resolveSongs(action.selection)
+    private suspend fun shuffle(action: MediaAction.Shuffle, songs: List<Song>): MediaActionResult {
         if (songs.isEmpty()) return Message(MediaActionMessage.NoSongs)
         return when (val result = shuffleSongs(songs, action.context)) {
             is ShuffleSongs.Result.Success -> MediaActionResult.None
@@ -106,8 +105,16 @@ class MediaActionHandler @Inject constructor(
 
     private suspend fun resume(action: MediaAction.Resume): MediaActionResult = when (val result = resumeContext(action.selection, action.context)) {
         is ResumeContext.Result.Resumed -> MediaActionResult.None
-        is ResumeContext.Result.StartOver -> handle(action.fromStart)
+        is ResumeContext.Result.StartOver -> startOver(action.fromStart, result.songs)
         is ResumeContext.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
+    }
+
+    /** Plays [action], a Resume's start over, with the selection's [songs] if the resume already read them (#687). */
+    private suspend fun startOver(action: MediaAction, songs: List<Song>?): MediaActionResult = when {
+        songs == null -> handle(action)
+        action is MediaAction.Play -> play(action, songs)
+        action is MediaAction.Shuffle -> shuffle(action, songs)
+        else -> handle(action)
     }
 
     private suspend fun enqueue(selection: MediaSelection, position: EnqueueSongs.Position): MediaActionResult {

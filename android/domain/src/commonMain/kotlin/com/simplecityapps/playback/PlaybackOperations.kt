@@ -48,12 +48,19 @@ interface PlaybackOperations {
     val playbackFailureFlow: SharedFlow<Song>
 
     /**
-     * Loads the current item, paused. An item that can't load is skipped for the next one, unless [skipUnloadable] is
-     * false (a restore): then it stays current, paused, until it's played. A load replaced by another before its item was
-     * ready (a later load, or a skip) fails with a [kotlinx.coroutines.CancellationException]: it didn't fail, it was
-     * dropped, and nothing should come of it.
+     * Loads the current item, paused, or playing once it's ready if [playWhenReady]: a play that loads in one go, rather
+     * than a load and then a play once it's ready, so the player can get its output ready while the item opens (#687).
+     * An item that can't load is skipped for the next one, unless [skipUnloadable] is false (a restore): then it stays
+     * current, paused, until it's played. A load replaced by another before its item was ready (a later load, or a skip)
+     * fails with a [kotlinx.coroutines.CancellationException]: it didn't fail, it was dropped, and nothing should come
+     * of it.
      */
-    fun load(seekPosition: Int? = null, skipUnloadable: Boolean = true, completion: (Result<Boolean>) -> Unit)
+    fun load(
+        seekPosition: Int? = null,
+        skipUnloadable: Boolean = true,
+        playWhenReady: Boolean = false,
+        completion: (Result<Boolean>) -> Unit
+    )
     fun play()
     fun pause()
     fun togglePlayback()

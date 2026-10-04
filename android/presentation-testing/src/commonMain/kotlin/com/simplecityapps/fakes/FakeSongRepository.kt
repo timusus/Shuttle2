@@ -31,10 +31,13 @@ class FakeSongRepository : SongRepository {
 
     override val updatedSongIds: Flow<Set<Long>> = emptyFlow()
 
-    override fun getSongs(query: SongQuery): Flow<List<Song>?> = if (applyQueryPredicates) {
-        songs.map { songs -> songs?.filter(query.predicate) }
-    } else {
-        songs
+    /** How many times [getSongs] was called: each read of the songs. */
+    var getSongsCalls = 0
+        private set
+
+    override fun getSongs(query: SongQuery): Flow<List<Song>?> {
+        getSongsCalls++
+        return if (applyQueryPredicates) songs.map { songs -> songs?.filter(query.predicate) } else songs
     }
 
     /** Every [setExcluded] call as (song ids, excluded), in order. */

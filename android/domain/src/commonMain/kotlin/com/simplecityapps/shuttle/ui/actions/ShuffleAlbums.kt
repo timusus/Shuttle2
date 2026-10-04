@@ -29,11 +29,8 @@ class ShuffleAlbums(
             return Result.Failure(null)
         }
         return suspendCancellableCoroutine { cont ->
-            playbackOperations.load { result ->
-                result.onSuccess {
-                    playbackOperations.play()
-                    cont.resume(Result.Success)
-                }
+            playbackOperations.load(playWhenReady = true) { result ->
+                result.onSuccess { cont.resume(Result.Success) }
                 result.onFailure { error ->
                     // A later load replaced this one: the play it was for was dropped, not failed.
                     if (error is CancellationException) cont.cancel(error) else cont.resume(Result.Failure(error.message))

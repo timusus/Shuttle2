@@ -4,11 +4,13 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeQueueOperations
+import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -32,7 +34,7 @@ class ResumeContextTest {
 
     @Test
     fun `a context never played from starts over`() = runTest {
-        resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver
+        resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver()
 
         queueOperations.lastSetQueue shouldBe null
     }
@@ -41,8 +43,8 @@ class ResumeContextTest {
     fun `a context played through, or with no context at all, starts over`() = runTest {
         playHistory.resumePoints[album] = point(track = 4, finished = true)
 
-        resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver
-        resumeContext(selection, PlayContext.None) shouldBe ResumeContext.Result.StartOver
+        resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver()
+        resumeContext(selection, PlayContext.None) shouldBe ResumeContext.Result.StartOver()
         queueOperations.lastSetQueue shouldBe null
     }
 
@@ -72,6 +74,7 @@ class ResumeContextTest {
         queueOperations.playContext shouldBe album
         queueOperations.shuffleModeFlow.value shouldBe ShuffleMode.Off
         playbackOperations.loadedPositions shouldBe listOf(45_000)
+        playbackOperations.loadedPlayWhenReady shouldBe listOf(true)
         playbackOperations.calls shouldBe listOf("play()")
     }
 
@@ -93,7 +96,7 @@ class ResumeContextTest {
     fun `a context whose song is gone starts over`() = runTest {
         playHistory.resumePoints[album] = point(track = 1).copy(songPath = "/music/removed.flac")
 
-        resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver
+        resumeContext(selection, album) shouldBe ResumeContext.Result.StartOver(songs)
     }
 
     @Test
@@ -127,6 +130,25 @@ class ResumeContextTest {
 
         queueOperations.lastSetQueuePosition shouldBe 0
         playbackOperations.loadedPositions shouldBe listOf(null)
+    }
+
+    @Test
+    fun `the resume action starts over without reading the songs again`() = runTest {
+        val songRepository = FakeSongRepository().apply { setSongs(songs) }
+        val handler = TestMediaActions(
+            songRepository = songRepository,
+            queueOperations = queueOperations,
+            playbackOperations = playbackOperations,
+            playHistoryRepository = playHistory,
+        ).handler
+        playHistory.resumePoints[album] = point(track = 1).copy(songPath = "/music/removed.flac")
+        val matching = MediaSelection.SongsMatching(SongQuery.All())
+
+        handler.handle(MediaAction.Resume(MediaAction.Play(matching, 0, album), album)) shouldBe MediaActionResult.None
+
+        songRepository.getSongsCalls shouldBe 1
+        queueOperations.lastSetQueue shouldBe songs
+        playbackOperations.loadedPlayWhenReady shouldBe listOf(true)
     }
 
     @Test
