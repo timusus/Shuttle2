@@ -5,6 +5,7 @@ import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -56,6 +57,7 @@ class SettingsIntegrationTest {
             ObserveLastScanDate(preferences),
             ObserveEqualizerPreset(presetStore),
             ReadEqualizerPreset(presetStore),
+            IsLastFmConfigured { false },
             effects,
             AndroidSettingsCatalog,
             backupFlow

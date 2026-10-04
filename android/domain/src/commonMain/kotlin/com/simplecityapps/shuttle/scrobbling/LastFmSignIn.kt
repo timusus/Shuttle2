@@ -34,6 +34,11 @@ enum class LastFmSignInResult {
     NotStarted
 }
 
+/** Whether this build has a Last.fm API key and shared secret; without them Last.fm is hidden. */
+fun interface IsLastFmConfigured {
+    operator fun invoke(): Boolean
+}
+
 fun interface ObserveLastFmAccount {
     operator fun invoke(): Flow<LastFmAccountState>
 }

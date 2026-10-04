@@ -5,11 +5,13 @@ import androidx.room.Room
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.scrobbling.FinishLastFmSignIn
+import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.scrobbling.ObserveLastFmAccount
 import com.simplecityapps.shuttle.scrobbling.SignOutOfLastFm
 import com.simplecityapps.shuttle.scrobbling.StartLastFmSignIn
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmAuthenticator
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSessionStore
 import com.simplecityapps.shuttle.scrobbling.lastfm.SecurePreferenceLastFmSessionStore
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
@@ -48,6 +50,9 @@ object ScrobblingModule {
         val httpClient: HttpClient = createHttpClient(preconfiguredClient = okHttpClient)
         return LastFmApi(httpClient)
     }
+
+    @Provides
+    fun provideIsLastFmConfigured(credentials: LastFmCredentials): IsLastFmConfigured = IsLastFmConfigured { credentials.isConfigured }
 
     @Provides
     fun provideObserveLastFmAccount(authenticator: LastFmAuthenticator): ObserveLastFmAccount = ObserveLastFmAccount { authenticator.state }

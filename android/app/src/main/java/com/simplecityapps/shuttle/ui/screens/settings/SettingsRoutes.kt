@@ -192,7 +192,7 @@ private fun SettingsDestinationEntry(
         }
     }
     SettingsDestinationScreen(
-        screen = AndroidSettingsCatalog.screen(destination),
+        screen = AndroidSettingsCatalog.screen(destination).let { if (uiState.lastFmConfigured) it else it.withoutScrobbling() },
         uiState = uiState,
         onNavigateUp = onNavigateUp,
         onSwitchChange = viewModel::onSwitchChange,

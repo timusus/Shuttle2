@@ -7,6 +7,7 @@ import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -42,6 +43,7 @@ class SettingsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
+    private var lastFmConfigured = false
     private val prefs = InMemoryKeyValueStore()
     private val effects = FakeSettingsEffects()
     private val backupFlow = FakeLibraryBackupFlow()
@@ -53,7 +55,7 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), ObserveEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), effects, AndroidSettingsCatalog, backupFlow)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), ObserveEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
@@ -62,6 +64,14 @@ class SettingsViewModelTest {
         store.preference(AppearanceSettings.PureBlack).value = true
 
         viewModel().uiState.value.value(AppearanceSettings.PureBlack) shouldBe true
+    }
+
+    @Test
+    fun `the state says whether Last_fm is configured in this build`() {
+        viewModel().uiState.value.lastFmConfigured shouldBe false
+
+        lastFmConfigured = true
+        viewModel().uiState.value.lastFmConfigured shouldBe true
     }
 
     @Test

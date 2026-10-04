@@ -9,7 +9,6 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.model.MinTrackLength
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -156,17 +155,15 @@ object AndroidSettingsCatalog : SettingsCatalog {
                     )
                 )
             )
-        ) + listOfNotNull(
-            // Hidden in a build without a Last.fm API key and secret, where sign-in is unavailable (LastFmAccountState.Unavailable).
-            SettingsGroup(
-                title = null,
-                items = listOf(
-                    SettingItem.Navigate(
-                        target = SettingsLink.Scrobbling,
-                        title = StringKey.SETTINGS_SCROBBLING_TITLE
-                    )
+        ) + SettingsGroup(
+            // Hidden in a build without a Last.fm API key and secret (SettingsUiState.lastFmConfigured): see SettingsScreen.withoutScrobbling.
+            title = null,
+            items = listOf(
+                SettingItem.Navigate(
+                    target = SettingsLink.Scrobbling,
+                    title = StringKey.SETTINGS_SCROBBLING_TITLE
                 )
-            ).takeIf { LastFmCredentials(BuildConfig.LASTFM_API_KEY, BuildConfig.LASTFM_SHARED_SECRET).isConfigured }
+            )
         )
     )
 

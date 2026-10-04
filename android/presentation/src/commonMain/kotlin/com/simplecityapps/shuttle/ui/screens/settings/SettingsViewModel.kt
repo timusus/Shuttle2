@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -37,6 +38,8 @@ data class SettingsUiState(
     val values: Map<String, Any?> = emptyMap(),
     val lastScanDate: Instant? = null,
     val equalizerPreset: Equalizer.Presets.Preset = Equalizer.Presets.custom,
+    /** False in a build without a Last.fm API key and secret, where the Scrobbling row is hidden. */
+    val lastFmConfigured: Boolean = false,
     val events: List<PendingEvent<SettingsUiEvent>> = emptyList()
 ) {
     @Suppress("UNCHECKED_CAST")
@@ -87,11 +90,13 @@ class SettingsViewModel @Inject constructor(
     observeLastScanDate: ObserveLastScanDate,
     observeEqualizerPreset: ObserveEqualizerPreset,
     readEqualizerPreset: ReadEqualizerPreset,
+    isLastFmConfigured: IsLastFmConfigured,
     private val effects: SettingsEffects,
     catalog: SettingsCatalog,
     private val backupFlow: LibraryBackupFlow
 ) : ViewModel() {
     private val catalogSettings = catalog.settings
+    private val lastFmConfigured = isLastFmConfigured()
 
     private val events = PendingEvents<SettingsUiEvent>()
 
@@ -100,11 +105,11 @@ class SettingsViewModel @Inject constructor(
         observeLastScanDate(),
         observeEqualizerPreset(),
         events.flow
-    ) { values, lastScan, preset, events -> SettingsUiState(values = values, lastScanDate = lastScan, equalizerPreset = preset, events = events) }
+    ) { values, lastScan, preset, events -> SettingsUiState(values = values, lastScanDate = lastScan, equalizerPreset = preset, lastFmConfigured = lastFmConfigured, events = events) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate(), equalizerPreset = readEqualizerPreset())
+            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate(), equalizerPreset = readEqualizerPreset(), lastFmConfigured = lastFmConfigured)
         )
 
     private val sliderEffects = mutableMapOf<String, Job>()

@@ -21,6 +21,13 @@ data class SettingsScreen(
     val groups: List<SettingsGroup>
 ) {
     val items: List<SettingItem> get() = groups.flatMap { it.items }
+
+    /** This screen without the Scrobbling row, for a build where Last.fm is unavailable; a group left empty goes too. */
+    fun withoutScrobbling(): SettingsScreen = copy(
+        groups = groups
+            .map { group -> group.copy(items = group.items.filterNot { it is SettingItem.Navigate && it.target == SettingsLink.Scrobbling }) }
+            .filter { it.items.isNotEmpty() }
+    )
 }
 
 /** A run of rows, under a header when [title] is set. */
