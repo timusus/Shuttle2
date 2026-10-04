@@ -1,29 +1,41 @@
 package com.simplecityapps.shuttle.shared.artwork
 
+import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.S2ArtworkApi
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.ui.actions.LoadArtistArtwork
+import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
 
 /**
  * Artwork requests try the [RemoteArtworkProvider] (standing an album or artist in with one of its songs), then the S2
- * artwork API by name: Android's remote chain.
+ * artwork API by name: Android's remote chain. An artist's follow the shared [ArtistHeroArtwork] rule.
  */
 class ArtworkUrlsTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val remoteArtworkProvider = FakeRemoteArtworkProvider()
     private val artworkSettings = ArtworkSettings(SettingsStore(InMemoryKeyValueStore()))
 
-    private val artworkUrls = ArtworkUrls(artworkSettings, remoteArtworkProvider, songRepository)
+    private val albumRepository = FakeAlbumRepository().apply { applyQueryPredicates = true }
+
+    private val artworkUrls = ArtworkUrls(artworkSettings, remoteArtworkProvider, songRepository, LoadArtistArtwork(ObserveArtistAlbums(albumRepository, songRepository), songRepository))
+
+    /** A library of [songs] and their albums, the way the real repositories derive them. */
+    private fun library(vararg songs: Song) {
+        songRepository.setSongs(songs.toList())
+        albumRepository.setAlbums(songs.distinctBy { it.albumGroupKey }.map(::album))
+    }
 
     @Test
     fun `the server's request carries the headers its provider asks for - the S2 API's does not`() = runTest {
@@ -53,23 +65,39 @@ class ArtworkUrlsTest {
     }
 
     @Test
-    fun `album artist artwork is the artist's first song's artist artwork and then the S2 API's`() = runTest {
+    fun `album artist artwork is the hero's - the server's artist image at a minimum size, then their top album's cover`() = runTest {
         val song = song("song-1")
-        songRepository.setSongs(listOf(song))
+        library(song)
 
-        artworkUrls.requests(albumArtist(song)) shouldBe listOf(ArtworkRequest("https://example.com/song-1/artist"), s2("$S2_URL?artist=The+Artist"))
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(
+            ArtworkRequest("https://example.com/song-1/artist", minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            ArtworkRequest("https://example.com/song-1/album"),
+            s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"),
+        )
         remoteArtworkProvider.artistArtworkRequests shouldBe listOf(song)
+    }
+
+    @Test
+    fun `the S2 API's artist image is asked for only when their tags carry one MusicBrainz id`() = runTest {
+        val song = song("song-1").copy(mbAlbumArtistIds = listOf("a74b1b7f-71a5-4011-9441-d0b5e4122711"))
+        library(song)
+        remoteArtworkProvider.hasArtwork = false
+
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(
+            s2("$S2_URL?artist=The+Artist").copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE),
+            s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"),
+        )
     }
 
     @Test
     fun `an item the server has no artwork for still has the S2 API's`() = runTest {
         val song = song("song-1")
-        songRepository.setSongs(listOf(song))
+        library(song)
         remoteArtworkProvider.hasArtwork = false
 
         artworkUrls.requests(song) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         artworkUrls.requests(album(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
-        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist"))
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
     }
 
     @Test
@@ -89,10 +117,11 @@ class ArtworkUrlsTest {
     }
 
     @Test
-    fun `an album artist with no songs in the library has only the S2 API's artwork`() = runTest {
+    fun `an album artist with nothing in the library has no artwork`() = runTest {
         val song = song("song-1")
+        library()
 
-        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist"))
+        artworkUrls.requests(albumArtist(song)) shouldBe emptyList()
         remoteArtworkProvider.artistArtworkRequests shouldBe emptyList()
     }
 
@@ -115,7 +144,7 @@ class ArtworkUrlsTest {
     @Test
     fun `no artwork of any kind when artwork is local-only`() = runTest {
         val song = song("song-1")
-        songRepository.setSongs(listOf(song))
+        library(song)
         artworkSettings.localOnly.value = true
 
         artworkUrls.requests(song) shouldBe emptyList()
@@ -128,18 +157,19 @@ class ArtworkUrlsTest {
     @Test
     fun `a local song's artwork is its file's first - even when artwork is local-only`() = runTest {
         val song = song("song-1").copy(path = "s2local://documents/Björk/03 Hyperballad.flac", mediaProvider = MediaProviderType.Shuttle, externalId = null)
-        songRepository.setSongs(listOf(song))
+        library(song)
         val local = ArtworkRequest("s2local://documents/Bj%C3%B6rk/03%20Hyperballad.flac")
         remoteArtworkProvider.hasArtwork = false
 
         artworkUrls.requests(song) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         artworkUrls.requests(album(song)) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(local, s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
 
         artworkSettings.localOnly.value = true
 
         artworkUrls.requests(song) shouldBe listOf(local)
         artworkUrls.requests(album(song)) shouldBe listOf(local)
-        artworkUrls.requests(albumArtist(song)) shouldBe emptyList()
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(local)
     }
 
     private fun s2(url: String) = ArtworkRequest(url, authorization = S2ArtworkApi.authorization, unmeteredOnly = true)

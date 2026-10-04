@@ -57,6 +57,11 @@ struct ArtworkLoaderTests {
         #expect(ArtworkLoader.downsample(data, maxPixelSize: 0) != nil)
     }
 
+    @Test func downsampleReturnsNilForAnImageUnderTheMinimumSizeOnItsShorterSide() {
+        #expect(ArtworkLoader.downsample(Self.pngData(width: 400, height: 200), maxPixelSize: 100, minimumSize: 300) == nil)
+        #expect(ArtworkLoader.downsample(Self.pngData(width: 400, height: 300), maxPixelSize: 100, minimumSize: 300) != nil)
+    }
+
     @Test func cachedIsNilBeforeAnythingWasLoaded() {
         let source = ArtworkSource(id: "unloaded-\(UUID())") { [] }
         #expect(ArtworkLoader.shared.cached(source, maxPixelSize: 64) == nil)
@@ -94,6 +99,20 @@ struct ArtworkLoaderTests {
 
         #expect(request.value(forHTTPHeaderField: "X-Plex-Token") == "token-1")
         #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+    }
+
+    /// A server's thumbnail-sized artist image counts as absent (#823): the next candidate, the top album's cover, is drawn.
+    @MainActor @Test func aCandidateUnderItsMinimumSizeFallsThroughToTheNext() async {
+        let fetcher = StubFetcher(responses: [
+            Self.server: (200, Self.pngData(width: 40, height: 40)),
+            Self.s2: (200, Self.pngData(width: 30, height: 60)),
+        ])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+
+        let image = await loader.image(for: Self.source([ArtworkCandidate(url: Self.server, minimumSize: 50), ArtworkCandidate(url: Self.s2)]), maxPixelSize: 64)
+
+        #expect(image?.size.width == 30)
+        #expect(await fetcher.requests.map(\.url) == [Self.server, Self.s2])
     }
 
     @MainActor @Test func theFirstCandidateThatLoadsWinsAndTheRestAreNotAsked() async {
@@ -236,7 +255,10 @@ struct ArtworkLoaderTests {
     }
 
     private static func pngData(width: Int, height: Int) -> Data {
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height))
+        // At 1x, so the image is `width` by `height` pixels rather than the screen's scale times that.
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format)
         let image = renderer.image { context in
             UIColor.systemBlue.setFill()
             context.fill(CGRect(x: 0, y: 0, width: width, height: height))

@@ -70,6 +70,8 @@ struct ArtworkSource: Equatable {
         }
     }
 
+    /// An artist's row, tile or search result: the hero's rule (#823), which `requests(albumArtist:)` resolves from
+    /// their library, so the row shows what their page does.
     static func albumArtist(_ albumArtist: AlbumArtist) -> ArtworkSource {
         ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion), isArtist: true) {
             try await AppGraph.shared.artworkUrls.requests(albumArtist: albumArtist).compactMap(ArtworkCandidate.init)
@@ -93,7 +95,7 @@ extension ArtworkCandidate {
     /// Kotlin's request as a value; nil for a url Foundation can't parse.
     init?(_ request: ArtworkRequest) {
         guard let url = URL(string: request.url) else { return nil }
-        self.init(url: url, authorization: request.authorization, unmeteredOnly: request.unmeteredOnly, headers: request.headers)
+        self.init(url: url, authorization: request.authorization, unmeteredOnly: request.unmeteredOnly, headers: request.headers, minimumSize: Int(request.minimumSize))
     }
 }
 

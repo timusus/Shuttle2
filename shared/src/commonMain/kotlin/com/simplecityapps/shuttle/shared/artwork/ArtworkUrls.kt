@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.shared.percentEncodedPath
+import com.simplecityapps.shuttle.ui.actions.LoadArtistArtwork
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
@@ -17,13 +18,15 @@ import kotlinx.coroutines.flow.firstOrNull
 /**
  * One place an item's artwork may be, and how to ask for it. [authorization] is an `Authorization` header value, so urls
  * stay free of credentials; [headers] are any others it needs, such as a Plex server's `X-Plex-Token`; [unmeteredOnly] means the request must
- * not go over a metered (cellular) network.
+ * not go over a metered (cellular) network; an image smaller than [minimumSize] pixels on its shorter side counts as absent,
+ * so the loader moves on to the next request (an artist image, [ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE]).
  */
 data class ArtworkRequest(
     val url: String,
     val authorization: String? = null,
     val unmeteredOnly: Boolean = false,
-    val headers: Map<String, String> = emptyMap()
+    val headers: Map<String, String> = emptyMap(),
+    val minimumSize: Int = 0
 )
 
 /**
@@ -41,7 +44,8 @@ data class ArtworkRequest(
 class ArtworkUrls(
     private val artworkSettings: ArtworkSettings,
     private val remoteArtworkProvider: RemoteArtworkProvider,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val loadArtistArtwork: LoadArtistArtwork
 ) {
     suspend fun requests(song: Song): List<ArtworkRequest> = listOfNotNull(localRequest(song)) + remoteRequests(song)
 
@@ -50,17 +54,13 @@ class ArtworkUrls(
         return listOfNotNull(song?.let(::localRequest)) + remoteRequests(album, song)
     }
 
-    suspend fun requests(albumArtist: AlbumArtist): List<ArtworkRequest> {
-        if (artworkSettings.localOnly.value) return emptyList()
-        return listOfNotNull(
-            firstSongOf(albumArtist)?.let { song -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song) } },
-            (albumArtist.name ?: albumArtist.friendlyArtistName)?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) }
-        )
-    }
+    /** An artist's row in a list or search (#823): their image by the hero's rule, so the row shows what their page does. */
+    suspend fun requests(albumArtist: AlbumArtist): List<ArtworkRequest> = requests(loadArtistArtwork(albumArtist))
 
     /**
-     * An artist page's hero (#781), the same chain as Android's: the media server's artist image, the S2 API's only when
-     * [ArtistHeroArtwork.onlineLookup], then the fallback album's cover.
+     * An artist's image by the shared rule (#781, #823), the same chain as Android's: the media server's artist image, the S2
+     * API's only when [ArtistHeroArtwork.onlineLookup], each only at [ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE] or larger,
+     * then the fallback album's cover.
      */
     suspend fun requests(hero: ArtistHeroArtwork): List<ArtworkRequest> {
         val artist = if (artworkSettings.localOnly.value) {
@@ -69,7 +69,7 @@ class ArtworkUrls(
             listOfNotNull(
                 firstSongOf(hero.artist)?.let { song -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song) } },
                 (hero.artist.name ?: hero.artist.friendlyArtistName)?.takeIf { hero.onlineLookup }?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) },
-            )
+            ).map { it.copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE) }
         }
         return artist + hero.fallbackAlbum?.let { requests(it) }.orEmpty()
     }

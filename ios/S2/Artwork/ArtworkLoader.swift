@@ -126,9 +126,10 @@ actor ArtworkLoader {
 
     /// The image `candidate` points at, downsampled so its longest side is `maxPixelSize` pixels.
     ///
-    /// Returns nil for anything that did not arrive as a decodable image, including a non-2xx response.
+    /// Returns nil for anything that did not arrive as a decodable image, including a non-2xx response, and for an
+    /// image smaller than the candidate's `minimumSize`.
     func image(for candidate: ArtworkCandidate, maxPixelSize: Int) async -> UIImage? {
-        let key = Self.key(candidate.url, maxPixelSize)
+        let key = Self.key(candidate.url, maxPixelSize, minimumSize: candidate.minimumSize)
         if let hit = memory.object(forKey: key as NSString) { return hit }
 
         // Every later caller for the same cover joins the download already running rather than
@@ -137,13 +138,14 @@ actor ArtworkLoader {
 
         let fetch = fetch
         let request = candidate.request
+        let minimumSize = candidate.minimumSize
         let created = Task<UIImage?, Never> {
             do {
                 let (data, response) = try await fetch(request)
                 if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                     return nil
                 }
-                return Self.downsample(data, maxPixelSize: maxPixelSize)
+                return Self.downsample(data, maxPixelSize: maxPixelSize, minimumSize: minimumSize)
             } catch {
                 return nil
             }
@@ -161,8 +163,11 @@ actor ArtworkLoader {
         return image
     }
 
-    private static func key(_ url: URL, _ maxPixelSize: Int) -> String {
-        "\(url.absoluteString)|\(maxPixelSize)"
+    /// Carries a minimum size, so an image too small for an artist's candidate is never answered from one cached
+    /// for a candidate that takes any size.
+    private static func key(_ url: URL, _ maxPixelSize: Int, minimumSize: Int) -> String {
+        let key = "\(url.absoluteString)|\(maxPixelSize)"
+        return minimumSize > 0 ? "\(key)|min\(minimumSize)" : key
     }
 
     /// Prefixed so an item's key can never be mistaken for a URL's.
@@ -173,10 +178,19 @@ actor ArtworkLoader {
     // MARK: - Decoding
 
     /// Decode straight to the size that will be drawn, rather than decoding the full image and letting
-    /// SwiftUI scale it down on the main thread.
-    nonisolated static func downsample(_ data: Data, maxPixelSize: Int) -> UIImage? {
+    /// SwiftUI scale it down on the main thread. Nil for an image whose shorter side is under `minimumSize` pixels
+    /// (an artist's, `ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE`), which counts as absent; one whose size can't be read
+    /// passes, for the decoder to judge.
+    nonisolated static func downsample(_ data: Data, maxPixelSize: Int, minimumSize: Int = 0) -> UIImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
+        if minimumSize > 0,
+           let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+           let width = properties[kCGImagePropertyPixelWidth] as? Int,
+           let height = properties[kCGImagePropertyPixelHeight] as? Int,
+           min(width, height) < minimumSize {
+            return nil
+        }
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
@@ -197,6 +211,9 @@ struct ArtworkCandidate: Hashable, Sendable {
     var unmeteredOnly = false
     /// Further headers the request needs, such as a Plex server's `X-Plex-Token`.
     var headers: [String: String] = [:]
+    /// The smallest the image's shorter side may be, in pixels: a smaller one counts as absent and the next candidate
+    /// is tried (an artist's image, #823). 0 takes any size.
+    var minimumSize = 0
 
     var request: URLRequest {
         var request = URLRequest(url: url)
