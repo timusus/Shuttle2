@@ -15,6 +15,8 @@ import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +36,7 @@ import kotlinx.coroutines.yield
 class MediaImporterTest {
     private val provider = GatedProvider()
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val clock = FakeClock(Instant.parse("2026-10-04T09:00:00Z"))
     private val importer =
         MediaImporter(
             strings = FakeMediaImportStrings,
@@ -42,7 +45,8 @@ class MediaImporterTest {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
             },
             preferenceManager = preferences,
-            afterImport = {}
+            afterImport = {},
+            clock = clock
         ).apply { mediaProviders += provider }
 
     @BeforeTest
@@ -250,6 +254,20 @@ class MediaImporterTest {
         provider.stored.load() shouldBe 1
     }
 
+    @Test
+    fun `a full import notes when each source's sync started - once it succeeds`() = runBlocking<Unit> {
+        provider.scanFailure = "Unreachable"
+        provider.gate.trySend(Unit)
+        importer.import()
+        preferences.lastSyncStart(provider.type.name) shouldBe null
+
+        provider.scanFailure = null
+        provider.gate.trySend(Unit)
+        importer.import()
+        preferences.lastSyncStart(provider.type.name) shouldBe clock.time
+        preferences.lastFullSyncStart(provider.type.name) shouldBe clock.time
+    }
+
     /**
      * Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext]
      * is set, reports [scanFailure] if that's set, or else finds no songs.
@@ -284,6 +302,10 @@ class MediaImporterTest {
 
     private companion object {
         const val IMPORTS = 8
+    }
+
+    private class FakeClock(var time: Instant) : Clock {
+        override fun now(): Instant = time
     }
 
     private object FakeMediaImportStrings : MediaImportStrings {

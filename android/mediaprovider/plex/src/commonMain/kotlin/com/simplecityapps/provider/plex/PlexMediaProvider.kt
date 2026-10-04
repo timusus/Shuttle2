@@ -1,8 +1,8 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.IncrementalMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
@@ -33,13 +33,21 @@ class PlexMediaProvider(
     private val plexStrings: PlexStrings,
     private val authenticationManager: PlexAuthenticationManager,
     private val itemsService: ItemsService
-) : MediaProvider {
+) : IncrementalMediaProvider {
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
     private val logger = Logger.tagged("PlexMediaProvider")
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since = null)
+
+    override fun findSongsChangedSince(
+        existingSongs: List<Song>,
+        since: Instant
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since)
+
+    /** Every track of every music section, or with [since] only those updated on the server at or after it. */
+    private fun findSongs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
                 // A server can hold several music libraries, whatever they're called; they're the sections of type "artist"
@@ -49,7 +57,7 @@ class PlexMediaProvider(
                     emit(FlowEvent.Failure(plexStrings.musicLibraryMissing))
                 } else {
                     emitAll(
-                        queryAllSections(address, credentials, sections).map { event ->
+                        queryAllSections(address, credentials, sections, since).map { event ->
                             when (event) {
                                 is FlowEvent.Success -> FlowEvent.Success(event.result.map { metadata -> metadata.toSong(type) })
                                 is FlowEvent.Progress -> FlowEvent.Progress(event.data)
@@ -130,12 +138,13 @@ class PlexMediaProvider(
     private fun queryAllSections(
         address: String,
         credentials: AuthenticatedCredentials,
-        sections: List<String>
+        sections: List<String>,
+        since: Instant?
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = flow {
         val items = mutableListOf<Metadata>()
         for (section in sections) {
             var failed = false
-            queryItems(address, credentials, section).collect { event ->
+            queryItems(address, credentials, section, since).collect { event ->
                 when (event) {
                     is FlowEvent.Success -> items.addAll(event.result)
 
@@ -155,7 +164,8 @@ class PlexMediaProvider(
     private fun queryItems(
         address: String,
         credentials: AuthenticatedCredentials,
-        section: String
+        section: String,
+        since: Instant?
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow { offset, limit ->
         authenticationManager.checkSession(
             credentials,
@@ -164,7 +174,8 @@ class PlexMediaProvider(
                 token = credentials.accessToken,
                 section = section,
                 offset = offset,
-                limit = limit
+                limit = limit,
+                updatedSince = since
             )
         ).map { it.toPage() }
     }

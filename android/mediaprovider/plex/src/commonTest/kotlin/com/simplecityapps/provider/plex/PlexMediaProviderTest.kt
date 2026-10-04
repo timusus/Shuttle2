@@ -21,6 +21,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
@@ -282,6 +283,28 @@ class PlexMediaProviderTest {
     fun `no server address fails the sync`() {
         provider.findSongs(emptyList()).events().single().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe
             TestServerStrings.addressMissing
+    }
+
+    @Test
+    fun `an incremental sync asks only for the items changed since it`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+
+        provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
+
+        server.requestsTo(ITEMS).single().url.parameters["updatedAt>>"] shouldBe "${Instant.parse("2026-10-01T08:00:00Z").epochSeconds - 1}"
+    }
+
+    @Test
+    fun `a full sync asks for every item whenever it changed`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+
+        sync()
+
+        server.requestsTo(ITEMS).single().url.parameters["updatedAt>>"] shouldBe null
     }
 
     private fun signedIn() {

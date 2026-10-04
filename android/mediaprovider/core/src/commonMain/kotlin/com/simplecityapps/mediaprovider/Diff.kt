@@ -4,7 +4,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 
-abstract class Diff<T>(private val existingData: List<T>, private val newData: List<T>) {
+/**
+ * Matches [newData] against [existingData]: what's only new is inserted, what's in both is updated, and, with
+ * [deleteMissing], what's only existing is deleted. Without it [newData] is a partial listing (an incremental sync's
+ * changes), so nothing is deleted.
+ */
+abstract class Diff<T>(
+    private val existingData: List<T>,
+    private val newData: List<T>,
+    private val deleteMissing: Boolean = true
+) {
     class Result<T>(
         val inserts: List<T>,
         val updates: List<T>,
@@ -35,7 +44,7 @@ abstract class Diff<T>(private val existingData: List<T>, private val newData: L
         }
 
         if (newData.isEmpty()) {
-            return Result(inserts = emptyList(), updates = emptyList(), deletes = existingData)
+            return Result(inserts = emptyList(), updates = emptyList(), deletes = if (deleteMissing) existingData else emptyList())
         }
 
         return withContext(Dispatchers.IO) {
@@ -50,7 +59,7 @@ abstract class Diff<T>(private val existingData: List<T>, private val newData: L
             }
 
             // Data which exist in the old dataset, but not in the new
-            val deletes = existingData.filter { oldData -> newData.none { newData -> isEqual(oldData, newData) } }
+            val deletes = if (deleteMissing) existingData.filter { oldData -> newData.none { newData -> isEqual(oldData, newData) } } else emptyList()
 
             Result(inserts, updates, deletes)
         }

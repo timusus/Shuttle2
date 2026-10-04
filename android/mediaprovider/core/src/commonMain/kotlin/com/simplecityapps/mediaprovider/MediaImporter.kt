@@ -34,7 +34,9 @@ class MediaImporter(
      * Runs after each import, told whether every source's songs now hold every tag this build reads: what moving the
      * stored album keys to the album identity rule (#637) waits for.
      */
-    private val afterImport: suspend (songTagsCurrent: Boolean) -> Unit
+    private val afterImport: suspend (songTagsCurrent: Boolean) -> Unit,
+    /** What each source's sync start is taken from: a fake in tests. */
+    private val clock: Clock = Clock.System
 ) : SongImportStateProvider {
     private val logger = Logger.tagged("MediaImporter")
 
@@ -124,7 +126,7 @@ class MediaImporter(
         withContext(Dispatchers.IO) {
             mediaProviders.map { mediaProvider ->
                 async {
-                    importSongs(mediaProvider).collect { event ->
+                    importSongs(mediaProvider, SyncPlan.Full).collect { event ->
                         when (event) {
                             is FlowEvent.Progress -> {
                                 publish(mediaProvider.type, mediaProvider.importProgress(event.data))
@@ -153,7 +155,7 @@ class MediaImporter(
             }.awaitAll()
         }
 
-        preferenceManager.lastMediaImportDate = Clock.System.now()
+        preferenceManager.lastMediaImportDate = clock.now()
         importCount++
 
         afterImport(mediaProviders.none { preferenceManager.songTagsOutdated(it.type) })
@@ -176,7 +178,17 @@ class MediaImporter(
         val deletes: Int
     )
 
-    private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
+    /**
+     * Fetches [mediaProvider]'s songs as [plan] says and stores them: a full listing replaces what's stored, removing what
+     * it no longer holds; an incremental one is stored over it. Once stored, the sync's start is noted for the next
+     * incremental sync to ask from.
+     */
+    private fun importSongs(
+        mediaProvider: MediaProvider,
+        plan: SyncPlan
+    ): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
+        // Before the request, so whatever changes on the source while it runs is fetched again next time
+        val start = clock.now()
         val storedSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
 
         val existingSongs =
@@ -191,7 +203,12 @@ class MediaImporter(
                 return@flow
             }
 
-        mediaProvider.findSongs(existingSongs).collect { event ->
+        val songs =
+            when (plan) {
+                SyncPlan.Full -> mediaProvider.findSongs(existingSongs)
+                is SyncPlan.Incremental -> (mediaProvider as IncrementalMediaProvider).findSongsChangedSince(existingSongs, plan.since)
+            }
+        songs.collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
                     emit(FlowEvent.Progress<SongImportResult, MessageProgress>(event.data))
@@ -200,7 +217,7 @@ class MediaImporter(
                 is FlowEvent.Success -> {
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
-                        val songDiff = SongDiff(existingSongs, event.result).apply()
+                        val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
@@ -209,6 +226,8 @@ class MediaImporter(
                                 mediaProviderType = mediaProvider.type
                             )
                         mediaProvider.songsStored()
+                        preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
+                        if (plan == SyncPlan.Full) preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
                         emit(
                             FlowEvent.Success(
                                 SongImportResult(

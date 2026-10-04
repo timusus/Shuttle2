@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 interface MediaProvider {
@@ -26,4 +27,17 @@ interface MediaProvider {
     suspend fun songsStored() {}
 
     fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
+}
+
+/**
+ * A source that can list just what changed since a time, so a sync doesn't fetch the whole library again (#771). What
+ * [findSongsChangedSince] finds is stored over the last import without removing anything: a song deleted on the source
+ * leaves the library at the next full [findSongs].
+ */
+interface IncrementalMediaProvider : MediaProvider {
+    /** The songs added to the source or changed on it at or after [since]; songs it no longer has aren't reported. */
+    fun findSongsChangedSince(
+        existingSongs: List<Song>,
+        since: Instant
+    ): Flow<FlowEvent<List<Song>, MessageProgress>>
 }

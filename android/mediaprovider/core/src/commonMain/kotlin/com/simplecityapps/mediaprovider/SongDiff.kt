@@ -2,7 +2,11 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.Song
 
-class SongDiff(existingData: List<Song>, newData: List<Song>) : Diff<Song>(existingData, newData) {
+class SongDiff(
+    existingData: List<Song>,
+    newData: List<Song>,
+    deleteMissing: Boolean = true
+) : Diff<Song>(existingData, newData, deleteMissing) {
     override fun isEqual(
         a: Song,
         b: Song

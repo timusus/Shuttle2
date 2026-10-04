@@ -1,8 +1,8 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.IncrementalMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
@@ -36,16 +36,25 @@ class EmbyMediaProvider(
     private val strings: ServerStrings,
     private val authenticationManager: EmbyAuthenticationManager,
     private val itemsService: ItemsService
-) : MediaProvider {
+) : IncrementalMediaProvider {
     override val type = MediaProviderType.Emby
 
     private val logger = Logger.tagged("EmbyMediaProvider")
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since = null)
+
+    override fun findSongsChangedSince(
+        existingSongs: List<Song>,
+        since: Instant
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(since)
+
+    /** Every song, or with [since] only those saved on the server (added or changed) at or after it. */
+    private fun findSongs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         emitAll(
             queryItems(
                 address = address,
-                credentials = credentials
+                credentials = credentials,
+                since = since
             ).map { event ->
                 when (event) {
                     is FlowEvent.Success -> {
@@ -100,7 +109,8 @@ class EmbyMediaProvider(
 
     private fun queryItems(
         address: String,
-        credentials: AuthenticatedCredentials
+        credentials: AuthenticatedCredentials,
+        since: Instant?
     ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow { offset, limit ->
         authenticationManager.checkSession(
             credentials,
@@ -109,7 +119,8 @@ class EmbyMediaProvider(
                 token = credentials.accessToken,
                 userId = credentials.userId,
                 limit = limit,
-                startIndex = offset
+                startIndex = offset,
+                minDateLastSaved = since
             )
         ).map { it.toPage() }
     }

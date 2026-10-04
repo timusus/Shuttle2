@@ -35,6 +35,22 @@ class GeneralPreferenceManagerTest {
         preferences.songTagsVersion("Jellyfin") shouldBe 0
         preferences.songTagsRescanVersion shouldBe 0
         preferences.lastMediaImportDate.shouldBeNull()
+        preferences.lastSyncStart("Jellyfin").shouldBeNull()
+        preferences.lastFullSyncStart("Jellyfin").shouldBeNull()
+    }
+
+    @Test
+    fun `sync starts are kept per source`() {
+        preferences.setLastSyncStart("Jellyfin", Instant.fromEpochMilliseconds(1_000))
+        preferences.setLastFullSyncStart("Plex", Instant.fromEpochMilliseconds(2_000))
+
+        preferences.lastSyncStart("Jellyfin") shouldBe Instant.fromEpochMilliseconds(1_000)
+        preferences.lastSyncStart("Plex").shouldBeNull()
+        preferences.lastFullSyncStart("Plex") shouldBe Instant.fromEpochMilliseconds(2_000)
+        preferences.lastFullSyncStart("Jellyfin").shouldBeNull()
+
+        preferences.setLastSyncStart("Jellyfin", null)
+        preferences.lastSyncStart("Jellyfin").shouldBeNull()
     }
 
     @Test

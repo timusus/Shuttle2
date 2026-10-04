@@ -301,6 +301,26 @@ class JellyfinMediaProviderTest {
             TestServerStrings.addressMissing
     }
 
+    @Test
+    fun `an incremental sync asks only for the items changed since it`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
+
+        server.requestsTo(ITEMS).single().url.parameters["minDateLastSaved"] shouldBe "2026-10-01T08:00:00Z"
+    }
+
+    @Test
+    fun `a full sync asks for every item whenever it changed`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        sync()
+
+        server.requestsTo(ITEMS).single().url.parameters["minDateLastSaved"] shouldBe null
+    }
+
     private fun signedIn() {
         credentialStore.address = server.address
         credentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")

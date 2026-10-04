@@ -69,9 +69,43 @@ class SongDiffTest {
         }
     }
 
+    @Test
+    fun `a full listing deletes the songs it no longer holds`() = runTest {
+        val kept = createSong(id = 1, lastModified = firstImport, path = "jellyfin://item/1")
+        val gone = createSong(id = 2, lastModified = firstImport, path = "jellyfin://item/2")
+
+        val diff = SongDiff(listOf(kept, gone), listOf(kept.copy(id = 0))).apply()
+
+        diff.deletes shouldBe listOf(gone)
+    }
+
+    @Test
+    fun `a partial listing inserts and updates without deleting what it leaves out`() = runTest {
+        val changed = createSong(id = 1, lastModified = firstImport, path = "jellyfin://item/1")
+        val untouched = createSong(id = 2, lastModified = firstImport, path = "jellyfin://item/2")
+        val added = createSong(id = 0, lastModified = firstImport, path = "jellyfin://item/3")
+
+        val diff = SongDiff(listOf(changed, untouched), listOf(changed.copy(id = 0, name = "Renamed"), added), deleteMissing = false).apply()
+
+        diff.inserts shouldBe listOf(added)
+        diff.updates.single().run {
+            id shouldBe 1
+            name shouldBe "Renamed"
+        }
+        diff.deletes shouldBe emptyList()
+    }
+
+    @Test
+    fun `an empty partial listing deletes nothing`() = runTest {
+        val stored = createSong(id = 1, lastModified = firstImport)
+
+        SongDiff(listOf(stored), emptyList(), deleteMissing = false).apply().deletes shouldBe emptyList()
+    }
+
     private fun createSong(
         id: Long,
         lastModified: Instant?,
+        path: String = "jellyfin://item/1",
         artworkVersion: String? = null,
         dateAdded: Instant? = null,
         bitDepth: Int? = null
@@ -86,7 +120,7 @@ class SongDiffTest {
         duration = 180_000,
         date = null,
         genres = emptyList(),
-        path = "jellyfin://item/1",
+        path = path,
         size = 0,
         mimeType = "Audio/*",
         lastModified = lastModified,

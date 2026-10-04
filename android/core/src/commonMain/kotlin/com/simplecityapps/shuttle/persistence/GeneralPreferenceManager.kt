@@ -177,6 +177,26 @@ class GeneralPreferenceManager @Inject constructor(
     }
 
     /**
+     * When the last successful sync of [source] (a media provider type's name) started (#771): the next incremental sync
+     * asks the server for what changed since then. Taken before the request, so a change made while it ran is fetched
+     * again rather than missed.
+     */
+    fun lastSyncStart(source: String): Instant? = store.getInstant("last_sync_start_$source")
+
+    fun setLastSyncStart(
+        source: String,
+        start: Instant?
+    ) = store.putInstant("last_sync_start_$source", start)
+
+    /** When the last successful full sync of [source] started: the one that also removes songs the server no longer has. */
+    fun lastFullSyncStart(source: String): Instant? = store.getInstant("last_full_sync_start_$source")
+
+    fun setLastFullSyncStart(
+        source: String,
+        start: Instant?
+    ) = store.putInstant("last_full_sync_start_$source", start)
+
+    /**
      * The album key version the stored album keys (play history, pinned downloads) were last moved to (#637): 0 before
      * the album identity rule, so they're moved once, after the first import that leaves every source's tags current.
      */

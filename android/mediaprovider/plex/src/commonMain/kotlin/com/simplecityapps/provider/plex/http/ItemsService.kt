@@ -7,6 +7,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
+import kotlin.time.Instant
 
 /** The header a Plex server reads its access token from. */
 const val PLEX_TOKEN = "X-Plex-Token"
@@ -18,7 +19,9 @@ class ItemsService(private val client: HttpClient) {
         token: String,
         section: String,
         offset: Int,
-        limit: Int
+        limit: Int,
+        /** Only the tracks updated on the server (added, or their metadata changed) at or after this time; all of them if null. */
+        updatedSince: Instant? = null
     ): NetworkResult<QueryResult> = query("$url/library/sections/$section/all", token) {
         parameter("type", 10)
         parameter("includeCollections", 1)
@@ -26,6 +29,8 @@ class ItemsService(private val client: HttpClient) {
         parameter("includeMeta", 1)
         // Adds each track's Guid list, which holds its MusicBrainz recording id
         parameter("includeGuids", 1)
+        // Plex's filter syntax: `field>>=value` is "greater than" (as python-plexapi sends it), in epoch seconds
+        updatedSince?.let { since -> parameter("updatedAt>>", since.epochSeconds - 1) }
         parameter("X-Plex-Container-Start", offset)
         parameter("X-Plex-Container-Size", limit)
     }
