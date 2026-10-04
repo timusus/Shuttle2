@@ -11,14 +11,14 @@ import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.shuttle.scrobbling.lastfm.LASTFM_BASE_URL
 import com.simplecityapps.shuttle.scrobbling.lastfm.FakeLastFmSessionStore
+import com.simplecityapps.shuttle.scrobbling.lastfm.LASTFM_BASE_URL
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmClient
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmError
-import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSession
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmError
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbleResponse
+import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSession
 import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase

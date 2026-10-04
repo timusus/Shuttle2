@@ -75,17 +75,15 @@ constructor(
     private suspend fun sendBatch(
         batch: List<QueuedScrobbleEntity>,
         sessionKey: String
-    ): Outcome {
-        return when (val result = lastFmClient.scrobble(batch, sessionKey)) {
-            is LastFmResult.Success -> Outcome.Cleared
+    ): Outcome = when (val result = lastFmClient.scrobble(batch, sessionKey)) {
+        is LastFmResult.Success -> Outcome.Cleared
 
-            is LastFmResult.Error -> when (result.code) {
-                LastFmError.INVALID_SESSION -> Outcome.SignedOut
-                in LastFmError.RETRYABLE -> Outcome.Retry
-                else -> Outcome.Cleared
-            }
-
-            LastFmResult.Unreachable -> Outcome.Retry
+        is LastFmResult.Error -> when (result.code) {
+            LastFmError.INVALID_SESSION -> Outcome.SignedOut
+            in LastFmError.RETRYABLE -> Outcome.Retry
+            else -> Outcome.Cleared
         }
+
+        LastFmResult.Unreachable -> Outcome.Retry
     }
 }
