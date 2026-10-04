@@ -99,13 +99,41 @@ IOS_TESTS_MAX=15
 FX="$TMP/fx"; mkdir -p "$FX/ios/S2Tests" "$FX/ios/S2/Artwork" "$FX/shared/src/commonMain"
 printf 'import S2\nfinal class LibraryListTests { let a: Album }\n' > "$FX/ios/S2Tests/LibraryListTests.swift"
 printf 'final class OtherTests { let r = RemoteArtwork() }\n' > "$FX/ios/S2Tests/OtherTests.swift"
-printf 'final class UnrelatedTests {}\n' > "$FX/ios/S2Tests/UnrelatedTests.swift"
+printf 'final class UnrelatedTests { let l = Label(); let v = View() }\n' > "$FX/ios/S2Tests/UnrelatedTests.swift"
 printf 'package x\ndata class Album(val id: String)\nenum class Kind { A }\n' > "$FX/shared/src/commonMain/Album.kt"
 printf 'package x\nfun helper() = 1\n' > "$FX/shared/src/commonMain/Helpers.kt"
-printf 'struct RemoteArtwork {}\nextension Album {}\n' > "$FX/ios/S2/Artwork/RemoteArtwork.swift"
+printf 'struct RemoteArtwork { enum Label { } }\nextension View { }\nextension Album { }\n' > "$FX/ios/S2/Artwork/RemoteArtwork.swift"
 ios_map() { (cd "$FX" && ios_tests_for "$@" | paste -sd, -); }
 check "ios map: shared model selects tests that mention its type" 0 test "$(ios_map shared/src/commonMain/Album.kt)" = "LibraryListTests"
-check "ios map: shared Swift helper selects tests by its declared types" 0 test "$(ios_map ios/S2/Artwork/RemoteArtwork.swift)" = "LibraryListTests,OtherTests"
+check "ios map: shared Swift source selects tests by its declared types" 0 test "$(ios_map ios/S2/Artwork/RemoteArtwork.swift)" = "OtherTests"
+check "ios map: nested and extension declarations select no test" 0 test "$(ios_map ios/S2/Artwork/RemoteArtwork.swift)" != "OtherTests,UnrelatedTests"
+
+# decl_names (#857 follow-up): only unindented declarations, `extension` lines skipped, leading
+# @Attr / @Attr(...) tokens allowed before the modifiers.
+DN="$TMP/dn"; mkdir -p "$DN"
+printf '%s\n' \
+  'package x' \
+  '@file:JvmName("Fx")' \
+  '@Serializable(with = F::class)' \
+  'sealed interface Kind' \
+  '@Suppress("a") @Deprecated("b") data class Tag(val t: String)' \
+  'class Outer(val id: String) {' \
+  '    enum class Search { A }' \
+  '    object All' \
+  '}' \
+  'fun helper() = 1' > "$DN/Model.kt"
+check "decl_names: kotlin top-level only, attributes with args allowed" 0 test "$(decl_names "$DN/Model.kt" | paste -sd, -)" = "Kind,Outer,Tag"
+printf '%s\n' \
+  'import S2' \
+  '@MainActor final class PlayerModel { enum Play { } }' \
+  'private struct Hidden { }' \
+  'indirect enum Tree { case node(Tree) }' \
+  'typealias ID = String' \
+  'extension View { func x() {} }' \
+  'extension String { }' > "$DN/Swift.swift"
+check "decl_names: swift modifiers and attributes, extensions skipped" 0 test "$(decl_names "$DN/Swift.swift" | paste -sd, -)" = "Hidden,ID,PlayerModel,Tree"
+printf '    class Indented { }\n\tstruct Tabbed { }\n' > "$DN/NestedOnly.swift"
+check "decl_names: only nested declarations declares nothing" 0 test -z "$(decl_names "$DN/NestedOnly.swift")"
 check "ios map: shared source declaring no type runs the whole target" 0 test "$(ios_map shared/src/commonMain/Helpers.kt)" = "--all"
 check "ios map: a deleted shared file falls back to its stem" 0 test "$(ios_map shared/src/commonMain/Gone.kt)" = ""
 check "ios map: Playback adds the package run" 0 test "$(ios_map shared/src/commonMain/Album.kt ios/Playback/X.swift)" = "LibraryListTests,--package"

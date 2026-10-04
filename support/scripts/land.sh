@@ -45,8 +45,9 @@
 #                                 S2Tests/*Tests.swift named <stem>* or mentioning <stem> as a word
 #   shared/, android/domain|presentation|core .kt   the same word match on the stem (and, for
 #                                 *ViewModel, <name>UiState)
-#   (shared/ and ios/S2 sources also match every test mentioning a type the file declares, #857;
-#   more than 15 classes, or no declared type to match on, runs the whole S2Tests target: `--all`)
+#   (shared/ and ios/S2 sources also match every test mentioning a top-level type the file
+#   declares, #857; more than 15 classes, or no declared type to match on, runs the whole S2Tests
+#   target: `--all`)
 #   ios/Playback/                 also `ios/scripts/test.sh --package`
 #   nothing mapped                build only, no simulator lease
 # The verify also runs `support/scripts/lint` (check only) first, so a format slip fails at landing (#827).
@@ -92,10 +93,14 @@ https_fallback() {
 }
 
 # decl_names <file>: the type names a .kt or .swift file declares (class, interface, object, struct,
-# enum, protocol, typealias, actor, extension), one per line, unique. Empty when it declares none.
+# enum, protocol, typealias, actor), one per line, unique. Empty when it declares none. Only
+# unindented (top-level) declarations count: nested ones (All, None, Search, Play) and `extension`
+# lines (View, Size, Style) name types far too common to match on. A leading @Attr / @Attr(...)
+# token is allowed before the modifiers (@MainActor final class Foo, @Immutable data class Foo).
 decl_names() {
-  grep -E '^[[:space:]]*([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor|extension)[[:space:]]+[A-Z][A-Za-z0-9_]*' "$1" 2>/dev/null \
-    | sed -E 's/^[[:space:]]*([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor|extension)[[:space:]]+([A-Z][A-Za-z0-9_]*).*/\3/' | sort -u
+  grep -E '^(@[A-Za-z0-9_.:]+(\([^)]*\))?[[:space:]]+)*([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor)[[:space:]]+[A-Z][A-Za-z0-9_]*' "$1" 2>/dev/null \
+    | sed -E -e 's/^(@[A-Za-z0-9_.:]+(\([^)]*\))?[[:space:]]+)*//' \
+             -e 's/^([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor)[[:space:]]+([A-Z][A-Za-z0-9_]*).*/\3/' | sort -u
 }
 
 # ios_tests_for <file>...: print the S2Tests classes (one per line, sorted, unique) that the
