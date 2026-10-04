@@ -119,6 +119,35 @@ class OfflineDownloadsTest {
     }
 
     @Test
+    fun aDownloadThatFinishedWhileTheAppWasntRunningIsKept() = runTest {
+        transport.listener!!.onCompleted("jellyfin://item/2")
+
+        downloads.downloads.value["jellyfin://item/2"] shouldBe OfflineDownload(OfflineDownload.State.Completed, 1f)
+        downloads.fileUrl("jellyfin://item/2") shouldBe "file:///Downloads/amVsbHlmaW46Ly9pdGVtLzI.flac"
+        transport.removed shouldBe emptyList()
+    }
+
+    @Test
+    fun aRemovedDownloadThatsStillReportedRunningStaysRemoved() = runTest {
+        downloads.download(remote(2))
+        downloads.remove(remote(2))
+        transport.listener!!.onRunning("jellyfin://item/2")
+
+        downloads.downloads.value.keys shouldBe setOf("jellyfin://item/1")
+    }
+
+    @Test
+    fun aSongDownloadedAgainAfterItsRemovalKeepsItsNewFile() = runTest {
+        downloads.download(remote(2))
+        downloads.remove(remote(2))
+        downloads.download(remote(2))
+        transport.listener!!.onCompleted("jellyfin://item/2")
+
+        downloads.downloads.value["jellyfin://item/2"]?.state shouldBe OfflineDownload.State.Completed
+        transport.removed shouldBe listOf("jellyfin://item/2")
+    }
+
+    @Test
     fun aDownloadStillRunningFromAnEarlierLaunchIsPickedUp() = runTest {
         transport.listener!!.onProgress("jellyfin://item/2", 10, 100)
         downloads.downloads.value.keys shouldBe setOf("jellyfin://item/1")

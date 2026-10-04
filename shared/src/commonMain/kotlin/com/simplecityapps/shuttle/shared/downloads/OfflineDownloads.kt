@@ -21,6 +21,10 @@ import kotlinx.coroutines.flow.update
  * as Android's is. The files are the record of what's downloaded: [downloads] starts from the ones [DownloadTransport.restore]
  * finds, so there's no table to drift from them. A failed download is remembered until the app quits or it's retried.
  *
+ * A completion this hasn't heard of is kept: iOS finishes a background download while the app isn't running and reports
+ * it at the next launch, before (or instead of) [DownloadTransport.Listener.onRunning]. Only a song the user removed
+ * ([remove]) since it was last downloaded has its late file deleted again.
+ *
  * The player plays a downloaded song from its file ([fileUrl]).
  */
 class OfflineDownloads(
@@ -29,12 +33,18 @@ class OfflineDownloads(
 ) : SongDownloader {
     private val _downloads = MutableStateFlow<Map<String, OfflineDownload>>(emptyMap())
 
+    /** The paths [remove]d since they were last downloaded, whose late reports change nothing and whose late files are deleted. */
+    private val removedPaths = MutableStateFlow<Set<String>>(emptySet())
+
     /** Every song's download that's running, completed or failed, by `Song.path`. */
     val downloads: StateFlow<Map<String, OfflineDownload>> = _downloads.asStateFlow()
 
     init {
         transport.listener = object : DownloadTransport.Listener {
-            override fun onRunning(path: String) = update(path) { current -> current ?: OfflineDownload(OfflineDownload.State.Downloading, 0f) }
+            override fun onRunning(path: String) {
+                if (path in removedPaths.value) return
+                update(path) { current -> current ?: OfflineDownload(OfflineDownload.State.Downloading, 0f) }
+            }
 
             override fun onProgress(
                 path: String,
@@ -46,17 +56,10 @@ class OfflineDownloads(
             }
 
             override fun onCompleted(path: String) {
-                var removed = false
-                update(path) { current ->
-                    if (current == null) {
-                        removed = true
-                        null
-                    } else {
-                        OfflineDownload(OfflineDownload.State.Completed, 1f)
-                    }
-                }
                 // Removed while it was finishing: the file arrived after the removal deleted it
-                if (removed) transport.remove(path)
+                if (path in removedPaths.value) return transport.remove(path)
+                // Anything else is kept, including one finished while the app wasn't running, which nothing had reported
+                update(path) { OfflineDownload(OfflineDownload.State.Completed, 1f) }
             }
 
             override fun onFailed(path: String) = update(path) { current -> current?.copy(state = OfflineDownload.State.Failed) }
@@ -68,12 +71,14 @@ class OfflineDownloads(
     override suspend fun download(song: Song): Boolean {
         if (_downloads.value[song.path]?.state.let { it == OfflineDownload.State.Downloading || it == OfflineDownload.State.Completed }) return true
         val source = streamUrls.forPath(song.path)?.downloadSource(song) ?: return false
+        removedPaths.update { it - song.path }
         _downloads.update { it + (song.path to OfflineDownload(OfflineDownload.State.Downloading, 0f)) }
         transport.start(song.path, source)
         return true
     }
 
     override fun remove(song: Song) {
+        removedPaths.update { it + song.path }
         _downloads.update { it - song.path }
         transport.remove(song.path)
     }
