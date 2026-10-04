@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
+import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.platform.BackgroundSync
@@ -120,6 +121,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** The paywall and purchase events Swift's `PaywallPresenter` and `StoreKitManager` record. */
     val monetisationAnalytics: MonetisationAnalytics
+
+    /** Offline downloads' state, which detail headers show and whose actions they offer. */
+    val offlineDownloads: OfflineDownloads
 
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel

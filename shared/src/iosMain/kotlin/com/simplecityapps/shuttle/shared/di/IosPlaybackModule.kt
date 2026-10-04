@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.shared.playback.IosEqualizer
 import com.simplecityapps.shuttle.shared.playback.IosPlaybackStore
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.playback.IosStreamResolver
+import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.playback.SongStreamResolver
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -61,7 +62,8 @@ class IosPlaybackModule {
         localFiles: IosLocalStreamUrls,
         plex: PlexStreamUrlProvider,
         playbackSettings: PlaybackSettings,
-        gatedServerStreams: GatedServerStreams
+        gatedServerStreams: GatedServerStreams,
+        downloads: OfflineDownloads
     ): IosStreamResolver {
         val replayGainMode = playbackSettings.replayGainMode
         val preAmpGain = playbackSettings.preAmpGain
@@ -70,7 +72,8 @@ class IosPlaybackModule {
             { replayGainMode.value },
             { preAmpGain.value },
             serverStreamAccess = gatedServerStreams::access,
-            localFiles = localFiles
+            localFiles = localFiles,
+            downloadedFile = downloads::fileUrl
         )
     }
 
