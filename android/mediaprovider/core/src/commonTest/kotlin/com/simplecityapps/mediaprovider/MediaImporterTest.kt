@@ -444,7 +444,7 @@ class MediaImporterTest {
         importer.mediaProviders += server
         songRepository.stored = listOf(song())
         server.found = listOf(song().copy(id = 2, path = "/added"))
-        server.listingComplete = false
+        server.missing = 1
 
         importer.sync(SyncTrigger.Periodic)
 
@@ -453,7 +453,7 @@ class MediaImporterTest {
         preferences.lastFullSyncStart(server.type.name) shouldBe null
         preferences.songTagsOutdated(server.type) shouldBe true
 
-        server.listingComplete = true
+        server.missing = 0
         importer.sync(SyncTrigger.Periodic)
 
         server.requests shouldBe listOf(null, null)
@@ -745,8 +745,8 @@ class MediaImporterTest {
         var found: List<Song> = emptyList()
         var failure: String? = null
 
-        /** Whether its listings are complete ([FlowEvent.Success.complete]). */
-        var listingComplete = true
+        /** How many songs short of its total its listings come to ([FlowEvent.Success.missing]). */
+        var missing = 0
 
         override var unreadableRoots: Set<String> = emptySet()
 
@@ -760,7 +760,7 @@ class MediaImporterTest {
         private fun songs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             requests += since
             emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, progress = null)))
-            failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found, listingComplete))
+            failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found, missing))
         }
 
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {

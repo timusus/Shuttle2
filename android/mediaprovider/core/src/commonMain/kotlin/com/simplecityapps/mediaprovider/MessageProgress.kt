@@ -4,10 +4,13 @@ sealed class FlowEvent<out T, out U> {
     class Progress<T, U>(val data: U) : FlowEvent<T, U>()
 
     /**
-     * [complete] is false for a listing that came to less than its source said it holds (a server's total), so what it
-     * left out can't be taken as gone.
+     * [missing] is how many items short of what its source said it holds (a server's total) the listing came to. A listing
+     * that isn't [complete] can't have what it left out taken as gone, unless the source is known to come up short by as
+     * many every time (`DeleteGuard`).
      */
-    class Success<T>(val result: T, val complete: Boolean = true) : FlowEvent<T, Nothing>()
+    class Success<T>(val result: T, val missing: Int = 0) : FlowEvent<T, Nothing>() {
+        val complete: Boolean get() = missing == 0
+    }
 
     class Failure(val message: String?) : FlowEvent<Nothing, Nothing>()
 }

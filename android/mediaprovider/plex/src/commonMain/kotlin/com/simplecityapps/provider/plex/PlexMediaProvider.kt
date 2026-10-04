@@ -71,7 +71,7 @@ class PlexMediaProvider(
                     emitAll(
                         queryAllSections(address, session, sections, since) { metadata -> metadata.toSong(type, syncedAt) }.map { event ->
                             if (event is FlowEvent.Success && since != null) {
-                                FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.complete)
+                                FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.missing)
                             } else {
                                 event
                             }
@@ -162,7 +162,7 @@ class PlexMediaProvider(
 
     /**
      * Every track of every one of [sections], each [convert]ed as its page arrives, emitted as one [FlowEvent.Success] after
-     * the sections' progress, complete only if every section's listing was. A failed section ends the flow.
+     * the sections' progress, missing as many as the sections' listings together. A failed section ends the flow.
      */
     private fun <R> queryAllSections(
         address: String,
@@ -173,14 +173,14 @@ class PlexMediaProvider(
         convert: (Metadata) -> R
     ): Flow<FlowEvent<List<R>, MessageProgress>> = flow {
         val items = mutableListOf<R>()
-        var complete = true
+        var missing = 0
         for (section in sections) {
             var failed = false
             queryItems(address, session, section, since, favouritesOnly, convert).collect { event ->
                 when (event) {
                     is FlowEvent.Success -> {
                         items.addAll(event.result)
-                        complete = complete && event.complete
+                        missing += event.missing
                     }
 
                     is FlowEvent.Progress -> emit(FlowEvent.Progress(event.data))
@@ -193,7 +193,7 @@ class PlexMediaProvider(
             }
             if (failed) return@flow
         }
-        emit(FlowEvent.Success(items, complete))
+        emit(FlowEvent.Success(items, missing))
     }
 
     private fun <R> queryItems(

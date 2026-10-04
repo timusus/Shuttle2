@@ -145,13 +145,14 @@ class JellyfinMediaProviderTest {
     @Test
     fun `a listing short of the server's total is incomplete, and the next sync's full listing complete`() {
         signedIn()
-        // The server counts 5 items but returns 3, as Jellyfin's total can count items the user can't see
+        // The server counts 5 items but returns 3, as Jellyfin's total counts rows it can't read
         server.respond(ITEMS, "songs_short.json", query = mapOf("includeItemTypes" to "Audio"))
 
         val short = syncEvent()
 
         short.result.size shouldBe 3
         short.complete shouldBe false
+        short.missing shouldBe 2
 
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
 
@@ -373,6 +374,17 @@ class JellyfinMediaProviderTest {
 
         songs.associate { song -> song.path to (song.favouritedAt != null) } shouldBe mapOf("jellyfin://item/song-1" to false, "jellyfin://item/song-2" to true)
         server.requestsTo(ITEMS).single { it.url.parameters["filters"] == "IsFavorite" }.url.parameters["sortBy"] shouldBe "DateCreated,SortName"
+    }
+
+    @Test
+    fun `an incremental sync short of the server's total says how many it's missing, alongside the favourites`() {
+        signedIn()
+        server.respond(ITEMS, "songs_short.json", query = mapOf("includeItemTypes" to "Audio"))
+        server.respond(ITEMS, "favourites.json", query = mapOf("filters" to "IsFavorite"))
+
+        val listing = provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
+
+        listing.missing shouldBe 2
     }
 
     @Test

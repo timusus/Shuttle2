@@ -65,7 +65,7 @@ class JellyfinMediaProvider(
         emitAll(
             queryItems(address = address, session = session, since = since, syncedAt = syncedAt).map { event ->
                 if (event is FlowEvent.Success && since != null) {
-                    FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.complete)
+                    FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
                 } else {
                     event
                 }

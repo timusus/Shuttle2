@@ -153,13 +153,23 @@ class PagedFlowTest {
     }
 
     @Test
-    fun `a listing that falls short of its total is emitted as incomplete`() = runTest {
+    fun `a listing that falls short of its total is emitted as incomplete, with how many it's missing`() = runTest {
         val events = pagedFlow<Int>(pageSize = 4, key = { it }) { offset, _ ->
             NetworkResult.Success(Page(if (offset == 0) listOf(0, 1, 2, 3) else listOf(3, 3), totalCount = 8))
         }.toList()
 
         events.described().last() shouldBe Event.Success(listOf(0, 1, 2, 3))
-        (events.last() as FlowEvent.Success).complete shouldBe false
+        val listing = events.last() as FlowEvent.Success
+        listing.complete shouldBe false
+        listing.missing shouldBe 4
+    }
+
+    @Test
+    fun `a listing without a key isn't missing anything, whatever its total`() = runTest {
+        val listing = pagedFlow<Int>(pageSize = 4) { _, _ -> NetworkResult.Success(Page(listOf(0, 1), totalCount = 2)) }
+            .toList().last() as FlowEvent.Success
+
+        listing.missing shouldBe 0
     }
 
     @Test
@@ -177,6 +187,7 @@ class PagedFlowTest {
         val complete = listing.toList().last() as FlowEvent.Success
         complete.result shouldBe (0 until 10).toList()
         complete.complete shouldBe true
+        complete.missing shouldBe 0
     }
 
     @Test
