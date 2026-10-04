@@ -16,8 +16,10 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -139,6 +141,29 @@ class IosPlayerControllerTest {
         controller.play()
         engine.settle()
         controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a load replaced before its item is ready is dropped - and the new one completes`() = test { controller ->
+        val replaced = mutableListOf<Result<Boolean>>()
+        val loaded = mutableListOf<Result<Boolean>>()
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+
+        controller.load { replaced += it }
+        controller.load { loaded += it }
+        replaced.single().exceptionOrNull().shouldBeInstanceOf<CancellationException>()
+        engine.settle()
+
+        replaced.size shouldBe 1
+        loaded shouldBe listOf(Result.success(true))
+        controller.playbackState() shouldBe PlaybackState.Paused
+
+        // A skip replaces a load in flight the same way.
+        controller.load { replaced += it }
+        controller.skipToNext { loaded += Result.success(it.isSuccess) }
+        replaced.last().exceptionOrNull().shouldBeInstanceOf<CancellationException>()
+        engine.settle()
+        loaded.last() shouldBe Result.success(true)
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.resume
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 @Inject
@@ -34,7 +35,8 @@ class ShuffleAlbums(
                     cont.resume(Result.Success)
                 }
                 result.onFailure { error ->
-                    cont.resume(Result.Failure(error.message))
+                    // A later load replaced this one: the play it was for was dropped, not failed.
+                    if (error is CancellationException) cont.cancel(error) else cont.resume(Result.Failure(error.message))
                 }
             }
         }

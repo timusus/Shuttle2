@@ -10,6 +10,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.engine.isResolutionFailure
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -59,13 +60,15 @@ class ItemLoader(
     /**
      * Moves to the current item at [positionMs] and prepares it. [completion] gets whether it loaded at the first
      * attempt once it's ready to play, or the failure if nothing could load (the current item alone, unless
-     * [skipUnloadable]: see [onPlayerError]). A later load supersedes it, and it's never called.
+     * [skipUnloadable]: see [onPlayerError]). A load still pending is dropped for this one: its completion gets a
+     * [CancellationException].
      */
     fun load(
         positionMs: Int,
         skipUnloadable: Boolean,
         completion: (Result<Boolean>) -> Unit
     ) {
+        complete(Result.failure(CancellationException("Replaced by a later load")))
         pendingLoad = PendingLoad(completion, skipUnloadable)
         readyUid = null
         loadFailures = 0

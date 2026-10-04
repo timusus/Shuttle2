@@ -11,6 +11,7 @@ import com.simplecityapps.playback.spec.ClockDriver
 import com.simplecityapps.playback.spec.PlaybackHarness
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -101,6 +102,17 @@ class ItemLoaderTest {
         load(skipUnloadable = true).isFailure shouldBe true
 
         gaveUp shouldBe 1
+    }
+
+    @Test
+    fun `a load replaced before its item is ready is dropped - and the new one completes`() {
+        queue(playable)
+        var replaced: Result<Boolean>? = null
+        loader.load(0, skipUnloadable = true) { replaced = it }
+
+        load(skipUnloadable = true) shouldBe Result.success(true)
+
+        (replaced?.exceptionOrNull() is CancellationException) shouldBe true
     }
 
     @Test

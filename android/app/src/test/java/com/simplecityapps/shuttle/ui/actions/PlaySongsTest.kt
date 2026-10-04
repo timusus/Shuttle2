@@ -3,8 +3,10 @@ package com.simplecityapps.shuttle.ui.actions
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeQueueOperations
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -32,6 +34,17 @@ class PlaySongsTest {
 
         result.shouldBeInstanceOf<PlaySongs.Result.Failure>()
         (result as PlaySongs.Result.Failure).message shouldBe "codec error"
+    }
+
+    @Test
+    fun `a load replaced by a later one is cancelled - not a failure, and doesn't play`() = runTest {
+        fakePlaybackOperations.loadResult = Result.failure(CancellationException("Replaced by a later load"))
+        val songs = listOf(createSong(id = 1))
+
+        val result = runCatching { playSongs(songs) }
+
+        (result.exceptionOrNull() is CancellationException) shouldBe true
+        fakePlaybackOperations.calls shouldNotContain "play()"
     }
 
     @Test

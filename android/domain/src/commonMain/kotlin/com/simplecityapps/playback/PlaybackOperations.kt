@@ -43,7 +43,9 @@ interface PlaybackOperations {
 
     /**
      * Loads the current item, paused. An item that can't load is skipped for the next one, unless [skipUnloadable] is
-     * false (a restore): then it stays current, paused, until it's played.
+     * false (a restore): then it stays current, paused, until it's played. A load replaced by another before its item was
+     * ready (a later load, or a skip) fails with a [kotlinx.coroutines.CancellationException]: it didn't fail, it was
+     * dropped, and nothing should come of it.
      */
     fun load(seekPosition: Int? = null, skipUnloadable: Boolean = true, completion: (Result<Boolean>) -> Unit)
     fun play()

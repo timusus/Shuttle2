@@ -585,6 +585,12 @@ class IosPlayerController(
         publishState()
     }
 
+    /** Makes [load] the pending load. One still pending never had its item ready, and is told it was dropped. */
+    private fun replacePending(load: PendingLoad) {
+        completePending(Result.failure(CancellationException("Replaced by a later load")))
+        pendingLoad = load
+    }
+
     private fun completePending(result: Result<Boolean>) {
         val load = pendingLoad ?: return
         pendingLoad = null
@@ -635,7 +641,7 @@ class IosPlayerController(
             completion(Result.failure(IllegalStateException("Queue empty")))
         } else {
             playWhenReady = false
-            pendingLoad = PendingLoad(completion, skipUnloadable)
+            replacePending(PendingLoad(completion, skipUnloadable))
             loadFailures = 0
             startLoad(item, seekPosition ?: PlaybackPolicy.startOf(item.song))
         }
@@ -748,7 +754,7 @@ class IosPlayerController(
     /** Plays the current item (just moved to) from its start. */
     private fun playFromStart(completion: ((Result<Any?>) -> Unit)?) {
         val item = queue.currentItem ?: return
-        pendingLoad = PendingLoad({ result -> completion?.invoke(result) }, skipUnloadable = true)
+        replacePending(PendingLoad({ result -> completion?.invoke(result) }, skipUnloadable = true))
         loadFailures = 0
         playWhenReady = true
         startLoad(item, 0)
