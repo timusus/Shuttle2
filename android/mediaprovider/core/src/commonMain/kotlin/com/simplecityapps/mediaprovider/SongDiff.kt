@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.Song
+import kotlin.time.Instant
 
 class SongDiff(
     existingData: List<Song>,
@@ -17,22 +18,42 @@ class SongDiff(
     override fun isChanged(
         oldData: Song,
         updated: Song
-    ): Boolean = updated.copy(
-        lastPlayed = oldData.lastPlayed,
-        lastCompleted = oldData.lastCompleted,
-        playCount = oldData.playCount,
-        playbackPosition = oldData.playbackPosition,
-        blacklisted = oldData.blacklisted,
-        mediaProvider = oldData.mediaProvider,
-        bitRate = oldData.bitRate,
-        sampleRate = oldData.sampleRate,
-        channelCount = oldData.channelCount,
-        audioCodec = oldData.audioCodec,
-        albumIdentity = oldData.albumIdentity,
-        // Stored as a year only
-        date = if (updated.date?.year == oldData.date?.year) oldData.date else updated.date,
-        favouritedAt = if (oldData.mediaProvider.remote) updated.favouritedAt else oldData.favouritedAt
-    ) != oldData
+    ): Boolean {
+        // The database stores epoch milliseconds, but Jellyfin and Emby parse ISO strings with up to seven fractional
+        // digits, so an instant only counts as changed at the stored precision
+        fun Instant?.atStoredPrecision(): Instant? = this?.toEpochMilliseconds()?.let(Instant::fromEpochMilliseconds)
+
+        val old = oldData.copy(
+            lastModified = oldData.lastModified.atStoredPrecision(),
+            dateAdded = oldData.dateAdded.atStoredPrecision(),
+            favouritedAt = oldData.favouritedAt.atStoredPrecision()
+        )
+
+        return updated.copy(
+            lastPlayed = old.lastPlayed,
+            lastCompleted = old.lastCompleted,
+            playCount = old.playCount,
+            playbackPosition = old.playbackPosition,
+            blacklisted = old.blacklisted,
+            mediaProvider = old.mediaProvider,
+            bitRate = old.bitRate,
+            sampleRate = old.sampleRate,
+            channelCount = old.channelCount,
+            audioCodec = old.audioCodec,
+            albumIdentity = old.albumIdentity,
+            // Stored as a year only
+            date = if (updated.date?.year == old.date?.year) old.date else updated.date,
+            // A server stamps all of its favourites with the sync time, and the merge keeps the stored time anyway,
+            // so only a flip in favourited-ness counts as a change
+            favouritedAt = if (old.mediaProvider.remote && (updated.favouritedAt != null) != (old.favouritedAt != null)) {
+                updated.favouritedAt.atStoredPrecision()
+            } else {
+                old.favouritedAt
+            },
+            lastModified = updated.lastModified.atStoredPrecision(),
+            dateAdded = updated.dateAdded.atStoredPrecision()
+        ) != old
+    }
 
     override fun update(
         oldData: Song,

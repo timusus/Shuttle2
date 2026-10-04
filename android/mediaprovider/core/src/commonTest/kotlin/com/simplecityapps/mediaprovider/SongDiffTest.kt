@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
 
@@ -114,6 +115,29 @@ class SongDiffTest {
         diff.inserts shouldBe listOf(added)
         diff.updates shouldBe listOf(changed.copy(name = "Renamed"))
         diff.deletes shouldBe listOf(gone)
+    }
+
+    @Test
+    fun `a song differing only below a millisecond is not an update`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport, dateAdded = firstImport)
+        val resynced = createSong(id = 0, lastModified = firstImport + 999_999.nanoseconds, dateAdded = firstImport + 1.nanoseconds)
+
+        SongDiff(listOf(stored), listOf(resynced)).apply().updates shouldBe emptyList()
+    }
+
+    @Test
+    fun `a favourite the server restamped is not an update`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport).copy(favouritedAt = firstImport)
+        val resynced = createSong(id = 0, lastModified = firstImport).copy(favouritedAt = Instant.fromEpochSeconds(1_700_000_300))
+
+        SongDiff(listOf(stored), listOf(resynced)).apply().updates shouldBe emptyList()
+    }
+
+    @Test
+    fun `a favourite the server removed is an update`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport).copy(favouritedAt = firstImport)
+
+        SongDiff(listOf(stored), listOf(createSong(id = 0, lastModified = firstImport))).apply().updates.single().favouritedAt shouldBe null
     }
 
     @Test
