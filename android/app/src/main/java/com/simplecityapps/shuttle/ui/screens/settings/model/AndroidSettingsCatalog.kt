@@ -154,7 +154,9 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         fromFloat = { it.roundToInt() }
                     )
                 )
-            ),
+            )
+        ) + listOfNotNull(
+            // Hidden in a build without a Last.fm API key, where sign-in is unavailable (LastFmAccountState.Unavailable).
             SettingsGroup(
                 title = null,
                 items = listOf(
@@ -163,7 +165,7 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         title = StringKey.SETTINGS_SCROBBLING_TITLE
                     )
                 )
-            )
+            ).takeIf { BuildConfig.LASTFM_API_KEY.isNotBlank() }
         )
     )
 
