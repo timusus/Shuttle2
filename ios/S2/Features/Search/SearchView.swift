@@ -80,7 +80,8 @@ struct SearchContentView: View {
     var onOpen: (Route) -> Void = { _ in }
     /// Plays the song results from this index.
     var onPlaySong: (Int) -> Void = { _ in }
-    var onPlay: (MediaSelection) -> Void = { _ in }
+    /// Plays a top result that isn't a song, keeping the query as a recent search.
+    let onPlay: (MediaSelection) -> Void
     /// Dispatches a long-press play or queue action.
     var onAction: (MediaAction) -> Void = { _ in }
 
@@ -239,6 +240,7 @@ struct SearchResultList: View {
     /// The rows' items, read across the bridge once for these results.
     private let items: SearchResultItems
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var expanded: SearchCategory?
     @State private var songInfo: SongInfoTarget?
 
@@ -248,7 +250,7 @@ struct SearchResultList: View {
         nowPlaying: LibraryNowPlaying = .none,
         onOpen: @escaping (Route) -> Void,
         onPlaySong: @escaping (Int) -> Void,
-        onPlay: @escaping (MediaSelection) -> Void = { _ in },
+        onPlay: @escaping (MediaSelection) -> Void,
         onAction: @escaping (MediaAction) -> Void
     ) {
         self.query = query
@@ -294,10 +296,13 @@ struct SearchResultList: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.tint)
                 .accessibilityIdentifier("search.topResult.kind")
-            HStack(spacing: Spacing.small) {
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.small))
+                : AnyLayout(HStackLayout(spacing: Spacing.small))
+            layout {
                 row(top, index: 0, artworkSize: Self.topResultArtwork)
                 Button { playTop(top) } label: {
-                    Label("Play", systemImage: "play.fill").labelStyle(.iconOnly)
+                    Label("Play \(topTitle(top))", systemImage: "play.fill").labelStyle(.iconOnly)
                 }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.circle)
@@ -310,6 +315,17 @@ struct SearchResultList: View {
     }
 
     private static let topResultArtwork: CGFloat = 96
+
+    /// The top result's title, for its Play button's label.
+    private func topTitle(_ category: SearchCategory) -> String {
+        switch category {
+        case .artists: AlbumArtistRow.title(items.artists[0])
+        case .albums: items.albums[0].name ?? "Unknown"
+        case .songs: items.songs[0].name ?? "Unknown"
+        case .genres: items.genres[0].name.trimmingCharacters(in: .whitespacesAndNewlines)
+        case .playlists: items.playlists[0].name
+        }
+    }
 
     private func playTop(_ category: SearchCategory) {
         switch category {
@@ -356,17 +372,7 @@ struct SearchResultList: View {
         case .songs:
             let song = items.songs[index]
             Button { onPlaySong(index) } label: {
-                if let artworkSize {
-                    MediaRow(
-                        song.name ?? "Unknown",
-                        subtitle: SongRow.subtitle(song),
-                        artwork: .song(song),
-                        artworkSize: artworkSize,
-                        playback: nowPlaying.playback(song: song)
-                    )
-                } else {
-                    SongRow(song: song, playback: nowPlaying.playback(song: song))
-                }
+                SongRow(song: song, playback: nowPlaying.playback(song: song), artworkSize: artworkSize ?? ArtworkSize.row)
             }
                 .buttonStyle(.pressScale)
                 .accessibilityIdentifier("search.result.song")

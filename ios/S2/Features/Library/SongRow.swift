@@ -69,13 +69,15 @@ struct SongRow: View {
     var playback: MediaRowPlayback = .none
     var key: SongRowKey?
     var omittingArtist: String?
+    var artworkSize: CGFloat
 
     /// The Library's sort, which adds its key to the subtitle: a play count, or the date added.
-    init(song: Song, playback: MediaRowPlayback = .none, sortOrder: SongSortOrder? = nil, key: SongRowKey? = nil, omittingArtist: String? = nil) {
+    init(song: Song, playback: MediaRowPlayback = .none, sortOrder: SongSortOrder? = nil, key: SongRowKey? = nil, omittingArtist: String? = nil, artworkSize: CGFloat = ArtworkSize.row) {
         self.song = song
         self.playback = playback
         self.key = key ?? SongRowKey(sortOrder: sortOrder)
         self.omittingArtist = omittingArtist
+        self.artworkSize = artworkSize
     }
 
     var body: some View {
@@ -83,6 +85,7 @@ struct SongRow: View {
             song.name ?? "Unknown",
             subtitle: Self.subtitle(song, key: key, omittingArtist: omittingArtist),
             artwork: .song(song),
+            artworkSize: artworkSize,
             playback: playback,
             titleIdentifier: "songRow.title"
         ) {

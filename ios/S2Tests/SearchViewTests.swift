@@ -42,21 +42,21 @@ struct SearchViewTests {
     }
 
     @Test func nothingTypedAndNoRecentSearchesInvitesASearch() throws {
-        let sut = SearchContentView(state: state(SearchContentRecent(searches: [])))
+        let sut = SearchContentView(state: state(SearchContentRecent(searches: [])), onPlay: { _ in })
         #expect((try? sut.inspect().find(text: "Search Your Library")) != nil)
         #expect((try? sut.typeChips.inspect().find(FilterChip.self)) == nil)
     }
 
     @Test func aRecentSearchFillsTheField() throws {
         var chosen: String?
-        let sut = SearchContentView(state: state(SearchContentRecent(searches: ["radiohead", "björk"])), onSelectRecent: { chosen = $0 })
+        let sut = SearchContentView(state: state(SearchContentRecent(searches: ["radiohead", "björk"])), onSelectRecent: { chosen = $0 }, onPlay: { _ in })
         #expect((try? sut.inspect().find(text: "Recent Searches")) != nil)
         try sut.inspect().find(button: "björk").tap()
         #expect(chosen == "björk")
     }
 
     @Test func searchingShowsProgressAndTheTypeChips() throws {
-        let sut = SearchContentView(state: state(SearchContentSearching.shared))
+        let sut = SearchContentView(state: state(SearchContentSearching.shared), onPlay: { _ in })
         #expect((try? sut.inspect().find(ViewType.ProgressView.self)) != nil)
         #expect(try sut.typeChips.inspect().findAll(FilterChip.self).count == 1 + SearchCategory.allCases.count)
     }
@@ -67,7 +67,8 @@ struct SearchViewTests {
         let sut = SearchContentView(
             state: state(SearchContentNoResults(query: "zzz"), categories: [.songs]),
             onSelectAll: { all = true },
-            onToggleCategory: { toggled = $0 }
+            onToggleCategory: { toggled = $0 },
+            onPlay: { _ in }
         )
         try sut.typeChips.inspect().find(button: "Albums").tap()
         try sut.typeChips.inspect().find(button: "All").tap()
@@ -76,7 +77,7 @@ struct SearchViewTests {
     }
 
     @Test func noResultsNamesTheQuery() throws {
-        let sut = SearchContentView(state: state(SearchContentNoResults(query: "zzz")))
+        let sut = SearchContentView(state: state(SearchContentNoResults(query: "zzz")), onPlay: { _ in })
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "search.noResults")) != nil)
     }
 
@@ -87,7 +88,7 @@ struct SearchViewTests {
             songs: TestSongs.demo,
             top: .artists
         )
-        let sut = SearchContentView(state: state(SearchContentResults(query: "radio", results: results)))
+        let sut = SearchContentView(state: state(SearchContentResults(query: "radio", results: results)), onPlay: { _ in })
         for header in ["Top Result", "Artists", "Albums", "Songs"] {
             #expect((try? sut.inspect().find(text: header)) != nil)
         }
@@ -100,7 +101,7 @@ struct SearchViewTests {
 
     @Test func seeAllExpandsACappedSection() throws {
         let albums = ["A", "B", "C", "D"].map { album($0) }
-        let sut = SearchResultList(query: "a", results: results(albums: albums, songs: [TestSongs.demo[0]]), onOpen: { _ in }, onPlaySong: { _ in }, onAction: { _ in })
+        let sut = SearchResultList(query: "a", results: results(albums: albums, songs: [TestSongs.demo[0]]), onOpen: { _ in }, onPlaySong: { _ in }, onPlay: { _ in }, onAction: { _ in })
         #expect((try? sut.inspect().find(text: "D")) == nil)
         #expect((try? sut.inspect().find(button: "See All")) != nil)
     }
@@ -112,7 +113,7 @@ struct SearchViewTests {
         let sut = SearchResultList(
             query: "radio",
             results: results(artists: [radiohead], albums: [okComputer]),
-            onOpen: { opened.append($0) }, onPlaySong: { _ in }, onAction: { _ in }
+            onOpen: { opened.append($0) }, onPlaySong: { _ in }, onPlay: { _ in }, onAction: { _ in }
         )
         try sut.inspect().find(text: "Radiohead").find(ViewType.Button.self, relation: .parent).tap()
         try sut.inspect().find(text: "OK Computer").find(ViewType.Button.self, relation: .parent).tap()
@@ -123,11 +124,30 @@ struct SearchViewTests {
         var played: Int?
         let sut = SearchResultList(
             query: "radio", results: results(songs: TestSongs.demo, top: .songs),
-            onOpen: { _ in }, onPlaySong: { played = $0 }, onAction: { _ in }
+            onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { _ in }, onAction: { _ in }
         )
         try sut.inspect().find(text: "Hyperballad").find(ViewType.Button.self, relation: .parent).tap()
         #expect(played == 1)
         try sut.inspect().find(text: "Paranoid Android").find(ViewType.Button.self, relation: .parent).tap()
         #expect(played == 0)
+    }
+
+    @Test func theTopResultsPlayButtonPlaysItWithoutOpeningIt() throws {
+        var selections: [MediaSelection] = []
+        var played: Int?
+        let artistResults = SearchResultList(
+            query: "radio", results: results(artists: [artist("Radiohead", albums: 3, songs: 42)], top: .artists),
+            onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
+        )
+        try artistResults.inspect().find(viewWithAccessibilityIdentifier: "search.topResult.play").find(ViewType.Button.self, relation: .parent).tap()
+        #expect(selections.count == 1)
+        #expect(played == nil)
+        let songResults = SearchResultList(
+            query: "radio", results: results(songs: TestSongs.demo, top: .songs),
+            onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
+        )
+        try songResults.inspect().find(viewWithAccessibilityIdentifier: "search.topResult.play").find(ViewType.Button.self, relation: .parent).tap()
+        #expect(played == 0)
+        #expect(selections.count == 1)
     }
 }
