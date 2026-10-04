@@ -26,10 +26,14 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
+import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.util.Collections
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -74,6 +78,8 @@ class TaglibMediaProvider(
     private var walkedPlaylistFiles: Map<String, List<PlaylistFile>> = emptyMap()
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+        // First, so an import that fails part way doesn't leave the last one's walk for findPlaylists to use
+        walkedPlaylistFiles = emptyMap()
         val startTime = System.currentTimeMillis()
         val folders = folders()
         val mediaStoreFiles = findAudioFiles(folders.filter)
@@ -170,19 +176,29 @@ class TaglibMediaProvider(
         }
         val primaryStoragePath = primaryStoragePath()
         val excludes = FolderFilter(excludes = folders.filter.excludes)
+        // Read from the walks' concurrent collectors
+        val excludedFolders: MutableList<DocumentNodeTree> = Collections.synchronizedList(mutableListOf())
         val statuses =
             folders.extraTrees
                 .map { treeUri ->
-                    // An excluded folder covers everything beneath it, so it isn't walked at all
+                    // An excluded folder covers everything beneath it, so its songs aren't walked at all
                     SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri) { folder ->
                         val path = externalStorageTreeFolder(folder.uri.authority, folder.documentId, primaryStoragePath)
-                        path != null && !excludes.accepts("$path/")
+                        (path != null && !excludes.accepts("$path/")).also { excluded -> if (excluded) excludedFolders += folder }
                     }
                 }
                 .merge()
                 .toList()
         val trees = statuses.filterIsInstance<SafDirectoryHelper.TreeStatus.Complete>().map { status -> status.tree }
-        walkedPlaylistFiles = trees.associate { tree -> treeKey(tree.rootUri) to tree.getLeaves().filter { it.isPlaylist() }.map { it.toPlaylistFile() } }
+        // Excludes limit songs, not playlists, so the playlists in excluded folders are looked for there alone
+        val excludedPlaylists =
+            excludedFolders.toList().mapNotNull { folder ->
+                SafDirectoryHelper.walkFolder(context.contentResolver, folder.rootUri, folder)
+                    ?.let { walked -> treeKey(walked.rootUri) to walked.getLeaves().filter { it.isPlaylist() }.map { it.toPlaylistFile() } }
+            }
+        walkedPlaylistFiles =
+            trees.associate { tree -> treeKey(tree.rootUri) to tree.getLeaves().filter { it.isPlaylist() }.map { it.toPlaylistFile() } }
+                .let { found -> found + excludedPlaylists.filter { (key, _) -> key in found }.groupBy({ it.first }, { it.second }).mapValues { (key, lists) -> found.getValue(key) + lists.flatten() } }
         val documents =
             trees
                 .flatMap { tree -> tree.getLeaves() }
@@ -207,6 +223,8 @@ class TaglibMediaProvider(
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { node ->
             merger.unchangedSong(node.uri.toString(), node.size, node.lastModified)?.reused(node.lastModified, emptyList())
                 ?: fileScanner.getAudioFile(context, kTagLib, node)?.toSong(type, emptyList())
+                // A file imported before that can't be read now keeps its song, which removing would take its play history with it
+                ?: merger.existingSong(node.uri.toString())?.reused(node.lastModified, emptyList())
         }.mapNotNull { it }
 
     private fun getSongs(
@@ -217,6 +235,7 @@ class TaglibMediaProvider(
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (file, folderImages) ->
             merger.unchangedSong(file.path, file.size, file.lastModified)?.reused(file.lastModified, folderImages)
                 ?: readAudioFile(file)?.toSong(type, folderImages)
+                ?: merger.existingSong(file.path)?.reused(file.lastModified, folderImages)
         }.mapNotNull { it }
 
     /** A stored song whose file is unchanged, as a freshly imported one: the tags are kept, but a cover next to the file may have changed. */
@@ -248,8 +267,9 @@ class TaglibMediaProvider(
     private suspend fun findPlaylistFiles(): List<PlaylistFile> = withContext(Dispatchers.IO) {
         val trees = grantedTrees()
         val primaryStoragePath = primaryStoragePath()
-        val walked = walkedPlaylistFiles
         val extraTrees = folders().extraTrees.map { tree -> treeKey(tree) }.toSet()
+        // Only a tree that is still an extra tree: one dropped since the walk is looked up like any other
+        val walked = walkedPlaylistFiles.filterKeys { key -> key in extraTrees }
         val mediaStoreVolumes = mediaStoreVolumes()
         // Queried once, and only if a tree needs it
         val indexed by lazy { queryPlaylistFiles() }
@@ -315,14 +335,28 @@ class TaglibMediaProvider(
         val m3uPlaylists =
             playlistFiles
                 .mapNotNull { file ->
-                    context.contentResolver.openInputStream(file.uri)
-                        ?.use { inputStream ->
-                            M3uParser().parse(
-                                path = file.uri.toString(),
-                                fileName = file.displayName,
-                                text = inputStream.readBytes().decodeToString()
-                            )
+                    try {
+                        context.contentResolver.openInputStream(file.uri)
+                            ?.use { inputStream ->
+                                M3uParser().parse(
+                                    path = file.uri.toString(),
+                                    fileName = file.displayName,
+                                    text = inputStream.readBytes().decodeToString()
+                                )
+                            }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        // A MediaStore row can outlive its file, and one playlist that can't be read shouldn't stop the others
+                        when (e) {
+                            is FileNotFoundException, is IllegalArgumentException, is SecurityException, is IOException -> {
+                                Timber.e(e, "Failed to read playlist ${file.uri}")
+                                null
+                            }
+
+                            else -> throw e
                         }
+                    }
                 }
 
         val updates =

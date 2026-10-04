@@ -20,10 +20,12 @@ import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import java.io.File
+import java.io.FileNotFoundException
 import java.util.Collections
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -47,9 +49,13 @@ class TaglibMediaProviderTest {
     private val skipFolder = "${android.os.Environment.getExternalStorageDirectory().path}/Music/Skip"
     private val zeroTree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Zero")
     private val namesTree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Names")
+    private val listsTree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Lists")
 
     // Read from the walk's concurrent workers
     private val read: MutableList<String> = Collections.synchronizedList(mutableListOf())
+
+    // Names of files the scanner fails to read
+    private val unreadable: MutableSet<String> = Collections.synchronizedSet(mutableSetOf())
 
     private val scanner =
         object : FileScanner() {
@@ -59,6 +65,7 @@ class TaglibMediaProviderTest {
                 node: DocumentNode
             ): AudioFile? {
                 read += node.displayName
+                if (node.displayName in unreadable) return null
                 return AudioFile(
                     path = node.uri.toString(),
                     size = node.size,
@@ -151,6 +158,75 @@ class TaglibMediaProviderTest {
     }
 
     @Test
+    fun `a playlist MediaStore lists that can't be opened is skipped, the others still import`() {
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/ghost.m3u" to "ghost.m3u", "$primary/Music/a.m3u" to "a.m3u")
+
+        val playlists = findPlaylists(trees = listOf(tree))
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/a.m3u").toString())
+    }
+
+    @Test
+    fun `playlists in an excluded folder of an extra tree are still found`() {
+        @Suppress("DEPRECATION")
+        val hidden = "${android.os.Environment.getExternalStorageDirectory().path}/Lists/Hidden"
+        val provider = provider(excludes = listOf(hidden), trees = listOf(listsTree), grantedTrees = listOf(listsTree))
+        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldContainExactlyInAnyOrder
+            listOf(
+                DocumentsContract.buildDocumentUriUsingTree(listsTree, "primary:Lists/k.m3u").toString(),
+                DocumentsContract.buildDocumentUriUsingTree(listsTree, "primary:Lists/Hidden/h.m3u").toString()
+            )
+    }
+
+    @Test
+    fun `a findSongs that fails doesn't leave the last import's playlist walk in use`() {
+        var calls = 0
+        val provider =
+            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, grantedTrees = { listOf(tree) }) {
+                // The second call is the failing findSongs' own, before it walks anything
+                if (++calls == 2) throw IllegalStateException("no folders")
+                ScannerFolders(extraTrees = listOf(tree))
+            }
+        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+        runCatching { runBlocking { provider.findSongs(emptyList()).toList() } }
+        queried.clear()
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+        // Walked again, not read from the map of the import before
+        queried.toList().isEmpty() shouldBe false
+    }
+
+    @Test
+    fun `a walked tree that is no longer an extra tree is looked up in MediaStore`() {
+        var extra = listOf(tree)
+        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
+        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+        extra = emptyList()
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/Lists/a.m3u" to "a.m3u")
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Lists/a.m3u").toString())
+    }
+
+    @Test
+    fun `a file that was imported before and can't be read now keeps its song, a new one is skipped`() {
+        unreadable += listOf("b.mp3", "c.mp3")
+        val existing = listOf(storedSong("b.mp3", size = 999, lastModified = MODIFIED))
+
+        val songs = findSongs(existing, excludes = listOf(skipFolder))
+
+        songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Read a.mp3", "Stored b.mp3")
+        songs.first { it.name == "Stored b.mp3" }.id shouldBe 0
+    }
+
+    @Test
     fun `MediaStore covers shared storage, and another volume only while it indexes it`() {
         mediaStoreIndexesTree("primary:Music", emptySet()) shouldBe true
         mediaStoreIndexesTree("home:", emptySet()) shouldBe true
@@ -183,6 +259,7 @@ class TaglibMediaProviderTest {
     @Test
     fun `an unchanged MediaStore file is reused without being read, a changed one is read`() {
         FakeMediaProvider.rows = listOf(mediaRow(1, "m1.mp3", size = 10), mediaRow(2, "m2.mp3", size = 11))
+        FakeMediaProvider.rows = FakeMediaProvider.rows + listOf(mediaRow(3, "m3.mp3", size = 12))
         val existing =
             listOf(
                 mediaStoreSong("m1.mp3", size = 10, lastModified = MODIFIED),
@@ -191,9 +268,9 @@ class TaglibMediaProviderTest {
 
         val songs = findSongs(existing, excludes = emptyList(), trees = emptyList())
 
-        // The changed file is read through KTagLib, which a JVM test can't, so it's skipped
-        songs.map { it.name } shouldBe listOf("Stored m1.mp3")
-        songs.single().id shouldBe 0
+        // The changed file is read through KTagLib, which a JVM test can't, so it fails and keeps its stored song; the new one fails and is skipped
+        songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Stored m1.mp3", "Stored m2.mp3")
+        songs.all { it.id == 0L } shouldBe true
     }
 
     @Test
@@ -213,10 +290,10 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `an excluded folder is never queried`() {
+    fun `no song in an excluded folder is read`() {
         findSongs(emptyList(), excludes = listOf(skipFolder))
 
-        queried.toList().none { it.startsWith("primary:Music/Skip") } shouldBe true
+        read shouldContainExactlyInAnyOrder listOf("a.mp3", "b.mp3", "c.mp3")
     }
 
     @Test
@@ -227,7 +304,6 @@ class TaglibMediaProviderTest {
         findSongs(emptyList(), excludes = listOf(foo), trees = listOf(namesTree))
 
         read shouldBe listOf("g.mp3")
-        queried.toList().none { it == "primary:Names/Foo" } shouldBe true
     }
 
     @Test
@@ -238,7 +314,6 @@ class TaglibMediaProviderTest {
         findSongs(emptyList(), excludes = listOf(deep))
 
         read shouldContainExactlyInAnyOrder listOf("a.mp3", "b.mp3", "c.mp3", "d.mp3")
-        queried.toList().none { it.startsWith("primary:Music/Skip/Deep") } shouldBe true
     }
 
     @Test
@@ -407,6 +482,8 @@ class TaglibMediaProviderTest {
                 "primary:Music" to listOf(Doc("primary:Music/p.m3u"), Doc("primary:Music/a.mp3"), Doc("primary:Music/b.mp3", size = 10), Doc("primary:Music/c.mp3"), Doc("primary:Music/Skip", dir = true)),
                 "primary:Music/Skip" to listOf(Doc("primary:Music/Skip/d.mp3"), Doc("primary:Music/Skip/Deep", dir = true)),
                 "primary:Music/Skip/Deep" to listOf(Doc("primary:Music/Skip/Deep/e.mp3")),
+                "primary:Lists" to listOf(Doc("primary:Lists/k.m3u"), Doc("primary:Lists/Hidden", dir = true)),
+                "primary:Lists/Hidden" to listOf(Doc("primary:Lists/Hidden/h.m3u")),
                 "primary:Zero" to listOf(Doc("primary:Zero/zero.mp3", modified = 0)),
                 "primary:Names" to listOf(Doc("primary:Names/Foo", dir = true), Doc("primary:Names/Foobar", dir = true)),
                 "primary:Names/Foo" to listOf(Doc("primary:Names/Foo/f.mp3")),
@@ -453,6 +530,7 @@ class TaglibMediaProviderTest {
             uri: Uri,
             mode: String
         ): ParcelFileDescriptor {
+            if (uri.toString().contains("ghost")) throw FileNotFoundException("Gone")
             val file = File.createTempFile("playlist", ".m3u").apply { writeText("#EXTM3U\n/storage/emulated/0/Music/a.mp3\n") }
             return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         }

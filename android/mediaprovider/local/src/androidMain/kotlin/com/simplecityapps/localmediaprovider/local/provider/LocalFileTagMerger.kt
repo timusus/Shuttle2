@@ -28,6 +28,9 @@ internal class LocalFileTagMerger(
         return existing
     }
 
+    /** The stored song for the file at [path], whether or not it changed: what to keep when the file can't be read this time. */
+    fun existingSong(path: String): Song? = existingSongsByPath[path]
+
     /** [this], a song built from the file listing, with the tags [unchangedSong] returned in place of the ones read from the file. */
     fun Song.withStoredTags(existing: Song): Song = copy(
         name = existing.name,

@@ -47,6 +47,23 @@ object SafDirectoryHelper {
         emit(tree?.let { TreeStatus.Complete(it) } ?: TreeStatus.Unavailable(rootUri))
     }.flowOn(Dispatchers.IO)
 
+    /**
+     * The contents of [folder], a folder of the tree at [rootUri] that [buildFolderNodeTree] skipped, as a tree of its own.
+     * Null if it can't be listed.
+     */
+    suspend fun walkFolder(
+        contentResolver: ContentResolver,
+        rootUri: Uri,
+        folder: DocumentNodeTree
+    ): DocumentNodeTree? = try {
+        folder.also { traverseDocumentNodes(it, contentResolver, rootUri) { false } }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to walk folder (${folder.uri})")
+        null
+    }
+
     private suspend fun traverseDocumentNodes(
         parent: DocumentNodeTree,
         contentResolver: ContentResolver,
