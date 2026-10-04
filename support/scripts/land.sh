@@ -109,8 +109,10 @@ TIMED_OUT_RC=125
 # run_in_group [--timeout <seconds>] <cmd>...: run <cmd> (stdin from /dev/null, stdout/stderr inherited) in its
 # own process group. With --timeout, kill the whole group (TERM, then KILL after 10s) if it outlives
 # <seconds> and return TIMED_OUT_RC (#779). If this shell is TERMed/INTed/HUPed or exits meanwhile, the group
-# and its watchdog are killed too, so a dead land.sh never leaves a verify holding the lock (#806). Portable:
-# macOS has no `timeout`. Otherwise returns the command's status.
+# and its watchdog are killed too, so a dead land.sh never leaves a verify holding the lock (#806). The KILL
+# is driven from here, not only the watchdog: `wait` below returns as soon as the group leader dies from the
+# TERM, and a descendant that traps TERM (a Gradle child) would otherwise outlive the watchdog, which is
+# killed right after (#809). Portable: macOS has no `timeout`. Otherwise returns the command's status.
 GROUP_PID="" WATCHDOG_PID=""
 kill_groups() {
   [ -n "$WATCHDOG_PID" ] && kill -TERM -- "-$WATCHDOG_PID" 2>/dev/null
@@ -134,6 +136,17 @@ run_in_group() {
   fi
   set +m
   wait "$GROUP_PID" 2>/dev/null; rc=$?
+  if [ -n "$flag" ] && [ -e "$flag" ]; then
+    # The timeout fired: the watchdog has TERMed the group and the leader is dead. Give the group
+    # the 10s grace the watchdog allows, then KILL whatever ignores TERM (it is not reaped by `wait`,
+    # which only waited for the leader) — before killing the watchdog, whose own KILL would never
+    # run once its parent stops it below (#809).
+    local deadline=$(( $(date +%s) + 10 ))
+    while kill -0 -- "-$GROUP_PID" 2>/dev/null && [ "$(date +%s)" -lt "$deadline" ]; do
+      sleep 1
+    done
+    kill -KILL -- "-$GROUP_PID" 2>/dev/null
+  fi
   [ -n "$WATCHDOG_PID" ] && kill -TERM -- "-$WATCHDOG_PID" 2>/dev/null && wait "$WATCHDOG_PID" 2>/dev/null
   WATCHDOG_PID="" GROUP_PID=""
   if [ -n "$flag" ] && [ -e "$flag" ]; then rm -f "$flag"; return "$TIMED_OUT_RC"; fi
