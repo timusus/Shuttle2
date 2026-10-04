@@ -12,6 +12,7 @@ private val losslessCodecs =
         "wavpack",
         "wv",
         "tta",
+        "shorten",
         "mlp",
         "truehd",
         "wmalossless",
