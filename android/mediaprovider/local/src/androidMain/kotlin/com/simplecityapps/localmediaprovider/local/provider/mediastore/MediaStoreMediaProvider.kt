@@ -155,7 +155,7 @@ class MediaStoreMediaProvider(
         // After the listing, so a volume unmounted while it ran counts too: MediaStore leaves its songs out until it's back
         unreadableRoots = unmountedRoots(existingSongs.map { song -> song.path }, mountedVolumeRoots(context))
 
-        var songs = mutableListOf<Song>()
+        val songs = mutableListOf<Song>()
         // The importer records the new version once this import's result is stored, so one cancelled part way through
         // reads every file again next time. Only this source's version: another failing doesn't make it read them again
         val backfillFileTags = preferenceManager.songTagsOutdated(type)
@@ -178,6 +178,8 @@ class MediaStoreMediaProvider(
                 )
             }
 
+        // Each genre's members by song id, gathered first: matching each member against every song is quadratic in a large library
+        val genresBySongId = mutableMapOf<String, MutableList<String>>()
         context.contentResolver.query(
             MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
             arrayOf(MediaStore.Audio.Genres._ID, MediaStore.Audio.Genres.NAME),
@@ -202,19 +204,12 @@ class MediaStoreMediaProvider(
                             genreSongCursor.getLong(
                                 genreSongCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
                             ).toString()
-                        songs =
-                            songs.map { song ->
-                                if (song.externalId == songId) {
-                                    song.copy(genres = song.genres + genre)
-                                } else {
-                                    song
-                                }
-                            }.toMutableList()
+                        genresBySongId.getOrPut(songId) { mutableListOf() } += genre
                     }
                 }
             }
         }
-        emit(FlowEvent.Success(songs))
+        emit(FlowEvent.Success(songs.withGenres(genresBySongId)))
     }
 
     data class MediaStoreSong(
@@ -404,3 +399,8 @@ internal fun mediaStoreBitDepth(
     mimeType: String?,
     bitsPerSample: Int?
 ): Int? = bitsPerSample?.takeIf { it > 0 && mimeType?.lowercase()?.substringAfter('/') in losslessMimeSubtypes }
+
+/** Each song with the MediaStore genres [genresBySongId] holds for its id ([Song.externalId]) added after its own. */
+internal fun List<Song>.withGenres(genresBySongId: Map<String, List<String>>): List<Song> = map { song ->
+    genresBySongId[song.externalId]?.let { genres -> song.copy(genres = song.genres + genres) } ?: song
+}
