@@ -72,7 +72,7 @@ class SourceSetupViewModel @Inject constructor(
         // A server connected before the setup existed counts as set up: removing it later doesn't reopen the setup.
         if (!completed.value && hasServer(mediaSources.enabledTypes.value)) complete(path = null)
         viewModelScope.launch {
-            importState.songImportState.collect { state -> serverImport.update { it.next(state) } }
+            importState.providerImportStates.collect { states -> serverImport.update { it.next(states) } }
         }
     }
 
@@ -118,19 +118,20 @@ class SourceSetupViewModel @Inject constructor(
 
     private fun hasServer(types: List<MediaProviderType>) = types.any { !it.isLocal }
 
-    /** Follows the connected server's import; any other provider's progress, or a stale result, leaves it be. */
-    private fun SourceSetupImport.next(state: SongImportState): SourceSetupImport {
+    /** Follows the connected server's own import state in [states]; a stale result leaves it be. */
+    private fun SourceSetupImport.next(states: Map<MediaProviderType, SongImportState>): SourceSetupImport {
         val type = when (this) {
             SourceSetupImport.NotStarted -> return this
             is SourceSetupImport.Starting -> type
             is SourceSetupImport.Running -> type
             is SourceSetupImport.Finished -> type
         }
+        val state = states[type]
         return when {
-            state is SongImportState.ImportProgress && state.providerType == type ->
+            state is SongImportState.ImportProgress ->
                 SourceSetupImport.Running(type, state.message, state.progress?.asFloat())
 
-            state is SongImportState.ImportComplete && state.providerType == type && this is SourceSetupImport.Running ->
+            state is SongImportState.ImportComplete && this is SourceSetupImport.Running ->
                 SourceSetupImport.Finished(type, state.error)
 
             else -> this
