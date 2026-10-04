@@ -38,7 +38,7 @@ class KTagLibMediaStoreTagReader(
         fileName: String
     ): FileTags? = withContext(Dispatchers.IO) {
         context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-            kTagLib.getMetadata(pfd.detachFd(), fileName)?.propertyMap?.toFileTags()
+            kTagLib.getMetadata(pfd.fd, fileName)?.propertyMap?.toFileTags()
         }
     }
 }

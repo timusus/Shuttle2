@@ -452,7 +452,7 @@ class TaglibMediaProvider(
     private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->
-                kTagLib.getAudioFile(pfd.detachFd(), file.path, file.displayName, file.lastModified, file.size, file.mimeType)
+                kTagLib.getAudioFile(pfd.fd, file.path, file.displayName, file.lastModified, file.size, file.mimeType)
             }
         } catch (e: CancellationException) {
             throw e

@@ -42,7 +42,7 @@ private fun openEmbeddedArtwork(
         }
     return try {
         context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-            kTagLib.getArtwork(pfd.detachFd(), uri.lastPathSegment)?.inputStream()
+            kTagLib.getArtwork(pfd.fd, uri.lastPathSegment)?.inputStream()
         }
     } catch (e: SecurityException) {
         Timber.v("Failed to retrieve artwork (permission denial)")

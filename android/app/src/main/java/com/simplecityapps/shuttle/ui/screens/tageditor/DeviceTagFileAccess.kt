@@ -67,7 +67,7 @@ class DeviceTagFileAccess @Inject constructor(
         return withContext(Dispatchers.IO) {
             try {
                 context.contentResolver.openFileDescriptor(target.uri, "rw")?.use { pfd ->
-                    kTagLib.writeMetadata(pfd.detachFd(), metadata, fileName)
+                    kTagLib.writeMetadata(pfd.fd, metadata, fileName)
                 } ?: false
             } catch (e: IllegalStateException) {
                 Timber.e(e, "Failed to update tags")
@@ -130,7 +130,7 @@ class DeviceTagFileAccess @Inject constructor(
     ): AudioFile? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                kTagLib.getAudioFile(pfd.detachFd(), song.path, File(song.path).name, song.lastModified?.toEpochMilliseconds() ?: 0L, song.size, song.mimeType)
+                kTagLib.getAudioFile(pfd.fd, song.path, File(song.path).name, song.lastModified?.toEpochMilliseconds() ?: 0L, song.size, song.mimeType)
             }
         } catch (e: CancellationException) {
             throw e

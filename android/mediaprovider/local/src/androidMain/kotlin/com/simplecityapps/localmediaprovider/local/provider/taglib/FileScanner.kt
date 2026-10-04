@@ -51,7 +51,7 @@ open class FileScanner {
     ): AudioFile? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                kTagLib.getAudioFile(pfd.detachFd(), path, name, lastModified, size, mimeType)
+                kTagLib.getAudioFile(pfd.fd, path, name, lastModified, size, mimeType)
             }
         } catch (e: CancellationException) {
             throw e
