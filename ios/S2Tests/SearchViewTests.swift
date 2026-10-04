@@ -135,19 +135,21 @@ struct SearchViewTests {
     @Test func theTopResultsPlayButtonPlaysItWithoutOpeningIt() throws {
         var selections: [MediaSelection] = []
         var played: Int?
+        var opened = 0
         let artistResults = SearchResultList(
             query: "radio", results: results(artists: [artist("Radiohead", albums: 3, songs: 42)], top: .artists),
-            onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
+            onOpen: { _ in opened += 1 }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
         )
         try artistResults.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "search.topResult.play" }).tap()
         #expect(selections.count == 1)
         #expect(played == nil)
         let songResults = SearchResultList(
             query: "radio", results: results(songs: TestSongs.demo, top: .songs),
-            onOpen: { _ in }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
+            onOpen: { _ in opened += 1 }, onPlaySong: { played = $0 }, onPlay: { selections.append($0) }, onAction: { _ in }
         )
         try songResults.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "search.topResult.play" }).tap()
         #expect(played == 0)
         #expect(selections.count == 1)
+        #expect(opened == 0)
     }
 }
