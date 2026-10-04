@@ -222,12 +222,13 @@ class LoadHomeSections @Inject constructor(
         val now = homeTime.clock.now()
         val timeZone = homeTime.timeZone()
         val candidates = MutableStateFlow(HomeCandidates(hasHistory))
+        val reads = HomeLoadReads()
 
         fun <T> load(
             stage: String,
             block: suspend () -> T,
             set: HomeCandidates.(T) -> HomeCandidates,
-        ) = launch {
+        ) = launch(reads) {
             val loaded = timed(stage) { block() }
             candidates.update { it.set(loaded) }
         }

@@ -287,6 +287,45 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `one load reads the genres once however many sections need them`() = runTest(testDispatcher) {
+        val genre = createGenre("genre 1", songCount = GenrePicks.MIN_SONGS)
+        suggestions.songCount.value = 4
+        suggestions.genres = listOf(genre) + (2..GENRE_PICKS_MIN).map { createGenre("genre $it", songCount = GenrePicks.MIN_SONGS) }
+        playHistory.eventCount.value = 1
+        playHistory.recentContexts = listOf(RecentContext(PlayContext.Genre(genre.name), start), RecentContext(phaseGarden.playContext, start))
+        viewModel()
+        advanceTimeBy(1.seconds)
+        runCurrent()
+
+        suggestions.calls.count { it == "genres()" } shouldBe 1
+    }
+
+    @Test
+    fun `the first load's later sections don't restart the cover load already under way`() = runTest(testDispatcher) {
+        val genre = createGenre("genre 1", songCount = GenrePicks.MIN_SONGS)
+        suggestions.songCount.value = 4
+        suggestions.genres = listOf(genre)
+        genres.setSongsForGenre(genre.name, listOf(createSong(album = genre.name)))
+        genres.coverDelay = 5.seconds
+        suggestions.albums = listOf(phaseGarden, dustChoir, saltMarsh, createAlbum("tide pool", "juniper static"))
+        suggestions.recentlyAdded = suggestions.albums.takeLast(2).map { it.groupKey!! }
+        suggestions.extraLatency = mapOf("albumsToRediscover" to 1.seconds)
+        playHistory.eventCount.value = 1
+        playHistory.recentContexts = listOf(RecentContext(PlayContext.Genre(genre.name), start), RecentContext(phaseGarden.playContext, start))
+        val viewModel = viewModel()
+
+        // Jump back in is up, with its genre's covers loading; Recently added joins it a second later
+        advanceTimeBy(1.seconds)
+        runCurrent()
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn, HomeSectionId.RecentlyAdded)
+        advanceTimeBy(5.seconds)
+        runCurrent()
+
+        genres.coverLimits.size shouldBe 1
+        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().covers.keys shouldBe setOf(HomeItem.GenreItem(genre).key)
+    }
+
+    @Test
     fun `an import completing reloads the sections while home is on screen`() = runTest(testDispatcher) {
         val viewModel = playedLibrary()
 

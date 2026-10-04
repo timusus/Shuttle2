@@ -6,12 +6,18 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Genre
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlayContext
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -25,6 +31,24 @@ class HomeTime(
 
     fun timeZone(): TimeZone = timeZone.invoke()
 }
+
+/**
+ * The whole-list reads (genres, playlists) the sections of one Home load share, put in the load's coroutine context so
+ * each is read once however many sections need it (#820). Outside a load, each caller reads for itself.
+ */
+class HomeLoadReads : AbstractCoroutineContextElement(Key) {
+    private val mutex = Mutex()
+    private var genres: List<Genre>? = null
+    private var playlists: List<Playlist>? = null
+
+    suspend fun genres(read: suspend () -> List<Genre>): List<Genre> = mutex.withLock { genres ?: read().also { genres = it } }
+
+    suspend fun playlists(read: suspend () -> List<Playlist>): List<Playlist> = mutex.withLock { playlists ?: read().also { playlists = it } }
+
+    companion object Key : CoroutineContext.Key<HomeLoadReads>
+}
+
+private suspend fun SuggestionsRepository.homeGenres(): List<Genre> = currentCoroutineContext()[HomeLoadReads]?.genres { genres() } ?: genres()
 
 /**
  * Turns play contexts into the items Home shows, in the same order, dropping any the library no longer has. Albums and
@@ -41,9 +65,10 @@ class ResolveHomeItems @Inject constructor(
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albums(it) }.orEmpty().associateBy { it.groupKey }
         val artists = contexts.filterIsInstance<PlayContext.AlbumArtist>().map { it.groupKey }
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albumArtists(it) }.orEmpty().associateBy { it.groupKey }
-        val genres = if (contexts.any { it is PlayContext.Genre }) suggestionsRepository.genres().associateBy { it.name } else emptyMap()
+        val genres = if (contexts.any { it is PlayContext.Genre }) suggestionsRepository.homeGenres().associateBy { it.name } else emptyMap()
         val playlists = if (contexts.any { it is PlayContext.Playlist }) {
-            playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first().associateBy { it.id }
+            val read: suspend () -> List<Playlist> = { playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first() }
+            (currentCoroutineContext()[HomeLoadReads]?.playlists(read) ?: read()).associateBy { it.id }
         } else {
             emptyMap()
         }
@@ -212,7 +237,7 @@ class GenrePicks @Inject constructor(
 ) {
     suspend operator fun invoke(now: Instant): GenrePickCandidates {
         val played = playHistoryRepository.genrePlays(since = now - WINDOW_DAYS.days, halfLife = HALF_LIFE_DAYS.days, limit = CANDIDATES)
-        val genres = suggestionsRepository.genres()
+        val genres = suggestionsRepository.homeGenres()
         val byName = genres.associateBy { it.name }
         return GenrePickCandidates(
             played = played.map { it.genre }.distinct().mapNotNull { byName[it] }.map { HomeItem.GenreItem(it) },

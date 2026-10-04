@@ -26,7 +26,21 @@ class LocalGenreRepository(
     val songRepository: SongRepository,
     private val albumIndex: LibraryAlbumIndex
 ) : GenreRepository {
-    private val genreRelay: StateFlow<Map<String, List<Song>>?> by lazy {
+    /** The songs of each genre, with each genre's totals worked out once per library change rather than per collector. */
+    private class GenreSongs(
+        val songs: Map<String, List<Song>>
+    ) {
+        val totals: List<Genre> = songs.map { (name, genreSongs) ->
+            Genre(
+                name,
+                genreSongs.size,
+                genreSongs.sumOf { it.duration },
+                genreSongs.map { it.mediaProvider }.distinct()
+            )
+        }
+    }
+
+    private val genreRelay: StateFlow<GenreSongs?> by lazy {
         songRepository
             .getSongs(SongQuery.All())
             .map { songs ->
@@ -37,6 +51,7 @@ class LocalGenreRepository(
                     }
                     ?.filterNot { it.isEmpty() }
                     ?.associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
+                    ?.let { GenreSongs(it) }
             }
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)
@@ -45,17 +60,8 @@ class LocalGenreRepository(
     override fun getGenres(query: GenreQuery): Flow<List<Genre>> = genreRelay
         .filterNotNull()
         .map { genres ->
-            genres
-                .map { entry ->
-                    com.simplecityapps.shuttle.model.Genre(
-                        entry.key,
-                        entry.value.size,
-                        entry.value.sumBy { song -> song.duration },
-                        entry.value.map { song -> song.mediaProvider }.distinct()
-                    )
-                }
+            genres.totals
                 .filter(query.predicate)
-                .toMutableList()
                 .sortedWith(query.sortOrder.comparator)
         }
 
@@ -66,7 +72,7 @@ class LocalGenreRepository(
         .filterNotNull()
         .map {
             genres.flatMap { genre ->
-                it[genre].orEmpty()
+                it.songs[genre].orEmpty()
             }
         }
         .map { songs ->
@@ -86,7 +92,7 @@ class LocalGenreRepository(
      * genre list's own (so a song too short for the library isn't a cover) and the albums the library's [albumIndex].
      */
     override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = combine(genreRelay.filterNotNull(), albumIndex.updates) { genres, index ->
-        genres[genre].orEmpty()
+        genres.songs[genre].orEmpty()
             .sortedWith(compareBy<Song>({ index.identities[it.id]?.albumArtistName?.lowercase().orEmpty() }, { it.album?.lowercase() }, { it.id }))
             .distinctBy { song -> index.identities[song.id]?.groupKey ?: song.id }
             .take(limit)

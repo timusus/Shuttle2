@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
+import com.simplecityapps.localmediaprovider.local.data.room.dao.SongPlaysRow
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
@@ -66,18 +67,35 @@ class LocalSuggestionsRepository(
         limit: Int
     ): List<AlbumGroupKey> {
         val identities = identities()
-        return suggestionsDao.playedSongs()
-            .groupBy { row -> identities[row.id]?.groupKey?.takeIf { it.key != null } }
-            .filterKeys { it != null }
-            .filterValues { rows ->
-                val plays = rows.sumOf { it.playCount }
-                val lastPlayed = rows.mapNotNull { it.lastPlayed }.maxOrNull()
-                (plays >= minPlays || rows.any { it.favouritedAt != null }) && (lastPlayed == null || lastPlayed < playedBefore)
-            }
-            .entries
-            .sortedByDescending { (_, rows) -> rows.sumOf { it.playCount } }
+        // Album identity is resolved across songs (names, folders, ids), so it can't be a SQL column; the aggregation is
+        // one pass over the played songs' narrow rows (the DAO's filter), tallying each album as its rows go by.
+        val tallies = LinkedHashMap<AlbumGroupKey, RediscoverTally>()
+        for (row in suggestionsDao.playedSongs()) {
+            val key = identities[row.id]?.groupKey?.takeIf { it.key != null } ?: continue
+            tallies.getOrPut(key) { RediscoverTally() }.add(row)
+        }
+        return tallies.entries
+            .filter { (_, tally) -> tally.qualifies(minPlays, playedBefore) }
+            .sortedByDescending { (_, tally) -> tally.plays }
             .take(limit)
-            .mapNotNull { it.key }
+            .map { it.key }
+    }
+
+    private class RediscoverTally {
+        var plays = 0
+        private var lastPlayed: Instant? = null
+        private var favourited = false
+
+        fun add(row: SongPlaysRow) {
+            plays += row.playCount
+            row.lastPlayed?.let { if (lastPlayed.let { last -> last == null || it > last }) lastPlayed = it }
+            if (row.favouritedAt != null) favourited = true
+        }
+
+        fun qualifies(
+            minPlays: Int,
+            playedBefore: Instant
+        ): Boolean = (plays >= minPlays || favourited) && lastPlayed.let { it == null || it < playedBefore }
     }
 
     private suspend fun identities(): Map<Long, AlbumIdentity> = albumIndex.albumIndex().identities

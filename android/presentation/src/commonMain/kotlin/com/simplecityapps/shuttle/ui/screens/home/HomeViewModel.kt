@@ -17,14 +17,14 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.stateIn
 
 sealed interface HomeUiState {
@@ -82,16 +82,38 @@ class HomeViewModel @Inject constructor(
 
     /**
      * The sections with their mosaics' covers; the sections show first and the covers follow as they load. A reload
-     * keeps the covers it already has for the items still shown, so their mosaics don't blank and refill.
+     * keeps the covers it already has for the items still shown, so their mosaics don't blank and refill. While the
+     * first load brings its sections in one at a time, each new set only extends the last, so the cover load under way
+     * carries on and a second one loads just the new sections' items, rather than restarting for every set.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val sectionsWithCovers = observeHomeSections(visible, refreshes).flatMapLatest { sections ->
-        refreshing.value = false
-        flow {
-            val keys = sections.orEmpty().flatMap { section -> section.items.map { it.key } }.toSet()
-            emit(SectionsWithCovers(sections, loadedCovers.filterKeys { it in keys }))
-            loadedCovers = sections?.let { loadHomeCovers(it) }.orEmpty()
-            emit(SectionsWithCovers(sections, loadedCovers))
+    private val sectionsWithCovers = channelFlow {
+        var latest: List<HomeSection>? = null
+        var loadedFor: List<HomeSection> = emptyList()
+        var coverLoad: Job? = null
+        // The covers the loads of one run of extending sets have found; each load adds to it, then it becomes [loadedCovers].
+        var fresh = emptyMap<String, List<Song>>()
+
+        fun current() = SectionsWithCovers(latest, loadedCovers.filterKeys { key -> latest.orEmpty().any { section -> section.items.any { it.key == key } } })
+
+        observeHomeSections(visible, refreshes).collect { sections ->
+            refreshing.value = false
+            val extension = sections != null && coverLoad?.isActive == true &&
+                sections.size >= loadedFor.size && sections.take(loadedFor.size) == loadedFor
+            val toLoad = if (extension) sections.drop(loadedFor.size) else sections.orEmpty()
+            if (!extension) {
+                coverLoad?.cancel()
+                fresh = emptyMap()
+            }
+            latest = sections
+            loadedFor = sections.orEmpty()
+            send(current())
+            if (sections != null) {
+                coverLoad = launch {
+                    fresh = fresh + loadHomeCovers(toLoad)
+                    loadedCovers = fresh
+                    send(current())
+                }
+            }
         }
     }
 
