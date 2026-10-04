@@ -7,7 +7,9 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreTagReader
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
+import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.sources.SafScannerFolderStore
 import dev.zacsweers.metro.AppScope
@@ -33,8 +35,16 @@ class MediaProviderModule {
         @ApplicationContext context: Context,
         kTagLib: KTagLib,
         fileScanner: FileScanner,
-        folderStore: SafScannerFolderStore
-    ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib, fileScanner, folderStore::scannerFolders)
+        folderStore: SafScannerFolderStore,
+        preferenceManager: GeneralPreferenceManager
+    ): TaglibMediaProvider =
+        TaglibMediaProvider(
+            context,
+            kTagLib,
+            fileScanner,
+            backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
+            folders = folderStore::scannerFolders
+        )
 
     @Provides
     @SingleIn(AppScope::class)

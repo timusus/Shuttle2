@@ -21,7 +21,8 @@ internal class LocalFileTagMerger(
         size: Long,
         lastModified: Long
     ): Song? {
-        if (readUnchanged) return null
+        // A modified date of 0 is one the source doesn't have (SAF reports 0 for that), so it can't say whether the file changed
+        if (readUnchanged || lastModified <= 0) return null
         val existing = existingSongsByPath[path] ?: return null
         if (existing.lastModified?.toEpochMilliseconds() != lastModified || existing.size != size) return null
         return existing

@@ -264,7 +264,7 @@ class MediaStoreFileTagsTest {
         externalId: String? = "42",
         path: String = "/storage/emulated/0/Music/test.mp3",
         size: Long = 1024L,
-        lastModified: Instant = Instant.fromEpochMilliseconds(0),
+        lastModified: Instant = Instant.fromEpochMilliseconds(5000),
         replayGainTrack: Double? = null,
         replayGainAlbum: Double? = null,
         name: String = "Test Song",

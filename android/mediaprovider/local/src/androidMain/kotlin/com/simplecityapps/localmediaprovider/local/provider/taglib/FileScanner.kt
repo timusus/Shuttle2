@@ -7,7 +7,7 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
-import java.io.FileNotFoundException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -48,16 +48,10 @@ open class FileScanner {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 kTagLib.getAudioFile(pfd.detachFd(), uri.toString(), name, lastModified, size, mimeType)
             }
-        } catch (e: IllegalArgumentException) {
-            Timber.e(e, "Failed to retrieve audio file for uri: $uri")
-            null
-        } catch (e: FileNotFoundException) {
-            Timber.e(e, "Failed to retrieve audio file for uri: $uri")
-            null
-        } catch (e: IllegalStateException) {
-            Timber.e(e, "Failed to retrieve audio file for uri: $uri")
-            null
-        } catch (e: SecurityException) {
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The native tag parse can throw anything for a corrupt file; one bad file shouldn't fail the whole import
             Timber.e(e, "Failed to retrieve audio file for uri: $uri")
             null
         }

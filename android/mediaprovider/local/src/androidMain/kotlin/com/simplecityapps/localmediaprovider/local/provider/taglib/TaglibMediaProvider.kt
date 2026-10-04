@@ -57,6 +57,8 @@ class TaglibMediaProvider(
     private val context: Context,
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
+    // Whether this source's songs lack tags this build reads, which reading every file again fills in
+    private val backfillFileTags: () -> Boolean = { false },
     private val folders: () -> ScannerFolders
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
@@ -94,7 +96,7 @@ class TaglibMediaProvider(
                 files.map { file -> file to folderImageReader.imagesNear(file.path) }
             }
         val songs = mutableListOf<Song>()
-        val merger = LocalFileTagMerger(existingSongs)
+        val merger = LocalFileTagMerger(existingSongs, readUnchanged = backfillFileTags())
         merge(getSongs(filesWithImages, merger), getExtraSongs(extraDocuments, merger))
             .collectIndexed { index, song ->
                 emit(
@@ -193,8 +195,7 @@ class TaglibMediaProvider(
     ): Flow<Song> = documents
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { node ->
-            // SAF reports 0 for a modified date it doesn't have, which can't say whether the file changed
-            node.takeIf { it.lastModified > 0 }?.let { merger.unchangedSong(it.uri.toString(), it.size, it.lastModified) }
+            merger.unchangedSong(node.uri.toString(), node.size, node.lastModified)?.reused(node.lastModified, emptyList())
                 ?: fileScanner.getAudioFile(context, kTagLib, node)?.toSong(type, emptyList())
         }.mapNotNull { it }
 
@@ -204,14 +205,15 @@ class TaglibMediaProvider(
     ): Flow<Song> = files
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (file, folderImages) ->
-            val unchanged = merger.unchangedSong(file.path, file.size, file.lastModified)
-            if (unchanged != null) {
-                // The file's tags are unchanged, but a cover next to it may not be
-                unchanged.copy(id = 0, artworkVersion = localArtworkVersion(file.lastModified, folderImages))
-            } else {
-                readAudioFile(file)?.toSong(type, folderImages)
-            }
+            merger.unchangedSong(file.path, file.size, file.lastModified)?.reused(file.lastModified, folderImages)
+                ?: readAudioFile(file)?.toSong(type, folderImages)
         }.mapNotNull { it }
+
+    /** A stored song whose file is unchanged, as a freshly imported one: the tags are kept, but a cover next to the file may have changed. */
+    private fun Song.reused(
+        lastModified: Long,
+        folderImages: List<FolderImage>
+    ): Song = copy(id = 0, artworkVersion = localArtworkVersion(lastModified, folderImages))
 
     private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
         try {
