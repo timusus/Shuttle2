@@ -38,6 +38,15 @@ class GeneralPreferenceManagerTest {
         preferences.lastSyncStart("Jellyfin").shouldBeNull()
         preferences.lastFullSyncStart("Jellyfin").shouldBeNull()
         preferences.sourceReachability("Jellyfin").shouldBeNull()
+        preferences.sourceUpdated("Jellyfin").shouldBeNull()
+    }
+
+    @Test
+    fun `a source's updated time is kept per source`() {
+        preferences.setSourceUpdated("Jellyfin", Instant.fromEpochMilliseconds(1_000))
+
+        preferences.sourceUpdated("Jellyfin") shouldBe Instant.fromEpochMilliseconds(1_000)
+        preferences.sourceUpdated("Plex").shouldBeNull()
     }
 
     @Test

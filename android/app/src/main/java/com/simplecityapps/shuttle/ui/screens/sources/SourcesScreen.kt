@@ -115,7 +115,7 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
                 @Composable { shapes: ListItemShapes ->
                     LinkSetting(
                         title = stringResource(server.type.titleRes),
-                        summary = serverStatusLine(server),
+                        summary = serverStatusLine(server, now),
                         onClick = { actions.onServerClick(server) },
                         icon = if (server.status is SourceStatus.Failed) Icons.Rounded.CloudOff else Icons.Rounded.Dns,
                         progress = server.status.progress,
@@ -138,7 +138,7 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
     }
 }
 
-/** This device's status: a scan's progress or failure, else its songs and when the library last updated. */
+/** This device's status: a scan's progress or failure, else its songs and when it last updated. */
 @Composable
 private fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = when (val status = uiState.deviceStatus) {
     is SourceStatus.Importing -> status.progress?.let { progress ->
@@ -149,7 +149,7 @@ private fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = wh
 
     SourceStatus.Idle -> {
         val songs = uiState.deviceSongs?.let { songsLabel(it) }
-        val updated = uiState.lastImport?.let { updatedLabel(it, now) }
+        val updated = uiState.deviceUpdated?.let { updatedLabel(it, now) }
         when {
             songs != null && updated != null -> stringResource(R.string.sources_status_songs_updated, songs, updated)
             else -> songs ?: updated ?: stringResource(R.string.sources_this_device_summary)
@@ -157,9 +157,9 @@ private fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = wh
     }
 }
 
-/** A server's status: syncing with its progress, unreachable, or connected with its songs. */
+/** A server's status: syncing with its progress, unreachable, or connected with its songs and when it last updated. */
 @Composable
-private fun serverStatusLine(server: ServerSource): String = when (val status = server.status) {
+private fun serverStatusLine(server: ServerSource, now: Instant): String = when (val status = server.status) {
     is SourceStatus.Importing -> status.progress?.let { progress ->
         stringResource(R.string.sources_server_syncing_count, progress.progress.formatted(), progress.total.formatted())
     } ?: stringResource(R.string.sources_server_syncing)
@@ -168,7 +168,8 @@ private fun serverStatusLine(server: ServerSource): String = when (val status = 
 
     SourceStatus.Idle -> {
         val connected = stringResource(R.string.sources_server_connected)
-        server.songs?.let { stringResource(R.string.sources_status_songs_updated, connected, songsLabel(it)) } ?: connected
+        val withSongs = server.songs?.let { stringResource(R.string.sources_status_songs_updated, connected, songsLabel(it)) } ?: connected
+        server.updated?.let { stringResource(R.string.sources_status_songs_updated, withSongs, updatedLabel(it, now)) } ?: withSongs
     }
 }
 

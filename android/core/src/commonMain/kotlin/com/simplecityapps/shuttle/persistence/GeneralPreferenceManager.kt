@@ -289,6 +289,17 @@ class GeneralPreferenceManager @Inject constructor(
     /** [sourceReachability] now and each time an import of [source] ends. */
     fun observeSourceReachability(source: String): Flow<SourceReachability?> = store.changes("source_checked_at_$source").map { sourceReachability(source) }.distinctUntilChanged()
 
+    /** When an import of [source] (a media provider type's name) last completed successfully, for its row in Sources (#668). */
+    fun sourceUpdated(source: String): Instant? = store.getInstant("source_updated_$source")
+
+    fun setSourceUpdated(
+        source: String,
+        updated: Instant?
+    ) = store.putInstant("source_updated_$source", updated)
+
+    /** [sourceUpdated] now and each time it changes. */
+    fun observeSourceUpdated(source: String): Flow<Instant?> = store.changes("source_updated_$source").map { sourceUpdated(source) }.distinctUntilChanged()
+
     /** The first-run source setup (iOS) was finished or skipped, so it never opens by itself again. */
     var sourceSetupCompleted: Boolean
         set(value) {

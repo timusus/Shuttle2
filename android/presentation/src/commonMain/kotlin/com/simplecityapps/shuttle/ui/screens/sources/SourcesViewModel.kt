@@ -29,6 +29,8 @@ data class ServerSource(
     val connected: Boolean,
     val status: SourceStatus = SourceStatus.Idle,
     val songs: Int? = null,
+    /** When an import from it last completed, if one has. */
+    val updated: Instant? = null,
 )
 
 data class SourcesUiState(
@@ -45,8 +47,10 @@ data class SourcesUiState(
     val deviceStatus: SourceStatus = SourceStatus.Idle,
     /** Songs from this device, once the library has loaded. */
     val deviceSongs: Int? = null,
+    /** When an import of this device's music last completed, if one has. */
+    val deviceUpdated: Instant? = null,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
-    /** When an import last finished, if one ever has. */
+    /** When any import last finished, if one ever has: iOS's scan row shows it. */
     val lastImport: Instant? = null,
     val events: List<PendingEvent<SourcesEvent>> = emptyList(),
 )
@@ -78,11 +82,12 @@ class SourcesViewModel @Inject constructor(
     private val forgetServer: ForgetServer,
     observeSongCounts: ObserveSongCounts,
     observeSourceReachability: ObserveSourceReachability,
+    observeSourceUpdated: ObserveSourceUpdated,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
     private val imports: Flow<Imports> =
-        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), observeSourceReachability(), ::Imports)
+        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), observeSourceReachability(), observeSourceUpdated(), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
         combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate(), events.flow) { types, folders, imports, lastImport, events ->
@@ -95,8 +100,9 @@ class SourcesViewModel @Inject constructor(
                 scanError = (latest as? SongImportState.ImportComplete)?.error,
                 deviceStatus = sourceStatus(types.firstOrNull { it.isLocal }?.let(imports.byProvider::get)),
                 deviceSongs = imports.songCounts?.filterKeys { it.isLocal }?.values?.sum(),
+                deviceUpdated = imports.updated.filterKeys { it.isLocal }.values.filterNotNull().maxOrNull(),
                 servers = ServerTypes.map { type ->
-                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 })
+                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type])
                 },
                 lastImport = lastImport,
                 events = events,
@@ -145,11 +151,12 @@ class SourcesViewModel @Inject constructor(
 
     fun onEventHandled(id: Long) = events.consume(id)
 
-    /** The importer's latest state, each provider's own, the library's songs per provider, and how each server's last import ended. */
+    /** The importer's latest state, each provider's own, the library's songs per provider, how each server's last import ended, and when each source last updated. */
     private data class Imports(
         val latest: SongImportState,
         val byProvider: Map<MediaProviderType, SongImportState>,
         val songCounts: Map<MediaProviderType, Int>?,
         val reachability: Map<MediaProviderType, SourceReachability?>,
+        val updated: Map<MediaProviderType, Instant?>,
     )
 }

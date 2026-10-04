@@ -10,7 +10,7 @@ object SourcesScenarios {
     /** "Now" for the status lines, so "Updated 2 hours ago" never moves. */
     val now: Instant = Instant.parse("2026-09-30T12:00:00Z")
 
-    private fun servers(vararg connected: Pair<MediaProviderType, SourceStatus>) = ServerTypes.map { type -> connected.toMap()[type]?.let { ServerSource(type, connected = true, status = it, songs = 1_842) } ?: ServerSource(type, connected = false) }
+    private fun servers(vararg connected: Pair<MediaProviderType, SourceStatus>) = ServerTypes.map { type -> connected.toMap()[type]?.let { ServerSource(type, connected = true, status = it, songs = 1_842, updated = now - 2.hours) } ?: ServerSource(type, connected = false) }
 
     /** This device on with an excluded and an extra folder, and Jellyfin connected; everything up to date. */
     val configured = SourcesUiState(
@@ -20,6 +20,7 @@ object SourcesScenarios {
             extras = listOf(SourceFolder(uri = "content://tree/Audiobooks", path = "/storage/emulated/0/Audiobooks", name = "Audiobooks")),
         ),
         deviceSongs = 1_234,
+        deviceUpdated = now - 2.hours,
         lastImport = now - 2.hours,
         servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle),
     )

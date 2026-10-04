@@ -103,7 +103,7 @@ class OnboardingTest {
     fun `connected servers show their status and open their options - add a server picks a type`() {
         robot.setSources(SourcesScenarios.serverUnreachable)
 
-        robot.assertTextDisplayed("Connected · 1,842 songs")
+        robot.assertTextDisplayed("Connected · 1,842 songs · Updated 2 hours ago")
         robot.assertTextDisplayed("Can't reach")
         robot.assertTextNotDisplayed("Emby")
         robot.clickText("Plex")

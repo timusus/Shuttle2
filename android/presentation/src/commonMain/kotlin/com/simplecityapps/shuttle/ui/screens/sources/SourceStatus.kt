@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -32,6 +33,15 @@ internal fun sourceStatus(state: SongImportState?, stored: SourceReachability? =
     is SongImportState.ImportProgress -> SourceStatus.Importing(state.progress)
     is SongImportState.ImportComplete -> state.error?.let(SourceStatus::Failed) ?: SourceStatus.Idle
     SongImportState.Idle, null -> stored?.error?.let(SourceStatus::Failed) ?: SourceStatus.Idle
+}
+
+/** When each source's import last completed successfully, now and each time one does (#668). */
+class ObserveSourceUpdated @Inject constructor(
+    private val generalPreferenceManager: GeneralPreferenceManager
+) {
+    operator fun invoke(): Flow<Map<MediaProviderType, Instant?>> = combine(MediaProviderType.entries.map { type -> generalPreferenceManager.observeSourceUpdated(type.name) }) { updated ->
+        MediaProviderType.entries.zip(updated.toList()).toMap()
+    }
 }
 
 /** How each server's last import ended, now and each time one ends (#668). */

@@ -332,7 +332,9 @@ class MediaImporter(
 
                     is FlowEvent.Success -> {
                         stored = event.result
-                        preferenceManager.setSourceReachability(type.name, SourceReachability(error = null, checkedAt = clock.now()))
+                        val completedAt = clock.now()
+                        preferenceManager.setSourceReachability(type.name, SourceReachability(error = null, checkedAt = completedAt))
+                        preferenceManager.setSourceUpdated(type.name, completedAt)
                         val changed = event.result.inserts + event.result.updates + event.result.deletes > 0
                         // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
                         val clearsError = (_providerImportStates.value[type] as? SongImportState.ImportComplete)?.error != null

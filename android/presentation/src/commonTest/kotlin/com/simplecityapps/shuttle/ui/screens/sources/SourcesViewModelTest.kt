@@ -65,6 +65,7 @@ class SourcesViewModelTest {
         ForgetServer(mapOf(MediaProviderType.Emby to emby)),
         ObserveSongCounts(songs),
         ObserveSourceReachability(preferences),
+        ObserveSourceUpdated(preferences),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -205,6 +206,25 @@ class SourcesViewModelTest {
         importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, null))
         preferences.setSourceReachability("Jellyfin", SourceReachability(null, Instant.fromEpochMilliseconds(2_000)))
         viewModel.uiState.value.servers.first { it.type == MediaProviderType.Jellyfin }.status shouldBe SourceStatus.Idle
+    }
+
+    @Test
+    fun `each source shows when its own import last completed`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle, MediaProviderType.Jellyfin, MediaProviderType.Plex))
+        val device = Instant.fromEpochMilliseconds(1_000)
+        val jellyfin = Instant.fromEpochMilliseconds(2_000)
+        viewModel.uiState.value.deviceUpdated shouldBe null
+        viewModel.uiState.value.servers.map { it.updated } shouldBe listOf(null, null, null)
+
+        preferences.setSourceUpdated("Shuttle", device)
+        preferences.setSourceUpdated("Jellyfin", jellyfin)
+
+        viewModel.uiState.value.deviceUpdated shouldBe device
+        viewModel.uiState.value.servers.associate { it.type to it.updated } shouldBe mapOf(
+            MediaProviderType.Jellyfin to jellyfin,
+            MediaProviderType.Emby to null,
+            MediaProviderType.Plex to null,
+        )
     }
 
     @Test
