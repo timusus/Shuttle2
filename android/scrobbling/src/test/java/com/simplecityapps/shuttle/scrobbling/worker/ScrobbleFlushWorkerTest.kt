@@ -234,14 +234,51 @@ class ScrobbleFlushWorkerTest {
     }
 
     @Test
-    fun `an unknown top-level error drops that batch so the queue keeps flowing`() = runTest {
-        dao.enqueue(entity(1))
-        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 6))
+    fun `one poison row in a batch is dropped and the others are scrobbled`() = runTest {
+        repeat(4) { dao.enqueue(entity(it, startedAtEpochSec = System.currentTimeMillis() / 1000 - 100 + it)) }
+        val invalid = LastFmScrobbleResponse(error = LastFmError.INVALID_PARAMETERS)
+        // Whole batch, then [0, 1], then [2, 3], then 2 alone, then 3 alone (the poison row).
+        fakeEngine.enqueueSuccess(invalid)
+        fakeEngine.enqueueSuccess()
+        fakeEngine.enqueueSuccess(invalid)
+        fakeEngine.enqueueSuccess()
+        fakeEngine.enqueueSuccess(invalid)
 
         val result = buildWorker().doWork()
 
         result shouldBe ListenableWorker.Result.success()
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+        fakeEngine.requests.map { scrobbleCount(it) } shouldBe listOf(4, 2, 2, 1, 1)
+        formData(fakeEngine.requests[3])["track[0]"] shouldBe "track-2"
+        formData(fakeEngine.requests[4])["track[0]"] shouldBe "track-3"
+    }
+
+    @Test
+    fun `a transient failure while isolating a poison row keeps the rows not yet accepted`() = runTest {
+        repeat(2) { dao.enqueue(entity(it, startedAtEpochSec = System.currentTimeMillis() / 1000 - 100 + it)) }
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = LastFmError.INVALID_PARAMETERS))
+        fakeEngine.enqueueSuccess()
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 11))
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.retry()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
+
+    @Test
+    fun `systemic top-level errors hold the queue and delete nothing`() = runTest {
+        listOf(2, 3, 4, 5, 14, 15, 17, 18, 27, 99).forEach { code ->
+            dao.deleteAll(QueuedScrobbleEntity.SERVICE_LASTFM)
+            dao.enqueue(entity(1))
+            fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = code))
+
+            val result = buildWorker().doWork()
+
+            result shouldBe ListenableWorker.Result.failure()
+            dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+            sessionStore.session.value?.key shouldBe "session-key"
+        }
     }
 
     @Test

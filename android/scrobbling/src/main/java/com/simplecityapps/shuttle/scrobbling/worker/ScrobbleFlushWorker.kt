@@ -26,8 +26,11 @@ import dev.zacsweers.metro.binding
  * retry with backoff. An invalid session (error 9) signs the user out and stops without retrying forever,
  * leaving the queue intact (a different account signing in clears it, see [ScrobbleQueue.clear]). A bad or suspended
  * API key or signature ([LastFmError.HOLD]) says nothing about the scrobbles themselves, so the queue is held
- * and the run ends without a retry. Any other error is one Last.fm won't accept for this batch however often
- * it is sent, so the batch is dropped rather than blocking the queue until it ages out. Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
+ * and the run ends without a retry. Error 6 (invalid parameters) means some row in the batch is malformed: the
+ * batch is halved until the offending row is isolated, and only a row that still gets error 6 when sent alone is
+ * dropped, while the rest are scrobbled. Any other error is held like the above and never deletes anything, so a
+ * systemic failure (bad auth, deprecated method) cannot empty the queue; only the age purge bounds it.
+ * Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
  * rejects their timestamp regardless.
  */
 class ScrobbleFlushWorker
@@ -54,7 +57,8 @@ constructor(
             val batch = scrobbleDao.oldestBatch(QueuedScrobbleEntity.SERVICE_LASTFM, ScrobbleQueue.BATCH_SIZE)
             if (batch.isEmpty()) return Result.success()
 
-            val outcome = sendBatch(batch, sessionKey)
+            var outcome = sendBatch(batch, sessionKey)
+            if (outcome == Outcome.InvalidParams) outcome = isolateInvalidRows(batch, sessionKey)
             when (outcome) {
                 Outcome.Retry -> return Result.retry()
 
@@ -65,6 +69,8 @@ constructor(
 
                 Outcome.Hold -> return Result.failure()
 
+                Outcome.InvalidParams -> error("isolateInvalidRows resolves InvalidParams")
+
                 Outcome.Cleared -> {
                     scrobbleDao.deleteByIds(batch.map { it.id })
                     if (batch.size < ScrobbleQueue.BATCH_SIZE) return Result.success()
@@ -73,8 +79,29 @@ constructor(
         }
     }
 
-    /** [Cleared]: the batch is done with, accepted or ignored - its rows are deleted either way. [Hold]: keep it, stop. */
-    private enum class Outcome { Cleared, Retry, SignedOut, Hold }
+    /** [Cleared]: the batch is done with, accepted or ignored - its rows are deleted either way. [Hold]: keep it, stop. [InvalidParams]: error 6, resolved by [isolateInvalidRows]. */
+    private enum class Outcome { Cleared, Retry, SignedOut, Hold, InvalidParams }
+
+    /**
+     * Halves [batch] until the row Last.fm rejects as invalid (error 6) is alone, deleting accepted halves as it goes
+     * (so a later failure doesn't resend them) and the lone rejected row. Any other outcome is returned as-is.
+     */
+    private suspend fun isolateInvalidRows(
+        batch: List<QueuedScrobbleEntity>,
+        sessionKey: String
+    ): Outcome {
+        if (batch.size == 1) return Outcome.Cleared
+        val middle = batch.size / 2
+        for (half in listOf(batch.subList(0, middle), batch.subList(middle, batch.size))) {
+            val outcome = when (val sent = sendBatch(half, sessionKey)) {
+                Outcome.InvalidParams -> isolateInvalidRows(half, sessionKey)
+                else -> sent
+            }
+            if (outcome != Outcome.Cleared) return outcome
+            scrobbleDao.deleteByIds(half.map { it.id })
+        }
+        return Outcome.Cleared
+    }
 
     private suspend fun sendBatch(
         batch: List<QueuedScrobbleEntity>,
@@ -86,7 +113,8 @@ constructor(
             LastFmError.INVALID_SESSION -> Outcome.SignedOut
             in LastFmError.RETRYABLE -> Outcome.Retry
             in LastFmError.HOLD -> Outcome.Hold
-            else -> Outcome.Cleared
+            LastFmError.INVALID_PARAMETERS -> Outcome.InvalidParams
+            else -> Outcome.Hold
         }
 
         LastFmResult.Unreachable -> Outcome.Retry

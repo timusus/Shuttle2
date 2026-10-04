@@ -40,6 +40,9 @@ object LastFmError {
     /** The session key is invalid or revoked: sign the user out rather than retry. */
     const val INVALID_SESSION = 9
 
+    /** Some parameter of the request, e.g. one scrobble's fields, was rejected as invalid. */
+    const val INVALID_PARAMETERS = 6
+
     /** The token hasn't been approved on last.fm yet. */
     const val UNAUTHORIZED_TOKEN = 14
 
