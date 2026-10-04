@@ -408,7 +408,7 @@ struct NowPlayingContent: View {
             .disabled(state.queue.isEmpty)
             .accessibilityLabel("Queue")
             .accessibilityIdentifier("nowPlaying.queue")
-            .playerSheet(isPresented: $showQueue, tier: tier) {
+            .playerSheet(isPresented: $showQueue, tier: tier, keepsPlayerTappable: true) {
                 NowPlayingQueueList(queue: state.queue, isPlaying: state.isPlaying, actions: actions, notice: notice)
                     .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
             }
@@ -479,9 +479,10 @@ struct NowPlayingContent: View {
 
     // MARK: - Swipe down to dismiss
 
-    /// Only the full-screen cover: the form sheet has the system's own.
+    /// Only the full-screen cover (the form sheet has the system's own), and not behind a player sheet, whose
+    /// exposed upper half would otherwise close the whole player (#684).
     private var dismissesByDragging: Bool {
-        NowPlayingPresentationStyle.resolve(for: tier) == .fullScreenCover
+        NowPlayingPresentationStyle.resolve(for: tier) == .fullScreenCover && !(showQueue || showAudio || showSleepTimer)
     }
 
     private var dismissDrag: some Gesture {

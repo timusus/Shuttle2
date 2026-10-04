@@ -62,6 +62,7 @@ extension View {
     func playerSheet<Content: View>(
         isPresented: Binding<Bool>,
         tier: LayoutTier,
+        keepsPlayerTappable: Bool = false,
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         let style = PlayerSubSheetStyle.resolve(for: tier)
@@ -70,9 +71,10 @@ extension View {
                 content()
                     .environment(\.layoutTier, tier)
                     .presentationDetents([.medium, .large])
-                    // At the medium detent Now Playing's close chevron is still on screen above the sheet: let it
-                    // take touches, so the player closes without dismissing the sheet first (#684).
-                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+                    // The queue sheet at its medium detent leaves Now Playing's close chevron on screen above it: let
+                    // it take touches, so the player closes without dismissing the sheet first (#684). The other
+                    // sheets keep the system dimming and blocking.
+                    .presentationBackgroundInteraction(keepsPlayerTappable ? .enabled(upThrough: .medium) : .automatic)
                     .presentationDragIndicator(.visible)
             }
             .popover(isPresented: isPresented.gated(on: style == .popover)) {
