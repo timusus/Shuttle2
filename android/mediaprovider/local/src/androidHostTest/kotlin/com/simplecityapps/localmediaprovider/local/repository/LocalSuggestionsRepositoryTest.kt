@@ -133,6 +133,18 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
+    fun `recently added albums are found past a newest album longer than a page of songs`() = runTest {
+        insert(
+            createSongData(album = "Old", track = 1).copy(dateAdded = now - 900.days),
+            *(1..700).map { createSongData(album = "Box Set", track = it).copy(path = "box/$it", dateAdded = now - it.seconds) }.toTypedArray(),
+            createSongData(album = "Middle", track = 1).copy(dateAdded = now - 30.days)
+        )
+
+        repository.recentlyAddedAlbums(limit = 2) shouldBe listOf(key("box set"), key("middle"))
+        repository.recentlyAddedAlbums(limit = 10) shouldBe listOf(key("box set"), key("middle"), key("old"))
+    }
+
+    @Test
     fun `a Jellyfin library imported at once has its newest albums (#649)`() = runTest {
         // As the Jellyfin mapper stores a song: DateCreated, the server's own scan time, as both dateAdded and
         // lastModified. The test server scanned every song on the same day, fractions of a second apart.

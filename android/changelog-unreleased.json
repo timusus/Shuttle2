@@ -19,7 +19,7 @@
     },
     {
       "text": "S2 has been redesigned: a new Home that opens quickly, with a grid of what you played lately, where Play picks up where you left off and each tile names the song you were on, with Play from start in its menu, and shelves of the albums, artists, playlists and genres you play most or might rediscover, each with a line saying what it holds, and pull down to refresh it, plus a new Library, where sections are chips and sort and grid or list are always in view, a new Search, and a new Settings that opens full screen, with the player always a tap away. The layout now adapts to tablets and foldables, and the app turns to landscape",
-      "commits": ["b9f88bcf4", "976314a51"]
+      "commits": ["b9f88bcf4", "976314a51", "3985b7691", "d2f59d401", "3b98b404e"]
     },
     {
       "text": "A new full screen Now Playing with a bigger seek bar and a round play button. Your queue sits behind its own Queue button, and the sleep timer and playback speed and sound settings open from the bar along the bottom, sliding up under the controls so you can still see the song and skip while they are open. The seek bar shows when a song is buffering. Now Playing and the mini player take their colours from the album art, changing smoothly from song to song",

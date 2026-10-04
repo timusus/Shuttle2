@@ -56,9 +56,9 @@ class LocalSuggestionsRepository(
     /** The Genres screen's genres: a song tagged with several genres counts for each. */
     override suspend fun genres(): List<Genre> = genreRepository.getGenres(GenreQuery.All()).first()
 
-    override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.completedSongs().map { it.id to it.at }, limit)
+    override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(limit, suggestionsDao::completedSongIds)
 
-    override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.songsAdded().map { it.id to it.at }, limit)
+    override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(limit, suggestionsDao::addedSongIds)
 
     override suspend fun albumsToRediscover(
         minPlays: Int,
@@ -82,19 +82,32 @@ class LocalSuggestionsRepository(
 
     private suspend fun identities(): Map<Long, AlbumIdentity> = albumIndex.albumIndex().identities
 
-    /** The albums of these (song id, time) rows, latest first by their latest song, at most [limit]; songs without an album name left out. */
+    /**
+     * The albums of the songs [page] reads, newest first, in the order their newest song comes, at most [limit]; songs
+     * without an album name left out. Pages are read until [limit] albums are found or the songs run out, so a library
+     * imported at once costs a page or two, not every song.
+     */
     private suspend fun latestAlbums(
-        rows: List<Pair<Long, Instant>>,
-        limit: Int
+        limit: Int,
+        page: suspend (limit: Int, offset: Int) -> List<Long>
     ): List<AlbumGroupKey> {
         val identities = identities()
-        return rows
-            .mapNotNull { (id, at) -> identities[id]?.groupKey?.takeIf { it.key != null }?.let { it to at } }
-            .groupBy({ it.first }, { it.second })
-            .mapValues { (_, times) -> times.max() }
-            .entries
-            .sortedByDescending { it.value }
-            .take(limit)
-            .map { it.key }
+        val albums = LinkedHashSet<AlbumGroupKey>()
+        var offset = 0
+        while (albums.size < limit) {
+            val ids = page(PAGE_SIZE, offset)
+            for (id in ids) {
+                identities[id]?.groupKey?.takeIf { it.key != null }?.let { albums += it }
+                if (albums.size == limit) break
+            }
+            if (ids.size < PAGE_SIZE) break
+            offset += PAGE_SIZE
+        }
+        return albums.toList()
+    }
+
+    private companion object {
+        /** Songs read per page of a newest-first list. */
+        const val PAGE_SIZE = 500
     }
 }
