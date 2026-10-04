@@ -59,6 +59,7 @@ kotlin {
             implementation(project(":android:mediaprovider:jellyfin"))
             implementation(project(":android:mediaprovider:emby"))
             implementation(project(":android:mediaprovider:plex"))
+            implementation(project(":android:scrobbling"))
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }

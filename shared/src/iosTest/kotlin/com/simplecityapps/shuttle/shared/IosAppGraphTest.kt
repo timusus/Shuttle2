@@ -84,6 +84,14 @@ class IosAppGraphTest {
         graph.artworkUrls
         graph.recordPlays
         graph.recordResumePoints
+        graph.scrobblingViewModel
+        graph.playbackScrobbling
+        graph.scrobbleFlushScheduler
+    }
+
+    @Test
+    fun scrobblesQueueAndFlushThroughOneInProcessScheduler() {
+        graph.scrobbleFlushScheduler shouldBeSameInstanceAs graph.scrobbleFlushScheduler
     }
 
     @Test

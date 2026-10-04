@@ -80,8 +80,8 @@ class IosSettingsCatalogTest {
     }
 
     @Test
-    fun theOnlyLinkIsTheEqualizerAndTheOnlySliderTheReplayGainPreamp() {
-        catalog.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly listOf(SettingsLink.Equalizer)
+    fun theLinksAreTheEqualizerAndScrobblingAndTheOnlySliderTheReplayGainPreamp() {
+        catalog.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly listOf(SettingsLink.Equalizer, SettingsLink.Scrobbling)
         catalog.items.filterIsInstance<SettingItem.Slider<*>>().map { it.setting } shouldContainExactly listOf(PlaybackSettings.PreAmpGain)
     }
 
@@ -109,5 +109,13 @@ class IosSettingsCatalogTest {
         preamp.maximum shouldBe 12f
         SettingsUiState().isOn(shuffle) shouldBe false
         SettingsUiState().sliderValue(preamp) shouldBe 0f
+    }
+
+    @Test
+    fun scrobblingIsInPlaybackAndSoundAndGoesWhenLastFmIsntConfigured() {
+        catalog.playbackAndSound.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly
+            listOf(SettingsLink.Equalizer, SettingsLink.Scrobbling)
+        catalog.playbackAndSound.withoutScrobbling().items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly
+            listOf(SettingsLink.Equalizer)
     }
 }

@@ -87,6 +87,17 @@ object IosSettingsCatalog : SettingsCatalog {
                         fromFloat = { it }
                     )
                 )
+            ),
+            // Hidden in a build without a Last.fm API key and secret (SettingsUiState.lastFmConfigured): SettingsView
+            // applies SettingsScreen.withoutScrobbling.
+            SettingsGroup(
+                title = null,
+                items = listOf(
+                    SettingItem.Navigate(
+                        target = SettingsLink.Scrobbling,
+                        title = StringKey.SETTINGS_SCROBBLING_TITLE
+                    )
+                )
             )
         )
     )

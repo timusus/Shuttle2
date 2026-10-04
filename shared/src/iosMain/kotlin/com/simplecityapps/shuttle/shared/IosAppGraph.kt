@@ -8,6 +8,8 @@ import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
+import com.simplecityapps.shuttle.scrobbling.PlaybackScrobbling
+import com.simplecityapps.shuttle.scrobbling.flush.InProcessScrobbleFlushScheduler
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
@@ -74,13 +76,12 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters (phase-6-playback.md).
  *
  * Shared ViewModels are excluded until iOS binds what they need (phase-4-viewmodels.md, "Wave 4"):
- * `ScrobblingViewModel` needs the Last.fm use cases only `:android:scrobbling` binds; iOS has no scrobbling.
  * `TagEditorViewModel` needs a `TagFileAccess`, a tag writer iOS doesn't have: it reads local files' tags with FFmpeg,
  * which doesn't write them in place. Until then nothing offers tag editing on iOS.
  */
 @DependencyGraph(
     AppScope::class,
-    excludes = [TagEditorViewModel.Factory::class, ScrobblingViewModel::class],
+    excludes = [TagEditorViewModel.Factory::class],
 )
 interface IosAppGraph : ViewModelGraph {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
@@ -103,6 +104,12 @@ interface IosAppGraph : ViewModelGraph {
 
     /** The daily background sync, which Swift's `BGAppRefreshTask` runs. */
     val backgroundSync: BackgroundSync
+
+    /** Scrobbles to Last.fm from [playerController]'s events (#503); Swift starts it once, at launch. */
+    val playbackScrobbling: PlaybackScrobbling
+
+    /** Sends the queued scrobbles: after each one is queued, and from Swift on foreground and in a `BGAppRefreshTask`. */
+    val scrobbleFlushScheduler: InProcessScrobbleFlushScheduler
 
     /** The running import's progress, for the Library root. */
     val songImportStateProvider: SongImportStateProvider
@@ -150,6 +157,7 @@ interface IosAppGraph : ViewModelGraph {
     val sourcesViewModel: SourcesViewModel
     val sourceSetupViewModel: SourceSetupViewModel
     val settingsViewModel: SettingsViewModel
+    val scrobblingViewModel: ScrobblingViewModel
     val equalizerViewModel: EqualizerViewModel
     val searchViewModel: SearchViewModel
 
