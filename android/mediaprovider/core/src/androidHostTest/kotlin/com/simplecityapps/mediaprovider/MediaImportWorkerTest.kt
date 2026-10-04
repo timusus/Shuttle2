@@ -40,7 +40,14 @@ class MediaImportWorkerTest {
             afterImport = {}
         ).apply { mediaProviders += provider }
 
-    private fun worker() = TestListenableWorkerBuilder<MediaImportWorker>(RuntimeEnvironment.getApplication())
+    private var foregrounds = 0
+
+    private fun worker(attempt: Int = 0) = TestListenableWorkerBuilder<MediaImportWorker>(RuntimeEnvironment.getApplication())
+        .setRunAttemptCount(attempt)
+        .setForegroundUpdater { _, _, _ ->
+            foregrounds++
+            com.google.common.util.concurrent.Futures.immediateVoidFuture()
+        }
         .setWorkerFactory(
             object : androidx.work.WorkerFactory() {
                 override fun createWorker(
@@ -64,6 +71,31 @@ class MediaImportWorkerTest {
         provider.failure = "Server unreachable"
 
         worker().doWork() shouldBe Result.retry()
+    }
+
+    @Test
+    fun `a sync that fails again with the same error is retried again`() = runBlocking<Unit> {
+        provider.failure = "Server unreachable"
+
+        worker().doWork() shouldBe Result.retry()
+        worker(attempt = 1).doWork() shouldBe Result.retry()
+    }
+
+    @Test
+    fun `a sync that is skipped is a success and shows no notification`() = runBlocking<Unit> {
+        preferences.lastMediaImportDate = null
+
+        worker().doWork() shouldBe Result.success()
+
+        provider.scans shouldBe 0
+        foregrounds shouldBe 0
+    }
+
+    @Test
+    fun `a sync that keeps failing gives up at the attempt cap`() = runBlocking<Unit> {
+        provider.failure = "Server unreachable"
+
+        worker(attempt = 2).doWork() shouldBe Result.success()
     }
 
     private class ScanProvider : MediaProvider {

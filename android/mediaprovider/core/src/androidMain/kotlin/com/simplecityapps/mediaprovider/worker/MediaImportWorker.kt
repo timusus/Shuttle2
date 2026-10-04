@@ -28,11 +28,9 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.binding
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -54,23 +52,38 @@ constructor(
     interface Factory : WorkerInstanceFactory<MediaImportWorker>
 
     override suspend fun doWork(): Result {
-        promoteToForeground()
-
-        // sync reports a source's failure through the import state, not a return value; a periodic sync isn't quiet about it
-        val failed = AtomicBoolean(false)
+        val importsBefore = mediaImporter.importCount
         coroutineScope {
-            // Unconfined, so the collector has taken the state the sync starts from (dropped) before the sync publishes anything
-            val watcher =
-                launch(Dispatchers.Unconfined) {
-                    mediaImporter.songImportState.drop(1).collect { state ->
-                        if (state is SongImportState.ImportComplete && state.error != null) failed.set(true)
-                    }
+            // A periodic sync publishes no progress, so a long one is told by its length: a sync that skips returns at once and
+            // shows nothing
+            val promotion =
+                launch {
+                    delay(FOREGROUND_DELAY_MILLIS)
+                    promoteToForeground()
                 }
-            mediaImporter.sync(SyncTrigger.Periodic)
-            watcher.cancel()
+            try {
+                mediaImporter.sync(SyncTrigger.Periodic)
+            } finally {
+                promotion.cancel()
+            }
         }
 
-        return if (failed.get()) Result.retry() else Result.success()
+        // sync reports a source's failure through the import state, not a return value; a periodic sync isn't quiet about it.
+        // The state outlasts the run, so it counts only when this run imported something (a skipped sync leaves importCount).
+        val imported = mediaImporter.importCount != importsBefore
+        val failed =
+            imported &&
+                mediaImporter.providerImportStates.value.values.any { state -> state is SongImportState.ImportComplete && state.error != null }
+        return when {
+            !failed -> Result.success()
+
+            runAttemptCount + 1 >= MAX_ATTEMPTS -> {
+                Timber.w("The media import failed %d times, leaving it to the next period", runAttemptCount + 1)
+                Result.success()
+            }
+
+            else -> Result.retry()
+        }
     }
 
     /** The system refuses a foreground start from some background states; the sync then runs as an ordinary worker. */
@@ -116,7 +129,13 @@ constructor(
     companion object {
         private const val TAG_MEDIA_IMPORT = "MEDIA_IMPORT"
         private const val NOTIFICATION_CHANNEL_ID = "media_import"
-        private const val NOTIFICATION_ID = 3
+        private const val NOTIFICATION_ID = 4
+
+        /** How long a sync runs before it is promoted to a foreground service. */
+        private const val FOREGROUND_DELAY_MILLIS = 3_000L
+
+        /** The runs (the first and its retries) a failing sync gets before it waits for the next period. */
+        private const val MAX_ATTEMPTS = 3
 
         /** The wait before a failed sync's first retry, doubling from there. */
         private const val BACKOFF_DELAY_MINUTES = 15L
