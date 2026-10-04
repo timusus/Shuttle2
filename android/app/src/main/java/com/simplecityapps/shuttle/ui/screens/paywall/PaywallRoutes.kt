@@ -4,6 +4,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.annotation.StringRes
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +19,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -68,6 +71,12 @@ fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
 @Composable
 fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
     var activeSource by rememberSaveable { mutableStateOf<PaywallSource?>(null) }
+    val visits = viewModel<PaywallVisitStore>()
+    // Closing ends the visit, which clears its view model and so reports the dismissal; a recreation doesn't
+    val close = {
+        activeSource = null
+        visits.close()
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(observePaywallRequests, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -77,13 +86,16 @@ fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
     }
     activeSource?.let { source ->
         Dialog(
-            onDismissRequest = { activeSource = null },
+            onDismissRequest = close,
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            S2AppTheme {
-                // The gate opens this only for a user already using a server, so the trial offer just closes it: their
-                // next song from the server starts the trial.
-                PaywallEntry(source, onClose = { activeSource = null }, onStartTrial = { activeSource = null })
+            // Each visit gets its own view model store, so the paywall's view model lives and dies with the dialog
+            CompositionLocalProvider(LocalViewModelStoreOwner provides visits.owner) {
+                S2AppTheme {
+                    // The gate opens this only for a user already using a server, so the trial offer just closes it: their
+                    // next song from the server starts the trial.
+                    PaywallEntry(source, onClose = close, onStartTrial = close)
+                }
             }
         }
     }
@@ -113,7 +125,7 @@ fun PaywallEntry(
     val scope = rememberCoroutineScope()
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         when (event) {
-            is PaywallUiEvent.LaunchPurchase -> viewModel.onPurchaseLaunched(activity?.let { billing.launchPurchaseFlow(it, event.offer) } ?: false)
+            is PaywallUiEvent.LaunchPurchase -> viewModel.onPurchaseLaunched(billing.launchPurchaseFlow(activity, event.offer))
 
             // Shown without holding back the events after it, such as a purchase launched while it's up
             is PaywallUiEvent.ShowMessage -> scope.launch { snackbarHostState.showSnackbar(context.getString(event.message.text)) }
@@ -130,7 +142,10 @@ fun PaywallEntry(
             val url = "https://play.google.com/store/account/subscriptions?package=${context.packageName}"
             runCatching { uriHandler.openUri(url) }.onFailure { Timber.w(it, "No app to open $url") }
         },
-        onStartTrial = onStartTrial,
+        onStartTrial = {
+            viewModel.onTrialStarted()
+            onStartTrial()
+        },
         onOpenPrivacyPolicy = { runCatching { uriHandler.openUri(PRIVACY_POLICY_URL) }.onFailure { Timber.w(it, "No app to open $PRIVACY_POLICY_URL") } },
         modifier = modifier,
         snackbarHostState = snackbarHostState

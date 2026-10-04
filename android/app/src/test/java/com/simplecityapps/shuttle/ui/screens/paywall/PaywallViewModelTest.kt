@@ -89,6 +89,58 @@ class PaywallViewModelTest {
     }
 
     @Test
+    fun `closing the paywall after starting the trial is not a dismissal`() {
+        val store = ViewModelStore()
+        val viewModel = ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel(PaywallSource.Settings) as T
+            }
+        )[PaywallViewModel::class]
+        viewModel.onTrialStarted()
+        store.clear()
+
+        verify(exactly = 0) { analytics.paywallDismissed(any()) }
+    }
+
+    /** Opens the gate paywall's view model in the visit store's current store, as the dialog does. */
+    private fun PaywallVisitStore.open(source: PaywallSource) = ViewModelProvider.create(
+        owner.viewModelStore,
+        object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel(source) as T
+        }
+    )[PaywallViewModel::class]
+
+    @Test
+    fun `each visit to the gate paywall is shown and dismissed with its own source`() {
+        val visits = PaywallVisitStore()
+
+        visits.open(PaywallSource.ServerPlayback)
+        verify(exactly = 0) { analytics.paywallDismissed(any()) }
+        visits.close()
+        visits.open(PaywallSource.Settings)
+        visits.close()
+
+        verify(exactly = 1) { analytics.paywallShown(PaywallSource.ServerPlayback) }
+        verify(exactly = 1) { analytics.paywallShown(PaywallSource.Settings) }
+        verify(exactly = 1) { analytics.paywallDismissed(PaywallSource.ServerPlayback) }
+        verify(exactly = 1) { analytics.paywallDismissed(PaywallSource.Settings) }
+    }
+
+    @Test
+    fun `a visit that outlives recreation is one visit`() {
+        val visits = PaywallVisitStore()
+
+        val first = visits.open(PaywallSource.ServerPlayback)
+        // Recreation re-reads the same store and does not close it
+        visits.open(PaywallSource.Settings) shouldBe first
+        verify(exactly = 1) { analytics.paywallShown(any()) }
+        verify(exactly = 0) { analytics.paywallDismissed(any()) }
+    }
+
+    @Test
     fun `the status follows the entitlement`() = runTest {
         val viewModel = collectedViewModel()
         viewModel.uiState.value.status shouldBe PaywallStatus.TrialAvailable

@@ -114,7 +114,8 @@ class PaywallViewModel @AssistedInject constructor(
         initialValue = PaywallUiState(entitlement.value.toStatus(), billing.offers.value, selectedPlan.value)
     )
 
-    private val openedAsPro = entitlement.value is Entitlement.Pro
+    // Unlike iOS, which logs a dismissal for a user who opened it as Pro, a paywall opened as Pro is never a dismissal
+    private var converted = entitlement.value is Entitlement.Pro
 
     init {
         analytics.paywallShown(source)
@@ -128,6 +129,11 @@ class PaywallViewModel @AssistedInject constructor(
     fun onPurchase() {
         val offer = uiState.value.selectedOffer ?: return
         events.post(PaywallUiEvent.LaunchPurchase(offer))
+    }
+
+    /** The trial button is the paywall's conversion, as on iOS: closing it after that is not a dismissal. */
+    fun onTrialStarted() {
+        converted = true
     }
 
     /** Whether Play's purchase sheet opened. The entitlement updates by itself once the purchase completes. */
@@ -157,7 +163,7 @@ class PaywallViewModel @AssistedInject constructor(
 
     /** Leaving the paywall without having bought Pro is a dismissal; a purchase made here is not. */
     override fun onCleared() {
-        if (openedAsPro || entitlement.value is Entitlement.Pro) return
+        if (converted || entitlement.value is Entitlement.Pro) return
         analytics.paywallDismissed(source)
     }
 }
