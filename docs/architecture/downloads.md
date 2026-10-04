@@ -37,8 +37,23 @@ The transport is `UrlSessionDownloads` (iosMain), over a background `URLSession`
 suspended or killed. Each task's `taskDescription` carries the MIME type and the song's path. When a task
 finishes, its file is moved into `Application Support/Downloads/` (excluded from iCloud backup) as
 `<base64url(Song.path)>.<ext>` (`DownloadFileNames`). The extension comes from the MIME type, falling back to
-the server's suggested name, so the engine's format probe has something to lean on. A non-2xx response or
-a failed move reports the download failed.
+the server's suggested name, so the engine's format probe has something to lean on. The file is moved in
+under a staging name first, then replaces any earlier one (`replaceItemAt`), so a failed move never loses
+a good download. A non-2xx or empty response, or a failed move, reports the download failed.
+
+The transport keeps each path's wanted task. Removing a download cancels that task there and then, and
+then cancels whatever else the session still runs for the path (a task from an earlier launch not found
+yet), except a download started for it since. A superseded task's progress and outcome are ignored, so a
+quick remove and re-download can't cancel or fail the new one.
+
+**Relaunches.** When the session's downloads finish while the app isn't running, iOS relaunches it in the
+background and calls the app delegate's `application(_:handleEventsForBackgroundURLSession:completionHandler:)`
+(`AppDelegate` in `S2App.swift`). `AppGraph.initialize()` builds `OfflineDownloads` at every launch, so
+the session is reattached before its events arrive; the delegate hands the completion handler to
+`UrlSessionDownloads.handleBackgroundEvents`, which calls it on the main queue from
+`urlSessionDidFinishEvents(forBackgroundURLSession:)`. A finished download reported this way arrives as a
+completion `OfflineDownloads` hasn't heard of (no `onRunning` first), and is kept. Only a song the user
+removed since its last download has a late file deleted again.
 
 **The files are the record.** At launch `restore()` lists the directory: every file there is a completed
 download, and its name gives back the path. The session's still-running tasks are found the same way
@@ -51,9 +66,22 @@ DB"; it isn't, deliberately:
   while the app wasn't running. The directory listing and the session can't disagree with themselves.
   This is the same choice as Android, where Media3's own index is the record, not a Room table.
 
+The file names carry no server id: `Song.path` is `jellyfin://item/<id>`, the same shape for every
+Jellyfin server. Switching to another server of the same kind keeps the old server's files under the new
+library's paths, and a song whose item id matches would play the old server's file. Jellyfin's ids are
+GUIDs, so that's unlikely there; Emby's and Plex's are small integers, so it's likely after a switch.
+Android's Media3 index has the same key. Removing a server should remove its downloads (see Not done
+yet).
+
 **Playback.** `SongStreamResolver` asks `OfflineDownloads.fileUrl(path)` for a server song. A completed
 download plays from its `file://` URL, from the start, offline. It still asks the Pro gate
-(`serverStreamAccess`) first, as Android's `ServerStreamPolicy` is asked before a download plays.
+(`serverStreamAccess`) first, as Android's `ServerStreamPolicy` is asked before a download plays. A
+completed download whose file has gone or is empty is forgotten, and the song streams instead.
+
+**Pro.** Starting a download is gated the same way on both platforms: `DownloadSongs` asks
+`TryDownloadFromServer`, which iOS binds to the StoreKit-fed `ServerAccessGate`
+(`IosEntitlementModule`), so without Pro or the trial Download opens the paywall and nothing is fetched.
+Removing a download never asks.
 
 **Screens.** Album and playlist detail screens offer Download and Remove Download in their toolbar menu
 and in each track's context menu (`DownloadMenuItems`), and the hero shows Downloading or Downloaded
@@ -69,9 +97,7 @@ session and its own directory under tmp, so tests never touch the app's download
 Each is its own issue (label `design`):
 
 - Retrying a 401 or 403 with the stream URL, as Android's `DownloadFallbackObserver` does.
-- `application(_:handleEventsForBackgroundURLSession:completionHandler:)`, so iOS can relaunch the app in
-  the background to finish a download. Without it the files still arrive, and are picked up at the next
-  launch.
+- Removing a server's downloads with the server, and a server id in the file names (see above).
 - Download on Wi-Fi only (Android's setting), and a cellular rule.
 - A Downloaded filter in the Library, storage management, download quality.
 - A badge on each downloaded song's row in the lists.
