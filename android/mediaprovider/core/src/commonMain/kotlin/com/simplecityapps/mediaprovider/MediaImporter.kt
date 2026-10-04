@@ -72,6 +72,10 @@ class MediaImporter(
 
     override val providerImportStates: StateFlow<Map<MediaProviderType, SongImportState>> = _providerImportStates.asStateFlow()
 
+    private val _importsCompleted = MutableStateFlow(0)
+
+    override val importsCompleted: StateFlow<Int> = _importsCompleted.asStateFlow()
+
     private val providers = CopyOnWriteSet<MediaProvider>()
 
     /**
@@ -311,7 +315,7 @@ class MediaImporter(
                         // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
                         val clearsError = (_providerImportStates.value[type] as? SongImportState.ImportComplete)?.error != null
                         if (showProgress || changed || clearsError) {
-                            publish(type, SongImportState.ImportComplete(type, error = null))
+                            complete(type, error = null)
                         }
                     }
 
@@ -319,7 +323,7 @@ class MediaImporter(
                         if (quietFailures) {
                             logger.warn { "$type sync failed, leaving its status as it was: ${event.message}" }
                         } else {
-                            publish(type, SongImportState.ImportComplete(type, event.message))
+                            complete(type, event.message)
                         }
                     }
                 }
@@ -334,7 +338,7 @@ class MediaImporter(
             throw e
         } catch (e: Exception) {
             logger.error(e) { "$type import failed" }
-            if (!quietFailures) publish(type, SongImportState.ImportComplete(type, strings.importError))
+            if (!quietFailures) complete(type, strings.importError)
             return e
         } finally {
             // Cancelled, or ended without saying how: the library doesn't stay scanning for it
@@ -360,12 +364,22 @@ class MediaImporter(
         state: SongImportState
     ) = updateStates { states -> states + (type to state) }
 
-    /** Swaps in [transform] of each provider's state, and the overall state they come to ([overallImportState]). */
-    private suspend fun updateStates(transform: (Map<MediaProviderType, SongImportState>) -> Map<MediaProviderType, SongImportState>) {
+    /** Reports how [type]'s import ended, [error] if it failed, and counts it in [importsCompleted]. */
+    private suspend fun complete(
+        type: MediaProviderType,
+        error: String?
+    ) = updateStates(completed = true) { states -> states + (type to SongImportState.ImportComplete(type, error)) }
+
+    /** Swaps in [transform] of each provider's state, and the overall state they come to ([overallImportState]), counting one more of [importsCompleted] if [completed]. */
+    private suspend fun updateStates(
+        completed: Boolean = false,
+        transform: (Map<MediaProviderType, SongImportState>) -> Map<MediaProviderType, SongImportState>
+    ) {
         stateLock.withLock {
             val states = transform(_providerImportStates.value)
             _providerImportStates.value = states
             _songImportState.value = overallImportState(states)
+            if (completed) _importsCompleted.value++
         }
     }
 

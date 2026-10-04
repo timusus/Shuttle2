@@ -14,7 +14,13 @@ class FakeSongImportStateProvider : SongImportStateProvider {
     private val _providerImportStates = MutableStateFlow<Map<MediaProviderType, SongImportState>>(emptyMap())
     override val providerImportStates: StateFlow<Map<MediaProviderType, SongImportState>> = _providerImportStates
 
-    /** Reports [state] as the importer does: as its provider's own, and the overall state they come to (Idle forgets them all). */
+    private val _importsCompleted = MutableStateFlow(0)
+    override val importsCompleted: StateFlow<Int> = _importsCompleted
+
+    /**
+     * Reports [state] as the importer does: as its provider's own, and the overall state they come to (Idle forgets them all),
+     * counting an [SongImportState.ImportComplete] in [importsCompleted].
+     */
     fun setState(state: SongImportState) {
         val states = when (state) {
             SongImportState.Idle -> emptyMap()
@@ -23,6 +29,7 @@ class FakeSongImportStateProvider : SongImportStateProvider {
         }
         _providerImportStates.value = states
         _songImportState.value = overallImportState(states)
+        if (state is SongImportState.ImportComplete) _importsCompleted.value++
     }
 }
 

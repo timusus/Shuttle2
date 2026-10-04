@@ -369,6 +369,20 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a second source's import completing reloads the sections too, though the overall state stays the same`() = runTest(testDispatcher) {
+        val viewModel = playedLibrary()
+        importState.setState(importComplete(MediaProviderType.Shuttle))
+        runCurrent()
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn)
+
+        playHistory.eventCount.value = 0
+        importState.setState(importComplete(MediaProviderType.Jellyfin))
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.ShuffleAll)
+    }
+
+    @Test
     fun `the library filling reloads home from its empty state`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         viewModel.uiState.value shouldBe HomeUiState.Empty

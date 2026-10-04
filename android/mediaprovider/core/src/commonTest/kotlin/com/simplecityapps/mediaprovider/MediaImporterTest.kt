@@ -219,6 +219,19 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `each source's import ending counts as a completion, though the overall state is the same after the second`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += server
+        provider.gate.trySend(Unit)
+        server.gate.trySend(Unit)
+
+        importer.import()
+
+        importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, error = null)
+        importer.importsCompleted.value shouldBe 2
+    }
+
+    @Test
     fun `a source that fails stays outdated while the others are marked current and the launch re-import runs once`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
         importer.mediaProviders += server

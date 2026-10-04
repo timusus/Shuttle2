@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
-import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -313,7 +311,7 @@ class ObserveHomeSections @Inject constructor(
         emitAll(loads)
     }.flowOn(dispatcher)
 
-    private fun importsCompleted(): Flow<Unit> = songImportStateProvider.songImportState.drop(1).filterIsInstance<SongImportState.ImportComplete>().map { }
+    private fun importsCompleted(): Flow<Unit> = songImportStateProvider.importsCompleted.drop(1).map { }
 
     private fun libraryFilledOrEmptied(): Flow<Unit> = suggestionsRepository.songCount().map { it > 0 }.distinctUntilChanged().drop(1).map { }
 

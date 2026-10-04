@@ -9,6 +9,13 @@ interface SongImportStateProvider {
 
     /** Each provider's own import: its progress while it runs, then how it ended, until its next import starts. Empty until one has run. */
     val providerImportStates: StateFlow<Map<MediaProviderType, SongImportState>>
+
+    /**
+     * How many provider imports have reported how they ended since launch, failed or not: a new count means the library
+     * may have changed. A cancelled import doesn't count. Unlike [songImportState], which a second source ending the same
+     * way leaves as it was, every ending counts.
+     */
+    val importsCompleted: StateFlow<Int>
 }
 
 sealed class SongImportState {
