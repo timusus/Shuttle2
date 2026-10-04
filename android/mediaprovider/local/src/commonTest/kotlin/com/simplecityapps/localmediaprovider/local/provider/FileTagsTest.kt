@@ -223,4 +223,18 @@ class FileTagsTest {
         mapOf("REPLAYGAIN_TRACK_GAIN" to listOf("-7.5 dB"), "R128_TRACK_GAIN" to listOf("-512")).toFileTags().replayGainTrack shouldBe -7.5
         mapOf("R128_TRACK_GAIN" to listOf("loud")).toFileTags().replayGainTrack shouldBe null
     }
+
+    @Test
+    fun `splits the ARTIST tag on semicolons pipes and spaced slashes only`() {
+        fun artists(value: String) = mapOf("ARTIST" to listOf(value)).toFileTags().artists
+
+        artists("A; B") shouldBe listOf("A", "B")
+        artists("A;B") shouldBe listOf("A", "B")
+        artists("A | B|C") shouldBe listOf("A", "B", "C")
+        artists("A / B") shouldBe listOf("A", "B")
+        artists(" A ;; a ; ") shouldBe listOf("A")
+        artists("AC/DC") shouldBe listOf("AC/DC")
+        artists("Bob Marley & the Wailers") shouldBe listOf("Bob Marley & the Wailers")
+        artists("Earth, Wind & Fire") shouldBe listOf("Earth, Wind & Fire")
+    }
 }

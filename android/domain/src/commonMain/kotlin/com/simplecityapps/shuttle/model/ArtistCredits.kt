@@ -19,12 +19,16 @@ data class ArtistCredit(
  * - Any other credit belongs to its name's key ([AlbumIdentityRule.artistKey]): the key an album artist of that name has.
  */
 object ArtistCredits {
-    private val SEPARATOR = Regex("\\s*;\\s+|\\s+/\\s+|\\s+[(\\[]?(?:feat\\.?|ft\\.?|featuring)\\s+", RegexOption.IGNORE_CASE)
+    private val SEPARATOR = Regex("\\s*;\\s+|\\s*\\|\\s*|\\s+/\\s+|\\s+[(\\[]?(?:feat\\.?|ft\\.?|featuring)\\s+", RegexOption.IGNORE_CASE)
 
     /** The artists [tags] credits, each once, in credit order; [identity] is the song's album identity. */
     fun credits(tags: AlbumIdentityTags, identity: AlbumIdentity): List<ArtistCredit> {
         val multiValue = tags.artistsTag.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
-        val names = multiValue.ifEmpty { tags.artists.flatMap(::split) }
+        val names = multiValue.ifEmpty { tags.artists.flatMap(::split) }.let { credited ->
+            // A combined album artist tag ("A; B") credits each of its artists too, so the song is under each of them
+            val albumArtists = tags.albumArtist?.let(::splitMultiArtist).orEmpty().takeIf { it.size > 1 }.orEmpty()
+            (credited + albumArtists).distinctBy { AlbumIdentityRule.artistKey(it) }
+        }
         val albumArtistKey = identity.albumArtistGroupKey
         val mbIds = tags.mbArtistIds.pairedWith(names)
         val serverIds = tags.serverArtistIds.pairedWith(names)
@@ -53,6 +57,18 @@ object ArtistCredits {
 
     private fun List<String>?.single(): String? = this?.map { it.trim() }?.filter { it.isNotEmpty() }?.singleOrNull()
 }
+
+/**
+ * One artist-like tag value's artists, for local files that put several in one tag: ";" and "|" separate wherever they
+ * stand, "/" only with whitespace either side (" / "), so "AC/DC" stays whole. "&" and "," never separate ("Earth, Wind & Fire").
+ * Values are trimmed, blanks dropped and repeats (ignoring case) removed.
+ */
+fun splitMultiArtist(value: String): List<String> = MULTI_ARTIST_SEPARATOR.split(value)
+    .map { it.trim() }
+    .filter { it.isNotEmpty() }
+    .distinctBy { it.lowercase() }
+
+private val MULTI_ARTIST_SEPARATOR = Regex("[;|]|\\s+/\\s+")
 
 /** Whether this song is [key]'s: its album's album artist, or credited on it. */
 fun Song.isByArtist(key: AlbumArtistGroupKey?): Boolean = albumArtistGroupKey == key || (key != null && artistCredits.any { it.groupKey == key })

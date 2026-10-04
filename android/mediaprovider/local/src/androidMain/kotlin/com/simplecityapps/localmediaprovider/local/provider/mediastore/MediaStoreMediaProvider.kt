@@ -21,6 +21,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.splitMultiArtist
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlin.math.abs
 import kotlin.time.Instant
@@ -110,7 +111,7 @@ class MediaStoreMediaProvider(
                                     MediaStore.Audio.Media.TITLE
                                 )
                             ),
-                        artists = listOfNotNull(artist),
+                        artists = artist?.let(::splitMultiArtist).orEmpty(),
                         albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
                         album =
                             songCursor.getStringOrNull(

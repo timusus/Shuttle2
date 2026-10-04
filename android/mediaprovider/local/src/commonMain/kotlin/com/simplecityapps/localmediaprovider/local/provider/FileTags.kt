@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import com.simplecityapps.shuttle.model.splitMultiArtist
 
 /**
  * The values of a file's tags, as TagLib (Android) or FFmpeg (iOS) read them. A null or empty field wasn't tagged: no
@@ -49,11 +50,7 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST
         albumArtist = first(TagLibProperty.AlbumArtist) ?: get(MATROSKA_ALBUM_ARTIST)?.firstOrNull(),
         artists =
-            get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
-                artist.split(';')
-                    .map { artist -> artist.trim() }
-                    .filterNot { artist -> artist.isEmpty() }
-            },
+            get(TagLibProperty.Artist.key).orEmpty().flatMap(::splitMultiArtist).distinctBy { it.lowercase() },
         album = first(TagLibProperty.Album),
         track = trackTag?.substringBefore('/')?.trim()?.toIntOrNull(),
         trackTotal = trackTag?.substringAfter('/', "")?.trim()?.toIntOrNull(),
