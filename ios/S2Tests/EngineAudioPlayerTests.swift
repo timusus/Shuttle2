@@ -243,6 +243,26 @@ struct EngineAudioPlayerTests {
         #expect(listener.calls == ["state a playing"])
     }
 
+    /// Reports the old engine had already queued on the main queue still run after it's replaced; they're dropped,
+    /// so a stale transition doesn't make its track current for the position, nor reach Kotlin.
+    @Test func reportsQueuedByAReplacedEngineAreDropped() {
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
+        let queued = engine.eventHandler
+        let rebuilt = FakeAudioEngine()
+        player.replaceEngine(rebuilt)
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
+        rebuilt.position = (uid: "a", ms: 500)
+
+        queued?(.transition(trackId: "b"))
+        queued?(.state(.playing, trackId: "b", commands: 1))
+        queued?(.position(trackId: "b", ms: 10))
+
+        #expect(listener.calls.isEmpty)
+        #expect(player.positionMs() == 500)
+        rebuilt.emit(.state(.playing, trackId: "a"))
+        #expect(listener.calls == ["state a playing"])
+    }
+
     private func coefficients(_ values: [Double]) -> KotlinDoubleArray {
         let array = KotlinDoubleArray(size: Int32(values.count))
         values.enumerated().forEach { array.set(index: Int32($0.offset), value: $0.element) }

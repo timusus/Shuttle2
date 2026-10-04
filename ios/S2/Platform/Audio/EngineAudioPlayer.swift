@@ -44,6 +44,9 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     private var commandsSent = 0
     /// The equalizer Kotlin last set, handed to a replacement engine too.
     private var equalizer: EngineEqualizer?
+    /// Which engine is current: each replacement gets the next. A report the old engine had already queued on the main
+    /// queue still runs after it's silenced, and is dropped by this.
+    private var engineGeneration = 0
 
     init(engine: AudioEngine) {
         self.engine = engine
@@ -51,21 +54,26 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         attach(engine)
     }
 
-    /// Swaps in a rebuilt engine after a media-services reset. The old one is silenced and stopped, and the new one
-    /// gets the equalizer; the caller reloads the current item into it.
+    /// Swaps in a rebuilt engine after a media-services reset. The old one is silenced and stopped, its reports already
+    /// on their way dropped, and the new one gets the equalizer; the caller reloads the current item into it.
     func replaceEngine(_ newEngine: AudioEngine) {
         engine.setEventHandler(nil)
         engine.stop()
         currentId = nil
         isPlaying = false
         commandsSent = 0
+        engineGeneration += 1
         engine = newEngine
         attach(newEngine)
         equalizer?.apply(to: newEngine)
     }
 
     private func attach(_ engine: AudioEngine) {
-        engine.setEventHandler { [weak self] event in self?.forward(event) }
+        let generation = engineGeneration
+        engine.setEventHandler { [weak self] event in
+            guard let self, engineGeneration == generation else { return }
+            forward(event)
+        }
     }
 
     private func forward(_ event: EngineEvent) {

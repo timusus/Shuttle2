@@ -33,6 +33,9 @@ final class FakeAudioEngine: AudioEngine {
 
     var hasEventHandler: Bool { handler != nil }
 
+    /// The event handler as set now, as a report the engine has already queued on the main queue holds it.
+    var eventHandler: ((EngineEvent) -> Void)? { handler }
+
     /// Reports `event` as the engine would, on the main queue. A state made with `.state(_:trackId:)` is stamped with
     /// the commands taken so far: a report the engine makes now.
     func emit(_ event: EngineEvent) {
