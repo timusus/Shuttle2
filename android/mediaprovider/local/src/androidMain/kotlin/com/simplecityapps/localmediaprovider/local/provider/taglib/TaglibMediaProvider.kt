@@ -9,7 +9,9 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
+import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
 import com.simplecityapps.localmediaprovider.local.provider.toSong
+import com.simplecityapps.localmediaprovider.local.provider.unmountedRoots
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.M3uEntryMatcher
@@ -57,16 +59,24 @@ class TaglibMediaProvider(
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
 
+    @Volatile
+    override var unreadableRoots: Set<String> = emptySet()
+        private set
+
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         val startTime = System.currentTimeMillis()
         val folders = folders()
-        val mediaStoreFiles = findAudioFiles(folders.filter)
-        val extraDocuments = findExtraDocuments(folders, knownPaths = mediaStoreFiles.orEmpty().map { it.path.lowercase() }.toSet())
-        if (mediaStoreFiles == null && extraDocuments.isEmpty()) {
-            emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_directories_empty)))
-            return@flow
-        }
-        val files = mediaStoreFiles.orEmpty()
+        // Without MediaStore's listing, failing keeps the library as it was: an empty one would remove every song it holds
+        val files =
+            findAudioFiles(folders.filter) ?: run {
+                emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
+                return@flow
+            }
+        val (extraDocuments, unavailableTrees) = findExtraDocuments(folders, knownPaths = files.map { it.path.lowercase() }.toSet())
+        // After the listing, so a volume unmounted while it ran counts too: MediaStore leaves its songs out until it's back.
+        // Songs read from a tree keep a document URI under it as their path (getExtraSongs)
+        unreadableRoots = unmountedRoots(existingSongs.map { song -> song.path }, mountedVolumeRoots(context)) +
+            unavailableTrees.map { treeUri -> "$treeUri/document/" }
         val total = files.size + extraDocuments.size
         val filesWithImages =
             withContext(Dispatchers.IO) {
@@ -129,30 +139,31 @@ class TaglibMediaProvider(
 
     /**
      * The audio documents in the extra folders that MediaStore didn't already list (by [knownPaths], lowercased), and
-     * that no excluded folder covers.
+     * that no excluded folder covers, and the extra folders that couldn't be read.
      */
     private suspend fun findExtraDocuments(
         folders: ScannerFolders,
         knownPaths: Set<String>
-    ): List<DocumentNode> = withContext(Dispatchers.IO) {
-        if (folders.extraTrees.isEmpty()) return@withContext emptyList()
+    ): Pair<List<DocumentNode>, List<Uri>> = withContext(Dispatchers.IO) {
+        if (folders.extraTrees.isEmpty()) return@withContext emptyList<DocumentNode>() to emptyList()
         val primaryStoragePath = primaryStoragePath()
         val excludes = FolderFilter(excludes = folders.filter.excludes)
-        folders.extraTrees
-            .map { treeUri ->
-                SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri)
-                    .filterIsInstance<SafDirectoryHelper.TreeStatus.Complete>()
-                    .map { it.tree }
-            }
-            .merge()
-            .toList()
-            .flatMap { tree -> tree.getLeaves() }
-            .filter { node -> node.ext != "m3u" && node.ext != "m3u8" && node.ext != "pls" }
-            .filter { node ->
-                val path = externalStorageTreeFolder(node.uri.authority, node.documentId, primaryStoragePath) ?: return@filter true
-                path.lowercase() !in knownPaths && excludes.accepts(path)
-            }
-            .distinctBy { node -> node.uri }
+        val statuses =
+            folders.extraTrees
+                .map { treeUri -> SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri) }
+                .merge()
+                .toList()
+        val documents =
+            statuses
+                .filterIsInstance<SafDirectoryHelper.TreeStatus.Complete>()
+                .flatMap { status -> status.tree.getLeaves() }
+                .filter { node -> node.ext != "m3u" && node.ext != "m3u8" && node.ext != "pls" }
+                .filter { node ->
+                    val path = externalStorageTreeFolder(node.uri.authority, node.documentId, primaryStoragePath) ?: return@filter true
+                    path.lowercase() !in knownPaths && excludes.accepts(path)
+                }
+                .distinctBy { node -> node.uri }
+        documents to statuses.filterIsInstance<SafDirectoryHelper.TreeStatus.Unavailable>().map { status -> status.rootUri }
     }
 
     @Suppress("DEPRECATION")

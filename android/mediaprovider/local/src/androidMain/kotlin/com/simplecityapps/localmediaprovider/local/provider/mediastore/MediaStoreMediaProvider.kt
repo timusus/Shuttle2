@@ -9,6 +9,8 @@ import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
+import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
+import com.simplecityapps.localmediaprovider.local.provider.unmountedRoots
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -30,6 +32,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
+import timber.log.Timber
 
 class MediaStoreMediaProvider(
     private val context: Context,
@@ -37,6 +40,10 @@ class MediaStoreMediaProvider(
     private val preferenceManager: GeneralPreferenceManager
 ) : MediaProvider {
     override val type = MediaProviderType.MediaStore
+
+    @Volatile
+    override var unreadableRoots: Set<String> = emptySet()
+        private set
 
     // Songs
 
@@ -47,16 +54,26 @@ class MediaStoreMediaProvider(
                 hasDiscNumber = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R,
                 hasBitsPerSample = hasBitsPerSampleColumn()
             )
+        // Without a listing, failing keeps the library as it was: an empty one would remove every song
         val songCursor =
-            context.contentResolver.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection.toTypedArray(),
-                "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
-                null,
+            try {
+                context.contentResolver.query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    projection.toTypedArray(),
+                    "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
+                    null,
+                    null
+                )
+            } catch (e: SecurityException) {
+                Timber.e(e, "Failed to query MediaStore for songs")
                 null
-            )
+            }
+        if (songCursor == null) {
+            emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
+            return@flow
+        }
 
-        songCursor?.use {
+        songCursor.use {
             val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
             val discNumberColumnIndex =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -134,6 +151,9 @@ class MediaStoreMediaProvider(
                 rawSongs.add(song)
             }
         }
+
+        // After the listing, so a volume unmounted while it ran counts too: MediaStore leaves its songs out until it's back
+        unreadableRoots = unmountedRoots(existingSongs.map { song -> song.path }, mountedVolumeRoots(context))
 
         var songs = mutableListOf<Song>()
         // The importer records the new version once this import's result is stored, so one cancelled part way through

@@ -3,6 +3,8 @@ package com.simplecityapps.saf
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
+import java.io.FileNotFoundException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -16,23 +18,30 @@ object SafDirectoryHelper {
      *
      * Leaves are represented by [FileNode], and only those whose mime type starts with 'audio' are included.
      *
+     * Ends with [TreeStatus.Complete], or [TreeStatus.Unavailable] if any folder of the tree can't be listed (its access
+     * was revoked, its volume isn't mounted): a partial tree would look like one whose files were deleted.
+     *
      * This task is resource intensive. Should be called from a background thread.
      */
     fun buildFolderNodeTree(
         contentResolver: ContentResolver,
         rootUri: Uri
     ): Flow<TreeStatus> = flow {
-        try {
-            val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
-            retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull()?.let { rootDocumentNode ->
-                val tree = DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
-                emit(TreeStatus.Progress(tree))
-                traverseDocumentNodes(tree, contentResolver, rootUri)
-                emit(TreeStatus.Complete(tree))
+        val tree =
+            try {
+                val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
+                val rootDocumentNode = retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull() ?: throw FileNotFoundException("No root document")
+                DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType).also { tree ->
+                    traverseDocumentNodes(tree, contentResolver, rootUri)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The documents provider is another app, so anything it throws means the tree can't be read
+                Timber.e(e, "Failed to build folder tree ($rootUri)")
+                null
             }
-        } catch (e: SecurityException) {
-            Timber.e(e, "Failed to build folder tree ($rootUri)")
-        }
+        emit(tree?.let { TreeStatus.Complete(it) } ?: TreeStatus.Unavailable(rootUri))
     }.flowOn(Dispatchers.IO)
 
     private suspend fun traverseDocumentNodes(
@@ -68,6 +77,9 @@ object SafDirectoryHelper {
      * Builds a list of [DocumentNode] from the passed in [Uri].
      *
      * This involves a content resolver query, and should be called from a background thread.
+     *
+     * @throws SecurityException without access to [uri]
+     * @throws FileNotFoundException if the documents provider returns no cursor
      */
     private suspend fun retrieveDocumentNodes(
         contentResolver: ContentResolver,
@@ -75,71 +87,55 @@ object SafDirectoryHelper {
         rootUri: Uri
     ): List<DocumentNode> = withContext(Dispatchers.IO) {
         val documentNodes = mutableListOf<DocumentNode>()
-        try {
-            contentResolver.query(
-                uri,
-                arrayOf(
-                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                    DocumentsContract.Document.COLUMN_MIME_TYPE,
-                    DocumentsContract.Document.COLUMN_LAST_MODIFIED,
-                    DocumentsContract.Document.COLUMN_SIZE
-                ),
-                null,
-                null,
-                null
-            ).use { cursor ->
-                cursor?.let {
-                    while (cursor.moveToNext()) {
-                        val mimeType = cursor.getString(2)
-                        val documentId = cursor.getString(0)
-                        if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                            documentNodes.add(
-                                DocumentNodeTree(
-                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
-                                    rootUri = rootUri,
-                                    documentId = documentId,
-                                    displayName = cursor.getString(1),
-                                    mimeType = mimeType
-                                )
+        contentResolver.query(
+            uri,
+            arrayOf(
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_MIME_TYPE,
+                DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                DocumentsContract.Document.COLUMN_SIZE
+            ),
+            null,
+            null,
+            null
+        ).use { cursor ->
+            cursor?.let {
+                while (cursor.moveToNext()) {
+                    val mimeType = cursor.getString(2)
+                    val documentId = cursor.getString(0)
+                    if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                        documentNodes.add(
+                            DocumentNodeTree(
+                                uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                rootUri = rootUri,
+                                documentId = documentId,
+                                displayName = cursor.getString(1),
+                                mimeType = mimeType
                             )
-                        } else {
-                            documentNodes.add(
-                                DocumentNode(
-                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
-                                    documentId = documentId,
-                                    displayName = cursor.getString(1),
-                                    mimeType = mimeType,
-                                    lastModified = cursor.getLong(3),
-                                    size = cursor.getLong(4)
-                                )
+                        )
+                    } else {
+                        documentNodes.add(
+                            DocumentNode(
+                                uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                documentId = documentId,
+                                displayName = cursor.getString(1),
+                                mimeType = mimeType,
+                                lastModified = cursor.getLong(3),
+                                size = cursor.getLong(4)
                             )
-                        }
+                        )
                     }
-                } ?: Timber.e("Failed to iterate cursor (null)")
-            }
-        } catch (e: SecurityException) {
-            Timber.e("Failed to retrieve document node for uri: $uri")
+                }
+            } ?: throw FileNotFoundException("No cursor for $uri")
         }
         documentNodes
     }
 
-    sealed class TreeStatus(val tree: DocumentNodeTree) {
-        class Progress(tree: DocumentNodeTree) : TreeStatus(tree)
+    sealed interface TreeStatus {
+        data class Complete(val tree: DocumentNodeTree) : TreeStatus
 
-        class Complete(tree: DocumentNodeTree) : TreeStatus(tree)
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as TreeStatus
-
-            if (tree != other.tree) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int = tree.hashCode()
+        /** Some or all of the tree at [rootUri] couldn't be read. */
+        data class Unavailable(val rootUri: Uri) : TreeStatus
     }
 }
