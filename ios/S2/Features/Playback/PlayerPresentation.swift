@@ -70,6 +70,9 @@ extension View {
                 content()
                     .environment(\.layoutTier, tier)
                     .presentationDetents([.medium, .large])
+                    // At the medium detent Now Playing's close chevron is still on screen above the sheet: let it
+                    // take touches, so the player closes without dismissing the sheet first (#684).
+                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
                     .presentationDragIndicator(.visible)
             }
             .popover(isPresented: isPresented.gated(on: style == .popover)) {
