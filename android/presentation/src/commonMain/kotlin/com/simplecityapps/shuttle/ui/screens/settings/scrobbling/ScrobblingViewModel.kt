@@ -8,7 +8,6 @@ import com.simplecityapps.shuttle.scrobbling.LastFmSignInResult
 import com.simplecityapps.shuttle.scrobbling.ObserveLastFmAccount
 import com.simplecityapps.shuttle.scrobbling.SignOutOfLastFm
 import com.simplecityapps.shuttle.scrobbling.StartLastFmSignIn
-import com.simplecityapps.shuttle.settings.ScrobblingSettings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -41,17 +40,18 @@ class ScrobblingViewModel @Inject constructor(
     private val startSignIn: StartLastFmSignIn,
     private val finishSignIn: FinishLastFmSignIn,
     private val signOut: SignOutOfLastFm,
-    private val settings: ScrobblingSettings
+    private val observeServerStreams: ObserveScrobbleServerStreams,
+    private val setServerStreams: SetScrobbleServerStreams
 ) : ViewModel() {
     private val transient = MutableStateFlow(ScrobblingUiState())
 
     val uiState: StateFlow<ScrobblingUiState> = combine(
         observeAccount(),
-        settings.scrobbleServerStreams.flow,
+        observeServerStreams(),
         transient
     ) { account, serverStreams, transient ->
         transient.copy(account = account, scrobbleServerStreams = serverStreams)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScrobblingUiState(scrobbleServerStreams = settings.scrobbleServerStreams.value))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ScrobblingUiState())
 
     fun onSignIn() {
         launchBusy {
@@ -78,7 +78,7 @@ class ScrobblingViewModel @Inject constructor(
     }
 
     fun onServerStreamsChange(enabled: Boolean) {
-        settings.scrobbleServerStreams.value = enabled
+        setServerStreams(enabled)
     }
 
     fun onApprovalUrlOpened() {

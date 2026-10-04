@@ -44,7 +44,8 @@ class ScrobblingViewModelTest {
         startSignIn = StartLastFmSignIn { approvalUrl },
         finishSignIn = FinishLastFmSignIn { finishResult },
         signOut = SignOutOfLastFm { signedOut = true },
-        settings = settings
+        observeServerStreams = ObserveScrobbleServerStreams(settings),
+        setServerStreams = SetScrobbleServerStreams(settings)
     )
 
     @Test

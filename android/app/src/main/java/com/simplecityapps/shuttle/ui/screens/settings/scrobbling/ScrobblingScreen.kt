@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.settings.scrobbling
 
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +18,7 @@ import com.simplecityapps.shuttle.designsystem.component.ActionsSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.scrobbling.LastFmAccountState
@@ -150,7 +150,7 @@ fun ScrobblingScreen(
             )
         }
         item(key = "attribution") {
-            Text(stringResource(R.string.scrobbling_attribution))
+            S2Text(stringResource(R.string.scrobbling_attribution))
         }
     }
 }
