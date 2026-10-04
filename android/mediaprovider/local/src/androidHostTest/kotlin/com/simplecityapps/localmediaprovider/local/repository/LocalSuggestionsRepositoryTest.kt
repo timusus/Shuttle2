@@ -183,6 +183,21 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
+    fun `albums to rediscover tie on plays in the order their songs come, and a null last play counts as not lately`() = runTest {
+        insert(
+            createSongData(album = "First", track = 1, playCount = 4).copy(lastPlayed = now - 200.days),
+            createSongData(album = "Second", track = 1, playCount = 4).copy(lastPlayed = now - 150.days),
+            createSongData(album = "Third", track = 1, playCount = 4).copy(lastPlayed = now - 100.days),
+            createSongData(album = "Never", track = 1, playCount = 7),
+            // A favourite with fewer plays than the minimum, and no last play
+            createSongData(album = "Starred", track = 1, playCount = 1).copy(favouritedAt = now - 300.days)
+        )
+
+        repository.albumsToRediscover(minPlays = 3, playedBefore = now - 90.days, limit = 10) shouldBe
+            listOf(key("never"), key("first"), key("second"), key("third"), key("starred"))
+    }
+
+    @Test
     fun `excluded songs are left out`() = runTest {
         insert(createSongData(album = "Hidden", track = 1).copy(excluded = true, lastCompleted = now))
 
