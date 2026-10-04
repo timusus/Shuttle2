@@ -140,12 +140,12 @@ class OfflineDownloadsTest {
     @Test
     fun theSummaryFollowsTheSongsDownloads() = runTest {
         downloads.summary(listOf(remote(1))) shouldBe DownloadSummary(DownloadSummary.Status.Downloaded, canDownload = false, canRemove = true)
-        downloads.summary(listOf(remote(1), remote(2))) shouldBe DownloadSummary(DownloadSummary.Status.None, canDownload = true, canRemove = true)
+        downloads.summary(listOf(remote(1), remote(2))) shouldBe DownloadSummary(DownloadSummary.Status.NotDownloaded, canDownload = true, canRemove = true)
 
         downloads.download(remote(2))
         downloads.summary(listOf(remote(1), remote(2))).status shouldBe DownloadSummary.Status.Downloading
 
-        downloads.summary(listOf(song(id = 3))) shouldBe DownloadSummary(DownloadSummary.Status.None, canDownload = false, canRemove = false)
+        downloads.summary(listOf(song(id = 3))) shouldBe DownloadSummary(DownloadSummary.Status.NotDownloaded, canDownload = false, canRemove = false)
     }
 
     private fun remote(id: Long) = song(id = id, path = "jellyfin://item/$id").copy(mediaProvider = MediaProviderType.Jellyfin)

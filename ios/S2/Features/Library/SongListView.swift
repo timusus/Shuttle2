@@ -195,6 +195,8 @@ enum MediaActionText {
             failed.reason.map { "Couldn't play: \($0)" } ?? "Couldn't play."
         case is MediaActionMessageNoSongs:
             "There's nothing to play."
+        case let failed as MediaActionMessageDownloadFailed:
+            String(localized: "Couldn't download \(Int(failed.songCount)) songs. Check you're signed in to the server and try again.")
         default:
             nil
         }

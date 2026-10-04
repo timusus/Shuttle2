@@ -94,10 +94,10 @@ class OfflineDownloads(
         val actions = downloadActions(songs, held)
         return DownloadSummary(
             status = when {
-                remote.isEmpty() -> DownloadSummary.Status.None
+                remote.isEmpty() -> DownloadSummary.Status.NotDownloaded
                 remote.any { it?.state == OfflineDownload.State.Downloading } -> DownloadSummary.Status.Downloading
                 remote.all { it?.state == OfflineDownload.State.Completed } -> DownloadSummary.Status.Downloaded
-                else -> DownloadSummary.Status.None
+                else -> DownloadSummary.Status.NotDownloaded
             },
             canDownload = MediaActionType.Download in actions,
             canRemove = MediaActionType.RemoveDownload in actions
@@ -144,7 +144,7 @@ data class DownloadSummary(
     val canRemove: Boolean
 ) {
     enum class Status {
-        None,
+        NotDownloaded,
         Downloading,
         Downloaded
     }

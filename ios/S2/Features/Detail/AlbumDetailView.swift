@@ -4,7 +4,8 @@ import SwiftUI
 /// Album detail (P5-7, polished in #624): a hero tinted from the cover (artwork, title, artist · year · songs ·
 /// duration, Play/Shuffle; the artist's name opens the artist), then the album's tracks, split into "Disc N" groups
 /// when it has more than one. A tap plays the album from that track; its context menu has the shared media actions.
-/// The toolbar's menu plays the whole album next, queues it, or goes to the artist. A "More by <album artist>" shelf
+/// The toolbar's menu plays the whole album next, queues it, goes to the artist, or downloads it or removes its download
+/// (#759, a server album; the hero then says Downloading or Downloaded). A "More by <album artist>" shelf
 /// of the artist's other albums ends the screen (#695; hidden when there are none). Modeled on Android's
 /// `AlbumDetailScreen.kt`.
 struct AlbumDetailView: View {
@@ -22,7 +23,7 @@ struct AlbumDetailView: View {
                 groupKey: AlbumGroupKey(key: albumKey, albumArtistGroupKey: albumArtistKey.map { AlbumArtistGroupKey(key: $0) }, identity: albumIdentity)
             )
         }
-        Observing(models.album.uiState, models.actions.uiState) { state, actions in
+        Observing(models.album.uiState, models.actions.uiState, AppGraph.shared.offlineDownloads.downloads) { state, actions, _ in
             AlbumDetailContent(
                 state: state,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
@@ -48,7 +49,8 @@ struct AlbumDetailView: View {
                     onPlay: { models.actions.send(MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0)) },
                     onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
                     onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
-                )
+                ),
+                downloads: DetailDownloads(actions: models.actions)
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -84,6 +86,8 @@ struct AlbumDetailContent: View {
     /// Opens an album of the More by shelf.
     var onAlbumTap: (Album) -> Void = { _ in }
     var albumActions = DetailAlbumActions()
+    /// The album's and each track's Download and Remove Download, and the hero's download status.
+    var downloads = DetailDownloads()
 
     @State private var songInfo: SongInfoTarget?
 
@@ -103,7 +107,8 @@ struct AlbumDetailContent: View {
                         onArtist: onGoToArtist,
                         layout: layout,
                         onPlay: { onPlay(0) },
-                        onShuffle: onShuffle
+                        onShuffle: onShuffle,
+                        downloadStatus: downloads.summary?(state.songs).status ?? .notDownloaded
                     ) { points in
                         RemoteArtwork(.album(album), points: points)
                             .artworkTile(points, shape: .artworkHero)
@@ -143,6 +148,7 @@ struct AlbumDetailContent: View {
                         if let onGoToArtist, artistLink(album) != nil {
                             Button("Go to Artist", systemImage: "music.mic", action: onGoToArtist)
                         }
+                        DownloadMenuItems(songs: state.songs, downloads: downloads)
                     } label: {
                         Label("More", systemImage: "ellipsis.circle")
                     }
@@ -166,7 +172,7 @@ struct AlbumDetailContent: View {
             )
         }
         .buttonStyle(.plain)
-        .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
+        .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
     }
 
     /// Songs grouped by disc (falling back to disc 1) in the order the ViewModel already sorted them, as

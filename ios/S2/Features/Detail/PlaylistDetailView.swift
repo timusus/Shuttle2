@@ -6,7 +6,7 @@ import SwiftUI
 /// (`canReorder`) — the HIG's native affordance for a manual order, replacing Android's `sh.calvin.reorderable`
 /// drag handle. Rename and delete are an alert/confirmationDialog, the same pattern `PlaylistListView` uses.
 /// Multi-select removal, the sort menu and m3u export are out of scope for this screen (tracked as a follow-up);
-/// a swipe removes one song from the playlist.
+/// a swipe removes one song from the playlist. Its menu and each song's download them or remove their downloads (#759).
 struct PlaylistDetailView: View {
     let id: Int64
 
@@ -16,6 +16,8 @@ struct PlaylistDetailView: View {
             PlaylistDetailModels(graph: AppGraph.shared, playlistId: id)
         }
         Observing(models.playlist.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
+            // Redrawn as a download moves on, so the hero and menus read the songs' downloads again
+            Observing(AppGraph.shared.offlineDownloads.downloads) { _ in
             PlaylistDetailContent(
                 state: state,
                 covers: covers,
@@ -44,8 +46,10 @@ struct PlaylistDetailView: View {
                     ))
                 },
                 onRename: { name in models.playlist.onRename(name: name) },
-                onDelete: { models.playlist.onDelete() }
+                onDelete: { models.playlist.onDelete() },
+                downloads: DetailDownloads(actions: models.actions)
             )
+            }
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
             .playlistDetailEvents(state.events, handled: { models.playlist.onEventHandled(id: $0) })
         }
@@ -83,6 +87,8 @@ struct PlaylistDetailContent: View {
     var onRemove: (PlaylistSong) -> Void = { _ in }
     var onRename: (String) -> Void = { _ in }
     var onDelete: () -> Void = {}
+    /// The playlist's and each song's Download and Remove Download (#759), and the hero's download status.
+    var downloads = DetailDownloads()
 
     @State private var songInfo: SongInfoTarget?
 
@@ -102,7 +108,8 @@ struct PlaylistDetailContent: View {
                     subtitle: eyebrow(pluralized(Int(playlist.songCount), "song"), totalDuration(state.songs.map(\.song))),
                     layout: layout,
                     onPlay: { onPlay(0) },
-                    onShuffle: onShuffle
+                    onShuffle: onShuffle,
+                    downloadStatus: downloads.summary?(state.songs.map(\.song)).status ?? .notDownloaded
                 ) { points in
                     CoverMosaic.playlist(playlist.name, covers: covers, shape: .artworkHero)
                         .frame(width: points, height: points)
@@ -119,6 +126,7 @@ struct PlaylistDetailContent: View {
                         .rowSeparator(.none)
                         .contextMenu {
                             SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
+                            DownloadMenuItems(songs: [entry.song], downloads: downloads)
                             Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }
                         }
                         .swipeActions(edge: .trailing) {
@@ -141,6 +149,7 @@ struct PlaylistDetailContent: View {
                         renameText = playlist.name
                         isRenaming = true
                     }
+                    DownloadMenuItems(songs: state.songs.map(\.song), downloads: downloads)
                     Button("Delete", systemImage: "trash", role: .destructive) { isDeleting = true }
                 } label: {
                     Image(systemName: "ellipsis.circle")

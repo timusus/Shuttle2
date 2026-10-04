@@ -29,7 +29,7 @@ class IosPlatformModule {
         artworkPrefetch = false,
         scheduledRescan = false,
         cast = false,
-        offlineDownloads = false,
+        offlineDownloads = true,
     )
 
     @Provides
