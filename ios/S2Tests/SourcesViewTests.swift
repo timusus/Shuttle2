@@ -13,6 +13,8 @@ struct SourcesViewTests {
         scan: ScanProgress? = nil,
         scanError: String? = nil,
         lastImport: KotlinInstant? = nil,
+        deviceUpdated: KotlinInstant? = nil,
+        serverUpdated: KotlinInstant? = nil,
         thisDevice: Bool = false,
         extras: [SourceFolder] = [],
         deviceSongs: Int? = nil
@@ -25,8 +27,8 @@ struct SourcesViewTests {
             scanError: scanError,
             deviceStatus: SourceStatusIdle.shared,
             deviceSongs: deviceSongs.map { KotlinInt(int: Int32($0)) },
-            deviceUpdated: nil,
-            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: nil, listingShortfall: 0) },
+            deviceUpdated: deviceUpdated,
+            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: serverUpdated, listingShortfall: 0) },
             lastImport: lastImport,
             events: []
         )
@@ -66,7 +68,7 @@ struct SourcesViewTests {
     /// ViewInspector can't reach swipe actions, so this checks the detail's).
     @Test func removeServerAsksBeforeRemoving() throws {
         var removed = false
-        let sut = ServerDetailContent(type: .emby, login: ServerLogin(), status: .connected, scan: .idle, lastImport: nil, onRemove: { removed = true })
+        let sut = ServerDetailContent(type: .emby, login: ServerLogin(), status: .connected, scan: .idle, updated: nil, onRemove: { removed = true })
         try sut.inspect().find(viewWithAccessibilityIdentifier: "serverDetail.remove").button().tap()
         #expect(!removed)
     }
@@ -170,7 +172,7 @@ struct SourcesViewTests {
 
     @Test func theDetailShowsWhereTheServerIsAndWhoIsSignedIn() throws {
         let login = ServerLogin(address: "https://music.example.com", username: "tim")
-        let sut = ServerDetailContent(type: .jellyfin, login: login, status: .connected, scan: .idle, lastImport: nil)
+        let sut = ServerDetailContent(type: .jellyfin, login: login, status: .connected, scan: .idle, updated: nil)
         #expect((try? sut.inspect().find(text: "https://music.example.com")) != nil)
         #expect((try? sut.inspect().find(text: "tim")) != nil)
         #expect((try? sut.inspect().find(text: "Connected")) != nil)
@@ -185,7 +187,7 @@ struct SourcesViewTests {
             login: ServerLogin(),
             status: .failed("HTTP 401"),
             scan: .idle,
-            lastImport: nil,
+            updated: nil,
             onRescan: { rescanned = true },
             onSignIn: { signedIn = true }
         )
@@ -194,6 +196,21 @@ struct SourcesViewTests {
         try sut.inspect().find(viewWithAccessibilityIdentifier: "sources.rescan").button().tap()
         #expect(signedIn)
         #expect(rescanned)
+    }
+
+    @Test func mapsEachSourcesOwnUpdatedTime() {
+        let instant = KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: 1_700_000_000_000)
+        let state = SourcesState(uiState(connected: [.jellyfin], deviceUpdated: instant, serverUpdated: instant))
+        #expect(state.deviceUpdated == Date(timeIntervalSince1970: 1_700_000_000))
+        #expect(state.serverUpdated[.jellyfin] == Date(timeIntervalSince1970: 1_700_000_000))
+        #expect(SourcesState(uiState()).deviceUpdated == nil)
+    }
+
+    @Test func serverRowAndDetailShowTheirUpdatedTime() throws {
+        let row = ServerRow(type: .jellyfin, host: nil, status: .connected, updated: Date().addingTimeInterval(-3600))
+        #expect((try? row.inspect().find(text: "Updated 1 hour ago")) != nil || (try? row.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("Updated") })) != nil)
+        let detail = ServerDetailContent(type: .jellyfin, login: ServerLogin(), status: .connected, scan: .idle, updated: Date().addingTimeInterval(-3600))
+        #expect((try? detail.inspect().find(viewWithAccessibilityIdentifier: "serverDetail.updated")) != nil)
     }
 
     @Test func mapsTheLastImport() {

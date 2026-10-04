@@ -24,7 +24,7 @@ struct ServerDetailView: View {
                     login: login,
                     status: sources.status(of: type),
                     scan: sources.scan,
-                    lastImport: sources.lastImport,
+                    updated: sources.serverUpdated[type],
                     onRescan: { models.sources.onRescan() },
                     onSignIn: { setup = .signIn(type) },
                     onRemove: {
@@ -51,7 +51,7 @@ struct ServerDetailContent: View {
     let login: ServerLogin
     let status: SourcesState.ServerStatus
     let scan: SourcesState.Scan
-    let lastImport: Date?
+    let updated: Date?
     var onRescan: () -> Void = {}
     var onSignIn: () -> Void = {}
     var onRemove: () -> Void = {}
@@ -76,6 +76,12 @@ struct ServerDetailContent: View {
                     ServerStatusLabel(status: status)
                 }
                 .accessibilityIdentifier("serverDetail.status")
+                if let updated {
+                    LabeledContent("Updated") {
+                        Text(updated, format: .relative(presentation: .named))
+                    }
+                    .accessibilityIdentifier("serverDetail.updated")
+                }
                 if case .failed(let error) = status {
                     Text(error).font(.subheadline).foregroundStyle(.s2TextSecondary)
                         .accessibilityIdentifier("serverDetail.error")
@@ -92,7 +98,7 @@ struct ServerDetailContent: View {
             }
             ScanSection(
                 scan: scan,
-                lastImport: lastImport,
+                lastImport: nil,
                 onRescan: onRescan,
                 footer: "Looks for new and changed music on every server you've connected."
             )

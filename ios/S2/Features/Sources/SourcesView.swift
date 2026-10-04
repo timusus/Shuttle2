@@ -102,6 +102,9 @@ struct SourcesState: Equatable {
     var scan: Scan
     var importStatus: ImportStatus
     var lastImport: Date?
+    /// When this device's music, and each connected server, last finished importing.
+    var deviceUpdated: Date?
+    var serverUpdated: [MediaProviderType: Date]
     var logins: [MediaProviderType: ServerLogin]
 
     /// A folder picked in Files: [hasAccess] is false while its bookmark won't resolve, until it's picked again.
@@ -143,6 +146,8 @@ struct SourcesState: Equatable {
         scan: Scan = .idle,
         importStatus: ImportStatus = .idle,
         lastImport: Date? = nil,
+        deviceUpdated: Date? = nil,
+        serverUpdated: [MediaProviderType: Date] = [:],
         logins: [MediaProviderType: ServerLogin] = [:]
     ) {
         self.thisDevice = thisDevice
@@ -152,6 +157,8 @@ struct SourcesState: Equatable {
         self.scan = scan
         self.importStatus = importStatus
         self.lastImport = lastImport
+        self.deviceUpdated = deviceUpdated
+        self.serverUpdated = serverUpdated
         self.logins = logins
     }
 
@@ -170,7 +177,11 @@ struct SourcesState: Equatable {
             scan = .idle
         }
         self.importStatus = importStatus
-        lastImport = state.lastImport.map { Date(timeIntervalSince1970: TimeInterval($0.toEpochMilliseconds()) / 1000) }
+        lastImport = state.lastImport.map(Date.init(kotlin:))
+        deviceUpdated = state.deviceUpdated.map(Date.init(kotlin:))
+        serverUpdated = Dictionary(uniqueKeysWithValues: state.servers.compactMap { server in
+            server.updated.map { (server.type, Date(kotlin: $0)) }
+        })
         self.logins = logins
     }
 
@@ -182,6 +193,17 @@ struct SourcesState: Equatable {
         default: .connected
         }
     }
+}
+
+extension Date {
+    init(kotlin instant: KotlinInstant) {
+        self.init(timeIntervalSince1970: TimeInterval(instant.toEpochMilliseconds()) / 1000)
+    }
+}
+
+/// When a source last updated, as Android words it: "Updated just now" inside the first minute, else "Updated 5 minutes ago".
+func updatedText(_ date: Date, now: Date = Date()) -> Text {
+    now.timeIntervalSince(date) < 60 ? Text("Updated just now") : Text("Updated \(date, format: .relative(presentation: .named))")
 }
 
 extension MediaProviderType {
@@ -245,7 +267,7 @@ struct SourcesContent: View {
             Section {
                 ForEach(state.servers, id: \.self) { type in
                     NavigationLink(value: Route.server(type: type.name)) {
-                        ServerRow(type: type, host: state.logins[type]?.host, status: state.status(of: type))
+                        ServerRow(type: type, host: state.logins[type]?.host, status: state.status(of: type), updated: state.serverUpdated[type])
                     }
                     .accessibilityIdentifier("sources.server.\(type.name)")
                     .swipeActions {
@@ -324,7 +346,11 @@ struct DeviceSection: View {
         } header: {
             Text("On This iPhone")
         } footer: {
-            Text(state.deviceFooter)
+            if state.thisDevice, let updated = state.deviceUpdated {
+                Text("\(state.deviceFooter) \(updatedText(updated)).")
+            } else {
+                Text(state.deviceFooter)
+            }
         }
         .fileImporter(isPresented: $picking, allowedContentTypes: [.folder]) { result in
             if case .success(let url) = result { onAddFolder(url) }
@@ -361,6 +387,7 @@ struct ServerRow: View {
     let type: MediaProviderType
     let host: String?
     let status: SourcesState.ServerStatus
+    var updated: Date?
 
     var body: some View {
         LabeledContent {
@@ -372,6 +399,9 @@ struct ServerRow: View {
                     if let host {
                         Text(host).font(.subheadline).foregroundStyle(.s2TextSecondary).lineLimit(1).truncationMode(.middle)
                     }
+                    if let updated {
+                        updatedText(updated).font(.subheadline).foregroundStyle(.s2TextSecondary).lineLimit(1)
+                    }
                 }
             } icon: {
                 IconSquare(systemImage: type.symbol, style: .filled(type.color))
@@ -379,7 +409,7 @@ struct ServerRow: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel([type.title, host].compactMap { $0 }.joined(separator: ", "))
-        .accessibilityValue(status.text)
+        .accessibilityValue([status.text, updated.map { "Updated \($0.formatted(.relative(presentation: .named)))" }].compactMap { $0 }.joined(separator: ", "))
     }
 }
 
