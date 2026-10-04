@@ -71,4 +71,31 @@ class LastFmScrobblerTest {
         server.requests shouldBe emptyList()
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
     }
+
+    @Test
+    fun `a song without an artist or track is neither sent nor queued`() = runTest {
+        listOf(
+            song.copy(name = " "),
+            song.copy(name = null),
+            song.copy(artists = emptyList(), albumArtist = null),
+            song.copy(artists = listOf(""), albumArtist = null)
+        ).forEach {
+            scrobbler.nowPlaying(it)
+            scrobbler.scrobble(it, startedAtEpochSec = 1_234)
+        }
+
+        server.requests shouldBe emptyList()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+    }
+
+    @Test
+    fun `an invalid session from now playing signs the user out and keeps the queue`() = runTest {
+        scrobbler.scrobble(song, startedAtEpochSec = 1_234)
+        server.enqueue("""{"error":9,"message":"Invalid session key"}""")
+
+        scrobbler.nowPlaying(song)
+
+        sessionStore.session.value shouldBe null
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
 }
