@@ -90,6 +90,9 @@ class IosPlayerController(
          */
         var offsetMs = 0
 
+        /** Where in the song the engine starts it; a seek before it's handed over moves it (#763). */
+        var startMs = 0
+
         /** Its stream can be resolved again to start at a position ([IosStream.opensAtPosition]). */
         var opensAtPosition = false
 
@@ -284,6 +287,7 @@ class IosPlayerController(
         val keepNext = reopen && next?.failed == false
         if (!keepNext) nextJob?.cancel()
         val feed = newFeed(item)
+        feed.startMs = startMs
         if (reopen) {
             feed.offsetMs = startMs
             feed.opensAtPosition = true
@@ -298,7 +302,7 @@ class IosPlayerController(
         publishProgress(startMs)
         publishState()
         if (preopened != null) {
-            handOver(feed, preopened, startMs)
+            handOver(feed, preopened)
             return
         }
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -313,16 +317,15 @@ class IosPlayerController(
                 onCurrentFailed(feed, skip = !resolved.undecided)
                 return@launch
             }
-            handOver(feed, stream, startMs)
+            handOver(feed, stream)
         }
         if (current === feed && job.isActive) loadJob = job
     }
 
-    /** Loads [feed], the current item, into the engine as [stream] at [startMs], then feeds the next. */
+    /** Loads [feed], the current item, into the engine as [stream] at its [Feed.startMs], then feeds the next. */
     private fun handOver(
         feed: Feed,
-        stream: IosStream,
-        startMs: Int
+        stream: IosStream
     ) {
         feed.sent = true
         feed.opensAtPosition = stream.opensAtPosition
@@ -331,7 +334,7 @@ class IosPlayerController(
         playCallPending = false
         playAwaitingRejection = false
         // A session that refuses this load reports paused inside the call, before the engine is ready.
-        callEngine { player.load(feed.track(stream), handedBack, (startMs - feed.offsetMs).toLong(), playWhenReady) }
+        callEngine { player.load(feed.track(stream), handedBack, (feed.startMs - feed.offsetMs).toLong(), playWhenReady) }
         feedNext()
     }
 
@@ -805,16 +808,21 @@ class IosPlayerController(
 
     override fun seekTo(position: Int) = onMain { seekNow(position) }
 
-    /** Seeks the engine, or, for a stream it can't seek that opens at a position, re-opens the stream there. */
+    /**
+     * Seeks the engine, or, for a stream it can't seek that opens at a position, re-opens the stream there. A track still
+     * being resolved starts at the position instead, once it's handed over (#763).
+     */
     private fun seekNow(positionMs: Int) {
         val feed = current ?: return
-        if (feed.seeksByReopening && feed.opensAtPosition) {
+        when {
             // Also while the last re-open is still resolving: a scrub supersedes it.
-            startLoad(feed.item, positionMs, reopen = true)
-        } else if (feed.sent) {
-            player.seek((positionMs - feed.offsetMs).toLong())
-            publishProgress(positionMs)
+            feed.seeksByReopening && feed.opensAtPosition -> startLoad(feed.item, positionMs, reopen = true)
+
+            feed.sent -> player.seek((positionMs - feed.offsetMs).toLong())
+
+            else -> feed.startMs = positionMs
         }
+        publishProgress(positionMs)
     }
 
     override fun playbackState(): PlaybackState = _playbackStateFlow.value

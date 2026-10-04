@@ -18,6 +18,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -59,6 +60,9 @@ class IosPlayerControllerTest {
 
     private fun url(song: Song) = "song:${song.id}"
 
+    /** While set, every stream resolution waits for it: a slow server answer. */
+    private var resolveGate: CompletableDeferred<Unit>? = null
+
     /**
      * Runs [block] over a controller on an unconfined test dispatcher; or, if not [unconfined], on a queued one, which
      * doesn't hold back the coroutines resumed while the controller works on main, as main doesn't.
@@ -72,6 +76,7 @@ class IosPlayerControllerTest {
             player = engine,
             resolver = { song, startPositionMs, playRequested ->
                 resolved += song.id
+                resolveGate?.await()
                 if (song.id in server) {
                     when (serverAccess(song, playRequested)) {
                         ServerAccess.Allowed -> Unit
@@ -1045,5 +1050,42 @@ class IosPlayerControllerTest {
         engine.settle()
         controller.playWhenReadyFlow.value shouldBe false
         controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+
+    // Seeking while loading
+
+    @Test
+    fun `a seek while the song's stream is still resolving starts it there`() = test { controller ->
+        val gate = CompletableDeferred<Unit>()
+        resolveGate = gate
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.load { }
+        controller.play()
+
+        controller.seekTo(30_000)
+        controller.progressFlow.value?.position shouldBe 30_000
+        controller.playbackState() shouldBe PlaybackState.Loading
+
+        resolveGate = null
+        gate.complete(Unit)
+        engine.settle()
+
+        engine.calls.first { it.startsWith("load") } shouldBe "load song:1@30000 playing"
+        controller.playbackState() shouldBe PlaybackState.Playing
+        controller.progressFlow.value?.position shouldBe 30_000
+    }
+
+    @Test
+    fun `a seek while the engine is opening the song is handed to it`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.load { }
+
+        controller.seekTo(30_000)
+        controller.playbackState() shouldBe PlaybackState.Loading
+        engine.settle()
+
+        engine.calls shouldContain "seek 30000"
+        controller.getProgress() shouldBe 30_000
     }
 }
