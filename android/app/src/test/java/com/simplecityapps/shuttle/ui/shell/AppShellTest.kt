@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
@@ -999,6 +1000,14 @@ class AppShellTest {
         robot.railLeft().value shouldBe (0f plusOrMinus 1f)
         robot.railContentLeft() shouldBeGreaterThanOrEqualTo 48.dp
         robot.miniPlayerLeft() shouldBeGreaterThanOrEqualTo robot.railRight()
+    }
+
+    @Test
+    fun `at Medium width in RTL the rail sits at the start edge, on the right`() {
+        robot.setContent(window = MediumWindow, layoutDirection = LayoutDirection.Rtl)
+
+        robot.railRight().value shouldBe (robot.rootRight().value plusOrMinus 1f)
+        robot.destinationLeft().value shouldBe (0f plusOrMinus 1f)
     }
 
     @Test

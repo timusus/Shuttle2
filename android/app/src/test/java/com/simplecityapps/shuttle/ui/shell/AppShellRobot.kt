@@ -7,6 +7,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -14,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -60,6 +62,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.test.up
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
@@ -359,6 +362,7 @@ class AppShellRobot(
         restoration: StateRestorationTester? = null,
         progress: PlayerProgress = progressState.value,
         systemBars: SystemBars? = null,
+        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
     ) {
         queueState.value = queue
         progressState.value = progress
@@ -370,25 +374,27 @@ class AppShellRobot(
             val currentEvents by actions.events.flow.collectAsState()
             val snackbarHostState = remember { SnackbarHostState().also { this.snackbarHostState = it } }
             val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
-            WithSystemBars(systemBars) {
-                S2Theme {
-                    PlayerEventsEffect(
-                        currentEvents,
-                        actions::onEventHandled,
-                        snackbarHostState,
-                        actions = actions,
-                        onNavigate = { targets.trySend(it) },
-                    )
-                    AppShell(
-                        playerUi = currentQueue,
-                        progress = { currentProgress },
-                        actions = actions,
-                        snackbarHostState = snackbarHostState,
-                        windowAdaptiveInfo = currentWindow,
-                        entryProvider = entryProvider,
-                        navigationRequests = remember(targets) { targets.receiveAsFlow() },
-                        tabRequests = remember { tabRequests.receiveAsFlow() },
-                    )
+            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                WithSystemBars(systemBars) {
+                    S2Theme {
+                        PlayerEventsEffect(
+                            currentEvents,
+                            actions::onEventHandled,
+                            snackbarHostState,
+                            actions = actions,
+                            onNavigate = { targets.trySend(it) },
+                        )
+                        AppShell(
+                            playerUi = currentQueue,
+                            progress = { currentProgress },
+                            actions = actions,
+                            snackbarHostState = snackbarHostState,
+                            windowAdaptiveInfo = currentWindow,
+                            entryProvider = entryProvider,
+                            navigationRequests = remember(targets) { targets.receiveAsFlow() },
+                            tabRequests = remember { tabRequests.receiveAsFlow() },
+                        )
+                    }
                 }
             }
         }
@@ -797,6 +803,9 @@ class AppShellRobot(
 
     /** The rail's navigation toggle's left edge, where its content starts: the first thing in the rail the cutout could cover. */
     fun railContentLeft(): Dp = rule.onNodeWithContentDescription("Expand navigation").getBoundsInRoot().left
+
+    /** The shell's right edge, from its left edge. */
+    fun rootRight(): Dp = rule.onNode(isRoot()).getBoundsInRoot().right
 
     /** The rail's own left edge, where its fill starts. */
     fun railLeft(): Dp = rule.onNodeWithTag(ShellTestTags.NavigationRail).getBoundsInRoot().left

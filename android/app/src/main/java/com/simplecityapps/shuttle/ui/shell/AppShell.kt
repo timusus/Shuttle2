@@ -314,12 +314,12 @@ private fun CompactShell(
         val scrimPlaceables = scrim.map { it.measure(fill) }
         val sheetPlaceables = sheet.map { it.measure(fill) }
         layout(width, height) {
-            destinationPlaceables.forEach { it.place(0, 0) }
-            scrimPlaceables.forEach { it.place(0, 0) }
+            destinationPlaceables.forEach { it.placeRelative(0, 0) }
+            scrimPlaceables.forEach { it.placeRelative(0, 0) }
             // Reading the slide here re-runs placement only: the mini player rides the bar's top edge.
             val sheetTop = player.geometry.sheetTop(player.offset, dock = dock(navigationShown.value)).roundToInt()
-            sheetPlaceables.forEach { it.place(0, sheetTop) }
-            navBarPlaceables.forEach { it.place(0, height - navBarHeight) }
+            sheetPlaceables.forEach { it.placeRelative(0, sheetTop) }
+            navBarPlaceables.forEach { it.placeRelative(0, height - navBarHeight) }
         }
     }
 }
@@ -387,19 +387,19 @@ private fun RailSheetShell(
         val sheetX = if (coversRail) 0 else railWidth
         val sheetPlaceables = sheet.map { it.measure(Constraints.fixed(width - sheetX, height)) }
         layout(width, height) {
-            railPlaceables.forEach { it.place(0, 0) }
-            destinationPlaceables.forEach { it.place(railWidth, 0) }
-            scrimPlaceables.forEach { it.place(scrimX, 0) }
+            railPlaceables.forEach { it.placeRelative(0, 0) }
+            destinationPlaceables.forEach { it.placeRelative(railWidth, 0) }
+            scrimPlaceables.forEach { it.placeRelative(scrimX, 0) }
             // Reading the offset here re-runs placement, not measurement or composition.
             val sheetTop = player.geometry.sheetTop(player.offset).roundToInt()
             sheetPlaceables.forEach {
                 if (coversRail) {
-                    it.placeWithLayer(sheetX, sheetTop) {
+                    it.placeRelativeWithLayer(sheetX, sheetTop) {
                         clip = true
                         shape = LeadingInsetShape(lerp(railWidth.toFloat(), 0f, player.geometry.expand(player.offset)))
                     }
                 } else {
-                    it.place(sheetX, sheetTop)
+                    it.placeRelative(sheetX, sheetTop)
                 }
             }
         }
