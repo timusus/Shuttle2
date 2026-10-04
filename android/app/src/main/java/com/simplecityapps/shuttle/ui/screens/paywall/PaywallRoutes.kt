@@ -19,10 +19,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -71,12 +71,8 @@ fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
 @Composable
 fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
     var activeSource by rememberSaveable { mutableStateOf<PaywallSource?>(null) }
-    val visits = viewModel<PaywallVisitStore>()
-    // Closing ends the visit, which clears its view model and so reports the dismissal; a recreation doesn't
-    val close = {
-        activeSource = null
-        visits.close()
-    }
+    // Closing removes the dialog, which clears its view model store and so reports the dismissal; a recreation keeps it
+    val close = { activeSource = null }
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(observePaywallRequests, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -90,7 +86,7 @@ fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             // Each visit gets its own view model store, so the paywall's view model lives and dies with the dialog
-            CompositionLocalProvider(LocalViewModelStoreOwner provides visits.owner) {
+            CompositionLocalProvider(LocalViewModelStoreOwner provides rememberViewModelStoreOwner()) {
                 S2AppTheme {
                     // The gate opens this only for a user already using a server, so the trial offer just closes it: their
                     // next song from the server starts the trial.

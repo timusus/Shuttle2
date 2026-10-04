@@ -46,17 +46,21 @@ class SettingsIntegrationTest {
 
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
 
-    private fun viewModel() = SettingsViewModel(
-        ObserveSetting(store),
-        ReadSetting(store),
-        SaveSetting(store),
-        ReadLastScanDate(preferences),
-        ObserveLastScanDate(preferences),
-        KeyValueEqualizerPresetStore(InMemoryKeyValueStore()),
-        effects,
-        AndroidSettingsCatalog,
-        backupFlow
-    )
+    private fun viewModel(): SettingsViewModel {
+        val presetStore = KeyValueEqualizerPresetStore(InMemoryKeyValueStore())
+        return SettingsViewModel(
+            ObserveSetting(store),
+            ReadSetting(store),
+            SaveSetting(store),
+            ReadLastScanDate(preferences),
+            ObserveLastScanDate(preferences),
+            ObserveEqualizerPreset(presetStore),
+            ReadEqualizerPreset(presetStore),
+            effects,
+            AndroidSettingsCatalog,
+            backupFlow
+        )
+    }
 
     @Test
     fun `toggling a switch stores it and redraws it`() {

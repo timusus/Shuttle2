@@ -53,7 +53,7 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), KeyValueEqualizerPresetStore(prefs), effects, AndroidSettingsCatalog, backupFlow)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), ObserveEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), effects, AndroidSettingsCatalog, backupFlow)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 

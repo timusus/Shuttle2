@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -86,7 +85,8 @@ class SettingsViewModel @Inject constructor(
     private val saveSetting: SaveSetting,
     readLastScanDate: ReadLastScanDate,
     observeLastScanDate: ObserveLastScanDate,
-    private val equalizerPresetStore: EqualizerPresetStore,
+    observeEqualizerPreset: ObserveEqualizerPreset,
+    readEqualizerPreset: ReadEqualizerPreset,
     private val effects: SettingsEffects,
     catalog: SettingsCatalog,
     private val backupFlow: LibraryBackupFlow
@@ -98,13 +98,13 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(catalogSettings.map { setting -> observeSetting(setting).map { setting.key to it } }) { it.toMap() },
         observeLastScanDate(),
-        equalizerPresetStore.observePreset(),
+        observeEqualizerPreset(),
         events.flow
     ) { values, lastScan, preset, events -> SettingsUiState(values = values, lastScanDate = lastScan, equalizerPreset = preset, events = events) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate(), equalizerPreset = equalizerPresetStore.preset)
+            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate(), equalizerPreset = readEqualizerPreset())
         )
 
     private val sliderEffects = mutableMapOf<String, Job>()
