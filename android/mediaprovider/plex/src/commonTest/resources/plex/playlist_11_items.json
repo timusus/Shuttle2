@@ -1,0 +1,31 @@
+{
+  "MediaContainer": {
+    "totalSize": 3,
+    "Metadata": [
+      {
+        "key": "/library/metadata/3",
+        "ratingKey": "3",
+        "type": "track",
+        "guid": "plex://track/3",
+        "title": "B-Side",
+        "Media": [ { "id": 3, "Part": [ { "id": 3, "key": "/library/parts/3/file.m4a" } ] } ]
+      },
+      {
+        "key": "/library/metadata/999",
+        "ratingKey": "999",
+        "type": "track",
+        "guid": "plex://track/999",
+        "title": "Not In The Library",
+        "Media": [ { "id": 999, "Part": [ { "id": 999, "key": "/library/parts/999/file.mp3" } ] } ]
+      },
+      {
+        "key": "/library/metadata/1",
+        "ratingKey": "1",
+        "type": "track",
+        "guid": "plex://track/1",
+        "title": "Opening",
+        "Media": [ { "id": 1, "Part": [ { "id": 1, "key": "/library/parts/1/file.mp3" } ] } ]
+      }
+    ]
+  }
+}

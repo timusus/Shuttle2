@@ -1,0 +1,25 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "Metadata": [
+      {
+        "ratingKey": "11",
+        "key": "/playlists/11/items",
+        "guid": "com.plexapp.agents.none://11",
+        "type": "playlist",
+        "title": "Road Trip",
+        "playlistType": "audio",
+        "smart": false
+      },
+      {
+        "ratingKey": "12",
+        "key": "/playlists/12/items",
+        "guid": "com.plexapp.agents.none://12",
+        "type": "playlist",
+        "title": "Empty One",
+        "playlistType": "audio",
+        "smart": false
+      }
+    ]
+  }
+}

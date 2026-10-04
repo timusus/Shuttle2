@@ -29,6 +29,8 @@ data class Metadata(
     @SerialName("key") val key: String,
     @SerialName("type") val type: String? = null,
     @SerialName("guid") val guid: String,
+    // This item's own id on the server: a playlist's, in /playlists/{ratingKey}/items
+    @SerialName("ratingKey") val ratingKey: String? = null,
     @SerialName("index") val index: Int? = null,
     @SerialName("parentIndex") val parentIndex: Int? = null,
     @SerialName("title") val title: String? = null,

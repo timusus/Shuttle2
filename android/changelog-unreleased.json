@@ -100,6 +100,10 @@
     {
       "text": "Now Playing has an output button, which opens Android's output switcher (the Cast button, where Cast is available), so you can pick Bluetooth, wired and Cast outputs from one place",
       "commits": []
+    },
+    {
+      "text": "Your Plex playlists now appear in the app, like your Jellyfin and Emby playlists",
+      "commits": []
     }
   ],
   "improvements": [

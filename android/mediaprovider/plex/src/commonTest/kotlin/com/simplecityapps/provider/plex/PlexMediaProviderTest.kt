@@ -2,6 +2,7 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
@@ -180,6 +181,62 @@ class PlexMediaProviderTest {
         authenticationManager.getAuthenticatedCredentials().shouldBeNull()
     }
 
+    // Playlists
+
+    @Test
+    fun `playlists hold the library songs their items refer to - in playlist order`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        server.respond(PLAYLISTS, "playlists.json")
+        server.respond("/playlists/11/items", "playlist_11_items.json")
+        server.respond("/playlists/12/items", "empty.json")
+        val library = sync()
+
+        val playlists = syncPlaylists(library)
+
+        playlists.map { it.externalId } shouldContainExactly listOf("11", "12")
+        with(playlists.first()) {
+            name shouldBe "Road Trip"
+            mediaProviderType shouldBe MediaProviderType.Plex
+            songs.map { it.name } shouldContainExactly listOf("B-Side", "Opening")
+        }
+        playlists.last().songs.shouldBeEmpty()
+    }
+
+    @Test
+    fun `playlists are the server's audio playlists - asked for with the session token`() {
+        signedIn()
+        server.respond(PLAYLISTS, "playlists.json")
+        server.respond("/playlists/11/items", "playlist_11_items.json")
+        server.respond("/playlists/12/items", "empty.json")
+
+        syncPlaylists(emptyList())
+
+        val request = server.requestsTo(PLAYLISTS).single()
+        request.url.parameters["playlistType"] shouldBe "audio"
+        request.headers["X-Plex-Token"] shouldBe "token-1"
+        server.requestsTo("/playlists/11/items").single().url.parameters["X-Plex-Container-Size"] shouldBe "500"
+    }
+
+    @Test
+    fun `a playlist whose items fail to load is left out`() {
+        signedIn()
+        server.respond(PLAYLISTS, "playlists.json")
+        server.respond("/playlists/11/items", code = 500)
+        server.respond("/playlists/12/items", "empty.json")
+
+        syncPlaylists(emptyList()).map { it.externalId } shouldContainExactly listOf("12")
+    }
+
+    @Test
+    fun `a failed playlists request fails the sync with the server's error`() {
+        signedIn()
+        server.respond(PLAYLISTS, code = 500)
+
+        provider.findPlaylists(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe "A server error occurred. (500)"
+    }
+
     // Paging
 
     @Test
@@ -234,10 +291,14 @@ class PlexMediaProviderTest {
 
     private fun sync(): List<Song> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
 
+    private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = provider.findPlaylists(library).events().last()
+        .shouldBeInstanceOf<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>().result
+
     private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
 
     private companion object {
         const val SECTIONS = "/library/sections"
+        const val PLAYLISTS = "/playlists"
         const val ITEMS = "/library/sections/2/all"
     }
 }

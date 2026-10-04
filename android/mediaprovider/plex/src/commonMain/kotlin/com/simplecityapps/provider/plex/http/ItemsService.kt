@@ -30,6 +30,27 @@ class ItemsService(private val client: HttpClient) {
         parameter("X-Plex-Container-Size", limit)
     }
 
+    /** The server's audio playlists, each with its [Metadata.ratingKey]. */
+    suspend fun playlists(
+        url: String,
+        token: String
+    ): NetworkResult<QueryResult> = query("$url/playlists", token) {
+        parameter("playlistType", "audio")
+    }
+
+    /** A page of a playlist's tracks, in playlist order. */
+    suspend fun playlistItems(
+        url: String,
+        token: String,
+        playlist: String,
+        offset: Int,
+        limit: Int
+    ): NetworkResult<QueryResult> = query("$url/playlists/$playlist/items", token) {
+        parameter("includeGuids", 1)
+        parameter("X-Plex-Container-Start", offset)
+        parameter("X-Plex-Container-Size", limit)
+    }
+
     suspend fun sections(
         url: String,
         token: String

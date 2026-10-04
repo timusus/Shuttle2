@@ -23,8 +23,9 @@ import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDate
 
 class PlexMediaProvider(
@@ -66,7 +67,60 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        when (val playlistsResult = authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken))) {
+            is NetworkResult.Success<QueryResult> -> {
+                val songsByPart = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
+                val updateData = findSongsForPlaylists(address, credentials, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart).toList()
+                emit(FlowEvent.Success(updateData))
+            }
+
+            is NetworkResult.Failure -> {
+                logger.error(playlistsResult.error) { playlistsResult.error.userDescription() }
+                emit(FlowEvent.Failure(playlistsResult.error.userDescription()))
+            }
+        }
+    }
+
+    /** A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items fail to load is left out. */
+    private fun findSongsForPlaylists(
+        address: String,
+        credentials: AuthenticatedCredentials,
+        playlists: List<Metadata>,
+        songsByPart: Map<String?, Song>
+    ): Flow<MediaImporter.PlaylistUpdateData> = flow {
+        for (playlist in playlists) {
+            val ratingKey = playlist.ratingKey ?: continue
+            val event = queryPlaylistItems(address, credentials, ratingKey).last()
+            if (event is FlowEvent.Success) {
+                emit(
+                    MediaImporter.PlaylistUpdateData(
+                        mediaProviderType = type,
+                        name = playlist.title ?: strings.unknownName,
+                        songs = event.result.mapNotNull { item -> songsByPart[item.media.firstOrNull()?.parts?.firstOrNull()?.key] },
+                        externalId = ratingKey
+                    )
+                )
+            }
+        }
+    }
+
+    private fun queryPlaylistItems(
+        address: String,
+        credentials: AuthenticatedCredentials,
+        playlist: String
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow { offset, limit ->
+        authenticationManager.checkSession(
+            credentials,
+            itemsService.playlistItems(
+                url = address,
+                token = credentials.accessToken,
+                playlist = playlist,
+                offset = offset,
+                limit = limit
+            )
+        ).map { it.toPage() }
+    }
 
     private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
         ?: authenticationManager.getLoginCredentials()
