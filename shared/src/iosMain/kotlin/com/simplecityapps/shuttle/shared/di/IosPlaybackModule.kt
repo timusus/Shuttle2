@@ -19,6 +19,7 @@ import com.simplecityapps.provider.plex.PlexStreamUrlProvider
 import com.simplecityapps.shuttle.di.AppSupervisorJob
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
+import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
 import com.simplecityapps.shuttle.shared.local.IosLocalStreamUrls
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
@@ -26,7 +27,6 @@ import com.simplecityapps.shuttle.shared.playback.IosEqualizer
 import com.simplecityapps.shuttle.shared.playback.IosPlaybackStore
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.playback.IosStreamResolver
-import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.playback.SongStreamResolver
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer

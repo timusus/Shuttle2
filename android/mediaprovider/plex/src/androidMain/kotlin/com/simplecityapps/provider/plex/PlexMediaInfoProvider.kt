@@ -37,5 +37,4 @@ constructor(
         path: String,
         responseCode: Int
     ): Uri? = null
-
 }
