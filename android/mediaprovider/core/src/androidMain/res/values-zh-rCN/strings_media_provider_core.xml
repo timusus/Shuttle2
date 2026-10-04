@@ -81,7 +81,6 @@
     <!-- Shown when the media importer fails to import songs -->
     <string name="media_import_error">导入歌曲时发生错误</string>
     <!-- Shown when the Shuttle Music scanner fails to find any folders to scan -->
-    <string name="media_import_directories_empty">没有要扫描的目录或文件</string>
     <!-- Shown when the Shuttle Music scanner is searching an m3u playlist for songs -->
     <string name="media_import_m3u_scan">正在 <xliff:g example="playlist1.m3u" id="playlist_name">%1$s</xliff:g> 中查找曲目</string>
 </resources>

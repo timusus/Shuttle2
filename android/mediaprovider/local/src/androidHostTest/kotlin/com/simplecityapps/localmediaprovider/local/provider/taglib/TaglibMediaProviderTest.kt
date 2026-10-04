@@ -6,17 +6,20 @@ import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import java.io.File
 import java.util.Collections
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.filterIsInstance
@@ -28,6 +31,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 
 private const val AUTHORITY = "com.android.externalstorage.documents"
+private const val CLOUD_AUTHORITY = "com.example.cloud.documents"
 private const val MODIFIED = 1_700_000_000_000
 
 // Document ids whose children the fake documents provider was asked for
@@ -87,8 +91,94 @@ class TaglibMediaProviderTest {
     fun registerDocumentsProvider() {
         Robolectric.setupContentProvider(FakeDocumentsProvider::class.java, AUTHORITY)
         Robolectric.setupContentProvider(FakeMediaProvider::class.java, "media")
+        Robolectric.setupContentProvider(FakeDocumentsProvider::class.java, CLOUD_AUTHORITY)
+        FakeMediaProvider.rows = emptyList()
+        FakeMediaProvider.playlistRows = emptyList()
         queried.clear()
     }
+
+    @Test
+    fun `playlists in a shared storage tree come from MediaStore without walking the tree`() {
+        FakeMediaProvider.playlistRows =
+            listOf(
+                "$primary/Music/Lists/a.m3u" to "a.m3u",
+                "$primary/Music/top.M3U8" to "top.M3U8",
+                // Outside the tree, one a folder whose name only starts the same
+                "$primary/Other/b.m3u" to "b.m3u",
+                "$primary/MusicBox/c.m3u" to "c.m3u"
+            )
+
+        val playlists = findPlaylists(trees = listOf(tree))
+
+        playlists.map { it.externalId } shouldContainExactlyInAnyOrder
+            listOf(
+                DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Lists/a.m3u").toString(),
+                DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/top.M3U8").toString()
+            )
+        queried.toList() shouldBe emptyList()
+    }
+
+    @Test
+    fun `playlists in a tree MediaStore can't see are found by walking it`() {
+        val cloud = DocumentsContract.buildTreeDocumentUri(CLOUD_AUTHORITY, "cloud")
+
+        val playlists = findPlaylists(trees = listOf(cloud))
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(cloud, "cloud/l.m3u").toString())
+    }
+
+    @Test
+    fun `an extra tree the song scan walked isn't walked again for playlists`() {
+        val provider = provider(excludes = emptyList(), trees = listOf(tree), grantedTrees = listOf(tree))
+        runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
+        queried.clear()
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+        queried.toList() shouldBe emptyList()
+    }
+
+    @Test
+    fun `an extra tree is walked for playlists, not looked up in MediaStore, which skips it`() {
+        // As when the song scan's walk of it failed, or hasn't run
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/stale.m3u" to "stale.m3u")
+        val provider = provider(excludes = emptyList(), trees = listOf(tree), grantedTrees = listOf(tree))
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+    }
+
+    @Test
+    fun `MediaStore covers shared storage, and another volume only while it indexes it`() {
+        mediaStoreIndexesTree("primary:Music", emptySet()) shouldBe true
+        mediaStoreIndexesTree("home:", emptySet()) shouldBe true
+        mediaStoreIndexesTree("1234-ABCD:Music", setOf("external_primary", "1234-abcd")) shouldBe true
+        // A USB drive MediaStore doesn't index, or any volume before Android 10, which can't say
+        mediaStoreIndexesTree("1234-ABCD:Music", setOf("external_primary")) shouldBe false
+        mediaStoreIndexesTree("1234-ABCD:Music", emptySet()) shouldBe false
+    }
+
+    @Test
+    fun `an extra tree that can't be read is reported unreadable, while the others are still read and pruned`() {
+        val locked = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Locked")
+        val provider = provider(excludes = listOf(skipFolder), trees = listOf(tree, locked))
+
+        val songs = runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result }
+
+        songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Read a.mp3", "Read b.mp3", "Read c.mp3")
+        provider.unreadableRoots shouldBe setOf("$locked/document/")
+    }
+
+    private fun findPlaylists(trees: List<Uri>): List<MediaImporter.PlaylistUpdateData> = runBlocking {
+        provider(excludes = emptyList(), trees = emptyList(), grantedTrees = trees).playlists()
+    }
+
+    private suspend fun TaglibMediaProvider.playlists(): List<MediaImporter.PlaylistUpdateData> = findPlaylists(listOf(mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)))
+        .filterIsInstance<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>()
+        .first()
+        .result
 
     @Test
     fun `an unchanged MediaStore file is reused without being read, a changed one is read`() {
@@ -189,16 +279,22 @@ class TaglibMediaProviderTest {
         trees: List<Uri> = listOf(tree),
         backfill: Boolean = false
     ): List<Song> {
-        val provider =
-            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, backfillFileTags = { backfill }) {
-                ScannerFolders(filter = FolderFilter(excludes = excludes), extraTrees = trees)
-            }
+        val provider = provider(excludes, trees, backfill = backfill)
         return runBlocking {
             provider.findSongs(existingSongs)
                 .filterIsInstance<FlowEvent.Success<List<Song>>>()
                 .first()
                 .result
         }
+    }
+
+    private fun provider(
+        excludes: List<String>,
+        trees: List<Uri>,
+        backfill: Boolean = false,
+        grantedTrees: List<Uri> = emptyList()
+    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
+        ScannerFolders(filter = FolderFilter(excludes = excludes), extraTrees = trees)
     }
 
     // KTagLib's constructor loads the native library, which a JVM test can't; the fake scanner never reads through it
@@ -260,6 +356,9 @@ class TaglibMediaProviderTest {
     class FakeMediaProvider : ContentProvider() {
         companion object {
             var rows: List<Array<Any>> = emptyList()
+
+            // Path and display name of the playlist files in the Files table
+            var playlistRows: List<Pair<String, String>> = emptyList()
         }
 
         override fun onCreate() = true
@@ -270,7 +369,13 @@ class TaglibMediaProviderTest {
             selection: String?,
             selectionArgs: Array<out String>?,
             sortOrder: String?
-        ): Cursor = MatrixCursor(projection).also { cursor -> rows.forEach { row -> cursor.addRow(row) } }
+        ): Cursor = MatrixCursor(projection).also { cursor ->
+            if (uri.pathSegments.contains("file")) {
+                playlistRows.forEach { (path, name) -> cursor.addRow(arrayOf(path, name)) }
+            } else {
+                rows.forEach { row -> cursor.addRow(row) }
+            }
+        }
 
         override fun getType(uri: Uri): String? = null
 
@@ -298,7 +403,8 @@ class TaglibMediaProviderTest {
 
         private val children =
             mapOf(
-                "primary:Music" to listOf(Doc("primary:Music/a.mp3"), Doc("primary:Music/b.mp3", size = 10), Doc("primary:Music/c.mp3"), Doc("primary:Music/Skip", dir = true)),
+                "cloud" to listOf(Doc("cloud/l.m3u")),
+                "primary:Music" to listOf(Doc("primary:Music/p.m3u"), Doc("primary:Music/a.mp3"), Doc("primary:Music/b.mp3", size = 10), Doc("primary:Music/c.mp3"), Doc("primary:Music/Skip", dir = true)),
                 "primary:Music/Skip" to listOf(Doc("primary:Music/Skip/d.mp3"), Doc("primary:Music/Skip/Deep", dir = true)),
                 "primary:Music/Skip/Deep" to listOf(Doc("primary:Music/Skip/Deep/e.mp3")),
                 "primary:Zero" to listOf(Doc("primary:Zero/zero.mp3", modified = 0)),
@@ -320,6 +426,7 @@ class TaglibMediaProviderTest {
             val docs =
                 if (uri.pathSegments.last() == "children") {
                     queried += DocumentsContract.getDocumentId(uri)
+                    if (DocumentsContract.getDocumentId(uri) == "primary:Locked") throw SecurityException("Access revoked")
                     children[DocumentsContract.getDocumentId(uri)].orEmpty()
                 } else {
                     listOf(Doc(DocumentsContract.getDocumentId(uri), dir = true))
@@ -339,6 +446,15 @@ class TaglibMediaProviderTest {
                 )
             }
             return cursor
+        }
+
+        // Every document read is a playlist naming a.mp3
+        override fun openFile(
+            uri: Uri,
+            mode: String
+        ): ParcelFileDescriptor {
+            val file = File.createTempFile("playlist", ".m3u").apply { writeText("#EXTM3U\n/storage/emulated/0/Music/a.mp3\n") }
+            return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         }
 
         override fun getType(uri: Uri): String? = null

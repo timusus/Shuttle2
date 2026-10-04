@@ -37,14 +37,13 @@ class MediaProviderModule {
         fileScanner: FileScanner,
         folderStore: SafScannerFolderStore,
         preferenceManager: GeneralPreferenceManager
-    ): TaglibMediaProvider =
-        TaglibMediaProvider(
-            context,
-            kTagLib,
-            fileScanner,
-            backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
-            folders = folderStore::scannerFolders
-        )
+    ): TaglibMediaProvider = TaglibMediaProvider(
+        context,
+        kTagLib,
+        fileScanner,
+        backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
+        folders = folderStore::scannerFolders
+    )
 
     @Provides
     @SingleIn(AppScope::class)
