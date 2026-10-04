@@ -19,14 +19,14 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
-/** A guard over a fresh marker folder, as the process [pid], where Android says [crashedNatively] of a process that died. */
+/** A guard over a fresh marker folder, as the process [pid], where Android records [processExits]. */
 fun testTagReadGuard(
     preferences: GeneralPreferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
     markerDir: File = Files.createTempDirectory("tag-reads").toFile(),
-    crashedNatively: (pid: Int) -> Boolean? = { null },
+    processExits: () -> List<ProcessExit>? = { null },
     pid: Int = 1,
     permits: Int = 3
-) = TagReadGuard(markerDir, preferences, crashedNatively, TagReadLimiter(permits), pid)
+) = TagReadGuard(markerDir, preferences, processExits, TagReadLimiter(permits), pid)
 
 class TagReadGuardTest {
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
@@ -37,8 +37,14 @@ class TagReadGuardTest {
 
     private fun guard(
         pid: Int,
-        crashedNatively: (pid: Int) -> Boolean? = { null }
-    ) = testTagReadGuard(preferences, markerDir, crashedNatively, pid)
+        processExits: () -> List<ProcessExit>? = { null }
+    ) = testTagReadGuard(preferences, markerDir, processExits, pid)
+
+    /** Android's record of [pid] ending now, after any marker it left. */
+    private fun exit(
+        pid: Int,
+        nativeCrash: Boolean = true
+    ) = ProcessExit(pid, System.currentTimeMillis(), nativeCrash)
 
     private fun markers() = markerDir.listFiles().orEmpty().map { it.readText() }
 
@@ -93,7 +99,7 @@ class TagReadGuardTest {
     @Test
     fun `a native crash with one read in flight quarantines its file`() = runTest {
         crashDuring(a)
-        val guard = guard(pid = 2, crashedNatively = { pid -> pid == 1 })
+        val guard = guard(pid = 2, processExits = { listOf(exit(pid = 1)) })
 
         guard.recover(source)
         var read = false
@@ -109,7 +115,7 @@ class TagReadGuardTest {
     @Test
     fun `a native crash with several reads in flight reads each alone and quarantines the one that crashes again`() = runTest {
         crashDuring(a, b)
-        val suspicious = guard(pid = 2, crashedNatively = { true })
+        val suspicious = guard(pid = 2, processExits = { listOf(exit(pid = 1)) })
         suspicious.recover(source)
 
         preferences.tagReadQuarantine().shouldBeEmpty()
@@ -130,7 +136,7 @@ class TagReadGuardTest {
         alongside.get() shouldBe 0
 
         crashDuring(b, pid = 2)
-        guard(pid = 3, crashedNatively = { true }).recover(source)
+        guard(pid = 3, processExits = { listOf(exit(pid = 2)) }).recover(source)
 
         preferences.tagReadQuarantine() shouldBe setOf(b.key)
     }
@@ -138,7 +144,7 @@ class TagReadGuardTest {
     @Test
     fun `a process that died some other way quarantines nothing`() = runTest {
         crashDuring(a)
-        val guard = guard(pid = 2, crashedNatively = { false })
+        val guard = guard(pid = 2, processExits = { listOf(exit(pid = 1, nativeCrash = false)) })
 
         guard.recover(source)
 
@@ -161,6 +167,57 @@ class TagReadGuardTest {
 
         preferences.tagReadQuarantine() shouldBe setOf(a.key)
         preferences.tagReadStrikes().shouldBeEmpty()
+    }
+
+    @Test
+    fun `where Android has no record of the process a file takes a strike`() = runTest {
+        crashDuring(a)
+        guard(pid = 2, processExits = { listOf(exit(pid = 5)) }).recover(source)
+
+        preferences.tagReadStrikes() shouldBe setOf(a.key)
+        preferences.tagReadQuarantine().shouldBeEmpty()
+    }
+
+    @Test
+    fun `recovery asks Android how processes ended once`() = runTest {
+        crashDuring(a)
+        crashDuring(b, pid = 2)
+        var asked = 0
+
+        guard(pid = 3, processExits = { asked++; listOf(exit(pid = 1), exit(pid = 2)) }).recover(source)
+
+        asked shouldBe 1
+        preferences.tagReadQuarantine() shouldBe setOf(a.key, b.key)
+    }
+
+    @Test
+    fun `recovery with no markers doesn't ask Android how processes ended`() = runTest {
+        var asked = 0
+
+        guard(pid = 3, processExits = { asked++; emptyList() }).recover(source)
+
+        asked shouldBe 0
+    }
+
+    @Test
+    fun `a process's end is its first record from when its marker was written`() {
+        val exits = listOf(ProcessExit(1, 3_000, nativeCrash = false), ProcessExit(1, 2_000, nativeCrash = true), ProcessExit(2, 2_500, nativeCrash = false))
+
+        crashedNatively(exits, pid = 1, since = 1_500) shouldBe true
+        crashedNatively(exits, pid = 2, since = 1_500) shouldBe false
+    }
+
+    @Test
+    fun `an earlier process with the same pid isn't the one that wrote the marker`() {
+        val exits = listOf(ProcessExit(1, 1_000, nativeCrash = true))
+
+        crashedNatively(exits, pid = 1, since = 1_500) shouldBe null
+    }
+
+    @Test
+    fun `Android without exit records can't say how a process ended`() {
+        crashedNatively(null, pid = 1, since = 0) shouldBe null
+        crashedNatively(emptyList(), pid = 1, since = 0) shouldBe null
     }
 
     @Test

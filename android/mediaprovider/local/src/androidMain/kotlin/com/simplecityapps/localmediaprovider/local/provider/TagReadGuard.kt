@@ -36,15 +36,15 @@ data class TagReadFile(
 class TagReadGuard(
     private val markerDir: File,
     private val preferences: GeneralPreferenceManager,
-    // Whether the process with this id ended in a native crash; null if Android can't say
-    private val crashedNatively: (pid: Int) -> Boolean?,
+    // How Android recorded this app's processes ending; null where it keeps no record (before 11)
+    private val processExits: () -> List<ProcessExit>?,
     private val limiter: TagReadLimiter = TagReadLimiter(),
     private val pid: Int = Process.myPid()
 ) {
     constructor(context: Context, preferences: GeneralPreferenceManager) : this(
         markerDir = File(context.filesDir, "tag-reads"),
         preferences = preferences,
-        crashedNatively = { pid -> nativeCrash(context, pid) }
+        processExits = { processExits(context) }
     )
 
     // A read holds at least one permit, so there's always a free slot for it
@@ -94,11 +94,13 @@ class TagReadGuard(
                     if (now - file.lastModified() > FRESH_MARKER_MILLIS) file.delete()
                     return@mapNotNull null
                 }
-                file.delete()
-                owner to key
+                Marker(owner, key, file.lastModified()).also { file.delete() }
             }
-        markers.groupBy({ it.first }, { it.second }).forEach { (owner, keys) ->
-            when (crashedNatively(owner)) {
+        // Asked once, and only when a marker was left
+        val exits by lazy { processExits() }
+        markers.groupBy { it.owner }.forEach { (owner, ownMarkers) ->
+            val keys = ownMarkers.map { it.key }
+            when (crashedNatively(exits, owner, since = ownMarkers.maxOf { it.writtenAt })) {
                 // Killed some other way (swiped away, out of memory): the read didn't crash it
                 false -> return@forEach
 
@@ -118,7 +120,7 @@ class TagReadGuard(
             }
         }
         if (markers.isNotEmpty()) {
-            Timber.w("Tag reads in flight when the app died: ${markers.map { it.second }}; quarantined ${quarantine.size}, suspects ${suspects.size}, strikes ${strikes.size}")
+            Timber.w("Tag reads in flight when the app died: ${markers.map { it.key }}; quarantined ${quarantine.size}, suspects ${suspects.size}, strikes ${strikes.size}")
             quarantine.minus(preferences.tagReadQuarantine()).forEach(preferences::quarantineTagRead)
             preferences.setTagReadStrikes(strikes)
         }
@@ -179,6 +181,12 @@ class TagReadGuard(
 
     private fun strikes(): Set<String> = strikes ?: preferences.tagReadStrikes().also { strikes = it }
 
+    private class Marker(
+        val owner: Int,
+        val key: String,
+        val writtenAt: Long
+    )
+
     private companion object {
         const val SLOT_PREFIX = "slot-"
 
@@ -190,12 +198,29 @@ class TagReadGuard(
     }
 }
 
-/** Whether this app's process [pid] ended in a native crash, from Android's record of how its processes exited (11+). */
-private fun nativeCrash(
-    context: Context,
-    pid: Int
-): Boolean? {
+/** How Android recorded one of this app's processes ending: its [pid], when, and whether a native crash ended it. */
+data class ProcessExit(
+    val pid: Int,
+    val timestamp: Long,
+    val nativeCrash: Boolean
+)
+
+/**
+ * Whether the process [pid], alive when it wrote a marker at [since], ended in a native crash, from [exits]; null if
+ * Android can't say. Below 11 there's no record ([exits] is null). On 11+ the process's end is the first record for its
+ * pid from [since] on, as an earlier one is a process that had the pid before; with none (Android keeps a bounded
+ * history and doesn't record every death) it's unknown too, so a file read alone then takes a strike rather than being
+ * quarantined at once.
+ */
+internal fun crashedNatively(
+    exits: List<ProcessExit>?,
+    pid: Int,
+    since: Long
+): Boolean? = exits?.filter { exit -> exit.pid == pid && exit.timestamp >= since }?.minByOrNull { it.timestamp }?.nativeCrash
+
+/** How Android recorded this app's processes ending (11+), or null where it can't say. */
+private fun processExits(context: Context): List<ProcessExit>? {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
     val exits = context.getSystemService(ActivityManager::class.java)?.getHistoricalProcessExitReasons(null, 0, 0) ?: return null
-    return exits.firstOrNull { exit -> exit.pid == pid }?.let { exit -> exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE }
+    return exits.map { exit -> ProcessExit(exit.pid, exit.timestamp, nativeCrash = exit.reason == ApplicationExitInfo.REASON_CRASH_NATIVE) }
 }
