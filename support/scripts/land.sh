@@ -396,6 +396,13 @@ drop_branch() {  # $1 = index; resets HEAD back to before this branch's picks
   log "${BRANCHES[$i]}: dropped to isolate a verify failure"
 }
 
+# reset_after_env_failure: put the checkout back on origin/main after an environment failure --
+# except in place, where HEAD holds the session's own unpushed commits and must be left alone.
+reset_after_env_failure() {
+  [ "$IN_PLACE" = 1 ] && return 0
+  run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+}
+
 # --- verify (once, one machine-lock hold for both phases) ------------------------------------------------------
 # verify_env_failure <log> <from-byte>: succeed when the verify output after <from-byte> shows Gradle
 # dying on the machine (JDK image transform, jlink, missing JDK/toolchain/SDK, #717) and no compiler
@@ -444,7 +451,7 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
   say "land.sh: running verify over ${#LANDED_IDX[@]} landed branch(es)"
   run_verify; vrc=$?
   if [ "$vrc" -eq 2 ]; then
-    run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+    reset_after_env_failure
     say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
     exit 3
   fi
@@ -463,7 +470,7 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
         remaining=("${remaining[@]}")
         run_verify; vrc=$?
         if [ "$vrc" -eq 2 ]; then
-          run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+          reset_after_env_failure
           say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
           exit 3
         fi
