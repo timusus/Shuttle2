@@ -119,6 +119,12 @@ final class AudioFileTagsTests: XCTestCase {
         XCTAssertNil(AudioFileTags(tags: [("date", "unknown")]).year)
     }
 
+    func testOriginalReleaseYearBeatsReissueInID3() throws {
+        // TDRC=2017 (the remaster) with TDOR=2002, as ffmpeg wrote them.
+        XCTAssertEqual(try read("reissue", "mp3").year, 2002)
+        XCTAssertEqual(AudioFileTags(tags: [("TYER", "2017"), ("TORY", "2002")]).year, 2002)
+    }
+
     func testOriginalDateBeatsReissueDate() {
         XCTAssertEqual(AudioFileTags(tags: [("date", "2017-06-30"), ("originaldate", "2002-01-28")]).year, 2002)
         XCTAssertEqual(AudioFileTags(tags: [("date", "2017"), ("year", "2002")]).year, 2017)

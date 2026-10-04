@@ -71,7 +71,8 @@ public struct AudioFileTags: Equatable, Sendable {
         album = first("album")
         (track, trackTotal) = Self.numberAndTotal(first("track", "tracknumber"))
         (disc, discTotal) = Self.numberAndTotal(first("disc", "discnumber"))
-        year = [first("originaldate"), first("date"), first("year")].lazy.compactMap { $0.flatMap(Self.year) }.first
+        // The original release's year beats a reissue's: ffmpeg names ID3's TDOR/TORY raw, and Vorbis/MP4's ORIGINALDATE as is.
+        year = [first("originaldate", "tdor", "tory"), first("date"), first("year")].lazy.compactMap { $0.flatMap(Self.year) }.first
         genres = first("genre").map { Self.split($0, on: [",", ";", "/"]) } ?? []
         replayGainTrack = first("replaygaintrackgain").flatMap(Self.decibels)
         replayGainAlbum = first("replaygainalbumgain").flatMap(Self.decibels)
