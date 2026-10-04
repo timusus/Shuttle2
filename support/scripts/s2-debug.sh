@@ -13,7 +13,8 @@
 #   support/scripts/s2-debug.sh SPEED --ef multiplier 1.5  set the playback speed
 #   support/scripts/s2-debug.sh SLEEP_TIMER --el seconds 3 [--ez play_to_end true]  start the sleep timer
 #   support/scripts/s2-debug.sh DUMP_STATE                 print the state as one JSON line
-#   support/scripts/s2-debug.sh IMPORT                     reimport the library from MediaStore
+#   support/scripts/s2-debug.sh IMPORT                     reimport the library (as a rescan does)
+#   support/scripts/s2-debug.sh SYNC                       run the scheduled background sync (local sources trust MediaStore)
 #   support/scripts/s2-debug.sh SET_ENTITLEMENT --es state free|trial|pro|store|real  override the resolved entitlement
 #
 # Honours ANDROID_SERIAL / ANDROID_ADB_SERVER_PORT: on a WSL lane, eval
@@ -41,6 +42,12 @@ shift
 if [ "$action" = "IMPORT" ]; then
     adb_retry shell am broadcast -f 32 -a "${PREFIX}ACTION_IMPORT_MEDIA" -p "$APP_ID" >/dev/null
     echo "s2-debug: IMPORT sent (the import runs in the background; give it a few seconds)"
+    exit 0
+fi
+
+if [ "$action" = "SYNC" ]; then
+    adb_retry shell am broadcast -f 32 -a "${PREFIX}ACTION_IMPORT_MEDIA" -p "$APP_ID" --ez sync true >/dev/null
+    echo "s2-debug: SYNC sent (the sync runs in the background; give it a few seconds)"
     exit 0
 fi
 

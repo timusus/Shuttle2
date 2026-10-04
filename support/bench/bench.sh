@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Local-import benchmark on a device. Usage: support/bench/bench.sh <taglib|mediastore> <a|b|c> [runs=3]
-#   a: pm clear (.dev app only) + provider setup + first import   b: no-change re-import   c: touch 50 S2Bench files, re-import
+# Local-import benchmark on a device. Usage: support/bench/bench.sh <taglib|mediastore> <a|b|c|d> [runs=3]
+#   a: pm clear (.dev app only) + provider setup + first import (TagLib: walks the picked folder)
+#   b: no-change routine import (the background sync)   c: touch 50 S2Bench files, routine import
+#   d: no-change rescan (an import, which walks the picked folders on TagLib)
 # Prints one line per run: "<provider> <scenario> run N: <ms> ms, peak PSS <MB> MB". Run from the repo root. See docs/testing/import-benchmark.md.
 export PATH=$PATH:/Users/tim/Library/Android/sdk/platform-tools
 export ANDROID_SERIAL=${ANDROID_SERIAL:-37211FDJG009GS}
@@ -60,10 +62,13 @@ for r in $(seq 1 "$runs"); do
       fi ;;
     b)
       start_app; sleep 2; adb logcat -c; sampler_start
-      support/scripts/s2-debug.sh IMPORT >/dev/null; ms=$(wait_import 1) ;;
+      support/scripts/s2-debug.sh SYNC >/dev/null; ms=$(wait_import 1) ;;
     c)
       adb shell "find /sdcard/Music/S2Bench -type f | head -50 | while read f; do touch \"\$f\"; done"
       [ "$provider" = mediastore ] && { adb shell content call --uri content://media/ --method scan_volume --arg external_primary >/dev/null; sleep 20; }
+      start_app; sleep 2; adb logcat -c; sampler_start
+      support/scripts/s2-debug.sh SYNC >/dev/null; ms=$(wait_import 1) ;;
+    d)
       start_app; sleep 2; adb logcat -c; sampler_start
       support/scripts/s2-debug.sh IMPORT >/dev/null; ms=$(wait_import 1) ;;
   esac
