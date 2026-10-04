@@ -535,6 +535,101 @@ class MediaImporterTest {
         songRepository.deleted[server.type].orEmpty().map { song -> song.id } shouldBe listOf(2L)
     }
 
+    @Test
+    fun `a source added while an import runs is read by the follow-up pass, and changing the sources never disturbs one`() = runBlocking<Unit> {
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+
+        // Sources changing from another thread while the import reads them, and while each pass's end reads them again
+        val churn = launch(Dispatchers.Default) {
+            repeat(CHURN) { i ->
+                val other = ServerProvider(if (i % 2 == 0) MediaProviderType.Emby else MediaProviderType.Plex)
+                importer.mediaProviders += other
+                importer.mediaProviders.any { it.type.remote }
+                importer.mediaProviders -= other
+            }
+        }
+        val added = GatedProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += added
+        importer.import() // requested while the first pass runs
+
+        provider.gate.trySend(Unit)
+        provider.started.receive()
+        added.started.receive()
+        provider.gate.trySend(Unit)
+        added.gate.trySend(Unit)
+        import.join()
+        churn.join()
+
+        provider.scans.load() shouldBe 2
+        added.scans.load() shouldBe 1
+        importer.mediaProviders shouldBe setOf(provider, added)
+    }
+
+    @Test
+    fun `a source that throws leaves the others to finish, and says how it ended rather than staying in progress`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += server
+        val result = CompletableDeferred<Result<Unit>>()
+        launch(Dispatchers.Default) { result.complete(runCatching { importer.import() }) }
+        provider.started.receive()
+        server.started.receive()
+
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+        while (importer.providerImportStates.value[MediaProviderType.Shuttle] !is SongImportState.ImportComplete) yield()
+        server.gate.trySend(Unit)
+
+        result.await().exceptionOrNull() shouldBe provider.failure
+        server.stored.load() shouldBe 1
+        importer.providerImportStates.value shouldBe mapOf(
+            MediaProviderType.Shuttle to SongImportState.ImportComplete(MediaProviderType.Shuttle, "Import failed"),
+            MediaProviderType.Jellyfin to SongImportState.ImportComplete(MediaProviderType.Jellyfin, error = null),
+        )
+        importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, "Import failed")
+    }
+
+    @Test
+    fun `the overall progress is every running source's, not whichever reported last`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += server
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        server.started.receive()
+
+        server.gate.trySend(Unit)
+        while (importer.providerImportStates.value[MediaProviderType.Jellyfin] !is SongImportState.ImportComplete) yield()
+
+        // The server finished last, but this device's import still runs
+        importer.songImportState.value shouldBe SongImportState.ImportProgress(MediaProviderType.Shuttle, "Fetching", progress = null)
+
+        provider.gate.trySend(Unit)
+        import.join()
+
+        importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, error = null)
+    }
+
+    @Test
+    fun `a source removed while its import runs stores nothing after, and the others finish`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin).apply { found = listOf(song()) }
+        importer.mediaProviders += server
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        server.started.receive()
+
+        importer.removeProvider(server)
+        server.gate.trySend(Unit) // what it would have found arrives too late
+
+        provider.gate.trySend(Unit)
+        import.join()
+
+        songRepository.writes.sum() shouldBe 0
+        server.stored.load() shouldBe 0
+        provider.stored.load() shouldBe 1
+        importer.mediaProviders shouldBe setOf(provider)
+        importer.providerImportStates.value shouldBe mapOf(MediaProviderType.Shuttle to SongImportState.ImportComplete(MediaProviderType.Shuttle, error = null))
+    }
+
     /** An importer of [server] alone. */
     private fun serverImporter() = MediaImporter(
         strings = FakeMediaImportStrings,
@@ -599,12 +694,15 @@ class MediaImporterTest {
 
         @Volatile var scanFailure: String? = null
 
+        /** What it finds, once its gate opens. */
+        @Volatile var found: List<Song> = emptyList()
+
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             scans.incrementAndFetch()
             started.send(Unit)
             gate.receive()
             if (failNext.exchange(false)) throw failure
-            emit(scanFailure?.let { message -> FlowEvent.Failure(message) } ?: FlowEvent.Success(emptyList()))
+            emit(scanFailure?.let { message -> FlowEvent.Failure(message) } ?: FlowEvent.Success(found))
         }
 
         override suspend fun songsStored() {
@@ -616,6 +714,7 @@ class MediaImporterTest {
 
     private companion object {
         const val IMPORTS = 8
+        const val CHURN = 10_000
     }
 
     private fun song(

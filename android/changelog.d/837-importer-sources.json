@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Removing a music source while your library is updating no longer leaves its songs behind, and one source failing no longer stops the others updating or leaves the library stuck scanning.", "commits": [] }

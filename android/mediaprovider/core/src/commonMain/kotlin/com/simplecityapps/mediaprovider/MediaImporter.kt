@@ -11,18 +11,23 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.TimeSource
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class MediaImporter(
@@ -55,6 +60,9 @@ class MediaImporter(
 
     val isImporting: Boolean get() = importLock.isLocked
 
+    /** Held while [_providerImportStates] and [_songImportState] change, so the overall state is always that of the latest states. */
+    private val stateLock = Mutex()
+
     private val _songImportState = MutableStateFlow<SongImportState>(SongImportState.Idle)
 
     /** The running import's progress, or how the last one ended, so a collector that arrives mid-import sees where it's at. */
@@ -64,7 +72,18 @@ class MediaImporter(
 
     override val providerImportStates: StateFlow<Map<MediaProviderType, SongImportState>> = _providerImportStates.asStateFlow()
 
-    val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
+    private val providers = CopyOnWriteSet<MediaProvider>()
+
+    /**
+     * The sources an import reads. Safe to change from any thread while one runs, which reads them as they were when it
+     * started; a source removed for good goes through [removeProvider], which stops its running import too.
+     */
+    val mediaProviders: MutableSet<MediaProvider> get() = providers
+
+    /** Each source's import in the running pass, so [removeProvider] can stop it. Held under [providerJobsLock]. */
+    private val providerJobs = mutableMapOf<MediaProviderType, Job>()
+
+    private val providerJobsLock = Mutex()
 
     /** Holds back the deletes of a full import that look like a source failing rather than shrinking. */
     private val deleteGuard = DeleteGuard(preferenceManager)
@@ -79,14 +98,14 @@ class MediaImporter(
      * up on its own next import rather than by importing everything again at each launch.
      */
     val songTagsOutdated: Boolean
-        get() = preferenceManager.songTagsRescanVersion < SONG_TAGS_VERSION && mediaProviders.any { preferenceManager.songTagsOutdated(it.type) }
+        get() = preferenceManager.songTagsRescanVersion < SONG_TAGS_VERSION && providers.snapshot.any { preferenceManager.songTagsOutdated(it.type) }
 
     /**
      * Reads every source in full. [foldersChanged] says the user just changed which of this device's folders are read, so
      * a mass removal of this device's songs is theirs and applies at once rather than waiting on the next import.
      */
     suspend fun import(foldersChanged: Boolean = false) {
-        if (mediaProviders.isEmpty()) {
+        if (providers.snapshot.isEmpty()) {
             logger.debug { "Import failed, media providers empty" }
             return
         }
@@ -106,7 +125,7 @@ class MediaImporter(
      * the lock first would only read every source in full a second time.
      */
     suspend fun sync(trigger: SyncTrigger) {
-        if (mediaProviders.isEmpty()) return
+        if (providers.snapshot.isEmpty()) return
         if (preferenceManager.lastMediaImportDate == null || songTagsOutdated) {
             logger.debug { "A full import is due, skipping the $trigger sync" }
             return
@@ -166,7 +185,7 @@ class MediaImporter(
         logger.debug { "Starting import.." }
         preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
         importProviders(
-            mediaProviders.map { mediaProvider -> mediaProvider to SyncPlan.Full },
+            providers.snapshot.map { mediaProvider -> mediaProvider to SyncPlan.Full },
             showProgress = true,
             quietFailures = false,
             foldersChanged = foldersChanged
@@ -176,7 +195,7 @@ class MediaImporter(
     private suspend fun syncAll(trigger: SyncTrigger) {
         val now = clock.now()
         val plans =
-            mediaProviders.mapNotNull { mediaProvider ->
+            providers.snapshot.mapNotNull { mediaProvider ->
                 SyncPolicy.plan(
                     trigger = trigger,
                     incremental = mediaProvider is IncrementalMediaProvider,
@@ -199,11 +218,8 @@ class MediaImporter(
     }
 
     /**
-     * Fetches and stores the songs of each provider in [plans], all at once, then the playlists of those [playlistsDue]
-     * says, given the provider's plan and its stored songs (null when that failed). Shows each fetch's progress only if
-     * [showProgress]. A fetch that stores nothing new is reported only if [showProgress], which is what reloads what shows
-     * the library; one that fails is, unless [quietFailures], which logs it and leaves the source's status as it was.
-     * [foldersChanged] applies a mass removal of this device's songs at once ([import]).
+     * Imports each provider in [plans], all at once and each on its own, so one failing or removed ([removeProvider]) leaves
+     * the others to finish. Throws the first provider's exception once they all have. See [importProvider].
      */
     private suspend fun importProviders(
         plans: List<Pair<MediaProvider, SyncPlan>>,
@@ -214,64 +230,30 @@ class MediaImporter(
     ) {
         val time = TimeSource.Monotonic.markNow()
 
-        if (showProgress) {
-            plans.forEach { (mediaProvider, _) ->
-                val start = MessageProgress(if (mediaProvider.type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)
-                publish(mediaProvider.type, mediaProvider.importProgress(start))
-            }
-        }
-
         // Each provider's timings, filled in by its own song and playlist passes, so the summary line below can attribute a slow import (#866)
         val timingsByProvider = plans.associate { (mediaProvider, _) -> mediaProvider.type to ImportTimings() }
 
+        val failures = mutableListOf<Exception>()
         withContext(Dispatchers.IO) {
-            val playlistProviders =
-                plans.map { (mediaProvider, plan) ->
-                    async {
-                        var stored: SongImportResult? = null
-                        importSongs(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), userRemoval = foldersChanged && !mediaProvider.type.remote).collect { event ->
-                            when (event) {
-                                is FlowEvent.Progress -> {
-                                    if (showProgress) publish(mediaProvider.type, mediaProvider.importProgress(event.data))
-                                }
-
-                                is FlowEvent.Success -> {
-                                    stored = event.result
-                                    val changed = event.result.inserts + event.result.updates + event.result.deletes > 0
-                                    // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
-                                    val clearsError = (_providerImportStates.value[mediaProvider.type] as? SongImportState.ImportComplete)?.error != null
-                                    if (showProgress || changed || clearsError) {
-                                        publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
-                                    }
-                                }
-
-                                is FlowEvent.Failure -> {
-                                    if (quietFailures) {
-                                        logger.warn { "${mediaProvider.type} sync failed, leaving its status as it was: ${event.message}" }
-                                    } else {
-                                        publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, event.message))
-                                    }
-                                }
-                            }
+            supervisorScope {
+                plans.mapNotNull { (mediaProvider, plan) ->
+                    val job =
+                        launch(start = CoroutineStart.LAZY) {
+                            importProvider(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), showProgress, quietFailures, userRemoval = foldersChanged && !mediaProvider.type.remote, playlistsDue)
+                                ?.let { failure -> providerJobsLock.withLock { failures += failure } }
                         }
-                        mediaProvider.takeIf { playlistsDue(plan, stored) }
-                    }
-                }.awaitAll().filterNotNull()
-
-            playlistProviders.map { mediaProvider ->
-                async {
-                    importPlaylists(mediaProvider, timingsByProvider.getValue(mediaProvider.type)).collect { event ->
-                        if (event is FlowEvent.Failure) logger.warn { "${mediaProvider.type} playlist import failed: ${event.message}" }
-                    }
-                }
-            }.awaitAll()
+                    job.takeIf { track(mediaProvider, job) }?.apply { start() }
+                }.joinAll()
+            }
         }
+        providerJobsLock.withLock { providerJobs.clear() }
+        failures.firstOrNull()?.let { throw it }
 
         preferenceManager.lastMediaImportDate = clock.now()
         importCount++
 
         val afterImportMark = TimeSource.Monotonic.markNow()
-        afterImport(mediaProviders.none { preferenceManager.songTagsOutdated(it.type) })
+        afterImport(providers.snapshot.none { preferenceManager.songTagsOutdated(it.type) })
 
         // One line per provider per run, so a slow import can be attributed to its phases (#866)
         timingsByProvider.forEach { (type, timings) ->
@@ -284,9 +266,107 @@ class MediaImporter(
         logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms (afterImport ${afterImportMark.elapsedNow().inWholeMilliseconds}ms)" }
     }
 
-    private fun publish(type: MediaProviderType, state: SongImportState) {
-        _songImportState.value = state
-        _providerImportStates.update { states -> states + (type to state) }
+    /**
+     * Records [job] as [mediaProvider]'s import, so [removeProvider] can stop it, unless the provider was removed since the
+     * pass read the sources: then cancels it, and it never runs.
+     */
+    private suspend fun track(
+        mediaProvider: MediaProvider,
+        job: Job
+    ): Boolean = providerJobsLock.withLock {
+        (mediaProvider in providers.snapshot).also { tracked -> if (tracked) providerJobs[mediaProvider.type] = job else job.cancel() }
+    }
+
+    /**
+     * Fetches and stores [mediaProvider]'s songs as [plan] says, then its playlists if [playlistsDue] says so, given its plan
+     * and its stored songs (null when that failed). Shows the fetch's progress only if [showProgress]. A fetch that stores
+     * nothing new is reported only if [showProgress], which is what reloads what shows the library; one that fails is, unless
+     * [quietFailures], which logs it and leaves the source's status as it was. [userRemoval] applies a mass removal of its
+     * songs at once ([import]). However it ends, its progress doesn't outlast it. The exception it threw, if it did.
+     */
+    private suspend fun importProvider(
+        mediaProvider: MediaProvider,
+        plan: SyncPlan,
+        timings: ImportTimings,
+        showProgress: Boolean,
+        quietFailures: Boolean,
+        userRemoval: Boolean,
+        playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
+    ): Exception? {
+        val type = mediaProvider.type
+        try {
+            if (showProgress) {
+                publish(type, mediaProvider.importProgress(MessageProgress(if (type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)))
+            }
+            var stored: SongImportResult? = null
+            importSongs(mediaProvider, plan, timings, userRemoval).collect { event ->
+                when (event) {
+                    is FlowEvent.Progress -> {
+                        if (showProgress) publish(type, mediaProvider.importProgress(event.data))
+                    }
+
+                    is FlowEvent.Success -> {
+                        stored = event.result
+                        val changed = event.result.inserts + event.result.updates + event.result.deletes > 0
+                        // A quiet sync that stored nothing stays silent, unless it clears an earlier failure.
+                        val clearsError = (_providerImportStates.value[type] as? SongImportState.ImportComplete)?.error != null
+                        if (showProgress || changed || clearsError) {
+                            publish(type, SongImportState.ImportComplete(type, error = null))
+                        }
+                    }
+
+                    is FlowEvent.Failure -> {
+                        if (quietFailures) {
+                            logger.warn { "$type sync failed, leaving its status as it was: ${event.message}" }
+                        } else {
+                            publish(type, SongImportState.ImportComplete(type, event.message))
+                        }
+                    }
+                }
+            }
+            if (playlistsDue(plan, stored)) {
+                importPlaylists(mediaProvider, timings).collect { event ->
+                    if (event is FlowEvent.Failure) logger.warn { "$type playlist import failed: ${event.message}" }
+                }
+            }
+            return null
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error(e) { "$type import failed" }
+            if (!quietFailures) publish(type, SongImportState.ImportComplete(type, strings.importError))
+            return e
+        } finally {
+            // Cancelled, or ended without saying how: the library doesn't stay scanning for it
+            withContext(NonCancellable) {
+                updateStates { states -> if (states[type] is SongImportState.ImportProgress) states + (type to SongImportState.ImportComplete(type, error = null)) else states }
+            }
+        }
+    }
+
+    /**
+     * Stops reading [mediaProvider]: takes it out of the sources and cancels its running import, returning once that has
+     * ended, so nothing it read is stored after this returns. Its import state goes with it.
+     */
+    suspend fun removeProvider(mediaProvider: MediaProvider) {
+        // Taken out first: a pass that read the sources before this sees it gone when it tracks its job ([track])
+        providers -= mediaProvider
+        providerJobsLock.withLock { providerJobs[mediaProvider.type] }?.cancelAndJoin()
+        updateStates { states -> states - mediaProvider.type }
+    }
+
+    private suspend fun publish(
+        type: MediaProviderType,
+        state: SongImportState
+    ) = updateStates { states -> states + (type to state) }
+
+    /** Swaps in [transform] of each provider's state, and the overall state they come to ([overallImportState]). */
+    private suspend fun updateStates(transform: (Map<MediaProviderType, SongImportState>) -> Map<MediaProviderType, SongImportState>) {
+        stateLock.withLock {
+            val states = transform(_providerImportStates.value)
+            _providerImportStates.value = states
+            _songImportState.value = overallImportState(states)
+        }
     }
 
     /** [progress] as the import state shows it: described in the user's words, with its count. */
@@ -378,6 +458,8 @@ class MediaImporter(
                                 )
                             )
                         )
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         logger.error(e) { "Failed to update song repository" }
                         emit(FlowEvent.Failure(strings.importError))

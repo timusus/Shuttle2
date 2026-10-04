@@ -21,6 +21,7 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,11 +64,13 @@ class IosMediaSources @Inject constructor(
 
     override fun disable(type: MediaProviderType) {
         if (type in _enabledTypes.value) save(_enabledTypes.value - type)
-        type.provider()?.let { mediaImporter.mediaProviders -= it }
 
         if (queueOperations.getCurrentItem()?.song?.mediaProvider == type) playbackOperations.pause()
         queueOperations.remove(queueOperations.getQueue().filter { it.song.mediaProvider == type })
-        appCoroutineScope.launch {
+        // Undispatched, so the importer drops the source before this returns; its running import ends before its songs go,
+        // so none it read are stored after them
+        appCoroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            type.provider()?.let { mediaImporter.removeProvider(it) }
             songRepository.removeAll(type)
             playlistRepository.deleteAll(type)
         }

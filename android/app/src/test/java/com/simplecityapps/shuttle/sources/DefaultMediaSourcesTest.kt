@@ -14,7 +14,9 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.shouldBe
+import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -30,7 +32,10 @@ class DefaultMediaSourcesTest {
     private val preferences = PlaybackPreferenceManager(InMemoryKeyValueStore())
     private val jellyfin = mockk<JellyfinMediaProvider>(relaxed = true)
     private val importerProviders = mutableSetOf<MediaProvider>()
-    private val mediaImporter = mockk<MediaImporter>(relaxed = true) { every { mediaProviders } returns importerProviders }
+    private val mediaImporter = mockk<MediaImporter>(relaxed = true) {
+        every { mediaProviders } returns importerProviders
+        coEvery { removeProvider(any()) } answers { importerProviders -= firstArg<MediaProvider>() }
+    }
     private val songRepository = mockk<SongRepository>(relaxed = true)
     private val playlistRepository = mockk<PlaylistRepository>(relaxed = true)
     private val queueOperations = mockk<QueueOperations>(relaxed = true)
@@ -70,7 +75,11 @@ class DefaultMediaSourcesTest {
         importerProviders shouldBe emptySet()
         verify { playbackOperations.pause() }
         verify { queueOperations.remove(listOf(serverItem)) }
-        coVerify { songRepository.removeAll(MediaProviderType.Jellyfin) }
+        // Its running import stops before its songs go, so it can't store any after them
+        coVerifyOrder {
+            mediaImporter.removeProvider(jellyfin)
+            songRepository.removeAll(MediaProviderType.Jellyfin)
+        }
         coVerify { playlistRepository.deleteAll(MediaProviderType.Jellyfin) }
     }
 
