@@ -128,9 +128,9 @@ struct SongRowTests {
                 groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.shuttle], artworkVersion: nil, appearsOnCount: 0
             ),
             albums: [], appearsOn: [], songs: [song], sortOrder: .mostPlayed, sections: [.init(album: nil, songs: [song])],
-            currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+            currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], hero: nil, seed: ArtworkSeedNone.shared
         )
-        let sut = AlbumArtistDetailContent(state: state, heroPhoto: .compact)
+        let sut = AlbumArtistDetailContent(state: state, heroPhoto: .loaded(nil))
         #expect((try? sut.inspect().find(text: "In Rainbows · 12 plays")) != nil)
     }
 

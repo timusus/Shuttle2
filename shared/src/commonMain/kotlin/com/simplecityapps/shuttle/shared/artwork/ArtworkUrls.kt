@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.S2ArtworkApi
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -55,6 +56,22 @@ class ArtworkUrls(
             firstSongOf(albumArtist)?.let { song -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song) } },
             (albumArtist.name ?: albumArtist.friendlyArtistName)?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) }
         )
+    }
+
+    /**
+     * An artist page's hero (#781), the same chain as Android's: the media server's artist image, the S2 API's only when
+     * [ArtistHeroArtwork.onlineLookup], then the fallback album's cover.
+     */
+    suspend fun requests(hero: ArtistHeroArtwork): List<ArtworkRequest> {
+        val artist = if (artworkSettings.localOnly.value) {
+            emptyList()
+        } else {
+            listOfNotNull(
+                firstSongOf(hero.artist)?.let { song -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song) } },
+                (hero.artist.name ?: hero.artist.friendlyArtistName)?.takeIf { hero.onlineLookup }?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) },
+            )
+        }
+        return artist + hero.fallbackAlbum?.let { requests(it) }.orEmpty()
     }
 
     private suspend fun remoteRequests(song: Song): List<ArtworkRequest> {

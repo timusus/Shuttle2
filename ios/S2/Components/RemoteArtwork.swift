@@ -77,6 +77,18 @@ struct ArtworkSource: Equatable {
     }
 }
 
+extension ArtworkSource {
+    /// An artist page's hero (#781): the shared rule's chain, so the image shown and the tint come from one place.
+    static func artistHero(_ hero: ArtistHeroArtwork) -> ArtworkSource {
+        let artist = itemKey("artist", hero.artist.stableId, version: hero.artist.artworkVersion)
+        let album = hero.fallbackAlbum.map { itemKey("album", $0.stableId, version: $0.artworkVersion) } ?? "none"
+        let key = "artistHero:\(artist)|online=\(hero.onlineLookup)|\(album)"
+        return ArtworkSource(id: key, cacheKey: key) {
+            try await AppGraph.shared.artworkUrls.requests(hero: hero).compactMap(ArtworkCandidate.init)
+        }
+    }
+}
+
 extension ArtworkCandidate {
     /// Kotlin's request as a value; nil for a url Foundation can't parse.
     init?(_ request: ArtworkRequest) {

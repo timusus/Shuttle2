@@ -29,7 +29,7 @@ struct AlbumArtistDetailTests {
         AlbumArtistDetailUiState(
             albumArtist: artist(), albums: albums, appearsOn: appearsOn, songs: TestSongs.demo,
             sortOrder: .songTitle, sections: [.init(album: nil, songs: TestSongs.demo)],
-            currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+            currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], hero: nil, seed: ArtworkSeedNone.shared
         )
     }
 
@@ -46,7 +46,7 @@ struct AlbumArtistDetailTests {
         return AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: order, sections: sections,
             currentSong: nil, expandedAlbums: expandedKeys, loadingState: .ready, events: [],
-            seed: ArtworkSeedNone.shared
+            hero: nil, seed: ArtworkSeedNone.shared
         )
     }
 
@@ -207,16 +207,8 @@ struct AlbumArtistDetailTests {
         }
     }
 
-    @Test func aPhotoRunsFullBleedOnlyWhenItsShortestSideIsSharpEnough() {
-        #expect(ArtistHeroPhoto.resolve(nil) == .compact)
-        #expect(ArtistHeroPhoto.resolve(image(width: 599, height: 1200)) == .compact)
-        #expect(ArtistHeroPhoto.resolve(image(width: 400, height: 400)) == .compact)
-        #expect(ArtistHeroPhoto.resolve(image(width: 600, height: 600)).image != nil)
-        #expect(ArtistHeroPhoto.resolve(image(width: 1200, height: 800)).image != nil)
-    }
-
     @Test func aFullBleedHeroPutsTheNameOverThePhotoAndDropsTheSquare() throws {
-        let sut = AlbumArtistDetailContent(state: flat(albums: [album("OK Computer", year: 1997)]), heroPhoto: .resolve(image(width: 800, height: 800)))
+        let sut = AlbumArtistDetailContent(state: flat(albums: [album("OK Computer", year: 1997)]), heroPhoto: .loaded(image(width: 800, height: 800)))
         let hero = try sut.inspect().find(ArtistBleedHero.self)
         #expect((try? hero.find(text: "Radiohead")) != nil)
         #expect((try? hero.find(text: "1 album · 5 songs")) != nil)
@@ -224,11 +216,12 @@ struct AlbumArtistDetailTests {
         #expect((try? sut.inspect().find(ArtistBackdrop.self)) != nil)
     }
 
-    @Test func noPhotoKeepsTheCompactHero() throws {
-        let sut = AlbumArtistDetailContent(state: flat(), heroPhoto: .compact)
-        #expect(try sut.inspect().findAll(ArtistBleedHero.self).isEmpty)
-        #expect(try sut.inspect().findAll(ArtistBackdrop.self).isEmpty)
-        #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
+    /// No image at all (#781): still the full-bleed hero, over the neutral fill, never a placeholder glyph.
+    @Test func noImageStillRunsFullBleedOverAPlainFill() throws {
+        let sut = AlbumArtistDetailContent(state: flat(), heroPhoto: .loaded(nil))
+        let hero = try sut.inspect().find(ArtistBleedHero.self)
+        #expect((try? hero.find(text: "Radiohead")) != nil)
+        #expect(try sut.inspect().find(ArtistBackdrop.self).actualView().image == nil)
     }
 
     @Test func aPendingPhotoShowsTheNameAndActionsOverAPlaceholderAtOnce() throws {
@@ -238,8 +231,6 @@ struct AlbumArtistDetailTests {
         #expect((try? hero.find(button: "Play")) != nil)
         let backdrop = try sut.inspect().find(ArtistBackdrop.self).actualView()
         #expect(backdrop.image == nil)
-        #expect(ArtistHeroPhoto.pending.isFullBleed)
-        #expect(!ArtistHeroPhoto.compact.isFullBleed)
     }
 
     /// The backdrop over a white photo: darkened at the top for the bars, and faded out at the bottom into whatever is
@@ -283,7 +274,7 @@ struct AlbumArtistDetailTests {
         var shuffled = false
         let sut = AlbumArtistDetailContent(
             state: flat(), onPlay: { _, _, _ in played = true }, onShuffle: { _, _ in shuffled = true },
-            heroPhoto: .resolve(image(width: 800, height: 800))
+            heroPhoto: .loaded(image(width: 800, height: 800))
         )
         let hero = try sut.inspect().find(ArtistBleedHero.self)
         try hero.find(button: "Play").tap()
@@ -301,13 +292,13 @@ struct AlbumArtistDetailTests {
         let loading = AlbumArtistDetailUiState(
             albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [],
             currentSong: nil, expandedAlbums: [], loadingState: .loading,
-            events: [], seed: ArtworkSeedNone.shared
+            events: [], hero: nil, seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)
         let notFound = AlbumArtistDetailUiState(
             albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [],
             currentSong: nil, expandedAlbums: [], loadingState: .empty,
-            events: [], seed: ArtworkSeedNone.shared
+            events: [], hero: nil, seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: notFound).inspect().find(text: "Artist Not Found")) != nil)
     }
@@ -352,7 +343,7 @@ struct AlbumArtistDetailTests {
         let state = AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [], appearsOn: [], songs: TestSongs.demo, sortOrder: .albumNewest,
             sections: [.init(album: nil, songs: TestSongs.demo)], currentSong: nil,
-            expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+            expandedAlbums: [], loadingState: .ready, events: [], hero: nil, seed: ArtworkSeedNone.shared
         )
         let sut = AlbumArtistDetailContent(state: state)
         #expect((try? sut.inspect().find(button: "Expand All")) == nil)
@@ -373,7 +364,7 @@ struct AlbumArtistDetailTests {
         let state = AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: .albumNewest,
             sections: sections, currentSong: nil,
-            expandedAlbums: Set([kidA, ok].compactMap(\.groupKey)), loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+            expandedAlbums: Set([kidA, ok].compactMap(\.groupKey)), loadingState: .ready, events: [], hero: nil, seed: ArtworkSeedNone.shared
         )
         var played: (songs: [Song], index: Int)?
         let sut = AlbumArtistDetailContent(state: state, onPlay: { songs, index, _ in played = (songs, index) })

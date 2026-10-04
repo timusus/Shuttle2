@@ -1,9 +1,9 @@
 import Shared
 import SwiftUI
 
-/// Album artist detail (P5-7, polished in #624, sectioned in #631): a hero tinted from the artist's picture (the
-/// artist's photo run full bleed behind the bars with the name over it when it's sharp enough, else a compact square
-/// hero, `ArtistHeroPhoto`; albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), a shelf of the
+/// Album artist detail (P5-7, polished in #624, sectioned in #631): a full-bleed hero behind the bars with the name over
+/// it, showing and tinted from the image the shared `ArtistHeroArtwork` rule picks (#781: the artist's own, else their
+/// top album's cover; `ArtistHeroPhoto`); albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), a shelf of the
 /// artist's album tiles (each zooming into `Route.album`) while the songs are flat, an Appears On shelf of others'
 /// albums crediting them (#637, hidden when empty; a long press on any tile plays or queues it), then the artist's
 /// songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the album orders, where
@@ -84,7 +84,7 @@ struct AlbumArtistDetailContent: View {
     var onCollapseAll: () -> Void = {}
     /// A shelf tile's long-press actions, on the whole album.
     var albumActions = DetailAlbumActions()
-    /// The hero's photo, already decided; nil decides it from the artist's artwork (`ArtistHeroPhotoReader`). For
+    /// The hero's image, already loaded; nil loads it from the artist's hero artwork (`ArtistHeroPhotoReader`). For
     /// tests and previews.
     var heroPhoto: ArtistHeroPhoto?
 
@@ -112,8 +112,11 @@ struct AlbumArtistDetailContent: View {
         let name = artist.name ?? artist.friendlyArtistName ?? "Unknown Artist"
         // An artist only credited on others' albums (#637) has none of their own to count
         let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song"))
-        return ArtistHeroPhotoReader(source: .albumArtist(artist), preset: heroPhoto) { photo in
-            DetailScaffold(title: name, tintSource: .albumArtist(artist), backdrop: photo.isFullBleed ? ArtistBackdrop(image: photo.image) : nil) { layout in
+        // The shared rule's image (#781): the artist's own, the online one only on a confident match, else their top
+        // album's cover. It fills the hero and seeds the tint, so the colours follow the image shown.
+        let source = ArtworkSource.artistHero(state.hero ?? ArtistHeroArtwork(artist: artist, onlineLookup: false, fallbackAlbum: nil))
+        return ArtistHeroPhotoReader(source: source, preset: heroPhoto) { photo in
+            DetailScaffold(title: name, tintSource: source, backdrop: ArtistBackdrop(image: photo.image)) { layout in
                 if case .bleed(let bleed) = layout {
                     ArtistBleedHero(
                         title: name,
@@ -122,19 +125,6 @@ struct AlbumArtistDetailContent: View {
                         onPlay: { onPlay(state.songs, 0, state.playContext) },
                         onShuffle: { onShuffle(state.songs, state.playContext) }
                     )
-                } else {
-                    DetailHero(
-                        title: name,
-                        subtitle: subtitle,
-                        layout: layout,
-                        onPlay: { onPlay(state.songs, 0, state.playContext) },
-                        onShuffle: { onShuffle(state.songs, state.playContext) }
-                    ) { points in
-                        RemoteArtwork(.albumArtist(artist), points: points) {
-                            ArtworkPlaceholder(symbol: "person.fill")
-                        }
-                        .artworkTile(points, shape: .artworkHero)
-                    }
                 }
             } rows: {
                 if state.showAlbumsShelf {
@@ -354,84 +344,56 @@ struct SongsHeader: View {
 
 // MARK: - Hero
 
-/// The artist's photo as the hero uses it, decided once per visit: full bleed when the photo is sharp enough to run edge
-/// to edge, else the compact square hero (no photo, or a low-resolution one, which full bleed would blow up and blur).
-/// Until an uncached photo decides it, `pending` draws the full-bleed layout over a neutral placeholder, so the name and
-/// Play/Shuffle show at once; most artists that make the wait have a photo, and those without settle quickly.
+/// The hero's image (#781): `pending` until it has loaded, then the image, or nil when there's nothing to show. Either
+/// way the hero runs full bleed, over a neutral fill until (or unless) an image arrives, so the name and Play/Shuffle
+/// show at once.
 enum ArtistHeroPhoto: Equatable {
-    case fullBleed(UIImage)
-    case compact
+    case loaded(UIImage?)
     case pending
 
-    /// The shortest side, in pixels, a photo needs to run full bleed. A 393 pt iPhone hero is ~1180 px at 3x, so under
-    /// 600 px the photo would be scaled up more than 2x and look soft. Measured on the decoded image (`decodePoints`),
-    /// so a very wide panorama (over ~2.6:1) whose long side the decode clamps also falls back, which suits it: a
-    /// square or 4:3 crop of it would show a sliver.
-    static let minimumPixels: CGFloat = 600
-    /// The longest side the photo is decoded at, in points: past the widest iPhone and the iPad hero column, without
+    /// The longest side the image is decoded at, in points: past the widest iPhone and the iPad hero column, without
     /// decoding a server's full-size original.
     static let decodePoints: CGFloat = 520
-    /// How long the screen waits for an uncached photo before settling on the compact hero for this visit. A photo
-    /// that arrives later still fills the compact hero's square, and the next visit finds it cached.
-    static let wait: Duration = .milliseconds(800)
-    /// Artists (by artwork cache key) already found to have no photo, or a low-resolution one, this run: the next
-    /// visit skips the wait.
-    @MainActor static var compactKeys = Set<String>()
 
-    /// The full-bleed photo, nil for the compact hero and the placeholder.
+    /// The image, nil while pending or when nothing loaded.
     var image: UIImage? {
-        if case .fullBleed(let image) = self { image } else { nil }
-    }
-
-    /// Whether the hero runs full bleed: over the photo, or over the placeholder while it's pending.
-    var isFullBleed: Bool { self != .compact }
-
-    /// `image`'s layout: full bleed if its shortest side reaches `minimumPixels`.
-    static func resolve(_ image: UIImage?) -> ArtistHeroPhoto {
-        guard let image else { return .compact }
-        let shortest = min(image.size.width, image.size.height) * image.scale
-        return shortest >= minimumPixels ? .fullBleed(image) : .compact
+        if case .loaded(let image) = self { image } else { nil }
     }
 }
 
-/// Decides the hero's `ArtistHeroPhoto` for `source`, then draws `content` with it. A photo already in memory decides
-/// in the first frame; otherwise `content` draws `.pending` until the photo arrives or `ArtistHeroPhoto.wait` passes.
+/// Loads the hero's `ArtistHeroPhoto` for `source`, then draws `content` with it. An image already in memory shows in the
+/// first frame; otherwise `content` draws `.pending` until the load finishes.
 struct ArtistHeroPhotoReader<Content: View>: View {
     let source: ArtworkSource
     var preset: ArtistHeroPhoto?
     @ViewBuilder let content: (ArtistHeroPhoto) -> Content
 
     @Environment(\.displayScale) private var displayScale
-    @State private var loaded: ArtistHeroPhoto?
+    /// The last load's result, under the source's cache key: the hero's source changes when the artist's albums arrive.
+    @State private var loaded: (key: String, photo: ArtistHeroPhoto)?
 
     private var maxPixelSize: Int { Int((ArtistHeroPhoto.decodePoints * displayScale).rounded(.up)) }
 
-    /// The decision without waiting: given, already made, or from a photo already decoded.
+    /// The image without waiting: given, already loaded, or already decoded.
     private var known: ArtistHeroPhoto? {
-        if let decided = preset ?? loaded { return decided }
-        if ArtistHeroPhoto.compactKeys.contains(source.cacheKey) { return .compact }
-        return ArtworkLoader.shared.cached(source, maxPixelSize: maxPixelSize).map(ArtistHeroPhoto.resolve)
+        if let preset { return preset }
+        if let loaded, loaded.key == source.cacheKey { return loaded.photo }
+        return ArtworkLoader.shared.cached(source, maxPixelSize: maxPixelSize).map { .loaded($0) }
     }
 
     var body: some View {
         content(known ?? .pending)
             .task(id: "\(source.cacheKey)@\(maxPixelSize)") {
                 guard known == nil else { return }
-                let timeout = Task {
-                    try? await Task.sleep(for: ArtistHeroPhoto.wait)
-                    if !Task.isCancelled, loaded == nil { loaded = .compact }
-                }
+                let key = source.cacheKey
                 let image = await ArtworkLoader.shared.image(for: source, maxPixelSize: maxPixelSize)
-                timeout.cancel()
-                let resolved = ArtistHeroPhoto.resolve(image)
-                if resolved == .compact { ArtistHeroPhoto.compactKeys.insert(source.cacheKey) }
-                if loaded == nil { loaded = resolved }
+                loaded = (key, .loaded(image))
             }
     }
 }
 
-/// The full-bleed hero's backdrop: the photo filling the frame, anchored to its top so a portrait photo keeps the
-/// faces (a neutral fill while it's pending), under a scrim at the top for the status bar and the bar buttons and one
+/// The hero's backdrop: the image filling the frame, anchored to its top so a portrait photo keeps the faces (a
+/// neutral fill while it's pending or when there's none), under a scrim at the top for the status bar and the bar buttons and one
 /// at the bottom for the name. Its last `fadeHeight` fades out into whatever is behind it, so the photo melts into the
 /// page rather than ending in a hard line; the name sits above the fade.
 struct ArtistBackdrop: View {
