@@ -36,7 +36,7 @@ struct MarqueeText: View {
     @State private var textWidth: CGFloat = 0
     @State private var availableWidth: CGFloat = 0
     @State private var offset: CGFloat = 0
-    /// While the pass runs the full-width line is drawn and slid; at rest the truncated one is,
+    /// While the pass runs the line is laid out at its full width and slid; at rest it is truncated,
     /// so the resting state ends in a real ellipsis rather than a hard clip.
     @State private var isScrolling = false
 
@@ -85,18 +85,15 @@ struct MarqueeText: View {
             .accessibilityLabel(text)
     }
 
-    @ViewBuilder
+    /// One `Text` whether resting or scrolling, so the offset animates from where the line rests. Two views
+    /// (the old truncated/full-width pair) made the full-width line a fresh insertion that appeared at its final
+    /// offset, the tail of the text, and slid back from there (#683).
     private var line: some View {
-        if isScrolling {
-            Text(text)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .offset(x: offset)
-        } else {
-            Text(text)
-                .lineLimit(1)
-                .truncationMode(.tail)
-        }
+        Text(text)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .fixedSize(horizontal: isScrolling, vertical: false)
+            .offset(x: offset)
     }
 
     @MainActor
