@@ -72,11 +72,22 @@ class PlexArtworkTokenInterceptorTest {
         tokenSentTo("http://plex.local:32400/library/metadata/1/thumb/1700000000") shouldBe null
     }
 
+    @Test
+    fun `strips a token a redirect carried to another host - header and query parameter`() {
+        val sent = send("http://cdn.example.com/art.jpg?X-Plex-Token=token123&w=300", Request.Builder().header(PLEX_TOKEN, "token123"))
+
+        sent.header(PLEX_TOKEN) shouldBe null
+        sent.url.toString() shouldBe "http://cdn.example.com/art.jpg?w=300"
+    }
+
     /** Sends a request for [url] through the interceptor and returns the token header the server would have seen. */
     private fun tokenSentTo(url: String): String? = send(url).header(PLEX_TOKEN)
 
     /** Sends a request for [url] through the interceptor and returns the request the server would have seen. */
-    private fun send(url: String): Request {
+    private fun send(
+        url: String,
+        builder: Request.Builder = Request.Builder()
+    ): Request {
         var sent: Request? = null
         val client = OkHttpClient.Builder()
             .addInterceptor(PlexArtworkTokenInterceptor(credentialStore))
@@ -91,7 +102,7 @@ class PlexArtworkTokenInterceptorTest {
                     .build()
             }
             .build()
-        client.newCall(Request.Builder().url(url).build()).execute().close()
+        client.newCall(builder.url(url).build()).execute().close()
         return sent!!
     }
 }
