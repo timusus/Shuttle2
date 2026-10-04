@@ -11,6 +11,17 @@ class TagLibBitDepthTest {
         taglibBitDepth("Song.wav", 24) shouldBe 24
         taglibBitDepth("Song.aif", 16) shouldBe 16
         taglibBitDepth("Song.wv", 24) shouldBe 24
+        taglibBitDepth("Song.aifc", 16) shouldBe 16
+        taglibBitDepth("Song.aiff", 24) shouldBe 24
+        taglibBitDepth("Song.ape", 16) shouldBe 16
+        taglibBitDepth("Song.dsf", 1) shouldBe 1
+    }
+
+    @Test
+    fun `a name without a usable extension has no bit depth`() {
+        taglibBitDepth("noextension", 16) shouldBe null
+        taglibBitDepth("Song.", 16) shouldBe null
+        taglibBitDepth("Song.OGG", 16) shouldBe null
     }
 
     @Test
