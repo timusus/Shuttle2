@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.KTagLibMediaStoreTagReader
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreTagReader
@@ -27,6 +28,13 @@ class MediaProviderModule {
 
     @Provides
     @SingleIn(AppScope::class)
+    fun provideTagReadGuard(
+        @ApplicationContext context: Context,
+        preferenceManager: GeneralPreferenceManager
+    ): TagReadGuard = TagReadGuard(context, preferenceManager)
+
+    @Provides
+    @SingleIn(AppScope::class)
     fun provideKTagLib(): KTagLib = KTagLib()
 
     @Provides
@@ -35,12 +43,14 @@ class MediaProviderModule {
         @ApplicationContext context: Context,
         kTagLib: KTagLib,
         fileScanner: FileScanner,
+        tagReadGuard: TagReadGuard,
         folderStore: SafScannerFolderStore,
         preferenceManager: GeneralPreferenceManager
     ): TaglibMediaProvider = TaglibMediaProvider(
         context,
         kTagLib,
         fileScanner,
+        tagReadGuard,
         backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
         folders = folderStore::scannerFolders
     )
@@ -49,14 +59,16 @@ class MediaProviderModule {
     @SingleIn(AppScope::class)
     fun provideMediaStoreTagReader(
         @ApplicationContext context: Context,
-        kTagLib: KTagLib
-    ): MediaStoreTagReader = KTagLibMediaStoreTagReader(context, kTagLib)
+        kTagLib: KTagLib,
+        tagReadGuard: TagReadGuard
+    ): MediaStoreTagReader = KTagLibMediaStoreTagReader(context, kTagLib, tagReadGuard)
 
     @Provides
     @SingleIn(AppScope::class)
     fun provideMediaStoreSongProvider(
         @ApplicationContext context: Context,
         tagReader: MediaStoreTagReader,
-        preferenceManager: GeneralPreferenceManager
-    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context, tagReader, preferenceManager)
+        preferenceManager: GeneralPreferenceManager,
+        tagReadGuard: TagReadGuard
+    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context, tagReader, preferenceManager, tagReadGuard)
 }

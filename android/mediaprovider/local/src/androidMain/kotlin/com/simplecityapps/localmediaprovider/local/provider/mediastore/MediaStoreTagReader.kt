@@ -7,6 +7,8 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FileTags
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
+import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
+import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.Song
@@ -19,26 +21,29 @@ import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 /**
- * Reads a file's tags. Returns null if TagLib can't parse the file, and may throw if it can't be opened; callers treat
- * both as "no tags".
+ * Reads the tags of [file] through [uri]. Returns null if TagLib can't parse the file or it's quarantined, and may throw
+ * if it can't be opened; callers treat each as "no tags".
  */
 fun interface MediaStoreTagReader {
     suspend fun read(
         uri: Uri,
-        fileName: String
+        file: TagReadFile
     ): FileTags?
 }
 
 class KTagLibMediaStoreTagReader(
     private val context: Context,
-    private val kTagLib: KTagLib
+    private val kTagLib: KTagLib,
+    private val tagReadGuard: TagReadGuard
 ) : MediaStoreTagReader {
     override suspend fun read(
         uri: Uri,
-        fileName: String
-    ): FileTags? = withContext(Dispatchers.IO) {
-        context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-            kTagLib.getMetadata(pfd.fd, fileName)?.propertyMap?.toFileTags()
+        file: TagReadFile
+    ): FileTags? = tagReadGuard.read(file) {
+        withContext(Dispatchers.IO) {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                kTagLib.getMetadata(pfd.fd, file.path.substringAfterLast('/'))?.propertyMap?.toFileTags()
+            }
         }
     }
 }
@@ -77,7 +82,7 @@ internal suspend fun Song.withFileTags(reader: MediaStoreTagReader): Song {
     val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
     val tags =
         try {
-            reader.read(uri = uri, fileName = path.substringAfterLast('/'))
+            reader.read(uri = uri, file = TagReadFile(path, size, lastModified?.toEpochMilliseconds() ?: 0))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

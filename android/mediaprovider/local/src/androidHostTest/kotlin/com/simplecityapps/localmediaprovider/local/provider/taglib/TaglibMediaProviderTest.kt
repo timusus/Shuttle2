@@ -11,12 +11,16 @@ import android.provider.DocumentsContract
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
+import com.simplecityapps.localmediaprovider.local.provider.testTagReadGuard
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import java.io.File
@@ -43,6 +47,8 @@ private val queried: MutableList<String> = Collections.synchronizedList(mutableL
 @RunWith(AndroidJUnit4::class)
 class TaglibMediaProviderTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val tagReadGuard = testTagReadGuard(preferences)
     private val tree = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Music")
 
     @Suppress("DEPRECATION")
@@ -187,7 +193,7 @@ class TaglibMediaProviderTest {
     fun `a findSongs that fails doesn't leave the last import's playlist walk in use`() {
         var calls = 0
         val provider =
-            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, grantedTrees = { listOf(tree) }) {
+            TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, grantedTrees = { listOf(tree) }) {
                 // The second call is the failing findSongs' own, before it walks anything
                 if (++calls == 2) throw IllegalStateException("no folders")
                 ScannerFolders(extraTrees = listOf(tree))
@@ -206,7 +212,7 @@ class TaglibMediaProviderTest {
     @Test
     fun `a walked tree that is no longer an extra tree is looked up in MediaStore`() {
         var extra = listOf(tree)
-        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
+        val provider = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, grantedTrees = { listOf(tree) }) { ScannerFolders(extraTrees = extra) }
         runBlocking { provider.findSongs(emptyList()).filterIsInstance<FlowEvent.Success<List<Song>>>().first() }
         extra = emptyList()
         FakeMediaProvider.playlistRows = listOf("$primary/Music/Lists/a.m3u" to "a.m3u")
@@ -225,6 +231,22 @@ class TaglibMediaProviderTest {
 
         songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Read a.mp3", "Stored b.mp3")
         songs.first { it.name == "Stored b.mp3" }.id shouldBe 0
+    }
+
+    @Test
+    fun `a quarantined file isn't read and keeps its stored song while a new one is left out`() {
+        val b = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/b.mp3").toString()
+        val c = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/c.mp3").toString()
+        preferences.quarantineTagRead(TagReadFile(b, 10, MODIFIED).key)
+        preferences.quarantineTagRead(TagReadFile(c, 10, MODIFIED).key)
+        val existing = listOf(storedSong("b.mp3", size = 999, lastModified = MODIFIED))
+        val provider = provider(excludes = listOf(skipFolder), trees = listOf(tree))
+
+        val songs = runBlocking { provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result }
+
+        songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Read a.mp3", "Stored b.mp3")
+        read shouldContainExactlyInAnyOrder listOf("a.mp3")
+        provider.skippedFiles shouldBe setOf(b, c)
     }
 
     @Test
@@ -369,7 +391,7 @@ class TaglibMediaProviderTest {
         trees: List<Uri>,
         backfill: Boolean = false,
         grantedTrees: List<Uri> = emptyList()
-    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
+    ) = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, backfillFileTags = { backfill }, grantedTrees = { grantedTrees }) {
         ScannerFolders(filter = FolderFilter(excludes = excludes), extraTrees = trees)
     }
 

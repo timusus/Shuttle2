@@ -303,15 +303,56 @@ class GeneralPreferenceManager @Inject constructor(
     /** [sourceUpdated] now and each time it changes. */
     fun observeSourceUpdated(source: String): Flow<Instant?> = store.changes("source_updated_$source").map { sourceUpdated(source) }.distinctUntilChanged()
 
-    /** Forgets what Sources kept of [source]'s imports (reachability, updated time, listing shortfall), once it's removed or forgotten (#870, #868). */
+    /** Forgets what Sources kept of [source]'s imports (reachability, updated time, listing shortfall, skipped files), once it's removed or forgotten (#870, #868). */
     fun clearSourceState(source: String) {
         store.edit {
             remove("source_error_$source")
             remove("source_checked_at_$source")
             remove("source_updated_$source")
             remove("listing_shortfall_$source")
+            remove("skipped_files_$source")
         }
     }
+
+    /**
+     * The files a native tag read crashed the app on, by `path|size|lastModified`, which the scanner leaves unread (#840):
+     * a file replaced or edited since is another key, so it's read again.
+     */
+    fun tagReadQuarantine(): Set<String> = keySet(TAG_READ_QUARANTINE)
+
+    fun quarantineTagRead(key: String) = putKeySet(TAG_READ_QUARANTINE, tagReadQuarantine() + key)
+
+    /** Files a tag read was in flight on alone when the app died, where Android can't say it crashed (before 11): a second time quarantines it. */
+    fun tagReadStrikes(): Set<String> = keySet(TAG_READ_STRIKES)
+
+    fun setTagReadStrikes(keys: Set<String>) = putKeySet(TAG_READ_STRIKES, keys)
+
+    /** Reads every quarantined file again: Sources' retry. */
+    fun clearTagReadQuarantine() {
+        store.edit {
+            remove(TAG_READ_QUARANTINE)
+            remove(TAG_READ_STRIKES)
+        }
+    }
+
+    /** How many files the last full import of [source] (a media provider type's name) left unread, for Sources to say (#840). */
+    fun skippedFiles(source: String): Int = store.getInt("skipped_files_$source", 0)
+
+    fun setSkippedFiles(
+        source: String,
+        count: Int
+    ) = store.putInt("skipped_files_$source", count)
+
+    /** [skippedFiles] now and each time it changes. */
+    fun observeSkippedFiles(source: String): Flow<Int> = store.changes("skipped_files_$source").map { skippedFiles(source) }.distinctUntilChanged()
+
+    // One key per line: a path can hold any other separator
+    private fun keySet(key: String): Set<String> = store.getString(key, null)?.split('\n')?.filter { it.isNotEmpty() }?.toSet().orEmpty()
+
+    private fun putKeySet(
+        key: String,
+        keys: Set<String>
+    ) = store.putString(key, keys.takeIf { it.isNotEmpty() }?.joinToString("\n"))
 
     /** The first-run source setup (iOS) was finished or skipped, so it never opens by itself again. */
     var sourceSetupCompleted: Boolean
@@ -324,6 +365,8 @@ class GeneralPreferenceManager @Inject constructor(
 
     private companion object {
         const val LAST_MEDIA_IMPORT_DATE = "pref_media_last_rescan_date"
+        const val TAG_READ_QUARANTINE = "tag_read_quarantine"
+        const val TAG_READ_STRIKES = "tag_read_strikes"
     }
 }
 

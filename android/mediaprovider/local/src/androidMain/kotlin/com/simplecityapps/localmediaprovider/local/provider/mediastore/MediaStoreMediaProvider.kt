@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
+import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
 import com.simplecityapps.localmediaprovider.local.provider.unmountedRoots
@@ -37,7 +38,9 @@ import timber.log.Timber
 class MediaStoreMediaProvider(
     private val context: Context,
     private val tagReader: MediaStoreTagReader,
-    private val preferenceManager: GeneralPreferenceManager
+    private val preferenceManager: GeneralPreferenceManager,
+    // Takes the reads a crash interrupted before tags are read again, so a file that crashes TagLib is left unread
+    private val tagReadGuard: TagReadGuard
 ) : MediaProvider {
     override val type = MediaProviderType.MediaStore
 
@@ -48,6 +51,7 @@ class MediaStoreMediaProvider(
     // Songs
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+        tagReadGuard.recover()
         val rawSongs = mutableListOf<Song>()
         val projection =
             mediaStoreSongProjection(

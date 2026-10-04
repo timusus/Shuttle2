@@ -9,9 +9,9 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
-import com.simplecityapps.localmediaprovider.local.provider.LARGE_TAG_READ_BYTES
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
-import com.simplecityapps.localmediaprovider.local.provider.TagReadLimiter
+import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
+import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
@@ -69,6 +69,8 @@ class TaglibMediaProvider(
     private val context: Context,
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
+    // Caps the native reads of every flow findSongs merges, and leaves out the files that crashed one
+    private val tagReadGuard: TagReadGuard,
     // Whether this source's songs lack tags this build reads, which reading every file again fills in
     private val backfillFileTags: () -> Boolean = { false },
     // The folder trees the user has granted access to, which is where playlist files are looked for
@@ -79,11 +81,12 @@ class TaglibMediaProvider(
 ) : IndexedMediaProvider {
     override val type = MediaProviderType.Shuttle
 
-    // One cap on the native reads of every flow findSongs merges, which would otherwise each run as many at once
-    private val tagReads = TagReadLimiter()
-
     @Volatile
     override var unreadableRoots: Set<String> = emptySet()
+        private set
+
+    @Volatile
+    override var skippedFiles: Set<String> = emptySet()
         private set
 
     /** The playlist files the last [findSongs] walk found in each tree it walked, by [treeKey], so [findPlaylists] needn't walk them again. */
@@ -117,6 +120,8 @@ class TaglibMediaProvider(
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         // First, so an import that fails part way doesn't leave the last one's walk for findPlaylists to use
         walkedPlaylistFiles = emptyMap()
+        skippedFiles = emptySet()
+        tagReadGuard.recover()
         val startTime = System.currentTimeMillis()
         val folders = folders()
         val primaryStoragePath = primaryStoragePath()
@@ -199,6 +204,7 @@ class TaglibMediaProvider(
             "Found ${songs.size} of ${files.size} MediaStore audio files, ${walkedFiles.size} more in included folders, ${extraDocuments.size} extra folder " +
                 "files and ${unlisted.size} stored songs MediaStore didn't list (thorough: $thorough) in ${System.currentTimeMillis() - startTime}ms"
         )
+        skippedFiles = tagReadGuard.skippedPaths
         emit(FlowEvent.Success(songs))
     }
 
@@ -469,7 +475,7 @@ class TaglibMediaProvider(
         merger: LocalFileTagMerger,
         folderImages: List<FolderImage>
     ): Song? = merger.unchangedSong(path, node.size, node.lastModified)?.reused(node.lastModified, folderImages)
-        ?: tagReads.withPermits(all = node.size > LARGE_TAG_READ_BYTES) { fileScanner.getAudioFile(context, kTagLib, node, path) }?.toSong(type, folderImages)
+        ?: tagReadGuard.read(TagReadFile(path, node.size, node.lastModified)) { fileScanner.getAudioFile(context, kTagLib, node, path) }?.toSong(type, folderImages)
         // A file imported before that can't be read now keeps its song, which removing would take its play history with it
         ?: merger.existingSong(path)?.reused(node.lastModified, folderImages)
 
@@ -490,19 +496,19 @@ class TaglibMediaProvider(
         folderImages: List<FolderImage>
     ): Song = copy(id = 0, artworkVersion = localArtworkVersion(lastModified, folderImages))
 
-    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = tagReads.withPermits(all = file.size > LARGE_TAG_READ_BYTES) { readNow(file) }
-
-    private suspend fun readNow(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
-        try {
-            context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->
-                kTagLib.getAudioFile(pfd.fd, file.path, file.displayName, file.lastModified, file.size, file.mimeType)
+    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = tagReadGuard.read(TagReadFile(file.path, file.size, file.lastModified)) {
+        withContext(Dispatchers.IO) {
+            try {
+                context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->
+                    kTagLib.getAudioFile(pfd.fd, file.path, file.displayName, file.lastModified, file.size, file.mimeType)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The native tag parse can throw anything for a corrupt file; one bad file shouldn't fail the whole import
+                Timber.e(e, "Failed to read audio file: ${file.contentUri} (${file.path})")
+                null
             }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // The native tag parse can throw anything for a corrupt file; one bad file shouldn't fail the whole import
-            Timber.e(e, "Failed to read audio file: ${file.contentUri} (${file.path})")
-            null
         }
     }
 

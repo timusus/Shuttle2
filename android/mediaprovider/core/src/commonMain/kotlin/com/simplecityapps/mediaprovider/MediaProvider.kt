@@ -44,6 +44,12 @@ interface MediaProvider {
 interface IndexedMediaProvider : MediaProvider {
     /** Every song [findSongs] finds, and those in the source's folders its index doesn't list. */
     fun findSongsThoroughly(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>>
+
+    /**
+     * The paths of the files the last [findSongs] left unread, because reading one crashed the app before (#840). A stored
+     * song among them keeps its row; a new file isn't added. The import records how many, for Sources to say.
+     */
+    val skippedFiles: Set<String> get() = emptySet()
 }
 
 /**

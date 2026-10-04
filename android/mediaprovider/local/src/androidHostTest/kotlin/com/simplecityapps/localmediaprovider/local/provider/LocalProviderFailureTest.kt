@@ -34,7 +34,7 @@ import org.robolectric.Robolectric
 class LocalProviderFailureTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
-    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, GeneralPreferenceManager(InMemoryKeyValueStore()))
+    private val mediaStoreProvider = MediaStoreMediaProvider(context, { _, _ -> null }, GeneralPreferenceManager(InMemoryKeyValueStore()), testTagReadGuard())
 
     @Test
     fun `MediaStore returning no cursor fails the MediaStore import`() {
