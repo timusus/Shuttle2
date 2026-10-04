@@ -22,6 +22,7 @@ class DownloadCacheDataSourceTest {
     private val streamed = Uri.parse("jellyfin://server/Audio/streamed")
     private val downloadedBytes = ByteArray(2048) { 1 }
     private val streamedBytes = ByteArray(512) { 2 }
+    private val partial = Uri.parse("jellyfin://server/Audio/partial")
 
     private lateinit var cache: Cache
 
@@ -29,7 +30,10 @@ class DownloadCacheDataSourceTest {
     private val upstreams = mutableListOf<FakeDataSource>()
 
     private val upstream = DataSource.Factory {
-        FakeDataSource(FakeDataSet().newData(streamed).appendReadData(streamedBytes).endData()).also { upstreams += it }
+        FakeDataSource(
+            FakeDataSet().newData(streamed).appendReadData(streamedBytes).endData()
+                .newData(partial).appendReadData(streamedBytes).endData()
+        ).also { upstreams += it }
     }
 
     private fun upstreamOpens() = upstreams.sumOf { it.getAndClearOpenedDataSpecs().size }
@@ -81,5 +85,25 @@ class DownloadCacheDataSourceTest {
         read(streamed).contentEquals(streamedBytes) shouldBe true
         upstreamOpens() shouldBe 1
         cache.keys.contains(streamed.toString()) shouldBe false
+    }
+
+    @Test
+    fun `a partial download streams from upstream alone instead of stitching its spans to the stream`() {
+        // A download that failed halfway: the first half is cached, the rest never arrived.
+        val failing = CacheDataSource.Factory().setCache(cache).setUpstreamDataSourceFactory {
+            FakeDataSource(
+                FakeDataSet().newData(partial)
+                    .appendReadData(ByteArray(1024) { 1 })
+                    .appendReadError(java.io.IOException("failed"))
+                    .appendReadData(ByteArray(1024) { 1 })
+                    .endData()
+            )
+        }.createDataSource()
+        runCatching {
+            CacheWriter(failing, DataSpec.Builder().setUri(partial).setKey(partial.toString()).build(), null, null).cache()
+        }
+        (cache.getCachedBytes(partial.toString(), 0, Long.MAX_VALUE) > 0) shouldBe true
+
+        read(partial).contentEquals(streamedBytes) shouldBe true
     }
 }
