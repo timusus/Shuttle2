@@ -13,7 +13,7 @@ Driven by `support/bench/bench.sh` (the TagLib folder pick is scripted in `suppo
   free and the server's FLACs average 38 MB. The app's library after import holds 3144 songs because the MediaStore provider also imports the owner's
   existing music (~2,050 tracks), so the imported library is ~3,100 tracks. MediaStore confirmed all 1090 S2Bench files via
   `content call --uri content://media/ --method scan_volume --arg external_primary`.
-- Timing: logcat tag `MediaImporter`, line `Import complete in <ms>` (existing log, no code change). Memory: `dumpsys meminfo <pid>` TOTAL PSS sampled every ~2 s.
+- Timing: logcat tag `MediaImporter`, line `Import complete in <ms>` (existing log, no code change; the baseline below predates #866, which also logs one `<type> import phases: findSongs <ms>, song diff and db write <ms>, findPlaylists <ms>` line per provider per run, so the split no longer has to be inferred from timestamps). Memory: `dumpsys meminfo <pid>` TOTAL PSS sampled every ~2 s.
 
 ## Results
 

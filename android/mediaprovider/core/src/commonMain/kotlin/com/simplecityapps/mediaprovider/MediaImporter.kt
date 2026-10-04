@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -220,12 +221,15 @@ class MediaImporter(
             }
         }
 
+        // Each provider's timings, filled in by its own song and playlist passes, so the summary line below can attribute a slow import (#866)
+        val timingsByProvider = plans.associate { (mediaProvider, _) -> mediaProvider.type to ImportTimings() }
+
         withContext(Dispatchers.IO) {
             val playlistProviders =
                 plans.map { (mediaProvider, plan) ->
                     async {
                         var stored: SongImportResult? = null
-                        importSongs(mediaProvider, plan, userRemoval = foldersChanged && !mediaProvider.type.remote).collect { event ->
+                        importSongs(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), userRemoval = foldersChanged && !mediaProvider.type.remote).collect { event ->
                             when (event) {
                                 is FlowEvent.Progress -> {
                                     if (showProgress) publish(mediaProvider.type, mediaProvider.importProgress(event.data))
@@ -256,7 +260,7 @@ class MediaImporter(
 
             playlistProviders.map { mediaProvider ->
                 async {
-                    importPlaylists(mediaProvider).collect { event ->
+                    importPlaylists(mediaProvider, timingsByProvider.getValue(mediaProvider.type)).collect { event ->
                         if (event is FlowEvent.Failure) logger.warn { "${mediaProvider.type} playlist import failed: ${event.message}" }
                     }
                 }
@@ -266,9 +270,18 @@ class MediaImporter(
         preferenceManager.lastMediaImportDate = clock.now()
         importCount++
 
+        val afterImportMark = TimeSource.Monotonic.markNow()
         afterImport(mediaProviders.none { preferenceManager.songTagsOutdated(it.type) })
 
-        logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms)" }
+        // One line per provider per run, so a slow import can be attributed to its phases (#866)
+        timingsByProvider.forEach { (type, timings) ->
+            logger.debug {
+                "$type import phases: findSongs ${timings.findSongs.inWholeMilliseconds}ms, " +
+                    "song diff and db write ${timings.dbWrite.inWholeMilliseconds}ms, " +
+                    "findPlaylists ${timings.findPlaylists.inWholeMilliseconds}ms"
+            }
+        }
+        logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms (afterImport ${afterImportMark.elapsedNow().inWholeMilliseconds}ms)" }
     }
 
     private fun publish(type: MediaProviderType, state: SongImportState) {
@@ -296,6 +309,7 @@ class MediaImporter(
     private fun importSongs(
         mediaProvider: MediaProvider,
         requested: SyncPlan,
+        timings: ImportTimings,
         userRemoval: Boolean
     ): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         // Before the request, so whatever changes on the source while it runs is fetched again next time
@@ -321,6 +335,7 @@ class MediaImporter(
                 SyncPlan.Full -> mediaProvider.findSongs(existingSongs)
                 is SyncPlan.Incremental -> (mediaProvider as IncrementalMediaProvider).findSongsChangedSince(existingSongs, plan.since)
             }
+        val findSongsMark = TimeSource.Monotonic.markNow()
         songs.collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
@@ -328,6 +343,8 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Success -> {
+                    timings.findSongs = findSongsMark.elapsedNow()
+                    val dbWriteMark = TimeSource.Monotonic.markNow()
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
@@ -339,6 +356,7 @@ class MediaImporter(
                                 deletes = guarded.apply,
                                 mediaProviderType = mediaProvider.type
                             )
+                        timings.dbWrite = dbWriteMark.elapsedNow()
                         mediaProvider.songsStored()
                         preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
                         if (guarded.awaitsFullPass) {
@@ -367,6 +385,7 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Failure -> {
+                    timings.findSongs = findSongsMark.elapsedNow()
                     emit(event)
                 }
             }
@@ -417,10 +436,11 @@ class MediaImporter(
         val mediaProviderType: MediaProviderType
     )
 
-    private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
+    private fun importPlaylists(mediaProvider: MediaProvider, timings: ImportTimings): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
         // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
         val existingSongs = songRepository.loadProviderSongs(mediaProvider.type)
 
+        val findPlaylistsMark = TimeSource.Monotonic.markNow()
         mediaProvider.findPlaylists(existingSongs).collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
@@ -440,7 +460,18 @@ class MediaImporter(
                 }
             }
         }
+        timings.findPlaylists = findPlaylistsMark.elapsedNow()
         emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
+    }
+
+    /**
+     * How long each phase of one provider's import took, logged as the per-provider summary line at the end of an import
+     * (#866). A phase that never ran (playlists not due, a fetch that failed) stays at zero.
+     */
+    private class ImportTimings {
+        var findSongs: Duration = Duration.ZERO
+        var dbWrite: Duration = Duration.ZERO
+        var findPlaylists: Duration = Duration.ZERO
     }
 
     /** A playlist [mediaProviderType] found, holding the [songs] of its source, which [externalId] identifies within that provider. */
