@@ -1,6 +1,9 @@
 package com.simplecityapps.localmediaprovider.local.data.room.migrations
 
 import androidx.room.testing.MigrationTestHelper
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
@@ -30,5 +33,22 @@ class MediaDatabaseMigrationTest {
         val latestVersion = ALL_MIGRATIONS.last().endVersion
 
         helper.runMigrationsAndValidate(TEST_DB, latestVersion, true, *chain.toTypedArray())
+    }
+
+    @Test
+    fun `the registered migrations reach the current database version`() {
+        helper.createDatabase(TEST_DB, OLDEST_EXPORTED_SCHEMA_VERSION).close()
+
+        // No destructive fallback: a missing migration to MediaDatabase's current version throws on open.
+        val database =
+            Room.databaseBuilder(ApplicationProvider.getApplicationContext<Context>(), MediaDatabase::class.java, TEST_DB)
+                .addMigrations(*ALL_MIGRATIONS)
+                .allowMainThreadQueries()
+                .build()
+        try {
+            database.openHelper.writableDatabase
+        } finally {
+            database.close()
+        }
     }
 }
