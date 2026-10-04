@@ -133,7 +133,6 @@ class EmbyMediaProviderTest {
         val songs = sync()
 
         songs.size shouldBe 502
-        provider.lastListingComplete() shouldBe true
         songs.map { it.externalId }.let { ids -> ids.take(2) + ids.takeLast(2) } shouldContainExactly listOf("501", "502", "503", "504")
         server.requestsTo(ITEMS).map { it.url.parameters["StartIndex"] to it.url.parameters["Limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")

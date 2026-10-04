@@ -407,30 +407,27 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a full listing that came up short stores what it found but deletes nothing`() = runBlocking<Unit> {
+    fun `a listing that came up short deletes nothing and makes the next sync full, which deletes as usual`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
-        val stored = song()
-        val added = song().copy(id = 2, path = "/added")
-        songRepository.stored = listOf(stored)
-        server.found = listOf(added)
+        songRepository.stored = listOf(song())
+        server.found = listOf(song().copy(id = 2, path = "/added"))
         server.listingComplete = false
 
         importer.sync(SyncTrigger.Periodic)
 
         songRepository.changes shouldBe Triple(1, 0, 0)
-    }
+        preferences.lastSyncStart(server.type.name) shouldBe clock.time
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
+        preferences.songTagsOutdated(server.type) shouldBe true
 
-    @Test
-    fun `a complete full listing deletes the songs it no longer holds`() = runBlocking<Unit> {
-        importer.mediaProviders -= provider
-        importer.mediaProviders += server
-        songRepository.stored = listOf(song())
-        server.found = listOf(song().copy(id = 2, path = "/added"))
-
+        server.listingComplete = true
         importer.sync(SyncTrigger.Periodic)
 
+        server.requests shouldBe listOf(null, null)
         songRepository.changes shouldBe Triple(1, 0, 1)
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time
+        preferences.songTagsOutdated(server.type) shouldBe false
     }
 
     @Test
@@ -561,9 +558,9 @@ class MediaImporterTest {
         /** What it finds, or the failure it reports instead. */
         var found: List<Song> = emptyList()
         var failure: String? = null
-        var listingComplete = true
 
-        override fun lastListingComplete() = listingComplete
+        /** Whether its listings are complete ([FlowEvent.Success.complete]). */
+        var listingComplete = true
 
         override var unreadableRoots: Set<String> = emptySet()
 
@@ -577,7 +574,7 @@ class MediaImporterTest {
         private fun songs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             requests += since
             emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, progress = null)))
-            failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found))
+            failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found, listingComplete))
         }
 
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {

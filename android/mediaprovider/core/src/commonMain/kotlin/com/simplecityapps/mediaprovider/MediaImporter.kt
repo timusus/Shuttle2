@@ -72,9 +72,9 @@ class MediaImporter(
 
     /**
      * Whether a source's songs were imported before this build's [SONG_TAGS_VERSION], so they lack tags it reads, and no
-     * import has run under this version yet: the one launch re-import is due. Every provider but MediaStore re-reads each
-     * song on each import (MediaStore does while its own songs are outdated), and an import updates songs in place by
-     * path, so a re-import fills them in without changing an id. A source whose import fails stays outdated, and catches
+     * import has run under this version yet: the one launch re-import is due. A full import is how a provider brings its
+     * songs' tags up to date, however it decides which songs to read again, and an import updates songs in place by path,
+     * so a re-import fills them in without changing an id. A source whose import fails stays outdated, and catches
      * up on its own next import rather than by importing everything again at each launch.
      */
     val songTagsOutdated: Boolean
@@ -288,9 +288,10 @@ class MediaImporter(
 
     /**
      * Fetches [mediaProvider]'s songs as [requested] says and stores them: a full listing replaces what's stored, removing
-     * what it no longer holds but for what [deleteGuard] holds back (a mass removal only if it isn't a [userRemoval]); an
-     * incremental one is stored over it, or is made full when nothing is stored. Once stored, the sync's start is noted for
-     * the next incremental sync to ask from.
+     * what it no longer holds but for what [deleteGuard] holds back (a mass removal only if it isn't a [userRemoval], or all
+     * of it for a listing that came up short); an incremental one is stored over it, or is made full when nothing is stored.
+     * Once stored, the sync's start is noted for the next incremental sync to ask from, and a full sync's for the next full
+     * one, unless the guard is waiting on a full pass.
      */
     private fun importSongs(
         mediaProvider: MediaProvider,
@@ -329,8 +330,8 @@ class MediaImporter(
                 is FlowEvent.Success -> {
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
-                        val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full && mediaProvider.lastListingComplete()).apply()
-                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval)
+                        val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
+                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, listingComplete = event.complete)
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
@@ -340,14 +341,14 @@ class MediaImporter(
                             )
                         mediaProvider.songsStored()
                         preferenceManager.setLastSyncStart(mediaProvider.type.name, start)
-                        if (plan == SyncPlan.Full && guarded.heldMassRemoval.isEmpty()) {
+                        if (guarded.awaitsFullPass) {
+                            // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's the
+                            // next sync rather than a week on. The songs it held weren't read, so the tags version stays as it was.
+                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
+                        } else if (plan == SyncPlan.Full) {
                             preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
                             // Every song read again, so this source's songs hold every tag this build reads
                             preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
-                        } else if (plan == SyncPlan.Full) {
-                            // A held mass removal waits on the next full sync, so that's the next sync rather than a week on.
-                            // Its songs weren't read, so MediaStore, finding them unchanged after all, reads their tags again.
-                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
                         }
                         emit(
                             FlowEvent.Success(
@@ -378,9 +379,13 @@ class MediaImporter(
         existingCount: Int,
         foundCount: Int,
         deletes: List<Song>,
-        userRemoval: Boolean
+        userRemoval: Boolean,
+        listingComplete: Boolean
     ): DeleteGuard.Decision {
-        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots, userRemoval)
+        val decision = deleteGuard.deletesToApply(mediaProvider.type, existingCount, foundCount, deletes, mediaProvider.unreadableRoots, userRemoval, listingComplete)
+        if (!decision.listingComplete) {
+            logger.warn { "${mediaProvider.type} listed fewer songs than it holds; keeping ${decision.heldIncomplete} it didn't list until a full import lists them all" }
+        }
         if (decision.heldUnreadable > 0) {
             logger.info { "Keeping ${decision.heldUnreadable} ${mediaProvider.type} songs under roots it couldn't read: ${mediaProvider.unreadableRoots}" }
         }

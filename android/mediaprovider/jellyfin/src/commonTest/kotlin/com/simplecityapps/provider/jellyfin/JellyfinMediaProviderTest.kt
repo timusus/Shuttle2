@@ -131,13 +131,33 @@ class JellyfinMediaProviderTest {
         server.respond(ITEMS, "songs_page_1.json", query = mapOf("includeItemTypes" to "Audio", "startIndex" to "0"))
         server.respond(ITEMS, "songs_page_2.json", query = mapOf("includeItemTypes" to "Audio", "startIndex" to "500"))
 
-        val songs = sync()
+        val listing = syncEvent()
+        val songs = listing.result
 
         songs.size shouldBe 502
-        provider.lastListingComplete() shouldBe true
+        listing.complete shouldBe true
         songs.map { it.externalId }.let { ids -> ids.take(2) + ids.takeLast(2) } shouldContainExactly listOf("page-1-a", "page-1-b", "page-2-a", "page-2-b")
         server.requestsTo(ITEMS).map { it.url.parameters["startIndex"] to it.url.parameters["limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")
+    }
+
+    @Test
+    fun `a listing short of the server's total is incomplete, and the next sync's full listing complete`() {
+        signedIn()
+        // The server counts 5 items but returns 3, as Jellyfin's total can count items the user can't see
+        server.respond(ITEMS, "songs_short.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        val short = syncEvent()
+
+        short.result.size shouldBe 3
+        short.complete shouldBe false
+
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        val complete = syncEvent()
+
+        complete.result.size shouldBe 3
+        complete.complete shouldBe true
     }
 
     @Test
@@ -354,7 +374,9 @@ class JellyfinMediaProviderTest {
         server.respond("/Users/Me", "me.json")
     }
 
-    private fun sync(): List<Song> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+    private fun sync(): List<Song> = syncEvent().result
+
+    private fun syncEvent(): FlowEvent.Success<List<Song>> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
     private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = provider.findPlaylists(library).events().last()
         .shouldBeInstanceOf<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>().result

@@ -250,7 +250,6 @@ class PlexMediaProviderTest {
         val songs = sync()
 
         songs.size shouldBe 502
-        provider.lastListingComplete() shouldBe true
         songs.map { it.externalId }.let { ids -> ids.take(2) + ids.takeLast(2) } shouldContainExactly
             listOf("/library/parts/1/file.mp3", "/library/parts/2/file.mp3", "/library/parts/3/file.mp3", "/library/parts/4/file.mp3")
         server.requestsTo(ITEMS).map { it.url.parameters["X-Plex-Container-Start"] to it.url.parameters["X-Plex-Container-Size"] } shouldContainExactly

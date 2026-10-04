@@ -3,7 +3,11 @@ package com.simplecityapps.mediaprovider
 sealed class FlowEvent<out T, out U> {
     class Progress<T, U>(val data: U) : FlowEvent<T, U>()
 
-    class Success<T>(val result: T) : FlowEvent<T, Nothing>()
+    /**
+     * [complete] is false for a listing that came to less than its source said it holds (a server's total), so what it
+     * left out can't be taken as gone.
+     */
+    class Success<T>(val result: T, val complete: Boolean = true) : FlowEvent<T, Nothing>()
 
     class Failure(val message: String?) : FlowEvent<Nothing, Nothing>()
 }

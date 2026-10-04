@@ -112,6 +112,29 @@ class DeleteGuardTest {
         DeleteGuard(GeneralPreferenceManager(store)).deletesToApply(MediaProviderType.Shuttle, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
     }
 
+    @Test
+    fun `an incomplete listing applies no deletes and awaits a full pass`() {
+        val deletes = songs(1L..3L) + songs(4L..5L, root = "/storage/1234-ABCD/")
+
+        val decision = DeleteGuard.decide(existingCount = 40, foundCount = 35, deletes = deletes, unreadableRoots = setOf("/storage/1234-ABCD/"), heldLastPass = emptySet(), listingComplete = false)
+
+        decision.apply.shouldBeEmpty()
+        decision.heldUnreadable shouldBe 2
+        decision.heldIncomplete shouldBe 3
+        decision.awaitsFullPass shouldBe true
+    }
+
+    @Test
+    fun `an incomplete listing neither confirms nor forgets the mass removal held before it`() {
+        val guard = DeleteGuard(preferences)
+        val deletes = songs(1L..30L)
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet(), listingComplete = false).apply.shouldBeEmpty()
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
+    }
+
     private fun songs(
         ids: LongRange,
         root: String = "/storage/emulated/0/"

@@ -21,12 +21,6 @@ interface MediaProvider {
     suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> = emptyList()
 
     /**
-     * Whether the last [findSongs] listed everything the source holds. When it didn't (a server's total was more than it
-     * returned), the import still stores what was found but removes nothing, as for an incremental listing.
-     */
-    fun lastListingComplete(): Boolean = true
-
-    /**
      * The songs the last [findSongs] found are stored: called once the import has saved them, and not when it fails, so
      * a provider can note what it imported (iOS's local files remember their listing, to import again only on a change).
      */

@@ -50,7 +50,7 @@ private suspend fun <T> retrying(fetchPage: suspend () -> NetworkResult<Page<T>>
         if (result !is NetworkResult.Failure || attempt >= MAX_ATTEMPTS || !result.error.isTransient()) return result
         val retryAfter = (result.error as? RemoteServiceHttpError)?.retryAfterSeconds
         val wait = if (retryAfter != null) {
-            min(retryAfter, MAX_RETRY_AFTER_SECONDS).seconds.inWholeMilliseconds
+            retryAfter.coerceIn(0, MAX_RETRY_AFTER_SECONDS).seconds.inWholeMilliseconds
         } else {
             val backoff = BACKOFF_BASE_MS shl (attempt - 1)
             backoff + Random.nextLong(backoff / 2 + 1)
@@ -76,15 +76,14 @@ private suspend fun <T> retrying(fetchPage: suspend () -> NetworkResult<Page<T>>
  * 429) waits and tries again, any other failure ends the listing at once.
  *
  * With a [key], an item already received is dropped (a server whose listing shifts mid-paging repeats items across
- * pages), and when the server gave a total and the result falls short of it, [onShortListing] is called (expected, received)
- * before the listing is emitted, so the caller can keep a sync from deleting against it: a server's total can count
- * items it never returns (Jellyfin's, with access filtering), so a short listing is still a listing, just not a
- * complete one. A listing that legitimately repeats an item (a playlist) passes no key and gets neither.
+ * pages), and when the server gave a total and the result falls short of it, the listing is emitted as not
+ * [FlowEvent.Success.complete], so an import doesn't delete against it: a server's total can count items it never
+ * returns (Jellyfin's, with access filtering), so a short listing is still a listing, just not a complete one. A listing
+ * that legitimately repeats an item (a playlist) passes no key and gets neither.
  */
 fun <T> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
     key: ((T) -> Any)? = null,
-    onShortListing: (expected: Int, received: Int) -> Unit = { _, _ -> },
     fetchPage: suspend (offset: Int, limit: Int) -> NetworkResult<Page<T>>
 ): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
     val items = mutableListOf<T>()
@@ -111,11 +110,11 @@ fun <T> pagedFlow(
 
                 val hasMore = if (totalCount != null) end < totalCount else page.items.isNotEmpty()
                 if (!hasMore) {
-                    if (key != null && reportedTotal != null && items.size < reportedTotal) {
+                    val short = key != null && reportedTotal != null && items.size < reportedTotal
+                    if (short) {
                         logger.warn { "The server reported $reportedTotal items but the listing came to ${items.size}; treating it as incomplete" }
-                        onShortListing(reportedTotal, items.size)
                     }
-                    emit(FlowEvent.Success(items))
+                    emit(FlowEvent.Success(items, complete = !short))
                     return@flow
                 }
                 offset = end

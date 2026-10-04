@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider.server
 
+import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
@@ -96,8 +97,7 @@ class PagedFlowTest {
         events.last() shouldBe Event.Success(listOf(0, 1))
     }
 
-    private fun transient(status: HttpStatusCode = HttpStatusCode.ServiceUnavailable, retryAfterSeconds: Long? = null) =
-        NetworkResult.Failure(RemoteServiceHttpError(status, retryAfterSeconds = retryAfterSeconds))
+    private fun transient(status: HttpStatusCode = HttpStatusCode.ServiceUnavailable, retryAfterSeconds: Long? = null) = NetworkResult.Failure(RemoteServiceHttpError(status, retryAfterSeconds = retryAfterSeconds))
 
     @Test
     fun `a page that fails transiently is retried and the listing carries on`() = runTest {
@@ -151,22 +151,54 @@ class PagedFlowTest {
     }
 
     @Test
-    fun `a listing that falls short of its total is emitted and reported short`() = runTest {
-        var short: Pair<Int, Int>? = null
-        val events = pagedFlow<Int>(pageSize = 4, key = { it }, onShortListing = { expected, received -> short = expected to received }) { offset, _ ->
+    fun `a listing that falls short of its total is emitted as incomplete`() = runTest {
+        val events = pagedFlow<Int>(pageSize = 4, key = { it }) { offset, _ ->
             NetworkResult.Success(Page(if (offset == 0) listOf(0, 1, 2, 3) else listOf(3, 3), totalCount = 8))
-        }.toList().described()
+        }.toList()
 
-        events.last() shouldBe Event.Success(listOf(0, 1, 2, 3))
-        short shouldBe (8 to 4)
+        events.described().last() shouldBe Event.Success(listOf(0, 1, 2, 3))
+        (events.last() as FlowEvent.Success).complete shouldBe false
     }
 
     @Test
-    fun `a complete listing is not reported short`() = runTest {
-        var short = false
-        pagedFlow<Int>(pageSize = 4, key = { it }, onShortListing = { _, _ -> short = true }, fetchPage = server(total = 10)).toList()
+    fun `a complete listing is emitted as complete, after a short one from the same server`() = runTest {
+        var short = true
+        val fetchPage = server(total = 10)
+        val listing =
+            pagedFlow<Int>(pageSize = 4, key = { it }) { offset, limit ->
+                // The first listing loses its last page's items, the next gets them all
+                if (short && offset >= 8) NetworkResult.Success(Page(emptyList(), totalCount = 10)) else fetchPage(offset, limit)
+            }
 
-        short shouldBe false
+        (listing.toList().last() as FlowEvent.Success).complete shouldBe false
+        short = false
+        val complete = listing.toList().last() as FlowEvent.Success
+        complete.result shouldBe (0 until 10).toList()
+        complete.complete shouldBe true
+    }
+
+    @Test
+    fun `a negative Retry-After retries at once`() = runTest {
+        var attempts = 0
+        pagedFlow<Int>(pageSize = 4) { offset, _ ->
+            attempts++
+            if (attempts == 1) transient(HttpStatusCode.TooManyRequests, retryAfterSeconds = -5) else NetworkResult.Success(Page(listOf(offset), totalCount = 1))
+        }.toList()
+
+        attempts shouldBe 2
+        testScheduler.currentTime shouldBe 0L
+    }
+
+    @Test
+    fun `a long Retry-After is capped at 30 seconds`() = runTest {
+        var attempts = 0
+        pagedFlow<Int>(pageSize = 4) { offset, _ ->
+            attempts++
+            if (attempts == 1) transient(HttpStatusCode.TooManyRequests, retryAfterSeconds = 3_600) else NetworkResult.Success(Page(listOf(offset), totalCount = 1))
+        }.toList()
+
+        attempts shouldBe 2
+        testScheduler.currentTime shouldBe 30_000L
     }
 
     @Test

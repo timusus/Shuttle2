@@ -43,11 +43,6 @@ class PlexMediaProvider(
 
     private val logger = Logger.tagged("PlexMediaProvider")
 
-    // Set when a listing came to fewer items than the server said it holds, so the import stores it without deleting
-    @Volatile private var listingComplete = true
-
-    override fun lastListingComplete() = listingComplete
-
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since = null)
 
     override fun findSongsChangedSince(
@@ -63,7 +58,6 @@ class PlexMediaProvider(
         existingSongs: List<Song>,
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
-        listingComplete = true
         val syncedAt = Clock.System.now()
         when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
@@ -79,9 +73,9 @@ class PlexMediaProvider(
                                 is FlowEvent.Success -> {
                                     val songs = event.result.map { metadata -> metadata.toSong(type, syncedAt) }
                                     if (since == null) {
-                                        FlowEvent.Success(songs)
+                                        FlowEvent.Success(songs, event.complete)
                                     } else {
-                                        FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favourites(address, credentials, sections, syncedAt)))
+                                        FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favourites(address, credentials, sections, syncedAt)), event.complete)
                                     }
                                 }
 
@@ -172,7 +166,10 @@ class PlexMediaProvider(
         return (event as? FlowEvent.Success)?.result?.mapNotNull { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } }?.toMap()
     }
 
-    /** Every track of every one of [sections], emitted as one [FlowEvent.Success] after the sections' progress. A failed section ends the flow. */
+    /**
+     * Every track of every one of [sections], emitted as one [FlowEvent.Success] after the sections' progress, complete only
+     * if every section's listing was. A failed section ends the flow.
+     */
     private fun queryAllSections(
         address: String,
         credentials: AuthenticatedCredentials,
@@ -181,11 +178,15 @@ class PlexMediaProvider(
         favouritesOnly: Boolean = false
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = flow {
         val items = mutableListOf<Metadata>()
+        var complete = true
         for (section in sections) {
             var failed = false
             queryItems(address, credentials, section, since, favouritesOnly).collect { event ->
                 when (event) {
-                    is FlowEvent.Success -> items.addAll(event.result)
+                    is FlowEvent.Success -> {
+                        items.addAll(event.result)
+                        complete = complete && event.complete
+                    }
 
                     is FlowEvent.Progress -> emit(FlowEvent.Progress(event.data))
 
@@ -197,7 +198,7 @@ class PlexMediaProvider(
             }
             if (failed) return@flow
         }
-        emit(FlowEvent.Success(items))
+        emit(FlowEvent.Success(items, complete))
     }
 
     private fun queryItems(
@@ -206,7 +207,7 @@ class PlexMediaProvider(
         section: String,
         since: Instant?,
         favouritesOnly: Boolean
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key, onShortListing = { _, _ -> listingComplete = false }) { offset, limit ->
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.items(
