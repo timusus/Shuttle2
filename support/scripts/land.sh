@@ -33,7 +33,7 @@
 # itself with an internal --verify-only mode), over everything landed so far:
 # `unit-test --changed`, a compile (not run) of the test sources of every module depending on a
 # changed :android:domain/:shared/:android:core/commonMain source (`unit-test --compile-dependents`,
-# #826), an assembleDebug, and — only if the picked commits touch ios/, shared/
+# #826), the layer rules (:android:architecture-tests, always, #871), an assembleDebug, and — only if the picked commits touch ios/, shared/
 # or android/domain|presentation|core — a light iOS check: the framework build, an app build
 # (`xcodebuild build`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
 # changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
@@ -278,6 +278,8 @@ verify_phases() {
   verify_step unit-tests "android unit tests" support/scripts/unit-test --changed --base "$base_sha"
   verify_step compile-dependents "dependent test sources did not compile (#826)" \
     support/scripts/unit-test --compile-dependents --base "$base_sha"
+  verify_step architecture "layer rules (:android:architecture-tests, #871)" \
+    support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest
   verify_step assembleDebug "assembleDebug" support/scripts/remote-build.sh --local -q :android:app:assembleDebug
   if [ "$touches_ios" = 1 ]; then
     verify_step ios "ios build/tests" verify_ios "$@"
