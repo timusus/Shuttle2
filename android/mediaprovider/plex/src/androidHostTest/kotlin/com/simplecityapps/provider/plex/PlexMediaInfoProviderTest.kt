@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
+import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -45,7 +46,12 @@ class PlexMediaInfoProviderTest {
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
-    private val streamUrls = PlexStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered }, StreamProfile.Android)
+    private val streamUrls = PlexStreamUrlProvider(
+        authenticationManager,
+        StreamingBitrateCap(streamingSettings) { metered },
+        StreamProfile.Android,
+        TranscodeService(createHttpClient(FixtureServer { error("not called") }.engine))
+    )
 
     private val provider = PlexMediaInfoProvider(streamUrls)
 

@@ -18,6 +18,7 @@ import com.simplecityapps.provider.plex.PlexStrings
 import com.simplecityapps.provider.plex.http.FavouriteService
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.PlaybackReportingService
+import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -32,7 +33,7 @@ import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
 
 /**
- * The Plex services, sign-in, sync, playback reporting and artwork. Each platform supplies the `PlexHttpClient`
+ * The Plex services, sign-in, sync, playback reporting, transcode sessions and artwork. Each platform supplies the `PlexHttpClient`
  * (PlexAndroidModule on Android), a [ServerStrings] and a [PlexStrings].
  */
 @ContributesTo(AppScope::class)
@@ -49,6 +50,10 @@ class PlexMediaProviderModule {
     @Provides
     @SingleIn(AppScope::class)
     fun providePlaybackReportingService(@Named("PlexHttpClient") httpClient: HttpClient): PlaybackReportingService = PlaybackReportingService(httpClient)
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideTranscodeService(@Named("PlexHttpClient") httpClient: HttpClient): TranscodeService = TranscodeService(httpClient)
 
     @Provides
     @SingleIn(AppScope::class)

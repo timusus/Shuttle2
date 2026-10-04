@@ -15,12 +15,24 @@ interface StreamUrlProvider {
      * [startPositionMs] starts a transcode that far into the song, for a seek in a progressive transcode, which can't be
      * range-seeked; a direct-play stream starts at the beginning either way.
      *
+     * [playId] names one play of the song: the same for every stream opened for it (a seek re-opening a transcode), and
+     * a different one for another play, even of the same song (repeat one's next). A provider whose stream holds a
+     * session on the server (a Plex transcode) keys it by this, until [endPlay]; null gives the stream a session of its
+     * own, which nothing ends.
+     *
      * @throws IllegalStateException when the server can't be signed in to, or the URL can't be built.
      */
     fun streamUrl(
         song: Song,
-        startPositionMs: Long = 0
+        startPositionMs: Long = 0,
+        playId: String? = null
     ): String
+
+    /**
+     * [playId]'s streams won't be opened again: the track was replaced, skipped, played out or stopped. A provider ends
+     * whatever the server holds for it (a transcode session), best effort: a failure is logged, never thrown.
+     */
+    suspend fun endPlay(playId: String) = Unit
 
     /**
      * Where to download [song]'s file for offline play: its original, untranscoded file where this platform's player

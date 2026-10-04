@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
+import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -15,12 +16,15 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.Url
+import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlinx.coroutines.test.runTest
 
 /** Direct play vs transcode for a Plex song, on Android's profile (HLS, no ALAC) and iOS's (progressive MP3, ALAC). */
 class PlexStreamUrlProviderTest {
@@ -33,8 +37,10 @@ class PlexStreamUrlProviderTest {
 
     private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
 
+    private val server = FixtureServer { error("not called") }
+
     private val authenticationManager = PlexAuthenticationManager(
-        userService = UserService(createHttpClient(FixtureServer { error("not called") }.engine)),
+        userService = UserService(createHttpClient(server.engine)),
         credentialStore = credentialStore,
         clientIdentity = clientIdentity
     )
@@ -43,8 +49,15 @@ class PlexStreamUrlProviderTest {
     private var metered = false
     private val bitrateCap = StreamingBitrateCap(streamingSettings) { metered }
 
-    private val android = PlexStreamUrlProvider(authenticationManager, bitrateCap, StreamProfile.Android)
-    private val ios = PlexStreamUrlProvider(authenticationManager, bitrateCap, StreamProfile.Ios)
+    private val transcodeService = TranscodeService(createHttpClient(server.engine))
+
+    private val android = PlexStreamUrlProvider(authenticationManager, bitrateCap, StreamProfile.Android, transcodeService)
+    private val ios = PlexStreamUrlProvider(authenticationManager, bitrateCap, StreamProfile.Ios, transcodeService)
+
+    @AfterTest
+    fun tearDown() {
+        server.close()
+    }
 
     @Test
     fun `handles plex songs only`() {
@@ -184,6 +197,60 @@ class PlexStreamUrlProviderTest {
         (first.parameters["session"] == second.parameters["session"]) shouldBe false
     }
 
+    @Test
+    fun `an iOS play keeps its transcode session across the re-opens its seeks make`() {
+        val opened = ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val reopened = Url(ios.streamUrl(song(externalId = WMA), startPositionMs = 83_045, playId = "play-1"))
+
+        Url(opened).parameters["session"] shouldBe "play-1"
+        reopened.parameters["session"] shouldBe "play-1"
+        reopened.parameters["X-Plex-Session-Identifier"] shouldBe "play-1"
+        ios.streamUrl(song(externalId = WMA), playId = "play-1") shouldBe opened
+    }
+
+    @Test
+    fun `another play of the same song has its own transcode session - as repeat one opens it ahead`() {
+        val playing = Url(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+        val upNext = Url(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
+
+        playing.parameters["session"] shouldBe "play-1"
+        upNext.parameters["session"] shouldBe "play-2"
+    }
+
+    @Test
+    fun `ending a play stops its transcode session once`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        ios.streamUrl(song(externalId = WMA), playId = "play-2")
+
+        ios.endPlay("play-1")
+        ios.endPlay("play-1")
+
+        val stop = server.requestsTo(TRANSCODE_STOP).single()
+        stop.url.parameters["session"] shouldBe "play-1"
+        stop.headers["X-Plex-Token"] shouldBe "token123"
+    }
+
+    @Test
+    fun `ending a play that opened no transcode asks nothing of the server`() = runTest {
+        ios.streamUrl(song(externalId = PART), playId = "play-1")
+
+        ios.endPlay("play-1")
+        ios.endPlay("never-opened")
+
+        server.requests.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a stop the server fails is not thrown`() = runTest {
+        server.respond(TRANSCODE_STOP, code = 500)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+
+        ios.endPlay("play-1")
+
+        server.requestsTo(TRANSCODE_STOP).size shouldBe 1
+    }
+
     private fun song(
         externalId: String?,
         bitRate: Int? = null,
@@ -221,5 +288,7 @@ class PlexStreamUrlProviderTest {
 
     private companion object {
         const val PART = "/library/parts/42/file.flac"
+        const val WMA = "/library/parts/43/1600000000/file.wma"
+        const val TRANSCODE_STOP = "/video/:/transcode/universal/stop"
     }
 }

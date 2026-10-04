@@ -16,7 +16,8 @@ class EmbyStreamUrlProvider(
 
     override fun streamUrl(
         song: Song,
-        startPositionMs: Long
+        startPositionMs: Long,
+        playId: String?
     ): String {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
