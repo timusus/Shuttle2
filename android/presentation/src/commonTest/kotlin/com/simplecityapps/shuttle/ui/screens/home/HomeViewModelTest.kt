@@ -239,6 +239,34 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `the first load shows sections as they come, and a reload swaps them in at once (#688)`() = runTest(testDispatcher) {
+        val tidePool = createAlbum("tide pool", "juniper static")
+        suggestions.albums = listOf(phaseGarden, dustChoir, saltMarsh, tidePool)
+        suggestions.recentlyAdded = listOf(saltMarsh.groupKey!!, tidePool.groupKey!!)
+        suggestions.songCount.value = 4
+        suggestions.extraLatency = mapOf("albumsToRediscover" to 1.seconds)
+        playHistory.eventCount.value = 1
+        playHistory.recentContexts = twoRecentContexts
+        val viewModel = viewModel()
+        val seen = mutableListOf<List<HomeSectionId>>()
+        backgroundScope.launch { viewModel.uiState.collect { (it as? HomeUiState.Content)?.let { content -> seen += content.sections.map { section -> section.id } } } }
+        runCurrent()
+
+        // Rediscover is still loading: Jump back in shows, Recently added after it waits
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn)
+        advanceTimeBy(1.seconds)
+        runCurrent()
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn, HomeSectionId.RecentlyAdded)
+
+        seen.clear()
+        viewModel.refresh()
+        advanceTimeBy(2.seconds)
+        runCurrent()
+
+        seen.distinct() shouldBe listOf(listOf(HomeSectionId.JumpBackIn, HomeSectionId.RecentlyAdded))
+    }
+
+    @Test
     fun `a reload keeps the covers already loaded for the items still shown`() = runTest(testDispatcher) {
         // A cold start library whose genre picks are its largest genres, each with a cover
         suggestions.songCount.value = 2

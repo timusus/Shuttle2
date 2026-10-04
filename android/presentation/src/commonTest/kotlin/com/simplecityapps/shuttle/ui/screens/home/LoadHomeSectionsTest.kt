@@ -11,12 +11,17 @@ import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
 import com.simplecityapps.shuttle.model.playContext
+import io.kotest.matchers.longs.shouldBeGreaterThanOrEqual
+import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
@@ -75,11 +80,11 @@ class LoadHomeSectionsTest {
         val (genrePicks, genrePicksTime) = timed { genrePicks(now) }
         val oneAfterAnother = assembleHomeSections(
             HomeCandidates(true, jumpBackIn, aroundThisTime, heavyRotation, rediscover, recentlyAdded, genrePicks),
-            homeTime.clock,
+            now,
             TimeZone.UTC,
         )
 
-        val (sections, loadTime) = timed { load(hasHistory = true) }
+        val (sections, loadTime) = timed { load(hasHistory = true).last() }
 
         sections shouldBe oneAfterAnother
         sections.map { it.id } shouldBe listOf(
@@ -91,5 +96,29 @@ class LoadHomeSectionsTest {
             HomeSectionId.GenrePicks,
         )
         loadTime shouldBe listOf(jumpBackInTime, aroundThisTimeTime, heavyRotationTime, rediscoverTime, recentlyAddedTime, genrePicksTime).max()
+    }
+
+    @Test
+    fun `sections come out as they load, each after every one before it, without changing once out (#688)`() = runTest {
+        suggestions.extraLatency = mapOf("genres" to 1.seconds)
+        val all = load(hasHistory = true).last()
+
+        val emissions = mutableListOf<Pair<Long, List<HomeSectionId>>>()
+        val started = currentTime
+        load(hasHistory = true).collect { sections -> emissions += currentTime - started to sections.map { it.id } }
+
+        emissions.map { it.second } shouldBe listOf(all.take(5).map { it.id }, all.map { it.id })
+        emissions.first().first shouldBeLessThan 1_000
+        emissions.last().first shouldBeGreaterThanOrEqual 1_000
+    }
+
+    @Test
+    fun `a slow first section holds back the ones after it, so none moves when it comes`() = runTest {
+        suggestions.extraLatency = mapOf("recentlyCompletedAlbums" to 1.seconds)
+
+        val emissions = load(hasHistory = true).toList()
+
+        emissions.size shouldBe 1
+        emissions.single().first().id shouldBe HomeSectionId.JumpBackIn
     }
 }

@@ -6,7 +6,6 @@ import com.simplecityapps.createGenre
 import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
@@ -17,10 +16,6 @@ class AssembleHomeSectionsTest {
     // Wednesday 23 September 2026, 8am in Melbourne (UTC+10)
     private val wednesdayMorning = Instant.parse("2026-09-22T22:00:00Z")
     private val saturdayMorning = Instant.parse("2026-09-25T22:00:00Z")
-
-    private fun clockAt(instant: Instant) = object : Clock {
-        override fun now(): Instant = instant
-    }
 
     private fun album(name: String): HomeItem = HomeItem.AlbumItem(createAlbum(name, "artist"))
 
@@ -44,7 +39,7 @@ class AssembleHomeSectionsTest {
     private fun assemble(
         candidates: HomeCandidates,
         at: Instant = wednesdayMorning,
-    ) = assembleHomeSections(candidates, clockAt(at), zone)
+    ) = assembleHomeSections(candidates, at, zone)
 
     private fun List<HomeSection>.section(id: HomeSectionId) = single { it.id == id }
 
@@ -85,6 +80,35 @@ class AssembleHomeSectionsTest {
         sections.section(HomeSectionId.Rediscover).items.toSet() shouldBe setOf(albums[10], albums[13])
         sections.section(HomeSectionId.RecentlyAdded).items shouldBe listOf(albums[11], albums[14])
         sections.flatMap { it.items }.map { it.key }.let { keys -> keys shouldBe keys.distinct() }
+    }
+
+    @Test
+    fun `while candidates load, the sections stop at the first still loading, each as it will be once all have (#688)`() {
+        val loaded = empty.copy(
+            jumpBackIn = JumpBackInCandidates(albums.take(2), emptyList()),
+            aroundThisTime = albums.subList(1, 5).map { around(it, days = 3) },
+            heavyRotation = listOf(rotation(albums[0], 6), rotation(albums[9], 5), rotation(albums[12], 4)),
+            rediscover = listOf(albums[9], albums[10], albums[13]),
+            recentlyAdded = listOf(albums[10], albums[11], albums[14]),
+            genrePicks = GenrePickCandidates(emptyList(), genres),
+        )
+        val all = assemble(loaded)
+
+        assemble(loaded.copy(jumpBackIn = null)) shouldBe emptyList()
+        assemble(loaded.copy(heavyRotation = null)) shouldBe all.take(2)
+        assemble(loaded.copy(heavyRotation = null, genrePicks = null)) shouldBe all.take(2)
+        assemble(loaded.copy(genrePicks = null)) shouldBe all.take(5)
+        loaded.complete shouldBe true
+        loaded.copy(genrePicks = null).complete shouldBe false
+    }
+
+    @Test
+    fun `a cold start waits on jump back in to choose, then shows recently added before genre picks and shuffle all load`() {
+        val loaded = empty.copy(hasHistory = false, recentlyAdded = albums.take(4), genrePicks = GenrePickCandidates(emptyList(), genres))
+
+        assemble(loaded.copy(jumpBackIn = null)) shouldBe emptyList()
+        assemble(loaded.copy(genrePicks = null)).map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded)
+        assemble(loaded).map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded, HomeSectionId.GenrePicks, HomeSectionId.ShuffleAll)
     }
 
     @Test
