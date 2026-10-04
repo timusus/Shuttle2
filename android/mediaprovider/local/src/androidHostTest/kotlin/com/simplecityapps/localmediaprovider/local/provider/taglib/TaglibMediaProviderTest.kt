@@ -435,6 +435,9 @@ class TaglibMediaProviderTest {
 
             // Path and display name of the playlist files in the Files table
             var playlistRows: List<Pair<String, String>> = emptyList()
+
+            // How many times the audio table was listed
+            val audioQueries = java.util.concurrent.atomic.AtomicInteger()
         }
 
         override fun onCreate() = true
@@ -449,6 +452,7 @@ class TaglibMediaProviderTest {
             if (uri.pathSegments.contains("file")) {
                 playlistRows.forEach { (path, name) -> cursor.addRow(arrayOf(path, name)) }
             } else {
+                audioQueries.incrementAndGet()
                 rows.forEach { row -> cursor.addRow(row) }
             }
         }

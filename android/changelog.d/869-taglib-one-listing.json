@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Songs in your chosen music folders keep their play history when Android is still indexing your music during a rescan.", "commits": [] }

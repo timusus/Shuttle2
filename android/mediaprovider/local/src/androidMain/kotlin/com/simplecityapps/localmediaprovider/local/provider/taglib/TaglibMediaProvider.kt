@@ -85,6 +85,14 @@ class TaglibMediaProvider(
     @Volatile
     private var walkedPlaylistFiles: Map<String, List<PlaylistFile>> = emptyMap()
 
+    /**
+     * The MediaStore listing [remapLegacySongs] read, for the [findSongs] that follows it in the same import to take instead
+     * of querying again (#869): a file listed by one query and not the other would be moved by the remap and then found
+     * under its other path, taking its history with it.
+     */
+    @Volatile
+    private var remapListing: MediaStoreListing? = null
+
     /** MediaStore's listing, walking only the included folders it lists nothing in. */
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, thorough = false)
 
@@ -107,7 +115,10 @@ class TaglibMediaProvider(
         val startTime = System.currentTimeMillis()
         val folders = folders()
         val primaryStoragePath = primaryStoragePath()
-        val mediaStoreFiles = findAudioFiles(folders.filter)
+        val mediaStoreFiles = takeRemapListing(folders.filter).let { listing -> if (listing != null) listing.files else findAudioFiles(folders.filter) }
+        // A listing with no files in it at all is MediaStore reindexing, not a library gone: a song stored under its file
+        // path keeps it (remapLegacySongs leaves it there), for the next listing to find there again
+        val keepFilePaths = mediaStoreFiles?.isEmpty() == true
         val extraKeys = folders.extraTrees.map { tree -> treeKey(tree) }.toSet()
         val includeTrees = folders.includeTrees.filter { tree -> treeKey(tree) !in extraKeys }
         val walk = walkTrees(includeTreesToWalk(includeTrees, mediaStoreFiles, thorough, primaryStoragePath), folders, primaryStoragePath)
@@ -156,7 +167,7 @@ class TaglibMediaProvider(
         val merger = LocalFileTagMerger(existingSongs, readUnchanged = backfillFileTags())
         merge(
             getSongs(filesWithImages, merger),
-            getWalkedSongs(walkedFiles, merger, folderImageReader),
+            getWalkedSongs(walkedFiles, merger, folderImageReader, keepFilePaths),
             getExtraSongs(extraDocuments, merger),
             getLookedUpSongs(unlisted, merger, folderImageReader, lostTrees)
         ).collectIndexed { index, song ->
@@ -190,9 +201,12 @@ class TaglibMediaProvider(
      * Stored songs moved to the path [findSongs] gives their file now, so they keep their history: a song under a SAF
      * document URI that MediaStore lists, to its file path (the scanner before #370 stored every song so, and a walk stores
      * every file MediaStore skips so), and a song under a file path that MediaStore no longer lists (its folder took a
-     * `.nomedia`, say) but an include tree still holds, to its document URI, which is the only way left to read it.
+     * `.nomedia`, say) but an include tree still holds, to its document URI, which is the only way left to read it. Not
+     * while MediaStore lists no file at all, which is it reindexing: the next import would only move them back.
      */
     override suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> {
+        // Cleared first, so a findSongs after a remap that didn't query reads a listing of its own
+        remapListing = null
         val folders = folders()
         val primaryStoragePath = primaryStoragePath()
         val extraKeys = folders.extraTrees.map { tree -> treeKey(tree) }.toSet()
@@ -202,9 +216,15 @@ class TaglibMediaProvider(
         if (documentSongs.isEmpty() && fileSongs.isEmpty()) return emptyList()
         // Without MediaStore, none of the files are listed, so each one the trees hold is read through them
         val files = findAudioFiles(folders.filter)
+        remapListing = MediaStoreListing(folders.filter, files)
         val toFiles = files?.let { LegacySafSongs(primaryStoragePath).remaps(documentSongs, files) }.orEmpty()
         val listedPaths = files?.mapTo(HashSet()) { file -> file.path.lowercase() }.orEmpty()
-        val toDocuments = documentRemaps(fileSongs.filter { song -> song.path.lowercase() !in listedPaths }, includeTrees, primaryStoragePath)
+        val toDocuments =
+            if (files?.isEmpty() == true) {
+                emptyList()
+            } else {
+                documentRemaps(fileSongs.filter { song -> song.path.lowercase() !in listedPaths }, includeTrees, primaryStoragePath)
+            }
         if (toFiles.isNotEmpty() || toDocuments.isNotEmpty()) {
             Timber.i("Matched ${toFiles.size} of ${documentSongs.size} songs stored under SAF document URIs to MediaStore files, and ${toDocuments.size} MediaStore no longer lists to their documents")
         }
@@ -227,6 +247,14 @@ class TaglibMediaProvider(
         }
         .mapNotNull { it }
         .toList()
+
+    /**
+     * The listing [remapLegacySongs] read for this import, if it was limited by [folderFilter] as this one is. Taken, so
+     * the next import reads its own; null if there's none.
+     */
+    private fun takeRemapListing(folderFilter: FolderFilter): MediaStoreListing? = remapListing
+        .also { remapListing = null }
+        ?.takeIf { listing -> listing.filter == folderFilter }
 
     /**
      * The audio files MediaStore has indexed, on every volume, limited by [folderFilter].
@@ -373,14 +401,21 @@ class TaglibMediaProvider(
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { node -> walkedSong(node.uri.toString(), node, merger, emptyList()) }
         .mapNotNull { it }
 
-    /** Songs an include tree's walk found that MediaStore didn't list, read through and stored under their document URI. */
+    /**
+     * Songs an include tree's walk found that MediaStore didn't list, read through and stored under their document URI; or,
+     * if [keepFilePaths], one stored under its file path stays there.
+     */
     private fun getWalkedSongs(
         files: List<WalkedFile>,
         merger: LocalFileTagMerger,
-        folderImageReader: FolderImageReader
+        folderImageReader: FolderImageReader,
+        keepFilePaths: Boolean
     ): Flow<Song> = files
         .asFlow()
-        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { file -> walkedSong(file.node.uri.toString(), file.node, merger, folderImagesNear(file.key, folderImageReader)) }
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { file ->
+            val path = file.key.takeIf { keepFilePaths && it.startsWith("/") && merger.existingSong(it) != null } ?: file.node.uri.toString()
+            walkedSong(path, file.node, merger, folderImagesNear(file.key, folderImageReader))
+        }
         .mapNotNull { it }
 
     /**
@@ -604,9 +639,13 @@ class TaglibMediaProvider(
 
 private data class PlaylistFile(val uri: Uri, val displayName: String)
 
+/** MediaStore's audio [files] limited by [filter], or null [files] if it couldn't be queried. */
+private class MediaStoreListing(val filter: FolderFilter, val files: List<MediaStoreAudioFile>?)
+
 /**
  * An audio document an include tree's walk found, matched against MediaStore's listing and the stored songs by [key]: its
- * file path, or its document URI outside shared storage. Its song is stored under the document URI either way.
+ * file path, or its document URI outside shared storage. Its song is stored under the document URI either way, unless
+ * [TaglibMediaProvider.getWalkedSongs] keeps a stored file path while MediaStore lists nothing.
  */
 private data class WalkedFile(val key: String, val node: DocumentNode)
 

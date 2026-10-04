@@ -71,6 +71,7 @@ class TaglibHybridScanTest {
         Robolectric.setupContentProvider(TaglibMediaProviderTest.FakeMediaProvider::class.java, "media")
         TaglibMediaProviderTest.FakeMediaProvider.rows = listOf(arrayOf(1L, "$primary/Music/a.mp3", "a.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
         TaglibMediaProviderTest.FakeMediaProvider.playlistRows = emptyList()
+        TaglibMediaProviderTest.FakeMediaProvider.audioQueries.set(0)
         Documents.files.clear()
         Documents.files += listOf("primary:Music/a.mp3", "primary:Music/Hidden/b.mp3", "primary:Music/Hidden/x.m3u")
         Documents.listed.clear()
@@ -166,7 +167,8 @@ class TaglibHybridScanTest {
 
     @Test
     fun `a song MediaStore stops listing is moved to its document URI, keeping its row`() {
-        TaglibMediaProviderTest.FakeMediaProvider.rows = emptyList()
+        // MediaStore still lists another file, so it isn't reindexing
+        TaglibMediaProviderTest.FakeMediaProvider.rows = listOf(arrayOf(3L, "$primary/Music/c.mp3", "c.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
         val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
         Documents.files -= "primary:Music/a.mp3"
 
@@ -174,6 +176,50 @@ class TaglibHybridScanTest {
 
         // a.mp3 is gone, so it keeps its path for the import to remove
         remaps shouldBe listOf(SongPathRemap(songId = 2, path = document("Hidden/b.mp3")))
+    }
+
+    @Test
+    fun `while MediaStore lists nothing at all, songs keep their file paths rather than moving and moving back`() {
+        TaglibMediaProviderTest.FakeMediaProvider.rows = emptyList()
+        val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
+        val provider = provider()
+
+        runBlocking { provider.remapLegacySongs(existing) } shouldBe emptyList()
+
+        val songs = provider.findSongs(existing).songs()
+        songs.map { it.path } shouldContainExactlyInAnyOrder existing.map { it.path }
+        songs.map { it.name } shouldContainExactlyInAnyOrder existing.map { it.name }
+        read.toList() shouldBe emptyList()
+    }
+
+    @Test
+    fun `findSongs uses the listing the remap read, so a file MediaStore lists in between isn't found under its other path`() {
+        val provider = provider()
+        val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
+
+        val remaps = runBlocking { provider.remapLegacySongs(existing) }
+        remaps shouldBe listOf(SongPathRemap(songId = 2, path = document("Hidden/b.mp3")))
+        // MediaStore indexes b.mp3 between the remap and findSongs
+        TaglibMediaProviderTest.FakeMediaProvider.rows += listOf(arrayOf(2L, "$primary/Music/Hidden/b.mp3", "b.mp3", 10L, MODIFIED / 1000, "audio/mpeg", 1000L))
+
+        val songs = provider.findSongs(listOf(stored("a.mp3", id = 1), storedDocument("Hidden/b.mp3", id = 2))).songs()
+
+        // Found where the remap moved it, so the import updates its row rather than replacing it
+        songs.map { it.path } shouldContainExactlyInAnyOrder listOf("$primary/Music/a.mp3", document("Hidden/b.mp3"))
+        songs.map { it.name } shouldContainExactlyInAnyOrder listOf("Stored a.mp3", "Stored Hidden/b.mp3")
+        TaglibMediaProviderTest.FakeMediaProvider.audioQueries.get() shouldBe 1
+    }
+
+    @Test
+    fun `the next import lists MediaStore again`() {
+        val provider = provider()
+        val existing = listOf(stored("a.mp3", id = 1), stored("Hidden/b.mp3", id = 2))
+        runBlocking { provider.remapLegacySongs(existing) }
+        provider.findSongs(existing).songs()
+
+        provider.findSongs(existing).songs()
+
+        TaglibMediaProviderTest.FakeMediaProvider.audioQueries.get() shouldBe 2
     }
 
     @Test
