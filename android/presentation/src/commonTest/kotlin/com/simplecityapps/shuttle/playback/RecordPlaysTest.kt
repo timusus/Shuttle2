@@ -8,6 +8,7 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
+import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.model.PlayContext
@@ -56,8 +57,8 @@ class RecordPlaysTest {
     fun `a track end records the song as played through`() {
         recordPlays.start()
 
-        playbackOperations.trackEndedFlow.tryEmit(createSong(id = 4, duration = 200_000))
-        playbackOperations.trackEndedFlow.tryEmit(createSong(id = 4, duration = 200_000))
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(40, createSong(id = 4, duration = 200_000)))
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(40, createSong(id = 4, duration = 200_000)))
 
         songRepository.playedThroughSongs.toList() shouldBe listOf(4L, 4L)
         songRepository.playbackPositions.toList() shouldBe emptyList()
@@ -75,7 +76,7 @@ class RecordPlaysTest {
 
     @Test
     fun `nothing is recorded before it starts`() {
-        playbackOperations.trackEndedFlow.tryEmit(createSong(id = 6))
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(60, createSong(id = 6)))
         recordPlays.start()
 
         songRepository.playedThroughSongs.toList() shouldBe emptyList()
@@ -103,11 +104,25 @@ class RecordPlaysTest {
         setCurrent(uid = 1, first)
         playTo(200_000)
 
-        playbackOperations.trackEndedFlow.tryEmit(first)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, first))
         setCurrent(uid = 2, second)
         dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS * 2)
 
         playHistory.plays.map { Triple(it.songId, it.listenedMs, it.completed) } shouldBe listOf(Triple(1L, 200_000L, true))
+    }
+
+    @Test
+    fun `a late track end for an earlier copy of the same song does not complete the copy playing now`() {
+        recordPlays.start()
+        setCurrent(uid = 1, first)
+        playTo(200_000)
+        setCurrent(uid = 2, first)
+        playTo(200_000)
+        setCurrent(uid = 3, first)
+
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, first))
+
+        playHistory.plays.map { Triple(it.songId, it.listenedMs, it.completed) } shouldBe listOf(Triple(1L, 100_000L, false), Triple(1L, 100_000L, false))
     }
 
     @Test
@@ -117,7 +132,7 @@ class RecordPlaysTest {
         playTo(200_000)
 
         setCurrent(uid = 2, second)
-        playbackOperations.trackEndedFlow.tryEmit(first)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, first))
 
         playHistory.plays.map { it.songId to it.completed } shouldBe listOf(1L to true)
     }
@@ -168,9 +183,9 @@ class RecordPlaysTest {
         recordPlays.start()
         setCurrent(uid = 1, first)
         playTo(200_000)
-        playbackOperations.trackEndedFlow.tryEmit(first)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, first))
         playTo(200_000)
-        playbackOperations.trackEndedFlow.tryEmit(first)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, first))
         playTo(120_000)
 
         playHistory.plays.map { it.listenedMs to it.completed } shouldBe listOf(200_000L to true, 200_000L to true, 100_000L to false)
@@ -185,7 +200,7 @@ class RecordPlaysTest {
         playHistory.plays.map { it.completed } shouldBe listOf(false)
 
         playTo(200_000, from = 120_000)
-        playbackOperations.trackEndedFlow.tryEmit(first)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, first))
         playbackOperations.playbackStateFlow.value = PlaybackState.Paused
 
         playHistory.plays.map { it.completed } shouldBe listOf(true)
@@ -220,7 +235,7 @@ class RecordPlaysTest {
 
         setCurrent(uid = 2, short)
         playTo(29_000, step = 1_000, durationMs = 29_000)
-        playbackOperations.trackEndedFlow.tryEmit(short)
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(2, short))
 
         playHistory.plays.map { it.songId } shouldBe listOf(3L)
     }

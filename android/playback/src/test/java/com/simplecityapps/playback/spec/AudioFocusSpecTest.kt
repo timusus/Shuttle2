@@ -12,6 +12,7 @@ import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +36,7 @@ class AudioFocusSpecTest {
 
     @Test
     fun `RS-04 playing out the queue pauses at its end, keeping audio focus as a pause does`() {
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         startPlaying(listOf(song(1, file = TONE_1S)))
 
         harness.runUntil { ended.isNotEmpty() }

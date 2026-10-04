@@ -64,7 +64,7 @@ constructor(
             current?.let { sender.send(planner.onProgress(it.position, now())) }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { song -> sender.send(planner.onTrackEnded(song)) }
+            playbackOperations.trackEndedFlow.collect { end -> sender.send(planner.onTrackEnded(end.song)) }
         }
 
         sender.replayPendingPlays()

@@ -136,8 +136,8 @@ class RecordResumePoints(
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { song ->
-                val point = current?.takeIf { it.song.id == song.id } ?: return@collect
+            playbackOperations.trackEndedFlow.collect { end ->
+                val point = current?.takeIf { it.song.id == end.song.id } ?: return@collect
                 val state = queueOperations.queueStateFlow.value
                 if (state.currentPosition == state.items.lastIndex && queueOperations.getRepeatMode() == RepeatMode.Off) {
                     point.finished = true

@@ -14,6 +14,7 @@ import kotlin.math.log10
 import kotlin.math.roundToLong
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlinx.coroutines.flow.map
 
 /**
  * The audio [PlaybackHarness]'s AudioTracks were given, decoded: [samples] are interleaved, scaled to [-1, 1). The sink
@@ -63,7 +64,7 @@ fun PlaybackHarness.playToEnd(
     songs: List<Song>,
     whilePlaying: () -> Unit = {}
 ): CapturedAudio {
-    val ended = record(playbackOperations.trackEndedFlow)
+    val ended = record(playbackOperations.trackEndedFlow.map { it.song })
     run { playbackOperations.addToQueue(songs) }
     whilePlaying()
     runUntil { ended.lastOrNull() == songs.last() }

@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryReposi
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.IoDispatcher
@@ -115,9 +116,9 @@ class RecordPlays(
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { song ->
-                appCoroutineScope.launch(ioDispatcher) { songRepository.recordPlayedThrough(song) }
-                onTrackEnded(song)
+            playbackOperations.trackEndedFlow.collect { end ->
+                appCoroutineScope.launch(ioDispatcher) { songRepository.recordPlayedThrough(end.song) }
+                onTrackEnded(end)
             }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
@@ -127,17 +128,17 @@ class RecordPlays(
         }
     }
 
-    private fun onTrackEnded(song: Song) {
+    private fun onTrackEnded(end: TrackEnd) {
         val pending = ended
         val current = listen
         when {
-            pending != null && pending.first.song.id == song.id -> {
+            pending != null && pending.first.uid == end.uid -> {
                 pending.second.cancel()
                 ended = null
                 complete(pending.first)
             }
 
-            current != null && current.song.id == song.id -> {
+            current != null && current.uid == end.uid -> {
                 complete(current)
                 // It starts over on repeat, or the queue moves on and the fresh listen never reaches the threshold.
                 listen = Listen(current.uid, current.song, now(), current.context)

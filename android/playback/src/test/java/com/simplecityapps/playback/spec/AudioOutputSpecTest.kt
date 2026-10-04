@@ -15,6 +15,7 @@ import io.kotest.matchers.shouldBe
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.abs
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,7 +57,7 @@ class AudioOutputSpecTest {
     @Test
     fun `RS-16 each song in a gapless run plays at its own ReplayGain, switching at the song boundary`() {
         val harness = harness(replayGainMode = ReplayGainMode.Track)
-        val ended = harness.record(harness.playbackOperations.trackEndedFlow)
+        val ended = harness.record(harness.playbackOperations.trackEndedFlow.map { it.song })
 
         harness.run { harness.playbackOperations.addToQueue(listOf(song(1, replayGainTrack = 0.0), song(2, replayGainTrack = HALF_GAIN_DB))) }
         harness.runUntil { ended.size == 2 }
@@ -95,7 +96,7 @@ class AudioOutputSpecTest {
         val harness = harness(equalizerEnabled = true)
         Equalizer.Presets.custom.bands.forEach { it.gain = 12.0 }
         harness.equalizer.preset = Equalizer.Presets.custom
-        val ended = harness.record(harness.playbackOperations.trackEndedFlow)
+        val ended = harness.record(harness.playbackOperations.trackEndedFlow.map { it.song })
 
         harness.run { harness.playbackOperations.addToQueue(listOf(song(1))) }
         harness.runUntil { ended.isNotEmpty() }
@@ -108,7 +109,7 @@ class AudioOutputSpecTest {
         harness: PlaybackHarness,
         song: Song
     ): ByteArray {
-        val ended = harness.record(harness.playbackOperations.trackEndedFlow)
+        val ended = harness.record(harness.playbackOperations.trackEndedFlow.map { it.song })
         harness.run { harness.playbackOperations.addToQueue(listOf(song)) }
         harness.runUntil { ended.isNotEmpty() }
         return harness.audioOutput()

@@ -174,7 +174,7 @@ class IosPlayerControllerTest {
         engine.finishTrack()
 
         controller.currentSong shouldBe b
-        ended shouldBe listOf(a)
+        ended.map { it.song } shouldBe listOf(a)
         engine.calls shouldBe listOf("next song:3")
         controller.progressFlow.value shouldBe PlaybackProgress(0, b.duration)
         controller.playbackState() shouldBe PlaybackState.Playing
@@ -266,7 +266,7 @@ class IosPlayerControllerTest {
 
         controller.currentSong shouldBe b
         controller.playbackState() shouldBe PlaybackState.Paused
-        ended shouldBe listOf(b)
+        ended.map { it.song } shouldBe listOf(b)
 
         controller.play()
         engine.settle()
@@ -299,7 +299,7 @@ class IosPlayerControllerTest {
 
         engine.finishTrack()
         controller.queueOperations.getCurrentItem()?.uid shouldBe uid
-        ended shouldBe listOf(a)
+        ended.map { it.song } shouldBe listOf(a)
         engine.next?.url shouldBe url(a)
         engine.next?.id shouldNotBe repeat?.id
 
@@ -587,7 +587,7 @@ class IosPlayerControllerTest {
 
         controller.currentSong shouldBe c
         failures shouldBe listOf(b)
-        ended shouldBe listOf(a)
+        ended.map { it.song } shouldBe listOf(a)
         engine.calls shouldContain "load song:3@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }

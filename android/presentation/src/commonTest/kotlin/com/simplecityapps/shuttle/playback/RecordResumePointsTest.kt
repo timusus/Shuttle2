@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
+import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
@@ -109,7 +110,7 @@ class RecordResumePointsTest {
         setCurrent(3)
         playTo(190_000, from = 180_000)
 
-        playbackOperations.trackEndedFlow.tryEmit(songs[3])
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(songs[3].id * 100 + 3, songs[3]))
         playHistory.resumePoints[album]?.finished shouldBe true
 
         playbackOperations.progressFlow.value = PlaybackProgress(0, 200_000)
@@ -136,13 +137,13 @@ class RecordResumePointsTest {
         recordResumePoints.start()
         setCurrent(1)
         playTo(10_000)
-        playbackOperations.trackEndedFlow.tryEmit(songs[1])
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(songs[1].id * 100 + 1, songs[1]))
         playHistory.resumePoints[album]?.finished shouldBe false
 
         setCurrent(3)
         playTo(10_000)
         queueOperations.repeatModeFlow.value = RepeatMode.All
-        playbackOperations.trackEndedFlow.tryEmit(songs[3])
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(songs[3].id * 100 + 3, songs[3]))
         dispatcher.scheduler.advanceUntilIdle()
         playHistory.resumePoints[album]?.finished shouldBe false
     }

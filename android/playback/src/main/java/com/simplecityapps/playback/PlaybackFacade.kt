@@ -97,9 +97,9 @@ class PlaybackFacade(
      * Buffered, so a collector on the main thread misses no track end even when two arrive before it resumes
      * (e.g. a short track ending right after another).
      */
-    private val _trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _trackEndedFlow = MutableSharedFlow<TrackEnd>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    override val trackEndedFlow: SharedFlow<Song> = _trackEndedFlow.asSharedFlow()
+    override val trackEndedFlow: SharedFlow<TrackEnd> = _trackEndedFlow.asSharedFlow()
 
     /** Buffered like [_trackEndedFlow]. */
     private val _pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -110,7 +110,7 @@ class PlaybackFacade(
 
     init {
         // A Cast receiver never reports an end of its own, so the Cast queue says when it played the queue out.
-        castQueue?.onPlayedOut = { song -> onPlayedOut(song) }
+        castQueue?.onPlayedOut = { entry -> onPlayedOut(entry) }
 
         // Individual callbacks, not onEvents: they arrive within the player call that caused them, so state published
         // here is current by the time that call returns. The player calls its listeners in the order they're added, so
@@ -146,7 +146,7 @@ class PlaybackFacade(
                 Player.STATE_READY -> progressTicker.publish()
 
                 // The last item played to its end, with nothing to repeat, or the current last item was removed.
-                Player.STATE_ENDED -> onPlayedOut(currentEntry?.song?.takeIf { !playlistChanged })
+                Player.STATE_ENDED -> onPlayedOut(currentEntry?.takeIf { !playlistChanged })
             }
             publishState()
         }
@@ -176,7 +176,7 @@ class PlaybackFacade(
                 // An item played to its end and the player moved on (to the next item, or back to its start on repeat).
                 oldPosition.mediaItem?.queueEntryOrNull?.let { entry ->
                     Timber.v("onTrackEnded(${entry.song.name})")
-                    _trackEndedFlow.tryEmit(entry.song)
+                    _trackEndedFlow.tryEmit(TrackEnd(entry.uid, entry.song))
                 }
             }
             progressTicker.publish()
@@ -191,13 +191,13 @@ class PlaybackFacade(
         get() = player.currentMediaItem?.queueEntryOrNull
 
     /**
-     * Nothing is left to play: [song], the last item, played to its end (null when the current last item was
+     * Nothing is left to play: [entry], the last item, played to its end (null when the current last item was
      * removed instead). Pauses there, unless playback is moving between devices.
      */
-    private fun onPlayedOut(song: Song?) {
+    private fun onPlayedOut(entry: QueueEntry?) {
         loader.abandon()
         if (!handover.isSwitching) {
-            song?.let(_trackEndedFlow::tryEmit)
+            entry?.let { _trackEndedFlow.tryEmit(TrackEnd(it.uid, it.song)) }
             if (player.playWhenReady) {
                 pause()
             }

@@ -8,6 +8,7 @@ import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -203,7 +204,7 @@ class CrossfadeTest {
         songs: List<Song>,
         whilePlaying: () -> Unit = {}
     ): CapturedAudio {
-        val ended = record(playbackOperations.trackEndedFlow)
+        val ended = record(playbackOperations.trackEndedFlow.map { it.song })
         run { queueOperations.setQueue(songs) }
         runUntil { decodeLog.size >= 2 }
         playbackOperations.play()

@@ -6,6 +6,12 @@ import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/** A queue item that played to its end: [uid] says which copy, as the same [song] may be queued more than once. */
+class TrackEnd(
+    val uid: Long,
+    val song: Song
+)
+
 /**
  * Callable from any thread. A call that changes playback runs on the main thread, where the player lives: straight away
  * if made there, else posted to it, so its effect isn't visible until the main thread gets to it. A read made off the
@@ -26,10 +32,10 @@ interface PlaybackOperations {
     val castDeviceFlow: StateFlow<CastDevice?>
 
     /**
-     * Each song that plays to its end, emitted before the queue moves on. An event, not state: nothing is
+     * Each queue item that plays to its end, emitted before the queue moves on. An event, not state: nothing is
      * replayed to a new collector, and a collector on the main thread sees every one.
      */
-    val trackEndedFlow: SharedFlow<Song>
+    val trackEndedFlow: SharedFlow<TrackEnd>
 
     /**
      * The current song and the position playback paused at (0 if it has none), emitted each time playback

@@ -8,6 +8,7 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
@@ -106,7 +107,7 @@ class PlaybackInitializerTest {
     fun `init starts recording plays`() {
         initializer.init(application)
 
-        playbackOperations.trackEndedFlow.tryEmit(createSong(id = 4, duration = 200_000))
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(40, createSong(id = 4, duration = 200_000)))
 
         songRepository.playedThroughSongs.toList() shouldBe listOf(4L)
     }

@@ -34,6 +34,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,7 +62,7 @@ class PlaybackSpecTest {
     fun `RS-01 a song that plays to its end moves the queue on, and progress follows the new song`() {
         val first = song(1)
         val second = song(2, file = TONE_1S)
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         val progress = harness.record(playback.progressFlow)
 
         harness.run { playback.addToQueue(listOf(first, second)) }
@@ -91,7 +92,7 @@ class PlaybackSpecTest {
     @Test
     fun `RS-03 a seek while paused moves the published progress, and playback resumes from it`() {
         loadPaused(listOf(song(1)))
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         playback.seekTo(1_200)
         harness.idle()
@@ -246,7 +247,7 @@ class PlaybackSpecTest {
 
     @Test
     fun `RS-11 resuming from a saved position near the song's end starts the song again`() {
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         harness.run { queue.setQueue(listOf(song(1))) }
         harness.playbackPreferenceManager.playbackPosition = TONE_2S_MS - 100
 
@@ -258,7 +259,7 @@ class PlaybackSpecTest {
 
     @Test
     fun `RS-11 resuming from a saved position mid-song plays on from it`() {
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         harness.run { queue.setQueue(listOf(song(1))) }
         harness.playbackPreferenceManager.playbackPosition = 1_000
 
@@ -294,7 +295,7 @@ class PlaybackSpecTest {
     @Test
     fun `RS-12 repeat one set before anything plays repeats the song`() {
         val first = song(1)
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         queue.setRepeatMode(RepeatMode.One)
 
         harness.run { playback.addToQueue(listOf(first, song(2))) }
@@ -356,7 +357,7 @@ class PlaybackSpecTest {
         startPlaying(listOf(first, last))
         playback.skipTo(1)
         harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing && playback.getProgress()!! > 0 }
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         queue.remove(listOf(queue.queueStateFlow.value.currentItem!!))
         harness.idle()
@@ -385,7 +386,7 @@ class PlaybackSpecTest {
         val unreadable = unreadableSong(2)
         val third = song(3, file = TONE_1S)
         val failures = harness.record(playback.playbackFailureFlow)
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         harness.run { playback.addToQueue(listOf(first, unreadable, third)) }
         harness.runUntil { ended.size == 2 }
@@ -421,7 +422,7 @@ class PlaybackSpecTest {
 
     @Test
     fun `RS-24 a saved position only resumes the song it was saved for`() {
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         harness.run { queue.setQueue(listOf(song(1), song(2))) }
         harness.playbackPreferenceManager.playbackPosition = 1_000
 
@@ -769,7 +770,7 @@ class PlaybackSpecTest {
         queue.setRepeatMode(RepeatMode.All)
         playback.skipTo(2)
         harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         harness.runUntil { ended.isNotEmpty() }
 
@@ -785,7 +786,7 @@ class PlaybackSpecTest {
         queue.setRepeatMode(RepeatMode.Off)
         playback.skipTo(1)
         harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         harness.runUntil { ended.isNotEmpty() }
         harness.idle()

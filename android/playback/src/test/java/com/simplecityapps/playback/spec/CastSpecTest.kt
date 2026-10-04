@@ -20,6 +20,7 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.flow.map
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -309,7 +310,7 @@ class CastSpecTest {
     fun `RS-39 the receiver playing out the last song ends the queue as the local player does`() {
         start(count = 2)
         connect()
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
         receiver.playOnToNext()
         settle()
 
@@ -326,7 +327,7 @@ class CastSpecTest {
     fun `a receiver stopped from elsewhere, or idle before the last song, doesn't end the queue`() {
         start(count = 2)
         connect()
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         receiver.playOut()
         harness.idle()
@@ -346,7 +347,7 @@ class CastSpecTest {
         connect()
         receiver.playOnToNext()
         settle()
-        val ended = harness.record(playback.trackEndedFlow)
+        val ended = harness.record(playback.trackEndedFlow.map { it.song })
 
         harness.run { queue.setQueue(listOf(song(7), song(8))) }
         var loaded = false

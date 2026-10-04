@@ -8,6 +8,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
@@ -45,7 +46,7 @@ class CastQueue(
     private val receiverPlayedOut: () -> Boolean
 ) : CastPlayer.TransferCallback {
     /** Called with the last song of the queue when the receiver has played it to its end, with nothing to repeat. */
-    var onPlayedOut: ((Song) -> Unit)? = null
+    var onPlayedOut: ((QueueEntry) -> Unit)? = null
 
     private var castPlayer: Player? = null
 
@@ -122,7 +123,7 @@ class CastQueue(
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (player.isRemote && playbackState == Player.STATE_IDLE && playedOut()) {
                         playingUid = null
-                        localPlayer.currentMediaItem?.queueEntryOrNull?.song?.let { song -> onPlayedOut?.invoke(song) }
+                        localPlayer.currentMediaItem?.queueEntryOrNull?.let { entry -> onPlayedOut?.invoke(entry) }
                     }
                 }
 

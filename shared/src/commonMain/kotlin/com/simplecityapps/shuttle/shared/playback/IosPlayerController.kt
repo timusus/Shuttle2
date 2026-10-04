@@ -6,6 +6,7 @@ import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
+import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueModel
 import com.simplecityapps.playback.queue.QueueOperations
@@ -173,9 +174,9 @@ class IosPlayerController(
     /** Never casting: there's no Cast on iOS. */
     override val castDeviceFlow: StateFlow<CastDevice?> = MutableStateFlow<CastDevice?>(null).asStateFlow()
 
-    private val _trackEndedFlow = eventFlow<Song>()
+    private val _trackEndedFlow = eventFlow<TrackEnd>()
 
-    override val trackEndedFlow: SharedFlow<Song> = _trackEndedFlow.asSharedFlow()
+    override val trackEndedFlow: SharedFlow<TrackEnd> = _trackEndedFlow.asSharedFlow()
 
     private val _pausePositionFlow = eventFlow<SongPosition>()
 
@@ -462,7 +463,7 @@ class IosPlayerController(
     /** The engine moved on to its next track: the queue's current item follows. */
     private fun onTransition(trackId: String) {
         val arrived = engineNext?.takeIf { it.id == trackId } ?: return
-        current?.takeIf { !it.failed }?.let { _trackEndedFlow.tryEmit(it.item.song) }
+        current?.takeIf { !it.failed }?.let { _trackEndedFlow.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
         nextJob?.cancel()
         current = arrived
         next = null
@@ -564,7 +565,7 @@ class IosPlayerController(
      * over in time. Playback goes on to the next item, or, with nothing left, pauses there.
      */
     private fun onEnded(feed: Feed) {
-        if (!feed.failed) _trackEndedFlow.tryEmit(feed.item.song)
+        if (!feed.failed) _trackEndedFlow.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
         val upcoming = next
         if (upcoming != null) {
             nextJob?.cancel()

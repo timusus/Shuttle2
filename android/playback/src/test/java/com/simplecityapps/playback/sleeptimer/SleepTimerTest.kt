@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.sleeptimer
 
+import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.fakes.FakePlaybackOperations
 import com.simplecityapps.playback.fakes.testSong
 import io.kotest.matchers.shouldBe
@@ -24,7 +25,7 @@ class SleepTimerTest {
 
     /** Ends the current track the way the playback reports it, and runs whatever it resumes. */
     private fun TestScope.endTrack() {
-        playbackOperations.trackEndedFlow.tryEmit(testSong(1))
+        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, testSong(1)))
         runCurrent()
     }
 
