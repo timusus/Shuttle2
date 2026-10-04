@@ -1,16 +1,16 @@
 package com.simplecityapps.provider.plex.di
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.FavouriteWriter
+import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
-import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.PlexFavouriteWriter
+import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.PlexPlaybackReporter
 import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
 import com.simplecityapps.provider.plex.PlexServerAuthentication

@@ -1,7 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.favourites
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
-import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.cancellation.CancellationException
@@ -32,12 +31,14 @@ class FavouriteSender(
         if (started) return
         started = true
         scope.launch {
-            // Conflated: toggles made while a drain is running collapse into one more drain afterwards.
-            dao.observePendingFavourites().conflate().collect { pending -> drain(pending) }
+            // The flow is only a trigger: a snapshot it queued while a drain was running is stale by the time it is
+            // collected (the drain has acked those rows), so each drain reads the outbox afresh.
+            dao.observePendingFavourites().conflate().collect { drain() }
         }
     }
 
-    private suspend fun drain(pending: List<PendingFavouriteData>) {
+    private suspend fun drain() {
+        val pending = dao.getPendingFavourites()
         if (pending.isEmpty()) return
         val songs = findSongs(pending.map { it.songId }).associateBy { it.id }
         for (row in pending) {

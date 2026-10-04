@@ -5,9 +5,9 @@ import com.simplecityapps.shuttle.appinitializers.AppInitializer
 import com.simplecityapps.shuttle.appinitializers.AppearanceInitializer
 import com.simplecityapps.shuttle.appinitializers.DownloadsInitializer
 import com.simplecityapps.shuttle.appinitializers.EntitlementInitializer
+import com.simplecityapps.shuttle.appinitializers.FavouriteSyncInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
-import com.simplecityapps.shuttle.appinitializers.FavouriteSyncInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackReportingInitializer
 import com.simplecityapps.shuttle.appinitializers.SearchIndexInitializer
 import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
