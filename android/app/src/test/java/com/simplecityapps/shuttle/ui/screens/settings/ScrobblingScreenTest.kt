@@ -67,16 +67,28 @@ class ScrobblingScreenTest {
         account.value = LastFmAccountState.AwaitingApproval
         composeTestRule.waitForIdle()
 
-        move(Lifecycle.State.STARTED)
+        move(Lifecycle.State.CREATED)
         move(Lifecycle.State.RESUMED)
 
         finishes shouldBe 1
     }
 
     @Test
+    fun `a pause without the app being stopped does not finish the sign-in`() {
+        setContent()
+        account.value = LastFmAccountState.AwaitingApproval
+        composeTestRule.waitForIdle()
+
+        move(Lifecycle.State.STARTED)
+        move(Lifecycle.State.RESUMED)
+
+        finishes shouldBe 0
+    }
+
+    @Test
     fun `resuming without having left while awaiting does nothing`() {
         setContent()
-        move(Lifecycle.State.STARTED)
+        move(Lifecycle.State.CREATED)
         account.value = LastFmAccountState.AwaitingApproval
         composeTestRule.waitForIdle()
         move(Lifecycle.State.RESUMED)

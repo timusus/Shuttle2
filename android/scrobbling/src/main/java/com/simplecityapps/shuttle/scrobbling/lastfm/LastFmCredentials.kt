@@ -8,4 +8,7 @@ package com.simplecityapps.shuttle.scrobbling.lastfm
 data class LastFmCredentials(
     val apiKey: String,
     val sharedSecret: String
-)
+) {
+    /** False for a build without the API key and secret (a fork or F-Droid build): Last.fm is hidden there. */
+    val isConfigured: Boolean get() = apiKey.isNotBlank() && sharedSecret.isNotBlank()
+}

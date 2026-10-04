@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -65,10 +66,11 @@ fun ScrobblingScreen(
         }
     }
     // Back from the browser: finish the sign-in if one is waiting, so the user needn't press anything. Only a resume
-    // that follows leaving the screen counts; the state flipping to awaiting while already resumed isn't a return.
+    // that follows the app being stopped counts (the browser covers the whole activity; a notification shade or dialog
+    // only pauses it), and the flag is saved so it survives a config change or process death while the user is away.
     val awaiting = uiState.account == LastFmAccountState.AwaitingApproval
-    var leftWhileAwaiting by remember { mutableStateOf(false) }
-    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+    var leftWhileAwaiting by rememberSaveable { mutableStateOf(false) }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         if (awaiting) leftWhileAwaiting = true
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {

@@ -29,8 +29,7 @@ constructor(
     private val api: LastFmApi,
     private val credentials: LastFmCredentials
 ) {
-    /** False for a build without the API key and secret (a fork or F-Droid build): Last.fm is hidden there. */
-    val isConfigured: Boolean get() = credentials.apiKey.isNotBlank() && credentials.sharedSecret.isNotBlank()
+    val isConfigured: Boolean get() = credentials.isConfigured
 
     /** The last.fm page where the user approves S2 for [token]. */
     fun approvalUrl(token: String): String = "$LASTFM_AUTH_URL?api_key=${credentials.apiKey}&token=$token"
