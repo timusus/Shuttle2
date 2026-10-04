@@ -5,11 +5,15 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ActionsSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
@@ -60,11 +64,17 @@ fun ScrobblingScreen(
             onMessageShown()
         }
     }
-    // Back from the browser: finish the sign-in if one is waiting, so the user needn't press anything.
+    // Back from the browser: finish the sign-in if one is waiting, so the user needn't press anything. Only a resume
+    // that follows leaving the screen counts; the state flipping to awaiting while already resumed isn't a return.
     val awaiting = uiState.account == LastFmAccountState.AwaitingApproval
-    LifecycleResumeEffect(awaiting) {
-        if (awaiting) onFinishSignIn()
-        onPauseOrDispose {}
+    var leftWhileAwaiting by remember { mutableStateOf(false) }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        if (awaiting) leftWhileAwaiting = true
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        val returned = awaiting && leftWhileAwaiting
+        leftWhileAwaiting = false
+        if (returned) onFinishSignIn()
     }
 
     SettingsScaffold(
