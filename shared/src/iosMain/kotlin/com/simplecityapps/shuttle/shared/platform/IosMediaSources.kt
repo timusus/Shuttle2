@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.SyncTrigger
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
@@ -13,8 +14,6 @@ import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.persistence.KeyValueStore
-import com.simplecityapps.shuttle.persistence.putString
 import com.simplecityapps.shuttle.shared.local.IosLocalMediaProvider
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import dev.zacsweers.metro.AppScope
@@ -29,14 +28,14 @@ import kotlinx.coroutines.launch
 
 /**
  * The library's sources on iOS: this device's files (the S2 scanner, [MediaProviderType.Shuttle]), Jellyfin, Emby
- * and Plex. The iOS counterpart of Android's `DefaultMediaSources`, saving the enabled types under
- * the same key; a fresh install reads this device's files, as Android's scanner starts on. Hands the saved providers to
- * the importer when it's created.
+ * and Plex. The iOS counterpart of Android's `DefaultMediaSources`, reading and saving the enabled types through
+ * the shared [PlaybackPreferenceManager.mediaProviderTypes]; a fresh install reads this device's files, as Android's
+ * scanner starts on. Hands the saved providers to the importer when it's created.
  */
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
 class IosMediaSources @Inject constructor(
-    private val store: KeyValueStore,
+    private val preferences: PlaybackPreferenceManager,
     private val generalPreferences: GeneralPreferenceManager,
     private val mediaImporter: MediaImporter,
     private val jellyfinMediaProvider: JellyfinMediaProvider,
@@ -86,14 +85,11 @@ class IosMediaSources @Inject constructor(
         appCoroutineScope.launch { mediaImporter.sync(SyncTrigger.Foreground) }
     }
 
-    private fun savedTypes(): List<MediaProviderType> = (store.getString(KEY, null) ?: MediaProviderType.Shuttle.ordinal.toString())
-        .split(",")
-        .filter { it.isNotEmpty() }
-        .map { MediaProviderType.init(it.toInt()) }
-        .filter { it.provider() != null }
+    /** The saved types, minus those without an iOS provider (MediaStore). */
+    private fun savedTypes(): List<MediaProviderType> = preferences.mediaProviderTypes.filter { it.provider() != null }
 
     private fun save(types: List<MediaProviderType>) {
-        store.putString(KEY, types.joinToString(",") { it.ordinal.toString() })
+        preferences.mediaProviderTypes = types
         _enabledTypes.value = types
     }
 
@@ -103,10 +99,5 @@ class IosMediaSources @Inject constructor(
         MediaProviderType.Emby -> embyMediaProvider
         MediaProviderType.Plex -> plexMediaProvider
         MediaProviderType.MediaStore -> null
-    }
-
-    private companion object {
-        /** Android's `PlaybackPreferenceManager.mediaProviderTypes` key: ordinals, comma separated. */
-        const val KEY = "media_providers"
     }
 }
