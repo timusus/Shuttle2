@@ -768,7 +768,9 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
             )
             // A head from disk still gets FFmpeg's look at the footer; a run that stops short of
             // it (a play that was left before the end) would otherwise pay a transaction for it.
-            if requestedOffset == 0, let total = totalLength, run.end < total {
+            // S2: only an mp3 has that footer; the run's head names any other container (#822).
+            if requestedOffset == 0, let total = totalLength, run.end < total,
+               !Self.headRulesOutMP3(runStore?.read(runKey, at: 0, maxLength: 12) ?? Data()) {
                 fetchTailIfNeeded(total: total)
             }
             pumpDisk()
@@ -1191,6 +1193,26 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         return offset >= total - Int64(Self.tailBytes) && offset < total
     }
 
+    /// S2: whether a stream's first bytes name a container other than mp3 (FLAC, Ogg, WAV, MP4, WavPack, APE), which
+    /// FFmpeg never looks for an ID3v1 footer in. An ID3v2 tag or a bare frame header might be mp3, as might a head
+    /// too short to tell.
+    static func headRulesOutMP3(_ head: Data) -> Bool {
+        let bytes = [UInt8](head.prefix(12))
+        func magic(_ text: String, at offset: Int = 0) -> Bool {
+            let expected = [UInt8](text.utf8)
+            return bytes.count >= offset + expected.count && Array(bytes[offset..<offset + expected.count]) == expected
+        }
+        return magic("fLaC") || magic("OggS") || magic("RIFF") || magic("ftyp", at: 4) || magic("wvpk") || magic("MAC ")
+    }
+
+    /// S2: whether a response's type names audio other than mp3 (`audio/flac`, `audio/mp4`, `application/ogg`). An
+    /// untyped or generic body (`application/octet-stream`) might be mp3.
+    static func typeRulesOutMP3(_ mimeType: String?) -> Bool {
+        guard let mimeType = mimeType?.lowercased() else { return false }
+        guard mimeType.hasPrefix("audio/") || mimeType == "application/ogg" else { return false }
+        return !["audio/mpeg", "audio/mp3", "audio/mpeg3", "audio/x-mpeg", "audio/x-mp3", "audio/x-mpeg-3"].contains(mimeType)
+    }
+
     /// One bounded request for the resource's last ``tailBytes``, beside the transaction that is
     /// open. Only when nothing holds them yet and the open body will not reach them. On `queue`.
     private func fetchTailIfNeeded(total: Int64) {
@@ -1504,8 +1526,10 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
         )
         // The open: the footer look is coming, so its bytes are asked for now, beside this body,
         // unless this body reaches them anyway.
+        // S2: not when the body is typed as something other than mp3, which has no footer (#822).
         if transactionStart == 0, !openIsContinuation, !hostIgnoresRange,
-           let total = learned ?? totalLength, transactionEndByte < total - 1 {
+           let total = learned ?? totalLength, transactionEndByte < total - 1,
+           !Self.typeRulesOutMP3(response.mimeType) {
             fetchTailIfNeeded(total: total)
         }
     }

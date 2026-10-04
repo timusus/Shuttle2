@@ -911,6 +911,37 @@ final class HTTPRangeByteSourceTests: XCTestCase {
         XCTAssertEqual(server.requestedRanges, [0])
     }
 
+    /// S2: only an mp3 has the ID3v1 footer FFmpeg looks for: a body typed as another kind of audio
+    /// opens no side fetch for it, so it never races the head on a second connection (#822).
+    func testNoTailFetchForABodyTypedAsAnotherKindOfAudio() throws {
+        let body = makeBody(512 * 1024)
+        let flac = try LoopbackMediaServer(body: body, mimeType: "audio/flac")
+        server = flac
+        let source = makeSource(flac, policy: policy(windowBytes: 64 * 1024))
+
+        XCTAssertEqual(try read(source, upTo: 4096), body.prefix(4096))
+        Thread.sleep(forTimeInterval: 0.2)
+        let total = Int64(body.count)
+        XCTAssertFalse(flac.requestedRanges.contains(total - 128), "a tail fetch: \(flac.requestedRanges)")
+    }
+
+    func testAStreamsHeadOrTypeRulesOutMP3OnlyForAnotherContainer() {
+        for magic in ["fLaC", "OggS", "RIFF", "wvpk", "MAC "] {
+            XCTAssertTrue(HTTPRangeByteSource.headRulesOutMP3(Data((magic + "\0\0\0\0\0\0\0\0").utf8)), magic)
+        }
+        XCTAssertTrue(HTTPRangeByteSource.headRulesOutMP3(Data([0, 0, 0, 0x20] + Array("ftypM4A ".utf8))))
+        XCTAssertFalse(HTTPRangeByteSource.headRulesOutMP3(Data("ID3\u{04}\0\0\0\0\0\0\0\0".utf8)), "ID3v2")
+        XCTAssertFalse(HTTPRangeByteSource.headRulesOutMP3(Data([0xFF, 0xFB, 0x90, 0x64])), "a bare frame header")
+        XCTAssertFalse(HTTPRangeByteSource.headRulesOutMP3(Data("fL".utf8)), "too short to tell")
+
+        for type in ["audio/flac", "audio/mp4", "AUDIO/OGG", "application/ogg", "audio/x-wav"] {
+            XCTAssertTrue(HTTPRangeByteSource.typeRulesOutMP3(type), type)
+        }
+        for type in ["audio/mpeg", "audio/MP3", "audio/x-mpeg-3", "application/octet-stream", nil] as [String?] {
+            XCTAssertFalse(HTTPRangeByteSource.typeRulesOutMP3(type), type ?? "nil")
+        }
+    }
+
     // MARK: - Superseded transactions
 
     /// A seek resets the window on the caller's thread; the chunks of the body it supersedes are

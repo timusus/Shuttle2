@@ -135,7 +135,8 @@ change. They are kept diffable so a later shared AudioCore can take them back.
     - frame timestamps after a byte-estimate seek for FLAC and PCM.
   - `FFmpegStreamDecoder` adds `setOutputFormat` and `read(into:maxFrames:)`.
   - `HTTPRangeByteSource` keys its kept run and remembered redirect end on `StreamCacheKey`, the URL
-    less its per-play session id and token (#822).
+    less its per-play session id and token, and fetches the 128-byte tail only for what might be an mp3
+    (#822).
   - `StartupTiming` keeps Podcasts' nested types and its `ttfa-net` line, but its record is the
     controller's start (#687): the Podcasts-only teardown, swap, tee and chain stages are gone, and
     it adds `open` (pre-opened or not), `play-after-ready` and `play`.
