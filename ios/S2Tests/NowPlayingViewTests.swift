@@ -315,10 +315,10 @@ struct NowPlayingViewTests {
         var playing = state()
         playing.quality = AudioQuality(codec: "flac", bitDepth: 24, sampleRate: 96_000)
         let line = try NowPlayingContent(state: playing).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.quality")
-        #expect(try line.text().string() == "FLAC 24/96")
+        #expect(try line.text().string() == "FLAC · 24/96 kHz")
 
         playing.quality = AudioQuality(mimeType: "audio/mpeg", bitRate: 320)
-        #expect(playing.qualityBadge == "MP3 320")
+        #expect(playing.qualityBadge == "MP3 · 320 kbps")
 
         for unknown in [nil, AudioQuality(), AudioQuality(bitDepth: 24, sampleRate: 96_000)] {
             playing.quality = unknown

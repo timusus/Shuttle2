@@ -31,10 +31,10 @@ struct SongInfoTests {
 
     @Test func anAlbumBadgeShowsOnlyWhenEverySongSharesAFormat() {
         let flac = { (id: Int64) in TestSongs.song(id, "S", artist: "A", album: "B", durationMs: 1, mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000) }
-        #expect(AudioQuality.sharedBadge(of: [flac(1), flac(2)], locale: Locale(identifier: "en_US")) == "FLAC 24/96")
+        #expect(AudioQuality.sharedBadge(of: [flac(1), flac(2)], locale: Locale(identifier: "en_US")) == "FLAC · 24/96 kHz")
         let mp3 = TestSongs.song(3, "S", artist: "A", album: "B", durationMs: 1, mimeType: "audio/mpeg", bitRate: 320)
         #expect(AudioQuality.sharedBadge(of: [flac(1), mp3]) == nil)
-        #expect(AudioQuality.sharedBadge(of: [mp3], locale: Locale(identifier: "en_US")) == "MP3 320")
+        #expect(AudioQuality.sharedBadge(of: [mp3], locale: Locale(identifier: "en_US")) == "MP3 · 320 kbps")
         let unknown = TestSongs.song(4, "S", artist: "A", album: "B", durationMs: 1, mimeType: "")
         #expect(AudioQuality.sharedBadge(of: [unknown]) == nil)
         #expect(AudioQuality.sharedBadge(of: [flac(1), unknown]) == nil)
@@ -50,16 +50,16 @@ struct SongInfoTests {
     }
 
     @Test func badgeIsDepthOverKilohertzForLosslessAndBitRateForLossy() {
-        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000).badge(locale: en) == "FLAC 24/96")
-        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 16, sampleRate: 44_100).badge(locale: en) == "FLAC 16/44.1")
-        #expect(AudioQuality(codec: "ALAC", mimeType: "audio/mp4", bitDepth: 24, sampleRate: 48_000, bitRate: 1_400).badge(locale: en) == "ALAC 24/48")
-        #expect(AudioQuality(mimeType: "audio/mpeg", bitRate: 320).badge(locale: en) == "MP3 320")
+        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000).badge(locale: en) == "FLAC · 24/96 kHz")
+        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 16, sampleRate: 44_100).badge(locale: en) == "FLAC · 16/44.1 kHz")
+        #expect(AudioQuality(codec: "ALAC", mimeType: "audio/mp4", bitDepth: 24, sampleRate: 48_000, bitRate: 1_400).badge(locale: en) == "ALAC · 24/48 kHz")
+        #expect(AudioQuality(mimeType: "audio/mpeg", bitRate: 320).badge(locale: en) == "MP3 · 320 kbps")
         #expect(AudioQuality(mimeType: "audio/mpeg").badge(locale: en) == "MP3")
     }
 
     @Test func aLossyFormatIgnoresTagLibsBitDepth() {
-        #expect(AudioQuality(codec: "AAC", mimeType: "audio/mp4", bitDepth: 16, sampleRate: 44_100, bitRate: 256).badge(locale: en) == "AAC 256")
-        #expect(AudioQuality(mimeType: "audio/mp4", bitDepth: 16, sampleRate: 44_100, bitRate: 256).badge(locale: en) == "M4A 256")
+        #expect(AudioQuality(codec: "AAC", mimeType: "audio/mp4", bitDepth: 16, sampleRate: 44_100, bitRate: 256).badge(locale: en) == "AAC · 256 kbps")
+        #expect(AudioQuality(mimeType: "audio/mp4", bitDepth: 16, sampleRate: 44_100, bitRate: 256).badge(locale: en) == "M4A · 256 kbps")
         #expect(!AudioQuality(mimeType: "audio/mpeg", bitDepth: 16).isLossless)
     }
 
@@ -75,7 +75,7 @@ struct SongInfoTests {
         #expect(AudioQuality.kilohertz(44_100, locale: en) == "44.1")
         #expect(AudioQuality.kilohertz(96_000, locale: en) == "96")
         #expect(AudioQuality.kilohertz(44_100, locale: Locale(identifier: "de_DE")) == "44,1")
-        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 16, sampleRate: 44_100).badge(locale: Locale(identifier: "de_DE")) == "FLAC 16/44,1")
+        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 16, sampleRate: 44_100).badge(locale: Locale(identifier: "de_DE")) == "FLAC · 16/44,1 kHz")
     }
 
     @Test func zeroValuesCountAsMissing() {

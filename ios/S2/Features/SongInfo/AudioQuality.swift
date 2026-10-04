@@ -1,7 +1,7 @@
 import Foundation
 import Shared
 
-/// A song's audio format as a short badge label, "FLAC 24/96" or "MP3 320" (Now Playing, album headers); Song Info's
+/// A song's audio format as a short badge label, "FLAC · 24/96 kHz" or "MP3 · 320 kbps" (Now Playing, album headers); Song Info's
 /// own rows come from the shared `infoSections()`. Pure values, so it tests without Kotlin.
 struct AudioQuality: Equatable {
     /// "FLAC", "MP3", "ALAC": the source codec when the provider reports one, else the MIME type's subtype.
@@ -40,16 +40,16 @@ struct AudioQuality: Equatable {
 
     private static let losslessFormats: Set<String> = ["FLAC", "ALAC", "WAV", "WAVE", "AIFF", "AIF", "APE", "WAVPACK", "WV", "DSF", "DFF"]
 
-    /// A short label for a badge: "FLAC 24/96" (bit depth / kHz) for lossless formats, "MP3 320" (kbps) for lossy ones.
+    /// A short label for a badge: "FLAC · 24/96 kHz" (bit depth / kHz) for lossless formats, "MP3 · 320 kbps" for lossy ones.
     func badge(locale: Locale = .current) -> String? {
         let detail: String?
         if isLossless, let bitDepth, let sampleRate {
-            detail = "\(bitDepth)/" + Self.kilohertz(sampleRate, locale: locale)
+            detail = "\(bitDepth)/" + Self.kilohertz(sampleRate, locale: locale) + " kHz"
         } else {
-            detail = bitRate.map { String($0) }
+            detail = bitRate.map { "\($0) kbps" }
         }
         let parts = [format, detail].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " ")
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     /// The badge the songs share, for an album's header: nil when they're mixed (or any has no format), so a header
