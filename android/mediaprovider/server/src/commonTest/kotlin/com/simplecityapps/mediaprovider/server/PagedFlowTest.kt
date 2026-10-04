@@ -10,6 +10,7 @@ import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
 import kotlin.test.Test
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
@@ -81,7 +82,8 @@ class PagedFlowTest {
             if (offset == 0) NetworkResult.Success(Page(listOf(0, 1, 2, 3), totalCount = 10)) else NetworkResult.Failure(IllegalStateException("offline"))
         }.toList().described()
 
-        requests shouldBe listOf(0 to 4, 4 to 4)
+        // The pages after the first are requested together, so the last was already on its way
+        requests shouldBe listOf(0 to 4, 4 to 4, 8 to 2)
         events shouldBe listOf(progress(4, 10), Event.Failure("An unknown error occurred."))
     }
 
@@ -210,5 +212,48 @@ class PagedFlowTest {
         }.toList()
 
         attempts shouldBe 1
+    }
+
+    @Test
+    fun `after the first page - three pages are requested at once`() = runTest {
+        var inFlight = 0
+        var mostInFlight = 0
+        val events = pagedFlow<Int>(pageSize = 2) { offset, limit ->
+            inFlight++
+            mostInFlight = maxOf(mostInFlight, inFlight)
+            delay(100)
+            inFlight--
+            server(total = 12)(offset, limit)
+        }.toList().described()
+
+        mostInFlight shouldBe 3
+        events.last() shouldBe Event.Success((0 until 12).toList())
+        // The first page alone, then pages 2-4 together, then 5 and 6
+        testScheduler.currentTime shouldBe 300L
+    }
+
+    @Test
+    fun `pages that arrive out of order are kept in listing order`() = runTest {
+        val events = pagedFlow<Int>(pageSize = 2) { offset, limit ->
+            // Each later page comes back sooner
+            delay(1_000L - offset * 100L)
+            server(total = 8)(offset, limit)
+        }.toList().described()
+
+        events shouldBe listOf(progress(2, 8), progress(4, 8), progress(6, 8), progress(8, 8), Event.Success((0 until 8).toList()))
+    }
+
+    @Test
+    fun `items are converted a page at a time - and duplicates dropped before converting`() = runTest {
+        val converted = mutableListOf<Int>()
+        val events = pagedFlow<Int, String>(pageSize = 4, key = { it }, convert = { item ->
+            converted += item
+            "#$item"
+        }) { offset, _ ->
+            NetworkResult.Success(Page(if (offset == 0) listOf(0, 1, 2, 3) else listOf(3, 4, 5), totalCount = 7))
+        }.toList().described()
+
+        converted shouldBe listOf(0, 1, 2, 3, 4, 5)
+        events.last() shouldBe Event.Success(listOf("#0", "#1", "#2", "#3", "#4", "#5"))
     }
 }

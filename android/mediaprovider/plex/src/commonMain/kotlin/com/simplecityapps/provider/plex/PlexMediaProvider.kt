@@ -69,20 +69,11 @@ class PlexMediaProvider(
                     emit(FlowEvent.Failure(plexStrings.musicLibraryMissing))
                 } else {
                     emitAll(
-                        queryAllSections(address, session, sections, since).map { event ->
-                            when (event) {
-                                is FlowEvent.Success -> {
-                                    val songs = event.result.map { metadata -> metadata.toSong(type, syncedAt) }
-                                    if (since == null) {
-                                        FlowEvent.Success(songs, event.complete)
-                                    } else {
-                                        FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.complete)
-                                    }
-                                }
-
-                                is FlowEvent.Progress -> FlowEvent.Progress(event.data)
-
-                                is FlowEvent.Failure -> FlowEvent.Failure(event.message)
+                        queryAllSections(address, session, sections, since) { metadata -> metadata.toSong(type, syncedAt) }.map { event ->
+                            if (event is FlowEvent.Success && since != null) {
+                                FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.complete)
+                            } else {
+                                event
                             }
                         }
                     )
@@ -164,27 +155,28 @@ class PlexMediaProvider(
         sections: List<String>,
         syncedAt: Instant
     ): Map<String, Instant>? {
-        val event = queryAllSections(address, session, sections, since = null, favouritesOnly = true).last()
         // Checked again here, so a server that ignored the filter can't make every track a favourite
-        return (event as? FlowEvent.Success)?.result?.mapNotNull { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } }?.toMap()
+        val event = queryAllSections(address, session, sections, since = null, favouritesOnly = true) { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } }.last()
+        return (event as? FlowEvent.Success)?.result?.filterNotNull()?.toMap()
     }
 
     /**
-     * Every track of every one of [sections], emitted as one [FlowEvent.Success] after the sections' progress, complete only
-     * if every section's listing was. A failed section ends the flow.
+     * Every track of every one of [sections], each [convert]ed as its page arrives, emitted as one [FlowEvent.Success] after
+     * the sections' progress, complete only if every section's listing was. A failed section ends the flow.
      */
-    private fun queryAllSections(
+    private fun <R> queryAllSections(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         sections: List<String>,
         since: Instant?,
-        favouritesOnly: Boolean = false
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = flow {
-        val items = mutableListOf<Metadata>()
+        favouritesOnly: Boolean = false,
+        convert: (Metadata) -> R
+    ): Flow<FlowEvent<List<R>, MessageProgress>> = flow {
+        val items = mutableListOf<R>()
         var complete = true
         for (section in sections) {
             var failed = false
-            queryItems(address, session, section, since, favouritesOnly).collect { event ->
+            queryItems(address, session, section, since, favouritesOnly, convert).collect { event ->
                 when (event) {
                     is FlowEvent.Success -> {
                         items.addAll(event.result)
@@ -204,13 +196,14 @@ class PlexMediaProvider(
         emit(FlowEvent.Success(items, complete))
     }
 
-    private fun queryItems(
+    private fun <R> queryItems(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         section: String,
         since: Instant?,
-        favouritesOnly: Boolean
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(key = Metadata::key) { offset, limit ->
+        favouritesOnly: Boolean,
+        convert: (Metadata) -> R
+    ): Flow<FlowEvent<List<R>, MessageProgress>> = pagedFlow(key = Metadata::key, convert = convert) { offset, limit ->
         session.request { credentials ->
             authenticationManager.checkSession(
                 credentials,

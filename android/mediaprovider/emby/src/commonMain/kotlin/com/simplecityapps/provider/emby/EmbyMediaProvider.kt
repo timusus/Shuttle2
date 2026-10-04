@@ -63,28 +63,11 @@ class EmbyMediaProvider(
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now()
         emitAll(
-            queryItems(
-                address = address,
-                session = session,
-                since = since
-            ).map { event ->
-                when (event) {
-                    is FlowEvent.Success -> {
-                        val songs = event.result.map { item -> item.toSong(syncedAt) }
-                        if (since == null) {
-                            FlowEvent.Success(songs, event.complete)
-                        } else {
-                            FlowEvent.Success(songs.withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.complete)
-                        }
-                    }
-
-                    is FlowEvent.Progress -> {
-                        FlowEvent.Progress(event.data)
-                    }
-
-                    is FlowEvent.Failure -> {
-                        FlowEvent.Failure(event.message)
-                    }
+            queryItems(address = address, session = session, since = since, syncedAt = syncedAt).map { event ->
+                if (event is FlowEvent.Success && since != null) {
+                    FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.complete)
+                } else {
+                    event
                 }
             }
         )
@@ -132,7 +115,7 @@ class EmbyMediaProvider(
         session: ServerSession<AuthenticatedCredentials>
     ): Set<String>? {
         val event =
-            pagedFlow(key = Item::id) { offset, limit ->
+            pagedFlow(key = Item::id, convert = { item -> item.songPath }) { offset, limit ->
                 session.request { credentials ->
                     authenticationManager.checkSession(
                         credentials,
@@ -146,14 +129,15 @@ class EmbyMediaProvider(
                     )
                 }.map { it.toPage() }
             }.last()
-        return (event as? FlowEvent.Success)?.result?.mapTo(HashSet()) { item -> item.songPath }
+        return (event as? FlowEvent.Success)?.result?.toHashSet()
     }
 
     private fun queryItems(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
-        since: Instant?
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(key = Item::id) { offset, limit ->
+        since: Instant?,
+        syncedAt: Instant
+    ): Flow<FlowEvent<List<Song>, MessageProgress>> = pagedFlow(key = Item::id, convert = { item -> item.toSong(syncedAt) }) { offset, limit ->
         session.request { credentials ->
             authenticationManager.checkSession(
                 credentials,
