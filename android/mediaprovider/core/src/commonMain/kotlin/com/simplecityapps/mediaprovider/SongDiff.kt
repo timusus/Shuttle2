@@ -29,7 +29,7 @@ class SongDiff(
             favouritedAt = oldData.favouritedAt.atStoredPrecision()
         )
 
-        return updated.copy(
+        return updated.keepingStoredBitDepth(old).copy(
             lastPlayed = old.lastPlayed,
             lastCompleted = old.lastCompleted,
             playCount = old.playCount,
@@ -58,7 +58,7 @@ class SongDiff(
     override fun update(
         oldData: Song,
         newData: Song
-    ): Song = newData.copy(
+    ): Song = newData.keepingStoredBitDepth(oldData).copy(
         id = oldData.id,
         // A provider with no date for the song keeps the one from its first import, rather than looking newly added
         lastModified = newData.lastModified ?: oldData.lastModified,
@@ -66,4 +66,14 @@ class SongDiff(
         // stamped when the song first reached the library, which a tag edit or rescan doesn't move
         dateAdded = newData.dateAdded ?: oldData.dateAdded
     )
+
+    /**
+     * A remote lossless song that arrives without a bit depth keeps the stored one: its server only reports the depth
+     * through a request that can fail (Plex), and a song whose codec turned lossy still clears it.
+     */
+    private fun Song.keepingStoredBitDepth(old: Song): Song = if (bitDepth == null && old.mediaProvider.remote && isLosslessCodec(audioCodec)) {
+        copy(bitDepth = old.bitDepth)
+    } else {
+        this
+    }
 }

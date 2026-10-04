@@ -71,6 +71,24 @@ class SongDiffTest {
     }
 
     @Test
+    fun `a remote lossless song that arrives without a bit depth keeps the stored one`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, bitDepth = 24, audioCodec = "flac")
+
+        val reimported = SongDiff(listOf(existing), listOf(createSong(id = 0, lastModified = firstImport, bitDepth = null, audioCodec = "flac"))).apply()
+
+        reimported.updates shouldBe emptyList()
+    }
+
+    @Test
+    fun `a remote song whose codec is now lossy clears the stored bit depth`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, bitDepth = 24, audioCodec = "flac")
+
+        val reimported = SongDiff(listOf(existing), listOf(createSong(id = 0, lastModified = firstImport, bitDepth = null, audioCodec = "mp3"))).apply()
+
+        reimported.updates.single().bitDepth shouldBe null
+    }
+
+    @Test
     fun `a full listing deletes the songs it no longer holds`() = runTest {
         val kept = createSong(id = 1, lastModified = firstImport, path = "jellyfin://item/1")
         val gone = createSong(id = 2, lastModified = firstImport, path = "jellyfin://item/2")
@@ -186,7 +204,8 @@ class SongDiffTest {
         path: String = "jellyfin://item/1",
         artworkVersion: String? = null,
         dateAdded: Instant? = null,
-        bitDepth: Int? = null
+        bitDepth: Int? = null,
+        audioCodec: String? = null
     ) = Song(
         id = id,
         name = "Song",
@@ -215,6 +234,7 @@ class SongDiffTest {
         sampleRate = null,
         channelCount = null,
         artworkVersion = artworkVersion,
-        dateAdded = dateAdded
+        dateAdded = dateAdded,
+        audioCodec = audioCodec
     )
 }
