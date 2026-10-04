@@ -62,12 +62,13 @@ class TaglibMediaProviderTest {
             override suspend fun getAudioFile(
                 context: Context,
                 kTagLib: KTagLib,
-                node: DocumentNode
+                node: DocumentNode,
+                path: String
             ): AudioFile? {
                 read += node.displayName
                 if (node.displayName in unreadable) return null
                 return AudioFile(
-                    path = node.uri.toString(),
+                    path = path,
                     size = node.size,
                     lastModified = node.lastModified,
                     mimeType = node.mimeType,

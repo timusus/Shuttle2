@@ -105,8 +105,10 @@ class MediaImporter(
         get() = preferenceManager.songTagsRescanVersion < SONG_TAGS_VERSION && providers.snapshot.any { preferenceManager.songTagsOutdated(it.type) }
 
     /**
-     * Reads every source in full. [foldersChanged] says the user just changed which of this device's folders are read, so
-     * a mass removal of this device's songs is theirs and applies at once rather than waiting on the next import.
+     * Reads every source in full, as the user asked (a rescan, a change of folders, the first import): an
+     * [IndexedMediaProvider] looks in every folder rather than trusting its index alone. [foldersChanged] says the user just
+     * changed which of this device's folders are read, so a mass removal of this device's songs is theirs and applies at
+     * once rather than waiting on the next import.
      */
     suspend fun import(foldersChanged: Boolean = false) {
         if (providers.snapshot.isEmpty()) {
@@ -192,7 +194,8 @@ class MediaImporter(
             providers.snapshot.map { mediaProvider -> mediaProvider to SyncPlan.Full },
             showProgress = true,
             quietFailures = false,
-            foldersChanged = foldersChanged
+            foldersChanged = foldersChanged,
+            thorough = true
         ) { _, _ -> true }
     }
 
@@ -216,7 +219,7 @@ class MediaImporter(
         logger.debug { "Starting $trigger sync: ${plans.joinToString { (mediaProvider, plan) -> "${mediaProvider.type} $plan" }}" }
         // A delta that changed nothing leaves the playlists as they were, bar the daily sync, which catches a playlist
         // edited on the server without touching its songs
-        importProviders(plans, showProgress = false, quietFailures = trigger == SyncTrigger.Foreground, foldersChanged = false) { plan, result ->
+        importProviders(plans, showProgress = false, quietFailures = trigger == SyncTrigger.Foreground, foldersChanged = false, thorough = false) { plan, result ->
             result != null && (plan == SyncPlan.Full || trigger == SyncTrigger.Periodic || result.inserts + result.updates > 0)
         }
     }
@@ -224,13 +227,14 @@ class MediaImporter(
     /**
      * Imports each provider in [plans], all at once and each on its own, so one failing or removed ([removeProvider]) leaves
      * the others to finish. Once they all have, records the import if any of them finished, then throws the first provider's
-     * exception. See [importProvider].
+     * exception. See [importProvider]. [thorough] has an [IndexedMediaProvider] look past its index.
      */
     private suspend fun importProviders(
         plans: List<Pair<MediaProvider, SyncPlan>>,
         showProgress: Boolean,
         quietFailures: Boolean,
         foldersChanged: Boolean,
+        thorough: Boolean,
         playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
     ) {
         val time = TimeSource.Monotonic.markNow()
@@ -246,7 +250,7 @@ class MediaImporter(
                     plans.mapNotNull { (mediaProvider, plan) ->
                         val job =
                             launch(start = CoroutineStart.LAZY) {
-                                val failure = importProvider(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), showProgress, quietFailures, userRemoval = foldersChanged && !mediaProvider.type.remote, playlistsDue)
+                                val failure = importProvider(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), showProgress, quietFailures, userRemoval = foldersChanged && !mediaProvider.type.remote, thorough = thorough, playlistsDue = playlistsDue)
                                 providerJobsLock.withLock { if (failure != null) failures += failure else finished++ }
                             }
                         job.takeIf { track(mediaProvider, job) }?.apply { start() }
@@ -297,7 +301,8 @@ class MediaImporter(
      * and its stored songs (null when that failed). Shows the fetch's progress only if [showProgress]. A fetch that stores
      * nothing new is reported only if [showProgress], which is what reloads what shows the library; one that fails is, unless
      * [quietFailures], which logs it and leaves the source's status as it was. [userRemoval] applies a mass removal of its
-     * songs at once ([import]). However it ends, its progress doesn't outlast it. The exception it threw, if it did.
+     * songs at once ([import]); [thorough] has an [IndexedMediaProvider] look past its index. However it ends, its progress
+     * doesn't outlast it. The exception it threw, if it did.
      */
     private suspend fun importProvider(
         mediaProvider: MediaProvider,
@@ -306,6 +311,7 @@ class MediaImporter(
         showProgress: Boolean,
         quietFailures: Boolean,
         userRemoval: Boolean,
+        thorough: Boolean,
         playlistsDue: (SyncPlan, SongImportResult?) -> Boolean
     ): Exception? {
         val type = mediaProvider.type
@@ -317,7 +323,7 @@ class MediaImporter(
                 publish(type, mediaProvider.importProgress(MessageProgress(if (type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)))
             }
             var stored: SongImportResult? = null
-            importSongs(mediaProvider, plan, timings, userRemoval).collect { event ->
+            importSongs(mediaProvider, plan, timings, userRemoval, thorough).collect { event ->
                 when (event) {
                     is FlowEvent.Progress -> {
                         if (showProgress) publish(type, mediaProvider.importProgress(event.data))
@@ -420,13 +426,14 @@ class MediaImporter(
      * what it no longer holds but for what [deleteGuard] holds back (a mass removal only if it isn't a [userRemoval], or all
      * of it for a listing that came up short); an incremental one is stored over it, or is made full when nothing is stored.
      * Once stored, the sync's start is noted for the next incremental sync to ask from, and a full sync's for the next full
-     * one, unless the guard is waiting on a full pass.
+     * one, unless the guard is waiting on a full pass. A [thorough] full listing of an [IndexedMediaProvider] looks past its index.
      */
     private fun importSongs(
         mediaProvider: MediaProvider,
         requested: SyncPlan,
         timings: ImportTimings,
-        userRemoval: Boolean
+        userRemoval: Boolean,
+        thorough: Boolean
     ): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         // Before the request, so whatever changes on the source while it runs is fetched again next time
         val start = clock.now()
@@ -448,7 +455,7 @@ class MediaImporter(
         val plan = if (storedSongs.isEmpty()) SyncPlan.Full else requested
         val songs =
             when (plan) {
-                SyncPlan.Full -> mediaProvider.findSongs(existingSongs)
+                SyncPlan.Full -> if (thorough && mediaProvider is IndexedMediaProvider) mediaProvider.findSongsThoroughly(existingSongs) else mediaProvider.findSongs(existingSongs)
                 is SyncPlan.Incremental -> (mediaProvider as IncrementalMediaProvider).findSongsChangedSince(existingSongs, plan.since)
             }
         val findSongsMark = TimeSource.Monotonic.markNow()

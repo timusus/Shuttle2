@@ -64,6 +64,56 @@ object SafDirectoryHelper {
         null
     }
 
+    /**
+     * The document at [documentUri] (a file's, under a tree this app holds a grant to) as of now: [DocumentLookup.Found] with
+     * its listing, [DocumentLookup.Missing] if the documents provider says there's no such document, or
+     * [DocumentLookup.Unknown] if it can't be asked (the grant was revoked, the provider failed), which says nothing either way.
+     *
+     * Costs one query, so it suits checking a few files rather than listing a folder.
+     */
+    suspend fun findDocument(
+        contentResolver: ContentResolver,
+        documentUri: Uri
+    ): DocumentLookup = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(documentUri, DOCUMENT_PROJECTION, null, null, null).use { cursor ->
+                // A documents provider answers a query for a document that doesn't exist with no cursor
+                if (cursor == null || !cursor.moveToFirst()) {
+                    DocumentLookup.Missing
+                } else {
+                    DocumentLookup.Found(
+                        DocumentNode(
+                            uri = documentUri,
+                            documentId = cursor.getString(0),
+                            displayName = cursor.getString(1),
+                            mimeType = cursor.getString(2) ?: "",
+                            lastModified = cursor.getLong(3),
+                            size = cursor.getLong(4)
+                        )
+                    )
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IllegalArgumentException) {
+            // The external storage provider checks a document is under the tree before looking it up, and that check
+            // throws this for one whose file is gone
+            Timber.w(e, "No document at $documentUri")
+            DocumentLookup.Missing
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to look up $documentUri")
+            DocumentLookup.Unknown
+        }
+    }
+
+    sealed interface DocumentLookup {
+        data class Found(val node: DocumentNode) : DocumentLookup
+
+        data object Missing : DocumentLookup
+
+        data object Unknown : DocumentLookup
+    }
+
     private suspend fun traverseDocumentNodes(
         parent: DocumentNodeTree,
         contentResolver: ContentResolver,
@@ -110,13 +160,7 @@ object SafDirectoryHelper {
         val documentNodes = mutableListOf<DocumentNode>()
         contentResolver.query(
             uri,
-            arrayOf(
-                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                DocumentsContract.Document.COLUMN_MIME_TYPE,
-                DocumentsContract.Document.COLUMN_LAST_MODIFIED,
-                DocumentsContract.Document.COLUMN_SIZE
-            ),
+            DOCUMENT_PROJECTION,
             null,
             null,
             null
@@ -152,6 +196,15 @@ object SafDirectoryHelper {
         }
         documentNodes
     }
+
+    private val DOCUMENT_PROJECTION =
+        arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+            DocumentsContract.Document.COLUMN_MIME_TYPE,
+            DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+            DocumentsContract.Document.COLUMN_SIZE
+        )
 
     sealed interface TreeStatus {
         data class Complete(val tree: DocumentNodeTree) : TreeStatus

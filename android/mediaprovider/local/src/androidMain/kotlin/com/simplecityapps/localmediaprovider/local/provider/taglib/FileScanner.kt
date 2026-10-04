@@ -13,12 +13,16 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 open class FileScanner {
-    /** Reads a file the SAF tree walk found, using the name, mime type, size and modified date the walk already returned. */
+    /**
+     * Reads a file the SAF tree walk found, using the name, mime type, size and modified date the walk already returned, as
+     * the song at [path]: its file path where it has one, else its document URI.
+     */
     open suspend fun getAudioFile(
         context: Context,
         kTagLib: KTagLib,
-        node: DocumentNode
-    ): AudioFile? = read(context, kTagLib, node.uri, node.displayName, node.lastModified, node.size, node.mimeType)
+        node: DocumentNode,
+        path: String
+    ): AudioFile? = read(context, kTagLib, node.uri, path, node.displayName, node.lastModified, node.size, node.mimeType)
 
     /** Reads a document by [uri] alone, which costs a query for each of its attributes. */
     suspend fun getAudioFile(
@@ -28,7 +32,7 @@ open class FileScanner {
     ): AudioFile? = withContext(Dispatchers.IO) {
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.exists() == true) {
-            read(context, kTagLib, uri, documentFile.name ?: "Unknown", documentFile.lastModified(), documentFile.length(), documentFile.type)
+            read(context, kTagLib, uri, uri.toString(), documentFile.name ?: "Unknown", documentFile.lastModified(), documentFile.length(), documentFile.type)
         } else {
             Timber.e("Document file doesn't exist for uri: $uri")
             null
@@ -39,6 +43,7 @@ open class FileScanner {
         context: Context,
         kTagLib: KTagLib,
         uri: Uri,
+        path: String,
         name: String,
         lastModified: Long,
         size: Long,
@@ -46,7 +51,7 @@ open class FileScanner {
     ): AudioFile? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                kTagLib.getAudioFile(pfd.detachFd(), uri.toString(), name, lastModified, size, mimeType)
+                kTagLib.getAudioFile(pfd.detachFd(), path, name, lastModified, size, mimeType)
             }
         } catch (e: CancellationException) {
             throw e

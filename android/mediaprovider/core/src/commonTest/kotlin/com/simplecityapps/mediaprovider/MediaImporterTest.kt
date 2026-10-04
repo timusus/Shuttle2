@@ -356,6 +356,20 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `an import the user asks for looks past a source's index, a scheduled sync trusts it`() = runBlocking<Unit> {
+        val indexed = IndexedProvider()
+        importer.mediaProviders -= provider
+        importer.mediaProviders += indexed
+
+        // A folder change, a rescan, then the daily sync
+        importer.import(foldersChanged = true)
+        importer.import()
+        importer.sync(SyncTrigger.Periodic)
+
+        indexed.listings shouldBe listOf("thorough", "thorough", "index")
+    }
+
+    @Test
     fun `a server that can't be reached on return to the app keeps its status, but the daily sync reports it`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
@@ -752,6 +766,24 @@ class MediaImporterTest {
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
             playlistRequests++
         }
+    }
+
+    /** A source with an index, which records how each of its listings was asked for. */
+    private class IndexedProvider : IndexedMediaProvider {
+        override val type = MediaProviderType.Shuttle
+
+        val listings = mutableListOf<String>()
+
+        override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = listing("index")
+
+        override fun findSongsThoroughly(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = listing("thorough")
+
+        private fun listing(kind: String): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+            listings += kind
+            emit(FlowEvent.Success(emptyList()))
+        }
+
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()
     }
 
     /**

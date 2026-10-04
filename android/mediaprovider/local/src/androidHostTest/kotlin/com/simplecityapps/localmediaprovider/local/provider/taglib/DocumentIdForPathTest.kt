@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.tageditor
+package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import io.kotest.matchers.shouldBe
 import org.junit.Test

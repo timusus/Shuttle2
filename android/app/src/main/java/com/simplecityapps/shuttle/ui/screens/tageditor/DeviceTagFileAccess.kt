@@ -11,6 +11,7 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
+import com.simplecityapps.localmediaprovider.local.provider.taglib.documentIdForPath
 import com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.di.ApplicationContext
@@ -139,21 +140,6 @@ class DeviceTagFileAccess @Inject constructor(
             null
         }
     }
-}
-
-/**
- * The document id of the file at [path] inside the tree whose root document is [treeDocumentId], found at [treePath];
- * null if the file isn't in that tree. Document ids of the external storage provider are `<root>:<relative path>`.
- */
-internal fun documentIdForPath(
-    path: String,
-    treeDocumentId: String,
-    treePath: String,
-): String? {
-    val folder = treePath.trimEnd('/')
-    if (!path.startsWith("$folder/")) return null
-    val relative = path.removePrefix("$folder/")
-    return if (treeDocumentId.endsWith(':')) treeDocumentId + relative else "${treeDocumentId.trimEnd('/')}/$relative"
 }
 
 @BindingContainer

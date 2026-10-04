@@ -37,6 +37,16 @@ interface MediaProvider {
 }
 
 /**
+ * A source whose [findSongs] trusts an index of its files (MediaStore, for this device's folders), which is quick but can
+ * miss files the index skipped or lost. When the user asks for an import (a rescan, a change of folders, the first one),
+ * the importer calls [findSongsThoroughly] instead, which looks in every folder itself as well.
+ */
+interface IndexedMediaProvider : MediaProvider {
+    /** Every song [findSongs] finds, and those in the source's folders its index doesn't list. */
+    fun findSongsThoroughly(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>>
+}
+
+/**
  * A source that can list just what changed since a time, so a sync doesn't fetch the whole library again (#771). What
  * [findSongsChangedSince] finds is stored over the last import without removing anything: a song deleted on the source
  * leaves the library at the next full [findSongs].

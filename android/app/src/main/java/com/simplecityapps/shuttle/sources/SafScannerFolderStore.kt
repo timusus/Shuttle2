@@ -59,6 +59,7 @@ class SafScannerFolderStore @Inject constructor(
         val lists = synchronized(lock) { load() }
         return ScannerFolders(
             filter = FolderFilter(includes = lists.includes.mapNotNull { it.path }, excludes = lists.excludes.mapNotNull { it.path }),
+            includeTrees = lists.includes.mapNotNull { folder -> folder.uri?.let(Uri::parse) },
             extraTrees = lists.extras.mapNotNull { folder -> folder.uri?.let(Uri::parse) }
         )
     }
