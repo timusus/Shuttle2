@@ -35,15 +35,17 @@ struct LibraryGrid<Content: View>: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var columns: [GridItem] {
-        let minimum = Self.minimumTile(layoutTier, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
+        let minimum = Self.minimumTile(layoutTier, indexed: index != nil, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
         return [GridItem(.adaptive(minimum: minimum), spacing: AdaptiveLayout.gridSpacing, alignment: .top)]
     }
 
-    /// The narrowest a tile gets. Compact width takes `ArtworkSize.gridMinimumCompact`, so two fit with the index's
-    /// width kept clear on both edges of a 320 pt screen; wider tiers `ArtworkSize.gridMinimum`. Twice that at the accessibility text sizes, whose
+    /// The narrowest a tile gets. Compact width takes `ArtworkSize.gridMinimumCompact` (`gridMinimumCompactIndexed`
+    /// with an index, so two fit with its width kept clear on both edges of a 320 pt screen); wider tiers
+    /// `ArtworkSize.gridMinimum`. Twice that at the accessibility text sizes, whose
     /// titles two narrow tiles can't hold: one full-width column can.
-    static func minimumTile(_ tier: LayoutTier, accessibilitySize: Bool = false) -> CGFloat {
-        let minimum = tier == .compact ? ArtworkSize.gridMinimumCompact : ArtworkSize.gridMinimum
+    static func minimumTile(_ tier: LayoutTier, indexed: Bool = true, accessibilitySize: Bool = false) -> CGFloat {
+        let compact = indexed ? ArtworkSize.gridMinimumCompactIndexed : ArtworkSize.gridMinimumCompact
+        let minimum = tier == .compact ? compact : ArtworkSize.gridMinimum
         return accessibilitySize ? minimum * 2 : minimum
     }
 
@@ -54,7 +56,7 @@ struct LibraryGrid<Content: View>: View {
     static func columnCount(width: CGFloat, tier: LayoutTier, indexWidth: CGFloat = LetterIndexStrip.baseWidth, accessibilitySize: Bool = false) -> Int {
         let spacing = AdaptiveLayout.gridSpacing
         let available = min(width - indexWidth * 2, AdaptiveLayout.contentMaxWidth) - AdaptiveLayout.contentInset(tier) * 2
-        let minimum = minimumTile(tier, accessibilitySize: accessibilitySize)
+        let minimum = minimumTile(tier, indexed: indexWidth > 0, accessibilitySize: accessibilitySize)
         return max(1, Int(((available + spacing) / (minimum + spacing)).rounded(.down)))
     }
 
