@@ -165,6 +165,10 @@
     <string name="pref_pure_black_title">Pure black</string>
     <!-- Settings: Summary of the pure black switch -->
     <string name="pref_pure_black_summary">Black backgrounds in dark theme, for AMOLED screens</string>
+    <!-- Settings: Title of the compact mode switch -->
+    <string name="pref_compact_mode_title">Compact mode</string>
+    <!-- Settings: Summary of the compact mode switch -->
+    <string name="pref_compact_mode_summary">Smaller rows, artwork and headers across Home, Library and Settings</string>
     <!-- Settings: Title of the switch that takes the app colours from the wallpaper (Android 12+) -->
     <string name="pref_dynamic_colour_title">Dynamic colour</string>
     <!-- Settings: Summary of the dynamic colour switch -->

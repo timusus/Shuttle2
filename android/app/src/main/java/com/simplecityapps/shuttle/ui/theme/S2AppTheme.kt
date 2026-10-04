@@ -3,11 +3,13 @@ package com.simplecityapps.shuttle.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.settings.Accent
@@ -29,7 +31,8 @@ data class AppThemeState(
     val theme: ThemeMode = ThemeMode.DayNight,
     val accent: Accent = Accent.Default,
     val dynamicColour: Boolean = false,
-    val pureBlack: Boolean = false
+    val pureBlack: Boolean = false,
+    val compactMode: Boolean = false
 )
 
 /** The Appearance settings the Compose theme follows, live, so a change in Settings restyles the app without a restart. */
@@ -44,6 +47,7 @@ class AppThemeViewModel @Inject constructor(
         observeSetting(AppearanceSettings.AccentColour),
         observeSetting(AppearanceSettings.DynamicColour),
         observeSetting(AppearanceSettings.PureBlack),
+        observeSetting(AppearanceSettings.CompactMode),
         ::AppThemeState
     ).stateIn(
         scope = viewModelScope,
@@ -52,7 +56,8 @@ class AppThemeViewModel @Inject constructor(
             theme = readSetting(AppearanceSettings.Theme),
             accent = readSetting(AppearanceSettings.AccentColour),
             dynamicColour = readSetting(AppearanceSettings.DynamicColour),
-            pureBlack = readSetting(AppearanceSettings.PureBlack)
+            pureBlack = readSetting(AppearanceSettings.PureBlack),
+            compactMode = readSetting(AppearanceSettings.CompactMode)
         )
     )
 }
@@ -81,17 +86,19 @@ fun S2AppTheme(
         // Always the same call, so toggling pure black recolours the content instead of moving it to a new
         // composition branch, which would drop its saved state (the shell's back stacks among it).
         val colorScheme = MaterialTheme.colorScheme
-        MaterialTheme(
-            colorScheme = if (darkTheme && state.pureBlack) {
-                colorScheme.copy(background = Color.Black, surface = Color.Black, surfaceContainerLowest = Color.Black)
-            } else {
-                colorScheme
-            },
-            motionScheme = MaterialTheme.motionScheme,
-            shapes = MaterialTheme.shapes,
-            typography = MaterialTheme.typography,
-            content = content
-        )
+        CompositionLocalProvider(LocalCompactMode provides state.compactMode) {
+            MaterialTheme(
+                colorScheme = if (darkTheme && state.pureBlack) {
+                    colorScheme.copy(background = Color.Black, surface = Color.Black, surfaceContainerLowest = Color.Black)
+                } else {
+                    colorScheme
+                },
+                motionScheme = MaterialTheme.motionScheme,
+                shapes = MaterialTheme.shapes,
+                typography = MaterialTheme.typography,
+                content = content
+            )
+        }
     }
 }
 

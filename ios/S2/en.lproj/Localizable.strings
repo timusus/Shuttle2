@@ -66,6 +66,8 @@
 "pref_colour_from_artwork_summary" = "Tint the player with colours from the album art";
 "pref_pure_black_title" = "Pure black";
 "pref_pure_black_summary" = "Black backgrounds in dark theme, for AMOLED screens";
+"pref_compact_mode_title" = "Compact mode";
+"pref_compact_mode_summary" = "Smaller rows, artwork and headers across Home, Library and Settings";
 "pref_category_title_widgets" = "Widgets";
 "pref_widget_opacity_title" = "Background opacity";
 "pref_navigation_title" = "Navigation";

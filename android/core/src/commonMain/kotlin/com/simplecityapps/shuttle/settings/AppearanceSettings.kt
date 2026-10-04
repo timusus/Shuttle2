@@ -38,6 +38,7 @@ class AppearanceSettings @Inject constructor(
     val colourFromArtwork = store.preference(ColourFromArtwork)
     val showHomeOnLaunch = store.preference(ShowHomeOnLaunch)
     val widgetBackgroundOpacity = store.preference(WidgetBackgroundOpacity)
+    val compactMode = store.preference(CompactMode)
 
     companion object {
         val Theme = Setting.enumOrdinalString("pref_theme", ThemeMode.DayNight, ThemeMode.entries)
@@ -59,5 +60,8 @@ class AppearanceSettings @Inject constructor(
 
         /** A percentage. The key predates the Glance widgets, so old values carry over. */
         val WidgetBackgroundOpacity = Setting.int("widget_background_opacity", 100)
+
+        /** Tighter rows, smaller artwork and shorter headers across Home, Library and Settings. Off by default. */
+        val CompactMode = Setting.boolean("pref_compact_mode", false)
     }
 }

@@ -63,6 +63,7 @@ class IosSettingsCatalogTest {
             AppearanceSettings.Theme.key,
             AppearanceSettings.DynamicColour.key,
             AppearanceSettings.AccentColour.key,
+            AppearanceSettings.CompactMode.key,
             AppearanceSettings.WidgetBackgroundOpacity.key,
             PlaybackSettings.UsbDacDirectOutput.key,
             ArtworkSettings.WifiOnly.key,

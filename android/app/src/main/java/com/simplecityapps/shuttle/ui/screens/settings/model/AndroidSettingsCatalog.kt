@@ -76,6 +76,11 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         setting = AppearanceSettings.PureBlack,
                         title = StringKey.PREF_PURE_BLACK_TITLE,
                         summary = StringKey.PREF_PURE_BLACK_SUMMARY
+                    ),
+                    SettingItem.Switch(
+                        setting = AppearanceSettings.CompactMode,
+                        title = StringKey.PREF_COMPACT_MODE_TITLE,
+                        summary = StringKey.PREF_COMPACT_MODE_SUMMARY
                     )
                 )
             ),

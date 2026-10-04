@@ -109,6 +109,7 @@ class SettingsScreenTest {
 
         robot.assertDisplayed("Dark")
         robot.assertSwitchOn("Pure black")
+        robot.assertSwitchOff("Compact mode")
         robot.assertSwitchOff("Show Home on launch")
     }
 
