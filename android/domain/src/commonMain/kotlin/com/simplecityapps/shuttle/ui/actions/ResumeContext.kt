@@ -27,6 +27,7 @@ class ResumeContext(
 ) {
     sealed interface Result {
         data object Resumed : Result
+
         /** Play it from the start: [songs] are the selection's, if they were read, else null. */
         data class StartOver(val songs: List<Song>? = null) : Result
         data class Failure(val message: String?) : Result
@@ -42,7 +43,7 @@ class ResumeContext(
         }
         if (point == null) return Result.StartOver()
         val songs = resolveSongs(selection)
-        val song = songs.find { it.mediaProvider == point.mediaProvider && it.path == point.songPath } ?: return Result.StartOver()
+        val song = songs.find { it.mediaProvider == point.mediaProvider && it.path == point.songPath } ?: return Result.StartOver(songs)
 
         // The shuffle mode goes first, as the queue's position is into the order it picks; a queue that fails puts it back.
         val shuffleMode = queueOperations.getShuffleMode()
