@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.songinfo
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.collections.shouldContain
@@ -68,6 +69,15 @@ class SongInfoViewModelTest {
         rows[StringKey.SONG_INFO_REPLAY_GAIN_TRACK] shouldBe "-6.50 dB"
         rows[StringKey.SONG_INFO_REPLAY_GAIN_ALBUM] shouldBe null
         rows[StringKey.SONG_INFO_ARTISTS] shouldBe "A, B"
+    }
+
+    @Test
+    fun `source row names the provider`() {
+        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections().flatMap { it.rows }.first { it.label == StringKey.SONG_INFO_SOURCE }.value
+
+        source(MediaProviderType.MediaStore) shouldBe "Local"
+        source(MediaProviderType.Jellyfin) shouldBe "Jellyfin"
+        source(MediaProviderType.Plex) shouldBe "Plex"
     }
 
     @Test

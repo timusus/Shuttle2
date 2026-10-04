@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.songinfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.format.formatDuration
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
@@ -75,6 +76,7 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
     SongInfoSection(
         StringKey.SONG_INFO_SECTION_FILE,
         listOf(
+            SongInfoRow(StringKey.SONG_INFO_SOURCE, mediaProvider.displayName),
             SongInfoRow(StringKey.SONG_INFO_PATH, displayPath),
             SongInfoRow(StringKey.SONG_INFO_MIME_TYPE, mimeType),
             SongInfoRow(StringKey.SONG_INFO_SIZE, "${formatDecimal(size / 1024.0 / 1024.0, 2)} MB"),
@@ -94,6 +96,15 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
         ),
     ),
 )
+
+/** The provider a song comes from, as people know it; the song doesn't carry which server it came from. */
+internal val MediaProviderType.displayName: String
+    get() = when (this) {
+        MediaProviderType.Shuttle, MediaProviderType.MediaStore -> "Local"
+        MediaProviderType.Jellyfin -> "Jellyfin"
+        MediaProviderType.Emby -> "Emby"
+        MediaProviderType.Plex -> "Plex"
+    }
 
 /** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */
 fun Song.infoChips(): List<String> = listOfNotNull(

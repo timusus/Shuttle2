@@ -44,6 +44,7 @@ val StringKey.resId: Int
         StringKey.SONG_INFO_DISC -> R.string.song_info_disc
         StringKey.SONG_INFO_GENRES -> R.string.song_info_genres
         StringKey.SONG_INFO_LYRICS -> R.string.song_info_lyrics
+        StringKey.SONG_INFO_SOURCE -> R.string.song_info_source
         StringKey.SONG_INFO_PATH -> R.string.song_info_path
         StringKey.SONG_INFO_MIME_TYPE -> R.string.song_info_mime_type
         StringKey.SONG_INFO_SIZE -> R.string.song_info_size

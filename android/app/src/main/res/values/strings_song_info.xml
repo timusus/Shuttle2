@@ -22,6 +22,8 @@
     <string name="song_info_play_count">Play count</string>
     <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Genres</string>
+    <!-- Shown in the song info dialog. Where the song comes from: Local, Jellyfin, Emby or Plex-->
+    <string name="song_info_source">Source</string>
     <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Path</string>
     <!-- Shown in the song info dialog. The song 'MIME type'-->
