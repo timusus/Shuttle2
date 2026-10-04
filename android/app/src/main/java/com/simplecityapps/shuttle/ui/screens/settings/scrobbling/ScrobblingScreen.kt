@@ -1,5 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.settings.scrobbling
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -10,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
@@ -67,11 +71,13 @@ fun ScrobblingScreen(
     }
     // Back from the browser: finish the sign-in if one is waiting, so the user needn't press anything. Only a resume
     // that follows the app being stopped counts (the browser covers the whole activity; a notification shade or dialog
-    // only pauses it), and the flag is saved so it survives a config change or process death while the user is away.
+    // only pauses it), and the flag is saved so it survives process death while the user is away. A stop caused by a
+    // configuration change (rotation, dark mode, locale) is the activity restarting, not the user leaving.
+    val activity = LocalContext.current.findActivity()
     val awaiting = uiState.account == LastFmAccountState.AwaitingApproval
     var leftWhileAwaiting by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
-        if (awaiting) leftWhileAwaiting = true
+        if (awaiting && activity?.isChangingConfigurations != true) leftWhileAwaiting = true
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         val returned = awaiting && leftWhileAwaiting
@@ -155,4 +161,10 @@ fun ScrobblingScreen(
             S2Text(stringResource(R.string.scrobbling_attribution))
         }
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

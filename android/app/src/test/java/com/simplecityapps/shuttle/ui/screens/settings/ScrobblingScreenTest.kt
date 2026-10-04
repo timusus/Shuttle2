@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -15,11 +17,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.util.ReflectionHelpers
 
 @RunWith(RobolectricTestRunner::class)
 class ScrobblingScreenTest {
     @get:Rule
-    val composeTestRule = createComposeRule()
+    val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private val owner = object : LifecycleOwner {
         val registry = LifecycleRegistry.createUnsafe(this)
@@ -31,19 +34,22 @@ class ScrobblingScreenTest {
     private fun setContent() {
         composeTestRule.runOnUiThread { owner.registry.currentState = Lifecycle.State.RESUMED }
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalLifecycleOwner provides owner) {
-                ScrobblingScreen(
-                    uiState = ScrobblingUiState(account = account.value),
-                    onNavigateUp = {},
-                    onSignIn = {},
-                    onFinishSignIn = { finishes++ },
-                    onSignOut = {},
-                    onServerStreamsChange = {},
-                    onApprovalUrlOpened = {},
-                    onMessageShown = {}
-                )
-            }
+            CompositionLocalProvider(LocalLifecycleOwner provides owner) { Screen() }
         }
+    }
+
+    @Composable
+    private fun Screen() {
+        ScrobblingScreen(
+            uiState = ScrobblingUiState(account = account.value),
+            onNavigateUp = {},
+            onSignIn = {},
+            onFinishSignIn = { finishes++ },
+            onSignOut = {},
+            onServerStreamsChange = {},
+            onApprovalUrlOpened = {},
+            onMessageShown = {}
+        )
     }
 
     private fun move(state: Lifecycle.State) {
@@ -94,5 +100,24 @@ class ScrobblingScreenTest {
         move(Lifecycle.State.RESUMED)
 
         finishes shouldBe 0
+    }
+
+    @Test
+    fun `a stop caused by a configuration change does not finish the sign-in on resume`() {
+        setContent()
+        account.value = LastFmAccountState.AwaitingApproval
+        composeTestRule.waitForIdle()
+
+        // What the activity reports while it is being recreated for a rotation, dark-mode or locale change.
+        setChangingConfigurations(true)
+        move(Lifecycle.State.CREATED)
+        setChangingConfigurations(false)
+        move(Lifecycle.State.RESUMED)
+
+        finishes shouldBe 0
+    }
+
+    private fun setChangingConfigurations(changing: Boolean) {
+        ReflectionHelpers.setField(composeTestRule.activity, "mChangingConfigurations", changing)
     }
 }
