@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.playbackreporting
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlin.time.Instant
-import org.junit.Test
 
 class PendingPlaysTest {
     private val store = InMemoryKeyValueStore()
@@ -20,7 +20,7 @@ class PendingPlaysTest {
     }
 
     @Test
-    fun `plays are saved under their key as songId colon epoch millis, comma separated`() {
+    fun `plays are saved under their key as songId colon epoch millis comma separated`() {
         PendingPlays(store).add(play(1))
         PendingPlays(store).add(play(2))
 
@@ -44,7 +44,7 @@ class PendingPlaysTest {
     }
 
     @Test
-    fun `removing plays keeps the rest, and removing the last removes the key`() {
+    fun `removing plays keeps the rest and removing the last removes the key`() {
         val pendingPlays = PendingPlays(store)
         (1L..3L).forEach { songId -> pendingPlays.add(play(songId)) }
 

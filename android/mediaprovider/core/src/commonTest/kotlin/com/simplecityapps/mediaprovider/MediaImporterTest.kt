@@ -183,7 +183,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `each provider keeps how its own import ended, whichever reported last`() = runBlocking<Unit> {
+    fun `each provider keeps how its own import ended whichever reported last`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
         importer.mediaProviders += server
         val import = launch(Dispatchers.Default) { importer.import() }
@@ -205,7 +205,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a source that fails stays outdated while the others are marked current, and the launch re-import runs once`() = runBlocking<Unit> {
+    fun `a source that fails stays outdated while the others are marked current and the launch re-import runs once`() = runBlocking<Unit> {
         val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
         importer.mediaProviders += server
         importer.songTagsOutdated shouldBe true

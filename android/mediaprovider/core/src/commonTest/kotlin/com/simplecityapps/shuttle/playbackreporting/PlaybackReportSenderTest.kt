@@ -1,35 +1,27 @@
 package com.simplecityapps.shuttle.playbackreporting
 
-import android.content.Context
-import com.simplecityapps.createSong
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackSession
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner.Call
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(RobolectricTestRunner::class)
 class PlaybackReportSenderTest {
     private val song = createSong(id = 1, duration = 200_000, mediaProvider = MediaProviderType.Jellyfin)
     private val session = PlaybackSession(song, "session-1")
     private val playedAt = Instant.fromEpochMilliseconds(1_700_000_000_000)
 
-    private val pendingPlays = PendingPlays(
-        SharedPreferencesKeyValueStore(RuntimeEnvironment.getApplication().getSharedPreferences("sender_test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
-    )
+    private val pendingPlays = PendingPlays(InMemoryKeyValueStore())
     private val reporter = FakeReporter()
     private var enabled = true
 
@@ -73,7 +65,7 @@ class PlaybackReportSenderTest {
     }
 
     @Test
-    fun `a failed play-through is kept, and recorded once a later call succeeds`() = runTest {
+    fun `a failed play-through is kept and recorded once a later call succeeds`() = runTest {
         val sender = sender()
         reporter.succeeds = false
 
@@ -112,7 +104,7 @@ class PlaybackReportSenderTest {
     }
 
     @Test
-    fun `pending plays are replayed on request, and a removed song's play is dropped`() = runTest {
+    fun `pending plays are replayed on request and a removed song's play is dropped`() = runTest {
         pendingPlays.add(PendingPlays.Play(song.id, playedAt))
         pendingPlays.add(PendingPlays.Play(99, playedAt))
         val sender = sender()

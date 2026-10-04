@@ -1,13 +1,12 @@
 package com.simplecityapps.shuttle.playbackreporting
 
-import com.simplecityapps.createSong
 import com.simplecityapps.mediaprovider.PlaybackSession
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner.Call
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner.State
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class PlaybackReportPlannerTest {
     private val remoteSong = createSong(id = 1, duration = 200_000, mediaProvider = MediaProviderType.Jellyfin)
@@ -101,7 +100,7 @@ class PlaybackReportPlannerTest {
     }
 
     @Test
-    fun `progress is reported every 10 seconds while playing, not on every tick`() {
+    fun `progress is reported every 10 seconds while playing not on every tick`() {
         playRemoteSong()
 
         (1..99).flatMap { tick -> planner.onProgress(positionMs = tick * 100, nowMs = tick * 100L) }.shouldBeEmpty()
@@ -163,7 +162,7 @@ class PlaybackReportPlannerTest {
     }
 
     @Test
-    fun `a late tick after a track ends does not start it again, a repeat does`() {
+    fun `a late tick after a track ends does not start it again a repeat does`() {
         playRemoteSong()
         planner.onProgress(positionMs = 199_900, nowMs = 199_900)
         planner.onTrackEnded(remoteSong)
@@ -211,7 +210,7 @@ class PlaybackReportPlannerTest {
     }
 
     @Test
-    fun `turning reporting off mid-song stops the play, and turning it back on starts a new one`() {
+    fun `turning reporting off mid-song stops the play and turning it back on starts a new one`() {
         playRemoteSong()
         planner.onProgress(positionMs = 30_000, nowMs = 30_000)
 
