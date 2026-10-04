@@ -46,6 +46,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.timber)
             implementation(libs.androidx.work.runtime.ktx)
+            implementation(libs.androidx.core)
         }
 
         commonTest.dependencies {
@@ -57,6 +58,7 @@ kotlin {
         getByName("androidHostTest").dependencies {
             implementation(libs.junit)
             implementation(libs.robolectric)
+            implementation(libs.androidx.work.testing)
         }
     }
 }
