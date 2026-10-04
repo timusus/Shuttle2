@@ -84,11 +84,9 @@ constructor(
         Paused("paused"),
         Stopped("stopped")
     }
-
-    private companion object {
-        const val LIBRARY_IDENTIFIER = "com.plexapp.plugins.library"
-    }
 }
+
+internal const val LIBRARY_IDENTIFIER = "com.plexapp.plugins.library"
 
 internal const val METADATA_PATH = "/library/metadata/"
 
