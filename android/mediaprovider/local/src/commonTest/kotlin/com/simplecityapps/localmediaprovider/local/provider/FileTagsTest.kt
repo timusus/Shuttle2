@@ -1,7 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class FileTagsTest {
     @Test
@@ -60,7 +60,7 @@ class FileTagsTest {
     }
 
     @Test
-    fun `reads the multi-value artist tags, compilation and MusicBrainz ids of a Vorbis comment file, none split`() {
+    fun `reads the multi-value artist tags compilation and MusicBrainz ids of a Vorbis comment file none split`() {
         // A FLAC tagged by Picard: ARTIST is the display credit, ARTISTS and ALBUMARTISTS hold one value per artist
         val tags =
             mapOf(
@@ -90,7 +90,7 @@ class FileTagsTest {
     }
 
     @Test
-    fun `reads an ID3v2_3 file's joined MusicBrainz ids, its TXXX spellings and TCMP`() {
+    fun `reads an ID3v2_3 file's joined MusicBrainz ids its TXXX spellings and TCMP`() {
         // TagLib maps TCMP to COMPILATION and the UFID frame to MUSICBRAINZ_TRACKID. ID3v2.3 has no multi-value frames,
         // so Picard joins several ids with '/'; a TXXX frame TagLib doesn't know comes through as its description.
         val tags =
@@ -109,7 +109,7 @@ class FileTagsTest {
     }
 
     @Test
-    fun `an MP4 cpil read as true is a compilation, and a malformed id or flag reads as untagged`() {
+    fun `an MP4 cpil read as true is a compilation and a malformed id or flag reads as untagged`() {
         val tags =
             mapOf(
                 "COMPILATION" to listOf("true"),
@@ -167,7 +167,8 @@ class FileTagsTest {
         tags.album shouldBe "Señor ¿Qué?"
     }
 
-    private fun String.asLatin1() = String(toByteArray(Charsets.UTF_8), Charsets.ISO_8859_1)
+    // Each UTF-8 byte as the Latin-1 character of that code
+    private fun String.asLatin1() = encodeToByteArray().joinToString("") { (it.toInt() and 0xFF).toChar().toString() }
 
     @Test
     fun parseDate() {
@@ -175,6 +176,7 @@ class FileTagsTest {
         "2010-00-00".parseDate() shouldBe "2010"
         "2020-04-03T07:00:00Z".parseDate() shouldBe "2020"
         "99".parseDate() shouldBe null
+        "199a".parseDate() shouldBe null
         "unknown".parseDate() shouldBe null
     }
 
@@ -184,5 +186,21 @@ class FileTagsTest {
         mapOf("DATE" to listOf("2017"), "YEAR" to listOf("2002")).toFileTags().year shouldBe "2017"
         mapOf("DATE" to listOf("unknown"), "YEAR" to listOf("2002")).toFileTags().year shouldBe "2002"
         mapOf("ORIGINALDATE" to listOf("n/a"), "DATE" to listOf("2017")).toFileTags().year shouldBe "2017"
+    }
+
+    @Test
+    fun `a track or disc number and a ReplayGain value may be padded`() {
+        val tags =
+            mapOf(
+                "TRACKNUMBER" to listOf("3 / 12"),
+                "DISCNUMBER" to listOf(" 1/2"),
+                "REPLAYGAIN_ALBUM_GAIN" to listOf("+1.25 dB")
+            ).toFileTags()
+
+        tags.track shouldBe 3
+        tags.trackTotal shouldBe 12
+        tags.disc shouldBe 1
+        tags.discTotal shouldBe 2
+        tags.replayGainAlbum shouldBe 1.25
     }
 }
