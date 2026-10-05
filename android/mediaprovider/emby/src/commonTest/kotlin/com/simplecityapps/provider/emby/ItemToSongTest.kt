@@ -95,7 +95,7 @@ class ItemToSongTest {
     }
 
     @Test
-    fun `the audio stream's codec, bit rate, sample rate and channels become the song's`() {
+    fun `the audio stream's codec and bit rate and sample rate and channels become the song's`() {
         val song = parse(
             mediaStreams = """[{"Type": "Video", "Codec": "mjpeg"}, {"Type": "Audio", "Codec": "FLAC", "BitRate": 1411000, "SampleRate": 96000, "Channels": 2}]"""
         ).toSong(SYNCED_AT)
