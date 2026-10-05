@@ -18,6 +18,9 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 - Interactive sessions: anything over ~2 minutes goes through `support/scripts/longjob.sh start <name> -- <cmd>` and one `longjob.sh wait`.
 - `/note` a finding the moment it appears. Then, if context is under ~150k, the fix is small and verifiable, and no running worker owns the files, fix it in the same session and close the issue in the landing commit.
 - Landing (`land.sh`, one light verify under `machine-lock`) and the full-verify watermark: `.claude/rules/landing.md`. Run `land.sh` as a `longjob.sh` batch, never twice for one batch.
+  - `--close BRANCH:N` closes issue N when that branch lands; a bare `--close N` only when every branch in the batch landed.
+  - `full-verify.sh --status` shows how far main is past the full-verify watermark; it runs in a warm, locked worktree.
+  - Full verify runs before every Play release: `/deploy-android` triggers it when the watermark isn't the release commit.
 - `support/scripts/worktree-report.sh` prints worktree count/size; `--prune` removes the safely disposable ones via `worktree-clean.sh`.
 
 ## Build Commands

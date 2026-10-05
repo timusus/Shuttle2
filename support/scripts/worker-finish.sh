@@ -27,7 +27,13 @@ trap 'rm -f "$log"' EXIT
 
 # First error line, with file:line when the tool gave one.
 first_error() {
-  grep -m1 -E '(\.kts?:[0-9]+|^e: |FAILED|error:)' "$log" | sed "s|$PWD/||; s|file://||" | cut -c1-240
+  local line
+  line="$(grep -m1 -E '(\.kts?:[0-9]+|^e: |FAILED|error:)' "$log" | sed "s|$PWD/||; s|file://||" | cut -c1-240)"
+  if [ -n "$line" ]; then
+    printf '%s\n' "$line"
+  else
+    tail -n 5 "$log" | cut -c1-240
+  fi
 }
 
 if support/scripts/lint -F >"$log" 2>&1; then
@@ -66,10 +72,24 @@ else
   echo "tests: skipped (--no-test)"
 fi
 
-git add -A
+# Stage tracked changes, plus untracked files under source paths only; report the rest.
+git add -u
+skipped=""
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.log|brief-*.md|*/brief-*.md|.claude/longjobs/*|build/*|*/build/*) skipped="$skipped $f"; continue ;;
+    android/*|ios/*|shared/*|support/*|docs/*|.claude/rules/*|.claude/skills/*|.githooks/*) git add -- "$f" ;;
+    *) skipped="$skipped $f" ;;
+  esac
+done <<EOF
+$(git -c core.quotePath=false ls-files --others --exclude-standard)
+EOF
+[ -n "$skipped" ] && echo "skipped untracked:$skipped"
+
 if ! git commit -q -m "$msg" >"$log" 2>&1; then
   echo "commit: FAILED"
-  head -n 3 "$log"
+  cat "$log"
   exit 1
 fi
 git log -1 --format='commit: %h %s'

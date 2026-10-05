@@ -7,8 +7,9 @@ paths:
 # Landing and full verify
 
 - **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
-  A worker's brief asks for `unit-test --changed` and nothing wider — no full suite, no emulator/simulator
-  lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
+  A worker verifies with `unit-test --changed-tests` via `worker-finish.sh` and nothing wider — no full suite,
+  no emulator/simulator lease unless the brief needs a screenshot. `lint` covers changed files only
+  (`land.sh` passes `--base` so it lints just the batch's commits). `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
   cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
   (Android: `lint` (check only), `unit-test --changed`, `:android:architecture-tests:testDebugUnitTest` (always, so a layer violation fails the batch that adds it; its own phase, so a failure there still runs assembleDebug), a compile of dependent modules' test sources when domain/shared/core/commonMain sources changed, + assembleDebug; one automatic retry per verify run (so per bisect iteration) with `-Pkotlin.incremental=false` on an `Incremental compilation failed` flake; iOS, only when the picked commits touch `ios/`,
   `shared/`, `android/domain|presentation|core`, or a KMP module's commonMain/commonTest/iosMain/iosTest: framework build, `:<module>:iosSimulatorArm64Test` for just the KMP modules whose commonMain/commonTest/iosMain/iosTest changed (none changed, no Kotlin/Native tests) + app build and just the `S2Tests` classes

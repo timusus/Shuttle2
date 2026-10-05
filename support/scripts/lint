@@ -3,7 +3,7 @@
 #
 #   lint [-F] [files...]      explicit files, else the .kt/.kts files changed against the merge-base
 #                             with origin/main plus staged, unstaged and untracked ones
-#   lint --base <rev> ...     changed since <rev> (land.sh passes the batch's base) instead of the merge-base
+#   lint --base <rev> ...     committed changes <rev>..HEAD only (land.sh passes the batch's base)
 #   lint --all [-F]           the whole tree
 #
 # -F formats in place. Deleted files and generated/ or build/ paths are skipped.
@@ -21,6 +21,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --all) all=1 ;;
     --base) base="${2:?--base needs a revision}"; shift ;;
+    --base=*) base="${1#--base=}" ;;
+    -r|--reporter|--editorconfig|--baseline|--code-style|--log-level) args+=("$1" "${2:?$1 needs a value}"); shift ;;
     -*) args+=("$1") ;;
     *) files+=("$1") ;;
   esac
@@ -28,18 +30,24 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$all" = 1 ]; then
-  exec ktlint ${args[@]+"${args[@]}"} "**.kt" "!**/generated/**" "!**/build/**"
+  exec ktlint ${args[@]+"${args[@]}"} "**.kt" "**.kts" "!**/generated/**" "!**/build/**"
 fi
 
 if [ ${#files[@]} -eq 0 ]; then
   root="$(git rev-parse --show-toplevel)" || exit 1
   cd "$root" || exit 1
-  [ -n "$base" ] || base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
+  if [ -n "$base" ]; then
+    # Committed changes only: land.sh lints the batch as picked, not the working tree.
+    changed() { git -c core.quotePath=false diff --name-only --diff-filter=d "$base" HEAD --; }
+  else
+    base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
+    changed() {
+      git -c core.quotePath=false diff --name-only --diff-filter=d "$base" --
+      git -c core.quotePath=false ls-files --others --exclude-standard
+    }
+  fi
   list="$(
-    {
-      git diff --name-only --diff-filter=d "$base" --
-      git ls-files --others --exclude-standard
-    } | grep -E '\.kts?$' | grep -Ev '(^|/)(generated|build)/' | sort -u
+    changed | grep -E '\.kts?$' | grep -Ev '(^|/)(generated|build)/' | sort -u
   )"
   while IFS= read -r f; do
     [ -n "$f" ] && [ -f "$f" ] && files+=("$f")
