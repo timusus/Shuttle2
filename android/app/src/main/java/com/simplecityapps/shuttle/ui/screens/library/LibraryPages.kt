@@ -39,6 +39,7 @@ import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.theme.S2GridTile
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
@@ -121,7 +122,7 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
     }
 
 /** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
-private val LibraryGridColumns = GridCells.Adaptive(minSize = 160.dp)
+private val LibraryGridColumns = GridCells.Adaptive(minSize = S2GridTile.minimumWidth)
 
 private val GridHorizontalPadding = S2Spacing.medium
 

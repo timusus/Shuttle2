@@ -43,7 +43,12 @@ object S2ContentWidth {
 
 /** A tile's width on a horizontal shelf, so a compact phone shows two and a peek of the third; wider windows take [wide]. */
 object S2ShelfTileWidth {
-    val compact = 150.dp
+    val compact = 140.dp
 
-    val wide = 180.dp
+    val wide = 170.dp
+}
+
+/** The narrowest a catalogue grid tile gets; a grid fits as many columns of at least this width as the window allows. */
+object S2GridTile {
+    val minimumWidth = 140.dp
 }
