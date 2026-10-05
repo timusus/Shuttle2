@@ -33,12 +33,18 @@ class WriteSongTags @Inject constructor(
         val failed = mutableListOf<Song>()
         songs.forEachIndexed { index, (song, file) ->
             onProgress(index, songs.size)
-            if (tagFileAccess.write(song, metadata(file, edits))) updated += song.edited(edits) else failed += song
+            if (tagFileAccess.write(song, metadata(file, edits))) updated += song.withStoredLyrics(edits.containsKey(TagField.Lyrics)).edited(edits) else failed += song
         }
         onProgress(songs.size, songs.size)
         if (updated.isNotEmpty()) songRepository.update(updated)
         return TagWriteResult(updated, failed)
     }
+
+    /**
+     * Library reads leave [Song.lyrics] null (#873) and the update writes the column from the song, so a song whose
+     * lyrics aren't being edited carries its stored ones, or the update would clear them.
+     */
+    private suspend fun Song.withStoredLyrics(lyricsEdited: Boolean): Song = if (lyricsEdited || lyrics != null) this else copy(lyrics = songRepository.loadLyrics(id))
 }
 
 /**

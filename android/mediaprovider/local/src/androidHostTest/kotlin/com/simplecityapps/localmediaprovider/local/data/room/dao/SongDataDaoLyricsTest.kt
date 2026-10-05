@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS_QUALIFIED
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.localmediaprovider.local.repository.createSongData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -60,5 +61,6 @@ class SongDataDaoLyricsTest {
         }
 
         SONG_COLUMNS.split(", ") shouldContainExactlyInAnyOrder columns - "lyrics"
+        SONG_COLUMNS_QUALIFIED.split(", ") shouldContainExactlyInAnyOrder (columns - "lyrics").map { "songs.$it" }
     }
 }

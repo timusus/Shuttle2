@@ -38,6 +38,24 @@ class WriteSongTagsTest {
     }
 
     @Test
+    fun `editing another tag keeps the song's stored lyrics`() = runTest {
+        songRepository.lyrics[1] = "la la la"
+
+        writeSongTags(listOf(EditableSong(createSong(id = 1), createAudioFile())), mapOf(TagField.Title to "New"))
+
+        songRepository.updatedSongs.single().lyrics shouldBe "la la la"
+    }
+
+    @Test
+    fun `clearing the lyrics field clears the stored lyrics`() = runTest {
+        songRepository.lyrics[1] = "la la la"
+
+        writeSongTags(listOf(EditableSong(createSong(id = 1), createAudioFile())), mapOf(TagField.Lyrics to ""))
+
+        songRepository.updatedSongs.single().lyrics shouldBe null
+    }
+
+    @Test
     fun `a failed write leaves the library alone and is reported`() = runTest {
         val good = createSong(id = 1)
         val bad = createSong(id = 2)

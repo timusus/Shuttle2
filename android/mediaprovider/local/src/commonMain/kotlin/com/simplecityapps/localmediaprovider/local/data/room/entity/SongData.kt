@@ -142,7 +142,7 @@ fun List<Song>.toSongData(mediaProviderType: MediaProviderType): List<SongData> 
  * Every `songs` column but `lyrics`, which a whole library's worth of text would otherwise load with every song list
  * (#873). A song's lyrics are read by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.lyrics]
  * when shown. Room leaves [SongData.lyrics] null for a query that omits it; a new column must be added here too (see
- * `SongColumnsTest`).
+ * `SongDataDaoLyricsTest`).
  */
 const val SONG_COLUMNS =
     "id, name, track, disc, duration, year, genres, path, albumArtist, artists, album, size, mimeType, lastModified, " +
