@@ -212,6 +212,18 @@ class SongDiffTest {
     }
 
     @Test
+    fun `a remote song played at the stored time below a millisecond is not an update, and merges at the stored precision`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport)
+
+        // Jellyfin and Emby report up to seven fractional digits; the database keeps milliseconds
+        val resynced = createSong(id = 0, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport + 999_900.nanoseconds)
+        SongDiff(listOf(stored), listOf(resynced)).apply().updates shouldBe emptyList()
+
+        val renamed = resynced.copy(name = "Renamed")
+        SongDiff(listOf(stored), listOf(renamed)).apply().updates.single().lastPlayed shouldBe firstImport
+    }
+
+    @Test
     fun `a server that reports no plays keeps the stored play stats`() = runTest {
         val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport)
 

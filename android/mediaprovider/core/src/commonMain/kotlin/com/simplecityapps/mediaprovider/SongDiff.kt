@@ -19,17 +19,13 @@ class SongDiff(
         oldData: Song,
         updated: Song
     ): Boolean {
-        // The database stores epoch milliseconds, but Jellyfin and Emby parse ISO strings with up to seven fractional
-        // digits, so an instant only counts as changed at the stored precision
-        fun Instant?.atStoredPrecision(): Instant? = this?.toEpochMilliseconds()?.let(Instant::fromEpochMilliseconds)
-
         val old = oldData.copy(
             lastModified = oldData.lastModified.atStoredPrecision(),
             dateAdded = oldData.dateAdded.atStoredPrecision(),
             favouritedAt = oldData.favouritedAt.atStoredPrecision()
         )
 
-        return updated.keepingStoredBitDepth(old).keepingStoredStreamProperties(old).copy(
+        return updated.copy(lastPlayed = updated.lastPlayed.atStoredPrecision()).keepingStoredBitDepth(old).keepingStoredStreamProperties(old).copy(
             lastPlayed = if (old.mediaProvider.remote) mergedPlayStats(old, updated).lastPlayed else old.lastPlayed,
             lastCompleted = old.lastCompleted,
             playCount = if (old.mediaProvider.remote) mergedPlayStats(old, updated).playCount else old.playCount,
@@ -57,13 +53,19 @@ class SongDiff(
     ): Song = newData.keepingStoredBitDepth(oldData).keepingStoredStreamProperties(oldData).copy(
         id = oldData.id,
         playCount = mergedPlayStats(oldData, newData).playCount,
-        lastPlayed = mergedPlayStats(oldData, newData).lastPlayed,
+        lastPlayed = mergedPlayStats(oldData, newData.copy(lastPlayed = newData.lastPlayed.atStoredPrecision())).lastPlayed,
         // A provider with no date for the song keeps the one from its first import, rather than looking newly added
         lastModified = newData.lastModified ?: oldData.lastModified,
         // The server's date for a remote song, which replaces an older import stamp; otherwise (local songs) the one
         // stamped when the song first reached the library, which a tag edit or rescan doesn't move
         dateAdded = newData.dateAdded ?: oldData.dateAdded
     )
+
+    /**
+     * The database stores epoch milliseconds, but Jellyfin and Emby parse ISO strings with up to seven fractional digits,
+     * so an instant only counts as changed, or wins the last-played merge, at the stored precision.
+     */
+    private fun Instant?.atStoredPrecision(): Instant? = this?.toEpochMilliseconds()?.let(Instant::fromEpochMilliseconds)
 
     /**
      * The stream properties a provider reports, else the stored ones: the MediaStore scan reports none, and a TagLib
