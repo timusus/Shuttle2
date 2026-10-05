@@ -298,7 +298,7 @@ class PlexMediaProviderTest {
 
         provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
-        server.requestsTo(ITEMS).filter { it.url.parameters["userRating"] == null }.single().url.parameters["updatedAt>>"] shouldBe
+        server.requestsTo(ITEMS).filter { it.url.parameters["userRating"] == null && it.url.parameters["lastViewedAt>>"] == null }.single().url.parameters["updatedAt>>"] shouldBe
             "${Instant.parse("2026-10-01T08:00:00Z").epochSeconds - 1}"
     }
 
