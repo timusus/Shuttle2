@@ -23,6 +23,7 @@ class ServerTypePickerTest {
         robot.assertTextDisplayed("Jellyfin")
         robot.assertTextDisplayed("Emby")
         robot.assertTextDisplayed("Plex")
+        robot.assertTextDisplayed("Navidrome / Subsonic")
     }
 
     @Test
@@ -32,5 +33,14 @@ class ServerTypePickerTest {
         robot.clickText("Plex")
 
         robot.selected shouldBe listOf(MediaProviderType.Plex)
+    }
+
+    @Test
+    fun `choosing Subsonic reports it`() {
+        robot.setContent()
+
+        robot.clickText("Navidrome / Subsonic")
+
+        robot.selected shouldBe listOf(MediaProviderType.Subsonic)
     }
 }

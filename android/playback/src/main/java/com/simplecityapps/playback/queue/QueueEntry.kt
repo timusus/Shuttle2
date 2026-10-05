@@ -26,7 +26,7 @@ fun QueueEntry.toQueueItem(isCurrent: Boolean): QueueItem = QueueItem(uid, song,
 
 /**
  * The [MediaItem] the player queues for this entry. Its URI is the song's own path: a remote song's `jellyfin://`,
- * `emby://` or `plex://` URI is resolved to a stream URL only when the player opens it
+ * `emby://`, `plex://` or `subsonic://` URI is resolved to a stream URL only when the player opens it
  * (see [com.simplecityapps.playback.engine.SongUriResolver]).
  *
  * Its metadata is what the media session shows (the notification, the lock screen, Android Auto). It carries no

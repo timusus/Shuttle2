@@ -19,7 +19,8 @@ class DefaultServerSessionsTest {
     private val jellyfin = store("jellyfin")
     private val emby = store("emby")
     private val plex = store("plex")
-    private val sessions = DefaultServerSessions(jellyfin, emby, plex)
+    private val subsonic = store("subsonic")
+    private val sessions = DefaultServerSessions(jellyfin, emby, plex, subsonic)
 
     private fun store(prefix: String) = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), prefix)
 
@@ -28,11 +29,11 @@ class DefaultServerSessionsTest {
         val expired = mutableListOf<MediaProviderType>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { sessions.expired.toList(expired) }
 
-        for (store in listOf(jellyfin, emby, plex)) {
+        for (store in listOf(jellyfin, emby, plex, subsonic)) {
             store.authenticatedCredentials = session
             store.expireSession(session)
         }
 
-        expired shouldBe listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex)
+        expired shouldBe listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex, MediaProviderType.Subsonic)
     }
 }

@@ -124,6 +124,17 @@ class ServerSignInViewModelTest {
     }
 
     @Test
+    fun `Subsonic needs the password but not a username - an API key signs in alone`() = runTest {
+        val viewModel = viewModel(MediaProviderType.Subsonic)
+
+        viewModel.onAuthenticate()
+
+        viewModel.form.missing shouldBe setOf(ServerSignInField.Password)
+        viewModel.uiState.value.acceptsApiKey shouldBe true
+        server.authenticated shouldBe emptyList()
+    }
+
+    @Test
     fun `typing into a missing field clears its error`() = runTest {
         val viewModel = viewModel()
         viewModel.onAddressChange("")

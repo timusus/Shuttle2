@@ -23,7 +23,7 @@ class PaywallScreenTest {
         robot.assertDisplayed(TRIAL_AVAILABLE)
         robot.assertDisplayed(TRIAL_TERMS)
         robot.assertDisplayed("What you get")
-        robot.assertDisplayed("Stream from Jellyfin, Emby and Plex")
+        robot.assertDisplayed("Stream from Jellyfin, Emby, Plex and Navidrome")
         robot.assertDisplayed("$9.99 once")
         robot.assertDisplayed("$3.99 / year")
         robot.assertDisplayed("Renews yearly · cancel anytime in Google Play")

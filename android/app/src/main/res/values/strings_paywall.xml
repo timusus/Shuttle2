@@ -3,7 +3,7 @@
     <!-- Title of the Shuttle Music Pro screen, and its row in Settings -->
     <string name="paywall_title">Shuttle Music Pro</string>
     <!-- Summary of the Shuttle Music Pro row in Settings -->
-    <string name="paywall_settings_summary">Stream from Jellyfin, Emby and Plex</string>
+    <string name="paywall_settings_summary">Stream from Jellyfin, Emby, Plex and Navidrome</string>
     <!-- Summary of the Shuttle Music Pro row in Settings when the user has Pro -->
     <string name="paywall_settings_summary_pro">Thank you for your support</string>
     <!-- Shuttle Music Pro screen: status while Google Play hasn't yet said whether the user owns Shuttle Music Pro (e.g. offline) -->
@@ -23,7 +23,7 @@
     <string name="paywall_status_pro">You have Shuttle Music Pro. Thank you for supporting Shuttle Music.</string>
     <!-- Shuttle Music Pro screen: heading of the list of what Pro unlocks -->
     <string name="paywall_benefits_heading">What you get</string>
-    <string name="paywall_benefit_streaming">Stream from Jellyfin, Emby and Plex</string>
+    <string name="paywall_benefit_streaming">Stream from Jellyfin, Emby, Plex and Navidrome</string>
     <string name="paywall_benefit_downloads">Download server songs for offline listening</string>
     <string name="paywall_benefit_free">Local playback, Chromecast, EQ, Android Auto and downloaded songs stay free</string>
     <!-- Shuttle Music Pro screen: heading of the plans -->
@@ -59,6 +59,6 @@
     <string name="paywall_restored">Your purchase has been restored</string>
     <string name="paywall_nothing_to_restore">No Shuttle Music Pro purchase found for this Google account</string>
     <string name="paywall_restore_failed">Couldn\'t reach Google Play. Please try again.</string>
-    <!-- Add-server sign-in dialog: shown to Free users before they connect to a Jellyfin, Emby or Plex server -->
-    <string name="paywall_server_disclosure">Streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro. Free for 14 days.</string>
+    <!-- Add-server sign-in dialog: shown to Free users before they connect to a Jellyfin, Emby, Plex or Subsonic server -->
+    <string name="paywall_server_disclosure">Streaming from Jellyfin, Emby, Plex and Navidrome is part of Shuttle Music Pro. Free for 14 days.</string>
 </resources>

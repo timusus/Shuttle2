@@ -16,6 +16,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.provider.emby.EmbyStreamUrlProvider
 import com.simplecityapps.provider.jellyfin.JellyfinStreamUrlProvider
 import com.simplecityapps.provider.plex.PlexStreamUrlProvider
+import com.simplecityapps.provider.subsonic.SubsonicStreamUrlProvider
 import com.simplecityapps.shuttle.di.AppSupervisorJob
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -42,7 +43,7 @@ import kotlinx.coroutines.Job
 /**
  * iOS playback: the [IosPlayerController] over the Swift engine the graph's factory is given, as the app's
  * [PlaybackOperations] and [QueueOperations], so the shared use cases resolve unchanged, and the [StreamProfile] its
- * FFmpeg build plays, for the Jellyfin, Emby and Plex stream URLs, which need Pro or the trial ([GatedServerStreams]); this
+ * FFmpeg build plays, for the Jellyfin, Emby, Plex and Subsonic stream URLs, which need Pro or the trial ([GatedServerStreams]); this
  * device's songs play from their files, ungated. The equalizer ([IosEqualizer]) designs the engine's
  * filters with the shared maths, and each resolved stream carries its ReplayGain. The queue, position, modes and speed
  * are kept across launches in Android's prefs ([PlaybackPreferenceManager]) by an [IosPlaybackStore] started with the
@@ -61,6 +62,7 @@ class IosPlaybackModule {
         emby: EmbyStreamUrlProvider,
         localFiles: IosLocalStreamUrls,
         plex: PlexStreamUrlProvider,
+        subsonic: SubsonicStreamUrlProvider,
         playbackSettings: PlaybackSettings,
         gatedServerStreams: GatedServerStreams,
         downloads: OfflineDownloads
@@ -68,7 +70,7 @@ class IosPlaybackModule {
         val replayGainMode = playbackSettings.replayGainMode
         val preAmpGain = playbackSettings.preAmpGain
         return SongStreamResolver(
-            listOf(jellyfin, emby, plex),
+            listOf(jellyfin, emby, plex, subsonic),
             { replayGainMode.value },
             { preAmpGain.value },
             serverStreamAccess = gatedServerStreams::access,

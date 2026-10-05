@@ -225,7 +225,7 @@ private fun BenefitIcon(icon: ImageVector) {
     Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
 }
 
-/** The Jellyfin, Emby and Plex marks, in their own colours. Decorative: the benefit's text names them. */
+/** The Jellyfin, Emby, Plex and Subsonic marks, in their own colours. Decorative: the benefit's text names them. */
 @Composable
 private fun ServerMarks() {
     Row(horizontalArrangement = Arrangement.spacedBy(ServerMarkSpacing)) {
@@ -237,7 +237,7 @@ private fun ServerMarks() {
 
 private val ServerMarkSize = 20.dp
 private val ServerMarkSpacing = 4.dp
-private val BenefitLeadingWidth = ServerMarkSize * 3 + ServerMarkSpacing * 2
+private val BenefitLeadingWidth = ServerMarkSize * ServerTypes.size + ServerMarkSpacing * (ServerTypes.size - 1)
 
 /** The premium glyph beside the heading. */
 private val HeroIconSize = 32.dp

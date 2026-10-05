@@ -11,6 +11,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.provider.subsonic.SubsonicMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -29,8 +30,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * The library's sources on iOS: this device's files (the S2 scanner, [MediaProviderType.Shuttle]), Jellyfin, Emby
- * and Plex. The iOS counterpart of Android's `DefaultMediaSources`, reading and saving the enabled types through
+ * The library's sources on iOS: this device's files (the S2 scanner, [MediaProviderType.Shuttle]), Jellyfin, Emby,
+ * Plex and Subsonic. The iOS counterpart of Android's `DefaultMediaSources`, reading and saving the enabled types through
  * the shared [PlaybackPreferenceManager.mediaProviderTypes]; a fresh install reads this device's files, as Android's
  * scanner starts on. Hands the saved providers to the importer when it's created.
  */
@@ -44,6 +45,7 @@ class IosMediaSources @Inject constructor(
     private val embyMediaProvider: EmbyMediaProvider,
     private val localMediaProvider: IosLocalMediaProvider,
     private val plexMediaProvider: PlexMediaProvider,
+    private val subsonicMediaProvider: SubsonicMediaProvider,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
     private val queueOperations: QueueOperations,
@@ -104,6 +106,7 @@ class IosMediaSources @Inject constructor(
         MediaProviderType.Jellyfin -> jellyfinMediaProvider
         MediaProviderType.Emby -> embyMediaProvider
         MediaProviderType.Plex -> plexMediaProvider
+        MediaProviderType.Subsonic -> subsonicMediaProvider
         MediaProviderType.MediaStore -> null
     }
 }

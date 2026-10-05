@@ -104,6 +104,7 @@ class IosAppGraphTest {
         graph.serverSignInViewModelFactory.create(MediaProviderType.Jellyfin).shouldBeInstanceOf<ServerSignInViewModel>()
         graph.serverSignInViewModelFactory.create(MediaProviderType.Emby).shouldBeInstanceOf<ServerSignInViewModel>()
         graph.serverSignInViewModelFactory.create(MediaProviderType.Plex).shouldBeInstanceOf<ServerSignInViewModel>()
+        graph.serverSignInViewModelFactory.create(MediaProviderType.Subsonic).shouldBeInstanceOf<ServerSignInViewModel>()
     }
 
     @Test

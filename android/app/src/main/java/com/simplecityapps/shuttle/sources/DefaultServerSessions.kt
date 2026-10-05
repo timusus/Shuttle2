@@ -18,10 +18,12 @@ class DefaultServerSessions @Inject constructor(
     @Named("JellyfinCredentialStore") jellyfin: ServerCredentialStore,
     @Named("EmbyCredentialStore") emby: ServerCredentialStore,
     @Named("PlexCredentialStore") plex: ServerCredentialStore,
+    @Named("SubsonicCredentialStore") subsonic: ServerCredentialStore,
 ) : ServerSessions {
     override val expired: Flow<MediaProviderType> = merge(
         jellyfin.sessionExpired.map { MediaProviderType.Jellyfin },
         emby.sessionExpired.map { MediaProviderType.Emby },
         plex.sessionExpired.map { MediaProviderType.Plex },
+        subsonic.sessionExpired.map { MediaProviderType.Subsonic },
     )
 }

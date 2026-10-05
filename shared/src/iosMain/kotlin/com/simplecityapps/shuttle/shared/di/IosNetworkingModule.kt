@@ -22,9 +22,9 @@ import io.ktor.client.HttpClient
 import platform.UIKit.UIDevice
 
 /**
- * What the Jellyfin, Emby and Plex providers need from the platform (docs/architecture/ios-port/phase-3-network.md): a
+ * What the Jellyfin, Emby, Plex and Subsonic providers need from the platform (docs/architecture/ios-port/phase-3-network.md): a
  * Darwin [HttpClient] each and, for Jellyfin and Emby, a Keychain-backed [ServerCredentialStore] (Plex's container
- * makes its own), under the names their containers ask for, and the [ClientIdentity] the servers list this device under.
+ * makes its own, as Subsonic's does), under the names their containers ask for, and the [ClientIdentity] the servers list this device under.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -66,6 +66,11 @@ abstract class IosNetworkingModule {
         ): HttpClient = createHttpClient(connectivity = connectivity) {
             sendPlexClientHeaders(plexClientHeaders(clientIdentity))
         }
+
+        @Provides
+        @SingleIn(AppScope::class)
+        @Named("SubsonicHttpClient")
+        fun provideSubsonicHttpClient(connectivity: NetworkConnectivity): HttpClient = createHttpClient(connectivity = connectivity)
 
         /** The client name Android sends too, so a server groups both apps' sessions under S2. */
         @Provides

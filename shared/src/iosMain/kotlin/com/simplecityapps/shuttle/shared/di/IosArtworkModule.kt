@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
+import com.simplecityapps.provider.subsonic.SignedSubsonicArtworkProvider
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
@@ -16,8 +17,9 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 
 /**
- * Artwork urls on the signed-in Jellyfin, Emby or Plex server, the iOS twin of Android's `ImageLoaderModule` aggregate,
- * and the artwork seed colour. Plex's urls carry no token: each request asks the provider for its `X-Plex-Token` header.
+ * Artwork urls on the signed-in Jellyfin, Emby, Plex or Subsonic server, the iOS twin of Android's `ImageLoaderModule`
+ * aggregate, and the artwork seed colour. Plex's urls carry no token: each request asks the provider for its
+ * `X-Plex-Token` header. Subsonic's come signed, as it takes credentials only in the url.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -27,8 +29,9 @@ class IosArtworkModule {
     fun provideRemoteArtworkProvider(
         jellyfin: JellyfinRemoteArtworkProvider,
         emby: EmbyRemoteArtworkProvider,
-        plex: PlexRemoteArtworkProvider
-    ): RemoteArtworkProvider = AggregateRemoteArtworkProvider(setOf(jellyfin, emby, plex))
+        plex: PlexRemoteArtworkProvider,
+        subsonic: SignedSubsonicArtworkProvider
+    ): RemoteArtworkProvider = AggregateRemoteArtworkProvider(setOf(jellyfin, emby, plex, subsonic))
 
     /**
      * No artwork seed on iOS yet (S9, phase-4-platform-seams.md): Swift decodes the artwork, and nothing extracts a

@@ -45,6 +45,17 @@ class ServerSignInTest {
     }
 
     @Test
+    fun `Subsonic says an API key can stand in for the username and password`() {
+        robot.setContent(serverSignInForm(MediaProviderType.Subsonic))
+
+        robot.assertTextDisplayed("Navidrome / Subsonic server")
+        robot.assertTextDisplayed("e.g. http://my.server.com:4533")
+        robot.assertTextDisplayed("Leave empty to sign in with an API key as the password")
+        robot.assertTextNotDisplayed("2FA Code")
+        robot.assertFieldCount(3)
+    }
+
+    @Test
     fun `the fields show what's filled in and report typing`() {
         robot.setContent(serverSignInForm(MediaProviderType.Plex, ServerSignInForm(address = "http://plex:32400", username = "sam")))
 
@@ -102,14 +113,14 @@ class ServerSignInTest {
     fun `a Free user sees the streaming disclosure before connecting`() {
         robot.setContent(serverSignInForm(showProDisclosure = true))
 
-        robot.assertTextDisplayed("Streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro. Free for 14 days.")
+        robot.assertTextDisplayed("Streaming from Jellyfin, Emby, Plex and Navidrome is part of Shuttle Music Pro. Free for 14 days.")
     }
 
     @Test
     fun `a Trial or Pro user doesn't see the disclosure`() {
         robot.setContent(serverSignInForm(showProDisclosure = false))
 
-        robot.assertTextNotDisplayed("Streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro. Free for 14 days.")
+        robot.assertTextNotDisplayed("Streaming from Jellyfin, Emby, Plex and Navidrome is part of Shuttle Music Pro. Free for 14 days.")
     }
 
     @Test

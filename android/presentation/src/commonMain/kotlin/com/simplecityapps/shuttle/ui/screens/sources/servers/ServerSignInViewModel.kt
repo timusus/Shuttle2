@@ -74,6 +74,9 @@ data class ServerSignInUiState(
 ) {
     /** Plex takes a two-factor code, and needs the password. */
     val asksForAuthCode: Boolean get() = type == MediaProviderType.Plex
+
+    /** A Subsonic server takes an OpenSubsonic API key in the password field in place of a username and password. */
+    val acceptsApiKey: Boolean get() = type == MediaProviderType.Subsonic
 }
 
 sealed interface ServerSignInEvent {
@@ -249,8 +252,9 @@ class ServerSignInViewModel @AssistedInject constructor(
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
         if (serverAddress(form.address) == null) add(ServerSignInField.Address)
-        if (form.username.isEmpty()) add(ServerSignInField.Username)
-        if (type == MediaProviderType.Plex && form.password.isEmpty()) add(ServerSignInField.Password)
+        // A Subsonic sign-in with no username is an API key's, in the password field
+        if (form.username.isEmpty() && type != MediaProviderType.Subsonic) add(ServerSignInField.Username)
+        if ((type == MediaProviderType.Plex || type == MediaProviderType.Subsonic) && form.password.isEmpty()) add(ServerSignInField.Password)
     }
 
     private companion object {

@@ -61,7 +61,7 @@ class ServerSignInActions(
     val onCancelQuickConnect: () -> Unit,
 )
 
-/** A Jellyfin, Emby or Plex server's sign-in dialog. */
+/** A Jellyfin, Emby, Plex or Subsonic server's sign-in dialog. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerSignInDialog(
@@ -131,7 +131,7 @@ private fun SignInFields(
             onValueChange = actions.onAddressChange,
             label = { Text(stringResource(R.string.media_provider_config_hint_address)) },
             supportingText = {
-                Text(if (addressMissing) required else stringResource(if (uiState.asksForAuthCode) R.string.media_provider_config_helper_address_plex else R.string.media_provider_config_helper_address))
+                Text(if (addressMissing) required else stringResource(uiState.type.addressHelperRes))
             },
             isError = addressMissing,
             singleLine = true,
@@ -143,7 +143,11 @@ private fun SignInFields(
             value = form.username,
             onValueChange = actions.onUsernameChange,
             label = { Text(stringResource(R.string.media_provider_config_hint_username)) },
-            supportingText = if (usernameMissing) ({ Text(required) }) else null,
+            supportingText = when {
+                usernameMissing -> ({ Text(required) })
+                uiState.acceptsApiKey -> ({ Text(stringResource(R.string.media_provider_config_helper_username_api_key)) })
+                else -> null
+            },
             isError = usernameMissing,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -266,7 +270,16 @@ private val MediaProviderType.longTitleRes: Int
         MediaProviderType.Jellyfin -> MediaProviderR.string.media_provider_title_long_jellyfin
         MediaProviderType.Emby -> MediaProviderR.string.media_provider_title_long_emby
         MediaProviderType.Plex -> MediaProviderR.string.media_provider_title_long_plex
+        MediaProviderType.Subsonic -> MediaProviderR.string.media_provider_title_long_subsonic
         MediaProviderType.Shuttle, MediaProviderType.MediaStore -> error("$this has no sign-in")
+    }
+
+@get:StringRes
+private val MediaProviderType.addressHelperRes: Int
+    get() = when (this) {
+        MediaProviderType.Plex -> R.string.media_provider_config_helper_address_plex
+        MediaProviderType.Subsonic -> R.string.media_provider_config_helper_address_subsonic
+        else -> R.string.media_provider_config_helper_address
     }
 
 private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})

@@ -81,6 +81,20 @@ class SubsonicReportingTest {
     }
 
     @Test
+    fun `where the image loader can't sign a request, the url comes signed`() {
+        subsonic.signIn()
+        val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
+        val signed = SignedSubsonicArtworkProvider(artwork, subsonic.authenticationManager, subsonic.service)
+
+        val url = Url(runBlocking { signed.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE")) }!!)
+
+        url.parameters["id"] shouldBe "mf-5zTXFMk8oDiQF9kh1gqcJE"
+        url.parameters["u"] shouldBe TestSubsonic.USERNAME
+        url.parameters["t"] shouldBe md5Hex(TestSubsonic.PASSWORD + url.parameters["s"])
+        signed.handles("subsonic") shouldBe true
+    }
+
+    @Test
     fun `album art falls back to the album's cover`() {
         subsonic.signIn()
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)

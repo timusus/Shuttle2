@@ -22,7 +22,7 @@
     <string name="song_info_play_count">Play count</string>
     <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Genres</string>
-    <!-- Shown in the song info dialog. Where the song comes from: this device, Jellyfin, Emby or Plex-->
+    <!-- Shown in the song info dialog. Where the song comes from: this device, Jellyfin, Emby, Plex or Subsonic-->
     <string name="song_info_source">Source</string>
     <!-- Shown in the song info dialog. The Source row's value for a song from this device's own library -->
     <string name="song_info_source_this_device">This device</string>

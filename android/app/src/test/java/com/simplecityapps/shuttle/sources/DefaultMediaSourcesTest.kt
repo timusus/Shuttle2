@@ -50,6 +50,7 @@ class DefaultMediaSourcesTest {
         embyMediaProvider = mockk(relaxed = true),
         jellyfinMediaProvider = jellyfin,
         plexMediaProvider = mockk(relaxed = true),
+        subsonicMediaProvider = mockk(relaxed = true),
         songRepository = songRepository,
         playlistRepository = playlistRepository,
         queueOperations = queueOperations,

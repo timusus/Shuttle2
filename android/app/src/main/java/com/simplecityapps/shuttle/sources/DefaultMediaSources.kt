@@ -13,6 +13,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.provider.subsonic.SubsonicMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -38,6 +39,7 @@ class DefaultMediaSources @Inject constructor(
     private val embyMediaProvider: EmbyMediaProvider,
     private val jellyfinMediaProvider: JellyfinMediaProvider,
     private val plexMediaProvider: PlexMediaProvider,
+    private val subsonicMediaProvider: SubsonicMediaProvider,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
     private val queueOperations: QueueOperations,
@@ -97,5 +99,6 @@ class DefaultMediaSources @Inject constructor(
         MediaProviderType.Emby -> embyMediaProvider
         MediaProviderType.Jellyfin -> jellyfinMediaProvider
         MediaProviderType.Plex -> plexMediaProvider
+        MediaProviderType.Subsonic -> subsonicMediaProvider
     }
 }

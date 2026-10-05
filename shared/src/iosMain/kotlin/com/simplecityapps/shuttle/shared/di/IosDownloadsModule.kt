@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.shared.di
 import com.simplecityapps.provider.emby.EmbyStreamUrlProvider
 import com.simplecityapps.provider.jellyfin.JellyfinStreamUrlProvider
 import com.simplecityapps.provider.plex.PlexStreamUrlProvider
+import com.simplecityapps.provider.subsonic.SubsonicStreamUrlProvider
 import com.simplecityapps.shuttle.shared.IosStorage
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
@@ -28,8 +29,9 @@ class IosDownloadsModule {
         jellyfin: JellyfinStreamUrlProvider,
         emby: EmbyStreamUrlProvider,
         plex: PlexStreamUrlProvider,
+        subsonic: SubsonicStreamUrlProvider,
         transport: UrlSessionDownloads
-    ): OfflineDownloads = OfflineDownloads(listOf(jellyfin, emby, plex), transport)
+    ): OfflineDownloads = OfflineDownloads(listOf(jellyfin, emby, plex, subsonic), transport)
 
     @Provides
     fun provideSongDownloader(downloads: OfflineDownloads): SongDownloader = downloads

@@ -64,7 +64,7 @@ sealed interface SourcesEvent {
     data object FolderNotOnDevice : SourcesEvent
 }
 
-val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex)
+val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex, MediaProviderType.Subsonic)
 
 /**
  * Settings > Sources (#379): this device on or off, the S2 scanner's folders, a rescan, and the media servers, each

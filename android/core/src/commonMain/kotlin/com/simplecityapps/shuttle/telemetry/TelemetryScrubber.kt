@@ -6,7 +6,8 @@ package com.simplecityapps.shuttle.telemetry
  * becomes a placeholder saying what it was, so a report still reads.
  *
  * - URLs of any scheme (`https://`, `file://`, `content://`), whole
- * - credentials outside a URL (`user=`, `token=`, `api_key=`, `X-Plex-Token=` and the like)
+ * - credentials outside a URL (`user=`, `token=`, `api_key=`, `X-Plex-Token=` and the like, and Subsonic's `u`, `t`,
+ *   `s` and `p` query parameters)
  * - email addresses, IPv4 and IPv6 addresses
  * - host names of any case (`music.example.com`, `Tims-NAS.local`), leaving code names (`kotlin.`, `com.simplecityapps.`)
  *   and source files (`Queue.kt`) be; a single-label one (`homeserver`) where the text marks it as a host: after
@@ -40,7 +41,7 @@ object TelemetryScrubber {
     }
 
     private val CREDENTIAL = Regex(
-        """(?i)\b(user(?:name|_?id)?|token|access_?token|api_?key|x-(?:plex|emby|mediabrowser)-token|password|pw|auth(?:orization)?)=([^&\s"',;()\[\]{}<>]+)"""
+        """(?i)\b(user(?:name|_?id)?|token|access_?token|api_?key|x-(?:plex|emby|mediabrowser)-token|password|pw|auth(?:orization)?|(?<=[?&])[utsp])=([^&\s"',;()\[\]{}<>]+)"""
     )
     private val URL = Regex("""\b[a-zA-Z][a-zA-Z0-9+.-]*://[^\s"'<>]+""")
     private val EMAIL = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")

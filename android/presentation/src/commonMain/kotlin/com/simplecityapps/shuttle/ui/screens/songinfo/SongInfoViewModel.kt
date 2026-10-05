@@ -110,6 +110,7 @@ internal fun MediaProviderType.songInfoSourceRow(): SongInfoRow = when (this) {
     MediaProviderType.Jellyfin -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Jellyfin")
     MediaProviderType.Emby -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Emby")
     MediaProviderType.Plex -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Plex")
+    MediaProviderType.Subsonic -> SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Subsonic")
 }
 
 /** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */

@@ -53,7 +53,7 @@ class BackedUpSettingsTest {
     @Test
     fun `secrets and per-device state are never exported`() {
         val excluded = mapOf(
-            "credentials and tokens" to listOf("jellyfin_access_token", "jellyfin_address", "jellyfin_username", "jellyfin_pass", "jellyfin_user_id", "plex_token"),
+            "credentials and tokens" to listOf("jellyfin_access_token", "jellyfin_address", "jellyfin_username", "jellyfin_pass", "jellyfin_user_id", "plex_token", "subsonic_pass"),
             "billing and trial" to listOf("app_purchased_date", "server_trial_started_at", "cached_pro_seen_at"),
             "SAF URIs and paths" to listOf("scanner_included_folders", "scanner_excluded_folders", "scanner_extra_folders"),
             "onboarding flags" to listOf("onboarding_completed", "changelog_show_on_launch", "last_viewed_changelog_version", "pref_analytics_consent_asked", "pref_analytics_notice_shown"),

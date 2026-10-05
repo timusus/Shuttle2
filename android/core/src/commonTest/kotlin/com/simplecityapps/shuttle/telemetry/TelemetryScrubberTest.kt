@@ -20,6 +20,8 @@ class TelemetryScrubberTest {
             "retry user=<redacted> token=<redacted>&X-Plex-Token=<redacted> api_key=<redacted>"
         scrub("userId=abc-123") shouldBe "userId=<redacted>"
         scrub("failed (token=abc) [pw=x]") shouldBe "failed (token=<redacted>) [pw=<redacted>]"
+        scrub("query ?id=1&u=sam&t=26719a&s=c19b2d&p=enc:73") shouldBe "query ?id=1&u=<redacted>&t=<redacted>&s=<redacted>&p=<redacted>"
+        scrub("a=1 s=2") shouldBe "a=1 s=2"
     }
 
     @Test

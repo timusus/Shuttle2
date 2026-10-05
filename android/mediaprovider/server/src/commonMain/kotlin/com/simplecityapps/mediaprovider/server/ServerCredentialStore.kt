@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  * A media server's address and credentials, kept in [SecurePreferenceManager] under `<prefix>_*` keys: `jellyfin`,
- * `emby` and `plex` read the keys each provider has always written, so existing sign-ins carry over. [addressKey]
+ * `emby` and `plex` read the keys each provider has always written, so existing sign-ins carry over; `subsonic` is new. [addressKey]
  * is there for Plex, which has always stored its address as `plex_host`.
  */
 class ServerCredentialStore(

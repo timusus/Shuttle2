@@ -266,7 +266,7 @@ class SourcesViewModelTest {
         val device = Instant.fromEpochMilliseconds(1_000)
         val jellyfin = Instant.fromEpochMilliseconds(2_000)
         viewModel.uiState.value.deviceUpdated shouldBe null
-        viewModel.uiState.value.servers.map { it.updated } shouldBe listOf(null, null, null)
+        viewModel.uiState.value.servers.map { it.updated } shouldBe listOf(null, null, null, null)
 
         preferences.setSourceUpdated("Shuttle", device)
         preferences.setSourceUpdated("Jellyfin", jellyfin)
@@ -276,6 +276,7 @@ class SourcesViewModelTest {
             MediaProviderType.Jellyfin to jellyfin,
             MediaProviderType.Emby to null,
             MediaProviderType.Plex to null,
+            MediaProviderType.Subsonic to null,
         )
     }
 
@@ -317,7 +318,7 @@ class SourcesViewModelTest {
 
         viewModel.uiState.value.deviceSongs shouldBe 2
         viewModel.uiState.value.servers.associate { it.type to it.songs } shouldBe
-            mapOf(MediaProviderType.Jellyfin to 1, MediaProviderType.Emby to 0, MediaProviderType.Plex to 0)
+            mapOf(MediaProviderType.Jellyfin to 1, MediaProviderType.Emby to 0, MediaProviderType.Plex to 0, MediaProviderType.Subsonic to 0)
     }
 
     @Test

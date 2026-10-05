@@ -80,6 +80,7 @@ class SongInfoViewModelTest {
         source(MediaProviderType.Jellyfin) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Jellyfin")
         source(MediaProviderType.Emby) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Emby")
         source(MediaProviderType.Plex) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Plex")
+        source(MediaProviderType.Subsonic) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = "Subsonic")
     }
 
     @Test

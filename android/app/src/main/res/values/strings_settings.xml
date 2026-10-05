@@ -46,15 +46,15 @@
     <string name="scrobbling_finish_sign_in">I\'ve approved it</string>
     <string name="scrobbling_sign_out">Sign out</string>
     <string name="scrobbling_server_streams_title">Scrobble server streams too</string>
-    <string name="scrobbling_server_streams_summary">Also scrobble Jellyfin, Emby and Plex songs, even when your server already does. This can count a play twice.</string>
+    <string name="scrobbling_server_streams_summary">Also scrobble Jellyfin, Emby, Plex and Navidrome songs, even when your server already does. This can count a play twice.</string>
     <string name="scrobbling_not_approved">Last.fm hasn\'t seen your approval yet</string>
     <string name="scrobbling_expired">That sign-in expired. Please try again</string>
     <string name="scrobbling_failed">Couldn\'t reach Last.fm. Check your connection and try again</string>
     <string name="scrobbling_attribution">Scrobbling powered by AudioScrobbler</string>
-    <!-- Settings: Title for the option to report what's playing to the Jellyfin, Emby or Plex server -->
+    <!-- Settings: Title for the option to report what's playing to the Jellyfin, Emby, Plex or Subsonic server -->
     <string name="pref_report_playback_title">Report playback to server</string>
-    <!-- Settings: Description for the option to report what's playing to the Jellyfin, Emby or Plex server -->
-    <string name="pref_report_playback_summary">Show what you\'re playing on your Jellyfin, Emby or Plex server, and count plays in its history</string>
+    <!-- Settings: Description for the option to report what's playing to the Jellyfin, Emby, Plex or Subsonic server -->
+    <string name="pref_report_playback_summary">Show what you\'re playing on your Jellyfin, Emby, Plex or Navidrome server, and count plays in its history</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Rescan</string>
     <!-- Settings: Description for the option to rescan the media library -->

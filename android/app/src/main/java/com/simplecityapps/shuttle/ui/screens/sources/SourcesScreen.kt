@@ -273,5 +273,6 @@ internal val MediaProviderType.titleRes: Int
         MediaProviderType.Jellyfin -> R.string.media_provider_title_jellyfin
         MediaProviderType.Emby -> R.string.media_provider_title_emby
         MediaProviderType.Plex -> R.string.media_provider_title_plex
+        MediaProviderType.Subsonic -> R.string.media_provider_title_subsonic
         MediaProviderType.Shuttle, MediaProviderType.MediaStore -> R.string.sources_this_device
     }

@@ -6,6 +6,7 @@
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_title_subsonic">Navidrome / Subsonic</string>
     <string name="media_provider_config_hint_address">Address</string>
     <string name="media_provider_config_hint_username">Username</string>
     <string name="media_provider_config_hint_password">Password</string>
@@ -14,6 +15,9 @@
     <string name="media_provider_config_switch_remember_password">Remember password</string>
     <string name="media_provider_config_helper_address">e.g. http://my.server.com:8080</string>
     <string name="media_provider_config_helper_address_plex">e.g. http://my.plex.server.com:32400</string>
+    <string name="media_provider_config_helper_address_subsonic">e.g. http://my.server.com:4533</string>
+    <!-- Subsonic sign-in: helper under the username field. OpenSubsonic servers can sign in with an API key instead of a username and password -->
+    <string name="media_provider_config_helper_username_api_key">Leave empty to sign in with an API key as the password</string>
     <string name="media_provider_config_show_password">Show password</string>
     <string name="media_provider_config_hide_password">Hide password</string>
     <string name="media_provider_button_use_quick_connect">Use Quick Connect</string>
