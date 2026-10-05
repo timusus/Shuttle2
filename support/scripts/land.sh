@@ -38,7 +38,7 @@
 # commonMain/commonTest/iosMain/iosTest — a light iOS check: the framework build, in the same Gradle call
 # `:<module>:iosSimulatorArm64Test` for just the KMP modules whose commonMain/commonTest/iosMain/iosTest changed
 # (`unit-test --kmp-native-tasks` maps the paths; none changed = no Kotlin/Native tests, #821), an app build
-# (`xcodebuild build`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
+# (`build-app.sh`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
 # changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
 # suite and the full Android verify run less often, in support/scripts/full-verify.sh (watermark,
 # always before a Play release).
@@ -286,9 +286,7 @@ verify_ios() {
       S2_SIM_HOLDER=land scripts/test.sh "${only[@]}" || exit 1
     else
       echo "verify: no iOS test class maps to the changed files; build only"
-      xcodebuild build -project S2.xcodeproj -scheme S2 \
-        -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet \
-        COMPILER_INDEX_STORE_ENABLE=NO || exit 1
+      scripts/build-app.sh || exit 1
     fi
     if [ "$pkg" = 1 ]; then
       echo "verify: ios Playback package tests"

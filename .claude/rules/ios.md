@@ -33,10 +33,9 @@ cd ios && xcodegen generate
 # regenerate ios/S2/en.lproj/Localizable.strings (--check exits 1 if it's stale)
 ios/scripts/generate-strings.py
 
-# 3. Build for the simulator
-cd ios && xcodebuild build -project S2.xcodeproj -scheme S2 \
-  -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
-
+# 3. Build for the simulator (Debug `build-for-testing` into ios/build/DerivedData; skipped when nothing
+#    under ios/ or shared/ changed since the last build). Workers call this, never raw xcodebuild
+ios/scripts/build-app.sh                       # --force rebuilds regardless
 # 4. Tests. The S2 scheme (swift-testing + ViewInspector) on this session's leased simulator (the
 #    shared ios-sim lease pool, if set up), else an iPhone on a released runtime (booted, else newest);
 #    S2_SIMULATOR_UDID=<udid> picks one. Extra args go to xcodebuild (-only-testing:S2Tests/AppShellTests)
@@ -45,6 +44,8 @@ ios/scripts/test.sh --package                  # swift test in ios/Playback (the
                                                # extra args go to swift test (--filter ...)
 ```
 
+`test.sh` builds through `build-app.sh` and then runs `test-without-building`, so a test run after a build
+(or a second run) never recompiles. Release is for archive/deploy only (`ios/archive-and-upload.sh`).
 The xcodebuild calls under `ios/scripts/` share one SPM clone cache (`~/Library/Caches/s2-spm`, via
 `-clonedSourcePackagesDirPath`) across worktrees and skip the index store. Don't set the scheme's S2Tests
 `parallelizable`: Swift Testing already runs in parallel in-process, and cloning made the suite slower and flaky.

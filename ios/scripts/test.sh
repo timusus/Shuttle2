@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs the iOS tests. Installs the FFmpeg frameworks first (ios/scripts/build-ffmpeg.sh; a no-op once
-# installed). Does not relink Shared.framework: run ios/scripts/build-framework.sh after a Kotlin change.
+# Runs the iOS tests: ios/scripts/build-app.sh (`build-for-testing`, skipped when ios/ and shared/ are
+# unchanged since the last build), then `test-without-building`. Does not relink Shared.framework: run ios/scripts/build-framework.sh after a Kotlin change.
 #
 #   ios/scripts/test.sh               # the S2 scheme (S2Tests) on an available iPhone simulator
 #   ios/scripts/test.sh --package     # `swift test` in ios/Playback, on the Mac (no simulator)
@@ -64,6 +64,8 @@ print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{notes})", file=sys.stderr)
 '
 }
 
+"$ios_dir/scripts/build-app.sh"
+
 lease_rc=0
 udid="${S2_SIMULATOR_UDID:-}"
 if [ -z "$udid" ]; then
@@ -75,10 +77,8 @@ if [ -z "$udid" ]; then
   fi
 fi
 
-"$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
 cd "$ios_dir"
-echo "==> xcodebuild test -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
-# One SPM clone cache for every worktree; no index store, which only Xcode's own UI reads.
-xcodebuild test -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
-  -derivedDataPath build/DerivedData -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" COMPILER_INDEX_STORE_ENABLE=NO -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
+echo "==> xcodebuild test-without-building -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
+xcodebuild test-without-building -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
+  -derivedDataPath build/DerivedData -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
 echo "==> S2 tests passed"

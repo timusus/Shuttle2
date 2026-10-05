@@ -36,11 +36,9 @@ bundle_id="com.simplecityapps.shuttle.dev"
 app="$ios_dir/build/DerivedData/Build/Products/Debug-iphonesimulator/S2.app"
 
 if [ "${BUILD:-1}" = "1" ]; then
-  "$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
   "$ios_dir/scripts/build-framework.sh" -q >/dev/null
   echo "==> Building S2 (Debug, simulator)"
-  (cd "$ios_dir" && xcodebuild build -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
-    -derivedDataPath build/DerivedData -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" COMPILER_INDEX_STORE_ENABLE=NO -quiet 2>&1 | { grep -E 'error:' | grep -v 'failed with exit code 0 but produced no further output' || true; })
+  "$ios_dir/scripts/build-app.sh"
 fi
 [ -d "$app" ] || { echo "run-sim-server: no build at $app" >&2; exit 1; }
 
