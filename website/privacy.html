@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy · Shuttle Music</title>
+  <meta name="description" content="How Shuttle Music for Android and iOS handles your data: no account, anonymous crash reports and usage statistics you can turn off, and server logins that stay on your device.">
+  <link rel="canonical" href="https://shuttlemusicplayer.com/privacy">
+  <meta name="theme-color" content="#0493e0">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><img src="/assets/icon-512.png" alt="" width="32" height="32">Shuttle Music</a>
+      <nav class="site-nav" aria-label="Main">
+        <a class="wide" href="/#features">Features</a>
+        <a class="wide" href="/#pro">Pro</a>
+        <a href="/support">Support</a>
+        <a href="/privacy" aria-current="page">Privacy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="page-head">
+      <div class="wrap narrow">
+        <h1>Privacy policy</h1>
+        <p>Shuttle Music and Shuttle Music Pro, for Android and iOS. Last updated 6 October 2026.</p>
+      </div>
+    </div>
+
+    <div class="prose">
+      <div class="wrap narrow">
+        <p>Shuttle Music is made by Simplecity Apps Pty Ltd ("we", "us"). This policy covers the Shuttle Music app on Google Play and on the App Store. In short: there's no account with us, your library and your server login stay on your device, and the app sends us only anonymous crash reports and usage statistics, which you can turn off, and artwork lookups.</p>
+
+        <nav class="toc" aria-label="On this page">
+          <ul>
+            <li><a href="#account">No account</a></li>
+            <li><a href="#library">Your music and servers</a></li>
+            <li><a href="#crash">Crash reports</a></li>
+            <li><a href="#analytics">Usage statistics</a></li>
+            <li><a href="#artwork">Artwork</a></li>
+            <li><a href="#purchases">Purchases</a></li>
+            <li><a href="#third-party">Services you choose</a></li>
+            <li><a href="#choices">Your choices</a></li>
+            <li><a href="#children">Children</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="account">No account with us</h2>
+        <p>You don't create an account with us to use Shuttle Music, and we don't ask for your name, email address or phone number. There is no advertising in the app and no advertising SDK. The app doesn't use your device's advertising identifier, and on iOS it doesn't ask to track you.</p>
+
+        <h2 id="library">Your music and your servers</h2>
+        <p>Your library, playlists, play counts, queue and settings are stored on your device.</p>
+        <p>If you add a Jellyfin, Emby, Plex or Navidrome (Subsonic) server, its address, your username and the session token it gives the app are stored on your device (on iOS, in the Keychain) and are only ever sent to that server. Plex sign-in goes through your plex.tv account, as Plex requires. We never receive your server address, your login, or the contents of your library.</p>
+        <p>Shuttle Music doesn't provide music or servers. What you play comes from your own files or your own server, and that server's operator (usually you) controls what it records.</p>
+
+        <h2 id="crash">Crash reports</h2>
+        <p>When the app crashes, freezes or hits a serious error, it sends a crash report to <a href="https://sentry.io/privacy/">Sentry</a>, which we use to find and fix bugs. A report contains technical details: the error and where in the code it happened, the app version, the device model and operating system version, and a short trail of what the app was doing beforehand. The app also reports whether a session ended in a crash, and on iOS how long the app took to start in a small sample of launches.</p>
+        <p>Before a report leaves your device, the app removes server addresses, host names, IP addresses, file paths, email addresses and login tokens from it. Reports don't include screenshots or your name, and they aren't linked to your identity.</p>
+
+        <h2 id="analytics">Usage statistics</h2>
+        <p>The app sends anonymous usage statistics to <a href="https://posthog.com/privacy">PostHog</a>, hosted in the EU, so we can see which features are used and where people get stuck: for example that the app was opened, that onboarding finished, that a server was added, or that a purchase started, completed or was restored. Events record what kind of thing happened, never the songs, artists or albums you play, your search text, server addresses or usernames.</p>
+        <p>The statistics are tied to a random ID the analytics library creates when the app is installed, not to you. PostHog is set to discard your IP address, no profile of you is built, and screen recording, screen-view tracking and tap tracking are off.</p>
+
+        <h3>What we don't do</h3>
+        <ul>
+          <li>We don't link crash reports or usage statistics to your identity.</li>
+          <li>We don't use them to track you across other companies' apps or websites, and we don't sell or share them for advertising.</li>
+          <li>We use them only to fix problems and improve the app.</li>
+        </ul>
+
+        <h2 id="artwork">Artwork</h2>
+        <p>When your files or your server don't have artwork for an album or artist, the app can look it up on our artwork service (api.shuttlemusicplayer.app). The request contains the artist and album name, nothing that identifies you. Like any web server, the service sees the IP address the request comes from; we don't use it to identify you. On Android you can stop the app downloading artwork from the internet in Settings.</p>
+
+        <h2 id="purchases">Purchases</h2>
+        <p>Shuttle Music Pro is bought through Google Play or the App Store, which handle payment. We never see your payment details. The app checks your purchase with Google Play or Apple to unlock Pro, and records anonymously, as part of the usage statistics above, that a purchase started, completed, failed or was restored, and for which product.</p>
+
+        <h2 id="third-party">Services you choose to use</h2>
+        <ul>
+          <li><strong>Your media server.</strong> Jellyfin, Emby, Plex or Navidrome receive what any client sends them: your login and the songs you request.</li>
+          <li><strong>Chromecast and Android Auto</strong> (Android) and <strong>AirPlay</strong> (iOS): playing to these sends the song and its details to that device.</li>
+          <li><strong>Last.fm</strong> (Android): only if you connect your Last.fm account, the app sends the songs you play to Last.fm under that account. <a href="https://www.last.fm/legal/privacy">Last.fm's privacy policy</a> applies.</li>
+        </ul>
+
+        <h2 id="choices">Your choices</h2>
+        <p>Crash reports and usage statistics are on by default. Each turns off on its own in <strong>Settings &gt; Privacy</strong>, on both Android and iOS.</p>
+        <p>Because the reports and statistics aren't linked to you, we usually can't find the ones from your device. If you'd like us to try, or have any other request about your data, email us and we'll help.</p>
+
+        <h2 id="children">Children</h2>
+        <p>Shuttle Music is a general-audience music player. It isn't directed at children, and we don't knowingly collect personal information from anyone.</p>
+
+        <h2 id="changes">Changes</h2>
+        <p>If the app starts handling data differently, we'll update this page and the date at the top before the change ships.</p>
+
+        <h2 id="contact">Contact</h2>
+        <p>Simplecity Apps Pty Ltd. Email <a href="mailto:hello@simplecityapps.com">hello@simplecityapps.com</a> for privacy questions, or <a href="mailto:support@simplecityapps.com">support@simplecityapps.com</a> for help with the app. Our general policy for all our apps is at <a href="https://simplecityapps.com/privacy">simplecityapps.com/privacy</a>; where this page is more specific, it governs Shuttle Music.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>&copy; 2026 Simplecity Apps Pty Ltd</span>
+      <nav aria-label="Footer">
+        <a href="/support">Support</a>
+        <a href="/privacy">Privacy</a>
+        <a href="mailto:support@simplecityapps.com">support@simplecityapps.com</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

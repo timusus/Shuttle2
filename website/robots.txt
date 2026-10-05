@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /chromecast/
+Sitemap: https://shuttlemusicplayer.com/sitemap.xml

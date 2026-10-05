@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1024 1024">
+  <!-- The app icon (ios/design/AppIcon.svg) with the corner mask iOS applies itself -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2FBBF8"/>
+      <stop offset="1" stop-color="#0493E0"/>
+    </linearGradient>
+    <g id="mark">
+      <path fill="#EEF5FA" d="M712.97,601.85A157.66,157.66 0 1 1 574.08,445.56V189.81H416.67L356.48,50.92H685.19A27.78,27.78 0 0 1 712.97,78.70Z"/>
+      <path fill="#CFDEE8" d="M416.67,189.81L393.52,138.89H486.11Z"/>
+      <path fill="#FFFFFF" d="M314.82,138.89V546.30A157.66,157.66 0 1 1 175.93,390.01V27.78A27.78,27.78 0 0 1 203.71,0H435.17L486.11,138.89Z"/>
+    </g>
+  </defs>
+  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
+  <g transform="translate(211.82 190) scale(0.84266)">
+    <use xlink:href="#mark"/>
+  </g>
+</svg>
