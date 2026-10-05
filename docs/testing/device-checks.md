@@ -458,3 +458,17 @@ Needs the App Group (`group.com.simplecityapps.shuttle.dev` / `group.com.simplec
 - [ ] Light mode, iOS 26 and iOS 18: open albums with gold, navy, green and beige covers. The hero carries a wash in the cover's hue, and the Play, Shuffle and artist-line text stay readable. Dark mode looks as before.
 - [ ] iOS 26: the Shuffle capsule (Liquid Glass, `.glassProminent`) text stays readable over the light-mode wash.
 - [ ] iOS 26, light mode: on an artist with a photo, scroll until the title moves into the nav bar. Over the photo it's white; past the photo it's dark and readable.
+
+## iOS CarPlay (#692)
+
+Needs a real head unit (or a wired CarPlay dongle) and a signed device build, so it waits on the App Groups signing fix (#917).
+
+- [ ] The car's home screen shows "Shuttle Music" with its icon; opening it shows the Home, Albums, Artists, Playlists and Songs tabs (fewer if the car allows fewer).
+- [ ] Launch from the car with the app not running on the phone: every tab fills in; none stays on Loading.
+- [ ] Home: Shuffle All shuffles the library; a Jump Back In row resumes where it left off and shows its progress; a suggestion row plays.
+- [ ] Albums, Artists and Playlists each open a song list with Shuffle first; tapping a song plays the list from it, Shuffle shuffles it, and Now Playing opens.
+- [ ] Songs: Shuffle All, then the library's songs (capped to the car's limit); tapping one plays from it.
+- [ ] Rows show artwork (a playlist shows its first song's cover); a list long enough to hit the car's item limit doesn't fail to open.
+- [ ] Now Playing: play, pause, skip and seek work; the shuffle and repeat buttons toggle and their icons follow the phone; Up Next lists the queue from the current song and tapping one plays it.
+- [ ] Unplug mid-song: playback carries on (or pauses, per the route rule) and reconnecting refills the tabs.
+- [ ] Phone locked, play an album for 15+ minutes over CarPlay: the car's progress and the phone's position keep moving. Podcasts saw the engine's render-clock reads fail for most of an episode in exactly this setup while the audio played on (its `ClockStallDetector`, 2026-09-18); S2's Playback package has no such detector, so if the position freezes, `sudo log collect --device` (the `audio-engine` and `playback` categories) and file it.
