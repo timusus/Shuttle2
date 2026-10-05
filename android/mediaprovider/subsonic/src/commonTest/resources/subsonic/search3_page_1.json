@@ -1,0 +1,170 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "searchResult3": {
+      "song": [
+        {
+          "id": "4S6nihsexXfLEd9rVm2LKr",
+          "parent": "4nxF0cOO4HAm80KTNDfkof",
+          "isDir": false,
+          "title": "A Whole New World (Aladdin’s Theme)",
+          "album": "Aladdin: Original Motion Picture Soundtrack (with original lyrics for “Arabian Nights”)",
+          "artist": "Peabo Bryson & Regina Belle",
+          "track": 21,
+          "year": 1992,
+          "genre": "Soundtrack",
+          "coverArt": "mf-4S6nihsexXfLEd9rVm2LKr",
+          "size": 23470433,
+          "contentType": "audio/flac",
+          "suffix": "flac",
+          "duration": 247,
+          "bitRate": 757,
+          "discNumber": 1,
+          "created": "2026-10-05T01:03:50.358065972Z",
+          "albumId": "4nxF0cOO4HAm80KTNDfkof",
+          "artistId": "4XVnsmsEkmk2E0NqAtB0Jx",
+          "type": "music",
+          "bpm": 108,
+          "sortName": "a whole new world (aladdin's theme)",
+          "mediaType": "song",
+          "musicBrainzId": "165f3d1e-168d-4642-9fa2-fac297b3d80d",
+          "genres": [
+            {
+              "name": "Soundtrack"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 2,
+          "samplingRate": 44100,
+          "bitDepth": 16,
+          "artists": [
+            {
+              "id": "4XVnsmsEkmk2E0NqAtB0Jx",
+              "name": "Peabo Bryson"
+            },
+            {
+              "id": "2fvetHX8g36Sb6XCnmrlSp",
+              "name": "Regina Belle"
+            }
+          ],
+          "displayArtist": "Peabo Bryson & Regina Belle",
+          "albumArtists": [
+            {
+              "id": "07LA8XP6U5De7mzuoBVPz4",
+              "name": "Alan Menken"
+            }
+          ],
+          "displayAlbumArtist": "Alan Menken"
+        },
+        {
+          "id": "0ZVb9IcFZ0wbcBgwwir582",
+          "parent": "6Q4e5U2Y1FMj5ragZpFkdL",
+          "isDir": false,
+          "title": "Steven’s Last Night in Town",
+          "album": "Whatever and Ever Amen (hidden segments; glass mastered at – Sony Disc Manufacturing, Springfield – CTDP-000024)",
+          "artist": "Ben Folds Five",
+          "track": 9,
+          "year": 1997,
+          "genre": "Rock",
+          "coverArt": "mf-0ZVb9IcFZ0wbcBgwwir582",
+          "size": 5046557,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 207,
+          "bitRate": 192,
+          "discNumber": 1,
+          "created": "2026-10-05T01:03:58.502341196Z",
+          "albumId": "6Q4e5U2Y1FMj5ragZpFkdL",
+          "artistId": "2F4RSLCIwn9WF8YbosV76f",
+          "type": "music",
+          "bpm": 0,
+          "sortName": "steven's last night in town",
+          "mediaType": "song",
+          "musicBrainzId": "e369e710-33f3-4a70-b301-290554248541",
+          "genres": [
+            {
+              "name": "Rock"
+            }
+          ],
+          "replayGain": {
+            "trackGain": -4.01,
+            "trackPeak": 1.008759
+          },
+          "channelCount": 2,
+          "samplingRate": 44100,
+          "bitDepth": 0,
+          "artists": [
+            {
+              "id": "2F4RSLCIwn9WF8YbosV76f",
+              "name": "Ben Folds Five"
+            }
+          ],
+          "displayArtist": "Ben Folds Five",
+          "albumArtists": [
+            {
+              "id": "2F4RSLCIwn9WF8YbosV76f",
+              "name": "Ben Folds Five"
+            }
+          ],
+          "displayAlbumArtist": "Ben Folds Five"
+        },
+        {
+          "id": "5zTXFMk8oDiQF9kh1gqcJE",
+          "parent": "4nxF0cOO4HAm80KTNDfkof",
+          "isDir": false,
+          "title": "One Jump Ahead",
+          "album": "Aladdin: Original Motion Picture Soundtrack (with original lyrics for “Arabian Nights”)",
+          "artist": "Alan Menken",
+          "track": 3,
+          "year": 1992,
+          "genre": "Soundtrack",
+          "coverArt": "mf-5zTXFMk8oDiQF9kh1gqcJE",
+          "size": 13955734,
+          "contentType": "audio/flac",
+          "suffix": "flac",
+          "duration": 142,
+          "bitRate": 778,
+          "discNumber": 1,
+          "created": "2026-10-05T01:03:50.354949245Z",
+          "albumId": "4nxF0cOO4HAm80KTNDfkof",
+          "artistId": "07LA8XP6U5De7mzuoBVPz4",
+          "type": "music",
+          "bpm": 123,
+          "sortName": "one jump ahead",
+          "mediaType": "song",
+          "musicBrainzId": "79784ee9-40bb-4729-8124-dbc996b8fb40",
+          "genres": [
+            {
+              "name": "Soundtrack"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 2,
+          "samplingRate": 44100,
+          "bitDepth": 16,
+          "artists": [
+            {
+              "id": "07LA8XP6U5De7mzuoBVPz4",
+              "name": "Alan Menken"
+            }
+          ],
+          "displayArtist": "Alan Menken",
+          "albumArtists": [
+            {
+              "id": "07LA8XP6U5De7mzuoBVPz4",
+              "name": "Alan Menken"
+            }
+          ],
+          "displayAlbumArtist": "Alan Menken",
+          "starred": "2026-09-30T08:15:00Z",
+          "playCount": 7,
+          "played": "2026-10-01T20:00:00Z"
+        }
+      ]
+    }
+  }
+}

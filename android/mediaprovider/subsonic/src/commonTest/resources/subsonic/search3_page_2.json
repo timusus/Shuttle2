@@ -1,0 +1,74 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "searchResult3": {
+      "song": [
+        {
+          "id": "0rkcRSZcVeI3YNESZf3Pui",
+          "parent": "4VvIFMdAclxknHzRC01CV0",
+          "isDir": false,
+          "title": "We’re Back (Te Vaka version)",
+          "album": "Moana 2 (Original Motion Picture Soundtrack)",
+          "artist": "Olivia Foaʻi, Sulata Foaʻi‐Amiatu & Te Vaka",
+          "track": 16,
+          "year": 2024,
+          "genre": "Soundtrack",
+          "coverArt": "mf-0rkcRSZcVeI3YNESZf3Pui",
+          "size": 22961975,
+          "contentType": "audio/flac",
+          "suffix": "flac",
+          "duration": 191,
+          "bitRate": 944,
+          "discNumber": 1,
+          "created": "2026-10-05T01:03:56.568648547Z",
+          "albumId": "4VvIFMdAclxknHzRC01CV0",
+          "artistId": "4p5i0qP7uL59MMhrNM8FhA",
+          "type": "music",
+          "bpm": 0,
+          "sortName": "we're back (te vaka version)",
+          "mediaType": "song",
+          "musicBrainzId": "a5faf0e6-1fab-4547-b484-93943cfe339a",
+          "genres": [
+            {
+              "name": "Soundtrack"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 2,
+          "samplingRate": 44100,
+          "bitDepth": 16,
+          "artists": [
+            {
+              "id": "4p5i0qP7uL59MMhrNM8FhA",
+              "name": "Olivia Foaʻi"
+            },
+            {
+              "id": "6eVkfQ8cvyPDdoSan3jsIz",
+              "name": "Sulata Foaʻi‐Amiatu"
+            },
+            {
+              "id": "72Z5wgz6klTXQHbkxt7rLT",
+              "name": "Te Vaka"
+            }
+          ],
+          "displayArtist": "Olivia Foaʻi, Sulata Foaʻi‐Amiatu & Te Vaka",
+          "albumArtists": [
+            {
+              "id": "5TYjpa7QPqIQqE7se2yFoJ",
+              "name": "Auliʻi Cravalho"
+            },
+            {
+              "id": "45KCnYL8K1dEayqlZFFtiJ",
+              "name": "Dwayne Johnson"
+            }
+          ],
+          "displayAlbumArtist": "Auliʻi Cravalho & Dwayne Johnson"
+        }
+      ]
+    }
+  }
+}

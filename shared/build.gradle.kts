@@ -60,6 +60,7 @@ kotlin {
             implementation(project(":android:mediaprovider:emby"))
             implementation(project(":android:mediaprovider:plex"))
             implementation(project(":android:scrobbling"))
+            implementation(project(":android:mediaprovider:subsonic"))
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }

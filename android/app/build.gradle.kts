@@ -166,6 +166,7 @@ android {
         implementation(project(":android:mediaprovider:emby"))
         implementation(project(":android:mediaprovider:jellyfin"))
         implementation(project(":android:mediaprovider:plex"))
+        implementation(project(":android:mediaprovider:subsonic"))
         implementation(project(":android:mediaprovider:server"))
         implementation(project(":android:scrobbling"))
 

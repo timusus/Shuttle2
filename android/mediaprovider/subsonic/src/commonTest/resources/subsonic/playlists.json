@@ -1,0 +1,35 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "playlists": {
+      "playlist": [
+        {
+          "id": "4OkvGqE1eXVi8lR27OxO8R",
+          "name": "2026-10-01",
+          "songCount": 2,
+          "duration": 372,
+          "owner": "fixture",
+          "created": "2026-10-01T10:13:14.282333713Z",
+          "changed": "2026-10-01T10:56:24.447812226Z",
+          "coverArt": "pl-4OkvGqE1eXVi8lR27OxO8R_cd21f40d6a390e12",
+          "readonly": false
+        },
+        {
+          "id": "6hxNgdRV8kzNLrIyAAvmx7",
+          "name": "Cassette Wrapped 2026",
+          "songCount": 5,
+          "duration": 1477,
+          "owner": "fixture",
+          "created": "2026-09-30T15:32:57.580476967Z",
+          "changed": "2026-10-02T11:21:03.338339146Z",
+          "coverArt": "pl-6hxNgdRV8kzNLrIyAAvmx7_cfd31ebc8974d5bd",
+          "readonly": false
+        }
+      ]
+    }
+  }
+}

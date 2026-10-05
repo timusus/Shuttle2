@@ -1,0 +1,139 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "album": {
+      "id": "3RcUiqVmOj5LztrSBWglLo",
+      "name": "“V” Is for Vagina",
+      "artist": "Puscifer",
+      "artistId": "3BCOoHVnn287SKIxXFdoZy",
+      "coverArt": "al-3RcUiqVmOj5LztrSBWglLo_4f4fb67b5b83eea1",
+      "songCount": 10,
+      "duration": 2915,
+      "created": "2023-10-12T19:35:06.63418026Z",
+      "year": 2007,
+      "genre": "Electronic",
+      "userRating": 0,
+      "genres": [
+        {
+          "name": "Electronic"
+        }
+      ],
+      "musicBrainzId": "bfece34a-acaf-4cd3-8bab-7876ae452d6b",
+      "isCompilation": false,
+      "sortName": "\"v\" is for vagina",
+      "artists": [
+        {
+          "id": "3BCOoHVnn287SKIxXFdoZy",
+          "name": "Puscifer"
+        }
+      ],
+      "displayArtist": "Puscifer",
+      "explicitStatus": "",
+      "version": "",
+      "song": [
+        {
+          "id": "4ybHCBhN2R5X5YAG1LyVKx",
+          "parent": "3RcUiqVmOj5LztrSBWglLo",
+          "isDir": false,
+          "title": "Queen B",
+          "album": "“V” Is for Vagina",
+          "artist": "Puscifer",
+          "track": 1,
+          "year": 2007,
+          "genre": "Electronic",
+          "coverArt": "dc-3RcUiqVmOj5LztrSBWglLo:1",
+          "size": 5956576,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 235,
+          "bitRate": 202,
+          "discNumber": 1,
+          "created": "2026-10-05T01:05:23.567476962Z",
+          "albumId": "3RcUiqVmOj5LztrSBWglLo",
+          "artistId": "3BCOoHVnn287SKIxXFdoZy",
+          "type": "music",
+          "bpm": 0,
+          "sortName": "queen b",
+          "mediaType": "song",
+          "musicBrainzId": "26d18526-74dd-46ad-a829-d0c595e63b61",
+          "genres": [
+            {
+              "name": "Electronic"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 2,
+          "samplingRate": 44100,
+          "bitDepth": 0,
+          "artists": [
+            {
+              "id": "3BCOoHVnn287SKIxXFdoZy",
+              "name": "Puscifer"
+            }
+          ],
+          "displayArtist": "Puscifer",
+          "albumArtists": [
+            {
+              "id": "3BCOoHVnn287SKIxXFdoZy",
+              "name": "Puscifer"
+            }
+          ],
+          "displayAlbumArtist": "Puscifer"
+        },
+        {
+          "id": "032Sq9OndYALAaM6wobkf2",
+          "parent": "3RcUiqVmOj5LztrSBWglLo",
+          "isDir": false,
+          "title": "Dozo",
+          "album": "“V” Is for Vagina",
+          "artist": "Puscifer",
+          "track": 2,
+          "year": 2007,
+          "genre": "Electronic",
+          "coverArt": "dc-3RcUiqVmOj5LztrSBWglLo:1",
+          "size": 6587690,
+          "contentType": "audio/mpeg",
+          "suffix": "mp3",
+          "duration": 240,
+          "bitRate": 219,
+          "discNumber": 1,
+          "created": "2026-10-05T01:05:23.568648627Z",
+          "albumId": "3RcUiqVmOj5LztrSBWglLo",
+          "artistId": "3BCOoHVnn287SKIxXFdoZy",
+          "type": "music",
+          "bpm": 0,
+          "sortName": "dozo",
+          "mediaType": "song",
+          "musicBrainzId": "1c48b3ef-00d8-4517-8ffd-8fc1278562d6",
+          "genres": [
+            {
+              "name": "Electronic"
+            }
+          ],
+          "replayGain": {},
+          "channelCount": 2,
+          "samplingRate": 44100,
+          "bitDepth": 0,
+          "artists": [
+            {
+              "id": "3BCOoHVnn287SKIxXFdoZy",
+              "name": "Puscifer"
+            }
+          ],
+          "displayArtist": "Puscifer",
+          "albumArtists": [
+            {
+              "id": "3BCOoHVnn287SKIxXFdoZy",
+              "name": "Puscifer"
+            }
+          ],
+          "displayAlbumArtist": "Puscifer"
+        }
+      ]
+    }
+  }
+}

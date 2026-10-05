@@ -1,0 +1,73 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "albumList2": {
+      "album": [
+        {
+          "id": "3RcUiqVmOj5LztrSBWglLo",
+          "name": "“V” Is for Vagina",
+          "artist": "Puscifer",
+          "artistId": "3BCOoHVnn287SKIxXFdoZy",
+          "coverArt": "al-3RcUiqVmOj5LztrSBWglLo_4f4fb67b5b83eea1",
+          "songCount": 10,
+          "duration": 2915,
+          "created": "2023-10-12T19:35:06.63418026Z",
+          "year": 2007,
+          "genre": "Electronic",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Electronic"
+            }
+          ],
+          "musicBrainzId": "bfece34a-acaf-4cd3-8bab-7876ae452d6b",
+          "isCompilation": false,
+          "sortName": "\"v\" is for vagina",
+          "artists": [
+            {
+              "id": "3BCOoHVnn287SKIxXFdoZy",
+              "name": "Puscifer"
+            }
+          ],
+          "displayArtist": "Puscifer",
+          "explicitStatus": "",
+          "version": ""
+        },
+        {
+          "id": "7Fhz3XaE3wcpnr99q4VR3B",
+          "name": "“Watch Out!”",
+          "artist": "Alexisonfire",
+          "artistId": "7FOrAVFamhgRHJxFwAPFeh",
+          "coverArt": "al-7Fhz3XaE3wcpnr99q4VR3B_6e4b2707d05312b4",
+          "songCount": 11,
+          "duration": 2625,
+          "created": "2026-09-27T12:46:48.64847458Z",
+          "year": 2004,
+          "genre": "Post-Hardcore",
+          "userRating": 0,
+          "genres": [
+            {
+              "name": "Post-Hardcore"
+            }
+          ],
+          "musicBrainzId": "f92505ed-a590-4307-a1a5-4a6b4fa5c632",
+          "isCompilation": false,
+          "sortName": "\"watch out!\"",
+          "artists": [
+            {
+              "id": "7FOrAVFamhgRHJxFwAPFeh",
+              "name": "Alexisonfire"
+            }
+          ],
+          "displayArtist": "Alexisonfire",
+          "explicitStatus": "",
+          "version": ""
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="500dp"
+    android:height="500dp"
+    android:viewportWidth="122.88"
+    android:viewportHeight="122.88">
+    <!-- A generic mark for Subsonic-compatible servers (Navidrome, gonic, ...): equaliser bars on a blue tile -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M8,0 h106.88 a8,8 0 0 1 8,8 v106.88 a8,8 0 0 1 -8,8 h-106.88 a8,8 0 0 1 -8,-8 v-106.88 a8,8 0 0 1 8,-8 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,52 h12 v42 h-12 z M44,30 h12 v64 h-12 z M62,42 h12 v52 h-12 z M80,62 h12 v32 h-12 z" />
+</vector>

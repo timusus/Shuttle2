@@ -1,0 +1,13 @@
+{
+  "subsonic-response": {
+    "status": "failed",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "error": {
+      "code": 41,
+      "message": "Token authentication not supported for LDAP users."
+    }
+  }
+}

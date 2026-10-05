@@ -1,0 +1,37 @@
+{
+  "subsonic-response": {
+    "status": "ok",
+    "version": "1.16.1",
+    "type": "navidrome",
+    "serverVersion": "0.64.2 (10114574)",
+    "openSubsonic": true,
+    "playlist": {
+      "id": "6hxNgdRV8kzNLrIyAAvmx7",
+      "name": "Cassette Wrapped 2026",
+      "songCount": 3,
+      "duration": 1477,
+      "owner": "fixture",
+      "created": "2026-09-30T15:32:57.580476967Z",
+      "changed": "2026-10-02T11:21:03.338339146Z",
+      "coverArt": "pl-6hxNgdRV8kzNLrIyAAvmx7_cfd31ebc8974d5bd",
+      "readonly": false,
+      "entry": [
+        {
+          "id": "4S6nihsexXfLEd9rVm2LKr",
+          "title": "A Whole New World (Aladdin’s Theme)",
+          "isDir": false
+        },
+        {
+          "id": "5zTXFMk8oDiQF9kh1gqcJE",
+          "title": "One Jump Ahead",
+          "isDir": false
+        },
+        {
+          "id": "notInLibrary",
+          "title": "Gone",
+          "isDir": false
+        }
+      ]
+    }
+  }
+}
