@@ -15,13 +15,15 @@ struct ServerSignInViewTests {
         missing: Set<ServerSignInField> = [],
         step: ServerSignInStep = ServerSignInStepForm.shared,
         quickConnectEnabled: Bool = false,
-        discoveredServers: [DiscoveredServer] = []
+        discoveredServers: [DiscoveredServer] = [],
+        headers: [CoreCustomHeader] = []
     ) -> ServerSignInUiState {
         ServerSignInUiState(
             type: type,
             form: ServerSignInForm(
                 address: address, username: username, password: "hunter2",
-                rememberPassword: false, passwordRevealable: true, missing: missing
+                rememberPassword: false, passwordRevealable: true, missing: missing,
+                headers: headers, showAdvanced: !headers.isEmpty
             ),
             step: step,
             events: [],
@@ -83,6 +85,17 @@ struct ServerSignInViewTests {
         )
         let choosing = ServerSignInStepChoosingServer(servers: [ServerChoice(id: "a", name: "Den", owned: false)])
         #expect(ServerSignInState(uiState(type: .plex, step: choosing)).step == .choosingServer([.init(id: "a", name: "Den", owned: false)]))
+        let untrusted = ServerSignInStepUntrustedCertificate(
+            origin: CoreServerOrigin(host: "music.local", port: 8920), fingerprint: "abcdef", message: "TLS"
+        )
+        #expect(ServerSignInState(uiState(step: untrusted)).step == .untrustedCertificate(host: "music.local:8920", fingerprint: "AB:CD:EF"))
+    }
+
+    @Test func mapsTheServersCustomHeadersAndOpensAdvanced() {
+        let state = ServerSignInState(uiState(headers: [CoreCustomHeader(name: "CF-Access-Client-Id", value: "id")]))
+        #expect(state.headers == [ServerSignInState.Header(name: "CF-Access-Client-Id", value: "id")])
+        #expect(state.showAdvanced)
+        #expect(!ServerSignInState(uiState()).showAdvanced)
     }
 
     // MARK: Steps

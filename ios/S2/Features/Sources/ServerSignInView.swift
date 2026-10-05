@@ -71,6 +71,14 @@ struct ServerSignInState: Equatable {
         case choosingServer([ServerOption])
         case connected
         case failed(String)
+        /// The server's certificate isn't one the system trusts (a self-signed one, say): its fingerprint, to trust it.
+        case untrustedCertificate(host: String, fingerprint: String)
+    }
+
+    /// A request header the user added for the server, sent with every request to it.
+    struct Header: Equatable {
+        var name: String
+        var value: String
     }
 
     /// One of the Plex account's servers: the user's own, or shared with them.
@@ -91,6 +99,8 @@ struct ServerSignInState: Equatable {
     var username = ""
     var password = ""
     var rememberPassword = true
+    var headers: [Header] = []
+    var showAdvanced = false
     var missing: Set<Field> = []
     var step: Step = .form
     var showProDisclosure = false
@@ -114,6 +124,8 @@ struct ServerSignInState: Equatable {
         username = state.form.username
         password = state.form.password
         rememberPassword = state.form.rememberPassword
+        headers = state.form.headers.map { Header(name: $0.name, value: $0.value) }
+        showAdvanced = state.form.showAdvanced
         missing = Set(state.form.missing.map { field in
             switch field {
             case .address: Field.address
@@ -130,6 +142,8 @@ struct ServerSignInState: Equatable {
             .choosingServer(choosing.servers.map { ServerOption(id: $0.id, name: $0.name, owned: $0.owned) })
         case .connected: .connected
         case .failed(let failed): .failed(failed.message)
+        case .untrustedCertificate(let untrusted):
+            .untrustedCertificate(host: untrusted.host, fingerprint: untrusted.displayedFingerprint)
         }
         showProDisclosure = state.showProDisclosure
         quickConnectEnabled = state.quickConnectEnabled
@@ -152,6 +166,11 @@ struct ServerSignInActions {
     var onOpenUrl: (String) -> Void = { _ in }
     var onChooseServer: (String) -> Void = { _ in }
     var onCancelPin: () -> Void = {}
+    var onShowAdvancedChange: (Bool) -> Void = { _ in }
+    var onAddHeader: () -> Void = {}
+    var onHeaderChange: (Int, String, String) -> Void = { _, _, _ in }
+    var onRemoveHeader: (Int) -> Void = { _ in }
+    var onTrustCertificate: () -> Void = {}
 }
 
 extension ServerSignInActions {
@@ -167,7 +186,12 @@ extension ServerSignInActions {
             onCancelQuickConnect: { viewModel.onCancelQuickConnect() },
             onOpenUrl: openURL,
             onChooseServer: { viewModel.onChooseServer(id: $0) },
-            onCancelPin: { viewModel.onCancelPin() }
+            onCancelPin: { viewModel.onCancelPin() },
+            onShowAdvancedChange: { viewModel.onShowAdvancedChange(show: $0) },
+            onAddHeader: { viewModel.onAddHeader() },
+            onHeaderChange: { viewModel.onHeaderChange(index: Int32($0), name: $1, value: $2) },
+            onRemoveHeader: { viewModel.onRemoveHeader(index: Int32($0)) },
+            onTrustCertificate: { viewModel.onTrustCertificate() }
         )
     }
 }
@@ -190,6 +214,8 @@ struct ServerSignInContent: View {
     @State private var username: String
     @State private var password: String
     @State private var rememberPassword: Bool
+    @State private var headers: [ServerSignInState.Header]
+    @State private var showAdvanced: Bool
 
     private enum Focus: Hashable {
         case address, username, password
@@ -202,6 +228,8 @@ struct ServerSignInContent: View {
         _username = State(initialValue: state.username)
         _password = State(initialValue: state.password)
         _rememberPassword = State(initialValue: state.rememberPassword)
+        _headers = State(initialValue: state.headers)
+        _showAdvanced = State(initialValue: state.showAdvanced)
     }
 
     var body: some View {
@@ -217,6 +245,8 @@ struct ServerSignInContent: View {
             case .connected:
                 SignedInSection(type: state.type)
                 submission
+            case let .untrustedCertificate(host, fingerprint):
+                UntrustedCertificateSection(host: host, fingerprint: fingerprint, onTrust: actions.onTrustCertificate, onCancel: actions.onRetry)
             case .form, .authenticating, .failed:
                 if state.signsInWithPin {
                     pinSignIn
@@ -237,12 +267,13 @@ struct ServerSignInContent: View {
         .onChange(of: username) { _, value in actions.onUsernameChange(value) }
         .onChange(of: password) { _, value in actions.onPasswordChange(value) }
         .onChange(of: rememberPassword) { _, value in actions.onRememberPasswordChange(value) }
+        .onChange(of: showAdvanced) { _, value in actions.onShowAdvancedChange(value) }
     }
 
     private var editable: Bool {
         switch state.step {
         case .form, .failed: true
-        case .authenticating, .awaitingCode, .awaitingPin, .choosingServer, .connected: false
+        case .authenticating, .awaitingCode, .awaitingPin, .choosingServer, .connected, .untrustedCertificate: false
         }
     }
 
@@ -304,10 +335,63 @@ struct ServerSignInContent: View {
             quickConnectOffer
         }
         accountSection
+        advancedSection
         if case .failed(let message) = state.step {
             SignInErrorSection(message: message)
         }
         submission
+    }
+
+    /// Custom headers, for a server behind a reverse proxy that wants its own (Cloudflare Access, Authelia).
+    private var advancedSection: some View {
+        Section {
+            Toggle("Advanced", isOn: $showAdvanced)
+                .s2Switch()
+                .accessibilityIdentifier("serverSignIn.advanced")
+            if showAdvanced {
+                ForEach(headers.indices, id: \.self) { index in
+                    HStack {
+                        VStack {
+                            TextField("Header", text: headerBinding(index, \.name))
+                                .accessibilityIdentifier("serverSignIn.headerName.\(index)")
+                            TextField("Value", text: headerBinding(index, \.value))
+                                .accessibilityIdentifier("serverSignIn.headerValue.\(index)")
+                        }
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        Button("Remove Header", systemImage: "minus.circle.fill", role: .destructive) {
+                            headers.remove(at: index)
+                            actions.onRemoveHeader(index)
+                        }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .accessibilityIdentifier("serverSignIn.removeHeader.\(index)")
+                    }
+                }
+                Button("Add Header", systemImage: "plus.circle") {
+                    headers.append(ServerSignInState.Header(name: "", value: ""))
+                    actions.onAddHeader()
+                }
+                .accessibilityIdentifier("serverSignIn.addHeader")
+            }
+        } footer: {
+            if showAdvanced {
+                Text("Custom headers are sent with every request to this server, for a reverse proxy such as Cloudflare Access or Authelia.")
+            }
+        }
+        .disabled(!editable)
+    }
+
+    /// One header's name or value, edited here and sent to the view model with its row.
+    private func headerBinding(_ index: Int, _ part: WritableKeyPath<ServerSignInState.Header, String>) -> Binding<String> {
+        Binding(
+            get: { headers.indices.contains(index) ? headers[index][keyPath: part] : "" },
+            set: { text in
+                guard headers.indices.contains(index) else { return }
+                headers[index][keyPath: part] = text
+                actions.onHeaderChange(index, headers[index].name, headers[index].value)
+            }
+        )
     }
 
     /// Servers that answered on the local network; tapping one fills in its address.
@@ -386,7 +470,7 @@ struct ServerSignInContent: View {
                         Label("Signed In", systemImage: "checkmark.circle.fill")
                     case .failed:
                         Text("Try Again")
-                    case .form, .awaitingCode, .awaitingPin, .choosingServer:
+                    case .form, .awaitingCode, .awaitingPin, .choosingServer, .untrustedCertificate:
                         Text(state.signsInWithPin ? "Sign In with Plex" : "Sign In")
                     }
                 }
@@ -412,7 +496,7 @@ struct ServerSignInContent: View {
             focus = nil
             actions.onRetry()
             actions.onAuthenticate()
-        case .authenticating, .awaitingCode, .awaitingPin, .choosingServer, .connected:
+        case .authenticating, .awaitingCode, .awaitingPin, .choosingServer, .connected, .untrustedCertificate:
             break
         }
     }
@@ -471,6 +555,38 @@ private struct SignInErrorSection: View {
             .padding(.vertical, Spacing.xsmall)
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("serverSignIn.error")
+        }
+    }
+}
+
+/// The server presented a certificate the system doesn't trust: its SHA-256 fingerprint, to trust for this server alone
+/// once the user has checked it against the server's. Cancel goes back to the form.
+private struct UntrustedCertificateSection: View {
+    let host: String
+    let fingerprint: String
+    let onTrust: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Spacing.small) {
+                Label("Untrusted Certificate", systemImage: "lock.trianglebadge.exclamationmark")
+                    .font(.s2Headline)
+                    .foregroundStyle(.s2Error)
+                Text("\(host) presented a certificate this device doesn't trust, such as a self-signed one. Trust it only if this SHA-256 fingerprint matches your server's certificate.")
+                Text(fingerprint)
+                    .font(.system(.footnote, design: .monospaced))
+                    .textSelection(.enabled)
+                    .accessibilityIdentifier("serverSignIn.certificateFingerprint")
+            }
+            .padding(.vertical, Spacing.xsmall)
+            Button("Trust Certificate", action: onTrust)
+                .font(.s2Headline)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("serverSignIn.trustCertificate")
+            Button("Cancel", role: .cancel, action: onCancel)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("serverSignIn.cancelTrust")
         }
     }
 }
