@@ -37,6 +37,12 @@
           },
           {
             "type": "command",
+            "command": "s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/seed-worktree-derived-data.sh\"; [ -x \"$s\" ] && \"$s\" || true",
+            "timeout": 60,
+            "statusMessage": "Seeding iOS DerivedData..."
+          },
+          {
+            "type": "command",
             "command": "s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/ensure-githooks.sh\"; [ -x \"$s\" ] && \"$s\" || true",
             "timeout": 15,
             "statusMessage": "Activating git hooks..."
