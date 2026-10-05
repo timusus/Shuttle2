@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsGroup
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
 import com.simplecityapps.shuttle.ui.screens.settings.model.StreamingQualityOptions
+import com.simplecityapps.shuttle.ui.screens.settings.model.TranscodeFormatOptions
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -36,7 +37,8 @@ import dev.zacsweers.metro.Provides
  * - Playback & sound: USB DAC direct output is Android's mixer. The equalizer, ReplayGain and its pre-amp are Android's
  *   rows, run by the S2Playback engine (phase 6, #604); ReplayGain and its pre-amp are a group of their own, apart
  *   from the Equalizer's Preamp (#645).
- * - Sources: reporting playback to the server has no iOS reporter yet; download on Wi-Fi only, until downloads.
+ * - Sources: reporting playback to the server has no iOS reporter yet; download on Wi-Fi only is
+ *   Android's download requirements (`DownloadSettings`); artwork on Wi-Fi only, below.
  * - Library: rescan frequency needs a background scheduler; excluded songs and folders wait for local files (phase
  *   8); artwork Wi-Fi only gates the S2 artwork service iOS doesn't use; media session artwork, clearing the
  *   artwork cache and downloading all artwork reach Android's Coil and media session.
@@ -107,7 +109,7 @@ object IosSettingsCatalog : SettingsCatalog {
         destination = SettingsDestination.Sources,
         groups = listOf(
             SettingsGroup(
-                title = StringKey.PREF_CATEGORY_TITLE_STREAMING_QUALITY,
+                title = StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS,
                 items = listOf(
                     SettingItem.Choice(
                         setting = StreamingSettings.UnmeteredQuality,
@@ -117,6 +119,16 @@ object IosSettingsCatalog : SettingsCatalog {
                     SettingItem.Choice(
                         setting = StreamingSettings.MeteredQuality,
                         title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
+                        options = StreamingQualityOptions
+                    ),
+                    SettingItem.Choice(
+                        setting = StreamingSettings.Format,
+                        title = StringKey.PREF_TRANSCODE_FORMAT_TITLE,
+                        options = TranscodeFormatOptions
+                    ),
+                    SettingItem.Choice(
+                        setting = StreamingSettings.DownloadQuality,
+                        title = StringKey.PREF_DOWNLOAD_QUALITY_TITLE,
                         options = StreamingQualityOptions
                     ),
                     SettingItem.Switch(

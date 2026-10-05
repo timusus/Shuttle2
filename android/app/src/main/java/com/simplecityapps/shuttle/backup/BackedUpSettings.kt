@@ -52,6 +52,8 @@ internal object BackedUpSettings {
         LibrarySettings.MinTrackLength,
         StreamingSettings.UnmeteredQuality,
         StreamingSettings.MeteredQuality,
+        StreamingSettings.DownloadQuality,
+        StreamingSettings.Format,
         DownloadSettings.WifiOnly
     )
 

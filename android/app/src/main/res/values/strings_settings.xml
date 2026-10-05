@@ -194,8 +194,6 @@
     <string name="pref_download_wifi_only_title">Download on Wi-Fi only</string>
     <!-- Settings: Summary of the download on Wi-Fi only switch -->
     <string name="pref_download_wifi_only_summary">Offline downloads wait for Wi-Fi</string>
-    <!-- Settings: Header of the Sources group that caps the bitrate of songs streamed from Jellyfin, Emby and Plex -->
-    <string name="pref_category_title_streaming_quality">Streaming quality</string>
     <!-- Settings: Title of the streaming quality choice used on Wi-Fi and other unmetered networks -->
     <string name="pref_streaming_quality_unmetered_title">On Wi-Fi</string>
     <!-- Settings: Title of the streaming quality choice used on mobile data and other metered networks -->
@@ -208,6 +206,18 @@
     <string name="pref_streaming_quality_192">192 kbps</string>
     <!-- Settings: Streaming quality option capping streams at 128 kilobits per second -->
     <string name="pref_streaming_quality_128">128 kbps</string>
+    <!-- Settings: Title of the quality choice for songs downloaded from Jellyfin, Emby, Plex and Subsonic for offline play -->
+    <string name="pref_download_quality_title">Download quality</string>
+    <!-- Settings: Title of the choice of audio format a server converts songs to when it lowers their quality -->
+    <string name="pref_transcode_format_title">Transcode format</string>
+    <!-- Settings: Transcode format option that lets the app pick the format that suits this device -->
+    <string name="pref_transcode_format_auto">Automatic</string>
+    <!-- Settings: Transcode format option for the Opus audio format -->
+    <string name="pref_transcode_format_opus" translatable="false">Opus</string>
+    <!-- Settings: Transcode format option for the AAC audio format -->
+    <string name="pref_transcode_format_aac" translatable="false">AAC</string>
+    <!-- Settings: Transcode format option for the MP3 audio format -->
+    <string name="pref_transcode_format_mp3" translatable="false">MP3</string>
     <!-- Settings: Name of the amber accent colour -->
     <string name="theme_accent_entry_amber">Amber</string>
     <!-- Settings: a row's summary when the switch it leads to is off -->

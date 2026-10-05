@@ -180,8 +180,9 @@ object AndroidSettingsCatalog : SettingsCatalog {
                     )
                 )
             ),
-            // Every network rule in one place: what streams at, and what only runs on Wi-Fi. Downloads take the
-            // stream URL as it is built, so they follow the quality caps above; there is no separate download quality.
+            // Every network rule in one place: what streams at on each network, the format a transcode is in, what
+            // downloads keep (whatever the network: a download is kept, so it has its own quality), and what only runs
+            // on Wi-Fi.
             SettingsGroup(
                 title = StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS,
                 items = listOf(
@@ -193,6 +194,16 @@ object AndroidSettingsCatalog : SettingsCatalog {
                     SettingItem.Choice(
                         setting = StreamingSettings.MeteredQuality,
                         title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
+                        options = StreamingQualityOptions
+                    ),
+                    SettingItem.Choice(
+                        setting = StreamingSettings.Format,
+                        title = StringKey.PREF_TRANSCODE_FORMAT_TITLE,
+                        options = TranscodeFormatOptions
+                    ),
+                    SettingItem.Choice(
+                        setting = StreamingSettings.DownloadQuality,
+                        title = StringKey.PREF_DOWNLOAD_QUALITY_TITLE,
                         options = StreamingQualityOptions
                     ),
                     SettingItem.Switch(

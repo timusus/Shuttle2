@@ -230,11 +230,20 @@ The JVM-proven parts of these items are mapped in `docs/architecture/parity-audi
 
 ## Streaming quality (#504)
 
-Set Settings → Sources → Streaming quality → On mobile data to 128 kbps and leave On Wi-Fi at Original. The S2 Transcode Test album on each server has a FLAC to try.
+Set Settings → Sources → Streaming & downloads → On mobile data to 128 kbps and leave On Wi-Fi at Original. The S2 Transcode Test album on each server has a FLAC to try.
 
 - [ ] Jellyfin: on Wi-Fi a FLAC plays as the original (the server's dashboard shows Direct Play). On mobile data the next song transcodes (the dashboard shows Transcode at about 128 kbps) and sounds right; seeking forward and back while it transcodes lands at the right position and keeps playing. A song already under 128 kbps direct-plays.
 - [ ] Emby: the same as Jellyfin. On mobile data the dashboard shows the stream transcoding at about 128 kbps (the parameter is untested against Emby), and seeking while it transcodes works.
 - [ ] Plex: on Wi-Fi a FLAC plays as the original file. On mobile data the next song plays through Plex's transcoder (Plex Web → Dashboard shows a transcode at about 128 kbps); seeking while it transcodes lands at the right position, and a song whose bitrate is already under the cap plays the original. Server side verified against the Plex test server, 2026-10-05: the transcode session is stopped by `/video/:/transcode/universal/stop` and a seek (same session id, new `offset`) replaces it at the new position; the capped transcode's bitrate is not checked (the test tracks are synthetic, so the VBR output sits far below 128 kbps). Plex also answers 400 to a second, different session id for the same track (`support/scripts/plex-transcode-probe.sh`).
+
+## Transcode format and download quality (#893, #766)
+
+Set On mobile data to 128 kbps and use mobile data (or a metered hotspot). The S2 Transcode Test album on each server has a FLAC to try.
+
+- [ ] Transcode format Opus, Android: Jellyfin and Emby play the FLAC as an Opus HLS transcode in fMP4 segments (unverified against either server: the dashboard should show Opus), and seeking works. Plex falls back to AAC, Subsonic to MP3.
+- [ ] Transcode format MP3, Android: Jellyfin, Emby and Plex play an MP3 HLS transcode (MPEG-TS segments) and seek; on Plex this is the first use of MP3 in its HLS profile.
+- [ ] Transcode format Opus, iOS: Jellyfin, Emby and Subsonic play a progressive Opus transcode and a seek re-opens it at the right place; Plex stays MP3.
+- [ ] Download quality 192 kbps: downloading the FLAC from each server saves a 192 kbps file in the chosen format (MP3 on Plex) that plays offline; a song already under 192 kbps downloads as the original.
 
 ## Crossfade clipping and the equalizer preamp (#544, #545, #236)
 

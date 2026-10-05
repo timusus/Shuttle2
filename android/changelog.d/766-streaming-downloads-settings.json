@@ -1,0 +1,1 @@
+{ "type": "features", "text": "Settings has one Streaming and downloads section for Jellyfin, Emby, Plex and Subsonic: choose the format songs are converted to (Opus, AAC or MP3) and a separate quality for downloads. Streaming on mobile data now uses 320 kbps unless you have picked a quality.", "commits": [] }

@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsUiState
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
@@ -45,6 +46,8 @@ class IosSettingsCatalogTest {
             PlaybackSettings.PreAmpGain.key,
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
+            StreamingSettings.Format.key,
+            StreamingSettings.DownloadQuality.key,
             DownloadSettings.WifiOnly.key,
             ArtworkSettings.LocalOnly.key,
             AppearanceSettings.ColourFromArtwork.key,
@@ -85,6 +88,21 @@ class IosSettingsCatalogTest {
     fun theLinksAreTheEqualizerAndScrobblingAndTheOnlySliderTheReplayGainPreamp() {
         catalog.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly listOf(SettingsLink.Equalizer, SettingsLink.Scrobbling)
         catalog.items.filterIsInstance<SettingItem.Slider<*>>().map { it.setting } shouldContainExactly listOf(PlaybackSettings.PreAmpGain)
+    }
+
+    @Test
+    fun sourcesIsOneStreamingAndDownloadsGroupWithTheNetworkQualitiesTheFormatAndTheDownloadQuality() {
+        val group = catalog.sources.groups.single()
+        group.title shouldBe StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS
+        group.items.map { it.key } shouldContainExactly listOf(
+            StreamingSettings.UnmeteredQuality.key,
+            StreamingSettings.MeteredQuality.key,
+            StreamingSettings.Format.key,
+            StreamingSettings.DownloadQuality.key
+        )
+        val format = group.items.filterIsInstance<SettingItem.Choice<*>>().single { it.setting == StreamingSettings.Format }
+        format.options.map { it.value } shouldContainExactly TranscodeFormat.entries
+        SettingsUiState(values = mapOf(format.key to TranscodeFormat.Opus)).selectedIndex(format) shouldBe 1
     }
 
     @Test

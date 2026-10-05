@@ -130,8 +130,8 @@ Touchpoints in the app and core (from the map):
 
 What the implementation did differently from the plan above.
 
-- **Transcoding shipped in v1, with a bitrate cap.** `SubsonicStreams` follows the Streaming quality
-  setting (Wi-Fi and mobile data caps). It streams the original file (`stream?format=raw`, byte-range
+- **Transcoding shipped in v1, with a bitrate cap.** `SubsonicStreams` follows the Streaming & downloads
+  settings (Wi-Fi and mobile data caps, the transcode format, the download quality). It streams the original file (`stream?format=raw`, byte-range
   seekable) when the player decodes it and it's within the cap. Otherwise, on a server with
   OpenSubsonic's `transcoding` extension, it asks `getTranscodeDecision` (MP3 first) and plays
   `getTranscodeStream`. Failing that, or on a server without the extension, it uses the classic

@@ -49,6 +49,12 @@
 "pref_streaming_quality_320" = "320 kbps";
 "pref_streaming_quality_192" = "192 kbps";
 "pref_streaming_quality_128" = "128 kbps";
+"pref_download_quality_title" = "Download quality";
+"pref_transcode_format_title" = "Transcode format";
+"pref_transcode_format_auto" = "Automatic";
+"pref_transcode_format_opus" = "Opus";
+"pref_transcode_format_aac" = "AAC";
+"pref_transcode_format_mp3" = "MP3";
 "pref_theme_title" = "Theme";
 "theme_entry_day_night" = "Day/Night";
 "theme_entry_light" = "Light";
@@ -90,7 +96,6 @@
 "pref_report_playback_summary" = "Show what you're playing on your Jellyfin, Emby, Plex or Navidrome server, and count plays in its history";
 "pref_download_wifi_only_title" = "Download on Wi-Fi only";
 "pref_download_wifi_only_summary" = "Offline downloads wait for Wi-Fi";
-"pref_category_title_streaming_quality" = "Streaming quality";
 "pref_streaming_quality_unmetered_title" = "On Wi-Fi";
 "pref_streaming_quality_metered_title" = "On mobile data";
 "pref_media_rescan_title" = "Rescan";

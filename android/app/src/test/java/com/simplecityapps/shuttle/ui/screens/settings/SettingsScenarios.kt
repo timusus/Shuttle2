@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import kotlin.time.Instant
 
 /** Settings UI states the characterisation tests render. */
@@ -42,7 +43,9 @@ object SettingsScenarios {
     val streamingCappedOnMobileData = SettingsUiState(
         values = mapOf(
             StreamingSettings.UnmeteredQuality.key to StreamingQuality.Original,
-            StreamingSettings.MeteredQuality.key to StreamingQuality.Kbps128
+            StreamingSettings.MeteredQuality.key to StreamingQuality.Kbps128,
+            StreamingSettings.Format.key to TranscodeFormat.Opus,
+            StreamingSettings.DownloadQuality.key to StreamingQuality.Kbps192
         )
     )
 }

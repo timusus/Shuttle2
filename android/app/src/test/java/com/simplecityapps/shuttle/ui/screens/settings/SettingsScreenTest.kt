@@ -258,7 +258,7 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `sources shows the streaming quality on Wi-Fi and on mobile data`() {
+    fun `sources shows the streaming quality on Wi-Fi and on mobile data, the transcode format and the download quality`() {
         robot.setDestinationContent(SettingsDestination.Sources, SettingsScenarios.streamingCappedOnMobileData)
 
         robot.assertDisplayed("Streaming & downloads")
@@ -266,6 +266,10 @@ class SettingsScreenTest {
         robot.assertDisplayed("Original")
         robot.assertDisplayed("On mobile data")
         robot.assertDisplayed("128 kbps")
+        robot.assertDisplayed("Transcode format")
+        robot.assertDisplayed("Opus")
+        robot.assertDisplayed("Download quality")
+        robot.assertDisplayed("192 kbps")
     }
 
     @Test
@@ -273,10 +277,21 @@ class SettingsScreenTest {
         robot.setDestinationContent(SettingsDestination.Sources)
 
         robot.tapText("On mobile data")
-        robot.assertDialogDisplayed("320 kbps")
+        robot.assertDialogDisplayed("192 kbps")
         robot.tapDialogText("128 kbps")
 
         robot.choiceSelections shouldBe listOf(StreamingSettings.MeteredQuality.key to 3)
+    }
+
+    @Test
+    fun `picking a transcode format reports the option`() {
+        robot.setDestinationContent(SettingsDestination.Sources)
+
+        robot.tapText("Transcode format")
+        robot.assertDialogDisplayed("Opus")
+        robot.tapDialogText("MP3")
+
+        robot.choiceSelections shouldBe listOf(StreamingSettings.Format.key to 3)
     }
 
     @Test

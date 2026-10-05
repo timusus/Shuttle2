@@ -80,6 +80,12 @@ val StringKey.resId: Int
         StringKey.PREF_STREAMING_QUALITY_320 -> R.string.pref_streaming_quality_320
         StringKey.PREF_STREAMING_QUALITY_192 -> R.string.pref_streaming_quality_192
         StringKey.PREF_STREAMING_QUALITY_128 -> R.string.pref_streaming_quality_128
+        StringKey.PREF_DOWNLOAD_QUALITY_TITLE -> R.string.pref_download_quality_title
+        StringKey.PREF_TRANSCODE_FORMAT_TITLE -> R.string.pref_transcode_format_title
+        StringKey.PREF_TRANSCODE_FORMAT_AUTO -> R.string.pref_transcode_format_auto
+        StringKey.PREF_TRANSCODE_FORMAT_OPUS -> R.string.pref_transcode_format_opus
+        StringKey.PREF_TRANSCODE_FORMAT_AAC -> R.string.pref_transcode_format_aac
+        StringKey.PREF_TRANSCODE_FORMAT_MP3 -> R.string.pref_transcode_format_mp3
         StringKey.PREF_THEME_TITLE -> R.string.pref_theme_title
         StringKey.THEME_ENTRY_DAY_NIGHT -> R.string.theme_entry_day_night
         StringKey.THEME_ENTRY_LIGHT -> R.string.theme_entry_light
@@ -121,7 +127,6 @@ val StringKey.resId: Int
         StringKey.PREF_REPORT_PLAYBACK_SUMMARY -> R.string.pref_report_playback_summary
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE -> R.string.pref_download_wifi_only_title
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY -> R.string.pref_download_wifi_only_summary
-        StringKey.PREF_CATEGORY_TITLE_STREAMING_QUALITY -> R.string.pref_category_title_streaming_quality
         StringKey.PREF_STREAMING_QUALITY_UNMETERED_TITLE -> R.string.pref_streaming_quality_unmetered_title
         StringKey.PREF_STREAMING_QUALITY_METERED_TITLE -> R.string.pref_streaming_quality_metered_title
         StringKey.PREF_MEDIA_RESCAN_TITLE -> R.string.pref_media_rescan_title

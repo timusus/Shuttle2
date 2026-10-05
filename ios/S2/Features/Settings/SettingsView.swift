@@ -397,6 +397,8 @@ struct SettingsIcon: Equatable {
         case "preamp_gain": ("speaker.wave.2.fill", .indigo)
         case "pref_streaming_quality_unmetered": ("wifi", .cyan)
         case "pref_streaming_quality_metered": ("antenna.radiowaves.left.and.right", .green)
+        case "pref_transcode_format": ("waveform.circle.fill", .orange)
+        case "pref_download_quality": ("arrow.down.circle.fill", .blue)
         case "pref_media_rescan": ("arrow.clockwise", .teal)
         case "artwork_local_only": ("photo.fill", .mint)
         case "pref_show_home_on_launch": ("house.fill", .red)
