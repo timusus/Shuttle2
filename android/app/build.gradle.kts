@@ -259,7 +259,8 @@ android {
         // WorkManager
         implementation(libs.androidx.work.runtime.ktx)
 
-        // Installs the Baseline Profile on sideloaded builds and reports it to the benchmarks; Play installs it itself
+        // Reports the Baseline Profile to the benchmarks (ProfileInstallReceiver); Play installs it itself. Sideloads get
+        // none while the manifest removes androidx.startup's provider (#913)
         implementation(libs.androidx.profileinstaller)
         baselineProfile(project(":android:baselineprofile"))
 
