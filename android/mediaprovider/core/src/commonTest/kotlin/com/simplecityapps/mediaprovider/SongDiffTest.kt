@@ -125,6 +125,42 @@ class SongDiffTest {
     }
 
     @Test
+    fun `a re-encoded song whose server omits the bit rate and sample rate clears the stored ones`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(sampleRate = 96000, channelCount = 2)
+        val reencoded = createSong(id = 0, lastModified = firstImport, audioCodec = "mp3")
+
+        SongDiff(listOf(existing), listOf(reencoded)).apply().updates.single().run {
+            audioCodec shouldBe "mp3"
+            bitRate shouldBe null
+            sampleRate shouldBe null
+            channelCount shouldBe null
+        }
+    }
+
+    @Test
+    fun `a remote song whose size changed clears the stored stream properties the server no longer reports`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(sampleRate = 96000)
+        val resized = createSong(id = 0, lastModified = firstImport).copy(size = 1234)
+
+        SongDiff(listOf(existing), listOf(resized)).apply().updates.single().run {
+            audioCodec shouldBe null
+            bitRate shouldBe null
+            sampleRate shouldBe null
+        }
+    }
+
+    @Test
+    fun `a local song's tag edit keeps the stored stream properties`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(mediaProvider = MediaProviderType.Shuttle)
+        val edited = createSong(id = 0, lastModified = Instant.fromEpochSeconds(1_800_000_000)).copy(mediaProvider = MediaProviderType.Shuttle, size = 99)
+
+        SongDiff(listOf(existing), listOf(edited)).apply().updates.single().run {
+            audioCodec shouldBe "flac"
+            bitRate shouldBe 1411
+        }
+    }
+
+    @Test
     fun `a full listing deletes the songs it no longer holds`() = runTest {
         val kept = createSong(id = 1, lastModified = firstImport, path = "jellyfin://item/1")
         val gone = createSong(id = 2, lastModified = firstImport, path = "jellyfin://item/2")

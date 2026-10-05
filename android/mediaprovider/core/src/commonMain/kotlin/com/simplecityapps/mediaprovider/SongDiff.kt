@@ -63,23 +63,44 @@ class SongDiff(
 
     /**
      * The stream properties a provider reports, else the stored ones: the MediaStore scan reports none, and a TagLib
-     * rescan's would otherwise be wiped by it.
+     * rescan's would otherwise be wiped by it. A song whose file changed ([isReencodeOf]) keeps none of them: a server that
+     * no longer reports a field would otherwise leave the old encode's value on the new file (#891).
      */
-    private fun Song.keepingStoredStreamProperties(old: Song): Song = copy(
-        bitRate = bitRate ?: old.bitRate,
-        sampleRate = sampleRate ?: old.sampleRate,
-        channelCount = channelCount ?: old.channelCount,
-        audioCodec = audioCodec ?: old.audioCodec
-    )
+    private fun Song.keepingStoredStreamProperties(old: Song): Song = if (isReencodeOf(old)) {
+        this
+    } else {
+        copy(
+            bitRate = bitRate ?: old.bitRate,
+            sampleRate = sampleRate ?: old.sampleRate,
+            channelCount = channelCount ?: old.channelCount,
+            audioCodec = audioCodec ?: old.audioCodec
+        )
+    }
 
     /**
      * A remote lossless song that arrives without a bit depth keeps the stored one: its server only reports the depth
      * through a request that can fail (Plex), and a song whose codec turned lossy still clears it.
      */
-    private fun Song.keepingStoredBitDepth(old: Song): Song = if (bitDepth == null && old.mediaProvider.remote && isLosslessCodec(audioCodec)) {
+    private fun Song.keepingStoredBitDepth(old: Song): Song = if (bitDepth == null && old.mediaProvider.remote && !isReencodeOf(old) && isLosslessCodec(audioCodec)) {
         copy(bitDepth = old.bitDepth)
     } else {
         this
+    }
+
+    /**
+     * Whether this song's file is no longer [old]'s: a different codec when both are known, or, for a remote song, a
+     * different size, container or modified time. A local scan's size and time move with a tag edit, which leaves the
+     * stream properties as they were, so only its codec counts.
+     */
+    private fun Song.isReencodeOf(old: Song): Boolean {
+        val codecChanged = audioCodec != null && old.audioCodec != null && !audioCodec.equals(old.audioCodec, ignoreCase = true)
+        return codecChanged || (
+            old.mediaProvider.remote && (
+                size != old.size ||
+                    mimeType != old.mimeType ||
+                    lastModified.atStoredPrecision() != old.lastModified.atStoredPrecision()
+                )
+            )
     }
 
     private class PlayStats(
