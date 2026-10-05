@@ -35,7 +35,8 @@ ios/scripts/generate-strings.py
 
 # 3. Build for the simulator (Debug `build-for-testing` into ios/build/DerivedData; skipped when nothing
 #    under ios/ or shared/ changed since the last build). Workers call this, never raw xcodebuild
-ios/scripts/build-app.sh                       # --force rebuilds regardless
+ios/scripts/build-app.sh                       # --force rebuilds and relinks regardless; the stamp also covers
+                                               # local xcconfigs, Playback/Frameworks, Xcode and SDK versions
 # 4. Tests. The S2 scheme (swift-testing + ViewInspector) on this session's leased simulator (the
 #    shared ios-sim lease pool, if set up), else an iPhone on a released runtime (booted, else newest);
 #    S2_SIMULATOR_UDID=<udid> picks one. Extra args go to xcodebuild (-only-testing:S2Tests/AppShellTests)

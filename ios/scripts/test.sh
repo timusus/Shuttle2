@@ -65,6 +65,9 @@ print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{notes})", file=sys.stderr)
 }
 
 "$ios_dir/scripts/build-app.sh"
+# The exact xctestrun the build recorded in its stamp, never a glob.
+xctestrun="$(sed -n 's/^xctestrun=//p' "$ios_dir/build/DerivedData/.s2-build-stamp")"
+[[ -n "$xctestrun" && -f "$xctestrun" ]] || { echo "ERROR: no xctestrun recorded by build-app.sh" >&2; exit 1; }
 
 lease_rc=0
 udid="${S2_SIMULATOR_UDID:-}"
@@ -78,7 +81,7 @@ if [ -z "$udid" ]; then
 fi
 
 cd "$ios_dir"
-echo "==> xcodebuild test-without-building -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
-xcodebuild test-without-building -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
+echo "==> xcodebuild test-without-building -xctestrun ${xctestrun##*/} -destination id=$udid ${args[*]+"${args[*]}"}"
+xcodebuild test-without-building -xctestrun "$xctestrun" -destination "id=$udid" \
   -derivedDataPath build/DerivedData -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
 echo "==> S2 tests passed"

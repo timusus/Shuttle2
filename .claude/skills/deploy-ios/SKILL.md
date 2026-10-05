@@ -23,9 +23,11 @@ Same as deploy-android: on `main`, clean tree, `HEAD == origin/main` after `git 
 The Mac must be free; take the build through a longjob, never a long foreground call.
 
 ```bash
-support/scripts/longjob.sh start ios-preflight -- sh -c 'ios/scripts/build-framework.sh -q && cd ios && xcodegen generate && cd .. && ios/scripts/build-app.sh'
+support/scripts/longjob.sh start ios-preflight -- sh -c 'ios/scripts/build-framework.sh -q && cd ios && xcodegen generate && cd .. && ios/scripts/build-app.sh --force'
 support/scripts/longjob.sh wait ios-preflight
 ```
+
+`--force` makes this a real compile and relink at the release commit, never a skipped build. It also builds the test target, so a test-target compile error blocks the preflight; that is intended.
 
 If iOS changed since the last full verify, also run `ios/scripts/test.sh`. **STOP** on failure.
 
