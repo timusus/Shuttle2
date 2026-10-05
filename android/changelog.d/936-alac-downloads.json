@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Lossless (ALAC) songs downloaded from Emby or Jellyfin that played silent are downloaded again and now play.", "commits": [] }

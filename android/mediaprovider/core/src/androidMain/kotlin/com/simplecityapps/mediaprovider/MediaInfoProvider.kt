@@ -41,16 +41,23 @@ interface MediaInfoProvider {
     suspend fun downloadInfo(song: Song): DownloadInfo?
 
     /**
-     * A fallback download URL for [path] (a `Song.path`), used when [downloadInfo]'s URL was
-     * rejected by the server with the given [responseCode] (401 or 403). A 403 persists the
-     * change, so later downloads for this provider go straight to the fallback; a 401 does not,
-     * since it can also mean the cached session expired rather than a permission change. Null when
-     * this provider isn't the one that produced [path], or has no distinct fallback to offer.
+     * A fallback download for [song], used when [downloadInfo]'s URL was rejected by the server
+     * with the given [responseCode] (401 or 403). A 403 persists the change, so later downloads
+     * for this provider go straight to the fallback; a 401 does not, since it can also mean the
+     * cached session expired rather than a permission change. A song the player can't decode as it
+     * is falls back to the same transcode [downloadInfo] gives. Null when this provider has no
+     * distinct fallback to offer.
      */
-    suspend fun downloadFallbackUri(
-        path: String,
+    suspend fun downloadFallbackInfo(
+        song: Song,
         responseCode: Int
-    ): Uri?
+    ): DownloadInfo?
+
+    /**
+     * Whether [song]'s original file can't be decoded on this platform, so [downloadInfo] gives a transcode of
+     * it: a download recorded as the original type is then silent, and is downloaded again.
+     */
+    fun downloadsAsTranscode(song: Song): Boolean = false
 }
 
 /** Whether a song from a remote server may be streamed. Asked once per song, when its stream is resolved. */
@@ -91,10 +98,12 @@ class AggregateMediaInfoProvider(
     // (matched below by scheme) can produce a download URL.
     override suspend fun downloadInfo(song: Song): DownloadInfo? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.downloadInfo(song)
 
-    override suspend fun downloadFallbackUri(
-        path: String,
+    override suspend fun downloadFallbackInfo(
+        song: Song,
         responseCode: Int
-    ): Uri? = providers.firstOrNull { it.handles(schemeOf(path)) }?.downloadFallbackUri(path, responseCode)
+    ): DownloadInfo? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.downloadFallbackInfo(song, responseCode)
+
+    override fun downloadsAsTranscode(song: Song): Boolean = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.downloadsAsTranscode(song) ?: false
 
     // MediaStore songs carry raw file paths, which may contain '#' or '?', so they're built as
     // file URIs rather than parsed. Everything else (content://, emby://, jellyfin://, plex://)

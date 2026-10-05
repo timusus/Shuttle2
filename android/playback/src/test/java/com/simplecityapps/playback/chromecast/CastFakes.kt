@@ -132,10 +132,10 @@ class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : M
 
     override suspend fun downloadInfo(song: Song): DownloadInfo? = error("not called")
 
-    override suspend fun downloadFallbackUri(
-        path: String,
+    override suspend fun downloadFallbackInfo(
+        song: Song,
         responseCode: Int
-    ): Uri? = error("not called")
+    ): DownloadInfo? = error("not called")
 
     companion object {
         const val TRANSCODED = "application/x-mpegURL"

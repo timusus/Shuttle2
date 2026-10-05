@@ -506,3 +506,11 @@ Script-side fixes verified by reading only; run these on a lane to confirm them.
 
 - [ ] `emu-verify.sh --check restore-track-finish` and `--check restore-skip-pause` pass with the paused-position read, and still fail if the restore carried over the finished track's position (#435).
 - [ ] After `remote-emu.sh reset` + `seed-test-media.sh library --skip-onboarding` on a fresh lane, the seed's own first import lists all 4 playlists with no extra `s2 IMPORT`; `emu-verify.sh --check voice-search` passes (#440).
+
+## Emby and Jellyfin ALAC downloads (#936, #156)
+
+Needs a server with an ALAC (`.m4a`) song, signed in on each of Emby and Jellyfin in turn, Download quality set to Original (no cap).
+
+- [ ] Download the ALAC song: it finishes and plays with sound. Note what the server's `universal` transcode request with no `MaxStreamingBitrate` returns (`curl -sI` the URL, or the server log): the codec, the container, and whether it sends the file at all or refuses for want of a bitrate. Record Emby's and Jellyfin's answers here; if either refuses or sends ALAC back, the no-cap transcode needs a bitrate.
+- [ ] On the server, turn off the user's content downloading, then download the ALAC song: the 401/403 retry saves the same playable transcode (AAC), not the original.
+- [ ] Upgrade a device holding an ALAC download made before #156 (silent): after the next app start it downloads again, then plays with sound; a second start doesn't download it again.

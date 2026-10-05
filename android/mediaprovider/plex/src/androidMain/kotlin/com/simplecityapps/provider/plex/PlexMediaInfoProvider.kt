@@ -34,8 +34,8 @@ constructor(
 
     // Plex has no separate download permission to fall back from: downloadInfo's URI is already the
     // only one there is.
-    override suspend fun downloadFallbackUri(
-        path: String,
+    override suspend fun downloadFallbackInfo(
+        song: Song,
         responseCode: Int
-    ): Uri? = null
+    ): DownloadInfo? = null
 }

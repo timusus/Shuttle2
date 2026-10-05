@@ -78,10 +78,10 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
-    fun `downloadFallbackUri is always null since plex has no separate download permission`() = runTest {
+    fun `downloadFallbackInfo is always null since plex has no separate download permission`() = runTest {
         credentialStore.authenticatedCredentials = credentials
 
-        provider.downloadFallbackUri("plex://item/107898", 403) shouldBe null
+        provider.downloadFallbackInfo(song(externalId = "/library/parts/42/file.mp3"), 403) shouldBe null
     }
 
     @Test

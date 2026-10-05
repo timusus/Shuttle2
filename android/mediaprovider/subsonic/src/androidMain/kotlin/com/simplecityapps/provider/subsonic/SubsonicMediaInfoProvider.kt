@@ -33,8 +33,8 @@ class SubsonicMediaInfoProvider(
     override suspend fun downloadInfo(song: Song): DownloadInfo? = streams.downloadSource(song)?.let { DownloadInfo(it.url.toUri(), it.mimeType) }
 
     // Subsonic has no separate download permission to fall back from.
-    override suspend fun downloadFallbackUri(
-        path: String,
+    override suspend fun downloadFallbackInfo(
+        song: Song,
         responseCode: Int
-    ): Uri? = null
+    ): DownloadInfo? = null
 }

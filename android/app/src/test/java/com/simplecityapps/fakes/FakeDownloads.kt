@@ -75,5 +75,5 @@ class FakeMediaInfoProvider : MediaInfoProvider {
 
     override suspend fun downloadInfo(song: Song): DownloadInfo? = if (song.path in unavailable) null else DownloadInfo(fakeUri("https://example.com/download/${song.id}"), "audio/download-transcode")
 
-    override suspend fun downloadFallbackUri(path: String, responseCode: Int): Uri? = null
+    override suspend fun downloadFallbackInfo(song: Song, responseCode: Int): DownloadInfo? = null
 }

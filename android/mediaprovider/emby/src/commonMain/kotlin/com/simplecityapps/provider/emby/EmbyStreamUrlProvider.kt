@@ -3,6 +3,7 @@ package com.simplecityapps.provider.emby
 import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.TranscodeFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormat
@@ -50,25 +51,39 @@ class EmbyStreamUrlProvider(
         val bitRate = song.bitRate
         val overCap = maxBitrateKbps != null && (bitRate == null || bitRate > maxBitrateKbps)
         if (overCap || !authenticationManager.directPlays(song.audioCodec)) {
-            return authenticationManager.buildTranscodedDownloadPath(
-                itemId = song.itemId(),
-                authenticatedCredentials = authenticatedCredentials,
-                maxBitrateKbps = maxBitrateKbps,
-                format = streamingPolicy.transcodeFormat()
-            )
+            return transcodedDownload(song, authenticatedCredentials)
         }
         val url = authenticationManager.buildDownloadPath(song.itemId(), authenticatedCredentials) ?: return null
         return DownloadSource(url, song.mimeType)
     }
 
-    /** A 403 means the server has revoked download permission, so it's remembered; a 401 may only be an expired session. */
+    /**
+     * A song the player can't decode (ALAC) falls back to the same transcode [downloadSource] gives it: the static
+     * stream is the original, which would be saved undecodable. Any other song falls back to the static stream, recorded
+     * as its own type. A 403 means the server has revoked download permission, so it's remembered (a transcode isn't
+     * the Download endpoint, so one refused says nothing of it); a 401 may only be an expired session.
+     */
     override fun downloadFallback(
         song: Song,
         httpStatus: Int
     ): DownloadSource? {
+        val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
+        if (!authenticationManager.directPlays(song.audioCodec)) return transcodedDownload(song, authenticatedCredentials)
         if (httpStatus == 403) authenticationManager.disableDownloadPermission()
-        return super.downloadFallback(song, httpStatus)
+        val url = authenticationManager.buildStreamPath(song.itemId(), authenticatedCredentials) ?: return null
+        return DownloadSource(url, song.mimeType)
     }
+
+    /** A progressive transcode in the chosen codec, at the download cap if there is one. */
+    private fun transcodedDownload(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials
+    ): DownloadSource? = authenticationManager.buildTranscodedDownloadPath(
+        itemId = song.itemId(),
+        authenticatedCredentials = authenticatedCredentials,
+        maxBitrateKbps = streamingPolicy.downloadMaxBitrateKbps(),
+        format = streamingPolicy.transcodeFormat()
+    )
 
     /**
      * What the server sends: the universal endpoint decides, so this is the decision it makes for a song whose bitrate is

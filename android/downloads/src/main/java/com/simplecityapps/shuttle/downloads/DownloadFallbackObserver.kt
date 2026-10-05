@@ -1,11 +1,11 @@
 package com.simplecityapps.shuttle.downloads
 
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Retries a failed download once with [AggregateMediaInfoProvider.downloadFallbackUri] when Media3
+ * Retries a failed download once with [AggregateMediaInfoProvider.downloadFallbackInfo] when Media3
  * reports an HTTP 401/403 from the Download URL (#322) — the server admin turned off download
  * permission after the URL was cached, or (401 only) the cached session simply expired. The
  * fallback is the static stream URL, which stays available in both cases; the retry restarts from
@@ -33,7 +33,8 @@ class DownloadFallbackObserver
 constructor(
     private val downloadManager: DownloadManager,
     private val songDownloadManager: SongDownloadManager,
-    private val mediaInfoProvider: AggregateMediaInfoProvider
+    private val mediaInfoProvider: AggregateMediaInfoProvider,
+    private val songRepository: SongRepository
 ) {
     private val retriedPaths = Collections.synchronizedSet(mutableSetOf<String>())
 
@@ -63,13 +64,14 @@ constructor(
         if (!retriedPaths.add(path)) return
 
         scope.launch {
-            val fallbackUri = mediaInfoProvider.downloadFallbackUri(path, responseCode)
-            if (fallbackUri == null) {
+            val song = songRepository.songAt(path)
+            val fallback = song?.let { mediaInfoProvider.downloadFallbackInfo(it, responseCode) }
+            if (fallback == null) {
                 Timber.w("Download for $path got HTTP $responseCode but no fallback URL was available")
                 return@launch
             }
             Timber.i("Download for $path got HTTP $responseCode; retrying once with the fallback URL")
-            songDownloadManager.restart(path, download.request.mimeType ?: MimeTypes.AUDIO_UNKNOWN, fallbackUri)
+            songDownloadManager.restart(path, fallback.mimeType, fallback.uri)
         }
     }
 

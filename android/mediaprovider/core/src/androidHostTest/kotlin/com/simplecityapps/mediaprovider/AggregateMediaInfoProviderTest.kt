@@ -23,10 +23,10 @@ class AggregateMediaInfoProviderTest {
 
         override suspend fun downloadInfo(song: Song): DownloadInfo = DownloadInfo(Uri.parse("https://$scheme.example/download"), song.mimeType)
 
-        override suspend fun downloadFallbackUri(
-            path: String,
+        override suspend fun downloadFallbackInfo(
+            song: Song,
             responseCode: Int
-        ): Uri = Uri.parse("https://$scheme.example/fallback")
+        ): DownloadInfo = DownloadInfo(Uri.parse("https://$scheme.example/fallback"), song.mimeType)
     }
 
     private val provider = AggregateMediaInfoProvider(
@@ -71,7 +71,7 @@ class AggregateMediaInfoProviderTest {
 
     @Test
     fun `fallback uri reaches the provider for its scheme`() = runTest {
-        provider.downloadFallbackUri("jellyfin://item/107898", 403).toString() shouldBe "https://jellyfin.example/fallback"
+        provider.downloadFallbackInfo(createSong("jellyfin://item/107898"), 403)?.uri.toString() shouldBe "https://jellyfin.example/fallback"
     }
 
     @Test

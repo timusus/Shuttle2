@@ -210,6 +210,89 @@ class JellyfinStreamUrlProviderTest {
     }
 
     @Test
+    fun `an ALAC download is a transcode even with a cap above its bitrate`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
+
+        val source = provider.downloadSource(song(bitRate = 100, audioCodec = "alac"))!!
+
+        source.url shouldContain "/Audio/item789/universal?"
+        source.url shouldContain "&MaxStreamingBitrate=192000&"
+        source.mimeType shouldBe "audio/aac"
+    }
+
+    @Test
+    fun `a download of unknown codec with no cap keeps the original`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        val source = provider.downloadSource(song(bitRate = null, audioCodec = null))!!
+
+        source.url shouldBe "http://jellyfin.local:8096/Items/item789/Download?ApiKey=token123"
+        source.mimeType shouldBe "Audio/*"
+    }
+
+    @Test
+    fun `an ALAC fallback is the same progressive transcode as the download and not the original`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        val fallback = provider.downloadFallback(song(bitRate = 900, audioCodec = "alac"), 401)!!
+
+        fallback shouldBe provider.downloadSource(song(bitRate = 900, audioCodec = "alac"))!!.copy(url = fallback.url)
+        fallback.url shouldContain "&TranscodingContainer=aac&TranscodingProtocol=http&"
+        fallback.mimeType shouldBe "audio/aac"
+    }
+
+    @Test
+    fun `a 403 on an ALAC transcode leaves the stored download permission alone`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.downloadFallback(song(audioCodec = "alac"), 403)
+
+        authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe true
+    }
+
+    @Test
+    fun `a fallback for a decodable song is the static stream url recorded as its own type`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        val fallback = provider.downloadFallback(song(audioCodec = "flac"), 401)!!
+
+        fallback.url shouldBe "http://jellyfin.local:8096/Audio/item789/stream?static=true&ApiKey=token123"
+        fallback.mimeType shouldBe "Audio/*"
+    }
+
+    @Test
+    fun `a 403 persists that download permission is disabled`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.downloadFallback(song(audioCodec = "flac"), 403)
+
+        authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe false
+    }
+
+    @Test
+    fun `a 401 leaves the stored download permission alone`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.downloadFallback(song(audioCodec = "flac"), 401)
+
+        authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe true
+    }
+
+    @Test
+    fun `the cap never reaches the static stream fallback`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+
+        provider.downloadFallback(song(audioCodec = "flac"), 401)!!.url shouldNotContain "MaxStreamingBitrate"
+    }
+
+    @Test
+    fun `a signed-out server has no fallback`() {
+        provider.downloadFallback(song(audioCodec = "flac"), 401) shouldBe null
+    }
+
+    @Test
     fun `a signed-out server fails the stream`() {
         shouldThrow<IllegalStateException> { provider.streamUrl(song()) }
     }
