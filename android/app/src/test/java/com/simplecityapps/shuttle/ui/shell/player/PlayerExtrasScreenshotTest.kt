@@ -22,7 +22,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records Now Playing's extras on a phone into `docs/design/player-extras/` for review (#377, #400):
@@ -31,7 +30,6 @@ import org.robolectric.annotation.GraphicsMode
  * `./gradlew :android:app:recordRoborazziDebug --tests '*PlayerExtrasScreenshotTest*'`.
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class PlayerExtrasScreenshotTest {
 

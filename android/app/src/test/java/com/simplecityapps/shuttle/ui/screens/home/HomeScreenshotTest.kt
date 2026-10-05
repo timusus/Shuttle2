@@ -19,7 +19,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the Home screen at phone size (and a tablet's, and at 200% font) into `docs/design/home/` for review (#377). A no-op under plain
@@ -27,7 +26,6 @@ import org.robolectric.annotation.GraphicsMode
  * shelves show the sample library with its generated covers ([SampleArtworkCoil]).
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class HomeScreenshotTest {
     @get:Rule

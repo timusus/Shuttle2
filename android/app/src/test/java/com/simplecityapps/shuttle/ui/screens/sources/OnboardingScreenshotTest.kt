@@ -30,7 +30,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records first run, Settings > Sources (idle, scanning, a server it can't reach) and its folder rules at phone size into `docs/design/onboarding/` for review (#379). A no-op
@@ -38,7 +37,6 @@ import org.robolectric.annotation.GraphicsMode
  * `./gradlew :android:app:recordRoborazziDebug --tests '*OnboardingScreenshotTest*'`.
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class OnboardingScreenshotTest {
     @get:Rule

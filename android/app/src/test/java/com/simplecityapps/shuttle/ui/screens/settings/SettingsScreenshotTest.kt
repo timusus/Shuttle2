@@ -32,7 +32,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the settings screens at phone size into `docs/design/settings/` for review (#378). A no-op
@@ -40,7 +39,6 @@ import org.robolectric.annotation.GraphicsMode
  * `./gradlew :android:app:recordRoborazziDebug --tests '*SettingsScreenshotTest*'`.
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class SettingsScreenshotTest {
     @get:Rule

@@ -240,13 +240,14 @@ class AppShellTest {
 
     @Test
     fun `tapping the selected tab scrolls its list back to the top`() {
-        robot.setContent()
-        robot.scrollListTo(6)
-        robot.assertTextNotDisplayed("Recently played")
+        // Library, whose fake list holds every sample album: Home's eight rows can all but fit the window
+        robot.setContent(startTab = ShellTab.Library)
+        robot.scrollListTo(12)
+        robot.assertTextNotDisplayed("Albums")
 
-        robot.tapText("Home")
+        robot.tapText("Library")
 
-        robot.assertTextDisplayed("Recently played")
+        robot.assertTextDisplayed("Albums")
     }
 
     @Test

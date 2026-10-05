@@ -20,14 +20,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records song info at phone size into `docs/design/songinfo/` for review (#377). A no-op under plain
  * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*SongInfoScreenshotTest*'`.
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class SongInfoScreenshotTest {
     @get:Rule

@@ -17,7 +17,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the S2 Pro paywall at phone size into `docs/design/paywall/` for review (#380). A no-op
@@ -25,7 +24,6 @@ import org.robolectric.annotation.GraphicsMode
  * `./gradlew :android:app:recordRoborazziDebug --tests '*PaywallScreenshotTest*'`.
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class PaywallScreenshotTest {
     @get:Rule

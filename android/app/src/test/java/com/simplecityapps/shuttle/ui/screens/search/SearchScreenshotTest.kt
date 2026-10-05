@@ -18,7 +18,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the Search screen at phone size into `docs/design/search/` for review (#377). A no-op under plain
@@ -26,7 +25,6 @@ import org.robolectric.annotation.GraphicsMode
  * show the sample library with its generated covers ([SampleArtworkCoil]).
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xhdpi")
 class SearchScreenshotTest {
     @get:Rule

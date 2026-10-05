@@ -31,7 +31,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the Compose library container and its detail screens into `docs/design/library/` for review (#377),
@@ -40,7 +39,6 @@ import org.robolectric.annotation.GraphicsMode
  * `./gradlew :android:app:recordRoborazziDebug --tests '*LibraryScreenshotTest*'`.
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class LibraryScreenshotTest {
 
     @get:Rule

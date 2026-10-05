@@ -298,7 +298,7 @@ catalogue — #553).
 ### Screenshots
 
 - **Roborazzi 1.75.0** (2026-09-21), Gradle plugin `io.github.takahirom.roborazzi`, with
-  `roborazzi-compose`. It needs Robolectric ≥ 4.10 with `@GraphicsMode(NATIVE)`; the repo is on
+  `roborazzi-compose`. It needs Robolectric ≥ 4.10 in native graphics mode (`graphicsMode=NATIVE` in `robolectric.properties`); the repo is on
   Robolectric 4.17 at `sdk=34`, so no Robolectric bump.
 - Why not the existing Paparazzi 2.0.0-alpha05 preview tests in `:android:app`: Paparazzi runs on
   layoutlib, a second rendering stack beside the Robolectric one the characterisation tests use,
@@ -314,7 +314,7 @@ catalogue — #553).
   `w1000dp-h720dp`; shell components (`nav-rail`, `player-pane`) add a large `w1280dp-h800dp` board.
 - **Output**: `roborazzi { outputDir.set(rootProject.file("docs/design/catalog/images")) }`, files
   `<id>_<light|dark>_<compact|expanded|large>.png`, recorded at a reduced `resizeScale` so a board
-  loads on a phone. `recordRoborazziDebug` writes them; CI runs `verifyRoborazziDebug`.
+  loads on a phone. `recordRoborazziDebug` writes them; full verify runs `verifyRoborazziDebug`.
 - **Review pages**: `docs/design/catalog/index.md` plus one `docs/design/catalog/<id>.md` per
   component with its boards inline and the states listed, so the owner reviews on GitHub from a
   phone by tapping through.

@@ -23,7 +23,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the shell at phone, foldable and tablet sizes into `docs/design/shell/` for review
@@ -32,7 +31,6 @@ import org.robolectric.annotation.GraphicsMode
  * sample-library queue with its generated covers ([SampleArtworkCoil]).
  */
 @RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class ShellScreenshotTest {
 
     @get:Rule

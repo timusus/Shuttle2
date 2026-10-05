@@ -81,7 +81,7 @@ Robolectric-based Compose tests that verify observable UI behaviour. These allow
 ./gradlew :android:app:testDebugUnitTest --tests "com.simplecityapps.shuttle.ui.screens.library.genres.GenreListTest"
 ```
 
-**Configuration:** `android/app/src/test/resources/robolectric.properties` sets `sdk=34`, `graphics=NATIVE`, and `application=android.app.Application` (bypasses the app graph and initializers for fast, isolated tests).
+**Configuration:** `android/app/src/test/resources/robolectric.properties` sets `sdk=34`, `qualifiers`, `graphicsMode=NATIVE` (every test renders natively, so screenshot classes need no `@GraphicsMode`), and `application=android.app.Application` (bypasses the app graph and initializers for fast, isolated tests).
 
 ## Robot Pattern
 

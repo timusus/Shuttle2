@@ -20,7 +20,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
-import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records every catalogue board into `docs/design/catalog/<id>/` (see [catalogShots] for the
@@ -31,7 +30,6 @@ import org.robolectric.annotation.GraphicsMode
  * indicator is caught at a fixed frame instead of animating forever.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w1000dp-h3000dp-mdpi")
 class CatalogScreenshotTest(private val shot: CatalogShot) {
     @get:Rule
