@@ -66,6 +66,12 @@ actor ArtworkLoader {
         configuration.httpMaximumConnectionsPerHost = 6
         configuration.timeoutIntervalForRequest = 20
         let session = URLSession(configuration: configuration, delegate: PlexTokenRedirectGuard(), delegateQueue: nil)
+        // A signed URL (a Subsonic server's, carrying its token) never goes near the session's cache: the loader caches
+        // its response itself, under the unsigned key, and the session would otherwise store it under the signed one
+        let uncachedConfiguration = configuration.copy() as! URLSessionConfiguration
+        uncachedConfiguration.urlCache = nil
+        uncachedConfiguration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let uncachedSession = URLSession(configuration: uncachedConfiguration, delegate: PlexTokenRedirectGuard(), delegateQueue: nil)
         self.init(fetch: { request in
             // This device's songs (#590): the picture in the file, or an image beside it.
             if let url = request.url, url.scheme == LocalLibrary.scheme {
@@ -73,7 +79,8 @@ actor ArtworkLoader {
                 guard let data = library.artwork(forArtworkURL: url) else { throw URLError(.fileDoesNotExist) }
                 return (data, URLResponse(url: url, mimeType: nil, expectedContentLength: data.count, textEncodingName: nil))
             }
-            return try await session.data(for: request)
+            let bypassesCache = request.cachePolicy == .reloadIgnoringLocalCacheData
+            return try await (bypassesCache ? uncachedSession : session).data(for: request)
         }, diskCache: diskCache)
     }
 
@@ -246,6 +253,8 @@ struct ArtworkCandidate: Hashable, Sendable {
         if let authorization { request.setValue(authorization, forHTTPHeaderField: "Authorization") }
         for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
         if unmeteredOnly { request.allowsExpensiveNetworkAccess = false }
+        // The loader caches a signed URL's response under `stableKey`; the session mustn't keep the signed URL as well
+        if stableKey != nil { request.cachePolicy = .reloadIgnoringLocalCacheData }
         return request
     }
 }

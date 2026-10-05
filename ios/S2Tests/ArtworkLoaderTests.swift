@@ -114,6 +114,9 @@ struct ArtworkLoaderTests {
         #expect(await loader.image(for: ArtworkCandidate(url: second, stableKey: stableKey), maxPixelSize: 64) != nil)
 
         #expect(await fetcher.requests.map(\.url) == [first])
+        // The session never caches the signed url, so the token stays off disk
+        #expect(await fetcher.requests.first?.cachePolicy == .reloadIgnoringLocalCacheData)
+        #expect(ArtworkCandidate(url: first).request.cachePolicy == .useProtocolCachePolicy)
         #expect(ArtworkCandidate(url: first).cacheKey == first.absoluteString)
     }
 
