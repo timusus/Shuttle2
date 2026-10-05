@@ -21,9 +21,10 @@ import kotlinx.coroutines.launch
 import platform.Foundation.NSBundle
 
 /**
- * Starts iOS telemetry, once, at launch (`AppGraph.initialize()`): logged warnings and errors become Sentry
- * breadcrumbs, the consent gate applies the stored choices and follows them, and PostHog's super properties follow
- * the entitlement and the enabled sources.
+ * Starts iOS telemetry, once. [start], at launch (`AppGraph.initialize()`): logged warnings and errors become Sentry
+ * breadcrumbs and the consent gate applies the crash reporting choice and follows it. [startAnalytics], once the first
+ * frame is up (`AppGraph.startAfterFirstFrame()`), keeping PostHog's set-up off the launch: the consent gate applies
+ * the analytics choice and follows it, and PostHog's super properties follow the entitlement and the enabled sources.
  *
  * iOS never shipped without telemetry, so it has no upgraders for Home's one-time "analytics is now on" notice
  * (`HomeEvent.AnalyticsNowOn`): the first run's welcome discloses it instead, and [start] marks the notice shown, as
@@ -39,13 +40,20 @@ class IosTelemetryStartup @Inject constructor(
     @AppCoroutineScope private val scope: CoroutineScope,
 ) {
     private var started = false
+    private var analyticsStarted = false
 
     fun start() {
         if (started) return
         started = true
         analyticsConsentSettings.noticeShown.value = true
         Logger.install { tag -> BreadcrumbLogger(OsLogLogger(tag), tag, telemetry.crashReporter) }
-        consentGate.start()
+        consentGate.startCrashReporting()
+    }
+
+    fun startAnalytics() {
+        if (analyticsStarted) return
+        analyticsStarted = true
+        consentGate.startAnalytics()
         scope.launch {
             combine(entitlements.entitlement, mediaSources.enabledTypes, ::superProperties)
                 .distinctUntilChanged()

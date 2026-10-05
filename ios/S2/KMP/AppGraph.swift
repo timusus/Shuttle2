@@ -21,10 +21,10 @@ enum AppGraph {
         dependencies.graph
     }
 
-    /// Builds the graph, applies the crash reporting and analytics choices before anything else runs, then starts the
-    /// playback system, the recording of plays, their reporting to the server and their scrobbling to Last.fm. Call
-    /// once, from `S2App.init`. The search index waits for the first content (`warmUpSearch()`), so it doesn't hold up
-    /// the launch.
+    /// Builds the graph, applies the crash reporting choice before anything else runs, then starts the playback system,
+    /// the recording of plays, their reporting to the server and their scrobbling to Last.fm. Call once, from
+    /// `S2App.init`. Analytics waits for the first frame (`startAfterFirstFrame()`) and the search index for the first
+    /// content (`warmUpSearch()`), so neither holds up the launch.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
@@ -50,7 +50,17 @@ enum AppGraph {
         _dependencies = dependencies
     }
 
+    private static var startedAfterFirstFrame = false
     private static var searchWarmUpStarted = false
+
+    /// Sets PostHog up and applies the analytics choice. Call once the first frame is on screen (`ContentView`):
+    /// PostHog's set-up takes tens of milliseconds on the main thread, and events sent before it are dropped anyway.
+    @MainActor
+    static func startAfterFirstFrame() {
+        guard !startedAfterFirstFrame else { return }
+        startedAfterFirstFrame = true
+        StartupTrace.step("analyticsStartup") { shared.telemetryStartup.startAnalytics() }
+    }
 
     /// Starts building the search index in the background, once: when Home or a Library list first shows its content,
     /// or when Search opens, whichever is first. Started at launch it competed with that first content for the

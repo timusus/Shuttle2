@@ -124,7 +124,11 @@ struct AppShell: View {
         .accessibilityIdentifier(container.accessibilityIdentifier)
         .modifier(PlayerInspectorModifier(tier: tier, navigator: navigator))
         // The first frame: the tab view (or split view) is going on screen
-        .onAppear { StartupTrace.mark("firstFrame") }
+        .onAppear {
+            StartupTrace.mark("firstFrame")
+            // After this frame is committed, not before it
+            DispatchQueue.main.async { AppGraph.startAfterFirstFrame() }
+        }
     }
 
     // MARK: - Compact (tab bar)

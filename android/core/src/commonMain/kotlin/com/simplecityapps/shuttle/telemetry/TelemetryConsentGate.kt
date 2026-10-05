@@ -27,7 +27,8 @@ interface AnalyticsSdk {
  * or a crash, then follows every change to them.
  *
  * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
- * so each gates its own SDK. Shared by Android (`TelemetryInitializer`) and iOS (`IosTelemetryStartup`).
+ * so each gates its own SDK. Shared by Android (`TelemetryInitializer`, [start]) and iOS (`IosTelemetryStartup`), which
+ * starts crash reporting at launch and analytics only once the first frame is up ([startCrashReporting], [startAnalytics]).
  */
 @SingleIn(AppScope::class)
 class TelemetryConsentGate @Inject constructor(
@@ -37,12 +38,20 @@ class TelemetryConsentGate @Inject constructor(
     @AppCoroutineScope private val scope: CoroutineScope,
 ) {
     fun start() {
-        // Synchronously, so the stored choice is in force before the first event or crash
-        crashReporting.setEnabled(privacySettings.crashReporting.value)
-        analytics.setEnabled(privacySettings.analytics.value)
+        startCrashReporting()
+        startAnalytics()
+    }
 
-        // Each flow starts with the value just applied, which the SDKs ignore, then follows every toggle
+    fun startCrashReporting() {
+        // Synchronously, so the stored choice is in force before the first crash; the flow starts with the value just
+        // applied, which the SDK ignores, then follows every toggle
+        crashReporting.setEnabled(privacySettings.crashReporting.value)
         scope.launch { privacySettings.crashReporting.flow.collect(crashReporting::setEnabled) }
+    }
+
+    fun startAnalytics() {
+        // As crash reporting: the stored choice is in force before the first event
+        analytics.setEnabled(privacySettings.analytics.value)
         scope.launch { privacySettings.analytics.flow.collect(analytics::setEnabled) }
     }
 }

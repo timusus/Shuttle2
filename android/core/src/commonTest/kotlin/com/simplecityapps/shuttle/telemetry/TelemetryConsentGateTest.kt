@@ -59,6 +59,21 @@ class TelemetryConsentGateTest {
     }
 
     @Test
+    fun `crash reporting starts on its own and analytics only when started`() = runTest {
+        val gate = TelemetryConsentGate(privacySettings, FakeCrashReporting(crashReporting), FakeAnalytics(analytics), backgroundScope)
+
+        gate.startCrashReporting()
+        runCurrent()
+
+        crashReporting.enabled shouldBe true
+        analytics.calls shouldBe emptyList()
+
+        gate.startAnalytics()
+
+        analytics.calls shouldBe listOf(true)
+    }
+
+    @Test
     fun `opting out of analytics stops it independently of crash reporting`() = runTest {
         startGate()
         runCurrent()
