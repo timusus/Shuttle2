@@ -12,9 +12,12 @@ data class CustomHeader(
     val name: String,
     val value: String
 ) {
-    /** A name HTTP accepts (a token: no spaces, colons or control characters) and a value on one line. */
+    /**
+     * A header every HTTP stack sends as it is: a name that's an RFC 7230 token (no spaces, colons or control
+     * characters) and a value of printable ASCII and tabs, so on one line. OkHttp throws on anything else.
+     */
     val isValid: Boolean
-        get() = name.isNotEmpty() && name.all { it in TOKEN_CHARACTERS } && value.none { it == '\r' || it == '\n' }
+        get() = name.isNotEmpty() && name.all { it in TOKEN_CHARACTERS } && value.all { it == '\t' || it in ' '..'~' }
 
     private companion object {
         val TOKEN_CHARACTERS = ('a'..'z') + ('A'..'Z') + ('0'..'9') + "!#$%&'*+-.^_`|~".toList()
@@ -134,7 +137,8 @@ class ServerConnectionStore @Inject constructor(
             ?.mapNotNull { line ->
                 val colon = line.indexOf(':')
                 if (colon <= 0) null else CustomHeader(line.substring(0, colon), line.substring(colon + 1).trim())
-            }.orEmpty()
+            }?.filter { it.isValid }
+            .orEmpty()
     }
 }
 

@@ -12,7 +12,7 @@ class ServerConnectionStoreTest {
     private val origin = ServerOrigin.of("music.example.com", 443)
 
     @Test
-    fun `an address's origin is its host and port, defaulting the port by scheme`() {
+    fun `an address's origin is its host and port defaulting the port by scheme`() {
         ServerOrigin.parse("https://Music.Example.com/jellyfin") shouldBe ServerOrigin("music.example.com", 443)
         ServerOrigin.parse("http://192.168.1.10:8096") shouldBe ServerOrigin("192.168.1.10", 8096)
         ServerOrigin.parse("192.168.1.10") shouldBe ServerOrigin("192.168.1.10", 80)
@@ -33,10 +33,27 @@ class ServerConnectionStoreTest {
     }
 
     @Test
-    fun `invalid headers are dropped, and clearing them removes the key`() {
+    fun `invalid headers are dropped and clearing them removes the key`() {
         store.setHeaders(origin, listOf(CustomHeader("Bad Name", "x"), CustomHeader("", "x"), CustomHeader("X-Ok", "line\nbreak")))
         store.connection(origin).headers shouldBe emptyList()
         values.values shouldBe emptyMap()
+    }
+
+    @Test
+    fun `a header name must be a token and its value printable ASCII or tabs`() {
+        CustomHeader("X-Token_1!#$%&'*+.^`|~", "a\tb c~").isValid shouldBe true
+        CustomHeader("X(Token)", "x").isValid shouldBe false
+        CustomHeader("X-Tökén", "x").isValid shouldBe false
+        CustomHeader("X-Token", "café").isValid shouldBe false
+        CustomHeader("X-Token", "bell\u0007").isValid shouldBe false
+        CustomHeader("X-Token", "del\u007F").isValid shouldBe false
+    }
+
+    @Test
+    fun `a stored header that is no longer valid is never read back`() {
+        SecurePreferenceManager(values).putString("server_connection_music.example.com:443_headers", "X-Token: café\nX-Ok: ok")
+
+        store.connection(origin).headers shouldBe listOf(CustomHeader("X-Ok", "ok"))
     }
 
     @Test

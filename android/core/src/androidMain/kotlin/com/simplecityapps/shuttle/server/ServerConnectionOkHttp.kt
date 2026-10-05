@@ -31,15 +31,16 @@ fun OkHttpClient.Builder.applyServerConnections(store: ServerConnectionStore): O
 
 /**
  * Adds the custom headers of the server a request goes to. A network interceptor, so each hop of a redirect is matched
- * on its own: a server's headers never follow a redirect to another host.
+ * on its own: a server's headers never follow a redirect to another host. A header OkHttp won't send is skipped rather
+ * than failing every request to the server.
  */
 class ServerHeadersInterceptor(private val store: ServerConnectionStore) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        val headers = store.connection(ServerOrigin.of(request.url.host, request.url.port)).headers
+        val headers = store.connection(ServerOrigin.of(request.url.host, request.url.port)).headers.filter { it.isValid }
         if (headers.isEmpty()) return chain.proceed(request)
         val builder = request.newBuilder()
-        headers.forEach { builder.header(it.name, it.value) }
+        headers.forEach { runCatching { builder.header(it.name, it.value) } }
         return chain.proceed(builder.build())
     }
 }
