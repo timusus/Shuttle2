@@ -15,8 +15,10 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 
@@ -81,6 +83,35 @@ class EmbyStreamProfileTest {
         sessions.distinct().size shouldBe 2
     }
 
+    @Test
+    fun `ios direct-plays an MP3 under the cap - the container list takes it and the cap is above its bitrate`() {
+        val deliveredFormats = DeliveredFormats()
+        val url = rawUrlFor(StreamProfile.Ios, StreamingQuality.Kbps320, 0, song(bitRate = 256, audioCodec = "mp3"), deliveredFormats)
+
+        url shouldContain "&Container=mp3|mp3,"
+        url shouldContain "&MaxStreamingBitrate=320000&"
+        deliveredFormats.byPath.value["emby://item/item789"] shouldBe null
+    }
+
+    @Test
+    fun `ios transcodes a FLAC above the cap to progressive MP3`() {
+        val deliveredFormats = DeliveredFormats()
+        val url = rawUrlFor(StreamProfile.Ios, StreamingQuality.Kbps320, 0, song(bitRate = 900, audioCodec = "flac"), deliveredFormats)
+
+        url shouldContain "&MaxStreamingBitrate=320000&"
+        url shouldContain "&TranscodingContainer=mp3&TranscodingProtocol=http&"
+        deliveredFormats.byPath.value["emby://item/item789"] shouldBe DeliveredFormat("MP3", 320)
+    }
+
+    @Test
+    fun `ios direct-plays a FLAC with no cap`() {
+        val deliveredFormats = DeliveredFormats()
+        val url = rawUrlFor(StreamProfile.Ios, StreamingQuality.Original, 0, song(bitRate = 900, audioCodec = "flac"), deliveredFormats)
+
+        url shouldNotContain "MaxStreamingBitrate"
+        deliveredFormats.byPath.value["emby://item/item789"] shouldBe null
+    }
+
     private fun urlFor(
         profile: StreamProfile,
         quality: StreamingQuality,
@@ -90,7 +121,9 @@ class EmbyStreamProfileTest {
     private fun rawUrlFor(
         profile: StreamProfile,
         quality: StreamingQuality,
-        startPositionMs: Long
+        startPositionMs: Long,
+        song: Song = song(),
+        deliveredFormats: DeliveredFormats = DeliveredFormats()
     ): String {
         val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "emby").apply {
             address = "http://emby.local:8096"
@@ -105,11 +138,14 @@ class EmbyStreamProfileTest {
         val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore())).apply {
             unmeteredQuality.value = quality
         }
-        val provider = EmbyStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings, DeliveredFormats()) { false })
-        return provider.streamUrl(song(), startPositionMs)
+        val provider = EmbyStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings, deliveredFormats) { false })
+        return provider.streamUrl(song, startPositionMs)
     }
 
-    private fun song() = Song(
+    private fun song(
+        bitRate: Int? = null,
+        audioCodec: String? = null
+    ) = Song(
         id = 0,
         name = "Song",
         albumArtist = "Artist",
@@ -133,9 +169,10 @@ class EmbyStreamProfileTest {
         mediaProvider = MediaProviderType.Emby,
         lyrics = null,
         grouping = null,
-        bitRate = null,
+        bitRate = bitRate,
         bitDepth = null,
         sampleRate = null,
-        channelCount = null
+        channelCount = null,
+        audioCodec = audioCodec
     )
 }
