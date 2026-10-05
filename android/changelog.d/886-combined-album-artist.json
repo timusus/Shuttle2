@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "An album tagged with a combined album artist such as \"A; B\" now appears under the first artist instead of a separate combined artist.", "commits": [] }

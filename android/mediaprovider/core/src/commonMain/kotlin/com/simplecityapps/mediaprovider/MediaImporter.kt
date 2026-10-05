@@ -680,9 +680,10 @@ class MediaImporter(
         /**
          * Raised when the importer starts storing a tag it didn't before, so the songs stored already are read again once
          * ([songTagsOutdated]). 1: the raw artist and album tags and ids of #637. 3: the codec, bit rate,
-         * sample rate and channel count of Emby and Jellyfin songs (#889).
+         * sample rate and channel count of Emby and Jellyfin songs (#889). 4: a local combined album artist tag
+         * ("A; B") reads as its first artist (#886).
          */
-        const val SONG_TAGS_VERSION = 3
+        const val SONG_TAGS_VERSION = 4
 
         /** Whether [type]'s songs were last imported before [SONG_TAGS_VERSION]: recorded when its import is stored. */
         fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < SONG_TAGS_VERSION

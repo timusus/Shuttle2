@@ -187,6 +187,17 @@ class FileTagsTest {
     }
 
     @Test
+    fun `a combined album artist tag reads as its first artist`() {
+        mapOf("ALBUMARTIST" to listOf("A; B")).toFileTags().albumArtist shouldBe "A"
+        mapOf("ALBUMARTIST" to listOf("A | B")).toFileTags().albumArtist shouldBe "A"
+        mapOf("ALBUMARTIST" to listOf("A / B")).toFileTags().albumArtist shouldBe "A"
+        mapOf("ALBUM_ARTIST" to listOf("A; B")).toFileTags().albumArtist shouldBe "A"
+        mapOf("ALBUMARTIST" to listOf("AC/DC")).toFileTags().albumArtist shouldBe "AC/DC"
+        mapOf("ALBUMARTIST" to listOf("Earth, Wind & Fire")).toFileTags().albumArtist shouldBe "Earth, Wind & Fire"
+        mapOf("ALBUMARTIST" to listOf("A; B"), "ALBUMARTISTS" to listOf("A", "B")).toFileTags().albumArtists shouldBe listOf("A", "B")
+    }
+
+    @Test
     fun `a full date becomes the first of its year`() {
         "2021-05-14".toYearDate() shouldBe LocalDate(2021, 1, 1)
         "2021".toYearDate() shouldBe LocalDate(2021, 1, 1)

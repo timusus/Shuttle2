@@ -52,8 +52,10 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
     val discTag = first(TagLibProperty.Disc)
     return FileTags(
         title = first(TagLibProperty.Title),
-        // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST
-        albumArtist = first(TagLibProperty.AlbumArtist) ?: get(MATROSKA_ALBUM_ARTIST)?.firstOrNull(),
+        // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST.
+        // A combined "A; B" names its first artist: an album has one album artist, and the whole string would list as an
+        // artist of its own (#886). The raw tag stays in albumArtists, and the ARTIST tag still credits every artist.
+        albumArtist = (first(TagLibProperty.AlbumArtist) ?: get(MATROSKA_ALBUM_ARTIST)?.firstOrNull())?.let(::primaryAlbumArtist),
         artists =
             get(TagLibProperty.Artist.key).orEmpty().flatMap(::splitArtistTag),
         album = first(TagLibProperty.Album),
@@ -94,6 +96,9 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
  * Repeats are kept, so the artists stay paired 1:1 with MUSICBRAINZ_ARTISTID; ArtistCredits credits each artist once.
  */
 internal fun splitArtistTag(value: String): List<String> = ARTIST_SEPARATOR.split(value).map { it.trim() }.filter { it.isNotEmpty() }
+
+/** The first artist an ALBUMARTIST value names, split as [splitArtistTag] splits an ARTIST value; a value naming none (blank) is null. */
+internal fun primaryAlbumArtist(value: String): String? = splitArtistTag(value).firstOrNull()
 
 private val ARTIST_SEPARATOR = Regex("[;|]|\\s+/\\s+")
 
