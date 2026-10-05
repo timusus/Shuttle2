@@ -417,6 +417,34 @@ if [ "$MEDIA_MATCHES" != "1" ]; then
             radb shell content call --uri content://media/ --method scan_file \
                 --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
         done
+
+        # scan_file returning isn't proof the playlist is indexed: the row lands in MediaStore some
+        # time after the call, and the import broadcast below fired first, so the first import found
+        # no playlists and only a second one saw them (#440, seen as checks/voice-search.sh's extra
+        # IMPORT). Poll the playlists table until every .m3u is listed (by name, which MediaStore
+        # derives from the file name), re-issuing that file's scan every few seconds -- a dropped
+        # first call is silently swallowed by the `|| true` above, and rescanning an already-indexed
+        # file is a no-op. Fixtures with no .m3u skip the loop; taglib never reaches here.
+        for f in "$FIXTURE_DIR"/*.m3u; do
+            [ -e "$f" ] || continue
+            name="$(basename "$f" .m3u)"
+            sql_name="${name//\'/\'\'}"
+            deadline=$(($(date +%s) + 30))
+            scanned_at=$(date +%s)
+            until radb shell content query --uri content://media/external/audio/playlists \
+                --projection _id --where "\"name='${sql_name}'\"" 2>/dev/null | grep -q '^Row'; do
+                if [ "$(date +%s)" -ge "$((scanned_at + 5))" ]; then
+                    radb shell content call --uri content://media/ --method scan_file \
+                        --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
+                    scanned_at=$(date +%s)
+                fi
+                [ "$(date +%s)" -lt "$deadline" ] || {
+                    echo "seed-test-media: MediaStore never listed playlist '${name}' within 30s of scanning" >&2
+                    exit 1
+                }
+                sleep 1
+            done
+        done
     fi
 else
     echo "seed-test-media: media manifest matches, skipping push/scan"

@@ -494,3 +494,10 @@ Prep only: the app still targets SDK 36, so the permission is declared but never
 - [ ] Deny the prompt: the dialog shows the local-network explanation with Retry; Retry then re-asks (or, after two denials, the message points to system settings).
 - [ ] Upgrade with a saved LAN server and the permission not granted: library import, streaming and artwork time out (see #527 comment for the hook points: no prompt exists there yet).
 - [ ] Casting to a Chromecast on Wi-Fi with permission denied: note whether the cast HttpServer (incoming TCP) is blocked.
+
+## Emulator check tooling (#435, #440)
+
+Script-side fixes verified by reading only; run these on a lane to confirm them.
+
+- [ ] `emu-verify.sh --check restore-track-finish` and `--check restore-skip-pause` pass with the paused-position read, and still fail if the restore carried over the finished track's position (#435).
+- [ ] After `remote-emu.sh reset` + `seed-test-media.sh library --skip-onboarding` on a fresh lane, the seed's own first import lists all 4 playlists with no extra `s2 IMPORT`; `emu-verify.sh --check voice-search` passes (#440).
