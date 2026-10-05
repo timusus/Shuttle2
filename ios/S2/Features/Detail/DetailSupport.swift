@@ -266,18 +266,22 @@ private struct UnderTheBars: ViewModifier {
 /// Light bar chrome over a full-bleed backdrop: while the hero's title is still below the bar, the navigation bar
 /// draws no background of its own and runs in the dark scheme, so the status bar, the back button and the bar
 /// buttons are white over the photo in both appearances; once the title has scrolled under the bar, the bar takes
-/// back its usual material and scheme. `toolbarColorScheme` only takes on a bar whose background is visible, hence
-/// the clear one rather than a hidden one. Inactive (no backdrop), the bar is left alone.
+/// back its usual material and the screen's own scheme. `toolbarColorScheme` only takes on a bar whose background is
+/// visible, hence the clear one rather than a hidden one, and a visible material bar after it: handed back to
+/// `.automatic` and a nil scheme, iOS 26 kept the dark one, and the inline title stayed white over light rows (#635).
+/// Inactive (no backdrop), the bar is left alone.
 private struct BleedNavigationBar: ViewModifier {
     let isActive: Bool
     let isOverBackdrop: Bool
+
+    @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
         if isActive {
             content
                 .toolbarBackground(isOverBackdrop ? AnyShapeStyle(Color.clear) : AnyShapeStyle(.bar), for: .navigationBar)
-                .toolbarBackground(isOverBackdrop ? .visible : .automatic, for: .navigationBar)
-                .toolbarColorScheme(isOverBackdrop ? .dark : nil, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(isOverBackdrop ? .dark : colorScheme, for: .navigationBar)
         } else {
             content
         }
