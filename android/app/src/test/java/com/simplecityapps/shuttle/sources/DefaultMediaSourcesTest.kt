@@ -24,11 +24,8 @@ import io.mockk.verify
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 /** Removing a source (turning This device off, or signing out of a server) takes its songs with it. */
-@RunWith(RobolectricTestRunner::class)
 class DefaultMediaSourcesTest {
     private val preferences = PlaybackPreferenceManager(InMemoryKeyValueStore())
     private val jellyfin = mockk<JellyfinMediaProvider>(relaxed = true)

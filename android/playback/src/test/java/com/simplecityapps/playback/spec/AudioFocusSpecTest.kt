@@ -18,7 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
+import org.robolectric.util.ReflectionHelpers
 
 /**
  * The audio focus and headphone rules of the behaviour spec (docs/testing/playback-behaviour-spec.md): other apps
@@ -173,8 +173,18 @@ class AudioFocusSpecTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.N])
     fun `RS-54 below API 31, where the end of a call can't be seen, a play during a call is dropped`() {
+        // CallMonitor is the only code that branches on the SDK level here, so fake it rather than load a second Android SDK
+        val sdkInt = Build.VERSION.SDK_INT
+        ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", Build.VERSION_CODES.N)
+        try {
+            dropsPlayDuringCallBelowApi31()
+        } finally {
+            ReflectionHelpers.setStaticField(Build.VERSION::class.java, "SDK_INT", sdkInt)
+        }
+    }
+
+    private fun dropsPlayDuringCallBelowApi31() {
         startPlaying(listOf(song(1, file = TONE_3S)))
         harness.run { playback.pause() }
         harness.setAudioMode(AudioManager.MODE_IN_CALL)
