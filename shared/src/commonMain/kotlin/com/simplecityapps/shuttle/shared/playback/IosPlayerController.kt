@@ -668,7 +668,12 @@ class IosPlayerController(
         }
     }
 
-    /** A ready track the engine is loading again while playback is intended: its stream ran dry, or its output restarts. */
+    /**
+     * A ready track the engine reports loading while playback is intended. That's an underrun: the node played all it
+     * had and a read is waiting on the stream, from then until a buffer reaches the node again. A seek or a restart
+     * waiting on its stream isn't one, and the engine says nothing of it; nor is a load, whose track isn't ready. The
+     * other is an output that wouldn't start after a route change, retried (#715): nothing plays then either.
+     */
     private fun isBuffering(): Boolean {
         val currentFeed = current ?: return false
         return pendingLoad == null && currentFeed.ready && !currentFeed.failed && playWhenReady &&

@@ -1192,6 +1192,17 @@ class IosPlayerControllerTest {
     }
 
     @Test
+    fun `a seek on a playing track is still playing - not buffering`() = test { controller ->
+        controller.start(listOf(a, b))
+
+        controller.seekTo(5_000)
+        engine.settle()
+
+        controller.playbackState() shouldBe PlaybackState.Playing
+        controller.bufferingFlow.value shouldBe false
+    }
+
+    @Test
     fun `a track that starts loading is loading but not buffering`() = test { controller ->
         controller.queueOperations.setQueue(listOf(a, b), null, 0)
         controller.load { }
