@@ -6,7 +6,7 @@ import SwiftUI
 /// the one place it opens from: the first run, Sources' Add a Server and Sign In Again. It starts from the saved
 /// login; once the server is signed in it calls `onConnected` (the setup enables the provider and imports), then
 /// `onFinished` when the view model says the success state has shown for long enough. Plex signs in with a plex.tv
-/// account, and an optional two-factor code, as on Android.
+/// PIN approved in the browser, then a choice of the account's servers, as on Android.
 struct ServerSignInView: View {
     let type: MediaProviderType
     /// The view model's `ViewModelCache` key, kept live by whoever shows the form (`Navigator.sourceSetupLive`).
@@ -14,33 +14,42 @@ struct ServerSignInView: View {
     let onConnected: () -> Void
     let onFinished: () -> Void
 
+    @Environment(\.openURL) private var openURL
+
     var body: some View {
         let signIn = ViewModelCache.shared.viewModel(cacheKey) {
             AppGraph.shared.serverSignInViewModelFactory.create(type: type)
         }
         Observing(signIn.uiState) { state in
-            ServerSignInContent(state: ServerSignInState(state), actions: ServerSignInActions(signIn))
+            ServerSignInContent(state: ServerSignInState(state), actions: ServerSignInActions(signIn, openURL: open))
                 .consumeEvents(state.events, handled: { signIn.onEventHandled(id: $0) }) { event in
-                    ServerSignInOutcome(onConnected: onConnected, onFinished: onFinished).handle(event)
+                    ServerSignInOutcome(onConnected: onConnected, onFinished: onFinished, onOpenUrl: open).handle(event)
                 }
         }
-        // The view model outlives this view (cached for the whole setup): a Quick Connect code left on screen when
-        // the user goes back stops polling here rather than when the setup closes.
+        // The view model outlives this view (cached for the whole setup): a Quick Connect code or PIN left on screen
+        // when the user goes back stops polling here rather than when the setup closes.
         .onDisappear { signIn.onLeave() }
         .navigationTitle(type.title)
         .navigationBarTitleDisplayMode(.inline)
     }
+
+    private func open(_ url: String) {
+        if let url = URL(string: url) { openURL(url) }
+    }
 }
 
-/// What the sign-in's one-shot events do: `Connected` starts the import, `Finished` moves on to its progress.
+/// What the sign-in's one-shot events do: `Connected` starts the import, `Finished` moves on to its progress, and
+/// `OpenUrl` opens Plex's sign-in page in the browser.
 struct ServerSignInOutcome {
     let onConnected: () -> Void
     let onFinished: () -> Void
+    var onOpenUrl: (String) -> Void = { _ in }
 
     func handle(_ event: ServerSignInEvent) {
         switch onEnum(of: event) {
         case .connected: onConnected()
         case .finished: onFinished()
+        case .openUrl(let open): onOpenUrl(open.url)
         }
     }
 }
@@ -56,8 +65,25 @@ struct ServerSignInState: Equatable {
         case authenticating
         /// Jellyfin Quick Connect's code, waiting for approval in another Jellyfin app.
         case awaitingCode(String)
+        /// Plex's sign-in PIN, waiting for approval at `authUrl` in the browser, or with the code at `linkUrl`.
+        case awaitingPin(code: String, authUrl: String, linkUrl: String)
+        /// The Plex account's servers, to pick the one to sign in to.
+        case choosingServer([ServerOption])
         case connected
         case failed(String)
+    }
+
+    /// One of the Plex account's servers: the user's own, or shared with them.
+    struct ServerOption: Equatable, Identifiable {
+        let id: String
+        let name: String
+        let owned: Bool
+    }
+
+    /// A server that answered on the local network, offered as an address.
+    struct Suggestion: Equatable {
+        let name: String
+        let address: String
     }
 
     var type: MediaProviderType
@@ -69,15 +95,17 @@ struct ServerSignInState: Equatable {
     var step: Step = .form
     var showProDisclosure = false
     var quickConnectEnabled = false
-    /// Plex's optional two-factor code, for a plex.tv account that has it on.
-    var authCode = ""
-    var asksForAuthCode = false
+    /// Plex signs in with a plex.tv PIN and a choice of servers: no address or password.
+    var signsInWithPin = false
+    /// Discovered servers, all but the one already typed. iOS finds none yet (no multicast entitlement).
+    var addressSuggestions: [Suggestion] = []
     /// A Subsonic server takes an OpenSubsonic API key as the password, with no username.
     var acceptsApiKey = false
 
     init(type: MediaProviderType) {
         self.type = type
         acceptsApiKey = type == .subsonic
+        signsInWithPin = type == .plex
     }
 
     init(_ state: ServerSignInUiState) {
@@ -97,13 +125,16 @@ struct ServerSignInState: Equatable {
         case .form: .form
         case .authenticating: .authenticating
         case .awaitingCode(let awaiting): .awaitingCode(awaiting.code)
+        case .awaitingPin(let pin): .awaitingPin(code: pin.code, authUrl: pin.authUrl, linkUrl: pin.linkUrl)
+        case .choosingServer(let choosing):
+            .choosingServer(choosing.servers.map { ServerOption(id: $0.id, name: $0.name, owned: $0.owned) })
         case .connected: .connected
         case .failed(let failed): .failed(failed.message)
         }
         showProDisclosure = state.showProDisclosure
         quickConnectEnabled = state.quickConnectEnabled
-        authCode = state.form.authCode
-        asksForAuthCode = state.asksForAuthCode
+        signsInWithPin = state.signsInWithPin
+        addressSuggestions = state.addressSuggestions.map { Suggestion(name: $0.name, address: $0.address) }
         acceptsApiKey = state.acceptsApiKey
     }
 }
@@ -113,26 +144,30 @@ struct ServerSignInActions {
     var onAddressChange: (String) -> Void = { _ in }
     var onUsernameChange: (String) -> Void = { _ in }
     var onPasswordChange: (String) -> Void = { _ in }
-    var onAuthCodeChange: (String) -> Void = { _ in }
     var onRememberPasswordChange: (Bool) -> Void = { _ in }
     var onAuthenticate: () -> Void = {}
     var onRetry: () -> Void = {}
     var onUseQuickConnect: () -> Void = {}
     var onCancelQuickConnect: () -> Void = {}
+    var onOpenUrl: (String) -> Void = { _ in }
+    var onChooseServer: (String) -> Void = { _ in }
+    var onCancelPin: () -> Void = {}
 }
 
 extension ServerSignInActions {
-    init(_ viewModel: ServerSignInViewModel) {
+    init(_ viewModel: ServerSignInViewModel, openURL: @escaping (String) -> Void) {
         self.init(
             onAddressChange: { viewModel.onAddressChange(address: $0) },
             onUsernameChange: { viewModel.onUsernameChange(username: $0) },
             onPasswordChange: { viewModel.onPasswordChange(password: $0) },
-            onAuthCodeChange: { viewModel.onAuthCodeChange(authCode: $0) },
             onRememberPasswordChange: { viewModel.onRememberPasswordChange(remember: $0) },
             onAuthenticate: { viewModel.onAuthenticate() },
             onRetry: { viewModel.onRetry() },
             onUseQuickConnect: { viewModel.onUseQuickConnect() },
-            onCancelQuickConnect: { viewModel.onCancelQuickConnect() }
+            onCancelQuickConnect: { viewModel.onCancelQuickConnect() },
+            onOpenUrl: openURL,
+            onChooseServer: { viewModel.onChooseServer(id: $0) },
+            onCancelPin: { viewModel.onCancelPin() }
         )
     }
 }
@@ -154,11 +189,10 @@ struct ServerSignInContent: View {
     @State private var address: String
     @State private var username: String
     @State private var password: String
-    @State private var authCode: String
     @State private var rememberPassword: Bool
 
     private enum Focus: Hashable {
-        case address, username, password, authCode
+        case address, username, password
     }
 
     init(state: ServerSignInState, actions: ServerSignInActions = ServerSignInActions()) {
@@ -167,7 +201,6 @@ struct ServerSignInContent: View {
         _address = State(initialValue: state.address)
         _username = State(initialValue: state.username)
         _password = State(initialValue: state.password)
-        _authCode = State(initialValue: state.authCode)
         _rememberPassword = State(initialValue: state.rememberPassword)
     }
 
@@ -177,19 +210,19 @@ struct ServerSignInContent: View {
             switch state.step {
             case .awaitingCode(let code):
                 QuickConnectSection(code: code, onCancel: actions.onCancelQuickConnect)
+            case let .awaitingPin(code, authUrl, linkUrl):
+                SignInPinSection(code: code, linkUrl: linkUrl, onOpenBrowser: { actions.onOpenUrl(authUrl) }, onCancel: actions.onCancelPin)
+            case .choosingServer(let servers):
+                ServerChoiceSection(servers: servers, onChoose: actions.onChooseServer, onCancel: actions.onCancelPin)
             case .connected:
                 SignedInSection(type: state.type)
                 submission
             case .form, .authenticating, .failed:
-                addressSection
-                if state.quickConnectEnabled, editable {
-                    quickConnectOffer
+                if state.signsInWithPin {
+                    pinSignIn
+                } else {
+                    passwordSignIn
                 }
-                accountSection
-                if case .failed(let message) = state.step {
-                    SignInErrorSection(message: message)
-                }
-                submission
             }
         }
         .sensoryFeedback(.success, trigger: state.step == .connected) { _, connected in connected }
@@ -203,14 +236,13 @@ struct ServerSignInContent: View {
         .onChange(of: address) { _, value in actions.onAddressChange(value) }
         .onChange(of: username) { _, value in actions.onUsernameChange(value) }
         .onChange(of: password) { _, value in actions.onPasswordChange(value) }
-        .onChange(of: authCode) { _, value in actions.onAuthCodeChange(value) }
         .onChange(of: rememberPassword) { _, value in actions.onRememberPasswordChange(value) }
     }
 
     private var editable: Bool {
         switch state.step {
         case .form, .failed: true
-        case .authenticating, .awaitingCode, .connected: false
+        case .authenticating, .awaitingCode, .awaitingPin, .choosingServer, .connected: false
         }
     }
 
@@ -255,6 +287,45 @@ struct ServerSignInContent: View {
         .disabled(!editable)
     }
 
+    /// Plex: no address or password, just the button that opens plex.tv's sign-in.
+    @ViewBuilder private var pinSignIn: some View {
+        if case .failed(let message) = state.step {
+            SignInErrorSection(message: message)
+        }
+        submission
+    }
+
+    @ViewBuilder private var passwordSignIn: some View {
+        addressSection
+        if !state.addressSuggestions.isEmpty, editable {
+            suggestionsSection
+        }
+        if state.quickConnectEnabled, editable {
+            quickConnectOffer
+        }
+        accountSection
+        if case .failed(let message) = state.step {
+            SignInErrorSection(message: message)
+        }
+        submission
+    }
+
+    /// Servers that answered on the local network; tapping one fills in its address.
+    private var suggestionsSection: some View {
+        Section {
+            ForEach(state.addressSuggestions, id: \.address) { suggestion in
+                Button {
+                    address = suggestion.address
+                } label: {
+                    LabeledContent(suggestion.name, value: suggestion.address)
+                }
+                .accessibilityIdentifier("serverSignIn.suggestion")
+            }
+        } header: {
+            Text("On Your Network")
+        }
+    }
+
     /// Quick Connect, offered first when the server supports it: no password to type.
     private var quickConnectOffer: some View {
         Section {
@@ -282,18 +353,9 @@ struct ServerSignInContent: View {
             SecureField("Password", text: $password)
                 .textContentType(.password)
                 .focused($focus, equals: .password)
-                .submitLabel(state.asksForAuthCode ? .next : .go)
-                .onSubmit { if state.asksForAuthCode { focus = .authCode } else { signIn() } }
+                .submitLabel(.go)
+                .onSubmit(signIn)
                 .accessibilityIdentifier("serverSignIn.password")
-            if state.asksForAuthCode {
-                TextField("Two-Factor Code", text: $authCode, prompt: Text("Optional"))
-                    .keyboardType(.numberPad)
-                    .textContentType(.oneTimeCode)
-                    .focused($focus, equals: .authCode)
-                    .submitLabel(.go)
-                    .onSubmit(signIn)
-                    .accessibilityIdentifier("serverSignIn.authCode")
-            }
             Toggle("Remember Password", isOn: $rememberPassword)
                 .s2Switch()
                 .accessibilityIdentifier("serverSignIn.rememberPassword")
@@ -324,8 +386,8 @@ struct ServerSignInContent: View {
                         Label("Signed In", systemImage: "checkmark.circle.fill")
                     case .failed:
                         Text("Try Again")
-                    case .form, .awaitingCode:
-                        Text("Sign In")
+                    case .form, .awaitingCode, .awaitingPin, .choosingServer:
+                        Text(state.signsInWithPin ? "Sign In with Plex" : "Sign In")
                     }
                 }
                 .font(.s2Headline)
@@ -350,7 +412,7 @@ struct ServerSignInContent: View {
             focus = nil
             actions.onRetry()
             actions.onAuthenticate()
-        case .authenticating, .awaitingCode, .connected:
+        case .authenticating, .awaitingCode, .awaitingPin, .choosingServer, .connected:
             break
         }
     }
@@ -370,7 +432,7 @@ private struct SignInHeader: View {
                     .font(.s2Title3)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
-                Text("Your server's address, then your \(type.accountName) account.")
+                Text(type == .plex ? "Sign in with your plex.tv account in the browser, then pick your server." : "Your server's address, then your \(type.title) account.")
                     .font(.subheadline)
                     .foregroundStyle(.s2TextSecondary)
                     .multilineTextAlignment(.center)
@@ -469,6 +531,81 @@ private struct QuickConnectSection: View {
     }
 }
 
+/// Plex's sign-in PIN: the browser opens on its own, and the code works at plex.tv/link on another device.
+private struct SignInPinSection: View {
+    let code: String
+    let linkUrl: String
+    let onOpenBrowser: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        Section {
+            VStack(spacing: Spacing.medium) {
+                Text("Approve the sign-in in your browser.")
+                    .font(.s2Headline)
+                    .multilineTextAlignment(.center)
+                Text(code)
+                    .font(.system(.largeTitle, design: .monospaced).weight(.bold))
+                    .tracking(Spacing.xsmall)
+                    .textSelection(.enabled)
+                    .accessibilityIdentifier("serverSignIn.pinCode")
+                Button("Open Browser", systemImage: "safari", action: onOpenBrowser)
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .accessibilityIdentifier("serverSignIn.openBrowser")
+                HStack(spacing: Spacing.small) {
+                    ProgressView()
+                    Text("Waiting for approval…").foregroundStyle(.s2TextSecondary)
+                }
+                .font(.subheadline)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Spacing.medium)
+            Button("Cancel", role: .cancel, action: onCancel)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("serverSignIn.cancelPin")
+        } header: {
+            Text("Plex")
+        } footer: {
+            Text("On another device, go to \(linkUrl.replacingOccurrences(of: "https://", with: "")) and enter the code.")
+        }
+    }
+}
+
+/// The Plex account's servers, the user's own first; tapping one signs in to it.
+private struct ServerChoiceSection: View {
+    let servers: [ServerSignInState.ServerOption]
+    let onChoose: (String) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        Section {
+            ForEach(servers) { server in
+                Button {
+                    onChoose(server.id)
+                } label: {
+                    VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                        Text(server.name).foregroundStyle(.primary)
+                        if !server.owned {
+                            Text("Shared with you")
+                                .font(.footnote)
+                                .foregroundStyle(.s2TextSecondary)
+                        }
+                    }
+                }
+                .accessibilityIdentifier("serverSignIn.server.\(server.id)")
+            }
+        } header: {
+            Text("Choose a Server")
+        }
+        Section {
+            Button("Cancel", role: .cancel, action: onCancel)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("serverSignIn.cancelPin")
+        }
+    }
+}
+
 extension ServerSignInState.Step {
     var isFailure: Bool {
         if case .failed = self { true } else { false }
@@ -484,10 +621,5 @@ extension MediaProviderType {
         case .subsonic: "https://music.example.com"
         default: "192.168.1.20:8096"
         }
-    }
-
-    /// Whose account signs in: Plex's is a plex.tv account, not one on the server.
-    var accountName: String {
-        self == .plex ? "plex.tv" : title
     }
 }
