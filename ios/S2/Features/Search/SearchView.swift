@@ -44,6 +44,8 @@ struct SearchView: View {
             }
         }
         .onAppear { StartupTrace.mark(.search, .appear) }
+        // A search opened before the warm-up has run builds the index itself; this only starts it sooner
+        .onAppear { AppGraph.warmUpSearch() }
         .navigationTitle(AppTab.search.title)
         .searchable(text: $query, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: "Artists, Albums, Songs")
         .onSubmit(of: .search) { models.search.onSearch() }

@@ -38,6 +38,7 @@ struct HomeView: View {
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
+            .warmsUpSearch(once: !(state is HomeUiStateLoading))
         }
         .refreshable {
             models.home.refresh()

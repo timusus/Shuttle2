@@ -33,6 +33,7 @@ struct PlaylistListView: View {
                 onDelete: { playlist in models.playlists.onDelete(playlist: playlist) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+            .warmsUpSearch(once: state.loadingState != .loading)
         }
         .refreshable { LibraryImport.refresh() }
         .onAppear { StartupTrace.mark(.playlists, .appear) }

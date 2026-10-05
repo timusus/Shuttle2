@@ -34,6 +34,7 @@ struct SongListView: View {
                     onSortOrder: { models.songs.setSortOrder(sortOrder: $0) }
                 )
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
+                .warmsUpSearch(once: state.loadingState != .loading)
             }
         }
         .refreshable { LibraryImport.refresh() }

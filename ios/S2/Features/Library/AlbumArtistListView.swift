@@ -34,6 +34,7 @@ struct AlbumArtistListView: View {
                     onSortOrder: { models.albumArtists.setSortOrder(sortOrder: $0) }
                 )
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+                .warmsUpSearch(once: state.loadingState != .loading)
             }
         }
         .refreshable { LibraryImport.refresh() }

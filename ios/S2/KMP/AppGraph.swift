@@ -1,6 +1,7 @@
 import Foundation
 import S2Playback
 import Shared
+import SwiftUI
 
 /// Central access point for the Kotlin dependency graph (the Metro `IosAppGraph` in :shared's iosMain) and
 /// the platform objects it runs on, built once by `initialize()` at launch (as in Shuttle Podcasts).
@@ -22,7 +23,8 @@ enum AppGraph {
 
     /// Builds the graph, applies the crash reporting and analytics choices before anything else runs, then starts the
     /// playback system, the recording of plays, their reporting to the server and their scrobbling to Last.fm. Call
-    /// once, from `S2App.init`.
+    /// once, from `S2App.init`. The search index waits for the first content (`warmUpSearch()`), so it doesn't hold up
+    /// the launch.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
@@ -35,7 +37,6 @@ enum AppGraph {
         StartupTrace.step("recordResumePoints") { dependencies.graph.recordResumePoints.start() }
         StartupTrace.step("playbackReporting") { dependencies.graph.playbackReporting.start() }
         StartupTrace.step("favouriteSender") { dependencies.graph.favouriteSender.start() }
-        StartupTrace.step("searchIndexWarmUp") { dependencies.graph.librarySearchIndex.warmUp() }
         // Reattaches offline downloads' background session, so a download that finished while the app wasn't running
         // is delivered, and is there for a background relaunch's events (AppDelegate)
         StartupTrace.step("offlineDownloads") { _ = dependencies.graph.offlineDownloads }
@@ -47,6 +48,27 @@ enum AppGraph {
         StartupTrace.step("storeKit") { dependencies.storeKit.start() }
         StartupTrace.step("paywallPresenter") { dependencies.paywallPresenter.start() }
         _dependencies = dependencies
+    }
+
+    private static var searchWarmUpStarted = false
+
+    /// Starts building the search index in the background, once: when Home or a Library list first shows its content,
+    /// or when Search opens, whichever is first. Started at launch it competed with that first content for the
+    /// library's songs; a search opened before it has run builds the index itself.
+    @MainActor
+    static func warmUpSearch() {
+        guard !searchWarmUpStarted else { return }
+        searchWarmUpStarted = true
+        StartupTrace.step("searchIndexWarmUp") { shared.librarySearchIndex.warmUp() }
+    }
+}
+
+extension View {
+    /// Starts the search index's warm-up (`AppGraph.warmUpSearch()`) once [loaded], this screen's first content, is up.
+    func warmsUpSearch(once loaded: Bool) -> some View {
+        onChange(of: loaded, initial: true) { _, loaded in
+            if loaded { AppGraph.warmUpSearch() }
+        }
     }
 }
 
