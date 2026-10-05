@@ -167,4 +167,45 @@ Telemetry off: `telemetryStartup` 38 → 0 ms, first frame ~11 ms earlier (198 �
 ### Open questions
 
 - Home content on device from a clean Home tab (the app was parked on an artist page); Home Kotlin timings need `log stream`-class capture, which `syslog live` doesn't give for the Home lines.
-- A Release build on the device, to separate Debug cost from real cost.
+- ~~A Release build on the device~~ Done, see "Physical device (Release build)".
+
+## Physical device (Release build)
+
+Measured 2026-10-05 on the same iPhone 16 and library (8,196 Emby songs, 190 play events, 14 resume points, telemetry on) with a Release build of HEAD installed as `com.simplecityapps.shuttle.dev`, so the owner's data is kept. Same method as the Debug section, except each run kills the previous process first (`devicectl device process terminate --pid <pid> --kill`; `--bundle-identifier` isn't accepted, and a launch without a kill only foregrounds the old process). 5 cold launches per variant, one 22 s `syslog live` capture each, launch arguments only (`-pref_show_home_on_launch '<false/>'` for Library). Home started on its root tab this time, so Home content is measured. Unlike the Debug run, `syslog live` captured every Kotlin Startup line, including the Home sections. The only gaps are `firstFrame` and `contentViewBody` in one run each (n=4). Median (min–max), ms; *duration* rows are step lengths, the others ms since process start.
+
+| Milestone | Home start (Release) | Library start (Release) | Debug (Home / Library) |
+|---|---|---|---|
+| Process start → S2App.init | 22 (19–29) | 29 (20–35) | 24 / 28 |
+| AppGraph: audio engine (duration) | 46 (44–48) | 45 (42–95) | 44 / 43 |
+| AppGraph: dependencies (duration) | 77 (73–84) | 78 (74–126) | 82 / 73 |
+| AppGraph: telemetry start (duration) | 40 (36–49) | 34 (33–46) | 38 / 39 |
+| AppGraph: playback system (duration) | 12 (7–62) | 8 (7–12) | 7 / 10 |
+| S2App.init done | 153 (150–214) | 156 (142–209) | 150 / 153 |
+| First frame | 210 (195–260) | 214 (188–260) | 198 / 202 |
+| Home body / onAppear | 252 / 257 | — | 231 / 241 |
+| **Home first content** | **731 (690–792)** | — | never logged |
+| Library body / onAppear | — | 240 / 252 | — / 234 / 247 |
+| **Library first content** | — | **594 (549–741)** | 3531 |
+| Album artists first content | — | 679 (662–768) | 3839 |
+| DB build / open after build (duration) | 0.2 / 17 (11–22) | 0.2 / 14 (6–17) | 15 / 12 |
+| Home: songCount (duration) | 200 (184–226) | — | — |
+| Home: eventCount (duration) | 0.8 | — | — |
+| Home sections: Rediscover / Recently added / Around this time | 3 / 32 / 83 | — | — |
+| Home sections: Jump back in / Heavy rotation / Genre picks / Resume points | 116 / 111 / 112 / 116 | — | — |
+| Home: first sections = sections loaded (duration) | 249 (158–273) | — | — |
+| **Search warm-up: songs loaded (duration)** | **354 (335–370)** | 433 (410–539) | 4547 / 3768 |
+| Search index ready (duration) | 805 (781–883) | 773 (726–982) | 5867 / 8064 |
+
+The section durations are measured from the start of the sections load, so they overlap (they run concurrently); only the longest sets "sections loaded".
+
+Debug → Release for the all-songs query: **~13× faster** (4547 → 354 ms Home; 3768 → 433 ms Library). Library first content improves ~6× (3531 → 594 ms), Home's search index ready ~7× (5867 → 805 ms). Release on the phone is in the same range as the simulator Release baseline for the songs query (345 ms) and first content (846 ms for Home, which is slower there).
+
+### Is pre-main credible?
+
+Partly. `StartupTrace.processStart` reads `kp_proc.p_starttime` from `sysctl(KERN_PROC_PID)`, the kernel's timestamp when the process was created, and subtracts it from `Date()` (wall clock), so it covers dyld, static initialisers and the Swift runtime up to `S2App.init`. 20-30 ms is plausible for a Release binary with no `S2.debug.dylib`, and it's stable across 10 launches (19-35 ms). It's a lower bound, not the user-visible launch cost: anything before the process exists (the tap, SpringBoard/RunningBoard, launchd spawning the process, the app-launch snapshot) isn't counted. The simulator's 263 ms is mostly the simulator's own spawn cost and a slower dyld, not a like-for-like figure. Don't read 22 ms as "launch takes 22 ms"; read it as "our binary's load cost is small". Instruments' App Launch template is the way to measure the full launch.
+
+### Ranked causes that still matter in Release
+
+1. **Home content waits on sections and the song count, ~730 ms to first content** (first frame at ~210 ms, so ~520 ms of empty Home). `songCount` takes ~200 ms and the sections load takes ~250 ms after it; the slowest sections (Jump back in, Heavy rotation, Genre picks, Resume points, ~110 ms each) set the end. Rendering the sections that are ready instead of waiting for all of them would help; `songCount` could be a cheap `COUNT(*)` or cached.
+2. **All-songs query and search warm-up, ~350-430 ms for the songs, ~800 ms to index ready.** It runs at launch regardless of tab, and competes with Home/Library for cores. Library first content (~590 ms) lands soon after it finishes (~430 ms). Smaller than in Debug, but the largest single step. A lighter first-page query for Library would remove the dependency.
+3. **Main-thread `AppGraph.initialize`, ~130 ms before first frame** (audio engine ~46 ms, dependencies ~77 ms, telemetry start ~35-40 ms, playback system ~8-12 ms). Pre-main is ~22 ms, so `S2App.init` done at ~153 ms and first frame ~210 ms are mostly this. Moving the audio engine and telemetry off the first frame's critical path would give ~80 ms.
