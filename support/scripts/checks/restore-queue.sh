@@ -23,8 +23,7 @@ echo "  restored paused on Playback Three at ${after} ms (${before} ms before th
 screenshot f-restored-mini-player
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
-maestro_flow -e TITLE="Playback Three" \
-    "${CHECKS_ROOT}/support/maestro/nav/open-queue.yaml" || fail "the Maestro flow failed (output in ${out})"
+maestro_flow "${CHECKS_ROOT}/support/maestro/nav/open-queue.yaml" || fail "the Maestro flow failed (output in ${out})"
 shown="$(queue_titles)"
 echo "  restored queue: ${shown}"
 [ "$shown" = "Playback One,Playback Three,Playback Four,Playback Five" ] || fail "the queue sheet shows ${shown}"

@@ -6,9 +6,10 @@
 # the edit doesn't interrupt playback, so the flow never pauses first. setup_taglib_provider's own
 # flow leaves the app on Settings > Sources (or Settings, depending on the last `back`), so the flow
 # backs out until the mini player shows, rather than counting `back`s. The keyboard auto-capitalises
-# the typed title ("(Edited)"), so the wrapper compares titles case-insensitively. The wrapper (support/scripts/checks/tag-edit-queued.sh) checks this alone,
-# before support/maestro/tag-edit-not-playing.yaml runs the second edit -- a real SAF tag write is
-# slow enough that both edits together can outlast this 180 s fixture track's remaining runtime.
+# the typed title ("(Edited)"), so the wrapper compares titles case-insensitively. The wrapper
+# (support/scripts/checks/tag-edit-queued.sh) checks this alone, before
+# support/maestro/tag-edit-not-playing.yaml runs the second edit -- a real SAF tag write is slow
+# enough that both edits together can outlast this 180 s fixture track's remaining runtime.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp:
@@ -19,6 +20,9 @@ appId: com.simplecityapps.shuttle.dev
         id: "player_mini"
     times: 4
     commands:
+      # A transient frame without the mini player mustn't trigger an extra `back`
+      - waitForAnimationToEnd:
+          timeout: 3000
       - back
 - extendedWaitUntil:
     visible:

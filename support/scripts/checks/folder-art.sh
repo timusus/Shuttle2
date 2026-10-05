@@ -49,20 +49,27 @@ s2 IMPORT >/dev/null
 # The import runs in the background: wait for the album row, then for its artwork to load
 deadline=$(($(date +%s) + 30))
 while :; do
-    # The Compose album row's artwork carries no semantics, so locate it from the album title: it
-    # fills the row's start, so its centre is half way along from the screen edge to the title's
-    # start, at the title's height. The title's bounds are used with x1 = 0 and x2 = the title's x1.
-    bounds="$("$emu" dump-texts 2>/dev/null | sed -n "s/^text=\"${album}\" bounds=\[\([0-9]*\),\([0-9]*\)\]\[[0-9]*,\([0-9]*\)\]\$/[0,\2][\1,\3]/p" | head -1)"
+    # The Compose album artwork carries no semantics, so locate it from the album title. Albums opens
+    # as a grid by default (a square tile: artwork above the title, as wide as the tile), but may be
+    # a list (artwork fills the row's start). Sample both spots and accept either being magenta:
+    #  - grid: centred on the title's x bounds, one title height above the title's top (inside the
+    #    artwork, which ends 8 dp above the title);
+    #  - list: half way from the screen edge to the title's start, at the title's height.
+    bounds="$("$emu" dump-texts 2>/dev/null | sed -n "s/^text=\"${album}\" bounds=\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]\$/\1 \2 \3 \4/p" | head -1)"
     if [ -n "$bounds" ]; then
         rgb="$(adb_retry exec-out screencap | python3 -c '
-import re, sys
+import sys
 raw = sys.stdin.buffer.read()
 w, h = int.from_bytes(raw[0:4], "little"), int.from_bytes(raw[4:8], "little")
 header = len(raw) - w * h * 4
-x1, y1, x2, y2 = map(int, re.findall(r"\d+", sys.argv[1]))
-i = header + (((y1 + y2) // 2) * w + (x1 + x2) // 2) * 4
-print(*raw[i:i + 3])
-' "$bounds")"
+x1, y1, x2, y2 = map(int, sys.argv[1:5])
+def px(x, y):
+    i = header + (y * w + x) * 4
+    return raw[i:i + 3]
+samples = [px((x1 + x2) // 2, y1 - (y2 - y1)), px(x1 // 2, (y1 + y2) // 2)]
+hit = [s for s in samples if s[0] > 200 and s[1] < 60 and s[2] > 200]
+print(*(hit or samples)[0])
+' $bounds)"
         read -r r g b <<<"$rgb"
         if [ "$r" -gt 200 ] && [ "$g" -lt 60 ] && [ "$b" -gt 200 ]; then
             break

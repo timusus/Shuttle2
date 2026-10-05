@@ -22,13 +22,13 @@ appId: com.simplecityapps.shuttle.dev
     element: "Song Info"
     direction: DOWN
 - tapOn: "Song Info"
-# The redesigned Song Info is a tall list: "Play count" sits below the fold
+- assertVisible: "Taglib Five"
+- takeScreenshot: shell-song-info
+# The redesigned Song Info is a tall list: "Play count" sits below the fold, so scroll after the title check
 - scrollUntilVisible:
     element: "Play count"
     direction: DOWN
     timeout: 10000
-- assertVisible: "Taglib Five"
-- takeScreenshot: shell-song-info
 - back
 # Edit Tags from a one-song selection
 - longPressOn: "Taglib One"
