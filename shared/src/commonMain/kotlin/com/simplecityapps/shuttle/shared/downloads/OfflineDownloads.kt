@@ -62,6 +62,15 @@ class OfflineDownloads(
     /** The paths whose download has had its one retry from the fallback URL. */
     private val fallbackTried = MutableStateFlow<Set<String>>(emptySet())
 
+    /** Whether each download of this launch was kept off mobile data when it started, so its fallback retry keeps to that. */
+    private val startedWifiOnly = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+
+    /**
+     * How many times each path has been downloaded or removed this launch: a fallback retry still loading its song when
+     * the count moves on belongs to a download that's gone, and starts nothing.
+     */
+    private val generations = MutableStateFlow<Map<String, Int>>(emptyMap())
+
     /** Every song's download that's running, completed or failed, by `Song.path`. */
     val downloads: StateFlow<Map<String, OfflineDownload>> = _downloads.asStateFlow()
 
@@ -110,8 +119,11 @@ class OfflineDownloads(
         fallbackTried.update { it - song.path }
         requested.update { it + (song.path to song) }
         requests.put(song)
+        nextGeneration(song.path)
+        val keepOffMobileData = wifiOnly()
+        startedWifiOnly.update { it + (song.path to keepOffMobileData) }
         _downloads.update { it + (song.path to OfflineDownload(OfflineDownload.State.Downloading, 0f)) }
-        transport.start(song.path, source, wifiOnly())
+        transport.start(song.path, source, keepOffMobileData)
         return true
     }
 
@@ -144,6 +156,7 @@ class OfflineDownloads(
     fun dismissFailed(path: String) {
         if (_downloads.value[path]?.state != OfflineDownload.State.Failed) return
         requests.remove(path)
+        requested.update { it - path }
         update(path) { current -> current?.takeUnless { it.state == OfflineDownload.State.Failed } }
     }
 
@@ -159,16 +172,20 @@ class OfflineDownloads(
             tried + path
         }
         if (!first) return false
+        val generation = generations.value[path]
+        // The retry keeps to the mobile-data decision its download started with; one from an earlier launch takes today's
+        val keepOffMobileData = startedWifiOnly.value[path] ?: wifiOnly()
         scope.launch {
             val fallback = loadRequestedSong(path)?.let { provider.downloadFallback(it, httpStatus) }
             when {
-                path in removedPaths.value -> Unit
+                // Removed, or removed and downloaded again, while the song loaded: this retry's download is gone
+                path in removedPaths.value || generations.value[path] != generation -> Unit
 
                 fallback == null -> markFailed(path)
 
                 else -> {
                     update(path) { OfflineDownload(OfflineDownload.State.Downloading, 0f) }
-                    transport.start(path, fallback, wifiOnly())
+                    transport.start(path, fallback, keepOffMobileData)
                 }
             }
         }
@@ -191,12 +208,16 @@ class OfflineDownloads(
     }
 
     private fun removePath(path: String) {
+        nextGeneration(path)
         removedPaths.update { it + path }
         requested.update { it - path }
+        startedWifiOnly.update { it - path }
         requests.remove(path)
         _downloads.update { it - path }
         transport.remove(path)
     }
+
+    private fun nextGeneration(path: String) = generations.update { it + (path to (it[path] ?: 0) + 1) }
 
     /** Whether [path] is one this hasn't heard of, of a provider whose downloads were all removed since launch. */
     private fun isRemovedUnknown(path: String): Boolean = path !in _downloads.value && removedPrefixes.value.any(path::startsWith)

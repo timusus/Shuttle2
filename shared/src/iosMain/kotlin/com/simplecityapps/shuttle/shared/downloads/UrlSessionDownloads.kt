@@ -112,8 +112,9 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
         // Per request, so a download started under one setting keeps it when the setting changes. A background session
         // holds a task that's refused a network until an allowed one is back, rather than failing it.
         val request = NSMutableURLRequest.requestWithURL(url).apply {
-            allowsCellularAccess = !wifiOnly
-            allowsExpensiveNetworkAccess = !wifiOnly
+            // NSURLRequest's properties are read-only vals in Kotlin; the mutable request's setters write them
+            setAllowsCellularAccess(!wifiOnly)
+            setAllowsExpensiveNetworkAccess(!wifiOnly)
         }
         val task = session.downloadTaskWithRequest(request)
         // The MIME type names the file; the server's suggested name is the fallback for one it doesn't know

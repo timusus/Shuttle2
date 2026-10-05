@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.shared.playback.song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -291,6 +292,35 @@ class OfflineDownloadsTest {
 
         transport.started.size shouldBe 2
         downloads.downloads.value["jellyfin://item/2"]?.state shouldBe OfflineDownload.State.Failed
+    }
+
+    @Test
+    fun aFallbackRetryKeepsToTheMobileDataSettingItsDownloadStartedWith() = runTest {
+        downloads.download(remote(2))
+        wifiOnly = false
+
+        transport.listener!!.onFailed("jellyfin://item/2", 403)
+
+        transport.wifiOnly shouldBe listOf(true, true)
+    }
+
+    @Test
+    fun aFallbackRetryWhoseDownloadIsRemovedAndStartedAgainWhileItsSongLoadsStartsNothing() = runTest {
+        offlineDownloads(FakeTransport()).download(remote(2))
+        val loaded = CompletableDeferred<Unit>()
+        val relaunched = FakeTransport()
+        val reopened = offlineDownloads(relaunched) { ids ->
+            loaded.await()
+            ids.map(::remote)
+        }
+
+        relaunched.listener!!.onFailed("jellyfin://item/2", 403)
+        reopened.remove(remote(2))
+        reopened.download(remote(2))
+        loaded.complete(Unit)
+
+        relaunched.started shouldBe listOf("jellyfin://item/2" to DownloadSource("https://jellyfin.example/2/download", "audio/flac"))
+        reopened.downloads.value["jellyfin://item/2"] shouldBe OfflineDownload(OfflineDownload.State.Downloading, 0f)
     }
 
     @Test
