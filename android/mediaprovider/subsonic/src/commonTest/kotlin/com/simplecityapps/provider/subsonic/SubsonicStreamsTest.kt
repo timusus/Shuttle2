@@ -32,6 +32,7 @@ class SubsonicStreamsTest {
     private val flac = subsonicSong()
     private val mp3 = subsonicSong(externalId = "0ZVb9IcFZ0wbcBgwwir582", mimeType = "audio/mpeg", bitRate = 192, audioCodec = "mp3")
     private val alac = subsonicSong(externalId = "alac-1", mimeType = "audio/mp4", bitRate = 900, audioCodec = "alac")
+    private val wma = subsonicSong(externalId = "wma-1", mimeType = "audio/x-ms-wma", bitRate = 96, audioCodec = "wma")
 
     @AfterTest
     fun tearDown() = subsonic.close()
@@ -95,8 +96,31 @@ class SubsonicStreamsTest {
     }
 
     @Test
+    fun `a decided transcode seeks by its own offset - without the transcodeOffset extension`() {
+        subsonic.signIn(extensions = "extensions_transcoding.json")
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+        server.respond(TRANSCODE_DECISION, "transcode_decision.json", method = "POST")
+
+        val stream = runBlocking { streams.stream(flac) }
+
+        Url(stream.url).encodedPath shouldBe "/rest/getTranscodeStream.view"
+        Url(stream.timeSeek.shouldNotBeNull().urlAt(30)).parameters["offset"] shouldBe "30"
+    }
+
+    @Test
+    fun `the transcode decision is asked for no more than a lossy source's bitrate`() {
+        subsonic.signIn()
+        server.respond(TRANSCODE_DECISION, "transcode_decision.json", method = "POST")
+
+        runBlocking { streams.stream(wma) }
+
+        val body = server.requestsTo(TRANSCODE_DECISION).single().bodyText
+        body shouldContain "\"maxTranscodingAudioBitrate\":96000"
+    }
+
+    @Test
     fun `past the cap - a server without transcoding streams the classic MP3 transcode`() {
-        subsonic.signIn(extensions = "ok.json")
+        subsonic.signIn(extensions = "extensions_transcode_offset.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
         val stream = runBlocking { streams.stream(flac) }
@@ -109,6 +133,49 @@ class SubsonicStreamsTest {
         url.parameters["timeOffset"].shouldBeNull()
         Url(stream.timeSeek!!.urlAt(42)).parameters["timeOffset"] shouldBe "42"
         server.requestsTo(TRANSCODE_DECISION).shouldBeEmpty()
+    }
+
+    @Test
+    fun `the classic transcode can't be seeked on a server without the transcodeOffset extension`() {
+        subsonic.signIn(extensions = "ok.json")
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+        val provider = SubsonicStreamUrlProvider(streams)
+
+        val stream = runBlocking { streams.stream(flac) }
+
+        Url(stream.url).parameters["format"] shouldBe "mp3"
+        stream.timeSeek.shouldBeNull()
+        Url(provider.streamUrl(flac, startPositionMs = 61_500, playId = null)).parameters["timeOffset"].shouldBeNull()
+    }
+
+    @Test
+    fun `a lossy source transcodes at no more than its own bitrate`() {
+        subsonic.signIn(extensions = "extensions_transcode_offset.json")
+
+        val stream = runBlocking { streams.stream(wma) }
+
+        Url(stream.url).parameters["maxBitRate"] shouldBe "96"
+        stream.timeSeek.shouldNotBeNull().bitrateKbps shouldBe 96
+        Url(streams.downloadSource(wma).shouldNotBeNull().url).parameters["maxBitRate"] shouldBe "96"
+    }
+
+    @Test
+    fun `a lossy source over the cap transcodes at the cap`() {
+        subsonic.signIn(extensions = "extensions_transcode_offset.json")
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+
+        val stream = runBlocking { streams.stream(wma.copy(bitRate = 192)) }
+
+        Url(stream.url).parameters["maxBitRate"] shouldBe "128"
+    }
+
+    @Test
+    fun `a transcode's bitrate is rounded down to one MP3 has`() {
+        SubsonicStreams.transcodeKbps(wma.copy(bitRate = 245), maxBitrateKbps = null) shouldBe 224
+        SubsonicStreams.transcodeKbps(wma.copy(bitRate = 20), maxBitrateKbps = null) shouldBe 32
+        SubsonicStreams.transcodeKbps(flac, maxBitrateKbps = null) shouldBe 320
+        SubsonicStreams.transcodeKbps(flac, maxBitrateKbps = 128) shouldBe 128
+        SubsonicStreams.transcodeKbps(wma.copy(bitRate = null), maxBitrateKbps = null) shouldBe 320
     }
 
     @Test
