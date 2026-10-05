@@ -232,7 +232,7 @@ class MediaStoreMediaProvider(
 
     // Playlists
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
         val mediaStorePlaylists = findMediaStorePlaylists().toList()
         val updates =
             mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->
@@ -255,7 +255,7 @@ class MediaStoreMediaProvider(
                 updateData
             }
 
-        emit(FlowEvent.Success(updates.toList()))
+        emit(FlowEvent.Success(MediaImporter.PlaylistListing(updates.toList())))
     }
 
     private suspend fun findSongsForMediaStorePlaylist(mediaStorePlaylistId: Long): List<MediaStoreSong> {

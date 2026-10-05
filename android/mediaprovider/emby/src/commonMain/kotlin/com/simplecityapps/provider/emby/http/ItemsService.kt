@@ -64,6 +64,8 @@ class ItemsService(private val client: HttpClient) {
         url = "$url/Users/$userId/Items",
         token = token,
         itemTypes = "Playlist",
+        // Only the music playlists, as Plex's playlistType=audio: a video playlist matches no song
+        mediaTypes = "Audio",
         limit = limit,
         startIndex = startIndex
     )
@@ -100,6 +102,7 @@ class ItemsService(private val client: HttpClient) {
         token: String,
         itemTypes: String,
         fields: String? = null,
+        mediaTypes: String? = null,
         limit: Int,
         startIndex: Int,
         userId: String? = null,
@@ -113,6 +116,7 @@ class ItemsService(private val client: HttpClient) {
             parameter("Recursive", true)
             parameter("IncludeItemTypes", itemTypes)
             parameter("Fields", fields)
+            parameter("MediaTypes", mediaTypes)
             parameter("Limit", limit)
             parameter("StartIndex", startIndex)
             parameter("UserId", userId)

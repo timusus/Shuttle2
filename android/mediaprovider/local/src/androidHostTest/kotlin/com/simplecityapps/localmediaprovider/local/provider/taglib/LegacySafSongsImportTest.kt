@@ -220,7 +220,7 @@ class LegacySafSongsImportTest {
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flowOf(FlowEvent.Success(files.map { file -> file.toScannedSong() }))
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flowOf(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
 
         private fun MediaStoreAudioFile.toScannedSong() = Song(
             id = 0,

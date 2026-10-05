@@ -93,16 +93,31 @@ class LocalPlaylistRepository(
      */
     override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = withContext(Dispatchers.IO) {
         playlistDataDao.storeImported(
-            PlaylistData(
-                name = playlist.name,
-                sortOrder = PlaylistSongSortOrder.Position,
-                mediaProviderType = playlist.mediaProviderType,
-                externalId = playlist.externalId
-            ),
+            playlist.toPlaylistData(),
             songIds = playlist.songs.inLibrary().map { song -> song.id },
             replaceSongs = isM3uSynced(playlist.mediaProviderType, playlist.externalId)
         )
     }
+
+    override suspend fun reconcilePlaylists(
+        type: MediaProviderType,
+        listing: MediaImporter.PlaylistListing,
+        listingComplete: Boolean
+    ) = withContext(Dispatchers.IO) {
+        playlistDataDao.reconcileImported(
+            mediaProviderType = type,
+            playlists = listing.playlists.map { playlist -> playlist.toPlaylistData() to playlist.songs.inLibrary().map { song -> song.id } },
+            unread = listing.unread,
+            deleteUnlisted = listingComplete
+        )
+    }
+
+    private fun MediaImporter.PlaylistUpdateData.toPlaylistData() = PlaylistData(
+        name = name,
+        sortOrder = PlaylistSongSortOrder.Position,
+        mediaProviderType = mediaProviderType,
+        externalId = externalId
+    )
 
     override suspend fun addToPlaylist(
         playlist: Playlist,

@@ -44,6 +44,9 @@ abstract class PlaylistDataDao {
         externalId: String
     ): PlaylistData?
 
+    @Query("SELECT * FROM playlists WHERE mediaProvider = :mediaProviderType AND externalId IS NOT NULL")
+    abstract suspend fun getImportedPlaylistData(mediaProviderType: MediaProviderType): List<PlaylistData>
+
     @Query("SELECT songId FROM playlist_song_join WHERE playlistId = :playlistId ORDER BY sortOrder")
     abstract suspend fun getSongIds(playlistId: Long): List<Long>
 
@@ -74,6 +77,39 @@ abstract class PlaylistDataDao {
             }
         } else {
             insertSongJoins(songJoins(existing.id, songIds.filterNot { songId -> songId in heldSongIds }, firstSortOrder = heldSongIds.size))
+        }
+    }
+
+    /**
+     * Makes the playlists [mediaProviderType] imported match its server's listing, as one transaction: stores each of
+     * [playlists] that holds songs as [storeImported] does, adding the songs it doesn't hold yet, then deletes each playlist
+     * imported from a source the listing names that matched no songs or holds none, and, if [deleteUnlisted], each one
+     * imported from a source it doesn't name. One imported from an [unread] source, whose songs the listing couldn't read,
+     * is left as it is.
+     */
+    @Transaction
+    open suspend fun reconcileImported(
+        mediaProviderType: MediaProviderType,
+        playlists: List<Pair<PlaylistData, List<Long>>>,
+        unread: Set<String>,
+        deleteUnlisted: Boolean
+    ) {
+        playlists.forEach { (playlistData, songIds) ->
+            if (songIds.isNotEmpty()) {
+                storeImported(playlistData, songIds, replaceSongs = false)
+            }
+        }
+        val listedSongIds = playlists.associate { (playlistData, songIds) -> playlistData.externalId to songIds }
+        getImportedPlaylistData(mediaProviderType).forEach { stored ->
+            val gone =
+                when (stored.externalId) {
+                    in unread -> false
+                    in listedSongIds -> listedSongIds.getValue(stored.externalId).isEmpty() || getSongIds(stored.id).isEmpty()
+                    else -> deleteUnlisted
+                }
+            if (gone) {
+                delete(stored.id)
+            }
         }
     }
 

@@ -261,9 +261,10 @@ class TaglibHybridScanTest {
         val playlists =
             runBlocking {
                 provider.findPlaylists(songs)
-                    .filterIsInstance<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>()
+                    .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>()
                     .first()
                     .result
+                    .playlists
             }
 
         playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Hidden/x.m3u").toString())

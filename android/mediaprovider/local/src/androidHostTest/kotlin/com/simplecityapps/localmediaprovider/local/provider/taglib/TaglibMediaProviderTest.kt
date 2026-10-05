@@ -275,9 +275,10 @@ class TaglibMediaProviderTest {
     }
 
     private suspend fun TaglibMediaProvider.playlists(): List<MediaImporter.PlaylistUpdateData> = findPlaylists(listOf(mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)))
-        .filterIsInstance<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>()
+        .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>()
         .first()
         .result
+        .playlists
 
     @Test
     fun `an unchanged MediaStore file is reused without being read, a changed one is read`() {

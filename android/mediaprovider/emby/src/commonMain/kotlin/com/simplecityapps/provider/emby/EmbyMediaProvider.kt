@@ -25,15 +25,10 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Clock
 import kotlin.time.Instant
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDate
 
 class EmbyMediaProvider(
@@ -73,7 +68,7 @@ class EmbyMediaProvider(
         )
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (
             val queryResult =
                 session.request { credentials ->
@@ -88,8 +83,9 @@ class EmbyMediaProvider(
                 }
         ) {
             is NetworkResult.Success<QueryResult> -> {
-                val updateData = findSongsForPlaylists(address, session, queryResult.body.items, existingSongs).toList()
-                emit(FlowEvent.Success(updateData))
+                val playlists = queryResult.body.items
+                // The listing isn't paged: one that left playlists out can't have them taken as gone from the server
+                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlists, existingSongs), missing = (queryResult.body.totalRecordCount - playlists.size).coerceAtLeast(0)))
             }
 
             is NetworkResult.Failure -> {
@@ -153,35 +149,34 @@ class EmbyMediaProvider(
         }.map { it.toPage() }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun findSongsForPlaylists(
+    /**
+     * A playlist per one of [playlistItems], holding the library songs its items refer to, in playlist order. A playlist whose
+     * items fail to load is listed as [unread][MediaImporter.PlaylistListing.unread], so the one stored from it is left as it is.
+     */
+    private suspend fun findSongsForPlaylists(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         playlistItems: List<Item>,
         existingSongs: List<Song>
-    ): Flow<MediaImporter.PlaylistUpdateData> = playlistItems
-        .asFlow()
-        .flatMapConcat { playlistItem ->
-            queryPlaylistItems(address, session, playlistItem.id)
-                .map { event ->
-                    when (event) {
-                        is FlowEvent.Success -> {
-                            val matchingSongs = event.result.mapNotNull { item -> existingSongs.firstOrNull { item.id == it.externalId } }
-                            MediaImporter.PlaylistUpdateData(
-                                mediaProviderType = type,
-                                name = playlistItem.name ?: strings.unknownName,
-                                songs = matchingSongs,
-                                externalId = playlistItem.id
-                            )
-                        }
-
-                        is FlowEvent.Failure -> null
-
-                        is FlowEvent.Progress -> null
-                    }
-                }
+    ): MediaImporter.PlaylistListing {
+        val playlists = mutableListOf<MediaImporter.PlaylistUpdateData>()
+        val unread = mutableSetOf<String>()
+        for (playlistItem in playlistItems) {
+            val event = queryPlaylistItems(address, session, playlistItem.id).last()
+            if (event is FlowEvent.Success) {
+                playlists +=
+                    MediaImporter.PlaylistUpdateData(
+                        mediaProviderType = type,
+                        name = playlistItem.name ?: strings.unknownName,
+                        songs = event.result.mapNotNull { item -> existingSongs.firstOrNull { item.id == it.externalId } },
+                        externalId = playlistItem.id
+                    )
+            } else {
+                unread += playlistItem.id
+            }
         }
-        .filterNotNull()
+        return MediaImporter.PlaylistListing(playlists, unread)
+    }
 
     private fun queryPlaylistItems(
         address: String,

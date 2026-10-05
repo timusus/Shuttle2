@@ -1,5 +1,7 @@
 package com.simplecityapps.mediaprovider
 
+import com.simplecityapps.shuttle.model.MediaProviderType
+
 /** Where [MediaImporter] stores the playlists a [MediaProvider] finds. */
 interface ImportedPlaylistStore {
     /**
@@ -8,4 +10,16 @@ interface ImportedPlaylistStore {
      * afterwards updates the playlist imported from that same source, never one that merely shares its name.
      */
     suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData)
+
+    /**
+     * Makes the playlists stored from [type]'s server match its [listing], as one transaction: stores each playlist it read
+     * as [storePlaylist] does, then deletes each stored playlist from a source it listed that matched no songs or holds none,
+     * and, if the listing is [listingComplete], each one from a source it no longer lists. One from an
+     * [unread][MediaImporter.PlaylistListing.unread] source is left as it is, and so are the playlists made in S2.
+     */
+    suspend fun reconcilePlaylists(
+        type: MediaProviderType,
+        listing: MediaImporter.PlaylistListing,
+        listingComplete: Boolean
+    )
 }

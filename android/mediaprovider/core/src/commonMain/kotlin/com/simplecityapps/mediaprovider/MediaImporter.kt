@@ -592,9 +592,13 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Success -> {
-                    event.result.forEach { playlistUpdateData ->
-                        if (playlistUpdateData.songs.isNotEmpty()) {
-                            playlistStore.storePlaylist(playlistUpdateData)
+                    if (mediaProvider.type.remote) {
+                        playlistStore.reconcilePlaylists(mediaProvider.type, event.result, listingComplete = event.complete)
+                    } else {
+                        event.result.playlists.forEach { playlistUpdateData ->
+                            if (playlistUpdateData.songs.isNotEmpty()) {
+                                playlistStore.storePlaylist(playlistUpdateData)
+                            }
                         }
                     }
                 }
@@ -617,6 +621,16 @@ class MediaImporter(
         var dbWrite: Duration = Duration.ZERO
         var findPlaylists: Duration = Duration.ZERO
     }
+
+    /**
+     * The playlists a provider found: [playlists], each with the songs of its source, and [unread], the [PlaylistUpdateData.externalId]s
+     * of those it listed but couldn't read the songs of. A playlist stored from an [unread] source is left as it is, never
+     * taken as gone from it.
+     */
+    data class PlaylistListing(
+        val playlists: List<PlaylistUpdateData>,
+        val unread: Set<String> = emptySet()
+    )
 
     /** A playlist [mediaProviderType] found, holding the [songs] of its source, which [externalId] identifies within that provider. */
     data class PlaylistUpdateData(

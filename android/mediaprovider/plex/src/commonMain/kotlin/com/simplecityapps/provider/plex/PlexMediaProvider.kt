@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDate
 
 class PlexMediaProvider(
@@ -89,12 +88,12 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (val playlistsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 val songsByPart = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
-                val updateData = findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart).toList()
-                emit(FlowEvent.Success(updateData))
+                // Not paged, so the listing holds every audio playlist on the server
+                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart)))
             }
 
             is NetworkResult.Failure -> {
@@ -104,27 +103,34 @@ class PlexMediaProvider(
         }
     }
 
-    /** A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items fail to load is left out. */
-    private fun findSongsForPlaylists(
+    /**
+     * A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items
+     * fail to load is listed as [unread][MediaImporter.PlaylistListing.unread], so the one stored from it is left as it is.
+     */
+    private suspend fun findSongsForPlaylists(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         playlists: List<Metadata>,
         songsByPart: Map<String?, Song>
-    ): Flow<MediaImporter.PlaylistUpdateData> = flow {
+    ): MediaImporter.PlaylistListing {
+        val found = mutableListOf<MediaImporter.PlaylistUpdateData>()
+        val unread = mutableSetOf<String>()
         for (playlist in playlists) {
             val ratingKey = playlist.ratingKey ?: continue
             val event = queryPlaylistItems(address, session, ratingKey).last()
             if (event is FlowEvent.Success) {
-                emit(
+                found +=
                     MediaImporter.PlaylistUpdateData(
                         mediaProviderType = type,
                         name = playlist.title ?: strings.unknownName,
                         songs = event.result.mapNotNull { item -> songsByPart[item.media.firstOrNull()?.parts?.firstOrNull()?.key] },
                         externalId = ratingKey
                     )
-                )
+            } else {
+                unread += ratingKey
             }
         }
+        return MediaImporter.PlaylistListing(found, unread)
     }
 
     private fun queryPlaylistItems(

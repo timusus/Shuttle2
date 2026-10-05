@@ -33,7 +33,13 @@ interface MediaProvider {
      */
     val unreadableRoots: Set<String> get() = emptySet()
 
-    fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
+    /**
+     * The source's playlists, each holding those of [existingSongs] it lists. A remote server's [FlowEvent.Success] is its
+     * listing, which the importer makes the playlists stored from it match ([ImportedPlaylistStore.reconcilePlaylists]): it
+     * must name every playlist the server listed, those whose songs it couldn't read as [MediaImporter.PlaylistListing.unread],
+     * and come [FlowEvent.Success.missing] as many as the listing left out. A listing that failed is a [FlowEvent.Failure].
+     */
+    fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>>
 }
 
 /**

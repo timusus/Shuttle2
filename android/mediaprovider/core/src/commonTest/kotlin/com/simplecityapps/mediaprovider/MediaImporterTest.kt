@@ -56,6 +56,12 @@ class MediaImporterTest {
             songRepository = songRepository,
             playlistStore = object : ImportedPlaylistStore {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
+
+                override suspend fun reconcilePlaylists(
+                    type: MediaProviderType,
+                    listing: MediaImporter.PlaylistListing,
+                    listingComplete: Boolean
+                ) = error("ImportedPlaylistStore.reconcilePlaylists isn't faked")
             },
             preferenceManager = preferences,
             afterImport = { songTagsCurrent -> afterImports += songTagsCurrent },
@@ -853,6 +859,12 @@ class MediaImporterTest {
         songRepository = songRepository,
         playlistStore = object : ImportedPlaylistStore {
             override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
+
+            override suspend fun reconcilePlaylists(
+                type: MediaProviderType,
+                listing: MediaImporter.PlaylistListing,
+                listingComplete: Boolean
+            ) = error("ImportedPlaylistStore.reconcilePlaylists isn't faked")
         },
         preferenceManager = preferences,
         afterImport = {},
@@ -889,7 +901,7 @@ class MediaImporterTest {
             failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found, missing))
         }
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
             playlistRequests++
         }
     }
@@ -911,7 +923,7 @@ class MediaImporterTest {
             emit(FlowEvent.Success(emptyList()))
         }
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
     }
 
     /**
@@ -946,7 +958,7 @@ class MediaImporterTest {
             stored.incrementAndFetch()
         }
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
     }
 
     private companion object {

@@ -186,13 +186,38 @@ class EmbyMediaProviderTest {
     }
 
     @Test
-    fun `a playlist whose items fail to load is left out`() {
+    fun `a playlist whose items fail to load is listed as unread - not taken as gone from the server`() {
         signedIn()
         server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
         server.respond("/Playlists/401/Items", code = 500)
         server.respond("/Playlists/402/Items", "empty.json")
 
-        syncPlaylists(emptyList()).map { it.externalId } shouldContainExactly listOf("402")
+        val listing = syncListing(emptyList())
+
+        listing.result.playlists.map { it.externalId } shouldContainExactly listOf("402")
+        listing.result.unread shouldBe setOf("401")
+        listing.complete shouldBe true
+    }
+
+    @Test
+    fun `only the server's music playlists are listed`() {
+        signedIn()
+        server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/401/Items", "empty.json")
+        server.respond("/Playlists/402/Items", "empty.json")
+
+        syncPlaylists(emptyList())
+
+        server.requestsTo(ITEMS).single().url.parameters["MediaTypes"] shouldBe "Audio"
+    }
+
+    @Test
+    fun `a listing short of the server's total says how many playlists it left out`() {
+        signedIn()
+        server.respond(ITEMS, "playlists_truncated.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/401/Items", "empty.json")
+
+        syncListing(emptyList()).missing shouldBe 2
     }
 
     @Test
@@ -382,8 +407,10 @@ class EmbyMediaProviderTest {
 
     private fun sync(): List<Song> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
 
-    private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = provider.findPlaylists(library).events().last()
-        .shouldBeInstanceOf<FlowEvent.Success<List<MediaImporter.PlaylistUpdateData>>>().result
+    private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = syncListing(library).result.playlists
+
+    private fun syncListing(library: List<Song>): FlowEvent.Success<MediaImporter.PlaylistListing> = provider.findPlaylists(library).events().last()
+        .shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>()
 
     private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
 
