@@ -11,7 +11,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 2. The demo server is Emby at https://emby.mediaserver.timmalseed.dev, user `appreview`. The owner enters the
    password in the demo account fields in App Store Connect (it is never written in the repo). Keep the server up
    until approval.
-3. Publish the draft `ffmpeg-n7.1.5-source` release on timusus/Shuttle2 (the About link points at it, #610).
+3. Check the published `ffmpeg-n7.1.5-source` release on timusus/Shuttle2 is still up (the About link points at it, #610).
 4. App Store Connect > App Information: paste `en-AU/*.txt`, set the privacy policy URL, category
    Music, content rights and age rating from `asc-answers.md`.
 5. App Privacy: Data Not Collected, publish.
@@ -19,7 +19,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
    once rendered from artwork we may show (#610 guideline 5.2 note).
 7. Version > App Review Information: paste the notes below with the placeholders filled;
    leave the demo-account toggle off (the credentials go in the notes); contact phone and email filled.
-8. Confirm the Info.plist background mode is `audio` only and the FFmpeg frameworks are not renamed.
+8. Confirm the Info.plist background modes are `audio` and `fetch` only and the FFmpeg frameworks are not renamed.
 9. Push the archive tag, wait for TestFlight to process, install on a device, play from the demo server
    and run through the purchase with a sandbox account, then submit.
 
@@ -50,8 +50,9 @@ free App Store trial (nothing is charged), after which Pro is a
 one-off lifetime purchase (no subscription). A sandbox Apple Account is enough to test the purchase,
 and Restore Purchases is on the paywall and in Settings.
 
-Background audio: UIBackgroundModes is limited to audio, used so music keeps playing with the screen
-locked or the app in the background, with lock screen and Control Centre controls.
+Background modes: audio, so music keeps playing with the screen locked or the app in the background,
+with lock screen and Control Centre controls; and background fetch, used only for system-scheduled
+BGAppRefreshTask runs that sync the user's media server library and send queued Last.fm scrobbles.
 
 Local network: the app asks for local network access only so it can connect to media servers on the
 user's Wi-Fi. Many Jellyfin, Emby and Plex servers are plain http on the LAN or use self-signed
@@ -76,11 +77,11 @@ Contact: <owner email / phone as in ASC>.
 |---|---|
 | Public demo server and reviewer credentials (#610) | open: owner to provide; never commit credentials |
 | Local-file playback with no server (#590) | built; the listing and review notes describe it |
-| FFmpeg source tarball hosted (#610) | done: draft release `ffmpeg-n7.1.5-source` on timusus/Shuttle2, publish before submitting |
+| FFmpeg source tarball hosted (#610) | done: published release `ffmpeg-n7.1.5-source` on timusus/Shuttle2 |
 | FFmpeg LGPL notice in About (#610) | done: Acknowledgements names FFmpeg and LGPL-2.1+; About has an FFmpeg source code link |
 | No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |
 | Never rename the FFmpeg frameworks (#610) | do not touch `ios/scripts/build-ffmpeg.sh` naming |
-| Background modes limited to audio | `ios/project.yml` `UIBackgroundModes: [audio]` |
+| Background modes: audio, plus fetch for library refresh and scrobbles (#771) | `ios/project.yml` `UIBackgroundModes: [audio, fetch]` |
 | Privacy manifest matches "Data Not Collected" | verified 2026-10-03, see `asc-answers.md` |
 | Paywall, trial and Restore Purchases (#609) | other worker; re-check the notes above once it lands |
 | Downloads on iOS | no download UI yet, so the listing does not mention downloads |
