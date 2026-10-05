@@ -49,6 +49,7 @@ struct ContentView: View {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
             }
             .sourceSetupPresentation(isPresented: $showsFirstRun, fullScreen: firstRunFullScreen, navigator: navigator)
+            .serverSignOutPrompt(navigator: navigator)
             #if DEBUG
             .screenshotHooks(navigator: navigator, showNowPlaying: $showNowPlaying)
             #endif

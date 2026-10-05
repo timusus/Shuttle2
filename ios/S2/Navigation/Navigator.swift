@@ -106,6 +106,10 @@ final class Navigator {
     /// whether to open the first run, and the setup follows the import after its sign-in has gone.
     static let sourceSetupCacheKey = "sourceSetup"
 
+    /// The `ViewModelCache` key for the shell's view model: always live, since it is what hears a server's session
+    /// expire (#819) for as long as the app runs.
+    static let shellCacheKey = "shell"
+
     /// The `ViewModelCache` key for `type`'s sign-in inside the source setup.
     static func sourceSetupSignInCacheKey(_ type: MediaProviderType) -> String {
         "sourceSetup.signIn:\(type.name)"
@@ -215,6 +219,7 @@ final class Navigator {
         }
         liveKeys.formUnion(songInfoPresented.map(Self.songInfoCacheKey))
         liveKeys.insert(Self.sourceSetupCacheKey)
+        liveKeys.insert(Self.shellCacheKey)
         if sourceSetupLive {
             liveKeys.formUnion(MediaProviderType.signInTypes.map(Self.sourceSetupSignInCacheKey))
         }

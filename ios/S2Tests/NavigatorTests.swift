@@ -331,6 +331,15 @@ struct NavigatorTests {
         #expect(Navigator.sourceSetupSignInCacheKey(.emby) == "sourceSetup.signIn:Emby")
     }
 
+    @Test func theShellsViewModelIsAlwaysLive() {
+        let cache = ViewModelCache()
+        let navigator = Navigator(viewModelCache: cache)
+        let shellVM = cache.viewModel(Navigator.shellCacheKey) { FakeViewModel() }
+
+        navigator.open(.genre(name: "Jazz"))
+        #expect(shellVM.clearCount == 0, "it hears server sign-outs (#819) for as long as the app runs")
+    }
+
     // MARK: - Song Info (#702)
 
     @Test func aPresentedSongInfosViewModelSurvivesPathChangesAndClearsWhenItCloses() {

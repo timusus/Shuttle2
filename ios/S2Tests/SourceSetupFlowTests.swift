@@ -8,6 +8,14 @@ import ViewInspector
 /// run's gating itself is `SourceSetupViewModel`'s, tested in `:android:presentation`.
 @MainActor
 struct SourceSetupFlowTests {
+    // MARK: Signed out of a server (#819)
+
+    @Test func theSignOutAlertNamesTheServer() {
+        let prompt = ServerSignOutPrompt(type: .jellyfin)
+        #expect(prompt.title == "Signed Out of Jellyfin")
+        #expect(prompt.message.contains("Jellyfin"))
+    }
+
     // MARK: Import state mapping
 
     @Test func mapsEachImportState() {

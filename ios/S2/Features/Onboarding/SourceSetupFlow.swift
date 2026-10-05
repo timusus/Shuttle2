@@ -546,3 +546,66 @@ extension View {
             }
     }
 }
+
+// MARK: - Signed out of a server (#819)
+
+/// The alert for a server whose session expired mid-session: Android's "Signed out of <server>" snackbar (#595).
+struct ServerSignOutPrompt: Equatable {
+    let type: MediaProviderType
+
+    var title: String { "Signed Out of \(type.title)" }
+    var message: String { "Your \(type.title) session has expired. Sign in again to keep streaming from it." }
+}
+
+/// The shell's ViewModel, cached under an always-live key (`Navigator.shellCacheKey`) so it keeps listening to the
+/// servers' sessions for as long as the app runs.
+@MainActor
+enum ShellModels {
+    static func cached() -> ShellViewModel {
+        ViewModelCache.shared.viewModel(Navigator.shellCacheKey) { AppGraph.shared.shellViewModel }
+    }
+}
+
+/// Alerts when a server signs the user out and, from its Sign In, opens the source setup at that server's sign-in,
+/// which starts from the saved address and username. Shown from the app's root, over whatever screen is up; while a
+/// setup is already open the user is signing in already, so the alert is skipped.
+private struct ServerSignOutModifier: ViewModifier {
+    let navigator: Navigator
+
+    @State private var prompts: [ServerSignOutPrompt] = []
+    @State private var signIn: SourceSetupStart?
+
+    func body(content: Content) -> some View {
+        let shell = ShellModels.cached()
+        Observing(shell.uiState) { state in
+            content
+                .consumeEvents(state.events, handled: { shell.onEventHandled(id: $0) }) { event in
+                    switch onEnum(of: event) {
+                    case .serverSignedOut(let signedOut):
+                        let prompt = ServerSignOutPrompt(type: signedOut.type)
+                        if !navigator.sourceSetupLive, !prompts.contains(prompt) { prompts.append(prompt) }
+                    }
+                }
+                .alert(
+                    prompts.first?.title ?? "",
+                    isPresented: Binding(get: { !prompts.isEmpty }, set: { if !$0 { prompts.removeFirst() } }),
+                    presenting: prompts.first
+                ) { prompt in
+                    Button("Sign In") { signIn = .signIn(prompt.type) }
+                    Button("Not Now", role: .cancel) {}
+                } message: { prompt in
+                    Text(prompt.message)
+                }
+                .sheet(item: $signIn) { start in
+                    SourceSetupFlow(start: start, navigator: navigator, onClose: { signIn = nil })
+                }
+        }
+    }
+}
+
+extension View {
+    /// The "Signed out of <server>" alert and its sign-in (`ServerSignOutModifier`).
+    func serverSignOutPrompt(navigator: Navigator) -> some View {
+        modifier(ServerSignOutModifier(navigator: navigator))
+    }
+}
