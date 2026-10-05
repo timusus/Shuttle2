@@ -85,6 +85,22 @@ class PaywallScreenTest {
     }
 
     @Test
+    fun `a user without Pro can redeem a promo code`() {
+        robot.setContent(PaywallScenarios.trialEnded)
+
+        robot.tapText("Redeem a code")
+
+        robot.redeemTaps shouldBe 1
+    }
+
+    @Test
+    fun `a Pro user is not offered a promo code`() {
+        robot.setContent(PaywallScenarios.pro)
+
+        robot.assertNotShown("Redeem a code")
+    }
+
+    @Test
     fun `restore and back reach the caller`() {
         robot.setContent(PaywallScenarios.trialEnded)
 

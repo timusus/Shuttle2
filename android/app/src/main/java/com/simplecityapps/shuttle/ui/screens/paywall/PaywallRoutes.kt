@@ -138,6 +138,7 @@ fun PaywallEntry(
             val url = "https://play.google.com/store/account/subscriptions?package=${context.packageName}"
             runCatching { uriHandler.openUri(url) }.onFailure { Timber.w(it, "No app to open $url") }
         },
+        onRedeemCode = { runCatching { uriHandler.openUri(PLAY_REDEEM_URL) }.onFailure { Timber.w(it, "No app to open $PLAY_REDEEM_URL") } },
         onStartTrial = {
             viewModel.onTrialStarted()
             onStartTrial()
@@ -147,6 +148,9 @@ fun PaywallEntry(
         snackbarHostState = snackbarHostState
     )
 }
+
+/** Play's own screen for entering a promo code; Play grants the purchase, and the entitlement updates by itself. */
+private const val PLAY_REDEEM_URL = "https://play.google.com/redeem"
 
 /** The privacy policy the Play listing links to. */
 private const val PRIVACY_POLICY_URL = "https://shuttlemusicplayer.com/privacy"

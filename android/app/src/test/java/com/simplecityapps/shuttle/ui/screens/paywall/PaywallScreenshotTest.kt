@@ -46,6 +46,7 @@ class PaywallScreenshotTest {
                     onSelectPlan = {},
                     onPurchase = {},
                     onRestore = {},
+                    onRedeemCode = {},
                     onRetry = {},
                     onManageSubscription = {},
                     onStartTrial = {},

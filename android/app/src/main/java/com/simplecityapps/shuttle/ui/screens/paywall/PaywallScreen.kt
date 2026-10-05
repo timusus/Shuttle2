@@ -60,7 +60,7 @@ import com.simplecityapps.trial.PaywallPlan
 /**
  * The S2 Pro paywall: where the user stands, what Pro unlocks, and the plans with Play's prices. While Play's
  * prices load or can't be loaded the plans show placeholders, and nothing can be bought. A user who hasn't had the
- * trial is offered it first, with buying second. A Pro user sees their status instead of the plans, and a subscriber
+ * trial is offered it first, with buying second. Everyone without Pro can redeem a Play promo code. A Pro user sees their status instead of the plans, and a subscriber
  * can manage their subscription.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,6 +71,7 @@ fun PaywallScreen(
     onSelectPlan: (PaywallPlan) -> Unit,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
+    onRedeemCode: () -> Unit,
     onRetry: () -> Unit,
     onManageSubscription: () -> Unit,
     onStartTrial: () -> Unit,
@@ -148,6 +149,12 @@ fun PaywallScreen(
                             onClick = onRestore,
                             style = S2ButtonStyle.Text,
                             enabled = !uiState.restoring,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        S2Button(
+                            text = stringResource(R.string.paywall_redeem_code),
+                            onClick = onRedeemCode,
+                            style = S2ButtonStyle.Text,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

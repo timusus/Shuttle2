@@ -27,6 +27,8 @@ class PaywallRobot(private val rule: ComposeContentTestRule) {
         private set
     var restores = 0
         private set
+    var redeemTaps = 0
+        private set
     var retries = 0
         private set
     var manageTaps = 0
@@ -47,6 +49,7 @@ class PaywallRobot(private val rule: ComposeContentTestRule) {
                     onSelectPlan = { selectedPlans += it },
                     onPurchase = { purchases++ },
                     onRestore = { restores++ },
+                    onRedeemCode = { redeemTaps++ },
                     onRetry = { retries++ },
                     onManageSubscription = { manageTaps++ },
                     onStartTrial = { trialStarts++ },

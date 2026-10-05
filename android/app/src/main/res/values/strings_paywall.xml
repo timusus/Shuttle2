@@ -54,6 +54,8 @@
     <!-- Shuttle Music Pro screen: footer link to the privacy policy -->
     <string name="paywall_privacy_policy">Privacy policy</string>
     <string name="paywall_restore">Restore purchases</string>
+    <!-- Shuttle Music Pro screen: opens Google Play's screen for entering a promo code -->
+    <string name="paywall_redeem_code">Redeem a code</string>
     <string name="paywall_manage_subscription">Manage subscription</string>
     <string name="paywall_purchase_failed">Couldn\'t open Google Play. Please try again.</string>
     <string name="paywall_restored">Your purchase has been restored</string>
