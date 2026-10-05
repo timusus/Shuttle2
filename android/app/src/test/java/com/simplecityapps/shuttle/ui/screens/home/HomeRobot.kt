@@ -143,7 +143,8 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         tag: String,
         count: Int,
     ) {
-        rule.onAllNodesWithTag(tag).fetchSemanticsNodes().size shouldBe count
+        // The unmerged tree, so a tag inside a clickable card (the shuffle glyph) counts too
+        rule.onAllNodesWithTag(tag, useUnmergedTree = true).fetchSemanticsNodes().size shouldBe count
     }
 
     fun assertTextDisplayed(text: String) {

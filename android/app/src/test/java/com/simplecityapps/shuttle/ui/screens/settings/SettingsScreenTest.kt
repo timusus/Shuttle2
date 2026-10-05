@@ -73,10 +73,10 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `the root sums Sources up as the mobile data cap, defaulted to 192 kbps`() {
+    fun `the root sums Sources up as the mobile data cap, defaulted to 320 kbps`() {
         robot.setRootContent()
 
-        robot.assertDisplayed("192 kbps on mobile data")
+        robot.assertDisplayed("320 kbps on mobile data")
     }
 
     @Test
@@ -84,7 +84,7 @@ class SettingsScreenTest {
         robot.setRootContent(SettingsScenarios.streamingOriginalOnMobileData)
 
         robot.assertDisplayed("Original on mobile data")
-        robot.assertNotShown("192 kbps on mobile data")
+        robot.assertNotShown("320 kbps on mobile data")
     }
 
     @Test
