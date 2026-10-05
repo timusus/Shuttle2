@@ -12,7 +12,7 @@ interface Analytics {
     val isCapturing: Boolean get() = true
 
     /** [isCapturing] as a flow, for callers that want to wait until analytics is set up and opted in. */
-    val capturing: StateFlow<Boolean> get() = AlwaysCapturing
+    val capturing: StateFlow<Boolean> get() = AlwaysCapturing.flow
 
     fun capture(
         event: String,
@@ -26,4 +26,7 @@ interface Analytics {
     )
 }
 
-private val AlwaysCapturing: StateFlow<Boolean> = MutableStateFlow(true)
+/** The default [Analytics.capturing]; public so Swift implementations, which don't inherit Kotlin defaults, can return it. */
+object AlwaysCapturing {
+    val flow: StateFlow<Boolean> = MutableStateFlow(true)
+}

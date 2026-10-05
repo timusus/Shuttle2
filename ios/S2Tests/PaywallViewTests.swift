@@ -129,6 +129,8 @@ private final class RecordingAnalytics: NSObject, Analytics {
 
     var isCapturing: Bool { true }
 
+    var capturing: SkieSwiftStateFlow<KotlinBoolean> { AlwaysCapturing.shared.flow }
+
     func capture(event: String, properties: [String: Any]) {
         events.append((event, properties))
     }
