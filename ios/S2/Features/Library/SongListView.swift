@@ -16,8 +16,8 @@ struct SongListView: View {
                 SongListContent(
                     state: state,
                     nowPlaying: nowPlaying,
-                    onPlay: { index in
-                        models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
+                    onPlay: { index, songs in
+                        models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: Int32(index)))
                     },
                     onPlayNext: { song in
                         models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
@@ -29,8 +29,8 @@ struct SongListView: View {
                         models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                     },
                     downloads: DetailDownloads(actions: models.actions),
-                    onShuffle: {
-                        models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
+                    onShuffle: { songs in
+                        models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: songs)))
                     },
                     onSortOrder: { models.songs.setSortOrder(sortOrder: $0) }
                 )
@@ -61,22 +61,34 @@ final class SongListModels: ViewModelGroup {
 struct SongListContent: View {
     let state: SongListUiState
     var nowPlaying: LibraryNowPlaying = .none
-    var onPlay: (Int) -> Void = { _ in }
+    /// Plays the songs shown (all of them, or the downloaded ones under the filter) from the index.
+    var onPlay: (Int, [Song]) -> Void = { _, _ in }
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
     var onExclude: (Song) -> Void = { _ in }
     var downloads = DetailDownloads()
-    var onShuffle: () -> Void = {}
+    var onShuffle: ([Song]) -> Void = { _ in }
     var onSortOrder: (SongSortOrder) -> Void = { _ in }
 
     @State private var songInfo: SongInfoTarget?
+    /// The Downloaded filter (#851): only the songs on the device, which play offline. Kept for the session.
+    @State private var downloadedOnly = false
+    @Environment(\.downloadBadges) private var downloadBadges
+
+    /// The songs the list shows: all of them, or with the filter on, those whose download has finished.
+    private var songs: [Song] {
+        downloadedOnly ? state.songs.filter { downloadBadges[$0.path] == .downloaded } : state.songs
+    }
 
     var body: some View {
         content
             .songInfoSheet($songInfo)
             .toolbar {
-                if !state.songs.isEmpty {
-                    ShuffleButton(identifier: "songs.shuffle", action: onShuffle)
+                if !songs.isEmpty {
+                    ShuffleButton(identifier: "songs.shuffle", action: { onShuffle(songs) })
+                }
+                if downloadedOnly || downloadBadges.values.contains(.downloaded) {
+                    DownloadedFilterToggle(isOn: $downloadedOnly)
                 }
                 if state.loadingState != .empty {
                     LibrarySortMenu(
@@ -99,14 +111,18 @@ struct SongListContent: View {
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Songs", systemImage: "music.note", message: "Pull to refresh to import.")
+        case .ready where downloadedOnly && songs.isEmpty, .scanning where downloadedOnly && songs.isEmpty:
+            EmptyState("No Downloaded Songs", systemImage: "arrow.down.circle", message: "Songs you download from a server are listed here.")
         case .ready, .scanning:
+            let shown = songs
             LetterIndexedList(
-                items: state.songs,
+                items: shown,
                 id: \.id,
-                sections: LetterIndex.sections(state.letterIndex, items: state.songs, id: \.id)
+                // The shared index is of every song; a filtered list has no index
+                sections: downloadedOnly ? nil : LetterIndex.sections(state.letterIndex, items: shown, id: \.id)
             ) { index, song in
                 let playback = nowPlaying.playback(song: song)
-                Button { onPlay(index) } label: { SongRow(song: song, playback: playback, sortOrder: state.sortOrder) }
+                Button { onPlay(index, shown) } label: { SongRow(song: song, playback: playback, sortOrder: state.sortOrder) }
                     .buttonStyle(.pressScale)
                     .contextMenu {
                         SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
@@ -114,6 +130,19 @@ struct SongListContent: View {
                     .nowPlayingRowBackground(playback)
             }
         }
+    }
+}
+
+/// The Songs toolbar's Downloaded filter (#851), named as Android's list filter chip is: on, the list is only the songs
+/// on the device.
+struct DownloadedFilterToggle: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            Label("Downloaded", systemImage: isOn ? "arrow.down.circle.fill" : "arrow.down.circle")
+        }
+        .accessibilityIdentifier("songs.downloadedFilter")
     }
 }
 

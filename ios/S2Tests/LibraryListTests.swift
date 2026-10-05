@@ -45,9 +45,28 @@ struct LibraryListTests {
         #expect((try? sut.inspect().find(text: "6:26")) != nil)
     }
 
+    /// The Downloaded filter (#851) is offered once a song is on the device, and flips its binding.
+    @Test func theDownloadedFilterAppearsOnlyOnceASongIsDownloaded() throws {
+        let state = songState(TestSongs.demo, .ready)
+        let id = "songs.downloadedFilter"
+        let without = SongListContent(state: state)
+        #expect((try? without.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: id)) == nil)
+        let with = SongListContent(state: state).environment(\.downloadBadges, [TestSongs.demo[0].path: .downloaded])
+        #expect((try? with.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: id)) != nil)
+        let downloading = SongListContent(state: state).environment(\.downloadBadges, [TestSongs.demo[0].path: .downloading])
+        #expect((try? downloading.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: id)) == nil)
+    }
+
+    @Test func theDownloadedFilterToggleFlipsItsBinding() throws {
+        var isOn = false
+        let toggle = DownloadedFilterToggle(isOn: Binding(get: { isOn }, set: { isOn = $0 }))
+        try toggle.inspect().find(ViewType.Toggle.self).tap()
+        #expect(isOn)
+    }
+
     @Test func tappingASongPlaysTheListFromIt() throws {
         var played: Int?
-        let sut = SongListContent(state: songState(TestSongs.demo, .ready), onPlay: { played = $0 })
+        let sut = SongListContent(state: songState(TestSongs.demo, .ready), onPlay: { index, _ in played = index })
         try sut.inspect().find(button: "Teardrop").tap()
         #expect(played == 2)
     }

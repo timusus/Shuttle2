@@ -89,7 +89,7 @@ struct LibraryLetterIndexTests {
 
     @Test func aSectionedSongStillPlaysTheListFromItsOwnPosition() throws {
         var played: Int?
-        let sut = SongListContent(state: songState(songs(sortedNames), sortOrder: .songName), onPlay: { played = $0 })
+        let sut = SongListContent(state: songState(songs(sortedNames), sortOrder: .songName), onPlay: { index, _ in played = index })
         try sut.inspect().find(button: "Émilie").tap()
         #expect(played == 5)
     }
@@ -127,7 +127,7 @@ struct LibraryLetterIndexTests {
         var shuffled = false
         let songs = songs(sortedNames)
         for sortOrder in [SongSortOrder.songName, .year] {
-            let sut = SongListContent(state: songState(songs, sortOrder: sortOrder), onShuffle: { shuffled = true })
+            let sut = SongListContent(state: songState(songs, sortOrder: sortOrder), onShuffle: { _ in shuffled = true })
             let button = try sut.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: "songs.shuffle")
             #expect((try? button.find(text: "7 songs")) == nil)
             try button.find(ViewType.Button.self).tap()
