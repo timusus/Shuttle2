@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
@@ -42,7 +43,9 @@ class JellyfinStreamUrlProviderTest {
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
-    private val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings, DeliveredFormats()) { metered })
+    private val deliveredFormats = DeliveredFormats()
+
+    private val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings, deliveredFormats) { metered })
 
     @Test
     fun `handles only jellyfin paths`() {
@@ -101,9 +104,46 @@ class JellyfinStreamUrlProviderTest {
         provider.streamUrl(song()) shouldContain "&TranscodingContainer=ts&TranscodingProtocol=hls&"
         provider.streamUrl(song()) shouldContain "&AudioCodec=mp3&"
 
+    }
+
+    @Test
+    fun `Opus streams transcode to AAC in HLS segments on Android`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
         streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
-        provider.streamUrl(song()) shouldContain "&TranscodingContainer=mp4&TranscodingProtocol=hls&"
-        provider.streamUrl(song()) shouldContain "&AudioCodec=opus&"
+
+        val path = provider.streamUrl(song())
+
+        path shouldContain "&TranscodingContainer=ts&TranscodingProtocol=hls&"
+        path shouldContain "&AudioCodec=aac&"
+    }
+
+    @Test
+    fun `a song over the cap is reported as a transcode at the cap`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
+
+        provider.streamUrl(song(bitRate = 900))
+
+        deliveredFormats.byPath.value[SONG_PATH] shouldBe DeliveredFormat("AAC", 320)
+    }
+
+    @Test
+    fun `a decodable song within the cap is reported as the original`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
+
+        provider.streamUrl(song(bitRate = 256, audioCodec = "aac"))
+
+        deliveredFormats.byPath.value[SONG_PATH] shouldBe null
+    }
+
+    @Test
+    fun `a song the player can't decode is reported as a transcode, though within the cap`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.streamUrl(song(bitRate = 256, audioCodec = "alac"))
+
+        deliveredFormats.byPath.value[SONG_PATH] shouldBe DeliveredFormat("AAC", null)
     }
 
     @Test
@@ -156,7 +196,10 @@ class JellyfinStreamUrlProviderTest {
         shouldThrow<IllegalStateException> { provider.streamUrl(song()) }
     }
 
-    private fun song(bitRate: Int? = null) = Song(
+    private fun song(
+        bitRate: Int? = null,
+        audioCodec: String? = null
+    ) = Song(
         id = 0,
         name = "Song",
         albumArtist = "Artist",
@@ -183,6 +226,11 @@ class JellyfinStreamUrlProviderTest {
         bitRate = bitRate,
         bitDepth = null,
         sampleRate = null,
-        channelCount = null
+        channelCount = null,
+        audioCodec = audioCodec
     )
+
+    private companion object {
+        const val SONG_PATH = "jellyfin://item/item789"
+    }
 }

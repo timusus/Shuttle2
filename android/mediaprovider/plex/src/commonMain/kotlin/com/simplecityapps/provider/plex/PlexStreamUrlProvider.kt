@@ -29,8 +29,8 @@ data class PlexStream(
  * skipped (#362, #567).
  *
  * The transcode follows [StreamProfile.playsHls]: an HLS stream where the player plays HLS (Android's Media3), which
- * stays seekable, in the chosen codec ([StreamingPolicy.transcodeFormat]: AAC or MP3; Plex's HLS is MPEG-TS, which
- * carries no Opus, so Opus falls back to AAC); otherwise one progressive MP3 (iOS's engine), which starts at the
+ * stays seekable, in the chosen codec ([StreamingPolicy.transcodeFormat]: AAC or MP3; HLS carries no Opus, so
+ * [StreamProfile.streamTarget] falls it back to AAC); otherwise one progressive MP3 (iOS's engine), which starts at the
  * position it's asked for. MP3 is the one progressive target Plex's transcoder reliably serves, so a progressive
  * transcode stays MP3 whatever the choice.
  *
@@ -154,9 +154,8 @@ class PlexStreamUrlProvider(
         return session
     }
 
-    /** The codec an HLS transcode is in: the chosen one, except Opus, which MPEG-TS can't carry. */
+    /** The codec an HLS transcode is in: the chosen one, Opus falling back to AAC. */
     private fun hlsCodec(): TranscodeCodec = streamProfile.streamTarget(streamingPolicy.transcodeFormat()).codec
-        .takeIf { it != TranscodeCodec.Opus } ?: TranscodeCodec.Aac
 
     /** The `X-Plex-Session-Identifier` every transcode of [song] carries, and the session of a stream with no play. */
     private fun sessionIdentifier(song: Song): String = "s2-${plexRatingKey(song.path) ?: song.path}"

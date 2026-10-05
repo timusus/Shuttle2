@@ -71,16 +71,17 @@ class EmbyStreamUrlProvider(
 
     /**
      * What the server sends: the universal endpoint decides, so this is the decision it makes for a song whose bitrate is
-     * known to be over the cap, a transcode at the cap in the chosen codec. A song within it, or of unknown bitrate, is
-     * taken to play as the original file.
+     * known to be over the cap, or whose codec the player can't decode as it is: a transcode (at the cap, if any) in the
+     * chosen codec. A decodable song within the cap, or of unknown bitrate, is taken to play as the original file.
      */
     private fun delivered(
         song: Song,
         maxBitrateKbps: Int?,
         format: TranscodeFormat
     ): DeliveredFormat? {
-        val bitRate = song.bitRate ?: return null
-        if (maxBitrateKbps == null || bitRate <= maxBitrateKbps) return null
+        val bitRate = song.bitRate
+        val overCap = maxBitrateKbps != null && bitRate != null && bitRate > maxBitrateKbps
+        if (!overCap && authenticationManager.directPlays(song.audioCodec)) return null
         return authenticationManager.streamTarget(format).codec.delivered(maxBitrateKbps)
     }
 

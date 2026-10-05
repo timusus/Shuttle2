@@ -217,6 +217,12 @@ class JellyfinAuthenticationManager(
     /** What the [StreamProfile] transcodes a stream to in [format]. */
     fun streamTarget(format: TranscodeFormat): TranscodeTarget = streamProfile.streamTarget(format)
 
+    /**
+     * Whether the player decodes a file in [audioCodec] as it is, so the server direct-plays it within the cap. A song
+     * carries no container, so only the codec decides; an unknown one is taken to play.
+     */
+    fun directPlays(audioCodec: String?): Boolean = streamProfile.directPlayFormats.isDecodable(container = null, audioCodec = audioCodec)
+
     private fun universalPath(
         itemId: String,
         authenticatedCredentials: AuthenticatedCredentials,
