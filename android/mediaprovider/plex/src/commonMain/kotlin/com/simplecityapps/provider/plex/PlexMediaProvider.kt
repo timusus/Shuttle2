@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.atStoredPrecision
+import com.simplecityapps.mediaprovider.server.concatenated
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
 import com.simplecityapps.mediaprovider.server.withPlayedSongs
@@ -31,9 +32,10 @@ import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
@@ -65,18 +67,16 @@ class PlexMediaProvider(
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val syncedAt = Clock.System.now().atStoredPrecision()
-        when (val sectionsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken)) }) {
-            is NetworkResult.Success<QueryResult> -> {
-                // A server can hold several music libraries, whatever they're called; they're the sections of type "artist"
-                val sections = sectionsResult.body.mediaContainer.directories.orEmpty().filter { it.type == "artist" }.map { it.key }
-                if (sections.isEmpty()) {
+        when (val sections = musicSections(address, session)) {
+            is NetworkResult.Success<List<String>> -> {
+                if (sections.body.isEmpty()) {
                     logger.error { "Failed to find a music section" }
                     emit(FlowEvent.Failure(plexStrings.musicLibraryMissing))
                 } else {
                     emitAll(
-                        queryAllSections(address, session, sections, since) { metadata -> metadata.toSong(type, syncedAt) }.map { event ->
+                        concatenated(sections.body.map { section -> queryItems(address, session, section, since, favouritesOnly = false, viewedSince = null) { metadata -> metadata.toSong(type, syncedAt) } }).map { event ->
                             if (event is FlowEvent.Success && since != null) {
-                                FlowEvent.Success(event.result.withPlayedSongs(playedSince(address, session, sections, since, syncedAt)).withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.missing)
+                                FlowEvent.Success(event.result.withPlayedSongs(playedSince(address, session, sections.body, since, syncedAt)).withFavouriteChanges(existingSongs, favourites(address, session, sections.body, syncedAt)), event.missing)
                             } else {
                                 event
                             }
@@ -85,11 +85,50 @@ class PlexMediaProvider(
                 }
             }
 
-            is NetworkResult.Failure -> {
-                logger.error(sectionsResult.error) { sectionsResult.error.userDescription() }
-                emit(FlowEvent.Failure(sectionsResult.error.userDescription()))
-            }
+            is NetworkResult.Failure -> emitSectionsFailure(sections)
         }
+    }
+
+    override suspend fun countSongs(): Int? = (
+        withServerSession<AuthenticatedCredentials, Int>(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+            when (val sections = musicSections(address, session)) {
+                is NetworkResult.Success<List<String>> -> {
+                    var total = 0
+                    for (section in sections.body) {
+                        // One track asked for, for the total that comes with it
+                        val result = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.items(url = address, token = credentials.accessToken, section = section, offset = 0, limit = 1)) }
+                        val size = (result as? NetworkResult.Success<QueryResult>)?.body?.mediaContainer?.totalSize
+                        if (size == null) {
+                            logger.warn { "Couldn't count the songs of section $section" }
+                            return@withServerSession
+                        }
+                        total += size
+                    }
+                    emit(FlowEvent.Success(total))
+                }
+
+                is NetworkResult.Failure -> logger.warn { "Couldn't count the songs: ${sections.error.userDescription()}" }
+            }
+        }.lastOrNull() as? FlowEvent.Success
+        )?.result
+
+    override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+        when (val sections = musicSections(address, session)) {
+            is NetworkResult.Success<List<String>> -> emitAll(concatenated(sections.body.map { section -> queryItems(address, session, section, since = null, favouritesOnly = false, viewedSince = null, streams = false) { metadata -> metadata.songPath } }))
+            is NetworkResult.Failure -> emitSectionsFailure(sections)
+        }
+    }
+
+    /** The sections of the server's music libraries, whatever they're called: those of type "artist". */
+    private suspend fun musicSections(
+        address: String,
+        session: ServerSession<AuthenticatedCredentials>
+    ): NetworkResult<List<String>> = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken)) }
+        .map { result -> result.mediaContainer.directories.orEmpty().filter { it.type == "artist" }.map { it.key } }
+
+    private suspend fun <T> FlowCollector<FlowEvent<T, MessageProgress>>.emitSectionsFailure(failure: NetworkResult.Failure) {
+        logger.error(failure.error) { failure.error.userDescription() }
+        emit(FlowEvent.Failure(failure.error.userDescription()))
     }
 
     override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
@@ -186,7 +225,7 @@ class PlexMediaProvider(
         since: Instant,
         syncedAt: Instant
     ): List<Song>? {
-        val event = queryAllSections(address, session, sections, since = null, viewedSince = since) { metadata -> metadata.toSong(type, syncedAt) }.last()
+        val event = concatenated(sections.map { section -> queryItems(address, session, section, since = null, favouritesOnly = false, viewedSince = since) { metadata -> metadata.toSong(type, syncedAt) } }).last()
         return (event as? FlowEvent.Success)?.result
     }
 
@@ -198,45 +237,8 @@ class PlexMediaProvider(
         syncedAt: Instant
     ): Map<String, Instant>? {
         // Checked again here, so a server that ignored the filter can't make every track a favourite
-        val event = queryAllSections(address, session, sections, since = null, favouritesOnly = true) { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } }.last()
+        val event = concatenated(sections.map { section -> queryItems(address, session, section, since = null, favouritesOnly = true, viewedSince = null, streams = false) { metadata -> metadata.favouritedAt(syncedAt)?.let { metadata.songPath to it } } }).last()
         return (event as? FlowEvent.Success)?.result?.filterNotNull()?.toMap()
-    }
-
-    /**
-     * Every track of every one of [sections], each [convert]ed as its page arrives, emitted as one [FlowEvent.Success] after
-     * the sections' progress, missing as many as the sections' listings together. A failed section ends the flow.
-     */
-    private fun <R> queryAllSections(
-        address: String,
-        session: ServerSession<AuthenticatedCredentials>,
-        sections: List<String>,
-        since: Instant?,
-        favouritesOnly: Boolean = false,
-        viewedSince: Instant? = null,
-        convert: (Metadata) -> R
-    ): Flow<FlowEvent<List<R>, MessageProgress>> = flow {
-        val items = mutableListOf<R>()
-        var missing = 0
-        for (section in sections) {
-            var failed = false
-            queryItems(address, session, section, since, favouritesOnly, viewedSince, convert).collect { event ->
-                when (event) {
-                    is FlowEvent.Success -> {
-                        items.addAll(event.result)
-                        missing += event.missing
-                    }
-
-                    is FlowEvent.Progress -> emit(FlowEvent.Progress(event.data))
-
-                    is FlowEvent.Failure -> {
-                        failed = true
-                        emit(FlowEvent.Failure(event.message))
-                    }
-                }
-            }
-            if (failed) return@flow
-        }
-        emit(FlowEvent.Success(items, missing))
     }
 
     private fun <R> queryItems(
@@ -246,6 +248,8 @@ class PlexMediaProvider(
         since: Instant?,
         favouritesOnly: Boolean,
         viewedSince: Instant?,
+        /** Whether the lossless tracks' bit depths are read: not by a listing that only needs each track's key or rating. */
+        streams: Boolean = true,
         convert: (Metadata) -> R
     ): Flow<FlowEvent<List<R>, MessageProgress>> = pagedFlow(key = Metadata::key, convert = convert) { offset, limit ->
         val result = session.request { credentials ->
@@ -266,8 +270,7 @@ class PlexMediaProvider(
         when (result) {
             is NetworkResult.Success<QueryResult> -> {
                 val page = result.body.toPage()
-                // A favourites listing only reads each track's rating
-                NetworkResult.Success(if (favouritesOnly) page else page.copy(items = withBitDepths(address, session, page.items)))
+                NetworkResult.Success(if (!streams) page else page.copy(items = withBitDepths(address, session, page.items)))
             }
 
             is NetworkResult.Failure -> result

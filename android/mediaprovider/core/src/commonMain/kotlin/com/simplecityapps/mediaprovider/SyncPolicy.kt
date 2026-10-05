@@ -21,7 +21,7 @@ object SyncPolicy {
     /** A source synced more recently than this is left alone by a return to the app. */
     val MIN_INTERVAL = 15.minutes
 
-    /** How long an incremental source goes without a full sync, which is what removes songs the server no longer has. */
+    /** How long an incremental source goes without a full sync, which reads every song's tags again (an incremental one removes songs the server no longer has itself). */
     val FULL_SYNC_INTERVAL = 7.days
 
     /**

@@ -170,6 +170,35 @@ fun <T, R> pagedFlow(
     emit(FlowEvent.Success(items, missing))
 }
 
+/**
+ * [listings] run one after another as one listing (a server's libraries, each listed on its own): their progress passes
+ * through, their items and [missing][FlowEvent.Success.missing] counts add up, and the first failure ends it.
+ */
+fun <T> concatenated(listings: List<Flow<FlowEvent<List<T>, MessageProgress>>>): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
+    val items = mutableListOf<T>()
+    var missing = 0
+    for (listing in listings) {
+        var failed = false
+        listing.collect { event ->
+            when (event) {
+                is FlowEvent.Success -> {
+                    items += event.result
+                    missing += event.missing
+                }
+
+                is FlowEvent.Progress -> emit(FlowEvent.Progress(event.data))
+
+                is FlowEvent.Failure -> {
+                    failed = true
+                    emit(FlowEvent.Failure(event.message))
+                }
+            }
+        }
+        if (failed) return@flow
+    }
+    emit(FlowEvent.Success(items, missing))
+}
+
 /** [pagedFlow], keeping the server's items as they are. */
 fun <T> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,

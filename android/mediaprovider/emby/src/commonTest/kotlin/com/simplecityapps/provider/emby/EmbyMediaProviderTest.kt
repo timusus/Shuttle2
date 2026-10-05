@@ -313,6 +313,7 @@ class EmbyMediaProviderTest {
         credentialStore.address = server.address
         credentialStore.loginCredentials = LoginCredentials("shuttle-test", "secret")
         server.respond("/Users/AuthenticateByName", "authenticate.json", method = "POST")
+        server.respond(VIEWS, "views.json")
         server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
 
         sync().size shouldBe 3
@@ -463,6 +464,69 @@ class EmbyMediaProviderTest {
         credentialStore.address = server.address
         credentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")
         server.respond("/emby/Users/Me", "me.json")
+        server.respond(VIEWS, "views.json")
+    }
+
+    // Music libraries only (#845)
+
+    @Test
+    fun `only the music libraries are listed - not audiobooks`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        sync()
+
+        server.requestsTo(ITEMS).map { it.url.parameters["ParentId"] } shouldContainExactly listOf("lib-music")
+    }
+
+    @Test
+    fun `a server without a music library syncs to no songs`() {
+        signedIn()
+        server.respond(VIEWS, "empty.json")
+
+        sync() shouldBe emptyList()
+
+        server.requestsTo(ITEMS).shouldBeEmpty()
+    }
+
+    @Test
+    fun `a failed library listing fails the sync`() {
+        signedIn()
+        server.respond(VIEWS, code = 500)
+
+        provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>()
+    }
+
+    @Test
+    fun `the song paths are listed by id alone`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        val event = provider.findSongPaths().events().last().shouldBeInstanceOf<FlowEvent.Success<List<String>>>()
+
+        event.result.size shouldBe 3
+        val request = server.requestsTo(ITEMS).single()
+        request.url.parameters["ParentId"] shouldBe "lib-music"
+        request.url.parameters["Fields"] shouldBe null
+        request.url.parameters["EnableUserData"] shouldBe "false"
+    }
+
+    @Test
+    fun `the songs are counted with a single item asked for`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        runBlocking { provider.countSongs() } shouldBe 3
+
+        server.requestsTo(ITEMS).single().url.parameters["Limit"] shouldBe "1"
+    }
+
+    @Test
+    fun `songs that can't be counted come back as unknown`() {
+        signedIn()
+        server.respond(ITEMS, code = 500)
+
+        runBlocking { provider.countSongs() } shouldBe null
     }
 
     private fun sync(): List<Song> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
@@ -484,5 +548,7 @@ class EmbyMediaProviderTest {
         const val SAVED = "2026-09-01T10:00:00.0000000Z"
 
         const val ITEMS = "/Users/user-1/Items"
+
+        const val VIEWS = "/Users/user-1/Views"
     }
 }

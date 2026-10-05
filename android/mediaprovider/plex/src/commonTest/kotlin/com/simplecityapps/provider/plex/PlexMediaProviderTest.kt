@@ -412,6 +412,51 @@ class PlexMediaProviderTest {
 
     private fun metadataRequests() = server.requests.map { it.url.encodedPath }.filter { it.startsWith("/library/metadata/") }
 
+    // Removals (#845)
+
+    @Test
+    fun `the song paths are listed from every music library - without reading the bit depths`() {
+        signedIn()
+        server.respond(SECTIONS, "sections_two_music.json")
+        server.respond(ITEMS, "songs.json")
+        server.respond("/library/sections/4/all", "songs_second_library.json")
+
+        val event = provider.findSongPaths().events().last().shouldBeInstanceOf<FlowEvent.Success<List<String>>>()
+
+        event.result.size shouldBe 4
+        event.result.first() shouldBe "plex:///library/metadata/1"
+        server.requestsTo("/library/metadata/101").shouldBeEmpty()
+    }
+
+    @Test
+    fun `the songs are counted from the sections' totals with a single track asked for`() {
+        signedIn()
+        server.respond(SECTIONS, "sections_two_music.json")
+        server.respond(ITEMS, "songs.json")
+        server.respond("/library/sections/4/all", "songs_second_library.json")
+
+        runBlocking { provider.countSongs() } shouldBe 4
+
+        server.requestsTo(ITEMS).single().url.parameters["X-Plex-Container-Size"] shouldBe "1"
+    }
+
+    @Test
+    fun `songs that can't be counted come back as unknown`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, code = 500)
+
+        runBlocking { provider.countSongs() } shouldBe null
+    }
+
+    @Test
+    fun `a failed section listing fails the song path listing`() {
+        signedIn()
+        server.respond(SECTIONS, code = 500)
+
+        provider.findSongPaths().events().last().shouldBeInstanceOf<FlowEvent.Failure>()
+    }
+
     private fun signedIn() {
         credentialStore.address = server.address
         credentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")

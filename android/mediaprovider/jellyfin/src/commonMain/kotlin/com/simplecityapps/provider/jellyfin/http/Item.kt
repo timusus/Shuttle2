@@ -63,5 +63,7 @@ data class Item(
     // The signed-in user's state for the item, sent by /Users/{id}/Items unless enableUserData is false
     @SerialName("UserData") val userData: UserData? = null,
     // An item read as a playlist's: the id of its entry in that playlist, which a removal or a move names
-    @SerialName("PlaylistItemId") val playlistItemId: String? = null
+    @SerialName("PlaylistItemId") val playlistItemId: String? = null,
+    // A library's kind, such as "music" or "books", as listed by /Users/{id}/Views; absent for a library of mixed content
+    @SerialName("CollectionType") val collectionType: String? = null
 )

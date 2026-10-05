@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.atStoredPrecision
+import com.simplecityapps.mediaprovider.server.concatenated
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.parseServerInstant
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
@@ -29,8 +30,10 @@ import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
@@ -51,9 +54,10 @@ class JellyfinMediaProvider(
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = findSongs(existingSongs, since)
 
     /**
-     * Every song, or with [since] only those saved on the server (added or changed) at or after it, plus those of
-     * [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved (#497), and those
-     * played on the server since (in any client), which doesn't either.
+     * Every song of the music libraries, or with [since] only those saved on the server (added or changed) at or after it,
+     * plus those of [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved
+     * (#497), and those played on the server since (in any client), which doesn't either. Only the music libraries are
+     * read: an audiobook library holds `Audio` items too (#845).
      */
     private fun findSongs(
         existingSongs: List<Song>,
@@ -61,15 +65,86 @@ class JellyfinMediaProvider(
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now().atStoredPrecision()
-        emitAll(
-            queryItems(address = address, session = session, since = since, syncedAt = syncedAt).map { event ->
-                if (event is FlowEvent.Success && since != null) {
-                    FlowEvent.Success(event.result.withPlayedSongs(playedSince(address, session, since, syncedAt)).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
-                } else {
-                    event
-                }
+        when (val libraries = musicLibraryIds(address, session)) {
+            is NetworkResult.Success<List<String>> -> {
+                // The plays come from every library, so those of songs stored are kept: a new song is in the listing already
+                val storedPaths = existingSongs.mapTo(HashSet()) { song -> song.path }
+                emitAll(
+                    concatenated(libraries.body.map { libraryId -> queryItems(address = address, session = session, libraryId = libraryId, since = since, syncedAt = syncedAt) }).map { event ->
+                        if (event is FlowEvent.Success && since != null) {
+                            val played = playedSince(address, session, since, syncedAt)?.filter { song -> song.path in storedPaths }
+                            FlowEvent.Success(event.result.withPlayedSongs(played).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
+                        } else {
+                            event
+                        }
+                    }
+                )
             }
-        )
+
+            is NetworkResult.Failure -> emitLibrariesFailure(libraries)
+        }
+    }
+
+    override suspend fun countSongs(): Int? = (
+        withServerSession<AuthenticatedCredentials, Int>(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+            when (val libraries = musicLibraryIds(address, session)) {
+                is NetworkResult.Success<List<String>> -> {
+                    var total = 0
+                    for (libraryId in libraries.body) {
+                        // One song asked for, for the total that comes with it
+                        val result = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.audioIds(address, authenticationManager.authorizationHeader(credentials), credentials.userId, libraryId, limit = 1)) }
+                        if (result !is NetworkResult.Success<QueryResult>) {
+                            logger.warn { "Couldn't count the songs: ${(result as NetworkResult.Failure).error.userDescription()}" }
+                            return@withServerSession
+                        }
+                        total += result.body.totalRecordCount
+                    }
+                    emit(FlowEvent.Success(total))
+                }
+
+                is NetworkResult.Failure -> logger.warn { "Couldn't count the songs: ${libraries.error.userDescription()}" }
+            }
+        }.lastOrNull() as? FlowEvent.Success
+        )?.result
+
+    override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+        when (val libraries = musicLibraryIds(address, session)) {
+            is NetworkResult.Success<List<String>> -> emitAll(concatenated(libraries.body.map { libraryId -> queryPaths(address, session, libraryId) }))
+            is NetworkResult.Failure -> emitLibrariesFailure(libraries)
+        }
+    }
+
+    /** The ids of the user's music libraries: those whose collection type is `music`, not audiobooks (`books`) or the rest. */
+    private suspend fun musicLibraryIds(
+        address: String,
+        session: ServerSession<AuthenticatedCredentials>
+    ): NetworkResult<List<String>> = session.request { credentials ->
+        authenticationManager.checkSession(credentials, itemsService.libraries(address, authenticationManager.authorizationHeader(credentials), credentials.userId))
+    }.map { result -> result.items.filter { library -> library.collectionType.equals("music", ignoreCase = true) }.map(Item::id) }
+
+    private suspend fun <T> FlowCollector<FlowEvent<T, MessageProgress>>.emitLibrariesFailure(failure: NetworkResult.Failure) {
+        logger.error(failure.error) { failure.error.userDescription() }
+        emit(FlowEvent.Failure(failure.error.userDescription()))
+    }
+
+    private fun queryPaths(
+        address: String,
+        session: ServerSession<AuthenticatedCredentials>,
+        libraryId: String
+    ): Flow<FlowEvent<List<String>, MessageProgress>> = pagedFlow(key = Item::id, convert = { item -> item.songPath }) { offset, limit ->
+        session.request { credentials ->
+            authenticationManager.checkSession(
+                credentials,
+                itemsService.audioIds(
+                    url = address,
+                    authorization = authenticationManager.authorizationHeader(credentials),
+                    userId = credentials.userId,
+                    parentId = libraryId,
+                    limit = limit,
+                    startIndex = offset
+                )
+            )
+        }.map { it.toPage() }
     }
 
     override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
@@ -178,6 +253,7 @@ class JellyfinMediaProvider(
     private fun queryItems(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
+        libraryId: String,
         since: Instant?,
         syncedAt: Instant
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = pagedFlow(key = Item::id, convert = { item -> item.toSong(syncedAt) }) { offset, limit ->
@@ -188,6 +264,7 @@ class JellyfinMediaProvider(
                     url = address,
                     authorization = authenticationManager.authorizationHeader(credentials),
                     userId = credentials.userId,
+                    parentId = libraryId,
                     limit = limit,
                     startIndex = offset,
                     minDateLastSaved = since

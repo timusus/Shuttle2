@@ -728,6 +728,113 @@ class MediaImporterTest {
         preferences.lastFullSyncStart(server.type.name) shouldBe clock.time - 1.days
     }
 
+    /** A server with songs 1 to 3 stored, last synced an hour ago and in full a day ago, that an incremental sync finds nothing new on. */
+    private suspend fun incrementalServer() {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song(1, "/1"), song(2, "/2"), song(3, "/3"))
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+    }
+
+    @Test
+    fun `an incremental sync removes the songs the server no longer lists`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 2
+        server.held = listOf("/1", "/3")
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/2")
+        preferences.lastSyncStart(server.type.name) shouldBe clock.time
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time - 1.days
+    }
+
+    @Test
+    fun `an incremental sync whose server count is what is stored lists nothing`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 3
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.pathListings shouldBe 0
+        songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+    }
+
+    @Test
+    fun `an incremental sync counts the songs it added as held`() = runBlocking<Unit> {
+        incrementalServer()
+        server.found = listOf(song(4, "/4"))
+        server.count = 4
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.pathListings shouldBe 0
+        songRepository.changes shouldBe Triple(1, 0, 0)
+    }
+
+    @Test
+    fun `an incremental sync adding a song while another is gone still removes it`() = runBlocking<Unit> {
+        incrementalServer()
+        server.found = listOf(song(4, "/4"))
+        server.count = 3
+        server.held = listOf("/1", "/2", "/4")
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.changes shouldBe Triple(1, 0, 1)
+        songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/3")
+    }
+
+    @Test
+    fun `an incremental sync with a count it cannot read lists the songs`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = null
+        server.held = listOf("/1", "/2")
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.pathListings shouldBe 1
+        songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/3")
+    }
+
+    @Test
+    fun `an incremental sync whose path listing fails removes nothing - and still stores what it found`() = runBlocking<Unit> {
+        incrementalServer()
+        server.found = listOf(song(4, "/4"))
+        server.count = 2
+        server.held = null
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.changes shouldBe Triple(1, 0, 0)
+        preferences.lastSyncStart(server.type.name) shouldBe clock.time
+    }
+
+    @Test
+    fun `an incremental sync whose path listing came up short removes nothing`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 2
+        server.held = listOf("/1")
+        server.heldMissing = 1
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+    }
+
+    @Test
+    fun `an incremental sync that would remove every song holds the removal back`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 0
+        server.held = emptyList()
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+    }
+
     @Test
     fun `a server with nothing stored is synced in full - whenever it last synced`() = runBlocking<Unit> {
         importer.mediaProviders += server
@@ -1022,6 +1129,21 @@ class MediaImporterTest {
         var missing = 0
 
         override var unreadableRoots: Set<String> = emptySet()
+
+        /** How many songs it says it holds, or null for a count it can't read. */
+        var count: Int? = null
+
+        /** The paths it lists as held (missing [heldMissing] short of its total), or null for a path listing that fails. */
+        var held: List<String>? = null
+        var heldMissing = 0
+        var pathListings = 0
+
+        override suspend fun countSongs(): Int? = count
+
+        override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = flow {
+            pathListings++
+            held?.let { paths -> emit(FlowEvent.Success(paths, heldMissing)) } ?: emit(FlowEvent.Failure("The listing failed"))
+        }
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = songs(since = null)
 

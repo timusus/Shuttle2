@@ -67,10 +67,21 @@ interface IndexedMediaProvider : MediaProvider {
 
 /**
  * A source that can list just what changed since a time, so a sync doesn't fetch the whole library again (#771). What
- * [findSongsChangedSince] finds is stored over the last import without removing anything: a song deleted on the source
- * leaves the library at the next full [findSongs].
+ * [findSongsChangedSince] finds is stored over the last import; it can't say what's gone, so the importer asks
+ * [countSongs] and, if the count isn't the one it expects, [findSongPaths] which songs the source still holds, and removes
+ * the others (#845), rather than leaving them to the next full [findSongs].
  */
 interface IncrementalMediaProvider : MediaProvider {
+    /** How many songs the source holds, in one cheap request, or null if it can't be read. */
+    suspend fun countSongs(): Int?
+
+    /**
+     * The path of every song the source holds, fetched as lightly as the source allows (ids alone, no tags). As a
+     * [findSongs] listing is, it's [missing][FlowEvent.Success.missing] as many as the source says it holds beyond those it
+     * listed, and a [FlowEvent.Failure] if any page failed: the importer removes nothing against either.
+     */
+    fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>>
+
     /**
      * The songs added to the source or changed on it at or after [since], plus those of [existingSongs] whose favourite
      * changed on it, which a server doesn't count as a change to the song; songs it no longer has aren't reported.

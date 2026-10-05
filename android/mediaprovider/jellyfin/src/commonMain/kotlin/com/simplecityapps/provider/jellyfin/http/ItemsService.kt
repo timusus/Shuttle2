@@ -15,6 +15,8 @@ class ItemsService(private val client: HttpClient) {
         url: String,
         authorization: String,
         userId: String,
+        /** The music library to list the songs of. */
+        parentId: String,
         limit: Int = 2500,
         startIndex: Int = 0,
         /** Only the songs saved on the server (added, or their metadata changed) at or after this time; all of them if null. */
@@ -24,6 +26,7 @@ class ItemsService(private val client: HttpClient) {
         authorization = authorization,
         itemTypes = "Audio",
         fields = "Genres,DateCreated,ProviderIds,MediaStreams",
+        parentId = parentId,
         limit = limit,
         startIndex = startIndex,
         minDateLastSaved = minDateLastSaved,
@@ -32,6 +35,42 @@ class ItemsService(private val client: HttpClient) {
         // A stable order (the server has no unique sort key to break ties), so a song is unlikely to slip between pages when the list is paged by offset
         sortBy = "DateCreated,SortName"
     )
+
+    /**
+     * The ids of the songs in the music library [parentId], with nothing else (no fields, user data or images): what the
+     * server still holds, which an incremental sync removes the rest against. A [limit] of 1 and [startIndex] 0 reads the
+     * [QueryResult.totalRecordCount] cheaply.
+     */
+    suspend fun audioIds(
+        url: String,
+        authorization: String,
+        userId: String,
+        parentId: String,
+        limit: Int = 2500,
+        startIndex: Int = 0
+    ): NetworkResult<QueryResult> = items(
+        url = "$url/Users/$userId/Items",
+        authorization = authorization,
+        itemTypes = "Audio",
+        parentId = parentId,
+        limit = limit,
+        startIndex = startIndex,
+        enableUserData = false,
+        enableImages = false,
+        // The order the songs are listed in, so one is unlikely to slip between pages when the list is paged by offset
+        sortBy = "DateCreated,SortName"
+    )
+
+    /** The user's libraries, each with its [Item.collectionType]: the music ones are the songs a sync reads. */
+    suspend fun libraries(
+        url: String,
+        authorization: String,
+        userId: String
+    ): NetworkResult<QueryResult> = client.networkResult {
+        get("$url/Users/$userId/Views") {
+            header(HttpHeaders.Authorization, authorization)
+        }
+    }
 
     /**
      * The user's favourite songs, by id alone (no fields, no user data): an incremental sync's favourites list, since a
@@ -128,9 +167,11 @@ class ItemsService(private val client: HttpClient) {
         limit: Int,
         startIndex: Int,
         userId: String? = null,
+        parentId: String? = null,
         minDateLastSaved: Instant? = null,
         filters: String? = null,
         enableUserData: Boolean? = null,
+        enableImages: Boolean? = null,
         sortBy: String? = null,
         sortOrder: String? = null
     ): NetworkResult<QueryResult> = client.networkResult {
@@ -142,9 +183,11 @@ class ItemsService(private val client: HttpClient) {
             parameter("limit", limit)
             parameter("startIndex", startIndex)
             parameter("userId", userId)
+            parameter("parentId", parentId)
             parameter("minDateLastSaved", minDateLastSaved?.toString())
             parameter("filters", filters)
             parameter("enableUserData", enableUserData)
+            parameter("enableImages", enableImages)
             parameter("sortBy", sortBy)
             parameter("sortOrder", sortOrder)
         }

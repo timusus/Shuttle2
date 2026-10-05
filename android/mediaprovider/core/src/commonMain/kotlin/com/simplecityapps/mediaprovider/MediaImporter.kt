@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -249,7 +250,7 @@ class MediaImporter(
         // edited on the server without touching its songs
         val outcomes =
             importProviders(plans, showProgress = false, quietFailures = trigger == SyncTrigger.Foreground, foldersChanged = false, thorough = false) { plan, result ->
-                result != null && (plan == SyncPlan.Full || trigger == SyncTrigger.Periodic || result.inserts + result.updates > 0)
+                result != null && (plan == SyncPlan.Full || trigger == SyncTrigger.Periodic || result.inserts + result.updates + result.deletes > 0)
             }
         return SyncResult.Ran(outcomes)
     }
@@ -528,7 +529,15 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
-                        val guarded = guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, event.missing, fullPass = plan == SyncPlan.Full)
+                        val guarded =
+                            when (plan) {
+                                SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, event.missing, fullPass = true)
+
+                                is SyncPlan.Incremental -> {
+                                    val removed = songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts.size)
+                                    guardDeletes(mediaProvider, existingSongs.size, existingSongs.size - removed.songs.size + songDiff.inserts.size, removed.songs, userRemoval, removed.missing, fullPass = false)
+                                }
+                            }
                         val result =
                             songRepository.insertUpdateAndDelete(
                                 inserts = songDiff.inserts,
@@ -579,6 +588,31 @@ class MediaImporter(
             }
         }
     }.flowOn(Dispatchers.IO)
+
+    /** The songs [mediaProvider] no longer holds, and how many songs short of what it says it holds its path listing came to. */
+    private class RemovedOnSource(val songs: List<Song>, val missing: Int)
+
+    /**
+     * Which of [existingSongs] [mediaProvider] no longer holds, for an incremental sync, which can't tell from the songs it
+     * fetched (#845). [inserted] songs were new, so if the source's count is what's stored plus those, nothing has gone and
+     * that's one request. Otherwise its path listing says: a failed one removes nothing, and one that left songs out has
+     * [missing][RemovedOnSource.missing] as many, which [DeleteGuard] holds the removal back for as it does a full listing's.
+     */
+    private suspend fun songsRemovedOnSource(
+        mediaProvider: IncrementalMediaProvider,
+        existingSongs: List<Song>,
+        inserted: Int
+    ): RemovedOnSource {
+        val none = RemovedOnSource(emptyList(), missing = 0)
+        if (mediaProvider.countSongs() == existingSongs.size + inserted) return none
+        val listing = mediaProvider.findSongPaths().lastOrNull()
+        if (listing !is FlowEvent.Success) {
+            logger.warn { "Couldn't list the songs ${mediaProvider.type} holds; keeping the ones it may have removed until it can be" }
+            return none
+        }
+        val held = listing.result.toHashSet()
+        return RemovedOnSource(existingSongs.filter { song -> song.path !in held }, listing.missing)
+    }
 
     /** Which of [deletes] [deleteGuard] lets [mediaProvider]'s import apply, logging what it held back. */
     private fun guardDeletes(
