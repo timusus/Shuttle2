@@ -74,11 +74,13 @@ targets:
     configFiles:
       Debug: Config/S2.xcconfig
       Release: Config/S2.xcconfig
-    # The App Group the widgets read Now Playing from (#758)
+    # The App Group the widgets read Now Playing from (#758), and CarPlay's audio app category (#692; the app only,
+    # not the widgets)
     entitlements:
       path: S2/S2.entitlements
       properties:
         com.apple.security.application-groups: ["$(S2_APP_GROUP)"]
+        com.apple.developer.carplay-audio: true
     # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
     # generated keys below (GENERATE_INFOPLIST_FILE stays on).
     info:
@@ -126,6 +128,14 @@ targets:
         S2LastFmSharedSecret: $(S2_LASTFM_SHARED_SECRET)
         # NowPlayingStore's container (#758)
         S2AppGroup: $(S2_APP_GROUP)
+        # CarPlay (#692): the car's scene goes to CarPlaySceneDelegate. The phone's scene isn't listed, so SwiftUI's
+        # App lifecycle makes its WindowGroup scene as before (multiple scenes on, as the generated manifest had it).
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+          UISceneConfigurations:
+            CPTemplateApplicationSceneSessionRoleApplication:
+              - UISceneConfigurationName: CarPlay
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).CarPlaySceneDelegate
     settings:
       base:
         # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).
@@ -138,7 +148,6 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_CFBundleDisplayName: "Shuttle Music"
         INFOPLIST_KEY_UILaunchScreen_Generation: true
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         SWIFT_VERSION: "5.9"
