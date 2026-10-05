@@ -6,6 +6,7 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 
 /** A request header the user added for a server, sent with every request to it: a reverse proxy's access token, say. */
 data class CustomHeader(
@@ -66,24 +67,24 @@ data class ServerConnection(
  *
  * A certificate is trusted for one origin, by its exact fingerprint; verification is never turned off. A certificate the
  * platform refused is remembered (in memory only) by [recordRejectedCertificate], for the sign-in to offer to trust it.
+ *
+ * Requests look settings up from any thread while the sign-in changes them. Each change writes the preferences first,
+ * then updates the cache atomically from the cache as it is at that moment, counting the change ([Cache.changes]); a
+ * read that misses loads the preferences inside its own atomic update. The count makes every change fail such an
+ * update that started before it, even one that left the map as it was (forgetting a server that wasn't cached), so a
+ * lookup never puts back settings a change has just replaced.
  */
 @SingleIn(AppScope::class)
 class ServerConnectionStore @Inject constructor(
     private val securePreferenceManager: SecurePreferenceManager
 ) {
-    private val cache = MutableStateFlow<Map<ServerOrigin, ServerConnection>>(emptyMap())
+    private val cache = MutableStateFlow(Cache())
     private val rejected = MutableStateFlow<Map<ServerOrigin, String>>(emptyMap())
 
     /** The connection settings for requests to [origin]: [ServerConnection.None] for a server with none. */
     fun connection(origin: ServerOrigin): ServerConnection {
-        cache.value[origin]?.let { return it }
-        val connection =
-            ServerConnection(
-                headers = decodeHeaders(securePreferenceManager.getString(headersKey(origin))),
-                trustedCertificate = securePreferenceManager.getString(certificateKey(origin))
-            )
-        cache.update { it + (origin to connection) }
-        return connection
+        cache.value.connections[origin]?.let { return it }
+        return cache.updateAndGet { it.loading(origin) }.connections.getValue(origin)
     }
 
     /** The connection settings for the server at [address], or [ServerConnection.None] when it isn't an address. */
@@ -96,7 +97,7 @@ class ServerConnectionStore @Inject constructor(
     ) {
         val valid = headers.map { CustomHeader(it.name.trim(), it.value.trim()) }.filter { it.isValid }
         securePreferenceManager.putString(headersKey(origin), encodeHeaders(valid))
-        cache.update { it + (origin to connection(origin).copy(headers = valid)) }
+        cache.update { it.changing(origin) { connection -> connection.copy(headers = valid) } }
     }
 
     /** Trusts the certificate with [fingerprint] for [origin] alone, in place of any it trusted before. */
@@ -106,7 +107,7 @@ class ServerConnectionStore @Inject constructor(
     ) {
         val normalized = normalizeFingerprint(fingerprint)
         securePreferenceManager.putString(certificateKey(origin), normalized)
-        cache.update { it + (origin to connection(origin).copy(trustedCertificate = normalized)) }
+        cache.update { it.changing(origin) { connection -> connection.copy(trustedCertificate = normalized) } }
         rejected.update { it - origin }
     }
 
@@ -114,7 +115,7 @@ class ServerConnectionStore @Inject constructor(
     fun forget(origin: ServerOrigin) {
         securePreferenceManager.putString(headersKey(origin), null)
         securePreferenceManager.putString(certificateKey(origin), null)
-        cache.update { it - origin }
+        cache.update { Cache(it.connections - origin, it.changes + 1) }
         rejected.update { it - origin }
     }
 
@@ -144,6 +145,36 @@ class ServerConnectionStore @Inject constructor(
 
     fun clearRejectedCertificate(origin: ServerOrigin) {
         rejected.update { it - origin }
+    }
+
+    /** The settings cached so far, and how many changes have been made: see the class's comment. */
+    private data class Cache(
+        val connections: Map<ServerOrigin, ServerConnection> = emptyMap(),
+        val changes: Long = 0
+    )
+
+    /** This cache with [origin] in it, loaded from the preferences when it isn't: run inside an atomic update. */
+    private fun Cache.loading(origin: ServerOrigin): Cache = if (origin in connections) {
+        this
+    } else {
+        copy(
+            connections = connections + (
+                origin to
+                    ServerConnection(
+                        headers = decodeHeaders(securePreferenceManager.getString(headersKey(origin))),
+                        trustedCertificate = securePreferenceManager.getString(certificateKey(origin))
+                    )
+                )
+        )
+    }
+
+    /** This cache with [change] made to [origin]'s settings, counted: run inside an atomic update. */
+    private fun Cache.changing(
+        origin: ServerOrigin,
+        change: (ServerConnection) -> ServerConnection
+    ): Cache {
+        val loaded = loading(origin)
+        return Cache(loaded.connections + (origin to change(loaded.connections.getValue(origin))), changes + 1)
     }
 
     private fun headersKey(origin: ServerOrigin) = "server_connection_${origin}_headers"

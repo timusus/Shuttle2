@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.server
 
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import com.simplecityapps.shuttle.persistence.SecureStore
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -90,6 +91,30 @@ class ServerConnectionStoreTest {
 
         store.connection(origin) shouldBe ServerConnection.None
         values.values shouldBe emptyMap()
+    }
+
+    @Test
+    fun `a lookup racing a change never puts back the settings it replaced`() {
+        val keys = SecurePreferenceManager(values)
+        var racing: () -> Unit = {}
+        // A store whose reads run the race in the middle of loading the preferences, as another thread might
+        val racy =
+            ServerConnectionStore(
+                SecurePreferenceManager(
+                    object : SecureStore by values {
+                        override fun getString(key: String): String? = values.getString(key).also {
+                            racing().also { racing = {} }
+                        }
+                    }
+                )
+            )
+        val other = ServerOrigin.of("other.example.com", 443)
+        keys.putString("server_connection_other.example.com:443_headers", "X-Token: old")
+
+        racing = { racy.forget(other) }
+        racy.connection(other)
+
+        racy.connection(other) shouldBe ServerConnection.None
     }
 
     @Test
