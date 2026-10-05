@@ -1,6 +1,11 @@
 import AVFoundation
 import os
 
+/// The byte source's and ``StreamingPCMReader``'s category, for the underruns: one
+/// `log stream --predicate 'category == "audio-engine"'` shows the node running dry beside the
+/// fetch that let it (#896).
+private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "audio-engine")
+
 /// One queue item as the engine sees it: an id, its ReplayGain, and where its audio comes from.
 ///
 /// The Kotlin side (`EnginePlayerController`, phase-6-playback.md) owns the queue, shuffle and
@@ -257,6 +262,10 @@ public final class MusicPlaybackController {
     private var outputIndex: Int64 = 0
     private var buffersInFlight = 0
     private var starved = false
+    /// The node ran dry while playing — an underrun, not the queue's end: when (``StartupTiming/now()``)
+    /// and where in the current track. Logged as it starts and as it ends (#896); the state reported
+    /// stays playing, since Kotlin reads a loading report on a track already playing as paused.
+    private var underrun: (since: TimeInterval, ms: Int64)?
     /// The queue's last frame is scheduled (current ended with no next).
     private var drained = false
     /// Bumped by every restart; completions from buffers a restart discarded are ignored.
@@ -529,6 +538,7 @@ public final class MusicPlaybackController {
             player.pause()
             timelineLock.withLock { timeline.held = held }
             if current != nil, state == .playing || state == .loading { setState(.paused) }
+            endUnderrun("paused")
             stopTicker()
             emitPosition()
         }
@@ -973,6 +983,7 @@ public final class MusicPlaybackController {
         if timePitchInGraph { timePitch.reset() }
         buffersInFlight = 0
         starved = false
+        endUnderrun("restarted")
         drained = false
         inputIndex = 0
         outputIndex = 0
@@ -1067,6 +1078,7 @@ public final class MusicPlaybackController {
         setReading(nil)
         drained = false
         buffersInFlight = 0
+        endUnderrun("stopped")
         timelineLock.withLock { timeline = Timeline() }
     }
 
@@ -1166,6 +1178,7 @@ public final class MusicPlaybackController {
             // The node ran dry and played silence the stream does not contain; this buffer starts
             // wherever the node's clock is now.
             starved = false
+            endUnderrun("recovered")
             if let now = nodeSampleTime() {
                 let anchor = Anchor(stream: outputIndex, player: now)
                 timelineLock.withLock { timeline.anchors.append(anchor) }
@@ -1178,13 +1191,34 @@ public final class MusicPlaybackController {
             self?.engineQueue.async {
                 guard let self, self.generation == generation else { return }
                 self.buffersInFlight -= 1
-                if self.buffersInFlight == 0, !self.drained, self.state == .playing { self.starved = true }
+                if self.buffersInFlight == 0, !self.drained, self.state == .playing {
+                    self.starved = true
+                    self.beginUnderrun()
+                }
                 self.fill()
             }
         }
         outputIndex += Int64(buffer.frameLength)
         let end = outputIndex
         timelineLock.withLock { timeline.scheduledEnd = end }
+    }
+
+    /// The node played its last buffer with the stream not over: from here it renders silence the
+    /// stream doesn't contain, until a buffer is scheduled. Said once per underrun (#896).
+    private func beginUnderrun() {
+        guard underrun == nil else { return }
+        let atMs = ms(frames: currentMediaFrame())
+        underrun = (StartupTiming.now(), atMs)
+        engineLog.warning("underrun: starved at \(atMs) ms uid \(self.current?.track.uid ?? "-", privacy: .public)")
+    }
+
+    /// The underrun is over: `how` is "recovered" when a buffer reached the node, else what dropped
+    /// it (a restart, a pause, a stop). Logs how long the listener heard silence.
+    private func endUnderrun(_ how: String) {
+        guard let underrun else { return }
+        self.underrun = nil
+        let starvedMs = Int(((StartupTiming.now() - underrun.since) * 1000).rounded())
+        engineLog.notice("underrun: \(how, privacy: .public) after \(starvedMs) ms, starved at \(underrun.ms) ms")
     }
 
     /// Follow the playhead: promote the next track once it is being heard, notice the end.

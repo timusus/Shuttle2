@@ -531,7 +531,7 @@ final class HTTPRangeByteSourceTests: XCTestCase {
     func testAFailedRequestIsRetriedAndTheReadStillSucceeds() throws {
         let body = makeBody(128 * 1024)
         let server = try startServer(body: body)
-        server.failNextRequest = true
+        server.failNextRequests = 1
         let source = makeSource(server, policy: policy(windowBytes: 1024 * 1024))
 
         let read = try self.read(source, upTo: 4096)

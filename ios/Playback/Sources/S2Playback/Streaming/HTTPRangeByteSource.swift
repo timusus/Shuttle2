@@ -89,8 +89,29 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// delegate callbacks, so something has to notice that the ceiling moved.
     private static let throttleTickSeconds: Double = 0.5
 
-    /// How many times a transport failure is retried before a read is failed.
-    private static let maxRetryAttempts = 3
+    /// How many times a transport failure is retried before a read is failed. With
+    /// ``retryBackoff(attempt:)`` that is ~19 s of waiting: a Wi-Fi to cellular handoff aborts every
+    /// connection and takes seconds to settle, and the old budget (3 tries, ~0.7 s) was spent
+    /// before the new path was up (#896). A chunk that arrives resets the count.
+    static let maxRetryAttempts = 9
+    private static let retryBaseSeconds: Double = 0.25
+    private static let retryCapSeconds: Double = 3
+
+    /// The wait before retry `attempt` (from 1): 0.25 s doubling, capped at 3 s.
+    static func retryBackoff(attempt: Int) -> TimeInterval {
+        min(retryBaseSeconds * pow(2, Double(max(attempt, 1) - 1)), retryCapSeconds)
+    }
+
+    /// How long a body that should be arriving may go without a byte before it is dropped and asked
+    /// for again at the frontier (#896). A trickling connection on weak Wi-Fi never errors; it just
+    /// stops, and the request timeout was all that would ever notice.
+    static let stallTimeoutSeconds: Double = 5
+    /// How often the stall watchdog looks.
+    private static let watchdogTickSeconds: Double = 1
+    /// The streaming session's `timeoutIntervalForRequest`: the longest a request waits between
+    /// packets before it fails into the retry (#896). The default is 60 s. A suspended task is not
+    /// subject to it, so the throttle's hold never times out.
+    static let requestTimeoutSeconds: Double = 10
 
     /// The safety net on a blocked read's wait, not its pacing. Every event that can end the wait —
     /// a chunk, a completion, a failure, a cancel, a learned length, a throttle change — broadcasts
@@ -143,6 +164,11 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// `URLSessionTask.delegate`, so the session itself has no delegate and no source sees another
     /// source's callbacks.
     private let session: URLSession
+    /// The stall watchdog's and the retry backoff's clock and timer.
+    private let scheduler: RecoveryScheduler
+    /// Tells this source when the network moved under it; observed from construction to ``cancel()``.
+    private let pathMonitor: NetworkPathMonitoring?
+    private var pathObserver: UUID?
 
     /// The one session every source in the process uses (#225).
     ///
@@ -154,14 +180,15 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
 
     /// A session shaped for this class. `configuration` is edited: URLCache is not the cache — it
     /// validates on headers, and a host's re-stitched ad break arrives with the same
-    /// Content-Length and a fresh ETag every time. The run store validates on bytes. Everything
-    /// else on the configuration (timeouts, connectivity waiting) is left as the caller set it.
+    /// Content-Length and a fresh ETag every time. The run store validates on bytes. The request
+    /// timeout is ``requestTimeoutSeconds``; connectivity waiting is left as the caller set it.
     /// The delegate queue is serial, as `URLSession` requires for ordered delivery; every callback
     /// for every task hops from it onto its source's own `queue` and returns at once (see the
     /// type's threading note), so no source's work is ever done on it.
     static func makeSession(configuration: URLSessionConfiguration) -> URLSession {
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.urlCache = nil
+        configuration.timeoutIntervalForRequest = requestTimeoutSeconds
         let operationQueue = OperationQueue()
         operationQueue.maxConcurrentOperationCount = 1
         operationQueue.underlyingQueue = sessionDelegateQueue
@@ -320,6 +347,16 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     private var hasOpened = false
     private var wantsResume = false
     private var retryAttempts = 0
+    /// The window a retry reopens, while its backoff is running: nothing is open, and something
+    /// will be. Cleared, and ``retryGeneration`` bumped, by every transaction opened meanwhile, so a
+    /// backoff that a seek, a path change or a newer retry has already acted on does nothing when
+    /// it fires.
+    private var pendingRetryWindow: UInt64?
+    private var retryGeneration = 0
+    /// When the CURRENT transaction last showed progress — opened, answered, delivered a chunk — or
+    /// last had no reason to (held by the throttle, nothing open). On ``scheduler``'s clock.
+    private var lastProgressAt: TimeInterval = 0
+    private var watchdogArmed = false
     private var appetiteHolders = 0
     /// This host answered a `Range` with a whole-body `200`. Latched, so the next transaction is
     /// opened as what it will actually be — a stream from 0 — instead of being re-declared
@@ -368,6 +405,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     ///   - tee: where the raw bytes go for ad-skip. Nil when the spine is off.
     ///   - runStore: where the fetched bytes are kept and read back from. Nil only in tests.
     ///   - resolvedURLs: where the redirect chain's end is kept between plays. Nil only in tests.
+    ///   - scheduler: the clock and timer of the stall watchdog and the retry backoff; a test's steps.
+    ///   - pathMonitor: network path changes, which reopen the transaction at once. Nil to ignore them.
     init(
         url: URL,
         authHeaders: [String: String],
@@ -375,7 +414,9 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         session: URLSession = HTTPRangeByteSource.sharedSession,
         tee: AudioByteTee? = nil,
         runStore: CachedRunStore? = .shared,
-        resolvedURLs: ResolvedURLCache? = .shared
+        resolvedURLs: ResolvedURLCache? = .shared,
+        scheduler: RecoveryScheduler = DispatchRecoveryScheduler.shared,
+        pathMonitor: NetworkPathMonitoring? = SystemNetworkPathMonitor.shared
     ) {
         self.url = url
         self.authHeaders = authHeaders
@@ -391,7 +432,14 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
             resolutionUnproven = true
         }
         self.session = session
+        self.scheduler = scheduler
+        self.pathMonitor = pathMonitor
         super.init()
+        // Weak: the monitor outlives every source, and ``cancel()`` is what removes the entry.
+        pathObserver = pathMonitor?.addObserver { [weak self] in
+            guard let self else { return }
+            self.queue.async { self.pathDidChange() }
+        }
         runStore?.touch(runKey)
         let run = runStore?.run(for: runKey)
         // The sidecar's total lets FFmpeg's `AVSEEK_SIZE` be answered before any response has.
@@ -424,6 +472,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     static var inFlightHighWaterBytesForTesting: Int { inFlightHighWaterBytes }
     /// Returns once everything queued for `queue` so far has run — a `cancel()` included. Tests only.
     func drainQueueForTesting() { queue.sync {} }
+    /// A retry's backoff is running. Tests only.
+    var retryPendingForTesting: Bool { queue.sync { pendingRetryWindow != nil } }
     /// Tail-fetch bytes the delegate has handed over, which the budget leaves out (#261). Tests only.
     var tailBytesEnqueuedForTesting: Int { withLock { tailBytesEnqueued } }
     /// Run once, on `queue`, at the door of the next body chunk — before the chunk has looked at
@@ -623,6 +673,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         condition.broadcast()
         condition.unlock()
         guard !wasCancelled else { return }
+        if let pathObserver { pathMonitor?.removeObserver(pathObserver) }
         queue.async {
             self.invalidated = true
             self.ticker?.cancel()
@@ -662,12 +713,62 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// and nothing already decoded is thrown away. A no-op on a source that has ended, been
     /// cancelled or never opened.
     func reopen() {
-        queue.async {
-            guard !self.invalidated, self.hasOpened, !self.isComplete else { return }
-            let at = self.withLock { self.frontier }
-            engineLog.info("bytes: reopen host=\(self.url.host ?? "?", privacy: .public) at=\(at)")
-            self.startTransaction(at: at, isContinuation: true, window: self.transactionWindowGeneration)
+        queue.async { self.reopenAtFrontier(reason: "asked") }
+    }
+
+    /// ``reopen()``'s body, on `queue`: also what the stall watchdog and a path change do. A pending
+    /// retry is superseded, since this is that retry, sooner. At the ceiling nothing is opened: the
+    /// task is dropped and the throttle opens the continuation once the window has room, as it does
+    /// for a body that ended short.
+    private func reopenAtFrontier(reason: String) {
+        guard !invalidated, hasOpened, !isComplete, diskCursor == nil else { return }
+        let (at, failed) = withLock { (frontier, failureMessage != nil) }
+        // A read already failed has nothing waiting on it; the seek that clears it opens its own.
+        guard !failed else { return }
+        engineLog.info("bytes: reopen host=\(self.url.host ?? "?", privacy: .public) at=\(at) reason=\(reason, privacy: .public)")
+        if at < readAheadCeiling() {
+            startTransaction(at: at, isContinuation: true, window: transactionWindowGeneration)
+            return
         }
+        dropPendingRetry()
+        if let task {
+            task.cancel()
+            self.task = nil
+            withLock { pacedTask = nil }
+            tee?.byteSourceDidCloseTransaction(endedAtByte: at)
+        }
+        wantsResume = true
+    }
+
+    /// The network moved under the transaction: the connection it is on is dead or on the old
+    /// interface, so it is dropped now rather than when it errors (#896). Each path is a new start,
+    /// so the retry budget is too.
+    private func pathDidChange() {
+        guard !invalidated else { return }
+        retryAttempts = 0
+        if pendingRetryWindow != nil {
+            // The backoff was waiting out the old path; the new one is worth trying now.
+            engineLog.info("bytes: retry host=\(self.url.host ?? "?", privacy: .public) reason=path")
+            retryNow()
+            return
+        }
+        // Nothing in flight: the throttle opens what is needed over the new path.
+        guard hasOpened, task != nil else { return }
+        reopenAtFrontier(reason: "path")
+    }
+
+    /// Open the transaction a pending retry is waiting to, at the frontier. A continuation, not an
+    /// anchor: a retry says nothing about where the listener is.
+    private func retryNow() {
+        guard let window = pendingRetryWindow else { return }
+        startTransaction(at: withLock { frontier }, isContinuation: true, window: window)
+    }
+
+    /// A transaction is being opened (or the reopen decided against one): any backoff still to
+    /// fire belongs to the transaction before, and must not open another behind this one.
+    private func dropPendingRetry() {
+        pendingRetryWindow = nil
+        retryGeneration += 1
     }
 
     /// Tag the next transaction with the seek it is being opened for. Set by the reader before it
@@ -702,6 +803,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         withLock { ensureFetchingCallsValue += 1 }
         guard !invalidated else { return }
         startTicker()
+        armWatchdog()
         if !hasOpened {
             startTransaction(at: position, isContinuation: false)
             return
@@ -727,6 +829,9 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         task = nil
         withLock { pacedTask = nil }
         wantsResume = false
+        dropPendingRetry()
+        // The watchdog's count starts at the open: a connect is allowed the same time a chunk is.
+        lastProgressAt = scheduler.now()
         switchToDiskAtClose = false
         diskCursor = nil
         var run = runStore?.run(for: runKey)
@@ -1183,6 +1288,43 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         timer.resume()
     }
 
+    // MARK: - Stall watchdog
+
+    /// Start the watchdog's look every ``watchdogTickSeconds``, once, for the life of the source.
+    private func armWatchdog() {
+        guard !watchdogArmed else { return }
+        watchdogArmed = true
+        lastProgressAt = scheduler.now()
+        scheduleWatchdog()
+    }
+
+    private func scheduleWatchdog() {
+        scheduler.schedule(after: Self.watchdogTickSeconds, on: queue) { [weak self] in
+            guard let self, !self.invalidated else { return }
+            self.checkForStall()
+            self.scheduleWatchdog()
+        }
+    }
+
+    /// A body that is open, running and below the ceiling — one the window is waiting on — and has
+    /// brought nothing for ``stallTimeoutSeconds`` is dropped and asked for again at the frontier
+    /// (#896). Time it spent with no reason to bring anything (held by the throttle or the in-flight
+    /// budget, nothing open, the disk pumping) is not counted. On `queue`.
+    private func checkForStall() {
+        let now = scheduler.now()
+        let (frontier, suspended) = withLock { (self.frontier, taskIsSuspended) }
+        guard task != nil, diskCursor == nil, !suspended, frontier < readAheadCeiling() else {
+            lastProgressAt = now
+            return
+        }
+        let idle = now - lastProgressAt
+        guard idle >= Self.stallTimeoutSeconds else { return }
+        engineLog.warning(
+            "bytes: stall host=\(self.url.host ?? "?", privacy: .public) at=\(frontier) idle=\(String(format: "%.1f", idle), privacy: .public)s"
+        )
+        reopenAtFrontier(reason: "stall")
+    }
+
     // MARK: - The tail
 
     /// `offset` is inside the tail this source holds, or inside the tail its side request is
@@ -1416,6 +1558,7 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
                 completionHandler(.cancel)
                 return
             }
+            lastProgressAt = scheduler.now()
             let http = response as? HTTPURLResponse
             if let http {
                 if resolutionUnproven, !(200..<300).contains(http.statusCode) {
@@ -1595,6 +1738,7 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
             // at an offset they were never at, and reach the tee labelled with it (#224). Checked
             // again under the lock, because the seek can land between here and the append.
             guard isCurrentWindow() else { return }
+            lastProgressAt = scheduler.now()
             var incoming = data
             if let held = unsniffedResponse, held.task === dataTask {
                 var buffer = held.buffer
@@ -1700,14 +1844,18 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
                 retryAttempts += 1
                 // A retry resumes at the byte the body stopped at, and says nothing about where the
                 // listener is: a continuation, not an anchor.
-                let backoff = 0.1 * pow(2.0, Double(retryAttempts - 1))
+                let backoff = Self.retryBackoff(attempt: retryAttempts)
                 engineLog.error(
-                    "bytes: retry host=\(self.url.host ?? "?", privacy: .public) at=\(endedAt) attempt=\(self.retryAttempts)"
+                    """
+                    bytes: retry host=\(self.url.host ?? "?", privacy: .public) at=\(endedAt) attempt=\(self.retryAttempts) \
+                    in=\(backoff, privacy: .public)s error=\(nsError.code, privacy: .public)
+                    """
                 )
-                let window = transactionWindowGeneration
-                queue.asyncAfter(deadline: .now() + backoff) { [weak self] in
-                    guard let self, !self.invalidated, self.task == nil else { return }
-                    self.startTransaction(at: self.withLock { self.frontier }, isContinuation: true, window: window)
+                pendingRetryWindow = transactionWindowGeneration
+                let generation = retryGeneration
+                scheduler.schedule(after: backoff, on: queue) { [weak self] in
+                    guard let self, !self.invalidated, self.retryGeneration == generation else { return }
+                    self.retryNow()
                 }
                 return
             }

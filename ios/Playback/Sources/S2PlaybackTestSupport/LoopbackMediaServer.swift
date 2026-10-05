@@ -22,7 +22,7 @@ public final class LoopbackMediaServer: @unchecked Sendable {
     private var _servedBytes: Int64 = 0
     private var _respondsWholeBodyIgnoringRange = false
     private var _streamsWithoutLength = false
-    private var _failNextRequest = false
+    private var _failNextRequests = 0
     private var _rejectNextRangeStartingAt: Int64?
     private var _rejectedHostStatus: (host: String, status: Int)?
     private var _pageForHost: (host: String, contentType: String, body: Data, firstChunkBytes: Int?)?
@@ -103,11 +103,11 @@ public final class LoopbackMediaServer: @unchecked Sendable {
         set { lock.lock(); _streamsWithoutLength = newValue; lock.unlock() }
     }
 
-    /// Drop the next request's connection without a response, once. The transport failure a retry
-    /// has to survive.
-    public var failNextRequest: Bool {
-        get { lock.lock(); defer { lock.unlock() }; return _failNextRequest }
-        set { lock.lock(); _failNextRequest = newValue; lock.unlock() }
+    /// Drop this many of the next requests' connections without a response. The transport failure a
+    /// retry has to survive; several in a row are a network handoff (#896).
+    public var failNextRequests: Int {
+        get { lock.lock(); defer { lock.unlock() }; return _failNextRequests }
+        set { lock.lock(); _failNextRequests = newValue; lock.unlock() }
     }
 
     /// Hold the response to every request whose `Range` starts at `offset` for `seconds`, and let
@@ -327,8 +327,8 @@ public final class LoopbackMediaServer: @unchecked Sendable {
         delay = max(delay, _delayForEveryRange)
         let withoutLength = _streamsWithoutLength
         let wholeBody = _respondsWholeBodyIgnoringRange || withoutLength
-        let shouldFail = _failNextRequest
-        if shouldFail { _failNextRequest = false }
+        let shouldFail = _failNextRequests > 0
+        if shouldFail { _failNextRequests -= 1 }
         var rejectedRange = false
         if _rejectNextRangeStartingAt == range.lowerBound {
             _rejectNextRangeStartingAt = nil
