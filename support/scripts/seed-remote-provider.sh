@@ -39,6 +39,9 @@ env_file="$HOME/.config/s2-test/${server}.env"
 URL="" API_KEY="" USERNAME="" PASSWORD=""
 # shellcheck disable=SC1090
 . "$env_file"
+# S2_SEED_URL overrides the address the app is given, e.g. http://127.0.0.1:4533 for a phone off the
+# server's network that reaches it through `adb reverse` and a forwarder on this Mac.
+URL="${S2_SEED_URL:-$URL}"
 URL="${URL%/}"
 if [ "$server" = navidrome ]; then
     [ -n "$URL" ] && [ -n "$USERNAME" ] && [ -n "$PASSWORD" ] || { echo "seed-remote-provider: $env_file must set URL, USERNAME and PASSWORD" >&2; exit 1; }
