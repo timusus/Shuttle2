@@ -51,12 +51,12 @@ class ShuttleApplication :
     lateinit var imageLoader: Lazy<ImageLoader>
 
     override fun onCreate() = trace("S2 Application.onCreate") {
-        appGraph.inject(this)
+        trace("S2 app inject") { appGraph.inject(this) }
         super.onCreate()
 
-        themeManager.setDayNightMode()
+        trace("S2 app setDayNightMode") { themeManager.setDayNightMode() }
 
-        installDefaults.onLaunch()
+        trace("S2 app installDefaults") { installDefaults.onLaunch() }
 
         initializers.init(this)
 

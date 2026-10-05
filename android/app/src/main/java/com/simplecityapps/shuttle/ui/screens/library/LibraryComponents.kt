@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.annotation.PluralsRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -77,6 +78,8 @@ fun LibraryContent(
     hasItems: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    // Library is the default start tab, so the first page past Loading is when the app is fully drawn (TTFD)
+    ReportDrawnWhen { state != LibraryContentState.Loading }
     // Ready and a scan over existing items share one call site for [content], so its remembered list state (the
     // scroll position) survives the scan starting and finishing.
     if (state == LibraryContentState.Ready || (state == LibraryContentState.Scanning && hasItems)) {

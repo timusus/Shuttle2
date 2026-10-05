@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import androidx.activity.compose.ReportDrawnWhen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -93,6 +94,9 @@ fun HomeScreen(
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
+    // Fully drawn, for the startup metrics and the Baseline Profile (docs/performance/android-startup.md), once the
+    // library has loaded: the sections, or the empty state.
+    ReportDrawnWhen { uiState !is HomeUiState.Loading }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = modifier,

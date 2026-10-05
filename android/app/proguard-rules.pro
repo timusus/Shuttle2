@@ -44,3 +44,7 @@
 -keepclasseswithmembers class com.simplecityapps.shuttle.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+# AppInitializers names each initializer's trace section ("S2 init <Name>") after its class, which the startup
+# benchmark measures (docs/performance/android-startup.md)
+-keepnames class * implements com.simplecityapps.shuttle.appinitializers.AppInitializer
