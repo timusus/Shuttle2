@@ -52,6 +52,12 @@ while IFS=$'\t' read -r path branch locked; do
   case "$path" in "$primary/.claude/worktrees/"*) ;; *) continue ;; esac
   wanted "$path" "$branch" "$@" || continue
   name=${path##*/}
+  case "$path" in
+    "$primary/.claude/worktrees/pool-"*)
+      # Pool slots are never removed (they stay build-warm); worktree-pool.sh reap (below) releases the
+      # ones whose leased branch is gone.
+      kept=$((kept + 1)); echo "keep    $name (pool slot)"; continue ;;
+  esac
   why=""
   if [ "$path" = "$here" ]; then why="this session's worktree"
   elif [ "$locked" = 1 ]; then why="locked"
@@ -77,6 +83,8 @@ while IFS=$'\t' read -r path branch locked; do
     kept=$((kept + 1)); echo "keep    $name (git worktree remove failed)"
   fi
 done <<< "$list"
+
+[ $dry = 1 ] || "$(dirname "$0")/worktree-pool.sh" reap 2>/dev/null || true
 
 verb=removed; [ $dry = 1 ] && verb="would remove"
 echo "worktree-clean: $verb $removed, kept $kept"

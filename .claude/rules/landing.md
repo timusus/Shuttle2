@@ -19,3 +19,12 @@ paths:
   start full-verify -- ...`) runs the whole suites (including `iosSimulatorArm64Test`) at `origin/main` and records the sha as the watermark;
   `--status` shows how far main is past it, SessionStart prints the same, and `/deploy-android` runs it
   before tagging if the watermark isn't the release commit.
+- **Worker worktree pool (#923).** `support/scripts/worktree-pool.sh lease <name>` hands a worker one of `S2_WORKTREE_POOL_SIZE`
+  (default 5) locked, reusable slots `.claude/worktrees/pool-<k>` on a fresh `worktree-<name>` branch at `origin/main`, so the Gradle
+  configuration cache, `build/`, `ios/build/DerivedData` and Shared.framework stay warm (tracked changes and untracked non-ignored
+  files are discarded at lease; ignored files stay). It prints the slot dir on stdout; exit 3 means every slot is leased, so the caller
+  falls back to a plain new worktree. Re-leasing a branch already in a slot returns that slot untouched. `land.sh` calls `release`
+  (detaches the slot, drops the lease) and then deletes the branch; `worktree-clean.sh` never removes a slot and `reap`s leases whose
+  branch is gone. `list` shows slot state, `slot-of <branch>` finds one. If a slot misbehaves (a stale ignored artifact), clear it with
+  the recovery command the script prints on failure (`git worktree unlock`, `git worktree remove --force --force`, delete the directory,
+  `git worktree prune`); the next lease recreates it cold.

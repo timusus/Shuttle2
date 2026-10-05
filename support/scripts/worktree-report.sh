@@ -9,7 +9,7 @@
 # (or listed landed/abandoned in ~/.claude/stale-worktrees.md), its tree is clean, it isn't
 # `git worktree lock`ed, and no process has its cwd inside it — worktree-clean.sh already checks
 # all of that. This script narrows the candidate list first: it skips worktrees named
-# "bridge-*" (owned by a bridge session, not landing state) and any worktree with a file
+# "bridge-*" and pool slots "pool-*" (worktree-pool.sh; never removed, a stale lease is reaped instead) (owned by a bridge session, not landing state) and any worktree with a file
 # modified in the last 2 hours (mid-edit, even if everything else lines up), then hands the
 # remaining names to worktree-clean.sh.
 set -uo pipefail
@@ -28,11 +28,20 @@ size_kb() {
 
 report() {  # $1 = optional label
   local count=0 kb label=${1:-}
-  [ -d "$wt_dir" ] && count=$(find "$wt_dir" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+  [ -d "$wt_dir" ] && count=$(find "$wt_dir" -mindepth 1 -maxdepth 1 -type d ! -name 'pool-*' | wc -l | tr -d ' ')
   kb=$(size_kb)
-  local gb
+  local gb pool_kb pool_n=0 pool_leased=0 pool_gb
+  pool_kb=$(du -sk "$wt_dir"/pool-* 2>/dev/null | awk '{s+=$1} END {print s+0}')
+  kb=$(( ${kb:-0} - pool_kb ))
   gb=$(awk -v k="${kb:-0}" 'BEGIN { printf "%.1f", k/1024/1024 }')
   echo "worktree-report: ${label:+$label }$count worktree(s) under .claude/worktrees, ${gb}GB"
+  # Pool slots (worktree-pool.sh) are reported separately: they are kept on purpose, never pruned.
+  pool_n=$(find "$wt_dir" -mindepth 1 -maxdepth 1 -type d -name 'pool-*' 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$pool_n" -gt 0 ]; then
+    pool_leased=$("$here/worktree-pool.sh" list 2>/dev/null | awk -F'\t' '$2 != "free"' | wc -l | tr -d ' ')
+    pool_gb=$(awk -v k="${pool_kb:-0}" 'BEGIN { printf "%.1f", k/1024/1024 }')
+    echo "worktree-report: pool $pool_n slot(s), $pool_leased leased, $((pool_n - pool_leased)) free, ${pool_gb}GB"
+  fi
 }
 
 if [ "$prune" = 0 ]; then
@@ -50,7 +59,7 @@ if [ -d "$wt_dir" ]; then
   for d in "$wt_dir"/*/; do
     [ -d "$d" ] || continue
     name=$(basename "$d")
-    case "$name" in bridge-*) continue ;; esac
+    case "$name" in bridge-*|pool-*) continue ;; esac
     if find "$d" -newer "$refmarker" -print -quit 2>/dev/null | grep -q .; then
       continue  # modified in the last 2 hours
     fi

@@ -21,6 +21,7 @@ S2 Music Player — an Android app for local music playback and streaming via Je
   - `--close BRANCH:N` closes issue N when that branch lands; a bare `--close N` only when every branch in the batch landed.
   - `full-verify.sh --status` shows how far main is past the full-verify watermark; it runs in a warm, locked worktree.
   - Full verify runs before every Play release: `/deploy-android` triggers it when the watermark isn't the release commit.
+- `support/scripts/worktree-pool.sh lease|release|list|slot-of|reap`: a pool of reusable, build-warm worker worktrees (`.claude/worktrees/pool-<k>`); `land.sh` releases a landed slot; see `.claude/rules/landing.md`.
 - `support/scripts/worktree-report.sh` prints worktree count/size; `--prune` removes the safely disposable ones via `worktree-clean.sh`.
 
 ## Build Commands

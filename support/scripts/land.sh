@@ -1131,6 +1131,13 @@ for i in "${LANDED_IDX[@]}"; do
   wt_path=$(git worktree list --porcelain | awk -v b="$b" '
     /^worktree /{p=substr($0,10)}
     /^branch /{br=substr($0,8); sub("refs/heads/","",br); if (br==b) print p}')
+  case "$wt_path" in
+    */.claude/worktrees/pool-*)
+      # A pool slot stays (locked, build-warm): detach it so the branch can go, then delete the branch.
+      support/scripts/worktree-pool.sh release "$wt_path" >> "$LOG" 2>&1 || true
+      git branch -D "$b" >> "$LOG" 2>&1 || true
+      continue ;;
+  esac
   [ -n "$wt_path" ] && { git worktree unlock "$wt_path" >> "$LOG" 2>&1 || true; }
   support/scripts/worktree-clean.sh "$b" >> "$LOG" 2>&1 || true
 done
