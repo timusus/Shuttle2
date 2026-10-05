@@ -214,6 +214,6 @@ class SubsonicMediaProviderTest {
 
     private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> {
         val events = runBlocking { provider.findPlaylists(library).toList() }
-        return (events.last() as FlowEvent.Success).result
+        return (events.last() as FlowEvent.Success).result.playlists
     }
 }

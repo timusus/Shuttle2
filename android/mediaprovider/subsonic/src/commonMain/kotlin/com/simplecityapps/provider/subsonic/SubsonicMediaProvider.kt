@@ -62,12 +62,14 @@ class SubsonicMediaProvider(
         emit(FlowEvent.Success(songs.filter(SongDto::isSong).map(SongDto::toSong), searched.missing))
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val playlists = when (val result = session.request { credentials -> authenticationManager.request(credentials) { auth -> service.playlists(address, auth) } }) {
             is NetworkResult.Success -> result.body
             is NetworkResult.Failure -> return@withServerSession fail(result.error)
         }
         val songsById = existingSongs.filter { it.mediaProvider == type }.associateBy { it.externalId }
+        // A playlist whose songs couldn't be read is unread, so the import keeps the copy it has rather than deleting it
+        val unread = mutableSetOf<String>()
         val updates = playlists.mapNotNull { playlist ->
             when (val result = session.request { credentials -> authenticationManager.request(credentials) { auth -> service.playlist(address, auth, playlist.id) } }) {
                 is NetworkResult.Success -> MediaImporter.PlaylistUpdateData(
@@ -79,11 +81,12 @@ class SubsonicMediaProvider(
 
                 is NetworkResult.Failure -> {
                     logger.warn(result.error) { "Failed to read playlist ${playlist.id}" }
+                    unread += playlist.id
                     null
                 }
             }
         }
-        emit(FlowEvent.Success(updates))
+        emit(FlowEvent.Success(MediaImporter.PlaylistListing(updates, unread)))
     }
 
     /** The stored credentials, or a fresh sign-in with the saved login when there are none (after a 401 signed out). */
