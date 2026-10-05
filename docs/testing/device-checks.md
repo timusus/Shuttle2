@@ -452,3 +452,9 @@ Needs the App Group (`group.com.simplecityapps.shuttle.dev` / `group.com.simplec
 - [ ] Siri: "Shuffle Shuttle Music", "Play or pause Shuttle Music", "Next song in Shuttle Music" and "Play Road Trip in Shuttle Music" (a playlist's name) each do what they say, with the app in the background and after it was swiped away.
 - [ ] Spotlight: searching "Shuttle" lists the app's shortcuts; Shortcuts lists the four actions, and Play Playlist offers the library's playlists.
 - [ ] Clear the queue: the widgets go back to Not Playing.
+
+## iOS light-mode detail heroes and artist nav title (#744, #635)
+
+- [ ] Light mode, iOS 26 and iOS 18: open albums with gold, navy, green and beige covers. The hero carries a wash in the cover's hue, and the Play, Shuffle and artist-line text stay readable. Dark mode looks as before.
+- [ ] iOS 26: the Shuffle capsule (Liquid Glass, `.glassProminent`) text stays readable over the light-mode wash.
+- [ ] iOS 26, light mode: on an artist with a photo, scroll until the title moves into the nav bar. Over the photo it's white; past the photo it's dark and readable.
