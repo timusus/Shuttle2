@@ -41,14 +41,15 @@ class EmbyStreamUrlProvider(
 
     /**
      * The original file ([EmbyAuthenticationManager.buildDownloadPath]), recorded as the song's own type, unless the
-     * download quality caps it below the song's bitrate (or the bitrate is unknown): then a progressive transcode at
-     * the cap in the chosen codec.
+     * download quality caps it below the song's bitrate (or the bitrate is unknown), or the player can't decode its
+     * codec (ALAC): then a progressive transcode (at the cap, if any) in the chosen codec.
      */
     override fun downloadSource(song: Song): DownloadSource? {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
         val maxBitrateKbps = streamingPolicy.downloadMaxBitrateKbps()
         val bitRate = song.bitRate
-        if (maxBitrateKbps != null && (bitRate == null || bitRate > maxBitrateKbps)) {
+        val overCap = maxBitrateKbps != null && (bitRate == null || bitRate > maxBitrateKbps)
+        if (overCap || !authenticationManager.directPlays(song.audioCodec)) {
             return authenticationManager.buildTranscodedDownloadPath(
                 itemId = song.itemId(),
                 authenticatedCredentials = authenticatedCredentials,

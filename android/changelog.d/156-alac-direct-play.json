@@ -1,1 +1,1 @@
-{ "type": "fixes", "text": "Emby and Jellyfin songs in ALAC (m4a) no longer play silently or fail to cast; the server now converts them.", "commits": [] }
+{ "type": "fixes", "text": "Emby and Jellyfin songs in ALAC (m4a) no longer play silently or fail to cast, and no longer download as silent files; the server now converts them.", "commits": [] }

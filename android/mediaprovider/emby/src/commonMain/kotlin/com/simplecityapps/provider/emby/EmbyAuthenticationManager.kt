@@ -154,7 +154,7 @@ class EmbyAuthenticationManager(
     fun buildTranscodedDownloadPath(
         itemId: String,
         authenticatedCredentials: AuthenticatedCredentials,
-        maxBitrateKbps: Int,
+        maxBitrateKbps: Int?,
         format: TranscodeFormat
     ): DownloadSource? {
         val target = streamProfile.downloadTarget(format)

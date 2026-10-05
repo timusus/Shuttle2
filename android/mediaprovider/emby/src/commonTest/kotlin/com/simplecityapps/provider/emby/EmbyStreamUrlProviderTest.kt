@@ -191,6 +191,25 @@ class EmbyStreamUrlProviderTest {
     }
 
     @Test
+    fun `an ALAC download with no cap is a transcode, since the player can't decode the original`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        val source = provider.downloadSource(song(bitRate = 900, audioCodec = "alac"))!!
+
+        source.url shouldContain "/emby/Audio/item789/universal?"
+        source.url shouldNotContain "MaxStreamingBitrate"
+        source.url shouldNotContain "/Download?"
+    }
+
+    @Test
+    fun `AAC and FLAC downloads with no cap keep the original`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.downloadSource(song(bitRate = 900, audioCodec = "aac"))!!.url shouldContain "/Items/item789/Download?"
+        provider.downloadSource(song(bitRate = 900, audioCodec = "flac"))!!.url shouldContain "/Items/item789/Download?"
+    }
+
+    @Test
     fun `a signed-out server fails the stream`() {
         shouldThrow<IllegalStateException> { provider.streamUrl(song()) }
     }
