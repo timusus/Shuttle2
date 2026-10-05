@@ -167,6 +167,11 @@ ios/
     KMP/ConsumeEvents.swift      # .consumeEvents: PendingEvent one-shots, consumed once, id handed back
     Platform/Audio/         # AudioSessionController, NowPlayingController, EngineAudioPlayer (the Kotlin
                             # IosAudioPlayer), PlaybackSystemCoordinator (wires them to IosPlayerController)
+    Platform/SystemIntents/ # App Intents for Siri/Shortcuts/Spotlight (#758): AppIntentPerformer carries them out,
+                            # registered in IntentPerformers at launch; NowPlayingWidgetPublisher writes the widgets' state
+  SystemSurfaces/           # compiled into the app AND S2Widgets: the playback App Intents and NowPlayingStore (the App
+                            # Group snapshot). No `import Shared` here: the extension doesn't link the framework
+  S2Widgets/                # the WidgetKit extension: Now Playing widgets, the iOS 18 play/pause control
   Playback/                 # the S2Playback package: the gapless engine (see its README); no AVAudioSession.
                             # A local package dependency of the S2 target only (project.yml `packages:`)
   S2Tests/                  # ViewInspector + swift-testing

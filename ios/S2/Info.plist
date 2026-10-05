@@ -80,6 +80,8 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>S2AppGroup</key>
+	<string>$(S2_APP_GROUP)</string>
 	<key>S2LastFmApiKey</key>
 	<string>$(S2_LASTFM_API_KEY)</string>
 	<key>S2LastFmSharedSecret</key>

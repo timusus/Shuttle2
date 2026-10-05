@@ -25,6 +25,8 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     private let player: EngineAudioPlayer
     private let session: AudioSessionController
     private let nowPlaying: NowPlayingController
+    /// The widgets' copy of Now Playing (#758); nil in tests that don't look at it.
+    private let widgets: NowPlayingWidgetPublisher?
     /// A new engine, for a media-services reset; nil if one can't be built.
     private let makeEngine: () -> AudioEngine?
     private var observers: [Task<Void, Never>] = []
@@ -38,6 +40,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         player: EngineAudioPlayer,
         session: AudioSessionController,
         nowPlaying: NowPlayingController,
+        widgets: NowPlayingWidgetPublisher? = nil,
         makeEngine: @escaping () -> AudioEngine?
     ) {
         self.playback = playback
@@ -45,6 +48,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         self.player = player
         self.session = session
         self.nowPlaying = nowPlaying
+        self.widgets = widgets
         self.makeEngine = makeEngine
     }
 
@@ -139,6 +143,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     /// `force` writes the item again, artwork included, instead of `updatePlayback`'s throttled position update.
     private func publish(force: Bool = false) {
         guard let current = playback.queueOperations.queueStateFlow.value.currentItem else {
+            widgets?.update(item: nil, isPlaying: false)
             guard nowPlaying.item != nil else { return }
             // The queue emptied: nothing is playing, so give the session back to other apps.
             nowPlaying.setItem(nil, position: 0, isPlaying: false, speed: 1)
@@ -152,6 +157,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         // A stalled stream stops the lock screen's clock; a load's doesn't, so a skip holds its pause button (#691).
         let isBuffering = playback.bufferingFlow.value.boolValue
         let speed = playback.playbackSpeedFlow.value.floatValue
+        widgets?.update(item: item, isPlaying: isPlaying)
         nowPlaying.setSkipMode(
             current.song.type == .audio
                 ? .tracks : .interval(forward: Self.skipForwardSeconds, backward: Self.skipBackwardSeconds)

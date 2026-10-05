@@ -442,3 +442,13 @@ Plex's sign-in and the local-network suggestions talk to real plex.tv and real s
 - [ ] Emby on the same Wi-Fi as an Emby server: the same suggestion appears (Emby answers "who is EmbyServer?" on UDP 7359).
 - [ ] On mobile data, or a network with no server, the Jellyfin and Emby sign-ins show no suggestions and nothing errors.
 - [ ] Jellyfin with Quick Connect enabled: "Use Quick Connect" is the filled button above the username and password.
+
+## iOS widgets, Siri and Shortcuts (#758)
+Needs the App Group (`group.com.simplecityapps.shuttle.dev` / `group.com.simplecityapps.shuttle`) and the `.widgets` bundle ids registered in the developer portal.
+- [ ] Add the Now Playing widget (small and medium) to the Home Screen. It shows the playing song, its artist and cover; its play/pause button pauses and resumes the app, and the button and the in-app player change together. Medium's Next skips.
+- [ ] With nothing queued (a fresh install with a library), the widget says Not Playing and its play button shuffles the library.
+- [ ] Lock Screen: the rectangular, circular and inline widgets show the song and their buttons play and pause, with the screen locked.
+- [ ] iOS 18: add the Play or Pause control to Control Center and to the Action button. It plays and pauses and shows the state the app is in.
+- [ ] Siri: "Shuffle Shuttle Music", "Play or pause Shuttle Music", "Next song in Shuttle Music" and "Play Road Trip in Shuttle Music" (a playlist's name) each do what they say, with the app in the background and after it was swiped away.
+- [ ] Spotlight: searching "Shuttle" lists the app's shortcuts; Shortcuts lists the four actions, and Play Playlist offers the library's playlists.
+- [ ] Clear the queue: the widgets go back to Not Playing.

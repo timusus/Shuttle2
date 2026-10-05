@@ -70,6 +70,8 @@ PROFILE_DIR = os.environ["PROFILE_DIR"]
 # Keep in step with ios/ExportOptions.plist (provisioningProfiles).
 PROFILES = [
     ("Shuttle Music App Store", "com.simplecityapps.shuttle"),
+    # The widget extension (#758); its App ID needs the App Group group.com.simplecityapps.shuttle, as the app's does.
+    ("Shuttle Music Widgets App Store", "com.simplecityapps.shuttle.widgets"),
 ]
 PROFILE_TYPE = "IOS_APP_STORE"
 

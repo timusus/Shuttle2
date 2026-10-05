@@ -18,6 +18,8 @@
 	<dict>
 		<key>com.simplecityapps.shuttle</key>
 		<string>Shuttle Music App Store</string>
+		<key>com.simplecityapps.shuttle.widgets</key>
+		<string>Shuttle Music Widgets App Store</string>
 	</dict>
 </dict>
 </plist>

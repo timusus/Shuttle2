@@ -132,6 +132,7 @@ final class IosAppDependencies {
             player: audioPlayer,
             session: audioSession,
             nowPlaying: nowPlaying,
+            widgets: NowPlayingWidgetPublisher(),
             makeEngine: { try? MusicPlaybackController() }
         )
         let intent = playIntent

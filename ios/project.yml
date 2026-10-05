@@ -22,13 +22,28 @@ packages:
     url: https://github.com/PostHog/posthog-ios
     from: "3.89.0"
 settings:
-  # Empty by default so the project builds for the simulator without a team; device builds pass
-  # APP_TEAM on the xcodebuild command line.
-  DEVELOPMENT_TEAM: "$(APP_TEAM)"
-  TARGETED_DEVICE_FAMILY: "1,2"
-  # Shared.framework ships an arm64 simulator slice only (iosSimulatorArm64), so a Release simulator
-  # build (ONLY_ACTIVE_ARCH=NO) would typecheck x86_64 against a module that has no slice for it.
-  "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
+  base:
+    # Empty by default so the project builds for the simulator without a team; device builds pass
+    # APP_TEAM on the xcodebuild command line.
+    DEVELOPMENT_TEAM: "$(APP_TEAM)"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    # Shared.framework ships an arm64 simulator slice only (iosSimulatorArm64), so a Release simulator
+    # build (ONLY_ACTIVE_ARCH=NO) would typecheck x86_64 against a module that has no slice for it.
+    "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
+    # The app and its widget extension carry the same versions, as the App Store requires.
+    # ios/archive-and-upload.sh overrides the S2_ settings on the xcodebuild command line:
+    # build number YYMMDDNN (the ios/vYYMMDDNN tag's digits), marketing version 20YY.MM.DD.
+    S2_MARKETING_VERSION: "2026.09.27"
+    S2_BUILD_NUMBER: "1"
+    MARKETING_VERSION: $(S2_MARKETING_VERSION)
+    CURRENT_PROJECT_VERSION: $(S2_BUILD_NUMBER)
+  configs:
+    # The App Group the app shares Now Playing with its widgets through (#758, NowPlayingStore): the Debug
+    # app's beside the store app's, as the bundle ids are. Both must be registered in the developer portal.
+    Debug:
+      S2_APP_GROUP: group.com.simplecityapps.shuttle.dev
+    Release:
+      S2_APP_GROUP: group.com.simplecityapps.shuttle
 targets:
   S2:
     type: application
@@ -46,6 +61,8 @@ targets:
       # S2.app/Frameworks by itself, so there is no `embed:` entry: one would copy them twice.
       - package: S2Playback
         product: S2Playback
+      # The widgets and the Control Center control (#758), embedded in S2.app/PlugIns
+      - target: S2Widgets
       - package: Sentry
         product: Sentry
       - package: PostHog
@@ -57,6 +74,11 @@ targets:
     configFiles:
       Debug: Config/S2.xcconfig
       Release: Config/S2.xcconfig
+    # The App Group the widgets read Now Playing from (#758)
+    entitlements:
+      path: S2/S2.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(S2_APP_GROUP)"]
     # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
     # generated keys below (GENERATE_INFOPLIST_FILE stays on).
     info:
@@ -102,17 +124,13 @@ targets:
         # then the Scrobbling settings row is hidden.
         S2LastFmApiKey: $(S2_LASTFM_API_KEY)
         S2LastFmSharedSecret: $(S2_LASTFM_SHARED_SECRET)
+        # NowPlayingStore's container (#758)
+        S2AppGroup: $(S2_APP_GROUP)
     settings:
       base:
         # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).
         PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.dev
         PRODUCT_NAME: S2
-        # ios/archive-and-upload.sh overrides the S2_ settings on the xcodebuild command line:
-        # build number YYMMDDNN (the ios/vYYMMDDNN tag's digits), marketing version 20YY.MM.DD.
-        S2_MARKETING_VERSION: "2026.09.27"
-        S2_BUILD_NUMBER: "1"
-        MARKETING_VERSION: $(S2_MARKETING_VERSION)
-        CURRENT_PROJECT_VERSION: $(S2_BUILD_NUMBER)
         GENERATE_INFOPLIST_FILE: true
         # The neutral accent: Assets.xcassets' AccentColor (near-black / near-white). The system ignores a neutral asset as the global tint, so S2App applies .tint(.s2Accent) and AccentTint sets UIKit's (Theme/Colors.swift).
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
@@ -154,6 +172,41 @@ targets:
             - "$(inherited)"
             - "-framework"
             - "Shared"
+  # The widget extension (#758): Now Playing widgets and the iOS 18 play/pause control. It shares
+  # SystemSurfaces/ with the app (the playback App Intents, NowPlayingStore) and doesn't link Shared: what it
+  # shows comes from the App Group, and its buttons' intents run in the app.
+  S2Widgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: S2Widgets
+      - path: SystemSurfaces
+    entitlements:
+      path: S2Widgets/S2Widgets.entitlements
+      properties:
+        com.apple.security.application-groups: ["$(S2_APP_GROUP)"]
+    info:
+      path: S2Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: Shuttle Music
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        S2AppGroup: $(S2_APP_GROUP)
+    settings:
+      base:
+        # The app's bundle id plus .widgets, Debug and Release alike (an extension's must start with its app's)
+        PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.dev.widgets
+        PRODUCT_NAME: S2Widgets
+        GENERATE_INFOPLIST_FILE: true
+        APPLICATION_EXTENSION_API_ONLY: true
+        SWIFT_VERSION: "5.9"
+        SWIFT_STRICT_CONCURRENCY: targeted
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        Release:
+          PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.widgets
   S2Tests:
     type: bundle.unit-test
     platform: iOS
