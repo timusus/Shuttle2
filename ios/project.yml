@@ -254,5 +254,8 @@ schemes:
       storeKitConfiguration: S2.storekit
     test:
       config: Debug
+      # The tests assert English (US) text; pin it so a host or simulator in en-GB, en-AU, ... doesn't pick en-GB.lproj.
+      language: en
+      region: US
       targets:
         - S2Tests
