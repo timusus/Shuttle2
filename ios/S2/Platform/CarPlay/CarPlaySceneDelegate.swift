@@ -108,15 +108,17 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         self.interfaceController = nil
     }
 
-    /// A pushed list that left the stack stops observing and clears its view model.
+    /// A template that left the stack forgets what it drew (its identifier can be reused by the next one, which must
+    /// draw); a pushed list also stops observing and clears its view model.
     nonisolated func templateDidDisappear(_ aTemplate: CPTemplate, animated: Bool) {
         MainActor.assumeIsolated {
             guard let controller = interfaceController,
-                  !controller.templates.contains(where: { $0 === aTemplate }),
-                  let list = pushed.removeValue(forKey: ObjectIdentifier(aTemplate)) else { return }
+                  !controller.templates.contains(where: { $0 === aTemplate }) else { return }
+            let id = ObjectIdentifier(aTemplate)
+            lastRendered[id] = nil
+            guard let list = pushed.removeValue(forKey: id) else { return }
             list.task.cancel()
             list.viewModel.clear()
-            lastRendered[ObjectIdentifier(aTemplate)] = nil
         }
     }
 
@@ -231,7 +233,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         songs = state.songs
         let sections: [CarPlaySectionModel] = switch state.loadingState {
         case .empty: CarPlayCatalog.message(CarPlayText.libraryEmpty, detail: CarPlayText.libraryEmptyDetail)
-        case .loading, .scanning where state.songs.isEmpty: CarPlayCatalog.loading()
+        case .loading where state.songs.isEmpty, .scanning where state.songs.isEmpty: CarPlayCatalog.loading()
         default: CarPlayCatalog.songs(state.songs.map(Self.song), shuffleTitle: CarPlayText.shuffleAll, limit: Self.rowLimit())
         }
         render(sections, into: songsTemplate)

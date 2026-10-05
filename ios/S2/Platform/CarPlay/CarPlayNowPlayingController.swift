@@ -54,8 +54,10 @@ final class CarPlayNowPlayingController: NSObject, CPNowPlayingTemplateObserver 
         attached = false
         showQueue = nil
         shownButtons = []
+        hasQueue = false
         let template = CPNowPlayingTemplate.shared
         template.remove(self)
+        template.isUpNextButtonEnabled = false
         template.updateNowPlayingButtons([])
     }
 
