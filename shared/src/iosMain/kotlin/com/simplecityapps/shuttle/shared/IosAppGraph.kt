@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
+import com.simplecityapps.shuttle.shared.intents.AppIntentLibrary
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.platform.BackgroundSync
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
@@ -138,6 +139,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Offline downloads' background `URLSession`, which the app delegate hands its background events to. */
     val urlSessionDownloads: UrlSessionDownloads
+
+    /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
+    val appIntentLibrary: AppIntentLibrary
 
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel
