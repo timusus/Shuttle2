@@ -1358,8 +1358,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/nalexn/ViewInspector";
 			requirement = {
-				kind = exactVersion;
-				version = 0.10.3;
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.10.5;
 			};
 		};
 		BC078097C418CD7ED96438F2 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {

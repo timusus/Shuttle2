@@ -9,9 +9,7 @@ options:
 packages:
   ViewInspector:
     url: https://github.com/nalexn/ViewInspector
-    # Pinned: later releases declare `.visionOS(.v2)` under a 5.9 tools version, which Xcode 27's
-    # SwiftPM rejects ("'v2' is unavailable"), so `from:` resolves to a manifest that won't load.
-    exactVersion: "0.10.3"
+    from: "0.10.5"
   # The gapless engine (#588): a local package, see Playback/README.md.
   S2Playback:
     path: Playback

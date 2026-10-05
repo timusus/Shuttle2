@@ -257,8 +257,6 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
 - **The test bundle does not link Shared.** It only has the search path for `import Shared`; the Kotlin
   code resolves from the host app through `BUNDLE_LOADER`. Linking the static framework into the tests
   as well would load a second Kotlin runtime.
-- **ViewInspector is pinned to 0.10.3.** Later releases declare `.visionOS(.v2)` under a 5.9 tools
-  version, which Xcode 27's SwiftPM rejects, and package resolution fails.
 - **Kotlin/Native wants a framework bundle id**; `shared/build.gradle.kts` sets
   `binaryOption("bundleId", ...)` to silence the link warning.
 - `:shared` is in `ModuleLayers` as a composition root (it aggregates the shared modules for iOS as
