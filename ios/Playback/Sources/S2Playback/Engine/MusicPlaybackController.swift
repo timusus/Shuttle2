@@ -489,7 +489,7 @@ public final class MusicPlaybackController {
             } else if drained, reading == nil {
                 drained = false
                 // The node may have run dry already: the new next starts where its clock is.
-                if buffersInFlight == 0 { starved = true }
+                if buffersInFlight == 0 { beginUnderrun() }
                 beginReading(next)
                 fill()
             } else {
@@ -1191,10 +1191,7 @@ public final class MusicPlaybackController {
             self?.engineQueue.async {
                 guard let self, self.generation == generation else { return }
                 self.buffersInFlight -= 1
-                if self.buffersInFlight == 0, !self.drained, self.state == .playing {
-                    self.starved = true
-                    self.beginUnderrun()
-                }
+                if self.buffersInFlight == 0, !self.drained, self.state == .playing { self.beginUnderrun() }
                 self.fill()
             }
         }
@@ -1204,9 +1201,12 @@ public final class MusicPlaybackController {
     }
 
     /// The node played its last buffer with the stream not over: from here it renders silence the
-    /// stream doesn't contain, until a buffer is scheduled. Said once per underrun (#896).
+    /// stream doesn't contain, until a buffer is scheduled. The one place `starved` is set, so every
+    /// underrun heard while playing is said once as it starts and once as it ends (#896); one found
+    /// while paused is nobody's silence, and only marks the anchor.
     private func beginUnderrun() {
-        guard underrun == nil else { return }
+        starved = true
+        guard underrun == nil, state == .playing else { return }
         let atMs = ms(frames: currentMediaFrame())
         underrun = (StartupTiming.now(), atMs)
         engineLog.warning("underrun: starved at \(atMs) ms uid \(self.current?.track.uid ?? "-", privacy: .public)")

@@ -95,6 +95,16 @@ final class StreamRecoveryTests: XCTestCase {
         return condition()
     }
 
+    /// Step the clock a second at a time, as the watchdog looks, until a stall has been dropped and
+    /// its retry is waiting out the backoff. One step at a time, so the retry is never stepped past.
+    private func advanceUntilStallRetry(_ source: HTTPRangeByteSource) -> Bool {
+        for _ in 0...Int(HTTPRangeByteSource.stallTimeoutSeconds) + 1 {
+            scheduler.advance(by: 1)
+            if source.retryPendingForTesting { return true }
+        }
+        return false
+    }
+
     // MARK: - Stall watchdog
 
     func testABodyThatGoesQuietBelowTheCeilingIsReopenedAtTheFrontier() throws {
@@ -113,9 +123,68 @@ final class StreamRecoveryTests: XCTestCase {
         XCTAssertEqual(server.requestedRanges, [0], "reopened before the stall timeout")
 
         scheduler.advance(by: 1)
-        XCTAssertTrue(waitUntil { server.requestedRanges.count == 2 }, "the stall was never noticed")
+        XCTAssertTrue(source.retryPendingForTesting, "the stall was never noticed")
+        XCTAssertEqual(source.retryAttemptsForTesting, 1, "a stall is not a retry like any other")
+        scheduler.advance(by: HTTPRangeByteSource.retryBackoff(attempt: 1))
+        XCTAssertTrue(waitUntil { server.requestedRanges.count == 2 }, "the stall was never retried")
         XCTAssertEqual(server.requestedRanges, [0, Int64(stallAt)], "not re-ranged from the frontier")
         XCTAssertEqual(try read(source, upTo: body.count - stallAt), body.suffix(from: stallAt))
+        XCTAssertEqual(source.retryAttemptsForTesting, 0, "bytes past the frontier did not give the budget back")
+    }
+
+    func testAHostThatNeverAnswersFailsTheReadOnceTheBudgetIsSpent() throws {
+        let server = try startServer(body: makeBody(64 * 1024))
+        // Accepts every request and never says a word: the stall, not the request timeout, is
+        // what sees it, so the stall has to spend the budget.
+        server.holdsOffsetZero = true
+        defer { server.releaseOffsetZero() }
+        let source = makeSource(server, windowBytes: 1024 * 1024)
+
+        let result = readInBackground(source, upTo: 4096)
+        XCTAssertTrue(waitUntil { server.requestedRanges.count == 1 })
+        for attempt in 1...HTTPRangeByteSource.maxRetryAttempts {
+            XCTAssertTrue(advanceUntilStallRetry(source), "stall \(attempt) was not retried")
+            XCTAssertEqual(source.retryAttemptsForTesting, attempt)
+            scheduler.advance(by: HTTPRangeByteSource.retryBackoff(attempt: attempt))
+            XCTAssertTrue(waitUntil { server.requestedRanges.count == attempt + 1 }, "retry \(attempt) never reached the host")
+        }
+        XCTAssertFalse(advanceUntilStallRetry(source), "a stall was retried past the budget")
+        XCTAssertTrue(waitUntil { result() != nil }, "the read outlived the budget")
+        guard case .failure(StreamByteReaderError.transport(_)) = try XCTUnwrap(result()) else {
+            return XCTFail("expected a transport failure, got \(String(describing: result()))")
+        }
+
+        // Failed is failed: the watchdog opens nothing more.
+        scheduler.advance(by: 10 * HTTPRangeByteSource.stallTimeoutSeconds)
+        source.drainQueueForTesting()
+        XCTAssertEqual(server.requestedRanges.count, HTTPRangeByteSource.maxRetryAttempts + 1)
+    }
+
+    func testARangeIgnoringHostCannotGiveTheBudgetBackWithItsPrefix() throws {
+        let body = makeBody(256 * 1024)
+        let server = try startServer(body: body)
+        server.respondsWholeBodyIgnoringRange = true
+        let reached = 32 * 1024
+        server.stallsAfterBodyBytes = reached
+        let source = makeSource(server, windowBytes: 1024 * 1024)
+        XCTAssertEqual(try read(source, upTo: reached), body.prefix(reached))
+
+        // Every reopen is answered from 0 and goes quiet short of where the first body got to: bytes
+        // arrive, the frontier moves, and nothing new is fetched.
+        let prefix = reached / 2
+        server.stallsAfterBodyBytes = prefix
+        let result = readInBackground(source, upTo: 4096)
+        for attempt in 1...HTTPRangeByteSource.maxRetryAttempts {
+            XCTAssertTrue(advanceUntilStallRetry(source), "stall \(attempt) was not retried")
+            XCTAssertEqual(source.retryAttemptsForTesting, attempt, "the prefix gave the budget back")
+            scheduler.advance(by: HTTPRangeByteSource.retryBackoff(attempt: attempt))
+            XCTAssertTrue(waitUntil { source.fetchFrontier == Int64(prefix) }, "retry \(attempt) brought no prefix")
+        }
+        XCTAssertFalse(advanceUntilStallRetry(source), "a stall was retried past the budget")
+        XCTAssertTrue(waitUntil { result() != nil }, "the read outlived the budget")
+        guard case .failure(StreamByteReaderError.transport(_)) = try XCTUnwrap(result()) else {
+            return XCTFail("expected a transport failure, got \(String(describing: result()))")
+        }
     }
 
     func testAFullWindowIsNotAStall() throws {
@@ -124,12 +193,17 @@ final class StreamRecoveryTests: XCTestCase {
         let source = makeSource(server, windowBytes: 32 * 1024)
 
         XCTAssertEqual(try read(source, upTo: 4096), body.prefix(4096))
-        // The bounded range ends at the ceiling: nothing is wanted until the decoder reads on.
-        XCTAssertTrue(waitUntil { source.fetchFrontier >= 32 * 1024 })
+        // The read is the ceiling's base, so the window ends 4 KiB past the first bounded range: its
+        // continuation fills to there, and nothing more is wanted until the decoder reads on. Time is
+        // only stepped once the frontier is at the ceiling, so a body still closing in real time is
+        // not left idle in fake time.
+        let ceiling = Int64(4096 + 32 * 1024)
+        XCTAssertTrue(waitUntil { source.fetchFrontier >= ceiling })
         source.drainQueueForTesting()
+        let opened = source.transactionCount
         scheduler.advance(by: 3 * HTTPRangeByteSource.stallTimeoutSeconds)
         source.drainQueueForTesting()
-        XCTAssertEqual(server.requestedRanges, [0], "a window held at its ceiling was taken for a stall")
+        XCTAssertEqual(source.transactionCount, opened, "a window held at its ceiling was taken for a stall")
     }
 
     // MARK: - Retry budget
@@ -195,7 +269,7 @@ final class StreamRecoveryTests: XCTestCase {
 
     // MARK: - Path changes
 
-    func testAPathChangeReopensAQuietBodyAtOnce() throws {
+    func testAPathChangeLeavesAFlowingBodyAndReopensAQuietOneAtOnce() throws {
         let body = makeBody(256 * 1024)
         let server = try startServer(body: body)
         let stallAt = 16 * 1024
@@ -204,8 +278,13 @@ final class StreamRecoveryTests: XCTestCase {
 
         XCTAssertEqual(try read(source, upTo: stallAt), body.prefix(stallAt))
         server.stallsAfterBodyBytes = nil
+        // Its last byte came just now: the path it is on works, whatever the monitor now prefers.
         paths.post()
+        source.drainQueueForTesting()
+        XCTAssertEqual(server.requestedRanges, [0], "a body still bringing bytes was dropped")
 
+        scheduler.advance(by: HTTPRangeByteSource.pathQuietSeconds)
+        paths.post()
         XCTAssertTrue(waitUntil { server.requestedRanges.count == 2 }, "the path change was ignored")
         XCTAssertEqual(server.requestedRanges, [0, Int64(stallAt)])
         XCTAssertEqual(try read(source, upTo: body.count - stallAt), body.suffix(from: stallAt))
@@ -237,6 +316,44 @@ final class StreamRecoveryTests: XCTestCase {
         let source = makeSource(server, windowBytes: 1024 * 1024)
         XCTAssertEqual(paths.observerCount, 1)
         source.cancel()
+        XCTAssertEqual(paths.observerCount, 0)
+    }
+
+    func testACancelledSourceIgnoresAPathChangeQueuedBeforeTheCancel() throws {
+        let body = makeBody(256 * 1024)
+        let server = try startServer(body: body)
+        server.stallsAfterBodyBytes = 16 * 1024
+        let source = makeSource(server, windowBytes: 1024 * 1024)
+        XCTAssertEqual(try read(source, upTo: 16 * 1024), body.prefix(16 * 1024))
+        // Quiet long enough that a path change would reopen it.
+        scheduler.advance(by: HTTPRangeByteSource.pathQuietSeconds)
+
+        let lock = NSLock()
+        var opened: [Int64] = []
+        source.testBeforeTransaction = { offset in lock.withLock { opened.append(offset) } }
+        // The change is queued, then the source is cancelled before the queue gets to it.
+        let gate = DispatchSemaphore(value: 0)
+        source.enqueueForTesting { gate.wait() }
+        paths.post()
+        source.cancel()
+        gate.signal()
+        source.drainQueueForTesting()
+        XCTAssertEqual(lock.withLock { opened }, [], "a cancelled source opened a transaction")
+    }
+
+    func testAReleasedSourceStopsObservingThePath() throws {
+        let server = try startServer(body: makeBody(16 * 1024))
+        autoreleasepool {
+            _ = HTTPRangeByteSource(
+                url: server.url,
+                authHeaders: [:],
+                session: HTTPRangeByteSourceTests.testSession,
+                runStore: nil,
+                resolvedURLs: nil,
+                scheduler: scheduler,
+                pathMonitor: paths
+            )
+        }
         XCTAssertEqual(paths.observerCount, 0)
     }
 
