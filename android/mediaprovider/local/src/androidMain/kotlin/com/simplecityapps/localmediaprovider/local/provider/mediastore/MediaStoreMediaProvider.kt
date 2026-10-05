@@ -49,9 +49,14 @@ class MediaStoreMediaProvider(
     override var unreadableRoots: Set<String> = emptySet()
         private set
 
+    @Volatile
+    override var skippedFiles: Set<String> = emptySet()
+        private set
+
     // Songs
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+        skippedFiles = emptySet()
         tagReadGuard.recover(type)
         val rawSongs = mutableListOf<Song>()
         val projection =
@@ -214,6 +219,7 @@ class MediaStoreMediaProvider(
                 }
             }
         }
+        skippedFiles = tagReadGuard.skippedPaths(type)
         emit(FlowEvent.Success(songs.withGenres(genresBySongId)))
     }
 

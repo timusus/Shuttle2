@@ -450,6 +450,15 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a source without an index records its unread files too`() = runBlocking<Unit> {
+        provider.skippedFiles = setOf("/music/a.flac")
+        provider.gate.trySend(Unit)
+        importer.import()
+
+        preferences.skippedFiles(provider.type.name) shouldBe 1
+    }
+
+    @Test
     fun `a full import records how many files the source left unread`() = runBlocking<Unit> {
         val indexed = IndexedProvider()
         importer.mediaProviders -= provider
@@ -946,6 +955,9 @@ class MediaImporterTest {
         val failure = IllegalStateException("Scan failed")
 
         @Volatile var scanFailure: String? = null
+
+        /** The files its last listing left unread, as a source without an index (MediaStore) reports them. */
+        @Volatile override var skippedFiles: Set<String> = emptySet()
 
         /** What it finds, once its gate opens. */
         @Volatile var found: List<Song> = emptyList()

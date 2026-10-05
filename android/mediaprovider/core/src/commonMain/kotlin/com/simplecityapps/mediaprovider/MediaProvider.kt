@@ -27,6 +27,12 @@ interface MediaProvider {
     suspend fun songsStored() {}
 
     /**
+     * The paths of the files the last [findSongs] left unread, because reading one crashed the app before (#840). A stored
+     * song among them keeps its row; a new file isn't added. The import records how many, for Sources to say.
+     */
+    val skippedFiles: Set<String> get() = emptySet()
+
+    /**
      * The roots the last [findSongs] couldn't read, as path prefixes each ending in a separator: a volume that isn't
      * mounted, a folder whose access was lost. The import keeps the stored songs under them rather than deleting them as
      * missing ([DeleteGuard]).
@@ -57,12 +63,6 @@ interface MediaProvider {
 interface IndexedMediaProvider : MediaProvider {
     /** Every song [findSongs] finds, and those in the source's folders its index doesn't list. */
     fun findSongsThoroughly(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>>
-
-    /**
-     * The paths of the files the last [findSongs] left unread, because reading one crashed the app before (#840). A stored
-     * song among them keeps its row; a new file isn't added. The import records how many, for Sources to say.
-     */
-    val skippedFiles: Set<String> get() = emptySet()
 }
 
 /**

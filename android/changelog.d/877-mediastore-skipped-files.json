@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Sources now says how many files could not be read when you use the Android media library, and lets you retry them.", "commits": [] }
