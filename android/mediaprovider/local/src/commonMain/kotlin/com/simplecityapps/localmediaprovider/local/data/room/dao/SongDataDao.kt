@@ -92,8 +92,9 @@ abstract class SongDataDao {
     abstract suspend fun delete(songData: List<SongData>): Int
 
     /**
-     * Stores an import's diff in one transaction. [updates] are written without their favourite (see [SongDataUpdate]);
-     * a remote-provider song's favourite, as its server reports it, is then merged in by [mergeServerFavourites]. An
+     * Stores an import's diff in one transaction. [updates] are written without their favourite or play stats (see
+     * [SongDataUpdate]); a remote-provider song's favourite and play stats, as its server reports them, are then merged in
+     * by [mergeServerFavourites] and [mergeServerPlayStats]. An
      * insert is a song new to the library, so it has no `pending_favourites` row and is stored with the server's state.
      */
     @Transaction
@@ -104,7 +105,9 @@ abstract class SongDataDao {
     ): Triple<Int, Int, Int> {
         val insertCount = insert(inserts)
         val updateCount = update(updates.map { it.toSongDataUpdate() })
-        mergeServerFavourites(updates.filter { it.mediaProvider.remote })
+        val remoteUpdates = updates.filter { it.mediaProvider.remote }
+        mergeServerFavourites(remoteUpdates)
+        mergeServerPlayStats(remoteUpdates)
         val deleteCount = delete(deletes)
         return Triple(insertCount.count { id -> id != -1L }, updateCount, deleteCount)
     }
@@ -123,6 +126,29 @@ abstract class SongDataDao {
             group.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).forEach { chunk -> stampServerFavourites(chunk, favouritedAt) }
         }
     }
+
+    /**
+     * Folds each of [songs]' server play stats into the row (#772): the larger play count and the later last-played time.
+     * The app reports its own plays to the server, so the server's count already includes them; taking the maximum, rather
+     * than adding, never double-counts, and the SQL form means a play finishing during the sync isn't overwritten.
+     */
+    private suspend fun mergeServerPlayStats(songs: List<SongData>) {
+        songs.filter { it.playCount > 0 || it.lastPlayed != null }.forEach { song -> applyServerPlayStats(song.id, song.playCount, song.lastPlayed) }
+    }
+
+    @Query(
+        """
+        UPDATE songs SET
+            playCount = MAX(playCount, :playCount),
+            lastPlayed = COALESCE(MAX(lastPlayed, :lastPlayed), lastPlayed, :lastPlayed)
+        WHERE id = :id
+        """
+    )
+    abstract suspend fun applyServerPlayStats(
+        id: Long,
+        playCount: Int,
+        lastPlayed: Instant?
+    )
 
     @Query("UPDATE songs SET favouritedAt = NULL WHERE id IN (:ids) AND favouritedAt IS NOT NULL AND id NOT IN (SELECT songId FROM pending_favourites)")
     abstract suspend fun clearServerUnfavourites(ids: List<Long>): Int

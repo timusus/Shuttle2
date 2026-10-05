@@ -304,9 +304,9 @@ internal fun Metadata.toSong(
     mimeType = "Audio/*",
     // When the song was added, like the Jellyfin and Emby DateCreated; updatedAt moves on every metadata refresh
     lastModified = (addedAt ?: updatedAt)?.let { seconds -> Instant.fromEpochSeconds(seconds) },
-    lastPlayed = null,
+    lastPlayed = lastViewedAt?.let(Instant::fromEpochSeconds),
     lastCompleted = null,
-    playCount = 0,
+    playCount = viewCount?.coerceAtLeast(0) ?: 0,
     playbackPosition = 0,
     blacklisted = false,
     externalId = media.firstOrNull()?.parts?.firstOrNull()?.key,

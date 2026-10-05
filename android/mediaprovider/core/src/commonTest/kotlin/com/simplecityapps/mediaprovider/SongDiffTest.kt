@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -192,6 +193,41 @@ class SongDiffTest {
         val diff = SongDiff(listOf(stored), listOf(createSong(id = 0, lastModified = firstImport).copy(favouritedAt = firstImport))).apply()
 
         diff.updates.single().favouritedAt shouldBe firstImport
+    }
+
+    @Test
+    fun `a remote song's play stats are the larger count and the later time of the server's and the stored ones`() = runTest {
+        val later = firstImport + 1.days
+        val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 5, lastPlayed = later)
+
+        // The server counts fewer plays (some were made offline) but played it earlier: nothing to write
+        val behind = createSong(id = 0, lastModified = firstImport).copy(playCount = 3, lastPlayed = firstImport)
+        SongDiff(listOf(stored), listOf(behind)).apply().updates shouldBe emptyList()
+
+        // The server counts more plays, and a later one: both are taken, not added to the stored ones
+        val ahead = createSong(id = 0, lastModified = firstImport).copy(playCount = 8, lastPlayed = later + 1.days)
+        val update = SongDiff(listOf(stored), listOf(ahead)).apply().updates.single()
+        update.playCount shouldBe 8
+        update.lastPlayed shouldBe later + 1.days
+    }
+
+    @Test
+    fun `a server that reports no plays keeps the stored play stats`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport)
+
+        SongDiff(listOf(stored), listOf(createSong(id = 0, lastModified = firstImport).copy(lastModified = firstImport + 1.days))).apply()
+            .updates.single().let { update ->
+                update.playCount shouldBe 5
+                update.lastPlayed shouldBe firstImport
+            }
+    }
+
+    @Test
+    fun `a local song keeps its own play stats on a rescan`() = runTest {
+        val stored = createSong(id = 7, lastModified = firstImport).copy(mediaProvider = MediaProviderType.Shuttle, playCount = 2)
+        val rescanned = stored.copy(id = 0, playCount = 9, lastModified = firstImport + 1.days)
+
+        SongDiff(listOf(stored), listOf(rescanned)).apply().updates.single().playCount shouldBe 2
     }
 
     @Test

@@ -26,7 +26,11 @@ data class MediaStream(
 /** The signed-in user's own state for an item. */
 @Serializable
 data class UserData(
-    @SerialName("IsFavorite") val isFavorite: Boolean = false
+    @SerialName("IsFavorite") val isFavorite: Boolean = false,
+    // How many times the user has played the item to the end; absent for an item never played
+    @SerialName("PlayCount") val playCount: Int? = null,
+    // An ISO date, absent for an item never played
+    @SerialName("LastPlayedDate") val lastPlayedDate: String? = null
 )
 
 @Serializable

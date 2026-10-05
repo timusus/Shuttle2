@@ -223,9 +223,9 @@ internal fun Item.toSong(syncedAt: Instant): Song {
         // The server has no modified date for items; DateCreated (when the song was added) is the closest, and keeps the
         // Last Modified sort meaningful rather than falling back to our own import time
         lastModified = createdAt,
-        lastPlayed = null,
+        lastPlayed = userData?.lastPlayedDate?.let { date -> runCatching { Instant.parse(date) }.getOrNull() },
         lastCompleted = null,
-        playCount = 0,
+        playCount = userData?.playCount?.coerceAtLeast(0) ?: 0,
         playbackPosition = 0,
         blacklisted = false,
         externalId = id,

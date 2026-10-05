@@ -139,6 +139,25 @@ class ItemToSongTest {
         parse(isFavorite = null).toSong(SYNCED_AT).favouritedAt shouldBe null
     }
 
+    @Test
+    fun `the user's play count and last played date become the song's`() {
+        val song = userData("{\"IsFavorite\": false, \"PlayCount\": 7, \"LastPlayedDate\": \"2026-09-30T18:00:00.0000000Z\"}").toSong(SYNCED_AT)
+
+        song.playCount shouldBe 7
+        song.lastPlayed shouldBe Instant.parse("2026-09-30T18:00:00Z")
+    }
+
+    @Test
+    fun `an item never played has no plays and no last played date`() {
+        val song = userData("{\"IsFavorite\": false}").toSong(SYNCED_AT)
+
+        song.playCount shouldBe 0
+        song.lastPlayed shouldBe null
+        parse().toSong(SYNCED_AT).playCount shouldBe 0
+    }
+
+    private fun userData(json: String): Item = S2Json.decodeFromString<Item>("{\"Id\": \"item-1\", \"UserData\": $json}")
+
     private fun parse(
         albumPrimaryImageTag: String? = "tag-1",
         dateCreated: String? = "2024-03-01T12:34:56.0000000Z",

@@ -54,7 +54,10 @@ data class Metadata(
     @SerialName("Guid") val guids: List<Guid> = emptyList(),
     // The user's rating out of 10 (5 stars), and when they gave it in epoch seconds; a favourite is a 10
     @SerialName("userRating") val userRating: Double? = null,
-    @SerialName("lastRatedAt") val lastRatedAt: Long? = null
+    @SerialName("lastRatedAt") val lastRatedAt: Long? = null,
+    // Absent for a track never played; lastViewedAt is epoch seconds
+    @SerialName("viewCount") val viewCount: Int? = null,
+    @SerialName("lastViewedAt") val lastViewedAt: Long? = null
 )
 
 @Serializable

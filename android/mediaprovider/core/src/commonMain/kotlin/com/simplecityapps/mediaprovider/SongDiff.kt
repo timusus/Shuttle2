@@ -11,9 +11,9 @@ class SongDiff(
     override fun key(item: Song): Any = item.path
 
     /**
-     * Whether [updated] differs from [oldData] in a field the update writes. What it doesn't write (play stats, exclusion,
-     * stream properties, the album identity) is taken from [oldData] before comparing; a remote song's favourite is
-     * written from its server, so it counts there.
+     * Whether [updated] differs from [oldData] in a field the update writes. What it doesn't write (exclusion, stream
+     * properties, the album identity, a local song's play stats) is taken from [oldData] before comparing; a remote song's
+     * favourite and play stats are merged in from its server (see [mergedPlayStats]), so they count there.
      */
     override fun isChanged(
         oldData: Song,
@@ -30,9 +30,9 @@ class SongDiff(
         )
 
         return updated.keepingStoredBitDepth(old).keepingStoredStreamProperties(old).copy(
-            lastPlayed = old.lastPlayed,
+            lastPlayed = if (old.mediaProvider.remote) mergedPlayStats(old, updated).lastPlayed else old.lastPlayed,
             lastCompleted = old.lastCompleted,
-            playCount = old.playCount,
+            playCount = if (old.mediaProvider.remote) mergedPlayStats(old, updated).playCount else old.playCount,
             playbackPosition = old.playbackPosition,
             blacklisted = old.blacklisted,
             mediaProvider = old.mediaProvider,
@@ -56,6 +56,8 @@ class SongDiff(
         newData: Song
     ): Song = newData.keepingStoredBitDepth(oldData).keepingStoredStreamProperties(oldData).copy(
         id = oldData.id,
+        playCount = mergedPlayStats(oldData, newData).playCount,
+        lastPlayed = mergedPlayStats(oldData, newData).lastPlayed,
         // A provider with no date for the song keeps the one from its first import, rather than looking newly added
         lastModified = newData.lastModified ?: oldData.lastModified,
         // The server's date for a remote song, which replaces an older import stamp; otherwise (local songs) the one
@@ -82,5 +84,29 @@ class SongDiff(
         copy(bitDepth = old.bitDepth)
     } else {
         this
+    }
+
+    private class PlayStats(
+        val playCount: Int,
+        val lastPlayed: Instant?
+    )
+
+    /**
+     * A remote song's play stats once its server's are merged with the stored (local) ones: the larger play count and the
+     * later last-played time. The app reports its own plays to the server, so the server's count already includes them
+     * and adding the two would count every play twice; taking the maximum never loses a play made on either side. A
+     * local song's stats come from this device only, so [oldData]'s are kept. The database applies the same rule in SQL
+     * (`SongDataDao.applyServerPlayStats`), so a play finishing during the sync isn't overwritten.
+     */
+    private fun mergedPlayStats(
+        oldData: Song,
+        newData: Song
+    ): PlayStats = if (oldData.mediaProvider.remote) {
+        PlayStats(
+            playCount = maxOf(oldData.playCount, newData.playCount),
+            lastPlayed = listOfNotNull(oldData.lastPlayed, newData.lastPlayed).maxOrNull()
+        )
+    } else {
+        PlayStats(oldData.playCount, oldData.lastPlayed)
     }
 }

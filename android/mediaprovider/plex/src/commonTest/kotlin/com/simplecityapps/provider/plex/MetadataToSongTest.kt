@@ -124,6 +124,24 @@ class MetadataToSongTest {
         parse(addedAt = null, updatedAt = null).toSong(MediaProviderType.Plex, SYNCED_AT).favouritedAt shouldBe null
     }
 
+    @Test
+    fun `the track's view count and last viewed time become the song's plays and last played`() {
+        val metadata = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1", "viewCount": 4, "lastViewedAt": 1790000000}""")
+
+        val song = metadata.toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.playCount shouldBe 4
+        song.lastPlayed shouldBe Instant.fromEpochSeconds(1790000000)
+    }
+
+    @Test
+    fun `a track never viewed has no plays and no last played time`() {
+        val song = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1"}""").toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.playCount shouldBe 0
+        song.lastPlayed shouldBe null
+    }
+
     private fun parse(
         addedAt: Long?,
         updatedAt: Long?,
