@@ -21,14 +21,21 @@ import platform.Foundation.NSURLErrorCancelled
 import platform.Foundation.NSURLErrorDomain
 import platform.Foundation.NSURLIsExcludedFromBackupKey
 import platform.Foundation.NSURLRequest
+import platform.Foundation.NSURLResponse
 import platform.Foundation.NSURLSession
 import platform.Foundation.NSURLSessionAuthChallengeDisposition
 import platform.Foundation.NSURLSessionConfiguration
+import platform.Foundation.NSURLSessionDataDelegateProtocol
+import platform.Foundation.NSURLSessionDataTask
 import platform.Foundation.NSURLSessionDownloadDelegateProtocol
 import platform.Foundation.NSURLSessionDownloadTask
+import platform.Foundation.NSURLSessionResponseCancel
+import platform.Foundation.NSURLSessionResponseDisposition
 import platform.Foundation.NSURLSessionTask
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.setAllHTTPHeaderFields
+import platform.Foundation.setValue
+import platform.Foundation.valueForHTTPHeaderField
 import platform.darwin.NSObject
 
 /**
@@ -85,6 +92,29 @@ class UrlSessionDownloads(
     /** Each path's wanted task: the one [start] made, or one [restore] found still running from an earlier launch. */
     private val tasks = mutableMapOf<String, NSURLSessionTask>()
 
+    /** The downloads still finding their address, for a server with custom headers: see [start]. */
+    private val resolving = mutableMapOf<String, Resolution>()
+
+    private class Resolution {
+        var task: NSURLSessionTask? = null
+        var cancelled = false
+
+        fun cancel() {
+            cancelled = true
+            task?.cancel()
+        }
+    }
+
+    /** What each probe request does with its response, by task: called once, with null if it failed. */
+    private val probes = mutableMapOf<ULong, (NSHTTPURLResponse?) -> Unit>()
+
+    /** An ordinary session for the probes, which a background session can't make (it only runs downloads). */
+    private val probeSession: NSURLSession = NSURLSession.sessionWithConfiguration(
+        NSURLSessionConfiguration.defaultSessionConfiguration,
+        delegate = ProbeDelegate(),
+        delegateQueue = NSOperationQueue.mainQueue
+    )
+
     /** The app delegate's completion handler for the session's background events, until they've all been delivered. */
     private var backgroundEventsCompletion: (() -> Unit)? = null
 
@@ -118,15 +148,31 @@ class UrlSessionDownloads(
     ) {
         val url = NSURL.URLWithString(source.url) ?: return listener?.onFailed(path) ?: Unit
         tasks.remove(path)?.cancel()
+        resolving.remove(path)?.cancel()
+        // A server with custom headers (#921): its redirects are followed here, with the headers, before the background
+        // session gets the final address. iOS follows a background task's redirects itself while the app is suspended,
+        // without asking the delegate, so a download that sent the headers could carry them to another host (#933).
+        if (serverRequestPolicy.headers(source.url).isEmpty()) return begin(path, source, url, wifiOnly, withHeaders = false)
+        val resolution = Resolution()
+        resolving[path] = resolution
+        resolve(resolution, url, url, wifiOnly, hops = 0) { final, withHeaders ->
+            if (resolving[path] !== resolution) return@resolve
+            resolving.remove(path)
+            if (final == null) listener?.onFailed(path) else begin(path, source, final, wifiOnly, withHeaders)
+        }
+    }
+
+    /** Starts [path]'s download task for [url], which carries [source]'s server's custom headers only if [withHeaders]. */
+    private fun begin(
+        path: String,
+        source: DownloadSource,
+        url: NSURL,
+        wifiOnly: Boolean,
+        withHeaders: Boolean
+    ) {
         // Per request, so a download started under one setting keeps it when the setting changes. A background session
         // holds a task that's refused a network until an allowed one is back, rather than failing it.
-        val request = NSMutableURLRequest.requestWithURL(url).apply {
-            // NSURLRequest's properties are read-only vals in Kotlin; the mutable request's setters write them
-            setAllowsCellularAccess(!wifiOnly)
-            setAllowsExpensiveNetworkAccess(!wifiOnly)
-            // The server's custom headers (#921); the pinned certificate is trusted in the delegate
-            setAllHTTPHeaderFields(serverRequestPolicy.headers(source.url).toMap<Any?, Any?>())
-        }
+        val request = downloadRequest(url, wifiOnly, if (withHeaders) serverRequestPolicy.headers(source.url) else emptyMap())
         val task = session.downloadTaskWithRequest(request)
         // The MIME type names the file; the server's suggested name is the fallback for one it doesn't know
         task.taskDescription = source.mimeType + "\n" + path
@@ -134,8 +180,38 @@ class UrlSessionDownloads(
         task.resume()
     }
 
+    /**
+     * Follows [url]'s redirects as far as they stay at [origin] (its server), with the server's headers, then reports where
+     * the download is to go: that address, with the headers only if it's still the server's. Null if a request failed.
+     */
+    private fun resolve(
+        resolution: Resolution,
+        origin: NSURL,
+        url: NSURL,
+        wifiOnly: Boolean,
+        hops: Int,
+        done: (NSURL?, Boolean) -> Unit
+    ) {
+        val probe = probeSession.dataTaskWithRequest(downloadRequest(url, wifiOnly, serverRequestPolicy.headers(origin.absoluteString.orEmpty()), probe = true))
+        resolution.task = probe
+        probes[probe.taskIdentifier] = { response ->
+            if (resolution.cancelled) {
+                // Removed or restarted meanwhile: nothing to report
+            } else if (response == null) {
+                done(null, false)
+            } else {
+                when (val step = nextDownloadStep(serverRequestPolicy, origin, url, response.statusCode, response.valueForHTTPHeaderField("Location"))) {
+                    is DownloadStep.Follow -> if (hops >= MAX_REDIRECTS) done(null, false) else resolve(resolution, origin, step.url, wifiOnly, hops + 1, done)
+                    is DownloadStep.Download -> done(step.url, step.withHeaders)
+                }
+            }
+        }
+        probe.resume()
+    }
+
     override fun remove(path: String) {
         tasks.remove(path)?.cancel()
+        resolving.remove(path)?.cancel()
         // One from an earlier launch that [restore] hasn't found yet: cancelled once the session lists it, unless it's
         // the download started for the path since
         session.getTasksWithCompletionHandler { _, _, downloadTasks ->
@@ -303,8 +379,107 @@ class UrlSessionDownloads(
         }
     }
 
+    /** Reads each probe's first response, whatever it is, and follows no redirect: [resolve] decides each hop. */
+    private inner class ProbeDelegate :
+        NSObject(),
+        NSURLSessionDataDelegateProtocol {
+        private fun finish(
+            task: NSURLSessionTask,
+            response: NSHTTPURLResponse?
+        ) {
+            probes.remove(task.taskIdentifier)?.invoke(response)
+        }
+
+        override fun URLSession(
+            session: NSURLSession,
+            task: NSURLSessionTask,
+            willPerformHTTPRedirection: NSHTTPURLResponse,
+            newRequest: NSURLRequest,
+            completionHandler: (NSURLRequest?) -> Unit
+        ) {
+            finish(task, willPerformHTTPRedirection)
+            completionHandler(null)
+        }
+
+        override fun URLSession(
+            session: NSURLSession,
+            dataTask: NSURLSessionDataTask,
+            didReceiveResponse: NSURLResponse,
+            completionHandler: (NSURLSessionResponseDisposition) -> Unit
+        ) {
+            finish(dataTask, didReceiveResponse as? NSHTTPURLResponse)
+            completionHandler(NSURLSessionResponseCancel)
+        }
+
+        override fun URLSession(
+            session: NSURLSession,
+            task: NSURLSessionTask,
+            didCompleteWithError: NSError?
+        ) {
+            finish(task, null)
+        }
+
+        override fun URLSession(
+            session: NSURLSession,
+            task: NSURLSessionTask,
+            didReceiveChallenge: NSURLAuthenticationChallenge,
+            completionHandler: (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit
+        ) {
+            serverRequestPolicy.handleChallenge(didReceiveChallenge, completionHandler)
+        }
+    }
+
     private companion object {
         /** A finished download's name while it's moved into place; [DownloadFileNames.path] reads no path from it. */
         const val STAGING_PREFIX = ".incoming-"
+
+        const val MAX_REDIRECTS = 10
     }
+}
+
+/** What to do with a probe's response: ask the next address, or hand the download this one. */
+internal sealed interface DownloadStep {
+    class Follow(
+        val url: NSURL
+    ) : DownloadStep
+
+    /** Download [url], with its server's custom headers only if [withHeaders]. */
+    class Download(
+        val url: NSURL,
+        val withHeaders: Boolean
+    ) : DownloadStep
+}
+
+/**
+ * The step after [url]'s response ([status] and its `Location`), a hop in a chain that began at [origin], the server's
+ * address: a redirect to the server's own scheme, host and port is followed with its headers, one to anywhere else is
+ * where the download goes, without them, and an answer that isn't a redirect means [url] itself is, with them.
+ */
+internal fun nextDownloadStep(
+    policy: ServerRequestPolicy,
+    origin: NSURL,
+    url: NSURL,
+    status: Long,
+    location: String?
+): DownloadStep {
+    val redirect = if (status in 300L..399L && location != null) NSURL.URLWithString(location, relativeToURL = url)?.absoluteURL else null
+    val next = redirect ?: return DownloadStep.Download(url, withHeaders = policy.sameOrigin(url, origin))
+    return if (policy.sameOrigin(next, origin)) DownloadStep.Follow(next) else DownloadStep.Download(next, withHeaders = false)
+}
+
+/**
+ * The request for a download or probe of [url]: [headers] are the server's custom headers (#921); the pinned certificate is
+ * trusted in the delegate. A probe asks for its first byte only, as it is only read for its status and `Location`.
+ */
+internal fun downloadRequest(
+    url: NSURL,
+    wifiOnly: Boolean,
+    headers: Map<String, String>,
+    probe: Boolean = false
+): NSMutableURLRequest = NSMutableURLRequest.requestWithURL(url).apply {
+    // NSURLRequest's properties are read-only vals in Kotlin; the mutable request's setters write them
+    setAllowsCellularAccess(!wifiOnly)
+    setAllowsExpensiveNetworkAccess(!wifiOnly)
+    setAllHTTPHeaderFields(headers.toMap<Any?, Any?>())
+    if (probe) setValue("bytes=0-0", forHTTPHeaderField = "Range")
 }

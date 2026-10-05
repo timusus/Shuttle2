@@ -29,6 +29,27 @@ struct ArtworkLoaderTests {
         #expect(redirected.url == request.url)
     }
 
+    @Test func aRedirectBackToTheServerGetsThePlexTokenAgain() {
+        var original = URLRequest(url: URL(string: "http://plex.local:32400/library/metadata/1/thumb/1")!)
+        original.setValue("abc", forHTTPHeaderField: "X-Plex-Token")
+        // The hop out stripped it; the hop back is bound for the server again
+        let back = URLRequest(url: URL(string: "http://plex.local:32400/photo/1")!)
+
+        let redirected = PlexTokenRedirectGuard.redirected(back, from: original.url, original: original)
+
+        #expect(redirected.value(forHTTPHeaderField: "X-Plex-Token") == "abc")
+    }
+
+    @Test func aRedirectFromHttpsToHttpOnTheSameHostLosesThePlexToken() {
+        var request = URLRequest(url: URL(string: "http://plex.local:32400/a")!)
+        request.setValue("abc", forHTTPHeaderField: "X-Plex-Token")
+        let origin = URL(string: "https://plex.local:32400/library/metadata/1/thumb/1")
+
+        let redirected = PlexTokenRedirectGuard.redirected(request, from: origin, original: nil)
+
+        #expect(redirected.value(forHTTPHeaderField: "X-Plex-Token") == nil)
+    }
+
     @Test func downsampleClampsToTheRequestedMaxPixelSize() {
         let data = Self.pngData(width: 400, height: 200)
         let image = ArtworkLoader.downsample(data, maxPixelSize: 100)

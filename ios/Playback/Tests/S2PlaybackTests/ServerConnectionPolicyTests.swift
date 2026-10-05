@@ -98,6 +98,61 @@ final class ServerConnectionPolicyTests: XCTestCase {
         XCTAssertFalse(landing.contains("CF-Access-Client-Id"), "the server's header must not reach the CDN: \(landing)")
     }
 
+    /// The app sets its policy after the graph is created, so a source made before then asks for it on each request (#933).
+    func testAPolicySetAfterTheSourceIsMadeStillApplies() throws {
+        let started = try LoopbackMediaServer(body: Data(repeating: 7, count: 64 * 1024), mimeType: "audio/mpeg")
+        server = started
+        let made = makeSource(started, policy: nil)
+        ServerConnections.policy = FakePolicy(host: started.url.host ?? "", headers: ["CF-Access-Client-Id": "id-1"])
+        defer { ServerConnections.policy = nil }
+
+        try read(made)
+
+        XCTAssertTrue(try XCTUnwrap(started.requestHeads.first).contains("CF-Access-Client-Id: id-1"))
+    }
+
+    /// The headers are for the server's scheme, host and port: the same host in cleartext, or on another port, gets none (#933).
+    func testRequestsKeepTheHeadersOnlyOnTheServersSchemeHostAndPort() throws {
+        let policy = PortedPolicy(origin: URL(string: "https://music.example:8920")!, headers: ["CF-Access-Client-Id": "id-1"])
+        let made = HTTPRangeByteSource(
+            url: URL(string: "https://music.example:8920/a")!, authHeaders: [:], session: session,
+            runStore: nil, resolvedURLs: nil, serverPolicy: policy
+        )
+        source = made
+        func header(_ url: String) -> String? {
+            made.makeRequest(url: URL(string: url)!, range: "bytes=0-").value(forHTTPHeaderField: "CF-Access-Client-Id")
+        }
+
+        XCTAssertEqual(header("https://music.example:8920/b"), "id-1")
+        XCTAssertNil(header("http://music.example:8920/b"))
+        XCTAssertNil(header("https://music.example:9000/b"))
+        XCTAssertNil(header("https://other.example:8920/b"))
+    }
+
+    /// Headers for one scheme, host and port, as the app's policy gives for a server at an explicit port.
+    private final class PortedPolicy: ServerConnectionPolicy, @unchecked Sendable {
+        let origin: URL
+        let headers: [String: String]
+
+        init(origin: URL, headers: [String: String]) {
+            self.origin = origin
+            self.headers = headers
+        }
+
+        func headers(for url: URL) -> [String: String] {
+            url.host == origin.host && url.port == origin.port ? headers : [:]
+        }
+
+        func redirected(_ request: URLRequest, from origin: URL?) -> URLRequest { request }
+
+        func handleChallenge(
+            _ challenge: URLAuthenticationChallenge,
+            completion: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+        ) {
+            completion(.performDefaultHandling, nil)
+        }
+    }
+
     /// The source answers its own TLS challenges, the session having no delegate: through the policy, which decides on the certificate.
     func testTheSourceAnswersATlsChallengeThroughThePolicy() throws {
         let started = try LoopbackMediaServer(body: Data(repeating: 7, count: 1024), mimeType: "audio/mpeg")

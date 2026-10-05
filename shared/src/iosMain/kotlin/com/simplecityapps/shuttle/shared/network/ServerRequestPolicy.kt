@@ -24,20 +24,34 @@ class ServerRequestPolicy(
     fun headers(url: String): Map<String, String> = store.requestHeaders(url)
 
     /**
-     * [request], a redirect from [origin], without the custom headers of the server it was made to when it now goes to
-     * another host or port: `URLSession` carries a request's headers over a redirect, so a server could otherwise send
-     * its proxy token anywhere.
+     * [request], a redirect from [origin] (the address the task was started with, the server's), with the custom headers
+     * of that server only while it goes to the same scheme, host and port: `URLSession` carries a request's headers over a
+     * redirect, so a server could otherwise send its proxy token to another host, or in cleartext. Decided on every hop
+     * against [origin], so a chain that leaves the server and comes back (A→B→A) has them again on its return.
      */
     fun redirected(
         request: NSURLRequest,
         origin: NSURL?
     ): NSURLRequest {
-        val target = request.URL?.absoluteString
+        val targetUrl = request.URL
         val from = origin?.absoluteString
-        if (target == null || from == null || ServerOrigin.parse(target) == ServerOrigin.parse(from)) return request
-        val stripped = request.mutableCopy() as NSMutableURLRequest
-        headers(from).keys.forEach { stripped.setValue(null, forHTTPHeaderField = it) }
-        return stripped
+        if (targetUrl == null || origin == null || from == null) return request
+        val headers = headers(from)
+        if (headers.isEmpty()) return request
+        val sameOrigin = sameOrigin(targetUrl, origin)
+        val copy = request.mutableCopy() as NSMutableURLRequest
+        headers.forEach { (name, value) -> copy.setValue(if (sameOrigin) value else null, forHTTPHeaderField = name) }
+        return copy
+    }
+
+    /** Whether [url] is at [origin]'s scheme, host and port: where its server's custom headers may go. */
+    fun sameOrigin(
+        url: NSURL,
+        origin: NSURL
+    ): Boolean {
+        val target = url.absoluteString ?: return false
+        val from = origin.absoluteString ?: return false
+        return url.scheme.equals(origin.scheme, ignoreCase = true) && ServerOrigin.parse(target) == ServerOrigin.parse(from)
     }
 
     /**

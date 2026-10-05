@@ -298,12 +298,21 @@ final class PlexTokenRedirectGuard: NSObject, URLSessionTaskDelegate, Sendable {
         completionHandler: @escaping (URLRequest?) -> Void
     ) {
         let origin = task.originalRequest?.url
-        completionHandler(policy?.redirected(Self.redirected(request, from: origin), from: origin) ?? Self.redirected(request, from: origin))
+        let guarded = Self.redirected(request, from: origin, original: task.originalRequest)
+        completionHandler(policy?.redirected(guarded, from: origin) ?? guarded)
     }
 
-    /// `request` without the Plex token when it is bound for a different scheme, host or port than `origin`.
-    static func redirected(_ request: URLRequest, from origin: URL?) -> URLRequest {
-        guard let url = request.url, let origin, !sameServer(url, origin) else { return request }
+    /// `request` without the Plex token when it is bound for a different scheme, host or port than `origin`, and with the
+    /// `original` request's token again when it is back there (a redirect chain A→B→A): each hop is decided against the
+    /// server, as streaming does.
+    static func redirected(_ request: URLRequest, from origin: URL?, original: URLRequest? = nil) -> URLRequest {
+        guard let url = request.url, let origin else { return request }
+        guard !sameServer(url, origin) else {
+            guard request.value(forHTTPHeaderField: tokenName) == nil, let token = original?.value(forHTTPHeaderField: tokenName) else { return request }
+            var request = request
+            request.setValue(token, forHTTPHeaderField: tokenName)
+            return request
+        }
         var request = request
         request.setValue(nil, forHTTPHeaderField: tokenName)
         if var components = URLComponents(url: url, resolvingAgainstBaseURL: false), let items = components.queryItems {

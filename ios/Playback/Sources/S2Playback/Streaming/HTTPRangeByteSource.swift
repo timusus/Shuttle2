@@ -152,9 +152,12 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// needs its `Authorization` header, and resolving it is an `async` lookup the decoder's
     /// blocking read cannot make. Values never reach a log — host and header count only.
     private let authHeaders: [String: String]
+    /// A policy handed in by a test; otherwise the app's, read per request because a source made while the app's graph is
+    /// still being created (a restored queue) is made before it is set.
+    private let serverPolicyOverride: ServerConnectionPolicy?
     /// The server's custom headers and pinned certificate (#921); nil in tests that want the system's trust. Header values
     /// are secrets and, like ``authHeaders``, go on the request only.
-    private let serverPolicy: ServerConnectionPolicy?
+    private var serverPolicy: ServerConnectionPolicy? { serverPolicyOverride ?? ServerConnections.policy }
     private let policy: ReadAheadPolicy
     /// Held strongly: the spine capture's lifetime is this playback, and a weak tee that died
     /// mid-episode would silently stop teeing while playback continued.
@@ -443,10 +446,10 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         resolvedURLs: ResolvedURLCache? = .shared,
         scheduler: RecoveryScheduler = DispatchRecoveryScheduler.shared,
         pathMonitor: NetworkPathMonitoring? = SystemNetworkPathMonitor.shared,
-        serverPolicy: ServerConnectionPolicy? = ServerConnections.policy
+        serverPolicy: ServerConnectionPolicy? = nil
     ) {
         self.url = url
-        self.serverPolicy = serverPolicy
+        self.serverPolicyOverride = serverPolicy
         self.authHeaders = authHeaders
         self.policy = readAhead
         self.tee = tee
@@ -1261,10 +1264,13 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// A ranged request to `url` with this source's headers. The auth headers go only to the
     /// ORIGINAL host: a private feed's `Authorization` is for the feed, and a redirect to a CDN
     /// must not carry it there.
-    private func makeRequest(url target: URL, range: String) -> URLRequest {
+    func makeRequest(url target: URL, range: String) -> URLRequest {
         var request = URLRequest(url: target)
-        // Matched on each hop's own origin, so a redirect to another host never carries the server's headers (#921)
-        for (field, value) in serverPolicy?.headers(for: target) ?? [:] { request.setValue(value, forHTTPHeaderField: field) }
+        // Matched on each hop's own origin, and only over the original's scheme, so a redirect to another host, or from https
+        // to cleartext, never carries the server's headers (#921, #933)
+        if target.scheme?.lowercased() == url.scheme?.lowercased() {
+            for (field, value) in serverPolicy?.headers(for: target) ?? [:] { request.setValue(value, forHTTPHeaderField: field) }
+        }
         if Self.sameHost(target, url) {
             for (field, value) in authHeaders { request.setValue(value, forHTTPHeaderField: field) }
         }
