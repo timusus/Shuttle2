@@ -95,6 +95,9 @@ final class Navigator {
     /// cached while it is, and clear (cancelling a Quick Connect poll) once it closes.
     var sourceSetupLive = false { didSet { retainViewModels() } }
 
+    /// The servers that signed the user out, waiting to be shown (`ServerSignOutAlertModifier`), oldest first.
+    var signOutPrompts: [ServerSignOutPrompt] = []
+
     /// The songs whose Song Info sheet is up (`SongInfoSheet`): their view models stay cached while it is, so a path
     /// change under the sheet (rotation, tier change) doesn't clear the one it's showing, and clear once it closes.
     var songInfoPresented = Set<Int64>() { didSet { retainViewModels() } }

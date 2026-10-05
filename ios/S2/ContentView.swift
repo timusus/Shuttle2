@@ -44,12 +44,13 @@ struct ContentView: View {
                 NowPlayingView(onOpen: { route in navigator.open(route) })
                     .playerArtworkTint()
                     .environment(\.nowPlayingNamespace, nowPlayingNamespace)
+                    .serverSignOutAlert(navigator: navigator)
             }
             .sheet(isPresented: $navigator.showsSettings) {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
             }
             .sourceSetupPresentation(isPresented: $showsFirstRun, fullScreen: firstRunFullScreen, navigator: navigator)
-            .serverSignOutPrompt(navigator: navigator)
+            .serverSignOutPrompt(navigator: navigator, isTopmost: !showNowPlaying && !navigator.showsSettings)
             #if DEBUG
             .screenshotHooks(navigator: navigator, showNowPlaying: $showNowPlaying)
             #endif
@@ -285,6 +286,7 @@ struct SettingsSheet: View {
                 }
         }
         .environment(navigator)
+        .serverSignOutAlert(navigator: navigator, isTopmost: !showNowPlaying)
     }
 }
 
