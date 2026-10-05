@@ -5,7 +5,6 @@ import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -34,7 +33,7 @@ constructor(
     private val downloadManager: DownloadManager,
     private val songDownloadManager: SongDownloadManager,
     private val mediaInfoProvider: AggregateMediaInfoProvider,
-    private val songRepository: SongRepository
+    private val songLookup: SongLookup
 ) {
     private val retriedPaths = Collections.synchronizedSet(mutableSetOf<String>())
 
@@ -64,7 +63,7 @@ constructor(
         if (!retriedPaths.add(path)) return
 
         scope.launch {
-            val song = songRepository.songAt(path)
+            val song = songLookup.songAt(path)
             val fallback = song?.let { mediaInfoProvider.downloadFallbackInfo(it, responseCode) }
             if (fallback == null) {
                 Timber.w("Download for $path got HTTP $responseCode but no fallback URL was available")

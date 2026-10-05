@@ -38,25 +38,25 @@ constructor(
     }
 
     internal suspend fun redownloadUndecodable() {
-        val completed = withContext(ioDispatcher) {
-            downloadManager.downloadIndex.getDownloads(Download.STATE_COMPLETED).use { cursor ->
+        withContext(ioDispatcher) {
+            val completed = downloadManager.downloadIndex.getDownloads(Download.STATE_COMPLETED).use { cursor ->
                 buildList {
                     while (cursor.moveToNext()) add(cursor.download.request)
                 }
             }
-        }
-        if (completed.isEmpty()) return
+            if (completed.isEmpty()) return@withContext
 
-        val songs = MediaProviderType.entries
-            .filter { it.remote }
-            .flatMap { songRepository.loadProviderSongs(it) }
-            .associateBy { it.path }
-        for (request in completed) {
-            val song = songs[request.id] ?: continue
-            if (request.mimeType != song.mimeType || !mediaInfoProvider.downloadsAsTranscode(song)) continue
-            val info = mediaInfoProvider.downloadInfo(song) ?: continue
-            Timber.i("Downloading ${song.path} again through the transcode: the player can't decode its original")
-            songDownloadManager.restart(song.path, info.mimeType, info.uri)
+            val songs = MediaProviderType.entries
+                .filter { it.remote }
+                .flatMap { songRepository.loadProviderSongs(it) }
+                .associateBy { it.path }
+            for (request in completed) {
+                val song = songs[request.id] ?: continue
+                if (request.mimeType != song.mimeType || !mediaInfoProvider.downloadsAsTranscode(song)) continue
+                val info = mediaInfoProvider.downloadInfo(song) ?: continue
+                Timber.i("Downloading ${song.path} again through the transcode: the player can't decode its original")
+                songDownloadManager.restart(song.path, info.mimeType, info.uri)
+            }
         }
     }
 }

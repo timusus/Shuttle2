@@ -17,6 +17,7 @@ import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -44,7 +45,7 @@ class DownloadFallbackObserverTest {
         songDownloadManager = RecordingSongDownloadManager()
         fallbackProvider = FakeMediaInfoProvider()
         mediaInfoProvider = AggregateMediaInfoProvider(mutableSetOf(fallbackProvider))
-        observer = DownloadFallbackObserver(downloadManager, songDownloadManager, mediaInfoProvider, FakeSongRepository(listOf(testSong(PATH))))
+        observer = DownloadFallbackObserver(downloadManager, songDownloadManager, mediaInfoProvider, SongLookup(FakeSongRepository(listOf(testSong(PATH))), Dispatchers.Unconfined))
     }
 
     @Test
@@ -93,7 +94,7 @@ class DownloadFallbackObserverTest {
     @Test
     fun `a song that has left the library has no fallback`() = runTest {
         fallbackProvider.fallback = DownloadInfo(Uri.parse("https://server/stream/abc123"), "audio/flac")
-        val observer = DownloadFallbackObserver(downloadManager, songDownloadManager, mediaInfoProvider, FakeSongRepository(emptyList()))
+        val observer = DownloadFallbackObserver(downloadManager, songDownloadManager, mediaInfoProvider, SongLookup(FakeSongRepository(emptyList()), Dispatchers.Unconfined))
 
         observer.onDownloadChanged(failedDownload(responseCode = 401), invalidResponseCode(401), backgroundScope)
         runCurrent()

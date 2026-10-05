@@ -47,13 +47,19 @@ internal fun testSong(
 
 /** A [SongRepository] holding [songs], of which tests read only [loadProviderSongs]. */
 internal class FakeSongRepository(private val songs: List<Song>) : SongRepository {
+    var loadCount = 0
+        private set
+
     override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(songs)
 
     override fun countSongs(): Flow<Int> = flowOf(songs.size)
 
     override suspend fun loadLyrics(songId: Long): String? = null
 
-    override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> = songs.filter { it.mediaProvider == mediaProviderType }
+    override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> {
+        loadCount++
+        return songs.filter { it.mediaProvider == mediaProviderType }
+    }
 
     override val updatedSongIds: Flow<Set<Long>> = emptyFlow()
 
