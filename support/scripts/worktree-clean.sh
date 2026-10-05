@@ -84,7 +84,13 @@ while IFS=$'\t' read -r path branch locked; do
   fi
 done <<< "$list"
 
-[ $dry = 1 ] || "$(dirname "$0")/worktree-pool.sh" reap 2>/dev/null || true
+# Pool reap detaches slots whose branch landed and names those branches; they are on main, so delete them here.
+if [ $dry = 0 ]; then
+  reaped=$("$(dirname "$0")/worktree-pool.sh" reap 2>/dev/null || true)
+  while read -r tag branch; do
+    [ "$tag" = landed ] && [ -n "$branch" ] && git branch -D "$branch" >/dev/null 2>&1
+  done <<< "$reaped"
+fi
 
 verb=removed; [ $dry = 1 ] && verb="would remove"
 echo "worktree-clean: $verb $removed, kept $kept"

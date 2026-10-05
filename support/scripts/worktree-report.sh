@@ -9,7 +9,8 @@
 # (or listed landed/abandoned in ~/.claude/stale-worktrees.md), its tree is clean, it isn't
 # `git worktree lock`ed, and no process has its cwd inside it — worktree-clean.sh already checks
 # all of that. This script narrows the candidate list first: it skips worktrees named
-# "bridge-*" and pool slots "pool-*" (worktree-pool.sh; never removed, a stale lease is reaped instead) (owned by a bridge session, not landing state) and any worktree with a file
+# "bridge-*" (owned by a bridge session, not landing state), pool slots "pool-*" (worktree-pool.sh; never
+# removed, a stale lease is reaped instead) and any worktree with a file
 # modified in the last 2 hours (mid-edit, even if everything else lines up), then hands the
 # remaining names to worktree-clean.sh.
 set -uo pipefail
