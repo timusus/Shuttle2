@@ -10,10 +10,15 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -73,6 +78,47 @@ class MediaImportWorkerTest {
         worker().doWork() shouldBe Result.success()
 
         provider.scans shouldBe 1
+        foregrounds shouldBe 1
+    }
+
+    @Test
+    fun `a sync where only one of two sources fails is retried`() = runBlocking<Unit> {
+        importer.mediaProviders += ScanProvider(MediaProviderType.Jellyfin)
+        provider.failure = "Server unreachable"
+
+        worker().doWork() shouldBe Result.retry()
+    }
+
+    @Test
+    fun `a sync where every source succeeds is a success`() = runBlocking<Unit> {
+        val other = ScanProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += other
+
+        worker().doWork() shouldBe Result.success()
+
+        provider.scans shouldBe 1
+        other.scans shouldBe 1
+    }
+
+    @Test
+    fun `a cancelled sync is cancelled, not retried`() = runBlocking<Unit> {
+        provider.hang = true
+        val run = launch(Dispatchers.Default) { worker().doWork() }
+        provider.started.receive()
+
+        run.cancelAndJoin()
+
+        run.isCancelled shouldBe true
+    }
+
+    @Test
+    fun `a failure from an earlier run doesn't retry a sync that skips`() = runBlocking<Unit> {
+        provider.failure = "Server unreachable"
+        worker().doWork() shouldBe Result.retry()
+
+        preferences.lastMediaImportDate = null
+
+        worker(attempt = 1).doWork() shouldBe Result.success()
     }
 
     @Test
@@ -107,13 +153,20 @@ class MediaImportWorkerTest {
         worker(attempt = 2).doWork() shouldBe Result.success()
     }
 
-    private class ScanProvider : MediaProvider {
-        override val type = MediaProviderType.Shuttle
+    private class ScanProvider(
+        override val type: MediaProviderType = MediaProviderType.Shuttle
+    ) : MediaProvider {
         var scans = 0
         var failure: String? = null
 
+        /** Holds the scan open until cancelled, signalling [started] as it begins. */
+        var hang = false
+        val started = Channel<Unit>(Channel.UNLIMITED)
+
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             scans++
+            started.send(Unit)
+            if (hang) awaitCancellation()
             emit(failure?.let { FlowEvent.Failure(it) } ?: FlowEvent.Success(emptyList()))
         }
 

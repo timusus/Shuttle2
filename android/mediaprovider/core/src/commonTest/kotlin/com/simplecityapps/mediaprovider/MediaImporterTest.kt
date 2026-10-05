@@ -341,6 +341,84 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a sync where every source succeeds reports each as a success and says it started`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        var started = 0
+
+        val result = importer.sync(SyncTrigger.Periodic, onStart = { started++ })
+
+        result shouldBe SyncResult.Ran(mapOf(MediaProviderType.Jellyfin to ProviderSyncOutcome.Success))
+        result.shouldRetry shouldBe false
+        started shouldBe 1
+    }
+
+    @Test
+    fun `a sync that is skipped says so and never says it started`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        preferences.lastMediaImportDate = null
+        var started = 0
+
+        val result = importer.sync(SyncTrigger.Periodic, onStart = { started++ })
+
+        result shouldBe SyncResult.Skipped
+        result.shouldRetry shouldBe false
+        started shouldBe 0
+    }
+
+    @Test
+    fun `a sync where one source fails and another succeeds reports both, and is worth retrying`() = runBlocking<Unit> {
+        importer.mediaProviders += server
+        server.failure = "Unreachable"
+        provider.gate.trySend(Unit)
+
+        val result = importer.sync(SyncTrigger.Periodic)
+
+        result shouldBe
+            SyncResult.Ran(
+                mapOf(
+                    MediaProviderType.Shuttle to ProviderSyncOutcome.Success,
+                    MediaProviderType.Jellyfin to ProviderSyncOutcome.Failed("Unreachable")
+                )
+            )
+        result.shouldRetry shouldBe true
+    }
+
+    @Test
+    fun `a source that throws during a sync is a failure carrying what it threw`() = runBlocking<Unit> {
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+
+        val result = importer.sync(SyncTrigger.Periodic)
+
+        result shouldBe SyncResult.Ran(mapOf(MediaProviderType.Shuttle to ProviderSyncOutcome.Failed("Import failed", cause = provider.failure)))
+        result.shouldRetry shouldBe true
+    }
+
+    @Test
+    fun `a source removed during a sync is cancelled, which is not worth retrying`() = runBlocking<Unit> {
+        val removed = GatedProvider(MediaProviderType.Jellyfin)
+        importer.mediaProviders += removed
+        val result = CompletableDeferred<SyncResult>()
+        launch(Dispatchers.Default) { result.complete(importer.sync(SyncTrigger.Periodic)) }
+        provider.started.receive()
+        removed.started.receive()
+
+        importer.removeProvider(removed)
+        provider.gate.trySend(Unit)
+
+        result.await() shouldBe
+            SyncResult.Ran(
+                mapOf(
+                    MediaProviderType.Shuttle to ProviderSyncOutcome.Success,
+                    MediaProviderType.Jellyfin to ProviderSyncOutcome.Cancelled
+                )
+            )
+        result.await().shouldRetry shouldBe false
+    }
+
+    @Test
     fun `an import cancelled mid-way records nothing`() = runBlocking<Unit> {
         val import = launch(Dispatchers.Default) { importer.import() }
         provider.started.receive()
@@ -777,7 +855,6 @@ class MediaImporterTest {
         runCatching { importer.import() }.exceptionOrNull() shouldBe provider.failure
 
         preferences.lastMediaImportDate shouldBe clock.time
-        importer.importCount shouldBe 1
         // The failing source stays outdated, so the album key move still waits on it
         afterImports shouldBe listOf(false)
     }
@@ -791,7 +868,6 @@ class MediaImporterTest {
         runCatching { importer.import() }.exceptionOrNull() shouldBe provider.failure
 
         preferences.lastMediaImportDate shouldBe null
-        importer.importCount shouldBe 0
         afterImports.shouldBeEmpty()
     }
 

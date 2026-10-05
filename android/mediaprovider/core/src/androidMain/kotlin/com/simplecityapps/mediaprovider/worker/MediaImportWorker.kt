@@ -17,7 +17,6 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.R
-import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SyncTrigger
 import com.simplecityapps.shuttle.di.WorkerInstanceFactory
 import com.simplecityapps.shuttle.di.WorkerKey
@@ -29,9 +28,6 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.binding
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -52,30 +48,10 @@ constructor(
     interface Factory : WorkerInstanceFactory<MediaImportWorker>
 
     override suspend fun doWork(): Result {
-        val importsBefore = mediaImporter.importCount
-        coroutineScope {
-            // A periodic sync publishes no progress, so a long one is told by its length: a sync that skips returns at once and
-            // shows nothing
-            val promotion =
-                launch {
-                    delay(FOREGROUND_DELAY_MILLIS)
-                    promoteToForeground()
-                }
-            try {
-                mediaImporter.sync(SyncTrigger.Periodic)
-            } finally {
-                promotion.cancel()
-            }
-        }
-
-        // sync reports a source's failure through the import state, not a return value; a periodic sync isn't quiet about it.
-        // The state outlasts the run, so it counts only when this run imported something (a skipped sync leaves importCount).
-        val imported = mediaImporter.importCount != importsBefore
-        val failed =
-            imported &&
-                mediaImporter.providerImportStates.value.values.any { state -> state is SongImportState.ImportComplete && state.error != null }
+        // Foregrounded as the sync starts work, so a sync that skips returns at once and shows nothing
+        val result = mediaImporter.sync(SyncTrigger.Periodic, onStart = ::promoteToForeground)
         return when {
-            !failed -> Result.success()
+            !result.shouldRetry -> Result.success()
 
             runAttemptCount + 1 >= MAX_ATTEMPTS -> {
                 Timber.w("The media import failed %d times, leaving it to the next period", runAttemptCount + 1)
@@ -130,9 +106,6 @@ constructor(
         private const val TAG_MEDIA_IMPORT = "MEDIA_IMPORT"
         private const val NOTIFICATION_CHANNEL_ID = "media_import"
         private const val NOTIFICATION_ID = 4
-
-        /** How long a sync runs before it is promoted to a foreground service. */
-        private const val FOREGROUND_DELAY_MILLIS = 3_000L
 
         /** The runs (the first and its retries) a failing sync gets before it waits for the next period. */
         private const val MAX_ATTEMPTS = 3
