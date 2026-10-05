@@ -55,18 +55,20 @@ appId: com.simplecityapps.shuttle.dev
     id: "settings.pref_streaming_quality_unmetered"
 - tapOn: "128 kbps"
 - tapOn:
-    text: "Library"
-    index: 0
-- tapOn: "Albums"
+    id: "settings.done"
+- tapOn:
+    id: "libraryChip.albums"
 - scrollUntilVisible:
     element:
       text: "Aladdin.*"
     timeout: 60000
+    centerElement: true
 - tapOn:
     text: "Aladdin.*"
 - scrollUntilVisible:
     element:
       text: "One Jump Ahead"
+    centerElement: true
 - tapOn: "One Jump Ahead"
 - extendedWaitUntil:
     visible:
