@@ -59,7 +59,7 @@ done
 log() { printf '[capture] %s\n' "$*" >&2; }
 
 # Whatever happened — success, a failed step, Ctrl-C — undo what this run did: clear every status-bar
-# override we set and release the iPhone lease if we took one. A lease somebody else holds (a run that
+# override and entitlement override we set and release the iPhone lease if we took one. A lease somebody else holds (a run that
 # failed before the lease, or a pre-existing holder) is never released.
 LEASE_TAKEN=0
 STATUS_BAR_UDIDS=()
@@ -68,6 +68,9 @@ cleanup() {
   local udid
   for udid in ${STATUS_BAR_UDIDS[@]+"${STATUS_BAR_UDIDS[@]}"}; do
     xcrun simctl status_bar "$udid" clear >/dev/null 2>&1 || true
+    # The paywall slot's Free override lives in the simulator's own defaults, which outlive the app and Maestro's
+    # clearState: left behind, every later debug run on this pool simulator refuses server streams (#502)
+    xcrun simctl spawn "$udid" defaults delete "$BUNDLE_ID" debug.entitlementOverride >/dev/null 2>&1 || true
   done
   if [ "$LEASE_TAKEN" = 1 ]; then
     CLAUDE_CODE_SESSION_ID="$("$IOS_DIR/scripts/lease-sim.sh" --holder)" \

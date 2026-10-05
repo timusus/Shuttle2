@@ -74,6 +74,10 @@ URL="" API_KEY=""
 . "$env_file"
 [ -n "$URL" ] && [ -n "$API_KEY" ] || { echo "maestro-sim: $env_file must set URL and API_KEY" >&2; exit 1; }
 
+# A debug entitlement override (the store screenshots' Free) lives in the simulator's own defaults, which clearState
+# leaves alone; a stale one refuses every server stream, so the flows run as the debug build's default, Pro (#502)
+xcrun simctl spawn "$udid" defaults delete com.simplecityapps.shuttle.dev debug.entitlementOverride >/dev/null 2>&1 || true
+
 echo "==> Running $(basename "$flow") on $udid against the Jellyfin test server"
 export MAESTRO_SERVER_URL="${URL%/}"
 export MAESTRO_API_KEY="$API_KEY"
