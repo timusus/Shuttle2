@@ -310,6 +310,27 @@ class QueueStoreTest {
     }
 
     @Test
+    fun `after a skip and a seek, a restore resumes the new song at the position it was seeked to (#341)`() {
+        val harness = harness()
+        harness.setQueue(library.take(3))
+        harness.loadPaused(30_000)
+        harness.playbackOperations.play()
+        harness.runUntil { harness.playbackOperations.getProgress().let { it != null && it > 30_000 } }
+
+        harness.run { harness.playbackOperations.skipToNext() }
+        harness.playbackOperations.seekTo(10_000)
+        harness.idle()
+        saved.queuePosition shouldBe 1
+        saved.playbackPosition shouldBe 10_000
+
+        val restored = harness()
+        restored.restore()
+        restored.queueOperations.queueStateFlow.value.currentPosition shouldBe 1
+        restored.runUntil { restored.playbackOperations.playbackStateFlow.value == PlaybackState.Paused }
+        restored.playbackOperations.getProgress() shouldBe 10_000
+    }
+
+    @Test
     fun `a move to another song clears the saved position, so it resumes from its own start`() {
         val harness = harness()
         harness.setQueue(library.take(2))
