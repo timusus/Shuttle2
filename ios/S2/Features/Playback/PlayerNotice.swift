@@ -35,8 +35,6 @@ enum PlayerEventOutcome {
             return .notice(PlayerNotice(message: "Queue cleared", actionTitle: "Undo", action: undoClearQueue))
         case is PlayerUiEventQueueItemRemoved:
             return .notice(PlayerNotice(message: "Removed from queue", actionTitle: "Undo", action: undoRemoveQueueItem))
-        case let skipped as PlayerUiEventServerSongSkipped:
-            return .notice(PlayerNotice(message: "Skipped “\(skipped.songTitle)” — streaming needs Shuttle Music Pro"))
         case let done as PlayerUiEventMediaActionDone:
             return resolve(done.result, send: send)
         default:

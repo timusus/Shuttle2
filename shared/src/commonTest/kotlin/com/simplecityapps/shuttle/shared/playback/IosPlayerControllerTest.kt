@@ -544,14 +544,12 @@ class IosPlayerControllerTest {
         serverAccess = streams::access
         server += listOf(a.id, b.id)
         val paywalls = collect(gate.paywallRequests)
-        val skipped = collect(streams.gatedSongs)
         controller.queueOperations.setQueue(listOf(a, b), null, 0)
 
         controller.load(skipUnloadable = false) { }
         engine.settle()
 
         paywalls shouldBe emptyList()
-        skipped shouldBe emptyList()
         controller.currentSong shouldBe a
         controller.playbackState() shouldBe PlaybackState.Paused
 
@@ -559,7 +557,45 @@ class IosPlayerControllerTest {
         engine.settle()
 
         paywalls.first() shouldBe PaywallSource.ServerPlayback
-        skipped.first() shouldBe a
+    }
+
+    @Test
+    fun `a refused server song opens the paywall once and stops the queue there - it doesn't skip through it`() = test { controller ->
+        val gate = ServerAccessGate(MutableStateFlow(Entitlement.Free(trialUsed = true)), startTrial = null)
+        val streams = GatedServerStreams(gate)
+        serverAccess = streams::access
+        server += listOf(a.id, b.id, c.id)
+        val paywalls = collect(gate.paywallRequests)
+        controller.queueOperations.setQueue(listOf(a, b, c), null, 0)
+
+        controller.load(skipUnloadable = true) { }
+        engine.settle()
+        controller.play()
+        engine.settle()
+
+        paywalls shouldBe listOf(PaywallSource.ServerPlayback)
+        controller.currentSong shouldBe a
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `a refused next song opens the paywall once - when it becomes current, not while the song before it plays`() = test { controller ->
+        val gate = ServerAccessGate(MutableStateFlow(Entitlement.Free(trialUsed = true)), startTrial = null)
+        val streams = GatedServerStreams(gate)
+        serverAccess = streams::access
+        server += b.id
+        val paywalls = collect(gate.paywallRequests)
+
+        controller.start(listOf(a, b, c))
+        engine.settle()
+        paywalls shouldBe emptyList()
+
+        engine.finishTrack()
+        engine.settle()
+
+        paywalls shouldBe listOf(PaywallSource.ServerPlayback)
+        controller.currentSong shouldBe b
+        controller.playbackState() shouldBe PlaybackState.Paused
     }
 
     @Test

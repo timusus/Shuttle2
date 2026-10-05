@@ -42,12 +42,6 @@ struct PlayerEventOutcomeTests {
         #expect(undone)
     }
 
-    @Test func aSkippedServerSongSaysWhy() throws {
-        let result = try notice(resolve(PlayerUiEventServerSongSkipped(songTitle: "Teardrop")))
-        #expect(result.message == "Skipped “Teardrop” — streaming needs Shuttle Music Pro")
-        #expect(result.action == nil)
-    }
-
     @Test func anActionMessageShowsItsTextAndSendsItsSnackbarAction() throws {
         var sent: [any MediaAction] = []
         let undo = MediaActionInclude(selection: selection)

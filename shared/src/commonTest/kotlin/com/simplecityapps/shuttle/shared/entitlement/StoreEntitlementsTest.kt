@@ -191,14 +191,14 @@ class StoreEntitlementsTest {
         val store = entitlements()
         store.storeAnswered(emptyList())
         runCurrent()
-        val streams = GatedServerStreams(ServerAccessGate(store.entitlement, startTrial = null))
-        val skipped = mutableListOf<Song>()
-        backgroundScope.launch { streams.gatedSongs.toList(skipped) }
+        val gate = ServerAccessGate(store.entitlement, startTrial = null)
+        val streams = GatedServerStreams(gate)
+        val paywalls = mutableListOf<PaywallSource>()
+        backgroundScope.launch { gate.paywallRequests.toList(paywalls) }
         runCurrent()
-        val song = song(id = 1, path = "jellyfin://item/1")
 
-        streams.access(song, playRequested = true) shouldBe ServerAccess.Refused
+        streams.access(song(id = 1, path = "jellyfin://item/1"), playRequested = true) shouldBe ServerAccess.Refused
         runCurrent()
-        skipped shouldBe listOf(song)
+        paywalls shouldBe listOf(PaywallSource.ServerPlayback)
     }
 }

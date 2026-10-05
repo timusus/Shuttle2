@@ -23,6 +23,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -77,7 +78,7 @@ class IosEntitlementModule {
     }
 
     @Provides
-    fun provideObserveGatedServerSkip(streams: GatedServerStreams): ObserveGatedServerSkip = ObserveGatedServerSkip { streams.gatedSongs }
+    fun provideObserveGatedServerSkip(): ObserveGatedServerSkip = ObserveGatedServerSkip { emptyFlow() }
 }
 
 private val STORE_ANSWER_WAIT = 5.seconds

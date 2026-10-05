@@ -270,15 +270,16 @@ class IosPlayerController(
     ) = Feed("${item.uid}-${++feedSerial}", item, playId)
 
     /**
-     * [feed]'s song's stream, or why it has none; a refusal opens the paywall only while the user is waiting to play. A
-     * play [feed] is no longer part of by the time its stream is resolved is ended straight away.
+     * [feed]'s song's stream, or why it has none; a refusal opens the paywall only while the user is waiting to play
+     * ([playRequested]). A play [feed] is no longer part of by the time its stream is resolved is ended straight away.
      */
     private suspend fun resolve(
         feed: Feed,
-        startPositionMs: Int = 0
+        startPositionMs: Int = 0,
+        playRequested: Boolean = playWhenReady
     ): Result<IosStream> = try {
         val song = feed.item.song
-        Result.success(resolver.resolve(song, startPositionMs.toLong(), playRequested = playWhenReady, playId = feed.playId)).also {
+        Result.success(resolver.resolve(song, startPositionMs.toLong(), playRequested = playRequested, playId = feed.playId)).also {
             resolvedPlays[feed.playId] = song
             endAbandonedPlays()
         }
@@ -308,9 +309,12 @@ class IosPlayerController(
         }
     }
 
-    /** StoreKit hadn't answered whether the user may stream it: not the song's fault, so it isn't failed for it. */
-    private val Result<IosStream>.undecided: Boolean
-        get() = (exceptionOrNull() as? ServerStreamNotAllowedException)?.undecided == true
+    /**
+     * The Pro gate refused it, or StoreKit hadn't answered yet: not the song's fault, so it isn't failed for it, and the
+     * queue isn't skipped through (every server song would be refused alike). A refusal has opened the paywall.
+     */
+    private val Result<IosStream>.notAllowed: Boolean
+        get() = exceptionOrNull() is ServerStreamNotAllowedException
 
     private fun Feed.track(stream: IosStream) = IosAudioTrack(
         id,
@@ -369,11 +373,11 @@ class IosPlayerController(
             if (current !== feed) return@launch
             val stream = resolved.getOrNull()
             if (stream == null) {
-                // Nothing of it can play, and whatever the engine had is no longer current. Undecided, it stays
+                // Nothing of it can play, and whatever the engine had is no longer current. Not allowed, it stays
                 // current, and playing it asks again.
                 player.stop()
                 feed.reportFailure = false
-                onCurrentFailed(feed, skip = !resolved.undecided)
+                onCurrentFailed(feed, skip = !resolved.notAllowed)
                 return@launch
             }
             handOver(feed, stream)
@@ -413,7 +417,8 @@ class IosPlayerController(
         val feed = newFeed(want)
         next = feed
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val resolved = resolve(feed)
+            // Resolved mid-song, so a refusal mustn't open the paywall: it's asked again, and opens it, once the song is current.
+            val resolved = resolve(feed, playRequested = false)
             if (next !== feed) return@launch
             val stream = resolved.getOrNull()
             if (stream == null) {
@@ -421,8 +426,8 @@ class IosPlayerController(
                     engineNext = null
                     player.setNext(null)
                 }
-                // Undecided, it's left unsent, and loaded afresh when playback reaches it (see onEnded).
-                if (resolved.undecided) return@launch
+                // Not allowed, it's left unsent, and loaded afresh when playback reaches it (see onEnded), asking again.
+                if (resolved.notAllowed) return@launch
                 // Reached, it's skipped as a failed item (see onEnded).
                 feed.failed = true
                 feed.reportFailure = false

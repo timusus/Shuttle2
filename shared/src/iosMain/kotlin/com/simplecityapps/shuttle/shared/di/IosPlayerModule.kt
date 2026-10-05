@@ -17,9 +17,8 @@ import kotlinx.coroutines.CoroutineScope
 
 /**
  * What the shared `PlayerViewModel` needs beyond playback, bound for what iOS has today: no Cast (the iOS app has no
- * Cast sender), the saved song to show until the saved queue is restored (as on Android). A server song
- * skipped for want of Pro comes from [com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams]
- * (`IosEntitlementModule`). The sleep timer is the shared one, on the player
+ * Cast sender), the saved song to show until the saved queue is restored (as on Android). No server song is
+ * ever skipped for want of Pro (it stays current and the paywall opens), so there is no skip notice. The sleep timer is the shared one, on the player
  * controller. ReplayGain is stored as on Android, but the iOS engine plays at unity gain until it applies it.
  */
 @ContributesTo(AppScope::class)
