@@ -1,13 +1,18 @@
 package com.simplecityapps.playback.exoplayer
 
 import com.simplecityapps.mediaprovider.MediaInfoProvider
+import com.simplecityapps.mediaprovider.TimeSeekableStream
 import com.simplecityapps.shuttle.model.Song
 
-/** Where to play a song from: its [uri] and [mimeType], and whether it streams over the network (which picks the wake mode). */
+/**
+ * Where to play a song from: its [uri] and [mimeType], whether it streams over the network (which picks the wake mode),
+ * and for a transcode that seeks by time rather than byte range, how ([timeSeek]).
+ */
 data class ResolvedMedia(
     val uri: String,
     val mimeType: String,
-    val isRemote: Boolean
+    val isRemote: Boolean,
+    val timeSeek: TimeSeekableStream? = null
 )
 
 /** Resolves a [Song] to the media the player streams for it. */
@@ -21,7 +26,8 @@ class MediaInfoMediaResolver(private val mediaInfoProvider: MediaInfoProvider) :
         return ResolvedMedia(
             uri = mediaInfo.path.toString(),
             mimeType = mediaInfo.mimeType,
-            isRemote = mediaInfo.isRemote
+            isRemote = mediaInfo.isRemote,
+            timeSeek = mediaInfo.timeSeek
         )
     }
 }

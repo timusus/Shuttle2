@@ -5,9 +5,10 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.datasource.TransferListener
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+import com.simplecityapps.mediaprovider.TimeSeekableStream
 import com.simplecityapps.playback.awaitBlocking
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.queue.QueueEntry
@@ -27,12 +28,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 
 /**
- * Resolves a remote song's own URI (`jellyfin://`, `emby://`, `plex://`) to the URL it streams from, only when the
+ * Resolves a remote song's own URI (`jellyfin://`, `emby://`, `plex://`, `subsonic://`) to the URL it streams from, only when the
  * player opens it, so building a queue never waits on a server.
  *
  * [queued] records which song each URI belongs to, and [retainOnly] forgets the songs the playlist no longer holds.
  * [dataSourceFactory]'s data sources then ask [mediaResolver] for that song's stream when they open its URI. They open
- * it on one of the player's loader threads, which Media3 lets a [ResolvingDataSource.Resolver] block, so that thread
+ * it on one of the player's loader threads, which Media3 lets a data source's open block, so that thread
  * waits (see [awaitBlocking]) while the resolution runs on [ioContext]; cancelling the load interrupts the wait. File,
  * content and http(s) URIs open as they are.
  */
@@ -48,7 +49,7 @@ class SongUriResolver(
      * Each URI's stream, resolving or resolved, so a seek or retry, or the stream-type probe and then the player
      * opening the same URI, asks the server once.
      */
-    private val resolutions = ConcurrentHashMap<String, Deferred<Uri>>()
+    private val resolutions = ConcurrentHashMap<String, Deferred<Resolution>>()
 
     /** Records the songs [items] play, so the player can open them. Call it before they join the playlist. */
     fun queued(items: List<MediaItem>) {
@@ -72,34 +73,32 @@ class SongUriResolver(
         (resolutions.keys - keep).forEach { key -> resolutions.remove(key)?.cancel() }
     }
 
-    fun dataSourceFactory(upstream: DataSource.Factory): DataSource.Factory = ResolvingDataSource.Factory(upstream) { dataSpec -> resolve(dataSpec) }
+    fun dataSourceFactory(upstream: DataSource.Factory): DataSource.Factory = DataSource.Factory { SongDataSource(upstream.createDataSource()) }
 
-    private fun resolve(dataSpec: DataSpec): DataSpec {
-        if (dataSpec.uri.isDirect()) return dataSpec
+    private fun resolve(dataSpec: DataSpec): Resolution {
         val key = dataSpec.uri.toString()
         val resolution = resolutions[key] ?: startResolving(key, dataSpec.uri)
-        val uri =
-            try {
-                resolution.awaitBlocking()
-            } catch (e: InterruptedIOException) {
-                throw e
-            } catch (e: Exception) {
-                // Forget the failure, so the next load asks again.
-                resolutions.remove(key, resolution)
-                throw e as? MediaResolutionException ?: MediaResolutionException("Resolving a ${dataSpec.uri.scheme} URI was cancelled", e)
-            }
-        return dataSpec.withUri(uri)
+        return try {
+            resolution.awaitBlocking()
+        } catch (e: InterruptedIOException) {
+            throw e
+        } catch (e: Exception) {
+            // Forget the failure, so the next load asks again.
+            resolutions.remove(key, resolution)
+            throw e as? MediaResolutionException ?: MediaResolutionException("Resolving a ${dataSpec.uri.scheme} URI was cancelled", e)
+        }
     }
 
     private fun startResolving(
         key: String,
         uri: Uri
-    ): Deferred<Uri> {
+    ): Deferred<Resolution> {
         val song = songs[key] ?: throw MediaResolutionException("No song queued for ${uri.scheme} URI")
         val resolution =
             scope.async(start = CoroutineStart.LAZY) {
                 try {
-                    Uri.parse(mediaResolver.resolve(song).uri)
+                    val media = mediaResolver.resolve(song)
+                    Resolution(Uri.parse(media.uri), media.timeSeek)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -115,7 +114,64 @@ class SongUriResolver(
         return resolution
     }
 
+    private class Resolution(
+        val uri: Uri,
+        val timeSeek: TimeSeekableStream?
+    )
+
+    /**
+     * Opens a remote song's URI as its stream, and direct URIs as they are. A stream that seeks by time
+     * ([TimeSeekableStream]) is opened from the second the requested byte position stands for, then read on to the
+     * position itself, and reported as long as its bitrate makes it, so the extractor (a constant-bitrate seeker) knows
+     * its duration and maps a seek to a byte position this turns back into a time.
+     */
+    private inner class SongDataSource(private val upstream: DataSource) : DataSource {
+        private var uri: Uri? = null
+
+        override fun addTransferListener(transferListener: TransferListener) = upstream.addTransferListener(transferListener)
+
+        override fun open(dataSpec: DataSpec): Long {
+            if (dataSpec.uri.isDirect()) return upstream.open(dataSpec).also { uri = dataSpec.uri }
+            val resolution = resolve(dataSpec)
+            val timeSeek = resolution.timeSeek ?: return upstream.open(dataSpec.withUri(resolution.uri)).also { uri = resolution.uri }
+            val position = dataSpec.position
+            val offsetSeconds = position / timeSeek.bytesPerSecond
+            val streamUri = if (offsetSeconds > 0) Uri.parse(timeSeek.urlAt(offsetSeconds)) else resolution.uri
+            uri = streamUri
+            upstream.open(dataSpec.buildUpon().setUri(streamUri).setPosition(0).setLength(C.LENGTH_UNSET.toLong()).build())
+            skip(position - offsetSeconds * timeSeek.bytesPerSecond)
+            return if (dataSpec.length != C.LENGTH_UNSET.toLong()) dataSpec.length else (timeSeek.estimatedLength - position).coerceAtLeast(0)
+        }
+
+        private fun skip(bytes: Long) {
+            val buffer = ByteArray(SKIP_BUFFER_SIZE)
+            var remaining = bytes
+            while (remaining > 0) {
+                val read = upstream.read(buffer, 0, minOf(remaining, buffer.size.toLong()).toInt())
+                if (read == C.RESULT_END_OF_INPUT) return
+                remaining -= read
+            }
+        }
+
+        override fun read(
+            buffer: ByteArray,
+            offset: Int,
+            length: Int
+        ): Int = upstream.read(buffer, offset, length)
+
+        override fun getUri(): Uri? = uri
+
+        override fun getResponseHeaders(): Map<String, List<String>> = upstream.responseHeaders
+
+        override fun close() {
+            uri = null
+            upstream.close()
+        }
+    }
+
     companion object {
+        private const val SKIP_BUFFER_SIZE = 8 * 1024
+
         private val DIRECT_SCHEMES = setOf(null, "file", "content", "android.resource", "asset", "rawresource", "data", "http", "https")
 
         /** Whether the player can open this URI as it is, without asking a media provider for its stream. */

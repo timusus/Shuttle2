@@ -6,6 +6,7 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.TransferListener
 import androidx.media3.test.utils.TestExoPlayerBuilder
+import com.simplecityapps.mediaprovider.TimeSeekableStream
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.testSong
@@ -46,7 +47,13 @@ class SongUriResolverTest {
                 gate.await()
                 resolved.incrementAndGet()
                 if (failures.getAndDecrement() > 0) throw IOException("Server unreachable")
-                ResolvedMedia(uri = "https://server/stream/${song.id}", mimeType = song.mimeType, isRemote = true)
+                val timeSeek = if (song.path.startsWith("subsonic:")) {
+                    // 8 kbps: a thousand bytes a second, for 10 s
+                    TimeSeekableStream(bitrateKbps = 8, durationMs = 10_000) { offsetSeconds -> "https://server/stream/${song.id}?offset=$offsetSeconds" }
+                } else {
+                    null
+                }
+                ResolvedMedia(uri = "https://server/stream/${song.id}", mimeType = song.mimeType, isRemote = true, timeSeek = timeSeek)
             }
         )
 
@@ -125,6 +132,42 @@ class SongUriResolverTest {
         resolved.get() shouldBe 1
     }
 
+    @Test
+    fun `a time-seekable stream opens from the second a position stands for, and reads on to the position`() {
+        val song = testSong(4, path = "subsonic://song/4")
+        runBlocking { queue.setQueue(listOf(song)) }
+
+        val length = dataSource.open(DataSpec.Builder().setUri(Uri.parse(song.path)).setPosition(2_500).build())
+
+        upstream.opened shouldBe Uri.parse("https://server/stream/4?offset=2")
+        upstream.skipped shouldBe 500
+        // What's left of 10 s at a thousand bytes a second
+        length shouldBe 7_500
+        dataSource.uri shouldBe Uri.parse("https://server/stream/4?offset=2")
+    }
+
+    @Test
+    fun `a time-seekable stream opens from its start with its estimated length`() {
+        val song = testSong(4, path = "subsonic://song/4")
+        runBlocking { queue.setQueue(listOf(song)) }
+
+        val length = dataSource.open(DataSpec(Uri.parse(song.path)))
+
+        upstream.opened shouldBe Uri.parse("https://server/stream/4")
+        upstream.skipped shouldBe 0
+        length shouldBe 10_000
+    }
+
+    @Test
+    fun `a stream that seeks by byte range opens at the position`() {
+        runBlocking { queue.setQueue(songs) }
+
+        dataSource.open(DataSpec.Builder().setUri(Uri.parse(songs[0].path)).setPosition(2_500).build())
+
+        upstream.openedPosition shouldBe 2_500
+        upstream.skipped shouldBe 0
+    }
+
     /** Opens [song]'s URI as the player's loader would, returning the URI the upstream was asked to open. */
     private fun open(song: com.simplecityapps.shuttle.model.Song): Result<Uri> = runCatching {
         dataSource.open(DataSpec(Uri.parse(song.path)))
@@ -132,11 +175,16 @@ class SongUriResolverTest {
         checkNotNull(upstream.opened)
     }
 
+    /** Records what it was asked to open, and serves endless bytes, counting those read as [skipped]. */
     private class RecordingDataSource : DataSource {
         var opened: Uri? = null
+        var openedPosition: Long? = null
+        var skipped = 0L
 
         override fun open(dataSpec: DataSpec): Long {
             opened = dataSpec.uri
+            openedPosition = dataSpec.position
+            skipped = 0
             return 0
         }
 
@@ -144,7 +192,10 @@ class SongUriResolverTest {
             buffer: ByteArray,
             offset: Int,
             length: Int
-        ): Int = -1
+        ): Int {
+            skipped += length
+            return length
+        }
 
         override fun getUri(): Uri? = opened
 

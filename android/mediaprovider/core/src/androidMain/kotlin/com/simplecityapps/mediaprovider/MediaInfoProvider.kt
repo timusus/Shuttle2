@@ -5,7 +5,13 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import java.io.File
 
-data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
+/** Where to play a song from. [timeSeek] is set for a stream that seeks by re-requesting it from a time, not by byte range. */
+data class MediaInfo(
+    val path: Uri,
+    val mimeType: String,
+    val isRemote: Boolean,
+    val timeSeek: TimeSeekableStream? = null
+)
 
 /** Where to download [song] from, and the MIME type of what's actually at [uri] — a provider that transcodes an
  * undecodable format for download (see [MediaInfoProvider.downloadInfo]) returns the transcode's MIME type here,
