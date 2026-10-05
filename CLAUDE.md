@@ -11,12 +11,12 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 - Launch Claude from the repo root (`claude`, or `claude -w <name>`), never a module directory: auto-memory is keyed by launch directory.
 - Delegation, worker tiers and `worker`/`worker-brief` live in the user's global `~/.claude/CLAUDE.md` (authoritative). Implementation goes to a worker via `/brief`.
 - **Briefs must demand foreground builds.** A headless worker that backgrounds a Gradle build or emulator run ends its run there, with no commit and no report. Say: run it in the FOREGROUND with a generous timeout; never background it and end your turn. A worker whose last line reads "waiting on the build" failed: check `git status` before re-briefing.
-- **Workers finish with `support/scripts/worker-finish.sh "<message>"`** (lint -F, `unit-test --changed-tests`, commit; message carries `Changelog:`), and verify narrowly: no full suite, no emulator/simulator lease unless a screenshot is needed.
+- **Workers finish with `support/scripts/worker-finish.sh "<message>"`** (lint -F, native test names, `unit-test --changed-tests`, architecture tests, iOS test compile of changed KMP modules, `verifyRoborazziDebug` when UI source changed, commit; message carries `Changelog:`), and verify narrowly: no full suite, no emulator/simulator lease unless a screenshot is needed.
 - **Never chain briefs in one job.** Launch the next worker only after reviewing and committing the previous one's tree.
 - Anything Sonnet or GLM wrote gets a fresh-context `reviewer` pass before it lands.
 - `/delegate-verbose` before a Gradle test sweep, emulator run or lint sweep, so raw output stays out of the orchestrator's context.
 - Interactive sessions: anything over ~2 minutes goes through `support/scripts/longjob.sh start <name> -- <cmd>` and one `longjob.sh wait`.
-- `/note` a finding the moment it appears. Then, if context is under ~150k, the fix is small and verifiable, and no running worker owns the files, fix it in the same session and close the issue in the landing commit.
+- `/note` a real bug or user-visible gap the moment it appears (not reviewer nits or speculative follow-ups: fix those in the branch or drop them; keep-worthy speculation is labelled `idea`). Then, if context is under ~150k, the fix is small and verifiable, and no running worker owns the files, fix it in the same session and close the issue in the landing commit.
 - Landing (`land.sh`, one light verify under `machine-lock`) and the full-verify watermark: `.claude/rules/landing.md`. Run `land.sh` as a `longjob.sh` batch, never twice for one batch.
   - `--close BRANCH:N` closes issue N when that branch lands; a bare `--close N` only when every branch in the batch landed.
   - `full-verify.sh --status` shows how far main is past the full-verify watermark; it runs in a warm, locked worktree.

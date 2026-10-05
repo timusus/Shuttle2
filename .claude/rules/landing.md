@@ -7,7 +7,8 @@ paths:
 # Landing and full verify
 
 - **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
-  A worker verifies with `unit-test --changed-tests` via `worker-finish.sh` and nothing wider — no full suite,
+  A worker verifies via `worker-finish.sh`: `unit-test --changed-tests`, plus the architecture tests, the iOS
+  test compile of changed KMP modules and `verifyRoborazziDebug` when the diff warrants — no full suite,
   no emulator/simulator lease unless the brief needs a screenshot. `lint` covers changed files only
   (`land.sh` passes `--base` so it lints just the batch's commits). `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
   cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
