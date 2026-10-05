@@ -265,8 +265,9 @@ public final class MusicPlaybackController {
     private var starved = false
     /// The node ran dry while playing — an underrun, not the queue's end: when (``StartupTiming/now()``)
     /// and where in the current track. Logged as it starts and as it ends (#896). The state stays
-    /// playing, but the owner hears loading for as long as it lasts, and playing again once it's over
-    /// still playing, so the listener sees the buffering (#897).
+    /// playing, but the owner hears loading for as long as it lasts, and playing again once a buffer
+    /// reaches the node, so the listener sees the buffering (#897). A restart (a seek, a rebuild) keeps
+    /// it: the listener hears silence until the restarted stream's first buffer.
     private var underrun: (since: TimeInterval, ms: Int64)?
     /// The last buffer health line: when, and whether it was under `lowBufferSeconds`.
     private var lastHealthLog: (at: TimeInterval, low: Bool)?
@@ -476,12 +477,12 @@ public final class MusicPlaybackController {
                 // The old next is already (partly or wholly) in the node's queue behind the
                 // current track, and scheduled buffers cannot be taken back: rebuild.
                 release(old)
-                next = track.map(Slot.init)
+                next = track.map(makeSlot)
                 restart(atFrame: currentMediaFrame())
                 return
             }
             if let old { release(old) }
-            next = track.map(Slot.init)
+            next = track.map(makeSlot)
             if let old, reading === old {
                 // The current track ended while the old next was still opening, and none of it is
                 // scheduled: the stream carries on into the new next instead, or (released, the old
@@ -552,7 +553,6 @@ public final class MusicPlaybackController {
             player.pause()
             timelineLock.withLock { timeline.held = held }
             if current != nil, state == .playing || state == .loading { setState(.paused) }
-            endUnderrun("paused")
             stopTicker()
             emitPosition()
         }
@@ -710,12 +710,17 @@ public final class MusicPlaybackController {
         )
         state = newState
         if newState == .playing { lastHealthLog = nil }
-        if newState == .paused || newState == .idle || newState == .ended { pauseEngine() }
+        if newState == .paused || newState == .idle || newState == .ended {
+            endUnderrun(newState.rawValue)
+            pauseEngine()
+        }
         reportState(newState)
     }
 
-    /// The current track's state, on the callback queue.
+    /// The current track's state, on the callback queue. Playing is loading while an underrun lasts: a play, a
+    /// restart's start, a command answered then doesn't end the buffering the listener hears (#897).
     private func reportState(_ newState: State) {
+        let newState = newState == .playing && underrun != nil ? .loading : newState
         let uid = current?.track.uid
         let commands = commandsTaken
         commandsReported = commands
@@ -1001,7 +1006,8 @@ public final class MusicPlaybackController {
         if timePitchInGraph { timePitch.reset() }
         buffersInFlight = 0
         starved = false
-        endUnderrun("restarted")
+        // An underrun carries on until the restarted stream's first buffer; one that's no longer played ends.
+        if !playWhenReady { endUnderrun("restarted") }
         drained = false
         inputIndex = 0
         outputIndex = 0
@@ -1178,7 +1184,13 @@ public final class MusicPlaybackController {
         }
         if interrupted, output.isEmpty { return nil }
         let frameCount = output.count / channels
-        if frameCount == 0 { return drained ? AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1) : nil }
+        if frameCount == 0 {
+            guard drained else { return nil }
+            // Nothing more will reach the node: a dry node is the queue's end, not a stall.
+            starved = false
+            endUnderrun("drained")
+            return AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1)
+        }
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)),
               let channelData = buffer.floatChannelData
         else { return nil }
@@ -1197,11 +1209,15 @@ public final class MusicPlaybackController {
             // The node ran dry and played silence the stream does not contain; this buffer starts
             // wherever the node's clock is now.
             starved = false
-            endUnderrun("recovered")
             if let now = nodeSampleTime() {
                 let anchor = Anchor(stream: outputIndex, player: now)
                 timelineLock.withLock { timeline.anchors.append(anchor) }
             }
+        }
+        if underrun != nil {
+            endUnderrun("recovered")
+            // The one place an underrun's end says playing: a buffer is at the node. A start still to come says it.
+            if current != nil, state == .playing { reportState(.playing) }
         }
         noteFirstBuffer()
         let generation = self.generation
@@ -1235,23 +1251,24 @@ public final class MusicPlaybackController {
     /// A read of the stream has waited a while for its bytes. Called on the reading thread: on the engine queue
     /// that's inside `fill`, which a stalled stream blocks, so the node's own completions can't say it ran dry
     /// until the bytes are back. Once the node has played everything scheduled, the underrun starts here (#897).
+    /// A node still held (a restart's first fill, before it plays) isn't rendering anything: a seek waiting on its
+    /// stream isn't an underrun.
     private func readWaited() {
         guard DispatchQueue.getSpecific(key: Self.engineQueueKey) == true else { return }
         guard state == .playing, !drained, !starved else { return }
-        let scheduledEnd = timelineLock.withLock { timeline.scheduledEnd }
-        guard playedStreamIndex() >= scheduledEnd else { return }
+        let (scheduledEnd, held) = timelineLock.withLock { (timeline.scheduledEnd, timeline.held) }
+        guard held == nil, playedStreamIndex() >= scheduledEnd else { return }
         beginUnderrun()
     }
 
     /// The underrun is over: `how` is "recovered" when a buffer reached the node, else what dropped
-    /// it (a restart, a pause, a stop). Logs how long the listener heard silence.
+    /// it (a pause, a stop, the queue's end). Logs how long the listener heard silence; reports nothing,
+    /// which is the caller's to say.
     private func endUnderrun(_ how: String) {
         guard let underrun else { return }
         self.underrun = nil
         let starvedMs = Int(((StartupTiming.now() - underrun.since) * 1000).rounded())
         engineLog.notice("underrun: \(how, privacy: .public) after \(starvedMs) ms, starved at \(underrun.ms) ms")
-        // A pause or a stop has reported its own state; one that's still playing says so again.
-        if current != nil, state == .playing { reportState(.playing) }
     }
 
     /// Follow the playhead: promote the next track once it is being heard, notice the end.

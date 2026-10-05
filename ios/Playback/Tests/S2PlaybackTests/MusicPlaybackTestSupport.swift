@@ -41,13 +41,15 @@ final class InMemoryTrackSource: TrackPCMSource {
 }
 
 /// A stream that stalls at `gateFrame`: reads there wait, saying so to the wait hook every 50 ms as a stalled
-/// ``HTTPRangeByteSource`` does, until ``release()``.
+/// ``HTTPRangeByteSource`` does, until ``release()``. An interrupt ends the wait, and every read until a seek,
+/// with ``TrackSourceError/interrupted``, as the real source's does.
 final class StallingTrackSource: TrackPCMSource {
     private let inner: InMemoryTrackSource
     private let gateFrame: Int
     private let gate = DispatchSemaphore(value: 0)
     private let lock = NSLock()
     private var released = false
+    private var interrupted = false
     private var delivered = 0
     private var waiting: (() -> Void)?
 
@@ -65,11 +67,14 @@ final class StallingTrackSource: TrackPCMSource {
     func seek(toFrame frame: Int64) throws {
         try inner.seek(toFrame: frame)
         delivered = Int(frame)
+        lock.withLock { interrupted = false }
     }
 
     func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        if lock.withLock({ interrupted }) { throw TrackSourceError.interrupted }
         if delivered >= gateFrame, !lock.withLock({ released }) {
             while gate.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
+                if lock.withLock({ interrupted }) { throw TrackSourceError.interrupted }
                 lock.withLock { waiting }?()
             }
             lock.withLock { released = true }
@@ -80,7 +85,7 @@ final class StallingTrackSource: TrackPCMSource {
     }
 
     func cancel() { release() }
-    func interrupt() {}
+    func interrupt() { lock.withLock { interrupted = true } }
 
     func onReadWaiting(_ handler: @escaping () -> Void) {
         lock.withLock { waiting = handler }

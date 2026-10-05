@@ -349,33 +349,139 @@ final class MusicPlaybackControllerTests: XCTestCase {
     /// owner hears as loading at once, not when the bytes come back; and playing again when they do (#897).
     func testAStallThatRunsTheNodeDryReportsLoadingUntilTheStreamFlowsAgain() throws {
         let (controller, log) = try makeController(scheduleAhead: 0.1)
-        let samples = TestSignal.noise(frames: 48_000, seed: 1)
-        let source = StallingTrackSource(samples: samples, gateFrame: 24_000)
+        let source = StallingTrackSource(samples: TestSignal.noise(frames: 48_000, seed: 1), gateFrame: 24_000)
         controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
         controller.syncForTesting()
         _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
         XCTAssertEqual(log.statesSoFar.last, .playing)
 
-        // Everything up to the stall goes to the node, which plays it out; the next fill blocks in the read.
-        controller.pumpForTesting()
-        _ = try controller.renderOffline(frameCount: 4096)
-        _ = try controller.renderOffline(frameCount: 4096)
-        _ = try controller.renderOffline(frameCount: 4096)
-        _ = try controller.renderOffline(frameCount: 4096)
-        let blockedFill = expectation(description: "the stalled fill returns")
-        DispatchQueue.global().async {
-            controller.pumpForTesting(awaitingOpens: false)
-            blockedFill.fulfill()
-        }
-        let deadline = Date().addingTimeInterval(5)
-        while log.statesSoFar.last != .loading, Date() < deadline { Thread.sleep(forTimeInterval: 0.02) }
-        XCTAssertEqual(log.statesSoFar.last, .loading, "the stall is heard while the read is still blocked")
-
+        let blockedFill = try runDryIntoTheStall(controller, log)
         source.release()
         wait(for: [blockedFill], timeout: 5)
         _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
         controller.syncForTesting()
         XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+    }
+
+    /// The next track set after the load, once it's playing gaplessly, is heard stalling just as the first was.
+    func testAStallAfterAGaplessTransitionIntoANextSetLaterReportsLoading() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let source = StallingTrackSource(samples: TestSignal.noise(frames: 48_000, seed: 2), gateFrame: 24_000)
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 2_048)
+        controller.setNext(PlaybackTrack(uid: "B", gainDb: 0) { source })
+        controller.syncForTesting()
+        _ = try renderer.render(frames: 20_000)
+        controller.syncForTesting()
+        XCTAssertEqual(log.transitions, ["B"])
+        XCTAssertEqual(log.statesSoFar.last, .playing)
+
+        let blockedFill = try runDryIntoTheStall(controller, log)
+        source.release()
+        wait(for: [blockedFill], timeout: 5)
+        _ = try renderer.render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+    }
+
+    /// A play that arrives while the node is dry changes nothing the listener hears: its answer is loading, not
+    /// playing, until a buffer reaches the node.
+    func testAPlayDuringAnUnderrunIsAnsweredWithLoading() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        // The next's first decode (on the prepare queue) waits, so A runs out with the engine queue free.
+        let source = StallingTrackSource(samples: TestSignal.noise(frames: 24_000, seed: 2), gateFrame: 0)
+        controller.load(
+            current: track("A", TestSignal.noise(frames: 12_000, seed: 1)),
+            next: PlaybackTrack(uid: "B", gainDb: 0) { source }, playWhenReady: true
+        )
+        controller.onEngineQueueForTesting {}
+        var renderer = OfflineRenderer(controller: controller, slice: 512)
+        renderer.awaitingOpens = false
+        _ = try renderer.render(frames: 16_000)
+        try awaitLoading(log)
+
+        controller.play()
+        controller.pumpForTesting(awaitingOpens: false)
+        XCTAssertEqual(log.statesSoFar.last, .loading, "the play's answer")
+        XCTAssertEqual(log.statesSoFar.filter { $0 == .playing }.count, 1, "playing once, before the underrun")
+
+        source.release()
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+        XCTAssertEqual(log.transitions, ["B"])
+    }
+
+    /// A seek made in an underrun restarts the stream, which is still stalled: the listener still hears nothing, so
+    /// the restart says nothing, and playing is said once its first buffer reaches the node.
+    func testARestartDuringAnUnderrunStaysLoadingUntilItsFirstBuffer() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        // At a chunk's start, so the seek's interrupt finds nothing read: a part chunk would go to the node first.
+        let source = StallingTrackSource(samples: TestSignal.noise(frames: 48_000, seed: 1), gateFrame: 24_576)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
+        let blockedFill = try runDryIntoTheStall(controller, log)
+        let statesBeforeSeek = log.statesSoFar.count
+
+        // Past the gate: the restarted read waits as well.
+        controller.seek(toMs: 600)
+        wait(for: [blockedFill], timeout: 5)
+        Thread.sleep(forTimeInterval: 0.3)
+        let sinceSeek = Array(log.statesSoFar[statesBeforeSeek...])
+        XCTAssertFalse(sinceSeek.contains(.playing), "playing said while the restarted read waits: \(log.statesSoFar)")
+        XCTAssertEqual(log.statesSoFar.last, .loading)
+
+        source.release()
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+    }
+
+    /// A seek on a track that's playing waits for its stream with the node held, not dry: that isn't buffering.
+    func testASeekWhoseReadWaitsIsNotAnUnderrun() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let source = StallingTrackSource(samples: TestSignal.noise(frames: 48_000, seed: 1), gateFrame: 24_000)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 4_096)
+        XCTAssertEqual(log.statesSoFar, [.loading, .playing])
+
+        controller.seek(toMs: 600)
+        Thread.sleep(forTimeInterval: 0.3)
+        XCTAssertEqual(log.statesSoFar, [.loading, .playing], "no loading while the seek's read waits")
+
+        source.release()
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar, [.loading, .playing])
+    }
+
+    /// Plays out everything scheduled up to a ``StallingTrackSource``'s gate, then waits for the owner to hear loading
+    /// while the engine's read is still blocked. Returns the stalled fill, which returns once the source is released.
+    private func runDryIntoTheStall(_ controller: MusicPlaybackController, _ log: CallbackLog,
+                                    file: StaticString = #filePath, line: UInt = #line) throws -> XCTestExpectation {
+        // Everything up to the stall goes to the node, which plays it out; the next fill blocks in the read.
+        controller.pumpForTesting()
+        for _ in 0..<4 { _ = try controller.renderOffline(frameCount: 4096) }
+        let blockedFill = expectation(description: "the stalled fill returns")
+        DispatchQueue.global().async {
+            controller.pumpForTesting(awaitingOpens: false)
+            blockedFill.fulfill()
+        }
+        try awaitLoading(log, "the stall is heard while the read is still blocked", file: file, line: line)
+        return blockedFill
+    }
+
+    private func awaitLoading(_ log: CallbackLog, _ message: String = "", file: StaticString = #filePath, line: UInt = #line) throws {
+        let deadline = Date().addingTimeInterval(5)
+        while log.statesSoFar.last != .loading, Date() < deadline { Thread.sleep(forTimeInterval: 0.02) }
+        XCTAssertEqual(log.statesSoFar.last, .loading, message, file: file, line: line)
     }
 
     /// Each report carries the commands taken before it, so the owner can tell a paused report made before a play
