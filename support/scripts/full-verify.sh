@@ -25,7 +25,8 @@
 # descends from the current watermark (never regresses). On a test failure a `bug` GitHub issue
 # names the failing step, the commit range watermark..sha and the log (an open "Full verify failed"
 # issue gets a comment instead) and the script exits 1. Infrastructure failures (no lock, no
-# worktree, no local.properties) file nothing and exit 3. The worktree is kept between runs.
+# worktree, no local.properties) file nothing and exit 3. The worktree is kept between runs. One run at a
+# time: a second waits on `machine-lock --name s2-full-verify` until the first has recorded its result.
 set -euo pipefail
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
@@ -137,6 +138,14 @@ case "${1:-}" in
   -*) echo "full-verify.sh: unknown option: $1" >&2; exit 2 ;;
 esac
 
+# One run at a time. The fixed worktree, its step file and the watermark belong to the run holding this lock,
+# from moving the worktree to the sha until the result is recorded; a second run waits here, before it touches
+# any of them. (The `verify` lock below covers only the build steps, and is shared with land.sh.)
+if [ -z "${S2_FULL_VERIFY_HELD:-}" ]; then
+  export S2_FULL_VERIFY_HELD=1
+  exec machine-lock --name s2-full-verify -- "$SELF" "$@"
+fi
+
 https_fallback
 
 if [ -n "${1:-}" ]; then
@@ -156,19 +165,38 @@ log() { printf '%s\n' "$*" | tee -a "$LOG"; }
 # A fixed, reusable worktree (next to the others, in the primary checkout): the configuration cache, Xcode
 # DerivedData, SPM checkouts and build outputs survive between runs instead of starting cold every time. It is
 # locked so worktree-clean.sh and worktree-report.sh --prune never take it.
+#
+# Only tracked files are reset between runs; untracked and ignored files (build outputs, caches) are kept on
+# purpose so the next run starts warm. The cost: an untracked source file left in the worktree (never committed,
+# so no checkout removes it) is still compiled and can make a run pass or fail for a reason main doesn't have.
+# Nothing but this script should write there; if a run looks wrong for that reason, clear the worktree with
+# $RECOVER (below) and the next run starts cold.
 WORKTREE="$(dirname "$COMMON_DIR")/.claude/worktrees/full-verify"
+RECOVER="git worktree unlock '$WORKTREE'; git worktree remove --force --force '$WORKTREE'; rm -rf '$WORKTREE'; git worktree prune"
+registered() { git worktree list --porcelain | grep -qxF "worktree $WORKTREE"; }
 
 PREV=$(watermark)
 log "full-verify: $SHA in $WORKTREE (log: $LOG)"
-if git worktree list --porcelain | grep -qxF "worktree $WORKTREE"; then
+if registered && [ "$(git -C "$WORKTREE" rev-parse --show-toplevel 2>/dev/null)" != "$WORKTREE" ]; then
+  # Registered, but the directory is missing or is not a usable checkout (an interrupted `worktree add`, a
+  # hand-deleted directory): drop the entry, unlocked so prune can take it, and re-add below.
+  log "full-verify: $WORKTREE is registered but not a usable checkout; recreating it"
+  git worktree unlock "$WORKTREE" >/dev/null 2>&1 || true
+  git worktree remove --force --force "$WORKTREE" >/dev/null 2>&1 || true
+  git worktree prune >/dev/null 2>&1 || true
+  ! registered && [ ! -e "$WORKTREE" ] \
+    || { log "full-verify: infrastructure error: could not clear the broken worktree; run: $RECOVER"; exit 3; }
+fi
+if registered; then
   # Reset tracked changes, keep untracked and ignored files (build outputs).
   { git -C "$WORKTREE" reset -q --hard && git -C "$WORKTREE" checkout -q --detach "$SHA"; } \
-    || { log "full-verify: infrastructure error: could not move the worktree to $SHA"; exit 3; }
+    || { log "full-verify: infrastructure error: could not move the worktree to $SHA; to start it cold, run: $RECOVER"; exit 3; }
 else
-  [ ! -e "$WORKTREE" ] || { log "full-verify: infrastructure error: $WORKTREE exists but is not a registered worktree"; exit 3; }
+  [ ! -e "$WORKTREE" ] \
+    || { log "full-verify: infrastructure error: $WORKTREE exists but is not a registered worktree; if nothing in it is needed, run: $RECOVER"; exit 3; }
   git worktree prune >/dev/null 2>&1 || true
   git worktree add -q --detach -f "$WORKTREE" "$SHA" \
-    || { log "full-verify: infrastructure error: could not create the worktree"; exit 3; }
+    || { log "full-verify: infrastructure error: could not create the worktree; clear it with: $RECOVER"; exit 3; }
   git worktree lock --reason "reused by support/scripts/full-verify.sh" "$WORKTREE" >/dev/null 2>&1 || true
 fi
 # Gitignored machine-local config (local.properties) a fresh worktree starts without.
