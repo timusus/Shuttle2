@@ -900,15 +900,15 @@ class AppShellTest {
         robot.actions.sleepTimerRemaining.value = 754_000
         robot.setContent(queue = shellQueue("First song").copy(sleepTimerActive = true))
         robot.tapMiniPlayer()
-        robot.assertTextDisplayed("12:34")
+        robot.assertReachable("Sleep timer on, 12:34", reachable = true)
 
         robot.actions.sleepTimerRemaining.value = 0
         robot.setQueue(shellQueue("First song").copy(sleepTimerActive = true))
-        robot.assertTextDisplayed("End of song")
+        robot.assertReachable("Sleep timer on, End of song", reachable = true)
 
         robot.actions.stopSleepTimer()
         robot.setQueue(shellQueue("First song"))
-        robot.assertReachable("End of song", reachable = false)
+        robot.assertReachable("Sleep timer on, End of song", reachable = false)
         robot.assertReachable("Sleep timer", reachable = true)
     }
 

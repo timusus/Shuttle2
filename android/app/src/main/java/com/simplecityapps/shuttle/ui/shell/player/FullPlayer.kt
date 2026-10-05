@@ -245,9 +245,12 @@ internal fun NowPlayingBar(
             val sleepTimerOpen = selected == NowPlayingPanel.SleepTimer
             if (player.sleepTimerActive) {
                 val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
-                BarLabelled(stringResource(R.string.player_bar_sleep), stringResource(R.string.player_sleep_timer_on), sleepTimerOpen, openSleepTimer) { button ->
+                val left = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty()
+                // The label's node hides the button's text, so TalkBack hears the time left in the description, as with the speed
+                val description = listOf(stringResource(R.string.player_sleep_timer_on), left).filter { it.isNotEmpty() }.joinToString(", ")
+                BarLabelled(stringResource(R.string.player_bar_sleep), description, sleepTimerOpen, openSleepTimer) { button ->
                     BarValueButton(
-                        text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty(),
+                        text = left,
                         icon = Icons.Rounded.Bedtime,
                         checked = sleepTimerOpen,
                         onClick = openSleepTimer,
