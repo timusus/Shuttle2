@@ -62,8 +62,9 @@ fun QueueRow(
             supporting = AnnotatedString(subtitle),
             meta = duration,
             leading = artwork,
+            // On the current row's secondaryContainer, primary isn't guaranteed 3:1 under every dynamic scheme.
             supportingLeading = if (current) {
-                { SupportingIcon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), MaterialTheme.colorScheme.primary) }
+                { SupportingIcon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), MaterialTheme.colorScheme.onSecondaryContainer) }
             } else {
                 null
             },

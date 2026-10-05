@@ -14,6 +14,8 @@ import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,6 +73,7 @@ import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2ConnectedButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
@@ -94,7 +97,14 @@ private const val DefaultSleepMinutes = 30
 /** What "+5 min" adds to a running timer. */
 private const val ExtendMinutes = 5
 
-private val SpeedPresets = listOf(0.8f, 1f, 1.2f, 1.5f, 2f)
+/** The speed chips; a speed set elsewhere that isn't one of them shows as an extra, selected chip. */
+private val SpeedPresets = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
+
+/** The Custom… ruler: 0.5× to 2× in tenths, labelled every half. */
+private const val MinSpeed = 0.5f
+private const val SpeedStep = 0.1f
+private const val SpeedTicks = 16
+private const val SpeedLabelEvery = 5
 private val ReplayGainModes = listOf(ReplayGainMode.Track, ReplayGainMode.Album, ReplayGainMode.Off)
 
 /**
@@ -224,14 +234,7 @@ internal fun PlaybackSoundPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PanelHeading(stringResource(R.string.settings_destination_playback_and_sound))
-        SectionHeader(stringResource(R.string.player_speed), containerColor = Color.Transparent)
-        S2ConnectedButtonGroup(
-            options = SpeedPresets,
-            selected = player.playbackSpeed,
-            onSelect = actions::setPlaybackSpeed,
-            label = formatSpeed,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        SpeedChooser(player.playbackSpeed, actions::setPlaybackSpeed, formatSpeed)
         Column {
             SectionHeader(stringResource(R.string.dsp_replay_gain_title), containerColor = Color.Transparent)
             val replayGainLabels = replayGainLabels
@@ -266,6 +269,52 @@ internal fun PlaybackSoundPanel(
         )
     }
 }
+
+/**
+ * The speed as chips (0.5× to 2×), with the current speed as an extra selected chip when it isn't one of them, and
+ * Custom… to reveal a ruler of tenths for anything in between.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SpeedChooser(
+    speed: Float,
+    onSpeedChange: (Float) -> Unit,
+    formatSpeed: (Float) -> String,
+) {
+    var showRuler by rememberSaveable { mutableStateOf(false) }
+    val chips = remember(speed) {
+        if (SpeedPresets.any { it.isSpeed(speed) }) SpeedPresets else (SpeedPresets + speed).sorted()
+    }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+        SectionHeader(stringResource(R.string.player_speed), containerColor = Color.Transparent)
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.small, Alignment.CenterHorizontally),
+        ) {
+            chips.forEach { chip ->
+                S2ChoiceChip(label = formatSpeed(chip), selected = chip.isSpeed(speed), onClick = { onSpeedChange(chip) })
+            }
+            S2ChoiceChip(label = stringResource(R.string.player_speed_custom), selected = showRuler, onClick = { showRuler = !showRuler })
+        }
+        if (showRuler) {
+            RulerValue(formatSpeed(speed))
+            RulerSlider(
+                value = ((speed - MinSpeed) / SpeedStep).roundToInt(),
+                count = SpeedTicks,
+                onValueChange = { onSpeedChange(speedAt(it)) },
+                contentDescription = stringResource(R.string.player_speed),
+                stateDescription = formatSpeed(speed),
+                tickLabel = { index -> if (index % SpeedLabelEvery == 0) formatSpeed(speedAt(index)) else null },
+            )
+        }
+    }
+}
+
+/** Whether this preset is [speed], allowing for float drift in a stored speed. */
+private fun Float.isSpeed(speed: Float): Boolean = abs(this - speed) < 0.005f
+
+/** Rounds to tenths, so the ruler's float steps land on 0.8 rather than 0.80000001. */
+private fun speedAt(index: Int): Float = ((MinSpeed + index * SpeedStep) * 10).roundToInt() / 10f
 
 /** The panel's title, where focus lands when it opens. */
 @Composable

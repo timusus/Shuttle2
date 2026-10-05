@@ -608,7 +608,8 @@ class AppShellRobot(
         title: String,
         rows: Int,
     ) {
-        val rowHeight = queueRow("Second song").fetchSemanticsNode().boundsInRoot.top - queueRow("First song").fetchSemanticsNode().boundsInRoot.top
+        // A row's own height: the Up Next divider under the current row leaves the list while one is dragged.
+        val rowHeight = queueRow(title).fetchSemanticsNode().boundsInRoot.height
         val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)), useUnmergedTree = true)[
             listOf("First song", "Second song", "Third song").indexOf(title)
         ]

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import android.view.ContextThemeWrapper
+import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,9 +56,15 @@ import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 @Composable
 internal fun PlayerUiState.castingTo(): String? = castDevice?.let { it.name ?: stringResource(R.string.player_cast_device) }
 
-/** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */
+/**
+ * The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. [onView] hands
+ * over the View for a label that clicks it, and leaves it out of accessibility for the label's node.
+ */
 @Composable
-internal fun CastButton(modifier: Modifier = Modifier) {
+internal fun CastButton(
+    modifier: Modifier = Modifier,
+    onView: ((View) -> Unit)? = null,
+) {
     val description = stringResource(R.string.player_cast)
     val tint = artworkRole(MaterialTheme.colorScheme.onSurfaceVariant, PlayerControlsColor).toArgb()
     AndroidView(
@@ -66,6 +73,10 @@ internal fun CastButton(modifier: Modifier = Modifier) {
             MediaRouteButton(ContextThemeWrapper(context, androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)).also { button ->
                 CastButtonFactory.setUpMediaRouteButton(context.applicationContext, button)
                 button.contentDescription = description
+                if (onView != null) {
+                    button.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                    onView(button)
+                }
             }
         },
         update = { button ->

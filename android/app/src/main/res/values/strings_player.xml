@@ -50,6 +50,8 @@
     <string name="player_sleep_timer_track_end">End of song</string>
     <!-- Title of the playback speed slider in Playback & sound -->
     <string name="player_speed">Speed</string>
+    <!-- Chip in Playback & sound that reveals a ruler for a speed between the preset chips -->
+    <string name="player_speed_custom">Custom…</string>
     <!-- A playback speed; %1$s is a number such as "1.25" -->
     <string name="player_speed_value">%1$s×</string>
     <!-- Content description of the Now Playing chip showing a non-normal speed; %1$s is a speed such as "1.25×" -->

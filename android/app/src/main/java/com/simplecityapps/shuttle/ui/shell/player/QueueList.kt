@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyColumn import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -77,7 +77,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/** The least height of the "Up Next" header over the queue's rows; it grows with the text. */
+/** The least height of the queue's header ("Queue" with Save as playlist and Clear Queue); it grows with the text. */
 internal val QueueHeaderHeight = 56.dp
 
 /**
@@ -137,15 +137,21 @@ private fun QueueSourceLine(
 /** How much of the cover's tint the queue header starts from. */
 private const val HeaderWashAlpha = 0.6f
 
+/** The lazy key of the "Up Next" divider, which the reorder looks for when a drag begins. */
+private const val UpNextKey = "queue_up_next"
+
 /** "Up Next" over the songs after the current one, with how many there are and how long they play for. */
 @Composable
-private fun UpNextDivider(upcoming: List<PlayerSong>) {
+private fun UpNextDivider(
+    upcoming: List<PlayerSong>,
+    modifier: Modifier = Modifier,
+) {
     val remaining = formatDuration(upcoming.sumOf { it.durationMs.toLong() })
     SectionHeader(
         title = stringResource(R.string.playback_up_next),
         subtitle = pluralStringResource(R.plurals.queue_up_next_summary, upcoming.size, upcoming.size, remaining),
         containerColor = PanelColor,
-        modifier = Modifier.testTag(PlayerTestTags.QueueUpNext),
+        modifier = modifier.testTag(PlayerTestTags.QueueUpNext),
     )
 }
 
@@ -182,7 +188,8 @@ internal fun rememberQueueListState(
 /**
  * The queue's rows: tap a row to play it, drag its handle to reorder, swipe it away to remove it, or
  * long-press it for its song actions ([QueueSongActions] shows the menu). Rows are keyed by their
- * queue uid.
+ * queue uid. The "Up Next" divider is its own item after the current row, left out while a row is
+ * dragged, so it never moves with a row or counts in the reorder's row heights.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun LazyListScope.queueItems(
@@ -202,7 +209,9 @@ internal fun LazyListScope.queueItems(
     }
     val rows = reorder.rows(items)
     val upcoming = rows.filter { it.position == QueuePosition.Upcoming }
-    items(rows, key = { it.uid }) { row ->
+    val split = rows.indexOfFirst { it.position == QueuePosition.Current } + 1
+    val showUpNext = reorder.draggingUid == null && split > 0 && upcoming.isNotEmpty()
+    val queueRow: @Composable LazyItemScope.(PlayerSong) -> Unit = { row ->
         val playNext = stringResource(R.string.menu_title_play_next)
         val remove = stringResource(R.string.menu_title_remove_from_queue)
         val dragging = reorder.draggingUid == row.uid
@@ -213,11 +222,6 @@ internal fun LazyListScope.queueItems(
             onClick = { actions.skipToQueueItem(row.uid) },
             onLongClick = { queue.songActions.menuFor = row },
             onRemove = { actions.removeQueueItem(row.uid) },
-            footer = if (row.position == QueuePosition.Current && upcoming.isNotEmpty()) {
-                { UpNextDivider(upcoming) }
-            } else {
-                null
-            },
             dragHandleModifier = Modifier.pointerInput(row.uid) {
                 detectDragGestures(
                     onDragStart = { reorder.start(queue.items, row.uid) },
@@ -252,6 +256,13 @@ internal fun LazyListScope.queueItems(
                     },
                 ),
         )
+    }
+    if (showUpNext) {
+        items(rows.subList(0, split), key = { it.uid }, itemContent = queueRow)
+        item(key = UpNextKey) { UpNextDivider(upcoming, Modifier.animateItem()) }
+        items(rows.subList(split, rows.size), key = { it.uid }, itemContent = queueRow)
+    } else {
+        items(rows, key = { it.uid }, itemContent = queueRow)
     }
 }
 
@@ -305,14 +316,11 @@ private fun QueueItem(
     onRemove: () -> Unit,
     dragHandleModifier: Modifier,
     modifier: Modifier = Modifier,
-    footer: (@Composable () -> Unit)? = null,
 ) {
     val swipeState = rememberSwipeToDismissBoxState()
-    // The footer sits outside the swipe, so removing the row doesn't drag it along.
-    Column(modifier) {
-        SwipeToDismissBox(
+    SwipeToDismissBox(
             state = swipeState,
-            modifier = Modifier.testTag(PlayerTestTags.QueueRow),
+            modifier = modifier.testTag(PlayerTestTags.QueueRow),
             gesturesEnabled = swipeEnabled,
             onDismiss = { onRemove() },
             backgroundContent = {
@@ -338,8 +346,6 @@ private fun QueueItem(
                 onLongClick = onLongClick,
             )
         }
-        footer?.invoke()
-    }
 }
 
 /** How near either edge of the list a dragged row starts it scrolling, and the fastest it scrolls, per second, at the edge itself. */
@@ -385,11 +391,14 @@ internal class QueueReorderState(
         items: List<PlayerSong>,
         uid: Long,
     ) {
-        val row = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == uid } ?: return
+        val visible = listState.layoutInfo.visibleItemsInfo
+        val row = visible.firstOrNull { it.key == uid } ?: return
+        // The Up Next divider leaves the list while the row is dragged, so a row below it has its slot that much higher.
+        val upNext = visible.firstOrNull { it.key == UpNextKey }?.takeIf { it.offset < row.offset }
         baseItems = items
         order = items
         startTop = row.offset.toFloat()
-        slotTop = startTop
+        slotTop = startTop - (upNext?.size ?: 0)
         height = row.size
         dragDistance = 0f
         draggingUid = uid

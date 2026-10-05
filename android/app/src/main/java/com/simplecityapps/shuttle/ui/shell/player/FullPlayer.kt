@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import android.text.format.DateUtils
+import android.view.View
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -23,7 +25,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
@@ -37,21 +38,26 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.mediarouter.app.SystemOutputSwitcherDialogController
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
@@ -222,65 +228,65 @@ internal fun NowPlayingBar(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             val playbackSound = stringResource(R.string.settings_destination_playback_and_sound)
+            val openPlaybackSound = { onPanel(NowPlayingPanel.PlaybackSound) }
+            val playbackSoundOpen = selected == NowPlayingPanel.PlaybackSound
             if (player.playbackSpeed != 1f) {
                 val speed = rememberSpeedFormat()(player.playbackSpeed)
-                BarValueButton(
-                    text = speed,
-                    icon = Icons.Rounded.GraphicEq,
-                    description = "$playbackSound, ${stringResource(R.string.player_speed_description, speed)}",
-                    checked = selected == NowPlayingPanel.PlaybackSound,
-                    onClick = { onPanel(NowPlayingPanel.PlaybackSound) },
-                )
+                val description = "$playbackSound, ${stringResource(R.string.player_speed_description, speed)}"
+                BarLabelled(stringResource(R.string.player_bar_sound), description, playbackSoundOpen, openPlaybackSound) { button ->
+                    BarValueButton(speed, Icons.Rounded.GraphicEq, playbackSoundOpen, openPlaybackSound, button)
+                }
             } else {
-                BarLabelled(stringResource(R.string.player_bar_sound)) {
-                    BarButton(Icons.Rounded.GraphicEq, playbackSound, selected == NowPlayingPanel.PlaybackSound) { onPanel(NowPlayingPanel.PlaybackSound) }
+                BarLabelled(stringResource(R.string.player_bar_sound), playbackSound, playbackSoundOpen, openPlaybackSound) { button ->
+                    BarButton(Icons.Rounded.GraphicEq, playbackSoundOpen, openPlaybackSound, button)
                 }
             }
+            val openSleepTimer = { onPanel(NowPlayingPanel.SleepTimer) }
+            val sleepTimerOpen = selected == NowPlayingPanel.SleepTimer
             if (player.sleepTimerActive) {
                 val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
-                BarValueButton(
-                    text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty(),
-                    icon = Icons.Rounded.Bedtime,
-                    description = stringResource(R.string.player_sleep_timer_on),
-                    checked = selected == NowPlayingPanel.SleepTimer,
-                    onClick = { onPanel(NowPlayingPanel.SleepTimer) },
-                )
+                BarLabelled(stringResource(R.string.player_bar_sleep), stringResource(R.string.player_sleep_timer_on), sleepTimerOpen, openSleepTimer) { button ->
+                    BarValueButton(
+                        text = remaining?.let { if (it > 0) DateUtils.formatElapsedTime(it / 1000) else stringResource(R.string.player_sleep_timer_track_end) }.orEmpty(),
+                        icon = Icons.Rounded.Bedtime,
+                        checked = sleepTimerOpen,
+                        onClick = openSleepTimer,
+                        modifier = button,
+                    )
+                }
             } else {
-                BarLabelled(stringResource(R.string.player_bar_sleep)) {
-                    BarButton(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), selected == NowPlayingPanel.SleepTimer) { onPanel(NowPlayingPanel.SleepTimer) }
+                BarLabelled(stringResource(R.string.player_bar_sleep), stringResource(R.string.player_sleep_timer), sleepTimerOpen, openSleepTimer) { button ->
+                    BarButton(Icons.Rounded.Bedtime, sleepTimerOpen, openSleepTimer, button)
                 }
             }
             if (player.castAvailable) {
-                BarLabelled(stringResource(R.string.player_cast)) { CastButton() }
+                // The route button is a View: a tap on the label clicks it, and it's left out of TalkBack for the label's node.
+                var castButton by remember { mutableStateOf<View?>(null) }
+                BarLabelled(stringResource(R.string.player_cast), stringResource(R.string.player_cast), selected = null, onClick = { castButton?.performClick() }) {
+                    CastButton(onView = { castButton = it })
+                }
             } else {
-                BarLabelled(stringResource(R.string.player_bar_output)) { OutputButton() }
+                val context = LocalContext.current
+                val showOutputs = { SystemOutputSwitcherDialogController.showDialog(context) }
+                BarLabelled(stringResource(R.string.player_bar_output), stringResource(R.string.player_output), selected = null, onClick = { showOutputs() }) { button ->
+                    OutputButton(button)
+                }
             }
+            val openQueue = { onPanel(NowPlayingPanel.Queue) }
             val queueOpen = selected == NowPlayingPanel.Queue
-            S2Button(
-                text = stringResource(R.string.player_queue),
-                onClick = { onPanel(NowPlayingPanel.Queue) },
-                // The same roles as the bar's other buttons: no container until its panel is open (#783).
-                style = if (queueOpen) S2ButtonStyle.Tonal else S2ButtonStyle.Text,
-                size = S2ButtonSize.Small,
-                textContentColor = PlayerTextButtonColor,
-                icon = Icons.AutoMirrored.Rounded.QueueMusic,
-                modifier = Modifier.semantics { this.selected = queueOpen },
-            )
-            BarLabelled(stringResource(R.string.player_bar_more)) {
-                S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
+            BarLabelled(stringResource(R.string.player_queue), stringResource(R.string.player_queue), queueOpen, openQueue) { button ->
+                BarButton(Icons.AutoMirrored.Rounded.QueueMusic, queueOpen, openQueue, button)
+            }
+            val showMore = { songActions.menuFor = player.current }
+            BarLabelled(stringResource(R.string.player_bar_more), stringResource(DesignR.string.ds_more_options), selected = null, onClick = { showMore() }) { button ->
+                S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = null, onClick = { showMore() }, modifier = button)
             }
         }
     }
-    val upNext = stringResource(R.string.playback_up_next)
     SongActionsHost(
         songActions,
         actions,
         trailing = listOf(
-            S2Action(
-                label = stringResource(R.string.menu_title_save_queue_to_playlist),
-                onClick = { songActions.playlistFor = PlaylistPick(MediaSelection.Queue, upNext) },
-                icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
-            ),
             S2Action(label = stringResource(R.string.menu_title_sort_clear_queue), onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true),
         ),
     )
@@ -315,14 +321,29 @@ private fun Modifier.swipeUpToOpen(
     }
 }
 
-/** A small label under a bar [content] button, so its icon reads without guessing. */
+/**
+ * A small label under a bar button, so its icon reads without guessing. The label and the button are one control:
+ * tapping the label does what the button does, and TalkBack reads one node, [description], selected while [selected].
+ * [content] takes the modifier that leaves the button's own semantics to this node.
+ */
 @Composable
 private fun BarLabelled(
     label: String,
-    content: @Composable () -> Unit,
+    description: String,
+    selected: Boolean?,
+    onClick: () -> Unit,
+    content: @Composable (Modifier) -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        content()
+    Column(
+        modifier = Modifier
+            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick)
+            .semantics {
+                contentDescription = description
+                if (selected != null) this.selected = selected
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        content(Modifier.clearAndSetSemantics { })
         Text(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
@@ -330,16 +351,17 @@ private fun BarLabelled(
 @Composable
 private fun BarButton(
     icon: ImageVector,
-    description: String,
     checked: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     S2IconToggleButton(
         icon = icon,
-        contentDescription = description,
+        contentDescription = null,
         checked = checked,
         onCheckedChange = { onClick() },
         style = if (checked) S2IconButtonStyle.Tonal else S2IconButtonStyle.Standard,
+        modifier = modifier,
     )
 }
 
@@ -348,9 +370,9 @@ private fun BarButton(
 private fun BarValueButton(
     text: String,
     icon: ImageVector,
-    description: String,
     checked: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     S2Button(
         text = text,
@@ -359,9 +381,6 @@ private fun BarValueButton(
         size = S2ButtonSize.ExtraSmall,
         textContentColor = PlayerTextButtonColor,
         icon = icon,
-        modifier = Modifier.semantics {
-            contentDescription = description
-            selected = checked
-        },
+        modifier = modifier,
     )
 }
