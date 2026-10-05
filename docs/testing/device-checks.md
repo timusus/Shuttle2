@@ -408,3 +408,16 @@ Billing is mocked in the JVM tests; the upgrade needs a real Play-signed build o
 - [ ] Reinstall (or clear data) and restore purchases. Pro comes back.
 - [ ] Trial state: a fresh install shows the trial with the right days left, and when the trial has ended without a purchase the paywall appears.
 - [ ] Pro state after a force-stop and a cold start, with the device offline. It stays Pro.
+
+## Subsonic / Navidrome provider (#502)
+Sign in with `support/scripts/seed-remote-provider.sh navidrome` (`~/.config/s2-test/navidrome.env`; `S2_SEED_URL` gives the app another address, e.g. a phone tunnelled over USB with `adb reverse`). Ticked items passed on a Pixel 8 Pro against Navidrome 0.64.2 on 2026-10-05.
+- [x] The import's Subsonic song count matches the server's `getScanStatus` count (8196 = 8196).
+- [x] At Original quality a FLAC streams as the original file and seeks forward and back.
+- [x] With both quality caps at 128 kbps, a FLAC plays through `getTranscodeStream` as 128 kbps MP3; seeking forward and back re-requests it from the new second (`offset=`) and plays on from the right position.
+- [x] With both caps at 128 kbps, a 320 kbps MP3 is transcoded to 128 kbps.
+- [ ] Sign in through Settings → Sources with a username and password (not the seed script), and once with an API key as the password and no username (servers with `apiKeyAuthentication`). The Sources screen shows the server and the library fills.
+- [ ] The transcoded song's Now Playing screen shows the song's own duration, and the seek bar lands where it's dragged.
+- [ ] A song already under the cap (e.g. a 96 kbps MP3 with a 128 kbps cap) streams as the original.
+- [ ] Cast a Subsonic song, direct and transcoded. It plays on the receiver, and seeking a transcode works.
+- [ ] Download a Subsonic song, then play it in airplane mode.
+- [ ] A server without the `transcoding` or `transcodeOffset` extensions (e.g. Gonic, Airsonic-Advanced): a capped song transcodes and plays, but isn't seekable; nothing hangs or errors.

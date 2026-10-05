@@ -105,6 +105,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:mediaprovider:server`** — What the Jellyfin/Emby/Plex providers share: paging, the sync session skeleton, credential storage, direct-play formats
 - **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
 - **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
+- **`:android:mediaprovider:subsonic`** — Subsonic/OpenSubsonic (Navidrome) provider: `search3` sync with an album-by-album fallback, raw or transcoded streams under the streaming quality cap, seeking a transcode by time
 - **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders, the repository interfaces (Song, Album, Playlist, Genre), the playback and queue operations interfaces, and the shared `ui/actions` use cases (no Android)
 - **`:android:downloads`** — Offline downloads of remote-provider songs
 - **`:android:saf`** — Storage Access Framework helpers

@@ -1,5 +1,8 @@
 # Spike: Subsonic / Navidrome provider (#502)
 
+**Status: implemented** as `:android:mediaprovider:subsonic` (#502). The spike below is kept as written;
+where the module went another way, see [Deviations](#deviations) at the end.
+
 Question: what would a `:android:mediaprovider:subsonic` module take, and does the OpenSubsonic API
 fit S2's provider model (full library import into Room, playback via Media3, Cast, offline
 downloads, Pro gating)? This spike wrote no app code. It mapped the Jellyfin provider as a
@@ -54,6 +57,10 @@ and `bpm`. Everything after `genre` in classic Subsonic is OpenSubsonic-only. Id
   in `SecurePreferenceManager` like Jellyfin's `CredentialStore`. Model credentials as a sealed
   `Token(user, password)` / `ApiKey(key)` so LMS and future Navidrome keys slot in. LDAP-backed
   servers reject token auth with error 41; fall back to `p=enc:<hex>` on that code.
+  *Implemented, with a cost accepted for v1:* after error 41 every request carries `p=enc:<hex>`, the
+  password hex-encoded, which is reversible rather than a hash. Stream and Cast URLs carry it too, so
+  the Cast receiver and anything that logs those URLs sees the password itself. Use an `apiKey` where
+  the server offers one.
 - **Pre-OpenSubsonic servers** (original Subsonic, maybe older Airsonic) may return nothing for an
   empty `search3`. If `openSubsonic` is false and `search3` is empty, fall back to
   `getAlbumList2(type=alphabeticalByName, size=500)` + `getAlbum` per album. That's about 5k calls for
@@ -118,3 +125,30 @@ Touchpoints in the app and core (from the map):
 - Whether `getCoverArt` responses can be cached forever. The demo server returned
   `cache-control: public, no-cache` with an ETag, but the id-embedded hash makes the id itself a safe
   Coil cache key either way.
+
+## Deviations
+
+What the implementation did differently from the plan above.
+
+- **Transcoding shipped in v1, with a bitrate cap.** `SubsonicStreams` follows the Streaming quality
+  setting (Wi-Fi and mobile data caps). It streams the original file (`stream?format=raw`, byte-range
+  seekable) when the player decodes it and it's within the cap. Otherwise, on a server with
+  OpenSubsonic's `transcoding` extension, it asks `getTranscodeDecision` (MP3 first) and plays
+  `getTranscodeStream`. Failing that, or on a server without the extension, it uses the classic
+  `stream?format=mp3&maxBitRate=…`. A transcode never runs above a lossy source's own bitrate (the cap
+  or 320 kbps, whichever is lower, then rounded down to a valid MP3 bitrate), so a 96 kbps WMA isn't
+  upscaled to 320.
+- **Seeking a transcode is by time, not by bytes.** A transcode has no byte ranges, so the player sees
+  it as a constant-bitrate stream (`TimeSeekableStream`). `SongUriResolver` reports its length from
+  the bitrate and duration (unknown when the duration is). It turns a seek's byte position back into
+  seconds, re-requests the stream from there, and reads on to the exact byte. The constant-bitrate
+  seeker this needs is enabled only for such streams (`TimeSeekExtractorsFactory`); a direct file
+  keeps the default extractors. `getTranscodeStream` always takes an `offset` in seconds. The classic
+  `stream` honours `timeOffset` for music only on a server listing the `transcodeOffset` extension
+  (Subsonic documents it for video), so elsewhere a classic transcode plays but can't seek.
+- **The album-by-album fallback isn't limited to pre-OpenSubsonic servers.** Any server whose empty
+  `search3` returns nothing is read with `getAlbumList2` + `getAlbum`. A truly empty library costs
+  one extra `getAlbumList2` request.
+- **Song URIs encode the id** (`subsonic://song/<url-encoded id>`), so an id with `/`, `?` or a space
+  stays one path segment. Resolution reads the song's `externalId`, never the URI.
+- **`apiKey` auth is in** (`SubsonicCredentials.ApiKey`), alongside token auth.
