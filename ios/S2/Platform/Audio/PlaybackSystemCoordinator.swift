@@ -30,7 +30,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     private var observers: [Task<Void, Never>] = []
     private var intentListener: Int?
     /// Where each pause and resume came from: the session or a remote command (#715).
-    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "AudioSession")
+    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "session")
 
     init(
         playback: IosPlayerController,

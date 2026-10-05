@@ -191,7 +191,6 @@ public final class MusicPlaybackController {
     /// Where ``activateOutput`` runs. Serial: activations finish in the order the plays were made.
     private let activationQueue = DispatchQueue(label: "com.simplecityapps.shuttle2.playback.activation", qos: .userInitiated)
     private let callbackQueue: DispatchQueue
-    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "MusicPlayback")
 
     /// How far ahead of the playhead audio is decoded and scheduled. Also how late an EQ change is
     /// heard, so it is short; the byte source's own read-ahead is what rides out the network.
@@ -526,7 +525,7 @@ public final class MusicPlaybackController {
         let activation = beginActivation()
         let requestedAt = StartupTiming.now()
         engineQueue.async { [self] in
-            log.notice("play: \(self.state.rawValue, privacy: .public)")
+            engineLog.notice("play: \(self.state.rawValue, privacy: .public)")
             commandsTaken += 1
             defer { answerCommand() }
             playWhenReady = true
@@ -539,7 +538,7 @@ public final class MusicPlaybackController {
 
     public func pause() {
         engineQueue.async { [self] in
-            log.notice("pause: \(self.state.rawValue, privacy: .public)")
+            engineLog.notice("pause: \(self.state.rawValue, privacy: .public)")
             commandsTaken += 1
             defer { answerCommand() }
             playWhenReady = false
@@ -727,14 +726,14 @@ public final class MusicPlaybackController {
 
     private func reportFailure(_ slot: Slot, _ error: Error) {
         slot.failed = true
-        log.error("track \(slot.track.uid, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+        engineLog.error("track \(slot.track.uid, privacy: .public) failed: \(String(describing: error), privacy: .public)")
         let uid = slot.track.uid
         let callback = callbackLock.withLock { callbacks.failed }
         if let callback { callbackQueue.async { callback(uid, error) } }
     }
 
     private func reportSeekUnsupported(_ slot: Slot, ms: Int64) {
-        log.info("track \(slot.track.uid, privacy: .public) can't seek; reporting \(ms) ms")
+        engineLog.info("track \(slot.track.uid, privacy: .public) can't seek; reporting \(ms) ms")
         let uid = slot.track.uid
         let callback = callbackLock.withLock { callbacks.seekUnsupported }
         if let callback { callbackQueue.async { callback(uid, ms) } }
@@ -794,7 +793,7 @@ public final class MusicPlaybackController {
             let activated = activation.wait()
             if startTiming?.nodePlayedAt == nil { startTiming?.sessionActivatedAt = activation.activatedAt }
             guard activated else {
-                log.error("output not activated; paused")
+                engineLog.error("output not activated; paused")
                 return false
             }
         }
@@ -805,7 +804,7 @@ public final class MusicPlaybackController {
             if startTiming?.nodePlayedAt == nil { startTiming?.engineStartMs = Int(((StartupTiming.now() - started) * 1000).rounded()) }
             return true
         } catch {
-            log.error("engine start failed: \(String(describing: error), privacy: .public)")
+            engineLog.error("engine start failed: \(String(describing: error), privacy: .public)")
             return false
         }
     }
@@ -834,11 +833,11 @@ public final class MusicPlaybackController {
         engineQueue.asyncAfter(deadline: .now() + startRetryDelay) { [weak self] in
             guard let self, self.generation == generation, playWhenReady, state == .loading else { return }
             if startPlaying() {
-                log.notice("engine started on retry \(attempt)")
+                engineLog.notice("engine started on retry \(attempt)")
             } else if attempt < Self.startRetryAttempts {
                 retryStart(attempt: attempt + 1)
             } else {
-                log.error("engine didn't start after \(attempt) retries; paused")
+                engineLog.error("engine didn't start after \(attempt) retries; paused")
                 stayPaused()
             }
         }
@@ -987,7 +986,7 @@ public final class MusicPlaybackController {
     /// left paused at once.
     private func restart(atFrame frame: Int64, retryingStart: Bool = false) {
         guard let current else { return }
-        log.notice("restart at \(frame) frames, playWhenReady \(self.playWhenReady)")
+        engineLog.notice("restart at \(frame) frames, playWhenReady \(self.playWhenReady)")
         generation += 1
         player.stop()
         // What the time-pitch unit already pulled belongs to the old stream.
@@ -1362,9 +1361,9 @@ public final class MusicPlaybackController {
         lastStartTiming = timing
         let line = timing.logLine
         if timing.isSlow {
-            log.error("\(line, privacy: .public)")
+            engineLog.error("\(line, privacy: .public)")
         } else {
-            log.info("\(line, privacy: .public)")
+            engineLog.info("\(line, privacy: .public)")
         }
     }
 
@@ -1409,7 +1408,7 @@ public final class MusicPlaybackController {
             let frame = currentMediaFrame()
             let snapshot = timelineLock.withLock { timeline }
             let held = snapshot.held.map(String.init) ?? "nil"
-            log.notice("""
+            engineLog.notice("""
                 engine configuration changed: stream \(snapshot.playedStreamIndex(nodeTime: self.nodeSampleTime())), \
                 heard \(snapshot.heard), held \(held, privacy: .public), render time \(renderTime, privacy: .public), \
                 frame \(frame), playWhenReady \(self.playWhenReady), running \(self.engine.isRunning)

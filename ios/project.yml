@@ -66,6 +66,14 @@ targets:
         # Keep playing with the screen locked or the app in the background (#588), and sync the servers daily in the
         # background (#771, BackgroundRefresh.swift).
         UIBackgroundModes: [audio, fetch]
+        # Playback diagnostics (#897): the four categories keep their info lines in the unified log, so
+        # `log collect` after a stall on the device has them; debug stays in memory only.
+        OSLogPreferences:
+          com.simplecityapps.shuttle2:
+            playback: {Level: {Enable: Info, Persist: Info}}
+            audio-engine: {Level: {Enable: Info, Persist: Info}}
+            network: {Level: {Enable: Info, Persist: Info}}
+            session: {Level: {Enable: Info, Persist: Info}}
         BGTaskSchedulerPermittedIdentifiers: [com.simplecityapps.shuttle.sync, com.simplecityapps.shuttle.scrobble]
         # This device's music (#590): Documents shows in Files ("On My iPhone > Shuttle Music") and Finder's file
         # sharing, so music can be copied in, and files opened there are read in place.

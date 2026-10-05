@@ -54,6 +54,6 @@ class OsLogLogger(
     }
 
     private companion object {
-        const val SUBSYSTEM = "com.simplecityapps.shuttle"
+        const val SUBSYSTEM = "com.simplecityapps.shuttle2"
     }
 }

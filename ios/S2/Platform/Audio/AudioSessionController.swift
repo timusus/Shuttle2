@@ -57,7 +57,7 @@ final class AudioSessionController {
     /// recommends activating it off the main thread), and this is never reassigned.
     private nonisolated(unsafe) let session: AudioSession
     private let notificationCenter: NotificationCenter
-    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "AudioSession")
+    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "session")
     private var observers: [NSObjectProtocol] = []
     private var resumeAfterInterruption = false
 

@@ -5,7 +5,7 @@ import OSLog
 /// Same category as the engine controller's and ``StreamingPCMReader``'s, with a `bytes:` prefix, so
 /// one `log stream --predicate 'category == "audio-engine"'` shows the fetch and the decode of a
 /// stall together — which side ran dry is the first question every streaming stall asks.
-private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "audio-engine")
+private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "network")
 
 /// **The byte layer of the streaming player: one HTTP transaction, read blocking, teed to the spine.**
 ///

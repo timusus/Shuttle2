@@ -34,6 +34,52 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Shuttle Music uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network.</string>
+	<key>OSLogPreferences</key>
+	<dict>
+		<key>com.simplecityapps.shuttle2</key>
+		<dict>
+			<key>audio-engine</key>
+			<dict>
+				<key>Level</key>
+				<dict>
+					<key>Enable</key>
+					<string>Info</string>
+					<key>Persist</key>
+					<string>Info</string>
+				</dict>
+			</dict>
+			<key>network</key>
+			<dict>
+				<key>Level</key>
+				<dict>
+					<key>Enable</key>
+					<string>Info</string>
+					<key>Persist</key>
+					<string>Info</string>
+				</dict>
+			</dict>
+			<key>playback</key>
+			<dict>
+				<key>Level</key>
+				<dict>
+					<key>Enable</key>
+					<string>Info</string>
+					<key>Persist</key>
+					<string>Info</string>
+				</dict>
+			</dict>
+			<key>session</key>
+			<dict>
+				<key>Level</key>
+				<dict>
+					<key>Enable</key>
+					<string>Info</string>
+					<key>Persist</key>
+					<string>Info</string>
+				</dict>
+			</dict>
+		</dict>
+	</dict>
 	<key>S2LastFmApiKey</key>
 	<string>$(S2_LASTFM_API_KEY)</string>
 	<key>S2LastFmSharedSecret</key>

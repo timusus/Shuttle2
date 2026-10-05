@@ -57,7 +57,7 @@ final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
 
     private static let foldersKey = "local_library_folders"
     private static let fingerprintKey = "local_library_fingerprint"
-    private static let log = os.Logger(subsystem: "com.simplecityapps.shuttle", category: "LocalLibrary")
+    private static let log = os.Logger(subsystem: "com.simplecityapps.shuttle2", category: "LocalLibrary")
 
     let documents: URL
     private let defaults: UserDefaults

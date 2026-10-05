@@ -32,7 +32,7 @@ struct ScreenshotHooksModifier: ViewModifier {
     let navigator: Navigator
     @Binding var showNowPlaying: Bool
 
-    private static let log = Logger(subsystem: "com.simplecityapps.shuttle.dev", category: "screenshot-hooks")
+    private static let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "screenshot-hooks")
 
     func body(content: Content) -> some View {
         content.task {

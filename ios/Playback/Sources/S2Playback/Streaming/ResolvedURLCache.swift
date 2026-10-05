@@ -2,7 +2,7 @@
 import Foundation
 import OSLog
 
-private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "audio-engine")
+private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "network")
 
 /// **Where an enclosure's redirect chain ended last time, so the next play can skip it.**
 ///

@@ -3,7 +3,7 @@ import CryptoKit
 import Foundation
 import OSLog
 
-private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "audio-engine")
+private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "network")
 
 /// **One contiguous run of streamed bytes per episode, on disk.**
 ///
