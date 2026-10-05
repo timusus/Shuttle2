@@ -54,6 +54,8 @@ internal class FakeSongRepository(private val songs: List<Song>) : SongRepositor
 
     override fun countSongs(): Flow<Int> = flowOf(songs.size)
 
+    override fun countSongsByProvider(): Flow<Map<MediaProviderType, Int>> = flowOf(songs.groupingBy { it.mediaProvider }.eachCount())
+
     override suspend fun loadLyrics(songId: Long): String? = null
 
     override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> {
