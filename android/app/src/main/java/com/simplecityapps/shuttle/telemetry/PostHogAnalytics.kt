@@ -10,6 +10,8 @@ import com.simplecityapps.shuttle.analytics.Analytics
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * [Analytics] through PostHog. Set up the first time the user opts in ([TelemetryConsentGate]), then opted in and out
@@ -24,7 +26,10 @@ class PostHogAnalytics @Inject constructor(
     @Volatile
     private var enabled = false
 
+    @Volatile
     private var setUp = false
+
+    private val _capturing = MutableStateFlow(false)
 
     /** Super properties registered so far; handed to PostHog once it's set up, since opt-in can come later. */
     private val superProperties = mutableMapOf<String, Any>()
@@ -39,9 +44,12 @@ class PostHogAnalytics @Inject constructor(
         } else if (setUp) {
             PostHog.optOut()
         }
+        _capturing.value = enabled && setUp
     }
 
     override val isCapturing: Boolean get() = enabled && setUp
+
+    override val capturing: StateFlow<Boolean> get() = _capturing
 
     override fun capture(
         event: String,

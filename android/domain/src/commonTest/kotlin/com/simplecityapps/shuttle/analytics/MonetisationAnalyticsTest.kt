@@ -10,10 +10,10 @@ import kotlin.time.Instant
 class MonetisationAnalyticsTest {
     private val events = mutableListOf<Pair<String, Map<String, Any>>>()
     private val registered = mutableMapOf<String, Any>()
-    private var capturing = true
+    private var backendTakesEvents = true
     private val analytics = MonetisationAnalytics(
         object : Analytics {
-            override val isCapturing: Boolean get() = capturing
+            override val isCapturing: Boolean get() = backendTakesEvents
 
             override fun capture(
                 event: String,
@@ -66,7 +66,7 @@ class MonetisationAnalyticsTest {
 
     @Test
     fun `entitlement_resolved reports it was not taken while analytics isn't capturing`() {
-        capturing = false
+        backendTakesEvents = false
 
         analytics.entitlementResolved(Entitlement.Free(trialUsed = false)) shouldBe false
 

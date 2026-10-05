@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
  *
  * Consent is unchanged: [TelemetryConsentGate.startAnalytics] applies the stored choice before PostHog is set up, and
  * [PostHogAnalytics] never sets up or sends without it. Events captured before this runs are dropped deliberately
- * (`Analytics.isCapturing` is false until setup), not queued: nothing sends one in the first frames.
+ * (`Analytics.isCapturing` is false until setup), not queued. The one event that must not be lost, the once-per-install
+ * `entitlement_resolved`, waits for `Analytics.capturing` instead of being offered once.
  *
  * Setup runs when the first activity has drawn its first frame; a process that never shows one (service, Android Auto)
  * sets up after [FALLBACK_DELAY_MS] instead. PostHog sends "Application Opened" itself: its process lifecycle observer

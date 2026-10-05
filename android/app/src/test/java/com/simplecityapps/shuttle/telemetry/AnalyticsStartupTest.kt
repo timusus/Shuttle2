@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Handler
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,16 +70,34 @@ class AnalyticsStartupTest {
 
     @Test
     fun `the fallback runs setup when no activity starts, and stops listening for one`() {
-        startup.schedule(application)
+        val app = mockk<Application>(relaxed = true)
+        startup.schedule(app)
+        val callbacks = slot<Application.ActivityLifecycleCallbacks>()
+        verify { app.registerActivityLifecycleCallbacks(capture(callbacks)) }
 
         shadowOf(android.os.Looper.getMainLooper()).idleFor(AnalyticsStartup.FALLBACK_DELAY_MS - 1, TimeUnit.MILLISECONDS)
         verify(exactly = 0) { consentGate.startAnalytics() }
+        verify(exactly = 0) { app.unregisterActivityLifecycleCallbacks(any()) }
 
         shadowOf(android.os.Looper.getMainLooper()).idleFor(2, TimeUnit.MILLISECONDS)
         verify(exactly = 1) { consentGate.startAnalytics() }
+        verify(exactly = 1) { app.unregisterActivityLifecycleCallbacks(callbacks.captured) }
+    }
 
-        resumeActivity()
-        shadowOf(android.os.Looper.getMainLooper()).idle()
-        verify(exactly = 1) { consentGate.startAnalytics() }
+    @Test
+    fun `the first resume stops listening and cancels the fallback`() {
+        val app = mockk<Application>(relaxed = true)
+        // Drop the post-frame step, so only the fallback could still run setup
+        startup.afterNextFrame = { _: Handler, _: () -> Unit -> }
+        startup.schedule(app)
+        val callbacks = slot<Application.ActivityLifecycleCallbacks>()
+        verify { app.registerActivityLifecycleCallbacks(capture(callbacks)) }
+
+        callbacks.captured.onActivityResumed(mockk<Activity>())
+
+        verify(exactly = 1) { app.unregisterActivityLifecycleCallbacks(callbacks.captured) }
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(AnalyticsStartup.FALLBACK_DELAY_MS * 2, TimeUnit.MILLISECONDS)
+        verify(exactly = 0) { consentGate.startAnalytics() }
+        verify(exactly = 1) { app.unregisterActivityLifecycleCallbacks(any()) }
     }
 }

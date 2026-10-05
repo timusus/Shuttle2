@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.flow.first
 
 /**
  * The paywall, purchase, server sign-in and onboarding events, shared by Android and iOS (#776). Every property is an
@@ -58,11 +59,17 @@ constructor(
      * The first time the entitlement is known on this install; [source] is where it came from: none, trial, pro, legacy
      * (an old purchase) or debug. Tells how many existing buyers there are, with [mediaSourcesChanged] for what they use.
      * Returns whether an enabled backend took the event; false means the caller should offer it again later.
+     * Call it after [awaitCapturing]: analytics is set up after the first frame, so earlier it would only drop the event.
      */
     fun entitlementResolved(entitlement: Entitlement): Boolean {
         if (!analytics.isCapturing) return false
         analytics.capture("entitlement_resolved", mapOf("source" to entitlement.analyticsSource))
         return true
+    }
+
+    /** Suspends until events reach a backend: analytics is set up and the user has opted in. */
+    suspend fun awaitCapturing() {
+        analytics.capturing.first { it }
     }
 
     /** The `media_sources` property: which kinds of source are set up, sent with every later event. */

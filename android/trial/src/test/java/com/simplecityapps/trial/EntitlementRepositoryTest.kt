@@ -1,6 +1,7 @@
 package com.simplecityapps.trial
 
 import com.android.billingclient.api.Purchase
+import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.CachedPro
 import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
@@ -23,6 +24,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -88,6 +90,43 @@ class EntitlementRepositoryTest {
         every { analytics.entitlementResolved(any()) } returns true
         repository()
         verify(exactly = 2) { analytics.entitlementResolved(any()) }
+        assertTrue(store.entitlementResolvedLogged)
+    }
+
+    @Test
+    fun `entitlement_resolved offered before analytics is set up is captured once it is, and only then marked logged`() = runTest {
+        val isSetUp = MutableStateFlow(false)
+        val events = mutableListOf<String>()
+        val setUpAnalytics = MonetisationAnalytics(
+            object : Analytics {
+                override val isCapturing: Boolean get() = isSetUp.value
+                override val capturing: StateFlow<Boolean> get() = isSetUp
+
+                override fun capture(
+                    event: String,
+                    properties: Map<String, Any>
+                ) {
+                    events += event
+                }
+
+                override fun register(
+                    name: String,
+                    value: Any
+                ) = Unit
+            }
+        )
+        val clock = object : Clock {
+            override fun now(): Instant = start + testScheduler.currentTime.milliseconds
+        }
+        EntitlementRepository(owned, store, setUpAnalytics, clock, backgroundScope, isDebug = false)
+        runCurrent()
+        assertTrue(events.isEmpty())
+        assertFalse(store.entitlementResolvedLogged)
+
+        isSetUp.value = true
+        runCurrent()
+
+        assertEquals(listOf("entitlement_resolved"), events)
         assertTrue(store.entitlementResolvedLogged)
     }
 

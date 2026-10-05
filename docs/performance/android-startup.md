@@ -87,8 +87,9 @@ Only PostHog setup moved (#914). Two sections account for about 90% of `onCreate
   moved: `AnalyticsStartup` runs `startAnalytics` once, off the main thread (IO dispatcher), after the first activity's
   first frame (Choreographer frame callback, then a main-looper message). A process that never shows an activity
   (service, Android Auto) sets it up after 5 s instead. As on iOS, consent is unchanged: no setup or event without it.
-  Events captured before setup are dropped on purpose (`PostHogAnalytics.isCapturing` is false until then); nothing
-  sends one in the first frames. PostHog sends "Application Opened" itself: its process lifecycle observer is added at
+  Events captured before setup are dropped on purpose (`PostHogAnalytics.isCapturing` is false until then), except
+  the once-per-install `entitlement_resolved`: `EntitlementRepository` waits on `Analytics.capturing` and marks it
+  sent only once it is captured. PostHog sends "Application Opened" itself: its process lifecycle observer is added at
   setup and replayed `onStart` on the already started lifecycle (checked in posthog-android 3.71.4 bytecode).
   - **Measure:** the `S2 init TelemetryInitializer` trace section should now be Sentry alone; capture the Baseline
     Profile benchmark as in Method and compare with the 47 ms (59 ms) above. TODO(owner's device batch): Sentry-only
