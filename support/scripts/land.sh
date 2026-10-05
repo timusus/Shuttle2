@@ -77,6 +77,14 @@
 # when the incoming commits touch none of the batch's files, else after one more verify (at most one
 # per run). If the push still fails, the checkout is reset to origin/main (not in place) so the next
 # landing isn't refused for unpushed commits; the branches keep theirs.
+# Any other exit after the picks and before a successful push (nothing landed, verify env failure or
+# timeout, a signal, an unexpected error) restores the checkout the same way, from an EXIT trap
+# (#867), and prints one line saying so; the picks are copies, so the branches are untouched. The
+# start is safe to return to because a tracked-clean tree is required and HEAD is reset to origin/main
+# before any pick. Not restored: in place, a successful push, `exit 4` aborts (HEAD in an unknown
+# state, left for inspection) and --no-push/--dry-run, which stop before the push on purpose so the
+# verified tree can be inspected or pushed by hand (the next landing then needs `git reset --hard
+# origin/main` first; the stop message says so).
 set -uo pipefail
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
@@ -191,10 +199,31 @@ kill_groups() {
   [ -n "$GROUP_PID" ] && kill -TERM -- "-$GROUP_PID" 2>/dev/null
   WATCHDOG_PID="" GROUP_PID=""
 }
+# land_exit: the one EXIT trap. Kills a running verify group, then, while RESTORE_HEAD_ON_EXIT=1 (armed
+# just before the picks, disarmed on success and the paths documented in the header), puts HEAD back on
+# origin/main so an unlanded batch's picks never block the next landing (#867).
+RESTORE_HEAD_ON_EXIT=0
+land_exit() {
+  local rc=$?
+  kill_groups
+  if [ "$RESTORE_HEAD_ON_EXIT" = 1 ]; then
+    RESTORE_HEAD_ON_EXIT=0
+    if [ "$(git rev-parse HEAD 2>/dev/null)" != "$ORIGIN_MAIN_SHA" ]; then
+      git cherry-pick --quit > /dev/null 2>&1 || true
+      git rebase --abort > /dev/null 2>&1 || true
+      if git reset -q --hard "$ORIGIN_MAIN_SHA" > /dev/null 2>&1; then
+        say "land.sh: exited without pushing; reset $CUR_BRANCH back to origin/main ($ORIGIN_MAIN_SHA); the branches are untouched, land them again"
+      else
+        say "land.sh: exited without pushing and could not reset $CUR_BRANCH to origin/main; reset it before the next landing (log: $LOG)"
+      fi
+    fi
+  fi
+  return "$rc"
+}
 run_in_group() {
   local secs=0 rc flag=""
   if [ "$1" = --timeout ]; then secs=$2; shift 2; fi
-  trap kill_groups EXIT
+  trap land_exit EXIT
   trap 'exit 143' TERM INT HUP
   set -m  # job control: each background job gets its own process group (pgid == pid)
   "$@" < /dev/null &
@@ -522,6 +551,7 @@ rollback_pick() {
   local now
   now=$(git rev-parse HEAD 2>/dev/null)
   if [ "$now" != "$1" ]; then
+    RESTORE_HEAD_ON_EXIT=0
     say "land.sh: ABORT: rollback failed, HEAD is ${now:-unknown} but should be $1; nothing verified or pushed, inspect $REPO_ROOT (log: $LOG)"
     exit 4
   fi
@@ -574,6 +604,9 @@ else
     say "land.sh: clearing a cherry-pick left in progress by an earlier run"
     git cherry-pick --quit >> "$LOG" 2>&1 || true
   fi
+  trap land_exit EXIT
+  trap 'exit 143' TERM INT HUP
+  RESTORE_HEAD_ON_EXIT=1
   for i in "${!BRANCHES[@]}"; do
     pick_branch "$i"
   done
@@ -793,6 +826,7 @@ checkout_back() {
   if [ "$CUR_BRANCH" = HEAD ]; then git checkout -q --detach "$1" >> "$LOG" 2>&1
   else git checkout -q "$CUR_BRANCH" >> "$LOG" 2>&1; fi
   if [ "$(git rev-parse HEAD)" != "$1" ]; then
+    RESTORE_HEAD_ON_EXIT=0
     say "land.sh: ABORT: could not return to $1 after verifying origin/main; nothing pushed, inspect $REPO_ROOT (log: $LOG)"
     exit 4
   fi
@@ -997,7 +1031,8 @@ if [ "${#LANDED_IDX[@]}" -eq 0 ]; then
 fi
 
 if [ "$NO_PUSH" = 1 ]; then
-  say "land.sh: --no-push/--dry-run, stopping before push (log: $LOG)"
+  RESTORE_HEAD_ON_EXIT=0
+  say "land.sh: --no-push/--dry-run, stopping before push; the picks stay on $CUR_BRANCH, run 'git reset --hard origin/main' before the next landing (log: $LOG)"
   exit 0
 fi
 
@@ -1095,6 +1130,7 @@ reset_after_push_failure() {
   fi
   git fetch -q origin main >> "$LOG" 2>&1 || true
   if run_git reset -q --hard origin/main; then
+    RESTORE_HEAD_ON_EXIT=0
     say "land.sh: reset $CUR_BRANCH back to origin/main ($(git rev-parse origin/main)); the branches keep their commits, land them again"
   else
     say "land.sh: could not reset $CUR_BRANCH to origin/main; the next landing will refuse until it is reset (log: $LOG)"
@@ -1107,6 +1143,7 @@ if ! push_landed; then
   exit 1
 fi
 
+RESTORE_HEAD_ON_EXIT=0
 SHA=$(git rev-parse HEAD)
 say "land.sh: pushed $SHA"
 

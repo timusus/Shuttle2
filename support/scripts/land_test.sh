@@ -12,7 +12,7 @@ trap 'rm -rf "$TMP"' EXIT
 fails=0
 
 # Pull just the matcher functions out of land.sh (the script itself runs a landing when sourced).
-eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step|verify_phases|verify_ios|kmp_native_tasks|run_git|push_once|rebase_onto_new_main|push_landed|reset_after_push_failure)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
+eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step|verify_phases|verify_ios|kmp_native_tasks|run_git|push_once|rebase_onto_new_main|push_landed|reset_after_push_failure|kill_groups|land_exit)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
 
 check() { # <name> <expected-rc> <cmd...>
   local name=$1 want=$2 rc=0; shift 2
@@ -293,5 +293,19 @@ check "push race: a conflict also resets the checkout" 0 test "$(lander_unpushed
 race_setup 1; race_push_other android/a.kt 1
 IN_PLACE=1 race_run 0 > /dev/null
 check "push race: in place, a failed push leaves HEAD's commits alone" 0 test "$(lander_unpushed)" = 1
+
+# EXIT trap (#867): an armed land_exit puts the checkout back on the batch's starting origin/main
+# (the batch commit is a stand-in for the picks); disarmed or in place it leaves HEAD alone.
+exit_run() {  # <armed 0|1>: run land_exit in the landing checkout, print "<unpushed> <message>"
+  ( cd "$RACE/lander" && LOG="$RACE/land.log" && : > "$LOG" && CUR_BRANCH=main && say() { echo "$*"; } \
+    && ORIGIN_MAIN_SHA=$(git -C "$RACE/seed" rev-parse HEAD) && RESTORE_HEAD_ON_EXIT=$1 && GROUP_PID="" WATCHDOG_PID="" \
+    && msg=$(land_exit) && echo "$(git rev-list --count "$ORIGIN_MAIN_SHA"..HEAD) ${msg:+reset}" )
+}
+race_setup 1
+check "exit trap: armed, the picks are dropped and one line says so" 0 test "$(exit_run 1)" = "0 reset"
+race_setup 1
+check "exit trap: disarmed (pushed, --no-push, abort), HEAD stays" 0 test "$(exit_run 0)" = "1 "
+race_setup 1
+check "exit trap: armed but already on origin/main, silent" 0 test "$(git -C "$RACE/lander" reset -q --hard HEAD~1; exit_run 1)" = "0 "
 
 [ "$fails" -eq 0 ] || { echo "$fails failed"; exit 1; }
