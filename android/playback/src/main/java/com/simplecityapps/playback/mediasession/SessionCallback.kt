@@ -50,6 +50,10 @@ import timber.log.Timber
  * the callers the app knows (Android Auto). The service is exported, so any other app can connect, and gets the
  * transport controls and requests to play something (a media id, a URI or a search, as the old session had), but
  * not the queue's contents.
+ *
+ * [carAccess] says whether a car may use the library. A locked car browses only [UPGRADE_ROOT_ID], and is refused the
+ * rest of the library, a search and a request to play something, so that nothing reaches the library around the
+ * upgrade item.
  */
 class SessionCallback(
     private val context: Context,
@@ -59,11 +63,7 @@ class SessionCallback(
     /** The song the saved queue was left on, to offer for resumption before the queue is restored. */
     private val nowPlaying: () -> NowPlayingSnapshot?,
     private val scope: CoroutineScope,
-    /**
-     * Whether a trusted controller may browse the library. A car may only while Android Auto is unlocked (Shuttle
-     * Music Pro or its trial; the first connection starts the trial); otherwise it gets [UPGRADE_ROOT_ID].
-     */
-    private val mayBrowse: suspend (ControllerInfo) -> Boolean,
+    private val carAccess: CarAccess,
     private val isTrustedCaller: (ControllerInfo) -> Boolean
 ) : MediaLibrarySession.Callback {
     override fun onConnect(session: MediaSession, controller: ControllerInfo): MediaSession.ConnectionResult = MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -129,6 +129,18 @@ class SessionCallback(
             .collect { (shuffleMode, repeatMode) -> session.setMediaButtonPreferences(mediaButtonPreferences(shuffleMode, repeatMode)) }
     }
 
+    /**
+     * Moves a connected car between the upgrade item and the library as Android Auto locks or unlocks (a purchase, or
+     * the trial ending), without it reconnecting, until [scope] ends: a car subscribed to either root fetches its
+     * children again, which [onGetChildren] answers for what the car may now see.
+     */
+    fun launchRootRefreshes(session: MediaLibrarySession): Job = scope.launch {
+        carAccess.lockChanges.collect {
+            session.notifyChildrenChanged(UPGRADE_ROOT_ID, Int.MAX_VALUE, null)
+            session.notifyChildrenChanged(MediaIdHelper.root.mediaId, Int.MAX_VALUE, null)
+        }
+    }
+
     // Browsing
 
     /** The browse tree's root for a controller allowed to browse; any other gets a root with nothing under it. */
@@ -139,10 +151,14 @@ class SessionCallback(
     ): ListenableFuture<LibraryResult<MediaItem>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofItem(emptyRoot, params))
         return scope.listenableFuture {
-            LibraryResult.ofItem(if (mayBrowse(browser)) MediaIdHelper.root else upgradeRoot(), params)
+            LibraryResult.ofItem(if (carAccess.mayUseLibrary(browser)) MediaIdHelper.root else upgradeRoot(), params)
         }
     }
 
+    /**
+     * Either root's children are the library's for a controller that may use it and the upgrade item for a locked
+     * car, so a car on either moves to the other when [launchRootRefreshes] tells it to fetch them again.
+     */
     override fun onGetChildren(
         session: MediaLibrarySession,
         browser: ControllerInfo,
@@ -152,9 +168,14 @@ class SessionCallback(
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
         if (!isTrustedCaller(browser) || parentId == EMPTY_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
-        if (parentId == UPGRADE_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(upgradeItem()), params))
+        val isRoot = parentId == UPGRADE_ROOT_ID || parentId == MediaIdHelper.root.mediaId
         return scope.listenableFuture {
-            LibraryResult.ofItemList(mediaIdHelper.getChildren(parentId).page(page, pageSize), params)
+            val children = when {
+                carAccess.mayUseLibrary(browser) -> mediaIdHelper.getChildren(if (isRoot) MediaIdHelper.root.mediaId else parentId)
+                isRoot -> listOf(upgradeItem())
+                else -> emptyList()
+            }
+            LibraryResult.ofItemList(children.page(page, pageSize), params)
         }
     }
 
@@ -163,7 +184,11 @@ class SessionCallback(
         .setMediaMetadata(MediaMetadata.Builder().setIsBrowsable(true).setIsPlayable(false).build())
         .build()
 
-    /** Neither playable nor browsable: the upgrade happens on the phone, never in the car. */
+    /**
+     * Playable, though there's nothing to play: Android Auto may hide an item that's neither browsable nor playable,
+     * and playing this one reports [SessionError.ERROR_SESSION_PREMIUM_ACCOUNT_REQUIRED] with the upgrade message
+     * ([requireLibrary]) for the car to show. The upgrade happens on the phone, never in the car.
+     */
     private fun upgradeItem(): MediaItem = MediaItem.Builder()
         .setMediaId(UPGRADE_ITEM_ID)
         .setMediaMetadata(
@@ -171,7 +196,7 @@ class SessionCallback(
                 .setTitle(context.getString(R.string.auto_pro_upgrade_title))
                 .setSubtitle(context.getString(R.string.auto_pro_upgrade_subtitle))
                 .setIsBrowsable(false)
-                .setIsPlayable(false)
+                .setIsPlayable(true)
                 .build()
         )
         .build()
@@ -182,7 +207,10 @@ class SessionCallback(
         mediaId: String
     ): ListenableFuture<LibraryResult<MediaItem>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
+        if (mediaId == UPGRADE_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItem(upgradeRoot(), null))
+        if (mediaId == UPGRADE_ITEM_ID) return Futures.immediateFuture(LibraryResult.ofItem(upgradeItem(), null))
         return scope.listenableFuture {
+            if (!carAccess.mayUseLibrary(browser)) return@listenableFuture LibraryResult.ofError(SessionError.ERROR_NOT_SUPPORTED)
             mediaIdHelper.getItem(mediaId)?.let { item -> LibraryResult.ofItem(item, null) } ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
         }
     }
@@ -196,6 +224,7 @@ class SessionCallback(
     ): ListenableFuture<LibraryResult<Void>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
         return scope.listenableFuture {
+            if (!carAccess.mayUseLibrary(browser)) return@listenableFuture LibraryResult.ofError(SessionError.ERROR_NOT_SUPPORTED)
             val results = mediaIdHelper.search(query)
             session.notifySearchResultChanged(browser, query, results.size, params)
             LibraryResult.ofVoid(params)
@@ -212,7 +241,8 @@ class SessionCallback(
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
         if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
         return scope.listenableFuture {
-            LibraryResult.ofItemList(mediaIdHelper.search(query).page(page, pageSize), params)
+            val results = if (carAccess.mayUseLibrary(browser)) mediaIdHelper.search(query) else emptyList()
+            LibraryResult.ofItemList(results.page(page, pageSize), params)
         }
     }
 
@@ -231,6 +261,7 @@ class SessionCallback(
         startIndex: Int,
         startPositionMs: Long
     ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture {
+        requireLibrary(mediaSession, controller)
         val search = mediaItems.singleOrNull()?.takeIf { item -> item.isSearch }?.requestMetadata
         val playQueue = if (search != null) {
             playRequests.queueForSearch(search.searchQuery, search.extras) ?: return@listenableFuture currentItems(mediaSession.player)
@@ -250,6 +281,7 @@ class SessionCallback(
         controller: ControllerInfo,
         mediaItems: List<MediaItem>
     ): ListenableFuture<List<MediaItem>> = scope.listenableFuture {
+        requireLibrary(mediaSession, controller)
         mediaItems.flatMap { item -> songsFor(item) }.map { song -> song.toQueueEntry().toMediaItem() }
     }
 
@@ -264,6 +296,7 @@ class SessionCallback(
         controller: ControllerInfo,
         isForPlayback: Boolean
     ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture {
+        requireLibrary(mediaSession, controller)
         val queue = queueOperations.queueStateFlow.value
         if (!isForPlayback && !queue.isRestored && queue.items.isEmpty()) {
             nowPlaying()?.let { snapshot ->
@@ -273,6 +306,16 @@ class SessionCallback(
         queueOperations.queueStateFlow.awaitRestored()
         if (mediaSession.player.mediaItemCount == 0) throw UnsupportedOperationException("No saved queue to resume")
         currentItems(mediaSession.player)
+    }
+
+    /**
+     * Refuses a locked car's request to play something (the upgrade item, a media id it kept from before, a voice
+     * search or resuming), telling it why, with the upgrade message, for the car to show.
+     */
+    private suspend fun requireLibrary(session: MediaSession, controller: ControllerInfo) {
+        if (carAccess.mayUseLibrary(controller)) return
+        session.sendError(controller, SessionError(SessionError.ERROR_SESSION_PREMIUM_ACCOUNT_REQUIRED, context.getString(R.string.auto_pro_upgrade_subtitle)))
+        throw UnsupportedOperationException("Android Auto needs Shuttle Music Pro")
     }
 
     private suspend fun resolve(mediaItems: List<MediaItem>, startIndex: Int): PlayQueue? {
@@ -326,13 +369,7 @@ class SessionCallback(
         /** The root a car gets once Android Auto needs Shuttle Music Pro: one item, pointing the user at the phone. */
         const val UPGRADE_ROOT_ID = "PRO_UPGRADE_ROOT"
 
-        private const val UPGRADE_ITEM_ID = "PRO_UPGRADE"
-
-        /** Android Auto's and Android Automotive's media browsers. */
-        private val carPackages = setOf("com.google.android.projection.gearhead", "com.android.car.media")
-
-        /** Whether [controller] is a car's media browser (Android Auto on the phone, or Android Automotive). */
-        fun isCar(controller: ControllerInfo): Boolean = controller.packageName in carPackages
+        const val UPGRADE_ITEM_ID = "PRO_UPGRADE"
 
         private val emptyRoot: MediaItem = MediaItem.Builder()
             .setMediaId(EMPTY_ROOT_ID)

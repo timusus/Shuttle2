@@ -525,3 +525,10 @@ Failed restores draw 1-star reviews in every paid music player sampled, and a Ja
 - [ ] Same for `s2_pro` and `s2_pro_lifetime`: own exactly one, clear data or reinstall, Restore purchases, Pro unlocks.
 - [ ] Buy the Yearly plan end to end: the button opens Google Play, the purchase completes, and Pro unlocks without a restart.
 - [ ] Cancel and refund the annual subscription in Play Console: the entitlement lapses, and after the licence-test account's cache catches up the paywall offers the plan again.
+
+## Android Auto behind Shuttle Music Pro (#939)
+
+Needs the Desktop Head Unit (`com.google.android.autosimulator` counts as a car) and a debug build resolving from Play (`support/scripts/s2-debug.sh SET_ENTITLEMENT --es state store`) on a licence-tester account whose trial has ended without Pro.
+- [ ] Connect the DHU: the media root shows the single "Upgrade to Shuttle Music Pro" item (not an empty list); tapping it shows the upgrade message as an error, and nothing plays. A voice search ("play <song> on Shuttle Music") is refused the same way.
+- [ ] With the DHU still connected on the upgrade item, `SET_ENTITLEMENT --es state pro`: the DHU's root swaps to Artists, Albums, Playlists and Shuffle All without reconnecting. `--es state store` again: it returns to the upgrade item.
+- [ ] Fresh install (trial unused), connect the DHU: the library shows straight away, the trial starts once, and the phone app shows the trial notice on its next open, including after a force-stop in between.

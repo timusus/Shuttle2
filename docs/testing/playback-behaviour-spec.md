@@ -280,9 +280,14 @@ device-only: *Media session through Media3*.
 
 **RS-68: a car without Shuttle Music Pro browses one upgrade item.** Given Android Auto needs Shuttle Music Pro (the
 free trial, which a car's first connection starts, has ended without an upgrade), when the car browses, then its root
-holds a single item, neither playable nor browsable, saying to upgrade from Shuttle Music on the phone; the car never
-opens a paywall, and stored settings and the queue are untouched. (#939) — JVM (`spec/MediaSessionSpecTest`); a real
-head unit is device-only.
+holds a single item saying to upgrade from Shuttle Music on the phone. The item is playable (Android Auto may hide one
+that is neither playable nor browsable), and playing it reports a premium-account-required error with that message.
+The car never opens a paywall, and stored settings and the queue are untouched. Nothing else in the library reaches a
+locked car: other folders are empty, an item, a search and a request to play something (a media id, a voice search,
+resuming) are refused. Pro, the trial, or a store that hasn't answered yet unlock it; any controller that isn't a car
+(Android Auto, Android Automotive or the desktop head unit) is never gated. A connected car moves between the upgrade
+item and the library without reconnecting when the user upgrades or the trial ends. (#939) — JVM
+(`spec/MediaSessionSpecTest`); a real head unit is device-only.
 
 **RS-48: a cold start in the foreground stays there until its command has run.** Given S2 not running, when the
 widget, a shortcut or a headset's play button starts the playback service in the foreground, then it's in the

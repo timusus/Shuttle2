@@ -8,19 +8,26 @@ import com.simplecityapps.playback.chromecast.FakeSongRepository
 import com.simplecityapps.playback.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.playback.fakes.FakeAlbumRepository
 import com.simplecityapps.playback.fakes.FakePlaylistRepository
+import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.mediasession.SessionPlayer
 import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.mediasession.VoiceSearchResolver
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
  * The media session over the real playback stack of a [PlaybackHarness], as the playback service builds it, with a
@@ -29,6 +36,9 @@ import kotlinx.coroutines.cancel
  *
  * The saved queue counts as restored unless [restored] is false, as it is while the app starts. Controllers are trusted
  * (as the system, Android Auto and S2 itself are) unless [trusted] is false, as another installed app isn't.
+ *
+ * The browsers [connect] builds are cars (Android Auto) if [car] is true, gated by the real [CarAccess] and Pro gate
+ * on [entitlement], whose trial starts as the app's does ([trialStarts] counts the starts).
  */
 class SessionHarness(
     val playback: PlaybackHarness = PlaybackHarness(),
@@ -37,9 +47,12 @@ class SessionHarness(
     playlists: Map<Playlist, List<Song>> = emptyMap(),
     restored: Boolean = true,
     trusted: Boolean = true,
-    /** False for a car once Android Auto needs Shuttle Music Pro (the trial has ended without an upgrade). */
-    mayBrowse: Boolean = true
+    car: Boolean = false,
+    /** What the store says the user has: Pro by default. */
+    val entitlement: MutableStateFlow<Entitlement> = MutableStateFlow(Entitlement.Pro(ProSource.Lifetime))
 ) {
+    var trialStarts = 0
+        private set
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private val browsers = mutableListOf<MediaBrowser>()
@@ -71,14 +84,24 @@ class SessionHarness(
                 voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository),
                 songRepository = songRepository
             )
-        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, { mayBrowse }) { trusted }
+        val gate = ServerAccessGate(entitlement, startTrial = {
+            val eligible = entitlement.value == Entitlement.Free(trialUsed = false)
+            if (eligible) {
+                trialStarts++
+                entitlement.value = Entitlement.Trial(Clock.System.now() + 14.days)
+            }
+            eligible
+        })
+        val carAccess = if (car) CarAccess(gate, carPackages = setOf(context.packageName)) else CarAccess(gate)
+        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, carAccess) { trusted }
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)
+        callback.launchRootRefreshes(session)
     }
 
-    /** A browser connected to the session, as Android Auto's or a Bluetooth head unit's is. */
-    fun connect(): MediaBrowser = await(MediaBrowser.Builder(playback.context, session.token).buildAsync()).also { browsers += it }
+    /** A browser connected to the session, as Android Auto's or a Bluetooth head unit's is, telling [listener] what the session sends it. */
+    fun connect(listener: MediaBrowser.Listener = object : MediaBrowser.Listener {}): MediaBrowser = await(MediaBrowser.Builder(playback.context, session.token).setListener(listener).buildAsync()).also { browsers += it }
 
     /** Turns the main looper, where the session and the playback stack live, until [future] is done. */
     fun <T> await(future: ListenableFuture<T>): T {

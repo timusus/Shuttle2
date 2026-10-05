@@ -24,6 +24,7 @@ import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.ArtworkBitmapLoader
+import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.mediasession.SessionPlayer
@@ -32,8 +33,6 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.di.appGraph
-import com.simplecityapps.shuttle.entitlement.ProFeature
-import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -131,12 +130,7 @@ class PlaybackService : MediaLibraryService() {
         )
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        // A car's first connection starts the shared trial; after it ends the car shows the upgrade item, and the phone
-        // app (not the car) offers the upgrade. A store that hasn't answered yet never locks a purchaser out.
-        val mayBrowse: suspend (MediaSession.ControllerInfo) -> Boolean = { controller ->
-            !SessionCallback.isCar(controller) || serverAccessGate.use(ProFeature.AndroidAuto, askForPaywall = false) != ServerAccess.Refused
-        }
-        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, mayBrowse) { controller ->
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate)) { controller ->
             controller.isTrusted || runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
         }
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
@@ -156,6 +150,7 @@ class PlaybackService : MediaLibraryService() {
         }
         addSession(session)
         callback.launchMediaButtonUpdates(session)
+        callback.launchRootRefreshes(session)
         // A session started with no activity (Android Auto, a media button) casts too.
         castStarter.startForSession()
     }

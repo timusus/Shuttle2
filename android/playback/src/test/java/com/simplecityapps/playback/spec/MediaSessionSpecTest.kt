@@ -8,14 +8,22 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaBrowser
+import androidx.media3.session.MediaController
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaSession
+import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.androidauto.MediaIdHelper
+import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -27,6 +35,8 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +52,8 @@ class MediaSessionSpecTest {
     private val album = listOf(albumSong(1, track = 1), albumSong(2, track = 2), albumSong(3, track = 3))
 
     private val harnesses = mutableListOf<SessionHarness>()
+
+    private val UPGRADE_MESSAGE = "Android Auto is part of Shuttle Music Pro. Open Shuttle Music on your phone to upgrade."
 
     @After
     fun tearDown() {
@@ -342,17 +354,170 @@ class MediaSessionSpecTest {
     }
 
     @Test
-    fun `RS-68 a car without Shuttle Music Pro browses one upgrade item`() {
-        val harness = sessionHarness(songs = listOf(song(1), song(2)), mayBrowse = false)
-        val browser = harness.connect()
+    fun `RS-68 a car without Shuttle Music Pro browses one upgrade item, and playing it says why it can't`() {
+        val harness = sessionHarness(songs = listOf(song(1), song(2)), car = true, entitlement = Entitlement.Free(trialUsed = true))
+        val errors = mutableListOf<SessionError>()
+        val browser = harness.connect(
+            object : MediaBrowser.Listener {
+                override fun onError(controller: MediaController, sessionError: SessionError) {
+                    errors += sessionError
+                }
+            }
+        )
 
         val root = harness.await(browser.getLibraryRoot(null)).value!!
         root.mediaId shouldBe SessionCallback.UPGRADE_ROOT_ID
         val upgrade = children(harness, browser, root.mediaId).single()
         upgrade.mediaMetadata.title.toString() shouldBe "Upgrade to Shuttle Music Pro"
-        upgrade.mediaMetadata.subtitle.toString() shouldBe "Android Auto is part of Shuttle Music Pro. Open Shuttle Music on your phone to upgrade."
-        upgrade.mediaMetadata.isPlayable shouldBe false
+        upgrade.mediaMetadata.subtitle.toString() shouldBe UPGRADE_MESSAGE
+        // Playable, as Android Auto may hide an item that's neither playable nor browsable.
+        upgrade.mediaMetadata.isPlayable shouldBe true
         upgrade.mediaMetadata.isBrowsable shouldBe false
+
+        browser.setMediaItem(MediaItem.Builder().setMediaId(upgrade.mediaId).build())
+        harness.playback.runUntil { errors.isNotEmpty() }
+        errors.single().code shouldBe SessionError.ERROR_SESSION_PREMIUM_ACCOUNT_REQUIRED
+        errors.single().message shouldBe UPGRADE_MESSAGE
+        harness.playback.queueOperations.getQueue().shouldBeEmpty()
+        harness.trialStarts shouldBe 0
+    }
+
+    @Test
+    fun `RS-68 a car browses the library with Pro, the trial or a store that hasn't answered, and not once the trial has ended`() {
+        val rootFor = listOf(
+            Entitlement.Pro(ProSource.Lifetime),
+            Entitlement.Trial(Clock.System.now() + 1.days),
+            Entitlement.Unknown,
+            Entitlement.Free(trialUsed = true)
+        ).associateWith { entitlement ->
+            val harness = sessionHarness(songs = listOf(song(1)), car = true, entitlement = entitlement)
+            harness.await(harness.connect().getLibraryRoot(null)).value!!.mediaId.also { harness.trialStarts shouldBe 0 }
+        }
+
+        rootFor.values.toList() shouldBe listOf(MediaIdHelper.ROOT_ID, MediaIdHelper.ROOT_ID, MediaIdHelper.ROOT_ID, SessionCallback.UPGRADE_ROOT_ID)
+    }
+
+    @Test
+    fun `RS-68 a car's first connection starts the trial once, and browses the library`() {
+        val harness = sessionHarness(songs = listOf(song(1)), car = true, entitlement = Entitlement.Free(trialUsed = false))
+        val browser = harness.connect()
+
+        harness.await(browser.getLibraryRoot(null)).value!!.mediaId shouldBe MediaIdHelper.ROOT_ID
+        harness.await(browser.getLibraryRoot(null)).value!!.mediaId shouldBe MediaIdHelper.ROOT_ID
+        children(harness, browser, MediaIdHelper.ROOT_ID).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle All")
+
+        harness.trialStarts shouldBe 1
+        (harness.entitlement.value is Entitlement.Trial) shouldBe true
+    }
+
+    @Test
+    fun `RS-68 a controller that isn't a car is never gated and never starts the trial`() {
+        val harness = sessionHarness(songs = album, albums = listOf(albumOf(album)), entitlement = Entitlement.Free(trialUsed = true))
+        val browser = harness.connect()
+
+        harness.await(browser.getLibraryRoot(null)).value!!.mediaId shouldBe MediaIdHelper.ROOT_ID
+        children(harness, browser, "media:/album_root/").map { it.mediaMetadata.title.toString() } shouldBe listOf("Blue")
+        playRequest(harness, browser, MediaItem.Builder().setRequestMetadata(MediaItem.RequestMetadata.Builder().setSearchQuery("Song2").build()).build())
+        harness.playback.queueOperations.queueStateFlow.value.currentItem?.song?.name shouldBe "Song2"
+
+        val untouched = sessionHarness(songs = album, entitlement = Entitlement.Free(trialUsed = false))
+        harness.await(untouched.connect().getLibraryRoot(null))
+        untouched.trialStarts shouldBe 0
+    }
+
+    @Test
+    fun `RS-68 a locked car reaches nothing in the library around the upgrade item`() {
+        val unlocked = sessionHarness(songs = album, albums = listOf(albumOf(album)), car = true)
+        val unlockedBrowser = unlocked.connect()
+        val albumId = children(unlocked, unlockedBrowser, "media:/album_root/").single().mediaId
+        val songId = children(unlocked, unlockedBrowser, albumId)[1].mediaId
+
+        val harness = sessionHarness(songs = album, albums = listOf(albumOf(album)), car = true, entitlement = Entitlement.Free(trialUsed = true))
+        val errors = mutableListOf<SessionError>()
+        val browser = harness.connect(
+            object : MediaBrowser.Listener {
+                override fun onError(controller: MediaController, sessionError: SessionError) {
+                    errors += sessionError
+                }
+            }
+        )
+
+        // The real root, an id it kept from before, shows only the upgrade item; any other folder is empty.
+        children(harness, browser, MediaIdHelper.ROOT_ID).map { it.mediaId } shouldBe listOf(SessionCallback.UPGRADE_ITEM_ID)
+        children(harness, browser, "media:/album_root/").shouldBeEmpty()
+        children(harness, browser, albumId).shouldBeEmpty()
+        harness.await(browser.getItem(songId)).resultCode shouldBe SessionError.ERROR_NOT_SUPPORTED
+        harness.await(browser.search("Song2", null)).resultCode shouldBe SessionError.ERROR_NOT_SUPPORTED
+        harness.await(browser.getSearchResult("Song2", 0, 100, null)).value.orEmpty().shouldBeEmpty()
+
+        browser.setMediaItem(MediaItem.Builder().setMediaId(songId).build())
+        harness.playback.runUntil { errors.size == 1 }
+        browser.setMediaItem(MediaItem.Builder().setRequestMetadata(MediaItem.RequestMetadata.Builder().setSearchQuery("Song2").build()).build())
+        harness.playback.runUntil { errors.size == 2 }
+        errors.map { it.code }.distinct() shouldBe listOf(SessionError.ERROR_SESSION_PREMIUM_ACCOUNT_REQUIRED)
+        harness.playback.queueOperations.getQueue().shouldBeEmpty()
+
+        // Nor does it resume the saved queue.
+        val resumed = harness.callback.onPlaybackResumption(harness.session, harness.session.connectedControllers.first(), true)
+        harness.playback.runUntil { resumed.isDone }
+        runCatching { resumed.get() }.isFailure shouldBe true
+    }
+
+    @Test
+    fun `RS-68 a connected car moves to the library on an upgrade, and back to the upgrade item when the trial ends`() {
+        val harness = sessionHarness(songs = listOf(song(1)), car = true, entitlement = Entitlement.Free(trialUsed = true))
+        val changed = mutableListOf<String>()
+        val browser = harness.connect(
+            object : MediaBrowser.Listener {
+                override fun onChildrenChanged(
+                    browser: MediaBrowser,
+                    parentId: String,
+                    itemCount: Int,
+                    params: MediaLibraryService.LibraryParams?
+                ) {
+                    changed += parentId
+                }
+            }
+        )
+        val root = harness.await(browser.getLibraryRoot(null)).value!!.mediaId
+        root shouldBe SessionCallback.UPGRADE_ROOT_ID
+        harness.await(browser.subscribe(root, null))
+
+        harness.entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+        harness.playback.runUntil { root in changed }
+        children(harness, browser, root).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle All")
+
+        // A car that connected during the trial, on the real root, gets the upgrade item once it ends.
+        val trial = sessionHarness(songs = listOf(song(1)), car = true, entitlement = Entitlement.Trial(Clock.System.now() + 1.days))
+        val trialChanged = mutableListOf<String>()
+        val trialBrowser = trial.connect(
+            object : MediaBrowser.Listener {
+                override fun onChildrenChanged(
+                    browser: MediaBrowser,
+                    parentId: String,
+                    itemCount: Int,
+                    params: MediaLibraryService.LibraryParams?
+                ) {
+                    trialChanged += parentId
+                }
+            }
+        )
+        val trialRoot = trial.await(trialBrowser.getLibraryRoot(null)).value!!.mediaId
+        trialRoot shouldBe MediaIdHelper.ROOT_ID
+        trial.await(trialBrowser.subscribe(trialRoot, null))
+
+        trial.entitlement.value = Entitlement.Free(trialUsed = true)
+        trial.playback.runUntil { trialRoot in trialChanged }
+        children(trial, trialBrowser, trialRoot).map { it.mediaId } shouldBe listOf(SessionCallback.UPGRADE_ITEM_ID)
+    }
+
+    @Test
+    fun `RS-68 Android Auto, Android Automotive and the desktop head unit are cars`() {
+        val carAccess = CarAccess(ServerAccessGate(MutableStateFlow(Entitlement.Unknown), startTrial = null))
+        fun controller(packageName: String) = MediaSession.ControllerInfo.createTestOnlyControllerInfo(packageName, 0, 0, 0, 0, false, Bundle.EMPTY, false)
+
+        listOf("com.google.android.projection.gearhead", "com.android.car.media", "com.google.android.autosimulator", "com.example.player")
+            .map { carAccess.isCar(controller(it)) } shouldBe listOf(true, true, true, false)
     }
 
     private fun sessionHarness(
@@ -360,8 +525,9 @@ class MediaSessionSpecTest {
         albums: List<Album> = emptyList(),
         restored: Boolean = true,
         trusted: Boolean = true,
-        mayBrowse: Boolean = true
-    ) = SessionHarness(songs = songs, albums = albums, restored = restored, trusted = trusted, mayBrowse = mayBrowse).also { harnesses += it }
+        car: Boolean = false,
+        entitlement: Entitlement = Entitlement.Pro(ProSource.Lifetime)
+    ) = SessionHarness(songs = songs, albums = albums, restored = restored, trusted = trusted, car = car, entitlement = MutableStateFlow(entitlement)).also { harnesses += it }
 
     /** Asks the session to play [item], as a voice search or another app does, and waits for it to play. */
     private fun playRequest(
