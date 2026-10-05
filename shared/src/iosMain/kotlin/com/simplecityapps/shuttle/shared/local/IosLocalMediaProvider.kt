@@ -19,6 +19,7 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -30,7 +31,8 @@ import kotlinx.coroutines.flow.flowOn
  * tags ([songTagsOutdated]), when every file is read again; one that's gone leaves the library.
  *
  * Only a folder that was read in full loses songs (see [IosLocalListing]): one out of reach (its bookmark won't resolve
- * until it's picked again), unreadable, or listing nothing where it had songs keeps them, and so does a file iCloud has
+ * until it's picked again), unreadable, or listing nothing where it had songs keeps them (until a second listing, a moment later, finds it empty
+ * again, #721), and so does a file iCloud has
  * offloaded, so a moment without access doesn't cost them their history. An offloaded file with no song yet is
  * downloaded, and imported once it's here.
  */
@@ -46,13 +48,12 @@ class IosLocalMediaProvider(
     private val pending = AtomicReference<IosLocalListing?>(null)
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
-        val listing = localFiles.audioFiles()
         pending.store(null)
+        val listing = confirmEmptyFolders(localFiles.audioFiles(), existingSongs)
         val reread = preferenceManager.songTagsOutdated(type)
         val existingByPath = existingSongs.associateBy { it.path }
         val offloaded = listing.offloaded.toSet()
-        val listedFolders = (listing.files.map { it.path } + listing.offloaded).mapNotNullTo(HashSet(), ::folderIdOf)
-        val keptFolders = listing.unread.toSet() + listing.folders.filterNot(listedFolders::contains)
+        val keptFolders = listing.unread.toSet() + listing.emptyFolders()
 
         val songs = ArrayList<Song>(existingSongs.size + listing.files.size)
         val filePaths = listing.files.mapTo(HashSet()) { it.path }
@@ -73,6 +74,27 @@ class IosLocalMediaProvider(
         emit(FlowEvent.Success(songs))
     }.flowOn(Dispatchers.IO)
 
+    /** How long to wait before listing again a folder that listed nothing where it had songs (#721); tests set it to zero. */
+    internal var emptyFolderRecheckDelayMs = 1_500L
+
+    /**
+     * A folder that lists nothing where it had songs is either briefly unavailable (a file provider still waking up) or
+     * really emptied, and one listing can't tell which. So the files are listed again after a short wait: a folder that's
+     * empty both times has lost its songs, and one with files the second time keeps them. The returned listing leaves a
+     * confirmed-empty folder out of its `folders`, so [emptyFolders] doesn't keep its songs; nothing is listed again when no
+     * folder looks emptied.
+     */
+    private suspend fun confirmEmptyFolders(first: IosLocalListing, existingSongs: List<Song>): IosLocalListing {
+        val songFolders = existingSongs.mapNotNullTo(HashSet()) { folderIdOf(it.path) }
+        val suspects = first.emptyFolders().filter { it in songFolders && it !in first.unread }
+        if (suspects.isEmpty()) return first
+        delay(emptyFolderRecheckDelayMs)
+        val second = localFiles.audioFiles()
+        val stillEmpty = second.emptyFolders().toSet()
+        val confirmed = suspects.filterTo(HashSet()) { it in stillEmpty && it !in second.unread }
+        return second.copy(folders = second.folders.filterNot(confirmed::contains))
+    }
+
     override suspend fun songsStored() {
         pending.exchange(null)?.let(localFiles::imported)
     }
@@ -81,6 +103,12 @@ class IosLocalMediaProvider(
     override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
         emit(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
     }
+}
+
+/** The ids of the [IosLocalListing.folders] that listed no file at all, not even an offloaded one. */
+private fun IosLocalListing.emptyFolders(): List<String> {
+    val listed = (files.map { it.path } + offloaded).mapNotNullTo(HashSet(), ::folderIdOf)
+    return folders.filterNot(listed::contains)
 }
 
 /** The folder id in song [path] (`s2local://<folder id>/...`), or null for a path that isn't a local song's. */

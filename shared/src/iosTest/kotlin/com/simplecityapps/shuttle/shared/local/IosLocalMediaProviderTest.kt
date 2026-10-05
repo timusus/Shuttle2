@@ -27,6 +27,10 @@ class IosLocalMediaProviderTest {
         val reads = mutableListOf<String>()
         val imported = mutableListOf<IosLocalListing>()
         val downloads = mutableListOf<String>()
+        var listings = 0
+
+        /** Runs before each listing is made, with how many were made before it. */
+        var beforeListing: (Int) -> Unit = {}
 
         override fun folders(): List<IosLocalFolder> = folders
 
@@ -40,7 +44,12 @@ class IosLocalMediaProviderTest {
             folders.removeAll { it.id == id }
         }
 
-        override fun audioFiles(): IosLocalListing = IosLocalListing(
+        override fun audioFiles(): IosLocalListing {
+            beforeListing(listings++)
+            return listing()
+        }
+
+        private fun listing() = IosLocalListing(
             files = files,
             offloaded = offloaded,
             folders = listOf(IosLocalFiles.DOCUMENTS) + folders.map { it.id },
@@ -66,7 +75,7 @@ class IosLocalMediaProviderTest {
 
     private val localFiles = FakeLocalFiles()
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore()).apply { setSongTagsVersion(MediaProviderType.Shuttle.name, MediaImporter.SONG_TAGS_VERSION) }
-    private val provider = IosLocalMediaProvider(localFiles, preferences)
+    private val provider = IosLocalMediaProvider(localFiles, preferences).apply { emptyFolderRecheckDelayMs = 0 }
 
     private suspend fun findSongs(existing: List<Song> = emptyList()): List<Song> = provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first().result
 
@@ -194,11 +203,34 @@ class IosLocalMediaProviderTest {
     }
 
     @Test
-    fun aFolderThatListsNothingKeepsItsSongs() = runTest {
+    fun aFolderThatListsNothingTwiceLosesItsSongs() = runTest {
         localFiles.folders += IosLocalFolder(id = "music", name = "Music", path = "/x", hasAccess = true)
-        val kept = listOf(song("s2local://music/a.flac", "A"), song("s2local://documents/b.flac", "B"))
+        val documents = song("s2local://documents/b.flac", "B")
+        localFiles.files = listOf(IosLocalFileRef(documents.path, 1, 1))
+
+        findSongs(listOf(song("s2local://music/a.flac", "A"), documents)) shouldBe listOf(documents)
+        localFiles.listings shouldBe 2
+    }
+
+    @Test
+    fun aFolderThatListsNothingOnlyBrieflyKeepsItsSongs() = runTest {
+        localFiles.folders += IosLocalFolder(id = "music", name = "Music", path = "/x", hasAccess = true)
+        val kept = song("s2local://music/a.flac", "A")
+        localFiles.tags[kept.path] = tags(title = "A")
+        localFiles.beforeListing = { count ->
+            if (count == 1) localFiles.files = listOf(IosLocalFileRef(kept.path, 1, 1))
+        }
+
+        findSongs(listOf(kept)).map { it.name } shouldBe listOf("A")
+    }
+
+    @Test
+    fun anUnreadFolderKeepsItsSongsWithoutBeingListedAgain() = runTest {
+        localFiles.folders += IosLocalFolder(id = "music", name = "Music", path = "/x", hasAccess = false)
+        val kept = listOf(song("s2local://music/a.flac", "A"))
 
         findSongs(kept) shouldBe kept
+        localFiles.listings shouldBe 1
     }
 
     @Test
