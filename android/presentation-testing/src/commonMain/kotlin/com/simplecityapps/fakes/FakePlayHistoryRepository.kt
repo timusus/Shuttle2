@@ -87,6 +87,8 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
 
     override suspend fun resumePoint(context: PlayContext): ResumePoint? = resumePoints[context]
 
+    override suspend fun resumePointsFor(contexts: List<PlayContext>): Map<PlayContext, ResumePoint> = contexts.mapNotNull { context -> resumePoints[context]?.let { context to it } }.toMap()
+
     override fun eventCount(): Flow<Int> = eventCount
 
     override suspend fun clearHistory() {

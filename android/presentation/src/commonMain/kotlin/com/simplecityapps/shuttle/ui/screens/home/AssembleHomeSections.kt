@@ -266,9 +266,10 @@ class LoadHomeSections @Inject constructor(
         return block().also { logger.info { "Home: $stage loaded in ${started.elapsedNow()}" } }
     }
 
-    private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> = items.mapNotNull { item ->
-        playHistoryRepository.resumePoint(item.playContext)?.let { item.key to HomeItemProgress.of(it) }
-    }.toMap()
+    private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> {
+        val points = playHistoryRepository.resumePointsFor(items.map { it.playContext })
+        return items.mapNotNull { item -> points[item.playContext]?.let { item.key to HomeItemProgress.of(it) } }.toMap()
+    }
 
     private companion object {
         /** In Release too: the cold-start measurements read Home's load (docs/performance/ios-startup.md). */

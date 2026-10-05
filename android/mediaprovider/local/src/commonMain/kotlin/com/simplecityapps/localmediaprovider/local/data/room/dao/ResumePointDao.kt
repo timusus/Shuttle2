@@ -12,18 +12,18 @@ interface ResumePointDao {
     @Upsert
     suspend fun upsert(point: ResumePointData)
 
-    /** The context's resume point, with its song's name and duration while the song is still in the library (#706). */
+    /**
+     * The resume points of the contexts with any of [contextIds], whatever their type (a caller matches the type), each with
+     * its song's name and duration while the song is still in the library (#706).
+     */
     @Query(
         """
         SELECT resume_points.*, songs.name AS songName, songs.duration AS songDuration FROM resume_points
         LEFT JOIN songs ON songs.path = resume_points.songPath AND songs.mediaProvider = resume_points.mediaProvider
-        WHERE resume_points.contextType = :contextType AND resume_points.contextId = :contextId
+        WHERE resume_points.contextId IN (:contextIds)
         """
     )
-    suspend fun get(
-        contextType: String,
-        contextId: String
-    ): ResumePointWithSong?
+    suspend fun getByContextIds(contextIds: List<String>): List<ResumePointWithSong>
 
     @Query("DELETE FROM resume_points")
     suspend fun clear()

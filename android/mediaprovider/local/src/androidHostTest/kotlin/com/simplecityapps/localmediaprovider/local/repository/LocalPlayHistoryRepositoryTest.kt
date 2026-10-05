@@ -279,6 +279,23 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
+    fun `resume points are read together, each as it's read alone, and only for the contexts that have one`() = runTest {
+        songDao.insert(listOf(createSongData(album = "Blue").copy(name = "River", path = "/music/2.flac", duration = 240_000)))
+        repository.saveResumePoint(resumePoint(albumContext, track = 2))
+        repository.saveResumePoint(resumePoint(playlistContext, track = 3))
+        val contexts = listOf(albumContext, playlistContext, genreContext, PlayContext.None, albumContext)
+
+        val points = repository.resumePointsFor(contexts)
+
+        points shouldBe mapOf(
+            albumContext to resumePoint(albumContext, track = 2).copy(songName = "River", songDurationMs = 240_000),
+            playlistContext to resumePoint(playlistContext, track = 3)
+        )
+        contexts.distinct().forEach { context -> points[context] shouldBe repository.resumePoint(context) }
+        repository.resumePointsFor(emptyList()) shouldBe emptyMap()
+    }
+
+    @Test
     fun `a queue from no context has no resume point`() = runTest {
         repository.saveResumePoint(resumePoint(PlayContext.None))
 

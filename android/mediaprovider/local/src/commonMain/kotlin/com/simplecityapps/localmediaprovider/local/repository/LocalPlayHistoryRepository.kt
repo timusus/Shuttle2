@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.ResumePointDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.ResumePointWithSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.ResumePointData
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumDay
@@ -77,9 +78,12 @@ class LocalPlayHistoryRepository(
      * holds the old key, so it's moved as the stored history was ([AlbumKeyMigration]); kept as it is when no song has it.
      */
     private suspend fun current(context: PlayContext): PlayContext {
-        if (context !is PlayContext.Album && context !is PlayContext.AlbumArtist) return context
+        if (!isRekeyed(context)) return context
         return albumIndex.albumIndex().rekey.context(context) ?: context
     }
+
+    /** Whether [context]'s key can move as the library's album identities change, so it's read as the index has it now. */
+    private fun isRekeyed(context: PlayContext): Boolean = context is PlayContext.Album || context is PlayContext.AlbumArtist
 
     private suspend fun pruneIfDue() {
         val now = clock.now()
@@ -161,25 +165,39 @@ class LocalPlayHistoryRepository(
         )
     }
 
-    override suspend fun resumePoint(context: PlayContext): ResumePoint? {
-        val current = current(context)
-        val contextId = current.id ?: return null
-        return resumePointDao.get(current.type, contextId)?.let { found ->
-            val row = found.point
-            ResumePoint(
-                context = context,
-                mediaProvider = row.mediaProvider,
-                songPath = row.songPath,
-                positionMs = row.positionMs,
-                track = row.track,
-                trackCount = row.trackCount,
-                shuffled = row.shuffled,
-                finished = row.finished,
-                updatedAt = row.updatedAt,
-                songName = found.songName,
-                songDurationMs = found.songDuration?.toLong()
-            )
-        }
+    override suspend fun resumePoint(context: PlayContext): ResumePoint? = resumePointsFor(listOf(context))[context]
+
+    /** One read of the album index and one query (per [MAX_CONTEXT_IDS]) for all of [contexts], rather than a pair each. */
+    override suspend fun resumePointsFor(contexts: List<PlayContext>): Map<PlayContext, ResumePoint> {
+        if (contexts.isEmpty()) return emptyMap()
+        val rekey = if (contexts.any(::isRekeyed)) albumIndex.albumIndex().rekey else null
+        val currents = contexts.distinct().associateWith { context -> rekey?.takeIf { isRekeyed(context) }?.context(context) ?: context }
+        val ids = currents.values.mapNotNull { it.id }.distinct()
+        if (ids.isEmpty()) return emptyMap()
+        val found = ids.chunked(MAX_CONTEXT_IDS)
+            .flatMap { chunk -> resumePointDao.getByContextIds(chunk) }
+            .associateBy { it.point.contextType to it.point.contextId }
+        return currents.mapNotNull { (context, current) ->
+            val id = current.id ?: return@mapNotNull null
+            found[current.type to id]?.let { context to it.toResumePoint(context) }
+        }.toMap()
+    }
+
+    private fun ResumePointWithSong.toResumePoint(context: PlayContext): ResumePoint {
+        val row = point
+        return ResumePoint(
+            context = context,
+            mediaProvider = row.mediaProvider,
+            songPath = row.songPath,
+            positionMs = row.positionMs,
+            track = row.track,
+            trackCount = row.trackCount,
+            shuffled = row.shuffled,
+            finished = row.finished,
+            updatedAt = row.updatedAt,
+            songName = songName,
+            songDurationMs = songDuration?.toLong()
+        )
     }
 
     override fun eventCount(): Flow<Int> = playEventDao.observeCount()
@@ -197,6 +215,9 @@ class LocalPlayHistoryRepository(
 
     companion object {
         private const val DAY_MS = 86_400_000L
+
+        /** Context ids per resume point query, under SQLite's bound-variable limit. */
+        private const val MAX_CONTEXT_IDS = 500
 
         /** The local hours (0 to 23) that the [windowMinutes] either side of [hour]:00 touch, wrapping round midnight. */
         internal fun hoursAround(

@@ -72,6 +72,9 @@ interface PlayHistoryRepository {
     /** Where the queue started from [context] was last left; null if it never was, or for [PlayContext.None]. */
     suspend fun resumePoint(context: PlayContext): ResumePoint?
 
+    /** Where each of [contexts] was last left, read together: a context with no resume point has no entry. */
+    suspend fun resumePointsFor(contexts: List<PlayContext>): Map<PlayContext, ResumePoint>
+
     /** How many events the history holds, re-emitted whenever it changes. */
     fun eventCount(): Flow<Int>
 
