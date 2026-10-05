@@ -5,16 +5,12 @@
 # turning it on and off doesn't break normal playback.
 source "$(dirname "$0")/_lib.sh"
 
-device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
-out="${CHECKS_ROOT}/tmp/maestro"
-mkdir -p "$out"
+out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 
 api_level="$(adb_retry shell getprop ro.build.version.sdk | tr -d '[:space:]')"
 
 run_flow() {
-    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-        "${CHECKS_ROOT}/support/maestro/settings-usb-dac-direct-output.yaml"
+    maestro_flow "${CHECKS_ROOT}/support/maestro/settings-usb-dac-direct-output.yaml"
 }
 
 bit_perfect_pref() {

@@ -7,18 +7,15 @@
 # `playback` fixture on exit like tag-edit-queued.sh.
 source "$(dirname "$0")/_lib.sh"
 
-device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
-mkdir -p "$out"
 
 setup_taglib_provider
 trap restore_playback_fixture EXIT
 
 wake_screen
 adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null 2>&1 || fail "could not launch MainActivity"
-MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-    "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-    "${CHECKS_ROOT}/support/maestro/shell-tag-editor.yaml" || fail "the Maestro flow failed (output in ${out})"
+maestro_flow "${CHECKS_ROOT}/support/maestro/shell-tag-editor.yaml" \
+    || fail "the Maestro flow failed (output in ${out})"
 
 # The title the flow typed, as the file now holds it (taglib1.mp3 is "Taglib One")
 title="Café — Ünïcødé 日本語"
@@ -30,7 +27,6 @@ written="$(ffprobe -v error -show_entries format_tags=title -of default=nw=1:nk=
 s2 IMPORT >/dev/null
 wait_for 30 "not s['libraryImporting']"
 wake_screen
-MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-    "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-    "${CHECKS_ROOT}/support/maestro/shell-tag-editor-rescanned.yaml" || fail "the Songs tab doesn't show '${title}' after a rescan (output in ${out})"
+maestro_flow "${CHECKS_ROOT}/support/maestro/shell-tag-editor-rescanned.yaml" \
+    || fail "the Songs tab doesn't show '${title}' after a rescan (output in ${out})"
 pass
