@@ -5,7 +5,7 @@
 # need one. Navidrome (Subsonic) signs in with a username and password.
 #
 # Usage: support/scripts/seed-remote-provider.sh [jellyfin|emby|plex|navidrome]
-# Reads ~/.config/s2-test/<server>.env (URL=, API_KEY=; navidrome: URL=, USERNAME=, PASSWORD=). The
+# Reads ~/.config/s2-test/<server>.env (URL=, API_KEY=; navidrome: URL=, USER_NAME=, PASSWORD=; not USERNAME, which zsh reserves). The
 # key or password is never printed and never appears on a command line: curl reads the auth header
 # from a process substitution and the device-side shell reads it from stdin.
 #
@@ -36,7 +36,7 @@ env_file="$HOME/.config/s2-test/${server}.env"
 [ -f "$env_file" ] || { echo "seed-remote-provider: missing $env_file (URL=, API_KEY=)" >&2; exit 1; }
 [ -n "${ANDROID_SERIAL:-}" ] || { echo "seed-remote-provider: ANDROID_SERIAL not set -- eval \"\$(support/scripts/remote-emu.sh env)\" first" >&2; exit 1; }
 
-URL="" API_KEY="" USERNAME="" PASSWORD=""
+URL="" API_KEY="" USER_NAME="" PASSWORD=""
 # shellcheck disable=SC1090
 . "$env_file"
 # S2_SEED_URL overrides the address the app is given, e.g. http://127.0.0.1:4533 for a phone off the
@@ -44,7 +44,7 @@ URL="" API_KEY="" USERNAME="" PASSWORD=""
 URL="${S2_SEED_URL:-$URL}"
 URL="${URL%/}"
 if [ "$server" = navidrome ]; then
-    [ -n "$URL" ] && [ -n "$USERNAME" ] && [ -n "$PASSWORD" ] || { echo "seed-remote-provider: $env_file must set URL, USERNAME and PASSWORD" >&2; exit 1; }
+    [ -n "$URL" ] && [ -n "$USER_NAME" ] && [ -n "$PASSWORD" ] || { echo "seed-remote-provider: $env_file must set URL, USER_NAME and PASSWORD" >&2; exit 1; }
     # The receiver takes the password as the access token and the username as the user Id.
     API_KEY="$PASSWORD"
 else
@@ -69,7 +69,7 @@ auth_header() {
 if [ "$server" = plex ]; then
     user_id="debug"
 elif [ "$server" = navidrome ]; then
-    user_id="$USERNAME"
+    user_id="$USER_NAME"
 else
     echo "seed-remote-provider: looking up user '$TEST_USER' on $server ($URL) ..."
     user_id=$(curl -sf -m 20 -H @<(auth_header) "$URL/Users" |
