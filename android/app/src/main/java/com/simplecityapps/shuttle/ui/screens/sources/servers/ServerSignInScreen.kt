@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.BasicAlertDialog
@@ -32,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -47,6 +49,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ActionChip
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
+import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -66,6 +69,11 @@ class ServerSignInActions(
     val onOpenUrl: (String) -> Unit,
     val onChooseServer: (String) -> Unit,
     val onCancelPin: () -> Unit,
+    val onShowAdvancedChange: (Boolean) -> Unit,
+    val onAddHeader: () -> Unit,
+    val onHeaderChange: (index: Int, name: String, value: String) -> Unit,
+    val onRemoveHeader: (Int) -> Unit,
+    val onTrustCertificate: () -> Unit,
 )
 
 /** A Jellyfin, Emby, Plex or Subsonic server's sign-in dialog. */
@@ -110,6 +118,8 @@ internal fun ServerSignInForm(
             is ServerSignInStep.ChoosingServer -> ServerChoices(step.servers, actions.onChooseServer, actions.onCancelPin)
 
             ServerSignInStep.Connected -> Progress(stringResource(R.string.media_provider_authentication_success), showSpinner = false)
+
+            is ServerSignInStep.UntrustedCertificate -> UntrustedCertificate(step, actions.onTrustCertificate, actions.onRetry)
 
             is ServerSignInStep.Failed -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 S2Button(
@@ -189,6 +199,79 @@ private fun SignInFields(
             S2Text(stringResource(R.string.media_provider_config_switch_remember_password))
             Spacer(Modifier.width(S2Spacing.medium))
             Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
+        }
+        AdvancedSection(form, actions)
+    }
+}
+
+/** Custom headers for a reverse proxy in front of the server, behind an Advanced toggle as most servers need none. */
+@Composable
+private fun AdvancedSection(
+    form: ServerSignInForm,
+    actions: ServerSignInActions,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        S2Text(stringResource(R.string.media_provider_advanced))
+        Spacer(Modifier.width(S2Spacing.medium))
+        Switch(checked = form.showAdvanced, onCheckedChange = actions.onShowAdvancedChange)
+    }
+    if (!form.showAdvanced) return
+    S2Text(stringResource(R.string.media_provider_custom_headers), style = MaterialTheme.typography.titleSmall)
+    S2Text(stringResource(R.string.media_provider_custom_headers_helper), style = MaterialTheme.typography.bodySmall)
+    form.headers.forEachIndexed { index, header ->
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = header.name,
+                onValueChange = { actions.onHeaderChange(index, it, header.value) },
+                label = { S2Text(stringResource(R.string.media_provider_header_name)) },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            OutlinedTextField(
+                value = header.value,
+                onValueChange = { actions.onHeaderChange(index, header.name, it) },
+                label = { S2Text(stringResource(R.string.media_provider_header_value)) },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            S2IconButton(
+                icon = Icons.Rounded.Close,
+                contentDescription = stringResource(R.string.media_provider_remove_header),
+                onClick = { actions.onRemoveHeader(index) },
+            )
+        }
+    }
+    S2Button(
+        text = stringResource(R.string.media_provider_add_header),
+        onClick = actions.onAddHeader,
+        style = S2ButtonStyle.Outlined,
+    )
+}
+
+/** The server's certificate isn't trusted: its fingerprint, to trust it for this server alone, or go back. */
+@Composable
+private fun UntrustedCertificate(
+    step: ServerSignInStep.UntrustedCertificate,
+    onTrust: () -> Unit,
+    onBack: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+        S2Text(stringResource(R.string.media_provider_untrusted_certificate_title), style = MaterialTheme.typography.titleSmall)
+        S2Text(stringResource(R.string.media_provider_untrusted_certificate_message, step.host))
+        S2Text(step.displayedFingerprint, style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.small, Alignment.End),
+        ) {
+            S2Button(text = stringResource(R.string.dialog_button_cancel), onClick = onBack, style = S2ButtonStyle.Outlined)
+            S2Button(text = stringResource(R.string.media_provider_trust_certificate), onClick = onTrust, style = S2ButtonStyle.Filled)
         }
     }
 }
@@ -380,7 +463,7 @@ private val MediaProviderType.addressHelperRes: Int
         else -> R.string.media_provider_config_helper_address
     }
 
-private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, { _, _, _ -> }, {}, {})
 
 @Preview
 @Composable

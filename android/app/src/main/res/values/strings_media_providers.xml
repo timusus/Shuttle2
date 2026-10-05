@@ -31,4 +31,14 @@
     <string name="media_provider_plex_choose_server">Choose a server</string>
     <!-- Plex sign-in: under a server that belongs to someone else and is shared with the user -->
     <string name="media_provider_plex_server_shared">Shared with you</string>
+    <string name="media_provider_advanced">Advanced</string>
+    <string name="media_provider_custom_headers">Custom headers</string>
+    <string name="media_provider_custom_headers_helper">Sent with every request to this server, for a reverse proxy such as Cloudflare Access or Authelia.</string>
+    <string name="media_provider_header_name">Header</string>
+    <string name="media_provider_header_value">Value</string>
+    <string name="media_provider_add_header">Add header</string>
+    <string name="media_provider_remove_header">Remove header</string>
+    <string name="media_provider_untrusted_certificate_title">Untrusted certificate</string>
+    <string name="media_provider_untrusted_certificate_message">%1$s presented a certificate this device doesn\'t trust, such as a self-signed one. Trust it only if this SHA-256 fingerprint matches your server\'s certificate.</string>
+    <string name="media_provider_trust_certificate">Trust certificate</string>
 </resources>

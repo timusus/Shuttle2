@@ -26,6 +26,7 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
     val openedUrls = mutableListOf<String>()
     val chosenServers = mutableListOf<String>()
     var pinCancelled = 0
+    var trusted = 0
     val rememberPassword = mutableListOf<Boolean>()
 
     fun setContent(uiState: ServerSignInUiState) {
@@ -45,6 +46,11 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
                     onOpenUrl = { openedUrls += it },
                     onChooseServer = { chosenServers += it },
                     onCancelPin = { pinCancelled++ },
+                    onShowAdvancedChange = {},
+                    onAddHeader = {},
+                    onHeaderChange = { _, _, _ -> },
+                    onRemoveHeader = {},
+                    onTrustCertificate = { trusted++ },
                 ),
             )
         }
@@ -71,7 +77,8 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
     }
 
     fun toggleRememberPassword() {
-        rule.onNode(isToggleable()).performClick()
+        // The first switch: Advanced's comes after it
+        rule.onAllNodes(isToggleable())[0].performClick()
     }
 
     fun assertRevealPasswordShown(shown: Boolean) {

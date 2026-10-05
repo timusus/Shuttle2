@@ -15,6 +15,11 @@ import com.simplecityapps.shuttle.analytics.SignInFailureClassifier
 import com.simplecityapps.shuttle.analytics.SignInFailureReason
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import com.simplecityapps.shuttle.server.CustomHeader
+import com.simplecityapps.shuttle.server.ServerConnectionStore
+import com.simplecityapps.shuttle.server.ServerOrigin
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -51,6 +56,7 @@ class ServerSignInViewModelTest {
     private val analytics = RecordingAnalytics()
     private val songDownloader = FakeSongDownloader()
     private val needsPro = MutableStateFlow(false)
+    private val connections = ServerConnectionStore(SecurePreferenceManager(InMemoryKeyValueStore()))
 
     /** [address] is typed over the saved or default one, unless it's null. */
     private fun TestScope.viewModel(
@@ -74,6 +80,7 @@ class ServerSignInViewModelTest {
             ConnectToAccountServer(pins, monetisation, classifyFailure),
             songDownloader,
             discovery,
+            connections,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             address?.let(viewModel::onAddressChange)
@@ -83,6 +90,61 @@ class ServerSignInViewModelTest {
     private val ServerSignInViewModel.form get() = uiState.value.form
 
     private val ServerSignInViewModel.events get() = uiState.value.events.map { it.value }
+
+    @Test
+    fun `the headers typed are saved for the server before signing in, and the form starts from them`() = runTest {
+        val origin = ServerOrigin.of("server", 8096)
+        server.onAuthenticate = { connections.connection(origin).headers shouldBe listOf(CustomHeader("X-Token", "t")) }
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+        viewModel.onAddHeader()
+        viewModel.onHeaderChange(0, "X-Token", "t")
+        viewModel.onAddHeader()
+        viewModel.onRemoveHeader(1)
+
+        viewModel.onAuthenticate()
+
+        server.authenticated.size shouldBe 1
+        server.saved = SavedServerLogin("http://server:8096")
+        viewModel(address = null).form.let {
+            it.headers shouldBe listOf(CustomHeader("X-Token", "t"))
+            it.showAdvanced shouldBe true
+        }
+    }
+
+    @Test
+    fun `a refused certificate offers to trust it, and trusting it signs in again`() = runTest {
+        val origin = ServerOrigin.of("server", 8096)
+        server.failure = IllegalStateException("Couldn't connect securely")
+        server.onAuthenticate = { if (!connections.acceptRefusedCertificate(origin, "ab:cd")) Unit else server.failure = null }
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+
+        viewModel.onAuthenticate()
+
+        val step = uiStateStep(viewModel) as ServerSignInStep.UntrustedCertificate
+        step.displayedFingerprint shouldBe "AB:CD"
+        step.message shouldBe "Couldn't connect securely"
+
+        viewModel.onTrustCertificate()
+
+        connections.connection(origin).trustedCertificate shouldBe "ABCD"
+        server.authenticated.size shouldBe 2
+        uiStateStep(viewModel) shouldBe ServerSignInStep.Connected
+    }
+
+    @Test
+    fun `a failure with no refused certificate is shown as it is`() = runTest {
+        server.failure = IllegalStateException("Wrong password")
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+
+        viewModel.onAuthenticate()
+
+        uiStateStep(viewModel) shouldBe ServerSignInStep.Failed("Wrong password")
+    }
+
+    private fun uiStateStep(viewModel: ServerSignInViewModel) = viewModel.uiState.value.step
 
     @Test
     fun `the form starts from the saved login and a saved password can't be revealed`() = runTest {

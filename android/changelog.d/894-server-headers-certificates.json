@@ -1,0 +1,1 @@
+{ "type": "features", "text": "Servers behind a reverse proxy (Cloudflare Access, Authelia) can be given custom headers when signing in, and a server with a self-signed certificate can be trusted by its fingerprint.", "commits": ["0fe7d91c1"] }

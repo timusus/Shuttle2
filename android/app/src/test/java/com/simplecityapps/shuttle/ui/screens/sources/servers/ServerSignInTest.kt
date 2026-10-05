@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.server.CustomHeader
+import com.simplecityapps.shuttle.server.ServerOrigin
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -24,6 +26,27 @@ class ServerSignInTest {
         robot.assertTextDisplayed("e.g. http://my.server.com:8080")
         robot.assertTextDisplayed("Remember password")
         robot.assertFieldCount(3)
+    }
+
+    @Test
+    fun `the Advanced section lists the custom headers`() {
+        val form = ServerSignInForm(headers = listOf(CustomHeader("CF-Access-Client-Id", "id")), showAdvanced = true)
+        robot.setContent(ServerSignInUiState(MediaProviderType.Jellyfin, form = form))
+
+        robot.assertTextDisplayed("Custom headers")
+        robot.assertTextDisplayed("Add header")
+        robot.assertFieldCount(5)
+    }
+
+    @Test
+    fun `an untrusted certificate shows its fingerprint and can be trusted`() {
+        val step = ServerSignInStep.UntrustedCertificate(ServerOrigin.of("192.168.1.10", 8920), "abcdef", "Couldn't connect")
+        robot.setContent(ServerSignInUiState(MediaProviderType.Jellyfin, step = step))
+
+        robot.assertTextDisplayed("AB:CD:EF")
+        robot.clickText("Trust certificate")
+
+        robot.trusted shouldBe 1
     }
 
     @Test

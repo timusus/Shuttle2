@@ -55,6 +55,11 @@ fun ServerSignInRoute(
             onOpenUrl = openUrl,
             onChooseServer = viewModel::onChooseServer,
             onCancelPin = viewModel::onCancelPin,
+            onShowAdvancedChange = viewModel::onShowAdvancedChange,
+            onAddHeader = viewModel::onAddHeader,
+            onHeaderChange = viewModel::onHeaderChange,
+            onRemoveHeader = viewModel::onRemoveHeader,
+            onTrustCertificate = viewModel::onTrustCertificate,
         )
     }
     ServerSignInDialog(uiState, actions)

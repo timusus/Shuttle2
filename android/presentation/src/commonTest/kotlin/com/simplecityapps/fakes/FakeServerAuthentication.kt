@@ -20,10 +20,14 @@ class FakeServerAuthentication(
     var forgotten = 0
     var forgottenServer = 0
 
+    /** Runs as each sign-in reaches the server: where a test has it refuse a certificate, say. */
+    var onAuthenticate: (ServerLogin) -> Unit = {}
+
     override fun savedLogin(): SavedServerLogin = saved
 
     override suspend fun authenticate(login: ServerLogin): Result<Unit> {
         authenticated += login
+        onAuthenticate(login)
         saved = saved.copy(address = login.address)
         pending?.await()
         return failure?.let { Result.failure(it) } ?: Result.success(Unit)

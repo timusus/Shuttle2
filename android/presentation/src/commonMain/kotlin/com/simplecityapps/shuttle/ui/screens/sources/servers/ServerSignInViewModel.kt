@@ -9,6 +9,10 @@ import com.simplecityapps.mediaprovider.server.ServerDiscovery
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.server.CustomHeader
+import com.simplecityapps.shuttle.server.ServerConnectionStore
+import com.simplecityapps.shuttle.server.ServerOrigin
+import com.simplecityapps.shuttle.server.displayFingerprint
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
@@ -49,6 +53,10 @@ data class ServerSignInForm(
     val passwordRevealable: Boolean = true,
     /** Required fields the user left empty when they last submitted, until they type into them. */
     val missing: Set<ServerSignInField> = emptySet(),
+    /** Headers sent with every request to the server (a reverse proxy's access token, say), as typed. */
+    val headers: List<CustomHeader> = emptyList(),
+    /** Whether the Advanced section, with [headers], is open. */
+    val showAdvanced: Boolean = false,
 )
 
 sealed interface ServerSignInStep {
@@ -71,6 +79,17 @@ sealed interface ServerSignInStep {
     data object Connected : ServerSignInStep
 
     data class Failed(val message: String) : ServerSignInStep
+
+    /**
+     * The server's certificate isn't one the device trusts (self-signed, say): the user can trust this exact one, by its
+     * SHA-256 [fingerprint], for [origin] alone, or go back with [message].
+     */
+    data class UntrustedCertificate(val origin: ServerOrigin, val fingerprint: String, val message: String) : ServerSignInStep {
+        val host: String get() = origin.toString()
+
+        /** [fingerprint] as colon-separated pairs, for the user to compare with the server's. */
+        val displayedFingerprint: String get() = displayFingerprint(fingerprint)
+    }
 }
 
 data class ServerSignInUiState(
@@ -129,6 +148,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val connectToAccountServer: ConnectToAccountServer,
     private val songDownloader: SongDownloader,
     serverDiscovery: ServerDiscovery,
+    private val serverConnections: ServerConnectionStore,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -151,7 +171,8 @@ class ServerSignInViewModel @AssistedInject constructor(
                 username = saved.username.orEmpty(),
                 password = saved.password.orEmpty(),
                 passwordRevealable = saved.password == null,
-            )
+                headers = saved.address?.let { serverConnections.connection(it).headers }.orEmpty(),
+            ).let { it.copy(showAdvanced = it.headers.isNotEmpty()) }
         },
     )
     private val step = MutableStateFlow<ServerSignInStep>(ServerSignInStep.Form)
@@ -165,6 +186,9 @@ class ServerSignInViewModel @AssistedInject constructor(
         .onStart { emit(false) }
     private val discoveredServers = MutableStateFlow(emptyList<DiscoveredServer>())
     private var quickConnectJob: Job? = null
+
+    /** The sign-in to try again once the user trusts the certificate that failed it. */
+    private var retryAfterTrust: (() -> Unit)? = null
     private var pinJob: Job? = null
 
     /** The account's servers, once its PIN has been approved: what [ServerSignInStep.ChoosingServer] lists. */
@@ -206,6 +230,24 @@ class ServerSignInViewModel @AssistedInject constructor(
         it.copy(password = password, passwordRevealable = it.passwordRevealable || password.isEmpty(), missing = it.missing - ServerSignInField.Password)
     }
 
+    fun onShowAdvancedChange(show: Boolean) = form.update { it.copy(showAdvanced = show) }
+
+    fun onAddHeader() = form.update { it.copy(headers = it.headers + CustomHeader("", "")) }
+
+    fun onHeaderChange(index: Int, name: String, value: String) = form.update {
+        it.copy(headers = it.headers.mapIndexed { i, header -> if (i == index) CustomHeader(name, value) else header })
+    }
+
+    fun onRemoveHeader(index: Int) = form.update { it.copy(headers = it.headers.filterIndexed { i, _ -> i != index }) }
+
+    /** Trusts the certificate [ServerSignInStep.UntrustedCertificate] showed, for its server alone, and signs in again. */
+    fun onTrustCertificate() {
+        val untrusted = step.value as? ServerSignInStep.UntrustedCertificate ?: return
+        serverConnections.trustCertificate(untrusted.origin, untrusted.fingerprint)
+        step.value = ServerSignInStep.Form
+        retryAfterTrust?.invoke()
+    }
+
     /** Turning it off forgets the saved login straight away. */
     fun onRememberPasswordChange(remember: Boolean) {
         form.update { it.copy(rememberPassword = remember) }
@@ -223,6 +265,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         }
         step.value = ServerSignInStep.Authenticating
         val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password)
+        val origin = prepareConnection(login.address, ::onAuthenticate)
         viewModelScope.launch {
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
@@ -230,7 +273,7 @@ class ServerSignInViewModel @AssistedInject constructor(
                     finishSignIn()
                 }
 
-                is SignInToServer.Result.Failure -> step.value = ServerSignInStep.Failed(result.message)
+                is SignInToServer.Result.Failure -> step.value = failedStep(origin, result.message)
             }
         }
     }
@@ -247,6 +290,7 @@ class ServerSignInViewModel @AssistedInject constructor(
             form.update { it.copy(missing = it.missing + ServerSignInField.Address) }
             return
         }
+        val origin = prepareConnection(address, ::onUseQuickConnect)
         quickConnectJob = viewModelScope.launch {
             signInWithQuickConnect(type, address).collect { state ->
                 when (state) {
@@ -260,7 +304,7 @@ class ServerSignInViewModel @AssistedInject constructor(
 
                     SignInWithQuickConnect.State.Expired -> step.value = ServerSignInStep.Failed(QUICK_CONNECT_EXPIRED_MESSAGE)
 
-                    is SignInWithQuickConnect.State.Failed -> step.value = ServerSignInStep.Failed(state.message)
+                    is SignInWithQuickConnect.State.Failed -> step.value = failedStep(origin, state.message)
                 }
             }
         }
@@ -364,6 +408,24 @@ class ServerSignInViewModel @AssistedInject constructor(
         val otherUser = username != null && previous.username != null && !previous.username.equals(username, ignoreCase = true)
         if (otherAddress || otherUser) songDownloader.removeAll(type)
         signedInServer = SavedServerLogin(address, username ?: previous.username.takeUnless { otherAddress })
+    }
+
+    /**
+     * Saves the typed headers for the server at [address] before it's contacted, so the sign-in sends them, and forgets
+     * any certificate it refused before: a refusal recorded from here on is this attempt's, which [retry] repeats.
+     */
+    private fun prepareConnection(address: String, retry: () -> Unit): ServerOrigin? {
+        val origin = ServerOrigin.parse(address) ?: return null
+        serverConnections.setHeaders(origin, form.value.headers)
+        serverConnections.clearRejectedCertificate(origin)
+        retryAfterTrust = retry
+        return origin
+    }
+
+    /** The step a failed sign-in to [origin] shows: the certificate to trust when it refused one, else [message]. */
+    private fun failedStep(origin: ServerOrigin?, message: String): ServerSignInStep {
+        val fingerprint = origin?.let(serverConnections::rejectedCertificate)
+        return if (fingerprint != null) ServerSignInStep.UntrustedCertificate(origin, fingerprint, message) else ServerSignInStep.Failed(message)
     }
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
