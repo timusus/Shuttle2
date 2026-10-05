@@ -11,7 +11,7 @@ trap 'rm -rf "$TMP"' EXIT
 fails=0
 
 # Pull just the matcher functions out of land.sh (the script itself runs a landing when sourced).
-eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
+eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step|verify_phases|verify_ios)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
 
 check() { # <name> <expected-rc> <cmd...>
   local name=$1 want=$2 rc=0; shift 2
@@ -144,6 +144,26 @@ check "ios map: more than 15 mapped classes runs the whole target" 0 test "$(ios
 VERIFY_FAILED=0
 steps=$( { verify_step a "x" false; verify_step b "y" true; echo "rc=$VERIFY_FAILED"; } )
 check "verify_step runs on past a failed phase" 0 test "$steps" = "$(printf '%s\n' 'verify: == a' 'verify: -- a failed: x' 'verify: == b' 'rc=1')"
+
+# verify_phases (#829): a layer-rule failure still runs assembleDebug, as its own phase.
+VFX="$TMP/vfx"
+mkdir -p "$VFX/support/scripts" "$VFX/ios/scripts" "$VFX/bin"
+for f in lint unit-test; do printf '#!/bin/sh\nexit 0\n' > "$VFX/support/scripts/$f"; done
+printf '#!/bin/sh\necho "gradle $*" >> "%s"\ncase "$*" in *architecture-tests*) exit 1;; esac\n' "$TMP/gradle.calls" \
+  > "$VFX/support/scripts/remote-build.sh"
+# The iOS link/test call: like Gradle under -q, it prints Kotlin's IC warning only without -q.
+printf '#!/bin/sh\nfor a in "$@"; do [ "$a" = -q ] && exit 1; done\necho "w: Incremental compilation failed: caches"\nexit 1\n' \
+  > "$VFX/ios/scripts/build-framework.sh"
+printf '#!/bin/sh\nexit 1\n' > "$VFX/ios/scripts/lease-sim.sh"
+printf '#!/bin/sh\nexit 0\n' > "$VFX/bin/xcodegen"
+chmod +x "$VFX"/support/scripts/* "$VFX"/ios/scripts/* "$VFX"/bin/*
+phases=$( cd "$VFX" && verify_phases base 0; echo "rc=$?" )
+check "verify_phases: architecture failure is its own phase" 0 grep -qx 'verify: -- architecture failed: layer rules (:android:architecture-tests, #871)' <<< "$phases"
+check "verify_phases: assembleDebug still runs after it" 0 grep -q ':android:app:assembleDebug' "$TMP/gradle.calls"
+check "verify_phases: every phase ran, and failed overall" 0 test "$(grep -e '^verify: == assembleDebug' -e '^verify: == end' -e '^rc=' <<< "$phases")" = "$(printf '%s\n' 'verify: == assembleDebug' 'verify: == end' 'rc=1')"
+# verify_ios (#824): the framework link's IC warning reaches the log ic_failure reads.
+( cd "$VFX" && HOME="$TMP/home" PATH="$VFX/bin:$PATH" verify_ios ) > "$TMP/ios.log" 2>&1
+check "verify_ios: IC warning from the framework link reaches the log" 0 ic_failure "$TMP/ios.log" 1
 
 # new_failures (#829): per-phase comparison, failing safe.
 sig() { printf '%s\n' "$@"; }

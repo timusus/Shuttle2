@@ -252,8 +252,9 @@ verify_ios() {
     echo "verify: ios framework build + KMP commonTest (iosSimulatorArm64Test), one Gradle invocation"
     # On the leased simulator (released below), not one the Kotlin/Native task boots outside the pool.
     udid="$(S2_SIM_HOLDER=land scripts/lease-sim.sh)" || udid=""
-    # build-framework.sh hands extra arguments to the same ./gradlew call as the link task.
-    scripts/build-framework.sh iosSimulatorArm64Test -q ${udid:+-Ps2.iosSimulatorUdid="$udid"} || exit 1
+    # build-framework.sh hands extra arguments to the same ./gradlew call as the link task. No -q: it would
+    # drop Kotlin's "Incremental compilation failed" warning, and ic_failure needs it to retry (#824).
+    scripts/build-framework.sh iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"} || exit 1
     if [ "$all" = 1 ]; then
       echo "verify: ios whole S2Tests target (many classes map, or a shared source declares no type to match)"
       S2_SIM_HOLDER=land scripts/test.sh || exit 1
@@ -286,10 +287,11 @@ verify_phases() {
   verify_step unit-tests "android unit tests" support/scripts/unit-test --changed --base "$base_sha"
   verify_step compile-dependents "dependent test sources did not compile (#826)" \
     support/scripts/unit-test --compile-dependents --base "$base_sha"
-  # One Gradle invocation for both (one configuration-cache load, shared task graph); a failure names the
-  # failing task, so the log still says whether it was a layer rule or the assemble.
-  verify_step architecture+assembleDebug "layer rules (:android:architecture-tests, #871) or assembleDebug (see the failed task)" \
-    support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest :android:app:assembleDebug
+  # Two phases, not one Gradle call: a layer-rule failure must not skip assembleDebug, and each is compared
+  # with origin/main on its own (#829).
+  verify_step architecture "layer rules (:android:architecture-tests, #871)" \
+    support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest
+  verify_step assembleDebug "assembleDebug" support/scripts/remote-build.sh --local -q :android:app:assembleDebug
   if [ "$touches_ios" = 1 ]; then
     verify_step ios "ios build/tests" verify_ios "$@"
   fi
