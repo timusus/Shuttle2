@@ -135,6 +135,9 @@ struct MiniPlayerBar: View {
     /// the glyphs clipped off the trailing edge and squeezed the title to a word (#861).
     static let maximumGlyphSize = DynamicTypeSize.accessibility1
 
+    /// How far a horizontal drag on the song must go to skip.
+    static let swipeDistance: CGFloat = 40
+
     @Environment(\.artworkTint) private var tint
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -229,6 +232,18 @@ struct MiniPlayerBar: View {
             .accessibilityLabel(accessibilityLabel)
             .accessibilityValue(isPlaying ? "Playing" : "Paused")
             .accessibilityHint("Opens Now Playing")
+            // Next is hidden beside the minimised tab bar, so VoiceOver reaches it from here too.
+            .accessibilityAction(named: "Next", onNext)
+            // A swipe left on the song skips to the next, as in Apple Music.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: Self.swipeDistance)
+                    .onEnded { drag in
+                        if drag.translation.width < -Self.swipeDistance, abs(drag.translation.height) < abs(drag.translation.width) {
+                            UISelectionFeedbackGenerator().selectionChanged()
+                            onNext()
+                        }
+                    }
+            )
             .accessibilityIdentifier("miniPlayer.open")
 
             Button(action: onPlayPause) {

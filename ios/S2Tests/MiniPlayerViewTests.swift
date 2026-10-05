@@ -75,6 +75,20 @@ struct MiniPlayerViewTests {
         #expect(toggled)
     }
 
+    @Test func theSongButtonSaysWhatItIsAndWhatItDoes() throws {
+        let sut = makeSut()
+        let button = try sut.inspect().findAll(ViewType.Button.self)[0]
+        #expect(try button.accessibilityLabel().string() == "Paranoid Android, Radiohead")
+        #expect(try button.accessibilityValue().string() == "Playing")
+        #expect(try button.accessibilityHint().string() == "Opens Now Playing")
+    }
+
+    @Test func playPauseIsLabelledForWhatItWillDo() throws {
+        let sut = makeSut()
+        let button = try sut.inspect().findAll(ViewType.Button.self)[1]
+        #expect(try button.accessibilityLabel().string() == "Pause")
+    }
+
     @Test func tappingNextAdvancesTheQueue() throws {
         var skipped = false
         let sut = makeSut(onNext: { skipped = true })
