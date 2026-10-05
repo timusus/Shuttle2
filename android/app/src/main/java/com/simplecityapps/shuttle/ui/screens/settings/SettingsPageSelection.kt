@@ -24,7 +24,7 @@ val SettingsLink.route: NavKey
 
 /**
  * The page the Settings list has open beside it: the entry directly above the top-most [SettingsRoute] on [stack], with
- * a page opened from a page (Folder rules, the equalizer, ...) standing for the page it belongs to, or
+ * a page opened from a page (This device, a server, the equalizer, ...) standing for the page it belongs to, or
  * [SettingsPlaceholderPage] while nothing is above the list. Null without a Settings list on the stack, or when the
  * entry above it belongs to no page.
  */
@@ -37,7 +37,7 @@ internal fun settingsPageBesideList(
     return when (val above = stack.getOrNull(list + 1)) {
         null -> SettingsPlaceholderPage
         is SettingsDestinationRoute -> above.destination
-        FolderRulesRoute -> SettingsDestination.Sources
+        ThisDeviceRoute, is ServerDetailRoute -> SettingsDestination.Sources
         else -> SettingsLink.entries.firstOrNull { it.route == above }?.let { link -> catalog.pageLinkingTo(link) }
     }
 }

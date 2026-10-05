@@ -1188,8 +1188,8 @@ class AppShellTest {
         robot.setContent(window = windowInfo(840, 900))
         robot.openSettings()
         robot.tapText("Sources")
-        robot.tapText("Open folder rules")
-        robot.assertTextDisplayed("Folder rules screen")
+        robot.tapText("Open this device")
+        robot.assertTextDisplayed("This device screen")
         robot.assertRowSelection("Sources", selected = true)
 
         robot.tapText("About")

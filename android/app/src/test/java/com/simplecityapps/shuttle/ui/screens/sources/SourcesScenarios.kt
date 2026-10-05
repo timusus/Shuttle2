@@ -10,7 +10,7 @@ object SourcesScenarios {
     /** "Now" for the status lines, so "Updated 2 hours ago" never moves. */
     val now: Instant = Instant.parse("2026-09-30T12:00:00Z")
 
-    private fun servers(vararg connected: Pair<MediaProviderType, SourceStatus>) = ServerTypes.map { type -> connected.toMap()[type]?.let { ServerSource(type, connected = true, status = it, songs = 1_842, updated = now - 2.hours) } ?: ServerSource(type, connected = false) }
+    private fun servers(vararg connected: Pair<MediaProviderType, SourceStatus>) = ServerTypes.map { type -> connected.toMap()[type]?.let { ServerSource(type, connected = true, status = it, songs = 1_842, updated = now - 2.hours, account = "tim@${type.name.lowercase()}.local") } ?: ServerSource(type, connected = false) }
 
     /** This device on with an excluded and an extra folder, and Jellyfin connected; everything up to date. */
     val configured = SourcesUiState(
@@ -41,5 +41,7 @@ object SourcesScenarios {
         servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle, MediaProviderType.Plex to SourceStatus.Idle).map { if (it.type == MediaProviderType.Jellyfin) it.copy(listingShortfall = 3) else it },
     )
 
-    val noActions = SourcesActions(onThisDeviceChange = {}, onRescan = {}, onRetrySkippedFiles = {}, onOpenFolderRules = {}, onServerClick = {}, onAddServer = {}, onShowDialog = {})
+    val noActions = SourcesActions(onOpenThisDevice = {}, onServerClick = {}, onAddServer = {})
+
+    val noDeviceActions = ThisDeviceActions(onThisDeviceChange = {}, onRescan = {}, onRetrySkippedFiles = {}, onAddFolder = {}, onShowDialog = {})
 }

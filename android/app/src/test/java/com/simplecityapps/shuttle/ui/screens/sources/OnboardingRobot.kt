@@ -19,7 +19,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import io.kotest.matchers.shouldBe
 
-/** Test robot for first run (#379): the Library's empty state, Settings > Sources' cards and its folder rules (#663). */
+/** Test robot for first run (#379): the Library's empty state, Settings > Sources' cards, This device and a server's page (#492). */
 class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var allowAccessClicks = 0
     var openAppSettingsClicks = 0
@@ -27,13 +27,15 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var connectServerClicks = 0
     var rescanClicks = 0
     var retrySkippedClicks = 0
-    var folderRulesClicks = 0
+    var thisDeviceClicks = 0
+    var syncClicks = 0
+    var signInClicks = 0
+    var removeClicks = 0
     var addServerClicks = 0
     var lastThisDevice: Boolean? = null
     var lastAddFolder: FolderKind? = null
     var lastServer: ServerSource? = null
-    var lastDialog: SourcesDialog? = null
-    var lastFolderDialog: FolderRulesDialog? = null
+    var lastDialog: ThisDeviceDialog? = null
 
     fun setEmptyState(state: LibraryAvailability.Empty) {
         composeTestRule.setContent {
@@ -51,27 +53,36 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
 
     fun setSources(uiState: SourcesUiState) {
         val actions = SourcesActions(
-            onThisDeviceChange = { lastThisDevice = it },
-            onRescan = { rescanClicks++ },
-            onRetrySkippedFiles = { retrySkippedClicks++ },
-            onOpenFolderRules = { folderRulesClicks++ },
+            onOpenThisDevice = { thisDeviceClicks++ },
             onServerClick = { lastServer = it },
             onAddServer = { addServerClicks++ },
-            onShowDialog = { lastDialog = it },
         )
         composeTestRule.setContent { S2Theme { LazyColumn { sourcesContent(uiState, actions, now = SourcesScenarios.now) } } }
     }
 
-    fun setFolderRules(folders: FolderLists) {
-        composeTestRule.setContent {
-            S2Theme {
-                FolderRulesScreen(folders = folders, onNavigateUp = {}, onAddFolder = { lastAddFolder = it }, onShowDialog = { lastFolderDialog = it })
-            }
-        }
+    fun setThisDevice(uiState: SourcesUiState, folders: FolderLists = uiState.folders) {
+        val actions = ThisDeviceActions(
+            onThisDeviceChange = { lastThisDevice = it },
+            onRescan = { rescanClicks++ },
+            onRetrySkippedFiles = { retrySkippedClicks++ },
+            onAddFolder = { lastAddFolder = it },
+            onShowDialog = { lastDialog = it },
+        )
+        composeTestRule.setContent { S2Theme { ThisDeviceScreen(uiState = uiState, folders = folders, actions = actions, onNavigateUp = {}, now = SourcesScenarios.now) } }
+    }
+
+    fun setServerDetail(server: ServerSource) {
+        val actions = ServerDetailActions(onSync = { syncClicks++ }, onSignIn = { signInClicks++ }, onRemove = { removeClicks++ })
+        composeTestRule.setContent { S2Theme { ServerDetailScreen(type = server.type, server = server, actions = actions, onNavigateUp = {}, now = SourcesScenarios.now) } }
     }
 
     fun assertScanNowEnabled(enabled: Boolean) {
         val node = composeTestRule.onNodeWithTag("sources-rescan")
+        if (enabled) node.assertIsEnabled() else node.assertIsNotEnabled()
+    }
+
+    fun assertSyncEnabled(enabled: Boolean) {
+        val node = composeTestRule.onNodeWithTag("server-detail-sync")
         if (enabled) node.assertIsEnabled() else node.assertIsNotEnabled()
     }
 
@@ -86,6 +97,10 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
 
     fun assertTextNotDisplayed(text: String) {
         composeTestRule.onAllNodesWithText(text).assertCountEquals(0)
+    }
+
+    fun clickTag(tag: String) {
+        composeTestRule.onNodeWithTag(tag).performClick()
     }
 
     fun clickText(text: String, index: Int = 0) {

@@ -18,12 +18,17 @@ class SettingsPageSelectionTest {
     fun `the page directly above the list is the one beside it, whatever was opened from it`() {
         val sources = SettingsDestinationRoute(SettingsDestination.Sources)
         settingsPageBesideList(listOf(HomeRoute, SettingsRoute, sources)) shouldBe SettingsDestination.Sources
-        settingsPageBesideList(listOf(HomeRoute, SettingsRoute, sources, FolderRulesRoute)) shouldBe SettingsDestination.Sources
+        settingsPageBesideList(listOf(HomeRoute, SettingsRoute, sources, ThisDeviceRoute)) shouldBe SettingsDestination.Sources
+    }
+
+    @Test
+    fun `a server's page, directly above the list, stands for Sources`() {
+        settingsPageBesideList(listOf(HomeRoute, SettingsRoute, ServerDetailRoute("Jellyfin"))) shouldBe SettingsDestination.Sources
     }
 
     @Test
     fun `a page under a page, directly above the list, stands for the page it belongs to`() {
-        settingsPageBesideList(listOf(HomeRoute, SettingsRoute, FolderRulesRoute)) shouldBe SettingsDestination.Sources
+        settingsPageBesideList(listOf(HomeRoute, SettingsRoute, ThisDeviceRoute)) shouldBe SettingsDestination.Sources
         settingsPageBesideList(listOf(HomeRoute, SettingsRoute, EqualizerRoute)) shouldBe SettingsDestination.PlaybackAndSound
         settingsPageBesideList(listOf(HomeRoute, SettingsRoute, ExcludedSongsRoute)) shouldBe SettingsDestination.Library
         settingsPageBesideList(listOf(HomeRoute, SettingsRoute, WhatsNewRoute)) shouldBe SettingsDestination.About

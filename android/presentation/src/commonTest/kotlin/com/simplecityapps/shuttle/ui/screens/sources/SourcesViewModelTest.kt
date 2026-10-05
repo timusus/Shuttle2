@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerAccount
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -61,6 +62,7 @@ class SourcesViewModelTest {
         ConnectServer(mediaSources),
         ObserveLastScanDate(preferences),
         ForgetServer(mapOf(MediaProviderType.Emby to emby), preferences),
+        ReadServerAccount(mapOf(MediaProviderType.Emby to emby)),
         ObserveSongCounts(songs),
         ObserveSourceReachability(preferences),
         ObserveSourceUpdated(preferences),
@@ -115,6 +117,20 @@ class SourcesViewModelTest {
         viewModel.onResume()
 
         folderStore.refreshes shouldBe 1
+    }
+
+    @Test
+    fun `a connected server shows its saved account as user at host`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Emby))
+
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Emby }.account shouldBe "tim@emby:8096"
+    }
+
+    @Test
+    fun `a server that isn't connected shows no account`() = runTest {
+        val viewModel = viewModel(FakeMediaSources())
+
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Emby }.account shouldBe null
     }
 
     @Test

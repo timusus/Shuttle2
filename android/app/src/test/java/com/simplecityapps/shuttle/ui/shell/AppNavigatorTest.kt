@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.compose.runtime.mutableStateOf
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
-import com.simplecityapps.shuttle.ui.screens.settings.FolderRulesRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.ThisDeviceRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.toList
@@ -156,7 +156,7 @@ class AppNavigatorTest {
         val navigator = navigator()
         navigator.open(SettingsRoute)
         navigator.open(sources)
-        navigator.open(FolderRulesRoute)
+        navigator.open(ThisDeviceRoute)
 
         navigator.replaceAbove(SettingsRoute, privacy)
 

@@ -28,12 +28,12 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.library.LibraryDetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
-import com.simplecityapps.shuttle.ui.screens.settings.FolderRulesRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDetailPane
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsList
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsProState
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScenarios
+import com.simplecityapps.shuttle.ui.screens.settings.ThisDeviceRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.settingsListPane
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen
@@ -82,15 +82,15 @@ fun fakeShellEntryProvider(
     // The real screen, so a sheet shows what a phone would; its ViewModel needs the Metro graph.
     entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}) }
     // The real Settings list and its pane metadata, over scenario state rather than its ViewModels; the stand-in and the
-    // pages are fakes. Sources opens Folder rules, a page under a page.
+    // pages are fakes. Sources opens This device, a page under a page.
     entry<SettingsRoute>(metadata = settingsListPane { FakeList("Settings: Appearance", emptyList(), openAlbum) }) {
         SettingsList(navigator, SettingsScenarios.equalizerOn, SettingsProState.Upsell)
     }
     entry<EqualizerRoute>(metadata = SettingsDetailPane) { FakeList("Equalizer screen", emptyList(), openAlbum) }
-    entry<FolderRulesRoute>(metadata = SettingsDetailPane) { FakeList("Folder rules screen", emptyList(), openAlbum) }
+    entry<ThisDeviceRoute>(metadata = SettingsDetailPane) { FakeList("This device screen", emptyList(), openAlbum) }
     entry<SettingsDestinationRoute>(metadata = SettingsDetailPane) { route ->
         Column {
-            if (route.destination == SettingsDestination.Sources) Text("Open folder rules", Modifier.clickable { navigator.open(FolderRulesRoute) })
+            if (route.destination == SettingsDestination.Sources) Text("Open this device", Modifier.clickable { navigator.open(ThisDeviceRoute) })
             FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum)
         }
     }

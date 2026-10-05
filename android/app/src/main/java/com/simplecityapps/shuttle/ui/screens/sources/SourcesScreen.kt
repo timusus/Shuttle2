@@ -2,18 +2,13 @@ package com.simplecityapps.shuttle.ui.screens.sources
 
 import android.text.format.DateUtils
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Dns
-import androidx.compose.material.icons.rounded.FolderOpen
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material3.ListItemShapes
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -25,108 +20,28 @@ import com.simplecityapps.shuttle.designsystem.component.ActionsSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
-import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.SettingProgress
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
-import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
-import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.MediaProviderType
 import java.text.NumberFormat
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
-/** A confirmation Sources is asking for. */
-sealed interface SourcesDialog {
-    data object TurnOffThisDevice : SourcesDialog
-
-    /** A connected server's options: sign in again, or remove it. */
-    data class Server(val type: MediaProviderType) : SourcesDialog
-}
-
 /** What the Sources cards ask their host to do. */
 class SourcesActions(
-    val onThisDeviceChange: (Boolean) -> Unit,
-    val onRescan: () -> Unit,
-    /** Reads the files this device's import couldn't read again (#840). */
-    val onRetrySkippedFiles: () -> Unit,
-    val onOpenFolderRules: () -> Unit,
+    val onOpenThisDevice: () -> Unit,
     val onServerClick: (ServerSource) -> Unit,
     val onAddServer: () -> Unit,
-    val onShowDialog: (SourcesDialog) -> Unit,
 )
 
 /**
- * Settings > Sources' own rows (#379), ahead of the catalog's switches: a card per source with its status (#663). This
- * device has its switch, its songs and when the library last updated (or a scan's progress), its folder rules, a
- * rescan and any files its last scan couldn't read, with a retry; each connected server has its status and songs, and opens its options; "Add a server" picks a type to sign
- * in to. [now] is when "Updated 2 hours ago" counts from.
+ * Settings > Sources' own rows (#379, #492), ahead of the catalog's switches: the servers first, each connected one with
+ * its account, status, songs and when it last updated (or a sync's progress) and opening its page, and "Add a server"
+ * picking a type to sign in to; then This device as one row with its own status, opening its page. [now] is when
+ * "Updated 2 hours ago" counts from.
  */
 fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesActions, now: Instant = Clock.System.now()) {
-    item(key = "sources-this-device") {
-        val rows = mutableListOf<@Composable (ListItemShapes) -> Unit>(
-            { shapes ->
-                SwitchSetting(
-                    title = stringResource(R.string.sources_this_device),
-                    summary = if (uiState.thisDevice) deviceStatusLine(uiState, now) else stringResource(R.string.sources_this_device_summary),
-                    checked = uiState.thisDevice,
-                    onCheckedChange = { checked -> if (checked) actions.onThisDeviceChange(true) else actions.onShowDialog(SourcesDialog.TurnOffThisDevice) },
-                    icon = Icons.Rounded.Smartphone,
-                    progress = uiState.deviceStatus.progress.takeIf { uiState.thisDevice },
-                    shapes = shapes,
-                    modifier = Modifier.testTag("sources-this-device"),
-                )
-            },
-        )
-        if (uiState.thisDevice) {
-            rows += { shapes ->
-                LinkSetting(
-                    title = stringResource(R.string.sources_folder_rules),
-                    summary = stringResource(
-                        when {
-                            uiState.usesAndroidProvider -> R.string.sources_folder_rules_android_summary
-                            uiState.folders.hasRevokedFolder -> R.string.sources_folder_rules_access_removed
-                            else -> R.string.sources_folder_rules_summary
-                        },
-                    ),
-                    onClick = actions.onOpenFolderRules,
-                    icon = Icons.Rounded.FolderOpen,
-                    shapes = shapes,
-                    modifier = Modifier.testTag("sources-folder-rules"),
-                )
-            }
-            rows += { shapes ->
-                ActionsSetting(shapes = shapes) {
-                    S2Button(
-                        text = stringResource(R.string.sources_scan_now),
-                        onClick = actions.onRescan,
-                        style = S2ButtonStyle.Tonal,
-                        icon = Icons.Rounded.Refresh,
-                        enabled = uiState.deviceStatus !is SourceStatus.Importing,
-                        modifier = Modifier.testTag("sources-rescan"),
-                    )
-                }
-            }
-            if (uiState.deviceSkippedFiles > 0) {
-                rows += { shapes ->
-                    ActionsSetting(
-                        summary = pluralStringResource(R.plurals.sources_skipped_files, uiState.deviceSkippedFiles, uiState.deviceSkippedFiles.formatted()),
-                        shapes = shapes,
-                        modifier = Modifier.testTag("sources-skipped-files"),
-                    ) {
-                        S2Button(
-                            text = stringResource(R.string.sources_skipped_files_retry),
-                            onClick = actions.onRetrySkippedFiles,
-                            style = S2ButtonStyle.Tonal,
-                            enabled = uiState.deviceStatus !is SourceStatus.Importing,
-                            modifier = Modifier.testTag("sources-retry-skipped-files"),
-                        )
-                    }
-                }
-            }
-        }
-        SettingsGroup(rows = rows)
-    }
     item(key = "sources-servers") {
         SettingsGroup(
             title = stringResource(R.string.sources_servers_title),
@@ -155,11 +70,32 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
             },
         )
     }
+    item(key = "sources-this-device") {
+        SettingsGroup(
+            rows = listOf(
+                @Composable { shapes: ListItemShapes ->
+                    LinkSetting(
+                        title = stringResource(R.string.sources_this_device),
+                        summary = when {
+                            !uiState.thisDevice -> stringResource(R.string.sources_this_device_off_summary)
+                            uiState.folders.hasRevokedFolder -> stringResource(R.string.sources_folder_rules_access_removed)
+                            else -> deviceStatusLine(uiState, now)
+                        },
+                        onClick = actions.onOpenThisDevice,
+                        icon = Icons.Rounded.Smartphone,
+                        progress = uiState.deviceStatus.progress.takeIf { uiState.thisDevice },
+                        shapes = shapes,
+                        modifier = Modifier.testTag("sources-this-device"),
+                    )
+                },
+            ),
+        )
+    }
 }
 
 /** This device's status: a scan's progress or failure, else its songs and when it last updated. */
 @Composable
-private fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = when (val status = uiState.deviceStatus) {
+internal fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = when (val status = uiState.deviceStatus) {
     is SourceStatus.Importing -> status.progress?.let { progress ->
         stringResource(R.string.sources_scanning_count, progress.progress.formatted(), progress.total.formatted())
     } ?: stringResource(R.string.sources_scanning)
@@ -176,17 +112,20 @@ private fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = wh
     }
 }
 
-/** A server's status: syncing with its progress, unreachable, or connected with its songs, when it last updated and any listing shortfall. */
+/** A server's status: syncing with its progress, unreachable, or its songs, when it last updated and any listing shortfall; led by its "user@host" account once it has one, else "Connected". */
 @Composable
-private fun serverStatusLine(server: ServerSource, now: Instant): String = when (val status = server.status) {
-    is SourceStatus.Importing -> status.progress?.let { progress ->
-        stringResource(R.string.sources_server_syncing_count, progress.progress.formatted(), progress.total.formatted())
-    } ?: stringResource(R.string.sources_server_syncing)
+internal fun serverStatusLine(server: ServerSource, now: Instant): String = when (val status = server.status) {
+    is SourceStatus.Importing -> withAccount(
+        server.account,
+        status.progress?.let { progress ->
+            stringResource(R.string.sources_server_syncing_count, progress.progress.formatted(), progress.total.formatted())
+        } ?: stringResource(R.string.sources_server_syncing),
+    )
 
-    is SourceStatus.Failed -> stringResource(R.string.sources_server_unreachable)
+    is SourceStatus.Failed -> withAccount(server.account, stringResource(R.string.sources_server_unreachable))
 
     SourceStatus.Idle -> {
-        val connected = stringResource(R.string.sources_server_connected)
+        val connected = server.account ?: stringResource(R.string.sources_server_connected)
         val withSongs = server.songs?.let { stringResource(R.string.sources_status_songs_updated, connected, songsLabel(it)) } ?: connected
         val withUpdated = server.updated?.let { stringResource(R.string.sources_status_songs_updated, withSongs, updatedLabel(it, now)) } ?: withSongs
         if (server.listingShortfall > 0) {
@@ -198,74 +137,26 @@ private fun serverStatusLine(server: ServerSource, now: Instant): String = when 
 }
 
 @Composable
-private fun songsLabel(count: Int): String = pluralStringResource(R.plurals.sources_songs, count, count.formatted())
+private fun withAccount(account: String?, status: String): String = account?.let { stringResource(R.string.sources_status_songs_updated, it, status) } ?: status
 
 @Composable
-private fun updatedLabel(lastImport: Instant, now: Instant): String {
+internal fun songsLabel(count: Int): String = pluralStringResource(R.plurals.sources_songs, count, count.formatted())
+
+@Composable
+internal fun updatedLabel(lastImport: Instant, now: Instant): String {
     if (now - lastImport < 1.minutes) return stringResource(R.string.sources_updated_just_now)
     val relative = DateUtils.getRelativeTimeSpanString(lastImport.toEpochMilliseconds(), now.toEpochMilliseconds(), DateUtils.MINUTE_IN_MILLIS)
     return stringResource(R.string.sources_updated, relative.toString().replaceFirstChar { it.lowercase() })
 }
 
-private fun Int.formatted(): String = NumberFormat.getIntegerInstance().format(this)
+internal fun Int.formatted(): String = NumberFormat.getIntegerInstance().format(this)
 
 /** The progress bar a status draws while it's importing: how far through, once the source knows its total. */
-private val SourceStatus.progress: SettingProgress?
+internal val SourceStatus.progress: SettingProgress?
     get() = (this as? SourceStatus.Importing)?.let { SettingProgress(it.progress?.asFloat()) }
 
-private val FolderLists.hasRevokedFolder: Boolean
+internal val FolderLists.hasRevokedFolder: Boolean
     get() = (includes + excludes + extras).any { !it.hasAccess }
-
-/** The confirmation [dialog] asks for; [onConfirm] runs the action, and each option closes it through [onDismiss]. */
-@Composable
-fun SourcesDialogHost(
-    dialog: SourcesDialog?,
-    onTurnOffThisDevice: () -> Unit,
-    onSignIn: (MediaProviderType) -> Unit,
-    onRemoveServer: (MediaProviderType) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    when (dialog) {
-        null -> Unit
-
-        SourcesDialog.TurnOffThisDevice -> S2Dialog(
-            title = stringResource(R.string.sources_this_device_off_title),
-            onDismissRequest = onDismiss,
-            confirmLabel = stringResource(R.string.sources_turn_off),
-            onConfirm = {
-                onDismiss()
-                onTurnOffThisDevice()
-            },
-            dismissLabel = stringResource(android.R.string.cancel),
-            destructive = true,
-        ) { Text(stringResource(R.string.sources_this_device_off_message)) }
-
-        is SourcesDialog.Server -> S2Dialog(
-            title = stringResource(R.string.sources_remove_server_title, stringResource(dialog.type.titleRes)),
-            onDismissRequest = onDismiss,
-            confirmLabel = stringResource(R.string.sources_remove),
-            onConfirm = {
-                onDismiss()
-                onRemoveServer(dialog.type)
-            },
-            dismissLabel = stringResource(android.R.string.cancel),
-            destructive = true,
-        ) {
-            Column {
-                Text(stringResource(R.string.sources_remove_server_message))
-                S2Button(
-                    text = stringResource(R.string.sources_server_sign_in),
-                    onClick = {
-                        onDismiss()
-                        onSignIn(dialog.type)
-                    },
-                    style = S2ButtonStyle.Text,
-                    modifier = Modifier.padding(top = S2Spacing.small),
-                )
-            }
-        }
-    }
-}
 
 @get:StringRes
 internal val MediaProviderType.titleRes: Int

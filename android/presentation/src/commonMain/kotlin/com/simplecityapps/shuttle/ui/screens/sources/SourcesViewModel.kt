@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
 import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerAccount
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -31,6 +32,8 @@ data class ServerSource(
     val updated: Instant? = null,
     /** How many songs the server counts but doesn't return on a full listing, if it comes up short. */
     val listingShortfall: Int = 0,
+    /** The saved account as "user@host", if the server has one. */
+    val account: String? = null,
 )
 
 data class SourcesUiState(
@@ -74,6 +77,7 @@ class SourcesViewModel @Inject constructor(
     private val connectServer: ConnectServer,
     observeLastScanDate: ObserveLastScanDate,
     private val forgetServer: ForgetServer,
+    private val readServerAccount: ReadServerAccount,
     observeSongCounts: ObserveSongCounts,
     observeSourceReachability: ObserveSourceReachability,
     observeSourceUpdated: ObserveSourceUpdated,
@@ -98,7 +102,7 @@ class SourcesViewModel @Inject constructor(
                 deviceUpdated = imports.updated.filterKeys { it.isLocal }.values.filterNotNull().maxOrNull(),
                 deviceSkippedFiles = imports.stored.deviceSkippedFiles,
                 servers = ServerTypes.map { type ->
-                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type], listingShortfall = imports.shortfalls[type] ?: 0)
+                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type], listingShortfall = imports.shortfalls[type] ?: 0, account = if (type in types) readServerAccount(type) else null)
                 },
                 lastImport = lastImport,
             )

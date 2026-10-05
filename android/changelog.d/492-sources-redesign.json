@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Sources now lists your servers first, with the account, song count and last sync for each. Your server and this device each have their own page, and the folder options are renamed to Scan only these folders, Exclude folders and Extra folders.", "commits": [] }

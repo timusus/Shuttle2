@@ -41,6 +41,11 @@
     </plurals>
     <string name="sources_skipped_files_retry">Try again</string>
     <string name="sources_folder_rules">Folder rules</string>
+    <string name="sources_this_device_off_summary">Off. Turn on to use music stored on this phone</string>
+    <string name="sources_server_account">Account</string>
+    <string name="sources_server_status">Status</string>
+    <string name="sources_server_sync_now">Sync now</string>
+    <string name="sources_server_remove_summary">Its songs and playlists leave your library</string>
     <string name="sources_folder_rules_summary">Choose which folders to include or leave out</string>
     <string name="sources_folder_rules_android_summary">Android\'s media library finds this device\'s music, so folder rules don\'t apply</string>
     <string name="sources_folder_rules_access_removed">A folder needs access again</string>
@@ -56,10 +61,11 @@
     <string name="sources_remove">Remove</string>
 
     <!-- Settings > Sources > Folder rules -->
-    <string name="sources_includes_title">Only include these folders</string>
-    <string name="sources_includes_empty">Every folder is included</string>
-    <string name="sources_excludes_title">Leave out these folders</string>
-    <string name="sources_extras_title">Read these folders directly (for files Android doesn\'t index)</string>
+    <string name="sources_includes_title">Scan only these folders</string>
+    <string name="sources_includes_empty">Every folder is scanned</string>
+    <string name="sources_excludes_title">Exclude folders</string>
+    <string name="sources_extras_title">Extra folders</string>
+    <string name="sources_extras_summary">Folders Android doesn\'t index, such as an SD card or a cloud-synced folder</string>
     <string name="sources_add_folder">Add folder</string>
     <string name="sources_remove_folder_title">Remove this folder?</string>
     <string name="sources_folder_access_removed_summary">Access removed. Tap to fix</string>

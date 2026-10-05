@@ -32,7 +32,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Records first run, Settings > Sources (idle, scanning, a server it can't reach) and its folder rules at phone size into `docs/design/onboarding/` for review (#379). A no-op
+ * Records first run, Settings > Sources (idle, scanning, a server it can't reach) its This device page and a server's page at phone size into `docs/design/onboarding/` for review (#379). A no-op
  * under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*OnboardingScreenshotTest*'`.
  */
@@ -101,8 +101,13 @@ class OnboardingScreenshotTest {
     fun sourcesServerUnreachable() = sourcesShot("sources-server-unreachable", SourcesScenarios.serverUnreachable)
 
     @Test
-    fun folderRules() = shot("folder-rules") {
-        FolderRulesScreen(folders = SourcesScenarios.configured.folders, onNavigateUp = {}, onAddFolder = {}, onShowDialog = {})
+    fun thisDevice() = shot("this-device") {
+        ThisDeviceScreen(uiState = SourcesScenarios.configured, folders = SourcesScenarios.configured.folders, actions = SourcesScenarios.noDeviceActions, onNavigateUp = {}, now = SourcesScenarios.now)
+    }
+
+    @Test
+    fun serverDetail() = shot("server-detail") {
+        ServerDetailScreen(type = MediaProviderType.Jellyfin, server = SourcesScenarios.configured.servers.first { it.connected }, actions = ServerDetailActions({}, {}, {}), onNavigateUp = {}, now = SourcesScenarios.now)
     }
 
     companion object {

@@ -24,6 +24,7 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.entitlement.PaywallSource
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoute
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesScreen
@@ -39,7 +40,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingScreen
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewModel
-import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesEntry
+import com.simplecityapps.shuttle.ui.screens.sources.ServerDetailEntry
+import com.simplecityapps.shuttle.ui.screens.sources.ThisDeviceEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.LocalListBesideDetail
@@ -74,8 +76,13 @@ data object LicencesRoute : UtilityRoute
 @Serializable
 data object LiveLogRoute : UtilityRoute
 
+/** Settings > Sources > This device: its switch and status, scanning and the folder rules. */
 @Serializable
-data object FolderRulesRoute : UtilityRoute
+data object ThisDeviceRoute : UtilityRoute
+
+/** Settings > Sources > a server, by its [MediaProviderType] name. */
+@Serializable
+data class ServerDetailRoute(val typeName: String) : UtilityRoute
 
 /**
  * The Settings screens' entries, for the shell's entry provider. Settings is the list pane and its pages the detail
@@ -86,7 +93,8 @@ data object FolderRulesRoute : UtilityRoute
 fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     val navigateUp = { navigator.back() }
     val openLink = { link: SettingsLink -> navigator.open(link.route) }
-    val openFolderRules = { navigator.open(FolderRulesRoute) }
+    val openThisDevice = { navigator.open(ThisDeviceRoute) }
+    val openServer = { type: MediaProviderType -> navigator.open(ServerDetailRoute(type.name)) }
     // The list entry's ViewModel store, lent to the stand-in page: the scene composes it outside any entry, where
     // metroViewModel() would reach the activity's store and keep a SettingsViewModel for the activity's lifetime.
     val listStore = mutableStateOf<ViewModelStoreOwner?>(null)
@@ -94,7 +102,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
         metadata = settingsListPane {
             listStore.value?.let { owner ->
                 CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
-                    SettingsDestinationEntry(SettingsPlaceholderPage, onNavigateUp = null, onOpenLink = openLink, onOpenFolderRules = openFolderRules)
+                    SettingsDestinationEntry(SettingsPlaceholderPage, onNavigateUp = null, onOpenLink = openLink, onOpenThisDevice = openThisDevice, onOpenServer = openServer)
                 }
             }
         }
@@ -111,9 +119,10 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
         SettingsList(navigator, uiState, pro)
     }
     entry<SettingsDestinationRoute>(metadata = SettingsDetailPane) { route ->
-        SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink, onOpenFolderRules = openFolderRules)
+        SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink, onOpenThisDevice = openThisDevice, onOpenServer = openServer)
     }
-    entry<FolderRulesRoute>(metadata = SettingsDetailPane) { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
+    entry<ThisDeviceRoute>(metadata = SettingsDetailPane) { ThisDeviceEntry(onNavigateUp = { navigateUp() }) }
+    entry<ServerDetailRoute>(metadata = SettingsDetailPane) { route -> ServerDetailEntry(route.typeName, onNavigateUp = { navigateUp() }) }
     entry<EqualizerRoute>(metadata = SettingsDetailPane) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
     entry<ExcludedSongsRoute>(metadata = SettingsDetailPane) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
     entry<ScrobblingRoute>(metadata = SettingsDetailPane) { ScrobblingEntry(onNavigateUp = { navigateUp() }) }
@@ -171,7 +180,8 @@ private fun SettingsDestinationEntry(
     destination: SettingsDestination,
     onNavigateUp: (() -> Unit)?,
     onOpenLink: (SettingsLink) -> Unit,
-    onOpenFolderRules: () -> Unit
+    onOpenThisDevice: () -> Unit,
+    onOpenServer: (MediaProviderType) -> Unit
 ) {
     val viewModel: SettingsViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -202,7 +212,7 @@ private fun SettingsDestinationEntry(
         onOpenLink = onOpenLink,
         versionName = BuildConfig.VERSION_NAME,
         snackbarHostState = snackbarHostState,
-        leadingContent = if (destination == SettingsDestination.Sources) sourcesRows(onOpenFolderRules) else ({})
+        leadingContent = if (destination == SettingsDestination.Sources) sourcesRows(onOpenThisDevice, onOpenServer) else ({})
     )
 }
 

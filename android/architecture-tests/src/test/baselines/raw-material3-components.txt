@@ -46,8 +46,8 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equaliz
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/excluded/ExcludedSongsScreen.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Text|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/FolderRulesScreen.kt|Text|4
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/SourcesScreen.kt|Text|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ServerDetailScreen.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ThisDeviceScreen.kt|Text|4
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|BasicAlertDialog|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|CircularProgressIndicator|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|IconButton|1
