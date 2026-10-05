@@ -12,7 +12,7 @@ unless it says otherwise. That leaves 601 files.
 ## The rules
 
 They live in `:android:architecture-tests` (Konsist 0.17.3) and run with
-`./gradlew :android:architecture-tests:test`. `check` and `testDebugUnitTest` both run them, so CI
+`./gradlew :android:architecture-tests:test`. `check` and `testDebugUnitTest` both run them, so landing
 and `support/scripts/unit-test` pick them up without changes. Each rule compares what it finds
 against `android/architecture-tests/src/test/baselines/<rule>.txt`, which holds one
 fully-qualified entry per line:

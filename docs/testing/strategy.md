@@ -62,9 +62,9 @@ cache on: old two-step 167 s (load 29 → 22) and 100 s (load 40 → 22); single
 22 → 16) and 65 s (load 16 → 40). `verifyModuleLayers`
 and the Konsist rules run automatically as dependencies of `:android:architecture-tests`'
 `testDebugUnitTest` (registered as a twin of `test` for exactly this reason), so a separate
-`:android:architecture-tests:test` invocation was redundant and is dropped; `lintDebug` moved to the
-nightly `lint-nightly.yml` workflow since `abortOnError = false` means it can't fail a landing yet
-(#537 — decision: drop it from the landing verify now, revisit a lint baseline as a gate later).
+`:android:architecture-tests:test` invocation was redundant and is dropped; `lintDebug` was dropped
+from the landing verify since `abortOnError = false` means it can't fail a landing yet (#537 —
+decision: revisit a lint baseline as a gate later; the nightly workflow that ran it went with CI).
 
 The measurements below were taken against the fuller command this baseline replaces
 (`verifyModuleLayers testDebugUnitTest :android:architecture-tests:test :android:app:assembleDebug
@@ -133,7 +133,7 @@ run on KSP.
 | 3 | Skip docs/design boards unless Roborazzi records or verifies | 40-90 CPU-s whenever designsystem tests rerun, ~30 s in app | Small test change | #538 — landed (measured `:android:designsystem:testDebugUnitTest`: 22s → 15s) |
 | 4 | Run `verifyRoborazziDebug` in the same invocation as `testDebugUnitTest`, so app's and designsystem's suites run once, in verify mode | A second Gradle run and a rerun of both suites: landing 100-167 s → 58-65 s on the Mac after a one-line app change | Landing command only | #552 — landed (running it on the box still waits on #539) |
 | 5 | Move the 15 Robolectric ViewModel/use-case tests to plain JVM | ~20-25 CPU-s per app run; fewer looper races | Prefs fake in fixtures | #540 |
-| 6 | `maxParallelForks = 2` for app tests, the default on macOS (`-Ps2.testForks=N` overrides; Linux, so CI and the box, stays at 1) | App test wall on the Mac 57-87 s → 50-52 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542, #552 — landed (fork table below) |
+| 6 | `maxParallelForks = 2` for app tests, the default on macOS (`-Ps2.testForks=N` overrides; Linux, so the box, stays at 1) | App test wall on the Mac 57-87 s → 50-52 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542, #552 — landed (fork table below) |
 | 7 | Take timing tests out of `testDebugUnitTest` | Fewer reruns after flakes (each costs a full slot) | Small | #541 |
 
 Forks measured on the Mac (#552), `testDebugUnitTest --rerun` of one module (app and designsystem
@@ -191,10 +191,9 @@ Considered and not worth it now:
 | While iterating | `support/scripts/unit-test --changed-tests` (falls back to `--changed`'s module-level mapping, or the full suite, per `.claude/rules/testing.md`), plus `verifyRoborazziDebug --tests` for the screens touched | Only the test classes exercising the changed files, not a whole module (#552) |
 | **Landing** (only when the change has behaviour to verify: an icon, copy, docs or asset change needs a compile at most) | `support/scripts/unit-test --changed` (affected modules, plus Roborazzi verify when a Composable changed) and `:android:app:assembleDebug` | Enough to land while iterating; breakage the scope misses is caught by the owner's manual testing and fixed forward |
 | **Full verify** (on demand, and for build-config or cross-module changes) | One invocation: `testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug` (the Baseline above) | Catches behaviour, compile and golden breaks across every module; `verifyModuleLayers` comes via architecture-tests |
-| Nightly (GitHub Actions, scheduled) | `:android:app:lintDebug`, report uploaded as an artifact (`.github/workflows/lint-nightly.yml`) | Lint today is a report, not a gate (#537) |
 | Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, the `*BenchmarkTest` classes (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
-| External PRs (CI) | As today: lint, unit tests, Roborazzi verify, the managed-device smoke group | Owner landings bypass CI (trunk push), so CI is not on the landing path |
+| External PRs | No CI: the contributor runs `support/scripts/lint` and `support/scripts/unit-test` locally, and the owner lands the PR through `land.sh` like any branch | All verification is local on the owner's Mac; the only GitHub workflow is the tag → Play deploy |
 
 `remote-build.sh` picks the host itself (#546): the Mac when its 1-min load is under 0.8x its cores
 (`REMOTE_BUILD_LOAD_RATIO`), else the box only if a slot is free, else the Mac anyway; `--box` and

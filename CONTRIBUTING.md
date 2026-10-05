@@ -70,10 +70,9 @@ Otherwise, lint the project before pushing your branch.
 
 ### Test your contribution
 
-Run the project unit tests before pushing your branch.
+Run the project unit tests before pushing your branch. There is no CI: these local runs, and `support/scripts/lint` above, are the checks a pull request is held to.
 
     ./support/scripts/unit-test
-    ./support/scripts/instrumented-test
 
 #### Push your branch and create a Pull Request
 
@@ -81,7 +80,7 @@ Push your branch and open a Pull Request - following the [Pull Request Template]
 
     git push origin feature/short-feature-description
 
-**Note**: Pushing changes directly to the `main` branch of this repository is not allowed. All changes must be integrated via an approved pull-request. All pull request branches are also built but a continuous integration build agent and must pass all checks before they can be merged.
+**Note**: Pushing changes directly to the `main` branch of this repository is not allowed. All changes must be integrated via an approved pull-request. There is no CI build, so run `./support/scripts/lint` and `./support/scripts/unit-test` locally before you open one.
 
 ## How to report a bug
 

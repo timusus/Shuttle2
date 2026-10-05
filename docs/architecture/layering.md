@@ -97,7 +97,7 @@ only the composition root may depend on one. Data → data stays open for the pl
 
 - Run it: `./gradlew verifyModuleLayers`. It also runs from every module's `check` and before
   `:android:architecture-tests:test`/`testDebugUnitTest`, so the project-wide unit test sweep (and
-  CI) gates on it.
+  the landing verify) gates on it.
 - It fails on a forbidden edge not in the baseline, on a baseline edge that no longer occurs, and on
   a module missing from `ModuleLayers.table`. The message names each edge, its configurations and
   the layers involved.
