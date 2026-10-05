@@ -33,9 +33,11 @@
 # itself with an internal --verify-only mode), over everything landed so far:
 # `unit-test --changed`, a compile (not run) of the test sources of every module depending on a
 # changed :android:domain/:shared/:android:core/commonMain source (`unit-test --compile-dependents`,
-# #826), the layer rules (:android:architecture-tests, always, #871), an assembleDebug, and — only if the picked commits touch ios/, shared/
-# or android/domain|presentation|core|networking|playback/core|mediaprovider/* commonMain/commonTest — a light iOS check: the framework build,
-# `./gradlew iosSimulatorArm64Test` (every KMP module's commonTest on Kotlin/Native, #821), an app build
+# #826), the layer rules (:android:architecture-tests, always, #871), an assembleDebug, and — only if the picked commits touch ios/, shared/,
+# android/domain|presentation|core|networking|playback/core|mediaprovider/* commonMain/commonTest, or any KMP module's
+# commonMain/commonTest/iosMain/iosTest — a light iOS check: the framework build, in the same Gradle call
+# `:<module>:iosSimulatorArm64Test` for just the KMP modules whose commonMain/commonTest/iosMain/iosTest changed
+# (`unit-test --kmp-native-tasks` maps the paths; none changed = no Kotlin/Native tests, #821), an app build
 # (`xcodebuild build`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
 # changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
 # suite and the full Android verify run less often, in support/scripts/full-verify.sh (watermark,
@@ -70,7 +72,11 @@
 # passes; if only unblameable branches are left and it still fails, nothing is pushed.
 # On a pass: push (retrying network
 # failures up to 3 times), close --close issues, then unlock and worktree-clean.sh each landed
-# branch's worktree.
+# branch's worktree. When the push is rejected because origin/main moved during the verify (another
+# session landed, #898), the batch is rebased onto the new origin/main and pushed again: straight away
+# when the incoming commits touch none of the batch's files, else after one more verify (at most one
+# per run). If the push still fails, the checkout is reset to origin/main (not in place) so the next
+# landing isn't refused for unpushed commits; the branches keep theirs.
 set -uo pipefail
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
@@ -157,6 +163,16 @@ ios_tests_for() {
   return 0
 }
 
+# kmp_native_tasks <file>...: the :<module>:iosSimulatorArm64Test tasks for the KMP modules whose
+# commonMain/commonTest/iosMain/iosTest the files fall under, one per line; unit-test owns the
+# path -> Gradle module mapping. Needs REPO_ROOT; prints nothing in a tree without it (the
+# unit-tests phase fails there anyway).
+kmp_native_tasks() {
+  local ut="$REPO_ROOT/support/scripts/unit-test"
+  [ "$#" -gt 0 ] && [ -x "$ut" ] || return 0
+  "$ut" --kmp-native-tasks "$@"
+}
+
 # Wall-clock limit for the verify phases once they hold machine-lock; overridable with LAND_VERIFY_TIMEOUT.
 VERIFY_TIMEOUT=${LAND_VERIFY_TIMEOUT:-1800}
 # Exit status of run_in_group when --timeout expired (124 is machine-lock's own "timed out waiting for the lock").
@@ -218,7 +234,7 @@ fi
 
 # Internal mode: the Android and iOS verify phases, run by run_verify below under one
 # `machine-lock --name verify` hold. Not for direct use.
-#   land.sh --verify-only <origin-main-sha> <touches_ios 0|1> [<S2Tests class>...]
+#   land.sh --verify-only <origin-main-sha> <touches_ios 0|1> [<S2Tests class>|--all|--package|--kmp=<task>...]
 # Every phase runs even after an earlier one fails, so a failure that is pre-existing on origin/main
 # never hides a later phase from the batch, and the batch is compared with origin/main phase by
 # phase (#829). "verify: == <phase>" opens a phase, "verify: -- <phase> failed: ..." records its
@@ -233,28 +249,34 @@ verify_step() {  # <phase> <what failed> <cmd>...
   VERIFY_FAILED=1
 }
 
-# verify_ios [<S2Tests class>|--package ...]: the light iOS check. Explicit `|| return`, not `set -e`:
+# verify_ios [<S2Tests class>|--package|--all|--kmp=<gradle task> ...]: the light iOS check. Explicit `|| return`, not `set -e`:
 # verify_step runs it in an && context, where set -e is ignored (it was, and iOS failures passed).
 verify_ios() {
-  local rc=0 c classes=() pkg=0 all=0 only=()
+  local rc=0 c classes=() pkg=0 all=0 only=() kmp=()
   for c in "$@"; do
     case "$c" in
       --package) pkg=1 ;;
       --all) all=1 ;;
+      --kmp=*) kmp+=("${c#--kmp=}") ;;
       *) classes+=("$c") ;;
     esac
   done
   (
     cd ios || exit 1
     xcodegen -q || exit 1
-    # Every KMP module's commonTest on the Kotlin/Native simulator target (#821): names and runtime
-    # behaviour the JVM run can't catch. Incremental, so a no-op for modules the batch didn't touch.
-    echo "verify: ios framework build + KMP commonTest (iosSimulatorArm64Test), one Gradle invocation"
-    # On the leased simulator (released below), not one the Kotlin/Native task boots outside the pool.
-    udid="$(S2_SIM_HOLDER=land scripts/lease-sim.sh)" || udid=""
     # build-framework.sh hands extra arguments to the same ./gradlew call as the link task. No -q: it would
     # drop Kotlin's "Incremental compilation failed" warning, and ic_failure needs it to retry (#824).
-    scripts/build-framework.sh iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"} || exit 1
+    if [ "${#kmp[@]}" -gt 0 ]; then
+      # The changed KMP modules' tests on the Kotlin/Native simulator target (#821): names and runtime
+      # behaviour the JVM run can't catch. Every module's run is full-verify.sh's job.
+      echo "verify: ios framework build + Kotlin/Native tests (${kmp[*]}), one Gradle invocation"
+      # On the leased simulator (released below), not one the Kotlin/Native task boots outside the pool.
+      udid="$(S2_SIM_HOLDER=land scripts/lease-sim.sh)" || udid=""
+      scripts/build-framework.sh "${kmp[@]}" ${udid:+-Ps2.iosSimulatorUdid="$udid"} || exit 1
+    else
+      echo "verify: ios framework build (no KMP module's commonMain/commonTest/iosMain/iosTest changed: no Kotlin/Native tests)"
+      scripts/build-framework.sh || exit 1
+    fi
     if [ "$all" = 1 ]; then
       echo "verify: ios whole S2Tests target (many classes map, or a shared source declares no type to match)"
       S2_SIM_HOLDER=land scripts/test.sh || exit 1
@@ -640,14 +662,15 @@ run_verify() {
     log "verify: LAND_SKIP_VERIFY=1, skipping"
     return 0
   fi
-  local touches_ios=0
-  if verify_changed_files "$files" | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/|android/(networking|playback/core|mediaprovider/[a-z]+)/src/common)'; then
+  local touches_ios=0 ios_tests=() changed=() kmp_tasks=() t
+  while IFS= read -r t; do [ -n "$t" ] && changed+=("$t"); done < <(verify_changed_files "$files")
+  while IFS= read -r t; do [ -n "$t" ] && kmp_tasks+=("$t"); done < <(kmp_native_tasks ${changed[@]+"${changed[@]}"})
+  if [ "${#kmp_tasks[@]}" -gt 0 ] || printf '%s\n' ${changed[@]+"${changed[@]}"} | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/|android/(networking|playback/core|mediaprovider/[a-z]+)/src/common)'; then
     touches_ios=1
   fi
-  local ios_tests=() changed=() t
   if [ "$touches_ios" = 1 ]; then
-    while IFS= read -r t; do [ -n "$t" ] && changed+=("$t"); done < <(verify_changed_files "$files")
     while IFS= read -r t; do [ -n "$t" ] && ios_tests+=("$t"); done < <(ios_tests_for ${changed[@]+"${changed[@]}"})
+    for t in ${kmp_tasks[@]+"${kmp_tasks[@]}"}; do ios_tests+=("--kmp=$t"); done
   fi
   log "verify: touches_ios=$touches_ios ios_tests=${ios_tests[*]-}"
 
@@ -980,23 +1003,109 @@ if [ "$NO_PUSH" = 1 ]; then
   exit 0
 fi
 
-# --- push (retry network failures only, up to 3 times) --------------------------------------
-push_ok=0
-for attempt in 1 2 3; do
-  err=$(git push origin HEAD:main 2>&1)
-  rc=$?
-  log "push attempt $attempt: rc=$rc"
-  log "$err"
-  if [ "$rc" -eq 0 ]; then push_ok=1; break; fi
-  if printf '%s' "$err" | grep -Eqi 'could not resolve host|connection (reset|refused|timed out)|network is unreachable|ssl|tls|timed out'; then
-    sleep $((attempt * 3))
-    continue
-  fi
-  break
-done
+# --- push (retry network failures only, up to 3 times; rebase once origin/main moved, #898) -----
+# push_once: push HEAD to main. Returns 0 when pushed, 2 when rejected because origin/main has commits
+# HEAD lacks (a concurrent landing), 1 on any other failure (network failures are retried 3 times).
+push_once() {
+  local attempt err rc
+  for attempt in 1 2 3; do
+    err=$(git push origin HEAD:main 2>&1)
+    rc=$?
+    log "push attempt $attempt: rc=$rc"
+    log "$err"
+    [ "$rc" -eq 0 ] && return 0
+    if grep -Eqi '\((fetch first|non-fast-forward)\)|Updates were rejected because' <<< "$err"; then
+      return 2
+    fi
+    if grep -Eqi 'could not resolve host|connection (reset|refused|timed out)|network is unreachable|ssl|tls|timed out' <<< "$err"; then
+      sleep $((attempt * 3))
+      continue
+    fi
+    return 1
+  done
+  return 1
+}
 
-if [ "$push_ok" -ne 1 ]; then
-  say "land.sh: push failed after retries (log: $LOG)"
+# rebase_onto_new_main: fetch origin/main and rebase the batch (ORIGIN_MAIN_SHA..HEAD) onto it, then
+# make it the new ORIGIN_MAIN_SHA. RACE_OVERLAP gets the files both the batch and the incoming commits
+# change, one per line (empty: they touch disjoint files). Returns 1, with nothing left in progress,
+# when the fetch fails or the rebase conflicts.
+RACE_OVERLAP=""
+rebase_onto_new_main() {
+  local new
+  if ! git fetch -q origin main >> "$LOG" 2>&1; then
+    say "land.sh: git fetch origin main failed"
+    return 1
+  fi
+  new=$(git rev-parse origin/main)
+  RACE_OVERLAP=$(comm -12 <(git diff --name-only "$ORIGIN_MAIN_SHA" HEAD | sort -u) \
+                          <(git diff --name-only "$ORIGIN_MAIN_SHA" "$new" | sort -u))
+  if ! run_git rebase -q --onto "$new" "$ORIGIN_MAIN_SHA"; then
+    git rebase --abort >> "$LOG" 2>&1 || true
+    say "land.sh: the batch does not rebase cleanly onto origin/main ($new)"
+    return 1
+  fi
+  log "rebased the batch from $ORIGIN_MAIN_SHA onto $new"
+  ORIGIN_MAIN_SHA=$new
+}
+
+# push_landed: push, and while the push is rejected because origin/main moved, rebase onto it and push
+# again (3 rounds). The rebased batch is pushed unverified only when the incoming commits touch none
+# of its files; otherwise it is verified again, once per run (verify_blame against the new
+# origin/main). Returns 0 when pushed.
+push_landed() {
+  local round reverified=0 prc vrc
+  for round in 1 2 3; do
+    prc=0
+    push_once || prc=$?
+    [ "$prc" -eq 0 ] && return 0
+    if [ "$prc" -ne 2 ]; then
+      say "land.sh: push failed (log: $LOG)"
+      return 1
+    fi
+    say "land.sh: push rejected, origin/main moved during the landing (#898); rebasing the batch onto it"
+    rebase_onto_new_main || return 1
+    if [ -z "$RACE_OVERLAP" ]; then
+      say "land.sh: the incoming commits touch none of the batch's files; pushing without verifying again"
+      continue
+    fi
+    if [ "$reverified" = 1 ]; then
+      say "land.sh: origin/main moved again over the batch's files after the re-verify; giving up"
+      return 1
+    fi
+    reverified=1
+    say "land.sh: the incoming commits also change: $(printf '%s\n' "$RACE_OVERLAP" | paste -sd ' ' -); verifying again"
+    BASE_SIG_DONE=0 BASE_SIG=""
+    vrc=0
+    verify_blame || vrc=$?
+    if [ "$vrc" -ne 0 ]; then
+      say "land.sh: the rebased batch fails verify (rc=$vrc); not pushing"
+      return 1
+    fi
+  done
+  say "land.sh: origin/main kept moving; giving up after 3 push attempts"
+  return 1
+}
+
+# reset_after_push_failure: put the checkout back on origin/main after a failed push, so the next
+# landing is not refused for HEAD's unpushed picks (#898); every branch still holds its own commits.
+# In place, HEAD is the session's own branch: leave it alone.
+reset_after_push_failure() {
+  if [ "$IN_PLACE" = 1 ]; then
+    say "land.sh: $CUR_BRANCH keeps its commits (landing in place); push it by hand or land it again"
+    return 0
+  fi
+  git fetch -q origin main >> "$LOG" 2>&1 || true
+  if run_git reset -q --hard origin/main; then
+    say "land.sh: reset $CUR_BRANCH back to origin/main ($(git rev-parse origin/main)); the branches keep their commits, land them again"
+  else
+    say "land.sh: could not reset $CUR_BRANCH to origin/main; the next landing will refuse until it is reset (log: $LOG)"
+  fi
+}
+
+if ! push_landed; then
+  reset_after_push_failure
+  say "land.sh: push failed, nothing landed (log: $LOG)"
   exit 1
 fi
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Tests for land.sh's verify-log matchers (#824) and its pre-existing-failure classification (#829): ic_failure and verify_env_failure must match on logs
+# Tests for land.sh's verify-log matchers (#824), its pre-existing-failure classification (#829), the
+# Kotlin/Native test scoping and the push-race recovery (#898). The matchers: ic_failure and verify_env_failure must match on logs
 # well over the 64KB pipe buffer (grep -q exiting early must not SIGPIPE a pipeline under pipefail),
 # and ic_failure must see the IC line in a build-brief "Raw log:" file when the console dropped it.
 # Run directly: support/scripts/land_test.sh
@@ -11,7 +12,7 @@ trap 'rm -rf "$TMP"' EXIT
 fails=0
 
 # Pull just the matcher functions out of land.sh (the script itself runs a landing when sourced).
-eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step|verify_phases|verify_ios)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
+eval "$(awk '/^(verify_env_failure|ic_failure|failure_sig|new_failures|run_verify|verify_changed_files|decl_names|ios_tests_raw|ios_tests_for|checkout_back|ensure_base_sig|verify_blame|verify_step|verify_phases|verify_ios|kmp_native_tasks|run_git|push_once|rebase_onto_new_main|push_landed|reset_after_push_failure)\(\) \{/{p=1} p{print} p&&/^\}/{p=0}' "$LAND")"
 
 check() { # <name> <expected-rc> <cmd...>
   local name=$1 want=$2 rc=0; shift 2
@@ -206,5 +207,91 @@ check "verify_blame: failure with main passing is blamed" 1 blame_case 1 0
 : > "$BATCH_OUT"
 check "verify_blame: killed verify (rc 143, no output) is blamed" 1 blame_case 143 1
 check "verify_blame: HEAD is back on the batch branch" 0 test "$(git -C "$REPO" rev-parse --abbrev-ref HEAD)" = work
+
+# Kotlin/Native test scoping: only KMP modules whose commonMain/commonTest/iosMain/iosTest changed,
+# mapped by unit-test's path -> module helpers against this repo's real settings and build files.
+REPO_ROOT="$(cd "$(dirname "$LAND")/../.." && pwd)"
+kmp() { kmp_native_tasks "$@" | paste -sd, -; }
+check "kmp tasks: a commonMain change maps to its module" 0 test "$(kmp android/scrobbling/src/commonMain/kotlin/X.kt)" = ":android:scrobbling:iosSimulatorArm64Test"
+check "kmp tasks: nested module wins over its parent dir" 0 test "$(kmp android/playback/core/src/commonTest/kotlin/X.kt)" = ":android:playback:core:iosSimulatorArm64Test"
+check "kmp tasks: iosMain and iosTest count" 0 test "$(kmp shared/src/iosTest/kotlin/A.kt android/presentation/src/iosMain/kotlin/B.kt)" = ":android:presentation:iosSimulatorArm64Test,:shared:iosSimulatorArm64Test"
+check "kmp tasks: androidMain/androidHostTest and build files map to nothing" 0 test -z "$(kmp android/domain/src/androidMain/kotlin/A.kt android/domain/src/androidHostTest/kotlin/B.kt android/domain/build.gradle.kts)"
+check "kmp tasks: a non-KMP module maps to nothing" 0 test -z "$(kmp android/playback/src/main/java/A.kt android/app/src/main/java/B.kt)"
+check "kmp tasks: docs, scripts and nothing at all map to nothing" 0 test -z "$(kmp docs/a.md support/scripts/land.sh; kmp)"
+check "kmp tasks: one task per module, sorted" 0 test "$(kmp android/domain/src/commonTest/kotlin/B.kt android/domain/src/commonMain/kotlin/A.kt android/core/src/commonMain/kotlin/C.kt)" = ":android:core:iosSimulatorArm64Test,:android:domain:iosSimulatorArm64Test"
+
+# run_verify hands the changed KMP modules to the iOS phase, which a KMP-only change now triggers.
+verify_args() {  # <changed path>...: the args run_verify gives verify_once (after the files-file)
+  ( cd "$TMP" && LOG="$TMP/rv.log" && : > "$LOG" && printf '%s\n' "$@" > "$TMP/rv.files" \
+    && verify_once() { shift; echo "$*"; } && run_verify "$TMP/rv.sig" "$TMP/rv.files" )
+}
+check "run_verify: a KMP module's commonMain alone runs the iOS phase with its task" 0 test "$(verify_args android/scrobbling/src/commonMain/kotlin/X.kt)" = "1 --kmp=:android:scrobbling:iosSimulatorArm64Test"
+check "run_verify: an androidMain change skips the iOS phase" 0 test "$(verify_args android/scrobbling/src/androidMain/kotlin/X.kt)" = "0"
+check "run_verify: domain androidMain still runs the iOS phase, without Kotlin/Native tests" 0 test "$(verify_args android/domain/src/androidMain/kotlin/ZzNoSuchType.kt)" = "1"
+
+# verify_ios passes just those tasks to the framework build's Gradle call.
+VI="$TMP/vi"; mkdir -p "$VI/ios/scripts" "$VI/bin"
+printf '#!/bin/sh\necho "$*" > "%s"\nexit 1\n' "$TMP/framework.args" > "$VI/ios/scripts/build-framework.sh"
+printf '#!/bin/sh\nexit 1\n' > "$VI/ios/scripts/lease-sim.sh"
+printf '#!/bin/sh\nexit 0\n' > "$VI/bin/xcodegen"
+chmod +x "$VI"/ios/scripts/* "$VI"/bin/*
+( cd "$VI" && HOME="$TMP/home" PATH="$VI/bin:$PATH" verify_ios --kmp=:a:iosSimulatorArm64Test --kmp=:b:iosSimulatorArm64Test SomeTests ) > /dev/null 2>&1
+check "verify_ios: runs only the given Kotlin/Native tasks" 0 test "$(cat "$TMP/framework.args")" = ":a:iosSimulatorArm64Test :b:iosSimulatorArm64Test"
+( cd "$VI" && HOME="$TMP/home" PATH="$VI/bin:$PATH" verify_ios SomeTests ) > /dev/null 2>&1
+check "verify_ios: no KMP task means no iosSimulatorArm64Test" 0 test -z "$(cat "$TMP/framework.args")"
+
+# Push race (#898): origin/main moves during the verify. A bare origin, the landing checkout and a
+# second session's clone, fresh for each case; verify_blame is stubbed to count calls.
+RACE_N=0 RACE=""
+race_cfg() { git -C "$1" config core.hooksPath /dev/null; git -C "$1" config user.name t; git -C "$1" config user.email t@t; git -C "$1" config commit.gpgsign false; }
+race_setup() {  # <batch-line>: the landing checkout has one batch commit changing that line of android/a.kt
+  RACE_N=$((RACE_N + 1)); RACE="$TMP/race$RACE_N"; mkdir -p "$RACE"
+  git init -q --bare -b main "$RACE/origin.git"
+  git clone -q "$RACE/origin.git" "$RACE/seed" 2>/dev/null; race_cfg "$RACE/seed"
+  mkdir -p "$RACE/seed/android"; seq 1 20 > "$RACE/seed/android/a.kt"
+  git -C "$RACE/seed" add -A; git -C "$RACE/seed" commit -qm base; git -C "$RACE/seed" push -q origin HEAD:main
+  git clone -q "$RACE/origin.git" "$RACE/lander"; git clone -q "$RACE/origin.git" "$RACE/other"
+  race_cfg "$RACE/lander"; race_cfg "$RACE/other"
+  sed -i.bak "${1}s/.*/batch/" "$RACE/lander/android/a.kt"
+  git -C "$RACE/lander" commit -qm batch android/a.kt
+}
+race_push_other() {  # <file> [<line>]: the second session lands a commit changing <file> (line <line> of it)
+  if [ -n "${2:-}" ]; then sed -i.bak "${2}s/.*/other/" "$RACE/other/$1"
+  else mkdir -p "$(dirname "$RACE/other/$1")"; echo other > "$RACE/other/$1"; fi
+  git -C "$RACE/other" add "$1"; git -C "$RACE/other" commit -qm other; git -C "$RACE/other" push -q origin HEAD:main
+}
+race_run() {  # <verify_blame rc>: push_landed, then reset_after_push_failure on a failure, in the landing checkout
+  ( cd "$RACE/lander" && LOG="$RACE/land.log" && : > "$LOG" && VB_RC=$1 && VB_N=0 && IN_PLACE=${IN_PLACE:-0} \
+    && CUR_BRANCH=main && ORIGIN_MAIN_SHA=$(git -C "$RACE/seed" rev-parse HEAD) \
+    && verify_blame() { VB_N=$((VB_N + 1)); return "$VB_RC"; } \
+    && { rc=0; push_landed || rc=$?; [ "$rc" -eq 0 ] || reset_after_push_failure; echo "rc=$rc verifies=$VB_N"; } )
+}
+origin_has() { git -C "$RACE/origin.git" show main:"$1" 2>/dev/null | grep -qx "$2"; }
+lander_unpushed() { git -C "$RACE/lander" fetch -q origin; git -C "$RACE/lander" rev-list --count origin/main..HEAD; }
+
+race_setup 1
+check "push race: an unraced push goes straight through" 0 test "$(race_run 0)" = "rc=0 verifies=0"
+
+race_setup 1; race_push_other docs/b.md
+check "push race: disjoint incoming commits push without verifying again" 0 test "$(race_run 0)" = "rc=0 verifies=0"
+check "push race: origin/main has both the batch and the incoming commit" 0 eval 'origin_has android/a.kt batch && origin_has docs/b.md other'
+
+race_setup 1; race_push_other android/a.kt 15
+check "push race: incoming commits on the batch's files verify once, then push" 0 test "$(race_run 0)" = "rc=0 verifies=1"
+check "push race: the rebased batch kept both edits" 0 eval 'origin_has android/a.kt batch && origin_has android/a.kt other'
+
+race_setup 1; race_push_other android/a.kt 15
+check "push race: a failing re-verify pushes nothing" 0 test "$(race_run 1)" = "rc=1 verifies=1"
+check "push race: origin/main lacks the batch" 1 origin_has android/a.kt batch
+check "push race: final failure resets the checkout to origin/main" 0 test "$(lander_unpushed)" = 0
+
+race_setup 1; race_push_other android/a.kt 1
+check "push race: a conflicting rebase pushes nothing and verifies nothing" 0 test "$(race_run 0)" = "rc=1 verifies=0"
+check "push race: no rebase left in progress" 1 test -e "$RACE/lander/.git/rebase-merge"
+check "push race: a conflict also resets the checkout" 0 test "$(lander_unpushed)" = 0
+
+race_setup 1; race_push_other android/a.kt 1
+IN_PLACE=1 race_run 0 > /dev/null
+check "push race: in place, a failed push leaves HEAD's commits alone" 0 test "$(lander_unpushed)" = 1
 
 [ "$fails" -eq 0 ] || { echo "$fails failed"; exit 1; }

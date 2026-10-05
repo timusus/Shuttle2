@@ -92,6 +92,7 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
        support/scripts/unit-test --changed [--base <ref>] [--dry-run]
        support/scripts/unit-test --changed-tests [--base <ref>] [--dry-run]
        support/scripts/unit-test --compile-dependents [--base <ref>] [--dry-run]
+       support/scripts/unit-test --kmp-native-tasks <file>...
 
   (no args)              Run testDebugUnitTest across the whole project.
   <module> [module ...]  Run testDebugUnitTest for one or more modules only.
@@ -123,6 +124,14 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
                            at the end via --changed or a plain run.
     --base <ref>           Diff base. Defaults to origin/main.
     --dry-run               Print the Gradle commands without running them.
+
+  --kmp-native-tasks <file>...
+                           Print (not run) the :<module>:iosSimulatorArm64Test
+                           task of every KMP module whose commonMain,
+                           commonTest, iosMain or iosTest sources the given
+                           repo-relative paths fall under, one per line,
+                           sorted. Prints nothing when none do. land.sh uses
+                           it to scope the Kotlin/Native test run.
 
 Examples:
   support/scripts/unit-test
@@ -306,6 +315,26 @@ compile_test_task_for() {
   else
     echo "compileDebugUnitTestKotlin"
   fi
+}
+
+# --kmp-native-tasks: the :<module>:iosSimulatorArm64Test task of every KMP module (s2.kmp-library)
+# whose commonMain/commonTest/iosMain/iosTest sources the given files fall under, sorted and unique.
+# Other source sets (androidMain, androidHostTest), build files and non-KMP modules map to nothing:
+# Kotlin/Native compiles only those four, and full-verify.sh runs every module's tests anyway.
+kmp_native_tasks_for_files() {
+  local f mdp mdir mpath rel
+  for f in "$@"; do
+    mdp="$(module_dir_and_path_for_file "${f}")" || continue
+    [ -n "${mdp}" ] || continue
+    mdir="${mdp%%$'\t'*}"
+    mpath="${mdp#*$'\t'}"
+    rel="${f#"${mdir}"/}"
+    case "${rel}" in
+      src/commonMain/*|src/commonTest/*|src/iosMain/*|src/iosTest/*) ;;
+      *) continue ;;
+    esac
+    if module_is_kmp "${mpath}"; then printf '%s:iosSimulatorArm64Test\n' "${mpath}"; fi
+  done | sort -u
 }
 
 # Echoes the changed files: committed since the merge-base with ${base},
@@ -849,6 +878,13 @@ run_changed_tests_mode() {
 
   return "${overall_rc}"
 }
+
+if [ "$#" -gt 0 ] && [ "$1" = "--kmp-native-tasks" ]; then
+  shift
+  trap - EXIT  # the output is parsed (land.sh): no "Finished" line
+  kmp_native_tasks_for_files "$@"
+  exit 0
+fi
 
 if [ "$#" -gt 0 ] && [ "$1" = "--changed" ]; then
   shift

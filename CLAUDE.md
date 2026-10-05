@@ -21,7 +21,7 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 - **Never chain briefs in one job.** Launch the next worker only after reviewing and committing the
   previous one's tree.
 - Anything Sonnet or GLM wrote gets a fresh-context `reviewer` pass before it lands.
-- Use `/delegate-verbose` before a Gradle test sweep, instrumented run or lint sweep, so the raw output
+- Use `/delegate-verbose` before a Gradle test sweep, emulator run or lint sweep, so the raw output
   never enters the orchestrator's context.
 - In an interactive session, anything over ~2 minutes (builds, emulator runs) goes through
   `support/scripts/longjob.sh start <name> -- <cmd>` and one `longjob.sh wait`, not a foreground call.
@@ -33,8 +33,8 @@ S2 Music Player — an Android app for local music playback and streaming via Je
   lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
   cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
   (Android: `lint` (check only), `unit-test --changed`, `:android:architecture-tests:testDebugUnitTest` (always, so a layer violation fails the batch that adds it; its own phase, so a failure there still runs assembleDebug), a compile of dependent modules' test sources when domain/shared/core/commonMain sources changed, + assembleDebug; one automatic retry per verify run (so per bisect iteration) with `-Pkotlin.incremental=false` on an `Incremental compilation failed` flake; iOS, only when the picked commits touch `ios/`,
-  `shared/`, `android/domain|presentation|core`, or a KMP module's commonMain/commonTest: framework build, `./gradlew iosSimulatorArm64Test` (all KMP commonTest on Kotlin/Native) + app build and just the `S2Tests` classes
-  mapped from the changed files), pushes, closes issues and cleans up the landed worktrees (`--close
+  `shared/`, `android/domain|presentation|core`, or a KMP module's commonMain/commonTest/iosMain/iosTest: framework build, `:<module>:iosSimulatorArm64Test` for just the KMP modules whose commonMain/commonTest/iosMain/iosTest changed (none changed, no Kotlin/Native tests) + app build and just the `S2Tests` classes
+  mapped from the changed files), pushes (if another session pushed meanwhile, it rebases onto the new `origin/main` and pushes again, re-verifying once only when the incoming commits touch the batch's files; a push that still fails resets the checkout to `origin/main`), closes issues and cleans up the landed worktrees (`--close
   BRANCH:N` closes only when BRANCH landed; a bare `--close N` only when every branch landed). Run it as a
   `longjob.sh` batch, never twice for the same batch. `support/scripts/full-verify.sh` (via `longjob.sh
   start full-verify -- ...`) runs the whole suites (including `iosSimulatorArm64Test`) at `origin/main` and records the sha as the watermark;
@@ -66,11 +66,6 @@ back to plain `./gradlew` when it isn't installed.
 
 # Fastest iteration loop: maps the current diff to test classes, not whole modules
 ./support/scripts/unit-test --changed-tests
-
-# Run instrumented tests (Gradle Managed Device — auto-provisions emulator)
-./gradlew :android:app:pixel6Api34AtdDebugAndroidTest
-# Or via the "smoke" device group:
-./gradlew :android:app:smokeGroupDebugAndroidTest
 
 # Build on whichever host has room: the Mac unless it's loaded, else a free WSL box slot
 # (never queues for the box; --box / --local force one — see .claude/rules/android.md)
@@ -168,7 +163,7 @@ support/scripts/lint -F
   over a manual `git commit`. Use `/check` after making changes, and `/verify-ui` after Compose UI
   changes to keep the characterisation tests honest.
 - Tag `vYYMMDDNN` (e.g. `git tag v26032801 && git push origin v26032801`) triggers build + deploy to Google Play (internal track)
-- External contributors use PRs to `main` (CI runs lint, unit tests, snapshot tests, instrumented tests)
+- External contributors use PRs to `main`. There is no CI: all verification is local, so contributors run `support/scripts/lint` and `support/scripts/unit-test` before opening one. The only GitHub workflow is the tag → Play deploy
 
 ## Testing
 
