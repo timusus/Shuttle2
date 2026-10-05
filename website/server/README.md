@@ -19,7 +19,7 @@
 ## The new setup
 
 An `nginx:alpine` container, `shuttle-site`, serves both the live site and the preview from
-`/srv/www/shuttlemusicplayer.com` (see `../deploy.sh` for the layout). It runs beside the old container until the
+`/srv/config/www/shuttlemusicplayer.com` (see `../deploy.sh` for the layout). It runs beside the old container until the
 cut-over, which is one line in `rules.toml` and just as easy to undo.
 
 ### When the iOS app goes live
@@ -35,15 +35,17 @@ redeploy, and every page then:
 The script sits at `/site.js` rather than under `/js/`, because nginx returns 410 for the old `/js/` and `/images/`
 paths.
 
-### One-time setup (on the droplet)
+### One-time setup (on the droplet; done 2026-10-06)
+
+No sudo needed: `tim` owns `/srv/config`.
 
 ```sh
-sudo mkdir -p /srv/www/shuttlemusicplayer.com/{preview,releases,legacy,nginx} && sudo chown -R tim:tim /srv/www/shuttlemusicplayer.com
-docker cp shuttle-website:/var/www/html/cv /srv/www/shuttlemusicplayer.com/legacy/
-docker cp shuttle-website:/var/www/html/chromecast /srv/www/shuttlemusicplayer.com/legacy/
+mkdir -p /srv/config/www/shuttlemusicplayer.com/{preview,releases,legacy,nginx}
+docker cp shuttle-website:/var/www/html/cv /srv/config/www/shuttlemusicplayer.com/legacy/
+docker cp shuttle-website:/var/www/html/chromecast /srv/config/www/shuttlemusicplayer.com/legacy/
 ```
 
-From the repo (Mac): `rsync -rz website/server/nginx/ tim@157.230.84.48:/srv/www/shuttlemusicplayer.com/nginx/`
+From the repo (Mac): `rsync -rz website/server/nginx/ tim@157.230.84.48:/srv/config/www/shuttlemusicplayer.com/nginx/`
 
 Add to the `services:` in `/srv/config/docker-compose.yml`, then `cd /srv/config && docker compose up -d shuttle-site`
 (the file was written for docker-compose 1.24; use whichever compose binary the droplet has):
@@ -56,8 +58,8 @@ Add to the `services:` in `/srv/config/docker-compose.yml`, then `cd /srv/config
             - '127.0.0.1:9008:80'
         restart: unless-stopped
         volumes:
-            - /srv/www/shuttlemusicplayer.com:/srv/site:ro
-            - /srv/www/shuttlemusicplayer.com/nginx:/etc/nginx/conf.d:ro
+            - /srv/config/www/shuttlemusicplayer.com:/srv/site:ro
+            - /srv/config/www/shuttlemusicplayer.com/nginx:/etc/nginx/conf.d:ro
 ```
 
 Add to `/etc/traefik/rules.toml` (Traefik picks it up on save and fetches the preview certificate):
@@ -85,5 +87,6 @@ Add to `/etc/traefik/rules.toml` (Traefik picks it up on save and fetches the pr
 After the cut-over, every `website/deploy.sh --live` is a new release; `website/deploy.sh --rollback` points `live` at
 the previous one.
 
-nginx redirects `www.` and the `.app` hosts to `https://shuttlemusicplayer.com`, and plain-http requests (Traefik's
-`X-Forwarded-Proto`) to https. The preview sends `X-Robots-Tag: noindex`.
+nginx routes on `X-Forwarded-Host` (falling back to `Host` for direct requests), because Traefik 1.7's file provider
+doesn't pass the Host header through. It redirects `www.` and the `.app` hosts to `https://shuttlemusicplayer.com`,
+and plain-http requests (Traefik's `X-Forwarded-Proto`) to https. The preview sends `X-Robots-Tag: noindex`.

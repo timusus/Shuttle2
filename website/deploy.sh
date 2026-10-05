@@ -7,17 +7,17 @@
 #   website/deploy.sh --rollback  point `live` back at the release before the current one
 #
 # Layout on the droplet (one-time setup and the Traefik cut-over are in server/README.md):
-#   /srv/www/shuttlemusicplayer.com/preview/        what the last deploy pushed
-#   /srv/www/shuttlemusicplayer.com/releases/<ts>/  frozen copies of the preview, newest five kept
-#   /srv/www/shuttlemusicplayer.com/live            symlink to one release, swapped atomically
-#   /srv/www/shuttlemusicplayer.com/legacy/         /cv and /chromecast from the old site
-#   /srv/www/shuttlemusicplayer.com/nginx/          server/nginx/, mounted into the shuttle-site container
+#   /srv/config/www/shuttlemusicplayer.com/preview/        what the last deploy pushed
+#   /srv/config/www/shuttlemusicplayer.com/releases/<ts>/  frozen copies of the preview, newest five kept
+#   /srv/config/www/shuttlemusicplayer.com/live            symlink to one release, swapped atomically
+#   /srv/config/www/shuttlemusicplayer.com/legacy/         /cv and /chromecast from the old site
+#   /srv/config/www/shuttlemusicplayer.com/nginx/          server/nginx/, mounted into the shuttle-site container
 #
 # SHUTTLE_SITE_HOST overrides the ssh target.
 set -euo pipefail
 
 HOST="${SHUTTLE_SITE_HOST:-tim@157.230.84.48}"
-BASE=/srv/www/shuttlemusicplayer.com
+BASE=/srv/config/www/shuttlemusicplayer.com
 CONTAINER=shuttle-site
 KEEP_RELEASES=5
 HERE="$(cd "$(dirname "$0")" && pwd)"
