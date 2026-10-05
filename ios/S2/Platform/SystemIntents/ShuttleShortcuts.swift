@@ -28,9 +28,9 @@ struct ShuttleShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: TogglePlaybackIntent(),
             phrases: [
+                // No "Pause"/"Resume" phrases: a toggle would do the opposite when the state isn't what the
+                // listener thinks, and Siri's own media commands already pause and resume the playing app
                 "Play or pause \(.applicationName)",
-                "Pause \(.applicationName)",
-                "Resume \(.applicationName)",
             ],
             shortTitle: "Play or Pause",
             systemImageName: "playpause"
