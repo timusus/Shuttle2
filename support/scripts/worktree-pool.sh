@@ -16,8 +16,9 @@
 #
 # Lease records live in <git-common-dir>/s2-worktree-pool/<k>.lease ("<branch> <epoch> <base-sha>"), never tracked.
 # The base sha is origin/main when the branch was created. A slot is reclaimable when it has no lease, or its
-# leased branch no longer exists, or the branch is landed: its tip moved off the base sha and every commit is on
-# origin/main (by patch). A branch still at its base sha is a worker that has not committed yet, never landed.
+# leased branch no longer exists, or the branch is landed: it has commits of its own and every one is on origin/main
+# by patch (at least one cherry "-", no "+"). A branch with no commits of its own (still at its base, or merely
+# fast-forwarded/rebased onto a newer origin/main) is a running worker, never landed.
 # Every lease, release and reap decides under the pool lock; reap detaches a landed slot but leaves the branch
 # for worktree-clean.sh to delete (it prints "landed <branch>" on stdout). The slots are `git worktree lock`ed
 # so worktree-clean.sh / worktree-report.sh --prune never remove them.
@@ -26,7 +27,8 @@ set -euo pipefail
 
 COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir) \
   || { echo "worktree-pool: not in a git checkout" >&2; exit 2; }
-PRIMARY=$(dirname "$COMMON_DIR")
+PRIMARY=$(cd -P "$(dirname "$COMMON_DIR")" && pwd -P)  # physical, like the paths git reports for worktrees
+COMMON_DIR="$PRIMARY/$(basename "$COMMON_DIR")"
 WT_DIR="$PRIMARY/.claude/worktrees"
 POOL_DIR="$COMMON_DIR/s2-worktree-pool"
 SIZE=${S2_WORKTREE_POOL_SIZE:-5}
@@ -38,7 +40,11 @@ registered() {
   wts=$(git -C "$PRIMARY" worktree list --porcelain)
   printf '%s\n' "$wts" | grep -qxF "worktree $1"
 }
-usable() { [ "$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" = "$1" ]; }
+usable() {  # git reports the physical toplevel, so compare against the physical path
+  local want
+  want=$(cd -P "$1" 2>/dev/null && pwd -P) || return 1
+  [ "$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" = "$want" ]
+}
 is_slot_path() {
   case "$1" in
     "$WT_DIR"/pool-*) case "${1##*/pool-}" in ''|*[!0-9]*) return 1 ;; *) return 0 ;; esac ;;
@@ -52,7 +58,14 @@ recover_cmd() {
 # --- the pool lock: mkdir is atomic; the holder's pid lets a crashed holder's lock be broken -----------------
 LOCK="$POOL_DIR/lock"
 LOCKED=0
-unlock() { [ "$LOCKED" = 1 ] && { rm -rf "$LOCK"; LOCKED=0; }; return 0; }
+# Only remove a lock that still carries our pid: if a waiter wrongly broke ours, never delete the next holder's.
+unlock() {
+  if [ "$LOCKED" = 1 ]; then
+    [ "$(cat "$LOCK/pid" 2>/dev/null || true)" = "$$" ] && rm -rf "$LOCK"
+    LOCKED=0
+  fi
+  return 0
+}
 mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || date +%s; }
 # Is the lock held by a dead process, or by one that crashed between mkdir and writing its pid (older than 30s)?
 lock_stale() {  # $1 = pid seen in the lock, possibly empty
@@ -63,23 +76,30 @@ lock_stale() {  # $1 = pid seen in the lock, possibly empty
   [ $(( $(date +%s) - $(mtime "$LOCK") )) -gt 30 ]
 }
 lock() {
-  local i=0 pid moved
+  local i=0 pid moved mpid
   until mkdir "$LOCK" 2>/dev/null; do
     pid=$(cat "$LOCK/pid" 2>/dev/null || true)
     if lock_stale "$pid"; then
-      # mv of one directory succeeds for exactly one waiter; only that winner removes it and retries.
-      moved="$LOCK.stale.$$"
+      # mv of one directory succeeds for exactly one waiter. Between our staleness check and the mv the stale lock may
+      # have been replaced by a live one, so re-read the pid of what we actually moved. A live holder's lock goes back
+      # only if $LOCK is still free (nobody can have taken it then, since mkdir needs it absent); if someone already
+      # holds a new lock, we leave the moved dir (a few bytes) and retry rather than clobber the new holder. The
+      # holder we robbed never notices: unlock only removes a lock carrying its own pid.
+      moved="$LOCK.stale.$$.$i"
       if mv "$LOCK" "$moved" 2>/dev/null; then
-        if [ "$(cat "$moved/pid" 2>/dev/null || true)" = "$pid" ]; then
-          rm -rf "$moved"
+        mpid=$(cat "$moved/pid" 2>/dev/null || true)
+        if [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null; then
+          [ -e "$LOCK" ] || mv "$moved" "$LOCK" 2>/dev/null || true
+        elif [ -z "$mpid" ] && [ $(( $(date +%s) - $(mtime "$moved") )) -le 30 ]; then
+          [ -e "$LOCK" ] || mv "$moved" "$LOCK" 2>/dev/null || true  # a fresh lock whose holder has not written its pid yet
         else
-          mv "$moved" "$LOCK" 2>/dev/null || rm -rf "$moved"  # we moved a live holder's fresh lock: put it back
+          rm -rf "$moved"
         fi
         continue
       fi
     fi
     i=$((i + 1))
-    [ $i -le 600 ] || { echo "worktree-pool: could not take the pool lock ($LOCK)" >&2; exit 2; }
+    [ $i -le 600 ] || { echo "worktree-pool: could not take the pool lock ($LOCK); fall back to a plain new worktree" >&2; exit 3; }
     sleep 0.1
   done
   echo $$ > "$LOCK/pid"
@@ -94,14 +114,34 @@ lease_epoch() { lease_field "$1" 2; }
 lease_base() { lease_field "$1" 3; }
 branch_exists() { git -C "$PRIMARY" show-ref --verify --quiet "refs/heads/$1"; }
 
-# Landed: the tip moved off the recorded base and every commit is on origin/main by patch (fast-forward or cherry-pick).
+# Landed: the branch has a commit of its own and every such commit is on origin/main by patch (cherry-pick, as land.sh
+# does). A branch with no commits of its own that was fast-forwarded, merged or rebased onto a newer origin/main has an
+# empty `git cherry`, so it never counts: a running worker's slot must not be reset.
 branch_landed() {  # $1 = branch, $2 = base sha
-  local tip ahead
+  local tip own ahead
   [ -n "$2" ] || return 1
   tip=$(git -C "$PRIMARY" rev-parse "refs/heads/$1")
   [ "$tip" != "$2" ] || return 1
-  ahead=$(git -C "$PRIMARY" cherry origin/main "$1" 2>/dev/null) || return 1
+  own=$(git -C "$PRIMARY" rev-list --no-merges "$2..refs/heads/$1" 2>/dev/null) || return 1
+  [ -n "$own" ] || return 1
+  ahead=$(git -C "$PRIMARY" cherry origin/main "refs/heads/$1" 2>/dev/null) || return 1
   case "$ahead" in *"+ "*) return 1 ;; esac
+  case "$ahead" in *"- "*) return 0 ;; esac
+  return 1
+}
+
+# Fetch origin main with a 25s ceiling (no GNU timeout on macOS); never under the lock. On failure the existing
+# origin/main is used.
+fetch_origin() {
+  local fp wd=0 rc=0
+  GIT_TERMINAL_PROMPT=0 git -C "$PRIMARY" fetch -q origin main >&2 &
+  fp=$!
+  while kill -0 "$fp" 2>/dev/null; do
+    if [ $wd -ge 50 ]; then kill "$fp" 2>/dev/null || true; break; fi
+    wd=$((wd + 1)); sleep 0.5
+  done
+  wait "$fp" 2>/dev/null || rc=$?
+  [ $rc = 0 ] || echo "worktree-pool: fetch failed or timed out; using the existing origin/main" >&2
   return 0
 }
 
@@ -172,6 +212,7 @@ cmd_lease() {
   case "$name" in *[!A-Za-z0-9._-]*) echo "worktree-pool: bad name: $name" >&2; exit 2 ;; esac
   branch="worktree-$name"
 
+  fetch_origin
   lock
   # Re-brief: the branch is already in a slot; hand it back untouched, restoring a lost lease record.
   if held=$(slot_of "$branch"); then
@@ -191,7 +232,6 @@ cmd_lease() {
     exit 2
   fi
 
-  git -C "$PRIMARY" fetch -q origin main >&2 || echo "worktree-pool: fetch failed; using the local origin/main" >&2
   for k in $(seq 1 "$SIZE"); do
     if slot_reclaimable "$k"; then d=$(slot_dir "$k"); break; fi
   done
