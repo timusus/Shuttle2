@@ -209,3 +209,30 @@ Partly. `StartupTrace.processStart` reads `kp_proc.p_starttime` from `sysctl(KER
 1. **Home content waits on sections and the song count, ~730 ms to first content** (first frame at ~210 ms, so ~520 ms of empty Home). `songCount` takes ~200 ms and the sections load takes ~250 ms after it; the slowest sections (Jump back in, Heavy rotation, Genre picks, Resume points, ~110 ms each) set the end. Rendering the sections that are ready instead of waiting for all of them would help; `songCount` could be a cheap `COUNT(*)` or cached.
 2. **All-songs query and search warm-up, ~350-430 ms for the songs, ~800 ms to index ready.** It runs at launch regardless of tab, and competes with Home/Library for cores. Library first content (~590 ms) lands soon after it finishes (~430 ms). Smaller than in Debug, but the largest single step. A lighter first-page query for Library would remove the dependency.
 3. **Main-thread `AppGraph.initialize`, ~130 ms before first frame** (audio engine ~46 ms, dependencies ~77 ms, telemetry start ~35-40 ms, playback system ~8-12 ms). Pre-main is ~22 ms, so `S2App.init` done at ~153 ms and first frame ~210 ms are mostly this. Moving the audio engine and telemetry off the first frame's critical path would give ~80 ms.
+
+## Changes made (2026-10-05)
+
+Not yet measured on the device; the effects below are expected from the measurements above, not observed.
+
+- **Resume points in one query.** Home's Resume points section read each context's resume point with its own query
+  (and its own album-index check), serially after Jump back in. `PlayHistoryRepository.resumePointsFor` reads them
+  all in one query, so that section no longer adds a round trip per item before the first sections emit.
+- **Search index warm-up after the first content.** It no longer starts in `AppGraph.initialize`; it starts when Home
+  or a Library list first shows content, or when Search opens, whichever is first (`AppGraph.warmUpSearch()`). Its
+  all-songs query no longer competes with the first content (cause 2). Search opened before it has run builds the
+  index on demand, as it always could.
+- **PostHog after the first frame.** `TelemetryConsentGate` starts crash reporting and analytics separately. iOS
+  applies the crash reporting choice (Sentry) in `AppGraph.initialize` as before, and the analytics choice (PostHog's
+  set-up and super properties) on the main queue after `ContentView`'s first `onAppear`
+  (`AppGraph.startAfterFirstFrame()`, logged as step `analyticsStartup`). Expected: PostHog's share of the ~35-40 ms
+  telemetry step leaves the first frame's path. Trade-off: PostHog's lifecycle integration only hears
+  `didBecomeActive` once it is set up, so a cold launch's "Application Opened" may no longer be captured. Installs,
+  updates and later opens still are. Android is unchanged.
+- **Instrumentation.** Home's `Startup` timings log at info once per process and at debug after that;
+  `StartupTrace.mark` repeats no longer allocate; the database line reads "builder set up" (`build()` only sets Room
+  up; the open is the "opened" line).
+- **Not changed: the audio engine (~46 ms).** `EngineAudioPlayer` is a constructor dependency of the Kotlin graph, the
+  playback system coordinator and the player binding, and `playbackSystem.start()` restores the queue, Now Playing and
+  the remote commands at launch. Deferring it would mean a lazy stand-in player and a second start-up order for
+  playback, so it stays on the launch path.
+- **Not changed here: Home's song count.** The `COUNT(*)` change (#900) landed separately with #882.
