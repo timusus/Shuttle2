@@ -209,6 +209,34 @@ class PaywallViewModelTest {
     }
 
     @Test
+    fun `a purchase made while the paywall is open is thanked`() = runTest {
+        val viewModel = collectedViewModel()
+
+        entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+
+        viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(PaywallMessage.ThankYou)
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `Play answering late that the user owns Pro is not a thank you`() = runTest {
+        entitlement.value = Entitlement.Unknown
+        val viewModel = collectedViewModel()
+
+        entitlement.value = Entitlement.Pro(ProSource.LegacyLifetime)
+
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `opening the paywall as Pro is not a thank you`() = runTest {
+        entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+        val viewModel = collectedViewModel()
+
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
     fun `unavailable prices are fetched again on open and on retry`() {
         billing.offers.value = PaywallOffers.Unavailable
         val viewModel = viewModel()

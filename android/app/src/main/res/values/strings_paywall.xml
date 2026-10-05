@@ -58,6 +58,8 @@
     <string name="paywall_redeem_code">Redeem a code</string>
     <string name="paywall_manage_subscription">Manage subscription</string>
     <string name="paywall_purchase_failed">Couldn\'t open Google Play. Please try again.</string>
+    <!-- Shuttle Music Pro screen: snackbar once a purchase or promo code has gone through -->
+    <string name="paywall_thank_you">Thank you for supporting Shuttle Music!</string>
     <string name="paywall_restored">Your purchase has been restored</string>
     <string name="paywall_nothing_to_restore">No Shuttle Music Pro purchase found for this Google account</string>
     <string name="paywall_restore_failed">Couldn\'t reach Google Play. Please try again.</string>

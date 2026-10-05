@@ -77,7 +77,8 @@ enum class PaywallMessage {
     PurchaseFailed,
     Restored,
     NothingToRestore,
-    RestoreFailed
+    RestoreFailed,
+    ThankYou
 }
 
 sealed interface PaywallUiEvent {
@@ -120,6 +121,22 @@ class PaywallViewModel @AssistedInject constructor(
     init {
         analytics.paywallShown(source)
         if (billing.offers.value == PaywallOffers.Unavailable) billing.refreshOffers()
+        viewModelScope.launch { thankPurchaser() }
+    }
+
+    /**
+     * Says thank you once when Free or Trial turns into Pro while the paywall is open: a purchase or a promo code just
+     * went through. Not from Unknown (Play answering late says nothing of a purchase made now), and not for a restore,
+     * which has its own message.
+     */
+    private suspend fun thankPurchaser() {
+        var previous = entitlement.value
+        entitlement.collect { current ->
+            if (current is Entitlement.Pro && (previous is Entitlement.Free || previous is Entitlement.Trial) && !restoring.value) {
+                events.post(PaywallUiEvent.ShowMessage(PaywallMessage.ThankYou))
+            }
+            previous = current
+        }
     }
 
     fun onSelectPlan(plan: PaywallPlan) {
