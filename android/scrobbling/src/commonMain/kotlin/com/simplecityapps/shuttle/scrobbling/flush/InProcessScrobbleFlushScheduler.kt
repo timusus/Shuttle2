@@ -22,7 +22,8 @@ import kotlinx.coroutines.sync.withLock
  * flush is never run twice at once: every run holds [running], and a request that arrives while one is waiting to
  * start joins it rather than queuing another. Offline requests are dropped; the next enqueue, launch or foreground
  * asks again. A [FlushResult.Retry] schedules one more attempt after an exponential backoff
- * ([INITIAL_BACKOFF] doubling to [MAX_BACKOFF]), cancelled by the next run that starts.
+ * ([INITIAL_BACKOFF] doubling to [MAX_BACKOFF]), cancelled by the next run that starts. If the device is offline
+ * when that backoff ends, the retry keeps checking every [OFFLINE_POLL] until it is connected, rather than dropping.
  */
 @SingleIn(AppScope::class)
 class InProcessScrobbleFlushScheduler
@@ -62,6 +63,7 @@ constructor(
             backoff = (backoff * 2).coerceAtMost(MAX_BACKOFF)
             retryJob = scope.launch {
                 delay(wait)
+                while (!connectivity.isConnected()) delay(OFFLINE_POLL)
                 scheduleFlush()
             }
         } else {
@@ -73,5 +75,6 @@ constructor(
     companion object {
         val INITIAL_BACKOFF: Duration = 30.seconds
         val MAX_BACKOFF: Duration = 30.minutes
+        val OFFLINE_POLL: Duration = 30.seconds
     }
 }

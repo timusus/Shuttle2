@@ -145,6 +145,28 @@ class InProcessScrobbleFlushSchedulerTest {
     }
 
     @Test
+    fun `a retry that comes due while offline waits for connectivity`() = runTest {
+        enqueue(1)
+        server.enqueueOffline()
+        val scheduler = scheduler()
+
+        scheduler.scheduleFlush()
+        runCurrent()
+        online = false
+
+        advanceTimeBy(InProcessScrobbleFlushScheduler.INITIAL_BACKOFF.inWholeMilliseconds + 1)
+        advanceTimeBy(InProcessScrobbleFlushScheduler.OFFLINE_POLL.inWholeMilliseconds * 3)
+        runCurrent()
+        server.requests.size shouldBe 1
+
+        online = true
+        advanceTimeBy(InProcessScrobbleFlushScheduler.OFFLINE_POLL.inWholeMilliseconds)
+        runCurrent()
+        server.requests.size shouldBe 2
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+    }
+
+    @Test
     fun `the background task's flush reports its result`() = runTest {
         enqueue(1)
         server.enqueueOffline()
