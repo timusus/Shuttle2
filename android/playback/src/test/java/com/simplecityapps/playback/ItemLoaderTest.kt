@@ -164,6 +164,43 @@ class ItemLoaderTest {
     }
 
     @Test
+    fun `a transcode replaced again at the same position after playback moved on is opened again`() {
+        queue(transcode)
+        load(skipUnloadable = true)
+        player.seekTo(0, 1_000)
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        failWithNotFound()
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+
+        player.seekTo(0, 2_000)
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        player.seekTo(0, 1_000)
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        failWithNotFound()
+
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        gaveUp shouldBe 0
+        failures shouldBe emptyList()
+    }
+
+    @Test
+    fun `a 404 at another position than the last re-open is opened again`() {
+        queue(transcode)
+        load(skipUnloadable = true)
+        player.seekTo(0, 1_000)
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        failWithNotFound()
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+
+        player.seekTo(0, 2_000)
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        failWithNotFound()
+
+        driver.runUntil { player.playbackState == Player.STATE_READY }
+        gaveUp shouldBe 0
+    }
+
+    @Test
     fun `a 404 on a transcode not yet ready opens it again rather than skipping it`() {
         queue(transcode, playable)
         player.play()

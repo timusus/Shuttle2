@@ -91,10 +91,11 @@ class SongUriResolver(
     fun isReplaceableTranscode(uri: Uri): Boolean = resolutions[uri.toString()]?.resolved()?.isReplaceableTranscode == true
 
     /**
-     * Whether [url] (one the player fetched: a stream, or an HLS playlist or segment) is on the server of a transcode that
-     * it drops when another starts, so a 404 from it means that transcode was replaced: retrying won't bring it back.
+     * Whether [url] (one the player fetched: a stream, or an HLS playlist or segment) is a transcode URL (a `transcode`
+     * path segment) on the server of a transcode that it drops when another starts, so a 404 from it means that transcode
+     * was replaced: retrying won't bring it back. Other URLs on that server (direct-play files) are retried as usual.
      */
-    fun servesReplaceableTranscode(url: Uri): Boolean = resolutions.values.any { deferred ->
+    fun servesReplaceableTranscode(url: Uri): Boolean = "transcode" in url.pathSegments && resolutions.values.any { deferred ->
         val resolution = deferred.resolved() ?: return@any false
         resolution.isReplaceableTranscode && resolution.uri.scheme == url.scheme && resolution.uri.encodedAuthority == url.encodedAuthority
     }

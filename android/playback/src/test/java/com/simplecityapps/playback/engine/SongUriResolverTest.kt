@@ -229,6 +229,7 @@ class SongUriResolverTest {
         policy.retryDelayFor(httpError(404, PLEX_SEGMENT)) shouldBe C.TIME_UNSET
         policy.retryDelayFor(httpError(500, PLEX_SEGMENT)) shouldNotBe C.TIME_UNSET
         policy.retryDelayFor(httpError(404, Uri.parse("https://server/stream/1"))) shouldNotBe C.TIME_UNSET
+        policy.retryDelayFor(httpError(404, Uri.parse("https://plex:32400/library/parts/5/file.mp3"))) shouldNotBe C.TIME_UNSET
         policy.retryDelayFor(MediaResolutionException("Server unreachable")) shouldBe C.TIME_UNSET
     }
 

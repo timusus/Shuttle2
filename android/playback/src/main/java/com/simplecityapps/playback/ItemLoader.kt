@@ -82,6 +82,7 @@ class ItemLoader(
         pendingLoad = PendingLoad(completion, skipUnloadable)
         readyUid = null
         loadFailures = 0
+        lastReopen = null
         player.seekTo(player.currentMediaItemIndex, positionMs.toLong())
         if (player.playbackState == Player.STATE_IDLE) {
             player.prepare()
@@ -115,6 +116,21 @@ class ItemLoader(
         val playsOn = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
         if (playsOn && player.playerError == null) {
             readyUid = mediaItem?.queueEntryOrNull?.uid
+        }
+    }
+
+    /**
+     * Playback moving to another position than it was at (a seek, or the player moving on) means a transcode that fails
+     * there again is a new failure, not the one [reopensReplacedTranscode] opened again. Opening it again seeks to
+     * where it already was, which is no move.
+     */
+    override fun onPositionDiscontinuity(
+        oldPosition: Player.PositionInfo,
+        newPosition: Player.PositionInfo,
+        reason: Int
+    ) {
+        if (oldPosition.mediaItemIndex != newPosition.mediaItemIndex || oldPosition.positionMs != newPosition.positionMs) {
+            lastReopen = null
         }
     }
 
