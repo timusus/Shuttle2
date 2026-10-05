@@ -73,19 +73,27 @@ Where `Application.onCreate` goes, with the profile (without it):
 | Section | Median |
 |---|---|
 | `S2 app inject` (the Metro graph, and every `@Inject` member of `ShuttleApplication`) | 96 ms (104 ms) |
-| `S2 init TelemetryInitializer` (Sentry and PostHog setup) | 47 ms (59 ms) |
+| `S2 init TelemetryInitializer` (Sentry and PostHog setup, before #914) | 47 ms (59 ms) |
 | `MediaProvider`, `Playback`, `Entitlement` and `Shortcut` initializers | 1.5–2.4 ms each |
 | `PlaybackReporting`, `Scrobbling`, `Widget`, `Downloads`, `FavouriteSync`, `SearchIndex`, `Appearance` and `Timber` initializers | under 1 ms each |
 | `setDayNightMode`, `installDefaults` | under 0.1 ms |
 
 ## Audit: what moved off the startup path, and what stayed
 
-Nothing moved. Two sections account for about 90% of `onCreate`, and neither can move without changing behaviour:
+Only PostHog setup moved (#914). Two sections account for about 90% of `onCreate`, and neither can move without changing behaviour:
 
-- **TelemetryInitializer stays.** Sentry and PostHog start synchronously, on purpose
-  (`TelemetryConsentGate.start`). The stored consent has to be in force before the first crash or event. Deferring it
-  would leave crashes in early startup unreported, and drop events sent before setup. A trace inside it would show
-  which SDK costs what. If it is PostHog, its setup could move once early events are buffered.
+- **TelemetryInitializer splits (#914).** Sentry still starts synchronously
+  (`TelemetryConsentGate.startCrashReporting`): the stored consent has to be in force before the first crash. PostHog
+  moved: `AnalyticsStartup` runs `startAnalytics` once, off the main thread (IO dispatcher), after the first activity's
+  first frame (Choreographer frame callback, then a main-looper message). A process that never shows an activity
+  (service, Android Auto) sets it up after 5 s instead. As on iOS, consent is unchanged: no setup or event without it.
+  Events captured before setup are dropped on purpose (`PostHogAnalytics.isCapturing` is false until then); nothing
+  sends one in the first frames. PostHog's "Application Opened" comes from an activity-started callback it registers at
+  setup, so when an activity had already started, `AnalyticsStartup` sends it itself, once.
+  - **Measure:** the `S2 init TelemetryInitializer` trace section should now be Sentry alone; capture the Baseline
+    Profile benchmark as in Method and compare with the 47 ms (59 ms) above. TODO(owner's device batch): Sentry-only
+    `init TelemetryInitializer` median: __ ms. TODO: check in PostHog that "Application Opened" still arrives once per
+    cold start, and TTID/TTFD are unchanged.
 - **The Metro inject stays.** This is the graph, plus the eager construction of everything
   `ShuttleApplication`'s fields reach. Most of that is the `AppInitializer` set, which builds each initializer's
   dependencies. Making those `Lazy`/`Provider` is a DI design change, not a move.

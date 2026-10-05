@@ -18,7 +18,10 @@ class TelemetryConsentGateTest {
     private val analytics = FakeSdk()
 
     private fun TestScope.startGate() {
-        TelemetryConsentGate(privacySettings, FakeCrashReporting(crashReporting), FakeAnalytics(analytics), backgroundScope).start()
+        TelemetryConsentGate(privacySettings, FakeCrashReporting(crashReporting), FakeAnalytics(analytics), backgroundScope).apply {
+            startCrashReporting()
+            startAnalytics()
+        }
     }
 
     @Test

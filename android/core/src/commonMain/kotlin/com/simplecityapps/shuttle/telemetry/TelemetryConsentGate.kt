@@ -23,12 +23,12 @@ interface AnalyticsSdk {
 /**
  * Each SDK runs only while its choice allows it. Both default to on for a user who never chose (#379, #481): Android's
  * Home says so once to an upgrader (`HomeEvent.AnalyticsNowOn`), iOS's first-run welcome to everyone. Turning either
- * off in Settings > Privacy stops its SDK at once. [start] applies the stored choices before anything can send an event
- * or a crash, then follows every change to them.
+ * off in Settings > Privacy stops its SDK at once. [startCrashReporting] and [startAnalytics] apply the stored choice
+ * before anything can send a crash or an event, then follow every change to it.
  *
  * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
- * so each gates its own SDK. Shared by Android (`TelemetryInitializer`, [start]) and iOS (`IosTelemetryStartup`), which
- * starts crash reporting at launch and analytics only once the first frame is up ([startCrashReporting], [startAnalytics]).
+ * so each gates its own SDK. Shared by Android (`TelemetryInitializer`, `AnalyticsStartup`) and iOS (`IosTelemetryStartup`),
+ * which both start crash reporting at launch and analytics only once the first frame is up.
  */
 @SingleIn(AppScope::class)
 class TelemetryConsentGate @Inject constructor(
@@ -37,11 +37,6 @@ class TelemetryConsentGate @Inject constructor(
     private val analytics: AnalyticsSdk,
     @AppCoroutineScope private val scope: CoroutineScope,
 ) {
-    fun start() {
-        startCrashReporting()
-        startAnalytics()
-    }
-
     fun startCrashReporting() {
         // Synchronously, so the stored choice is in force before the first crash; the flow starts with the value just
         // applied, which the SDK ignores, then follows every toggle
