@@ -72,4 +72,18 @@ class PlayerQualityTest {
         flac.qualityLine(DeliveredFormat("OPUS", null)) shouldBe "OPUS"
         flac.qualityLine(null) shouldBe "FLAC · 24-bit / 96 kHz"
     }
+
+    @Test
+    fun `a raw pcm codec reads as PCM with the depth from its name`() {
+        bare.copy(mimeType = "audio/wav", audioCodec = "pcm_s16le", bitRate = 1411, sampleRate = 44100).qualityLine() shouldBe "PCM · 16-bit / 44.1 kHz"
+        bare.copy(mimeType = "audio/wav", audioCodec = "pcm_s24le", sampleRate = 96000).qualityLine() shouldBe "PCM · 24-bit / 96 kHz"
+        bare.copy(mimeType = "audio/wav", audioCodec = "pcm_f32le", sampleRate = 48000).qualityLine() shouldBe "PCM · 32-bit / 48 kHz"
+        bare.copy(mimeType = "audio/wav", audioCodec = "pcm_u8", sampleRate = 22050).qualityLine() shouldBe "PCM · 8-bit / 22.05 kHz"
+    }
+
+    @Test
+    fun `a raw pcm codec prefers the reported depth and falls back to the sample rate`() {
+        bare.copy(audioCodec = "pcm_s16le", bitDepth = 24, sampleRate = 44100).qualityLine() shouldBe "PCM · 24-bit / 44.1 kHz"
+        bare.copy(audioCodec = "pcm_dvd", sampleRate = 48000).qualityLine() shouldBe "PCM · 48 kHz"
+    }
 }

@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "WAV files from Jellyfin and Emby now show as PCM with their bit depth and sample rate in Now Playing.", "commits": [] }
