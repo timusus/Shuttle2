@@ -191,7 +191,7 @@ class JellyfinStreamUrlProviderTest {
     }
 
     @Test
-    fun `an ALAC download with no cap is a transcode, since the player can't decode the original`() {
+    fun `an ALAC download with no cap is a transcode because the player can't decode the original`() {
         credentialStore.authenticatedCredentials = downloadableCredentials
 
         val source = provider.downloadSource(song(bitRate = 900, audioCodec = "alac"))!!
