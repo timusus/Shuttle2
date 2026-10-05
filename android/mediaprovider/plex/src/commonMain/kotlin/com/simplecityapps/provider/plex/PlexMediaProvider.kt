@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
+import com.simplecityapps.mediaprovider.server.atStoredPrecision
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
 import com.simplecityapps.mediaprovider.server.withPlayedSongs
@@ -62,7 +63,7 @@ class PlexMediaProvider(
         existingSongs: List<Song>,
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
-        val syncedAt = Clock.System.now()
+        val syncedAt = Clock.System.now().atStoredPrecision()
         when (val sectionsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 // A server can hold several music libraries, whatever they're called; they're the sections of type "artist"

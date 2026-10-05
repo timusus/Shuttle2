@@ -25,11 +25,12 @@ class ItemToSongTest {
     }
 
     @Test
-    fun `the song's dates are when it was added to the server`() {
+    fun `the song's dates are when it was added to the server - at the library's millisecond precision`() {
+        // The server reports seven fractional digits; the library stores milliseconds, so a re-read song compares equal to the stored one
         val song = parse(dateCreated = "2024-03-01T12:34:56.1234567Z").toSong(SYNCED_AT)
 
-        song.dateAdded shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
-        song.lastModified shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
+        song.dateAdded shouldBe Instant.parse("2024-03-01T12:34:56.123Z")
+        song.lastModified shouldBe Instant.parse("2024-03-01T12:34:56.123Z")
     }
 
     @Test
@@ -150,6 +151,13 @@ class ItemToSongTest {
 
         song.playCount shouldBe 7
         song.lastPlayed shouldBe Instant.parse("2026-09-30T18:00:00Z")
+    }
+
+    @Test
+    fun `a last played date below a millisecond is read at the library's precision`() {
+        val song = userData("{\"IsFavorite\": false, \"PlayCount\": 7, \"LastPlayedDate\": \"2026-09-30T18:00:00.9999000Z\"}").toSong(SYNCED_AT)
+
+        song.lastPlayed shouldBe Instant.parse("2026-09-30T18:00:00.999Z")
     }
 
     @Test

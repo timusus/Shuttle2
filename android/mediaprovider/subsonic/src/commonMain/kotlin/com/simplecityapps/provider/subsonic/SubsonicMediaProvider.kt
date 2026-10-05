@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
+import com.simplecityapps.mediaprovider.server.parseServerInstant
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
@@ -150,7 +151,7 @@ internal fun SongDto.toSong(): Song {
     val artistNames = artists.names().ifEmpty { listOfNotNull(artist?.takeIf(String::isNotBlank)) }
     val albumArtistNames = albumArtists.names()
     val codec = audioCodec()
-    val createdAt = created?.let { date -> runCatching { Instant.parse(date) }.getOrNull() }
+    val createdAt = parseServerInstant(created)
     val gain = replayGain?.takeUnless { it.isEmpty() }
     return Song(
         id = 0,
@@ -187,7 +188,7 @@ internal fun SongDto.toSong(): Song {
         // The cover art id carries the art's own hash (`al-<id>_<hash>`), so it changes when the art does
         artworkVersion = coverArt ?: albumId,
         dateAdded = createdAt,
-        favouritedAt = starred?.let { date -> runCatching { Instant.parse(date) }.getOrNull() },
+        favouritedAt = parseServerInstant(starred),
         albumArtists = albumArtistNames,
         artistsTag = artistNames,
         artistDisplay = displayArtist?.takeIf(String::isNotBlank) ?: artist,

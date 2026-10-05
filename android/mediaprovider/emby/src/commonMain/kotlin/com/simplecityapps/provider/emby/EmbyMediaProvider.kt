@@ -9,7 +9,9 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
 import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
+import com.simplecityapps.mediaprovider.server.atStoredPrecision
 import com.simplecityapps.mediaprovider.server.pagedFlow
+import com.simplecityapps.mediaprovider.server.parseServerInstant
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
 import com.simplecityapps.mediaprovider.server.withPlayedSongs
 import com.simplecityapps.mediaprovider.server.withServerSession
@@ -58,7 +60,7 @@ class EmbyMediaProvider(
         since: Instant?
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
-        val syncedAt = Clock.System.now()
+        val syncedAt = Clock.System.now().atStoredPrecision()
         emitAll(
             queryItems(address = address, session = session, since = since, syncedAt = syncedAt).map { event ->
                 if (event is FlowEvent.Success && since != null) {
@@ -291,7 +293,7 @@ internal fun Item.toSong(syncedAt: Instant): Song {
         // The server has no modified date for items; DateCreated (when the song was added) is the closest, and keeps the
         // Last Modified sort meaningful rather than falling back to our own import time
         lastModified = createdAt,
-        lastPlayed = userData?.lastPlayedDate?.let { date -> runCatching { Instant.parse(date) }.getOrNull() },
+        lastPlayed = parseServerInstant(userData?.lastPlayedDate),
         lastCompleted = null,
         playCount = userData?.playCount?.coerceAtLeast(0) ?: 0,
         playbackPosition = 0,
@@ -328,7 +330,10 @@ internal fun Item.toSong(syncedAt: Instant): Song {
 }
 
 internal val Item.songPath: String
-    get() = "emby://item/$id"
+    get() = "$SONG_PATH_PREFIX$id"
+
+/** What [Item.songPath] puts before the item id. */
+internal const val SONG_PATH_PREFIX = "emby://item/"
 
 private val Item.createdAt: Instant?
-    get() = dateCreated?.let { date -> runCatching { Instant.parse(date) }.getOrNull() }
+    get() = parseServerInstant(dateCreated)

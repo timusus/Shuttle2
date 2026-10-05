@@ -19,13 +19,10 @@ class SongDiff(
         oldData: Song,
         updated: Song
     ): Boolean {
-        val old = oldData.copy(
-            lastModified = oldData.lastModified.atStoredPrecision(),
-            dateAdded = oldData.dateAdded.atStoredPrecision(),
-            favouritedAt = oldData.favouritedAt.atStoredPrecision()
-        )
+        // Each provider maps its times at the stored precision, whole milliseconds, so the stored and the read compare exactly
+        val old = oldData
 
-        return updated.copy(lastPlayed = updated.lastPlayed.atStoredPrecision()).keepingStoredBitDepth(old).keepingStoredStreamProperties(old).copy(
+        return updated.keepingStoredBitDepth(old).keepingStoredStreamProperties(old).copy(
             lastPlayed = if (old.mediaProvider.remote) mergedPlayStats(old, updated).lastPlayed else old.lastPlayed,
             lastCompleted = old.lastCompleted,
             playCount = if (old.mediaProvider.remote) mergedPlayStats(old, updated).playCount else old.playCount,
@@ -41,12 +38,12 @@ class SongDiff(
             // A server stamps all of its favourites with the sync time, and the merge keeps the stored time anyway,
             // so only a flip in favourited-ness counts as a change
             favouritedAt = if (old.mediaProvider.remote && (updated.favouritedAt != null) != (old.favouritedAt != null)) {
-                updated.favouritedAt.atStoredPrecision()
+                updated.favouritedAt
             } else {
                 old.favouritedAt
             },
-            lastModified = updated.lastModified.atStoredPrecision(),
-            dateAdded = updated.dateAdded.atStoredPrecision()
+            lastModified = updated.lastModified,
+            dateAdded = updated.dateAdded
         ) != old
     }
 
@@ -56,19 +53,13 @@ class SongDiff(
     ): Song = newData.keepingStoredBitDepth(oldData).keepingStoredStreamProperties(oldData).copy(
         id = oldData.id,
         playCount = mergedPlayStats(oldData, newData).playCount,
-        lastPlayed = mergedPlayStats(oldData, newData.copy(lastPlayed = newData.lastPlayed.atStoredPrecision())).lastPlayed,
+        lastPlayed = mergedPlayStats(oldData, newData).lastPlayed,
         // A provider with no date for the song keeps the one from its first import, rather than looking newly added
         lastModified = newData.lastModified ?: oldData.lastModified,
         // The server's date for a remote song, which replaces an older import stamp; otherwise (local songs) the one
         // stamped when the song first reached the library, which a tag edit or rescan doesn't move
         dateAdded = newData.dateAdded ?: oldData.dateAdded
     )
-
-    /**
-     * The database stores epoch milliseconds, but Jellyfin and Emby parse ISO strings with up to seven fractional digits,
-     * so an instant only counts as changed, or wins the last-played merge, at the stored precision.
-     */
-    private fun Instant?.atStoredPrecision(): Instant? = this?.toEpochMilliseconds()?.let(Instant::fromEpochMilliseconds)
 
     /**
      * The stream properties a provider reports, else the stored ones: the MediaStore scan reports none, and a TagLib

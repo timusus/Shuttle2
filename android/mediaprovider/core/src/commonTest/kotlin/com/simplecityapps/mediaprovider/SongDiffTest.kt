@@ -5,7 +5,6 @@ import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
 
@@ -173,14 +172,6 @@ class SongDiffTest {
     }
 
     @Test
-    fun `a song differing only below a millisecond is not an update`() = runTest {
-        val stored = createSong(id = 7, lastModified = firstImport, dateAdded = firstImport)
-        val resynced = createSong(id = 0, lastModified = firstImport + 999_999.nanoseconds, dateAdded = firstImport + 1.nanoseconds)
-
-        SongDiff(listOf(stored), listOf(resynced)).apply().updates shouldBe emptyList()
-    }
-
-    @Test
     fun `a favourite the server restamped is not an update`() = runTest {
         val stored = createSong(id = 7, lastModified = firstImport).copy(favouritedAt = firstImport)
         val resynced = createSong(id = 0, lastModified = firstImport).copy(favouritedAt = Instant.fromEpochSeconds(1_700_000_300))
@@ -225,18 +216,6 @@ class SongDiffTest {
         val update = SongDiff(listOf(stored), listOf(ahead)).apply().updates.single()
         update.playCount shouldBe 8
         update.lastPlayed shouldBe later + 1.days
-    }
-
-    @Test
-    fun `a remote song played at the stored time below a millisecond is not an update - and merges at the stored precision`() = runTest {
-        val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport)
-
-        // Jellyfin and Emby report up to seven fractional digits; the database keeps milliseconds
-        val resynced = createSong(id = 0, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport + 999_900.nanoseconds)
-        SongDiff(listOf(stored), listOf(resynced)).apply().updates shouldBe emptyList()
-
-        val renamed = resynced.copy(name = "Renamed")
-        SongDiff(listOf(stored), listOf(renamed)).apply().updates.single().lastPlayed shouldBe firstImport
     }
 
     @Test
