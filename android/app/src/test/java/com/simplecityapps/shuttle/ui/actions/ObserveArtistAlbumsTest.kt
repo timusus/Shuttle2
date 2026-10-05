@@ -11,6 +11,10 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -20,6 +24,14 @@ class ObserveArtistAlbumsTest {
     private val observeArtistAlbums = TestMediaActions(songRepository = songRepository, albumRepository = albumRepository).observeArtistAlbums
 
     private fun key(name: String) = AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name))
+
+    /** The artist's albums once Appears On has loaded too; it follows the albums, which emit first. */
+    private suspend fun TestScope.settled(key: AlbumArtistGroupKey): ArtistAlbums {
+        var latest: ArtistAlbums? = null
+        observeArtistAlbums(key).onEach { latest = it }.launchIn(backgroundScope)
+        advanceUntilIdle()
+        return latest!!
+    }
 
     /** A library: its songs, each holding the identity the rule gives it, and an album for each album they make. */
     private fun library(vararg songs: Song) {
@@ -43,23 +55,30 @@ class ObserveArtistAlbumsTest {
             createSong(id = 5, album = "Brothers", albumArtist = "The Black Keys", artists = listOf("The Black Keys"), path = "/m/5.mp3"),
         )
 
-        val coldplay = observeArtistAlbums(key("Coldplay")).first()
+        val coldplay = settled(key("Coldplay"))
         coldplay.albums.map { it.name } shouldBe listOf("Viva la Vida")
         coldplay.appearsOn.map { it.name } shouldBe listOf("Now 100")
 
-        val chrisMartin = observeArtistAlbums(key("Chris Martin")).first()
+        val chrisMartin = settled(key("Chris Martin"))
         chrisMartin.albums shouldBe emptyList()
         chrisMartin.appearsOn.map { it.name } shouldBe listOf("Graduation")
 
-        val blackKeys = observeArtistAlbums(key("The Black Keys")).first()
+        val blackKeys = settled(key("The Black Keys"))
         blackKeys.albums.map { it.name } shouldBe listOf("Brothers")
         blackKeys.appearsOn shouldBe emptyList()
+    }
+
+    @Test
+    fun `the albums emit before Appears On has loaded`() = runTest {
+        library(createSong(id = 1, album = "Viva la Vida", albumArtist = "Coldplay", artists = listOf("Coldplay"), path = "/m/1.mp3"))
+
+        observeArtistAlbums(key("Coldplay")).first().albums.map { it.name } shouldBe listOf("Viva la Vida")
     }
 
     @Test
     fun `a song without an album name makes no album to appear on`() = runTest {
         songRepository.setSongs(listOf(createSong(id = 1, album = "", albumArtist = "Kanye West", artists = listOf("Kanye West feat. Chris Martin"))).withAlbumIdentities())
 
-        observeArtistAlbums(key("Chris Martin")).first().appearsOn shouldBe emptyList()
+        settled(key("Chris Martin")).appearsOn shouldBe emptyList()
     }
 }
