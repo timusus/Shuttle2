@@ -490,8 +490,10 @@ Needs a real head unit (or a wired CarPlay dongle) and a signed device build, so
 
 Prep only: the app still targets SDK 36, so the permission is declared but never requested and nothing prompts today. These checks apply once targetSdk is 37; on an Android 17 device before that, confirm LAN sign-in works unchanged.
 
-- [ ] targetSdk 37, Android 17, fresh install: Jellyfin sign-in to a `192.168.x.x` address shows the Nearby devices prompt when tapping Sign in (and Use Quick Connect); allowing it signs in. A public HTTPS address never prompts.
+- [ ] targetSdk 37, Android 17, fresh install: opening the Jellyfin or Emby sign-in shows the Nearby devices prompt (before the "On your network" search; Jellyfin's Quick Connect probe of a LAN address also waits for it). Allowing it shows the suggestions. Tapping Sign in (or Use Quick Connect) on a `192.168.x.x` address signs in without a second prompt. A public HTTPS address, and `localhost`, never prompt; Plex and Subsonic never prompt just for opening.
 - [ ] Deny the prompt: the dialog shows the local-network explanation with Retry; Retry then re-asks (or, after two denials, the message points to system settings).
+- [ ] Plex with the server on the same Wi-Fi, permission not granted: after approving the PIN the Nearby devices prompt appears before the server connects; denying shows the explanation and Retry re-asks.
+- [ ] Rotate the phone while the prompt is showing: the dialog starts over and asks again, with no stale error.
 - [ ] Upgrade with a saved LAN server and the permission not granted: library import, streaming and artwork time out (see #527 comment for the hook points: no prompt exists there yet).
 - [ ] Casting to a Chromecast on Wi-Fi with permission denied: note whether the cast HttpServer (incoming TCP) is blocked.
 

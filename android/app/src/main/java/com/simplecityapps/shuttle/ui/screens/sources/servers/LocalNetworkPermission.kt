@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
-import com.simplecityapps.shuttle.model.MediaProviderType
 
 /**
  * Android 17's local-network permission: at targetSdk 37 any connection to a LAN address needs it at runtime.
@@ -23,28 +22,20 @@ object LocalNetworkPermission {
     fun isGranted(context: Context): Boolean = ContextCompat.checkSelfPermission(context, NAME) == PackageManager.PERMISSION_GRANTED
 
     /**
-     * Whether signing in to [typedAddress] on a [type] server should first ask for the permission. Plex signs in
-     * through plex.tv, so its address isn't dialled at sign-in.
-     */
-    fun shouldRequest(
-        type: MediaProviderType,
-        typedAddress: String,
-        enforced: Boolean,
-        granted: Boolean,
-    ): Boolean = enforced && !granted && type != MediaProviderType.Plex && isLocalAddress(typedAddress)
-
-    /**
-     * Whether the typed server address names a host on the local network: a private, link-local or CGNAT IPv4 or
-     * IPv6 literal, `localhost`, a `.local`/`.lan`/`.home.arpa` name, or a bare name with no dot. A public name that
-     * resolves to a LAN address can't be told apart without a lookup, so it isn't counted.
+     * Whether the typed server address names a host on the local network, so reaching it needs the permission: a
+     * private, link-local or CGNAT IPv4 or IPv6 literal (an IPv4 one may also be `::ffff:`-mapped), a `.local`, `.lan`,
+     * `.home.arpa` or `.internal` name, or a single-label name such as `nas` (resolved by mDNS or the LAN's DNS).
+     * Loopback (`localhost`, 127/8, `::1`) never leaves the device, so it needs nothing. A public name that resolves
+     * to a LAN address can't be told apart without a lookup, so it isn't counted.
      */
     fun isLocalAddress(typedAddress: String): Boolean {
         val authority = serverAddress(typedAddress)?.substringAfter("://")?.substringBefore('/') ?: return false
         val host = (if (authority.startsWith('[')) authority.substringAfter('[').substringBefore(']') else authority.substringBefore(':')).lowercase()
-        if (host.isEmpty()) return false
         if (':' in host) return isLocalIpv6(host)
         ipv4Octets(host)?.let { return isLocalIpv4(it) }
-        return '.' !in host.trimEnd('.') || LOCAL_SUFFIXES.any { host.trimEnd('.').endsWith(it) }
+        val name = host.trimEnd('.')
+        if (name.isEmpty() || name == "localhost") return false
+        return '.' !in name || LOCAL_SUFFIXES.any { name.endsWith(it) }
     }
 
     private val LOCAL_SUFFIXES = listOf(".local", ".lan", ".home.arpa", ".internal")
@@ -57,7 +48,6 @@ object LocalNetworkPermission {
 
     private fun isLocalIpv4(o: List<Int>): Boolean = when {
         o[0] == 10 -> true
-        o[0] == 127 -> true
         o[0] == 172 && o[1] in 16..31 -> true
         o[0] == 192 && o[1] == 168 -> true
         o[0] == 169 && o[1] == 254 -> true
@@ -67,9 +57,18 @@ object LocalNetworkPermission {
 
     private fun isLocalIpv6(host: String): Boolean {
         val h = host.substringBefore('%')
-        if (h == "::1") return true
+        mappedIpv4(h)?.let { return isLocalIpv4(it) }
         val first = h.substringBefore(':').toIntOrNull(16) ?: return false
         // fe80::/10 link-local, fc00::/7 unique local
         return first in 0xfe80..0xfebf || first in 0xfc00..0xfdff
+    }
+
+    /** The IPv4 address inside an IPv4-mapped IPv6 one (`::ffff:192.168.1.5` or `::ffff:c0a8:105`), if it is one. */
+    private fun mappedIpv4(host: String): List<Int>? {
+        val tail = host.removePrefix("::ffff:").takeIf { it != host } ?: return null
+        ipv4Octets(tail)?.let { return it }
+        val groups = tail.split(':').map { it.toIntOrNull(16)?.takeIf { g -> g in 0..0xffff } ?: return null }
+        if (groups.size != 2) return null
+        return listOf(groups[0] shr 8, groups[0] and 0xff, groups[1] shr 8, groups[1] and 0xff)
     }
 }

@@ -21,9 +21,13 @@ class FakeQuickConnectAuthentication : QuickConnectAuthentication {
     var initiatePending: CompletableDeferred<Unit>? = null
     var initiateCallCount = 0
     var pollCount = 0
+    var enabledChecks = 0
     val authenticated = mutableListOf<Pair<String, String>>()
 
-    override suspend fun isEnabled(address: String): Boolean = enabledCheckThrows?.let { throw it } ?: enabled
+    override suspend fun isEnabled(address: String): Boolean {
+        enabledChecks++
+        return enabledCheckThrows?.let { throw it } ?: enabled
+    }
 
     override suspend fun initiate(address: String): Result<QuickConnectCode> {
         initiateCallCount++

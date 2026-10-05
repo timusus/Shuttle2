@@ -3,17 +3,13 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
@@ -48,24 +44,7 @@ fun ServerSignInRoute(
         }
     }
 
-    // A LAN address needs Android 17's local-network permission (once targetSdk is 37); asked for just before connecting
-    val context = LocalContext.current
-    var localNetworkDenied by remember { mutableStateOf(false) }
-    var afterGrant by remember { mutableStateOf<(() -> Unit)?>(null) }
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        val proceed = afterGrant
-        afterGrant = null
-        if (granted) proceed?.invoke() else localNetworkDenied = true
-    }
-    val currentAddress by rememberUpdatedState(uiState.form.address)
-    val withLocalNetworkPermission: (() -> Unit) -> Unit = { connect ->
-        if (LocalNetworkPermission.shouldRequest(type, currentAddress, LocalNetworkPermission.isEnforced(context), LocalNetworkPermission.isGranted(context))) {
-            afterGrant = connect
-            permissionLauncher.launch(LocalNetworkPermission.NAME)
-        } else {
-            connect()
-        }
-    }
+    LocalNetworkPermissionPrompt(uiState.localNetworkRequested, viewModel::onLocalNetworkResult)
 
     val actions = remember(viewModel, uriHandler) {
         ServerSignInActions(
@@ -73,13 +52,10 @@ fun ServerSignInRoute(
             onUsernameChange = viewModel::onUsernameChange,
             onPasswordChange = viewModel::onPasswordChange,
             onRememberPasswordChange = viewModel::onRememberPasswordChange,
-            onAuthenticate = { withLocalNetworkPermission(viewModel::onAuthenticate) },
-            onRetry = {
-                localNetworkDenied = false
-                viewModel.onRetry()
-            },
+            onAuthenticate = viewModel::onAuthenticate,
+            onRetry = viewModel::onRetry,
             onDismiss = { currentOnDismiss() },
-            onUseQuickConnect = { withLocalNetworkPermission(viewModel::onUseQuickConnect) },
+            onUseQuickConnect = viewModel::onUseQuickConnect,
             onCancelQuickConnect = viewModel::onCancelQuickConnect,
             onOpenUrl = openUrl,
             onChooseServer = viewModel::onChooseServer,
@@ -91,10 +67,20 @@ fun ServerSignInRoute(
             onTrustCertificate = viewModel::onTrustCertificate,
         )
     }
-    val shownState = if (localNetworkDenied) {
-        uiState.copy(step = ServerSignInStep.Failed(stringResource(R.string.media_provider_local_network_denied)))
-    } else {
-        uiState
+    ServerSignInDialog(uiState, actions)
+}
+
+/**
+ * Asks for Android 17's local-network permission each time the sign-in holds LAN access for it ([requested] turns
+ * true; enforced from targetSdk 37), and reports the answer through [onResult].
+ */
+@Composable
+internal fun LocalNetworkPermissionPrompt(
+    requested: Boolean,
+    onResult: (Boolean) -> Unit,
+) {
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission(), onResult)
+    LaunchedEffect(requested) {
+        if (requested) launcher.launch(LocalNetworkPermission.NAME)
     }
-    ServerSignInDialog(shownState, actions)
 }

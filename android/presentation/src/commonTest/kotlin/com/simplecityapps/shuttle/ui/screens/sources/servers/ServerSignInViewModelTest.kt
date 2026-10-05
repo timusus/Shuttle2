@@ -1,11 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
+import com.simplecityapps.fakes.FakeLocalNetworkAccess
 import com.simplecityapps.fakes.FakePinAuthentication
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
 import com.simplecityapps.fakes.FakeServerDiscovery
 import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.RecordingAnalytics
+import com.simplecityapps.mediaprovider.server.AccountServer
 import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
@@ -54,6 +56,7 @@ class ServerSignInViewModelTest {
     private val quickConnect = FakeQuickConnectAuthentication()
     private val plex = FakePinAuthentication()
     private val discovery = FakeServerDiscovery()
+    private val localNetwork = FakeLocalNetworkAccess()
     private val analytics = RecordingAnalytics()
     private val songDownloader = FakeSongDownloader()
     private val needsPro = MutableStateFlow(false)
@@ -81,6 +84,7 @@ class ServerSignInViewModelTest {
             ConnectToAccountServer(pins, monetisation, classifyFailure),
             songDownloader,
             discovery,
+            localNetwork,
             ReadServerHeaders(connections),
             PrepareServerConnection(connections),
             TrustServerCertificate(connections),
@@ -695,5 +699,180 @@ class ServerSignInViewModelTest {
 
         viewModel.onAddressChange("http://192.168.1.10:8096/")
         viewModel.uiState.value.addressSuggestions shouldBe listOf(nas)
+    }
+
+    private fun ServerSignInViewModel.answerLocalNetwork(granted: Boolean) {
+        localNetwork.granted = granted
+        onLocalNetworkResult(granted)
+    }
+
+    @Test
+    fun `with the permission needed - discovery waits for it and runs once it's granted`() = runTest {
+        localNetwork.enforced = true
+        discovery.servers = listOf(DiscoveredServer("NAS", "http://192.168.1.11:8096"))
+
+        val viewModel = viewModel(MediaProviderType.Jellyfin, address = null)
+
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        discovery.searched shouldBe emptyList()
+
+        viewModel.answerLocalNetwork(granted = true)
+
+        viewModel.uiState.value.localNetworkRequested shouldBe false
+        discovery.searched shouldBe listOf(MediaProviderType.Jellyfin)
+    }
+
+    @Test
+    fun `refusing the permission leaves discovery off`() = runTest {
+        localNetwork.enforced = true
+        val viewModel = viewModel(MediaProviderType.Emby, address = null)
+
+        viewModel.answerLocalNetwork(granted = false)
+
+        discovery.searched shouldBe emptyList()
+        viewModel.uiState.value.localNetworkRequested shouldBe false
+    }
+
+    @Test
+    fun `Plex and Subsonic never ask to search the network`() = runTest {
+        localNetwork.enforced = true
+
+        viewModel(MediaProviderType.Plex, address = null).uiState.value.localNetworkRequested shouldBe false
+        viewModel(MediaProviderType.Subsonic, address = null).uiState.value.localNetworkRequested shouldBe false
+    }
+
+    @Test
+    fun `the Quick Connect probe of a LAN address waits for the permission`() = runTest {
+        localNetwork.enforced = true
+        quickConnect.enabled = true
+        val viewModel = viewModel(address = "http://192.168.1.10:8096")
+        viewModel.answerLocalNetwork(granted = true) // the search for servers asked first
+
+        advanceTimeBy(501)
+        runCurrent()
+        viewModel.uiState.value.quickConnectEnabled shouldBe true
+    }
+
+    @Test
+    fun `the Quick Connect probe is held while the permission is unanswered and dropped when it is refused`() = runTest {
+        localNetwork.enforced = true
+        quickConnect.enabled = true
+        val viewModel = viewModel(address = "http://192.168.1.10:8096")
+
+        advanceTimeBy(501)
+        runCurrent()
+        viewModel.uiState.value.quickConnectEnabled shouldBe false
+        quickConnect.enabledChecks shouldBe 0
+
+        viewModel.answerLocalNetwork(granted = false)
+        advanceTimeBy(501)
+        runCurrent()
+        viewModel.uiState.value.quickConnectEnabled shouldBe false
+        quickConnect.enabledChecks shouldBe 0
+    }
+
+    @Test
+    fun `a public address needs no permission`() = runTest {
+        localNetwork.enforced = true
+        quickConnect.enabled = true
+        val viewModel = viewModel(MediaProviderType.Subsonic, address = "https://music.example.com")
+
+        viewModel.uiState.value.localNetworkRequested shouldBe false
+        viewModel.onUsernameChange("tim")
+        viewModel.onPasswordChange("pw")
+        viewModel.onAuthenticate()
+        runCurrent()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+    }
+
+    @Test
+    fun `signing in to a LAN address waits for the permission - refusal shows the explanation and Retry asks again`() = runTest {
+        localNetwork.enforced = true
+        val viewModel = viewModel(MediaProviderType.Subsonic, address = "http://192.168.1.10:4533")
+        viewModel.onUsernameChange("tim")
+        viewModel.onPasswordChange("pw")
+
+        viewModel.onAuthenticate()
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        server.authenticated shouldBe emptyList()
+
+        viewModel.answerLocalNetwork(granted = false)
+        runCurrent()
+        (viewModel.uiState.value.step as ServerSignInStep.Failed).message.contains("local network") shouldBe true
+        server.authenticated shouldBe emptyList()
+
+        viewModel.onRetry()
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+
+        viewModel.answerLocalNetwork(granted = true)
+        runCurrent()
+        server.authenticated.map { it.username } shouldBe listOf("tim")
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+    }
+
+    @Test
+    fun `Quick Connect to a LAN address waits for the permission and Retry asks again`() = runTest {
+        localNetwork.enforced = true
+        quickConnect.pollState = QuickConnectPollState.Authenticated
+        val viewModel = viewModel(address = "http://192.168.1.10:8096")
+        viewModel.onLocalNetworkResult(granted = true) // the search for servers asked first
+
+        viewModel.onUseQuickConnect()
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        quickConnect.initiateCallCount shouldBe 0
+
+        viewModel.answerLocalNetwork(granted = false)
+        runCurrent()
+        (viewModel.uiState.value.step as ServerSignInStep.Failed).message.contains("local network") shouldBe true
+
+        viewModel.onRetry()
+        runCurrent()
+        viewModel.answerLocalNetwork(granted = true)
+        runCurrent()
+        quickConnect.initiateCallCount shouldBe 1
+    }
+
+    @Test
+    fun `Plex asks before probing a LAN connection and Retry asks again`() = runTest {
+        localNetwork.enforced = true
+        plex.servers = listOf(
+            AccountServer("home", "Home", owned = true, accessToken = "t", connections = listOf(com.simplecityapps.mediaprovider.server.ServerConnection("http://192.168.1.5:32400"))),
+        )
+        val viewModel = viewModel(MediaProviderType.Plex)
+
+        viewModel.onAuthenticate()
+        advanceTimeBy(2_001)
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        plex.connected shouldBe emptyList()
+
+        viewModel.answerLocalNetwork(granted = false)
+        runCurrent()
+        (viewModel.uiState.value.step as ServerSignInStep.Failed).message.contains("local network") shouldBe true
+
+        viewModel.onRetry()
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+
+        viewModel.answerLocalNetwork(granted = true)
+        runCurrent()
+        plex.connected.map { it.id } shouldBe listOf("home")
+    }
+
+    @Test
+    fun `Plex with only remote connections never asks`() = runTest {
+        localNetwork.enforced = true
+        val viewModel = viewModel(MediaProviderType.Plex)
+
+        viewModel.onAuthenticate()
+        advanceTimeBy(2_001)
+        runCurrent()
+
+        viewModel.uiState.value.localNetworkRequested shouldBe false
+        plex.connected.map { it.id } shouldBe listOf("home")
     }
 }
