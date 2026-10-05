@@ -3,26 +3,77 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Support · Shuttle Music</title>
-  <meta name="description" content="Getting started with Shuttle Music on your device, Jellyfin, Emby, Plex and Navidrome, restoring purchases, and how to get in touch.">
+  <title>Shuttle Music support: servers, playback and Pro</title>
+  <meta name="description" content="Set up Shuttle Music with your phone's music, Jellyfin, Emby, Plex or Navidrome, fix connection problems, and restore Pro on Android and iPhone.">
   <link rel="canonical" href="https://shuttlemusicplayer.com/support">
-  <meta name="theme-color" content="#0493e0">
+  <meta name="theme-color" content="#f7f9fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Shuttle Music">
+  <meta property="og:title" content="Shuttle Music support">
+  <meta property="og:description" content="Getting started with your phone's music, Jellyfin, Emby, Plex and Navidrome, purchases, and how to get in touch.">
+  <meta property="og:url" content="https://shuttlemusicplayer.com/support">
+  <meta property="og:image" content="https://shuttlemusicplayer.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/site.css">
+  <script src="/site.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Shuttle Music", "item": "https://shuttlemusicplayer.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Support", "item": "https://shuttlemusicplayer.com/support" }
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Which servers does Shuttle Music work with?", "acceptedAnswer": { "@type": "Answer", "text": "Jellyfin, Emby, Plex, and Navidrome and other Subsonic-compatible servers such as gonic and Airsonic, on both Android and iPhone." } },
+      { "@type": "Question", "name": "Can I use my phone's music and a server together?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Add each place your music lives in Settings > Sources, and they play side by side." } },
+      { "@type": "Question", "name": "Where does my server login go?", "acceptedAnswer": { "@type": "Answer", "text": "It stays on your device and is only ever sent to your server. There's no account with us, and Plex sign-in goes through your plex.tv account." } },
+      { "@type": "Question", "name": "Can I choose the streaming quality?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Stream the original file, or cap it at 320, 192 or 128 kbps, with separate settings for Wi-Fi and mobile data." } },
+      { "@type": "Question", "name": "Does Shuttle Music come with music?", "acceptedAnswer": { "@type": "Answer", "text": "No. It plays your own audio files, or music from a Jellyfin, Emby, Plex or Navidrome server that you run or have access to. It isn't a streaming service." } },
+      { "@type": "Question", "name": "Which audio formats play?", "acceptedAnswer": { "@type": "Answer", "text": "On Android: FLAC, MP3, AAC and M4A, Ogg Vorbis, Opus and WAV. On iPhone and iPad: all of those, plus ALAC and AIFF." } },
+      { "@type": "Question", "name": "Is playback gapless?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, on both Android and iPhone, so albums that run from one track into the next play without a break." } },
+      { "@type": "Question", "name": "Can I listen offline?", "acceptedAnswer": { "@type": "Answer", "text": "Music stored on your device always plays offline. With Pro, you can also download albums from your server to play without a connection, on Android and on iPhone." } },
+      { "@type": "Question", "name": "Does it work in the car?", "acceptedAnswer": { "@type": "Answer", "text": "Yes: Android Auto on Android, and CarPlay on iPhone." } },
+      { "@type": "Question", "name": "What's free, and what needs Pro?", "acceptedAnswer": { "@type": "Answer", "text": "Playing the music stored on your device is free. Streaming and downloading from Jellyfin, Emby, Plex or Navidrome is part of Shuttle Music Pro." } },
+      { "@type": "Question", "name": "How does the free trial work?", "acceptedAnswer": { "@type": "Answer", "text": "The first time you play a song from your server, the app offers a free trial: 14 days on Android, 7 days on iPhone and iPad. After that, Pro is a one-time purchase, and Android also offers a yearly plan. If the trial ends without a purchase, server songs stop playing, while music on your device and songs you've already downloaded keep playing." } },
+      { "@type": "Question", "name": "How do I restore a purchase?", "acceptedAnswer": { "@type": "Answer", "text": "On Android, sign in to Google Play with the account you bought Pro with, then tap Restore purchases on the Shuttle Music Pro screen in Settings. On iPhone and iPad, use the same Apple Account and tap Restore purchases on the Pro screen or in Settings." } },
+      { "@type": "Question", "name": "Does a purchase carry over between Android and iPhone?", "acceptedAnswer": { "@type": "Answer", "text": "No. Google Play and the App Store keep purchases separate, so Pro bought on one doesn't unlock the other." } },
+      { "@type": "Question", "name": "How do I get a refund or cancel the yearly plan?", "acceptedAnswer": { "@type": "Answer", "text": "Google Play and the App Store handle payment, so refunds and cancellations go through them: in the Play Store under Payments & subscriptions, and for the App Store at reportaproblem.apple.com." } },
+      { "@type": "Question", "name": "My server won't connect. What should I check?", "acceptedAnswer": { "@type": "Answer", "text": "Make sure your phone can reach the server: try the same address in your phone's browser. Include the port (8096 for Jellyfin and Emby, 4533 for Navidrome, by default) and http:// or https:// as your server uses. Plain http:// addresses on your home network are fine." } },
+      { "@type": "Question", "name": "Some songs on my phone are missing. Why?", "acceptedAnswer": { "@type": "Answer", "text": "On Android, check that Shuttle Music has access to your music and, if you picked folders, that the songs are inside them. On iPhone and iPad, songs have to be in Shuttle Music's folder in the Files app, or in a folder you picked." } },
+      { "@type": "Question", "name": "Is this the original Shuttle Music Player?", "acceptedAnswer": { "@type": "Answer", "text": "Shuttle Music is a separate app from the original Shuttle Music Player, with its own Google Play listing." } }
+    ]
+  }
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="/"><img src="/assets/icon-512.png" alt="" width="32" height="32">Shuttle Music</a>
+      <a class="brand" href="/"><img src="/assets/icon-56.png" alt="" width="28" height="28">Shuttle Music</a>
       <nav class="site-nav" aria-label="Main">
         <a class="wide" href="/#features">Features</a>
+        <a class="wide" href="/#servers">Servers</a>
         <a class="wide" href="/#pro">Pro</a>
         <a href="/support" aria-current="page">Support</a>
-        <a href="/privacy">Privacy</a>
+        <button class="theme-toggle" type="button" aria-label="Switch theme" hidden>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -30,34 +81,33 @@
   <main id="main">
     <div class="page-head">
       <div class="wrap narrow">
-        <h1>Support</h1>
-        <p>Getting started, purchases, and how to reach us.</p>
+        <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Shuttle Music</a> › Support</nav>
+        <h1>Need a hand?</h1>
+        <p>Getting set up, your purchases, and how to reach us.</p>
       </div>
     </div>
 
     <div class="prose">
       <div class="wrap narrow">
         <nav class="toc" aria-label="On this page">
+          <strong>On this page</strong>
           <ul>
-            <li><a href="#device">Music on your device</a></li>
-            <li><a href="#jellyfin">Jellyfin</a></li>
-            <li><a href="#emby">Emby</a></li>
-            <li><a href="#plex">Plex</a></li>
-            <li><a href="#navidrome">Navidrome and Subsonic</a></li>
+            <li><a href="#getting-started">Getting started</a></li>
+            <li><a href="#servers">Servers</a></li>
+            <li><a href="#playback">Playback</a></li>
             <li><a href="#purchases">Pro and purchases</a></li>
-            <li><a href="#faq">Questions</a></li>
+            <li><a href="#troubleshooting">Troubleshooting</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
         </nav>
 
         <h2 id="getting-started">Getting started</h2>
-        <p>The first time you open Shuttle Music it asks where your music is. You can add more places later in <strong>Settings &gt; Sources</strong>, and use your device and one or more servers side by side.</p>
+        <p>The first time you open Shuttle Music it asks where your music is. You can add more places later in <strong>Settings &gt; Sources</strong>, and use your phone and one or more servers side by side.</p>
 
         <h3 id="device">Music on your device (free)</h3>
         <ul>
           <li><strong>Android:</strong> allow access to your music when asked, and Shuttle Music finds the songs on your phone. You can also pick the folders it reads.</li>
           <li><strong>iPhone and iPad:</strong> choose <em>Use this device</em>, then add songs to Shuttle Music's folder with the Files app or with Finder on a Mac, or pick a folder you already have.</li>
-          <li>FLAC, MP3, M4A, AAC, Ogg, Opus, WAV and AIFF all play.</li>
         </ul>
 
         <h3 id="jellyfin">Jellyfin</h3>
@@ -76,51 +126,89 @@
           <li>Sign in with your plex.tv account, then choose your server and music library.</li>
         </ul>
 
-        <h3 id="navidrome">Navidrome and other Subsonic servers (Android)</h3>
+        <h3 id="navidrome">Navidrome and other Subsonic servers</h3>
         <ul>
           <li>Enter your server's address, for example <code>http://my.server.com:4533</code>, and your username and password. OpenSubsonic servers can sign in with an API key instead.</li>
         </ul>
 
-        <h3>If your server won't connect</h3>
-        <ul>
-          <li>Your phone has to reach the server: on the same Wi-Fi as a home server, or over the internet if you've made it available there. Try the same address in your phone's browser.</li>
-          <li>Include the port (<code>:8096</code> for Jellyfin and Emby by default, <code>:4533</code> for Navidrome) and <code>http://</code> or <code>https://</code> as your server uses.</li>
-          <li>Plain <code>http://</code> addresses on your home network are fine.</li>
-        </ul>
+        <h2 id="servers">Servers</h2>
+        <details>
+          <summary>Which servers does Shuttle Music work with?</summary>
+          <p>Jellyfin, Emby, Plex, and Navidrome and other Subsonic-compatible servers such as gonic and Airsonic, on both Android and iPhone.</p>
+        </details>
+        <details>
+          <summary>Can I use my phone's music and a server together?</summary>
+          <p>Yes. Add each place your music lives in <strong>Settings &gt; Sources</strong>, and they play side by side.</p>
+        </details>
+        <details>
+          <summary>Where does my server login go?</summary>
+          <p>It stays on your device and is only ever sent to your server. There's no account with us, and Plex sign-in goes through your plex.tv account. The <a href="/privacy">privacy policy</a> has the details.</p>
+        </details>
+        <details>
+          <summary>Can I choose the streaming quality?</summary>
+          <p>Yes. Stream the original file, or cap it at 320, 192 or 128 kbps, with separate settings for Wi-Fi and mobile data.</p>
+        </details>
 
-        <h2 id="purchases">Pro and purchases</h2>
-        <p>Playing music stored on your device is free. Streaming from Jellyfin, Emby, Plex or Navidrome is part of <strong>Shuttle Music Pro</strong>. The first time you play a song from your server, the app offers a free trial: 14 days on Android, 7 days on iPhone and iPad. After that, Pro is a single lifetime purchase; Android also offers a yearly plan. When a trial ends without a purchase, server songs stop playing, while music on your device and songs you've already downloaded keep playing.</p>
-
-        <h3>Restoring a purchase</h3>
-        <ul>
-          <li><strong>Android:</strong> sign in to Google Play with the account you bought Pro with, then tap <strong>Restore purchases</strong> on the Shuttle Music Pro screen (in Settings).</li>
-          <li><strong>iPhone and iPad:</strong> use the same Apple Account, then tap <strong>Restore purchases</strong> on the Pro screen or in Settings. The lifetime purchase works with Family Sharing.</li>
-          <li>A purchase on Google Play doesn't carry over to the App Store, or the other way round: the stores keep them separate.</li>
-        </ul>
-
-        <h3>Refunds and subscriptions</h3>
-        <p>Google Play and the App Store handle payment, so refunds and yearly-plan cancellations go through them: in the Play Store, <em>Payments &amp; subscriptions</em>; on iPhone, <a href="https://reportaproblem.apple.com/">reportaproblem.apple.com</a>.</p>
-
-        <h2 id="faq">Questions</h2>
+        <h2 id="playback">Playback</h2>
         <details>
           <summary>Does Shuttle Music come with music?</summary>
           <p>No. It plays your own audio files, or music from a Jellyfin, Emby, Plex or Navidrome server that you run or have access to. It isn't a streaming service.</p>
         </details>
         <details>
-          <summary>Do I need an account?</summary>
-          <p>Not with us. You sign in to your own server, and Plex uses your plex.tv account. Your login stays on your device.</p>
+          <summary>Which audio formats play?</summary>
+          <p>On Android: FLAC, MP3, AAC and M4A, Ogg Vorbis, Opus and WAV. On iPhone and iPad: all of those, plus ALAC and AIFF.</p>
         </details>
         <details>
-          <summary>Does the app collect data?</summary>
-          <p>Only anonymous crash reports and usage statistics, which aren't linked to you, and you can turn each off in Settings &gt; Privacy. The <a href="/privacy">privacy policy</a> has the details.</p>
+          <summary>Is playback gapless?</summary>
+          <p>Yes, on both Android and iPhone, so albums that run from one track into the next play without a break.</p>
+        </details>
+        <details>
+          <summary>Can I listen offline?</summary>
+          <p>Music stored on your device always plays offline. With Pro, you can also download albums from your server to play without a connection, on Android and on iPhone.</p>
+        </details>
+        <details>
+          <summary>Does it work in the car?</summary>
+          <p>Yes: Android Auto on Android, and CarPlay on iPhone.</p>
+        </details>
+
+        <h2 id="purchases">Pro and purchases</h2>
+        <details>
+          <summary>What's free, and what needs Pro?</summary>
+          <p>Playing the music stored on your device is free. Streaming and downloading from Jellyfin, Emby, Plex or Navidrome is part of <strong>Shuttle Music Pro</strong>.</p>
+        </details>
+        <details>
+          <summary>How does the free trial work?</summary>
+          <p>The first time you play a song from your server, the app offers a free trial: 14 days on Android, 7 days on iPhone and iPad. After that, Pro is a one-time purchase, and Android also offers a yearly plan. If the trial ends without a purchase, server songs stop playing, while music on your device and songs you've already downloaded keep playing.</p>
+        </details>
+        <details>
+          <summary>How do I restore a purchase?</summary>
+          <p><strong>Android:</strong> sign in to Google Play with the account you bought Pro with, then tap <strong>Restore purchases</strong> on the Shuttle Music Pro screen (in Settings). <strong>iPhone and iPad:</strong> use the same Apple Account, then tap <strong>Restore purchases</strong> on the Pro screen or in Settings.</p>
+        </details>
+        <details>
+          <summary>Does a purchase carry over between Android and iPhone?</summary>
+          <p>No. Google Play and the App Store keep purchases separate, so Pro bought on one doesn't unlock the other.</p>
+        </details>
+        <details>
+          <summary>How do I get a refund or cancel the yearly plan?</summary>
+          <p>Google Play and the App Store handle payment, so refunds and cancellations go through them: in the Play Store, <em>Payments &amp; subscriptions</em>; for the App Store, <a href="https://reportaproblem.apple.com/">reportaproblem.apple.com</a>.</p>
+        </details>
+
+        <h2 id="troubleshooting">Troubleshooting</h2>
+        <details>
+          <summary>My server won't connect. What should I check?</summary>
+          <ul>
+            <li>Your phone has to reach the server: on the same Wi-Fi as a home server, or over the internet if you've made it available there. Try the same address in your phone's browser.</li>
+            <li>Include the port (<code>:8096</code> for Jellyfin and Emby by default, <code>:4533</code> for Navidrome) and <code>http://</code> or <code>https://</code> as your server uses.</li>
+            <li>Plain <code>http://</code> addresses on your home network are fine.</li>
+          </ul>
+        </details>
+        <details>
+          <summary>Some songs on my phone are missing. Why?</summary>
+          <p>On Android, check that Shuttle Music has access to your music and, if you picked folders, that the songs are inside them. On iPhone and iPad, songs have to be in Shuttle Music's folder in the Files app, or in a folder you picked.</p>
         </details>
         <details>
           <summary>Is this the original Shuttle Music Player?</summary>
           <p>Shuttle Music is a separate app from the original Shuttle Music Player, with its own Google Play listing.</p>
-        </details>
-        <details>
-          <summary>Can I listen offline?</summary>
-          <p>Music stored on your device always plays offline. On Android you can also download songs from your server to play without a connection.</p>
         </details>
 
         <h2 id="contact">Contact</h2>
@@ -131,12 +219,14 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <span>&copy; 2026 Simplecity Apps Pty Ltd</span>
+      <a class="brand" href="/"><img src="/assets/icon-56.png" alt="" width="28" height="28" loading="lazy">Shuttle Music</a>
       <nav aria-label="Footer">
-        <a href="/support">Support</a>
         <a href="/privacy">Privacy</a>
+        <a href="/support">Support</a>
+        <a href="https://shuttlepodcasts.app">Shuttle Podcasts</a>
         <a href="mailto:support@simplecityapps.com">support@simplecityapps.com</a>
       </nav>
+      <p class="legal">Made by Simplecity Apps. &copy; 2026 Simplecity Apps Pty Ltd.</p>
     </div>
   </footer>
 </body>

@@ -3,31 +3,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Shuttle Music: a music player for your files and your own server</title>
-  <meta name="description" content="Shuttle Music plays the music on your phone and streams from your own Jellyfin, Emby, Plex or Navidrome server. For Android and iPhone. No ads, no account with us.">
+  <title>Shuttle Music: Jellyfin, Emby, Plex &amp; FLAC music player</title>
+  <meta name="description" content="Play FLAC and MP3 on your phone and stream your own Jellyfin, Emby, Plex or Navidrome library. A music player for Android and iPhone, with no ads.">
   <link rel="canonical" href="https://shuttlemusicplayer.com/">
-  <meta name="theme-color" content="#0493e0">
+  <meta name="theme-color" content="#f7f9fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0d10" media="(prefers-color-scheme: dark)">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Shuttle Music">
-  <meta property="og:description" content="Your music, on your device or your own Jellyfin, Emby, Plex or Navidrome server. For Android and iPhone.">
+  <meta property="og:site_name" content="Shuttle Music">
+  <meta property="og:title" content="Shuttle Music: your music, your server, your rules">
+  <meta property="og:description" content="A music player for Android and iPhone that plays the files on your phone and streams your own Jellyfin, Emby, Plex or Navidrome library.">
   <meta property="og:url" content="https://shuttlemusicplayer.com/">
-  <meta property="og:image" content="https://shuttlemusicplayer.com/assets/icon-512.png">
+  <meta property="og:image" content="https://shuttlemusicplayer.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Shuttle Music's Now Playing and album screens, beside the line: Your music. Your server. Your rules.">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/site.css">
+  <script src="/site.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://shuttlemusicplayer.com/#org",
+        "name": "Simplecity Apps",
+        "legalName": "Simplecity Apps Pty Ltd",
+        "url": "https://shuttlemusicplayer.com/",
+        "logo": "https://shuttlemusicplayer.com/assets/icon-512.png",
+        "email": "support@simplecityapps.com"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://shuttlemusicplayer.com/#website",
+        "url": "https://shuttlemusicplayer.com/",
+        "name": "Shuttle Music",
+        "publisher": { "@id": "https://shuttlemusicplayer.com/#org" }
+      },
+      {
+        "@type": "MobileApplication",
+        "@id": "https://shuttlemusicplayer.com/#android",
+        "name": "Shuttle Music",
+        "operatingSystem": "Android",
+        "applicationCategory": "MultimediaApplication",
+        "description": "A music player for the files on your phone and your own Jellyfin, Emby, Plex or Navidrome server.",
+        "url": "https://shuttlemusicplayer.com/",
+        "image": "https://shuttlemusicplayer.com/assets/icon-512.png",
+        "downloadUrl": "https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle",
+        "installUrl": "https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "publisher": { "@id": "https://shuttlemusicplayer.com/#org" }
+      }
+    ]
+  }
+  </script>
+  <script type="application/ld+json" id="ld-ios">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "@id": "https://shuttlemusicplayer.com/#ios",
+    "name": "Shuttle Music",
+    "operatingSystem": "iOS",
+    "applicationCategory": "MultimediaApplication",
+    "description": "A music player for iPhone and iPad that plays your own files and streams your Jellyfin, Emby, Plex or Navidrome server.",
+    "url": "https://shuttlemusicplayer.com/",
+    "image": "https://shuttlemusicplayer.com/assets/icon-512.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@id": "https://shuttlemusicplayer.com/#org" }
+  }
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4-4-7.4-9-7.4z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></symbol>
+      <symbol id="i-wave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11v2M7 8v8M11 4v16M15 8v8M19 10v4"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></symbol>
+      <symbol id="i-widget" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/></symbol>
+      <symbol id="i-queue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h12M4 12h12M4 18h8M18 15v6M15 18h6"/></symbol>
+      <symbol id="i-gapless" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9a3 3 0 1 0 0 6c3 0 8-6 11-6a3 3 0 1 1 0 6c-3 0-8-6-11-6z"/></symbol>
+      <symbol id="i-resume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></symbol>
+      <symbol id="i-sliders" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 21v-7M5 10V3M12 21v-9M12 8V3M19 21v-5M19 12V3M2 14h6M9 8h6M16 16h6"/></symbol>
+      <symbol id="i-gain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+      <symbol id="i-fade" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18 21 6M3 6l18 12"/></symbol>
+      <symbol id="i-server" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+      <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 14l4-4M3.3 19a10 10 0 1 1 17.4 0"/></symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3l-5.5 2.9 1-6.2L3 9.6l6.2-.9z"/></symbol>
+    </defs>
+  </svg>
+
   <header class="site-header">
     <div class="wrap">
-      <a class="brand" href="/"><img src="/assets/icon-512.png" alt="" width="32" height="32">Shuttle Music</a>
+      <a class="brand" href="/"><img src="/assets/icon-56.png" alt="" width="28" height="28">Shuttle Music</a>
       <nav class="site-nav" aria-label="Main">
         <a class="wide" href="#features">Features</a>
+        <a class="wide" href="#servers">Servers</a>
         <a class="wide" href="#pro">Pro</a>
         <a href="/support">Support</a>
-        <a href="/privacy">Privacy</a>
+        <button class="theme-toggle" type="button" aria-label="Switch theme" hidden>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -36,162 +120,243 @@
     <div class="hero">
       <div class="wrap">
         <div class="hero-copy">
-          <h1>Your music, on your phone or your own server.</h1>
-          <p class="lede">Shuttle Music plays the files on your device and streams from your own Jellyfin, Emby, Plex or Navidrome server. No ads, and no account with us.</p>
+          <span class="eyebrow">For Android and iPhone</span>
+          <h1>Your music. Your server. Your rules.</h1>
+          <p class="lede">A music player for the FLAC, MP3 and more on your phone, and for your own Jellyfin, Emby, Plex or Navidrome library. No ads, and no account with us.</p>
           <div class="badges">
             <a href="https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle" rel="noopener">
-              <img src="/assets/google-play-badge.png" alt="Get it on Google Play" width="182" height="54">
+              <img src="/assets/google-play-badge.png" alt="Get it on Google Play" width="161" height="48">
             </a>
-            <a href="https://apps.apple.com/app/id6818057709" rel="noopener">
-              <img src="/assets/app-store-badge.svg" alt="Download on the App Store" width="162" height="54">
-            </a>
+            <span class="store-soon" data-app-store>
+              <img src="/assets/app-store-badge.svg" alt="" width="144" height="48">
+              <span class="small">Coming soon to the App Store</span>
+            </span>
           </div>
-          <p class="fineprint">Free to download. Playing music on your device is always free; streaming from your server is part of Shuttle Music Pro, with a free trial.</p>
+          <p class="small">Free to download · Pro adds streaming from your server, with a free trial first</p>
         </div>
-        <div class="hero-shot" aria-hidden="true">
-          <img src="/assets/screens/iphone-2.jpg" alt="" width="640" height="1385">
-          <img src="/assets/screens/iphone-4.jpg" alt="" width="640" height="1385">
+        <div class="hero-shots">
+          <picture class="shot back">
+            <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/hero-ios-dark-320.avif 320w, /assets/shots/hero-ios-dark-480.avif 480w, /assets/shots/hero-ios-dark-720.avif 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/hero-ios-dark-320.webp 320w, /assets/shots/hero-ios-dark-480.webp 480w, /assets/shots/hero-ios-dark-720.webp 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <source type="image/avif" srcset="/assets/shots/hero-ios-light-320.avif 320w, /assets/shots/hero-ios-light-480.avif 480w, /assets/shots/hero-ios-light-720.avif 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <source type="image/webp" srcset="/assets/shots/hero-ios-light-320.webp 320w, /assets/shots/hero-ios-light-480.webp 480w, /assets/shots/hero-ios-light-720.webp 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <img src="/assets/shots/hero-ios-light-480.png" alt="Shuttle Music on iPhone: the Albums tab, a grid of album covers" width="480" height="1044" decoding="async">
+          </picture>
+          <picture class="shot front">
+            <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/hero-android-dark-320.avif 320w, /assets/shots/hero-android-dark-480.avif 480w, /assets/shots/hero-android-dark-720.avif 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/hero-android-dark-320.webp 320w, /assets/shots/hero-android-dark-480.webp 480w, /assets/shots/hero-android-dark-720.webp 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <source type="image/avif" srcset="/assets/shots/hero-android-light-320.avif 320w, /assets/shots/hero-android-light-480.avif 480w, /assets/shots/hero-android-light-720.avif 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <source type="image/webp" srcset="/assets/shots/hero-android-light-320.webp 320w, /assets/shots/hero-android-light-480.webp 480w, /assets/shots/hero-android-light-720.webp 720w" sizes="(min-width: 1024px) 323px, min(56vw, 261px)">
+            <img src="/assets/shots/hero-android-light-480.png" alt="Shuttle Music on Android: Now Playing, tinted pink to match the album cover" width="480" height="1041" fetchpriority="high" decoding="async">
+          </picture>
         </div>
       </div>
     </div>
 
-    <section id="sources">
+    <section id="servers" class="alt">
       <div class="wrap">
         <div class="section-head">
-          <span class="eyebrow">Where your music lives</span>
-          <h2>One player for all of it.</h2>
-          <p>Shuttle Music doesn't sell or stream music of its own. It plays your library: the files you keep on your device, and the media server you run at home or in the cloud.</p>
+          <span class="eyebrow">Connects to the library you already have</span>
+          <h2>One player to rule them all.</h2>
+          <p>Shuttle Music doesn't sell music or stream a catalogue of its own. It plays yours: the files on your phone and the media server you run at home or in the cloud, side by side.</p>
         </div>
         <div class="sources">
-          <div class="source"><strong>On your device</strong><span>FLAC, MP3, AAC, Ogg, Opus and more. Free, no server needed.</span></div>
-          <div class="source"><strong>Jellyfin</strong><span>Server address and login, or Quick Connect.</span></div>
-          <div class="source"><strong>Emby</strong><span>Server address and login.</span></div>
-          <div class="source"><strong>Plex</strong><span>Sign in with your plex.tv account.</span></div>
-          <div class="source"><strong>Navidrome</strong><span>And other Subsonic servers, on Android.</span></div>
+          <div class="source"><h3>Your phone</h3><p>FLAC, MP3, AAC, Ogg, Opus and WAV, plus ALAC and AIFF on iPhone. Free, no server needed.</p></div>
+          <div class="source"><h3>Jellyfin</h3><p>Your server address and login, or Quick Connect.</p></div>
+          <div class="source"><h3>Emby</h3><p>Your server address and Emby login.</p></div>
+          <div class="source"><h3>Plex</h3><p>Sign in with plex.tv, then pick your server and library.</p></div>
+          <div class="source"><h3>Navidrome</h3><p>And other Subsonic servers, with a password or an API key.</p></div>
         </div>
       </div>
     </section>
 
-    <section id="features" class="soft">
+    <section id="features">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Features</span>
-          <h2>Built for people who care about their library.</h2>
-        </div>
-        <div class="grid">
-          <div class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></div>
-            <h3>Gapless playback</h3>
-            <p>Albums play the way they were made, with no gap between tracks, including FLAC.</p>
+        <div class="feature">
+          <div class="feature-copy">
+            <span class="eyebrow">Now Playing</span>
+            <h2>Dressed by the album art.</h2>
+            <p>The player takes its colours from the cover, in light or dark, so every album looks like itself.</p>
+            <ul class="ticks">
+              <li><svg aria-hidden="true"><use href="#i-wave"/></svg>The format and quality of what's playing, at a glance</li>
+              <li><svg aria-hidden="true"><use href="#i-moon"/></svg>Sleep timer and playback speed, a tap away</li>
+              <li><svg aria-hidden="true"><use href="#i-widget"/></svg>Home-screen widgets and lock-screen controls</li>
+            </ul>
           </div>
-          <div class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><circle cx="6" cy="14" r="2" fill="currentColor"/><circle cx="12" cy="8" r="2" fill="currentColor"/><circle cx="18" cy="16" r="2" fill="currentColor"/></svg></div>
-            <h3>Equalizer and ReplayGain</h3>
-            <p>Shape the sound with the equalizer, and keep a steady volume from song to song.</p>
-          </div>
-          <div class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></div>
-            <h3>Browse and search</h3>
-            <p>Albums, artists, genres, playlists and songs, with artwork and fast scrolling through big libraries.</p>
-          </div>
-          <div class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m16 15 3 3-3 3"/></svg></div>
-            <h3>A queue you control</h3>
-            <p>Play next, reorder, shuffle and repeat. The queue is yours.</p>
-          </div>
-          <div class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 15V9M11 15v-4M15 15v-6"/></svg></div>
-            <h3>Know what you're hearing</h3>
-            <p>Now Playing shows the format and audio quality of the song that's playing.</p>
-          </div>
-          <div class="card">
-            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></div>
-            <h3>Light and dark</h3>
-            <p>Follows your system appearance, day and night.</p>
-          </div>
+          <picture class="shot">
+            <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/now-playing-dark-320.avif 320w, /assets/shots/now-playing-dark-480.avif 480w, /assets/shots/now-playing-dark-720.avif 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/now-playing-dark-320.webp 320w, /assets/shots/now-playing-dark-480.webp 480w, /assets/shots/now-playing-dark-720.webp 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/avif" srcset="/assets/shots/now-playing-light-320.avif 320w, /assets/shots/now-playing-light-480.avif 480w, /assets/shots/now-playing-light-720.avif 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/webp" srcset="/assets/shots/now-playing-light-320.webp 320w, /assets/shots/now-playing-light-480.webp 480w, /assets/shots/now-playing-light-720.webp 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <img src="/assets/shots/now-playing-light-480.png" alt="Now Playing on iPhone in warm orange taken from the album cover, with the song's format and bitrate under the title" width="480" height="1044" loading="lazy" decoding="async">
+          </picture>
         </div>
 
+        <div class="feature flip">
+          <div class="feature-copy">
+            <span class="eyebrow">Queue</span>
+            <h2>The queue does what you tell it.</h2>
+            <p>Line up what's next, change your mind, and pick up where you left off.</p>
+            <ul class="ticks">
+              <li><svg aria-hidden="true"><use href="#i-queue"/></svg>Play next or add to the queue, then drag to reorder</li>
+              <li><svg aria-hidden="true"><use href="#i-gapless"/></svg>Gapless playback, so live albums and mixes flow without a break</li>
+              <li><svg aria-hidden="true"><use href="#i-resume"/></svg>Your queue, shuffle and place are still there when you come back</li>
+            </ul>
+          </div>
+          <picture class="shot">
+            <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/queue-dark-320.avif 320w, /assets/shots/queue-dark-480.avif 480w, /assets/shots/queue-dark-720.avif 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/queue-dark-320.webp 320w, /assets/shots/queue-dark-480.webp 480w, /assets/shots/queue-dark-720.webp 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/avif" srcset="/assets/shots/queue-light-320.avif 320w, /assets/shots/queue-light-480.avif 480w, /assets/shots/queue-light-720.avif 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/webp" srcset="/assets/shots/queue-light-320.webp 320w, /assets/shots/queue-light-480.webp 480w, /assets/shots/queue-light-720.webp 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <img src="/assets/shots/queue-light-480.png" alt="The queue on iPhone: the song playing now, then what's up next" width="480" height="1044" loading="lazy" decoding="async">
+          </picture>
+        </div>
+
+        <div class="feature">
+          <div class="feature-copy">
+            <span class="eyebrow">Sound</span>
+            <h2>Sound, tuned to taste.</h2>
+            <p>Shape the sound once for every album, and keep the volume steady between records mastered loud and quiet.</p>
+            <ul class="ticks">
+              <li><svg aria-hidden="true"><use href="#i-sliders"/></svg>A 10-band equalizer with presets, or your own curve</li>
+              <li><svg aria-hidden="true"><use href="#i-gain"/></svg>ReplayGain by track or by album, with a preamp</li>
+              <li><svg aria-hidden="true"><use href="#i-fade"/></svg>On Android: crossfade up to 12 seconds, and USB DAC output at each song's own sample rate (Android 14 and later)</li>
+            </ul>
+          </div>
+          <picture class="shot">
+            <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/eq-dark-320.avif 320w, /assets/shots/eq-dark-480.avif 480w, /assets/shots/eq-dark-720.avif 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/eq-dark-320.webp 320w, /assets/shots/eq-dark-480.webp 480w, /assets/shots/eq-dark-720.webp 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/avif" srcset="/assets/shots/eq-light-320.avif 320w, /assets/shots/eq-light-480.avif 480w, /assets/shots/eq-light-720.avif 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <source type="image/webp" srcset="/assets/shots/eq-light-320.webp 320w, /assets/shots/eq-light-480.webp 480w, /assets/shots/eq-light-720.webp 720w" sizes="(min-width: 1024px) 300px, 260px">
+            <img src="/assets/shots/eq-light-480.png" alt="The equalizer on Android: the Bass boost preset on a frequency curve above ten band sliders" width="480" height="1041" loading="lazy" decoding="async">
+          </picture>
+        </div>
+      </div>
+    </section>
+
+    <section id="specs" class="alt">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Spec sheet</span>
+          <h2>The nerdy bits.</h2>
+          <p>Everything below works on both Android and iPhone, except where it's marked.</p>
+        </div>
+        <dl class="specs">
+          <div><dt>Formats</dt><dd>FLAC, MP3, AAC/M4A, Ogg Vorbis, Opus, WAV; ALAC and AIFF <span class="tag">iPhone</span></dd></div>
+          <div><dt>Servers</dt><dd>Jellyfin, Emby, Plex, Navidrome and Subsonic</dd></div>
+          <div><dt>Gapless</dt><dd>Yes</dd></div>
+          <div><dt>Streaming quality</dt><dd>Original, 320, 192 or 128 kbps, set separately for Wi-Fi and mobile data</dd></div>
+          <div><dt>ReplayGain</dt><dd>Track or album, with preamp</dd></div>
+          <div><dt>Offline</dt><dd>Download from your server, Wi-Fi only if you like</dd></div>
+          <div><dt>Equalizer</dt><dd>10 bands, 6 presets</dd></div>
+          <div><dt>In the car</dt><dd>Android Auto <span class="tag">Android</span> CarPlay <span class="tag">iPhone</span></dd></div>
+          <div><dt>Crossfade</dt><dd>Up to 12 s <span class="tag">Android</span></dd></div>
+          <div><dt>Casting</dt><dd>Chromecast <span class="tag">Android</span> AirPlay <span class="tag">iPhone</span></dd></div>
+          <div><dt>USB DAC</dt><dd>Direct output, Android 14+ <span class="tag">Android</span></dd></div>
+          <div><dt>Widgets</dt><dd>Home screen; Lock Screen <span class="tag">iPhone</span></dd></div>
+          <div><dt>Sleep timer, speed</dt><dd>Yes</dd></div>
+          <div><dt>Tag editing</dt><dd>Edit many songs at once <span class="tag">Android</span></dd></div>
+          <div><dt>Playlists</dt><dd>Create and edit; M3U import and export <span class="tag">Android</span></dd></div>
+          <div><dt>Account with us</dt><dd>None</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="platforms">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Two native apps</span>
+          <h2>Fluent in Android and iPhone.</h2>
+          <p>Not one app squeezed onto two phones: each is built with its own platform's tools, and looks like it belongs there.</p>
+        </div>
         <div class="platforms">
-          <div class="card">
-            <h3>On Android</h3>
-            <ul>
-              <li>Android Auto and Chromecast</li>
-              <li>Downloads for offline listening</li>
-              <li>Batch tag editing for your local files</li>
-              <li>Sleep timer</li>
-              <li>Material You theming</li>
-              <li>Navidrome and other Subsonic servers</li>
-            </ul>
+          <div class="platform">
+            <h3>Android: Material 3, coloured by your artwork</h3>
+            <p>Dynamic colour, Android Auto, Chromecast and a home-screen widget, with batch tag editing for the files on your phone.</p>
+            <picture class="shot">
+              <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/android-dark-320.avif 320w, /assets/shots/android-dark-480.avif 480w, /assets/shots/android-dark-720.avif 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/android-dark-320.webp 320w, /assets/shots/android-dark-480.webp 480w, /assets/shots/android-dark-720.webp 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <source type="image/avif" srcset="/assets/shots/android-light-320.avif 320w, /assets/shots/android-light-480.avif 480w, /assets/shots/android-light-720.avif 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <source type="image/webp" srcset="/assets/shots/android-light-320.webp 320w, /assets/shots/android-light-480.webp 480w, /assets/shots/android-light-720.webp 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <img src="/assets/shots/android-light-480.png" alt="Home on Android: Jump back in, Heavy rotation and Rediscover rows of albums" width="480" height="1041" loading="lazy" decoding="async">
+            </picture>
           </div>
-          <div class="card">
-            <h3>On iPhone and iPad</h3>
-            <ul>
-              <li>Add music through the Files app or Finder, or pick a folder</li>
-              <li>Lock Screen and Control Centre controls</li>
-              <li>AirPlay to your speakers</li>
-              <li>Runs on iPhone and iPad</li>
-            </ul>
+          <div class="platform">
+            <h3>iPhone and iPad: native SwiftUI, with Liquid Glass</h3>
+            <p>Liquid Glass on iOS 26, CarPlay, AirPlay and Lock Screen widgets. Add music with the Files app or Finder, or pick a folder you already have.</p>
+            <picture class="shot">
+              <source type="image/avif" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/ios-dark-320.avif 320w, /assets/shots/ios-dark-480.avif 480w, /assets/shots/ios-dark-720.avif 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <source type="image/webp" media="(prefers-color-scheme: dark)" data-dark srcset="/assets/shots/ios-dark-320.webp 320w, /assets/shots/ios-dark-480.webp 480w, /assets/shots/ios-dark-720.webp 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <source type="image/avif" srcset="/assets/shots/ios-light-320.avif 320w, /assets/shots/ios-light-480.avif 480w, /assets/shots/ios-light-720.avif 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <source type="image/webp" srcset="/assets/shots/ios-light-320.webp 320w, /assets/shots/ios-light-480.webp 480w, /assets/shots/ios-light-720.webp 720w" sizes="(min-width: 720px) 280px, 62vw">
+              <img src="/assets/shots/ios-light-480.png" alt="An album on iPhone: Blue Hours, with Play and Shuffle buttons above its track list" width="480" height="1044" loading="lazy" decoding="async">
+            </picture>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="screenshots">
+    <section id="pro" class="alt">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">A closer look</span>
-          <h2>Clean, quick, and out of the way.</h2>
+        <div class="section-head center">
+          <span class="eyebrow">Shuttle Music Pro</span>
+          <h2>Free to play. Pro to stream.</h2>
+          <p>Everything for the music on your phone is free, with no ads. Pro is for streaming from your server.</p>
         </div>
-        <div class="shots" tabindex="0" aria-label="Screenshots">
-          <img src="/assets/screens/iphone-1.jpg" alt="Albums, from your Jellyfin, Emby or Plex server and your iPhone" width="640" height="1385" loading="lazy">
-          <img src="/assets/screens/iphone-2.jpg" alt="Home: jump back in to recent albums" width="640" height="1385" loading="lazy">
-          <img src="/assets/screens/iphone-3.jpg" alt="An album with its tracks" width="640" height="1385" loading="lazy">
-          <img src="/assets/screens/iphone-4.jpg" alt="Now Playing, coloured by the album artwork" width="640" height="1385" loading="lazy">
-          <img src="/assets/screens/iphone-5.jpg" alt="The queue" width="640" height="1385" loading="lazy">
-          <img src="/assets/screens/iphone-6.jpg" alt="Equalizer and ReplayGain" width="640" height="1385" loading="lazy">
+        <div class="pro-card">
+          <ul class="ticks">
+            <li><svg aria-hidden="true"><use href="#i-server"/></svg>Stream your Jellyfin, Emby, Plex and Navidrome libraries</li>
+            <li><svg aria-hidden="true"><use href="#i-download"/></svg>Download albums from your server for offline listening</li>
+            <li><svg aria-hidden="true"><use href="#i-gauge"/></svg>Choose the streaming quality for Wi-Fi and for mobile data</li>
+            <li><svg aria-hidden="true"><use href="#i-phone"/></svg>Your phone's music and your server's, side by side</li>
+            <li><svg aria-hidden="true"><use href="#i-star"/></svg>Buy once and keep it. Android also offers a yearly plan.</li>
+          </ul>
+          <p class="small">Try it free first: the trial starts the first time you play from a server, and lasts 14 days on Android and 7 days on iPhone and iPad. Purchases go through Google Play or the App Store.</p>
         </div>
       </div>
     </section>
 
-    <section id="pro" class="soft">
+    <section id="faq">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Pricing</span>
-          <h2>Free to play. Pay once to stream.</h2>
-          <p>No ads, ever. Pro unlocks streaming from your own server, and there's a free trial first.</p>
+        <div class="section-head center">
+          <span class="eyebrow">FAQ</span>
+          <h2>Before you ask.</h2>
         </div>
-        <div class="plans">
-          <div class="plan">
-            <h3>Shuttle Music</h3>
-            <div class="price">Free</div>
-            <ul>
-              <li>Play all the music stored on your device</li>
-              <li>Equalizer, ReplayGain and gapless playback</li>
-              <li>On Android: Chromecast, Android Auto, and songs you've already downloaded</li>
-            </ul>
-          </div>
-          <div class="plan pro">
-            <h3>Shuttle Music Pro</h3>
-            <div class="price">Free trial, then a one-off purchase</div>
-            <ul>
-              <li>Stream from your Jellyfin, Emby or Plex server, and Navidrome on Android</li>
-              <li>On Android, download songs from your server for offline listening</li>
-              <li>Start the free trial the first time you play a song from your server: 14 days on Android, 7 days on iPhone and iPad</li>
-              <li>Then a single lifetime purchase. Android also offers a yearly plan.</li>
-            </ul>
-          </div>
+        <div class="faq">
+          <details>
+            <summary>Does Shuttle Music come with music?</summary>
+            <p>No. It plays your own audio files, or music from a Jellyfin, Emby, Plex or Navidrome server that you run or have access to. It isn't a streaming service.</p>
+          </details>
+          <details>
+            <summary>What's free, and what needs Pro?</summary>
+            <p>Playing the music stored on your phone is free, with every feature. Pro adds streaming and downloads from your own server, and you can try it free for 14 days on Android or 7 days on iPhone and iPad.</p>
+          </details>
+          <details>
+            <summary>Does the app collect data?</summary>
+            <p>Only anonymous crash reports and usage statistics, which aren't linked to you, and you can turn each off in Settings. Your server login stays on your device. The <a href="/privacy">privacy policy</a> has the details.</p>
+          </details>
+          <details>
+            <summary>Is this the original Shuttle Music Player?</summary>
+            <p>Shuttle Music is a separate app from the original Shuttle Music Player, with its own Google Play listing.</p>
+          </details>
+          <p class="faq-more"><a href="/support">More answers on the support page</a></p>
         </div>
-        <p class="note">Purchases go through Google Play or the App Store, and you can restore them in the app at any time. Music on your device, and songs you've downloaded, keep playing whether or not you have Pro.</p>
       </div>
     </section>
 
-    <section id="privacy">
+    <section class="cta">
       <div class="wrap">
-        <div class="section-head">
-          <span class="eyebrow">Privacy</span>
-          <h2>Your library stays yours.</h2>
-          <p>There's no account with us. Your server address and login stay on your device and are only ever sent to the server you chose. The app sends anonymous crash reports and usage statistics that aren't linked to you and aren't used for tracking, and you can turn either off in Settings.</p>
-          <p><a href="/privacy">Read the privacy policy</a></p>
+        <img class="icon" src="/assets/icon-144.png" alt="" width="72" height="72" loading="lazy">
+        <h2>Press play on your own library.</h2>
+        <p>Free to download. No ads, and no account with us.</p>
+        <div class="badges">
+          <a href="https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle" rel="noopener">
+            <img src="/assets/google-play-badge.png" alt="Get it on Google Play" width="161" height="48" loading="lazy">
+          </a>
+          <span class="store-soon" data-app-store>
+            <img src="/assets/app-store-badge.svg" alt="" width="144" height="48" loading="lazy">
+            <span class="small">Coming soon to the App Store</span>
+          </span>
         </div>
       </div>
     </section>
@@ -199,12 +364,14 @@
 
   <footer class="site-footer">
     <div class="wrap">
-      <span>&copy; 2026 Simplecity Apps Pty Ltd</span>
+      <a class="brand" href="/"><img src="/assets/icon-56.png" alt="" width="28" height="28" loading="lazy">Shuttle Music</a>
       <nav aria-label="Footer">
-        <a href="/support">Support</a>
         <a href="/privacy">Privacy</a>
+        <a href="/support">Support</a>
+        <a href="https://shuttlepodcasts.app">Shuttle Podcasts</a>
         <a href="mailto:support@simplecityapps.com">support@simplecityapps.com</a>
       </nav>
+      <p class="legal">Made by Simplecity Apps. &copy; 2026 Simplecity Apps Pty Ltd. Google Play and the Google Play logo are trademarks of Google LLC. App Store is a service mark of Apple Inc.</p>
     </div>
   </footer>
 </body>

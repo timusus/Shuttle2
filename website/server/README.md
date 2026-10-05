@@ -22,6 +22,19 @@ An `nginx:alpine` container, `shuttle-site`, serves both the live site and the p
 `/srv/www/shuttlemusicplayer.com` (see `../deploy.sh` for the layout). It runs beside the old container until the
 cut-over, which is one line in `rules.toml` and just as easy to undo.
 
+### When the iOS app goes live
+
+The App Store badge is controlled by one constant, `APP_STORE_LIVE` at the top of `website/site.js` (default `false`).
+While it is `false`, every page shows the badge unlinked with "Coming soon to the App Store". Set it to `true` and
+redeploy, and every page then:
+
+- links the badge to `https://apps.apple.com/app/id6818057709` (`APP_STORE_ID`, next to the flag);
+- adds the `apple-itunes-app` Smart App Banner meta;
+- adds `downloadUrl` to the iOS `MobileApplication` JSON-LD (`#ld-ios` in `index.html`).
+
+The script sits at `/site.js` rather than under `/js/`, because nginx returns 410 for the old `/js/` and `/images/`
+paths.
+
 ### One-time setup (on the droplet)
 
 ```sh

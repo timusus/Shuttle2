@@ -91,3 +91,5 @@ __pycache__/
 
 # design-shots.sh output
 shots/
+# ...but the website's screenshots are site assets
+!website/assets/shots/
