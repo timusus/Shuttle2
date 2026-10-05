@@ -14,9 +14,7 @@ struct DownloadsView: View {
             DownloadsStorage(
                 downloads: current,
                 title: { downloads.requestedTitle(path: $0) },
-                fileSize: { path in
-                    downloads.fileUrl(path: path).flatMap { URL(string: $0) }.flatMap { try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize }.map(Int64.init) ?? 0
-                },
+                fileURL: { path in downloads.fileUrl(path: path).flatMap { URL(string: $0) } },
                 onRetry: { path in
                     // One that failed in an earlier launch has its song loaded from the library again first
                     Task {
@@ -62,17 +60,18 @@ struct DownloadsState: Equatable {
 
     var isEmpty: Bool { completedPaths.isEmpty && running.isEmpty && failed.isEmpty }
 
-    /// `title` is a song's name, nil when the download is from an earlier launch and its song isn't known.
+    /// `title` is a song's name, nil when the download is from an earlier launch and its song isn't known. It's asked
+    /// only for the running and failed ones, which are listed by name.
     init(_ downloads: [String: OfflineDownload], title: (String) -> String?, canRetry: (String) -> Bool = { _ in false }) {
+        func name(_ path: String) -> String { title(path) ?? String(localized: "Unknown song") }
         for (path, download) in downloads.sorted(by: { $0.key < $1.key }) {
-            let name = title(path) ?? String(localized: "Unknown song")
             switch download.state {
             case .completed:
                 completedPaths.append(path)
             case .downloading:
-                running.append(Item(path: path, title: name, progress: Double(download.progress), canRetry: false))
+                running.append(Item(path: path, title: name(path), progress: Double(download.progress), canRetry: false))
             case .failed:
-                failed.append(Item(path: path, title: name, progress: nil, canRetry: canRetry(path)))
+                failed.append(Item(path: path, title: name(path), progress: nil, canRetry: canRetry(path)))
             default:
                 break
             }
@@ -82,12 +81,12 @@ struct DownloadsState: Equatable {
     init() {}
 }
 
-/// Adds the size of the completed downloads' files, read only when the set of completed
+/// Adds the size of the completed downloads' files, read off the main actor and only when the set of completed
 /// downloads changes (not on each progress tick).
 struct DownloadsStorage: View {
     let downloads: [String: OfflineDownload]
     var title: (String) -> String?
-    var fileSize: (String) -> Int64
+    var fileURL: (String) -> URL?
     var onRetry: (String) -> Void
     var onDismiss: (String) -> Void
     var onRemoveAll: () -> Void
@@ -99,8 +98,16 @@ struct DownloadsStorage: View {
         let state = DownloadsState(downloads, title: title, canRetry: canRetry)
         DownloadsContent(state: state, totalBytes: bytes, onRetry: onRetry, onDismiss: onDismiss, onRemoveAll: onRemoveAll)
             .task(id: state.completedPaths) {
-                bytes = state.completedPaths.reduce(Int64(0)) { $0 + fileSize($1) }
+                let urls = state.completedPaths.compactMap(fileURL)
+                bytes = await Task.detached(priority: .utility) { Self.sizeOnDisk(urls) }.value
             }
+    }
+
+    /// The files' total size, from the file system: call it off the main actor.
+    nonisolated static func sizeOnDisk(_ urls: [URL]) -> Int64 {
+        urls.reduce(Int64(0)) { total, url in
+            total + Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+        }
     }
 }
 
@@ -135,7 +142,9 @@ struct DownloadsContent: View {
                     ForEach(state.running) { item in
                         VStack(alignment: .leading, spacing: Spacing.xsmall) {
                             Text(item.title)
+                            // The row reads its percentage once, as its value; the bar would read it again.
                             ProgressView(value: item.progress)
+                                .accessibilityHidden(true)
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityValue(Text(item.progress.map { $0.formatted(.percent.precision(.fractionLength(0))) } ?? ""))

@@ -24,11 +24,11 @@ enum DownloadBadge: Equatable {
     /// The badge for each song path that has one. Progress is left out, so the map only changes (and rows only redraw)
     /// when a download starts, finishes, fails or is removed, not on every progress tick.
     static func badges(_ downloads: [String: OfflineDownload]) -> [String: DownloadBadge] {
-        downloads.compactMapValues { download in
+        downloads.compactMapValues { download -> DownloadBadge? in
             switch download.state {
-            case .completed: .downloaded
-            case .downloading: .downloading
-            default: nil
+            case .completed: return DownloadBadge.downloaded
+            case .downloading: return DownloadBadge.downloading
+            default: return nil
             }
         }
     }

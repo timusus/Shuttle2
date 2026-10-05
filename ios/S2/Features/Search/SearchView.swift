@@ -250,6 +250,8 @@ struct SearchResultList: View {
     private var downloads: DetailDownloads { DetailDownloads(send: onAction) }
     @State private var expanded: SearchCategory?
     @State private var songInfo: SongInfoTarget?
+    /// The song download badges, read in each song's menu so Download and Remove Download follow it.
+    @Environment(\.downloadBadges) private var downloadBadges
 
     init(
         query: String,
@@ -384,6 +386,8 @@ struct SearchResultList: View {
                 .buttonStyle(.pressScale)
                 .accessibilityIdentifier("search.result.song")
                 .contextMenu {
+                    // Reading the song's badge rebuilds this menu when its download starts, finishes or is removed.
+                    let _ = downloadBadges[song.path]
                     SongRowMenu(
                         song: song,
                         onPlayNext: { onAction(MediaActionPlayNext(selection: MediaSelectionSongs(song: $0))) },

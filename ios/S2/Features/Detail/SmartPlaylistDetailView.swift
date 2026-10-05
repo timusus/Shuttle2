@@ -62,6 +62,8 @@ struct SmartPlaylistDetailContent: View {
     var downloads = DetailDownloads()
 
     @State private var songInfo: SongInfoTarget?
+    /// The song download badges, read in each song's menu so Download and Remove Download follow it.
+    @Environment(\.downloadBadges) private var downloadBadges
 
     var body: some View {
         if state.loading {
@@ -87,6 +89,8 @@ struct SmartPlaylistDetailContent: View {
                     .buttonStyle(.plain)
                     .rowSeparator(.none)
                     .contextMenu {
+                        // Reading the song's badge rebuilds this menu when its download starts, finishes or is removed.
+                        let _ = downloadBadges[song.path]
                         SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
                     }
                 }
