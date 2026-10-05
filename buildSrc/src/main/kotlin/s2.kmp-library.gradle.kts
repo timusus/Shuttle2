@@ -7,8 +7,7 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
 }
 
-// Modules whose host tests run under Robolectric (resources and assets are merged for them only).
-val modulesWithRobolectricTests = setOf(":android:mediaprovider:core", ":android:mediaprovider:local")
+var hostTestConfig: com.android.build.api.dsl.KotlinMultiplatformAndroidHostTest? = null
 
 kotlin {
     jvmToolchain(17)
@@ -21,16 +20,22 @@ kotlin {
         compileSdk = 36
         minSdk = 24
         // Runs commonTest (and androidHostTest) on the JVM, as testDebugUnitTest does for Android modules. AGP allows
-        // one host test component, so it's declared here for every module. Android resources and assets (what Robolectric
-        // tests read, e.g. the Room migration tests loading the exported schemas) are opt-in, since merging them costs
-        // every module's build, and AGP allows withHostTest only once, so the modules with Robolectric tests are listed here.
-        withHostTest {
-            isIncludeAndroidResources = project.path in modulesWithRobolectricTests
-        }
+        // one host test component, so it's declared here for every module. Android resources and assets are merged for
+        // it only in modules that run Robolectric (below).
+        withHostTest { hostTestConfig = this }
     }
 
     iosArm64()
     iosSimulatorArm64()
+}
+
+// Merging Android resources and assets into the host tests (what Robolectric tests read, e.g. the Room migration
+// tests loading the exported schemas) costs every module's build, so it's on only where androidHostTest declares a
+// Robolectric dependency. Derived, not listed, so a module that adds Robolectric gets them without anyone
+// remembering to; finalizeDsl runs after the module's build script has declared its dependencies.
+extensions.getByType<com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension>().finalizeDsl {
+    val hostTestDependencies = configurations.getByName(kotlin.sourceSets.getByName("androidHostTest").implementationConfigurationName)
+    hostTestConfig?.isIncludeAndroidResources = hostTestDependencies.dependencies.any { it.group == "org.robolectric" }
 }
 
 // `support/scripts/unit-test` and CI run `testDebugUnitTest` across the project; the multiplatform Android

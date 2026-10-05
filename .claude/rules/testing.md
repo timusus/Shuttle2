@@ -185,6 +185,11 @@ Android behaviour rather than just an Android *type*: a real `ContentResolver`/S
 (`ExportPlaylistTest`), a real `ExoPlayer`/`RuntimeEnvironment` Context/AudioManager, a
 `PlaybackHarness` spec test, or a library (Cast SDK) calling real Android internals under the hood.
 
+A KMP module (`s2.kmp-library`) gets Android resources and assets merged into its host tests only
+when its `androidHostTest` dependencies declare Robolectric directly (`implementation(libs.robolectric)`);
+the convention derives it, so there's no list to update. Room migration tests reading the exported
+schemas as assets need it. Details in `docs/testing/strategy.md`.
+
 ## Known Robolectric Limitations
 
 - **FastScroller + DropdownMenu:** The `FastScroller` overlay causes `DropdownMenu` popups to be immediately dismissed under Robolectric. Context menu tests that need dropdowns should render the list *item* composable directly (e.g. `GenreListItem`) rather than the full list. The robots encapsulate this — see `setItemContent()` in `GenreListRobot`, `PlaylistListRobot`, `AlbumListRobot`, `AlbumArtistListRobot` and `FolderListRobot`.

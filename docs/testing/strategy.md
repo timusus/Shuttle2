@@ -167,10 +167,15 @@ Considered and not worth it now:
   modules (#443 direction), so a Settings change stops rerunning the shell's 50 AppShellTests.
   That is an architecture project, not a tooling switch.
 - **`forkEvery`.** It pays the Robolectric sandbox start again on every fork. Leave it unset.
-- **Robolectric SDK sharing.** Every module pins `sdk=34` in `robolectric.properties` except
-  `:android:imageloader` (no file, so the default SDK) and one `@Config(sdk = [M])` in
-  `AudioFocusSpecTest`. M is API 23, below minSdk 24, and costs a second sandbox (#541).
-  Qualifier-only `@Config`s reuse the sandbox.
+- **Robolectric SDK sharing.** Every module pins `sdk=34` in `robolectric.properties`, and no test
+  sets `@Config(sdk = ...)`: `AudioFocusSpecTest`'s pre-O focus case fakes `Build.VERSION.SDK_INT`
+  with `ReflectionHelpers` instead of loading a second SDK sandbox (#541). Qualifier-only
+  `@Config`s reuse the sandbox. Keep it that way: an `sdk` override costs a whole extra sandbox.
+- **Android resources in KMP host tests.** `s2.kmp-library` merges Android resources and assets
+  into `androidHostTest` only for modules whose `androidHostTest` declares a Robolectric
+  dependency (`libs.robolectric`, group `org.robolectric`), derived in `finalizeDsl`, so a module
+  that adds Robolectric gets them without a list to update. Declare Robolectric directly on
+  `androidHostTest`; one only reached transitively (through a testing module) isn't seen.
 - **Configuration cache, JVM args.** Configuration takes 1.5 s. The 2 GB test heap is needed for
   NATIVE graphics; GC wasn't profiled, and nothing pointed at it.
 - **Shared remote build cache (Mac pulls from the box).** It would let the Mac's Roborazzi verify
