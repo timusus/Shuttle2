@@ -17,7 +17,9 @@ wait_for 20 "s['queueSize'] == 5 and s['queuePosition'] == 1 and not s['pendingL
 # between PLAY and this read adds to it, which is how this check read 16449 ms (#341).
 after="$(state positionMs)"
 [ "$(state title)" = "Playback Two" ] || fail "resumed on $(state title), not Playback Two"
-[ "$after" -ge 7000 ] && [ "$after" -le 13000 ] \
-    || fail "resumed at ${after} ms, expected ~10000 (was ${before} ms before the force-stop)"
+# Compare against the position read before the force-stop, not a fixed 10 s: under host load the
+# sleep and polls stretch, so both drift together.
+[ "$after" -ge 7000 ] && [ "$after" -ge $((before - 3000)) ] && [ "$after" -le $((before + 3000)) ] \
+    || fail "resumed at ${after} ms, expected within 3 s of ${before} ms (the position before the force-stop)"
 echo "  resumed at ${after} ms (${before} ms before the force-stop)"
 pass
