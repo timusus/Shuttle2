@@ -232,8 +232,11 @@ struct MiniPlayerBar: View {
             .accessibilityLabel(accessibilityLabel)
             .accessibilityValue(isPlaying ? "Playing" : "Paused")
             .accessibilityHint("Opens Now Playing")
-            // Next is hidden beside the minimised tab bar, so VoiceOver reaches it from here too.
-            .accessibilityAction(named: "Next", onNext)
+            // Where Next is hidden (beside the minimised tab bar), VoiceOver reaches it from here instead; where its
+            // button shows, a second Next would only repeat it.
+            .accessibilityActions {
+                if !showsNext { Button("Next", action: onNext) }
+            }
             // A swipe left on the song skips to the next, as in Apple Music.
             .simultaneousGesture(
                 DragGesture(minimumDistance: Self.swipeDistance)
