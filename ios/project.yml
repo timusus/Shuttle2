@@ -85,9 +85,9 @@ targets:
         # would break a plain-http server reached by a public hostname (#608).
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
-        # Local network access prompt (#608): the app discovers and connects to Jellyfin/Emby/Plex
+        # Local network access prompt (#608): the app discovers and connects to Jellyfin/Emby/Plex/Navidrome
         # servers on the user's LAN, not for any tracking or discovery purpose.
-        NSLocalNetworkUsageDescription: "Shuttle Music uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network."
+        NSLocalNetworkUsageDescription: "Shuttle Music uses your local network to find and connect to Jellyfin, Emby, Plex and Navidrome media servers on your Wi-Fi network."
         # The app only uses standard HTTPS/TLS to reach user-configured media servers; no proprietary
         # or non-exempt encryption (#608).
         ITSAppUsesNonExemptEncryption: false

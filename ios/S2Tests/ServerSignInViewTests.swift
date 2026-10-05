@@ -131,6 +131,18 @@ struct ServerSignInViewTests {
         #expect((try? jellyfin.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.authCode")) == nil)
     }
 
+    @Test func subsonicTakesAUsernameAndPasswordOrAnAPIKey() throws {
+        let sut = ServerSignInContent(state: ServerSignInState(type: .subsonic))
+        #expect((try? sut.inspect().find(text: "Connect to Navidrome / Subsonic")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.username")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.password")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.apiKeyNote")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.authCode")) == nil)
+
+        let jellyfin = ServerSignInContent(state: state(.form))
+        #expect((try? jellyfin.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.apiKeyNote")) == nil)
+    }
+
     // MARK: Quick Connect
 
     @Test func quickConnectIsOfferedOnlyWhenTheServerSupportsIt() throws {

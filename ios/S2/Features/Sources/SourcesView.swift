@@ -238,6 +238,7 @@ extension MediaProviderType {
         case .emby: "Emby"
         case .jellyfin: "Jellyfin"
         case .plex: "Plex"
+        case .subsonic: "Navidrome / Subsonic"
         }
     }
 
@@ -245,8 +246,13 @@ extension MediaProviderType {
     var symbol: String {
         switch self {
         case .shuttle, .mediaStore: "iphone"
-        case .emby, .jellyfin, .plex: "server.rack"
+        case .emby, .jellyfin, .plex, .subsonic: "server.rack"
         }
+    }
+
+    /// Its glyph on a tile (`IconSquare`): the symbol, or Android's equaliser-bars mark for Subsonic servers.
+    var glyph: IconSquare.Glyph {
+        self == .subsonic ? .asset("Subsonic") : .system(symbol)
     }
 
     /// Its glyph's colour, near the brand's own.
@@ -256,6 +262,8 @@ extension MediaProviderType {
         case .jellyfin: .purple
         case .emby: .green
         case .plex: .orange
+        // Android's ic_subsonic tile, #1565C0
+        case .subsonic: Color(red: 0x15 / 255, green: 0x65 / 255, blue: 0xC0 / 255)
         }
     }
 }
@@ -295,7 +303,7 @@ struct SourcesContent: View {
                 Text("Media Servers")
             } footer: {
                 if state.servers.isEmpty {
-                    Text("Connect a Jellyfin, Emby or Plex server to stream your music library from it.")
+                    Text("Connect a Jellyfin, Emby, Plex or Navidrome server to stream your music library from it.")
                 }
             }
             if state.thisDevice || !state.servers.isEmpty {
@@ -418,7 +426,7 @@ struct ServerRow: View {
                     }
                 }
             } icon: {
-                IconSquare(systemImage: type.symbol, style: .filled(type.color))
+                IconSquare(glyph: type.glyph, style: .filled(type.color))
             }
         }
         .accessibilityElement(children: .ignore)

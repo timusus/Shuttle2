@@ -72,7 +72,7 @@ struct ServerDetailContent: View {
                         }
                     }
                 } icon: {
-                    IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
+                    IconSquare(glyph: type.glyph, style: .filled(type.color), size: .large)
                 }
                 .accessibilityElement(children: .combine)
                 LabeledContent("Status") {

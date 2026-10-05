@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// A Jellyfin, Emby or Plex server's sign-in (#587, #624), on the shared `ServerSignInViewModel`: Android's
+/// A Jellyfin, Emby, Plex or Subsonic server's sign-in (#587, #624), on the shared `ServerSignInViewModel`: Android's
 /// `ServerSignInRoute`/`ServerSignInDialog` as a HIG form, a step of the source setup (`SourceSetupFlow`), which is
 /// the one place it opens from: the first run, Sources' Add a Server and Sign In Again. It starts from the saved
 /// login; once the server is signed in it calls `onConnected` (the setup enables the provider and imports), then
@@ -72,9 +72,12 @@ struct ServerSignInState: Equatable {
     /// Plex's optional two-factor code, for a plex.tv account that has it on.
     var authCode = ""
     var asksForAuthCode = false
+    /// A Subsonic server takes an OpenSubsonic API key as the password, with no username.
+    var acceptsApiKey = false
 
     init(type: MediaProviderType) {
         self.type = type
+        acceptsApiKey = type == .subsonic
     }
 
     init(_ state: ServerSignInUiState) {
@@ -101,6 +104,7 @@ struct ServerSignInState: Equatable {
         quickConnectEnabled = state.quickConnectEnabled
         authCode = state.form.authCode
         asksForAuthCode = state.asksForAuthCode
+        acceptsApiKey = state.acceptsApiKey
     }
 }
 
@@ -300,6 +304,9 @@ struct ServerSignInContent: View {
                 RequiredNote(field: "username")
             } else if state.missing.contains(.password) {
                 RequiredNote(field: "password")
+            } else if state.acceptsApiKey {
+                Text("Leave the username empty to sign in with an API key as the password.")
+                    .accessibilityIdentifier("serverSignIn.apiKeyNote")
             }
         }
         .disabled(!editable)
@@ -356,7 +363,7 @@ private struct SignInHeader: View {
     var body: some View {
         Section {
             VStack(spacing: Spacing.smallMedium) {
-                IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
+                IconSquare(glyph: type.glyph, style: .filled(type.color), size: .large)
                     .scaleEffect(1.25)
                     .padding(Spacing.small)
                 Text("Connect to \(type.title)")
@@ -471,7 +478,12 @@ extension ServerSignInState.Step {
 extension MediaProviderType {
     /// An address like this type's server listens on, for the address field's prompt.
     var exampleAddress: String {
-        self == .plex ? "192.168.1.20:32400" : "192.168.1.20:8096"
+        switch self {
+        case .plex: "192.168.1.20:32400"
+        // Navidrome is usually reached through a reverse proxy, by name
+        case .subsonic: "https://music.example.com"
+        default: "192.168.1.20:8096"
+        }
     }
 
     /// Whose account signs in: Plex's is a plex.tv account, not one on the server.

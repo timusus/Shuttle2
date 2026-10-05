@@ -153,7 +153,7 @@ struct LibraryRootContent<CategoryContent: View>: View {
             switch availability {
             case .empty where !importStatus.isImporting:
                 ScrollView {
-                    EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin, Emby or Plex server to stream your music.") {
+                    EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin, Emby, Plex or Navidrome server to stream your music.") {
                         NavigationLink("Add a Source", value: Route.sources)
                             .accessibilityIdentifier("libraryEmpty.addSource")
                     }
@@ -346,9 +346,25 @@ struct IconSquare: View {
         }
     }
 
-    let systemImage: String
+    /// What it draws: an SF Symbol, or a template image from the asset catalog where no symbol fits (a server's mark).
+    enum Glyph: Equatable {
+        case system(String)
+        case asset(String)
+    }
+
+    let glyph: Glyph
     let style: Style
     var size: Size = .settings
+
+    init(systemImage: String, style: Style, size: Size = .settings) {
+        self.init(glyph: .system(systemImage), style: style, size: size)
+    }
+
+    init(glyph: Glyph, style: Style, size: Size = .settings) {
+        self.glyph = glyph
+        self.style = style
+        self.size = size
+    }
 
     @Environment(\.artworkTint) private var tint
     /// Grows with the text, up to about half again at the largest sizes, as iOS Settings' icons do.
@@ -358,12 +374,24 @@ struct IconSquare: View {
         let scale = min(textScale, 1.5)
         let side = size.points * scale
         let shape = RoundedRectangle(cornerRadius: size.cornerRadius * scale, style: .continuous)
-        Image(systemName: systemImage)
-            .font(.s2ScaledGlyph(size.glyph * scale, weight: .medium))
+        glyphImage(scale: scale)
             .foregroundStyle(foreground)
             .frame(width: side, height: side)
             .background(shape.fill(background))
             .accessibilityHidden(true)
+    }
+
+    @ViewBuilder private func glyphImage(scale: CGFloat) -> some View {
+        switch glyph {
+        case .system(let name):
+            Image(systemName: name)
+                .font(.s2ScaledGlyph(size.glyph * scale, weight: .medium))
+        case .asset(let name):
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .frame(width: size.glyph * scale, height: size.glyph * scale)
+        }
     }
 
     private var foreground: Color {

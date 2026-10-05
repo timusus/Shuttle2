@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The bars of Android's ic_subsonic (equaliser bars, a generic mark for Subsonic-compatible servers), cropped to them: a template glyph that IconSquare draws white on the type's tile -->
+<svg xmlns="http://www.w3.org/2000/svg" width="66" height="66" viewBox="26 29 66 66">
+  <path fill="#000000" d="M26,52 h12 v42 h-12 z M44,30 h12 v64 h-12 z M62,42 h12 v52 h-12 z M80,62 h12 v32 h-12 z"/>
+</svg>

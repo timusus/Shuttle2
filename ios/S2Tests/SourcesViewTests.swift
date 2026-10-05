@@ -93,7 +93,7 @@ struct SourcesViewTests {
     @Test func noServersShowsAddServerAndNoScan() throws {
         let sut = SourcesContent(state: SourcesState(servers: []))
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.addServer")) != nil)
-        #expect((try? sut.inspect().find(text: "Connect a Jellyfin, Emby or Plex server to stream your music library from it.")) != nil)
+        #expect((try? sut.inspect().find(text: "Connect a Jellyfin, Emby, Plex or Navidrome server to stream your music library from it.")) != nil)
         #expect((try? sut.inspect().find(text: "Scan Now")) == nil)
     }
 

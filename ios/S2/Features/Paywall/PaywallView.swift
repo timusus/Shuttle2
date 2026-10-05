@@ -6,20 +6,20 @@ import SwiftUI
 /// messages. Name only what the app has (App Review 2.3, 3.1.1): add downloads when they ship.
 enum ProFeatures {
     /// The servers Pro streams from.
-    static let servers = ["Jellyfin", "Emby", "Plex"]
+    static let servers = ["Jellyfin", "Emby", "Plex", "Navidrome"]
 
-    /// "Jellyfin, Emby and Plex".
+    /// "Jellyfin, Emby, Plex and Navidrome".
     static var serverList: String {
         servers.count < 2 ? servers.joined() : servers.dropLast().joined(separator: ", ") + " and " + servers.last!
     }
 
-    /// The paywall's headline feature and Settings' row: "Stream from Jellyfin, Emby and Plex".
+    /// The paywall's headline feature and Settings' row: "Stream from Jellyfin, Emby, Plex and Navidrome".
     static var headline: String { "Stream from \(serverList)" }
 
     /// The trial's length in days, from :shared's `AppStoreProducts`: the one place it is defined.
     static var trialDays: Int { Int(AppStoreProducts.shared.TRIAL_DAYS) }
 
-    /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin, Emby and Plex".
+    /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin, Emby, Plex and Navidrome".
     static var afterTrial: String { "streaming from \(serverList)" }
 
     /// Server sign-in's disclosure, for anyone without Pro or a running trial.

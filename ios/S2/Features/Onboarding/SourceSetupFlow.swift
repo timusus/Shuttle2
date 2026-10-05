@@ -217,7 +217,7 @@ struct SourceSetupWelcome: View {
                 VStack(alignment: .leading, spacing: Spacing.large) {
                     FeatureRow(
                         symbol: "server.rack", color: .purple, title: "Your Music, Wherever It Lives",
-                        detail: "Play the music on this iPhone, or sign in to Jellyfin, Emby or Plex and play your own collection."
+                        detail: "Play the music on this iPhone, or sign in to Jellyfin, Emby, Plex or Navidrome and play your own collection."
                     )
                     FeatureRow(
                         symbol: "square.stack", color: .orange, title: "Your Whole Library",
@@ -334,7 +334,7 @@ private struct SourceTypeCard: View {
 
     var body: some View {
         HStack(spacing: Spacing.medium) {
-            IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
+            IconSquare(glyph: type.glyph, style: .filled(type.color), size: .large)
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(type.setupTitle).font(.s2Headline)
                 Text(type.setupBlurb)
@@ -366,7 +366,7 @@ extension MediaProviderType {
     var setupTitle: String {
         switch self {
         case .shuttle, .mediaStore: "Use Music on This iPhone"
-        case .jellyfin, .emby, .plex: title
+        case .jellyfin, .emby, .plex, .subsonic: title
         }
     }
 
@@ -376,6 +376,7 @@ extension MediaProviderType {
         case .jellyfin: "The free, open-source media server. Sign in with Quick Connect or a password."
         case .emby: "Sign in with your Emby server's address and account."
         case .plex: "Sign in with your Plex account."
+        case .subsonic: "Navidrome, gonic, Airsonic and other Subsonic-compatible music servers."
         case .shuttle, .mediaStore: "Songs copied into Shuttle Music in the Files app or Finder, and folders you add from Files."
         }
     }

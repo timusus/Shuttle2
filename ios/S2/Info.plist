@@ -33,7 +33,7 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Shuttle Music uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network.</string>
+	<string>Shuttle Music uses your local network to find and connect to Jellyfin, Emby, Plex and Navidrome media servers on your Wi-Fi network.</string>
 	<key>OSLogPreferences</key>
 	<dict>
 		<key>com.simplecityapps.shuttle2</key>
