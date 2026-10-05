@@ -160,7 +160,7 @@ fun ActionsSetting(
     }
 }
 
-/** A single-choice setting showing its current [value]; [onClick] opens the choice dialog. */
+/** A single-choice setting showing its current [value], with an optional [summary] under it; [onClick] opens the choice dialog. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ChoiceSetting(
@@ -168,6 +168,7 @@ fun ChoiceSetting(
     value: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    summary: String? = null,
     icon: ImageVector? = null,
     enabled: Boolean = true,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
@@ -179,7 +180,12 @@ fun ChoiceSetting(
         colors = settingColors(),
         enabled = enabled,
         leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
-        supportingContent = { Text(value) },
+        supportingContent = {
+            Column {
+                Text(value)
+                summary?.let { Text(it, style = MaterialTheme.typography.supporting, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        },
     ) { Text(title) }
 }
 

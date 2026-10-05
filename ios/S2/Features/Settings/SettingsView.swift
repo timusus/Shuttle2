@@ -88,7 +88,7 @@ enum SettingsRow: Equatable, Identifiable {
     /// Pushes another screen: Sources, from the Sources section, the Equalizer and Scrobbling.
     case link(id: String, title: String, systemImage: String, route: Route, summary: String? = nil)
     case toggle(key: String, title: String, summary: String?, isOn: Bool, isEnabled: Bool)
-    case choice(key: String, title: String, options: [String], selected: Int, isEnabled: Bool)
+    case choice(key: String, title: String, summary: String? = nil, options: [String], selected: Int, isEnabled: Bool)
     case action(key: String, title: String, summary: String?, confirmation: Confirmation?, isEnabled: Bool)
     /// A continuous slider over `range`, its value shown by `valueLabel` (nil: not shown).
     case slider(key: String, title: String, value: Float, range: ClosedRange<Float>, valueLabel: String?, isEnabled: Bool)
@@ -102,7 +102,7 @@ enum SettingsRow: Equatable, Identifiable {
     var id: String {
         switch self {
         case .link(let id, _, _, _, _): id
-        case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _), .action(let key, _, _, _, _),
+        case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _, _), .action(let key, _, _, _, _),
              .slider(let key, _, _, _, _, _): key
         }
     }
@@ -167,6 +167,7 @@ extension SettingsSection {
             return .choice(
                 key: choice.key,
                 title: title,
+                summary: summary,
                 options: choice.options.map { $0.label.localized() },
                 selected: Int(state.selectedIndex(item: choice)),
                 isEnabled: enabled
@@ -329,13 +330,13 @@ struct SettingsContent: View {
             .s2Switch()
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
-        case .choice(let key, let title, let options, let selected, let isEnabled):
+        case .choice(let key, let title, let summary, let options, let selected, let isEnabled):
             Picker(selection: Binding(get: { selected }, set: { onChoose(key, $0) })) {
                 ForEach(options.indices, id: \.self) { index in
                     Text(options[index]).tag(index)
                 }
             } label: {
-                Label { Text(title) } icon: { icon.square }
+                Label { RowLabel(title: title, summary: summary) } icon: { icon.square }
             }
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")

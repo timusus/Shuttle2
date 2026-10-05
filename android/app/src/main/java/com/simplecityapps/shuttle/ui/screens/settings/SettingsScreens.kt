@@ -341,6 +341,7 @@ private fun SettingRow(
         is SettingItem.Choice<*> -> ChoiceSetting(
             title = stringResource(item.title),
             value = override?.let { stringResource(it.hint) } ?: choiceValueLabel(item, uiState),
+            summary = summary,
             onClick = { onOpenChoice(item) },
             enabled = enabled && override == null,
             shapes = shapes

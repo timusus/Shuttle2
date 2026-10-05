@@ -30,7 +30,7 @@ fun SettingRowBoard(width: BoardWidth) {
                 SettingsGroup(
                     title = "Appearance",
                     rows = listOf(
-                        { ChoiceSetting("Theme", "Follow system", {}, icon = Icons.Rounded.DarkMode, shapes = it) },
+                        { ChoiceSetting("Theme", "Follow system", {}, summary = "Applies to every screen", icon = Icons.Rounded.DarkMode, shapes = it) },
                         { LinkSetting("Accent colour", {}, summary = "Artwork", icon = Icons.Rounded.Palette, shapes = it) },
                         { SwitchSetting("Dynamic colour", checked = true, onCheckedChange = {}, icon = Icons.Rounded.Palette, shapes = it) },
                     ),
