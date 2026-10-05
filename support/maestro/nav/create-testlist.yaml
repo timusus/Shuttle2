@@ -13,8 +13,12 @@ appId: com.simplecityapps.shuttle.dev
     when:
       notVisible: "TestList"
     commands:
-      - tapOn: "Library"
-      - tapOn: "Songs"
+      # A fresh launch scrolls the tab row back to the selected Songs tab; tapping Library from the
+      # Playlists tab leaves the row scrolled to Playlists, with "Songs" off screen
+      - runFlow:
+          file: open-library-tab.yaml
+          env:
+            TAB: Songs
       - scrollUntilVisible:
           element:
             text: "Artist A Album 1 Track 1"

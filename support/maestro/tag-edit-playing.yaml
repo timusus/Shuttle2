@@ -4,23 +4,32 @@
 # -- "Edit Tags" opens the dialog pre-filled with its title, then Save. Every tap uses
 # waitToSettleTimeoutMs, the same as playback-controls.yaml, because the point of the check is that
 # the edit doesn't interrupt playback, so the flow never pauses first. setup_taglib_provider's own
-# flow leaves the app on Settings > Sources (two screens deep), so two `back`s reach the Library root
-# and its mini player. The wrapper (support/scripts/checks/tag-edit-queued.sh) checks this alone,
+# flow leaves the app on Settings > Sources (or Settings, depending on the last `back`), so the flow
+# backs out until the mini player shows, rather than counting `back`s. The keyboard auto-capitalises
+# the typed title ("(Edited)"), so the wrapper compares titles case-insensitively. The wrapper (support/scripts/checks/tag-edit-queued.sh) checks this alone,
 # before support/maestro/tag-edit-not-playing.yaml runs the second edit -- a real SAF tag write is
 # slow enough that both edits together can outlast this 180 s fixture track's remaining runtime.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp:
     stopApp: false
-- back
-- back
-# The mini player is the only match at the Library root (no songs list behind it here).
+- repeat:
+    while:
+      notVisible:
+        id: "player_mini"
+    times: 4
+    commands:
+      - back
 - extendedWaitUntil:
-    visible: "Taglib One"
+    visible:
+      id: "player_mini"
     timeout: 10000
+# By id: the Library opens on Songs, where the title text also matches that song's list row
 - tapOn:
-    text: "Taglib One"
+    id: "player_mini"
     waitToSettleTimeoutMs: 500
+- waitForAnimationToEnd:
+    timeout: 5000
 - tapOn:
     text: "Queue"
     waitToSettleTimeoutMs: 500
@@ -35,6 +44,8 @@ appId: com.simplecityapps.shuttle.dev
     waitToSettleTimeoutMs: 500
 - eraseText
 - inputText: "Taglib One (edited)"
+# The keyboard covers the dialog's Save button (#438)
+- hideKeyboard
 - tapOn:
     text: "Save"
     waitToSettleTimeoutMs: 500

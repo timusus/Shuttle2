@@ -2,6 +2,9 @@
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: open-now-playing.yaml
+# The player sheet is still animating open: a tap during it can land on the Cast button instead
+- waitForAnimationToEnd:
+    timeout: 5000
 - tapOn: "Queue"
 - extendedWaitUntil:
     visible: "Up Next"

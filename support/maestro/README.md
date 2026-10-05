@@ -91,8 +91,8 @@ e.g. `runFlow: open-now-playing.yaml`).
 | Flow | What it does | Params |
 |---|---|---|
 | `nav/launch-fresh.yaml` | Cold launch (`stopApp: true`). The building block every other nav flow starts with. | none |
-| `nav/open-now-playing.yaml` | Launch fresh, then open the full-screen player by tapping the mini player row (no stable id, so it's selected by the current track's title). | `TITLE`: the current track's title |
-| `nav/open-queue.yaml` | Open the full player, then tap its "Queue" button to open the queue. | `TITLE`: the current track's title |
+| `nav/open-now-playing.yaml` | Launch fresh, then open the full-screen player by tapping the mini player (id `player_mini`; the title text would also match the Songs list row). | none |
+| `nav/open-queue.yaml` | Open the full player, then tap its "Queue" button once the sheet has settled, to open the queue. | none |
 | `nav/open-library-tab.yaml` | Tap the Library bottom-nav item, then a sub-tab by name. | `TAB`: `Genres`\|`Playlists`\|`Artists`\|`Albums`\|`Songs` |
 | `nav/open-settings.yaml` | Open the More sheet, then tap "Settings". | none |
 | `nav/search.yaml` | Open Search and type a query into the auto-focused search field. | `QUERY`: text to type |

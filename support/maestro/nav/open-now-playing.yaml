@@ -1,7 +1,13 @@
 # Open the full-screen player from the mini player. Starts with a fresh launch so this runs
-# standalone regardless of the prior screen; the mini player has no stable id, so the caller
-# passes the current track's title (the whole mini player row expands the player on tap).
+# standalone regardless of the prior screen. The mini player is selected by its test tag
+# (PlayerTestTags.MiniPlayer, exposed as an id), not the track's title: the app reopens on
+# Library > Songs, where the title text also matches that song's list row.
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: launch-fresh.yaml
-- tapOn: "${TITLE}"
+- extendedWaitUntil:
+    visible:
+      id: "player_mini"
+    timeout: 10000
+- tapOn:
+    id: "player_mini"

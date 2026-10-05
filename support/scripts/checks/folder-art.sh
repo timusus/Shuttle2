@@ -49,8 +49,10 @@ s2 IMPORT >/dev/null
 # The import runs in the background: wait for the album row, then for its artwork to load
 deadline=$(($(date +%s) + 30))
 while :; do
-    # The row's "Artwork" image is the node listed just before the album title
-    bounds="$("$emu" dump-texts 2>/dev/null | grep -B1 "text=\"${album}\"" | sed -n 's/^desc="Artwork" bounds=\(.*\)$/\1/p' | head -1)"
+    # The Compose album row's artwork carries no semantics, so locate it from the album title: it
+    # fills the row's start, so its centre is half way along from the screen edge to the title's
+    # start, at the title's height. The title's bounds are used with x1 = 0 and x2 = the title's x1.
+    bounds="$("$emu" dump-texts 2>/dev/null | sed -n "s/^text=\"${album}\" bounds=\[\([0-9]*\),\([0-9]*\)\]\[[0-9]*,\([0-9]*\)\]\$/[0,\2][\1,\3]/p" | head -1)"
     if [ -n "$bounds" ]; then
         rgb="$(adb_retry exec-out screencap | python3 -c '
 import re, sys

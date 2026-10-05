@@ -5,6 +5,9 @@
 # SAF-backed TagLib song (tag writes go through the content:// document, not MediaStore), so uses
 # setup_taglib_provider; restored back to the `playback` fixture on exit like m3u-sync.sh.
 #
+# The keyboard recapitalises the typed " (edited)" to " (Edited)", so every title match is
+# case-insensitive (#438).
+#
 # Two Maestro flows, not one: a real SAF tag write is slow enough that doing both edits back to
 # back can outlast the 180 s fixture track's remaining runtime, so the currently-playing song's
 # assertions (title updated, position past its pre-edit value, notification) run right after
@@ -31,12 +34,12 @@ wake_screen
 maestro_flow "${CHECKS_ROOT}/support/maestro/tag-edit-playing.yaml" \
     || fail "editing the playing song's title failed (output in ${out})"
 
-wait_for 10 "s['state'] == 'Playing' and s['title'] == 'Taglib One (edited)' and s['queuePosition'] == 0"
+wait_for 10 "s['state'] == 'Playing' and s['title'].lower() == 'taglib one (edited)' and s['queuePosition'] == 0"
 after="$(state positionMs)"
 [ "$after" -gt "$before" ] || fail "position didn't advance past the pre-edit value (${before} -> ${after} ms) -- looks like the edit restarted playback"
 assert_progressing
 
-adb_retry shell dumpsys notification --noredact | grep -q "android.title=String (Taglib One (edited))" \
+adb_retry shell dumpsys notification --noredact | grep -qi "android.title=String (Taglib One (edited))" \
     || fail "the media notification doesn't show the edited title"
 
 maestro_flow "${CHECKS_ROOT}/support/maestro/tag-edit-not-playing.yaml" \
@@ -48,7 +51,7 @@ maestro_flow "${CHECKS_ROOT}/support/maestro/tag-edit-not-playing.yaml" \
 s2 PAUSE >/dev/null
 shown="$(queue_titles)"
 s2 PLAY >/dev/null
-echo "$shown" | grep -q "Taglib Three (edited)" || fail "the queue sheet doesn't show the edited queued (not playing) song: ${shown}"
+echo "$shown" | grep -qi "Taglib Three (edited)" || fail "the queue sheet doesn't show the edited queued (not playing) song: ${shown}"
 # Not asserting the now-playing title is still "Taglib One (edited)": the track may have finished
 # and auto-advanced to Two while editing Three, which is normal, undisturbed playback, not a bug.
 wait_for 5 "s['state'] == 'Playing'"

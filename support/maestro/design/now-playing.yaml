@@ -1,10 +1,7 @@
 # design-shots.sh screen: now-playing. The `library` fixture is seeded, and (for player screens) Blue Hours is queued then paused, by the script.
 appId: com.simplecityapps.shuttle.dev
 ---
-- runFlow:
-    file: ../nav/open-now-playing.yaml
-    env:
-      TITLE: "Cobalt Walk"
+- runFlow: ../nav/open-now-playing.yaml
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: now-playing
