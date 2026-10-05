@@ -9,9 +9,11 @@ struct S2App: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        StartupTrace.mark("appInit")
         AppGraph.initialize()
         AccentTint.apply()
         startTab = AppTab(AppGraph.shared.shellViewModel.uiState.value.startTab)
+        StartupTrace.mark("appInitDone")
     }
 
     var body: some Scene {
@@ -19,7 +21,7 @@ struct S2App: App {
             ContentView(startTab: startTab)
                 .tint(.s2Accent)
                 .task {
-                    LibraryImport.atLaunch()
+                    StartupTrace.step("libraryImportAtLaunch") { LibraryImport.atLaunch() }
                     LibraryImport.syncIfStale()
                     await LibraryImport.whenLocalFilesChange()
                 }

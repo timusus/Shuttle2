@@ -8,11 +8,13 @@ import SwiftUI
 /// `MediaActionShuffle` over every artist, as over a multi-selection. The playing artist is marked.
 struct AlbumArtistListView: View {
     var body: some View {
+        let _ = StartupTrace.mark(.albumArtists, .body)
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albumArtists).cacheKey) {
             AlbumArtistListModels(graph: AppGraph.shared)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.albumArtists.uiState, models.actions.uiState) { state, actions in
+                let _ = StartupTrace.content(.albumArtists, loaded: state.loadingState != .loading)
                 AlbumArtistListContent(
                     state: state,
                     nowPlaying: nowPlaying,
@@ -35,6 +37,7 @@ struct AlbumArtistListView: View {
             }
         }
         .refreshable { LibraryImport.refresh() }
+        .onAppear { StartupTrace.mark(.albumArtists, .appear) }
         .navigationTitle(LibraryCategory.albumArtists.title)
     }
 }

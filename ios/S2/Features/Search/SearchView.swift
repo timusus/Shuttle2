@@ -16,11 +16,13 @@ struct SearchView: View {
     @State private var isSearchPresented = false
 
     var body: some View {
+        let _ = StartupTrace.mark(.search, .body)
         let models = ViewModelCache.shared.viewModel(AppTab.search.cacheKey) {
             SearchModels(graph: AppGraph.shared)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.search.uiState, models.actions.uiState) { state, actions in
+                let _ = StartupTrace.content(.search, loaded: true)
                 SearchContentView(
                     state: state,
                     nowPlaying: nowPlaying,
@@ -41,6 +43,7 @@ struct SearchView: View {
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
             }
         }
+        .onAppear { StartupTrace.mark(.search, .appear) }
         .navigationTitle(AppTab.search.title)
         .searchable(text: $query, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: "Artists, Albums, Songs")
         .onSubmit(of: .search) { models.search.onSearch() }

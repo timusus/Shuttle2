@@ -8,11 +8,13 @@ import SwiftUI
 /// Pull to refresh imports.
 struct AlbumListView: View {
     var body: some View {
+        let _ = StartupTrace.mark(.albums, .body)
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albums).cacheKey) {
             AlbumListModels(graph: AppGraph.shared)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.albums.uiState, models.actions.uiState) { state, actions in
+                let _ = StartupTrace.content(.albums, loaded: state.loadingState != .loading)
                 AlbumListContent(
                     state: state,
                     nowPlaying: nowPlaying,
@@ -34,6 +36,7 @@ struct AlbumListView: View {
             }
         }
         .refreshable { LibraryImport.refresh() }
+        .onAppear { StartupTrace.mark(.albums, .appear) }
         .navigationTitle(LibraryCategory.albums.title)
     }
 }

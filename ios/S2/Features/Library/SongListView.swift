@@ -6,11 +6,13 @@ import SwiftUI
 /// Shuffle is a toolbar button (#676). Pull to refresh imports.
 struct SongListView: View {
     var body: some View {
+        let _ = StartupTrace.mark(.songs, .body)
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.songs).cacheKey) {
             SongListModels(graph: AppGraph.shared)
         }
         LibraryNowPlayingReader { nowPlaying in
             Observing(models.songs.uiState, models.actions.uiState) { state, actions in
+                let _ = StartupTrace.content(.songs, loaded: state.loadingState != .loading)
                 SongListContent(
                     state: state,
                     nowPlaying: nowPlaying,
@@ -35,6 +37,7 @@ struct SongListView: View {
             }
         }
         .refreshable { LibraryImport.refresh() }
+        .onAppear { StartupTrace.mark(.songs, .appear) }
         .navigationTitle(LibraryCategory.songs.title)
     }
 }

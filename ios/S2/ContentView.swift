@@ -30,6 +30,7 @@ struct ContentView: View {
     }
 
     var body: some View {
+        let _ = StartupTrace.mark("contentViewBody")
         let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerSize.width)
         AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying)
             .environment(\.layoutTier, tier)
@@ -122,6 +123,8 @@ struct AppShell: View {
         }
         .accessibilityIdentifier(container.accessibilityIdentifier)
         .modifier(PlayerInspectorModifier(tier: tier, navigator: navigator))
+        // The first frame: the tab view (or split view) is going on screen
+        .onAppear { StartupTrace.mark("firstFrame") }
     }
 
     // MARK: - Compact (tab bar)

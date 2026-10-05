@@ -16,8 +16,10 @@ struct LibraryView: View {
     @AppStorage("library.category") private var storedCategory: String = ""
 
     var body: some View {
+        let _ = StartupTrace.mark(.library, .body)
         let models = ViewModelCache.shared.viewModel(AppTab.library.cacheKey) { LibraryRootModels(graph: AppGraph.shared) }
         Observing(models.library.uiState, models.empty.uiState, models.importState) { library, availability, importStatus in
+            let _ = StartupTrace.content(.library, loaded: LibraryRootAvailability(availability) != .loading)
             LibraryRootContent(
                 categories: library.tabs.compactMap(LibraryCategory.init),
                 availability: LibraryRootAvailability(availability),
@@ -30,6 +32,7 @@ struct LibraryView: View {
             // is always held; this also moves it past Loading.
             models.empty.onAccessChecked(granted: true, showRationale: false)
         }
+        .onAppear { StartupTrace.mark(.library, .appear) }
         .navigationTitle(AppTab.library.title)
         .inlineTitleUnderEdgeEffect()
     }

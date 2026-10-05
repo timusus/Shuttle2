@@ -18,11 +18,13 @@ struct HomeView: View {
     @State private var appeared = false
 
     var body: some View {
+        let _ = StartupTrace.mark(.home, .body)
         let models = ViewModelCache.shared.viewModel(AppTab.home.cacheKey) {
             HomeModels(graph: AppGraph.shared)
         }
         let intent = AppGraph.dependencies.playIntent
         Observing(models.home.uiState, models.actions.uiState, models.importState) { state, actions, importState in
+            let _ = StartupTrace.content(.home, loaded: !(state is HomeUiStateLoading))
             HomeContent(
                 state: state,
                 importStatus: ImportStatus(importState),
@@ -52,6 +54,7 @@ struct HomeView: View {
         .onChange(of: scenePhase) { _, phase in
             models.home.onVisibilityChanged(visible: appeared && phase != .background)
         }
+        .onAppear { StartupTrace.mark(.home, .appear) }
         .navigationTitle(AppTab.home.title)
     }
 

@@ -7,10 +7,12 @@ import SwiftUI
 /// or queues through the shared `MediaAction`s.
 struct GenreListView: View {
     var body: some View {
+        let _ = StartupTrace.mark(.genres, .body)
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.genres).cacheKey) {
             GenreListModels(graph: AppGraph.shared)
         }
         Observing(models.genres.uiState, models.covers.uiState, models.actions.uiState) { state, covers, actions in
+            let _ = StartupTrace.content(.genres, loaded: state.loadingState != .loading)
             GenreListContent(
                 state: state,
                 covers: covers,
@@ -31,6 +33,7 @@ struct GenreListView: View {
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
         .refreshable { LibraryImport.refresh() }
+        .onAppear { StartupTrace.mark(.genres, .appear) }
         .navigationTitle(LibraryCategory.genres.title)
     }
 }

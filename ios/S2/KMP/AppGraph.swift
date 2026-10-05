@@ -26,25 +26,26 @@ enum AppGraph {
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
-        let dependencies = IosAppDependencies()
-        dependencies.graph.telemetryStartup.start()
-        dependencies.playbackSystem.start()
-        dependencies.graph.recordPlays.start()
-        dependencies.graph.playbackScrobbling.start()
-        dependencies.graph.recordResumePoints.start()
-        dependencies.graph.playbackReporting.start()
-        dependencies.graph.favouriteSender.start()
-        dependencies.graph.librarySearchIndex.warmUp()
+        // Each step's time goes to the Startup log (`StartupTrace`, docs/performance/ios-startup.md)
+        let dependencies = StartupTrace.step("dependencies") { IosAppDependencies() }
+        StartupTrace.step("telemetryStartup") { dependencies.graph.telemetryStartup.start() }
+        StartupTrace.step("playbackSystem") { dependencies.playbackSystem.start() }
+        StartupTrace.step("recordPlays") { dependencies.graph.recordPlays.start() }
+        StartupTrace.step("playbackScrobbling") { dependencies.graph.playbackScrobbling.start() }
+        StartupTrace.step("recordResumePoints") { dependencies.graph.recordResumePoints.start() }
+        StartupTrace.step("playbackReporting") { dependencies.graph.playbackReporting.start() }
+        StartupTrace.step("favouriteSender") { dependencies.graph.favouriteSender.start() }
+        StartupTrace.step("searchIndexWarmUp") { dependencies.graph.librarySearchIndex.warmUp() }
         // Reattaches offline downloads' background session, so a download that finished while the app wasn't running
         // is delivered, and is there for a background relaunch's events (AppDelegate)
-        _ = dependencies.graph.offlineDownloads
+        StartupTrace.step("offlineDownloads") { _ = dependencies.graph.offlineDownloads }
         #if DEBUG
         if let override = UserDefaults.standard.string(forKey: DebugEntitlement.defaultsKey) {
             dependencies.graph.storeEntitlements.setDebugOverrideNamed(name: override)
         }
         #endif
-        dependencies.storeKit.start()
-        dependencies.paywallPresenter.start()
+        StartupTrace.step("storeKit") { dependencies.storeKit.start() }
+        StartupTrace.step("paywallPresenter") { dependencies.paywallPresenter.start() }
         _dependencies = dependencies
     }
 }
@@ -72,14 +73,19 @@ final class IosAppDependencies {
     let paywallPresenter: PaywallPresenter
 
     init() {
-        audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
-        localLibrary = LocalLibrary()
+        let audioPlayer = StartupTrace.step("audioEngine") { EngineAudioPlayer(engine: Self.makeEngine()) }
+        let localLibrary = LocalLibrary()
+        self.audioPlayer = audioPlayer
+        self.localLibrary = localLibrary
         let telemetryConfig = TelemetryConfig.main
         let telemetry = IosTelemetry(
             crashReporter: SentryCrashReporter(config: telemetryConfig),
             analytics: PostHogProductAnalytics(config: telemetryConfig)
         )
-        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry)
+        let graph = StartupTrace.step("createIosAppGraph") {
+            IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry)
+        }
+        self.graph = graph
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
         playIntent = PlayIntent(following: graph.playerController)
@@ -91,7 +97,10 @@ final class IosAppDependencies {
             nowPlaying: nowPlaying,
             makeEngine: { try? MusicPlaybackController() }
         )
-        playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: playIntent)
+        let intent = playIntent
+        playerBinding = StartupTrace.step("playerBinding") {
+            PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: intent)
+        }
         storeKit = StoreKitManager(entitlements: graph.storeEntitlements, analytics: graph.monetisationAnalytics)
         paywallPresenter = PaywallPresenter(requests: graph.observePaywallRequests, store: storeKit)
     }

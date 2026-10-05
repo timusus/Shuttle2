@@ -7,10 +7,12 @@ import SwiftUI
 /// `MediaAction`s, same as the other library lists. A Shuffle row heads the list while there are playlists to shuffle.
 struct PlaylistListView: View {
     var body: some View {
+        let _ = StartupTrace.mark(.playlists, .body)
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.playlists).cacheKey) {
             PlaylistListModels(graph: AppGraph.shared)
         }
         Observing(models.playlists.uiState, models.actions.uiState) { state, actions in
+            let _ = StartupTrace.content(.playlists, loaded: state.loadingState != .loading)
             PlaylistListContent(
                 state: state,
                 onPlay: { playlist in
@@ -33,6 +35,7 @@ struct PlaylistListView: View {
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
         .refreshable { LibraryImport.refresh() }
+        .onAppear { StartupTrace.mark(.playlists, .appear) }
         .navigationTitle(LibraryCategory.playlists.title)
     }
 }
