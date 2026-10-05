@@ -83,6 +83,23 @@ extension View {
                     .frame(width: PlayerSubSheetStyle.popoverSize.width, height: PlayerSubSheetStyle.popoverSize.height)
             }
     }
+
+    /// `playerSheet` for an optional item: presented while `item` is non-nil, and clearing it dismisses.
+    func playerSheet<Item: Identifiable, Content: View>(
+        item: Binding<Item?>,
+        tier: LayoutTier,
+        @ViewBuilder content: @escaping (Item) -> Content
+    ) -> some View {
+        let isPresented = Binding<Bool>(
+            get: { item.wrappedValue != nil },
+            set: { if !$0 { item.wrappedValue = nil } }
+        )
+        return playerSheet(isPresented: isPresented, tier: tier) {
+            if let value = item.wrappedValue {
+                content(value)
+            }
+        }
+    }
 }
 
 private extension Binding<Bool> {

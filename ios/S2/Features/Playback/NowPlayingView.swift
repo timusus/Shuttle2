@@ -133,7 +133,6 @@ struct NowPlayingContent: View {
         // On a player surface the artwork tint is the accent.
         .tint(playerTint)
         .playerNotice(showQueue ? .constant(nil) : notice)
-        .songInfoSheet($songInfo)
         .alert("New Playlist", isPresented: $showNewPlaylist) {
             TextField("Playlist Name", text: $newPlaylistName)
             Button("Cancel", role: .cancel) { newPlaylistName = "" }
@@ -479,6 +478,10 @@ struct NowPlayingContent: View {
         }
         .accessibilityLabel("More")
         .accessibilityIdentifier("nowPlaying.more")
+        // Song Info opens from the menu, so the iPad popover anchors to this button.
+        .playerSheet(item: $songInfo, tier: tier) { target in
+            SongInfoSheet(songID: target.songID)
+        }
     }
 
     /// Opens the Audio sheet: the playback speed, and the Equalizer & Playback Settings screen it pushes. Tinted while
