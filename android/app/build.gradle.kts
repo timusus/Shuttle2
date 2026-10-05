@@ -29,7 +29,6 @@ android {
         versionName = versionName()
         versionCode = versionCode()
         vectorDrawables.useSupportLibrary = true
-        testInstrumentationRunner = "com.simplecityapps.shuttle.CustomTestRunner"
         ndk {
             debugSymbolLevel = "FULL"
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
@@ -105,22 +104,6 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
-        managedDevices {
-            localDevices {
-                create("pixel6Api34Atd") {
-                    device = "Pixel 6"
-                    apiLevel = 34
-                    systemImageSource = "aosp-atd"
-                }
-            }
-            groups {
-                create("smoke") {
-                    targetDevices.add(localDevices["pixel6Api34Atd"])
-                }
-            }
-        }
-        execution = "ANDROIDX_TEST_ORCHESTRATOR"
-        animationsDisabled = true
     }
 
     buildFeatures {
@@ -134,7 +117,6 @@ android {
 
         val composeBom = platform(libs.androidx.compose.bom)
         implementation(composeBom)
-        androidTestImplementation(composeBom)
         implementation(libs.androidx.activity.ktx)
         implementation(libs.androidx.activity.compose)
         testImplementation(libs.roborazzi)
@@ -268,17 +250,7 @@ android {
         testImplementation(libs.androidx.glance.appwidget.testing)
         testImplementation("androidx.compose.ui:ui-test-junit4")
         debugImplementation("androidx.compose.ui:ui-test-manifest")
-        androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-        androidTestImplementation(libs.androidx.runner)
-        androidTestImplementation(libs.androidx.rules)
-        androidTestImplementation(libs.androidx.core.ktx)
-        // Declared directly, not just through ui-test-junit4, or its error_prone_annotations 2.30.0 clashes with the
-        // app runtime classpath's strict 2.28.0 and the androidTest classpath fails to resolve
-        androidTestImplementation(libs.androidx.espresso.core)
-        androidTestImplementation(libs.androidx.junit)
-        androidTestImplementation(libs.androidx.ui.test.junit4)
         debugImplementation(libs.androidx.ui.test.manifest)
-        androidTestUtil("androidx.test:orchestrator:1.6.1")
 
         testImplementation(libs.junit)
 

@@ -133,10 +133,8 @@ Run all unit tests:
 ./gradlew testDebugUnitTest
 ```
 
-Run GMD instrumented tests:
-```bash
-./gradlew :android:app:pixel6Api34AtdDebugAndroidTest
-```
+(This prompt originally also ran the Gradle Managed Device instrumented suite; that suite was later
+removed in favour of the Maestro flows.)
 
 Run lint:
 ```bash

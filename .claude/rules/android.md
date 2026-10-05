@@ -25,11 +25,12 @@ the root `CLAUDE.md`'s Testing section — this is about *which* test type a cha
 |------|----------|-------------|
 | Unit | `src/test/` | ViewModels, use cases, repositories, mappers, business logic |
 | Compose characterisation | `src/test/` (Robolectric) | Compose screens and their ViewModels |
-| Instrumented | `src/androidTest/` | Platform integration only — MediaSession/PlaybackService, Android Auto, SAF document access, Chromecast |
+| Device (Maestro) | `support/maestro/`, `support/scripts/checks/` | Platform integration only — MediaSession/PlaybackService, Android Auto, SAF document access, Chromecast |
 
 Which layer each kind of check belongs in, the measured landing baseline and the speed levers: `docs/testing/strategy.md`.
 
-**The rule for androidTest:** if you're adding one, explain why it can't run on JVM.
+There are no instrumented (`src/androidTest`) tests: the old smoke suite was removed because the Maestro
+flows cover the same paths. **The rule for a device check:** if you're adding one, explain why it can't run on JVM.
 Valid: `PlaybackService`/`MediaBrowserServiceCompat` behaviour, real `AudioManager` focus
 interaction, SAF tree access. Invalid: "it's a UI change" (Compose screens are Robolectric-testable
 via the Robot pattern) or "I want to see the real app".

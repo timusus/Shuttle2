@@ -23,7 +23,7 @@ Classify each changed file:
 | Compose screens/composables under `android/app/src/main/.../ui/screens/` | **UI change** — likely needs a characterisation test |
 | ViewModel, ViewState for a Compose screen | **Behavior change** — needs a characterisation test |
 | `mediaprovider/`, `data/`, use cases | **Logic change** — unit test, not this skill |
-| DI modules, navigation wiring | **Wiring change** — verify manually or via instrumented tests |
+| DI modules, navigation wiring | **Wiring change** — verify manually or via a Maestro flow |
 
 If no Compose UI files changed, stop — say "No UI changes detected, characterisation tests
 not needed."

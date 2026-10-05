@@ -17,7 +17,7 @@ Delegate when **both** are true:
 2. You only need the conclusion — not the raw text — to continue.
 
 Concretely in this project: `./gradlew testDebugUnitTest` sweeps across modules,
-`./gradlew :android:app:smokeGroupDebugAndroidTest` (instrumented/emulator run),
+`support/scripts/emu-verify.sh --suite` (emulator run),
 `support/scripts/lint` across the whole tree, and reading anything under `build/reports/`.
 `support/scripts/unit-test` already condenses its Gradle output through `build-brief` when it's
 on PATH (falling back to plain `./gradlew`); a raw `./gradlew` invocation still benefits from

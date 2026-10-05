@@ -59,16 +59,11 @@ support/scripts/longjob.sh wait full-verify
 **STOP if it fails** — it files (or comments on) a `bug` issue naming the step; do not tag. Exit 3 means an
 infrastructure problem (lock, worktree, `local.properties`), not a test failure: fix it and rerun.
 
-### 3. Pre-flight: Instrumented tests (skip by default)
+### 3. Pre-flight: Device checks (skip by default)
 
-Skip instrumented tests unless the user explicitly asks to run them.
-
-If yes:
-```bash
-./gradlew :android:app:smokeGroupDebugAndroidTest
-```
-
-If no device is available or user skips, note it and continue.
+There are no instrumented tests; on-device coverage is the Maestro flows. Skip them unless the user
+explicitly asks, then run the device smoke set with `support/scripts/emu-verify.sh --suite` (see
+the `emulator-check` skill). If no emulator lane is free or the user skips, note it and continue.
 
 ### 4. Calculate version code
 
