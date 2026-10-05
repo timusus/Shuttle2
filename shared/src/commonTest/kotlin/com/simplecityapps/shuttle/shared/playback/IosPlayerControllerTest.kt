@@ -579,7 +579,7 @@ class IosPlayerControllerTest {
     }
 
     @Test
-    fun `a refused next song opens the paywall once - when it becomes current, not while the song before it plays`() = test { controller ->
+    fun `a refused next song opens the paywall once - when it becomes current and not while the song before it plays`() = test { controller ->
         val gate = ServerAccessGate(MutableStateFlow(Entitlement.Free(trialUsed = true)), startTrial = null)
         val streams = GatedServerStreams(gate)
         serverAccess = streams::access
