@@ -144,6 +144,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
     /// Whether it plays over HTTP, for the start timing.
     var isStreamed: Bool { !url.isFileURL }
 
+    /// Which server it streams from and whether that's a transcode: nil for a file.
+    var streamOrigin: StartupTiming.Origin? { isStreamed ? StartupTiming.Origin(url: url) : nil }
+
     /// Seconds of the track fetched ahead of the decoder and not yet read, at its average bitrate: nil for a file, or
     /// a stream whose length or duration isn't known. For the buffer health line (#897).
     var networkBufferedSeconds: Double? {

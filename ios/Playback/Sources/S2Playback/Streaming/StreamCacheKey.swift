@@ -14,6 +14,10 @@ enum StreamCacheKey {
         "x-plex-token", "x-plex-session-identifier",
     ]
 
+    /// Plex's bare `session` (a fresh UUID per transcode start) is too generic a name to drop everywhere, so it goes
+    /// only from Plex transcode URLs.
+    private static let plexTranscodePathMarker = "/transcode/universal/"
+
     static func key(for url: URL) -> String {
         stableURL(for: url).absoluteString
     }
@@ -22,7 +26,11 @@ enum StreamCacheKey {
     static func stableURL(for url: URL) -> URL {
         guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let items = components.percentEncodedQueryItems else { return url }
-        let kept = items.filter { !volatileParameters.contains(($0.name.removingPercentEncoding ?? $0.name).lowercased()) }
+        let isPlexTranscode = components.path.contains(plexTranscodePathMarker)
+        let kept = items.filter {
+            let name = ($0.name.removingPercentEncoding ?? $0.name).lowercased()
+            return !volatileParameters.contains(name) && !(isPlexTranscode && name == "session")
+        }
         guard kept.count != items.count else { return url }
         components.percentEncodedQueryItems = kept.isEmpty ? nil : kept
         return components.url ?? url

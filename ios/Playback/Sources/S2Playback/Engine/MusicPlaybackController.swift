@@ -451,7 +451,8 @@ public final class MusicPlaybackController {
                     start: startMs > 0 ? .resume(seconds: Double(startMs) / 1000) : .fresh,
                     open: slot.opened || slot.preparing != nil ? .preopened : .opened,
                     playRequestedAt: requestedAt
-                )
+                ),
+                of: slot
             )
             setState(.loading)
             openIfNeeded(slot)
@@ -1311,9 +1312,10 @@ public final class MusicPlaybackController {
         (slot.source as? FFmpegTrackSource)?.isStreamed == true ? .streamed : .file
     }
 
-    private func beginStartTiming(_ timing: StartupTiming) {
+    private func beginStartTiming(_ timing: StartupTiming, of slot: Slot) {
         startTimingSerial += 1
         startTiming = timing
+        startTiming?.origin = (slot.source as? FFmpegTrackSource)?.streamOrigin
     }
 
     /// A start that won't reach the ear (paused, refused, torn down) has no line.
@@ -1339,7 +1341,8 @@ public final class MusicPlaybackController {
                 start: ms > 0 ? .resume(seconds: Double(ms) / 1000) : .fresh,
                 open: .preopened,
                 playRequestedAt: requestedAt
-            )
+            ),
+            of: current
         )
     }
 

@@ -145,3 +145,26 @@ final class StartupTimingTests: XCTestCase {
         XCTAssertTrue(line.contains("render=16ms"), line)
     }
 }
+
+/// ``StartupTiming/Origin``: provider and transcode read off a stream URL for the `ttfa` line (#822).
+final class StartupTimingOriginTests: XCTestCase {
+    private func origin(_ url: String) -> StartupTiming.Origin { StartupTiming.Origin(url: URL(string: url)!) }
+
+    func testPlexTranscodeAndDirectPlay() {
+        XCTAssertEqual(
+            origin("https://plex.local/music/:/transcode/universal/start.m3u8?session=u"),
+            .init(provider: .plex, transcode: .yes)
+        )
+        XCTAssertEqual(
+            origin("https://plex.local/library/parts/1/2/file.flac?X-Plex-Token=t"),
+            .init(provider: .plex, transcode: .no)
+        )
+    }
+
+    func testJellyfinAndEmbyUniversalAreServerDecided() {
+        XCTAssertEqual(origin("https://jf.example.com/Audio/a/universal?ApiKey=t"), .init(provider: .jellyfin, transcode: .server))
+        XCTAssertEqual(origin("http://emby.local/emby/Audio/4/universal?api_key=t"), .init(provider: .emby, transcode: .server))
+        XCTAssertEqual(origin("http://emby.local/emby/Audio/4/stream?static=true&api_key=t"), .init(provider: .emby, transcode: .no))
+        XCTAssertEqual(origin("https://jf.example.com/Audio/a/stream?static=true&ApiKey=t"), .init(provider: .jellyfin, transcode: .no))
+    }
+}

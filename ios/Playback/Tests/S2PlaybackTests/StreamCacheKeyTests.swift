@@ -61,6 +61,20 @@ final class StreamCacheKeyTests: XCTestCase {
         )
     }
 
+    func testAPlexTranscodesBareSessionIsDroppedButNotElsewhere() {
+        func transcode(_ session: String) -> URL {
+            URL(string: "https://plex.local/music/:/transcode/universal/start?path=%2Flibrary%2Fmetadata%2F9&offset=30"
+                + "&session=\(session)&X-Plex-Session-Identifier=s2-9&X-Plex-Token=t")!
+        }
+        XCTAssertEqual(StreamCacheKey.key(for: transcode("u1")), StreamCacheKey.key(for: transcode("u2")))
+        XCTAssertEqual(
+            StreamCacheKey.key(for: transcode("u1")),
+            "https://plex.local/music/:/transcode/universal/start?path=%2Flibrary%2Fmetadata%2F9&offset=30"
+        )
+        let other = URL(string: "https://example.com/stream?session=a&id=1")!
+        XCTAssertEqual(StreamCacheKey.key(for: other), other.absoluteString)
+    }
+
     func testSessionIdsAndTokensAreDroppedWhateverTheirCase() {
         let url = URL(string: "http://jf.local:8096/Audio/1/universal?UserId=u&PLAYSESSIONID=s&AudioCodec=mp3&APIKEY=t"
             + "&Api_Key=t&X-Emby-Token=t&x-plex-token=t&X-MediaBrowser-Token=t&StartTimeTicks=10")!

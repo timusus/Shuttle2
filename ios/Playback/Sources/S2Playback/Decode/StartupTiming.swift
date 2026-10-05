@@ -118,7 +118,46 @@ struct StartupTiming: Equatable {
         let bytes: Int64
     }
 
+    /// Which server a stream came from and whether it was a transcode, read off its URL (#822).
+    struct Origin: Equatable {
+        enum Provider: String, Equatable {
+            case jellyfin, emby, plex, other
+        }
+
+        /// What the server does with the file. Jellyfin and Emby's universal endpoint decides on the server, so
+        /// all that's known there is `server`.
+        enum Transcode: String, Equatable {
+            case yes, no, server
+        }
+
+        let provider: Provider
+        let transcode: Transcode
+
+        init(provider: Provider, transcode: Transcode) {
+            self.provider = provider
+            self.transcode = transcode
+        }
+
+        init(url: URL) {
+            let path = url.path
+            let query = url.query?.lowercased() ?? ""
+            if path.contains("/transcode/universal/") {
+                self.init(provider: .plex, transcode: .yes)
+            } else if path.contains("/library/parts/") || query.contains("x-plex-") {
+                self.init(provider: .plex, transcode: .no)
+            } else if path.hasPrefix("/emby/") || query.contains("api_key=") {
+                self.init(provider: .emby, transcode: path.hasSuffix("/universal") ? .server : .no)
+            } else if path.contains("/Audio/") {
+                self.init(provider: .jellyfin, transcode: path.hasSuffix("/universal") ? .server : .no)
+            } else {
+                self.init(provider: .other, transcode: .no)
+            }
+        }
+    }
+
     let source: Source
+    /// Set for a streamed start whose source knows its URL.
+    var origin: Origin?
     let start: Start
     let open: Open
     let playRequestedAt: TimeInterval
@@ -231,6 +270,8 @@ struct StartupTiming: Equatable {
         var fields: [String] = [
             "engine: ttfa total=\(ms(totalMs))",
             "source=\(source.rawValue)",
+            "provider=\(origin.map { $0.provider.rawValue } ?? "local")",
+            "transcode=\(origin.map { $0.transcode.rawValue } ?? "no")",
             "start=\(startDescription)",
             "open=\(open.rawValue)",
             "play-after-ready=\(ms(playAfterReadyMs))",
