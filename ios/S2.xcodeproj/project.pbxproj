@@ -411,7 +411,6 @@
 		F0476A365E435C171FC10075 /* PlaybackIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackIntents.swift; sourceTree = "<group>"; };
 		F2E9C9B867D2C9D540A8AF3C /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
 		F43278A29F0712F2BE55C8E6 /* SystemIntentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemIntentsTests.swift; sourceTree = "<group>"; };
-		F49E2AC8FA89C075E494C171 /* S2Debug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = S2Debug.entitlements; sourceTree = "<group>"; };
 		F514B51790ECF0E4C03C9DCE /* S2.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = S2.xcconfig; sourceTree = "<group>"; };
 		F57C06B74E49F7F95F50A62E /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		F6D121E3E347AC1642C1D039 /* LibraryLetterIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryLetterIndex.swift; sourceTree = "<group>"; };
@@ -901,7 +900,6 @@
 				94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */,
 				802E9F83EAD3F63E086B199B /* S2.entitlements */,
 				20E688A48CB9963C2F8837D2 /* S2App.swift */,
-				F49E2AC8FA89C075E494C171 /* S2Debug.entitlements */,
 				FCBFC3688D06BC30635B00FA /* Settings.bundle */,
 				ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */,
 				B802D8A89AD0B7B3EF631EF3 /* Artwork */,
@@ -1458,7 +1456,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = S2/S2Debug.entitlements;
+				CODE_SIGN_ENTITLEMENTS = S2/S2.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
