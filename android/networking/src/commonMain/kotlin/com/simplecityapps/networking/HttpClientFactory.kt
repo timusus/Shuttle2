@@ -1,5 +1,6 @@
 package com.simplecityapps.networking
 
+import com.simplecityapps.shuttle.server.ServerConnectionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -24,17 +25,23 @@ val S2Json: Json = Json {
 
 /**
  * The platform's HTTP client: OkHttp on Android, backed by [preconfiguredClient] when it's an `OkHttpClient` (the
- * app's proxy-aware, logged client), and Darwin on iOS.
+ * app's proxy-aware, logged client), and Darwin on iOS. On iOS it applies [serverConnections]: each server's custom
+ * headers and trusted certificate (#894). On Android the app's `OkHttpClient` already does, for every client built
+ * from it, so it's not passed there.
  */
-expect fun createPlatformHttpClient(preconfiguredClient: Any? = null): HttpClient
+expect fun createPlatformHttpClient(
+    preconfiguredClient: Any? = null,
+    serverConnections: ServerConnectionStore? = null
+): HttpClient
 
 /** An [HttpClient] on the platform's engine, decoding JSON with [json] and reporting connectivity with [connectivity]. */
 fun createHttpClient(
     preconfiguredClient: Any? = null,
     json: Json = S2Json,
     connectivity: NetworkConnectivity? = null,
+    serverConnections: ServerConnectionStore? = null,
     configure: HttpClientConfig<*>.() -> Unit = {}
-): HttpClient = createPlatformHttpClient(preconfiguredClient).config {
+): HttpClient = createPlatformHttpClient(preconfiguredClient, serverConnections).config {
     installDefaults(json, connectivity)
     configure()
 }

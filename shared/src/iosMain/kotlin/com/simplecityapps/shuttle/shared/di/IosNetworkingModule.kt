@@ -10,6 +10,7 @@ import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.provider.plex.http.sendPlexClientHeaders
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.platform.AppVersion
+import com.simplecityapps.shuttle.server.ServerConnectionStore
 import com.simplecityapps.shuttle.shared.platform.NetworkPathMonitor
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -23,7 +24,7 @@ import platform.UIKit.UIDevice
 
 /**
  * What the Jellyfin, Emby, Plex and Subsonic providers need from the platform (docs/architecture/ios-port/phase-3-network.md): a
- * Darwin [HttpClient] each and, for Jellyfin and Emby, a Keychain-backed [ServerCredentialStore] (Plex's container
+ * Darwin [HttpClient] each, sending each server's custom headers and trusting its pinned certificate (#894), and, for Jellyfin and Emby, a Keychain-backed [ServerCredentialStore] (Plex's container
  * makes its own, as Subsonic's does), under the names their containers ask for, and the [ClientIdentity] the servers list this device under.
  */
 @ContributesTo(AppScope::class)
@@ -39,7 +40,10 @@ abstract class IosNetworkingModule {
         @Provides
         @SingleIn(AppScope::class)
         @Named("JellyfinHttpClient")
-        fun provideJellyfinHttpClient(connectivity: NetworkConnectivity): HttpClient = createHttpClient(connectivity = connectivity)
+        fun provideJellyfinHttpClient(
+            connectivity: NetworkConnectivity,
+            serverConnections: ServerConnectionStore
+        ): HttpClient = createHttpClient(connectivity = connectivity, serverConnections = serverConnections)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -49,7 +53,10 @@ abstract class IosNetworkingModule {
         @Provides
         @SingleIn(AppScope::class)
         @Named("EmbyHttpClient")
-        fun provideEmbyHttpClient(connectivity: NetworkConnectivity): HttpClient = createHttpClient(connectivity = connectivity)
+        fun provideEmbyHttpClient(
+            connectivity: NetworkConnectivity,
+            serverConnections: ServerConnectionStore
+        ): HttpClient = createHttpClient(connectivity = connectivity, serverConnections = serverConnections)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -62,15 +69,19 @@ abstract class IosNetworkingModule {
         @Named("PlexHttpClient")
         fun providePlexHttpClient(
             connectivity: NetworkConnectivity,
-            clientIdentity: ClientIdentity
-        ): HttpClient = createHttpClient(connectivity = connectivity) {
+            clientIdentity: ClientIdentity,
+            serverConnections: ServerConnectionStore
+        ): HttpClient = createHttpClient(connectivity = connectivity, serverConnections = serverConnections) {
             sendPlexClientHeaders(plexClientHeaders(clientIdentity))
         }
 
         @Provides
         @SingleIn(AppScope::class)
         @Named("SubsonicHttpClient")
-        fun provideSubsonicHttpClient(connectivity: NetworkConnectivity): HttpClient = createHttpClient(connectivity = connectivity)
+        fun provideSubsonicHttpClient(
+            connectivity: NetworkConnectivity,
+            serverConnections: ServerConnectionStore
+        ): HttpClient = createHttpClient(connectivity = connectivity, serverConnections = serverConnections)
 
         /** The client name Android sends too, so a server groups both apps' sessions under S2. */
         @Provides

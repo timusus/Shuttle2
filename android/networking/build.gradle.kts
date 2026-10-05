@@ -24,6 +24,7 @@ kotlin {
             api(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(project(":android:core"))
         }
 
         androidMain.dependencies {
