@@ -358,6 +358,163 @@ final class CachedRunTests: XCTestCase {
         XCTAssertNotEqual(CachedRunStore.sharedDirectory, CachedRunStore.legacyDirectory)
     }
 
+    // MARK: - (g2) When eviction runs, and what it spares
+
+    /// A store whose clock and eviction queue the test drives: `passes` are queued, run by `drain()`.
+    private final class Harness {
+        var clock = Date(timeIntervalSince1970: 1_000_000)
+        var passes: [() -> Void] = []
+        let store: CachedRunStore
+
+        init(directory: URL, budget: Int64) {
+            var clockBox: (() -> Date)?
+            var queueBox: ((@escaping () -> Void) -> Void)?
+            store = CachedRunStore(
+                directory: directory,
+                budget: budget,
+                now: { clockBox?() ?? Date() },
+                evictionQueue: { queueBox?($0) }
+            )
+            clockBox = { [unowned self] in clock }
+            queueBox = { [unowned self] work in passes.append(work) }
+        }
+
+        func drain() {
+            let queued = passes
+            passes = []
+            queued.forEach { $0() }
+        }
+    }
+
+    private func fill(_ store: CachedRunStore, _ key: String, bytes: Int) {
+        store.replace(key, startingAt: 0, totalLength: nil)
+        store.append(key, Data(repeating: 7, count: bytes))
+    }
+
+    func testReplaceSchedulesAnEvictionPassThatSparesTheRunJustBegun() {
+        let harness = Harness(directory: storeDirectory, budget: 150)
+        let store = harness.store
+        fill(store, "old", bytes: 100)
+        harness.drain()
+        harness.clock.addTimeInterval(120)
+        // The new run is the newest by clock but the pass must not rely on that: exclude it by name.
+        fill(store, "new", bytes: 100)
+        XCTAssertEqual(harness.passes.count, 1)
+        harness.drain()
+        XCTAssertNil(store.run(for: "old"))
+        XCTAssertEqual(store.run(for: "new")?.length, 100)
+
+        // Even over budget on its own, the run just begun survives its own pass.
+        harness.clock.addTimeInterval(120)
+        store.replace("huge", startingAt: 0, totalLength: nil)
+        store.append("huge", Data(repeating: 1, count: 400))
+        harness.drain()
+        XCTAssertEqual(store.run(for: "huge")?.length, 400)
+        XCTAssertNil(store.run(for: "new"))
+    }
+
+    func testReplaceSchedulesAtMostOnePassAMinute() {
+        let harness = Harness(directory: storeDirectory, budget: 1000)
+        let store = harness.store
+        fill(store, "a", bytes: 10)
+        fill(store, "b", bytes: 10)
+        harness.clock.addTimeInterval(59)
+        fill(store, "c", bytes: 10)
+        XCTAssertEqual(harness.passes.count, 1)
+        harness.clock.addTimeInterval(2)
+        fill(store, "d", bytes: 10)
+        XCTAssertEqual(harness.passes.count, 2)
+    }
+
+    func testARunASourceHasOpenIsNeverEvictedAndIsFreeAgainOnRelease() {
+        let harness = Harness(directory: storeDirectory, budget: 100)
+        let store = harness.store
+        fill(store, "playing", bytes: 200)
+        store.retain("playing")
+        harness.clock.addTimeInterval(500)
+        fill(store, "next", bytes: 50)
+        harness.clock.addTimeInterval(500)
+        fill(store, "later", bytes: 50)
+        harness.drain()
+        XCTAssertEqual(store.run(for: "playing")?.length, 200)
+        XCTAssertNil(store.run(for: "next"))
+
+        store.release("playing")
+        XCTAssertGreaterThanOrEqual(store.evict(toBudget: 0, excluding: nil), 1)
+        XCTAssertNil(store.run(for: "playing"))
+    }
+
+    func testStartupEvictionRunsOnItsQueueAndSparesActiveRuns() {
+        let harness = Harness(directory: storeDirectory, budget: 100)
+        let store = harness.store
+        fill(store, "big", bytes: 300)
+        store.retain("big")
+        harness.drain()
+        fill(store, "idle", bytes: 50)
+        XCTAssertTrue(harness.passes.isEmpty, "throttled: no second pass this minute")
+        XCTAssertEqual(store.run(for: "big")?.length, 300)
+
+        store.scheduleStartupEviction()
+        XCTAssertEqual(harness.passes.count, 1)
+        XCTAssertNotNil(store.run(for: "idle"), "nothing runs until the queue does")
+        harness.drain()
+        XCTAssertNil(store.run(for: "idle"))
+        XCTAssertEqual(store.run(for: "big")?.length, 300)
+    }
+
+    func testReadsAndAppendsRefreshTheAccessTimeInMemory() {
+        let harness = Harness(directory: storeDirectory, budget: 150)
+        let store = harness.store
+        fill(store, "a", bytes: 100)
+        harness.clock.addTimeInterval(10)
+        fill(store, "b", bytes: 100)
+        harness.clock.addTimeInterval(10)
+        // "a" is older by its sidecar, but a read makes it the newer.
+        _ = store.read("a", at: 0, maxLength: 10)
+        XCTAssertEqual(store.evict(excluding: nil), 1)
+        XCTAssertNotNil(store.run(for: "a"))
+        XCTAssertNil(store.run(for: "b"))
+    }
+
+    func testAnUndecodableSidecarSweepsItsRunToo() throws {
+        store.replace("good", startingAt: 0, totalLength: nil)
+        store.append("good", Data(repeating: 1, count: 10))
+        let stem = String(repeating: "ab", count: 32)
+        let run = storeDirectory.appendingPathComponent("\(stem).run")
+        let sidecar = storeDirectory.appendingPathComponent("\(stem).json")
+        try Data(repeating: 9, count: 50).write(to: run)
+        try Data("not json".utf8).write(to: sidecar)
+
+        store.evict(excluding: nil)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: run.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: sidecar.path))
+        XCTAssertEqual(store.run(for: "good")?.length, 10)
+    }
+
+    func testTheStoreRecreatesItsDirectoryAfterThePlatformPurgesCaches() throws {
+        store.replace("one", startingAt: 0, totalLength: nil)
+        try FileManager.default.removeItem(at: storeDirectory)
+
+        store.replace("two", startingAt: 0, totalLength: nil)
+        XCTAssertTrue(store.append("two", Data(repeating: 3, count: 20)))
+        XCTAssertEqual(store.run(for: "two")?.length, 20)
+        XCTAssertNil(store.run(for: "one"))
+    }
+
+    func testTheResolvedURLCacheRecreatesItsDirectoryOnWrite() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("resolved-purge-\(UUID().uuidString)", isDirectory: true)
+        let file = directory.appendingPathComponent("resolved-urls.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let cache = ResolvedURLCache(fileURL: file)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.path))
+
+        cache.record(original: URL(string: "https://a.example/x.mp3")!, resolved: URL(string: "https://cdn.example/x.mp3")!)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: file.path))
+    }
+
     // MARK: - (h) A replace drops the old bytes before it records the new start
 
     func testReplaceNeverLeavesOldBytesUnderANewStart() throws {

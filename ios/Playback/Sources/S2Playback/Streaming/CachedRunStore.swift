@@ -61,12 +61,18 @@ public final class CachedRunStore {
     public static let shared: CachedRunStore = {
         let store = CachedRunStore(directory: sharedDirectory)
         // Off the caller's thread: the first play must not wait on a directory walk or a delete.
-        DispatchQueue.global(qos: .utility).async {
-            removeLegacyDirectory(legacyDirectory)
-            store.evict(excluding: nil)
-        }
+        defaultEvictionQueue { removeLegacyDirectory(legacyDirectory) }
+        store.scheduleStartupEviction()
         return store
     }()
+
+    /// Where eviction passes run by default: a utility-priority global queue.
+    public static let defaultEvictionQueue: (@escaping () -> Void) -> Void = { work in
+        DispatchQueue.global(qos: .utility).async(execute: work)
+    }
+
+    /// How often a use is written back to the sidecar; in between it is only remembered in memory.
+    static let touchPersistInterval: TimeInterval = 60
 
     /// Delete the pre-`Caches` directory, once: a no-op when it is already gone.
     static func removeLegacyDirectory(_ legacy: URL) {
@@ -75,16 +81,70 @@ public final class CachedRunStore {
     }
 
     private let directory: URL
+    private let budget: Int64
+    private let now: () -> Date
+    private let evictionQueue: (@escaping () -> Void) -> Void
     private let lock = NSLock()
     private var lastScheduledEviction: Date = .distantPast
+    /// Keys a byte source has open, with how many: never evicted while held.
+    private var activeKeys: [String: Int] = [:]
+    /// The latest use of each key since launch, ahead of what the sidecar says.
+    private var usedAt: [String: TimeInterval] = [:]
+    /// When each key's use was last written to its sidecar.
+    private var persistedAt: [String: TimeInterval] = [:]
 
-    public init(directory: URL) {
+    /// - Parameters:
+    ///   - budget: what eviction trims to.
+    ///   - now: the clock the eviction throttle and use times are measured on. Injectable for tests.
+    ///   - evictionQueue: runs an eviction pass; the default is a utility global queue. Injectable for tests.
+    public init(
+        directory: URL,
+        budget: Int64 = CachedRunStore.budgetBytes,
+        now: @escaping () -> Date = Date.init,
+        evictionQueue: @escaping (@escaping () -> Void) -> Void = CachedRunStore.defaultEvictionQueue
+    ) {
         self.directory = directory
+        self.budget = budget
+        self.now = now
+        self.evictionQueue = evictionQueue
+        ensureDirectory()
+    }
+
+    /// Create the directory (and exclude it from backup) when missing: the OS may purge `Caches`
+    /// while the app runs.
+    private func ensureDirectory() {
+        guard !FileManager.default.fileExists(atPath: directory.path) else { return }
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
         var dir = directory
         try? dir.setResourceValues(values)
+    }
+
+    // MARK: - Active runs
+
+    /// A byte source has the run open: it is not evicted until a matching ``release(_:)``.
+    public func retain(_ key: String) {
+        lock.lock(); defer { lock.unlock() }
+        activeKeys[key, default: 0] += 1
+    }
+
+    public func release(_ key: String) {
+        lock.lock(); defer { lock.unlock() }
+        guard let count = activeKeys[key] else { return }
+        if count <= 1 { activeKeys[key] = nil } else { activeKeys[key] = count - 1 }
+    }
+
+    /// Note a use: in memory always, in the sidecar at most once a minute.
+    private func noteUseLocked(_ key: String) {
+        let time = now().timeIntervalSince1970
+        usedAt[key] = time
+        guard time - (persistedAt[key] ?? 0) >= Self.touchPersistInterval else { return }
+        persistedAt[key] = time
+        if var sidecar = readSidecarLocked(key) {
+            sidecar.touched = time
+            writeSidecarLocked(key, sidecar)
+        }
     }
 
     // MARK: - Lookup
@@ -104,6 +164,7 @@ public final class CachedRunStore {
     public func read(_ key: String, at offset: Int64, maxLength: Int) -> Data? {
         lock.lock(); defer { lock.unlock() }
         guard let run = runLocked(key), offset >= run.start, offset < run.end, maxLength > 0 else { return nil }
+        noteUseLocked(key)
         guard let handle = FileHandle(forReadingAtPath: dataURL(key).path) else { return nil }
         defer { try? handle.close() }
         do {
@@ -128,19 +189,31 @@ public final class CachedRunStore {
         // the old run, or a sidecar over no bytes (a zero-length run eviction will get to) — never
         // old bytes under a new start, and never a data file eviction cannot see.
         try? FileManager.default.removeItem(at: dataURL(key))
-        writeSidecarLocked(key, Sidecar(start: offset, totalLength: total, touched: Date().timeIntervalSince1970, tail: tail))
+        let time = now().timeIntervalSince1970
+        usedAt[key] = time
+        persistedAt[key] = time
+        writeSidecarLocked(key, Sidecar(start: offset, totalLength: total, touched: time, tail: tail))
         FileManager.default.createFile(atPath: dataURL(key).path, contents: nil)
         engineLog.info("bytes: run replace key=\(Self.fileName(key), privacy: .public) at=\(offset) had=\(previous?.length ?? -1)")
         scheduleEvictionLocked(excluding: key)
     }
 
     /// A new run is the moment the store grows: trim in the background, at most once a minute,
-    /// never touching the run just begun.
+    /// never touching the run just begun (or any run a byte source has open).
     private func scheduleEvictionLocked(excluding key: String) {
-        guard Date().timeIntervalSince(lastScheduledEviction) > 60 else { return }
-        lastScheduledEviction = Date()
-        DispatchQueue.global(qos: .utility).async { [self] in
-            evict(excluding: key)
+        let time = now()
+        guard time.timeIntervalSince(lastScheduledEviction) > 60 else { return }
+        lastScheduledEviction = time
+        evictionQueue { [self] in
+            evict(toBudget: budget, excluding: key)
+        }
+    }
+
+    /// The first-access pass: trim once, in the background, with no run singled out (the active
+    /// ones are still protected). Called when the shared store is created.
+    func scheduleStartupEviction() {
+        evictionQueue { [self] in
+            evict(toBudget: budget, excluding: nil)
         }
     }
 
@@ -153,6 +226,7 @@ public final class CachedRunStore {
         do {
             try handle.seekToEnd()
             try handle.write(contentsOf: data)
+            noteUseLocked(key)
             return true
         } catch {
             return false
@@ -189,7 +263,7 @@ public final class CachedRunStore {
             sidecar.tail = tail
             writeSidecarLocked(key, sidecar)
         } else {
-            writeSidecarLocked(key, Sidecar(start: 0, totalLength: totalLength, touched: Date().timeIntervalSince1970, tail: tail))
+            writeSidecarLocked(key, Sidecar(start: 0, totalLength: totalLength, touched: now().timeIntervalSince1970, tail: tail))
             FileManager.default.createFile(atPath: dataURL(key).path, contents: nil)
         }
     }
@@ -204,34 +278,50 @@ public final class CachedRunStore {
     /// Refresh the key's clock: a play, from the network or from the disk, is a use.
     public func touch(_ key: String) {
         lock.lock(); defer { lock.unlock() }
+        let time = now().timeIntervalSince1970
+        usedAt[key] = time
+        persistedAt[key] = time
         if var sidecar = readSidecarLocked(key) {
-            sidecar.touched = Date().timeIntervalSince1970
+            sidecar.touched = time
             writeSidecarLocked(key, sidecar)
         }
     }
 
     /// Bytes held across every run.
     public func totalBytes() -> Int64 {
-        lock.lock(); defer { lock.unlock() }
-        return entriesLocked().reduce(0) { $0 + $1.size }
+        scanEntries().entries.reduce(0) { $0 + $1.size }
     }
 
     /// Delete least-recently-touched runs until the store fits `budget`. `playingKey` is the
-    /// episode the player has loaded — the one run a byte source may be writing and the whole-file
-    /// scanner may be reading — and is never touched. Returns how many runs were removed.
+    /// episode just begun; runs a byte source has open (``retain(_:)``) are skipped too, since one
+    /// may be writing it and the whole-file scanner may be reading it. The directory is listed and
+    /// every sidecar decoded once WITHOUT the lock, which a victim's delete takes only briefly (and
+    /// re-checks under), so a play never waits on a pass. Returns how many runs were removed.
     @discardableResult
-    public func evict(toBudget budget: Int64 = CachedRunStore.budgetBytes, excluding playingKey: String?) -> Int {
-        lock.lock(); defer { lock.unlock() }
-        removeOrphanDataLocked()
-        var entries = entriesLocked()
+    public func evict(toBudget budget: Int64? = nil, excluding playingKey: String? = nil) -> Int {
+        let budget = budget ?? self.budget
+        let scan = scanEntries()
+        removeOrphansAndCorrupt(scan)
+
+        lock.lock()
+        let used = usedAt
+        lock.unlock()
+        var entries = scan.entries.map { entry in
+            Entry(key: entry.key, size: entry.size, touched: max(entry.touched, used[entry.key] ?? 0))
+        }
         var total = entries.reduce(0) { $0 + $1.size }
         guard total > budget else { return 0 }
         entries.sort { $0.touched < $1.touched }
         var removed = 0
         for entry in entries where total > budget && entry.key != playingKey {
-            removeLocked(entry.key)
-            total -= entry.size
-            removed += 1
+            lock.lock()
+            // Re-check under the lock: a source may have opened the run since the scan.
+            if activeKeys[entry.key] == nil {
+                removeLocked(entry.key)
+                total -= entry.size
+                removed += 1
+            }
+            lock.unlock()
         }
         engineLog.info("bytes: run evict removed=\(removed) remaining=\(total)")
         return removed
@@ -245,24 +335,64 @@ public final class CachedRunStore {
         let touched: TimeInterval
     }
 
-    /// Every run on disk. The sidecar carries the key so eviction can name it back.
-    private func entriesLocked() -> [Entry] {
+    private struct Scan {
+        var entries: [Entry] = []
+        /// File-name stems of sidecars that do not decode.
+        var corruptStems: [String] = []
+        /// `.run` files with no sidecar beside them.
+        var orphanDataNames: [String] = []
+    }
+
+    /// Every run on disk, sidecar decoded once (it carries the key so eviction can name it back).
+    /// Takes no lock: sidecars are written atomically and every delete re-checks under the lock.
+    private func scanEntries() -> Scan {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
-        return names.filter { $0.hasSuffix(".json") }.compactMap { name in
+        var scan = Scan()
+        var stems = Set<String>()
+        for name in names where name.hasSuffix(".json") {
             let stem = String(name.dropLast(5))
-            guard let key = readKeyLocked(stem), let sidecar = readSidecarLocked(key) else { return nil }
-            return Entry(key: key, size: dataSizeLocked(key), touched: sidecar.touched)
+            stems.insert(stem)
+            guard let file = readSidecarFile(stem: stem) else {
+                // `resolved-urls.json` shares the directory; only digest-named sidecars are ours.
+                if stem != "resolved-urls" { scan.corruptStems.append(stem) }
+                continue
+            }
+            scan.entries.append(Entry(key: file.key, size: dataSize(stem: stem), touched: file.sidecar.touched))
+        }
+        scan.orphanDataNames = names.filter { $0.hasSuffix(".run") && !stems.contains(String($0.dropLast(4))) }
+        return scan
+    }
+
+    /// `.run` files whose sidecar is gone (a crash between the two deletes), and runs whose
+    /// sidecar will not decode: nothing can name either, so eviction would never see them. Each is
+    /// re-checked under the lock before it goes.
+    private func removeOrphansAndCorrupt(_ scan: Scan) {
+        for name in scan.orphanDataNames {
+            lock.lock()
+            let stem = String(name.dropLast(4))
+            if !FileManager.default.fileExists(atPath: directory.appendingPathComponent("\(stem).json").path) {
+                try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
+            }
+            lock.unlock()
+        }
+        for stem in scan.corruptStems {
+            lock.lock()
+            if readSidecarFile(stem: stem) == nil {
+                try? FileManager.default.removeItem(at: directory.appendingPathComponent("\(stem).run"))
+                try? FileManager.default.removeItem(at: directory.appendingPathComponent("\(stem).json"))
+            }
+            lock.unlock()
         }
     }
 
-    /// `.run` files whose sidecar is gone (a crash between the two deletes, a corrupt sidecar):
-    /// nothing can name them, so eviction would never see them.
-    private func removeOrphanDataLocked() {
-        let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
-        let stems = Set(names.filter { $0.hasSuffix(".json") }.map { String($0.dropLast(5)) })
-        for name in names where name.hasSuffix(".run") && !stems.contains(String(name.dropLast(4))) {
-            try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
-        }
+    private func readSidecarFile(stem: String) -> SidecarFile? {
+        guard let data = try? Data(contentsOf: directory.appendingPathComponent("\(stem).json")) else { return nil }
+        return try? JSONDecoder().decode(SidecarFile.self, from: data)
+    }
+
+    private func dataSize(stem: String) -> Int64 {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: directory.appendingPathComponent("\(stem).run").path)
+        return (attributes?[.size] as? NSNumber)?.int64Value ?? 0
     }
 
     private func runLocked(_ key: String) -> Run? {
@@ -278,6 +408,8 @@ public final class CachedRunStore {
     private func removeLocked(_ key: String) {
         try? FileManager.default.removeItem(at: dataURL(key))
         try? FileManager.default.removeItem(at: sidecarURL(key))
+        usedAt[key] = nil
+        persistedAt[key] = nil
     }
 
     private struct SidecarFile: Codable {
@@ -290,12 +422,8 @@ public final class CachedRunStore {
         return (try? JSONDecoder().decode(SidecarFile.self, from: data))?.sidecar
     }
 
-    private func readKeyLocked(_ stem: String) -> String? {
-        guard let data = try? Data(contentsOf: directory.appendingPathComponent("\(stem).json")) else { return nil }
-        return (try? JSONDecoder().decode(SidecarFile.self, from: data))?.key
-    }
-
     private func writeSidecarLocked(_ key: String, _ sidecar: Sidecar) {
+        ensureDirectory()
         guard let data = try? JSONEncoder().encode(SidecarFile(key: key, sidecar: sidecar)) else { return }
         try? data.write(to: sidecarURL(key), options: .atomic)
     }

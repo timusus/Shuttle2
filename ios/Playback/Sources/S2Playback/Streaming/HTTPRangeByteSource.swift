@@ -226,6 +226,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     private var durationHintValue: TimeInterval?
     private var failureMessage: String?
     private var isCancelled = false
+    /// This source holds ``runStore``'s run open (``CachedRunStore/retain(_:)``). Under `condition`.
+    private var runRetained = false
     /// A blocked read has been asked to come back so the caller can seek. Unlike ``isCancelled``
     /// this is cleared — by ``clearInterrupt()``, which the decoder calls as part of that seek —
     /// and the transaction it was waiting on is left alone, because the seek that follows will
@@ -467,6 +469,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
             guard let self else { return }
             self.queue.async { self.pathDidChange() }
         }
+        runStore?.retain(runKey)
+        runRetained = true
         runStore?.touch(runKey)
         let run = runStore?.run(for: runKey)
         // The sidecar's total lets FFmpeg's `AVSEEK_SIZE` be answered before any response has.
@@ -488,6 +492,16 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
 
     deinit {
         if let pathObserver { pathMonitor?.removeObserver(pathObserver) }
+        releaseRun()
+    }
+
+    /// Let eviction have the run again, once: on ``cancel()``, or `deinit` for a source never cancelled.
+    private func releaseRun() {
+        condition.lock()
+        let held = runRetained
+        runRetained = false
+        condition.unlock()
+        if held { runStore?.release(runKey) }
     }
 
     #if DEBUG
@@ -721,6 +735,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         condition.broadcast()
         condition.unlock()
         guard !wasCancelled else { return }
+        releaseRun()
         if let pathObserver { pathMonitor?.removeObserver(pathObserver) }
         queue.async {
             self.invalidated = true

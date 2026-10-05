@@ -119,6 +119,8 @@ public final class ResolvedURLCache {
     private func saveLocked() {
         guard let fileURL, let entries else { return }
         do {
+            // The OS may have purged `Caches` since the last write.
+            try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try JSONEncoder().encode(entries).write(to: fileURL, options: .atomic)
         } catch {
             engineLog.error("bytes: resolved-url cache write failed error=\(error.localizedDescription, privacy: .public)")
