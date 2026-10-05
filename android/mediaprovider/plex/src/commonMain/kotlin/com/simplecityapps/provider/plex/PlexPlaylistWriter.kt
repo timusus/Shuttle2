@@ -13,7 +13,7 @@ import dev.zacsweers.metro.Inject
 /**
  * Writes the edits made in S2 to a Plex playlist back to it (#916): `PUT /playlists/{id}/items?uri=server://{machineId}/...`
  * adds, `DELETE /playlists/{id}/items/{playlistItemID}` removes one entry, `PUT /playlists/{id}/items/{playlistItemID}/move?after=`
- * moves one. The machine id is the server's client identifier, which sign-in keeps as the credentials' user id.
+ * moves one, `PUT /playlists/{id}?title=` renames and `DELETE /playlists/{id}` deletes. The machine id is the server's client identifier, which sign-in keeps as the credentials' user id.
  */
 class PlexPlaylistWriter
 @Inject
@@ -64,6 +64,17 @@ constructor(
         after: String?
     ): PlaylistWriteResult<Unit> = request { address, credentials ->
         playlistService.move(address, credentials.accessToken, playlistId, entryId, after)
+    }.toPlaylistWriteResult()
+
+    override suspend fun rename(
+        playlistId: String,
+        name: String
+    ): PlaylistWriteResult<Unit> = request { address, credentials ->
+        playlistService.rename(address, credentials.accessToken, playlistId, name)
+    }.toPlaylistWriteResult()
+
+    override suspend fun delete(playlistId: String): PlaylistWriteResult<Unit> = request { address, credentials ->
+        playlistService.delete(address, credentials.accessToken, playlistId)
     }.toPlaylistWriteResult()
 
     /** [block]'s request with the signed-in session, signing out if the server rejects it; a failure when signed out. */

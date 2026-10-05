@@ -59,4 +59,26 @@ class PlaylistService(private val client: HttpClient) {
             parameter("after", after)
         }
     }
+
+    suspend fun rename(
+        url: String,
+        token: String,
+        playlistId: String,
+        title: String
+    ): NetworkResult<Unit> = client.networkResult {
+        put("$url/playlists/$playlistId") {
+            header(PLEX_TOKEN, token)
+            parameter("title", title)
+        }
+    }
+
+    suspend fun delete(
+        url: String,
+        token: String,
+        playlistId: String
+    ): NetworkResult<Unit> = client.networkResult {
+        delete("$url/playlists/$playlistId") {
+            header(PLEX_TOKEN, token)
+        }
+    }
 }

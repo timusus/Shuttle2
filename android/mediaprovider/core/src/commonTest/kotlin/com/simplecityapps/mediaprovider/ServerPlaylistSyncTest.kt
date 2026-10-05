@@ -164,9 +164,67 @@ class ServerPlaylistSyncTest {
     }
 
     /** A server's playlists, as entries, edited as a Jellyfin server would edit them: a move puts the entry at its final index. */
+    @Test
+    fun `a rename is kept across a restart and sent - a name can't break the queue`() = runTest {
+        server.playlists["p1"] = server.playlist(A)
+        preferences.setPlaylistServerSongs(source, mapOf("p1" to listOf(A)))
+        server.offline = true
+        sync().enqueue(MediaProviderType.Jellyfin, PlaylistEdit.Rename("p1", "Road\ttrip\nmix"))
+        runCurrent()
+
+        server.offline = false
+        val relaunched = sync()
+        relaunched.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe setOf("p1")
+        relaunched.send(MediaProviderType.Jellyfin)
+
+        server.names["p1"] shouldBe "Road trip mix"
+        preferences.playlistServerSongs(source) shouldBe mapOf("p1" to listOf(A))
+        relaunched.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
+    }
+
+    @Test
+    fun `deleting a playlist drops its queued edits and the songs it held on the server`() = runTest {
+        server.playlists["p1"] = server.playlist(A)
+        server.playlists["p2"] = server.playlist(A)
+        preferences.setPlaylistServerSongs(source, mapOf("p1" to listOf(A), "p2" to listOf(A)))
+        server.offline = true
+        val sync = sync()
+        sync.enqueue(MediaProviderType.Jellyfin, PlaylistEdit.Add("p1", listOf(B)))
+        sync.enqueue(MediaProviderType.Jellyfin, PlaylistEdit.Add("p2", listOf(B)))
+        sync.enqueue(MediaProviderType.Jellyfin, PlaylistEdit.Rename("p1", "Gone soon"))
+        sync.enqueue(MediaProviderType.Jellyfin, PlaylistEdit.Delete("p1"))
+        runCurrent()
+        // Held back from the import until the server has deleted it, so the import can't bring it back
+        sync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe setOf("p1", "p2")
+
+        server.offline = false
+        sync.send(MediaProviderType.Jellyfin)
+
+        server.calls shouldBe listOf("add [$B]", "delete")
+        server.playlists.keys shouldBe setOf("p2")
+        preferences.playlistServerSongs(source) shouldBe mapOf("p2" to listOf(A, B))
+        sync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
+    }
+
+    @Test
+    fun `a delete the server refuses is dropped - the next import brings the playlist back`() = runTest {
+        server.playlists["p1"] = server.playlist(A)
+        preferences.setPlaylistServerSongs(source, mapOf("p1" to listOf(A)))
+        server.refuse = true
+        val sync = sync()
+
+        sync.enqueue(MediaProviderType.Jellyfin, PlaylistEdit.Delete("p1"))
+        runCurrent()
+
+        server.playlists.keys shouldBe setOf("p1")
+        preferences.playlistServerSongs(source) shouldBe mapOf("p1" to listOf(A))
+        sync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
+    }
+
     private class FakeServer : ServerPlaylistWriter {
         override val type = MediaProviderType.Jellyfin
         val playlists = mutableMapOf<String, MutableList<ServerPlaylistEntry>>()
+        val names = mutableMapOf<String, String>()
         val calls = mutableListOf<String>()
         var offline = false
         var refuse = false
@@ -204,6 +262,18 @@ class ServerPlaylistSyncTest {
             entries.remove(entry)
             entries.add(index, entry)
             entries.getOrNull(index - 1)?.entryId shouldBe after
+            Unit
+        }
+
+        override suspend fun rename(
+            playlistId: String,
+            name: String
+        ): PlaylistWriteResult<Unit> = answer(playlistId, "rename $name") {
+            names[playlistId] = name
+        }
+
+        override suspend fun delete(playlistId: String): PlaylistWriteResult<Unit> = answer(playlistId, "delete") {
+            playlists.remove(playlistId)
             Unit
         }
 

@@ -192,28 +192,36 @@ class LocalPlaylistRepository(
         entries.map { entry -> index.identities[entry.song.id]?.let { entry.copy(song = entry.song.copy(albumIdentity = it)) } ?: entry }
     }
 
-    override suspend fun deletePlaylist(playlist: Playlist) = playlistDataDao.delete(playlist.id)
+    override suspend fun deletePlaylist(playlist: Playlist) {
+        playlistDataDao.delete(playlist.id)
+        sendToServer(playlist) { playlistId -> PlaylistEdit.Delete(playlistId) }
+    }
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = playlistDataDao.deleteAll(mediaProviderType)
 
     override suspend fun clearPlaylist(playlist: Playlist) {
+        val songs = if (sendsToServer(playlist)) playlistSongJoinDao.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty().map { playlistSong -> playlistSong.song } else emptyList()
         playlistDataDao.clear(playlist.id)
         syncM3uFile(playlist)
+        sendToServer(playlist, songs) { playlistId, paths -> PlaylistEdit.Remove(playlistId, paths, everyEntry = true) }
     }
 
     override suspend fun renamePlaylist(
         playlist: Playlist,
         name: String
-    ) = playlistDataDao.update(
-        PlaylistData(
-            id = playlist.id,
-            name = name,
-            externalId = playlist.externalId,
-            mediaProviderType = playlist.mediaProvider,
-            sortOrder = playlist.sortOrder,
-            sortDescending = playlist.sortDescending
+    ) {
+        playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = name,
+                externalId = playlist.externalId,
+                mediaProviderType = playlist.mediaProvider,
+                sortOrder = playlist.sortOrder,
+                sortDescending = playlist.sortDescending
+            )
         )
-    )
+        sendToServer(playlist) { playlistId -> PlaylistEdit.Rename(playlistId, name) }
+    }
 
     override suspend fun updatePlaylistSortOder(
         playlist: Playlist,
@@ -266,14 +274,21 @@ class LocalPlaylistRepository(
         songs: List<Song>,
         edit: (playlistId: String, songPaths: List<String>) -> PlaylistEdit
     ) {
-        val sync = serverSync ?: return
-        val playlistId = playlist.externalId ?: return
-        if (!sendsToServer(playlist)) {
-            return
-        }
         val paths = songs.filter { song -> song.mediaProvider == playlist.mediaProvider }.map { song -> song.path }
         if (paths.isNotEmpty()) {
-            sync.enqueue(playlist.mediaProvider, edit(playlistId, paths))
+            sendToServer(playlist) { playlistId -> edit(playlistId, paths) }
+        }
+    }
+
+    /** Queues [edit] to [playlist] itself (its title, or deleting it) for its media server, if it came from one. */
+    private suspend fun sendToServer(
+        playlist: Playlist,
+        edit: (playlistId: String) -> PlaylistEdit
+    ) {
+        val sync = serverSync ?: return
+        val playlistId = playlist.externalId ?: return
+        if (sendsToServer(playlist)) {
+            sync.enqueue(playlist.mediaProvider, edit(playlistId))
         }
     }
 

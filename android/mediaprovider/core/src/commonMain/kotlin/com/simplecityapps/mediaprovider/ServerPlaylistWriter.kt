@@ -3,7 +3,8 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.shuttle.model.MediaProviderType
 
 /**
- * Writes the edits made in S2 to a playlist imported from [type]'s server back to that server (#916), each call one request
+ * Writes the edits made in S2 to a playlist imported from [type]'s server back to that server (#916): its songs, its title, and
+ * deleting it. Each call is one request
  * (or a few) that [ServerPlaylistSync] makes as it sends its queue. Playlists and songs are named as the import names them:
  * a playlist by its [MediaImporter.PlaylistUpdateData.externalId], a song by its path.
  */
@@ -32,6 +33,15 @@ interface ServerPlaylistWriter {
         index: Int,
         after: String?
     ): PlaylistWriteResult<Unit>
+
+    /** Gives the playlist the title [name]. */
+    suspend fun rename(
+        playlistId: String,
+        name: String
+    ): PlaylistWriteResult<Unit>
+
+    /** Deletes the playlist from the server. */
+    suspend fun delete(playlistId: String): PlaylistWriteResult<Unit>
 }
 
 /** One entry of a server's playlist: the server's own id for it, which a removal or a move names, and its song's path. */

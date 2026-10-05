@@ -5,14 +5,18 @@ import com.simplecityapps.mediaprovider.ServerPlaylistEntry
 import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.toPlaylistWriteResult
+import com.simplecityapps.mediaprovider.then
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.emby.http.PlaylistService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.Inject
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * Writes the edits made in S2 to an Emby playlist back to it (#916): `POST /Playlists/{id}/Items?ids=` adds, `DELETE
- * /Playlists/{id}/Items?entryIds=` removes, `POST /Playlists/{id}/Items/{entryId}/Move/{newIndex}` moves.
+ * /Playlists/{id}/Items?entryIds=` removes, `POST /Playlists/{id}/Items/{entryId}/Move/{newIndex}` moves, `POST /Items/{id}`
+ * renames and `DELETE /Items/{id}` deletes.
  */
 class EmbyPlaylistWriter
 @Inject
@@ -49,6 +53,22 @@ constructor(
         after: String?
     ): PlaylistWriteResult<Unit> = request { address, credentials, authorization ->
         playlistService.move(address, credentials.accessToken, authorization, playlistId, entryId, index)
+    }.toPlaylistWriteResult()
+
+    /** Emby has no rename: its item update takes the whole item, so the playlist's item is read and sent back with the new name. */
+    override suspend fun rename(
+        playlistId: String,
+        name: String
+    ): PlaylistWriteResult<Unit> = request { address, credentials, authorization ->
+        playlistService.item(address, credentials.accessToken, authorization, playlistId, credentials.userId)
+    }.toPlaylistWriteResult { item -> item }.then { item ->
+        request { address, credentials, authorization ->
+            playlistService.update(address, credentials.accessToken, authorization, playlistId, JsonObject(item + ("Name" to JsonPrimitive(name))))
+        }.toPlaylistWriteResult()
+    }
+
+    override suspend fun delete(playlistId: String): PlaylistWriteResult<Unit> = request { address, credentials, authorization ->
+        playlistService.delete(address, credentials.accessToken, authorization, playlistId)
     }.toPlaylistWriteResult()
 
     /** [block]'s request with the signed-in session, signing out if the server rejects it; a failure when signed out. */

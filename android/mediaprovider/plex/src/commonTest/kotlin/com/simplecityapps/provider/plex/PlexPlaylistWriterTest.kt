@@ -37,6 +37,26 @@ class PlexPlaylistWriterTest {
     private val items = "/playlists/77/items"
 
     @Test
+    fun `renames the playlist with its title`() = runTest {
+        server.respond("/playlists/77", code = 200, method = "PUT")
+
+        writer.rename("77", "Road trip") shouldBe PlaylistWriteResult.Success(Unit)
+
+        val request = server.requestsTo("/playlists/77").single()
+        request.method shouldBe HttpMethod.Put
+        request.url.parameters["title"] shouldBe "Road trip"
+    }
+
+    @Test
+    fun `deletes the playlist`() = runTest {
+        server.respond("/playlists/77", code = 204, method = "DELETE")
+
+        writer.delete("77") shouldBe PlaylistWriteResult.Success(Unit)
+
+        server.requestsTo("/playlists/77").single().method shouldBe HttpMethod.Delete
+    }
+
+    @Test
     fun `reads every entry of the playlist with its playlistItemID and song path`() = runTest {
         server.respond(items, "playlist_entries.json")
 

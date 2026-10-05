@@ -12,7 +12,8 @@ import dev.zacsweers.metro.Inject
 
 /**
  * Writes the edits made in S2 to a Jellyfin playlist back to it (#916): `POST /Playlists/{id}/Items?ids=` adds, `DELETE
- * /Playlists/{id}/Items?entryIds=` removes, `POST /Playlists/{id}/Items/{entryId}/Move/{newIndex}` moves.
+ * /Playlists/{id}/Items?entryIds=` removes, `POST /Playlists/{id}/Items/{entryId}/Move/{newIndex}` moves, `POST /Playlists/{id}`
+ * renames and `DELETE /Items/{id}` deletes.
  */
 class JellyfinPlaylistWriter
 @Inject
@@ -49,6 +50,17 @@ constructor(
         after: String?
     ): PlaylistWriteResult<Unit> = request { address, _, authorization ->
         playlistService.move(address, authorization, playlistId, entryId, index)
+    }.toPlaylistWriteResult()
+
+    override suspend fun rename(
+        playlistId: String,
+        name: String
+    ): PlaylistWriteResult<Unit> = request { address, _, authorization ->
+        playlistService.rename(address, authorization, playlistId, name)
+    }.toPlaylistWriteResult()
+
+    override suspend fun delete(playlistId: String): PlaylistWriteResult<Unit> = request { address, _, authorization ->
+        playlistService.delete(address, authorization, playlistId)
     }.toPlaylistWriteResult()
 
     /** [block]'s request with the signed-in session, signing out if the server rejects it; a failure when signed out. */

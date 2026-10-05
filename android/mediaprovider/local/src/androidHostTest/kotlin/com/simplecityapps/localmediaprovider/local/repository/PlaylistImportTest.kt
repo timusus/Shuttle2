@@ -416,6 +416,41 @@ class PlaylistImportTest {
         database.playlistSongJoinDataDao().getSongsForPlaylist(playlist.id).first().sortedBy { entry -> entry.sortOrder }.map { entry -> entry.song.path } shouldBe listOf(C, A, B)
     }
 
+    @Test
+    fun `a playlist deleted in S2 while offline isn't brought back by an import - and is deleted on the server once it answers`() = runBlocking<Unit> {
+        server.songPaths = listOf(A, B)
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        syncedImporter.import()
+        serverWriter.offline = true
+        syncedPlaylistRepository.deletePlaylist(serverPlaylist())
+
+        syncedImporter.import()
+
+        server.playlists.keys shouldBe setOf(PLAYLIST_ID)
+        importedPlaylists() shouldBe emptyMap()
+
+        serverWriter.offline = false
+        syncedImporter.import()
+
+        server.playlists shouldBe emptyMap()
+        importedPlaylists() shouldBe emptyMap()
+        preferences.playlistServerSongs(MediaProviderType.Jellyfin.name).keys shouldBe emptySet()
+    }
+
+    @Test
+    fun `a rename in S2 reaches the server - and the next import keeps it`() = runBlocking<Unit> {
+        server.songPaths = listOf(A, B)
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        syncedImporter.import()
+        syncedPlaylistRepository.renamePlaylist(serverPlaylist(), "Road trip")
+
+        syncedImporter.import()
+
+        server.names[PLAYLIST_ID] shouldBe "Road trip"
+        serverPlaylist().name shouldBe "Road trip"
+        importedPlaylistPaths() shouldBe listOf(A, B)
+    }
+
     private suspend fun serverPlaylist() = database.playlistDataDao().getAll().first().single { playlist -> playlist.externalId == PLAYLIST_ID }
 
     private suspend fun librarySongs(vararg paths: String): List<Song> = database.songDataDao().get().filter { song -> song.path in paths }.map { song -> song.toSong() }
@@ -458,6 +493,9 @@ class PlaylistImportTest {
 
         @Volatile var playlists: Map<String, List<String>> = emptyMap()
 
+        /** Each playlist's name, by its id, if not [PLAYLIST_NAME]. */
+        @Volatile var names: Map<String, String> = emptyMap()
+
         @Volatile var unread: Set<String> = emptySet()
 
         /** Playlists the listing doesn't read, reporting the server hasn't changed them. */
@@ -483,7 +521,7 @@ class PlaylistImportTest {
             }
             val read =
                 (playlists.filterKeys { id -> id !in unread && id !in unchanged && id !in partlyRead } + partlyRead).map { (id, paths) ->
-                    MediaImporter.PlaylistUpdateData(type, PLAYLIST_NAME, paths.mapNotNull { path -> existingSongs.firstOrNull { song -> song.path == path } }, id)
+                    MediaImporter.PlaylistUpdateData(type, names[id] ?: PLAYLIST_NAME, paths.mapNotNull { path -> existingSongs.firstOrNull { song -> song.path == path } }, id)
                 }
             emit(FlowEvent.Success(MediaImporter.PlaylistListing(read, unread + partlyRead.keys, unchanged), missing = missing))
         }
@@ -516,6 +554,17 @@ class PlaylistImportTest {
             index: Int,
             after: String?
         ) = edit(playlistId) { paths -> paths.toMutableList().apply { add(index, removeAt(entryId.toInt())) } to Unit }
+
+        override suspend fun rename(
+            playlistId: String,
+            name: String
+        ) = edit(playlistId) { paths -> paths to Unit }.also { result ->
+            if (result is PlaylistWriteResult.Success) server.names = server.names + (playlistId to name)
+        }
+
+        override suspend fun delete(playlistId: String) = edit(playlistId) { paths -> paths to Unit }.also { result ->
+            if (result is PlaylistWriteResult.Success) server.playlists = server.playlists - playlistId
+        }
 
         private fun <T> edit(
             playlistId: String,

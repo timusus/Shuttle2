@@ -8,9 +8,12 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
 
-/** Jellyfin's playlist edits (#916): a playlist's entries, adding songs, removing entries and moving one. */
+/** Jellyfin's playlist edits (#916): a playlist's entries, adding songs, removing entries, moving one, renaming and deleting it. */
 class PlaylistService(private val client: HttpClient) {
     /** Every entry of the playlist, in order, each with its PlaylistItemId: whatever its type, so an entry's index is its place in the playlist. */
     suspend fun entries(
@@ -61,6 +64,30 @@ class PlaylistService(private val client: HttpClient) {
         newIndex: Int
     ): NetworkResult<Unit> = client.networkResult {
         post("$url/Playlists/$playlistId/Items/$entryId/Move/$newIndex") {
+            header(HttpHeaders.Authorization, authorization)
+        }
+    }
+
+    /** Sets the playlist's name: `POST /Playlists/{id}` takes just the fields that change (Jellyfin 10.9 and later). */
+    suspend fun rename(
+        url: String,
+        authorization: String,
+        playlistId: String,
+        name: String
+    ): NetworkResult<Unit> = client.networkResult {
+        post("$url/Playlists/$playlistId") {
+            header(HttpHeaders.Authorization, authorization)
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("Name" to name))
+        }
+    }
+
+    suspend fun delete(
+        url: String,
+        authorization: String,
+        playlistId: String
+    ): NetworkResult<Unit> = client.networkResult {
+        delete("$url/Items/$playlistId") {
             header(HttpHeaders.Authorization, authorization)
         }
     }

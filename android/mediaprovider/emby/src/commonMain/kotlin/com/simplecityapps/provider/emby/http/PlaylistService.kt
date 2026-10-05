@@ -8,6 +8,10 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import kotlinx.serialization.json.JsonObject
 
 /** Emby's playlist edits (#916): a playlist's entries, adding songs, removing entries and moving one. */
 class PlaylistService(private val client: HttpClient) {
@@ -67,6 +71,48 @@ class PlaylistService(private val client: HttpClient) {
         newIndex: Int
     ): NetworkResult<Unit> = client.networkResult {
         post("$url/Playlists/$playlistId/Items/$entryId/Move/$newIndex") {
+            header(EMBY_TOKEN, token)
+            header(EMBY_AUTHORIZATION, authorization)
+        }
+    }
+
+    /** The playlist's item, every field of it: Emby's item update takes the whole item back. */
+    suspend fun item(
+        url: String,
+        token: String,
+        authorization: String,
+        playlistId: String,
+        userId: String
+    ): NetworkResult<JsonObject> = client.networkResult {
+        get("$url/Users/$userId/Items/$playlistId") {
+            header(EMBY_TOKEN, token)
+            header(EMBY_AUTHORIZATION, authorization)
+        }
+    }
+
+    /** Saves [item], the playlist's item from [item] with its fields changed. */
+    suspend fun update(
+        url: String,
+        token: String,
+        authorization: String,
+        playlistId: String,
+        item: JsonObject
+    ): NetworkResult<Unit> = client.networkResult {
+        post("$url/Items/$playlistId") {
+            header(EMBY_TOKEN, token)
+            header(EMBY_AUTHORIZATION, authorization)
+            contentType(ContentType.Application.Json)
+            setBody(item)
+        }
+    }
+
+    suspend fun delete(
+        url: String,
+        token: String,
+        authorization: String,
+        playlistId: String
+    ): NetworkResult<Unit> = client.networkResult {
+        delete("$url/Items/$playlistId") {
             header(EMBY_TOKEN, token)
             header(EMBY_AUTHORIZATION, authorization)
         }

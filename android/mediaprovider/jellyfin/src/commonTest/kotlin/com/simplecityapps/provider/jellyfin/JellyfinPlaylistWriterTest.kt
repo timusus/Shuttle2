@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.bodyText
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.PlaylistService
 import com.simplecityapps.provider.jellyfin.http.UserService
@@ -86,6 +87,33 @@ class JellyfinPlaylistWriterTest {
         writer.move("pl1", "entry-3", index = 0, after = null) shouldBe PlaylistWriteResult.Success(Unit)
 
         server.requestsTo("$items/entry-3/Move/0").single().method shouldBe HttpMethod.Post
+    }
+
+    @Test
+    fun `renames the playlist with just its new name`() = runTest {
+        server.respond("/Playlists/pl1", code = 204, method = "POST")
+
+        writer.rename("pl1", "Road trip") shouldBe PlaylistWriteResult.Success(Unit)
+
+        val request = server.requestsTo("/Playlists/pl1").single()
+        request.method shouldBe HttpMethod.Post
+        request.bodyText shouldBe "{\"Name\":\"Road trip\"}"
+    }
+
+    @Test
+    fun `deletes the playlist's item`() = runTest {
+        server.respond("/Items/pl1", code = 204, method = "DELETE")
+
+        writer.delete("pl1") shouldBe PlaylistWriteResult.Success(Unit)
+
+        server.requestsTo("/Items/pl1").single().method shouldBe HttpMethod.Delete
+    }
+
+    @Test
+    fun `a playlist the user may not delete is refused`() = runTest {
+        server.respond("/Items/pl1", code = 403, method = "DELETE")
+
+        writer.delete("pl1") shouldBe PlaylistWriteResult.Refused
     }
 
     @Test

@@ -11,25 +11,40 @@ import kotlinx.coroutines.sync.withLock
 /** An edit made in S2 to a server's playlist, naming the playlist by its external id and the server's songs in it by path. */
 sealed interface PlaylistEdit {
     val playlistId: String
-    val songPaths: List<String>
+
+    /** An edit to the playlist's songs: one with no [songPaths] has nothing to send. */
+    sealed interface Songs : PlaylistEdit {
+        val songPaths: List<String>
+    }
 
     /** The songs were added to the end of the playlist. */
     data class Add(
         override val playlistId: String,
         override val songPaths: List<String>
-    ) : PlaylistEdit
+    ) : Songs
 
     /** One entry of each song was removed from the playlist, or every entry of each when [everyEntry]. */
     data class Remove(
         override val playlistId: String,
         override val songPaths: List<String>,
         val everyEntry: Boolean = false
-    ) : PlaylistEdit
+    ) : Songs
 
     /** The playlist was put in a new order: [songPaths] is every one of the server's songs it holds, in that order. */
     data class Reorder(
         override val playlistId: String,
         override val songPaths: List<String>
+    ) : Songs
+
+    /** The playlist was given the title [name]. */
+    data class Rename(
+        override val playlistId: String,
+        val name: String
+    ) : PlaylistEdit
+
+    /** The playlist was deleted. */
+    data class Delete(
+        override val playlistId: String
     ) : PlaylistEdit
 }
 
@@ -46,6 +61,9 @@ sealed interface PlaylistEdit {
  *
  * Only the songs of the playlist's own server go into an edit: the server can't hold a song from anywhere else, so such a song
  * stays in the playlist in S2 alone, as before.
+ *
+ * Deleting a playlist drops the edits to it still queued, and once the server has deleted it, so do the songs it last held there.
+ * A server that refuses to delete it (a playlist the user doesn't own) keeps it, so the next import brings it back.
  */
 class ServerPlaylistSync(
     writers: Set<ServerPlaylistWriter>,
@@ -67,10 +85,14 @@ class ServerPlaylistSync(
         type: MediaProviderType,
         edit: PlaylistEdit
     ) {
-        if (!handles(type) || edit.songPaths.isEmpty()) {
+        if (!handles(type) || (edit is PlaylistEdit.Songs && edit.songPaths.isEmpty())) {
             return
         }
-        queueLock.withLock { save(type, pending(type) + edit) }
+        queueLock.withLock {
+            val queued = pending(type)
+            // Nothing queued for a playlist about to be deleted needs sending
+            save(type, if (edit is PlaylistEdit.Delete) queued.filterNot { it.playlistId == edit.playlistId } + edit else queued + edit)
+        }
         scope.launch { send(type) }
     }
 
@@ -143,6 +165,10 @@ class ServerPlaylistSync(
         }
 
         is PlaylistEdit.Reorder -> entries(edit.playlistId).then { entries -> reorder(edit.playlistId, entries, entries.reordered(edit.songPaths)) }
+
+        is PlaylistEdit.Rename -> rename(edit.playlistId, edit.name).then { PlaylistWriteResult.Success(emptyList()) }
+
+        is PlaylistEdit.Delete -> delete(edit.playlistId).then { PlaylistWriteResult.Success(emptyList()) }
     }
 
     /** Moves the entries from [current] into [target]'s order, one entry at a time, front to back. */
@@ -165,13 +191,15 @@ class ServerPlaylistSync(
         return PlaylistWriteResult.Success(emptyList())
     }
 
+    /** Sets the songs [playlistId] holds on the server to [update] of those it held: none at all, once it's deleted (null). */
     private fun updateServerSongs(
         type: MediaProviderType,
         playlistId: String,
-        update: (List<String>) -> List<String>
+        update: (List<String>) -> List<String>?
     ) {
         val songs = preferenceManager.playlistServerSongs(type.name)
-        preferenceManager.setPlaylistServerSongs(type.name, songs + (playlistId to update(songs[playlistId].orEmpty())))
+        val updated = update(songs[playlistId].orEmpty())
+        preferenceManager.setPlaylistServerSongs(type.name, if (updated == null) songs - playlistId else songs + (playlistId to updated))
     }
 
     private fun pending(type: MediaProviderType): List<PlaylistEdit> = preferenceManager.pendingPlaylistEdits(type.name)
@@ -219,23 +247,27 @@ private fun List<String>.occurrences(): List<Pair<String, Int>> {
     return map { path -> path to seen.getOrElse(path) { 0 }.also { seen[path] = it + 1 } }
 }
 
-/** The songs a playlist holds on the server once it has [edit], given the [removed] songs' paths. */
+/** The songs a playlist holds on the server once it has [edit], given the [removed] songs' paths: null once it's deleted. */
 private fun List<String>.after(
     edit: PlaylistEdit,
     removed: List<String>
-): List<String> = when (edit) {
+): List<String>? = when (edit) {
     is PlaylistEdit.Add -> this + edit.songPaths
     is PlaylistEdit.Remove -> toMutableList().apply { removed.forEach { path -> remove(path) } }
-    is PlaylistEdit.Reorder -> this
+    is PlaylistEdit.Reorder, is PlaylistEdit.Rename -> this
+    is PlaylistEdit.Delete -> null
 }
 
+/** One line per edit, its fields separated by tabs: a name can't hold either, so its tabs and line breaks become spaces. */
 private fun PlaylistEdit.encode(): String {
-    val kind = when (this) {
-        is PlaylistEdit.Add -> ADD
-        is PlaylistEdit.Remove -> if (everyEntry) REMOVE_EVERY else REMOVE
-        is PlaylistEdit.Reorder -> REORDER
+    val (kind, fields) = when (this) {
+        is PlaylistEdit.Add -> ADD to songPaths
+        is PlaylistEdit.Remove -> (if (everyEntry) REMOVE_EVERY else REMOVE) to songPaths
+        is PlaylistEdit.Reorder -> REORDER to songPaths
+        is PlaylistEdit.Rename -> RENAME to listOf(name.replace(Regex("[\\t\\r\\n]"), " "))
+        is PlaylistEdit.Delete -> DELETE to emptyList()
     }
-    return (listOf(kind, playlistId) + songPaths).joinToString("\t")
+    return (listOf(kind, playlistId) + fields).joinToString("\t")
 }
 
 private fun String.decodeEdit(): PlaylistEdit? {
@@ -250,6 +282,8 @@ private fun String.decodeEdit(): PlaylistEdit? {
         REMOVE -> PlaylistEdit.Remove(playlistId, paths)
         REMOVE_EVERY -> PlaylistEdit.Remove(playlistId, paths, everyEntry = true)
         REORDER -> PlaylistEdit.Reorder(playlistId, paths)
+        RENAME -> paths.singleOrNull()?.let { name -> PlaylistEdit.Rename(playlistId, name) }
+        DELETE -> PlaylistEdit.Delete(playlistId)
         else -> null
     }
 }
@@ -258,5 +292,7 @@ private const val ADD = "add"
 private const val REMOVE = "remove"
 private const val REMOVE_EVERY = "remove-every"
 private const val REORDER = "reorder"
+private const val RENAME = "rename"
+private const val DELETE = "delete"
 
 private val logger = Logger.tagged("ServerPlaylistSync")

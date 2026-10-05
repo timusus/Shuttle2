@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.bodyText
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.emby.http.PlaylistService
 import com.simplecityapps.provider.emby.http.UserService
@@ -16,6 +17,11 @@ import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpMethod
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonObject
 
 class EmbyPlaylistWriterTest {
     private val server = FixtureServer("emby")
@@ -36,6 +42,36 @@ class EmbyPlaylistWriterTest {
     private val writer = EmbyPlaylistWriter(authenticationManager, PlaylistService(client))
 
     private val items = "/Playlists/pl1/Items"
+
+    @Test
+    fun `renames the playlist by sending its whole item back with the new name`() = runTest {
+        server.respond("/Users/user456/Items/pl1", "playlist_item.json")
+        server.respond("/Items/pl1", code = 204, method = "POST")
+
+        writer.rename("pl1", "Night drive") shouldBe PlaylistWriteResult.Success(Unit)
+
+        val sent = Json.parseToJsonElement(server.requestsTo("/Items/pl1").single().bodyText).jsonObject
+        sent["Name"] shouldBe JsonPrimitive("Night drive")
+        // The rest of the item goes back as it was, so the update doesn't clear it
+        sent["Tags"] shouldBe JsonArray(listOf(JsonPrimitive("summer")))
+        sent["ProviderIds"] shouldBe JsonObject(emptyMap())
+    }
+
+    @Test
+    fun `a playlist that can't be read isn't renamed`() = runTest {
+        writer.rename("pl1", "Night drive") shouldBe PlaylistWriteResult.PlaylistGone
+
+        server.requestsTo("/Items/pl1") shouldBe emptyList()
+    }
+
+    @Test
+    fun `deletes the playlist's item`() = runTest {
+        server.respond("/Items/pl1", code = 204, method = "DELETE")
+
+        writer.delete("pl1") shouldBe PlaylistWriteResult.Success(Unit)
+
+        server.requestsTo("/Items/pl1").single().method shouldBe HttpMethod.Delete
+    }
 
     @Test
     fun `reads every entry of the playlist with its entry id and song path`() = runTest {
