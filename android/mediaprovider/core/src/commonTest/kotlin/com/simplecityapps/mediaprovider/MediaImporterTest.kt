@@ -394,7 +394,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `an import requested during a sync follows it, and its failure makes the sync worth retrying`() = runBlocking<Unit> {
+    fun `an import requested during a sync follows it and its failure makes the sync worth retrying`() = runBlocking<Unit> {
         val result = CompletableDeferred<SyncResult>()
         var started = 0
         launch(Dispatchers.Default) { result.complete(importer.sync(SyncTrigger.Periodic, onStart = { started++ })) }
@@ -412,7 +412,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a sync where one source fails and another succeeds reports both, and is worth retrying`() = runBlocking<Unit> {
+    fun `a sync where one source fails and another succeeds reports both and is worth retrying`() = runBlocking<Unit> {
         importer.mediaProviders += server
         server.failure = "Unreachable"
         provider.gate.trySend(Unit)
@@ -441,7 +441,7 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `a source removed during a sync is cancelled, which is not worth retrying`() = runBlocking<Unit> {
+    fun `a source removed during a sync is cancelled and not worth retrying`() = runBlocking<Unit> {
         val removed = GatedProvider(MediaProviderType.Jellyfin)
         importer.mediaProviders += removed
         val result = CompletableDeferred<SyncResult>()
