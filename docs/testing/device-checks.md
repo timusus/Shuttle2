@@ -493,7 +493,7 @@ Prep only: the app still targets SDK 36, so the permission is declared but never
 - [ ] targetSdk 37, Android 17, fresh install: opening the Jellyfin or Emby sign-in shows the Nearby devices prompt (before the "On your network" search; Jellyfin's Quick Connect probe of a LAN address also waits for it). Allowing it shows the suggestions. Tapping Sign in (or Use Quick Connect) on a `192.168.x.x` address signs in without a second prompt. A public HTTPS address, and `localhost`, never prompt; Plex and Subsonic never prompt just for opening.
 - [ ] Deny the prompt: the dialog shows the local-network explanation with Retry; Retry then re-asks (or, after two denials, the message points to system settings).
 - [ ] Plex with the server on the same Wi-Fi, permission not granted: after approving the PIN the Nearby devices prompt appears before the server connects; denying shows the explanation and Retry re-asks.
-- [ ] Rotate the phone while the prompt is showing: the dialog starts over and asks again, with no stale error.
+- [ ] Rotate the phone while the prompt is showing (targetSdk 37): the sign-in carries on after answering, with no second prompt stacked on the first and no spurious "local network" error from the redelivered answer.
 - [ ] Upgrade with a saved LAN server and the permission not granted: library import, streaming and artwork time out (see #527 comment for the hook points: no prompt exists there yet).
 - [ ] Casting to a Chromecast on Wi-Fi with permission denied: note whether the cast HttpServer (incoming TCP) is blocked.
 

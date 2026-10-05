@@ -149,7 +149,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val signInWithPin: SignInWithPin,
     private val connectToAccountServer: ConnectToAccountServer,
     private val songDownloader: SongDownloader,
-    serverDiscovery: ServerDiscovery,
+    private val serverDiscovery: ServerDiscovery,
     private val localNetworkAccess: LocalNetworkAccess,
     private val readServerHeaders: ReadServerHeaders,
     private val prepareServerConnection: PrepareServerConnection,
@@ -190,6 +190,9 @@ class ServerSignInViewModel @AssistedInject constructor(
 
     /** What the failed sign-in does when the user taps Retry after refusing the local-network permission. */
     private var retryAfterLocalNetworkDenied: (() -> Unit)? = null
+    private var localNetworkRefused = false
+    private val searchesNetwork = type == MediaProviderType.Jellyfin || type == MediaProviderType.Emby
+    private var discoveryStarted = false
     private val quickConnectEnabled = form
         .map { it.address }
         .distinctUntilChanged()
@@ -245,29 +248,42 @@ class ServerSignInViewModel @AssistedInject constructor(
     init {
         // Looked for once, as the sign-in opens (Jellyfin and Emby only): a server that answers later can still be typed in
         viewModelScope.launch {
-            val searches = type == MediaProviderType.Jellyfin || type == MediaProviderType.Emby
-            if (!searches || awaitLocalNetwork(localNetworkAccess.needsRequestToSearch())) discoveredServers.value = serverDiscovery.discover(type)
+            if (searchesNetwork && awaitLocalNetwork(localNetworkAccess.needsRequestToSearch())) discoverOnce()
         }
+    }
+
+    private fun discoverOnce() {
+        if (!searchesNetwork || discoveryStarted) return
+        discoveryStarted = true
+        viewModelScope.launch { discoveredServers.value = serverDiscovery.discover(type) }
     }
 
     /**
      * The screen's answer to [ServerSignInUiState.localNetworkRequested]: whether the user allowed local-network access.
-     * Whatever waited on it carries on, or fails when it was refused.
+     * Whatever waited on it carries on, or fails when it was refused. An answer with no request outstanding (a dialog
+     * redelivering its result after the screen was recreated) is ignored.
      */
     fun onLocalNetworkResult(granted: Boolean) {
-        localNetworkResult?.complete(granted)
+        val pending = localNetworkResult ?: return
         localNetworkResult = null
         localNetworkRequested.value = false
+        pending.complete(granted)
     }
 
-    /** True once the user has allowed [needsRequest]'s access, asking the screen first when it must; false if refused. */
+    /**
+     * True once the user has allowed [needsRequest]'s access, asking the screen first when it must; false if refused.
+     * A refusal is remembered until Retry, so nothing asks again meanwhile.
+     */
     private suspend fun awaitLocalNetwork(needsRequest: Boolean): Boolean {
         if (!needsRequest) return true
+        if (localNetworkRefused) return false
         val result = localNetworkResult ?: CompletableDeferred<Boolean>().also {
             localNetworkResult = it
             localNetworkRequested.value = true
         }
-        return result.await()
+        val granted = result.await()
+        if (granted) discoverOnce() else localNetworkRefused = true
+        return granted
     }
 
     private fun localNetworkDenied(retry: () -> Unit) {
@@ -336,6 +352,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Back to the form after a failed sign-in, which asks for the local-network permission again if that's what failed. */
     fun onRetry() {
         step.value = ServerSignInStep.Form
+        localNetworkRefused = false
         val retry = retryAfterLocalNetworkDenied ?: return
         retryAfterLocalNetworkDenied = null
         retry()
@@ -449,8 +466,13 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Signs in to the account's [server]; switching from another server removes the downloads of the old one's songs. */
     private suspend fun connectTo(server: AccountServer) {
         step.value = ServerSignInStep.Authenticating
-        // Connecting probes each of the server's addresses, the local ones among them
-        val needsRequest = server.connections.any { localNetworkAccess.needsRequest(it.uri) }
+        // Connecting probes each of the server's addresses, the local ones among them. Plex's LAN URIs are plex.direct
+        // hostnames, so the connection's own local flag and plain address count as well as the URI
+        val needsRequest = server.connections.any { connection ->
+            (connection.local && localNetworkAccess.needsRequestToSearch()) ||
+                localNetworkAccess.needsRequest(connection.uri) ||
+                connection.address?.let(localNetworkAccess::needsRequest) == true
+        }
         if (!awaitLocalNetwork(needsRequest)) return localNetworkDenied { pinJob = viewModelScope.launch { connectTo(server) } }
         when (val result = connectToAccountServer(type, server)) {
             is ConnectToAccountServer.Result.Success -> {

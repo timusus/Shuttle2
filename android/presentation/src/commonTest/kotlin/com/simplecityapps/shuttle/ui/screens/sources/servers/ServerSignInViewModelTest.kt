@@ -864,6 +864,78 @@ class ServerSignInViewModelTest {
     }
 
     @Test
+    fun `Plex asks for a plex direct connection flagged local though its URI looks public`() = runTest {
+        localNetwork.enforced = true
+        plex.servers = listOf(
+            AccountServer(
+                "home",
+                "Home",
+                owned = true,
+                accessToken = "t",
+                connections = listOf(
+                    com.simplecityapps.mediaprovider.server.ServerConnection("https://abc.plex.direct:32400", local = true),
+                ),
+            ),
+        )
+        val viewModel = viewModel(MediaProviderType.Plex)
+
+        viewModel.onAuthenticate()
+        advanceTimeBy(2_001)
+        runCurrent()
+
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        plex.connected shouldBe emptyList()
+    }
+
+    @Test
+    fun `an answer with no request outstanding is ignored`() = runTest {
+        localNetwork.enforced = true
+        val viewModel = viewModel(MediaProviderType.Subsonic, address = "http://192.168.1.10:4533")
+        viewModel.onUsernameChange("tim")
+        viewModel.onPasswordChange("pw")
+        viewModel.onLocalNetworkResult(granted = false) // redelivered by a dialog from before the screen was recreated
+
+        viewModel.onAuthenticate()
+        runCurrent()
+
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Authenticating
+    }
+
+    @Test
+    fun `after a refusal the Quick Connect probe does not ask again until Retry - granting then starts discovery`() = runTest {
+        localNetwork.enforced = true
+        quickConnect.enabled = true
+        discovery.servers = listOf(DiscoveredServer("NAS", "http://192.168.1.11:8096"))
+        val viewModel = viewModel(address = null)
+        viewModel.answerLocalNetwork(granted = false) // the search for servers asked first
+        discovery.searched shouldBe emptyList()
+
+        viewModel.onAddressChange("http://192.168.1.10:8096")
+        advanceTimeBy(501)
+        runCurrent()
+        viewModel.onAddressChange("http://192.168.1.12:8096")
+        advanceTimeBy(501)
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe false
+        quickConnect.enabledChecks shouldBe 0
+
+        viewModel.onUsernameChange("tim")
+        viewModel.onPasswordChange("pw")
+        viewModel.onAuthenticate()
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe false
+        (viewModel.uiState.value.step as ServerSignInStep.Failed).message.contains("local network") shouldBe true
+
+        viewModel.onRetry()
+        runCurrent()
+        viewModel.uiState.value.localNetworkRequested shouldBe true
+        viewModel.answerLocalNetwork(granted = true)
+        runCurrent()
+        discovery.searched shouldBe listOf(MediaProviderType.Jellyfin)
+    }
+
+    @Test
     fun `Plex with only remote connections never asks`() = runTest {
         localNetwork.enforced = true
         val viewModel = viewModel(MediaProviderType.Plex)
