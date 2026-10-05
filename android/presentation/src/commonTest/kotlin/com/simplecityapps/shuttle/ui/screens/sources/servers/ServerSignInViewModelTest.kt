@@ -396,14 +396,14 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `Jellyfin and Emby send no two-factor code`() = runTest {
+    fun `Jellyfin and Emby sign in with the address and username and password`() = runTest {
         val viewModel = viewModel()
         viewModel.onUsernameChange("sam")
 
         viewModel.onAuthenticate()
         runCurrent()
 
-        server.authenticated shouldBe listOf(ServerLogin("http://server:8096", "sam", "", null))
+        server.authenticated shouldBe listOf(ServerLogin("http://server:8096", "sam", ""))
     }
 
     @Test

@@ -180,7 +180,7 @@ interface IosAppGraph : ViewModelGraph {
     val songInfoViewModelFactory: SongInfoViewModel.Factory
     val folderListViewModelFactory: FolderListViewModel.Factory
 
-    /** A Jellyfin, Emby or Plex server's sign-in form, including Jellyfin Quick Connect and Plex's two-factor code. */
+    /** A Jellyfin, Emby or Plex server's sign-in form, including Jellyfin Quick Connect and Plex's plex.tv PIN. */
     val serverSignInViewModelFactory: ServerSignInViewModel.Factory
 
     /** A signed-in Jellyfin, Emby or Plex server's saved address and user, for its row and detail in Sources. */
