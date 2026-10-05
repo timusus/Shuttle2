@@ -31,7 +31,9 @@ enum StartupTrace {
     nonisolated private static let signposter = OSSignposter(logHandle: log)
 
     private static var seen = Set<Milestone>()
-    private static var appMilestones = Set<String>()
+    /// The app-wide milestones logged, by their name's address: a literal's text is in the binary, so a repeat looks it up
+    /// without allocating a `String`.
+    private static var appMilestones = Set<UInt>()
 
     /// When the kernel started this process, the earliest point there is: what runs before `S2App.init` (dyld, the
     /// static initialisers, UIKit's launch) counts too.
@@ -50,10 +52,10 @@ enum StartupTrace {
 
     /// An app-wide milestone (the app's init, the first frame), logged the first time only.
     static func mark(_ name: StaticString) {
-        let key = name.description
+        let key = name.hasPointerRepresentation ? UInt(bitPattern: name.utf8Start) : UInt(name.unicodeScalar.value)
         guard appMilestones.insert(key).inserted else { return }
         signposter.emitEvent(name)
-        logger.notice("\(key, privacy: .public) at \(sinceProcessStart) ms")
+        logger.notice("\(name.description, privacy: .public) at \(sinceProcessStart) ms")
     }
 
     /// One of [screen]'s milestones, logged the first time only. Returns nothing a view builder would show, so a body
