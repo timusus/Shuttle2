@@ -127,6 +127,8 @@ struct PaywallViewTests {
 private final class RecordingAnalytics: NSObject, Analytics {
     private(set) var events: [(String, [String: Any])] = []
 
+    var isCapturing: Bool { true }
+
     func capture(event: String, properties: [String: Any]) {
         events.append((event, properties))
     }

@@ -81,6 +81,7 @@ fun mediaSourcesValue(types: Collection<MediaProviderType>): String = types
 
 private val Entitlement.analyticsSource: String
     get() = when (this) {
+        // Callers never pass Unknown; the branch only keeps the `when` exhaustive.
         is Entitlement.Unknown, is Entitlement.Free -> "none"
 
         is Entitlement.Trial -> "trial"

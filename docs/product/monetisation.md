@@ -114,7 +114,7 @@ There is no subscription on iOS, only the trial and Lifetime. The trial length i
   - `media_sources`, a property on every event: configured source kinds, sorted and comma-separated
     (`jellyfin,local,plex`; `none` with no source).
   - `entitlement_resolved{source}`, once per install, once the entitlement first resolves and an enabled analytics
-    backend took the event (while opted out it is offered again next launch): `none`, `trial`, `pro`, `legacy` or
+    backend took the event (while opted out it is offered again next launch, recording the entitlement at that later launch): `none`, `trial`, `pro`, `legacy` or
     `debug`. In the first week, the legacy ones show what share of existing buyers are local-only.
   - Ship these with or before the gating release. Analytics is opt-in (about 13% of users): read ratios, not counts.
 - **KPIs** (Play Console): trial-to-paid (target at least 15%), paywall-view-to-purchase, monthly gross against the
