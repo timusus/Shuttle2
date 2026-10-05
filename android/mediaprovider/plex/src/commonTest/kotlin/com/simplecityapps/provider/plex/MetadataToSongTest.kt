@@ -54,6 +54,51 @@ class MetadataToSongTest {
     }
 
     @Test
+    fun `an artist string naming several artists is split as the other sources split it`() {
+        val metadata =
+            S2Json.decodeFromString<Metadata>(
+                """{"key": "/library/metadata/101", "originalTitle": "A; B / C", "grandparentTitle": "AC/DC | Queen"}"""
+            )
+
+        val song = metadata.toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.artists shouldBe listOf("A", "B", "C")
+        song.artistsTag shouldBe listOf("A", "B", "C")
+        song.albumArtists shouldBe listOf("AC/DC", "Queen")
+        song.artistDisplay shouldBe "A; B / C"
+    }
+
+    @Test
+    fun `a track with no track or disc number has none rather than zero`() {
+        val song = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1"}""").toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.track shouldBe null
+        song.disc shouldBe null
+    }
+
+    @Test
+    fun `a track's track and disc numbers are kept`() {
+        val song = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1", "index": 3, "parentIndex": 2}""").toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.track shouldBe 3
+        song.disc shouldBe 2
+    }
+
+    @Test
+    fun `a track without a duration takes its media's`() {
+        val song = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1", "Media": [{"id": 1}, {"id": 2, "duration": 215000}]}""").toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.duration shouldBe 215_000
+    }
+
+    @Test
+    fun `a track's own duration wins over its media's`() {
+        val song = S2Json.decodeFromString<Metadata>("""{"key": "/library/metadata/1", "duration": 180000, "Media": [{"id": 1, "duration": 215000}]}""").toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.duration shouldBe 180_000
+    }
+
+    @Test
     fun `the bit depth is the audio stream's - for a lossless codec only`() {
         fun bitDepth(codec: String) = S2Json.decodeFromString<Metadata>(
             """

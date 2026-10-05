@@ -11,7 +11,6 @@ import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
-import com.simplecityapps.localmediaprovider.local.provider.splitArtistTag
 import com.simplecityapps.localmediaprovider.local.provider.unmountedRoots
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
@@ -20,6 +19,7 @@ import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager

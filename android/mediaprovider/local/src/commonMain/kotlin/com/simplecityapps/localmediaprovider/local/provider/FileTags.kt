@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
+import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlinx.datetime.LocalDate
 
@@ -90,17 +91,8 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
     )
 }
 
-/**
- * One ARTIST tag value's artists, for files that put several in one tag (#880): ";" and "|" separate wherever they stand,
- * "/" only with whitespace either side (" / "), so "AC/DC" stays whole; "&" and "," never separate ("Earth, Wind & Fire").
- * Repeats are kept, so the artists stay paired 1:1 with MUSICBRAINZ_ARTISTID; ArtistCredits credits each artist once.
- */
-internal fun splitArtistTag(value: String): List<String> = ARTIST_SEPARATOR.split(value).map { it.trim() }.filter { it.isNotEmpty() }
-
 /** The first artist an ALBUMARTIST value names, split as [splitArtistTag] splits an ARTIST value; a value naming none (blank) is null. */
 internal fun primaryAlbumArtist(value: String): String? = splitArtistTag(value).firstOrNull()
-
-private val ARTIST_SEPARATOR = Regex("[;|]|\\s+/\\s+")
 
 /** The non-blank values of the tag [key], trimmed and otherwise as written: a multi-value tag keeps its values, none split. */
 private fun Map<String, List<String>>.values(key: String): List<String> = get(key).orEmpty().map { it.trim() }.filter { it.isNotEmpty() }

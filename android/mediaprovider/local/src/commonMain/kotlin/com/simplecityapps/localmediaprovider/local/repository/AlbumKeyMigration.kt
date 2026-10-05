@@ -5,7 +5,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.ResumePointDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollectionData
-import com.simplecityapps.localmediaprovider.local.provider.splitArtistTag
+import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.AlbumKeyChange

@@ -28,9 +28,8 @@ class ItemsService(private val client: HttpClient) {
         viewedSince: Instant? = null
     ): NetworkResult<QueryResult> = query("$url/library/sections/$section/all", token) {
         parameter("type", 10)
-        parameter("includeCollections", 1)
+        // Not includeCollections or includeMeta: a track's collections and the listing's filter metadata aren't read
         parameter("includeAdvanced", 1)
-        parameter("includeMeta", 1)
         // Adds each track's Guid list, which holds its MusicBrainz recording id
         parameter("includeGuids", 1)
         // Plex's filter syntax: `field>>=value` is "greater than" (as python-plexapi sends it), in epoch seconds

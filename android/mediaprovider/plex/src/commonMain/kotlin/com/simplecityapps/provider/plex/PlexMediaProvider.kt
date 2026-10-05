@@ -15,6 +15,7 @@ import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
 import com.simplecityapps.mediaprovider.server.withPlayedSongs
 import com.simplecityapps.mediaprovider.server.withServerSession
+import com.simplecityapps.mediaprovider.splitArtistTag
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
 import com.simplecityapps.networking.userDescription
@@ -94,9 +95,9 @@ class PlexMediaProvider(
     override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (val playlistsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
-                val songsByPart = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
+                val songsByPath = existingSongs.associateBy { it.path }
                 // Not paged, so the listing holds every audio playlist on the server
-                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart, knownVersions)))
+                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPath, knownVersions)))
             }
 
             is NetworkResult.Failure -> {
@@ -107,7 +108,8 @@ class PlexMediaProvider(
     }
 
     /**
-     * A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items
+     * A playlist per one of [playlists], holding the library songs its items refer to, by path (the track's key, which holds
+     * across the server analysing a file again, unlike its media part's key). A playlist whose items
      * fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
      * so the one stored from it is never deleted; the songs a short one did return are still added to it. One whose
      * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][MediaImporter.PlaylistListing.unchanged].
@@ -116,7 +118,7 @@ class PlexMediaProvider(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         playlists: List<Metadata>,
-        songsByPart: Map<String?, Song>,
+        songsByPath: Map<String, Song>,
         knownVersions: Map<String, String>
     ): MediaImporter.PlaylistListing {
         val found = mutableListOf<MediaImporter.PlaylistUpdateData>()
@@ -137,7 +139,7 @@ class PlexMediaProvider(
                     MediaImporter.PlaylistUpdateData(
                         mediaProviderType = type,
                         name = playlist.title ?: strings.unknownName,
-                        songs = event.result.mapNotNull { item -> songsByPart[item.media.firstOrNull()?.parts?.firstOrNull()?.key] },
+                        songs = event.result.mapNotNull { item -> songsByPath[item.songPath] },
                         externalId = ratingKey
                     )
             }
@@ -328,12 +330,14 @@ internal fun Metadata.toSong(
     id = 0,
     name = title,
     albumArtist = grandparentTitle,
-    // Plex sends the track's own artist as originalTitle only when it differs from the album artist's
-    artists = listOfNotNull(originalTitle ?: grandparentTitle),
+    // Plex sends the track's own artist as originalTitle only when it differs from the album artist's. One string holds
+    // several artists when the file does, which the other sources get split
+    artists = splitArtistTag(originalTitle ?: grandparentTitle.orEmpty()),
     album = parentTitle,
-    track = index ?: 0,
-    disc = parentIndex ?: 0,
-    duration = duration?.toInt() ?: 0,
+    track = index,
+    disc = parentIndex,
+    // A track the server hasn't finished analysing may carry its length only on its media
+    duration = (duration ?: media.firstNotNullOfOrNull { it.duration })?.toInt() ?: 0,
     date = year?.let { LocalDate(it, 1, 1) },
     genres = emptyList(),
     path = songPath,
@@ -358,10 +362,10 @@ internal fun Metadata.toSong(
     audioCodec = media.firstOrNull()?.audioCodec,
     // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
     dateAdded = addedAt?.let { seconds -> Instant.fromEpochSeconds(seconds) },
-    // Plex sends one artist string per track and one album artist, neither split into several, no COMPILATION, and no
+    // Plex sends one artist string per track and one album artist, which are split here, no COMPILATION, and no
     // album or artist MusicBrainz ids on a track: only its recording id, in the Guid list
-    albumArtists = listOfNotNull(grandparentTitle),
-    artistsTag = listOfNotNull(originalTitle ?: grandparentTitle),
+    albumArtists = splitArtistTag(grandparentTitle.orEmpty()),
+    artistsTag = splitArtistTag(originalTitle ?: grandparentTitle.orEmpty()),
     artistDisplay = originalTitle ?: grandparentTitle,
     compilation = null,
     mbTrackId = guids.firstNotNullOfOrNull { guid -> guid.id.takeIf { it.startsWith("mbid://") }?.let { musicBrainzIds(it).firstOrNull() } },
