@@ -31,8 +31,7 @@ public final class ResolvedURLCache {
     static let maxEntries = 256
 
     public static let shared: ResolvedURLCache = {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let directory = base.appendingPathComponent("streamed-runs", isDirectory: true)
+        let directory = CachedRunStore.sharedDirectory
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return ResolvedURLCache(fileURL: directory.appendingPathComponent("resolved-urls.json"))
     }()

@@ -23,7 +23,7 @@ public final class CachedRunStore {
 
     /// Least-recently-touched eviction to this many bytes, run by ``evict(toBudget:)`` from the
     /// auto-download pass. A constant, not a setting.
-    public static let budgetBytes: Int64 = 1024 * 1024 * 1024
+    public static let budgetBytes: Int64 = 512 * 1024 * 1024
 
     /// What the sidecar records. `length` is the data file's size, so an append never rewrites it.
     public struct Run: Equatable {
@@ -45,13 +45,38 @@ public final class CachedRunStore {
         var tail: Data?
     }
 
+    /// Where the app's runs (and the resolved-URL map beside them) live: `Caches`, which the OS may
+    /// purge and iCloud never backs up. Everything in it is re-fetchable.
+    static let sharedDirectory: URL = FileManager.default
+        .urls(for: .cachesDirectory, in: .userDomainMask).first!
+        .appendingPathComponent("streamed-runs", isDirectory: true)
+
+    /// Before the cap and `Caches`, runs went under Application Support, which is backed up and
+    /// never purged, and nothing evicted them.
+    static var legacyDirectory: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("streamed-runs", isDirectory: true)
+    }
+
     public static let shared: CachedRunStore = {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return CachedRunStore(directory: base.appendingPathComponent("streamed-runs", isDirectory: true))
+        let store = CachedRunStore(directory: sharedDirectory)
+        // Off the caller's thread: the first play must not wait on a directory walk or a delete.
+        DispatchQueue.global(qos: .utility).async {
+            removeLegacyDirectory(legacyDirectory)
+            store.evict(excluding: nil)
+        }
+        return store
     }()
+
+    /// Delete the pre-`Caches` directory, once: a no-op when it is already gone.
+    static func removeLegacyDirectory(_ legacy: URL) {
+        guard FileManager.default.fileExists(atPath: legacy.path) else { return }
+        try? FileManager.default.removeItem(at: legacy)
+    }
 
     private let directory: URL
     private let lock = NSLock()
+    private var lastScheduledEviction: Date = .distantPast
 
     public init(directory: URL) {
         self.directory = directory
@@ -106,6 +131,17 @@ public final class CachedRunStore {
         writeSidecarLocked(key, Sidecar(start: offset, totalLength: total, touched: Date().timeIntervalSince1970, tail: tail))
         FileManager.default.createFile(atPath: dataURL(key).path, contents: nil)
         engineLog.info("bytes: run replace key=\(Self.fileName(key), privacy: .public) at=\(offset) had=\(previous?.length ?? -1)")
+        scheduleEvictionLocked(excluding: key)
+    }
+
+    /// A new run is the moment the store grows: trim in the background, at most once a minute,
+    /// never touching the run just begun.
+    private func scheduleEvictionLocked(excluding key: String) {
+        guard Date().timeIntervalSince(lastScheduledEviction) > 60 else { return }
+        lastScheduledEviction = Date()
+        DispatchQueue.global(qos: .utility).async { [self] in
+            evict(excluding: key)
+        }
     }
 
     /// Extend the run by `data` at its end. False, with nothing written, when there is no run.
@@ -186,6 +222,7 @@ public final class CachedRunStore {
     @discardableResult
     public func evict(toBudget budget: Int64 = CachedRunStore.budgetBytes, excluding playingKey: String?) -> Int {
         lock.lock(); defer { lock.unlock() }
+        removeOrphanDataLocked()
         var entries = entriesLocked()
         var total = entries.reduce(0) { $0 + $1.size }
         guard total > budget else { return 0 }
@@ -215,6 +252,16 @@ public final class CachedRunStore {
             let stem = String(name.dropLast(5))
             guard let key = readKeyLocked(stem), let sidecar = readSidecarLocked(key) else { return nil }
             return Entry(key: key, size: dataSizeLocked(key), touched: sidecar.touched)
+        }
+    }
+
+    /// `.run` files whose sidecar is gone (a crash between the two deletes, a corrupt sidecar):
+    /// nothing can name them, so eviction would never see them.
+    private func removeOrphanDataLocked() {
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? []
+        let stems = Set(names.filter { $0.hasSuffix(".json") }.map { String($0.dropLast(5)) })
+        for name in names where name.hasSuffix(".run") && !stems.contains(String(name.dropLast(4))) {
+            try? FileManager.default.removeItem(at: directory.appendingPathComponent(name))
         }
     }
 

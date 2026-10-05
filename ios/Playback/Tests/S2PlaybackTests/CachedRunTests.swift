@@ -323,6 +323,41 @@ final class CachedRunTests: XCTestCase {
         XCTAssertEqual(store.evict(toBudget: 250, excluding: "three"), 0)
     }
 
+    func testEvictionRemovesOrphanedDataFilesAndKeepsTheResolvedURLMap() throws {
+        store.replace("kept", startingAt: 0, totalLength: nil)
+        store.append("kept", Data(repeating: 1, count: 10))
+        let orphan = storeDirectory.appendingPathComponent("orphan.run")
+        try Data(repeating: 9, count: 50).write(to: orphan)
+        let map = storeDirectory.appendingPathComponent("resolved-urls.json")
+        try Data("{}".utf8).write(to: map)
+
+        store.evict(excluding: nil)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: orphan.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: map.path))
+        XCTAssertEqual(store.run(for: "kept")?.length, 10)
+    }
+
+    func testTheBudgetIsHalfAGigabyte() {
+        XCTAssertEqual(CachedRunStore.budgetBytes, 512 * 1024 * 1024)
+    }
+
+    func testLegacyDirectoryIsRemovedOnceAndRemovingAgainIsANoOp() throws {
+        let legacy = FileManager.default.temporaryDirectory.appendingPathComponent("legacy-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: legacy, withIntermediateDirectories: true)
+        try Data(repeating: 1, count: 100).write(to: legacy.appendingPathComponent("abc.run"))
+
+        CachedRunStore.removeLegacyDirectory(legacy)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
+        CachedRunStore.removeLegacyDirectory(legacy)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
+    }
+
+    func testTheSharedStoreLivesInCachesNotApplicationSupport() {
+        XCTAssertTrue(CachedRunStore.sharedDirectory.path.contains("/Caches/"))
+        XCTAssertNotEqual(CachedRunStore.sharedDirectory, CachedRunStore.legacyDirectory)
+    }
+
     // MARK: - (h) A replace drops the old bytes before it records the new start
 
     func testReplaceNeverLeavesOldBytesUnderANewStart() throws {
