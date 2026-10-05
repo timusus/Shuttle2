@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
 import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
@@ -104,7 +105,7 @@ class SettingsViewModelTest {
         store.preference(StreamingSettings.MeteredQuality).value shouldBe StreamingQuality.Kbps128
         store.preference(StreamingSettings.UnmeteredQuality).value shouldBe StreamingQuality.Original
         prefs.getString(StreamingSettings.MeteredQuality.key, null) shouldBe "Kbps128"
-        StreamingPolicy(StreamingSettings(store)) { true }.maxBitrateKbps() shouldBe 128
+        StreamingPolicy(StreamingSettings(store), DeliveredFormats()) { true }.maxBitrateKbps() shouldBe 128
     }
 
     @Test
@@ -114,7 +115,7 @@ class SettingsViewModelTest {
 
         prefs.getString(StreamingSettings.Format.key, null) shouldBe "Opus"
         prefs.getString(StreamingSettings.DownloadQuality.key, null) shouldBe "Kbps192"
-        val policy = StreamingPolicy(StreamingSettings(store)) { false }
+        val policy = StreamingPolicy(StreamingSettings(store), DeliveredFormats()) { false }
         policy.transcodeFormat() shouldBe TranscodeFormat.Opus
         policy.downloadMaxBitrateKbps() shouldBe 192
         policy.maxBitrateKbps() shouldBe null

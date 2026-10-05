@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -26,7 +27,7 @@ class SubsonicStreamsTest {
     private val server = subsonic.server
 
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
-    private val streamingPolicy = StreamingPolicy(streamingSettings) { false }
+    private val streamingPolicy = StreamingPolicy(streamingSettings, DeliveredFormats()) { false }
 
     private val streams = SubsonicStreams(subsonic.authenticationManager, subsonic.service, streamingPolicy, StreamProfile.Android, "Shuttle")
 

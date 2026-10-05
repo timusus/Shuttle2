@@ -4,6 +4,8 @@ import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import dev.zacsweers.metro.Inject
 
 /**
@@ -24,13 +26,17 @@ class JellyfinStreamUrlProvider(
     ): String {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
-        return authenticationManager.buildJellyfinPath(
+        val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
+        val format = streamingPolicy.transcodeFormat()
+        val url = authenticationManager.buildJellyfinPath(
             itemId = song.itemId(),
             authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = streamingPolicy.maxBitrateKbps(),
+            maxBitrateKbps = maxBitrateKbps,
             startPositionMs = startPositionMs,
-            format = streamingPolicy.transcodeFormat()
+            format = format
         ) ?: throw IllegalStateException("Failed to build jellyfin path")
+        streamingPolicy.streamOpened(song.path, delivered(song, maxBitrateKbps, format))
+        return url
     }
 
     /**
@@ -61,6 +67,21 @@ class JellyfinStreamUrlProvider(
     ): DownloadSource? {
         if (httpStatus == 403) authenticationManager.disableDownloadPermission()
         return super.downloadFallback(song, httpStatus)
+    }
+
+    /**
+     * What the server sends: the universal endpoint decides, so this is the decision it makes for a song whose bitrate is
+     * known to be over the cap, a transcode at the cap in the chosen codec. A song within it, or of unknown bitrate, is
+     * taken to play as the original file.
+     */
+    private fun delivered(
+        song: Song,
+        maxBitrateKbps: Int?,
+        format: TranscodeFormat
+    ): DeliveredFormat? {
+        val bitRate = song.bitRate ?: return null
+        if (maxBitrateKbps == null || bitRate <= maxBitrateKbps) return null
+        return authenticationManager.streamTarget(format).codec.delivered(maxBitrateKbps)
     }
 
     private fun Song.itemId(): String = path.substringAfterLast('/')

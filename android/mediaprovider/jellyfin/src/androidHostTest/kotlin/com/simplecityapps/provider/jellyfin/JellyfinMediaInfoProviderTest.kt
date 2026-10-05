@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
@@ -50,7 +51,7 @@ class JellyfinMediaInfoProviderTest {
     private val provider = JellyfinMediaInfoProvider(
         authenticationManager,
         JellyfinTranscodeService(client),
-        StreamingPolicy(streamingSettings) { metered }
+        StreamingPolicy(streamingSettings, DeliveredFormats()) { metered }
     )
 
     @Test

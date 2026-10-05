@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.Setting
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
@@ -107,6 +108,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val restoreQueue: RestoreQueue,
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
+    deliveredFormats: DeliveredFormats,
     @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     PlayerActions {
@@ -202,6 +204,8 @@ class PlayerViewModel @AssistedInject constructor(
             )
         }.combine(observeSetting(PlayerSettings.ShowRemainingTime)) { state, showRemainingTime ->
             state.copy(showRemainingTime = showRemainingTime)
+        }.combine(deliveredFormats.byPath) { state, delivered ->
+            state.copy(delivered = state.current?.song?.path?.let(delivered::get))
         }.combine(panel) { state, panel ->
             // An emptied queue takes the player, and its panel, away.
             state.copy(panel = panel.takeIf { state.hasQueue == true })

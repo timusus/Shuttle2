@@ -34,6 +34,8 @@ import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -93,6 +95,7 @@ class PlayerViewModelTest {
     }
     private val gatedSongs = MutableSharedFlow<Song>()
     private val replayGainModeSetting = ReplayGainModeSetting { PlaybackSettings.ReplayGain }
+    private val deliveredFormats = DeliveredFormats()
 
     @BeforeTest
     fun setUp() {
@@ -132,6 +135,7 @@ class PlayerViewModelTest {
             restoreQueue = RestoreQueue(queueOperations, playbackOperations),
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures()),
             mediaActionHandler = mediaActions.handler,
+            deliveredFormats = deliveredFormats,
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -171,6 +175,22 @@ class PlayerViewModelTest {
         queueOperations.queueStateFlow.value = queueOf(songs("A")).copy(playContext = PlayContext.Playlist(9))
 
         viewModel.uiState.value.player.queueSource shouldBe null
+    }
+
+    @Test
+    fun `the current song's transcode is what the player delivers - and the next song's own file has none`() = runTest {
+        val transcoded = createSong(id = 1, name = "Transcoded").copy(path = "subsonic://song/1")
+        val original = createSong(id = 2, name = "Original").copy(path = "subsonic://song/2")
+        val viewModel = viewModel()
+        queueOperations.queueStateFlow.value = queueOf(listOf(transcoded, original))
+
+        deliveredFormats.record(transcoded.path, DeliveredFormat("MP3", 128))
+
+        viewModel.uiState.value.player.delivered shouldBe DeliveredFormat("MP3", 128)
+
+        queueOperations.queueStateFlow.value = queueOf(listOf(transcoded, original), current = 1)
+
+        viewModel.uiState.value.player.delivered shouldBe null
     }
 
     @Test

@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -41,7 +42,7 @@ class JellyfinStreamUrlProviderTest {
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
-    private val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings) { metered })
+    private val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings, DeliveredFormats()) { metered })
 
     @Test
     fun `handles only jellyfin paths`() {

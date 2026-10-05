@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -13,7 +14,7 @@ class StreamingPolicyTest {
     private val store = InMemoryKeyValueStore()
     private val streamingSettings = StreamingSettings(SettingsStore(store))
     private var metered = false
-    private val cap = StreamingPolicy(streamingSettings) { metered }
+    private val cap = StreamingPolicy(streamingSettings, DeliveredFormats()) { metered }
 
     @Test
     fun `streams the original by default unmetered and 320 kbps metered`() {

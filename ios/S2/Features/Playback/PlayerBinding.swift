@@ -11,7 +11,7 @@ struct NowPlayingState: Equatable {
     var artist: String?
     var album: String?
     var artwork: ArtworkSource?
-    /// The current song's format, for the quality line under its title.
+    /// The current song's format, for the quality line under its title: what the server sends while it transcodes it.
     var quality: AudioQuality?
     /// Play is intended (`PlayIntent`): the transport shows pause from the tap, not once audio starts.
     var isPlaying = false
@@ -313,7 +313,8 @@ final class PlayerBinding {
             next.artist = current?.artist
             next.album = current?.album
             next.artwork = artwork
-            next.quality = current.map { AudioQuality(song: $0.song) }
+            // A transcode's badge is what the server sends, not the file it holds (#902).
+            next.quality = current.map { playing in player.delivered.map(AudioQuality.init(delivered:)) ?? AudioQuality(song: playing.song) }
             next.queueSource = player.queueSource
             next.queue = player.items.map { item in
                 NowPlayingQueueRow(

@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -52,7 +53,7 @@ class PlexStreamUrlProviderTest {
 
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
-    private val streamingPolicy = StreamingPolicy(streamingSettings) { metered }
+    private val streamingPolicy = StreamingPolicy(streamingSettings, DeliveredFormats()) { metered }
 
     private val transcodeService = TranscodeService(createHttpClient(server.engine))
 

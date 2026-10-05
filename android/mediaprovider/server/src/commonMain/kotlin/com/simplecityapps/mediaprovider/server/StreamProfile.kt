@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.server
 
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 
 /**
  * What a platform's player plays: for Jellyfin and Emby's universal audio endpoint, the formats it direct-plays and
@@ -77,7 +78,10 @@ enum class TranscodeCodec(
 ) {
     Aac(codec = "aac", progressiveContainer = "aac", segmentContainer = "ts", mimeType = "audio/aac", label = "AAC"),
     Mp3(codec = "mp3", progressiveContainer = "mp3", segmentContainer = "ts", mimeType = "audio/mpeg", label = "MP3"),
-    Opus(codec = "opus", progressiveContainer = "ogg", segmentContainer = "mp4", mimeType = "audio/ogg", label = "OPUS")
+    Opus(codec = "opus", progressiveContainer = "ogg", segmentContainer = "mp4", mimeType = "audio/ogg", label = "OPUS");
+
+    /** A stream of this codec at [bitrateKbps] (null when the server picks it), as Now Playing's badge shows it. */
+    fun delivered(bitrateKbps: Int?): DeliveredFormat = DeliveredFormat(label, bitrateKbps)
 }
 
 /** A transcode: [codec], in HLS segments or one progressive file. */

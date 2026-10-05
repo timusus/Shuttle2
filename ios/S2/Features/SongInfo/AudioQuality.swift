@@ -31,6 +31,12 @@ struct AudioQuality: Equatable {
         )
     }
 
+    /// What the server sends while it transcodes a song, "MP3 · 128 kbps", for Now Playing's badge (#902); Song Info keeps
+    /// the file's own format.
+    init(delivered: DeliveredFormat) {
+        self.init(codec: delivered.codec, bitRate: delivered.bitrateKbps.map { Int(truncating: $0) })
+    }
+
     /// Whether the format keeps the source's bit depth: only then does a bit depth mean anything to a listener
     /// (TagLib reports 16 for AAC/M4A too).
     var isLossless: Bool {

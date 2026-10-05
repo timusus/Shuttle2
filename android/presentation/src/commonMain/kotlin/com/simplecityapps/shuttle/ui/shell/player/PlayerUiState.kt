@@ -5,6 +5,7 @@ import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
@@ -59,6 +60,8 @@ data class PlayerUiState(
     /** The playback speed, 1 being normal; the pitch stays the same at any speed. */
     val playbackSpeed: Float = 1f,
     val replayGainMode: ReplayGainMode = ReplayGainMode.Off,
+    /** What the server sends for [current] when it transcodes it, which Now Playing's badge shows; null for the file itself. */
+    val delivered: DeliveredFormat? = null,
     /** The seek bar's end label counts down the time left, rather than showing the song's length. */
     val showRemainingTime: Boolean = true,
     /** The panel the bar has open, or null at rest. */

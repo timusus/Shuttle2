@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
@@ -104,7 +105,7 @@ class JellyfinStreamProfileTest {
         val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore())).apply {
             unmeteredQuality.value = quality
         }
-        val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings) { false })
+        val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings, DeliveredFormats()) { false })
         return provider.streamUrl(song(), startPositionMs)
     }
 

@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
@@ -48,7 +49,7 @@ class PlexMediaInfoProviderTest {
 
     private val streamUrls = PlexStreamUrlProvider(
         authenticationManager,
-        StreamingPolicy(streamingSettings) { metered },
+        StreamingPolicy(streamingSettings, DeliveredFormats()) { metered },
         StreamProfile.Android,
         TranscodeService(createHttpClient(FixtureServer { error("not called") }.engine))
     )

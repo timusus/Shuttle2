@@ -107,12 +107,15 @@ class PlexStreamUrlProvider(
         if (withinCap && isDecodable(song)) {
             val path = authenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials)
                 ?: throw IllegalStateException("Failed to build plex path")
+            streamingPolicy.streamOpened(song.path, null)
             return PlexStream(path, song.mimeType)
         }
         val transcodeKbps = maxBitrateKbps ?: UNCAPPED_TRANSCODE_KBPS
         return if (streamProfile.playsHls) {
-            val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps, sessionIdentifier(song), hlsCodec())
+            val codec = hlsCodec()
+            val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps, sessionIdentifier(song), codec)
                 ?: throw IllegalStateException("Failed to build plex transcode path")
+            streamingPolicy.streamOpened(song.path, codec.delivered(transcodeKbps))
             PlexStream(path, HLS_MIME_TYPE)
         } else {
             val session = if (playId == null) sessionIdentifier(song) else playSession(song, playId)
@@ -124,6 +127,7 @@ class PlexStreamUrlProvider(
                 session = session,
                 sessionIdentifier = sessionIdentifier(song)
             ) ?: throw IllegalStateException("Failed to build plex transcode path")
+            streamingPolicy.streamOpened(song.path, TranscodeCodec.Mp3.delivered(transcodeKbps))
             PlexStream(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
         }
     }

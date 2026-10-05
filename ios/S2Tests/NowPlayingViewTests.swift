@@ -335,6 +335,12 @@ struct NowPlayingViewTests {
         #expect(AudioQuality().spokenBadge(locale: en) == nil)
     }
 
+    @Test func aTranscodesQualityLineIsWhatTheServerSends() {
+        let en = Locale(identifier: "en_US")
+        #expect(AudioQuality(delivered: DeliveredFormat(codec: "MP3", bitrateKbps: KotlinInt(int: 128))).badge(locale: en) == "MP3 · 128 kbps")
+        #expect(AudioQuality(delivered: DeliveredFormat(codec: "OPUS", bitrateKbps: nil)).badge(locale: en) == "OPUS")
+    }
+
     @Test func theQualityLineShowsTheFormatAndHidesWhenUnknown() throws {
         var playing = state()
         playing.quality = AudioQuality(codec: "flac", bitDepth: 24, sampleRate: 96_000)

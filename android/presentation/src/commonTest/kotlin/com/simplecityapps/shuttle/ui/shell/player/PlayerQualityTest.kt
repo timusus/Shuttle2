@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.createSong
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -61,5 +62,14 @@ class PlayerQualityTest {
     @Test
     fun `22 point 05 kHz reads with its decimals`() {
         bare.copy(sampleRate = 22050).qualityLine() shouldBe "FLAC · 22.05 kHz"
+    }
+
+    @Test
+    fun `a transcode reads as what the server delivers - not the file`() {
+        val flac = bare.copy(bitDepth = 24, sampleRate = 96000)
+
+        flac.qualityLine(DeliveredFormat("MP3", 128)) shouldBe "MP3 · 128 kbps"
+        flac.qualityLine(DeliveredFormat("OPUS", null)) shouldBe "OPUS"
+        flac.qualityLine(null) shouldBe "FLAC · 24-bit / 96 kHz"
     }
 }

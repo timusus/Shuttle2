@@ -16,15 +16,18 @@ import com.simplecityapps.provider.subsonic.http.TranscodingProfileDto
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.TranscodeFormat
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 
 /**
  * Where a song streams from. A transcode the server can start part way in has [timeSeek]: it has no byte ranges to seek
- * by, so a seek re-requests it from that time. A transcode without one can't be seeked.
+ * by, so a seek re-requests it from that time. A transcode without one can't be seeked. [delivered] is the transcode's
+ * codec and bitrate, null for the original file.
  */
 data class SubsonicStream(
     val url: String,
     val mimeType: String,
-    val timeSeek: TimeSeekableStream? = null
+    val timeSeek: TimeSeekableStream? = null,
+    val delivered: DeliveredFormat? = null
 )
 
 /**
@@ -56,11 +59,11 @@ class SubsonicStreams(
     suspend fun stream(song: Song): SubsonicStream {
         val signedIn = signedIn()
         val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
-        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return direct(signedIn, song)
+        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return opened(song, direct(signedIn, song))
         if (authenticationManager.serverInfo?.supports(SubsonicServerInfo.TRANSCODING) == true) {
-            decided(signedIn, song, maxBitrateKbps)?.let { return it }
+            decided(signedIn, song, maxBitrateKbps)?.let { return opened(song, it) }
         }
-        return legacyTranscode(signedIn, song, maxBitrateKbps, transcodeCodec())
+        return opened(song, legacyTranscode(signedIn, song, maxBitrateKbps, transcodeCodec()))
     }
 
     /**
@@ -72,10 +75,10 @@ class SubsonicStreams(
     fun immediateStream(song: Song, startPositionMs: Long = 0): SubsonicStream {
         val signedIn = signedIn()
         val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
-        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return direct(signedIn, song)
+        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return opened(song, direct(signedIn, song))
         val transcode = legacyTranscode(signedIn, song, maxBitrateKbps, transcodeCodec())
         val timeSeek = transcode.timeSeek
-        return if (startPositionMs > 0 && timeSeek != null) transcode.copy(url = timeSeek.urlAt(startPositionMs / 1000)) else transcode
+        return opened(song, if (startPositionMs > 0 && timeSeek != null) transcode.copy(url = timeSeek.urlAt(startPositionMs / 1000)) else transcode)
     }
 
     /**
@@ -86,8 +89,14 @@ class SubsonicStreams(
     fun castStream(song: Song): SubsonicStream {
         val signedIn = signedIn()
         val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
-        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return direct(signedIn, song)
-        return legacyTranscode(signedIn, song, maxBitrateKbps, TranscodeCodec.Mp3).copy(timeSeek = null)
+        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return opened(song, direct(signedIn, song))
+        return opened(song, legacyTranscode(signedIn, song, maxBitrateKbps, TranscodeCodec.Mp3).copy(timeSeek = null))
+    }
+
+    /** Reports what [song]'s stream delivers, for Now Playing's badge, and hands it on. */
+    private fun opened(song: Song, stream: SubsonicStream): SubsonicStream {
+        streamingPolicy.streamOpened(song.path, stream.delivered)
+        return stream
     }
 
     /**
@@ -153,7 +162,7 @@ class SubsonicStreams(
             )
         }
         val timeSeek = TimeSeekableStream(kbps, song.duration.toLong(), urlAt).takeIf { authenticationManager.serverInfo?.supports(SubsonicServerInfo.TRANSCODE_OFFSET) == true }
-        return SubsonicStream(urlAt(0), codec.mimeType, timeSeek)
+        return SubsonicStream(urlAt(0), codec.mimeType, timeSeek, codec.delivered(kbps))
     }
 
     /** What `getTranscodeDecision` says; null when it fails, or the server can do neither. */
@@ -186,7 +195,8 @@ class SubsonicStreams(
                         "offset" to offsetSeconds.takeIf { it > 0 }
                     )
                 }
-                SubsonicStream(urlAt(0), mimeTypeOf(decision.transcodeStream?.container), TimeSeekableStream(kbps, song.duration.toLong(), urlAt))
+                val codec = (decision.transcodeStream?.codec ?: decision.transcodeStream?.container ?: TranscodeCodec.Mp3.codec).uppercase()
+                SubsonicStream(urlAt(0), mimeTypeOf(decision.transcodeStream?.container), TimeSeekableStream(kbps, song.duration.toLong(), urlAt), DeliveredFormat(codec, kbps))
             }
 
             else -> {

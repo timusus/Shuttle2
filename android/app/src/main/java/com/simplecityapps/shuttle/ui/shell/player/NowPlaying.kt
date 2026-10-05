@@ -132,7 +132,7 @@ internal fun NowPlayingTitle(
             if (castingTo != null) {
                 S2PlayingOn(castingTo, style = MaterialTheme.typography.bodyMedium)
             } else {
-                current?.song?.qualityLine()?.let { quality ->
+                current?.song?.qualityLine(player.delivered)?.let { quality ->
                     Text(text = quality, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }

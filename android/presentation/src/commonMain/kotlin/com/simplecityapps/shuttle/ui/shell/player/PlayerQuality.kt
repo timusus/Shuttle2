@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.ui.screens.songinfo.formatName
 import com.simplecityapps.shuttle.ui.screens.songinfo.formatSampleRate
 
@@ -11,8 +12,12 @@ private val losslessCodecs = setOf("FLAC", "ALAC", "WAV", "WAVE", "AIFF", "AIF",
  * "MP3 · 320 kbps", or the codec and sample rate when the bit rate is unknown. A lossless codec reads
  * "FLAC · 24-bit / 96 kHz" when both are known, else the sample rate, else the bit rate. Null when the
  * song carries no format at all.
+ *
+ * While the server transcodes the song, it's what's [delivered] instead: "MP3 · 128 kbps", or the codec alone when the
+ * server picks the bitrate (#902). Song Info keeps the file's own format.
  */
-fun Song.qualityLine(): String? {
+fun Song.qualityLine(delivered: DeliveredFormat? = null): String? {
+    if (delivered != null) return listOfNotNull(delivered.codec, delivered.bitrateKbps?.let { "$it kbps" }).joinToString(" · ")
     val codec = audioCodec?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: formatName(mimeType)
     val rate = bitRate?.takeIf { it > 0 }?.let { "$it kbps" }
     val sample = sampleRate?.takeIf { it > 0 }?.let(::formatSampleRate)
