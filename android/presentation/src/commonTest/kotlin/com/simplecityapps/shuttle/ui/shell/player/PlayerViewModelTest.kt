@@ -22,6 +22,8 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.SmartPlaylistId
@@ -107,13 +109,13 @@ class PlayerViewModelTest {
         Dispatchers.resetMain()
     }
 
-    /** Whether the Pro gate lets the user turn ReplayGain on; allowed by default. */
-    private var advancedAudioAllowed = true
+    /** What the Pro gate decides turning ReplayGain on from; Pro by default. */
+    private var entitlement: Entitlement = Entitlement.Pro(ProSource.Lifetime)
 
     private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
         val sleepTimer = SleepTimer(playbackOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
         val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
-        mediaActions.proFeatureAllowed = advancedAudioAllowed
+        mediaActions.entitlement.value = entitlement
         return PlayerViewModel(
             observeQueue = ObserveQueue(queueOperations),
             observeQueueSource = ObserveQueueSource(ResolveHomeItems(suggestionsRepository, playlistRepository)),
@@ -594,7 +596,7 @@ class PlayerViewModelTest {
     @Test
     fun `after the trial turning ReplayGain on keeps the stored mode and turning it off stays free`() = runTest {
         SaveSetting(settingsStore)(PlaybackSettings.ReplayGain, ReplayGainMode.Track)
-        advancedAudioAllowed = false
+        entitlement = Entitlement.Free(trialUsed = true)
         val viewModel = viewModel()
 
         viewModel.setReplayGainMode(ReplayGainMode.Album)
@@ -603,6 +605,15 @@ class PlayerViewModelTest {
 
         viewModel.setReplayGainMode(ReplayGainMode.Off)
         ReadSetting(settingsStore)(PlaybackSettings.ReplayGain) shouldBe ReplayGainMode.Off
+    }
+
+    @Test
+    fun `turning ReplayGain on goes ahead while the store hasn't answered - so a purchaser is never blocked`() = runTest {
+        entitlement = Entitlement.Unknown
+        val viewModel = viewModel()
+
+        viewModel.setReplayGainMode(ReplayGainMode.Album)
+        ReadSetting(settingsStore)(PlaybackSettings.ReplayGain) shouldBe ReplayGainMode.Album
     }
 
     @Test

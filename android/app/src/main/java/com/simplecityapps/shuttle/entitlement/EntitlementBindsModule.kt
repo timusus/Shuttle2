@@ -46,7 +46,7 @@ object EntitlementBindsModule {
     fun provideObservePaywallRequests(serverAccessGate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { serverAccessGate.paywallRequests }
 
     @Provides
-    fun provideTryUseProFeature(serverAccessGate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> serverAccessGate.use(feature) == ServerAccess.Allowed }
+    fun provideTryUseProFeature(serverAccessGate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> serverAccessGate.tryUse(feature) }
 
     @Provides
     fun provideTrialDisclosures(serverAccessGate: ServerAccessGate): TrialDisclosures = serverAccessGate

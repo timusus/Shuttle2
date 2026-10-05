@@ -273,6 +273,58 @@ class ServerAccessGateTest {
     }
 
     @Test
+    fun `while Play hasn't answered every feature but servers goes ahead - so a purchaser is never blocked`() {
+        entitlement.value = Entitlement.Unknown
+        val requests = requests {
+            listOf(ProFeature.AndroidAuto, ProFeature.BatchTagEdit, ProFeature.AdvancedAudio).forEach { assertTrue(gate.tryUse(it), "$it") }
+            assertFalse(gate.tryStreamFromServer())
+        }
+        assertEquals(emptyList<PaywallSource>(), requests)
+        assertEquals(0, trialStarts)
+    }
+
+    @Test
+    fun `tryUse refuses only once the trial has ended without Pro`() {
+        entitlement.value = Entitlement.Free(trialUsed = true)
+        val requests = requests {
+            assertFalse(gate.tryUse(ProFeature.BatchTagEdit))
+            assertFalse(gate.tryUse(ProFeature.AndroidAuto, askForPaywall = false))
+        }
+        assertEquals(listOf(PaywallSource.BatchTagEdit), requests)
+    }
+
+    @Test
+    fun `a pending disclosure survives the process - until it's disclosed`() {
+        val store = object : TrialDisclosureStore {
+            override var pendingDisclosure: ProFeature? = null
+        }
+        val gate = ServerAccessGate(entitlement, startTrial = { true }, disclosureStore = store)
+        requests(gate) { gate.use(ProFeature.AndroidAuto, askForPaywall = false) }
+        assertEquals(ProFeature.AndroidAuto, store.pendingDisclosure)
+
+        // The process dies; the next one's gate still has it to disclose
+        val restarted = ServerAccessGate(MutableStateFlow(Entitlement.Trial(Instant.DISTANT_FUTURE)), startTrial = { false }, disclosureStore = store)
+        assertEquals(ProFeature.AndroidAuto, restarted.pending.value)
+        restarted.onDisclosed()
+        assertEquals(null, store.pendingDisclosure)
+        assertEquals(null, restarted.pending.value)
+    }
+
+    @Test
+    fun `locked changes only when a refusal starts or stops`() {
+        entitlement.value = Entitlement.Unknown
+        val changes = mutableListOf<Boolean>()
+        runTest(UnconfinedTestDispatcher()) {
+            backgroundScope.launch { gate.locked.collect { changes += it } }
+            entitlement.value = Entitlement.Free(trialUsed = false)
+            entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
+            entitlement.value = Entitlement.Free(trialUsed = true)
+            entitlement.value = Entitlement.Pro(ProSource.Subscription)
+        }
+        assertEquals(listOf(false, true, false), changes)
+    }
+
+    @Test
     fun `where only the paywall can start the trial - a first use opens it and discloses nothing`() {
         val requests = requests(consentGate) { assertEquals(ServerAccess.Refused, consentGate.use(ProFeature.BatchTagEdit)) }
         assertEquals(listOf(PaywallSource.BatchTagEdit), requests)

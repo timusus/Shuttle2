@@ -1,6 +1,7 @@
 package com.simplecityapps.trial
 
 import com.simplecityapps.shuttle.entitlement.CachedPro
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import kotlin.time.Instant
@@ -52,6 +53,18 @@ class KeyValueEntitlementStoreTest {
 
         assertEquals(Instant.fromEpochMilliseconds(1_000), entitlementStore.serverTrialStartedAt)
         assertEquals(CachedPro(ProSource.entries.last(), Instant.fromEpochMilliseconds(2_000)), entitlementStore.cachedPro)
+    }
+
+    @Test
+    fun `a pending trial disclosure is saved by the feature's name - and cleared once disclosed`() {
+        assertNull(entitlementStore.pendingDisclosure)
+
+        entitlementStore.pendingDisclosure = ProFeature.AndroidAuto
+        assertEquals(mapOf("pending_trial_disclosure" to "AndroidAuto"), store.values)
+        assertEquals(ProFeature.AndroidAuto, KeyValueEntitlementStore(store).pendingDisclosure)
+
+        entitlementStore.pendingDisclosure = null
+        assertEquals(emptyMap<String, Any>(), store.values)
     }
 
     @Test

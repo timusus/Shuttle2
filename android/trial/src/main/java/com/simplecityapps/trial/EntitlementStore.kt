@@ -1,12 +1,17 @@
 package com.simplecityapps.trial
 
 import com.simplecityapps.shuttle.entitlement.CachedPro
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.TrialDisclosureStore
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import kotlin.time.Instant
 
-/** Persists what [EntitlementRepository] needs across launches. */
-interface EntitlementStore {
+/**
+ * Persists what [EntitlementRepository] needs across launches, and the trial disclosure still to show
+ * ([TrialDisclosureStore]), which lives beside the trial it discloses.
+ */
+interface EntitlementStore : TrialDisclosureStore {
     /** When the server trial started. Written once; a user gets one trial. */
     var serverTrialStartedAt: Instant?
 
@@ -42,6 +47,10 @@ class KeyValueEntitlementStore(
         get() = store.getBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, false)
         set(value) = store.edit { putBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, value) }
 
+    override var pendingDisclosure: ProFeature?
+        get() = store.getString(KEY_PENDING_TRIAL_DISCLOSURE, null)?.let { name -> ProFeature.entries.firstOrNull { it.name == name } }
+        set(value) = store.edit { putString(KEY_PENDING_TRIAL_DISCLOSURE, value?.name) }
+
     private fun KeyValueStore.getInstant(key: String): Instant? = if (contains(key)) Instant.fromEpochMilliseconds(getLong(key, 0)) else null
 
     private fun KeyValueStore.Editor.putInstant(
@@ -57,5 +66,6 @@ class KeyValueEntitlementStore(
         private const val KEY_CACHED_PRO_SOURCE = "cached_pro_source"
         private const val KEY_CACHED_PRO_SEEN_AT = "cached_pro_seen_at"
         private const val KEY_ENTITLEMENT_RESOLVED_LOGGED = "entitlement_resolved_logged"
+        private const val KEY_PENDING_TRIAL_DISCLOSURE = "pending_trial_disclosure"
     }
 }

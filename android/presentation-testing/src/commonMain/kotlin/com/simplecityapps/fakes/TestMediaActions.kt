@@ -8,7 +8,10 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProFeature
+import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
@@ -42,6 +45,7 @@ import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The shared media action and library use cases, wired to a test's fakes. */
 class TestMediaActions(
@@ -72,12 +76,16 @@ class TestMediaActions(
     var downloadAllowed = true
     val downloadSongs = DownloadSongs(songDownloader, resolveSongs, TryDownloadFromServer { downloadAllowed })
 
-    /** Whether the user may use a Pro feature (the entitlement gate); allowed by default. Records each feature asked for. */
-    var proFeatureAllowed = true
+    /**
+     * What the real Pro gate ([ServerAccessGate.tryUse]) decides a Pro feature from: Pro by default; `Free(trialUsed =
+     * true)` refuses, and `Unknown` (the store hasn't answered) lets it through. Records each feature asked for.
+     */
+    val entitlement = MutableStateFlow<Entitlement>(Entitlement.Pro(ProSource.Lifetime))
     val proFeaturesAsked = mutableListOf<ProFeature>()
+    private val proFeatureGate = ServerAccessGate(entitlement, startTrial = null)
     val tryUseProFeature = TryUseProFeature { feature ->
         proFeaturesAsked += feature
-        proFeatureAllowed
+        proFeatureGate.tryUse(feature)
     }
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)

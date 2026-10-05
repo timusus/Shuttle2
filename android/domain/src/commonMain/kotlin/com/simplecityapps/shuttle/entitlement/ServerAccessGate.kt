@@ -2,13 +2,16 @@ package com.simplecityapps.shuttle.entitlement
 
 import kotlin.time.Duration
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 
 /** What [ServerAccessGate] decided about a [ProFeature]. */
@@ -33,31 +36,45 @@ enum class ServerAccess {
  * (iOS, where the trial is a free App Store purchase), the use is refused and the paywall offers the trial instead.
  *
  * A refusal also asks for the paywall through [paywallRequests], so each entry point makes one call. While the store
- * hasn't answered, a use waits up to [storeAnswerWait] for it; if it still hasn't, the use is refused as
- * [ServerAccess.Undecided], without the paywall, which a purchaser mustn't be shown.
+ * hasn't answered, a use waits up to [storeAnswerWait] for it; if it still hasn't, the use is
+ * [ServerAccess.Undecided], without the paywall, which a purchaser mustn't be shown. A stream or download from a server
+ * is refused then; every other feature goes ahead ([tryUse]), so a purchaser is never locked out of one.
  *
  * @param startTrial starts the trial if the user hasn't had one (Android's `EntitlementRepository.startTrialIfEligible`),
  *   or null where only the paywall can start it (iOS).
  * @param storeAnswerWait how long a use waits for the store's first answer: none on Android, whose cached Pro answers
  *   at once; a few seconds on iOS, where StoreKit answers soon after launch.
+ * @param disclosureStore keeps [pending] across process death, so a trial a car started is still disclosed after the
+ *   app was killed; in memory where the gate never starts the trial (iOS).
  */
 class ServerAccessGate(
     private val entitlement: StateFlow<Entitlement>,
     private val startTrial: (suspend () -> Boolean)?,
-    private val storeAnswerWait: Duration = Duration.ZERO
+    private val storeAnswerWait: Duration = Duration.ZERO,
+    private val disclosureStore: TrialDisclosureStore = InMemoryTrialDisclosureStore()
 ) : TrialDisclosures {
     private val _paywallRequests = MutableSharedFlow<PaywallSource>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /** Where a refused action wants the paywall opened from. Dropped while nothing on screen collects it. */
     val paywallRequests: SharedFlow<PaywallSource> = _paywallRequests.asSharedFlow()
 
-    private val _pending = MutableStateFlow<ProFeature?>(null)
+    private val _pending = MutableStateFlow(disclosureStore.pendingDisclosure)
 
     override val pending: StateFlow<ProFeature?> = _pending.asStateFlow()
 
     override fun onDisclosed() {
+        disclosureStore.pendingDisclosure = null
         _pending.value = null
     }
+
+    /**
+     * Whether Pro features are locked now (the trial has ended without Pro, or only the paywall can start it), rather
+     * than unlocked or undecided. Changes when a purchase, the trial ending or the store's first answer changes that,
+     * for a surface that can't ask again (a car's browse tree) to refresh.
+     */
+    val locked: Flow<Boolean> = entitlement
+        .map { it is Entitlement.Free && (it.trialUsed || startTrial == null) }
+        .distinctUntilChanged()
 
     /** True if the user may add a remote server: anyone but a user whose trial has ended without Pro. */
     fun tryAddServer(): Boolean {
@@ -92,6 +109,16 @@ class ServerAccessGate(
         feature: ProFeature,
         askForPaywall: Boolean = true
     ): ServerAccess = use(feature, feature.paywallSource, askForPaywall)
+
+    /**
+     * True unless [use] refuses [feature]: a store that hasn't answered yet ([ServerAccess.Undecided], a fresh install
+     * or a Billing error) lets it through rather than block a purchaser. A refusal has asked for the paywall if
+     * [askForPaywall].
+     */
+    suspend fun tryUse(
+        feature: ProFeature,
+        askForPaywall: Boolean = true
+    ): Boolean = use(feature, askForPaywall) != ServerAccess.Refused
 
     private suspend fun use(
         feature: ProFeature,
@@ -130,11 +157,18 @@ class ServerAccessGate(
                 ServerAccess.Refused
             } else {
                 // False only if another caller started it first, or the store reports Pro: either way the feature is unlocked.
-                if (startTrial()) _pending.value = feature
+                if (startTrial()) {
+                    disclosureStore.pendingDisclosure = feature
+                    _pending.value = feature
+                }
                 ServerAccess.Allowed
             }
         }
 
         Entitlement.Unknown -> ServerAccess.Undecided
     }
+}
+
+private class InMemoryTrialDisclosureStore : TrialDisclosureStore {
+    override var pendingDisclosure: ProFeature? = null
 }

@@ -9,6 +9,7 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
@@ -216,14 +217,21 @@ class MediaActionHandlerTest {
 
     @Test
     fun `a refused batch tag edit opens nothing since the gate has asked for the upgrade`() = runTest {
-        actions.proFeatureAllowed = false
+        actions.entitlement.value = Entitlement.Free(trialUsed = true)
 
         handler.handle(MediaAction.EditTags(songs)) shouldBe MediaActionResult.None
     }
 
     @Test
+    fun `a batch tag edit goes ahead while the store hasn't answered - so a purchaser is never blocked`() = runTest {
+        actions.entitlement.value = Entitlement.Unknown
+
+        handler.handle(MediaAction.EditTags(songs)) shouldBe MediaActionResult.Navigate(NavigationTarget.TagEditor(listOf(song, other)))
+    }
+
+    @Test
     fun `editing one song's tags stays free after the trial`() = runTest {
-        actions.proFeatureAllowed = false
+        actions.entitlement.value = Entitlement.Free(trialUsed = true)
 
         handler.handle(MediaAction.EditTags(MediaSelection.Songs(song))) shouldBe
             MediaActionResult.Navigate(NavigationTarget.TagEditor(listOf(song)))

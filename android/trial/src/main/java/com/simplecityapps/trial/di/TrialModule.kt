@@ -63,5 +63,8 @@ class TrialModule {
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideServerAccessGate(entitlementRepository: EntitlementRepository): ServerAccessGate = ServerAccessGate(entitlementRepository.entitlement, entitlementRepository::startTrialIfEligible)
+    fun provideServerAccessGate(
+        entitlementRepository: EntitlementRepository,
+        store: EntitlementStore
+    ): ServerAccessGate = ServerAccessGate(entitlementRepository.entitlement, entitlementRepository::startTrialIfEligible, disclosureStore = store)
 }

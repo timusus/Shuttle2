@@ -6,7 +6,10 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProFeature
+import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -33,6 +36,7 @@ import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -60,12 +64,13 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    /** Whether the Pro gate lets a Pro option through; allowed by default. Records each feature asked for. */
-    private var proFeatureAllowed = true
+    /** What the real Pro gate decides a Pro option from; Pro by default. Records each feature asked for. */
+    private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Pro(ProSource.Lifetime))
     private val proFeaturesAsked = mutableListOf<ProFeature>()
+    private val proFeatureGate = ServerAccessGate(entitlement, startTrial = null)
     private val tryUseProFeature = TryUseProFeature { feature ->
         proFeaturesAsked += feature
-        proFeatureAllowed
+        proFeatureGate.tryUse(feature)
     }
 
     private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), ObserveEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow, tryUseProFeature)
@@ -119,7 +124,7 @@ class SettingsViewModelTest {
         store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Album
         proFeaturesAsked shouldBe listOf(ProFeature.AdvancedAudio)
 
-        proFeatureAllowed = false
+        entitlement.value = Entitlement.Free(trialUsed = true)
         viewModel.onChoiceSelect(replayGain, replayGain.options.indexOfFirst { it.value == ReplayGainMode.Off })
         runCurrent()
         store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Off
@@ -129,7 +134,7 @@ class SettingsViewModelTest {
     @Test
     fun `a refused ReplayGain mode keeps the stored one after the trial`() = runTest(mainDispatcherRule.testDispatcher) {
         store.preference(PlaybackSettings.ReplayGain).value = ReplayGainMode.Track
-        proFeatureAllowed = false
+        entitlement.value = Entitlement.Free(trialUsed = true)
         val viewModel = viewModel()
         val replayGain = item<SettingItem.Choice<*>>(PlaybackSettings.ReplayGain.key)
 
@@ -138,6 +143,18 @@ class SettingsViewModelTest {
 
         store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Track
         effects.changes shouldBe emptyList()
+    }
+
+    @Test
+    fun `a ReplayGain mode is stored while the store hasn't answered so a purchaser is never blocked`() = runTest(mainDispatcherRule.testDispatcher) {
+        entitlement.value = Entitlement.Unknown
+        val viewModel = viewModel()
+        val replayGain = item<SettingItem.Choice<*>>(PlaybackSettings.ReplayGain.key)
+
+        viewModel.onChoiceSelect(replayGain, replayGain.options.indexOfFirst { it.value == ReplayGainMode.Album })
+        runCurrent()
+
+        store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Album
     }
 
     @Test

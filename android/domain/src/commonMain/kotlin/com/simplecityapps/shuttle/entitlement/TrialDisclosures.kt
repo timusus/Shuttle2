@@ -14,3 +14,8 @@ interface TrialDisclosures {
     /** The user has seen the disclosure. */
     fun onDisclosed()
 }
+
+/** Keeps [TrialDisclosures.pending] across process death, so a trial started where nothing could show it is still disclosed. */
+interface TrialDisclosureStore {
+    var pendingDisclosure: ProFeature?
+}

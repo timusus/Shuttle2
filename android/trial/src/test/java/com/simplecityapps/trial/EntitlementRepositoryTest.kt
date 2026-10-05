@@ -5,7 +5,10 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.CachedPro
 import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
 import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.ServerAccess
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -14,7 +17,11 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -32,7 +39,8 @@ class EntitlementRepositoryTest {
     private class FakeStore(
         override var serverTrialStartedAt: Instant? = null,
         override var cachedPro: CachedPro? = null,
-        override var entitlementResolvedLogged: Boolean = false
+        override var entitlementResolvedLogged: Boolean = false,
+        override var pendingDisclosure: ProFeature? = null
     ) : EntitlementStore
 
     private val start = Instant.fromEpochMilliseconds(1_800_000_000_000)
@@ -147,6 +155,26 @@ class EntitlementRepositoryTest {
     fun `a trial started on an earlier launch carries over`() = runTest {
         store.serverTrialStartedAt = start - 10.days
         assertEquals(Entitlement.Trial(start + 4.days), repository().entitlement.value)
+    }
+
+    @Test
+    fun `first uses of several Pro features at once start the trial once and disclose one of them`() = runTest {
+        val repository = repository()
+        val gate = ServerAccessGate(repository.entitlement, repository::startTrialIfEligible, disclosureStore = store)
+        val go = CompletableDeferred<Unit>()
+        val uses = ProFeature.entries.map { feature ->
+            async(Dispatchers.Default) {
+                go.await()
+                gate.use(feature, askForPaywall = false)
+            }
+        }
+        go.complete(Unit)
+
+        assertEquals(ProFeature.entries.map { ServerAccess.Allowed }, uses.awaitAll())
+        verify(exactly = 1) { analytics.trialStarted() }
+        assertEquals(start, store.serverTrialStartedAt)
+        assertTrue(store.pendingDisclosure in ProFeature.entries)
+        assertEquals(store.pendingDisclosure, gate.pending.value)
     }
 
     @Test
