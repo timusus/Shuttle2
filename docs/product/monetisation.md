@@ -8,8 +8,10 @@ the reasoning behind it and read as the original recommendation.
 
 Decided by the owner on epic #382; each can still be revisited:
 
-- **Pro** = streaming from Jellyfin/Emby/Plex, plus new downloads from a server. Songs already
-  downloaded never disappear.
+- **Pro** = Jellyfin/Emby/Plex/Subsonic access: new downloads from a server and the streaming that goes with
+  it. It is sold as "offline downloads + Android Auto/CarPlay for your server", not as "server streaming"
+  (decided 2026-10-06): Plexamp and Finamp stream for free, and offline is what Plex and Emby charge for. The
+  gating is unchanged. Songs already downloaded never disappear.
 - **Free** = local playback, Chromecast, EQ, Android Auto and downloaded songs.
 - **Pricing decided on #380:** lifetime $9.99, annual $3.99, **no monthly plan** (the 14-day trial
   covers trying it, and twelve monthly payments would cost more than lifetime). A 30-day launch
@@ -19,10 +21,13 @@ Decided by the owner on epic #382; each can still be revisited:
   one fresh trial the same way.
 - **All five legacy products are grandfathered to Pro**, indefinitely.
 - **No nag dialogs.** The paywall appears at add-server, at trial end, and in Settings.
-- **Pro for local-only users** takes nothing away; Pro adds optional supporter extras only
-  (alternate app icons, extra theme options beyond artwork theming). Details land with #380.
+- **Pro for local-only users** takes nothing away, and there are no supporter perks (alternate icons, extra
+  themes): they would not earn revenue (decided 2026-10-06). If 60-day gross falls below 70% of the A$220/month
+  baseline, local-only users get one dismissible card, shown once after about 30 days and 200 local plays:
+  "made by one developer, Pro unlocks servers". It bends "no nag dialogs", so it only ships on that trigger.
 - **No analytics-only release before the freeze.** Paywall and server-use analytics events ship
-  with the redesign; prices are tuned afterwards with Play price experiments.
+  with the redesign, plus the `media_sources` property and the `entitlement_resolved` event (§6); prices are
+  tuned afterwards with Play price experiments.
 - **Still needs the owner:** Play listing wording, the Play Console setup checklist in §5, and the
   payments account notice (#372).
 - **Non-blocking catalogue approval** (design-language.md §5, app-shell.md §6) was decided in the
@@ -87,10 +92,9 @@ Decided by the owner on epic #382; each can still be revisited:
 
 | Free, forever | Pro |
 |---|---|
-| All local playback, library, playlists, tag editor, EQ, replay gain, sleep timer, Android Auto, widgets | Streaming from Jellyfin, Emby and Plex (all three; there's no per-server pricing) |
+| All local playback, library, playlists, tag editor, EQ, replay gain, sleep timer, Android Auto, widgets | Jellyfin, Emby, Plex and Subsonic servers, for offline downloads and Android Auto (all of them; there's no per-server pricing) |
 | Chromecast, for local and remote | Adding and syncing more than zero remote servers after the trial |
 | Downloaded remote songs keep playing after a trial or subscription ends (they are on the device) | New downloads from a server (this needs server access, which is Pro) |
-| Themes | Optional supporter perks: extra themes, accent colours, app icons. They are cheap to build and give local-only users a reason to pay |
 
 The owner kept downloads free, but downloading from a server needs server access. My reading is that downloads are never a separate upsell and never disappear, rather than that free users can download from a server. Confirm this.
 
@@ -144,7 +148,7 @@ The owner kept downloads free, but downloading from a server needs server access
 
 ### Paywall placement
 
-1. **Add-server screen**, before connecting: "Streaming from Jellyfin, Emby and Plex is part of S2 Pro. Free for 14 days." This is the disclosure that keeps the listing honest.
+1. **Add-server screen**, before connecting: "Offline downloads and Android Auto for your Jellyfin, Emby, Plex or Subsonic server are part of S2 Pro. Free for 14 days." This is the disclosure that keeps the listing honest.
 2. **Trial end**, when the user taps play on a remote song. This is the highest-intent moment.
 3. **Settings → S2 Pro**: status, restore purchases, promo code (make it visible and drop the five-tap easter egg), and manage subscription (a deep link to Play).
 4. **A trial chip** in the Library top bar for the last 3 days only. Replaces today's always-visible ring and daily dialog.
@@ -177,25 +181,28 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 
 ### iOS (StoreKit 2, #609)
 
-iOS sells the same thing, as far as iOS has it: Jellyfin, Emby and Plex streaming need Pro after a 7-day trial;
+iOS sells the same thing, as far as iOS has it: Jellyfin, Emby and Plex streaming need Pro after a 14-day trial, as on
+Android. Lifetime is $19.99, and $14.99 in the launch month (decided 2026-10-06; it stays under Narjo's $29.99, and
+iOS self-hosters pay two to three times Android prices). Purchases are per store, so there is no cross-platform
+unlock, and the paywall says so;
 AirPlay, the equalizer and everything else stay free. Downloads join Pro when iOS has them, and not before: the
 paywall, Settings and the App Store Connect product descriptions name only what the app does (guidelines 2.3 and
 3.1.1), from one place in Swift (`ProFeatures` in `PaywallView.swift`). There's no subscription on iOS yet, only the
 trial and Lifetime. The length is `AppStoreProducts.TRIAL_DAYS` in `:shared`, the one place it is defined.
 
 - **Products.** Two non-consumables, ids in `shared/.../entitlement/AppStoreProducts.kt`:
-  - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 7-day Trial", display name
-    "7-day Free Trial", description "Stream from Jellyfin, Emby and Plex free for 7 days". Buying it starts the trial,
-    which runs 7 days from the transaction's `originalPurchaseDate`. The App Store keeps the transaction per Apple
+  - `com.simplecityapps.shuttle.pro.trial`: free (price tier 0), reference name "Pro 14-day Trial", display name
+    "14-day Free Trial", description "Stream from Jellyfin, Emby and Plex free for 14 days". Buying it starts the trial,
+    which runs 14 days from the transaction's `originalPurchaseDate`. The App Store keeps the transaction per Apple
     ID, and a restore, reinstall or new device reports the same original date, so none of them restarts the trial.
     A refunded or revoked trial counts as used.
-  - `com.simplecityapps.shuttle.pro.lifetime`: paid (USD 9.99 in `S2.storekit`; set the real price in App Store
-    Connect), reference name "Pro Lifetime", display name "Shuttle Music Pro (Lifetime)", description "Stream from
+  - `com.simplecityapps.shuttle.pro.lifetime`: paid (USD 19.99 in `S2.storekit`, with $14.99 for the launch month set
+    in App Store Connect), reference name "Pro Lifetime", display name "Shuttle Music Pro (Lifetime)", description "Stream from
     Jellyfin, Emby and Plex, for life". A refunded purchase is no longer Pro.
 - **Trial consent.** Android starts the trial silently on the first server stream. App Review wants the user to
   start a free trial knowingly, so on iOS `ServerAccessGate` has no `startTrial`: the first stream before the trial
   is refused and opens the paywall, which discloses the trial length, what stops after it and Lifetime's localized
-  `displayPrice` above the "Start 7-day free trial" button (guideline 3.1.1). Adding a server stays allowed until
+  `displayPrice` above the "Start 14-day free trial" button (guideline 3.1.1). Adding a server stays allowed until
   the trial has been used, as on Android.
 - **Entitlement.** `StoreKitManager` (Swift) reads `Transaction.latest(for:)` for each product at launch, after
   each purchase or restore and on every `Transaction.updates`, and hands the verified transactions, revoked ones
@@ -215,8 +222,10 @@ trial and Lifetime. The length is `AppStoreProducts.TRIAL_DAYS` in `:shared`, th
 
 ## 6. Measuring it
 
-- **Instrument first.** Add Firebase events: `provider_connected{type}`, `remote_trial_started`, `paywall_viewed{source}`, `purchase_started/completed{product}` and `remote_trial_expired`. Add a user property `media_sources` (local / jellyfin / emby / plex, multi-valued).
-  - Ship these **one release before** the paywall, so the share of remote users is known before gating starts.
+- **Events** (PostHog, `MonetisationAnalytics`): `server_connected{type}`, `trial_started`, `paywall_shown{source}`, `paywall_dismissed{source}` and `purchase_started/completed/failed/restored{product}`, plus two that say who the buyers are (Android; iOS has no caller yet):
+  - `media_sources`, a property sent with every event: the configured source kinds, sorted and comma-separated (`jellyfin,local,plex`; `none` with no source). Local covers both on-device scanners. It updates when a source is enabled or disabled.
+  - `entitlement_resolved{source}`, once per install, when the entitlement first resolves: `none` (free), `trial`, `pro`, `legacy` (an old SKU) or `debug`. In the first week after the paywall release, the legacy ones show what share of existing buyers are local-only: the revenue at risk, measured before any new purchase data exists.
+  - Ship these **with** the paywall release at the latest, so the share of remote users is known as gating starts.
   - Analytics is opt-in (about 13% of users), so read ratios, not absolute counts.
 - **KPIs, from Play Console → Buyer conversion, Revenue and Subscriptions → Retention/Cancellations:**
   - Trial-to-paid (target: at least 15% of remote trials)
@@ -232,7 +241,7 @@ trial and Lifetime. The length is `AppStoreProducts.TRIAL_DAYS` in `:shared`, th
 
 ## 7. Assumptions and open questions
 
-1. **Share of remote users is unknown.** If most of today's buyers are local-only, free local playback could cut revenue. The supporter perks and the one-release instrumentation lead time are the hedges.
+1. **Share of remote users is unknown.** If most of today's buyers are local-only, free local playback could cut revenue. The `media_sources` and `entitlement_resolved` signals measure it, and the local-user card (see Decisions) is the hedge if 60-day gross falls below 70% of baseline.
 2. **Which variant won "S2 Pricing" isn't confirmed.** Check the A/B test's detail page.
 3. **Zero orders since about 13 Sep 2026.** Verify billing on a release build before attributing any drop to the new model.
 4. **Revenue scale.** At about 500 orders a year, price matters less than volume. The larger lever is a better rating and a free local tier that brings users in.
