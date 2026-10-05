@@ -123,3 +123,48 @@ and the per-item resume-point loop (Jump Back In is empty here; recheck with pla
 - Device numbers, and a library with play history (Jump Back In's resume points, Around This Time, Heavy Rotation).
 - Library and Search first content: relaunch with each as the start tab (Settings) and rerun.
 - `OsLogLogger`'s `<compose failure>` in `log show` (archived Kotlin logs unreadable, sysdiagnoses included).
+
+## Physical device (Debug build)
+
+Measured 2026-10-05 on the owner's iPhone 16 (iOS 26), Debug configuration (`com.simplecityapps.shuttle.dev`, `S2.debug.dylib`), with the real library: 8,196 Emby songs, 190 play events, 14 resume points, telemetry consent on. Debug is what the owner runs day to day.
+
+**Method:** `devicectl device process terminate`, `pymobiledevice3 syslog live --tunnel <udid> -m S2` streamed to a file, then `devicectl device process launch --device <udid> com.simplecityapps.shuttle.dev -- <args>` (the `--` is needed or devicectl parses `-pref_…` as its own option). 5 cold launches per variant, one 22 s capture each. Launch arguments only (`-pref_show_home_on_launch '<false/>'`; `-pref_crash_reporting '<false/>' -pref_firebase_analytics '<false/>'`), nothing changed on the phone. `syslog live` doesn't print the category and drops some lines under load (n below is the number of runs in which a milestone was captured). It shows the Kotlin `Database` and `Search index` lines but not the Home section lines (`songCount`, `eventCount`, `LoadHomeSections`).
+
+Median (min–max) in ms; *duration* rows are step lengths, the others ms since the kernel started the process.
+
+| Milestone | Home start tab | Library start tab | Telemetry off (Home) | Sim Release (baseline) |
+|---|---|---|---|---|
+| Process start → S2App.init | 24 (21–86) | 28 (21–150) | 32 (26–36) | 263 |
+| AppGraph: audio engine (duration) | 44 (37–96) | 43 (38–67) | 45 (45–121) | 113 |
+| AppGraph: dependencies (duration) | 82 (78–173) | 73 (68–153) | 80 (72–149) | 136 |
+| AppGraph: telemetry start (duration) | 38 (37–52) | 39 (37–52) | 0 (0–0) | 58 |
+| AppGraph: playback system (duration) | 7 (5–8) | 10 (6–11) | 17 (11–20) | <2 |
+| S2App.init done | 150 (145–329) | 153 (144–377) | 142 (140–194) | 473 |
+| First frame | 198 (194–425) | 202 (191–480) | 187 (168–240) | 541 |
+| Home body / onAppear | 231 / 241 | — | 223 / 225 | 642 / 656 |
+| **Home first content** | never logged (see below) | — | never logged | 846 |
+| Library body / onAppear | — | 234 / 247 | — | — |
+| **Library first content** | — | 3531 (3521–4042) | — | — |
+| Album artists first content | — | 3839 (3729–4489) | — | — |
+| DB open after build began (duration) | 15 (14–20) | 12 (7–25) | 7 (4–10) | 2 |
+| Search warm-up: songs loaded (duration) | 4547 (4244–4571) | 3768 (3410–6804) | 4434 (4334–4607) | 345 |
+| Search index ready (duration) | 5867 (5588–5976) | 8064 (7657–8613) | 5831 (5687–5871) | ~800 after songs |
+
+Telemetry off: `telemetryStartup` 38 → 0 ms, first frame ~11 ms earlier (198 → 187). Smaller than the simulator's ~75 ms, and the search warm-up is unchanged.
+
+### Findings
+
+- **Home first content never fires.** In all 15 launches `home body` and `home appear` log, but `home content` doesn't, and no Home Kotlin lines appear in the 22 s window. The app had been left on an artist detail page (Bicep) and restores onto it, so Home sits under the pushed screen. Whether Home is still loading or is just not started while hidden is not settled; it needs a clean tab state to measure (see open questions).
+- **Pre-main and `AppGraph.initialize` are not the problem on device.** The process reaches `S2App.init` in ~25 ms and the first frame in ~200 ms, about a third of the simulator Release time. Caveat: the first launch after install and any pre-warmed process may hide cost in `p_starttime`.
+- **The wait is the 8,196-song query.** `getSongs(SongQuery.All())` takes ~4.5 s in Debug on the device against 345 ms in simulator Release. Library's first content lands at ~3.5 s, in step with the warm-up's songs query finishing.
+
+### Ranked causes of the 1-2 s (and worse) before content
+
+1. **The all-songs query in Debug, ~3.4-4.6 s** (13× the simulator Release time). Library content waits on it (~3.5 s); the warm-up and anything else that loads every song shares it. Debug Kotlin/Native and Room are far slower than Release, so confirm on a Release build before optimising.
+2. **Search warm-up after the songs query, ~1.3-3.8 s more** (index ready at 5.6-8.6 s), competing for the same cores when the user opens Library or Search.
+3. **Main-thread `AppGraph.initialize`, ~130 ms** (audio engine ~44 ms, Sentry + PostHog ~38 ms, playback system ~7-17 ms). Telemetry off saves ~11 ms of first frame. Small next to 1 and 2.
+
+### Open questions
+
+- Home content on device from a clean Home tab (the app was parked on an artist page); Home Kotlin timings need `log stream`-class capture, which `syslog live` doesn't give for the Home lines.
+- A Release build on the device, to separate Debug cost from real cost.
