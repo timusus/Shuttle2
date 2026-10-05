@@ -6,6 +6,8 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.PlaylistEdit
+import com.simplecityapps.mediaprovider.ServerPlaylistSync
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.comparator
@@ -46,7 +48,9 @@ class LocalPlaylistRepository(
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao,
     private val fileSync: PlaylistFileSync,
-    private val albumIndex: LibraryAlbumIndex
+    private val albumIndex: LibraryAlbumIndex,
+    /** Sends the edits to a playlist imported from a media server back to that server (#916). */
+    private val serverSync: ServerPlaylistSync? = null
 ) : PlaylistRepository,
     ImportedPlaylistStore {
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
@@ -141,6 +145,7 @@ class LocalPlaylistRepository(
             }
         )
         syncM3uFile(playlist)
+        sendToServer(playlist, songs.inLibrary()) { playlistId, paths -> PlaylistEdit.Add(playlistId, paths) }
     }
 
     override suspend fun removeFromPlaylist(
@@ -152,6 +157,7 @@ class LocalPlaylistRepository(
             playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
         )
         syncM3uFile(playlist)
+        sendToServer(playlist, playlistSongs.map { playlistSong -> playlistSong.song }) { playlistId, paths -> PlaylistEdit.Remove(playlistId, paths) }
     }
 
     override suspend fun removeSongsFromPlaylist(
@@ -163,6 +169,7 @@ class LocalPlaylistRepository(
             songIds = songs.map { it.id }.toTypedArray()
         )
         syncM3uFile(playlist)
+        sendToServer(playlist, songs) { playlistId, paths -> PlaylistEdit.Remove(playlistId, paths, everyEntry = true) }
     }
 
     override suspend fun getMemberSongIds(playlist: Playlist): Set<Long> = playlistSongJoinDao.getSongIds(playlist.id).toSet()
@@ -241,6 +248,33 @@ class LocalPlaylistRepository(
             }
         )
         syncM3uFile(playlist)
+        if (sendsToServer(playlist)) {
+            // The whole playlist, in its new order: the songs moved are only part of it
+            val songs = playlistSongJoinDao.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty().sortedBy { playlistSong -> playlistSong.sortOrder }
+            sendToServer(playlist, songs.map { playlistSong -> playlistSong.song }) { playlistId, paths -> PlaylistEdit.Reorder(playlistId, paths) }
+        }
+    }
+
+    private fun sendsToServer(playlist: Playlist): Boolean = playlist.mediaProvider.remote && playlist.externalId != null && serverSync?.handles(playlist.mediaProvider) == true
+
+    /**
+     * Queues [edit] of [songs] to [playlist] for its media server, if it came from one. Only that server's own songs go: a song from
+     * anywhere else can't be in its playlist, so it stays in the playlist in S2 alone.
+     */
+    private suspend fun sendToServer(
+        playlist: Playlist,
+        songs: List<Song>,
+        edit: (playlistId: String, songPaths: List<String>) -> PlaylistEdit
+    ) {
+        val sync = serverSync ?: return
+        val playlistId = playlist.externalId ?: return
+        if (!sendsToServer(playlist)) {
+            return
+        }
+        val paths = songs.filter { song -> song.mediaProvider == playlist.mediaProvider }.map { song -> song.path }
+        if (paths.isNotEmpty()) {
+            sync.enqueue(playlist.mediaProvider, edit(playlistId, paths))
+        }
     }
 
     /** Writes an m3u-imported [playlist]'s songs back to its file after they change; see [PlaylistFileSync]. */

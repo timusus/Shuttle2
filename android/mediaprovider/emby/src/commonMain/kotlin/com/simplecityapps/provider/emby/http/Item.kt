@@ -62,5 +62,7 @@ data class Item(
     // Only returned when requested in 'fields': the file's streams, of which the audio one carries its codec and bit depth
     @SerialName("MediaStreams") val mediaStreams: List<MediaStream> = emptyList(),
     // The signed-in user's state for the item, sent by /Users/{id}/Items unless enableUserData is false
-    @SerialName("UserData") val userData: UserData? = null
+    @SerialName("UserData") val userData: UserData? = null,
+    // An item read as a playlist's: the id of its entry in that playlist, which a removal or a move names
+    @SerialName("PlaylistItemId") val playlistItemId: String? = null
 )

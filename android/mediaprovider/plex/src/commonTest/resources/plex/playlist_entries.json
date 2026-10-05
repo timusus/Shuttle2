@@ -1,0 +1,9 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "Metadata": [
+      { "key": "/library/metadata/101", "ratingKey": "101", "type": "track", "playlistItemID": 5001 },
+      { "key": "/library/metadata/102", "ratingKey": "102", "type": "track", "playlistItemID": 5002 }
+    ]
+  }
+}

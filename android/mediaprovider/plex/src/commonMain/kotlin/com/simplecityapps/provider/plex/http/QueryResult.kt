@@ -30,6 +30,8 @@ data class Metadata(
     @SerialName("guid") val guid: String? = null,
     // This item's own id on the server: a playlist's, in /playlists/{ratingKey}/items
     @SerialName("ratingKey") val ratingKey: String? = null,
+    // A track read as a playlist's, in /playlists/{ratingKey}/items: the id of its entry in that playlist, which a removal or a move names
+    @SerialName("playlistItemID") val playlistItemId: Long? = null,
     @SerialName("index") val index: Int? = null,
     @SerialName("parentIndex") val parentIndex: Int? = null,
     @SerialName("title") val title: String? = null,

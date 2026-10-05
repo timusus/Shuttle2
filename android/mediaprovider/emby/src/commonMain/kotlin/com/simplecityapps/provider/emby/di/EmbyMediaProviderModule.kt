@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
@@ -13,12 +14,14 @@ import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyFavouriteWriter
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
+import com.simplecityapps.provider.emby.EmbyPlaylistWriter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyServerAuthentication
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.FavouriteService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
+import com.simplecityapps.provider.emby.http.PlaylistService
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
@@ -78,6 +81,14 @@ class EmbyMediaProviderModule {
     @Provides
     @IntoSet
     fun provideFavouriteWriter(writer: EmbyFavouriteWriter): FavouriteWriter = writer
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun providePlaylistService(@Named("EmbyHttpClient") httpClient: HttpClient): PlaylistService = PlaylistService(httpClient)
+
+    @Provides
+    @IntoSet
+    fun providePlaylistWriter(writer: EmbyPlaylistWriter): ServerPlaylistWriter = writer
 
     @Provides
     @IntoSet

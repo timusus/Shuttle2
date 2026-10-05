@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.server.PinAuthentication
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -14,12 +15,14 @@ import com.simplecityapps.provider.plex.PlexFavouriteWriter
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.PlexPinAuthentication
 import com.simplecityapps.provider.plex.PlexPlaybackReporter
+import com.simplecityapps.provider.plex.PlexPlaylistWriter
 import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
 import com.simplecityapps.provider.plex.PlexServerAuthentication
 import com.simplecityapps.provider.plex.PlexStrings
 import com.simplecityapps.provider.plex.http.FavouriteService
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.PlaybackReportingService
+import com.simplecityapps.provider.plex.http.PlaylistService
 import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -86,6 +89,14 @@ class PlexMediaProviderModule {
     @Provides
     @IntoSet
     fun provideFavouriteWriter(writer: PlexFavouriteWriter): FavouriteWriter = writer
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun providePlaylistService(@Named("PlexHttpClient") httpClient: HttpClient): PlaylistService = PlaylistService(httpClient)
+
+    @Provides
+    @IntoSet
+    fun providePlaylistWriter(writer: PlexPlaylistWriter): ServerPlaylistWriter = writer
 
     @Provides
     @IntoSet

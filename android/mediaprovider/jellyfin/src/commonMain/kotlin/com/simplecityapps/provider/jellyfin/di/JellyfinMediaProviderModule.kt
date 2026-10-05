@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
@@ -13,12 +14,14 @@ import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinFavouriteWriter
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
+import com.simplecityapps.provider.jellyfin.JellyfinPlaylistWriter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.provider.jellyfin.http.FavouriteService
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
+import com.simplecityapps.provider.jellyfin.http.PlaylistService
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
@@ -78,6 +81,14 @@ class JellyfinMediaProviderModule {
     @Provides
     @IntoSet
     fun provideFavouriteWriter(writer: JellyfinFavouriteWriter): FavouriteWriter = writer
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun providePlaylistService(@Named("JellyfinHttpClient") httpClient: HttpClient): PlaylistService = PlaylistService(httpClient)
+
+    @Provides
+    @IntoSet
+    fun providePlaylistWriter(writer: JellyfinPlaylistWriter): ServerPlaylistWriter = writer
 
     @Provides
     @IntoSet

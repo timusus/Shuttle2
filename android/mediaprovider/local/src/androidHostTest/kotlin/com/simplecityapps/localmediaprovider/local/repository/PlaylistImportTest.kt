@@ -12,7 +12,11 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PlaylistWriteResult
 import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
+import com.simplecityapps.mediaprovider.ServerPlaylistEntry
+import com.simplecityapps.mediaprovider.ServerPlaylistSync
+import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -59,6 +63,23 @@ class PlaylistImportTest {
             preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
             afterImport = {}
         ).apply { mediaProviders += provider }
+
+    /** A media server whose playlists are edited through [serverWriter], imported by [syncedImporter] (#916). */
+    private val server = FakeProvider(MediaProviderType.Jellyfin)
+    private val serverWriter = FakePlaylistWriter(server)
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val playlistSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope)
+    private val syncedPlaylistRepository =
+        LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), playlistSync)
+    private val syncedImporter =
+        MediaImporter(
+            strings = ResourceMediaImportStrings(context),
+            songRepository = songRepository,
+            playlistStore = syncedPlaylistRepository,
+            preferenceManager = preferences,
+            afterImport = {},
+            playlistSync = playlistSync
+        ).apply { mediaProviders += server }
 
     @Before
     fun setUp() {
@@ -336,6 +357,69 @@ class PlaylistImportTest {
         database.playlistDataDao().getAll().first().map { playlist -> playlist.id } shouldContainExactlyInAnyOrder listOf(made.id, madeForServer.id, fromPlex.id)
     }
 
+    @Test
+    fun `a song added in S2 reaches the server - the next import keeps it once - and a removal on the server then removes it`() = runBlocking<Unit> {
+        server.songPaths = listOf(A, B, C)
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        syncedImporter.import()
+        syncedPlaylistRepository.addToPlaylist(serverPlaylist(), librarySongs(C))
+
+        syncedImporter.import()
+
+        server.playlists[PLAYLIST_ID] shouldBe listOf(A, B, C)
+        importedPlaylistPaths() shouldBe listOf(A, B, C)
+        preferences.playlistServerSongs(MediaProviderType.Jellyfin.name)[PLAYLIST_ID] shouldBe listOf(A, B, C)
+
+        // The server holds it now, so the server removing it removes it in S2 too
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        syncedImporter.import()
+
+        importedPlaylistPaths() shouldBe listOf(A, B)
+    }
+
+    @Test
+    fun `an edit made offline stays in S2 through an import and reaches the server once it answers`() = runBlocking<Unit> {
+        server.songPaths = listOf(A, B, C)
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
+        syncedImporter.import()
+        serverWriter.offline = true
+        val playlist = serverPlaylist()
+        syncedPlaylistRepository.removeFromPlaylist(playlist, database.playlistSongJoinDataDao().getSongsForPlaylist(playlist.id).first().filter { entry -> entry.song.path == B })
+
+        syncedImporter.import()
+
+        server.playlists[PLAYLIST_ID] shouldBe listOf(A, B, C)
+        importedPlaylistPaths() shouldBe listOf(A, C)
+        playlistSync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe setOf(PLAYLIST_ID)
+
+        serverWriter.offline = false
+        syncedImporter.import()
+
+        server.playlists[PLAYLIST_ID] shouldBe listOf(A, C)
+        importedPlaylistPaths() shouldBe listOf(A, C)
+        playlistSync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
+    }
+
+    @Test
+    fun `a reorder in S2 reaches the server`() = runBlocking<Unit> {
+        server.songPaths = listOf(A, B, C)
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
+        syncedImporter.import()
+        val playlist = serverPlaylist()
+        val entries = database.playlistSongJoinDataDao().getSongsForPlaylist(playlist.id).first().sortedBy { entry -> entry.sortOrder }
+        val sortOrders = entries.map { entry -> entry.sortOrder }
+        syncedPlaylistRepository.updatePlaylistSongsSortOder(playlist, listOf(entries[2], entries[0], entries[1]).zip(sortOrders) { entry, sortOrder -> entry.copy(sortOrder = sortOrder) })
+
+        syncedImporter.import()
+
+        server.playlists[PLAYLIST_ID] shouldBe listOf(C, A, B)
+        database.playlistSongJoinDataDao().getSongsForPlaylist(playlist.id).first().sortedBy { entry -> entry.sortOrder }.map { entry -> entry.song.path } shouldBe listOf(C, A, B)
+    }
+
+    private suspend fun serverPlaylist() = database.playlistDataDao().getAll().first().single { playlist -> playlist.externalId == PLAYLIST_ID }
+
+    private suspend fun librarySongs(vararg paths: String): List<Song> = database.songDataDao().get().filter { song -> song.path in paths }.map { song -> song.toSong() }
+
     /** Makes the importer's one provider a media server's ([MediaProviderType.Jellyfin]), whose playlists the import reconciles. */
     private fun serverProvider(): FakeProvider = FakeProvider(MediaProviderType.Jellyfin).also { provider ->
         importer.mediaProviders.clear()
@@ -402,6 +486,46 @@ class PlaylistImportTest {
                     MediaImporter.PlaylistUpdateData(type, PLAYLIST_NAME, paths.mapNotNull { path -> existingSongs.firstOrNull { song -> song.path == path } }, id)
                 }
             emit(FlowEvent.Success(MediaImporter.PlaylistListing(read, unread + partlyRead.keys, unchanged), missing = missing))
+        }
+    }
+
+    /**
+     * Edits [server]'s playlists as a Jellyfin server would, unless [offline]. An entry's id is its index, which holds from
+     * reading the entries to the edit that names them: each edit reads them again.
+     */
+    private class FakePlaylistWriter(private val server: FakeProvider) : ServerPlaylistWriter {
+        override val type = MediaProviderType.Jellyfin
+
+        @Volatile var offline = false
+
+        override suspend fun entries(playlistId: String) = edit(playlistId) { paths -> paths to paths.mapIndexed { index, path -> ServerPlaylistEntry("$index", path) } }
+
+        override suspend fun add(
+            playlistId: String,
+            songPaths: List<String>
+        ) = edit(playlistId) { paths -> paths + songPaths to Unit }
+
+        override suspend fun remove(
+            playlistId: String,
+            entryIds: List<String>
+        ) = edit(playlistId) { paths -> paths.filterIndexed { index, _ -> "$index" !in entryIds } to Unit }
+
+        override suspend fun move(
+            playlistId: String,
+            entryId: String,
+            index: Int,
+            after: String?
+        ) = edit(playlistId) { paths -> paths.toMutableList().apply { add(index, removeAt(entryId.toInt())) } to Unit }
+
+        private fun <T> edit(
+            playlistId: String,
+            block: (List<String>) -> Pair<List<String>, T>
+        ): PlaylistWriteResult<T> {
+            if (offline) return PlaylistWriteResult.Failed
+            val paths = server.playlists[playlistId] ?: return PlaylistWriteResult.PlaylistGone
+            val (edited, value) = block(paths)
+            server.playlists = server.playlists + (playlistId to edited)
+            return PlaylistWriteResult.Success(value)
         }
     }
 

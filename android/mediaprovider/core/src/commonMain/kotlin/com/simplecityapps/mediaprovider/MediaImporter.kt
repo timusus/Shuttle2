@@ -41,6 +41,8 @@ class MediaImporter(
      * stored album keys to the album identity rule (#637) waits for.
      */
     private val afterImport: suspend (songTagsCurrent: Boolean) -> Unit,
+    /** Sends the edits made in S2 to a server's playlists before that server's playlists are read again (#916). */
+    private val playlistSync: ServerPlaylistSync? = null,
     /** What each source's sync start is taken from: a fake in tests. */
     private val clock: Clock = Clock.System
 ) : SongImportStateProvider {
@@ -356,9 +358,12 @@ class MediaImporter(
             if (playlistsDue(plan, stored)) {
                 // A full sync, or one that added songs a playlist might now match, reads every playlist again
                 val reuseVersions = plan != SyncPlan.Full && stored != null && stored.inserts == 0
-                importPlaylists(mediaProvider, timings, songsStored = stored != null, reuseVersions = reuseVersions).collect { event ->
-                    if (event is FlowEvent.Failure) logger.warn { "$type playlist import failed: ${event.message}" }
+                val import = suspend {
+                    importPlaylists(mediaProvider, timings, songsStored = stored != null, reuseVersions = reuseVersions).collect { event ->
+                        if (event is FlowEvent.Failure) logger.warn { "$type playlist import failed: ${event.message}" }
+                    }
                 }
+                playlistSync?.withEditsSent(type) { import() } ?: import()
             }
             return null
         } catch (e: CancellationException) {
@@ -622,8 +627,12 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Success -> {
+                    val held = playlistSync?.pendingPlaylistIds(mediaProvider.type).orEmpty()
+                    if (held.isNotEmpty()) {
+                        logger.info { "${mediaProvider.type}: ${held.size} playlists left as they are until their edits reach the server" }
+                    }
                     if (reconcile) {
-                        val listing = event.result
+                        val listing = event.result.holdingBack(held)
                         val lastServerSongs = preferenceManager.playlistServerSongs(source)
                         val songIds by lazy { existingSongs.associate { song -> song.path to song.id } }
                         playlistStore.reconcilePlaylists(
@@ -636,7 +645,7 @@ class MediaImporter(
                         preferenceManager.setPlaylistServerSongs(source, serverSongsAfter(listing, lastServerSongs))
                     } else {
                         event.result.playlists.forEach { playlistUpdateData ->
-                            if (playlistUpdateData.songs.isNotEmpty()) {
+                            if (playlistUpdateData.songs.isNotEmpty() && playlistUpdateData.externalId !in held) {
                                 playlistStore.storePlaylist(playlistUpdateData)
                             }
                         }
@@ -650,6 +659,22 @@ class MediaImporter(
         }
         timings.findPlaylists = findPlaylistsMark.elapsedNow()
         emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
+    }
+
+    /**
+     * This listing with the playlists in [held] left unchanged: those S2 has edits to that the server hasn't been sent yet. Their
+     * versions are dropped, so the next sync reads them again once the server has the edits.
+     */
+    private fun PlaylistListing.holdingBack(held: Set<String>): PlaylistListing = if (held.isEmpty()) {
+        this
+    } else {
+        val listed = playlists.map { playlist -> playlist.externalId } + unread + unchanged
+        PlaylistListing(
+            playlists = playlists.filterNot { playlist -> playlist.externalId in held },
+            unread = unread - held,
+            unchanged = unchanged + held.filter { externalId -> externalId in listed },
+            versions = versions - held
+        )
     }
 
     /**

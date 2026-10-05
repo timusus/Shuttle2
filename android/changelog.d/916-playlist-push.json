@@ -1,0 +1,1 @@
+{ "type": "features", "text": "Changes you make to a Jellyfin, Emby or Plex playlist (adding, removing or reordering songs) are now saved to the server too, and are sent later if the server can't be reached.", "commits": [] }

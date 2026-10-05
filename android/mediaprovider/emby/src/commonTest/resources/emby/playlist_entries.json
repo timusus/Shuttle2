@@ -1,0 +1,9 @@
+{
+  "Items": [
+    { "Name": "Opening", "Id": "song-1", "PlaylistItemId": "entry-1" },
+    { "Name": "A Video", "Id": "video-1", "Type": "Video", "PlaylistItemId": "entry-2" },
+    { "Name": "B-Side", "Id": "song-3", "PlaylistItemId": "entry-3" }
+  ],
+  "TotalRecordCount": 3,
+  "StartIndex": 0
+}

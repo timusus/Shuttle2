@@ -218,6 +218,17 @@ class GeneralPreferenceManager @Inject constructor(
         songs: Map<String, List<String>>
     ) = store.putString("playlist_server_songs_$source", songs.entries.joinToString("\n") { (id, paths) -> (listOf(id) + paths).joinToString("\t") }.ifEmpty { null })
 
+    /**
+     * The edits made in S2 to [source]'s playlists that its server hasn't been sent yet, oldest first, one per line, as
+     * `ServerPlaylistSync` encodes them (#916). Kept across restarts, so an edit made offline is sent once the server answers.
+     */
+    fun pendingPlaylistEdits(source: String): String? = store.getString("pending_playlist_edits_$source", null)
+
+    fun setPendingPlaylistEdits(
+        source: String,
+        edits: String?
+    ) = store.putString("pending_playlist_edits_$source", edits?.ifEmpty { null })
+
     /** When the last successful full sync of [source] started: the one that also removes songs the server no longer has. */
     fun lastFullSyncStart(source: String): Instant? = store.getInstant("last_full_sync_start_$source")
 

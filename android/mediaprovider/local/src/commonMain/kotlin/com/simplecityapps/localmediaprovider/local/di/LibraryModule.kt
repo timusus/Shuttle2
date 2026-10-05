@@ -19,6 +19,8 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.ServerPlaylistSync
+import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
@@ -85,11 +87,21 @@ abstract class LibraryModule {
             songRepository: SongRepository,
             playlistStore: ImportedPlaylistStore,
             preferenceManager: GeneralPreferenceManager,
-            database: MediaDatabase
+            database: MediaDatabase,
+            playlistSync: ServerPlaylistSync
         ): MediaImporter {
             val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.resumePointDao(), database.pinnedCollectionDao(), preferenceManager)
-            return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue)
+            return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue, playlistSync)
         }
+
+        /** Sends the edits made to media servers' playlists back to them (#916); each provider module contributes its writer to the set. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideServerPlaylistSync(
+            writers: Set<ServerPlaylistWriter>,
+            preferenceManager: GeneralPreferenceManager,
+            @AppCoroutineScope appCoroutineScope: CoroutineScope
+        ): ServerPlaylistSync = ServerPlaylistSync(writers, preferenceManager, appCoroutineScope + Dispatchers.IO)
 
         /** Each provider module contributes its writer to the set. */
         @Provides
@@ -131,8 +143,9 @@ abstract class LibraryModule {
             database: MediaDatabase,
             fileSync: PlaylistFileSync,
             @AppCoroutineScope appCoroutineScope: CoroutineScope,
-            albumIndex: LibraryAlbumIndex
-        ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), fileSync, albumIndex)
+            albumIndex: LibraryAlbumIndex,
+            playlistSync: ServerPlaylistSync
+        ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), fileSync, albumIndex, playlistSync)
 
         @Provides
         fun providePlaylistRepository(playlistRepository: LocalPlaylistRepository): PlaylistRepository = playlistRepository
