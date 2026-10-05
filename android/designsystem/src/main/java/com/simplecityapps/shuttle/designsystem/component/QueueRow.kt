@@ -27,8 +27,9 @@ import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
 /**
  * A song in the queue with a trailing drag handle. The caller's reorder library attaches its
  * gesture through [dragHandleModifier]. [QueuePosition.Current] marks the playing song like
- * [SongRow] does; [QueuePosition.Played] dims songs already heard. [dragging] lifts the row onto
- * a `surfaceContainerHigh` card with a shadow while it moves.
+ * [SongRow] does and also sits on a `secondaryContainer` card, so it stands out from the rows around
+ * it; [QueuePosition.Played] dims songs already heard. [dragging] lifts the row onto a
+ * `surfaceContainerHigh` card with a shadow while it moves.
  */
 @Composable
 fun QueueRow(
@@ -46,9 +47,13 @@ fun QueueRow(
     val current = position == QueuePosition.Current
     Surface(
         modifier = modifier,
-        color = if (dragging) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+        color = when {
+            dragging -> MaterialTheme.colorScheme.surfaceContainerHigh
+            current -> MaterialTheme.colorScheme.secondaryContainer
+            else -> Color.Transparent
+        },
         shadowElevation = if (dragging) 6.dp else 0.dp,
-        shape = if (dragging) MaterialTheme.shapes.medium else RectangleShape,
+        shape = if (dragging || current) MaterialTheme.shapes.medium else RectangleShape,
     ) {
         MediaRow(
             title = AnnotatedString(title),

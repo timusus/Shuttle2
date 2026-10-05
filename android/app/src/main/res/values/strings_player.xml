@@ -14,6 +14,13 @@
     <string name="player_bar_output">Output</string>
     <!-- Small label under the full-screen player's overflow menu button -->
     <string name="player_bar_more">More</string>
+    <!-- Content description of the queue header's button that saves the queue as a playlist -->
+    <string name="queue_save_as_playlist">Save as playlist</string>
+    <!-- Under the queue's "Up Next" divider: how many songs follow the current one and how long they play for; %2$s is a length such as "12:30" -->
+    <plurals name="queue_up_next_summary">
+        <item quantity="one">%1$d song · %2$s left</item>
+        <item quantity="other">%1$d songs · %2$s left</item>
+    </plurals>
     <!-- Snackbar shown after the queue is cleared -->
     <string name="player_queue_cleared">Queue cleared</string>
     <!-- Snackbar action that puts a cleared queue back -->

@@ -97,6 +97,7 @@ internal object PlayerTestTags {
     const val QueueList = "player_queue_list"
     const val QueueHeader = "player_queue_header"
     const val QueueRow = "player_queue_row"
+    const val QueueUpNext = "player_queue_up_next"
     const val Bar = "player_bar"
     const val PanelSheet = "player_panel_sheet"
     const val Scrim = "player_scrim"

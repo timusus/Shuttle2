@@ -809,6 +809,29 @@ class AppShellTest {
     }
 
     @Test
+    fun `the queue divides the current song from Up Next, counting what is left`() {
+        robot.setContent(queue = shellQueue("One", "Two", "Three"))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.assertTextDisplayed("Up Next")
+        robot.assertTextDisplayed("2 songs · 6:00 left")
+    }
+
+    @Test
+    fun `the queue header saves the queue as a playlist`() {
+        val roadTrip = createPlaylist(name = "Road trip")
+        robot.actions.playlists = listOf(roadTrip)
+        robot.setContent(queue = shellQueue("One", "Two", "Three"))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.tapDescription("Save as playlist")
+        robot.tapText("Road trip")
+        robot.actions.mediaActions shouldBe listOf(MediaAction.AddToPlaylist(MediaSelection.Queue, roadTrip))
+    }
+
+    @Test
     fun `a song action's snackbar button sends its action back`() {
         val include = MediaAction.Include(MediaSelection.Songs(emptyList()))
         robot.actions.mediaActionResult = { action ->

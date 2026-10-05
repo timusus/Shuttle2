@@ -167,7 +167,14 @@ internal fun PlayerPanel(
         val scrolling = Modifier.verticalScroll(scrollState).padding(contentPadding)
         when (panel) {
             NowPlayingPanel.Queue -> {
-                QueueHeader(onClear = actions::clearQueue, modifier = grip)
+                val saveActions = rememberSongActionsState()
+                val queueName = stringResource(R.string.player_queue)
+                QueueHeader(
+                    onSave = { saveActions.playlistFor = PlaylistPick(MediaSelection.Queue, queueName) },
+                    onClear = actions::clearQueue,
+                    modifier = grip,
+                )
+                SongActionsHost(saveActions, actions)
                 QueueList(player.items, actions, Modifier.weight(1f), contentPadding = contentPadding)
             }
 

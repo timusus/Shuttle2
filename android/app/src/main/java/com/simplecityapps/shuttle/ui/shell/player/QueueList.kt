@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.QueuePlayNext
@@ -43,10 +45,14 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -59,6 +65,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.format.formatDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -67,25 +74,46 @@ import kotlinx.coroutines.launch
 /** The least height of the "Up Next" header over the queue's rows; it grows with the text. */
 internal val QueueHeaderHeight = 56.dp
 
-/** "Up Next" over the queue, with Clear Queue. */
+/**
+ * "Queue" over the queue's rows, with Save as playlist and Clear Queue. Under artwork it starts from the
+ * cover's tint and fades to the panel's colour by its lower edge, so a long list below sits on plain surface.
+ */
 @Composable
 internal fun QueueHeader(
+    onSave: () -> Unit,
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val color = PanelColor
+    val top = artworkRole(color, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = HeaderWashAlpha).compositeOver(color))
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = QueueHeaderHeight)
-            .background(color)
+            .background(Brush.verticalGradient(listOf(top, color)))
             .testTag(PlayerTestTags.QueueHeader)
             .padding(end = S2Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SectionHeader(title = stringResource(R.string.playback_up_next), modifier = Modifier.weight(1f), containerColor = color)
+        SectionHeader(title = stringResource(R.string.player_queue), modifier = Modifier.weight(1f), containerColor = Color.Transparent)
+        S2IconButton(icon = Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = stringResource(R.string.queue_save_as_playlist), onClick = onSave)
         S2IconButton(icon = Icons.Rounded.ClearAll, contentDescription = stringResource(R.string.menu_title_sort_clear_queue), onClick = onClear)
     }
+}
+
+/** How much of the cover's tint the queue header starts from. */
+private const val HeaderWashAlpha = 0.6f
+
+/** "Up Next" over the songs after the current one, with how many there are and how long they play for. */
+@Composable
+private fun UpNextDivider(upcoming: List<PlayerSong>) {
+    val remaining = formatDuration(upcoming.sumOf { it.durationMs.toLong() })
+    SectionHeader(
+        title = stringResource(R.string.playback_up_next),
+        subtitle = pluralStringResource(R.plurals.queue_up_next_summary, upcoming.size, upcoming.size, remaining),
+        containerColor = PanelColor,
+        modifier = Modifier.testTag(PlayerTestTags.QueueUpNext),
+    )
 }
 
 /**
@@ -139,7 +167,9 @@ internal fun LazyListScope.queueItems(
         }
         return
     }
-    items(reorder.rows(items), key = { it.uid }) { row ->
+    val rows = reorder.rows(items)
+    val upcoming = rows.filter { it.position == QueuePosition.Upcoming }
+    items(rows, key = { it.uid }) { row ->
         val playNext = stringResource(R.string.menu_title_play_next)
         val remove = stringResource(R.string.menu_title_remove_from_queue)
         val dragging = reorder.draggingUid == row.uid
@@ -150,6 +180,11 @@ internal fun LazyListScope.queueItems(
             onClick = { actions.skipToQueueItem(row.uid) },
             onLongClick = { queue.songActions.menuFor = row },
             onRemove = { actions.removeQueueItem(row.uid) },
+            footer = if (row.position == QueuePosition.Current && upcoming.isNotEmpty()) {
+                { UpNextDivider(upcoming) }
+            } else {
+                null
+            },
             dragHandleModifier = Modifier.pointerInput(row.uid) {
                 detectDragGestures(
                     onDragStart = { reorder.start(queue.items, row.uid) },
@@ -237,35 +272,40 @@ private fun QueueItem(
     onRemove: () -> Unit,
     dragHandleModifier: Modifier,
     modifier: Modifier = Modifier,
+    footer: (@Composable () -> Unit)? = null,
 ) {
     val swipeState = rememberSwipeToDismissBoxState()
-    SwipeToDismissBox(
-        state = swipeState,
-        modifier = modifier.testTag(PlayerTestTags.QueueRow),
-        gesturesEnabled = swipeEnabled,
-        onDismiss = { onRemove() },
-        backgroundContent = {
-            val alignment = if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
-            Box(
-                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = S2Spacing.large),
-                contentAlignment = alignment,
-            ) {
-                Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
-            }
-        },
-    ) {
-        QueueRow(
-            title = row.title,
-            subtitle = row.artist.orEmpty(),
-            onClick = onClick,
-            modifier = Modifier.background(PanelColor),
-            position = row.position,
-            artwork = { SongArtwork(row.song) },
-            duration = formatDuration(row.durationMs.toLong()),
-            dragging = dragging,
-            dragHandleModifier = dragHandleModifier,
-            onLongClick = onLongClick,
-        )
+    // The footer sits outside the swipe, so removing the row doesn't drag it along.
+    Column(modifier) {
+        SwipeToDismissBox(
+            state = swipeState,
+            modifier = Modifier.testTag(PlayerTestTags.QueueRow),
+            gesturesEnabled = swipeEnabled,
+            onDismiss = { onRemove() },
+            backgroundContent = {
+                val alignment = if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
+                Box(
+                    Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = S2Spacing.large),
+                    contentAlignment = alignment,
+                ) {
+                    Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                }
+            },
+        ) {
+            QueueRow(
+                title = row.title,
+                subtitle = row.artist.orEmpty(),
+                onClick = onClick,
+                modifier = Modifier.background(PanelColor),
+                position = row.position,
+                artwork = { SongArtwork(row.song) },
+                duration = formatDuration(row.durationMs.toLong()),
+                dragging = dragging,
+                dragHandleModifier = dragHandleModifier,
+                onLongClick = onLongClick,
+            )
+        }
+        footer?.invoke()
     }
 }
 
