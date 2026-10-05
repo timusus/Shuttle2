@@ -1,10 +1,54 @@
 #!/usr/bin/env bash
-
-set -eu
+# ktlint over the Kotlin files this branch changed.
+#
+#   lint [-F] [files...]      explicit files, else the .kt/.kts files changed against the merge-base
+#                             with origin/main plus staged, unstaged and untracked ones
+#   lint --base <rev> ...     changed since <rev> (land.sh passes the batch's base) instead of the merge-base
+#   lint --all [-F]           the whole tree
+#
+# -F formats in place. Deleted files and generated/ or build/ paths are skipped.
+set -uo pipefail
 
 SUPPORT_DIR="${BASH_SOURCE[0]%/*}/.."
 VENDOR_DIR="${SUPPORT_DIR}/vendor"
-
 PATH="${VENDOR_DIR}/ktlint:$PATH"
 
-ktlint "$@" "**.kt" "!**/generated/**" "!**/build/**"
+all=0
+base=""
+args=()
+files=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --all) all=1 ;;
+    --base) base="${2:?--base needs a revision}"; shift ;;
+    -*) args+=("$1") ;;
+    *) files+=("$1") ;;
+  esac
+  shift
+done
+
+if [ "$all" = 1 ]; then
+  exec ktlint ${args[@]+"${args[@]}"} "**.kt" "!**/generated/**" "!**/build/**"
+fi
+
+if [ ${#files[@]} -eq 0 ]; then
+  root="$(git rev-parse --show-toplevel)" || exit 1
+  cd "$root" || exit 1
+  [ -n "$base" ] || base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
+  list="$(
+    {
+      git diff --name-only --diff-filter=d "$base" --
+      git ls-files --others --exclude-standard
+    } | grep -E '\.kts?$' | grep -Ev '(^|/)(generated|build)/' | sort -u
+  )"
+  while IFS= read -r f; do
+    [ -n "$f" ] && [ -f "$f" ] && files+=("$f")
+  done <<<"$list"
+fi
+
+if [ ${#files[@]} -eq 0 ]; then
+  echo "lint: no changed Kotlin files"
+  exit 0
+fi
+
+exec ktlint ${args[@]+"${args[@]}"} "${files[@]}"

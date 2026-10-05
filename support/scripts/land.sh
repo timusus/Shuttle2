@@ -53,7 +53,7 @@
 #   target: `--all`)
 #   ios/Playback/                 also `ios/scripts/test.sh --package`
 #   nothing mapped                build only, no simulator lease
-# The verify also runs `support/scripts/lint` (check only) first, so a format slip fails at landing (#827).
+# The verify also runs `support/scripts/lint --base <batch base>` (check only, the batch's changed files) first, so a format slip fails at landing (#827).
 # Every phase runs even when an earlier one fails, so a pre-existing failure never hides a later phase.
 # A verify whose output says "Incremental compilation failed" (a Kotlin cache flake, #824) is retried
 # once over the same branches with -Pkotlin.incremental=false; the log notes the retry. The retry is
@@ -305,7 +305,7 @@ verify_phases() {
   local base_sha=${1:?} touches_ios=${2:-0}
   shift 2 || true
   VERIFY_FAILED=0
-  verify_step lint "ktlint (#827)" support/scripts/lint
+  verify_step lint "ktlint (#827)" support/scripts/lint --base "$base_sha"
   verify_step unit-tests "android unit tests" support/scripts/unit-test --changed --base "$base_sha"
   verify_step compile-dependents "dependent test sources did not compile (#826)" \
     support/scripts/unit-test --compile-dependents --base "$base_sha"
