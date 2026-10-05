@@ -18,7 +18,6 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.extractor.DefaultExtractorsFactory
 import com.simplecityapps.playback.OutputFormat
 import com.simplecityapps.playback.dsp.crossfade.CapturingAudioOutputProvider
 import com.simplecityapps.playback.dsp.crossfade.Crossfade
@@ -82,9 +81,7 @@ class ExoPlayerFactory(
 
     private val mediaSourceFactory by lazy {
         val dataSourceFactory = downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context)))
-        // An MP3 with no seek table (a server's transcode, which streams before it knows its length) seeks by its
-        // constant bitrate, rather than not at all
-        val extractorsFactory = DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true)
+        val extractorsFactory = TimeSeekExtractorsFactory(songUriResolver::isTimeSeekable)
         StreamSniffingMediaSourceFactory(dataSourceFactory, defaultFactory = DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory))
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())
     }

@@ -2,6 +2,7 @@ package com.simplecityapps.playback.engine
 
 import android.net.Uri
 import android.os.Looper
+import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.TransferListener
@@ -49,7 +50,7 @@ class SongUriResolverTest {
                 if (failures.getAndDecrement() > 0) throw IOException("Server unreachable")
                 val timeSeek = if (song.path.startsWith("subsonic:")) {
                     // 8 kbps: a thousand bytes a second, for 10 s
-                    TimeSeekableStream(bitrateKbps = 8, durationMs = 10_000) { offsetSeconds -> "https://server/stream/${song.id}?offset=$offsetSeconds" }
+                    TimeSeekableStream(bitrateKbps = 8, durationMs = if (song.duration == 0) 0 else 10_000) { offsetSeconds -> "https://server/stream/${song.id}?offset=$offsetSeconds" }
                 } else {
                     null
                 }
@@ -156,6 +157,30 @@ class SongUriResolverTest {
         upstream.opened shouldBe Uri.parse("https://server/stream/4")
         upstream.skipped shouldBe 0
         length shouldBe 10_000
+    }
+
+    @Test
+    fun `a time-seekable stream with no duration has an unknown length`() {
+        val song = testSong(4, path = "subsonic://song/4").copy(duration = 0)
+        runBlocking { queue.setQueue(listOf(song)) }
+
+        val length = dataSource.open(DataSpec(Uri.parse(song.path)))
+
+        length shouldBe C.LENGTH_UNSET.toLong()
+    }
+
+    @Test
+    fun `only a stream that resolved to one seeking by time is time-seekable`() {
+        val timeSeekable = testSong(4, path = "subsonic://song/4")
+        runBlocking { queue.setQueue(songs + timeSeekable) }
+
+        resolver.isTimeSeekable(Uri.parse(timeSeekable.path)) shouldBe false
+        dataSource.open(DataSpec(Uri.parse(timeSeekable.path)))
+        dataSource.open(DataSpec(Uri.parse(songs[0].path)))
+
+        resolver.isTimeSeekable(Uri.parse(timeSeekable.path)) shouldBe true
+        resolver.isTimeSeekable(Uri.parse(songs[0].path)) shouldBe false
+        resolver.isTimeSeekable(Uri.parse(songs[1].path)) shouldBe false
     }
 
     @Test

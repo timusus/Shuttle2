@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 
@@ -74,6 +75,16 @@ class SongUriResolver(
     }
 
     fun dataSourceFactory(upstream: DataSource.Factory): DataSource.Factory = DataSource.Factory { SongDataSource(upstream.createDataSource()) }
+
+    /**
+     * Whether [uri] (a song's own URI) resolved to a stream that seeks by time. False until it has resolved, which it has
+     * by the time the player picks the stream's extractor: that follows opening it.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun isTimeSeekable(uri: Uri): Boolean {
+        val resolution = resolutions[uri.toString()]?.takeIf { it.isCompleted && it.getCompletionExceptionOrNull() == null } ?: return false
+        return resolution.getCompleted().timeSeek != null
+    }
 
     private fun resolve(dataSpec: DataSpec): Resolution {
         val key = dataSpec.uri.toString()
@@ -140,7 +151,14 @@ class SongUriResolver(
             uri = streamUri
             upstream.open(dataSpec.buildUpon().setUri(streamUri).setPosition(0).setLength(C.LENGTH_UNSET.toLong()).build())
             skip(position - offsetSeconds * timeSeek.bytesPerSecond)
-            return if (dataSpec.length != C.LENGTH_UNSET.toLong()) dataSpec.length else (timeSeek.estimatedLength - position).coerceAtLeast(0)
+            return when {
+                dataSpec.length != C.LENGTH_UNSET.toLong() -> dataSpec.length
+
+                // With no duration there's no estimate, so the length is unknown rather than nothing
+                timeSeek.estimatedLength <= 0 -> C.LENGTH_UNSET.toLong()
+
+                else -> (timeSeek.estimatedLength - position).coerceAtLeast(0)
+            }
         }
 
         private fun skip(bytes: Long) {
