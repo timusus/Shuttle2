@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.intents.AppIntentLibrary
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
+import com.simplecityapps.shuttle.shared.network.ServerRequestPolicy
 import com.simplecityapps.shuttle.shared.platform.BackgroundSync
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
@@ -53,8 +54,10 @@ import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.servers.PrepareServerConnection
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerLogin
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.servers.TrustServerCertificate
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
@@ -139,6 +142,13 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Offline downloads' background `URLSession`, which the app delegate hands its background events to. */
     val urlSessionDownloads: UrlSessionDownloads
+
+    /** A server's custom headers and pinned certificate, for the sessions Swift makes itself (streaming, artwork; #921). */
+    val serverRequestPolicy: ServerRequestPolicy
+
+    /** Saves a server's custom headers, and trusts a certificate for it: the sign-in's, and what tests seed [serverRequestPolicy] with. */
+    val prepareServerConnection: PrepareServerConnection
+    val trustServerCertificate: TrustServerCertificate
 
     /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
     val appIntentLibrary: AppIntentLibrary

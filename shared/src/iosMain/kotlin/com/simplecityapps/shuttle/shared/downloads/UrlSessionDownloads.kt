@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.downloads
 
 import com.simplecityapps.mediaprovider.DownloadSource
+import com.simplecityapps.shuttle.shared.network.ServerRequestPolicy
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.Foundation.NSApplicationSupportDirectory
@@ -14,15 +15,20 @@ import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
+import platform.Foundation.NSURLAuthenticationChallenge
+import platform.Foundation.NSURLCredential
 import platform.Foundation.NSURLErrorCancelled
 import platform.Foundation.NSURLErrorDomain
 import platform.Foundation.NSURLIsExcludedFromBackupKey
+import platform.Foundation.NSURLRequest
 import platform.Foundation.NSURLSession
+import platform.Foundation.NSURLSessionAuthChallengeDisposition
 import platform.Foundation.NSURLSessionConfiguration
 import platform.Foundation.NSURLSessionDownloadDelegateProtocol
 import platform.Foundation.NSURLSessionDownloadTask
 import platform.Foundation.NSURLSessionTask
 import platform.Foundation.NSUserDomainMask
+import platform.Foundation.setAllHTTPHeaderFields
 import platform.darwin.NSObject
 
 /**
@@ -43,7 +49,10 @@ import platform.darwin.NSObject
  * downloads or its background session.
  */
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
-class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
+class UrlSessionDownloads(
+    isolatedName: String?,
+    private val serverRequestPolicy: ServerRequestPolicy
+) : DownloadTransport {
     override var listener: DownloadTransport.Listener? = null
 
     private val fileManager = NSFileManager.defaultManager
@@ -115,6 +124,8 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
             // NSURLRequest's properties are read-only vals in Kotlin; the mutable request's setters write them
             setAllowsCellularAccess(!wifiOnly)
             setAllowsExpensiveNetworkAccess(!wifiOnly)
+            // The server's custom headers (#921); the pinned certificate is trusted in the delegate
+            setAllHTTPHeaderFields(serverRequestPolicy.headers(source.url).toMap<Any?, Any?>())
         }
         val task = session.downloadTaskWithRequest(request)
         // The MIME type names the file; the server's suggested name is the fallback for one it doesn't know
@@ -264,6 +275,25 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
             // Cancelled by a removal (which forgot it) or a restart; a cancelled task that's still wanted has failed
             if (wanted == null && error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled) return
             listener?.onFailed(path)
+        }
+
+        override fun URLSession(
+            session: NSURLSession,
+            task: NSURLSessionTask,
+            didReceiveChallenge: NSURLAuthenticationChallenge,
+            completionHandler: (NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit
+        ) {
+            serverRequestPolicy.handleChallenge(didReceiveChallenge, completionHandler)
+        }
+
+        override fun URLSession(
+            session: NSURLSession,
+            task: NSURLSessionTask,
+            willPerformHTTPRedirection: NSHTTPURLResponse,
+            newRequest: NSURLRequest,
+            completionHandler: (NSURLRequest?) -> Unit
+        ) {
+            completionHandler(serverRequestPolicy.redirected(newRequest, task.originalRequest?.URL))
         }
 
         override fun URLSessionDidFinishEventsForBackgroundURLSession(session: NSURLSession) {

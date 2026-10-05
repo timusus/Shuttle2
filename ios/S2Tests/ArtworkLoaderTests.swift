@@ -275,7 +275,7 @@ struct ArtworkLoaderTests {
     }
 
     /// Answers each url with a canned status and body, and records the requests it was sent.
-    private actor StubFetcher {
+    actor StubFetcher {
         let responses: [URL: (Int, Data)]
         private(set) var requests: [URLRequest] = []
 
@@ -292,7 +292,7 @@ struct ArtworkLoaderTests {
         }
     }
 
-    private static func pngData(width: Int, height: Int) -> Data {
+    static func pngData(width: Int, height: Int) -> Data {
         // At 1x, so the image is `width` by `height` pixels rather than the screen's scale times that.
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1

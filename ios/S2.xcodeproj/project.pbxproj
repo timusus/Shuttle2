@@ -119,6 +119,7 @@
 		980E6C1CAAFE8E1F5BB5F288 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E1CF29EA73E2E84524801440 /* Sentry */; };
 		9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F74B98EFB99516DD895C476 /* LibraryView.swift */; };
 		9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467103A9C583DD5E8967EABF /* LayoutTier.swift */; };
+		9F1FD3B78D286A40F4A9857C /* KotlinServerConnectionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */; };
 		A0D212754B15BC66F9CBE7EB /* PlayerPaletteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9188F0A66E8159B42084CA4B /* PlayerPaletteTests.swift */; };
 		A12FAD75FAC331471138D9B0 /* PlaybackSystemCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F97906E25504493A67DA322 /* PlaybackSystemCoordinatorTests.swift */; };
 		A204971796190252B0805D9F /* Settings.strings in Resources */ = {isa = PBXBuildFile; fileRef = ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */; };
@@ -132,6 +133,7 @@
 		ACCCD2E8586E770E2C07D096 /* AlbumDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26298475CFBDD52FD92166E6 /* AlbumDetailView.swift */; };
 		ACDB6D9649523BDFD87FE392 /* BackgroundRefresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = 556730A5C2CEEAB7679BA948 /* BackgroundRefresh.swift */; };
 		AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */; };
+		AE59B7457387D4A73420E24D /* ServerConnectionSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73605108B41272213DD11931 /* ServerConnectionSessionTests.swift */; };
 		B085B4392432468B9A77DB85 /* KotlinCrashEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAE1605FEA8DC6066A59B46 /* KotlinCrashEventTests.swift */; };
 		B0FB022FA7D066955A64D070 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57C06B74E49F7F95F50A62E /* MarqueeText.swift */; };
 		B2017C3E5F7DB5964CD434D0 /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */; };
@@ -315,6 +317,7 @@
 		6FA31930A8CB79E30E7CB606 /* Motion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; };
 		7041C95EB2787868FD153782 /* SongInfoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongInfoTests.swift; sourceTree = "<group>"; };
 		71DAEDFDFF585409EBA6E69E /* CarPlayArtworkLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayArtworkLoader.swift; sourceTree = "<group>"; };
+		73605108B41272213DD11931 /* ServerConnectionSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerConnectionSessionTests.swift; sourceTree = "<group>"; };
 		7679FEB8D9FEE4B1455173CC /* MediaRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaRow.swift; sourceTree = "<group>"; };
 		76ADBE2382A54513A42CEACC /* S2.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = S2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		76FFB737346ADAB913A47F6F /* ScrobblingViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrobblingViewTests.swift; sourceTree = "<group>"; };
@@ -345,6 +348,7 @@
 		9188F0A66E8159B42084CA4B /* PlayerPaletteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPaletteTests.swift; sourceTree = "<group>"; };
 		91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugArtworkTests.swift; sourceTree = "<group>"; };
 		91C9049F0CB5EDB935D8D6B8 /* PlaybackSystemCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackSystemCoordinator.swift; sourceTree = "<group>"; };
+		93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotlinServerConnectionPolicy.swift; sourceTree = "<group>"; };
 		9439F2E0407BF9275E4CEC04 /* RouteDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDestination.swift; sourceTree = "<group>"; };
 		94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		9617DD31BA89B09F9D5E6DDE /* SourcesViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourcesViewTests.swift; sourceTree = "<group>"; };
@@ -854,6 +858,7 @@
 				0F7B25219533CE12C48913F7 /* SearchPerformanceTests.swift */,
 				B2A215E10EED997DF8D49390 /* SearchViewTests.swift */,
 				A3B538CC6C71126EA2D2CC07 /* SentryCrashReporterTests.swift */,
+				73605108B41272213DD11931 /* ServerConnectionSessionTests.swift */,
 				AD2EF810FC899B3829DAD4FA /* ServerSignInViewTests.swift */,
 				F2E9C9B867D2C9D540A8AF3C /* SettingsViewTests.swift */,
 				AE1248F23C192E471CE3403C /* SmartPlaylistDetailTests.swift */,
@@ -876,6 +881,7 @@
 				7E5961F296B2738309AF66BC /* AppGraph.swift */,
 				071E70571E51743974A5AC4F /* CombineFlowBridge.swift */,
 				7D100B2699FDBBA93E472ED3 /* ConsumeEvents.swift */,
+				93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */,
 				9F59DA1BBF939E0071AED4F2 /* ViewModelCache.swift */,
 				214D546417D1085A1C2B5F67 /* ViewModelGroup.swift */,
 			);
@@ -1088,6 +1094,7 @@
 				210B036A0CC1AF2D9E0E1286 /* ImportActivity.swift in Sources */,
 				4B7D96BE34E44984943545EE /* JumpBackInGrid.swift in Sources */,
 				140C0EE1B9DAE1FF6D153099 /* KotlinCrashEvent.swift in Sources */,
+				9F1FD3B78D286A40F4A9857C /* KotlinServerConnectionPolicy.swift in Sources */,
 				9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */,
 				3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */,
 				B8399C63B96189E50C51B76E /* LibraryImport.swift in Sources */,
@@ -1209,6 +1216,7 @@
 				3BA363657A25B16138985A50 /* SearchPerformanceTests.swift in Sources */,
 				FF363B6168FD0A6F0006028A /* SearchViewTests.swift in Sources */,
 				759C6DD3CA5A311C47D298F6 /* SentryCrashReporterTests.swift in Sources */,
+				AE59B7457387D4A73420E24D /* ServerConnectionSessionTests.swift in Sources */,
 				F7C5229F897F3B344B93DAC9 /* ServerSignInViewTests.swift in Sources */,
 				D38E4DF3DFD20F788529DAE9 /* SettingsViewTests.swift in Sources */,
 				4F5AE3ED0FF9CCAC0F5ED871 /* SmartPlaylistDetailTests.swift in Sources */,

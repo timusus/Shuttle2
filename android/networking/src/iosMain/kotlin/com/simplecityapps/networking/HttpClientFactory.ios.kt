@@ -71,7 +71,7 @@ actual fun createPlatformHttpClient(
  * the sign-in to offer to trust it, and the request fails as it always has.
  */
 @OptIn(ExperimentalForeignApi::class)
-private fun ((NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit).handleServerTrust(
+fun ((NSURLSessionAuthChallengeDisposition, NSURLCredential?) -> Unit).handleServerTrust(
     challenge: NSURLAuthenticationChallenge,
     store: ServerConnectionStore
 ) {

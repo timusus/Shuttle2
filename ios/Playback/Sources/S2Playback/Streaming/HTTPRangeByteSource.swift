@@ -152,6 +152,9 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// needs its `Authorization` header, and resolving it is an `async` lookup the decoder's
     /// blocking read cannot make. Values never reach a log — host and header count only.
     private let authHeaders: [String: String]
+    /// The server's custom headers and pinned certificate (#921); nil in tests that want the system's trust. Header values
+    /// are secrets and, like ``authHeaders``, go on the request only.
+    private let serverPolicy: ServerConnectionPolicy?
     private let policy: ReadAheadPolicy
     /// Held strongly: the spine capture's lifetime is this playback, and a weak tee that died
     /// mid-episode would silently stop teeing while playback continued.
@@ -437,9 +440,11 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         runStore: CachedRunStore? = .shared,
         resolvedURLs: ResolvedURLCache? = .shared,
         scheduler: RecoveryScheduler = DispatchRecoveryScheduler.shared,
-        pathMonitor: NetworkPathMonitoring? = SystemNetworkPathMonitor.shared
+        pathMonitor: NetworkPathMonitoring? = SystemNetworkPathMonitor.shared,
+        serverPolicy: ServerConnectionPolicy? = ServerConnections.policy
     ) {
         self.url = url
+        self.serverPolicy = serverPolicy
         self.authHeaders = authHeaders
         self.policy = readAhead
         self.tee = tee
@@ -1243,6 +1248,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// must not carry it there.
     private func makeRequest(url target: URL, range: String) -> URLRequest {
         var request = URLRequest(url: target)
+        // Matched on each hop's own origin, so a redirect to another host never carries the server's headers (#921)
+        for (field, value) in serverPolicy?.headers(for: target) ?? [:] { request.setValue(value, forHTTPHeaderField: field) }
         if Self.sameHost(target, url) {
             for (field, value) in authHeaders { request.setValue(value, forHTTPHeaderField: field) }
         }
@@ -1615,6 +1622,17 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
             }
             completionHandler(makeRequest(url: next, range: range))
         }
+    }
+
+    /// A server whose certificate the system refuses is still played when it's the one the user trusted for it (#921).
+    /// Answered here rather than on the session, which has no delegate: see ``session``.
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        ServerConnections.handle(challenge, policy: serverPolicy, completion: completionHandler)
     }
 
     func urlSession(

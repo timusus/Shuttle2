@@ -1,3 +1,4 @@
+import S2Playback
 import Shared
 import SwiftUI
 
@@ -100,6 +101,7 @@ extension ArtworkCandidate {
             authorization: request.authorization,
             unmeteredOnly: request.unmeteredOnly,
             headers: request.headers,
+            customHeaders: ServerConnections.policy?.headers(for: url) ?? [:],
             minimumSize: Int(request.minimumSize),
             stableKey: request.cacheKey == request.url ? nil : request.cacheKey
         )

@@ -90,6 +90,9 @@ class ServerConnectionStore @Inject constructor(
     /** The connection settings for the server at [address], or [ServerConnection.None] when it isn't an address. */
     fun connection(address: String): ServerConnection = ServerOrigin.parse(address)?.let(::connection) ?: ServerConnection.None
 
+    /** The valid custom headers (name to value) for a request to [url], for a stack that builds its own requests (iOS's streaming, artwork and downloads). */
+    fun requestHeaders(url: String): Map<String, String> = connection(url).headers.filter { it.isValid }.associate { it.name to it.value }
+
     /** Replaces the custom headers sent to [origin]; invalid and blank ones are dropped. */
     fun setHeaders(
         origin: ServerOrigin,

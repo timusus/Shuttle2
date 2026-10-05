@@ -123,6 +123,8 @@ final class IosAppDependencies {
             IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry)
         }
         self.graph = graph
+        // Before anything opens a stream or fetches artwork: their sessions ask it for the server's headers and certificate (#921)
+        ServerConnections.policy = KotlinServerConnectionPolicy(graph.serverRequestPolicy)
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
         playIntent = PlayIntent(following: graph.playerController)

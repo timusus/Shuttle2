@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.shared.IosStorage
 import com.simplecityapps.shuttle.shared.downloads.DownloadRequests
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
+import com.simplecityapps.shuttle.shared.network.ServerRequestPolicy
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -27,7 +28,10 @@ class IosDownloadsModule {
     /** One per app: iOS allows only one session with the background identifier. */
     @Provides
     @SingleIn(AppScope::class)
-    fun provideUrlSessionDownloads(storage: IosStorage): UrlSessionDownloads = UrlSessionDownloads(storage.isolatedName)
+    fun provideUrlSessionDownloads(
+        storage: IosStorage,
+        serverRequestPolicy: ServerRequestPolicy
+    ): UrlSessionDownloads = UrlSessionDownloads(storage.isolatedName, serverRequestPolicy)
 
     @Provides
     @SingleIn(AppScope::class)
