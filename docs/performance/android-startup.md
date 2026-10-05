@@ -88,8 +88,8 @@ Only PostHog setup moved (#914). Two sections account for about 90% of `onCreate
   first frame (Choreographer frame callback, then a main-looper message). A process that never shows an activity
   (service, Android Auto) sets it up after 5 s instead. As on iOS, consent is unchanged: no setup or event without it.
   Events captured before setup are dropped on purpose (`PostHogAnalytics.isCapturing` is false until then); nothing
-  sends one in the first frames. PostHog's "Application Opened" comes from an activity-started callback it registers at
-  setup, so when an activity had already started, `AnalyticsStartup` sends it itself, once.
+  sends one in the first frames. PostHog sends "Application Opened" itself: its process lifecycle observer is added at
+  setup and replayed `onStart` on the already started lifecycle (checked in posthog-android 3.71.4 bytecode).
   - **Measure:** the `S2 init TelemetryInitializer` trace section should now be Sentry alone; capture the Baseline
     Profile benchmark as in Method and compare with the 47 ms (59 ms) above. TODO(owner's device batch): Sentry-only
     `init TelemetryInitializer` median: __ ms. TODO: check in PostHog that "Application Opened" still arrives once per

@@ -1,23 +1,38 @@
 package com.simplecityapps.shuttle.telemetry
 
-import com.simplecityapps.shuttle.analytics.Analytics
-import io.kotest.matchers.shouldBe
+import android.app.Activity
+import android.app.Application
+import android.os.Handler
 import io.mockk.mockk
 import io.mockk.verify
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.android.controller.ActivityController
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class AnalyticsStartupTest {
     private val consentGate = mockk<TelemetryConsentGate>(relaxed = true)
-    private val analytics = FakeAnalytics()
-    private val startup = AnalyticsStartup(consentGate, analytics, UnconfinedTestDispatcher())
+    private val startup = AnalyticsStartup(consentGate, UnconfinedTestDispatcher()).apply {
+        // Robolectric's Choreographer is not driven by the test: run the post-frame step directly
+        afterNextFrame = { handler: Handler, block: () -> Unit -> handler.post(block) }
+    }
+    private val application = RuntimeEnvironment.getApplication() as Application
+
+    private fun resumeActivity(): ActivityController<Activity> = Robolectric.buildActivity(Activity::class.java).setup()
 
     @Test
     fun `nothing is set up until the startup runs`() {
+        startup.schedule(application)
+
         verify(exactly = 0) { consentGate.startAnalytics() }
-        analytics.events shouldBe emptyList()
     }
 
     @Test
@@ -30,46 +45,40 @@ class AnalyticsStartupTest {
     }
 
     @Test
-    fun `Application Opened is sent once after setup when an activity was already started`() {
-        analytics.capturing = true
-        startup.activityStarted = true
+    fun `setup runs after the first activity resumes, then the fallback does not run it again`() {
+        startup.schedule(application)
 
-        startup.start()
-        startup.start()
+        resumeActivity()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        verify(exactly = 1) { consentGate.startAnalytics() }
 
-        analytics.events shouldBe listOf("Application Opened")
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(AnalyticsStartup.FALLBACK_DELAY_MS * 2, TimeUnit.MILLISECONDS)
+        verify(exactly = 1) { consentGate.startAnalytics() }
     }
 
     @Test
-    fun `no event is sent without consent`() {
-        analytics.capturing = false
-        startup.activityStarted = true
+    fun `a second activity after the first does not run setup again`() {
+        startup.schedule(application)
 
-        startup.start()
+        resumeActivity()
+        resumeActivity()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
 
         verify(exactly = 1) { consentGate.startAnalytics() }
-        analytics.events shouldBe emptyList()
     }
 
     @Test
-    fun `Application Opened is left to PostHog when no activity has started yet`() {
-        analytics.capturing = true
+    fun `the fallback runs setup when no activity starts, and stops listening for one`() {
+        startup.schedule(application)
 
-        startup.start()
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(AnalyticsStartup.FALLBACK_DELAY_MS - 1, TimeUnit.MILLISECONDS)
+        verify(exactly = 0) { consentGate.startAnalytics() }
 
-        analytics.events shouldBe emptyList()
-    }
+        shadowOf(android.os.Looper.getMainLooper()).idleFor(2, TimeUnit.MILLISECONDS)
+        verify(exactly = 1) { consentGate.startAnalytics() }
 
-    private class FakeAnalytics : Analytics {
-        var capturing = false
-        val events = mutableListOf<String>()
-
-        override val isCapturing: Boolean get() = capturing
-
-        override fun capture(event: String, properties: Map<String, Any>) {
-            if (capturing) events += event
-        }
-
-        override fun register(name: String, value: Any) = Unit
+        resumeActivity()
+        shadowOf(android.os.Looper.getMainLooper()).idle()
+        verify(exactly = 1) { consentGate.startAnalytics() }
     }
 }
