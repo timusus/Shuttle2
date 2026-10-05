@@ -42,6 +42,10 @@ abstract class SongDataDao {
     @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
     abstract fun getAllSongData(): Flow<List<SongData>>
 
+    /** The songs not excluded, and at least [minDurationMs] long (or of no known duration): what the library shows. */
+    @Query("SELECT COUNT(*) FROM songs WHERE blacklisted = 0 AND (duration <= 0 OR duration >= :minDurationMs)")
+    abstract fun countVisible(minDurationMs: Int): Flow<Int>
+
     /** The whole library, each song holding its album identity among the others. */
     fun getAll(): Flow<List<Song>> = getAllSongData().map { list -> list.map { songData -> songData.toSong() }.withAlbumIdentities() }
 

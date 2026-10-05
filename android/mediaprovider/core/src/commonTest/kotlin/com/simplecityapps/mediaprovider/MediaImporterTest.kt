@@ -1030,6 +1030,8 @@ class MediaImporterTest {
 
         override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(stored)
 
+        override fun countSongs(): Flow<Int> = flowOf(stored.size)
+
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
 
         override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProviderType) = notFaked()

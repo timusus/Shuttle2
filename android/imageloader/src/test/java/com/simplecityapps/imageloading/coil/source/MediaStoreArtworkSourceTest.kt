@@ -109,6 +109,8 @@ class MediaStoreArtworkSourceTest {
     private class FakeSongRepository(private val songs: List<Song>) : SongRepository {
         override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(songs)
 
+        override fun countSongs(): Flow<Int> = flowOf(songs.size)
+
         override suspend fun insert(
             songs: List<Song>,
             mediaProviderType: MediaProviderType

@@ -16,8 +16,6 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -34,7 +32,7 @@ class LocalSuggestionsRepository(
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository
 ) : SuggestionsRepository {
-    override fun songCount(): Flow<Int> = songRepository.getSongs(SongQuery.All()).filterNotNull().map { it.size }.distinctUntilChanged()
+    override fun songCount(): Flow<Int> = songRepository.countSongs()
 
     override suspend fun albums(keys: List<AlbumGroupKey>): List<Album> {
         val wanted = keys.filter { it.key != null }.distinct()

@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.map
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>?>
 
+    /** How many songs [getSongs] of [SongQuery.All] holds (not excluded, not under the minimum track length), counted without loading them. */
+    fun countSongs(): Flow<Int>
+
     /**
      * The songs matching [query] as stored now, including any write that has returned. [getSongs] can lag a write (the local
      * repository shares one song list across its collectors and requeries it only after the write), so read this when the next

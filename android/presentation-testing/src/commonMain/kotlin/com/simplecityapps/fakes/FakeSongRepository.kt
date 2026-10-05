@@ -40,6 +40,8 @@ class FakeSongRepository : SongRepository {
         return if (applyQueryPredicates) songs.map { songs -> songs?.filter(query.predicate) } else songs
     }
 
+    override fun countSongs(): Flow<Int> = songs.filterNotNull().map { songs -> songs.count { !it.blacklisted } }
+
     /** Every [setExcluded] call as (song ids, excluded), in order. */
     val excludedChanges: MutableList<Pair<List<Long>, Boolean>> = threadSafeList()
 

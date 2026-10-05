@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,12 +27,14 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LocalSongRepository(
     val scope: CoroutineScope,
     private val songDataDao: SongDataDao,
@@ -68,6 +71,11 @@ class LocalSongRepository(
             }
         return songs.map { result -> result?.matching(query) }
     }
+
+    override fun countSongs(): Flow<Int> = minTrackLength
+        .flatMapLatest { min -> songDataDao.countVisible(min.seconds * 1000) }
+        .distinctUntilChanged()
+        .flowOn(Dispatchers.IO)
 
     /**
      * Reads the database directly rather than the shared song list, whose requery after a write can take a while for a

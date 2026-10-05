@@ -47,6 +47,8 @@ internal fun freshAlbumIndex(database: MediaDatabase) = AlbumIndexProvider { Alb
 internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDataDao() {
     override fun getAllSongData(): Flow<List<SongData>> = songs
 
+    override fun countVisible(minDurationMs: Int): Flow<Int> = throw NotImplementedError()
+
     override fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>> = throw NotImplementedError()
 
     override suspend fun identityData(): List<SongIdentityData> = throw NotImplementedError()

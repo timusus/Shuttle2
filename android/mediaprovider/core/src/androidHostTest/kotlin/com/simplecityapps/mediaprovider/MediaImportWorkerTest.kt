@@ -130,6 +130,7 @@ class MediaImportWorkerTest {
 
     private object EmptySongRepository : SongRepository {
         override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(emptyList())
+        override fun countSongs(): Flow<Int> = flowOf(0)
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
         override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProviderType) = unused()
         override suspend fun update(song: Song): Int = unused()
