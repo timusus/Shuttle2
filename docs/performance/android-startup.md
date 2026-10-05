@@ -94,16 +94,19 @@ Nothing moved. Two sections account for about 90% of `onCreate`, and neither can
   WorkManager's `updateWork`, billing, and the search index warm-up. Deferring them would save little and change
   ordering.
 - **ContentProviders stay.** The merged release manifest declares only `FileProvider` (which does nothing at
-  startup) and Sentry's `SentryNdkPreloadProvider`, which preloads the NDK library for crash reporting. There is no
-  androidx.startup `InitializationProvider`, because the app manifest removes it (`tools:node="remove"`), and
-  WorkManager is configured on demand through `Configuration.Provider`.
+  startup), Sentry's `SentryNdkPreloadProvider`, which preloads the NDK library for crash reporting, and
+  androidx.startup's `InitializationProvider`. The app manifest merges that provider but removes every initializer
+  except profileinstaller's `ProfileInstallerInitializer` (WorkManager, ProcessLifecycle, EmojiCompat and OkHttp's
+  `PlatformInitializer` are removed with `tools:node="remove"`). WorkManager is configured on demand through
+  `Configuration.Provider`.
 
 So the before and after numbers for the audit are the table above.
 
-## Open: sideloaded installs don't get the profile
+## Sideloaded installs get the profile
 
-With androidx.startup's provider removed, profileinstaller's `ProfileInstallerInitializer` never runs. Play installs
-are unaffected, because Play compiles from the profile in the bundle at install time. The benchmark is unaffected too,
-because it installs the profile through `ProfileInstallReceiver`. A sideloaded APK, though, never writes its profile.
-The fix is to keep `InitializationProvider` and remove only the initializers that must not auto-run. That changes how
-WorkManager and ProcessLifecycle start, so it needs its own change and a check of both.
+profileinstaller's `ProfileInstallerInitializer` runs from androidx.startup's `InitializationProvider`, so a sideloaded
+APK (GitHub release, `adb install`) writes its Baseline Profile shortly after first launch; it takes effect on the next
+cold start. Play installs compile from the profile in the bundle at install time and the benchmark installs it through
+`ProfileInstallReceiver`, so neither depends on this. The provider is kept with only that initializer; the merged debug
+and release manifests were checked to confirm no other initializer remains. A device check (sideload a release APK,
+`adb shell dumpsys package dexopt` after a second launch) is still open.
