@@ -136,7 +136,7 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 
 ## Android 17 background-audio hardening (#571), needs an API 37 image and targetSdk 37
 
-At targetSdk 37, playback, audio focus requests and volume changes from the background fail unless a foreground service with while-in-use capability (`mediaPlayback`) is running. Run these on an API 37 emulator once targetSdk is bumped (#527 slice 5); until then they can only be tried with the app-compat flag, if one exists for it.
+At targetSdk 37, playback, audio focus requests and volume changes from the background fail unless a foreground service with while-in-use capability (`mediaPlayback`) is running. Run these on an API 37 emulator once targetSdk is bumped (#527 slice 5); until then, force the hardening on with `adb shell cmd audio set-enable-hardening enable|throw|disable` and read its state with `adb shell dumpsys audio | grep AudioHardening` (`partial` = no foreground service, `full` = foreground service without while-in-use).
 
 - [ ] Play, press Home, wait for the notification to settle, then play/pause and skip from the notification and the lock screen: playback follows each command.
 - [ ] Widget buttons (play/pause, next, previous, shuffle, repeat) with the app swiped away and no notification showing: each starts playback or does its action, with no crash.
@@ -514,3 +514,12 @@ Needs a server with an ALAC (`.m4a`) song, signed in on each of Emby and Jellyfi
 - [ ] Download the ALAC song: it finishes and plays with sound. Note what the server's `universal` transcode request with no `MaxStreamingBitrate` returns (`curl -sI` the URL, or the server log): the codec, the container, and whether it sends the file at all or refuses for want of a bitrate. Record Emby's and Jellyfin's answers here; if either refuses or sends ALAC back, the no-cap transcode needs a bitrate.
 - [ ] On the server, turn off the user's content downloading, then download the ALAC song: the 401/403 retry saves the same playable transcode (AAC), not the original.
 - [ ] Upgrade a device holding an ALAC download made before #156 (silent): after the next app start it downloads again, then plays with sound; a second start doesn't download it again.
+
+## Before the paywall release (#940)
+
+Failed restores draw 1-star reviews in every paid music player sampled, and a January 2026 review said the yearly button did nothing (#372, missing offerToken). On a Play device signed in to a licence-test account, take the seven product IDs one at a time, with only the one under test owned when you restore.
+
+- [ ] For each legacy SKU in turn — `s2_iap_full_version`, `s2_iap_full_version_low`, `s2_subscription_full_version_monthly`, `s2_subscription_full_version_yearly`, `s2_subscription_full_version_yearly_low` — acquire it on the licence-test account (the old paywall still offers the two `-low` IDs until the `s2_pro*` products are live; reactivate the other three in Play Console for the test, then deactivate them again), clear data or reinstall, open the Shuttle Music Pro screen and tap Restore purchases: Pro unlocks.
+- [ ] Same for `s2_pro` and `s2_pro_lifetime`: own exactly one, clear data or reinstall, Restore purchases, Pro unlocks.
+- [ ] Buy the Yearly plan end to end: the button opens Google Play, the purchase completes, and Pro unlocks without a restart.
+- [ ] Cancel and refund the annual subscription in Play Console: the entitlement lapses, and after the licence-test account's cache catches up the paywall offers the plan again.
