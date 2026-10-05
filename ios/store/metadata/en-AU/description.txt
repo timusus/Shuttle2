@@ -21,7 +21,7 @@ Shuttle Music is free to download, and playing music stored on your device is al
 
 PRIVATE BY DESIGN
 
-Shuttle Music collects no data. There is no analytics and no crash reporting. Your server address and login stay on your device, in the Keychain, and are only ever sent to the server you chose. Purchases are handled by Apple.
+Shuttle Music sends crash reports and anonymous usage analytics to help fix bugs; neither is linked to you or used for tracking, and both can be turned off in Settings > Privacy. There is no account with us. Your server address and login stay on your device, in the Keychain, and are only ever sent to the server you chose. Purchases are handled by Apple.
 
 MUSIC AND SERVERS
 
