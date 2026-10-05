@@ -37,21 +37,21 @@ class AlbumKeyChangeTest {
     }
 
     @Test
-    fun `a key the change leaves alone is kept, and one no song had is null`() {
+    fun `a key the change leaves alone is kept and one no song had is null`() {
         change.album(low) shouldBe low
         change.album(AlbumGroupKey("duets", AlbumArtistGroupKey("ann"))) shouldBe AlbumGroupKey("duets", AlbumArtistGroupKey("ann"))
         change.album(AlbumGroupKey("gone", AlbumArtistGroupKey("nobody"))) shouldBe null
     }
 
     @Test
-    fun `an album artist moves to the album artist its songs have now, one still credited is kept`() {
+    fun `an album artist moves to the album artist its songs have now and one still credited is kept`() {
         change.albumArtist(AlbumArtistGroupKey("ann / bob")) shouldBe AlbumArtistGroupKey("ann")
         change.albumArtist(AlbumArtistGroupKey("bob")) shouldBe AlbumArtistGroupKey("bob")
         change.albumArtist(AlbumArtistGroupKey("nobody")) shouldBe null
     }
 
     @Test
-    fun `contexts move with their album or album artist, others pass through`() {
+    fun `contexts move with their album or album artist and others pass through`() {
         change.context(PlayContext.Album(AlbumGroupKey("duets", AlbumArtistGroupKey("ann / bob")))) shouldBe PlayContext.Album(AlbumGroupKey("duets", AlbumArtistGroupKey("ann")))
         change.context(PlayContext.AlbumArtist(AlbumArtistGroupKey("ann / bob"))) shouldBe PlayContext.AlbumArtist(AlbumArtistGroupKey("ann"))
         change.context(PlayContext.Genre("Jazz")) shouldBe PlayContext.Genre("Jazz")
