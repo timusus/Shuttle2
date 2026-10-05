@@ -148,9 +148,16 @@ class MediaImporter(
             logger.debug { "Import already in progress, skipping the $trigger sync" }
             return SyncResult.Skipped
         }
+        var started = false
+        val startOnce: suspend () -> Unit = {
+            if (!started) {
+                started = true
+                onStart()
+            }
+        }
         val result =
             try {
-                syncAll(trigger, onStart)
+                syncAll(trigger, startOnce)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -159,14 +166,17 @@ class MediaImporter(
             } finally {
                 importLock.unlock()
             }
-        // An import asked for while this ran found the lock held and left its request for whoever unlocks next; it logs its
-        // own failure
-        runRequestedImports()
-        return result
+        // An import asked for while this ran found the lock held and left its request for whoever unlocks next. It's work
+        // this sync did, so it starts the caller's foreground state if nothing has, and its failure is the sync's
+        val followUpFailure = runRequestedImports(startOnce)
+        return if (followUpFailure != null && result !is SyncResult.Aborted) SyncResult.Aborted(followUpFailure) else result
     }
 
-    /** Runs a full import for as long as one is requested and no other import holds [importLock]; the last pass's failure. */
-    private suspend fun runRequestedImports(): Exception? {
+    /**
+     * Runs a full import for as long as one is requested and no other import holds [importLock]; the last pass's failure.
+     * [onStart] is called before each pass.
+     */
+    private suspend fun runRequestedImports(onStart: suspend () -> Unit = {}): Exception? {
         var failure: Exception? = null
         // Checked again after each unlock: a request made between the last check and the unlock found the lock still held,
         // so whichever import sees it next runs it
@@ -177,6 +187,7 @@ class MediaImporter(
             }
             try {
                 while (rescanRequested.exchange(false)) {
+                    onStart()
                     failure =
                         try {
                             importAll(foldersChanged = foldersChangedRequested.exchange(false))
@@ -272,7 +283,7 @@ class MediaImporter(
                                     try {
                                         importProvider(mediaProvider, plan, timingsByProvider.getValue(mediaProvider.type), showProgress, quietFailures, userRemoval = foldersChanged && !mediaProvider.type.remote, thorough = thorough, playlistsDue = playlistsDue)
                                     } catch (e: CancellationException) {
-                                        providerJobsLock.withLock { outcomes[mediaProvider.type] = ProviderSyncOutcome.Cancelled }
+                                        withContext(NonCancellable) { providerJobsLock.withLock { outcomes[mediaProvider.type] = ProviderSyncOutcome.Cancelled } }
                                         throw e
                                     }
                                 providerJobsLock.withLock { outcomes[mediaProvider.type] = outcome }

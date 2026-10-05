@@ -368,6 +368,50 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a sync where every source was synced recently never says it started`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.minutes)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.minutes)
+        var started = 0
+
+        val result = importer.sync(SyncTrigger.Foreground, onStart = { started++ })
+
+        result shouldBe SyncResult.Skipped
+        started shouldBe 0
+    }
+
+    @Test
+    fun `a sync cancelled mid-way rethrows the cancellation rather than reporting it aborted`() = runBlocking<Unit> {
+        val outcome = CompletableDeferred<Result<SyncResult>>()
+        val run = launch(Dispatchers.Default) { outcome.complete(runCatching { importer.sync(SyncTrigger.Periodic) }) }
+        provider.started.receive()
+
+        run.cancelAndJoin()
+
+        outcome.await().exceptionOrNull().shouldBeInstanceOf<kotlin.coroutines.cancellation.CancellationException>()
+    }
+
+    @Test
+    fun `an import requested during a sync follows it, and its failure makes the sync worth retrying`() = runBlocking<Unit> {
+        val result = CompletableDeferred<SyncResult>()
+        var started = 0
+        launch(Dispatchers.Default) { result.complete(importer.sync(SyncTrigger.Periodic, onStart = { started++ })) }
+        provider.started.receive()
+
+        importer.import() // requested while the sync runs: left for the sync to run after it
+        provider.gate.trySend(Unit)
+        provider.started.receive() // the follow-up pass starts
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+
+        result.await() shouldBe SyncResult.Aborted(provider.failure)
+        result.await().shouldRetry shouldBe true
+        started shouldBe 1
+    }
+
+    @Test
     fun `a sync where one source fails and another succeeds reports both, and is worth retrying`() = runBlocking<Unit> {
         importer.mediaProviders += server
         server.failure = "Unreachable"

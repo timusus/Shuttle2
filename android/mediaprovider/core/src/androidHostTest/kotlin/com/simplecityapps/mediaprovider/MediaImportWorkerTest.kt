@@ -28,6 +28,9 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class MediaImportWorkerTest {
     private val provider = ScanProvider()
+
+    /** What the importer's afterImport throws, which fails the sync itself rather than one source. */
+    private var afterImportFailure: Exception? = null
     private val preferences =
         GeneralPreferenceManager(InMemoryKeyValueStore()).apply {
             // The library has been imported under this build, so the periodic sync has something to do
@@ -51,7 +54,7 @@ class MediaImportWorkerTest {
                 ) = Unit
             },
             preferenceManager = preferences,
-            afterImport = {}
+            afterImport = { afterImportFailure?.let { throw it } }
         ).apply { mediaProviders += provider }
 
     private var foregrounds = 0
@@ -112,7 +115,14 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a failure from an earlier run doesn't retry a sync that skips`() = runBlocking<Unit> {
+    fun `a sync that throws is retried`() = runBlocking<Unit> {
+        afterImportFailure = IllegalStateException("afterImport failed")
+
+        worker().doWork() shouldBe Result.retry()
+    }
+
+    @Test
+    fun `a sync skipped before the first import is a success even after an earlier failure`() = runBlocking<Unit> {
         provider.failure = "Server unreachable"
         worker().doWork() shouldBe Result.retry()
 

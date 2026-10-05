@@ -11,5 +11,7 @@ import dev.zacsweers.metro.Inject
 class BackgroundSync @Inject constructor(
     private val mediaImporter: MediaImporter
 ) {
-    suspend fun run() = mediaImporter.sync(SyncTrigger.Periodic)
+    suspend fun run() {
+        mediaImporter.sync(SyncTrigger.Periodic)
+    }
 }
