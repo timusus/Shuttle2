@@ -295,10 +295,12 @@ IN_PLACE=1 race_run 0 > /dev/null
 check "push race: in place, a failed push leaves HEAD's commits alone" 0 test "$(lander_unpushed)" = 1
 
 # EXIT trap (#867): an armed land_exit puts the checkout back on the batch's starting origin/main
-# (the batch commit is a stand-in for the picks); disarmed or in place it leaves HEAD alone.
-exit_run() {  # <armed 0|1>: run land_exit in the landing checkout, print "<unpushed> <message>"
+# (the batch commit is a stand-in for the picks); disarmed it leaves HEAD alone (in place never arms:
+# land.sh disarms before the in-place path, so the trap cannot touch the session's own branch).
+exit_run() {  # <armed 0|1> [<pre-hook>] [<origin sha>]: run land_exit in the landing checkout, print "<unpushed> <message>"
   ( cd "$RACE/lander" && LOG="$RACE/land.log" && : > "$LOG" && CUR_BRANCH=main && say() { echo "$*"; } \
-    && ORIGIN_MAIN_SHA=$(git -C "$RACE/seed" rev-parse HEAD) && RESTORE_HEAD_ON_EXIT=$1 && GROUP_PID="" WATCHDOG_PID="" \
+    && ORIGIN_MAIN_SHA=${3:-$(git -C "$RACE/seed" rev-parse HEAD)} && RESTORE_HEAD_ON_EXIT=$1 && GROUP_PID="" WATCHDOG_PID="" \
+    && { [ -z "${2:-}" ] || eval "$2"; } \
     && msg=$(land_exit) && echo "$(git rev-list --count "$ORIGIN_MAIN_SHA"..HEAD) ${msg:+reset}" )
 }
 race_setup 1
@@ -307,5 +309,27 @@ race_setup 1
 check "exit trap: disarmed (pushed, --no-push, abort), HEAD stays" 0 test "$(exit_run 0)" = "1 "
 race_setup 1
 check "exit trap: armed but already on origin/main, silent" 0 test "$(git -C "$RACE/lander" reset -q --hard HEAD~1; exit_run 1)" = "0 "
+
+race_setup 1
+check "exit trap: a detached base verify is re-attached and the branch reset" 0 test "$(exit_run 1 'git checkout -q --detach "$ORIGIN_MAIN_SHA"')" = "0 reset"
+check "exit trap: ... and HEAD is back on the branch" 0 test "$(git -C "$RACE/lander" symbolic-ref -q --short HEAD)" = main
+check "exit trap: ... with the branch at origin/main" 0 test "$(git -C "$RACE/lander" rev-parse main)" = "$(git -C "$RACE/seed" rev-parse HEAD)"
+
+# A kill during the first pick's conflict: HEAD already equals origin, but the index is conflicted.
+race_setup 1
+( cd "$RACE/lander" && git branch b0 HEAD && git reset -q --hard HEAD~1 && sed -i.bak '1s/.*/zzz/' android/a.kt \
+  && git commit -qam zzz && git cherry-pick b0 > /dev/null 2>&1 || true )
+check "exit trap: the conflicted pick is in progress before the trap" 0 test -n "$(git -C "$RACE/lander" rev-parse -q --verify CHERRY_PICK_HEAD)"
+exit_run 1 "" "$(git -C "$RACE/lander" rev-parse HEAD)" > /dev/null
+check "exit trap: a conflicted first pick is cleared" 0 test -z "$(git -C "$RACE/lander" rev-parse -q --verify CHERRY_PICK_HEAD)"
+check "exit trap: ... leaving a clean tree" 0 test -z "$(git -C "$RACE/lander" status --porcelain --untracked-files=no)"
+
+# push_once disarms the trap the moment the push lands, so a TERM deferred past it cannot reset.
+race_setup 1
+check "push_once: a successful push disarms the exit trap" 0 test "$( cd "$RACE/lander" && LOG="$RACE/land.log" && : > "$LOG" \
+  && RESTORE_HEAD_ON_EXIT=1 && push_once && echo "$RESTORE_HEAD_ON_EXIT" )" = 0
+race_setup 1; race_push_other docs/b.md
+check "push_once: a rejected push stays armed" 0 test "$( cd "$RACE/lander" && LOG="$RACE/land.log" && : > "$LOG" \
+  && RESTORE_HEAD_ON_EXIT=1 && { push_once; echo "rc=$? $RESTORE_HEAD_ON_EXIT"; } )" = "rc=2 1"
 
 [ "$fails" -eq 0 ] || { echo "$fails failed"; exit 1; }

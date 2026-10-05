@@ -204,18 +204,26 @@ kill_groups() {
 # origin/main so an unlanded batch's picks never block the next landing (#867).
 RESTORE_HEAD_ON_EXIT=0
 land_exit() {
-  local rc=$?
+  local rc=$? gp=$GROUP_PID wp=$WATCHDOG_PID n=0 moved=0
+  trap '' TERM INT HUP  # a second signal must not interrupt the restore
   kill_groups
+  # Give the killed groups a few seconds to die, so the reset never races a verify still writing the tree.
+  while { [ -n "$gp" ] && kill -0 -- "-$gp" 2>/dev/null; } || { [ -n "$wp" ] && kill -0 -- "-$wp" 2>/dev/null; }; do
+    [ "$n" -ge 20 ] && break
+    sleep 0.25; n=$((n + 1))
+  done
   if [ "$RESTORE_HEAD_ON_EXIT" = 1 ]; then
     RESTORE_HEAD_ON_EXIT=0
-    if [ "$(git rev-parse HEAD 2>/dev/null)" != "$ORIGIN_MAIN_SHA" ]; then
-      git cherry-pick --quit > /dev/null 2>&1 || true
-      git rebase --abort > /dev/null 2>&1 || true
-      if git reset -q --hard "$ORIGIN_MAIN_SHA" > /dev/null 2>&1; then
-        say "land.sh: exited without pushing; reset $CUR_BRANCH back to origin/main ($ORIGIN_MAIN_SHA); the branches are untouched, land them again"
-      else
-        say "land.sh: exited without pushing and could not reset $CUR_BRANCH to origin/main; reset it before the next landing (log: $LOG)"
-      fi
+    # Always clear sequencer state: a kill mid-conflict leaves HEAD at origin with a conflicted index.
+    git cherry-pick --quit > /dev/null 2>&1 || true
+    git rebase --abort > /dev/null 2>&1 || true
+    # The detached origin/main base verify leaves HEAD detached; re-attach so the reset moves the branch.
+    [ "$CUR_BRANCH" != HEAD ] && { git checkout -q -f "$CUR_BRANCH" > /dev/null 2>&1 || true; }
+    [ "$(git rev-parse HEAD 2>/dev/null)" != "$ORIGIN_MAIN_SHA" ] && moved=1
+    if git reset -q --hard "$ORIGIN_MAIN_SHA" > /dev/null 2>&1; then
+      [ "$moved" = 1 ] && say "land.sh: exited without pushing; reset $CUR_BRANCH back to origin/main ($ORIGIN_MAIN_SHA); the branches are untouched, land them again"
+    else
+      say "land.sh: exited without pushing and could not reset $CUR_BRANCH to origin/main; reset it before the next landing (log: $LOG)"
     fi
   fi
   return "$rc"
@@ -1044,6 +1052,8 @@ push_once() {
   for attempt in 1 2 3; do
     err=$(git push origin HEAD:main 2>&1)
     rc=$?
+    # Disarm the EXIT trap the moment the push lands: a deferred TERM must not reset a pushed checkout.
+    [ "$rc" -eq 0 ] && RESTORE_HEAD_ON_EXIT=0
     log "push attempt $attempt: rc=$rc"
     log "$err"
     [ "$rc" -eq 0 ] && return 0
