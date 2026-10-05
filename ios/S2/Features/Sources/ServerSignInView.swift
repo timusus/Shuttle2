@@ -376,7 +376,7 @@ struct ServerSignInContent: View {
             }
         } footer: {
             if showAdvanced {
-                Text("Custom headers are sent with every request to this server, for a reverse proxy such as Cloudflare Access or Authelia.")
+                Text("Custom headers are sent with every request to this server, for a reverse proxy such as Cloudflare Access or Authelia. Headers the app sets itself, such as Host, Authorization or the server's own token, are ignored.")
             }
         }
         .disabled(!editable)

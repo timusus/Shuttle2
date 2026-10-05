@@ -14,13 +14,35 @@ data class CustomHeader(
 ) {
     /**
      * A header every HTTP stack sends as it is: a name that's an RFC 7230 token (no spaces, colons or control
-     * characters) and a value of printable ASCII and tabs, so on one line. OkHttp throws on anything else.
+     * characters) and a value of printable ASCII and tabs, so on one line. OkHttp throws on anything else. A
+     * [reserved][isReserved] name is never valid.
      */
     val isValid: Boolean
-        get() = name.isNotEmpty() && name.all { it in TOKEN_CHARACTERS } && value.all { it == '\t' || it in ' '..'~' }
+        get() = name.isNotEmpty() && name.all { it in TOKEN_CHARACTERS } && !isReserved && value.all { it == '\t' || it in ' '..'~' }
+
+    /**
+     * A header the app sets itself, which a user's header must never replace: the request's framing (Host,
+     * Content-Length and the like) or the server's credentials (Authorization, Jellyfin and Emby's token, Plex's).
+     */
+    val isReserved: Boolean
+        get() = RESERVED_NAMES.any { it.equals(name, ignoreCase = true) }
 
     private companion object {
         val TOKEN_CHARACTERS = ('a'..'z') + ('A'..'Z') + ('0'..'9') + "!#$%&'*+-.^_`|~".toList()
+
+        val RESERVED_NAMES =
+            listOf(
+                "Host",
+                "Content-Length",
+                "Content-Type",
+                "Transfer-Encoding",
+                "Connection",
+                "Authorization",
+                "X-Emby-Authorization",
+                "X-Emby-Token",
+                "X-MediaBrowser-Token",
+                "X-Plex-Token"
+            )
     }
 }
 

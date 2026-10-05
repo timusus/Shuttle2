@@ -33,7 +33,7 @@
     <string name="media_provider_plex_server_shared">Shared with you</string>
     <string name="media_provider_advanced">Advanced</string>
     <string name="media_provider_custom_headers">Custom headers</string>
-    <string name="media_provider_custom_headers_helper">Sent with every request to this server, for a reverse proxy such as Cloudflare Access or Authelia.</string>
+    <string name="media_provider_custom_headers_helper">Sent with every request to this server, for a reverse proxy such as Cloudflare Access or Authelia. Headers the app sets itself, such as Host, Authorization or the server\'s own token, are ignored.</string>
     <string name="media_provider_header_name">Header</string>
     <string name="media_provider_header_value">Value</string>
     <string name="media_provider_add_header">Add header</string>

@@ -50,6 +50,17 @@ class ServerConnectionStoreTest {
     }
 
     @Test
+    fun `a header the app sets itself is never replaced`() {
+        store.setHeaders(
+            origin,
+            listOf("Host", "content-length", "Authorization", "X-Emby-Token", "x-emby-authorization", "X-MediaBrowser-Token", "X-Plex-Token", "X-Ok")
+                .map { CustomHeader(it, "x") }
+        )
+
+        store.connection(origin).headers shouldBe listOf(CustomHeader("X-Ok", "x"))
+    }
+
+    @Test
     fun `a stored header that is no longer valid is never read back`() {
         SecurePreferenceManager(values).putString("server_connection_music.example.com:443_headers", "X-Token: café\nX-Ok: ok")
 
