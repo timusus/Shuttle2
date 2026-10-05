@@ -48,6 +48,27 @@ class ArtworkUrlsTest {
     }
 
     @Test
+    fun `a url signed afresh for each request keeps its unsigned url as its cache key`() = runTest {
+        remoteArtworkProvider.headers = mapOf("X-Token" to "secret")
+        var salt = 0
+        remoteArtworkProvider.requestUrl = { url -> "$url?s=${++salt}" }
+
+        val first = artworkUrls.requests(song("song-1")).first()
+        val second = artworkUrls.requests(song("song-1")).first()
+
+        first shouldBe ArtworkRequest("https://example.com/song-1/album?s=1", headers = mapOf("X-Token" to "secret"), cacheKey = "https://example.com/song-1/album")
+        second.url shouldBe "https://example.com/song-1/album?s=2"
+        second.cacheKey shouldBe first.cacheKey
+    }
+
+    @Test
+    fun `a url the provider can't sign now is no request - the S2 API's is still asked`() = runTest {
+        remoteArtworkProvider.requestUrl = { null }
+
+        artworkUrls.requests(song("song-1")) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+    }
+
+    @Test
     fun `song artwork is the remote provider's album artwork and then the S2 API's by album artist and album`() = runTest {
         val song = song("song-1")
 
@@ -238,6 +259,10 @@ class ArtworkUrlsTest {
         var headers = emptyMap<String, String>()
 
         override fun requestHeaders(url: String): Map<String, String> = if (url.startsWith("https://example.com/")) headers else emptyMap()
+
+        var requestUrl: (String) -> String? = { it }
+
+        override fun requestUrl(url: String): String? = requestUrl.invoke(url)
 
         override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 

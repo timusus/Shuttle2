@@ -86,11 +86,14 @@ class SubsonicReportingTest {
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
         val signed = SignedSubsonicArtworkProvider(artwork, subsonic.authenticationManager, subsonic.service)
 
-        val url = Url(runBlocking { signed.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE")) }!!)
+        val unsigned = runBlocking { signed.getAlbumArtworkUrl(song.copy(artworkVersion = "mf-5zTXFMk8oDiQF9kh1gqcJE")) }!!
+        val url = Url(signed.requestUrl(unsigned)!!)
 
+        Url(unsigned).parameters["u"] shouldBe null
         url.parameters["id"] shouldBe "mf-5zTXFMk8oDiQF9kh1gqcJE"
         url.parameters["u"] shouldBe TestSubsonic.USERNAME
         url.parameters["t"] shouldBe md5Hex(TestSubsonic.PASSWORD + url.parameters["s"])
+        signed.requestUrl("https://elsewhere.example/art.png") shouldBe "https://elsewhere.example/art.png"
         signed.handles("subsonic") shouldBe true
     }
 

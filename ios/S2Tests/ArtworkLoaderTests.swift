@@ -101,6 +101,41 @@ struct ArtworkLoaderTests {
         #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
     }
 
+    /// A Subsonic server's artwork url is signed afresh for every request: its unsigned url keys the caches, so a second
+    /// signature for the same cover is a memory hit, not a download.
+    @MainActor @Test func aSignedCandidateIsCachedUnderItsStableKey() async {
+        let first = URL(string: "http://music.local:4533/rest/getCoverArt.view?id=1&s=a")!
+        let second = URL(string: "http://music.local:4533/rest/getCoverArt.view?id=1&s=b")!
+        let stableKey = "http://music.local:4533/rest/getCoverArt.view?id=1"
+        let fetcher = StubFetcher(responses: [first: (200, Self.pngData(width: 40, height: 40)), second: (200, Self.pngData(width: 40, height: 40))])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+
+        #expect(await loader.image(for: ArtworkCandidate(url: first, stableKey: stableKey), maxPixelSize: 64) != nil)
+        #expect(await loader.image(for: ArtworkCandidate(url: second, stableKey: stableKey), maxPixelSize: 64) != nil)
+
+        #expect(await fetcher.requests.map(\.url) == [first])
+        #expect(ArtworkCandidate(url: first).cacheKey == first.absoluteString)
+    }
+
+    /// After a relaunch (a new loader, the same disk cache), the signed cover comes from disk under its stable key.
+    @MainActor @Test func aSignedCandidateIsReadFromDiskUnderItsStableKey() async {
+        let signed = URL(string: "http://music.local:4533/rest/getCoverArt.view?id=2&s=a")!
+        let stableKey = "http://music.local:4533/rest/getCoverArt.view?id=2"
+        let diskCache = URLCache(memoryCapacity: 4 * 1024 * 1024, diskCapacity: 0)
+        let fetcher = StubFetcher(responses: [signed: (200, Self.pngData(width: 40, height: 40))])
+        _ = await ArtworkLoader(fetch: fetcher.fetch, diskCache: diskCache)
+            .image(for: ArtworkCandidate(url: signed, stableKey: stableKey), maxPixelSize: 64)
+
+        let offline = StubFetcher(responses: [:])
+        let resigned = URL(string: "http://music.local:4533/rest/getCoverArt.view?id=2&s=b")!
+        let image = await ArtworkLoader(fetch: offline.fetch, diskCache: diskCache)
+            .image(for: ArtworkCandidate(url: resigned, stableKey: stableKey), maxPixelSize: 64)
+
+        #expect(image != nil)
+        #expect(await offline.requests.isEmpty)
+        #expect(diskCache.cachedResponse(for: URLRequest(url: URL(string: stableKey)!))?.response.url?.absoluteString == stableKey)
+    }
+
     /// A server's thumbnail-sized artist image counts as absent (#823): the next candidate, the top album's cover, is drawn.
     @MainActor @Test func aCandidateUnderItsMinimumSizeFallsThroughToTheNext() async {
         let fetcher = StubFetcher(responses: [

@@ -19,7 +19,8 @@ import UIKit
 ///   look at a screen costs nothing at all — not even the Kotlin lookup, which asks the server about the
 ///   item; behind it a disk `URLCache` on this loader's own session, so a cold launch re-downloads
 ///   nothing. Artwork is immutable at its URL, which is what makes a long-lived disk cache correct. A miss
-///   is never cached: the next look tries again.
+///   is never cached: the next look tries again. A URL signed afresh for every request (a Subsonic server's) is
+///   cached under its candidate's `cacheKey`, the unsigned URL, in both, or neither would ever hit.
 /// - **Its own session.** Image traffic never queues behind the API.
 /// - **One request per URL and size.** A caller that goes away stops waiting, but the download is never
 ///   cancelled: it finishes into the cache, so the row that comes back a moment later is instant.
@@ -48,14 +49,17 @@ actor ArtworkLoader {
     private nonisolated let isGeneratedArtworkEnabled: @Sendable () -> Bool
     #endif
     private var inFlight: [String: Task<UIImage?, Never>] = [:]
+    /// The session's disk cache, which a candidate with its own `cacheKey` reads and writes under that key.
+    private nonisolated let diskCache: URLCache?
 
     private init() {
         let configuration = URLSessionConfiguration.default
-        configuration.urlCache = URLCache(
+        let diskCache = URLCache(
             memoryCapacity: 16 * 1024 * 1024,
             diskCapacity: 256 * 1024 * 1024,
             diskPath: "s2-artwork"
         )
+        configuration.urlCache = diskCache
         // Artwork at a URL never changes; prefer whatever is on disk and only ask the network when
         // there is nothing there.
         configuration.requestCachePolicy = .returnCacheDataElseLoad
@@ -70,11 +74,12 @@ actor ArtworkLoader {
                 return (data, URLResponse(url: url, mimeType: nil, expectedContentLength: data.count, textEncodingName: nil))
             }
             return try await session.data(for: request)
-        })
+        }, diskCache: diskCache)
     }
 
-    init(fetch: @escaping Fetch, isGeneratedArtworkEnabled: @escaping @Sendable () -> Bool = { DebugArtwork.isEnabled }) {
+    init(fetch: @escaping Fetch, diskCache: URLCache? = nil, isGeneratedArtworkEnabled: @escaping @Sendable () -> Bool = { DebugArtwork.isEnabled }) {
         self.fetch = fetch
+        self.diskCache = diskCache
         #if DEBUG
         self.isGeneratedArtworkEnabled = isGeneratedArtworkEnabled
         #endif
@@ -129,7 +134,7 @@ actor ArtworkLoader {
     /// Returns nil for anything that did not arrive as a decodable image, including a non-2xx response, and for an
     /// image smaller than the candidate's `minimumSize`.
     func image(for candidate: ArtworkCandidate, maxPixelSize: Int) async -> UIImage? {
-        let key = Self.key(candidate.url, maxPixelSize, minimumSize: candidate.minimumSize)
+        let key = Self.key(candidate.cacheKey, maxPixelSize, minimumSize: candidate.minimumSize)
         if let hit = memory.object(forKey: key as NSString) { return hit }
 
         // Every later caller for the same cover joins the download already running rather than
@@ -139,11 +144,21 @@ actor ArtworkLoader {
         let fetch = fetch
         let request = candidate.request
         let minimumSize = candidate.minimumSize
+        // The session caches by URL: a signed URL is cached here under its stable key instead
+        let keyed = candidate.keyedCacheRequest.flatMap { keyRequest in diskCache.map { (keyRequest, $0) } }
         let created = Task<UIImage?, Never> {
+            if case let (keyRequest, diskCache)? = keyed, let cached = diskCache.cachedResponse(for: keyRequest) {
+                return Self.downsample(cached.data, maxPixelSize: maxPixelSize, minimumSize: minimumSize)
+            }
             do {
                 let (data, response) = try await fetch(request)
                 if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                     return nil
+                }
+                if case let (keyRequest, diskCache)? = keyed, let keyURL = keyRequest.url,
+                   let stored = HTTPURLResponse(url: keyURL, statusCode: 200, httpVersion: nil, headerFields: nil) {
+                    // Stored against the unsigned URL, so the signature never lands on disk with it
+                    diskCache.storeCachedResponse(CachedURLResponse(response: stored, data: data), for: keyRequest)
                 }
                 return Self.downsample(data, maxPixelSize: maxPixelSize, minimumSize: minimumSize)
             } catch {
@@ -165,8 +180,8 @@ actor ArtworkLoader {
 
     /// Carries a minimum size, so an image too small for an artist's candidate is never answered from one cached
     /// for a candidate that takes any size.
-    private static func key(_ url: URL, _ maxPixelSize: Int, minimumSize: Int) -> String {
-        let key = "\(url.absoluteString)|\(maxPixelSize)"
+    private static func key(_ cacheKey: String, _ maxPixelSize: Int, minimumSize: Int) -> String {
+        let key = "\(cacheKey)|\(maxPixelSize)"
         return minimumSize > 0 ? "\(key)|min\(minimumSize)" : key
     }
 
@@ -214,6 +229,17 @@ struct ArtworkCandidate: Hashable, Sendable {
     /// The smallest the image's shorter side may be, in pixels: a smaller one counts as absent and the next candidate
     /// is tried (an artist's image, #823). 0 takes any size.
     var minimumSize = 0
+    /// What names the image in the caches, when it isn't `url`: the unsigned URL of one signed afresh each time
+    /// (a Subsonic server's), whose own URL would never hit.
+    var stableKey: String?
+
+    var cacheKey: String { stableKey ?? url.absoluteString }
+
+    /// The request the disk cache keeps this image under, for a candidate with a `stableKey`; nil for any other,
+    /// which the session caches by its own URL.
+    var keyedCacheRequest: URLRequest? {
+        stableKey.flatMap(URL.init(string:)).map { URLRequest(url: $0) }
+    }
 
     var request: URLRequest {
         var request = URLRequest(url: url)

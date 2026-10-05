@@ -16,6 +16,13 @@ interface RemoteArtworkProvider {
      * Artwork urls stay free of credentials, so a loader that can't intercept requests (iOS's) asks for them here.
      */
     fun requestHeaders(url: String): Map<String, String> = emptyMap()
+
+    /**
+     * The url to request [url], one of this provider's artwork urls, at: [url] itself by default, or null when it can't be
+     * requested now. A provider whose server takes credentials only in the url (Subsonic) signs it here on iOS, where the
+     * loader can't sign a request on its way out; [url] stays its image's cache key, since the signature changes each time.
+     */
+    fun requestUrl(url: String): String? = url
 }
 
 /** Routes each call to the first of [providers] that handles the song's uri; each provider module contributes its own via `@IntoSet`. */
@@ -28,6 +35,9 @@ class AggregateRemoteArtworkProvider(private val providers: Set<RemoteArtworkPro
 
     /** Each provider adds headers only for its own server's urls, so the union is the headers for [url]'s. */
     override fun requestHeaders(url: String): Map<String, String> = providers.fold(emptyMap()) { headers, provider -> headers + provider.requestHeaders(url) }
+
+    /** Each provider changes only its own server's urls, so passing [url] through them all gives its request url. */
+    override fun requestUrl(url: String): String? = providers.fold<RemoteArtworkProvider, String?>(url) { requestUrl, provider -> requestUrl?.let(provider::requestUrl) }
 }
 
 /**
