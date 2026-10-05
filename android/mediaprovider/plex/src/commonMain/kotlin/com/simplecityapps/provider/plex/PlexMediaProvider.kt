@@ -333,9 +333,7 @@ internal fun Metadata.toSong(
     id = 0,
     name = title,
     albumArtist = grandparentTitle,
-    // Plex sends the track's own artist as originalTitle only when it differs from the album artist's. One string holds
-    // several artists when the file does, which the other sources get split
-    artists = splitArtistTag(originalTitle ?: grandparentTitle.orEmpty()),
+    artists = trackArtists,
     album = parentTitle,
     track = index,
     disc = parentIndex,
@@ -368,7 +366,7 @@ internal fun Metadata.toSong(
     // Plex sends one artist string per track and one album artist, which are split here, no COMPILATION, and no
     // album or artist MusicBrainz ids on a track: only its recording id, in the Guid list
     albumArtists = splitArtistTag(grandparentTitle.orEmpty()),
-    artistsTag = splitArtistTag(originalTitle ?: grandparentTitle.orEmpty()),
+    artistsTag = trackArtists,
     artistDisplay = originalTitle ?: grandparentTitle,
     compilation = null,
     mbTrackId = guids.firstNotNullOfOrNull { guid -> guid.id.takeIf { it.startsWith("mbid://") }?.let { musicBrainzIds(it).firstOrNull() } },
@@ -377,12 +375,22 @@ internal fun Metadata.toSong(
     mbArtistIds = emptyList(),
     mbAlbumArtistIds = emptyList(),
     serverAlbumId = parentRatingKey,
-    // The track's own artist (originalTitle) has no id of its own; without one, the track's artist is the album's
-    serverArtistIds = if (originalTitle == null) listOfNotNull(grandparentRatingKey) else emptyList(),
+    // Paired 1:1 with artistsTag, or none. The track's own artist (originalTitle) has no id of its own; without one, the
+    // track's artist is the album's, whose id is the whole string's: one artist's when it names one, none of the artists
+    // it's split into when it names several
+    serverArtistIds = if (originalTitle == null && trackArtists.size == 1) listOfNotNull(grandparentRatingKey) else emptyList(),
+    // The album artist's, unsplit like albumArtist, which the album artist's page is keyed by
     serverAlbumArtistIds = listOfNotNull(grandparentRatingKey),
     favouritedAt = favouritedAt(syncedAt)
     // No artworkVersion: Plex songs have no server artwork loader, only the S2 artwork API, whose cache is keyed by URL
 )
+
+/**
+ * The track's artists. Plex sends the track's own artist as originalTitle only when it differs from the album artist's.
+ * One string holds several artists when the file does, which the other sources get split.
+ */
+private val Metadata.trackArtists: List<String>
+    get() = splitArtistTag(originalTitle ?: grandparentTitle.orEmpty())
 
 internal val Metadata.songPath: String
     get() = "plex://$key"

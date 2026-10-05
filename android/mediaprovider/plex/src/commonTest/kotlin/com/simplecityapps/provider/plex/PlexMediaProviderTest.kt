@@ -206,6 +206,25 @@ class PlexMediaProviderTest {
     }
 
     @Test
+    fun `playlist items are matched to library songs by track - not by the file the track was last read from`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        server.respond(PLAYLISTS, "playlists.json")
+        server.respond("/playlists/11/items", "playlist_11_items.json")
+        server.respond("/playlists/12/items", "empty.json")
+        // The files replaced since the library was stored (new parts, so new part keys), and a song of another track that
+        // was last read from the file playlist item 999 now names
+        val library =
+            sync().map { song -> song.copy(externalId = "/library/parts/old-${song.name}/file.flac") } +
+                sync().first().copy(name = "Another Track", path = "plex:///library/metadata/42", externalId = "/library/parts/999/file.mp3")
+
+        val playlists = syncPlaylists(library)
+
+        playlists.first().songs.map { it.name } shouldContainExactly listOf("B-Side", "Opening")
+    }
+
+    @Test
     fun `playlists are the server's audio playlists - asked for with the session token`() {
         signedIn()
         server.respond(PLAYLISTS, "playlists.json")

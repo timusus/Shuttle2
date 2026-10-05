@@ -3,6 +3,7 @@ package com.simplecityapps.provider.plex
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.serverArtistId
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Instant
@@ -51,6 +52,25 @@ class MetadataToSongTest {
         song.serverAlbumArtistIds shouldBe listOf("99")
         song.serverAlbumId shouldBe "100"
         song.mbTrackId shouldBe null
+    }
+
+    @Test
+    fun `an album artist naming several artists keeps its id for the album artist - and pairs none with the split track artists`() {
+        val metadata =
+            S2Json.decodeFromString<Metadata>(
+                """{"key": "/library/metadata/101", "grandparentTitle": "A; B", "parentRatingKey": "100", "grandparentRatingKey": "99"}"""
+            )
+
+        val song = metadata.toSong(MediaProviderType.Plex, SYNCED_AT)
+
+        song.artistsTag shouldBe listOf("A", "B")
+        song.serverArtistIds shouldBe emptyList()
+        song.serverAlbumArtistIds shouldBe listOf("99")
+        song.serverArtistId(song.albumArtistGroupKey) shouldBe "99"
+        song.artistCredits.map { credit -> credit.name to song.serverArtistId(credit.groupKey) } shouldBe listOf("A" to null, "B" to null)
+        // The album keeps its key: the album artist isn't split, and the album is the server's
+        song.albumArtist shouldBe "A; B"
+        song.serverAlbumId shouldBe "100"
     }
 
     @Test
