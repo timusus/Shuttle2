@@ -57,8 +57,13 @@ constructor(
     /**
      * The first time the entitlement is known on this install; [source] is where it came from: none, trial, pro, legacy
      * (an old purchase) or debug. Tells how many existing buyers there are, with [mediaSourcesChanged] for what they use.
+     * Returns whether an enabled backend took the event; false means the caller should offer it again later.
      */
-    fun entitlementResolved(entitlement: Entitlement) = analytics.capture("entitlement_resolved", mapOf("source" to entitlement.analyticsSource))
+    fun entitlementResolved(entitlement: Entitlement): Boolean {
+        if (!analytics.isCapturing) return false
+        analytics.capture("entitlement_resolved", mapOf("source" to entitlement.analyticsSource))
+        return true
+    }
 
     /** The `media_sources` property: which kinds of source are set up, sent with every later event. */
     fun mediaSourcesChanged(types: Collection<MediaProviderType>) = analytics.register("media_sources", mediaSourcesValue(types))

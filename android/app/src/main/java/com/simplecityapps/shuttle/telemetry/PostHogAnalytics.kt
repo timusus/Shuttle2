@@ -41,11 +41,13 @@ class PostHogAnalytics @Inject constructor(
         }
     }
 
+    override val isCapturing: Boolean get() = enabled && setUp
+
     override fun capture(
         event: String,
         properties: Map<String, Any>
     ) {
-        if (enabled && setUp) {
+        if (isCapturing) {
             PostHog.capture(event, properties = properties)
         }
     }

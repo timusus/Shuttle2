@@ -74,9 +74,9 @@ class EntitlementRepository(
         // The first answer, once per install: how many existing buyers there are is what this measures
         coroutineScope.launch {
             val resolved = entitlement.first { it !is Entitlement.Unknown }
-            if (!store.entitlementResolvedLogged) {
+            // Only once an enabled backend took it: while opted out the event is offered again next launch
+            if (!store.entitlementResolvedLogged && analytics.entitlementResolved(resolved)) {
                 store.entitlementResolvedLogged = true
-                analytics.entitlementResolved(resolved)
             }
         }
     }

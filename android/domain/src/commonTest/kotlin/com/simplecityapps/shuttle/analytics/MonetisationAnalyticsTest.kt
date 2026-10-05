@@ -10,8 +10,11 @@ import kotlin.time.Instant
 class MonetisationAnalyticsTest {
     private val events = mutableListOf<Pair<String, Map<String, Any>>>()
     private val registered = mutableMapOf<String, Any>()
+    private var capturing = true
     private val analytics = MonetisationAnalytics(
         object : Analytics {
+            override val isCapturing: Boolean get() = capturing
+
             override fun capture(
                 event: String,
                 properties: Map<String, Any>
@@ -55,9 +58,18 @@ class MonetisationAnalyticsTest {
             Entitlement.Pro(ProSource.LegacyLifetime),
             Entitlement.Pro(ProSource.LegacySubscription),
             Entitlement.Pro(ProSource.Debug)
-        ).forEach(analytics::entitlementResolved)
+        ).forEach { analytics.entitlementResolved(it) shouldBe true }
 
         events.map { it.first }.toSet() shouldBe setOf("entitlement_resolved")
         events.map { it.second["source"] } shouldBe listOf("none", "none", "trial", "pro", "pro", "legacy", "legacy", "debug")
+    }
+
+    @Test
+    fun `entitlement_resolved reports it was not taken while analytics isn't capturing`() {
+        capturing = false
+
+        analytics.entitlementResolved(Entitlement.Free(trialUsed = false)) shouldBe false
+
+        events shouldBe emptyList()
     }
 }

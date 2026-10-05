@@ -38,7 +38,9 @@ class EntitlementRepositoryTest {
     private val start = Instant.fromEpochMilliseconds(1_800_000_000_000)
     private val owned = MutableStateFlow<Set<String>?>(emptySet())
     private val store = FakeStore()
-    private val analytics = mockk<MonetisationAnalytics>(relaxed = true)
+    private val analytics = mockk<MonetisationAnalytics>(relaxed = true).also {
+        every { it.entitlementResolved(any()) } returns true
+    }
 
     private fun TestScope.repository(isDebug: Boolean = false): EntitlementRepository {
         val clock = object : Clock {
@@ -65,6 +67,19 @@ class EntitlementRepositoryTest {
         runCurrent()
 
         verify(exactly = 1) { analytics.entitlementResolved(Entitlement.Pro(ProSource.LegacySubscription)) }
+        assertTrue(store.entitlementResolvedLogged)
+    }
+
+    @Test
+    fun `entitlement_resolved stays unlogged while analytics is opted out, and is sent on a later launch`() = runTest {
+        every { analytics.entitlementResolved(any()) } returns false
+        repository()
+        verify(exactly = 1) { analytics.entitlementResolved(any()) }
+        assertFalse(store.entitlementResolvedLogged)
+
+        every { analytics.entitlementResolved(any()) } returns true
+        repository()
+        verify(exactly = 2) { analytics.entitlementResolved(any()) }
         assertTrue(store.entitlementResolvedLogged)
     }
 

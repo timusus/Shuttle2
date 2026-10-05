@@ -5,6 +5,9 @@ package com.simplecityapps.shuttle.analytics
  * until then, and after an opt-out, [capture] drops them.
  */
 interface Analytics {
+    /** Whether [capture] currently reaches a backend: false while opted out or not set up. */
+    val isCapturing: Boolean get() = true
+
     fun capture(
         event: String,
         properties: Map<String, Any> = emptyMap()
