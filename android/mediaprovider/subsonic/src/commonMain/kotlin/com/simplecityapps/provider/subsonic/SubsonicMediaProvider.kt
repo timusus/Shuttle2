@@ -25,6 +25,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import io.ktor.http.encodeURLPathPart
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -32,8 +33,9 @@ import kotlinx.datetime.LocalDate
 
 /**
  * Syncs a Subsonic server's songs and playlists. Songs come from `search3` with an empty query, a page at a time, which
- * Navidrome and other OpenSubsonic servers answer with every song. A server that isn't OpenSubsonic and answers it with
- * nothing is read album by album instead (`getAlbumList2`, then `getAlbum` for each).
+ * Navidrome and other OpenSubsonic servers answer with every song. A server that answers it with nothing (a plain
+ * Subsonic server, or an OpenSubsonic one that doesn't take an empty query) is read album by album instead
+ * (`getAlbumList2`, then `getAlbum` for each); a library that's truly empty costs that one more request, for no albums.
  */
 class SubsonicMediaProvider(
     private val strings: ServerStrings,
@@ -51,7 +53,7 @@ class SubsonicMediaProvider(
                     .map { songs -> Page(songs, totalCount = null) }
             }
         ) ?: return@withServerSession
-        val songs = if (searched.result.isEmpty() && authenticationManager.serverInfo?.openSubsonic != true) {
+        val songs = if (searched.result.isEmpty()) {
             logger.info { "search3 found no songs; reading the library album by album" }
             songsByAlbum(address, session) ?: return@withServerSession
         } else {
@@ -135,7 +137,11 @@ class SubsonicMediaProvider(
 internal val SongDto.isSong: Boolean
     get() = !isDir && !isVideo
 
-internal fun songPath(id: String): String = "subsonic://song/$id"
+/**
+ * The song's own URI. Its id is the server's, which Subsonic leaves opaque, so it's encoded to stay one path segment.
+ * Nothing reads the id back from it: a song's stream is resolved from [Song.externalId].
+ */
+internal fun songPath(id: String): String = "subsonic://song/${id.encodeURLPathPart()}"
 
 internal fun SongDto.toSong(): Song {
     val artistNames = artists.names().ifEmpty { listOfNotNull(artist?.takeIf(String::isNotBlank)) }

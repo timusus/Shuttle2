@@ -14,6 +14,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.ktor.http.Url
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.time.Instant
@@ -136,12 +137,38 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `an OpenSubsonic server that finds nothing has no songs`() {
+    fun `an OpenSubsonic server that finds nothing for an empty search is read album by album too`() {
         subsonic.signIn()
         server.respond(SEARCH, "search3_empty.json")
+        server.respond(ALBUM_LIST, "album_list.json", query = mapOf("offset" to "0"))
+        server.respond(ALBUM_LIST, "album_list_empty.json", query = mapOf("offset" to "2"))
+        server.respond(ALBUM, "album.json")
+
+        syncSongs().map { it.externalId } shouldContainExactly listOf("4ybHCBhN2R5X5YAG1LyVKx", "032Sq9OndYALAaM6wobkf2")
+    }
+
+    @Test
+    fun `an empty library has no songs - after one look for albums`() {
+        subsonic.signIn()
+        server.respond(SEARCH, "search3_empty.json")
+        server.respond(ALBUM_LIST, "album_list_empty.json")
 
         syncSongs().shouldBeEmpty()
-        server.requestsTo(ALBUM_LIST).shouldBeEmpty()
+        server.requestsTo(ALBUM_LIST).size shouldBe 1
+        server.requestsTo(ALBUM).shouldBeEmpty()
+    }
+
+    @Test
+    fun `a song's URI keeps an id with reserved characters to one path segment`() {
+        val id = "a/b?c d"
+
+        val uri = Url(songPath(id))
+
+        uri.protocol.name shouldBe "subsonic"
+        uri.host shouldBe "song"
+        uri.segments shouldContainExactly listOf(id)
+        uri.parameters.isEmpty() shouldBe true
+        SongDto(id = id, title = "Song").toSong().path shouldBe "subsonic://song/a%2Fb%3Fc%20d"
     }
 
     @Test
