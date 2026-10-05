@@ -15,7 +15,8 @@
 #   --covers   release gate: exit 0 if the watermark is <sha>, or an ancestor of it with only the
 #              changelog files the deploy skill commits changed since; else exit 1 and say why
 #
-# Runs in a temporary detached worktree under `machine-lock --name verify`: testDebugUnitTest,
+# Runs in the reusable, locked detached worktree .claude/worktrees/full-verify (moved to the sha with
+# `git checkout --detach`, build outputs kept) under `machine-lock --name verify`: testDebugUnitTest,
 # assembleDebug and both verifyRoborazziDebug, then the iOS framework build, `iosSimulatorArm64Test` (every KMP module's commonTest on
 # Kotlin/Native, #821) + the whole `test.sh`
 # (simulator leased as S2_SIM_HOLDER=full-verify, released afterwards), then `test.sh --package`.
@@ -24,7 +25,7 @@
 # descends from the current watermark (never regresses). On a test failure a `bug` GitHub issue
 # names the failing step, the commit range watermark..sha and the log (an open "Full verify failed"
 # issue gets a comment instead) and the script exits 1. Infrastructure failures (no lock, no
-# worktree, no local.properties) file nothing and exit 3. The temp worktree is always removed.
+# worktree, no local.properties) file nothing and exit 3. The worktree is kept between runs.
 set -euo pipefail
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
@@ -62,14 +63,14 @@ if [ "${1:-}" = "--steps" ]; then
   step "android: testDebugUnitTest, assembleDebug, verifyRoborazziDebug"
   support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug \
     :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
-  step "ios: framework build"
-  (cd ios && xcodegen -q && scripts/build-framework.sh)
-  step "ios: KMP commonTest (iosSimulatorArm64Test)"
+  step "ios: framework build + KMP commonTest (iosSimulatorArm64Test), one Gradle invocation"
+  (cd ios && xcodegen -q)
   # Lease the pool's simulator (held through the test.sh step below, released after it) instead of letting the
   # Kotlin/Native task boot its own.
   udid="$(S2_SIM_HOLDER=full-verify ios/scripts/lease-sim.sh)" || udid=""
   rc=0
-  ./gradlew iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"} || rc=$?
+  # build-framework.sh hands extra arguments to the same ./gradlew call as the link task.
+  (cd ios && scripts/build-framework.sh iosSimulatorArm64Test ${udid:+-Ps2.iosSimulatorUdid="$udid"}) || rc=$?
   if [ "$rc" -eq 0 ]; then
     step "ios: full test.sh"
     (cd ios && S2_SIM_HOLDER=full-verify scripts/test.sh) || rc=$?
@@ -152,24 +153,31 @@ LOG="$REPO_ROOT/.claude/land-logs/full-verify-$(date -u +%Y%m%dT%H%M%SZ).log"
 : > "$LOG"
 log() { printf '%s\n' "$*" | tee -a "$LOG"; }
 
-WORKTREE=$(mktemp -d "${TMPDIR:-/tmp}/s2-full-verify.XXXXXX")
-cleanup() {
-  git worktree remove --force "$WORKTREE" >/dev/null 2>&1 || true
-  rmdir "$WORKTREE" >/dev/null 2>&1 || true
-  git worktree prune >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+# A fixed, reusable worktree (next to the others, in the primary checkout): the configuration cache, Xcode
+# DerivedData, SPM checkouts and build outputs survive between runs instead of starting cold every time. It is
+# locked so worktree-clean.sh and worktree-report.sh --prune never take it.
+WORKTREE="$(dirname "$COMMON_DIR")/.claude/worktrees/full-verify"
 
 PREV=$(watermark)
 log "full-verify: $SHA in $WORKTREE (log: $LOG)"
-git worktree add -q --detach -f "$WORKTREE" "$SHA" \
-  || { log "full-verify: infrastructure error: could not create the worktree"; exit 3; }
+if git worktree list --porcelain | grep -qxF "worktree $WORKTREE"; then
+  # Reset tracked changes, keep untracked and ignored files (build outputs).
+  { git -C "$WORKTREE" reset -q --hard && git -C "$WORKTREE" checkout -q --detach "$SHA"; } \
+    || { log "full-verify: infrastructure error: could not move the worktree to $SHA"; exit 3; }
+else
+  [ ! -e "$WORKTREE" ] || { log "full-verify: infrastructure error: $WORKTREE exists but is not a registered worktree"; exit 3; }
+  git worktree prune >/dev/null 2>&1 || true
+  git worktree add -q --detach -f "$WORKTREE" "$SHA" \
+    || { log "full-verify: infrastructure error: could not create the worktree"; exit 3; }
+  git worktree lock --reason "reused by support/scripts/full-verify.sh" "$WORKTREE" >/dev/null 2>&1 || true
+fi
 # Gitignored machine-local config (local.properties) a fresh worktree starts without.
 (cd "$WORKTREE" && .claude/hooks/sync-worktree-secrets.sh) >> "$LOG" 2>&1 || true
 [ -f "$WORKTREE/local.properties" ] \
   || { log "full-verify: ENVIRONMENT error: no local.properties (sdk.dir) for the worktree; no issue filed"; exit 3; }
 
 STEP_FILE="$WORKTREE/.full-verify-step"
+rm -f "$STEP_FILE"  # a stale one from the last run would mask a setup failure
 rc=0
 machine-lock --name verify -- "$SELF" --steps "$WORKTREE" "$STEP_FILE" >> "$LOG" 2>&1 || rc=$?
 
