@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -29,7 +29,7 @@ class ObserveArtistAlbumsTest {
     private suspend fun TestScope.settled(key: AlbumArtistGroupKey): ArtistAlbums {
         var latest: ArtistAlbums? = null
         observeArtistAlbums(key).onEach { latest = it }.launchIn(backgroundScope)
-        advanceUntilIdle()
+        runCurrent()
         return latest!!
     }
 

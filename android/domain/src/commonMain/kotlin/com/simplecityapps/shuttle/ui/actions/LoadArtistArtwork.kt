@@ -18,7 +18,7 @@ class LoadArtistArtwork(
     private val songRepository: SongRepository,
 ) {
     suspend operator fun invoke(artist: AlbumArtist): ArtistHeroArtwork {
-        val albums = observeArtistAlbums(artist.groupKey).first()
+        val albums = observeArtistAlbums.settled(artist.groupKey).first()
         val songs = songRepository.loadSongs(SongQuery.ArtistGroupKey(artist.groupKey))
         return ArtistHeroArtwork.of(artist, albums.albums, songs, albums.appearsOn)
     }
