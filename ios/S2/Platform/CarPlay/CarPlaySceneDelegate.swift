@@ -47,6 +47,9 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private var downloads: [String: OfflineDownload] = [:]
     /// What plays offline, built when Home is drawn offline and dropped when the library or the downloads change.
     private var offlineIndex: CarPlayOfflineIndex?
+    /// The ids of the playlists with a song that plays offline, nil until known; restarted when the playlists or the downloads change.
+    private var playablePlaylists: Set<Int64>?
+    private var playablePlaylistsTask: Task<Void, Never>?
 
     private var isOffline: Bool { !(network?.isOnline ?? true) }
 
@@ -117,6 +120,9 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         // up. A reconnect calls didConnect again and fills the templates afresh.
         tasks.forEach { $0.cancel() }
         tasks.removeAll()
+        playablePlaylistsTask?.cancel()
+        playablePlaylistsTask = nil
+        playablePlaylists = nil
         viewModels.forEach { $0.clear() }
         viewModels.removeAll()
         pushed.values.forEach { $0.task.cancel(); $0.viewModel.clear() }
@@ -214,7 +220,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
                     artwork: Self.artwork(item, covers: content.covers),
                     progress: resumes ? section.progress[item.key].map { Double($0.fraction) } : nil,
                     symbol: Self.symbol(item),
-                    playableOffline: index?.isPlayable(item, covers: content.covers[item.key]) ?? true
+                    playableOffline: index?.isPlayable(item, playablePlaylists: playablePlaylists) ?? true
                 )
             }
             return CarPlayHomeSection(id: "\(section.id)", header: HomeContent.title(section.title), entries: entries, resumes: resumes)
@@ -243,9 +249,24 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
             for await downloads in flow {
                 guard let self else { return }
                 self.downloads = downloads
+                self.observePlayablePlaylists()
                 self.libraryChanged()
             }
         })
+    }
+
+    /// Re-asks which playlists have a song that plays offline (#925), for the current playlists and completed downloads.
+    private func observePlayablePlaylists() {
+        playablePlaylistsTask?.cancel()
+        let downloaded = Set(downloads.compactMap { $0.value.state == .completed ? $0.key : nil })
+        let flow = AppGraph.shared.observePlayablePlaylists.invoke(playlists: Array(playlists.values), downloadedPaths: downloaded)
+        playablePlaylistsTask = Task { [weak self] in
+            for await ids in flow {
+                guard let self else { return }
+                self.playablePlaylists = Set(ids.map(\.int64Value))
+                self.libraryChanged()
+            }
+        }
     }
 
     /// The library or the downloads changed: what plays offline may have too.
@@ -261,6 +282,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private func updatePlaylists(_ state: PlaylistListUiState) {
         playlists = Dictionary(state.playlists.map { ("\($0.id)", $0) }, uniquingKeysWith: { first, _ in first })
         smartPlaylists = Dictionary(state.smartPlaylists.map { (Self.smartKey($0), $0) }, uniquingKeysWith: { first, _ in first })
+        observePlayablePlaylists()
         let smart = state.smartPlaylists.map { smartPlaylist in
             CarPlayEntry(id: Self.smartKey(smartPlaylist), title: smartPlaylist.id.title, subtitle: nil, symbol: smartPlaylist.id.symbol)
         }

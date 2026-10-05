@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.telemetry.IosTelemetry
 import com.simplecityapps.shuttle.shared.telemetry.IosTelemetryStartup
+import com.simplecityapps.shuttle.ui.actions.ObservePlayablePlaylists
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.home.HomeViewModel
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailCoversViewModel
@@ -139,6 +140,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Offline downloads' state, which detail headers show and whose actions they offer. Swift builds it at launch. */
     val offlineDownloads: OfflineDownloads
+
+    /** Which playlists have a song that plays offline, given the completed downloads' paths; CarPlay's offline Home (#925). */
+    val observePlayablePlaylists: ObservePlayablePlaylists
 
     /** Offline downloads' background `URLSession`, which the app delegate hands its background events to. */
     val urlSessionDownloads: UrlSessionDownloads

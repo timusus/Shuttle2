@@ -8,8 +8,8 @@ import Shared
 ///
 /// There's no shared notion of an item's availability (downloads are per song, and iOS-only), so this lives with
 /// CarPlay rather than in the shared Home state. Albums, artists and genres are matched against the library's songs,
-/// a smart playlist by its query; a playlist's own songs aren't loaded on Home, so it's judged by its cover songs (up
-/// to four, from different albums), or, with none known, by its provider.
+/// a smart playlist by its query; a playlist's own songs aren't loaded on Home, so the shared `ObservePlayablePlaylists`
+/// judges it by all of its songs (#925).
 struct CarPlayOfflineIndex {
     private let playable: [Song]
     private let albums: Set<AlbumGroupKey>
@@ -27,7 +27,9 @@ struct CarPlayOfflineIndex {
         genres = Set(playable.flatMap(\.genres))
     }
 
-    func isPlayable(_ item: HomeItem, covers: [Song]?) -> Bool {
+    /// `playablePlaylists` is the ids of the playlists with a song that plays offline (`ObservePlayablePlaylists`), nil
+    /// until it's known, when a playlist is shown rather than hidden.
+    func isPlayable(_ item: HomeItem, playablePlaylists: Set<Int64>?) -> Bool {
         switch onEnum(of: item) {
         case .albumItem(let it):
             it.album.mediaProviders.contains { !$0.remote } || it.album.groupKey.map(albums.contains) == true
@@ -38,11 +40,7 @@ struct CarPlayOfflineIndex {
         case .smartPlaylistItem(let it):
             playable.contains { it.smartPlaylistId.songQuery.predicate($0).boolValue }
         case .playlistItem(let it):
-            if let covers, !covers.isEmpty {
-                covers.contains { Self.isPlayable($0, downloaded: downloaded) }
-            } else {
-                !it.playlist.mediaProvider.remote
-            }
+            playablePlaylists?.contains(it.playlist.id) ?? true
         }
     }
 
