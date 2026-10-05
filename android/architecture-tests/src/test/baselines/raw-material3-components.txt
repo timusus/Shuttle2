@@ -52,8 +52,8 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|CircularProgressIndicator|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|IconButton|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Icon|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|3
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Switch|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|5
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Switch|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|OutlinedTextField|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Surface|3
