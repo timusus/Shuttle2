@@ -13,6 +13,9 @@ mkdir -p "$CHECKS" "$TMP/bin"
 cp "$REAL_ROOT/support/scripts/checks/run-all.sh" "$CHECKS/run-all.sh"
 cp "$REAL_ROOT/support/scripts/checks/_lib.sh" "$CHECKS/_lib.sh"
 cp "$REAL_ROOT/support/scripts/checks/_timeout_fallback.sh" "$CHECKS/_timeout_fallback.sh"
+# _lib.sh sources ../_adb-path.sh (#723); without the copy, the ac-calls-fail stub dies at source
+# time under `set -e`, before fail() ever runs.
+cp "$REAL_ROOT/support/scripts/_adb-path.sh" "$TMP/support/scripts/_adb-path.sh"
 cp "$REAL_ROOT/support/scripts/checks/_suite_names.sh" "$CHECKS/_suite_names.sh"
 chmod +x "$CHECKS/run-all.sh"
 
