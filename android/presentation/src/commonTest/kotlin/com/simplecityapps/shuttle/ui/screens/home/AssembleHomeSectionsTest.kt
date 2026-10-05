@@ -239,7 +239,7 @@ class AssembleHomeSectionsTest {
         )
 
         sections.map { it.subtitle } shouldBe listOf(
-            StringKey.HOME_JUMP_BACK_IN_SUBTITLE,
+            null,
             StringKey.HOME_AROUND_THIS_TIME_SUBTITLE,
             StringKey.HOME_HEAVY_ROTATION_SUBTITLE,
             StringKey.HOME_REDISCOVER_SUBTITLE,

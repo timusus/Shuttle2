@@ -63,7 +63,7 @@ class HomeScreenTest {
         robot.setContent(HomeScenarios.content)
 
         robot.assertTextDisplayed("Jump back in")
-        robot.assertTextDisplayed("Pick up where you left off")
+        robot.assertTextNotShown("Pick up where you left off")
         robot.scrollTo("Saltmarsh Choir")
         robot.scrollTo("Heavy rotation")
         robot.scrollTo("What you've played most in the last 4 weeks")
@@ -91,11 +91,12 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `jump back in is a grid of two columns on a phone, at most four rows`() {
+    fun `jump back in is a resume card over a grid of two columns on a phone, at most three rows`() {
         robot.setContent(HomeScenarios.content)
 
+        robot.assertTagCount(JUMP_BACK_IN_CARD_TAG, 1)
         robot.gridColumns() shouldBe 2
-        robot.gridCellCount() shouldBe JUMP_BACK_IN_MAXIMUM_ITEMS
+        robot.gridCellCount() shouldBe JUMP_BACK_IN_MAXIMUM_TILES
     }
 
     @Test
@@ -124,16 +125,16 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `a phone cell has no play button, its long-press offers Play`() {
+    fun `only the resume card has a play button, tiles offer Play on long-press`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertDescriptionNotShown("Play Phase Garden")
-        robot.customActionLabels("Phase Garden") shouldContain "Play"
+        robot.assertTagCount(JUMP_BACK_IN_PLAY_TAG, 1)
+        robot.assertDescriptionNotShown("Play Saltmarsh Choir")
+        robot.customActionLabels("Saltmarsh Choir") shouldContain "Play"
     }
 
     @Test
-    @Config(qualifiers = "w900dp-h1200dp-xhdpi")
-    fun `a wide cell's play button plays its item with the item's context`() {
+    fun `the resume card's play button resumes its item with the item's context`() {
         robot.setContent(HomeScenarios.content)
         val phaseGarden = HomeItem.AlbumItem(HomeScenarios.phaseGarden)
 
@@ -145,17 +146,43 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `a jump back in cell names the song its queue was left on`() {
+    fun `the resume card says the kind and when, the song it was on and a Resume button`() {
         robot.setContent(HomeScenarios.resuming)
 
+        robot.assertTextDisplayed("Album · 2 hours ago")
         robot.assertTextDisplayed("Glasshouse")
+        robot.assertDescriptionShown("Resume Phase Garden")
+        robot.assertDescriptionShown("Phase Garden, Album, on Glasshouse, 38% through, 2 hours ago")
     }
 
     @Test
-    fun `a finished jump back in item shows no song`() {
+    fun `a finished item's card reads Finished, Play again and its play button plays`() {
         robot.setContent(HomeScenarios.finished)
 
+        robot.assertTextDisplayed("Finished · Play again")
         robot.assertTextNotShown("Glasshouse")
+        robot.assertDescriptionShown("Play Phase Garden")
+        robot.assertDescriptionShown("Phase Garden, Album, finished, 2 hours ago")
+    }
+
+    @Test
+    fun `a shuffled item's card shows a shuffle glyph where a bar would be`() {
+        robot.setContent(HomeScenarios.shuffled)
+
+        robot.assertTagCount(JUMP_BACK_IN_SHUFFLED_TAG, 1)
+        robot.assertDescriptionShown("Phase Garden, Album, on Glasshouse, shuffled, 2 hours ago")
+    }
+
+    @Test
+    fun `tiles say the kind and the song, Shuffled or Finished`() {
+        robot.setContent(HomeScenarios.resuming)
+
+        robot.assertTextDisplayed("Playlist · Open Roads")
+        robot.assertTextDisplayed("Artist · Shuffled")
+        robot.assertTextDisplayed("Album · Finished")
+        robot.assertDescriptionShown("Road Trip, Playlist, on Open Roads, 50% through")
+        robot.assertDescriptionShown("Saltmarsh Choir, Artist, on Tidal Pull, shuffled")
+        robot.assertDescriptionShown("Harbour Weather, Album, finished")
     }
 
     @Test

@@ -63,7 +63,7 @@ data class HomeCandidates(
  * leading ones of the full set, each as it will be once everything has loaded, as a section only depends on the ones before it. Sections come in [HomeSectionId]
  * order and an item shows once, in the earliest section that shows it; a hidden section claims nothing. Each section's
  * thresholds are checked on its own candidates, and a section hides when fewer than [MIN_SHOWN_ITEMS] are left to show.
- * Every section but Shuffle all carries a one-line subtitle saying what it is (#671).
+ * Every section but Shuffle all and Jump back in (whose cards say it, #706) carries a one-line subtitle saying what it is (#671).
  * - Cold start (no history, nothing ever played through): Recently added, Genre picks by size, and Shuffle all.
  * - Jump back in: the last [JUMP_BACK_IN_SIZE] contexts played from; the albums last played through until there's history.
  * - Around this time: contexts by days played near this hour, days of today's kind (weekday or weekend) counting
@@ -101,7 +101,7 @@ fun assembleHomeSections(
     }
 
     val jumpBackIn = jumpBackInCandidates.fromHistory.ifEmpty { jumpBackInCandidates.lastCompleted }
-    builder.add(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, StringKey.HOME_JUMP_BACK_IN_SUBTITLE, jumpBackIn, JUMP_BACK_IN_SIZE)
+    builder.add(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, subtitle = null, jumpBackIn, JUMP_BACK_IN_SIZE)
 
     val weekend = now.dayOfWeek == DayOfWeek.SATURDAY || now.dayOfWeek == DayOfWeek.SUNDAY
     val aroundThisTime = (candidates.aroundThisTime ?: return builder.sections)
@@ -164,7 +164,7 @@ private class SectionBuilder {
     fun add(
         id: HomeSectionId,
         title: HomeSectionTitle,
-        subtitle: StringKey,
+        subtitle: StringKey?,
         candidates: List<HomeItem>,
         size: Int,
         eligible: Boolean = candidates.isNotEmpty(),
@@ -175,7 +175,7 @@ private class SectionBuilder {
     fun add(
         id: HomeSectionId,
         title: HomeSectionTitle,
-        subtitle: (shown: List<HomeItem>) -> StringKey,
+        subtitle: (shown: List<HomeItem>) -> StringKey?,
         candidates: List<HomeItem>,
         size: Int,
         eligible: Boolean = candidates.isNotEmpty(),

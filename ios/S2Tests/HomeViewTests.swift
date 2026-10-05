@@ -123,7 +123,7 @@ struct HomeViewTests {
 
     @Test func jumpBackInHasNoSubtitle() throws {
         let sut = HomeContent(state: content([
-            section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))], subtitle: .homeJumpBackInSubtitle),
+            section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))], subtitle: nil),
         ]))
         #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
         #expect((try? sut.inspect().find(text: "Pick up where you left off")) == nil)

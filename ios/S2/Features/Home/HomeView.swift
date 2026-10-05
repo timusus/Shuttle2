@@ -202,8 +202,7 @@ struct HomeContent: View {
     @ViewBuilder
     private func header(_ section: HomeSection) -> some View {
         let title = Self.title(section.title)
-        // Jump Back In's subtitle only says its title again (#706).
-        let subtitle = section.id == .jumpBackIn ? nil : section.subtitle?.localized()
+        let subtitle = section.subtitle?.localized()
         switch section.id {
         case .recentlyAdded: SectionHeader(title, subtitle: subtitle, seeAll: .smartPlaylist(id: "recently-added"))
         case .genrePicks: SectionHeader(title, subtitle: subtitle, seeAll: .libraryCategory(.genres))

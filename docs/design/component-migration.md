@@ -91,7 +91,7 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.screens.equalizer.FrequencyResponseChart` | Text |
 | [x] | `ui.screens.home.HomeItemTile` | Text |
 | [ ] | `ui.screens.home.HomeScreen` | ElevatedCard, Icon, Scaffold, Text, pulltorefresh.PullToRefreshBox |
-| [ ] | `ui.screens.home.JumpBackInGrid` | Surface, Text |
+| [ ] | `ui.screens.home.JumpBackInGrid` | Surface |
 | [ ] | `ui.screens.library.AddToPlaylistSubmenu` | DropdownMenu, DropdownMenuItem, Text |
 | [x] | `ui.screens.library.LibraryControls` | — |
 | [x] | `ui.screens.library.LibraryDetailComponents` | Text |

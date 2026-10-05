@@ -3,7 +3,6 @@
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/AlphabetFastScroller.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/FastScroller.kt|dp|5
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|dp|8
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryComponents.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryPages.kt|dp|1

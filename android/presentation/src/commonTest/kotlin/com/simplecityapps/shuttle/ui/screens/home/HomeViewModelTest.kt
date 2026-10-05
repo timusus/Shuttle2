@@ -140,7 +140,7 @@ class HomeViewModelTest {
         playHistory.recentContexts = twoRecentContexts
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
-        content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, StringKey.HOME_JUMP_BACK_IN_SUBTITLE, listOf(HomeItem.AlbumItem(phaseGarden), HomeItem.AlbumItem(dustChoir))))
+        content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, null, listOf(HomeItem.AlbumItem(phaseGarden), HomeItem.AlbumItem(dustChoir))))
         content.showWhatsNew shouldBe false
     }
 

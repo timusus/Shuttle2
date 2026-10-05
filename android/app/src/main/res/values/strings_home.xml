@@ -48,8 +48,22 @@
     <string name="home_genre_picks">Genre picks</string>
     <!-- Home: long-press action on a Jump back in item, playing it from its first song rather than where the user left off -->
     <string name="home_play_from_start">Play from start</string>
-    <!-- Home: one line under the Jump back in header -->
-    <string name="home_jump_back_in_subtitle">Pick up where you left off</string>
+    <!-- Home: content description of the resume card's play button while its queue is under way; %1$s is the album, artist or playlist -->
+    <string name="home_resume_item">Resume <xliff:g example="OK Computer" id="name">%1$s</xliff:g></string>
+    <!-- Home: a Jump back in tile's detail (after the kind) for an item played through -->
+    <string name="home_state_finished">Finished</string>
+    <!-- Home: a Jump back in tile's detail (after the kind) for an item whose queue was shuffled -->
+    <string name="home_state_shuffled">Shuffled</string>
+    <!-- Home: the resume card's song line for an item played through; tapping Play starts it again -->
+    <string name="home_finished_play_again">Finished · Play again</string>
+    <!-- Home: TalkBack, part of a Jump back in item's description: the item was played through -->
+    <string name="home_cd_finished">finished</string>
+    <!-- Home: TalkBack, part of a Jump back in item's description: the queue was shuffled -->
+    <string name="home_cd_shuffled">shuffled</string>
+    <!-- Home: TalkBack, part of a Jump back in item's description: the song the queue was left on -->
+    <string name="home_cd_on_song">on <xliff:g example="Airbag" id="song">%1$s</xliff:g></string>
+    <!-- Home: TalkBack, part of a Jump back in item's description: how far through the queue was left -->
+    <string name="home_cd_percent_through"><xliff:g example="40" id="percent">%1$d</xliff:g>%% through</string>
     <!-- Home: one line under the This morning / This afternoon / Tonight header -->
     <string name="home_around_this_time_subtitle">What you often play at this time of day</string>
     <!-- Home: one line under the Heavy rotation header -->

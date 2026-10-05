@@ -44,7 +44,7 @@ object HomeScenarios {
 
     /** The subtitle the shared assembly gives a section with history (#671). */
     private fun subtitle(id: HomeSectionId): StringKey? = when (id) {
-        HomeSectionId.JumpBackIn -> StringKey.HOME_JUMP_BACK_IN_SUBTITLE
+        HomeSectionId.JumpBackIn -> null
         HomeSectionId.AroundThisTime -> StringKey.HOME_AROUND_THIS_TIME_SUBTITLE
         HomeSectionId.HeavyRotation -> StringKey.HOME_HEAVY_ROTATION_SUBTITLE
         HomeSectionId.Rediscover -> StringKey.HOME_REDISCOVER_SUBTITLE
@@ -89,39 +89,49 @@ object HomeScenarios {
 
     val whatsNew = content.copy(showWhatsNew = true)
 
-    /** Phase Garden's queue left on its fifth track of twelve, "Glasshouse" (#670, #706). */
+    private fun progress(
+        songName: String?,
+        fraction: Float,
+        shuffled: Boolean = false,
+        finished: Boolean = false,
+        hoursAgo: Long = 2,
+    ) = HomeItemProgress(
+        songName = songName,
+        positionMs = 30_000,
+        fraction = fraction,
+        shuffled = shuffled,
+        finished = finished,
+        updatedAt = Instant.fromEpochMilliseconds(System.currentTimeMillis() - hoursAgo * 3_600_000),
+    )
+
+    /**
+     * Phase Garden's queue left on its fifth track of twelve, "Glasshouse", two hours ago (#670, #706), under way in
+     * Road Trip ("Open Roads"), shuffled in Saltmarsh Choir and played through in Harbour Weather.
+     */
     val resuming = content.copy(
         sections = listOf(
             jumpBackIn.copy(
                 progress = mapOf(
-                    HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(
-                        songName = "Glasshouse",
-                        positionMs = 30_000,
-                        fraction = 4.5f / 12,
-                        shuffled = false,
-                        finished = false,
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
+                    HomeItem.AlbumItem(phaseGarden).key to progress("Glasshouse", fraction = 4.5f / 12),
+                    HomeItem.PlaylistItem(roadTrip).key to progress("Open Roads", fraction = 0.5f),
+                    HomeItem.ArtistItem(saltmarshChoir).key to progress("Tidal Pull", fraction = 0.3f, shuffled = true),
+                    HomeItem.AlbumItem(harbourWeather).key to progress("Last Light", fraction = 1f, finished = true),
                 ),
             ),
         ) + content.sections.drop(1),
     )
 
-    /** Phase Garden played to the end: nothing left to resume, so its cell names no song. */
+    /** Phase Garden played to the end: nothing left to resume, so its card says Play again. */
     val finished = content.copy(
         sections = listOf(
-            jumpBackIn.copy(
-                progress = mapOf(
-                    HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(
-                        songName = "Glasshouse",
-                        positionMs = 0,
-                        fraction = 1f,
-                        shuffled = false,
-                        finished = true,
-                        updatedAt = Instant.fromEpochMilliseconds(0),
-                    ),
-                ),
-            ),
+            jumpBackIn.copy(progress = mapOf(HomeItem.AlbumItem(phaseGarden).key to progress("Glasshouse", fraction = 1f, finished = true))),
+        ) + content.sections.drop(1),
+    )
+
+    /** Phase Garden's queue shuffled: the card shows a shuffle glyph and no bar. */
+    val shuffled = content.copy(
+        sections = listOf(
+            jumpBackIn.copy(progress = mapOf(HomeItem.AlbumItem(phaseGarden).key to progress("Glasshouse", fraction = 0.3f, shuffled = true))),
         ) + content.sections.drop(1),
     )
 

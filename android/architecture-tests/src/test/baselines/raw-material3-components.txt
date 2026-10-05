@@ -20,7 +20,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Text|4
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|pulltorefresh.PullToRefreshBox|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|Surface|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|LinearWavyProgressIndicator|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|ListItem|1

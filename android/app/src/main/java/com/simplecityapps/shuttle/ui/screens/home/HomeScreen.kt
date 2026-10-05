@@ -184,7 +184,6 @@ private fun HomeContent(
                             progress = section.progress,
                             covers = content.covers,
                             columns = columns,
-                            showPlayButton = wide || largeText,
                             callbacks = callbacks,
                             modifier = Modifier.animateItem().padding(horizontal = S2Spacing.medium),
                         )
