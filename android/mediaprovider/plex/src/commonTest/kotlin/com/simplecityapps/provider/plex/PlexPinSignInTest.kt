@@ -22,7 +22,9 @@ import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 
 /** Signing in with a plex.tv PIN, then to one of the account's servers, on a client configured as the app's. */
 class PlexPinSignInTest {
@@ -108,7 +110,8 @@ class PlexPinSignInTest {
         // Every connection answers on the fixture server, so the order decides: the local one goes first
         server.respond("/identity", "empty.json")
 
-        authenticationManager.connect(home).getOrThrow()
+        // The probe's timeout runs on real time: under runTest it would be virtual, and skip ahead whenever the test thread idles
+        withContext(Dispatchers.Default) { authenticationManager.connect(home).getOrThrow() }
 
         credentialStore.address shouldBe "https://192-168-1-20.aaaa.plex.direct:32400"
         credentialStore.authenticatedCredentials shouldBe AuthenticatedCredentials(accessToken = "home-token", userId = "server-home")
@@ -122,7 +125,7 @@ class PlexPinSignInTest {
         credentialStore.authenticatedCredentials = working
         server.respond("/identity", code = 503)
 
-        authenticationManager.connect(home).isFailure shouldBe true
+        withContext(Dispatchers.Default) { authenticationManager.connect(home).isFailure } shouldBe true
 
         credentialStore.address shouldBe "http://old.server:32400"
         credentialStore.authenticatedCredentials shouldBe working
