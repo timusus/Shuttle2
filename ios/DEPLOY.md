@@ -15,9 +15,13 @@ version `20YY.MM.DD` is derived from it):
 1. `ios/scripts/build-framework.sh --device --release` installs the FFmpeg frameworks
    (`ios/Playback/Frameworks`) and links the Release iosArm64 `Shared.framework`;
 2. `xcodegen generate`, then the script archives scheme `S2` (Release, bundle id
-   `com.simplecityapps.shuttle`), checks the archive carries the build number, makes sure the App
-   Store profile exists (`ios/scripts/ensure-store-profiles.sh`) and exports with `ExportOptions.plist`,
-   which uploads to App Store Connect.
+   `com.simplecityapps.shuttle`), checks the archive carries the build number and exports, which
+   uploads to App Store Connect. Without API-key flags the export signs automatically with Xcode's
+   signed-in account (`-allowProvisioningUpdates`; the script drops `ExportOptions.plist`'s manual
+   signing entries from a copy in `ios/build`), so the profiles always match the app's entitlements.
+   With the key flags it signs manually with the profiles `ios/scripts/ensure-store-profiles.sh`
+   creates; that script only recreates a profile that is invalid, missing or bound to another
+   certificate, so a profile that predates an entitlement change can still fail the export.
 
 After a successful upload the skill pushes the `ios/vYYMMDDNN` tag on the deployed commit. Nothing
 triggers on it.
@@ -31,11 +35,12 @@ xcodebuild command line.
 1. App Store Connect > Users and Access > Integrations > App Store Connect API > Team Keys: generate a
    key with role App Manager (or reuse the Podcasts one) and keep the `.p8` and its Key ID and Issuer ID.
    Put them in `~/.secrets/asc.env` (mode 600; `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`); the
-   skill and `support/scripts/asc` read it (key default `/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8`).
-2. An **Apple Distribution: Simplecity Apps Pty Ltd (9HYNX943MQ)** certificate must be in the login
-   keychain of this Mac. Export signs manually with the profile "Shuttle Music App Store" (the team's
-   API keys cannot use a cloud-managed distribution certificate); `ensure-store-profiles.sh` creates and
-   installs it when the key flags are given, so no manual profile step is needed.
+   `support/scripts/asc` reads it (key default `/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8`); the
+   deploy itself does not need it.
+2. Xcode signed in (Settings > Accounts) with developer@simplecityapps.com, team 9HYNX943MQ: the
+   deploy signs with it. The team's API keys cannot use a cloud-managed distribution certificate,
+   which is why the key flags (optional) switch export to manual signing and need an **Apple
+   Distribution: Simplecity Apps Pty Ltd** certificate in the login keychain.
 
 ## App Store Connect via API
 
@@ -62,8 +67,7 @@ Chrome is only for what the API can't do: agreements, tax and banking, the App P
 
 ```bash
 # Dry run: archive + export an IPA to ios/build/export, no upload
-ios/archive-and-upload.sh --no-upload --build-number 26100301 \
-  --api-key-path ~/keys/AuthKey_XXXXXXXXXX.p8 --api-key-id XXXXXXXXXX --api-issuer-id <issuer-uuid>
+ios/archive-and-upload.sh --no-upload --build-number 26100301
 
 # Real upload: same without --no-upload
 ```
@@ -74,7 +78,7 @@ ios/archive-and-upload.sh --no-upload --build-number 26100301 \
 | `--marketing-version V` | CFBundleShortVersionString; derived from the build number (`20YY.MM.DD`) when omitted. |
 | `--no-upload` | Export the IPA to `ios/build/export` instead of uploading. |
 | `--skip-shared-framework` | Skip FFmpeg and `Shared.framework` (built separately first). |
-| `--api-key-path P --api-key-id K --api-issuer-id I` | Headless signing and upload; all three or none. Without them Xcode's signed-in Apple-ID session is used, but export still needs the Store profile, which only the key flags can create. |
+| `--api-key-path P --api-key-id K --api-issuer-id I` | Optional, all three or none: headless upload with manual signing (see above). Without them Xcode's signed-in account signs automatically. |
 
 Logs: `ios/build/archive.log`, `ios/build/export.log`.
 
@@ -88,4 +92,8 @@ the export-compliance answer (the Info.plist already sets `ITSAppUsesNonExemptEn
 
 - FFmpeg's four frameworks are dynamic and re-signed by Xcode when embedding; App Store processing
   accepting them is still to be confirmed with the first upload (`docs/architecture/ios-port/phase-6-playback.md`).
+- The export warns that dSYMs for Sentry and the four FFmpeg frameworks are missing. Expected, not a
+  build-setting gap: S2 itself already gets a dSYM (Release default), but the FFmpeg frameworks are
+  stripped prebuilt binaries and Sentry's SPM binary framework ships none. Only S2's dSYM (which holds
+  Shared.framework's code) is uploaded to Sentry by `scripts/upload-dsyms.sh`.
 - Build numbers must increase per upload; never reuse a tag.

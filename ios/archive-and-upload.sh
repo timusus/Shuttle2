@@ -10,9 +10,10 @@ set -euo pipefail
 # Prerequisites:
 #   1. Signed into Xcode with developer@simplecityapps.com (paid team 9HYNX943MQ; ExportOptions.plist
 #      carries it and the archive passes it below), OR the three --api-key-* flags.
-#      Either way an "Apple Distribution: Simplecity Apps Pty Ltd" certificate must be in the login
-#      keychain: export signs manually with the App Store profiles named in ExportOptions.plist,
-#      which scripts/ensure-store-profiles.sh creates/installs when the key flags are given.
+#      With the key flags, export signs manually with the App Store profiles named in
+#      ExportOptions.plist (scripts/ensure-store-profiles.sh creates/installs them; an "Apple
+#      Distribution: Simplecity Apps Pty Ltd" certificate must be in the login keychain). Without
+#      them, export signs automatically (the plist's manual entries are dropped at runtime).
 #   2. Gradle and the FFmpeg frameworks: scripts/build-framework.sh installs ios/Playback/Frameworks
 #      (scripts/build-ffmpeg.sh) and links the Release iosArm64 Shared.framework.
 #   3. Optional: sentry-cli and SENTRY_AUTH_TOKEN (environment or ~/.config/s2-telemetry/ios.env) to
@@ -148,27 +149,32 @@ fi
 # there is no Sentry auth token or sentry-cli on this Mac.
 "$SCRIPT_DIR/scripts/upload-dsyms.sh" "$ARCHIVE_PATH"
 
-EXPORT_OPTIONS="$PROJECT_DIR/ExportOptions.plist"
+# ExportOptions.plist is the manual-signing form (App Store profiles by name). Work on a copy in build/.
+EXPORT_OPTIONS="$BUILD_DIR/ExportOptions-export.plist"
+cp "$PROJECT_DIR/ExportOptions.plist" "$EXPORT_OPTIONS"
 if [ "$UPLOAD" = 0 ]; then
-    # Same options, but the IPA lands in build/export instead of App Store Connect.
-    EXPORT_OPTIONS="$BUILD_DIR/ExportOptions-export.plist"
-    cp "$PROJECT_DIR/ExportOptions.plist" "$EXPORT_OPTIONS"
+    # The IPA lands in build/export instead of App Store Connect.
     plutil -replace destination -string export "$EXPORT_OPTIONS"
     echo "==> Exporting archive to $EXPORT_PATH (no upload)..."
 else
     echo "==> Exporting archive and uploading to App Store Connect..."
 fi
-# Export signs manually (ExportOptions.plist names the App Store profile) because the team's
-# API keys cannot use a cloud-managed distribution certificate. With the key, make sure that
-# profile exists for the certificate in this keychain and are installed before xcodebuild looks.
 if [ ${#AUTH_ARGS[@]} -gt 0 ]; then
+    # The team's API keys cannot use a cloud-managed distribution certificate, so with the key export
+    # signs manually; make sure the profiles exist for the certificate in this keychain first.
     echo "==> Ensuring App Store provisioning profiles..."
     "$SCRIPT_DIR/scripts/ensure-store-profiles.sh" \
         --api-key-path "$API_KEY_PATH" --api-key-id "$API_KEY_ID" --api-issuer-id "$API_ISSUER_ID"
+else
+    # No key: Xcode's signed-in account signs automatically (-allowProvisioningUpdates below), which
+    # keeps the profiles current with the app's entitlements. Drop the manual-signing entries.
+    plutil -replace signingStyle -string automatic "$EXPORT_OPTIONS"
+    plutil -remove signingCertificate "$EXPORT_OPTIONS"
+    plutil -remove provisioningProfiles "$EXPORT_OPTIONS"
 fi
 rm -rf "$EXPORT_PATH"
-# -allowProvisioningUpdates is harmless with manual signing and still lets the upload step talk to
-# App Store Connect with the key. The system-only PATH matters: Apple's /usr/bin/rsync (openrsync) spawns its server half via PATH,
+# -allowProvisioningUpdates lets automatic signing fetch profiles and, with the key, lets the upload
+# step talk to App Store Connect. The system-only PATH matters: Apple's /usr/bin/rsync (openrsync) spawns its server half via PATH,
 # and a Homebrew rsync there rejects openrsync's -E flag, which surfaces as "Copy failed".
 PATH=/usr/bin:/bin:/usr/sbin:/sbin xcodebuild -exportArchive \
     -archivePath "$ARCHIVE_PATH" \

@@ -31,18 +31,11 @@ support/scripts/longjob.sh wait ios-preflight
 
 If iOS changed since the last full verify, also run `ios/scripts/test.sh`. **STOP** on failure.
 
-### 3. Pre-flight: App Store Connect key
+### 3. Pre-flight: Xcode account
 
-```bash
-[ -f ~/.secrets/asc.env ] && . ~/.secrets/asc.env
-API_KEY_PATH="${ASC_KEY_PATH:-/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8}"
-[ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_KEY_PATH in ~/.secrets/asc.env)"; false; }
-: "${ASC_KEY_ID:?set in ~/.secrets/asc.env}"
-: "${ASC_ISSUER_ID:?set in ~/.secrets/asc.env}"
-```
-
-`~/.secrets/asc.env` holds `ASC_KEY_ID` (`98Q5SW65X5`), `ASC_ISSUER_ID` and `ASC_KEY_PATH`. Never print or commit the `.p8`.
-Missing key: **STOP** and point the user at `ios/DEPLOY.md`.
+The deploy signs with Xcode's signed-in account (developer@simplecityapps.com, team 9HYNX943MQ), not
+an API key: no key flags, so the export signs automatically and always has current profiles. If the
+export fails on signing, ask the user to check Xcode > Settings > Accounts (`ios/DEPLOY.md`).
 
 ### 4. Pick the tag
 
@@ -69,10 +62,7 @@ and offer a dry run (`--no-upload`, IPA lands in `ios/build/export`) before the 
 
 ```bash
 support/scripts/longjob.sh start ios-deploy -- ios/archive-and-upload.sh \
-  --build-number "$BUILD_NUMBER" \
-  --api-key-path "$API_KEY_PATH" \
-  --api-key-id "${ASC_KEY_ID:-98Q5SW65X5}" \
-  --api-issuer-id "$ASC_ISSUER_ID"
+  --build-number "$BUILD_NUMBER"
 # dry run: add --no-upload
 support/scripts/longjob.sh wait ios-deploy
 ```
