@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.shuttle.ui.screens.home.HomeItem
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
@@ -47,6 +48,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -82,6 +84,7 @@ fun interface ReplayGainModeSetting {
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerViewModel @AssistedInject constructor(
     observeQueue: ObserveQueue,
+    observeQueueSource: ObserveQueueSource,
     observePlayback: ObservePlayback,
     observeProgress: ObserveProgress,
     observeGatedServerSkip: ObserveGatedServerSkip,
@@ -167,6 +170,9 @@ class PlayerViewModel @AssistedInject constructor(
                 }
             }.distinctUntilChanged()
 
+    // None until it's resolved, so resolving it never holds the rest of the player back.
+    private val queueSource: Flow<HomeItem?> = observeQueueSource(queue).onStart { emit(null) }
+
     private val extras: Flow<Extras> =
         combine(
             favouriteIds,
@@ -199,6 +205,8 @@ class PlayerViewModel @AssistedInject constructor(
         }.combine(panel) { state, panel ->
             // An emptied queue takes the player, and its panel, away.
             state.copy(panel = panel.takeIf { state.hasQueue == true })
+        }.combine(queueSource) { state, source ->
+            state.copy(queueSource = source)
         }.distinctUntilChanged()
 
     // The total is the song's own duration, as the queue rows show it; the player's reported duration can differ by a rounding second.

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
@@ -55,8 +56,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.simplecityapps.shuttle.R
@@ -67,6 +70,9 @@ import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.format.formatDuration
+import com.simplecityapps.shuttle.ui.screens.home.HomeItem
+import com.simplecityapps.shuttle.ui.screens.home.kind
+import com.simplecityapps.shuttle.ui.screens.home.title
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -75,11 +81,14 @@ import kotlinx.coroutines.launch
 internal val QueueHeaderHeight = 56.dp
 
 /**
- * "Queue" over the queue's rows, with Save as playlist and Clear Queue. Under artwork it starts from the
- * cover's tint and fades to the panel's colour by its lower edge, so a long list below sits on plain surface.
+ * "Queue" over the queue's rows, with Save as playlist and Clear Queue, and over it what the queue is playing from
+ * ([source], #909), which [onOpenSource] opens. Under artwork it starts from the cover's tint and fades to the panel's
+ * colour by its lower edge, so a long list below sits on plain surface.
  */
 @Composable
 internal fun QueueHeader(
+    source: HomeItem?,
+    onOpenSource: (HomeItem) -> Unit,
     onSave: () -> Unit,
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
@@ -95,10 +104,34 @@ internal fun QueueHeader(
             .padding(end = S2Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SectionHeader(title = stringResource(R.string.player_queue), modifier = Modifier.weight(1f), containerColor = Color.Transparent)
+        Column(Modifier.weight(1f)) {
+            source?.let { QueueSourceLine(it, onOpen = { onOpenSource(it) }) }
+            SectionHeader(title = stringResource(R.string.player_queue), containerColor = Color.Transparent)
+        }
         S2IconButton(icon = Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = stringResource(R.string.queue_save_as_playlist), onClick = onSave)
         S2IconButton(icon = Icons.Rounded.ClearAll, contentDescription = stringResource(R.string.menu_title_sort_clear_queue), onClick = onClear)
     }
+}
+
+/** "Playing from Phase Garden": what the queue was started from, which a tap opens. */
+@Composable
+private fun QueueSourceLine(
+    source: HomeItem,
+    onOpen: () -> Unit,
+) {
+    val goTo = stringResource(source.kind.goTo)
+    Text(
+        text = stringResource(R.string.queue_playing_from, source.title()),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClickLabel = goTo, role = Role.Button, onClick = onOpen)
+            .padding(start = S2Spacing.medium, end = S2Spacing.xsmall, top = S2Spacing.small)
+            .testTag(PlayerTestTags.QueueSource),
+    )
 }
 
 /** How much of the cover's tint the queue header starts from. */

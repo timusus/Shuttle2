@@ -15,6 +15,8 @@ import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.SnackbarAction
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.screens.home.HomeItem
+import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
@@ -816,6 +818,28 @@ class AppShellTest {
 
         robot.assertTextDisplayed("Up Next")
         robot.assertTextDisplayed("2 songs · 6:00 left")
+    }
+
+    @Test
+    fun `the queue says what it's playing from, and a tap on it opens it, settling the player first`() {
+        val sample = SampleLibrary.albums.first()
+        robot.setContent(queue = shellQueue("One", "Two").copy(queueSource = HomeItem.AlbumItem(sample.toAlbum())))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.tapText("Playing from ${sample.title}")
+
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.selectedStack.last() shouldBe sample.toAlbum().route
+    }
+
+    @Test
+    fun `a queue started from nothing in particular doesn't say where it's playing from`() {
+        robot.setContent(queue = shellQueue("One", "Two"))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.assertNoQueueSource()
     }
 
     @Test

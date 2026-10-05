@@ -67,6 +67,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2PanelSheet
 import com.simplecityapps.shuttle.designsystem.component.S2SheetHandle
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.screens.home.route
 
 /**
  * The full-screen player of a compact sheet and the pane (docs/architecture/app-shell.md, section 1):
@@ -170,6 +171,8 @@ internal fun PlayerPanel(
                 val saveActions = rememberSongActionsState()
                 val queueName = stringResource(R.string.player_queue)
                 QueueHeader(
+                    source = player.queueSource,
+                    onOpenSource = { source -> onOpenRoute(source.route) },
                     onSave = { saveActions.playlistFor = PlaylistPick(MediaSelection.Queue, queueName) },
                     onClear = actions::clearQueue,
                     modifier = grip,

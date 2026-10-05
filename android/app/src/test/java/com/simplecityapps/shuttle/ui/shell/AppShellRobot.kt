@@ -519,6 +519,11 @@ class AppShellRobot(
         rule.onNodeWithText(text).assertIsNotDisplayed()
     }
 
+    /** The queue's header says nothing about what the queue is playing from. */
+    fun assertNoQueueSource() {
+        rule.onNodeWithTag(PlayerTestTags.QueueSource).assertDoesNotExist()
+    }
+
     fun tapText(text: String) {
         rule.onNodeWithText(text).performClick()
         rule.waitForIdle()

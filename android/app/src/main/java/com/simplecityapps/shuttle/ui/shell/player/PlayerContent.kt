@@ -96,6 +96,7 @@ internal object PlayerTestTags {
     const val Transport = "player_transport"
     const val QueueList = "player_queue_list"
     const val QueueHeader = "player_queue_header"
+    const val QueueSource = "player_queue_source"
     const val QueueRow = "player_queue_row"
     const val QueueUpNext = "player_queue_up_next"
     const val Bar = "player_bar"

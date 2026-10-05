@@ -14,6 +14,8 @@
     <string name="player_bar_output">Output</string>
     <!-- Small label under the full-screen player's overflow menu button -->
     <string name="player_bar_more">More</string>
+    <!-- Over the queue: what it was started from, which a tap opens; %1$s is an album, artist, playlist or genre name -->
+    <string name="queue_playing_from">Playing from %1$s</string>
     <!-- Content description of the queue header's button that saves the queue as a playlist -->
     <string name="queue_save_as_playlist">Save as playlist</string>
     <!-- Under the queue's "Up Next" divider: how many songs follow the current one and how long they play for; %2$s is a length such as "12:30" -->

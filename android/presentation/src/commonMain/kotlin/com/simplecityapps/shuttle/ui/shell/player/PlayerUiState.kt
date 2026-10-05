@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.screens.home.HomeItem
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import kotlinx.coroutines.flow.Flow
 
@@ -62,6 +63,8 @@ data class PlayerUiState(
     val showRemainingTime: Boolean = true,
     /** The panel the bar has open, or null at rest. */
     val panel: NowPlayingPanel? = null,
+    /** What the queue is playing from (#909), shown and opened from the queue's header; null for none ([ObserveQueueSource]). */
+    val queueSource: HomeItem? = null,
 ) {
     companion object {
         val Unknown = PlayerUiState(hasQueue = null, current = null, items = emptyList())

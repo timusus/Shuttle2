@@ -86,15 +86,7 @@ private fun HomeDestination(
                     onOpen(WhatsNewRoute)
                 },
                 onDismissWhatsNew = viewModel::onWhatsNewHandled,
-                onOpenItem = { item ->
-                    when (item) {
-                        is HomeItem.AlbumItem -> onOpen(item.album.route)
-                        is HomeItem.ArtistItem -> onOpen(item.albumArtist.route)
-                        is HomeItem.PlaylistItem -> onOpen(PlaylistRoute(item.playlist.id))
-                        is HomeItem.SmartPlaylistItem -> onOpen(SmartPlaylistRoute(item.smartPlaylistId.id))
-                        is HomeItem.GenreItem -> onOpen(GenreRoute(item.genre.name))
-                    }
-                },
+                onOpenItem = { item -> onOpen(item.route) },
                 onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,
                 onShowActions = actions::showActions,
@@ -133,3 +125,13 @@ internal fun HomeVisibilityEffect(onVisibilityChanged: (Boolean) -> Unit) {
         onStopOrDispose { onChanged(false) }
     }
 }
+
+/** The screen that opens [this]: its album, artist, playlist, smart playlist or genre. */
+val HomeItem.route: NavKey
+    get() = when (this) {
+        is HomeItem.AlbumItem -> album.route
+        is HomeItem.ArtistItem -> albumArtist.route
+        is HomeItem.PlaylistItem -> PlaylistRoute(playlist.id)
+        is HomeItem.SmartPlaylistItem -> SmartPlaylistRoute(smartPlaylistId.id)
+        is HomeItem.GenreItem -> GenreRoute(genre.name)
+    }

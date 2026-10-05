@@ -2,11 +2,13 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createPlatformFeatures
+import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.FakeSuggestionsRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.PlaybackProgress
@@ -21,6 +23,8 @@ import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
+import com.simplecityapps.shuttle.model.PlayContext
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -39,6 +43,8 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
+import com.simplecityapps.shuttle.ui.screens.home.HomeItem
+import com.simplecityapps.shuttle.ui.screens.home.ResolveHomeItems
 import com.simplecityapps.shuttle.ui.screens.settings.FakeSettingsEffects
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
@@ -71,6 +77,7 @@ class PlayerViewModelTest {
     private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
     private val songRepository = FakeSongRepository()
+    private val suggestionsRepository = FakeSuggestionsRepository()
     private val preferences = InMemoryKeyValueStore()
     private val settingsStore = SettingsStore(preferences)
     private val preferenceManager = GeneralPreferenceManager(preferences)
@@ -102,6 +109,7 @@ class PlayerViewModelTest {
         val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         return PlayerViewModel(
             observeQueue = ObserveQueue(queueOperations),
+            observeQueueSource = ObserveQueueSource(ResolveHomeItems(suggestionsRepository, playlistRepository)),
             observePlayback = ObservePlayback(playbackOperations, queueOperations),
             observeProgress = ObserveProgress(playbackOperations),
             observeGatedServerSkip = ObserveGatedServerSkip { gatedSongs },
@@ -138,6 +146,31 @@ class PlayerViewModelTest {
     ): QueueState {
         val items = songs.mapIndexed { index, song -> QueueItem(uid = 100L + index, song = song, isCurrent = index == current) }
         return QueueState.Empty.copy(items = items, currentItem = items.getOrNull(current), currentPosition = current, isRestored = true)
+    }
+
+    @Test
+    fun `the queue says what it's playing from - and drops it for a queue started from nothing`() = runTest {
+        val playlist = createPlaylist(id = 4, name = "Road trip")
+        playlistRepository.setPlaylists(listOf(playlist))
+        val viewModel = viewModel()
+
+        queueOperations.queueStateFlow.value = queueOf(songs("A", "B")).copy(playContext = PlayContext.Playlist(4))
+        viewModel.uiState.value.player.queueSource shouldBe HomeItem.PlaylistItem(playlist)
+
+        queueOperations.queueStateFlow.value = queueOf(songs("C")).copy(playContext = PlayContext.SmartPlaylist(SmartPlaylistId.Favourites))
+        viewModel.uiState.value.player.queueSource shouldBe HomeItem.SmartPlaylistItem(SmartPlaylistId.Favourites)
+
+        queueOperations.queueStateFlow.value = queueOf(songs("D"))
+        viewModel.uiState.value.player.queueSource shouldBe null
+    }
+
+    @Test
+    fun `a queue started from a playlist the library no longer has says nothing about where it's from`() = runTest {
+        val viewModel = viewModel()
+
+        queueOperations.queueStateFlow.value = queueOf(songs("A")).copy(playContext = PlayContext.Playlist(9))
+
+        viewModel.uiState.value.player.queueSource shouldBe null
     }
 
     @Test
