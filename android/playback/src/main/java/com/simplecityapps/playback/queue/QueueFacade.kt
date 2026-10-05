@@ -51,10 +51,12 @@ class QueueFacade(
 
     override val queueStateFlow: StateFlow<QueueState> = publisher.queueStateFlow
 
-    /** Set on the main thread, with the queue it goes with; read from any thread. */
-    @Volatile
-    override var playContext: PlayContext = PlayContext.None
-        private set
+    /** Set on the main thread, with the queue it goes with; read from any thread. Published as [QueueState.playContext]. */
+    override var playContext: PlayContext
+        get() = publisher.playContext
+        private set(value) {
+            publisher.playContext = value
+        }
 
     override var hasRestoredQueue: Boolean
         get() = publisher.isRestored

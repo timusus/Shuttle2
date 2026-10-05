@@ -434,6 +434,25 @@ class QueueStoreTest {
 
         harness.currentIds() shouldBe listOf(1L, 2L, 3L)
         harness.queueOperations.playContext shouldBe PlayContext.Playlist(9)
+        harness.queueOperations.queueStateFlow.value.playContext shouldBe PlayContext.Playlist(9)
+    }
+
+    @Test
+    fun `the published queue carries what it was started from - kept by adding to it, dropped with it`() {
+        val harness = harness()
+        val genre = PlayContext.Genre("Jazz")
+
+        harness.run { harness.queueOperations.setQueue(library.take(2), context = genre) }
+        harness.queueOperations.queueStateFlow.value.playContext shouldBe genre
+
+        harness.run { harness.queueOperations.addToQueue(library.drop(2).take(1)) }
+        harness.run { harness.queueOperations.addToNext(library.drop(3).take(1)) }
+        harness.queueOperations.queueStateFlow.value.playContext shouldBe genre
+        saved.playContext shouldBe genre
+
+        harness.run { harness.queueOperations.clear() }
+        harness.idle()
+        harness.queueOperations.queueStateFlow.value.playContext shouldBe PlayContext.None
     }
 
     @Test

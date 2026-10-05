@@ -1,5 +1,7 @@
 package com.simplecityapps.playback.queue
 
+import com.simplecityapps.shuttle.model.PlayContext
+
 /**
  * A snapshot of the queue as the active shuffle mode presents it, mirroring
  * [QueueOperations.getQueue], [QueueOperations.getCurrentItem] and [QueueOperations.getCurrentPosition].
@@ -29,6 +31,9 @@ package com.simplecityapps.playback.queue
  * @param shuffleMode the shuffle mode [items] are presented in. Unlike [QueueOperations.shuffleModeFlow],
  * which changes before a reshuffle, a snapshot only carries a new shuffle mode once its list is ready,
  * so a collector acting on the order of the queue sees the two change together.
+ * @param playContext what the queue was started from (#909), mirroring [QueueOperations.playContext]: published with
+ * the queue it goes with, so the queue screen can say "Playing from" it. Replaced when the queue is, left alone by
+ * adding to it, [PlayContext.None] once it's cleared.
  */
 data class QueueState(
     val items: List<QueueItem>,
@@ -39,7 +44,8 @@ data class QueueState(
     val nonMoveContentVersion: Long = 0,
     val songDataVersion: Long = 0,
     val isRestored: Boolean = false,
-    val shuffleMode: ShuffleMode = ShuffleMode.Off
+    val shuffleMode: ShuffleMode = ShuffleMode.Off,
+    val playContext: PlayContext = PlayContext.None
 ) {
     companion object {
         val Empty = QueueState(items = emptyList(), currentItem = null, currentPosition = null)

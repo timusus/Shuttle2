@@ -1,6 +1,8 @@
 package com.simplecityapps.playback.queue
 
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import kotlin.concurrent.Volatile
 import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,6 +59,13 @@ class QueueModel(
             field = value
             publish()
         }
+
+    /**
+     * What the queue was started from; published as [QueueState.playContext] with the next change to the queue, so
+     * it's set just before the queue it goes with. Read from any thread.
+     */
+    @Volatile
+    var playContext: PlayContext = PlayContext.None
 
     val shuffleMode: ShuffleMode
         get() = _shuffleModeFlow.value
@@ -266,7 +275,8 @@ class QueueModel(
             shuffledIndices = shuffleOrder.toList(),
             currentIndex = currentIndex,
             shuffleMode = shuffleMode,
-            isRestored = isRestored
+            isRestored = isRestored,
+            playContext = playContext
         ) { index, isCurrent -> QueueItem(entries[index].uid, entries[index].song, isCurrent) } ?: return
         lists = published.lists
         _queueState.value = published.state

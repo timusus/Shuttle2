@@ -4,6 +4,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.shuttle.model.PlayContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +46,13 @@ internal class QueueStatePublisher(
 
     /** Whether the saved queue has been restored; published as [QueueState.isRestored]. */
     var isRestored = false
+
+    /**
+     * What the queue was started from; published as [QueueState.playContext] with the next publish. Set on the main
+     * thread, with the queue it goes with; read from any thread.
+     */
+    @Volatile
+    var playContext: PlayContext = PlayContext.None
 
     /** While a change made of several player calls is underway, publishing waits for it to finish. */
     private var batchDepth = 0
@@ -94,7 +102,8 @@ internal class QueueStatePublisher(
             shuffledIndices = player.shuffledIndices(),
             currentIndex = player.currentMediaItemIndex,
             shuffleMode = player.shuffleModeEnabled.toShuffleMode(),
-            isRestored = isRestored
+            isRestored = isRestored,
+            playContext = playContext
         ) { index, isCurrent -> entries[index].toQueueItem(isCurrent) } ?: return
         lists = published.lists
         _queueState.value = published.state

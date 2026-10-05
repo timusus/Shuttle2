@@ -2,6 +2,7 @@ package com.simplecityapps.playback.queue
 
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.model.PlayContext
 import io.kotest.matchers.shouldBe
 import kotlin.random.Random
 import kotlin.test.Test
@@ -16,6 +17,24 @@ class QueueModelTest {
     private val d = song(4)
 
     private fun presented() = queue.queueStateFlow.value.items.map { it.song }
+
+    @Test
+    fun `the play context set before a queue is published with it - and adding to the queue keeps it`() {
+        queue.playContext = PlayContext.Playlist(4)
+        queue.setQueue(listOf(a, b), shuffleSongs = null, position = 0)
+
+        queue.queueStateFlow.value.playContext shouldBe PlayContext.Playlist(4)
+
+        queue.add(listOf(c))
+        queue.addNext(listOf(d))
+
+        queue.queueStateFlow.value.playContext shouldBe PlayContext.Playlist(4)
+
+        queue.playContext = PlayContext.None
+        queue.clear()
+
+        queue.queueStateFlow.value.playContext shouldBe PlayContext.None
+    }
 
     @Test
     fun `with shuffle on - the position is in the saved shuffled order - a song held twice included`() {

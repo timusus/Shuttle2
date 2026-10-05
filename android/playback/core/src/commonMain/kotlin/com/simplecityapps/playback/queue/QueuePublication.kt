@@ -1,5 +1,7 @@
 package com.simplecityapps.playback.queue
 
+import com.simplecityapps.shuttle.model.PlayContext
+
 /** The queue in both orders. */
 class QueueLists(
     val base: List<QueueItem>,
@@ -24,7 +26,7 @@ class PublishedQueue(
 /**
  * The queue to publish after this one: [size] items in queue order, built by [item] from their index and whether it's
  * the current one, shuffled as [shuffledIndices] lists them, [currentIndex] current and presented in [shuffleMode]'s
- * order. Null when it doesn't differ from this one.
+ * order, started from [playContext]. Null when it doesn't differ from this one.
  *
  * The versions record what changed since this one: the order or membership of the presented items
  * ([QueueState.contentVersion]), anything but a reordering with the same items and shuffle mode
@@ -36,6 +38,7 @@ fun QueueState.republished(
     currentIndex: Int?,
     shuffleMode: ShuffleMode,
     isRestored: Boolean,
+    playContext: PlayContext = PlayContext.None,
     item: (index: Int, isCurrent: Boolean) -> QueueItem
 ): PublishedQueue? {
     val current = currentIndex?.takeIf { size > 0 }
@@ -50,7 +53,8 @@ fun QueueState.republished(
     val songsChanged = items.map { it.song } != previous.items.map { it.song }
     val currentPosition = currentItem?.let { items.indexOf(it) }?.takeIf { it != -1 }
     val unchanged = uids == previousUids && !songsChanged && currentItem?.uid == previous.currentItem?.uid &&
-        currentPosition == previous.currentPosition && shuffleMode == previous.shuffleMode && isRestored == previous.isRestored
+        currentPosition == previous.currentPosition && shuffleMode == previous.shuffleMode && isRestored == previous.isRestored &&
+        playContext == previous.playContext
     if (unchanged) return null
 
     val contentChanged = uids != previousUids
@@ -64,7 +68,8 @@ fun QueueState.republished(
         nonMoveContentVersion = previous.nonMoveContentVersion + if (contentChanged && !moveOnly) 1 else 0,
         songDataVersion = previous.songDataVersion + if (!contentChanged && songsChanged) 1 else 0,
         isRestored = isRestored,
-        shuffleMode = shuffleMode
+        shuffleMode = shuffleMode,
+        playContext = playContext
     )
     return PublishedQueue(state, QueueLists(base, shuffled))
 }

@@ -16,7 +16,6 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
-import kotlin.concurrent.Volatile
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
@@ -976,10 +975,15 @@ class IosPlayerController(
         return queue.setQueue(songs, shuffleSongs, position, shuffleMode = shuffleMode).also { sync() }
     }
 
-    /** What the queue was started from ([QueueOperations.playContext]); set on the main thread with the queue. */
-    @Volatile
-    var playContext: PlayContext = PlayContext.None
-        private set
+    /**
+     * What the queue was started from ([QueueOperations.playContext]); set on the main thread with the queue. Kept by
+     * the queue, which publishes it as [QueueState.playContext].
+     */
+    var playContext: PlayContext
+        get() = queue.playContext
+        private set(value) {
+            queue.playContext = value
+        }
 
     /** [QueueOperations] over the same queue: changes made through it are handed on to the engine. */
     val queueOperations: QueueOperations = object : QueueOperations {

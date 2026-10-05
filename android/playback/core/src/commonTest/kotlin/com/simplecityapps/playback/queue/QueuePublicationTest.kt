@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.queue
 
+import com.simplecityapps.shuttle.model.PlayContext
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -11,8 +12,9 @@ class QueuePublicationTest {
         uids: List<Long>,
         shuffled: List<Int> = uids.indices.toList(),
         current: Int? = 0,
-        shuffleMode: ShuffleMode = ShuffleMode.Off
-    ): QueueState? = republished(uids.size, shuffled, current, shuffleMode, isRestored = false) { index, isCurrent ->
+        shuffleMode: ShuffleMode = ShuffleMode.Off,
+        playContext: PlayContext = PlayContext.None
+    ): QueueState? = republished(uids.size, shuffled, current, shuffleMode, isRestored = false, playContext = playContext) { index, isCurrent ->
         QueueItem(uids[index], songs[uids[index].toInt() - 1], isCurrent)
     }?.state
 
@@ -21,6 +23,17 @@ class QueuePublicationTest {
         val state = checkNotNull(QueueState.Empty.publish(listOf(1, 2, 3)))
 
         state.publish(listOf(1, 2, 3)) shouldBe null
+    }
+
+    @Test
+    fun `the play context is published with the queue - and a change to it alone republishes without a content change`() {
+        val state = checkNotNull(QueueState.Empty.publish(listOf(1, 2, 3), playContext = PlayContext.Playlist(4)))
+        val recontexted = checkNotNull(state.publish(listOf(1, 2, 3), playContext = PlayContext.Genre("Jazz")))
+
+        state.playContext shouldBe PlayContext.Playlist(4)
+        state.publish(listOf(1, 2, 3), playContext = PlayContext.Playlist(4)) shouldBe null
+        recontexted.playContext shouldBe PlayContext.Genre("Jazz")
+        recontexted.contentVersion shouldBe state.contentVersion
     }
 
     @Test
