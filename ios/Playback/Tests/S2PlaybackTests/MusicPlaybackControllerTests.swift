@@ -345,6 +345,39 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states, [.loading, .paused, .paused, .playing])
     }
 
+    /// A stream that stalls inside the engine's read, once the node has played all it was given, is an underrun the
+    /// owner hears as loading at once, not when the bytes come back; and playing again when they do (#897).
+    func testAStallThatRunsTheNodeDryReportsLoadingUntilTheStreamFlowsAgain() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let samples = TestSignal.noise(frames: 48_000, seed: 1)
+        let source = StallingTrackSource(samples: samples, gateFrame: 24_000)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
+        XCTAssertEqual(log.statesSoFar.last, .playing)
+
+        // Everything up to the stall goes to the node, which plays it out; the next fill blocks in the read.
+        controller.pumpForTesting()
+        _ = try controller.renderOffline(frameCount: 4096)
+        _ = try controller.renderOffline(frameCount: 4096)
+        _ = try controller.renderOffline(frameCount: 4096)
+        _ = try controller.renderOffline(frameCount: 4096)
+        let blockedFill = expectation(description: "the stalled fill returns")
+        DispatchQueue.global().async {
+            controller.pumpForTesting(awaitingOpens: false)
+            blockedFill.fulfill()
+        }
+        let deadline = Date().addingTimeInterval(5)
+        while log.statesSoFar.last != .loading, Date() < deadline { Thread.sleep(forTimeInterval: 0.02) }
+        XCTAssertEqual(log.statesSoFar.last, .loading, "the stall is heard while the read is still blocked")
+
+        source.release()
+        wait(for: [blockedFill], timeout: 5)
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+    }
+
     /// Each report carries the commands taken before it, so the owner can tell a paused report made before a play
     /// (a pause's, a load's) from that play's refusal (#708), and a playing one made before a pause from now.
     func testEachStateReportCountsTheCommandsTakenBeforeIt() throws {

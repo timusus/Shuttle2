@@ -41,10 +41,16 @@ public protocol TrackPCMSource: AnyObject {
 
     func cancel()
     func interrupt()
+
+    /// `handler` is called on the reading thread each time a read has waited a while for its stream, so the
+    /// engine can tell a stall from inside its own read. A source that never waits ignores it.
+    func onReadWaiting(_ handler: @escaping () -> Void)
 }
 
 public extension TrackPCMSource {
     var isSeekable: Bool { true }
+
+    func onReadWaiting(_ handler: @escaping () -> Void) {}
 }
 
 /// A track decoded by FFmpeg from a file or an HTTP(S) URL.
@@ -63,6 +69,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
     private var openStartedAt: TimeInterval?
     private var openFinishedAt: TimeInterval?
     private var probe: StartupTiming.Probe?
+    private var readWaiting: (() -> Void)?
 
     public init(url: URL, headers: [String: String] = [:]) {
         self.url = url
@@ -80,6 +87,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
         }
         let decoder = FFmpegStreamDecoder(reader: reader)
         lock.lock()
+        if let readWaiting { (reader as? HTTPRangeByteSource)?.onReadWaiting = readWaiting }
         let wasCancelled = cancelled
         self.reader = reader
         self.decoder = decoder
@@ -168,6 +176,10 @@ public final class FFmpegTrackSource: TrackPCMSource {
         case .interrupted: throw TrackSourceError.interrupted
         case .failure: throw TrackSourceError.failed("decode \(url.lastPathComponent) failed mid-stream")
         }
+    }
+
+    public func onReadWaiting(_ handler: @escaping () -> Void) {
+        lock.withLock { readWaiting = handler }
     }
 
     public func cancel() {

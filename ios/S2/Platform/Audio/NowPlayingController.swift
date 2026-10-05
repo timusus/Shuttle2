@@ -186,8 +186,9 @@ final class NowPlayingController {
     // MARK: - Info
 
     /// Publishes `item` with its position and rate, or clears the Now Playing info for nil. Setting the
-    /// same item again (a metadata edit) keeps its artwork; a new item loads its own.
-    func setItem(_ item: NowPlayingItem?, position: TimeInterval, isPlaying: Bool, speed: Float) {
+    /// same item again (a metadata edit) keeps its artwork; a new item loads its own. `isBuffering`: playing,
+    /// but waiting for its stream, so the clock stands still (rate 0) while the state stays playing.
+    func setItem(_ item: NowPlayingItem?, position: TimeInterval, isPlaying: Bool, isBuffering: Bool = false, speed: Float) {
         let previous = self.item
         self.item = item
         guard let item else {
@@ -210,7 +211,7 @@ final class NowPlayingController {
             info[MPMediaItemPropertyArtwork] = self.info?[MPMediaItemPropertyArtwork]
         }
         self.info = info
-        writePlayback(position: position, isPlaying: isPlaying, speed: speed)
+        writePlayback(position: position, isPlaying: isPlaying, isBuffering: isBuffering, speed: speed)
 
         if previous?.id != item.id {
             artworkTask?.cancel()
@@ -225,11 +226,15 @@ final class NowPlayingController {
     /// Updates elapsed time and rate. Writes only when the state or speed changed, the position jumped
     /// more than `discontinuitySeconds` from where the system extrapolates it, or `driftGuardSeconds`
     /// passed, so it is safe to call on every progress tick.
-    func updatePlayback(position: TimeInterval, isPlaying: Bool, speed: Float) {
+    func updatePlayback(position: TimeInterval, isPlaying: Bool, isBuffering: Bool = false, speed: Float) {
         guard info != nil else { return }
         setPlaybackState(isPlaying ? .playing : .paused)
-        guard shouldPublish(position: position, rate: isPlaying ? speed : 0, speed: speed) else { return }
-        writePlayback(position: position, isPlaying: isPlaying, speed: speed)
+        guard shouldPublish(position: position, rate: Self.rate(isPlaying, isBuffering, speed), speed: speed) else { return }
+        writePlayback(position: position, isPlaying: isPlaying, isBuffering: isBuffering, speed: speed)
+    }
+
+    private static func rate(_ isPlaying: Bool, _ isBuffering: Bool, _ speed: Float) -> Float {
+        isPlaying && !isBuffering ? speed : 0
     }
 
     private func shouldPublish(position: TimeInterval, rate: Float, speed: Float) -> Bool {
@@ -241,9 +246,9 @@ final class NowPlayingController {
         return abs(position - extrapolated) > Self.discontinuitySeconds
     }
 
-    private func writePlayback(position: TimeInterval, isPlaying: Bool, speed: Float) {
+    private func writePlayback(position: TimeInterval, isPlaying: Bool, isBuffering: Bool, speed: Float) {
         guard var info else { return }
-        let rate: Float = isPlaying ? speed : 0
+        let rate = Self.rate(isPlaying, isBuffering, speed)
         info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = position
         info[MPNowPlayingInfoPropertyPlaybackRate] = Double(rate)
         info[MPNowPlayingInfoPropertyDefaultPlaybackRate] = Double(speed > 0 ? speed : 1)

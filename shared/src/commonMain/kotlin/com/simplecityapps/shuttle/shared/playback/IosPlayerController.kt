@@ -182,6 +182,14 @@ class IosPlayerController(
 
     override val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
 
+    private val _bufferingFlow = MutableStateFlow(false)
+
+    /**
+     * The current track was playing and ran out of data: the engine waits for its stream with the intent kept, and
+     * [playbackStateFlow] is [PlaybackState.Loading]. Unlike a load's, this one stops the clock, so Now Playing shows it.
+     */
+    val bufferingFlow: StateFlow<Boolean> = _bufferingFlow.asStateFlow()
+
     private val _progressFlow = MutableStateFlow<PlaybackProgress?>(null)
 
     /** Republished on each engine position tick while playing, and on every jump. */
@@ -640,12 +648,21 @@ class IosPlayerController(
         return when {
             pendingLoad != null -> PlaybackState.Loading
             !currentFeed.ready && !currentFeed.failed && (!currentFeed.sent || engineState == IosAudioPlayerState.Loading) -> PlaybackState.Loading
+            isBuffering() -> PlaybackState.Loading
             engineState == IosAudioPlayerState.Playing -> PlaybackState.Playing
             else -> PlaybackState.Paused
         }
     }
 
+    /** A ready track the engine is loading again while playback is intended: its stream ran dry, or its output restarts. */
+    private fun isBuffering(): Boolean {
+        val currentFeed = current ?: return false
+        return pendingLoad == null && currentFeed.ready && !currentFeed.failed && playWhenReady &&
+            engineState == IosAudioPlayerState.Loading
+    }
+
     private fun publishState() {
+        _bufferingFlow.value = isBuffering()
         val state = derivedState()
         val previous = _playbackStateFlow.value
         _playbackStateFlow.value = state

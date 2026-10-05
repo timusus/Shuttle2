@@ -120,6 +120,11 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
                 }
             },
             Task { [weak self] in
+                for await _ in playback.bufferingFlow {
+                    self?.publish()
+                }
+            },
+            Task { [weak self] in
                 for await _ in playback.playbackSpeedFlow {
                     self?.publish()
                 }
@@ -148,15 +153,17 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         let item = Self.nowPlayingItem(current, progress: progress)
         let position = TimeInterval(progress?.position ?? 0) / 1000
         let isPlaying = playerIsPlaying
+        // A stalled stream stops the lock screen's clock; a load's doesn't, so a skip holds its pause button (#691).
+        let isBuffering = playback.bufferingFlow.value.boolValue
         let speed = playback.playbackSpeedFlow.value.floatValue
         nowPlaying.setSkipMode(
             current.song.type == .audio
                 ? .tracks : .interval(forward: Self.skipForwardSeconds, backward: Self.skipBackwardSeconds)
         )
         if !force, item == nowPlaying.item {
-            nowPlaying.updatePlayback(position: position, isPlaying: isPlaying, speed: speed)
+            nowPlaying.updatePlayback(position: position, isPlaying: isPlaying, isBuffering: isBuffering, speed: speed)
         } else {
-            nowPlaying.setItem(item, position: position, isPlaying: isPlaying, speed: speed)
+            nowPlaying.setItem(item, position: position, isPlaying: isPlaying, isBuffering: isBuffering, speed: speed)
         }
     }
 

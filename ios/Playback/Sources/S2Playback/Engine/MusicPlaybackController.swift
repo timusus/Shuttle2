@@ -180,6 +180,8 @@ public final class MusicPlaybackController {
     let format: AVAudioFormat
     private let renderingMode: RenderingMode
     private let engineQueue = DispatchQueue(label: "com.simplecityapps.shuttle2.playback.engine", qos: .userInitiated)
+    /// Set on `engineQueue`, so a source's wait hook can tell it's called inside the engine's own read.
+    private static let engineQueueKey = DispatchSpecificKey<Bool>()
     /// Where next tracks are opened. Concurrent: a cancelled open may still be unwinding.
     private let prepareQueue = DispatchQueue(
         label: "com.simplecityapps.shuttle2.playback.prepare", qos: .userInitiated, attributes: .concurrent
@@ -263,8 +265,9 @@ public final class MusicPlaybackController {
     private var buffersInFlight = 0
     private var starved = false
     /// The node ran dry while playing — an underrun, not the queue's end: when (``StartupTiming/now()``)
-    /// and where in the current track. Logged as it starts and as it ends (#896); the state reported
-    /// stays playing, since Kotlin reads a loading report on a track already playing as paused.
+    /// and where in the current track. Logged as it starts and as it ends (#896). The state stays
+    /// playing, but the owner hears loading for as long as it lasts, and playing again once it's over
+    /// still playing, so the listener sees the buffering (#897).
     private var underrun: (since: TimeInterval, ms: Int64)?
     /// The queue's last frame is scheduled (current ended with no next).
     private var drained = false
@@ -390,6 +393,7 @@ public final class MusicPlaybackController {
         processor = PCMProcessor(sampleRate: outputSampleRate, channelCount: 2)
         scratch = [Float](repeating: 0, count: Self.chunkFrames * 2)
 
+        engineQueue.setSpecific(key: Self.engineQueueKey, value: true)
         engine.attach(player)
         engine.attach(timePitch)
         connectGraph(speed: 1)
@@ -431,9 +435,9 @@ public final class MusicPlaybackController {
             var reusable = next.flatMap { old in old.atStart && !old.failed && reading !== old ? old : nil }
             if reusable != nil { next = nil }
             teardown()
-            let slot = take(&reusable, for: track) ?? Slot(track: track)
+            let slot = take(&reusable, for: track) ?? makeSlot(track)
             current = slot
-            next = nextTrack.map { take(&reusable, for: $0) ?? Slot(track: $0) }
+            next = nextTrack.map { take(&reusable, for: $0) ?? makeSlot($0) }
             reusable.map(release)
             self.playWhenReady = playWhenReady
             readyPausedAt = nil
@@ -496,6 +500,13 @@ public final class MusicPlaybackController {
                 prepareNextIfDue()
             }
         }
+    }
+
+    /// A slot for `track` whose source tells the engine when a read waits on its stream (``readWaited()``).
+    private func makeSlot(_ track: PlaybackTrack) -> Slot {
+        let slot = Slot(track: track)
+        slot.source.onReadWaiting { [weak self] in self?.readWaited() }
+        return slot
     }
 
     /// The owner's ``activateOutput``, started now on `activationQueue`; nil if there's none.
@@ -996,7 +1007,7 @@ public final class MusicPlaybackController {
         // One opened (or opening) and not read yet is still at its start, and is kept.
         if let old = next, old.opened, !old.atStart {
             release(old)
-            next = Slot(track: old.track)
+            next = makeSlot(old.track)
         }
         timelineLock.withLock { timeline = Timeline() }
         setReading(current)
@@ -1210,6 +1221,18 @@ public final class MusicPlaybackController {
         let atMs = ms(frames: currentMediaFrame())
         underrun = (StartupTiming.now(), atMs)
         engineLog.warning("underrun: starved at \(atMs) ms uid \(self.current?.track.uid ?? "-", privacy: .public)")
+        reportState(.loading)
+    }
+
+    /// A read of the stream has waited a while for its bytes. Called on the reading thread: on the engine queue
+    /// that's inside `fill`, which a stalled stream blocks, so the node's own completions can't say it ran dry
+    /// until the bytes are back. Once the node has played everything scheduled, the underrun starts here (#897).
+    private func readWaited() {
+        guard DispatchQueue.getSpecific(key: Self.engineQueueKey) == true else { return }
+        guard state == .playing, !drained, !starved else { return }
+        let scheduledEnd = timelineLock.withLock { timeline.scheduledEnd }
+        guard playedStreamIndex() >= scheduledEnd else { return }
+        beginUnderrun()
     }
 
     /// The underrun is over: `how` is "recovered" when a buffer reached the node, else what dropped
@@ -1219,6 +1242,8 @@ public final class MusicPlaybackController {
         self.underrun = nil
         let starvedMs = Int(((StartupTiming.now() - underrun.since) * 1000).rounded())
         engineLog.notice("underrun: \(how, privacy: .public) after \(starvedMs) ms, starved at \(underrun.ms) ms")
+        // A pause or a stop has reported its own state; one that's still playing says so again.
+        if current != nil, state == .playing { reportState(.playing) }
     }
 
     /// Follow the playhead: promote the next track once it is being heard, notice the end.

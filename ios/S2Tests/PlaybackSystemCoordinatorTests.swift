@@ -168,6 +168,21 @@ struct PlaybackSystemCoordinatorTests {
         #expect(title == "Paranoid Android")
     }
 
+    /// A stream that stalls while playing stops the lock screen's clock and keeps its pause button; it runs again
+    /// once the stream flows (#897).
+    @Test func bufferingStopsTheLockScreenClockUntilItPlaysAgain() async throws {
+        let id = try await playQueue()
+        #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
+
+        engine.emit(.state(.loading, trackId: id))
+        #expect(await waitUntil { rate == 0 })
+        #expect(info.playbackState == .playing)
+        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
+
+        engine.emit(.state(.playing, trackId: id))
+        #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
+    }
+
     /// A play still being prepared (a `MediaAction` reading its songs) shows on the lock screen as playing from the tap,
     /// and its failure as paused again.
     @Test func aPendingPlayShowsAsPlayingOnTheLockScreen() async throws {

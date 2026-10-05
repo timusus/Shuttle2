@@ -548,6 +548,15 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// scheduled at the player node, and neither alone is the answer.
     var bufferedAheadBytes: Int64 { withLock { max(frontier - positionValue, 0) } }
 
+    /// Called on the reading thread each time ``read(into:maxLength:)`` has waited ``blockedWaitSeconds`` for
+    /// bytes. Set before the first read.
+    var onReadWaiting: (() -> Void)? {
+        get { withLock { onReadWaitingValue } }
+        set { withLock { onReadWaitingValue = newValue } }
+    }
+
+    private var onReadWaitingValue: (() -> Void)?
+
     /// The first byte the window does not hold yet: where a continuation opens. Distinct from the
     /// end of the range the origin was asked for, which a throttled body has not reached.
     var fetchFrontier: Int64 { withLock { frontier } }
@@ -644,7 +653,11 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
             }
             // Every path that can produce a byte, end the stream or fail it broadcasts, so this
             // sleeps until there is something to do rather than until a poll interval elapses.
-            _ = condition.wait(until: Date().addingTimeInterval(Self.blockedWaitSeconds))
+            if !condition.wait(until: Date().addingTimeInterval(Self.blockedWaitSeconds)), let onReadWaiting = onReadWaitingValue {
+                condition.unlock()
+                onReadWaiting()
+                condition.lock()
+            }
         }
     }
 

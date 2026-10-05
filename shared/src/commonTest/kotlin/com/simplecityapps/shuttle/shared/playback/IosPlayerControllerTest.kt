@@ -1157,6 +1157,50 @@ class IosPlayerControllerTest {
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
+    // Buffering
+
+    @Test
+    fun `a playing track whose stream runs dry is loading - with the intent kept - until it plays again`() = test { controller ->
+        controller.start(listOf(a, b))
+        val id = checkNotNull(engine.current).id
+
+        engine.emitState(IosAudioPlayerState.Loading, id)
+        engine.settle()
+
+        controller.playbackState() shouldBe PlaybackState.Loading
+        controller.bufferingFlow.value shouldBe true
+        controller.playWhenReadyFlow.value shouldBe true
+
+        engine.emitState(IosAudioPlayerState.Playing, id)
+        engine.settle()
+
+        controller.playbackState() shouldBe PlaybackState.Playing
+        controller.bufferingFlow.value shouldBe false
+    }
+
+    @Test
+    fun `a pause while buffering is paused - not loading`() = test { controller ->
+        controller.start(listOf(a, b))
+        engine.emitState(IosAudioPlayerState.Loading, checkNotNull(engine.current).id)
+        engine.settle()
+
+        controller.pause()
+        engine.settle()
+
+        controller.playbackState() shouldBe PlaybackState.Paused
+        controller.bufferingFlow.value shouldBe false
+    }
+
+    @Test
+    fun `a track that starts loading is loading but not buffering`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.load { }
+        controller.play()
+
+        controller.playbackState() shouldBe PlaybackState.Loading
+        controller.bufferingFlow.value shouldBe false
+    }
+
     @Test
     fun `a play refused between a pause and its report clears intent`() = test { controller ->
         controller.start(listOf(a, b))

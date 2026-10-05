@@ -40,6 +40,53 @@ final class InMemoryTrackSource: TrackPCMSource {
     func interrupt() {}
 }
 
+/// A stream that stalls at `gateFrame`: reads there wait, saying so to the wait hook every 50 ms as a stalled
+/// ``HTTPRangeByteSource`` does, until ``release()``.
+final class StallingTrackSource: TrackPCMSource {
+    private let inner: InMemoryTrackSource
+    private let gateFrame: Int
+    private let gate = DispatchSemaphore(value: 0)
+    private let lock = NSLock()
+    private var released = false
+    private var delivered = 0
+    private var waiting: (() -> Void)?
+
+    init(samples: [Float], gateFrame: Int) {
+        inner = InMemoryTrackSource(samples: samples)
+        self.gateFrame = gateFrame
+    }
+
+    func release() { gate.signal() }
+
+    func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
+        try inner.open(sampleRate: sampleRate, channelCount: channelCount)
+    }
+
+    func seek(toFrame frame: Int64) throws {
+        try inner.seek(toFrame: frame)
+        delivered = Int(frame)
+    }
+
+    func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        if delivered >= gateFrame, !lock.withLock({ released }) {
+            while gate.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
+                lock.withLock { waiting }?()
+            }
+            lock.withLock { released = true }
+        }
+        let frames = try inner.read(into: buffer, maxFrames: delivered < gateFrame ? min(maxFrames, gateFrame - delivered) : maxFrames)
+        delivered += frames
+        return frames
+    }
+
+    func cancel() { release() }
+    func interrupt() {}
+
+    func onReadWaiting(_ handler: @escaping () -> Void) {
+        lock.withLock { waiting = handler }
+    }
+}
+
 /// Passes another source through and keeps every frame it handed the controller, so a test can
 /// compare the render with exactly what the decoder produced.
 final class RecordingTrackSource: TrackPCMSource {
@@ -133,6 +180,8 @@ final class CallbackLog {
     let queue = DispatchQueue(label: "test.callbacks")
     private(set) var transitions: [String] = []
     private(set) var states: [MusicPlaybackController.State] = []
+    /// ``states``, read from any thread.
+    var statesSoFar: [MusicPlaybackController.State] { queue.sync { states } }
     /// The commands taken before each of `states`.
     private(set) var stateCommands: [Int] = []
     private(set) var failures: [String] = []
