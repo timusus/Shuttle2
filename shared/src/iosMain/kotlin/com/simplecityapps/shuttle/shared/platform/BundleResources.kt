@@ -53,6 +53,7 @@ class BundleServerStrings @Inject constructor() : ServerStrings {
     override val addressMissing: String get() = localized("media_provider_address_missing", "Server address missing")
     override val authenticationError: String get() = localized("media_provider_authentication_error", "Failed to authenticate")
     override val unknownName: String get() = localized("unknown", "Unknown")
+    override val musicLibraryMissing: String get() = localized("media_provider_music_library_missing", "No music library found on the server")
 }
 
 @ContributesBinding(AppScope::class)
