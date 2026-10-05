@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
 import com.simplecityapps.shuttle.model.musicBrainzIds
+import kotlinx.datetime.LocalDate
 
 /**
  * The values of a file's tags, as TagLib (Android) or FFmpeg (iOS) read them. A null or empty field wasn't tagged: no
@@ -31,7 +32,12 @@ data class FileTags(
     val mbAlbumId: String? = null,
     val mbReleaseGroupId: String? = null,
     val mbArtistIds: List<String> = emptyList(),
-    val mbAlbumArtistIds: List<String> = emptyList()
+    val mbAlbumArtistIds: List<String> = emptyList(),
+    // The audio properties, which the tag map doesn't carry: set by a reader that has them (the MediaStore path's TagLib read)
+    val bitRate: Int? = null,
+    val bitDepth: Int? = null,
+    val sampleRate: Int? = null,
+    val channelCount: Int? = null
 )
 
 /**
@@ -144,6 +150,9 @@ internal const val R128_ALBUM_GAIN = "R128_ALBUM_GAIN"
 private fun String.parseR128Gain(): Double? = trim().toIntOrNull()?.let { it / 256.0 + 5.0 }
 
 private fun String.parseReplayGain(): Double? = replace(oldValue = "db", newValue = "", ignoreCase = true).trim().toDoubleOrNull()
+
+/** The date [parseDate] read, as the first of its year: songs store the year only. */
+fun String.toYearDate(): LocalDate? = parseDate()?.toIntOrNull()?.let { LocalDate(it, 1, 1) }
 
 internal fun String.parseDate(): String? = take(4).takeIf { it.length == 4 && it.all { char -> char in '0'..'9' } }
 

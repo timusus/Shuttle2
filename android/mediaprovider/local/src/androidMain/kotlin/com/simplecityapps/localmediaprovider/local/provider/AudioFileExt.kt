@@ -5,7 +5,6 @@ import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Instant
-import kotlinx.datetime.LocalDate
 
 fun AudioFile.toSong(
     providerType: MediaProviderType,
@@ -19,7 +18,7 @@ fun AudioFile.toSong(
     track = track,
     disc = disc,
     duration = duration ?: 0,
-    date = year?.toIntOrNull()?.let { LocalDate(it, 1, 1) },
+    date = year?.toYearDate(),
     genres = genres,
     path = path,
     size = size,

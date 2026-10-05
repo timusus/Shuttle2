@@ -124,6 +124,18 @@ class SafScannerFolderStoreTest {
     }
 
     @Test
+    fun `an include list of only path-less folders doesn't import everything`() {
+        val downloads = "content://com.android.providers.downloads.documents/tree/downloads"
+        store.add(FolderKind.Include, downloads)
+
+        val folders = store.scannerFolders()
+
+        folders.filter.includes shouldBe emptyList()
+        folders.filter.accepts("/storage/emulated/0/Music/a.mp3") shouldBe false
+        folders.includeTrees shouldBe listOf(Uri.parse(downloads))
+    }
+
+    @Test
     fun `re-granting a flagged folder under another form of its URI restores it without duplicating it`() {
         store.add(FolderKind.Include, music)
         revoke(music)

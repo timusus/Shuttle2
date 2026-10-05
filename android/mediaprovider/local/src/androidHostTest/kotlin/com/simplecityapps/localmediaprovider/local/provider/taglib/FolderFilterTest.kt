@@ -5,6 +5,11 @@ import org.junit.Test
 
 class FolderFilterTest {
     @Test
+    fun `includes that are all path-less trees accept no MediaStore file`() {
+        FolderFilter(includesTreesOnly = true).accepts("/storage/emulated/0/Music/a.mp3") shouldBe false
+    }
+
+    @Test
     fun `with no includes or excludes every file is accepted`() {
         FolderFilter().accepts("/storage/emulated/0/Music/a.mp3") shouldBe true
     }

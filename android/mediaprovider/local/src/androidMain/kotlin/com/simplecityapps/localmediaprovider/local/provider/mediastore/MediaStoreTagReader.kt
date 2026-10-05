@@ -9,7 +9,9 @@ import com.simplecityapps.localmediaprovider.local.provider.FileTags
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
 import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
 import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
+import com.simplecityapps.localmediaprovider.local.provider.taglibBitDepth
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
+import com.simplecityapps.localmediaprovider.local.provider.toYearDate
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -18,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 /**
@@ -43,7 +44,15 @@ class KTagLibMediaStoreTagReader(
     ): FileTags? = tagReadGuard.read(file, MediaProviderType.MediaStore) {
         withContext(Dispatchers.IO) {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                kTagLib.getMetadata(pfd.fd, file.path.substringAfterLast('/'))?.propertyMap?.toFileTags()
+                kTagLib.getMetadata(pfd.fd, file.path.substringAfterLast('/'))?.let { metadata ->
+                    val audio = metadata.audioProperties
+                    metadata.propertyMap?.toFileTags()?.copy(
+                        bitRate = audio?.bitrate,
+                        bitDepth = taglibBitDepth(audio?.codec, audio?.bitsPerSample),
+                        sampleRate = audio?.sampleRate,
+                        channelCount = audio?.channelCount
+                    )
+                }
             }
         }
     }
@@ -101,9 +110,16 @@ internal fun Song.withFileTags(tags: FileTags): Song = copy(
     album = tags.album ?: album,
     track = tags.track ?: track,
     disc = tags.disc ?: disc,
-    date = tags.year?.toIntOrNull()?.let { LocalDate(it, 1, 1) } ?: date,
+    date = tags.year?.toYearDate() ?: date,
     replayGainTrack = tags.replayGainTrack,
     replayGainAlbum = tags.replayGainAlbum,
+    genres = tags.genres.ifEmpty { genres },
+    lyrics = tags.lyrics ?: lyrics,
+    grouping = tags.grouping ?: grouping,
+    bitRate = tags.bitRate ?: bitRate,
+    bitDepth = tags.bitDepth ?: bitDepth,
+    sampleRate = tags.sampleRate ?: sampleRate,
+    channelCount = tags.channelCount ?: channelCount,
     albumArtists = tags.albumArtists,
     artistsTag = tags.artistsTag,
     artistDisplay = tags.artistDisplay ?: artistDisplay,

@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.ArtistCredits
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlinx.datetime.LocalDate
 
 class FileTagsTest {
     @Test
@@ -183,6 +184,14 @@ class FileTagsTest {
         "99".parseDate() shouldBe null
         "199a".parseDate() shouldBe null
         "unknown".parseDate() shouldBe null
+    }
+
+    @Test
+    fun `a full date becomes the first of its year`() {
+        "2021-05-14".toYearDate() shouldBe LocalDate(2021, 1, 1)
+        "2021".toYearDate() shouldBe LocalDate(2021, 1, 1)
+        "2020-04-03T07:00:00Z".toYearDate() shouldBe LocalDate(2020, 1, 1)
+        "unknown".toYearDate() shouldBe null
     }
 
     @Test

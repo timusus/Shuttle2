@@ -3,13 +3,16 @@ package com.simplecityapps.localmediaprovider.local.provider.taglib
 /**
  * Which folders the TagLib scanner imports, as absolute paths. With no [includes], every folder is included; an
  * exclude wins over an include, so a subfolder of an included folder can be left out. Shared storage paths are
- * case-insensitive, so matching is too.
+ * case-insensitive, so matching is too. [includesTreesOnly] is for includes that are all path-less trees (Downloads, cloud
+ * storage): there is no path to include, but the list isn't empty, so no MediaStore file is accepted (those trees are
+ * walked instead) rather than every one.
  */
 data class FolderFilter(
     val includes: List<String> = emptyList(),
-    val excludes: List<String> = emptyList()
+    val excludes: List<String> = emptyList(),
+    val includesTreesOnly: Boolean = false
 ) {
-    fun accepts(path: String): Boolean = (includes.isEmpty() || includes.any { folder -> path.isIn(folder) }) && excludes.none { folder -> path.isIn(folder) }
+    fun accepts(path: String): Boolean = !includesTreesOnly && (includes.isEmpty() || includes.any { folder -> path.isIn(folder) }) && excludes.none { folder -> path.isIn(folder) }
 
     private fun String.isIn(folder: String): Boolean = startsWith(folder.trimEnd('/') + "/", ignoreCase = true)
 }

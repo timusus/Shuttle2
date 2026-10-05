@@ -57,8 +57,10 @@ class SafScannerFolderStore @Inject constructor(
     /** What [com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider] scans. */
     fun scannerFolders(): ScannerFolders {
         val lists = synchronized(lock) { load() }
+        val includePaths = lists.includes.mapNotNull { it.path }
         return ScannerFolders(
-            filter = FolderFilter(includes = lists.includes.mapNotNull { it.path }, excludes = lists.excludes.mapNotNull { it.path }),
+            // Includes that all lack a path must not read as an empty list, which means "everything"
+            filter = FolderFilter(includes = includePaths, excludes = lists.excludes.mapNotNull { it.path }, includesTreesOnly = lists.includes.isNotEmpty() && includePaths.isEmpty()),
             includeTrees = lists.includes.mapNotNull { folder -> folder.uri?.let(Uri::parse) },
             extraTrees = lists.extras.mapNotNull { folder -> folder.uri?.let(Uri::parse) }
         )

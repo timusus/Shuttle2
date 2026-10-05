@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.local
 
 import com.simplecityapps.localmediaprovider.local.provider.ffmpegPropertyMap
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
+import com.simplecityapps.localmediaprovider.local.provider.toYearDate
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -21,7 +22,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.datetime.LocalDate
 
 /**
  * This device's music on iOS (#590), as the S2 scanner ([MediaProviderType.Shuttle]): every audio file [IosLocalFiles]
@@ -102,7 +102,7 @@ internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
         track = fileTags.track,
         disc = fileTags.disc,
         duration = durationMs?.toInt() ?: 0,
-        date = fileTags.year?.toIntOrNull()?.let { LocalDate(it, 1, 1) },
+        date = fileTags.year?.toYearDate(),
         genres = fileTags.genres,
         path = file.path,
         size = file.size,

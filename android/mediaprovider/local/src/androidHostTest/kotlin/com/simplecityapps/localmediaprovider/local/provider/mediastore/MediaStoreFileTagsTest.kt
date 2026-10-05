@@ -33,6 +33,31 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
+    fun `genres, lyrics, grouping and audio properties come from the file's tags`() {
+        val tags = fileTags().copy(genres = listOf("R&B/Soul"), lyrics = "la la", grouping = "Set A", bitRate = 320, bitDepth = 16, sampleRate = 44100, channelCount = 2)
+        val reader = MediaStoreTagReader { _, _ -> tags }
+
+        val result = runBlocking { createMediaStoreSong().withFileTags(reader) }
+
+        result.genres shouldBe listOf("R&B/Soul")
+        result.lyrics shouldBe "la la"
+        result.grouping shouldBe "Set A"
+        result.bitRate shouldBe 320
+        result.bitDepth shouldBe 16
+        result.sampleRate shouldBe 44100
+        result.channelCount shouldBe 2
+    }
+
+    @Test
+    fun `a file without genre tags keeps the MediaStore genres`() {
+        val reader = MediaStoreTagReader { _, _ -> fileTags() }
+
+        val result = runBlocking { createMediaStoreSong().copy(genres = listOf("Rock")).withFileTags(reader) }
+
+        result.genres shouldBe listOf("Rock")
+    }
+
+    @Test
     fun `a failing read leaves ReplayGain values null`() {
         val reader = MediaStoreTagReader { _, _ -> null }
 
