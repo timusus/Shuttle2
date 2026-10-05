@@ -50,6 +50,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.entitlement.ProSource
@@ -198,8 +199,8 @@ private fun StatusCard(
         ) {
             Icon(Icons.Rounded.WorkspacePremium, contentDescription = null, modifier = Modifier.size(HeroIconSize))
             Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
-                Text(text, style = MaterialTheme.typography.bodyLarge)
-                if (explainsTrialEnd) Text(stringResource(R.string.paywall_trial_terms), style = MaterialTheme.typography.bodyMedium)
+                S2Text(text, style = MaterialTheme.typography.bodyLarge)
+                if (explainsTrialEnd) S2Text(stringResource(R.string.paywall_trial_terms), style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
@@ -223,7 +224,7 @@ private fun Benefit(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(BenefitLeadingWidth), contentAlignment = Alignment.Center) { leading() }
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+        S2Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -254,7 +255,7 @@ private val SelectedBorderWidth = 2.dp
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+    S2Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 }
 
 /** One card per plan: Play's offers once they've loaded, otherwise every plan with a placeholder price. */
@@ -282,7 +283,7 @@ private fun Plans(
                 onClick = { onSelectPlan(plan) }
             )
             if (plan == PaywallPlan.Annual) {
-                Text(
+                S2Text(
                     stringResource(R.string.paywall_annual_terms),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -310,8 +311,8 @@ private fun PlanCard(
         ) {
             RadioButton(selected = selected, onClick = null, enabled = enabled, modifier = Modifier.padding(horizontal = S2Spacing.small))
             Column(Modifier.weight(1f)) {
-                Text(stringResource(plan.title), style = MaterialTheme.typography.titleMedium)
-                Text(price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                S2Text(stringResource(plan.title), style = MaterialTheme.typography.titleMedium)
+                S2Text(price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (plan == PaywallPlan.Lifetime) {
                 Surface(
@@ -320,7 +321,7 @@ private fun PlanCard(
                     shape = MaterialTheme.shapes.small,
                     modifier = Modifier.padding(end = S2Spacing.small)
                 ) {
-                    Text(
+                    S2Text(
                         stringResource(R.string.paywall_plan_best_value),
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(horizontal = S2Spacing.small, vertical = S2Spacing.xsmall)

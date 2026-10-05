@@ -137,7 +137,7 @@ class EmbyStreamUrlProviderTest {
     }
 
     @Test
-    fun `a song the player can't decode is reported as a transcode, though within the cap`() {
+    fun `a song the player can't decode is reported as a transcode - though within the cap`() {
         credentialStore.authenticatedCredentials = downloadableCredentials
 
         provider.streamUrl(song(bitRate = 256, audioCodec = "alac"))

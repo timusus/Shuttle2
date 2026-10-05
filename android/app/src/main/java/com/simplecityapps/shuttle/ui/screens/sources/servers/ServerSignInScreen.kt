@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,13 +21,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +31,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -47,9 +41,13 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.component.InlineLoadingIndicator
+import com.simplecityapps.shuttle.designsystem.component.LinkSetting
+import com.simplecityapps.shuttle.designsystem.component.S2ActionChip
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -136,15 +134,15 @@ private fun SignInFields(
         verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
     ) {
         if (uiState.showProDisclosure) {
-            Text(stringResource(R.string.paywall_server_disclosure))
+            S2Text(stringResource(R.string.paywall_server_disclosure))
         }
         val addressMissing = ServerSignInField.Address in form.missing
         OutlinedTextField(
             value = form.address,
             onValueChange = actions.onAddressChange,
-            label = { Text(stringResource(R.string.media_provider_config_hint_address)) },
+            label = { S2Text(stringResource(R.string.media_provider_config_hint_address)) },
             supportingText = {
-                Text(if (addressMissing) required else stringResource(uiState.type.addressHelperRes))
+                S2Text(if (addressMissing) required else stringResource(uiState.type.addressHelperRes))
             },
             isError = addressMissing,
             singleLine = true,
@@ -167,12 +165,12 @@ private fun SignInFields(
         OutlinedTextField(
             value = form.username,
             onValueChange = actions.onUsernameChange,
-            label = { Text(stringResource(R.string.media_provider_config_hint_username)) },
+            label = { S2Text(stringResource(R.string.media_provider_config_hint_username)) },
             supportingText = when {
                 usernameMissing -> required
                 uiState.acceptsApiKey -> stringResource(R.string.media_provider_config_helper_username_api_key)
                 else -> null
-            }?.let { helper -> { Text(helper) } },
+            }?.let { helper -> { S2Text(helper) } },
             isError = usernameMissing,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
@@ -188,7 +186,7 @@ private fun SignInFields(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.media_provider_config_switch_remember_password))
+            S2Text(stringResource(R.string.media_provider_config_switch_remember_password))
             Spacer(Modifier.width(S2Spacing.medium))
             Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
         }
@@ -202,13 +200,13 @@ private fun AddressSuggestions(
     onChoose: (String) -> Unit,
 ) {
     Column {
-        Text(stringResource(R.string.media_provider_discovered_servers), style = MaterialTheme.typography.labelMedium)
+        S2Text(stringResource(R.string.media_provider_discovered_servers), style = MaterialTheme.typography.labelMedium)
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
         ) {
             servers.forEach { server ->
-                SuggestionChip(onClick = { onChoose(server.address) }, label = { Text(server.name) })
+                S2ActionChip(label = server.name, onClick = { onChoose(server.address) })
             }
         }
     }
@@ -219,9 +217,9 @@ private fun AddressSuggestions(
 private fun PinSignInIntro(uiState: ServerSignInUiState) {
     Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         if (uiState.showProDisclosure) {
-            Text(stringResource(R.string.paywall_server_disclosure))
+            S2Text(stringResource(R.string.paywall_server_disclosure))
         }
-        Text(stringResource(R.string.media_provider_plex_sign_in_intro))
+        S2Text(stringResource(R.string.media_provider_plex_sign_in_intro))
     }
 }
 
@@ -239,12 +237,12 @@ private fun SignInPinCode(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
-        Text(
+        S2Text(
             stringResource(R.string.media_provider_plex_pin_instructions, step.linkUrl.removePrefix("https://")),
             textAlign = TextAlign.Center,
         )
-        Text(step.code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-        CircularProgressIndicator()
+        S2Text(step.code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+        InlineLoadingIndicator()
         Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
             S2Button(
                 text = stringResource(R.string.dialog_button_cancel),
@@ -271,15 +269,13 @@ private fun ServerChoices(
         modifier = Modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
     ) {
-        Text(stringResource(R.string.media_provider_plex_choose_server), style = MaterialTheme.typography.titleSmall)
+        S2Text(stringResource(R.string.media_provider_plex_choose_server), style = MaterialTheme.typography.titleSmall)
         servers.forEach { server ->
-            ListItem(
-                headlineContent = { Text(server.name) },
-                supportingContent = if (server.owned) null else ({ Text(stringResource(R.string.media_provider_plex_server_shared)) }),
-                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onChoose(server.id) },
+            LinkSetting(
+                title = server.name,
+                summary = if (server.owned) null else stringResource(R.string.media_provider_plex_server_shared),
+                onClick = { onChoose(server.id) },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -305,8 +301,8 @@ private fun QuickConnectCode(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
-        Text(stringResource(R.string.media_provider_quick_connect_instructions), textAlign = TextAlign.Center)
-        Text(code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+        S2Text(stringResource(R.string.media_provider_quick_connect_instructions), textAlign = TextAlign.Center)
+        S2Text(code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
         CircularProgressIndicator()
         S2Button(
             text = stringResource(R.string.dialog_button_cancel),
@@ -328,8 +324,8 @@ private fun PasswordField(
     OutlinedTextField(
         value = password,
         onValueChange = onPasswordChange,
-        label = { Text(stringResource(R.string.media_provider_config_hint_password)) },
-        supportingText = if (missing) ({ Text(stringResource(R.string.validation_field_required)) }) else null,
+        label = { S2Text(stringResource(R.string.media_provider_config_hint_password)) },
+        supportingText = if (missing) ({ S2Text(stringResource(R.string.validation_field_required)) }) else null,
         isError = missing,
         singleLine = true,
         visualTransformation = if (revealed && revealable) VisualTransformation.None else PasswordVisualTransformation(),
@@ -363,7 +359,7 @@ private fun Progress(
         verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         if (showSpinner) CircularProgressIndicator()
-        Text(message, textAlign = TextAlign.Center)
+        S2Text(message, textAlign = TextAlign.Center)
     }
 }
 

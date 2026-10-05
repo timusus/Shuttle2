@@ -5,7 +5,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/FastSc
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|dp|8
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryComponents.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|dp|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryPages.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|dp|4
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|dp|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|dp|3

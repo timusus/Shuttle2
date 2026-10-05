@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
@@ -150,5 +151,5 @@ fun ServerDetailDialogHost(
         },
         dismissLabel = stringResource(android.R.string.cancel),
         destructive = true,
-    ) { Text(stringResource(R.string.sources_remove_server_message)) }
+    ) { S2Text(stringResource(R.string.sources_remove_server_message)) }
 }

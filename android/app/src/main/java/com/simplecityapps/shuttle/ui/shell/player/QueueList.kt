@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +66,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.QueueRow
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
@@ -121,7 +121,7 @@ private fun QueueSourceLine(
     onOpen: () -> Unit,
 ) {
     val goTo = stringResource(source.kind.goTo)
-    Text(
+    S2Text(
         text = stringResource(R.string.queue_playing_from, source.title()),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -203,7 +203,7 @@ internal fun LazyListScope.queueItems(
     if (items.isEmpty()) {
         item(key = "queue_empty") {
             Box(Modifier.fillMaxWidth().padding(vertical = S2Spacing.xlarge), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.queue_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                S2Text(stringResource(R.string.queue_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         return

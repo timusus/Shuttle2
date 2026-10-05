@@ -28,7 +28,8 @@ fun Entitlement.trialChipDaysLeft(now: Instant = Clock.System.now()): Int? = (th
 class LibraryTrialChipViewModel @Inject constructor(
     entitlement: @JvmSuppressWildcards StateFlow<Entitlement>
 ) : ViewModel() {
-    val daysLeft: StateFlow<Int?> = entitlement
+    /** The days left to show on the chip, or null to hide it ([trialChipDaysLeft]). */
+    val uiState: StateFlow<Int?> = entitlement
         .map { it.trialChipDaysLeft() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), entitlement.value.trialChipDaysLeft())
 }

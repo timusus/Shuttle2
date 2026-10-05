@@ -58,14 +58,14 @@ class StreamingPolicyTest {
     }
 
     @Test
-    fun `downloads keep the original by default, whatever the network`() {
+    fun `downloads keep the original by default - whatever the network`() {
         metered = true
 
         cap.downloadMaxBitrateKbps() shouldBe null
     }
 
     @Test
-    fun `downloads use the download quality, not the network's`() {
+    fun `downloads use the download quality - not the network's`() {
         streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
         streamingSettings.meteredQuality.value = StreamingQuality.Kbps128
         metered = true

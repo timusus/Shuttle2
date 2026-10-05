@@ -26,7 +26,6 @@ com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> c
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.worker.ImportFrequency (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB (:android:playback:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.playback.settings.PlaybackSettings (:android:playback:core)
-com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.shuttle.downloads.DownloadSettings (:android:downloads)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.getAudioFile (:android:mediaprovider:local)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner (:android:mediaprovider:local)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder (:android:mediaprovider:local)

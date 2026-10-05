@@ -37,17 +37,16 @@ class ObserveArtistAlbums(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
 ) {
-    operator fun invoke(key: AlbumArtistGroupKey): Flow<ArtistAlbums> = artistAlbums(key, appearsOn(key).onStart { emit(emptyList()) })
-
-    /** As [invoke], but its first emission waits for Appears On, for a caller that takes just the one ([LoadArtistArtwork]). */
-    fun settled(key: AlbumArtistGroupKey): Flow<ArtistAlbums> = artistAlbums(key, appearsOn(key))
-
-    private fun artistAlbums(
+    /**
+     * [settled] makes the first emission wait for Appears On, for a caller that takes just the one ([LoadArtistArtwork]),
+     * rather than starting with it empty.
+     */
+    operator fun invoke(
         key: AlbumArtistGroupKey,
-        appearsOn: Flow<List<Album>>,
+        settled: Boolean = false,
     ): Flow<ArtistAlbums> = combine(
         albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(key)),
-        appearsOn,
+        if (settled) appearsOn(key) else appearsOn(key).onStart { emit(emptyList()) },
     ) { albums, appearsOn ->
         ArtistAlbums(albums = albums.sortedWith(ArtistSongComparator.albumNewest), appearsOn = appearsOn.sortedWith(ArtistSongComparator.albumNewest))
     }

@@ -30,7 +30,7 @@ class MatroskaTitleTest {
     }
 
     @Test
-    fun `not a matroska file, or an empty one, gives null`() {
+    fun `not a matroska file or an empty one gives null`() {
         matroskaTitle(byteArrayOf()) shouldBe null
         matroskaTitle("ID3 not matroska at all".encodeToByteArray()) shouldBe null
     }

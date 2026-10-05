@@ -35,7 +35,7 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallS
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|RadioButton|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Surface|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Text|10
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Text|3
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/SettingsScreens.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/SettingsScreens.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|Surface|1
@@ -47,14 +47,13 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/exclude
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ServerDetailScreen.kt|Text|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ThisDeviceScreen.kt|Text|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ThisDeviceScreen.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|BasicAlertDialog|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|CircularProgressIndicator|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|IconButton|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Icon|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|3
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Switch|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Text|13
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|OutlinedTextField|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Surface|3
@@ -69,7 +68,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerPane.
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerSheet.kt|Surface|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|Icon|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|SwipeToDismissBox|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/SongActions.kt|BasicAlertDialog|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/SongActions.kt|OutlinedTextField|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/SongActions.kt|Text|1

@@ -375,7 +375,7 @@ fun LibraryDestination(
     val viewModel: LibraryViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val trialViewModel: LibraryTrialChipViewModel = metroViewModel()
-    val trialDaysLeft by trialViewModel.daysLeft.collectAsStateWithLifecycle()
+    val trialDaysLeft by trialViewModel.uiState.collectAsStateWithLifecycle()
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)

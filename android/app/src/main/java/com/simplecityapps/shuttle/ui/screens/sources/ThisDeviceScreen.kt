@@ -27,6 +27,7 @@ import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SettingIconStyle
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
@@ -127,7 +128,7 @@ fun ThisDeviceScreen(
         if (uiState.thisDevice) {
             if (uiState.usesAndroidProvider) {
                 item(key = "this-device-android-provider") {
-                    Text(
+                    S2Text(
                         text = stringResource(R.string.sources_folder_rules_android_summary),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -207,7 +208,7 @@ fun ThisDeviceDialogHost(
             },
             dismissLabel = stringResource(android.R.string.cancel),
             destructive = true,
-        ) { Text(stringResource(R.string.sources_this_device_off_message)) }
+        ) { S2Text(stringResource(R.string.sources_this_device_off_message)) }
 
         is ThisDeviceDialog.RemoveFolder -> S2Dialog(
             title = stringResource(R.string.sources_remove_folder_title),
@@ -218,7 +219,7 @@ fun ThisDeviceDialogHost(
                 onRemoveFolder(dialog.kind, dialog.folder)
             },
             dismissLabel = stringResource(android.R.string.cancel),
-        ) { Text(dialog.folder.path ?: dialog.folder.name) }
+        ) { S2Text(dialog.folder.path ?: dialog.folder.name) }
 
         is ThisDeviceDialog.RevokedFolder -> S2Dialog(
             title = stringResource(R.string.sources_folder_access_removed_title),
@@ -232,7 +233,7 @@ fun ThisDeviceDialogHost(
             destructive = true,
         ) {
             Column {
-                Text(stringResource(R.string.sources_folder_access_removed_message, dialog.folder.path ?: dialog.folder.name))
+                S2Text(stringResource(R.string.sources_folder_access_removed_message, dialog.folder.path ?: dialog.folder.name))
                 S2Button(
                     text = stringResource(R.string.sources_grant_access),
                     onClick = {

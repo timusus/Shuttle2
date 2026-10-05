@@ -212,7 +212,7 @@ class SongDiffTest {
     }
 
     @Test
-    fun `a remote song played at the stored time below a millisecond is not an update, and merges at the stored precision`() = runTest {
+    fun `a remote song played at the stored time below a millisecond is not an update - and merges at the stored precision`() = runTest {
         val stored = createSong(id = 7, lastModified = firstImport).copy(playCount = 5, lastPlayed = firstImport)
 
         // Jellyfin and Emby report up to seven fractional digits; the database keeps milliseconds
