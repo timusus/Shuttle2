@@ -203,10 +203,15 @@ data class ServerOrigin(
     override fun toString() = "$host:$port"
 
     companion object {
+        /**
+         * The origin of [host] and [port], with the host as OkHttp and the platform report it (lower case, an
+         * internationalised name in punycode, without an IPv6 literal's brackets), so a server's settings are found
+         * however its address was typed.
+         */
         fun of(
             host: String,
             port: Int
-        ) = ServerOrigin(host.lowercase().removePrefix("[").removeSuffix("]"), port)
+        ) = ServerOrigin(asciiHost(host.removePrefix("[").removeSuffix("]")), port)
 
         /** The origin of [address] (`https://music.example.com:8920/jellyfin`, say), or null when it has no host. */
         fun parse(address: String): ServerOrigin? {
@@ -230,6 +235,86 @@ data class ServerOrigin(
         }
     }
 }
+
+/** [host] in lower case, each label holding other than ASCII in punycode (`bücher.example` is `xn--bcher-kva.example`). */
+internal fun asciiHost(host: String): String = host
+    .lowercase()
+    .split('.', '\u3002', '\uFF0E', '\uFF61')
+    .joinToString(".") { label -> if (label.all { it.code < 0x80 }) label else "xn--" + punycode(label) }
+
+/** [label] in punycode (RFC 3492), without the `xn--` prefix. */
+private fun punycode(label: String): String {
+    val codePoints = buildList {
+        var i = 0
+        while (i < label.length) {
+            val c = label[i]
+            if (c.isHighSurrogate() && i + 1 < label.length && label[i + 1].isLowSurrogate()) {
+                add(((c.code - 0xD800) shl 10) + (label[i + 1].code - 0xDC00) + 0x10000)
+                i += 2
+            } else {
+                add(c.code)
+                i++
+            }
+        }
+    }
+    val output = StringBuilder()
+    codePoints.filter { it < 0x80 }.forEach { output.append(it.toChar()) }
+    val basicCount = output.length
+    if (basicCount > 0) output.append('-')
+    var n = PUNYCODE_INITIAL_N
+    var delta = 0L
+    var bias = PUNYCODE_INITIAL_BIAS
+    var handled = basicCount
+    while (handled < codePoints.size) {
+        val next = codePoints.filter { it >= n }.min()
+        delta += (next - n).toLong() * (handled + 1)
+        n = next
+        for (codePoint in codePoints) {
+            if (codePoint < n) delta++
+            if (codePoint == n) {
+                var q = delta
+                var k = PUNYCODE_BASE
+                while (true) {
+                    val t = (k - bias).coerceIn(PUNYCODE_T_MIN, PUNYCODE_T_MAX)
+                    if (q < t) break
+                    output.append(punycodeDigit(t + ((q - t) % (PUNYCODE_BASE - t)).toInt()))
+                    q = (q - t) / (PUNYCODE_BASE - t)
+                    k += PUNYCODE_BASE
+                }
+                output.append(punycodeDigit(q.toInt()))
+                bias = punycodeBias(delta, handled + 1, first = handled == basicCount)
+                delta = 0
+                handled++
+            }
+        }
+        delta++
+        n++
+    }
+    return output.toString()
+}
+
+private fun punycodeBias(
+    delta: Long,
+    points: Int,
+    first: Boolean
+): Int {
+    var d = if (first) delta / 700 else delta / 2
+    d += d / points
+    var k = 0
+    while (d > ((PUNYCODE_BASE - PUNYCODE_T_MIN) * PUNYCODE_T_MAX) / 2) {
+        d /= PUNYCODE_BASE - PUNYCODE_T_MIN
+        k += PUNYCODE_BASE
+    }
+    return k + ((PUNYCODE_BASE - PUNYCODE_T_MIN + 1) * d / (d + 38)).toInt()
+}
+
+private fun punycodeDigit(digit: Int): Char = if (digit < 26) 'a' + digit else '0' + (digit - 26)
+
+private const val PUNYCODE_BASE = 36
+private const val PUNYCODE_T_MIN = 1
+private const val PUNYCODE_T_MAX = 26
+private const val PUNYCODE_INITIAL_N = 128
+private const val PUNYCODE_INITIAL_BIAS = 72
 
 /** [fingerprint] as the store keeps it: upper-case hex without separators. */
 fun normalizeFingerprint(fingerprint: String): String = fingerprint.filter { it.isLetterOrDigit() }.uppercase()

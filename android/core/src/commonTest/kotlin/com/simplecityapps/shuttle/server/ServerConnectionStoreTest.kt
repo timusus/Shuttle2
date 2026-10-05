@@ -23,6 +23,15 @@ class ServerConnectionStoreTest {
     }
 
     @Test
+    fun `an internationalised host is kept in lower case punycode as OkHttp reports it`() {
+        ServerOrigin.parse("https://Bücher.example/") shouldBe ServerOrigin("xn--bcher-kva.example", 443)
+        ServerOrigin.of("MÜNCHEN.example", 443) shouldBe ServerOrigin.of("xn--mnchen-3ya.example", 443)
+        ServerOrigin.of("пример.испытание", 80).host shouldBe "xn--e1afmkfd.xn--80akhbyknj4f"
+        ServerOrigin.of("ドメイン名例.jp", 80).host shouldBe "xn--eckwd4c7cu47r2wf.jp"
+        ServerOrigin.of("[FD00::1]", 8920).host shouldBe "fd00::1"
+    }
+
+    @Test
     fun `headers are saved for their server alone and survive a restart`() {
         store.setHeaders(origin, listOf(CustomHeader("CF-Access-Client-Id", "id"), CustomHeader(" X-Token ", " a:b ")))
 
