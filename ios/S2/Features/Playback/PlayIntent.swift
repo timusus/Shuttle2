@@ -105,6 +105,8 @@ final class PlayIntent {
         case remoteCommand = "remote command"
         case interruption
         case routeChange = "route change"
+        /// Siri, Shortcuts, a widget's button or a Control Center control (#758).
+        case appIntent = "app intent"
     }
 
     struct Command: Equatable {

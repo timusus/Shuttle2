@@ -47,6 +47,9 @@ enum AppGraph {
         #endif
         StartupTrace.step("storeKit") { dependencies.storeKit.start() }
         StartupTrace.step("paywallPresenter") { dependencies.paywallPresenter.start() }
+        // Siri, Shortcuts, widgets and controls run their intents through the app (#758)
+        IntentPerformers.playback = dependencies.intentPerformer
+        IntentPerformers.library = dependencies.intentPerformer
         _dependencies = dependencies
     }
 
@@ -103,6 +106,8 @@ final class IosAppDependencies {
     let storeKit: StoreKitManager
     /// Opens the paywall when a gated action asks for it.
     let paywallPresenter: PaywallPresenter
+    /// Carries out the App Intents: Siri, Shortcuts, the widgets' buttons and the Control Center control (#758).
+    let intentPerformer: AppIntentPerformer
 
     init() {
         let audioPlayer = StartupTrace.step("audioEngine") { EngineAudioPlayer(engine: Self.makeEngine()) }
@@ -135,6 +140,7 @@ final class IosAppDependencies {
         }
         storeKit = StoreKitManager(entitlements: graph.storeEntitlements, analytics: graph.monetisationAnalytics)
         paywallPresenter = PaywallPresenter(requests: graph.observePaywallRequests, store: storeKit)
+        intentPerformer = AppIntentPerformer(graph: graph, intent: playIntent)
     }
 
     /// The engine only fails to build without a stereo float format, which every device has.

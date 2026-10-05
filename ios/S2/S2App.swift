@@ -23,6 +23,8 @@ struct S2App: App {
                 .task {
                     StartupTrace.step("libraryImportAtLaunch") { LibraryImport.atLaunch() }
                     LibraryImport.syncIfStale()
+                    // Siri and Spotlight learn the playlists' names for "Play <playlist> in Shuttle Music"
+                    ShuttleShortcuts.updateAppShortcutParameters()
                     await LibraryImport.whenLocalFilesChange()
                 }
                 .onChange(of: scenePhase) { _, phase in

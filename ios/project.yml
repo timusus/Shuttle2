@@ -35,6 +35,8 @@ targets:
     platform: iOS
     sources:
       - path: S2
+      # The playback App Intents and the widgets' shared state, compiled into the widget extension as well (#758)
+      - path: SystemSurfaces
     # PrivacyInfo.xcprivacy (#607) must be a resource in the app bundle, not compiled as source.
     resources:
       - path: S2/PrivacyInfo.xcprivacy
