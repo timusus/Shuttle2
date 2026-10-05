@@ -22,6 +22,8 @@ class ServerRequestPolicyTest {
 
     init {
         store.setHeaders(ServerOrigin.of("music.example.com", 8920), listOf(CustomHeader("CF-Access-Client-Id", "id")))
+        store.setHeaders(ServerOrigin.of("secure.example.com", 443), listOf(CustomHeader("CF-Access-Client-Id", "id")))
+        store.setHeaders(ServerOrigin.of("plain.example.com", 80), listOf(CustomHeader("CF-Access-Client-Id", "id")))
     }
 
     private fun request(url: String, header: String? = null): NSURLRequest = NSMutableURLRequest.requestWithURL(NSURL.URLWithString(url)!!).apply {
@@ -32,8 +34,32 @@ class ServerRequestPolicyTest {
 
     private fun redirect(
         to: String,
-        carrying: String? = "id"
-    ) = policy.redirected(request(to, carrying), NSURL.URLWithString(server)).header()
+        carrying: String? = "id",
+        from: String = server
+    ) = policy.redirected(request(to, carrying), NSURL.URLWithString(from)).header()
+
+    @Test
+    fun anExplicitDefaultHttpsPortIsTheSameServer() {
+        redirect("https://secure.example.com:443/b", from = "https://secure.example.com/a") shouldBe "id"
+        redirect("https://secure.example.com/b", from = "https://secure.example.com:443/a") shouldBe "id"
+    }
+
+    @Test
+    fun anExplicitDefaultHttpPortIsTheSameServer() {
+        redirect("http://plain.example.com:80/b", from = "http://plain.example.com/a") shouldBe "id"
+        redirect("http://plain.example.com/b", from = "http://plain.example.com:80/a") shouldBe "id"
+    }
+
+    @Test
+    fun theOtherSchemesDefaultPortIsAnotherServer() {
+        redirect("https://secure.example.com:80/b", from = "https://secure.example.com/a").shouldBeNull()
+    }
+
+    @Test
+    fun theHostsCaseDoesNotMatter() {
+        redirect("https://MUSIC.Example.COM:8920/Audio/2/stream") shouldBe "id"
+        redirect("https://music.example.com:8920/b", from = "HTTPS://Music.Example.com:8920/a") shouldBe "id"
+    }
 
     @Test
     fun aRedirectWithinTheServerKeepsTheHeaders() {

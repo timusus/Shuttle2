@@ -34,8 +34,9 @@ import platform.Foundation.NSURLSessionResponseDisposition
 import platform.Foundation.NSURLSessionTask
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.setAllHTTPHeaderFields
-import platform.Foundation.setValue
 import platform.Foundation.valueForHTTPHeaderField
+import platform.UIKit.UIApplication
+import platform.UIKit.UIBackgroundTaskInvalid
 import platform.darwin.NSObject
 
 /**
@@ -45,9 +46,19 @@ import platform.darwin.NSObject
  * (Application Support/Downloads, excluded from iCloud backup) under its [DownloadFileNames] name, replacing any earlier
  * one only once it's there, and the directory's listing is the record of what's downloaded.
  *
- * Every delegate call arrives on the main queue, where [start] and [remove] are called too, so [tasks] is only touched
- * there. A path's wanted task is the one [tasks] holds: a removal cancels it there and then, and a task the session still
- * runs for a removed or restarted path is cancelled and ignored, never mistaken for the one that replaced it.
+ * Every delegate call arrives on the main queue, where [start] and [remove] are called too, so [wanted] is only touched
+ * there. A path's wanted download is the one [wanted] holds, a task or a start still finding its address: a removal
+ * cancels it there and then, and a task the session still runs for a removed or restarted path is cancelled and ignored,
+ * never mistaken for the one that replaced it.
+ *
+ * A server with custom headers (#921) has its download's address found first (#933). A background session follows a
+ * task's redirects itself (Apple documents `willPerformHTTPRedirection` as called for default and ephemeral sessions
+ * only) and carries the request's headers along, so a task that sent them could take them to another host. So each hop
+ * is probed on an ordinary session ([probeSession]) with the download's own request (same URL, headers and network
+ * rules, no Range, cancelled at its response), and the task starts where the redirects leave the server, with the headers
+ * only if that's still the server. The risk left: a server that redirects the download differently from the probe a
+ * moment earlier (a redirect that depends on the time, or on something iOS adds to a background request) still takes
+ * the task, headers and all, off the server. A probe that can't resolve hands over unprobed: see [start].
  *
  * iOS relaunches the app in the background when the session's downloads finish while it isn't running; the app delegate
  * hands that over with [handleBackgroundEvents]. The session must already exist by then, so the app builds this at launch.
@@ -89,31 +100,32 @@ class UrlSessionDownloads(
         delegateQueue = NSOperationQueue.mainQueue
     )
 
-    /** Each path's wanted task: the one [start] made, or one [restore] found still running from an earlier launch. */
-    private val tasks = mutableMapOf<String, NSURLSessionTask>()
+    /**
+     * Each path's wanted download: the task [start] made, or one [restore] found still running from an earlier launch, or
+     * the [Resolution] still finding its address.
+     */
+    private val wanted = WantedDownloads<NSURLSessionTask, Resolution>(
+        sameTask = { a, b -> a.taskIdentifier == b.taskIdentifier },
+        cancelTask = { it.cancel() },
+        cancelPending = { it.close() }
+    )
 
-    /** The downloads still finding their address, for a server with custom headers: see [start]. */
-    private val resolving = mutableMapOf<String, Resolution>()
+    /** What each probe request does with its answer, by task: called once, with null if it failed. */
+    private val probes = mutableMapOf<ULong, (ProbeAnswer?) -> Unit>()
 
-    private class Resolution {
-        var task: NSURLSessionTask? = null
-        var cancelled = false
-
-        fun cancel() {
-            cancelled = true
-            task?.cancel()
-        }
-    }
-
-    /** What each probe request does with its response, by task: called once, with null if it failed. */
-    private val probes = mutableMapOf<ULong, (NSHTTPURLResponse?) -> Unit>()
-
-    /** An ordinary session for the probes, which a background session can't make (it only runs downloads). */
+    /**
+     * An ordinary session for the probes, which a background session can't make (it only runs downloads). A probe waits
+     * for a network its request allows, as the background session's tasks do, rather than failing offline or on mobile
+     * data under Wi-Fi only.
+     */
     private val probeSession: NSURLSession = NSURLSession.sessionWithConfiguration(
-        NSURLSessionConfiguration.defaultSessionConfiguration,
+        NSURLSessionConfiguration.defaultSessionConfiguration.apply { waitsForConnectivity = true },
         delegate = ProbeDelegate(),
         delegateQueue = NSOperationQueue.mainQueue
     )
+
+    /** Keeps the app running while a probe is out, up to the background time iOS gives it; tests never run out. */
+    private val grace: BackgroundGrace = if (isolatedName == null) AppBackgroundGrace else BackgroundGrace { {} }
 
     /** The app delegate's completion handler for the session's background events, until they've all been delivered. */
     private var backgroundEventsCompletion: (() -> Unit)? = null
@@ -125,16 +137,8 @@ class UrlSessionDownloads(
             NSOperationQueue.mainQueue.addOperationWithBlock {
                 downloadTasks.orEmpty().filterIsInstance<NSURLSessionDownloadTask>().forEach { task ->
                     val path = task.path() ?: return@forEach
-                    val wanted = tasks[path]
-                    when {
-                        wanted == null -> {
-                            tasks[path] = task
-                            listener?.onRunning(path)
-                        }
-
-                        // Started again since launch: the new task replaces this one
-                        !wanted.isSameTask(task) -> task.cancel()
-                    }
+                    // One started again since launch, or still finding its address, replaces (and cancels) this one
+                    if (wanted.found(path, task)) listener?.onRunning(path)
                 }
             }
         }
@@ -147,19 +151,17 @@ class UrlSessionDownloads(
         wifiOnly: Boolean
     ) {
         val url = NSURL.URLWithString(source.url) ?: return listener?.onFailed(path) ?: Unit
-        tasks.remove(path)?.cancel()
-        resolving.remove(path)?.cancel()
-        // A server with custom headers (#921): its redirects are followed here, with the headers, before the background
-        // session gets the final address. iOS follows a background task's redirects itself while the app is suspended,
-        // without asking the delegate, so a download that sent the headers could carry them to another host (#933).
+        // A server with custom headers (#921) has its redirects followed here first, with the headers (#933). While the
+        // probe can't be answered for want of an allowed network, it waits, as the background session would. One that
+        // can't resolve (it failed, or the app went to the background and its time ran out first) hands the download to
+        // the background session at the original address with the headers, as before the probes: that session keeps
+        // it until a network is allowed and the app is gone, where failing would lose it, and without the headers the
+        // proxy they're for refuses it, or answers with its sign-in page, saved as the song. Only these unprobed
+        // starts can still take the headers along a redirect off the server.
         if (serverRequestPolicy.headers(source.url).isEmpty()) return begin(path, source, url, wifiOnly, withHeaders = false)
-        val resolution = Resolution()
-        resolving[path] = resolution
-        resolve(resolution, url, url, wifiOnly, hops = 0) { final, withHeaders ->
-            if (resolving[path] !== resolution) return@resolve
-            resolving.remove(path)
-            if (final == null) listener?.onFailed(path) else begin(path, source, final, wifiOnly, withHeaders)
-        }
+        val resolution = Resolution(path, source, url, wifiOnly)
+        wanted.pend(path, resolution)
+        resolution.ask(url, hops = 0)
     }
 
     /** Starts [path]'s download task for [url], which carries [source]'s server's custom headers only if [withHeaders]. */
@@ -176,49 +178,72 @@ class UrlSessionDownloads(
         val task = session.downloadTaskWithRequest(request)
         // The MIME type names the file; the server's suggested name is the fallback for one it doesn't know
         task.taskDescription = source.mimeType + "\n" + path
-        tasks[path] = task
+        wanted.run(path, task)
         task.resume()
     }
 
     /**
-     * Follows [url]'s redirects as far as they stay at [origin] (its server), with the server's headers, then reports where
-     * the download is to go: that address, with the headers only if it's still the server's. Null if a request failed.
+     * [path]'s download for a server with custom headers, finding its address from [origin]: it follows the redirects
+     * as far as they stay at the server, with the server's headers ([nextDownloadStep]), then starts the task. It holds
+     * background time while it does, and hands over unprobed when that runs out ([start]).
      */
-    private fun resolve(
-        resolution: Resolution,
-        origin: NSURL,
-        url: NSURL,
-        wifiOnly: Boolean,
-        hops: Int,
-        done: (NSURL?, Boolean) -> Unit
+    private inner class Resolution(
+        private val path: String,
+        private val source: DownloadSource,
+        private val origin: NSURL,
+        private val wifiOnly: Boolean
     ) {
-        val probe = probeSession.dataTaskWithRequest(downloadRequest(url, wifiOnly, serverRequestPolicy.headers(origin.absoluteString.orEmpty()), probe = true))
-        resolution.task = probe
-        probes[probe.taskIdentifier] = { response ->
-            if (resolution.cancelled) {
-                // Removed or restarted meanwhile: nothing to report
-            } else if (response == null) {
-                done(null, false)
-            } else {
-                when (val step = nextDownloadStep(serverRequestPolicy, origin, url, response.statusCode, response.valueForHTTPHeaderField("Location"))) {
-                    is DownloadStep.Follow -> if (hops >= MAX_REDIRECTS) done(null, false) else resolve(resolution, origin, step.url, wifiOnly, hops + 1, done)
-                    is DownloadStep.Download -> done(step.url, step.withHeaders)
-                }
+        private var probe: NSURLSessionTask? = null
+        private var closed = false
+        private val release = grace.hold { step(origin, hops = 0, answer = null) }
+
+        /** Probes [url], hop [hops] of the chain. */
+        fun ask(
+            url: NSURL,
+            hops: Int
+        ) {
+            val task = probeSession.dataTaskWithRequest(downloadRequest(url, wifiOnly, serverRequestPolicy.headers(origin.absoluteString.orEmpty())))
+            probe = task
+            probes[task.taskIdentifier] = { answer -> if (!closed) step(url, hops, answer) }
+            task.resume()
+        }
+
+        private fun step(
+            url: NSURL,
+            hops: Int,
+            answer: ProbeAnswer?
+        ) {
+            when (val step = nextDownloadStep(serverRequestPolicy, origin, url, hops, answer)) {
+                is DownloadStep.Follow -> ask(step.url, hops + 1)
+                is DownloadStep.Download -> finish { begin(path, source, step.url, wifiOnly, step.withHeaders) }
+                DownloadStep.Fail -> finish { listener?.onFailed(path) }
             }
         }
-        probe.resume()
+
+        /** Ends the probing with [then], unless the path has been removed or restarted since. */
+        private fun finish(then: () -> Unit) {
+            if (!wanted.resolved(path, this)) return
+            close()
+            then()
+        }
+
+        /** Stops the probe and gives back the background time: done, removed or restarted. */
+        fun close() {
+            if (closed) return
+            closed = true
+            probe?.cancel()
+            release()
+        }
     }
 
     override fun remove(path: String) {
-        tasks.remove(path)?.cancel()
-        resolving.remove(path)?.cancel()
+        wanted.clear(path)
         // One from an earlier launch that [restore] hasn't found yet: cancelled once the session lists it, unless it's
         // the download started for the path since
         session.getTasksWithCompletionHandler { _, _, downloadTasks ->
             NSOperationQueue.mainQueue.addOperationWithBlock {
-                val wanted = tasks[path]
                 downloadTasks.orEmpty().filterIsInstance<NSURLSessionTask>()
-                    .filter { it.path() == path && (wanted == null || !wanted.isSameTask(it)) }
+                    .filter { it.path() == path && !wanted.isRunning(path, it) }
                     .forEach { it.cancel() }
             }
         }
@@ -264,14 +289,6 @@ class UrlSessionDownloads(
 
     private fun NSURLSessionTask.path(): String? = taskDescription?.substringAfter('\n', "")?.takeIf { it.isNotEmpty() }
 
-    private fun NSURLSessionTask.isSameTask(other: NSURLSessionTask): Boolean = taskIdentifier == other.taskIdentifier
-
-    /** Whether [task] is [path]'s wanted task, or one from an earlier launch that's still the only one for it. */
-    private fun isWanted(
-        path: String,
-        task: NSURLSessionTask
-    ): Boolean = tasks[path]?.isSameTask(task) ?: true
-
     /**
      * Moves [path]'s finished download at [location] in as [destination]: first beside it under a staging name, then over
      * any earlier file, so the earlier one is only gone once the new one is in its place.
@@ -311,7 +328,7 @@ class UrlSessionDownloads(
             totalBytesExpectedToWrite: Long
         ) {
             val path = downloadTask.path() ?: return
-            if (isWanted(path, downloadTask)) listener?.onProgress(path, totalBytesWritten, totalBytesExpectedToWrite)
+            if (wanted.isWanted(path, downloadTask)) listener?.onProgress(path, totalBytesWritten, totalBytesExpectedToWrite)
         }
 
         // The temporary file is deleted when this returns, so it's moved here, before anything else
@@ -322,7 +339,7 @@ class UrlSessionDownloads(
         ) {
             val path = downloadTask.path() ?: return
             // Replaced by a later download of the same song, whose file is the one to keep
-            if (!isWanted(path, downloadTask)) return
+            if (!wanted.isWanted(path, downloadTask)) return
             val response = downloadTask.response as? NSHTTPURLResponse
             // A refusal's body is an error page, not the song: its status is reported so a 401/403 can be retried
             if (response != null && response.statusCode !in 200L..299L) return listener?.onFailed(path, response.statusCode.toInt()) ?: Unit
@@ -343,13 +360,12 @@ class UrlSessionDownloads(
             didCompleteWithError: NSError?
         ) {
             val path = task.path() ?: return
-            val wanted = tasks[path]
             // Replaced by a later download of the same song, which reports for itself
-            if (wanted != null && !wanted.isSameTask(task)) return
-            tasks.remove(path)
+            if (!wanted.isWanted(path, task)) return
+            val held = wanted.finished(path)
             val error = didCompleteWithError ?: return
             // Cancelled by a removal (which forgot it) or a restart; a cancelled task that's still wanted has failed
-            if (wanted == null && error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled) return
+            if (!held && error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled) return
             listener?.onFailed(path)
         }
 
@@ -369,6 +385,7 @@ class UrlSessionDownloads(
             newRequest: NSURLRequest,
             completionHandler: (NSURLRequest?) -> Unit
         ) {
+            // Asked by the isolated session's tasks; a background session's are followed without asking (see the KDoc)
             completionHandler(serverRequestPolicy.redirected(newRequest, task.originalRequest?.URL))
         }
 
@@ -379,7 +396,10 @@ class UrlSessionDownloads(
         }
     }
 
-    /** Reads each probe's first response, whatever it is, and follows no redirect: [resolve] decides each hop. */
+    /**
+     * Reads each probe's first response, whatever it is, and follows no redirect: [Resolution] decides each hop. The
+     * response ends the probe before its body is read.
+     */
     private inner class ProbeDelegate :
         NSObject(),
         NSURLSessionDataDelegateProtocol {
@@ -387,7 +407,7 @@ class UrlSessionDownloads(
             task: NSURLSessionTask,
             response: NSHTTPURLResponse?
         ) {
-            probes.remove(task.taskIdentifier)?.invoke(response)
+            probes.remove(task.taskIdentifier)?.invoke(response?.let { ProbeAnswer(it.statusCode, it.valueForHTTPHeaderField("Location")) })
         }
 
         override fun URLSession(
@@ -432,12 +452,43 @@ class UrlSessionDownloads(
     private companion object {
         /** A finished download's name while it's moved into place; [DownloadFileNames.path] reads no path from it. */
         const val STAGING_PREFIX = ".incoming-"
-
-        const val MAX_REDIRECTS = 10
     }
 }
 
-/** What to do with a probe's response: ask the next address, or hand the download this one. */
+/**
+ * Keeps the app running in the background while a probe is out: [hold] returns what gives the time back, and calls its
+ * `onExpired` (on the main queue) if iOS is about to suspend the app first.
+ */
+internal fun interface BackgroundGrace {
+    fun hold(onExpired: () -> Unit): () -> Unit
+}
+
+/** [BackgroundGrace] as a `UIApplication` background task. */
+private object AppBackgroundGrace : BackgroundGrace {
+    override fun hold(onExpired: () -> Unit): () -> Unit {
+        val app = UIApplication.sharedApplication
+        var id = UIBackgroundTaskInvalid
+        val end = {
+            if (id != UIBackgroundTaskInvalid) {
+                app.endBackgroundTask(id)
+                id = UIBackgroundTaskInvalid
+            }
+        }
+        id = app.beginBackgroundTaskWithName("Download address") {
+            onExpired()
+            end()
+        }
+        return end
+    }
+}
+
+/** A probe's response: its [status] and `Location`. */
+internal class ProbeAnswer(
+    val status: Long,
+    val location: String?
+)
+
+/** What to do after a probe: ask the next address, hand the download this one, or give up on a redirect loop. */
 internal sealed interface DownloadStep {
     class Follow(
         val url: NSURL
@@ -448,38 +499,49 @@ internal sealed interface DownloadStep {
         val url: NSURL,
         val withHeaders: Boolean
     ) : DownloadStep
+
+    data object Fail : DownloadStep
 }
 
+/** How many redirects within the server a download's probes follow before failing it. */
+internal const val MAX_DOWNLOAD_REDIRECTS = 10
+
 /**
- * The step after [url]'s response ([status] and its `Location`), a hop in a chain that began at [origin], the server's
- * address: a redirect to the server's own scheme, host and port is followed with its headers, one to anywhere else is
- * where the download goes, without them, and an answer that isn't a redirect means [url] itself is, with them.
+ * The step after [url]'s [answer], hop [hops] of a chain that began at [origin], the server's address: a redirect to the
+ * server's own scheme, host and port is followed with its headers (a loop fails after [MAX_DOWNLOAD_REDIRECTS]), one to
+ * anywhere else is where the download goes, without them, and an answer that isn't a redirect means [url] itself is,
+ * with them. No answer (the probe failed, or the app's time ran out first) hands over [origin] with the headers, unprobed,
+ * as [UrlSessionDownloads.start] explains.
  */
 internal fun nextDownloadStep(
     policy: ServerRequestPolicy,
     origin: NSURL,
     url: NSURL,
-    status: Long,
-    location: String?
+    hops: Int,
+    answer: ProbeAnswer?
 ): DownloadStep {
-    val redirect = if (status in 300L..399L && location != null) NSURL.URLWithString(location, relativeToURL = url)?.absoluteURL else null
+    answer ?: return DownloadStep.Download(origin, withHeaders = true)
+    val location = answer.location
+    val redirect = if (answer.status in 300L..399L && location != null) NSURL.URLWithString(location, relativeToURL = url)?.absoluteURL else null
     val next = redirect ?: return DownloadStep.Download(url, withHeaders = policy.sameOrigin(url, origin))
-    return if (policy.sameOrigin(next, origin)) DownloadStep.Follow(next) else DownloadStep.Download(next, withHeaders = false)
+    return when {
+        !policy.sameOrigin(next, origin) -> DownloadStep.Download(next, withHeaders = false)
+        hops >= MAX_DOWNLOAD_REDIRECTS -> DownloadStep.Fail
+        else -> DownloadStep.Follow(next)
+    }
 }
 
 /**
- * The request for a download or probe of [url]: [headers] are the server's custom headers (#921); the pinned certificate is
- * trusted in the delegate. A probe asks for its first byte only, as it is only read for its status and `Location`.
+ * The request for a download, or a probe of one, of [url]: [headers] are the server's custom headers (#921); the pinned
+ * certificate is trusted in the delegate. A probe is the same request, so the server redirects it as it would the download.
  */
 internal fun downloadRequest(
     url: NSURL,
     wifiOnly: Boolean,
-    headers: Map<String, String>,
-    probe: Boolean = false
+    headers: Map<String, String>
 ): NSMutableURLRequest = NSMutableURLRequest.requestWithURL(url).apply {
     // NSURLRequest's properties are read-only vals in Kotlin; the mutable request's setters write them
     setAllowsCellularAccess(!wifiOnly)
     setAllowsExpensiveNetworkAccess(!wifiOnly)
     setAllHTTPHeaderFields(headers.toMap<Any?, Any?>())
-    if (probe) setValue("bytes=0-0", forHTTPHeaderField = "Range")
 }

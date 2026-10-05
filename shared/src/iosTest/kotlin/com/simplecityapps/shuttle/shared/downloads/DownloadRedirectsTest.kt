@@ -25,8 +25,9 @@ class DownloadRedirectsTest {
     private fun step(
         status: Long,
         location: String?,
-        from: NSURL = origin
-    ) = nextDownloadStep(policy, origin, from, status, location)
+        from: NSURL = origin,
+        hops: Int = 0
+    ) = nextDownloadStep(policy, origin, from, hops, ProbeAnswer(status, location))
 
     @Test
     fun anAnswerThatIsNotARedirectIsDownloadedWithTheHeaders() {
@@ -55,15 +56,28 @@ class DownloadRedirectsTest {
     }
 
     @Test
-    fun aRedirectBackFromAnotherHostIsNotFollowedWithTheHeaders() {
-        // A hop out of the server ends the chain at once: the download starts there, so there is no way back
-        val out = step(302, "https://cdn.example.net/a").shouldBeInstanceOf<DownloadStep.Download>()
-        out.withHeaders shouldBe false
+    fun aRedirectWithoutALocationIsTheDownloadItself() {
+        step(302, null).shouldBeInstanceOf<DownloadStep.Download>().withHeaders shouldBe true
     }
 
     @Test
-    fun aRedirectWithoutALocationIsTheDownloadItself() {
-        step(302, null).shouldBeInstanceOf<DownloadStep.Download>().withHeaders shouldBe true
+    fun aRedirectLoopWithinTheServerFails() {
+        step(302, "/Audio/2/stream", hops = MAX_DOWNLOAD_REDIRECTS - 1).shouldBeInstanceOf<DownloadStep.Follow>()
+        step(302, "/Audio/2/stream", hops = MAX_DOWNLOAD_REDIRECTS) shouldBe DownloadStep.Fail
+    }
+
+    @Test
+    fun aRedirectLoopThatLeavesTheServerStillDownloadsThere() {
+        step(302, "https://cdn.example.net/file.flac", hops = MAX_DOWNLOAD_REDIRECTS).shouldBeInstanceOf<DownloadStep.Download>().withHeaders shouldBe false
+    }
+
+    @Test
+    fun aProbeWithoutAnAnswerHandsTheOriginalAddressOverWithTheHeaders() {
+        // Offline too long, a timeout, or the app's background time gone: the background session takes it unprobed
+        val hop = NSURL.URLWithString("https://music.example.com:8920/Audio/2/stream")!!
+        val step = nextDownloadStep(policy, origin, hop, hops = 3, answer = null).shouldBeInstanceOf<DownloadStep.Download>()
+        step.url shouldBe origin
+        step.withHeaders shouldBe true
     }
 
     @Test
@@ -71,11 +85,5 @@ class DownloadRedirectsTest {
         val request = downloadRequest(origin, wifiOnly = false, headers = policy.headers(origin.absoluteString!!))
         request.valueForHTTPHeaderField("CF-Access-Client-Id") shouldBe "id"
         downloadRequest(origin, wifiOnly = false, headers = emptyMap()).valueForHTTPHeaderField("CF-Access-Client-Id") shouldBe null
-    }
-
-    @Test
-    fun aProbeAsksForItsFirstByteOnly() {
-        downloadRequest(origin, wifiOnly = true, headers = emptyMap(), probe = true).valueForHTTPHeaderField("Range") shouldBe "bytes=0-0"
-        downloadRequest(origin, wifiOnly = true, headers = emptyMap()).valueForHTTPHeaderField("Range") shouldBe null
     }
 }
