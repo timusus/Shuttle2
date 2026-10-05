@@ -14,6 +14,7 @@ import com.simplecityapps.mediaprovider.search.SearchField
 import com.simplecityapps.mediaprovider.search.SearchIndex
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
@@ -84,8 +85,14 @@ class LibrarySearchIndex @Inject constructor(
     fun warmUp() {
         if (warming?.isActive == true) return
         warming = scope.launch(dispatcher) {
+            val started = TimeSource.Monotonic.markNow()
             songRepository.getSongs(SongQuery.All()).first { it != null }
-            index.collect {}
+            logger.info { "Search index: songs loaded in ${started.elapsedNow()}" }
+            var built = false
+            index.collect {
+                if (!built) logger.info { "Search index: ready in ${started.elapsedNow()}" }
+                built = true
+            }
         }
     }
 
@@ -155,6 +162,9 @@ class LibrarySearchIndex @Inject constructor(
     private companion object {
         val PLAY_REFRESH = 10.minutes
         val REBUILD_INTERVAL = 500.milliseconds
+
+        /** The warm-up's times, for the cold-start measurements (docs/performance/ios-startup.md). */
+        val logger = Logger.tagged("Startup")
 
         /** Whether [old] and [new] differ at most by what playing their items changes, which [withoutPlays] clears. */
         fun <T> sameIgnoringPlays(old: List<T>?, new: List<T>?, withoutPlays: (T) -> T): Boolean = old === new ||

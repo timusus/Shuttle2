@@ -248,12 +248,13 @@ class LoadHomeSections @Inject constructor(
                 }
             }
             if (sections != last && (sections.isNotEmpty() || loaded.complete)) {
+                if (last == null) logger.info { "Home: first sections in ${started.elapsedNow()}" }
                 last = sections
                 emit(sections)
             }
             !loaded.complete
         }.collect { send(it) }
-        logger.debug { "Home's sections loaded in ${started.elapsedNow()}" }
+        logger.info { "Home: sections loaded in ${started.elapsedNow()}" }
     }
 
     /** Runs [block], logging how long the stage of the load it is took. */
@@ -262,7 +263,7 @@ class LoadHomeSections @Inject constructor(
         block: suspend () -> T,
     ): T {
         val started = TimeSource.Monotonic.markNow()
-        return block().also { logger.debug { "$stage loaded in ${started.elapsedNow()}" } }
+        return block().also { logger.info { "Home: $stage loaded in ${started.elapsedNow()}" } }
     }
 
     private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> = items.mapNotNull { item ->
@@ -270,7 +271,8 @@ class LoadHomeSections @Inject constructor(
     }.toMap()
 
     private companion object {
-        val logger = Logger.tagged("LoadHomeSections")
+        /** In Release too: the cold-start measurements read Home's load (docs/performance/ios-startup.md). */
+        val logger = Logger.tagged("Startup")
     }
 }
 
@@ -300,11 +302,17 @@ class ObserveHomeSections @Inject constructor(
         val loads = visible.distinctUntilChanged()
             .flatMapLatest { visible -> if (visible) merge(flowOf(Unit), refreshes, importsCompleted(), libraryFilledOrEmptied()) else hourTurns() }
             .transformLatest {
-                if (suggestionsRepository.songCount().first() == 0) {
+                val counting = TimeSource.Monotonic.markNow()
+                val songCount = suggestionsRepository.songCount().first()
+                logger.info { "Home: songCount in ${counting.elapsedNow()}" }
+                if (songCount == 0) {
                     shown = false
                     emit(null)
                 } else {
-                    val sections = loadHomeSections(hasHistory = playHistoryRepository.eventCount().first() > 0)
+                    val countingEvents = TimeSource.Monotonic.markNow()
+                    val hasHistory = playHistoryRepository.eventCount().first() > 0
+                    logger.info { "Home: eventCount in ${countingEvents.elapsedNow()}" }
+                    val sections = loadHomeSections(hasHistory = hasHistory)
                     if (shown) emit(sections.last()) else emitAll(sections.onEach { shown = true })
                 }
             }
@@ -323,4 +331,8 @@ class ObserveHomeSections @Inject constructor(
             delay((60 - now.minute).times(60).seconds - now.second.seconds)
         }
     }.distinctUntilChanged().drop(1).map { }
+
+    private companion object {
+        val logger = Logger.tagged("Startup")
+    }
 }
