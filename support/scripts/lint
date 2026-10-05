@@ -59,4 +59,7 @@ if [ ${#files[@]} -eq 0 ]; then
   exit 0
 fi
 
+# Kotlin/Native-illegal backtick test names (#908): a grep, so cheap enough to run alongside ktlint.
+"${BASH_SOURCE[0]%/*}/native-test-names" "${files[@]}" || exit 1
+
 exec ktlint ${args[@]+"${args[@]}"} "${files[@]}"

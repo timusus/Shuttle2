@@ -48,6 +48,12 @@ else
   exit 1
 fi
 
+if ! support/scripts/native-test-names >"$log" 2>&1; then
+  echo "native test names: FAILED (not committed)"
+  cat "$log"
+  exit 1
+fi
+
 if [ "$run_tests" = 1 ]; then
   if ! support/scripts/unit-test --changed-tests >"$log" 2>&1; then
     echo "tests: FAILED (not committed)"

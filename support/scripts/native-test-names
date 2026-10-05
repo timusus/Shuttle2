@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Fast, Gradle-free check that backticked test names in commonTest/iosTest avoid the characters
+# Kotlin/Native rejects (#908, #932). Same character set as NativeTestNameRules in
+# android/architecture-tests (keep ILLEGAL in sync); that test only runs at landing.
+#
+#   native-test-names [files...]   explicit files, else the .kt files changed against the
+#                                  merge-base with origin/main plus staged/unstaged/untracked ones
+#
+# Prints file:line: `name` per violation and exits 1; exits 0 when clean or nothing applies.
+set -uo pipefail
+
+files=()
+if [ $# -gt 0 ]; then
+  for f in "$@"; do
+    case "$f" in
+      */src/commonTest/*.kt|*/src/iosTest/*.kt) [ -f "$f" ] && files+=("$f") ;;
+    esac
+  done
+else
+  cd "$(git rev-parse --show-toplevel)" || exit 1
+  base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
+  while IFS= read -r f; do
+    [ -n "$f" ] && [ -f "$f" ] && files+=("$f")
+  done < <(
+    {
+      git -c core.quotePath=false diff --name-only --diff-filter=d "$base" --
+      git -c core.quotePath=false ls-files --others --exclude-standard
+    } | grep -E '/src/(commonTest|iosTest)/.*\.kt$' | sort -u
+  )
+fi
+
+[ ${#files[@]} -gt 0 ] || exit 0
+
+# Backtick function name containing any of , ; : . / \ < > [ ]
+out="$(grep -nE '\bfun[[:space:]]+`[^`]*[],;:./\\<>[][^`]*`' -- "${files[@]}" 2>/dev/null)"
+[ -z "$out" ] && exit 0
+
+echo "Backtick test names in commonTest/iosTest must not contain any of , ; : . / \\ < > [ ] (Kotlin/Native rejects them):" >&2
+printf '%s\n' "$out" >&2
+exit 1

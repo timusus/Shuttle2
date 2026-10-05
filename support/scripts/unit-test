@@ -442,6 +442,18 @@ print_and_run() {
   run_and_report "$@"
 }
 
+# After a --changed / --changed-tests run: when the diff touches commonTest or iosTest sources, also run
+# NativeTestNameRules (Kotlin/Native-illegal backtick names, #908), which otherwise only fails at landing.
+# Returns the task's exit code, or 0 when nothing applies.
+run_native_name_rules_if_needed() {
+  local changed_files
+  changed_files="$(changed_files_since "$1")" || return 0
+  printf '%s\n' "${changed_files}" | grep -qE '/src/(commonTest|iosTest)/' || return 0
+  echo
+  echo "commonTest/iosTest changed: running NativeTestNameRules"
+  print_and_run :android:architecture-tests:testDebugUnitTest --tests '*NativeTestNameRules*'
+}
+
 run_changed_mode() {
   local base="$1"
   local changed_files
@@ -912,8 +924,10 @@ if [ "$#" -gt 0 ] && [ "$1" = "--changed" ]; then
         ;;
     esac
   done
-  run_changed_mode "${BASE_REF}"
-  exit $?
+  rc=0
+  run_changed_mode "${BASE_REF}" || rc=$?
+  run_native_name_rules_if_needed "${BASE_REF}" || rc=$?
+  exit "${rc}"
 fi
 
 if [ "$#" -gt 0 ] && [ "$1" = "--compile-dependents" ]; then
@@ -968,8 +982,10 @@ if [ "$#" -gt 0 ] && [ "$1" = "--changed-tests" ]; then
         ;;
     esac
   done
-  run_changed_tests_mode "${BASE_REF}"
-  exit $?
+  rc=0
+  run_changed_tests_mode "${BASE_REF}" || rc=$?
+  run_native_name_rules_if_needed "${BASE_REF}" || rc=$?
+  exit "${rc}"
 fi
 
 if [ "$#" -eq 0 ]; then

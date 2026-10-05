@@ -2,9 +2,13 @@
 paths:
   - "android/**/src/test/**"
   - "android/**/src/androidTest/**"
+  - "**/src/commonTest/**"
+  - "**/src/iosTest/**"
 ---
 
 # Android tests
+
+**commonTest/iosTest names:** no commas or other Kotlin/Native-illegal characters (`, ; : . / \ < > [ ]`) in backticked test names — `iosSimulatorArm64Test` refuses to compile them. `support/scripts/native-test-names` (run by `worker-finish.sh` and `lint`) catches them in seconds, and `unit-test --changed` runs `NativeTestNameRules` when commonTest/iosTest changed.
 
 ## `unit-test --changed`
 
