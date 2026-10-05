@@ -117,6 +117,14 @@ class AppShellTest {
     }
 
     @Test
+    fun `the bar labels its icon buttons`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        listOf("Sound", "Sleep", "Queue", "More").forEach { robot.assertTextDisplayed(it) }
+    }
+
+    @Test
     fun `each bar button opens its panel, and tapping it again closes it`() {
         robot.setContent()
         robot.tapMiniPlayer()

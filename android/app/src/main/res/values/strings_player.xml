@@ -6,6 +6,14 @@
     <string name="player_now_playing">Now playing</string>
     <!-- Button in the full-screen player's bottom row that opens and closes the queue -->
     <string name="player_queue">Queue</string>
+    <!-- Small label under the full-screen player's Playback & sound button (the waveform icon) -->
+    <string name="player_bar_sound">Sound</string>
+    <!-- Small label under the full-screen player's sleep timer button -->
+    <string name="player_bar_sleep">Sleep</string>
+    <!-- Small label under the full-screen player's audio output button -->
+    <string name="player_bar_output">Output</string>
+    <!-- Small label under the full-screen player's overflow menu button -->
+    <string name="player_bar_more">More</string>
     <!-- Snackbar shown after the queue is cleared -->
     <string name="player_queue_cleared">Queue cleared</string>
     <!-- Snackbar action that puts a cleared queue back -->

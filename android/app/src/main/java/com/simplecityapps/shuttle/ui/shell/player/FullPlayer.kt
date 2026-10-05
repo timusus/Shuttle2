@@ -30,6 +30,7 @@ import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -185,7 +186,7 @@ internal fun CollapseHandle(onCollapse: () -> Unit) {
 
 /**
  * The player's bar: Playback & sound (the speed when it isn't normal), the sleep timer (its time
- * left while one runs), Cast where it can start, the labelled Queue button, and the overflow with
+ * left while one runs), Cast where it can start, the Queue button, and the overflow with
  * the song's actions and Clear queue. The [selected] panel's button takes a tonal container. Swiping up on the bar
  * opens the queue, when no panel is open.
  */
@@ -221,7 +222,9 @@ internal fun NowPlayingBar(
                     onClick = { onPanel(NowPlayingPanel.PlaybackSound) },
                 )
             } else {
-                BarButton(Icons.Rounded.GraphicEq, playbackSound, selected == NowPlayingPanel.PlaybackSound) { onPanel(NowPlayingPanel.PlaybackSound) }
+                BarLabelled(stringResource(R.string.player_bar_sound)) {
+                    BarButton(Icons.Rounded.GraphicEq, playbackSound, selected == NowPlayingPanel.PlaybackSound) { onPanel(NowPlayingPanel.PlaybackSound) }
+                }
             }
             if (player.sleepTimerActive) {
                 val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
@@ -233,9 +236,15 @@ internal fun NowPlayingBar(
                     onClick = { onPanel(NowPlayingPanel.SleepTimer) },
                 )
             } else {
-                BarButton(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), selected == NowPlayingPanel.SleepTimer) { onPanel(NowPlayingPanel.SleepTimer) }
+                BarLabelled(stringResource(R.string.player_bar_sleep)) {
+                    BarButton(Icons.Rounded.Bedtime, stringResource(R.string.player_sleep_timer), selected == NowPlayingPanel.SleepTimer) { onPanel(NowPlayingPanel.SleepTimer) }
+                }
             }
-            if (player.castAvailable) CastButton() else OutputButton()
+            if (player.castAvailable) {
+                BarLabelled(stringResource(R.string.player_cast)) { CastButton() }
+            } else {
+                BarLabelled(stringResource(R.string.player_bar_output)) { OutputButton() }
+            }
             val queueOpen = selected == NowPlayingPanel.Queue
             S2Button(
                 text = stringResource(R.string.player_queue),
@@ -247,7 +256,9 @@ internal fun NowPlayingBar(
                 icon = Icons.AutoMirrored.Rounded.QueueMusic,
                 modifier = Modifier.semantics { this.selected = queueOpen },
             )
-            S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
+            BarLabelled(stringResource(R.string.player_bar_more)) {
+                S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
+            }
         }
     }
     val upNext = stringResource(R.string.playback_up_next)
@@ -291,6 +302,18 @@ private fun Modifier.swipeUpToOpen(
             change.consume()
         }
         if (completed && swiped <= -swipeDistance && enabled()) onOpen()
+    }
+}
+
+/** A small label under a bar [content] button, so its icon reads without guessing. */
+@Composable
+private fun BarLabelled(
+    label: String,
+    content: @Composable () -> Unit,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        content()
+        Text(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }
 
