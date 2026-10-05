@@ -37,6 +37,8 @@ If iOS changed since the last full verify, also run `ios/scripts/test.sh`. **STO
 [ -f ~/.secrets/asc.env ] && . ~/.secrets/asc.env
 API_KEY_PATH="${ASC_KEY_PATH:-/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8}"
 [ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_KEY_PATH in ~/.secrets/asc.env)"; false; }
+: "${ASC_KEY_ID:?set in ~/.secrets/asc.env}"
+: "${ASC_ISSUER_ID:?set in ~/.secrets/asc.env}"
 ```
 
 `~/.secrets/asc.env` holds `ASC_KEY_ID` (`98Q5SW65X5`), `ASC_ISSUER_ID` and `ASC_KEY_PATH`. Never print or commit the `.p8`.

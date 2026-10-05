@@ -38,11 +38,14 @@ def load_env():
     cfg = {}
     path = os.path.expanduser("~/.secrets/asc.env")
     if os.path.isfile(path):
-        for line in open(path):
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                cfg[k.strip()] = v.strip().strip('"').strip("'")
+        if os.stat(path).st_mode & 0o077:
+            print(f"warning: {path} is group/other-accessible; chmod 600 it", file=sys.stderr)
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    cfg[k.strip()] = v.strip().strip('"').strip("'")
     for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"):
         if os.environ.get(k):
             cfg[k] = os.environ[k]
@@ -55,18 +58,20 @@ def b64(b):
 
 def der_to_raw(der):
     """ECDSA DER signature -> r||s (32 bytes each), as JWS ES256 needs."""
-    assert der[0] == 0x30
+    if len(der) < 8 or der[0] != 0x30:
+        die("unexpected signature format from openssl")
     i = 2 if der[1] < 0x80 else 2 + (der[1] & 0x7F)
     parts = []
     for _ in range(2):
-        assert der[i] == 0x02
+        if i + 1 >= len(der) or der[i] != 0x02:
+            die("unexpected signature format from openssl")
         n = der[i + 1]
         parts.append(der[i + 2:i + 2 + n].lstrip(b"\0").rjust(32, b"\0"))
         i += 2 + n
     return parts[0] + parts[1]
 
 
-def make_jwt(cfg, ttl=1200):
+def make_jwt(cfg, ttl=1100):
     for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"):
         if not cfg.get(k):
             die(f"{k} not set (env or ~/.secrets/asc.env)")
@@ -97,7 +102,10 @@ class Client:
         try:
             with urllib.request.urlopen(req, timeout=60) as resp:
                 raw = resp.read()
-                return json.loads(raw) if raw else {}
+                try:
+                    return json.loads(raw) if raw else {}
+                except ValueError:
+                    die(f"{method} {path}: response is not valid JSON")
         except urllib.error.HTTPError as e:
             try:
                 errs = json.loads(e.read()).get("errors", [])
@@ -287,13 +295,18 @@ def cmd_whats_new(a, c):
 
 
 def parser():
-    common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--json", action="store_true", help="raw JSON output")
-    common.add_argument("--yes", action="store_true", help="perform write operations")
-    common.add_argument("--dry-run", action="store_true", help="print the write request, send nothing")
-    common.add_argument("--app", help="bundle id (default $ASC_APP_BUNDLE or " + DEFAULT_BUNDLE + ")")
+    def shared(sub):
+        # Subparser copies use SUPPRESS so a flag given before the leaf command is not reset to its default.
+        d = {"default": argparse.SUPPRESS} if sub else {}
+        c = argparse.ArgumentParser(add_help=False)
+        c.add_argument("--json", action="store_true", help="raw JSON output", **d)
+        c.add_argument("--yes", action="store_true", help="perform write operations", **d)
+        c.add_argument("--dry-run", action="store_true", help="print the write request, send nothing", **d)
+        c.add_argument("--app", help="bundle id (default $ASC_APP_BUNDLE or " + DEFAULT_BUNDLE + ")", **d)
+        return c
+    common = shared(True)
     p = argparse.ArgumentParser(prog="asc", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
-                                parents=[common])
+                                parents=[shared(False)])
     s = p.add_subparsers(dest="cmd", required=True)
     s.add_parser("apps", parents=[common]).set_defaults(fn=cmd_apps)
     b = s.add_parser("builds", parents=[common])
@@ -335,6 +348,8 @@ def parser():
 
 def main():
     a = parser().parse_args()
+    if a.dry_run:
+        a.yes = False
     a.fn(a, Client())
 
 
