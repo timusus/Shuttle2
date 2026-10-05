@@ -21,7 +21,7 @@ class SongDiffTest {
     }
 
     @Test
-    fun `lyrics alone are not a change, as the stored songs are read without them`() = runTest {
+    fun `lyrics alone are not a change as the stored songs are read without them`() = runTest {
         val existing = createSong(id = 7, lastModified = firstImport)
         val scanned = createSong(id = 0, lastModified = firstImport).copy(lyrics = "la la la")
 
