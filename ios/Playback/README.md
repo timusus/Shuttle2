@@ -124,7 +124,6 @@ change. They are kept diffable so a later shared AudioCore can take them back.
   - `Decode/`: `StreamByteReader`, `FileByteReader`, `ReadAheadTunables`, `StreamingPCMReader`.
   - `Streaming/`: `CachedRunStore`, `ResolvedURLCache`, `ReadAheadPolicy`,
     `ReadAheadControl`, `AudioByteTee`. The tee and appetite hooks are nil by default.
-  - `Engine/`: `ClockStallDetector`, `PlayerStallRecovery`.
   - Test support: `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`, `tone_moov_last.m4a`.
   - Their tests.
 - **Adapted.** S2 additions are marked `S2:`.

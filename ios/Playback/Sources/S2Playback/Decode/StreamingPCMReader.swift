@@ -196,10 +196,6 @@ final class StreamingPCMReader: ReadAheadControl {
     /// estimate. Zero for a file, which is never short of bytes.
     var bufferedAheadBytes: Int64 { httpSource?.bufferedAheadBytes ?? 0 }
 
-    /// The byte source, for the player's own stall recovery (``HTTPRangeByteSource/reopen()``).
-    /// Nil for a download.
-    var byteSource: HTTPRangeByteSource? { httpSource }
-
     // MARK: - Loading
 
     /// Probe the container and learn its audio format. Must be awaited before ``start(at:)``.

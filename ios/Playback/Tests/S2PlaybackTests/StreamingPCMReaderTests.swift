@@ -287,7 +287,6 @@ final class StreamingPCMReaderTests: XCTestCase {
         try made.start(at: 0)
         XCTAssertNotNil(made.nextChunk())
         XCTAssertNil(made.bytesFetched, "a file has no HTTP byte source")
-        XCTAssertNil(made.byteSource)
     }
 
     /// Not audio at all: the failure has to be `unprobeable`, because that is what the `AVPlayer`
