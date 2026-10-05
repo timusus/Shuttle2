@@ -103,7 +103,7 @@ class SongDiff(
         if (!old.mediaProvider.remote) return false
         val sizeChanged = size > 0 && old.size > 0 && size != old.size
         val mimeTypeChanged = !mimeType.isPlaceholderMimeType() && !old.mimeType.isPlaceholderMimeType() && !mimeType.equals(old.mimeType, ignoreCase = true)
-        val modifiedChanged = lastModified != null && lastModified.atStoredPrecision() != old.lastModified.atStoredPrecision()
+        val modifiedChanged = lastModified != null && old.lastModified != null && lastModified != old.lastModified
         return sizeChanged || mimeTypeChanged || modifiedChanged
     }
 
