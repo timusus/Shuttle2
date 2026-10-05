@@ -136,16 +136,9 @@ struct AlbumArtistDetailContent: View {
                         albumActions: albumActions
                     )
                 }
-                if !state.appearsOn.isEmpty {
-                    DetailAlbumShelf(
-                        title: "Appears On",
-                        albums: state.appearsOn,
-                        // Whose album it is: the album artist, not the track artists friendlyArtistName joins
-                        subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
-                        onAlbumTap: onAlbumTap,
-                        albumActions: albumActions,
-                        tileIdentifier: "detailTile.appearsOn"
-                    )
+                // Grouped, the album sections are the artist's albums, and Appears On follows them (#788)
+                if !state.hasAlbumSections {
+                    appearsOnShelf
                 }
                 songs
             }
@@ -162,6 +155,21 @@ struct AlbumArtistDetailContent: View {
         }
     }
 
+    /// Others' albums crediting the artist (#637), after the artist's own albums (#788).
+    @ViewBuilder private var appearsOnShelf: some View {
+        if !state.appearsOn.isEmpty {
+            DetailAlbumShelf(
+                title: "Appears On",
+                albums: state.appearsOn,
+                // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+                subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
+                onAlbumTap: onAlbumTap,
+                albumActions: albumActions,
+                tileIdentifier: "detailTile.appearsOn"
+            )
+        }
+    }
+
     // MARK: - Songs
 
     @ViewBuilder private var songs: some View {
@@ -169,7 +177,7 @@ struct AlbumArtistDetailContent: View {
         Section {
             SongsHeader(
                 sortOrder: state.sortOrder,
-                allExpanded: allExpanded,
+                allExpanded: state.allAlbumsExpanded,
                 hasAlbumSections: state.hasAlbumSections,
                 onSortOrderSelected: onSortOrderSelected,
                 onExpandAll: onExpandAll,
@@ -188,6 +196,10 @@ struct AlbumArtistDetailContent: View {
                 if let album = section.album {
                     albumSection(album, songs: section.songs, startIndex: indexed.startIndex)
                 } else {
+                    // Appears On sits between the artist's albums and the songs on none of them
+                    if state.hasAlbumSections {
+                        appearsOnShelf
+                    }
                     Section {
                         songRows(section.songs, startIndex: indexed.startIndex, numbered: false)
                     } header: {
@@ -199,6 +211,10 @@ struct AlbumArtistDetailContent: View {
                             .accessibilityAddTraits(.isHeader)
                     }
                 }
+            }
+            // With no songs off the artist's albums, Appears On closes the page
+            if state.hasAlbumSections && !state.sections.contains(where: { $0.album == nil }) {
+                appearsOnShelf
             }
         } else {
             Section {
@@ -272,12 +288,6 @@ struct AlbumArtistDetailContent: View {
 
     private func isExpanded(_ album: Album) -> Bool {
         album.groupKey.map { state.expandedAlbums.contains($0) } ?? false
-    }
-
-    /// Whether every album section is unfolded, which turns the header's Expand All into Collapse All.
-    private var allExpanded: Bool {
-        let albums = state.sections.compactMap(\.album)
-        return !albums.isEmpty && albums.allSatisfy(isExpanded)
     }
 }
 

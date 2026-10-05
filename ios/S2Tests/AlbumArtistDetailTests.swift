@@ -35,7 +35,7 @@ struct AlbumArtistDetailTests {
 
     /// Two albums, Kid A (2000) holding the third and fourth demo songs and OK Computer (1997) the first two, then
     /// the fifth song with no album, in `order`; `expanded` names the unfolded albums.
-    private func sectioned(_ order: ArtistSongSortOrder, expanded: [String] = []) -> AlbumArtistDetailUiState {
+    private func sectioned(_ order: ArtistSongSortOrder, expanded: [String] = [], appearsOn: [Album] = []) -> AlbumArtistDetailUiState {
         let ok = album("OK Computer", year: 1997)
         let kidA = album("Kid A", year: 2000)
         let songs = TestSongs.demo
@@ -44,7 +44,7 @@ struct AlbumArtistDetailTests {
             : [.init(album: nil, songs: songs)]
         let expandedKeys = Set([ok, kidA].filter { expanded.contains($0.name ?? "") }.compactMap(\.groupKey))
         return AlbumArtistDetailUiState(
-            albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: order, sections: sections,
+            albumArtist: artist(), albums: [kidA, ok], appearsOn: appearsOn, songs: sections.flatMap(\.songs), sortOrder: order, sections: sections,
             currentSong: nil, expandedAlbums: expandedKeys, loadingState: .ready, events: [],
             hero: nil, seed: ArtworkSeedNone.shared
         )
@@ -394,6 +394,14 @@ struct AlbumArtistDetailTests {
         #expect(try appearsOnTiles(sut) == 1)
         try sut.inspect().find(button: "Help: A Day in the Life").tap()
         #expect(opened?.name == "Help: A Day in the Life")
+    }
+
+    @Test func groupedByAlbumAppearsOnStillShowsAfterTheAlbumSections() throws {
+        let compilation = album("Help: A Day in the Life", year: 2005, albumArtist: "Various Artists")
+        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest, appearsOn: [compilation]))
+        #expect((try? sut.inspect().find(text: "Appears On")) != nil)
+        #expect(try appearsOnTiles(sut) == 1)
+        #expect((try? sut.inspect().find(text: "Other Songs")) != nil)
     }
 
     @Test func aShelfTilesMenuPlaysOrQueuesItsAlbum() throws {
