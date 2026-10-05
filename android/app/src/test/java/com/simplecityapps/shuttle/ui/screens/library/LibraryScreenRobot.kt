@@ -152,6 +152,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
                     LibraryTabChrome(),
                     LibraryTabControls(viewMode = viewMode, onViewModeChange = { viewMode = it }),
                     LibraryPageStates(albums = albums.copy(viewMode = viewMode)),
+                    trialDaysLeft = null,
                 )
             }
         }
