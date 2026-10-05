@@ -7,6 +7,9 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
 }
 
+// Modules whose host tests run under Robolectric (resources and assets are merged for them only).
+val modulesWithRobolectricTests = setOf(":android:mediaprovider:core", ":android:mediaprovider:local")
+
 kotlin {
     jvmToolchain(17)
 
@@ -18,10 +21,11 @@ kotlin {
         compileSdk = 36
         minSdk = 24
         // Runs commonTest (and androidHostTest) on the JVM, as testDebugUnitTest does for Android modules. AGP allows
-        // one host test component, so it's configured here for every module: with the Android resources and assets
-        // Robolectric tests read (the Room migration tests load the exported schemas as assets).
+        // one host test component, so it's declared here for every module. Android resources and assets (what Robolectric
+        // tests read, e.g. the Room migration tests loading the exported schemas) are opt-in, since merging them costs
+        // every module's build, and AGP allows withHostTest only once, so the modules with Robolectric tests are listed here.
         withHostTest {
-            isIncludeAndroidResources = true
+            isIncludeAndroidResources = project.path in modulesWithRobolectricTests
         }
     }
 

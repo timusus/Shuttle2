@@ -32,7 +32,7 @@ S2 Music Player — an Android app for local music playback and streaming via Je
   A worker's brief asks for `unit-test --changed` and nothing wider — no full suite, no emulator/simulator
   lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
   cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
-  (Android: `lint` (check only), `unit-test --changed`, `:android:architecture-tests:testDebugUnitTest` (always, so a layer violation fails the batch that adds it), a compile of dependent modules' test sources when domain/shared/core/commonMain sources changed, + assembleDebug; one automatic retry per verify run (so per bisect iteration) with `-Pkotlin.incremental=false` on an `Incremental compilation failed` flake; iOS, only when the picked commits touch `ios/`,
+  (Android: `lint` (check only), `unit-test --changed`, `:android:architecture-tests:testDebugUnitTest` (always, so a layer violation fails the batch that adds it; one Gradle call with assembleDebug), a compile of dependent modules' test sources when domain/shared/core/commonMain sources changed, + assembleDebug; one automatic retry per verify run (so per bisect iteration) with `-Pkotlin.incremental=false` on an `Incremental compilation failed` flake; iOS, only when the picked commits touch `ios/`,
   `shared/`, `android/domain|presentation|core`, or a KMP module's commonMain/commonTest: framework build, `./gradlew iosSimulatorArm64Test` (all KMP commonTest on Kotlin/Native) + app build and just the `S2Tests` classes
   mapped from the changed files), pushes, closes issues and cleans up the landed worktrees (`--close
   BRANCH:N` closes only when BRANCH landed; a bare `--close N` only when every branch landed). Run it as a
@@ -80,7 +80,7 @@ back to plain `./gradlew` when it isn't installed.
 # closes issues, cleans up worktrees. Run via longjob.sh, not a foreground call.
 support/scripts/longjob.sh start land -- support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]
 
-# Full verify (Android + iOS, temp worktree, records the watermark; before every Play release):
+# Full verify (Android + iOS, reusable locked worktree .claude/worktrees/full-verify so caches stay warm, records the watermark; before every Play release):
 support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh
 support/scripts/full-verify.sh --status
 
@@ -136,6 +136,7 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 
 ## Build Configuration
 
+- **Gradle memory**: `gradle.properties` pins the Kotlin daemon to 4g and `org.gradle.workers.max=6` (the Gradle daemon's 6g comes from `~/.gradle/gradle.properties`), sized for a 32 GB/10-core Mac running two builds at once; `remote-build.sh --max-workers` overrides the worker cap. `:android:app` tests fork twice on macOS (2g each)
 - **Kotlin 2.x**, **Java 17** (with core library desugaring)
 - **Gradle daemon runs on JDK 21**, pinned by `gradle/gradle-daemon-jvm.properties` (foojay resolver in `settings.gradle` downloads it if missing), so builds don't depend on `JAVA_HOME`. If Android Studio sync complains, set Gradle JDK to a 21 (e.g. the bundled JBR)
 - **Min SDK 24** (Compose 1.13), Target/Compile SDK 36
