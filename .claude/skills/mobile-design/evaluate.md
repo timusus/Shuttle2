@@ -69,8 +69,9 @@ only the screenshot scorecard is incomplete. Findings from every pass get filed.
    [native-surfaces.md](native-surfaces.md) and capture or check each surface by hand (its
    "Checking surfaces in an audit" section); one this environment cannot capture is checked from
    code and marked *unverified-in-this-audit*.
-4. **Feature expectations** — the checklist in [competitors.md](competitors.md): every
-   table-stakes feature of a premium 2026 music player, present / partial / absent, per platform.
+4. **Feature expectations** — the **Feature expectations** checklist in
+   [competitors.md](competitors.md): every feature a premium 2026 music player is expected to
+   have, present / partial / absent, per platform.
    A missing expectation is a finding even when everything that exists is beautiful.
 
 Pass 1 produces the rubric scores; passes 2–4 produce findings and the feature-gap list. All four go
@@ -122,6 +123,7 @@ transcript is not a backlog. The evidence lives **in the issue**, embedded, not 
 # once: git worktree add --detach .claude/worktrees/design-evidence \
 #   && git -C .claude/worktrees/design-evidence switch --orphan design-evidence \
 #   && (commit one file, push -u origin design-evidence) && git worktree remove …
+git fetch origin design-evidence
 git worktree add .claude/worktrees/design-evidence design-evidence
 cp <cropped>.png .claude/worktrees/design-evidence/<issue>-<slug>.png
 git -C .claude/worktrees/design-evidence add . && git -C .claude/worktrees/design-evidence commit -m "#<issue> <slug>"

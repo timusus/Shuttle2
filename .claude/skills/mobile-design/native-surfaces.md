@@ -13,10 +13,10 @@ custom.
 | 1 | Media session / Now Playing | Present (`PlaybackService`) | Present (`NowPlayingController`) | Feeds every other surface; Android core-quality requirement |
 | 2 | Car | Android Auto present | **CarPlay absent** | Driving is a primary listening context |
 | 3 | Output routing | Cast present | AirPlay picker present | Core for server streaming |
-| 4 | Widgets | Glance `NowPlayingWidget` present | **WidgetKit absent** | High visibility; Home + Lock Screen + StandBy |
-| 5 | Intents / shortcuts | App shortcuts present | **App Intents absent** | One intents layer powers Siri, Spotlight, widgets, controls |
+| 4 | Widgets | Glance `NowPlayingWidget` present | Present (`S2Widgets`) | High visibility; Home + Lock Screen + StandBy |
+| 5 | Intents / shortcuts | App shortcuts present | Present (`IntentPerformers`) | One intents layer powers Siri, Spotlight, widgets, controls |
 | 6 | Predictive back + mini player | On (targetSdk 36) — verify animations | n/a | In-app native feel |
-| 7 | Quick controls | **QS tile absent** | **ControlWidget absent** | Sleep timer / shuffle all; niche |
+| 7 | Quick controls | **QS tile absent** | Present (play/pause `ControlWidget`) | Sleep timer / shuffle all; niche |
 | 8 | Watch | **Wear absent** | **watchOS absent** | Minority, costly (needs offline) |
 | 9 | Live Activity / Live Update | n/a (media excluded) | Not for playback | Only for download/sync progress |
 
@@ -78,13 +78,16 @@ Re-check the state column against code before acting on it; it was a snapshot.
 
 `design-shots.sh` tours in-app screens only, so a whole-app audit (evaluate.md) checks these by hand:
 capture what this environment allows, check the rest from code, and mark anything not captured
-*unverified-in-this-audit* rather than skipping it silently.
+*unverified-in-this-audit* rather than skipping it silently. Do these on the audit's leased lanes,
+not ad-hoc `adb`/`simctl` sessions of your own: Android via the `emulator-check` skill /
+`remote-emu.sh` lanes (lock screen: `remote-emu.sh lockscreen on`), iOS via the `ios-simulator`
+skill's simulator lease (`sim-lease.sh`) — never `simctl create`.
 
 | Surface | How to check |
 |---|---|
 | Media notification (Android) | With playback running: `adb shell cmd statusbar expand-notifications`, then `adb exec-out screencap -p > notif.png`. Check MediaStyle, slot order, buffering spinner, overflow actions. |
-| Lock Screen / Dynamic Island (iOS) | Simulator: Device → Trigger Lockdown, then `xcrun simctl io booted screenshot lock.png`. Real colour and Island behaviour: the `ios-device` skill on a phone. |
-| Widgets (Android) | No flow can add a widget: add it to the launcher by hand on the emulator (or owner device) once, then screenshot light/dark/tinted and each size. iOS WidgetKit: check from code until it exists. |
+| Lock Screen / Dynamic Island (iOS) | Simulator: Device → Lock (Cmd+L), then `xcrun simctl io booted screenshot lock.png`. Real colour and Island behaviour: the `ios-device` skill on a phone. |
+| Widgets | Android: no flow can add a widget — add it to the launcher by hand on the emulator (or owner device) once, then screenshot light/dark/tinted and each size. iOS: the `S2Widgets` extension (WidgetKit widgets + ControlWidget) — add by hand on the simulator or a device and screenshot the same set. |
 | Android Auto | Desktop Head Unit (`desktop-head-unit` from the SDK) against a running emulator if installed; otherwise read the browse tree from `PlaybackService` and mark unverified. |
 | CarPlay | No CarPlay simulator in this environment: check the template code and the entitlement, mark unverified. |
-| Shortcuts / App Intents | Android: `adb shell dumpsys shortcut` (or long-press the launcher icon by hand). iOS: check the App Intents code until it exists. |
+| Shortcuts / App Intents | Android: `adb shell dumpsys shortcut` (or long-press the launcher icon by hand). iOS: check the App Shortcuts (backed by `IntentPerformers`) on the simulator or a device — long-press the app icon, Spotlight, the Shortcuts app. |
