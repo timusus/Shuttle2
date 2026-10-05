@@ -5,6 +5,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
@@ -44,6 +45,7 @@ class IosSettingsCatalogTest {
             PlaybackSettings.PreAmpGain.key,
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
+            DownloadSettings.WifiOnly.key,
             ArtworkSettings.LocalOnly.key,
             AppearanceSettings.ColourFromArtwork.key,
             AppearanceSettings.ShowHomeOnLaunch.key,

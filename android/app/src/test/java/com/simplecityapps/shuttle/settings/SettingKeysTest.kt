@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.settings
 
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.settings.PlaybackSettings
-import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
 import io.kotest.matchers.shouldBe
 import org.junit.Test

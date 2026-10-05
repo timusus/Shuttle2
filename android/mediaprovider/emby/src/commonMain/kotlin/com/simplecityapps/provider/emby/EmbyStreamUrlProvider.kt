@@ -35,4 +35,13 @@ class EmbyStreamUrlProvider(
         val url = authenticationManager.buildDownloadPath(song.path.substringAfterLast('/'), authenticatedCredentials) ?: return null
         return DownloadSource(url, song.mimeType)
     }
+
+    /** A 403 means the server has revoked download permission, so it's remembered; a 401 may only be an expired session. */
+    override fun downloadFallback(
+        song: Song,
+        httpStatus: Int
+    ): DownloadSource? {
+        if (httpStatus == 403) authenticationManager.disableDownloadPermission()
+        return super.downloadFallback(song, httpStatus)
+    }
 }

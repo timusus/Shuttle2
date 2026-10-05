@@ -9,6 +9,7 @@ import platform.Foundation.NSError
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSFileSize
 import platform.Foundation.NSHTTPURLResponse
+import platform.Foundation.NSMutableURLRequest
 import platform.Foundation.NSNumber
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSTemporaryDirectory
@@ -103,11 +104,18 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
 
     override fun start(
         path: String,
-        source: DownloadSource
+        source: DownloadSource,
+        wifiOnly: Boolean
     ) {
         val url = NSURL.URLWithString(source.url) ?: return listener?.onFailed(path) ?: Unit
         tasks.remove(path)?.cancel()
-        val task = session.downloadTaskWithURL(url)
+        // Per request, so a download started under one setting keeps it when the setting changes. A background session
+        // holds a task that's refused a network until an allowed one is back, rather than failing it.
+        val request = NSMutableURLRequest.requestWithURL(url).apply {
+            allowsCellularAccess = !wifiOnly
+            allowsExpensiveNetworkAccess = !wifiOnly
+        }
+        val task = session.downloadTaskWithRequest(request)
         // The MIME type names the file; the server's suggested name is the fallback for one it doesn't know
         task.taskDescription = source.mimeType + "\n" + path
         tasks[path] = task
@@ -228,7 +236,9 @@ class UrlSessionDownloads(isolatedName: String?) : DownloadTransport {
             // Replaced by a later download of the same song, whose file is the one to keep
             if (!isWanted(path, downloadTask)) return
             val response = downloadTask.response as? NSHTTPURLResponse
-            if (response == null || response.statusCode !in 200L..299L || didFinishDownloadingToURL.size() == 0L) return listener?.onFailed(path) ?: Unit
+            // A refusal's body is an error page, not the song: its status is reported so a 401/403 can be retried
+            if (response != null && response.statusCode !in 200L..299L) return listener?.onFailed(path, response.statusCode.toInt()) ?: Unit
+            if (response == null || didFinishDownloadingToURL.size() == 0L) return listener?.onFailed(path) ?: Unit
             val mimeType = downloadTask.taskDescription!!.substringBefore('\n')
             val extension = DownloadFileNames.extension(mimeType, fallback = response.suggestedFilename?.substringAfterLast('.', ""))
             val destination = directory.URLByAppendingPathComponent(DownloadFileNames.fileName(path, extension))!!

@@ -9,7 +9,6 @@ import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
-import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.ui.theme.toS2Accent
 import io.kotest.matchers.shouldBe

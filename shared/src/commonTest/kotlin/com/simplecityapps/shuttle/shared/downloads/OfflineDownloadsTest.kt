@@ -4,9 +4,12 @@ import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.shared.playback.song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 
@@ -19,11 +22,15 @@ class OfflineDownloadsTest {
 
         override fun restore(): Set<String> = onDevice
 
+        val wifiOnly = mutableListOf<Boolean>()
+
         override fun start(
             path: String,
-            source: DownloadSource
+            source: DownloadSource,
+            wifiOnly: Boolean
         ) {
             started += path to source
+            this.wifiOnly += wifiOnly
         }
 
         override fun remove(path: String) {
@@ -43,10 +50,23 @@ class OfflineDownloadsTest {
         ): String = error("Not streamed")
 
         override fun downloadSource(song: Song): DownloadSource? = if (song.name == "signed out") null else DownloadSource("https://jellyfin.example/${song.id}/download", song.mimeType)
+
+        override fun downloadFallback(
+            song: Song,
+            httpStatus: Int
+        ): DownloadSource? = DownloadSource("https://jellyfin.example/${song.id}/stream", song.mimeType)
     }
 
     private val transport = FakeTransport(onDevice = setOf("jellyfin://item/1"))
-    private val downloads = OfflineDownloads(listOf(jellyfin), transport)
+    private val requests = DownloadRequests(InMemoryKeyValueStore())
+    private var wifiOnly = true
+    private val downloads = offlineDownloads(transport)
+
+    /** [scope] runs eagerly, so a fallback retry has started by the time the failure's reported. */
+    private fun offlineDownloads(
+        transport: FakeTransport,
+        loadSongs: suspend (List<Long>) -> List<Song> = { emptyList() }
+    ) = OfflineDownloads(listOf(jellyfin), transport, requests, CoroutineScope(Dispatchers.Unconfined), { wifiOnly }, loadSongs)
 
     @Test
     fun theFilesOnTheDeviceAreDownloadedAtLaunch() = runTest {
@@ -112,7 +132,7 @@ class OfflineDownloadsTest {
     @Test
     fun removingAllOfATypeDeletesItsFilesAndLeavesTheOthers() = runTest {
         val transport = FakeTransport(onDevice = setOf("jellyfin://item/1", "jellyfin://item/2", "emby://item/3", "plex://library/4"))
-        val downloads = OfflineDownloads(listOf(jellyfin), transport)
+        val downloads = offlineDownloads(transport)
 
         downloads.removeAll(MediaProviderType.Jellyfin)
 
@@ -247,6 +267,73 @@ class OfflineDownloadsTest {
         transport.removed.toSet() shouldBe setOf("jellyfin://item/1", "jellyfin://item/2")
         transport.listener!!.onProgress("jellyfin://item/2", 50, 100)
         downloads.downloads.value shouldBe emptyMap()
+    }
+
+    @Test
+    fun aDownloadKeepsOffMobileDataWhenWifiOnlyIsOn() = runTest {
+        downloads.download(remote(2))
+        wifiOnly = false
+        downloads.download(remote(3))
+
+        transport.wifiOnly shouldBe listOf(true, false)
+    }
+
+    @Test
+    fun aRefusedDownloadIsTriedOnceFromTheFallbackUrl() = runTest {
+        downloads.download(remote(2))
+
+        transport.listener!!.onFailed("jellyfin://item/2", 403)
+
+        transport.started.last() shouldBe ("jellyfin://item/2" to DownloadSource("https://jellyfin.example/2/stream", "audio/flac"))
+        downloads.downloads.value["jellyfin://item/2"] shouldBe OfflineDownload(OfflineDownload.State.Downloading, 0f)
+
+        transport.listener!!.onFailed("jellyfin://item/2", 401)
+
+        transport.started.size shouldBe 2
+        downloads.downloads.value["jellyfin://item/2"]?.state shouldBe OfflineDownload.State.Failed
+    }
+
+    @Test
+    fun aDownloadThatFailsForAnotherReasonIsNotRetried() = runTest {
+        downloads.download(remote(2))
+
+        transport.listener!!.onFailed("jellyfin://item/2", 500)
+
+        transport.started.size shouldBe 1
+        downloads.downloads.value["jellyfin://item/2"]?.state shouldBe OfflineDownload.State.Failed
+    }
+
+    @Test
+    fun aDownloadThatFailedWhileTheAppWasntRunningIsListedAndCanBeRetried() = runTest {
+        offlineDownloads(FakeTransport()).download(remote(2))
+
+        val relaunched = FakeTransport()
+        val reopened = offlineDownloads(relaunched) { ids -> ids.map { remote(it).copy(name = "Song $it") } }
+        relaunched.listener!!.onFailed("jellyfin://item/2")
+
+        reopened.downloads.value["jellyfin://item/2"]?.state shouldBe OfflineDownload.State.Failed
+        reopened.canRetry("jellyfin://item/2") shouldBe true
+        reopened.requestedSong("jellyfin://item/2") shouldBe null
+        reopened.loadRequestedSong("jellyfin://item/2")?.name shouldBe "Song 2"
+        reopened.requestedTitle("jellyfin://item/2") shouldBe "Song 2"
+
+        reopened.dismissFailed("jellyfin://item/2")
+        reopened.canRetry("jellyfin://item/2") shouldBe false
+    }
+
+    @Test
+    fun aFailureOfADownloadNobodyAskedForIsIgnored() = runTest {
+        transport.listener!!.onFailed("jellyfin://item/9")
+
+        downloads.downloads.value.keys shouldBe setOf("jellyfin://item/1")
+    }
+
+    @Test
+    fun aCompletedDownloadIsNoLongerRemembered() = runTest {
+        downloads.download(remote(2))
+        transport.listener!!.onCompleted("jellyfin://item/2")
+
+        requests["jellyfin://item/2"] shouldBe null
     }
 
     private fun remote(id: Long) = song(id = id, path = "jellyfin://item/$id").copy(mediaProvider = MediaProviderType.Jellyfin)

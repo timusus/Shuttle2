@@ -13,12 +13,12 @@ import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.downloads.DefaultSongDownloadManager
 import com.simplecityapps.shuttle.downloads.DefaultSongDownloadRepository
-import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.downloads.downloadRequirements
 import com.simplecityapps.shuttle.downloads.runOnMainThreadBlocking
 import com.simplecityapps.shuttle.downloads.service.SongDownloadService
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds

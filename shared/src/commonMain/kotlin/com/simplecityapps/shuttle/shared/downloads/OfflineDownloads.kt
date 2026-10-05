@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.actions.downloadActions
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * Offline downloads of Jellyfin, Emby and Plex songs on iOS (docs/architecture/downloads.md), the counterpart of Android's
@@ -27,11 +29,21 @@ import kotlinx.coroutines.flow.update
  * ([remove]) since it was last downloaded has its late file deleted again, as does one of a provider whose downloads were
  * all removed ([removeAll]) that hadn't been reported yet: an earlier launch's download the transport is still finding.
  *
- * The player plays a downloaded song from its file ([fileUrl]).
+ * A download the server refuses with a 401 or 403 is tried once more from the provider's fallback URL
+ * ([StreamUrlProvider.downloadFallback]), as Android's `DownloadFallbackObserver` does. Which song each download was
+ * asked for is kept across launches ([requests]), so one that failed while the app wasn't running is listed and can be
+ * retried; its song is loaded again from the library with [loadSongs].
+ *
+ * The player plays a downloaded song from its file ([fileUrl]). [wifiOnly] says whether a download that starts now
+ * is kept off mobile data. [scope] runs on the thread the [transport] is called on.
  */
 class OfflineDownloads(
     private val streamUrls: Collection<StreamUrlProvider>,
-    private val transport: DownloadTransport
+    private val transport: DownloadTransport,
+    private val requests: DownloadRequests,
+    private val scope: CoroutineScope,
+    private val wifiOnly: () -> Boolean = { true },
+    private val loadSongs: suspend (List<Long>) -> List<Song> = { emptyList() }
 ) : SongDownloader {
     private val _downloads = MutableStateFlow<Map<String, OfflineDownload>>(emptyMap())
 
@@ -44,8 +56,11 @@ class OfflineDownloads(
      */
     private val removedPrefixes = MutableStateFlow<Set<String>>(emptySet())
 
-    /** The song each download of this launch was started for, so a failed one can be retried; not those found at launch. */
+    /** The song each download of this launch was started for, or has been loaded for since, so a failed one can be retried. */
     private val requested = MutableStateFlow<Map<String, Song>>(emptyMap())
+
+    /** The paths whose download has had its one retry from the fallback URL. */
+    private val fallbackTried = MutableStateFlow<Set<String>>(emptySet())
 
     /** Every song's download that's running, completed or failed, by `Song.path`. */
     val downloads: StateFlow<Map<String, OfflineDownload>> = _downloads.asStateFlow()
@@ -68,13 +83,21 @@ class OfflineDownloads(
             }
 
             override fun onCompleted(path: String) {
+                requests.remove(path)
                 // Removed while it was finishing: the file arrived after the removal deleted it
                 if (path in removedPaths.value || isRemovedUnknown(path)) return transport.remove(path)
                 // Anything else is kept, including one finished while the app wasn't running, which nothing had reported
                 update(path) { OfflineDownload(OfflineDownload.State.Completed, 1f) }
             }
 
-            override fun onFailed(path: String) = update(path) { current -> current?.copy(state = OfflineDownload.State.Failed) }
+            override fun onFailed(
+                path: String,
+                httpStatus: Int?
+            ) {
+                if (path in removedPaths.value || isRemovedUnknown(path)) return
+                if ((httpStatus == 401 || httpStatus == 403) && retryFromFallback(path, httpStatus)) return
+                markFailed(path)
+            }
         }
         val restored = transport.restore().associateWith { OfflineDownload(OfflineDownload.State.Completed, 1f) }
         _downloads.update { restored + it }
@@ -84,9 +107,11 @@ class OfflineDownloads(
         if (_downloads.value[song.path]?.state.let { it == OfflineDownload.State.Downloading || it == OfflineDownload.State.Completed }) return true
         val source = streamUrls.forPath(song.path)?.downloadSource(song) ?: return false
         removedPaths.update { it - song.path }
+        fallbackTried.update { it - song.path }
         requested.update { it + (song.path to song) }
+        requests.put(song)
         _downloads.update { it + (song.path to OfflineDownload(OfflineDownload.State.Downloading, 0f)) }
-        transport.start(song.path, source)
+        transport.start(song.path, source, wifiOnly())
         return true
     }
 
@@ -100,8 +125,64 @@ class OfflineDownloads(
     /** The song [path]'s download was started for in this launch, so a failed one can be tried again; null for any other. */
     fun requestedSong(path: String): Song? = requested.value[path]
 
+    /** The name of the song [path]'s download was asked for, kept across launches; null if it isn't known. */
+    fun requestedTitle(path: String): String? = requested.value[path]?.name ?: requests[path]?.title?.takeIf { it.isNotEmpty() }
+
+    /** Whether [path]'s download can be started again: its song is known, or can be loaded from the library. */
+    fun canRetry(path: String): Boolean = path in requested.value || requests[path] != null
+
+    /** The song [path]'s download was asked for, loaded from the library if it was asked for in an earlier launch; null if unknown. */
+    suspend fun loadRequestedSong(path: String): Song? {
+        requested.value[path]?.let { return it }
+        val request = requests[path] ?: return null
+        val song = loadSongs(listOf(request.songId)).firstOrNull { it.path == path } ?: return null
+        requested.update { it + (path to song) }
+        return song
+    }
+
     /** Forgets [path]'s failed download, for a list that dismisses it. A running or completed one is left alone. */
-    fun dismissFailed(path: String) = update(path) { current -> current?.takeUnless { it.state == OfflineDownload.State.Failed } }
+    fun dismissFailed(path: String) {
+        if (_downloads.value[path]?.state != OfflineDownload.State.Failed) return
+        requests.remove(path)
+        update(path) { current -> current?.takeUnless { it.state == OfflineDownload.State.Failed } }
+    }
+
+    /** Starts [path]'s one retry from the provider's fallback URL; false if it has had it, or no provider can give one. */
+    private fun retryFromFallback(
+        path: String,
+        httpStatus: Int
+    ): Boolean {
+        val provider = streamUrls.forPath(path) ?: return false
+        var first = false
+        fallbackTried.update { tried ->
+            first = path !in tried
+            tried + path
+        }
+        if (!first) return false
+        scope.launch {
+            val fallback = loadRequestedSong(path)?.let { provider.downloadFallback(it, httpStatus) }
+            when {
+                path in removedPaths.value -> Unit
+
+                fallback == null -> markFailed(path)
+
+                else -> {
+                    update(path) { OfflineDownload(OfflineDownload.State.Downloading, 0f) }
+                    transport.start(path, fallback, wifiOnly())
+                }
+            }
+        }
+        return true
+    }
+
+    /** [path]'s download has failed, whether this launch started it or an earlier one did and its song is remembered. */
+    private fun markFailed(path: String) = update(path) { current ->
+        when {
+            current != null -> current.copy(state = OfflineDownload.State.Failed)
+            requests[path] != null -> OfflineDownload(OfflineDownload.State.Failed, 0f)
+            else -> null
+        }
+    }
 
     private fun removeProvider(type: MediaProviderType) {
         val prefix = type.pathScheme?.let { "$it://" } ?: return
@@ -112,6 +193,7 @@ class OfflineDownloads(
     private fun removePath(path: String) {
         removedPaths.update { it + path }
         requested.update { it - path }
+        requests.remove(path)
         _downloads.update { it - path }
         transport.remove(path)
     }

@@ -3,11 +3,11 @@ package com.simplecityapps.shuttle.backup
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
-import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.Setting

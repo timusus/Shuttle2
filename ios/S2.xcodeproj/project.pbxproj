@@ -36,6 +36,7 @@
 		28BC962B531FFE397879547B /* DebugArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE223215219F6F97AC1D9FD2 /* DebugArtwork.swift */; };
 		2A319BAAFA3AE125057BF8AC /* SectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36538449409BD13651C085A2 /* SectionHeader.swift */; };
 		2ABA345B8D63E42DA6D413BF /* CoverMosaic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32385386778AA341330EA17 /* CoverMosaic.swift */; };
+		2AD1E9BF05D612DECD20795D /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 7C51FFDD0CF125C66929F1E1 /* Localizable.stringsdict */; };
 		2C7B3FD103869E7BB31DC2A7 /* NavigatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A6ADEACA55D27E692A2C22 /* NavigatorTests.swift */; };
 		2D1E96D1ECC97DF4A709C917 /* ViewModelGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 214D546417D1085A1C2B5F67 /* ViewModelGroup.swift */; };
 		2DA2E2E30509CFBEDD4130AD /* DetailSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA8DC3CAF502AB452A47E5C /* DetailSupportTests.swift */; };
@@ -342,6 +343,7 @@
 		F514B51790ECF0E4C03C9DCE /* S2.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = S2.xcconfig; sourceTree = "<group>"; };
 		F57C06B74E49F7F95F50A62E /* MarqueeText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarqueeText.swift; sourceTree = "<group>"; };
 		F6D121E3E347AC1642C1D039 /* LibraryLetterIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryLetterIndex.swift; sourceTree = "<group>"; };
+		F711E976200272B01EDEB182 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		F7647069B7F0DC85EE4B35DB /* EmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyState.swift; sourceTree = "<group>"; };
 		F8D3127BEC11A3D89D92CAA2 /* RouteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteTests.swift; sourceTree = "<group>"; };
 		F95725D349E6F5EBD720DD23 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
@@ -763,6 +765,7 @@
 				FC548555BCD74CA0702CE7B3 /* ContentView.swift */,
 				E5B4C7411078C92EE8985A4B /* Info.plist */,
 				CB2C91FE8406D6ED46243D9D /* Localizable.strings */,
+				7C51FFDD0CF125C66929F1E1 /* Localizable.stringsdict */,
 				94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */,
 				20E688A48CB9963C2F8837D2 /* S2App.swift */,
 				FCBFC3688D06BC30635B00FA /* Settings.bundle */,
@@ -874,6 +877,7 @@
 			files = (
 				22061B66DFCCC943591B60BA /* Assets.xcassets in Resources */,
 				842361F9758C975E8AAB0BDB /* Localizable.strings in Resources */,
+				2AD1E9BF05D612DECD20795D /* Localizable.stringsdict in Resources */,
 				D3F60B96084F2A27FEDB1EB9 /* PrivacyInfo.xcprivacy in Resources */,
 				52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */,
 				A204971796190252B0805D9F /* Settings.strings in Resources */,
@@ -1064,6 +1068,14 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		7C51FFDD0CF125C66929F1E1 /* Localizable.stringsdict */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F711E976200272B01EDEB182 /* en */,
+			);
+			name = Localizable.stringsdict;
+			sourceTree = "<group>";
+		};
 		ABEAF4D5A4ED98BF0D97DB69 /* Settings.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

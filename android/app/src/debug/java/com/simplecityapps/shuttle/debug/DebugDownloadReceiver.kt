@@ -6,10 +6,10 @@ import android.content.Intent
 import android.util.Log
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.appGraph
-import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.ui.actions.DownloadSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import dev.zacsweers.metro.AppScope

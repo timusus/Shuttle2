@@ -13,17 +13,20 @@ struct DownloadsView: View {
         Observing(downloads.downloads, models.actions.uiState) { current, actions in
             DownloadsStorage(
                 downloads: current,
-                title: { downloads.requestedSong(path: $0)?.name },
+                title: { downloads.requestedTitle(path: $0) },
                 fileSize: { path in
                     downloads.fileUrl(path: path).flatMap { URL(string: $0) }.flatMap { try? $0.resourceValues(forKeys: [.fileSizeKey]).fileSize }.map(Int64.init) ?? 0
                 },
                 onRetry: { path in
-                    guard let song = downloads.requestedSong(path: path) else { return }
-                    models.actions.send(MediaActionDownload(selection: MediaSelectionSongs(songs: [song])))
+                    // One that failed in an earlier launch has its song loaded from the library again first
+                    Task {
+                        guard let song = try? await downloads.loadRequestedSong(path: path) else { return }
+                        models.actions.send(MediaActionDownload(selection: MediaSelectionSongs(songs: [song])))
+                    }
                 },
                 onDismiss: { downloads.dismissFailed(path: $0) },
                 onRemoveAll: { downloads.removeEverything() },
-                canRetry: { downloads.requestedSong(path: $0) != nil }
+                canRetry: { downloads.canRetry(path: $0) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
         }

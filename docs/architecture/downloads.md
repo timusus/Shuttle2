@@ -96,9 +96,19 @@ playlists offer Download and Remove Download too (`SongRowMenu`). Library > Song
 toolbar, shown once a song is downloaded (Android's Library has no such filter yet); with it on, the list, Play and
 Shuffle cover only the downloaded songs. Settings > Downloads (`DownloadsView`) shows the count and size on disk
 (the completed files' own sizes), Remove All (`OfflineDownloads.removeEverything`, behind a confirmation), the
-running downloads and the failed ones, which can be retried (through the gated Download action, from the song
-`OfflineDownloads.requestedSong` remembers for this launch) or dismissed. A download that was running before a
-relaunch and then fails has no remembered song, so it can only be dismissed.
+running downloads and the failed ones, which can be retried (through the gated Download action) or dismissed.
+`DownloadRequests` keeps each requested song's id and name by path across launches, so a download that fails while
+the app isn't running is listed with its name and its song is loaded from the library again to retry it
+(`OfflineDownloads.loadRequestedSong`). A record goes when its download completes, is removed or is dismissed.
+
+**401/403.** `UrlSessionDownloads` reports the HTTP status of a refused download, and `OfflineDownloads` retries it
+once from `StreamUrlProvider.downloadFallback` (the stream URL; Jellyfin and Emby also remember a 403 as revoked
+download permission), as Android's `DownloadFallbackObserver` does. A second refusal fails the download.
+
+**Wi-Fi only.** `DownloadSettings.WifiOnly` (`:android:core`, shared with Android, default on) is read when a
+download starts and set on its request as `allowsCellularAccess` and `allowsExpensiveNetworkAccess`, so the background
+session holds it until Wi-Fi is back. A download already started keeps the rule it began with. Settings > Sources has
+the switch.
 
 **Tests.** `OfflineDownloadsTest`, `DownloadFileNamesTest` and `SongStreamResolverTest` (commonTest, run on
 the JVM with `:shared:testAndroidHostTest`). An isolated test graph (`IosStorage(isolatedName)`) gets a plain
@@ -108,8 +118,6 @@ session and its own directory under tmp, so tests never touch the app's download
 
 Each is its own issue (label `design`):
 
-- Retrying a 401 or 403 with the stream URL, as Android's `DownloadFallbackObserver` does.
 - Removing a server's downloads with the server, and a server id in the file names (see above).
-- Download on Wi-Fi only (Android's setting), and a cellular rule.
 - Download quality.
-- iOS plurals (`.stringsdict`) for the download messages.
+- Plurals (`.stringsdict`) for the other count strings; only the download-failed alert has one.

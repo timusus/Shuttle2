@@ -71,8 +71,8 @@ struct SongListContent: View {
     var onSortOrder: (SongSortOrder) -> Void = { _ in }
 
     @State private var songInfo: SongInfoTarget?
-    /// The Downloaded filter (#851): only the songs on the device, which play offline. Kept for the session.
-    @State private var downloadedOnly = false
+    /// The Downloaded filter (#851): only the songs on the device, which play offline. Kept across launches.
+    @AppStorage("library.songs.downloadedOnly") private var downloadedOnly = false
     @Environment(\.downloadBadges) private var downloadBadges
 
     /// The songs the list shows: all of them, or with the filter on, those whose download has finished.

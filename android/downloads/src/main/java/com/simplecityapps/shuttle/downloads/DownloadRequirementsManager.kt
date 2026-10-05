@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.downloads
 
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn

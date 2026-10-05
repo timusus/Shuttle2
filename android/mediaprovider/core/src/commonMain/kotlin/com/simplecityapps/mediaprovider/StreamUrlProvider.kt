@@ -40,6 +40,20 @@ interface StreamUrlProvider {
      * and always for a local provider, whose songs are already on the device.
      */
     fun downloadSource(song: Song): DownloadSource? = null
+
+    /**
+     * Where to try again when [song]'s download was refused with HTTP [httpStatus] (401 or 403): the server's admin
+     * turned off downloads after the URL was built, or the session it carries has expired. The stream URL stays
+     * available in both cases; the file is recorded as the song's own type. Null when it can't be built.
+     */
+    fun downloadFallback(
+        song: Song,
+        httpStatus: Int
+    ): DownloadSource? = try {
+        DownloadSource(streamUrl(song), song.mimeType)
+    } catch (_: IllegalStateException) {
+        null
+    }
 }
 
 /**

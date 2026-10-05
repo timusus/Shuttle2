@@ -17,10 +17,14 @@ interface DownloadTransport {
      */
     fun restore(): Set<String>
 
-    /** Downloads [path]'s file from [source], replacing any earlier file. */
+    /**
+     * Downloads [path]'s file from [source], replacing any earlier file. [wifiOnly] keeps it off mobile data and other
+     * expensive networks: it waits for a network that isn't one.
+     */
     fun start(
         path: String,
-        source: DownloadSource
+        source: DownloadSource,
+        wifiOnly: Boolean
     )
 
     /** Stops [path]'s download if it's running and deletes its file. */
@@ -43,7 +47,13 @@ interface DownloadTransport {
         /** [path]'s file is on the device. */
         fun onCompleted(path: String)
 
-        /** [path]'s download failed: the server refused it, or the network or disk did. Not called for a [remove]. */
-        fun onFailed(path: String)
+        /**
+         * [path]'s download failed: the server refused it, or the network or disk did. Not called for a [remove].
+         * [httpStatus] is the server's response code when it refused it, null for any other failure.
+         */
+        fun onFailed(
+            path: String,
+            httpStatus: Int? = null
+        )
     }
 }

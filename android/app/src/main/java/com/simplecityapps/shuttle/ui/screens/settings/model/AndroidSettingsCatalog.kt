@@ -7,12 +7,12 @@ import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingSettings

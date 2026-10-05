@@ -5,6 +5,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingSettings
@@ -117,6 +118,11 @@ object IosSettingsCatalog : SettingsCatalog {
                         setting = StreamingSettings.MeteredQuality,
                         title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
                         options = StreamingQualityOptions
+                    ),
+                    SettingItem.Switch(
+                        setting = DownloadSettings.WifiOnly,
+                        title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
+                        summary = StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
                     )
                 )
             )
