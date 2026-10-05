@@ -51,21 +51,48 @@ largest tier it supports. A redesign sign-off needs the full matrix for that scr
 Screenshots go to the owner (Read the PNGs so they render; see the show-screenshots memory). Workers
 capture; the orchestrator or reviewer looks.
 
+## Whole-app audit — four required passes
+
+Auditing the whole app (not one screen) is four passes, and all four are required; an audit that ran
+only the screenshot scorecard is incomplete. Findings from every pass get filed.
+
+1. **Screenshot scorecard** — the evidence matrix above, `--matrix full`, judged by a fresh-context
+   reviewer against the rubric below (cohesion row included).
+2. **Foundations sweep** — the code, not the screenshots: hard-coded tokens (`N.dp`, `Color(0x…)`,
+   `.padding(13)`, `RoundedCornerShape(n.dp)`, `Font.system(size:)`) in screens; components
+   duplicated per screen instead of shared; missing a11y/adaptive usage. Judged against the
+   ground-truth docs in SKILL.md's table — `docs/design/design-language.md`,
+   `docs/design/ios-design-language.md`, `docs/architecture/parity-audit.md` and
+   `redesign-inventory.md` — reporting every place code and docs disagree, in both directions.
+3. **Native surfaces** — everything `design-shots.sh` never tours: media notification, Lock
+   Screen / Dynamic Island, widgets, Auto/CarPlay, shortcuts / App Intents. Walk the table in
+   [native-surfaces.md](native-surfaces.md) and capture or check each surface by hand (its
+   "Checking surfaces in an audit" section); one this environment cannot capture is checked from
+   code and marked *unverified-in-this-audit*.
+4. **Feature expectations** — the checklist in [competitors.md](competitors.md): every
+   table-stakes feature of a premium 2026 music player, present / partial / absent, per platform.
+   A missing expectation is a finding even when everything that exists is beautiful.
+
+Pass 1 produces the rubric scores; passes 2–4 produce findings and the feature-gap list. All four go
+in the audit report.
+
 ## Rubric (score 0–10 each, anchored)
 
 | Category | Weight | 9–10 | 5–6 | 1–3 |
 |---|---|---|---|---|
-| Platform conformance | 0.20 | Indistinguishable from a first-party app of this platform | Mostly standard, a few borrowed idioms | Looks ported from the other platform or the web |
+| Platform conformance | 0.15 | Indistinguishable from a first-party app of this platform | Mostly standard, a few borrowed idioms | Looks ported from the other platform or the web |
 | Hierarchy & layout | 0.15 | One obvious focus; rhythm and alignment exact at every tier | Clear on phone, weak on large screens | Everything equal weight; stretched phone layout |
 | Craft | 0.15 | Tokens only, optical details right, motion purposeful | Minor spacing/radius inconsistencies | Literals, misalignment, janky motion |
 | Accessibility | 0.15 | Passes the craft-floor checks at 200% and with a screen reader | Small targets or contrast misses in secondary UI | Breaks at large text; unlabeled controls |
 | Adaptivity | 0.10 | Deliberate layout per tier, posture-aware, state continuous | Works but under-uses space | Letterboxed, stretched or broken on resize |
 | Music fitness | 0.10 | Artwork-led with art-derived colour at Shuttle's bar (music.md), playback always reachable, source/download state clear | Functional but generic; art colour flat or single-tone | Playback buried; art treated as decoration |
 | Parity | 0.10 | Same intent and information as the other platform, native idioms | Minor capability gaps | Missing features or borrowed idioms |
+| Cohesion | 0.05 | One app, not a collection of screens: same components, spacing rhythm and colour behaviour everywhere; screens differ only where the job differs | Core screens consistent; secondary ones drift (a component re-built per screen, one-off spacing) | Every screen its own dialect: duplicated components, mixed idioms, goldens disagree |
 | Distinctiveness | 0.05 | Has one memorable, appropriate moment | Competent and anonymous | AI-slop defaults (craft-floor list) |
 
 Weighted score ≥ 7.5 to ship a redesign; any category ≤ 4 blocks regardless of total; any accessibility
-floor violation blocks.
+floor violation blocks. Cohesion is judged across the whole screen set (the tour or the goldens), not
+one screen, and is scored in single-screen critiques too — against the app's other screens.
 
 ## Reviewer brief template
 
@@ -80,3 +107,27 @@ floor violation blocks.
 
 At most two fix → recapture → re-score rounds per change. If it still fails, file the remaining
 findings with `/note` (label `design`) and surface them to the owner rather than looping.
+
+## Filing findings (evidence in the issue)
+
+Every non-trivial finding is filed with `/note` (label `design`) as the audit finds it; the
+transcript is not a backlog. The evidence lives **in the issue**, embedded, not named:
+
+- Crop each screenshot to the defect — a reviewer must not have to find it in a full-screen shot.
+  Before/after pairs wherever a fix is proposed.
+- Never point at the tool or the shot path ("the design-shots capture shows…"): `gh` cannot upload
+  images, so push the PNGs to the orphan `design-evidence` branch and embed them via raw URLs.
+
+```bash
+# once: git worktree add --detach .claude/worktrees/design-evidence \
+#   && git -C .claude/worktrees/design-evidence switch --orphan design-evidence \
+#   && (commit one file, push -u origin design-evidence) && git worktree remove …
+git worktree add .claude/worktrees/design-evidence design-evidence
+cp <cropped>.png .claude/worktrees/design-evidence/<issue>-<slug>.png
+git -C .claude/worktrees/design-evidence add . && git -C .claude/worktrees/design-evidence commit -m "#<issue> <slug>"
+git -C .claude/worktrees/design-evidence push origin design-evidence
+git worktree remove .claude/worktrees/design-evidence
+```
+
+Embed in the issue body as
+`![before](https://raw.githubusercontent.com/timusus/Shuttle2/design-evidence/<issue>-<slug>.png)`.

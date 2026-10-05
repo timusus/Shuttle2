@@ -73,3 +73,18 @@ Re-check the state column against code before acting on it; it was a snapshot.
 - Use the same vocabulary everywhere ("Shuffle all", "Play next") — app, widgets, intents, Auto/CarPlay.
 - Artwork everywhere a surface allows it, at the right resolution; generated artwork when missing.
 - Every surface deep-links to the matching in-app screen, never just the app root.
+
+## Checking surfaces in an audit (pass 3)
+
+`design-shots.sh` tours in-app screens only, so a whole-app audit (evaluate.md) checks these by hand:
+capture what this environment allows, check the rest from code, and mark anything not captured
+*unverified-in-this-audit* rather than skipping it silently.
+
+| Surface | How to check |
+|---|---|
+| Media notification (Android) | With playback running: `adb shell cmd statusbar expand-notifications`, then `adb exec-out screencap -p > notif.png`. Check MediaStyle, slot order, buffering spinner, overflow actions. |
+| Lock Screen / Dynamic Island (iOS) | Simulator: Device → Trigger Lockdown, then `xcrun simctl io booted screenshot lock.png`. Real colour and Island behaviour: the `ios-device` skill on a phone. |
+| Widgets (Android) | No flow can add a widget: add it to the launcher by hand on the emulator (or owner device) once, then screenshot light/dark/tinted and each size. iOS WidgetKit: check from code until it exists. |
+| Android Auto | Desktop Head Unit (`desktop-head-unit` from the SDK) against a running emulator if installed; otherwise read the browse tree from `PlaybackService` and mark unverified. |
+| CarPlay | No CarPlay simulator in this environment: check the template code and the entitlement, mark unverified. |
+| Shortcuts / App Intents | Android: `adb shell dumpsys shortcut` (or long-press the launcher icon by hand). iOS: check the App Intents code until it exists. |

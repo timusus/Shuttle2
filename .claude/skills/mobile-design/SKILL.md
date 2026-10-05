@@ -34,7 +34,7 @@ Pick the mode from the request; each lists the references to load.
 |---|---|---|
 | **shape** | New screen/feature/flow, or a redesign. Produces a design plan before any code. | craft-floor, platform file(s), adaptive, music, competitors |
 | **critique** | "Does this look right / feel native?" on a screen that exists. Screenshot-led. | craft-floor, evaluate, platform file |
-| **audit** | Systematic sweep of a module or screen for token, a11y, adaptive and platform-conformance defects. | craft-floor, evaluate, platform file, adaptive |
+| **audit** | Systematic sweep of a module or screen for token, a11y, adaptive and platform-conformance defects. A **whole-app audit is four required passes** — screenshot scorecard, foundations sweep in code against the ground-truth docs, native surfaces, feature expectations — defined in [evaluate.md](evaluate.md); the scorecard alone is not an audit. | craft-floor, evaluate, platform file, adaptive; a whole-app audit also loads native-surfaces, competitors |
 | **parity** | Compare one feature across iOS and Android. | parity section below, both platform files |
 | **surfaces** | Widgets, Live Activities, controls, tiles, Auto/CarPlay, Wear/Watch, media session. | native-surfaces |
 | **polish** | Small refinements to a finished screen (spacing rhythm, motion, optical alignment). | craft-floor, platform file |
@@ -118,8 +118,9 @@ same idiom done less well (the usual Android problem — compare screenshots sid
 - **shape**: the plan above, then implementation briefs (via `/brief`) per platform; never one brief
   spanning both platforms' UI code.
 - **critique / audit**: findings table — `severity | file:line or screenshot | rule | fix` — ranked,
-  only genuine problems, plus the [evaluate.md](evaluate.md) scorecard. File each non-trivial finding
-  with `/note` (label `design`).
+  only genuine problems, plus the [evaluate.md](evaluate.md) scorecard. A whole-app audit reports all
+  four passes and its feature-gap list. File each non-trivial finding with `/note` (label `design`),
+  with cropped screenshot evidence embedded in the issue (evaluate.md → Filing findings).
 - **parity**: the table above with a verdict per row, and filed gaps.
 - Visual claims cite the screenshot they came from and whether it was a golden, emulator/simulator or
   device.

@@ -28,13 +28,38 @@ major competitor redesigns.
 | Marvis Pro | Section-based home (~30 section types, each with layout choice) | Unrefined gestures/transitions; bland greyscale ([MacStories](https://www.macstories.net/reviews/marvis-review-the-ultra-customizable-apple-music-client/)) |
 | Manet, Amperfy | Jellyfin/Subsonic clients with CarPlay, Siri, Shortcuts, offline — the native-surface baseline for server players | — |
 
-## Table stakes (a premium player in 2026 has these)
+## Feature expectations (audit pass 4)
 
-Both: persistent mini player with swipe-to-skip; queue one tap from Now Playing; synced lyrics, ideally
-word-level; art-derived colour; gapless + ReplayGain; size-adaptive widgets; Auto/CarPlay.
-Android: dynamic colour, edge-to-edge, M3 Expressive (wavy) progress as in system media controls, real
-large-screen layouts. iOS: tab-bar-accessory mini player, system Now Playing on Lock Screen/CarPlay/Watch,
-Dynamic Type, library pins.
+The music-app baseline an audit compares Shuttle against, distilled from the tables above. The
+whole-app audit (evaluate.md) walks every row per platform, marks it present / partial / absent, and
+files each miss as a finding — a missing expectation is a defect even when everything that exists is
+beautiful. Rows in [native-surfaces.md](native-surfaces.md) say where each surface is checked.
+
+Core playback (both platforms):
+
+- Persistent mini player: swipe-to-skip, expands to Now Playing with a shared-element transition.
+- Queue one tap from Now Playing: reorder by drag, history vs up next, "Play next" vs "Add to queue".
+- Now Playing: artwork-led, art-derived colour as a full contrast-safe scheme, scrubber with buffered
+  range, sleep timer and EQ reachable from the more-menu.
+- Gapless playback, ReplayGain.
+- Playback resumption offered (never autoplay on launch); position remembered for long tracks.
+- Headphone/Bluetooth disconnect pauses; resume after interruption only when the system says so.
+
+Library (both platforms):
+
+- Merged local + server library; "playable now / offline" filter, not per-row badges.
+- Album/artist/playlist detail with quality line (codec/bitrate/sample rate, transcode vs direct).
+- Search across the merged library; sort/filter persisted per view.
+- Downloads: per-row state, bulk download on album/playlist.
+
+Platform surfaces:
+
+- Android: dynamic colour, edge-to-edge, M3 Expressive (wavy) progress as in the system media
+  controls, real large-screen layouts, MediaStyle notification, Android Auto, size-adaptive widgets,
+  app shortcuts.
+- iOS: tab-bar-accessory mini player, system Now Playing on Lock Screen/Control Center/Watch via the
+  media session, CarPlay, Dynamic Type, WidgetKit widgets, App Intents/Siri.
+- Both: Auto/CarPlay, synced lyrics (word-level ideal), library pins.
 
 ## Anti-patterns users punish
 
