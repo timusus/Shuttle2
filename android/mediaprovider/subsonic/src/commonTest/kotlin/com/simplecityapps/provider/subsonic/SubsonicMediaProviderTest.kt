@@ -51,7 +51,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `a song maps its artists, album artists, genres, ids and audio details`() {
+    fun `a song maps its artists - album artists - genres - ids and audio details`() {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_empty.json", query = mapOf("songOffset" to "3"))
@@ -84,7 +84,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `ReplayGain is kept when tagged, and empty when the server sends none`() {
+    fun `ReplayGain is kept when tagged and empty when the server sends none`() {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_empty.json", query = mapOf("songOffset" to "3"))
@@ -97,7 +97,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `a starred song is a favourite, with its play count`() {
+    fun `a starred song is a favourite - with its play count`() {
         subsonic.signIn()
         server.respond(SEARCH, "search3_page_1.json", query = mapOf("songOffset" to "0"))
         server.respond(SEARCH, "search3_empty.json", query = mapOf("songOffset" to "3"))
@@ -111,7 +111,7 @@ class SubsonicMediaProviderTest {
     }
 
     @Test
-    fun `an m4a's codec is AAC, or ALAC past any AAC bitrate`() {
+    fun `an m4a's codec is AAC or ALAC past any AAC bitrate`() {
         val aac = SongDto(id = "song", suffix = "m4a", bitRate = 256)
         val alac = SongDto(id = "song", suffix = "m4a", bitRate = 900)
 
@@ -158,7 +158,7 @@ class SubsonicMediaProviderTest {
     // Playlists
 
     @Test
-    fun `playlists hold the library's songs in order, skipping what the library doesn't have`() {
+    fun `playlists hold the library's songs in order - skipping what the library doesn't have`() {
         subsonic.signIn()
         server.respond(PLAYLISTS, "playlists.json")
         server.respond(PLAYLIST, "playlist.json")

@@ -71,7 +71,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `past the cap, a server with transcoding streams what it decides`() {
+    fun `past the cap - a server with transcoding streams what it decides`() {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
         server.respond(TRANSCODE_DECISION, "transcode_decision.json", method = "POST")
@@ -95,7 +95,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `past the cap, a server without transcoding streams the classic MP3 transcode`() {
+    fun `past the cap - a server without transcoding streams the classic MP3 transcode`() {
         subsonic.signIn(extensions = "ok.json")
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
@@ -134,7 +134,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `Cast gets the classic transcode, which it can seek itself`() {
+    fun `Cast gets the classic transcode - which it can seek itself`() {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
@@ -145,7 +145,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a decodable song downloads its original file, ignoring the cap`() {
+    fun `a decodable song downloads its original file - ignoring the cap`() {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 

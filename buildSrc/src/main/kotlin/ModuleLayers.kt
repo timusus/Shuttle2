@@ -54,6 +54,7 @@ object ModuleLayers {
         ":android:mediaprovider:jellyfin" to ModuleLayer.PROVIDER,
         ":android:mediaprovider:emby" to ModuleLayer.PROVIDER,
         ":android:mediaprovider:plex" to ModuleLayer.PROVIDER,
+        ":android:mediaprovider:subsonic" to ModuleLayer.PROVIDER,
         ":android:presentation" to ModuleLayer.VIEWMODEL,
         ":android:designsystem" to ModuleLayer.PRESENTATION,
         ":android:app" to ModuleLayer.COMPOSITION_ROOT,

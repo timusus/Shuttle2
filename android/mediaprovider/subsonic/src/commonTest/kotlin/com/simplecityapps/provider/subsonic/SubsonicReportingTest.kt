@@ -23,7 +23,7 @@ class SubsonicReportingTest {
     fun tearDown() = subsonic.close()
 
     @Test
-    fun `a start is reported as now playing, and a finished play with when it was played`() {
+    fun `a start is reported as now playing and a finished play with when it was played`() {
         subsonic.signIn()
         server.respond(SCROBBLE, "ok.json")
         val reporter = SubsonicPlaybackReporter(subsonic.authenticationManager, subsonic.service)
@@ -52,7 +52,7 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `a favourite is a star, and clearing it unstars`() {
+    fun `a favourite is a star and clearing it unstars`() {
         subsonic.signIn()
         server.respond(STAR, "ok.json")
         server.respond(UNSTAR, "ok.json")
@@ -68,7 +68,7 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `album art is the song's cover art, with no credentials in the url`() {
+    fun `album art is the song's cover art - with no credentials in the url`() {
         subsonic.signIn()
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
 
@@ -81,7 +81,7 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `where the image loader can't sign a request, the url comes signed`() {
+    fun `where the image loader can't sign a request - the url comes signed`() {
         subsonic.signIn()
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
         val signed = SignedSubsonicArtworkProvider(artwork, subsonic.authenticationManager, subsonic.service)

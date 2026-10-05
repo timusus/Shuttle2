@@ -39,7 +39,7 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `the ping is signed with a salted token, never the password`() {
+    fun `the ping is signed with a salted token - never the password`() {
         server.respond(PING, "ping.json")
         server.respond(EXTENSIONS, "extensions.json")
 
@@ -63,7 +63,7 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `wrong credentials fail with the server's message, and store nothing`() {
+    fun `wrong credentials fail with the server's message and store nothing`() {
         server.respond(PING, "error_wrong_credentials.json")
         val authentication = SubsonicServerAuthentication(authenticationManager)
 
@@ -75,7 +75,7 @@ class SubsonicSignInTest {
     }
 
     @Test
-    fun `a server that refuses tokens is signed in to with the password, and sent it from then on`() {
+    fun `a server that refuses tokens is signed in to with the password and sent it from then on`() {
         server.respond(PING, "error_token_not_supported.json")
         server.respond(PING, "ping_subsonic.json", where = { it.parameter("p") != null })
         server.respond(STAR, "ok.json", where = { it.parameter("p") != null })
