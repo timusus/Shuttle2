@@ -28,6 +28,18 @@ class MediaStoreAudioFilesTest {
     }
 
     @Test
+    fun `reads each row's generation where the cursor has the column, and 0 where it hasn't`() {
+        val withGeneration =
+            MatrixCursor(MEDIA_STORE_AUDIO_PROJECTION + GENERATION_MODIFIED).apply {
+                addRow(arrayOf(7L, "/storage/emulated/0/Music/a.flac", "a.flac", 2_048L, 1_700_000_000L, "audio/flac", 185_000L, 42L))
+            }
+        val withoutGeneration = cursorOf(arrayOf(7L, "/storage/emulated/0/Music/a.flac", "a.flac", 2_048L, 1_700_000_000L, "audio/flac", 185_000L))
+
+        withGeneration.readMediaStoreAudioRows().single().generation shouldBe 42
+        withoutGeneration.readMediaStoreAudioRows().single().generation shouldBe 0
+    }
+
+    @Test
     fun `the content uri is the file's row in MediaStore's external audio table`() {
         val file = MediaStoreAudioFile(id = 42, path = "/a.mp3", displayName = "a.mp3", size = 1, lastModified = 0, mimeType = null)
 

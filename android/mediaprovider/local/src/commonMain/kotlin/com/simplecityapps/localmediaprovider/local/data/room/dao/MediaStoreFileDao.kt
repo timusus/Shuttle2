@@ -41,25 +41,15 @@ abstract class MediaStoreFileDao {
         setState(MediaStoreScanStateData(version = version))
     }
 
-    /** Forgets the listing, so the next import reads MediaStore whole. */
-    @Transaction
-    open suspend fun clear() {
-        deleteAll()
-        deleteState()
-    }
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun upsert(files: List<MediaStoreFileData>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    protected abstract suspend fun upsert(files: List<MediaStoreFileData>)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    protected abstract suspend fun setState(state: MediaStoreScanStateData)
+    abstract suspend fun setState(state: MediaStoreScanStateData)
 
     @Query("DELETE FROM media_store_files WHERE id IN (:ids)")
-    protected abstract suspend fun delete(ids: List<Long>)
+    abstract suspend fun delete(ids: List<Long>)
 
     @Query("DELETE FROM media_store_files")
-    protected abstract suspend fun deleteAll()
-
-    @Query("DELETE FROM media_store_scan_state")
-    protected abstract suspend fun deleteState()
+    abstract suspend fun deleteAll()
 }

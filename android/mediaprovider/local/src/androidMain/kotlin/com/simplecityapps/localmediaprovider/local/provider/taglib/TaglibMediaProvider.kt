@@ -77,6 +77,8 @@ class TaglibMediaProvider(
     private val grantedTrees: () -> List<Uri> = { persistedTrees(context) },
     // The roots of the storage volumes mounted now, each ending in a separator
     private val mountedRoots: () -> Set<String> = { mountedVolumeRoots(context) },
+    // MediaStore's audio files, read only in part where the last stored import's listing allows (#875)
+    private val mediaStoreFiles: MediaStoreAudioLister = MediaStoreAudioLister.whole(context),
     private val folders: () -> ScannerFolders
 ) : IndexedMediaProvider {
     override val type = MediaProviderType.Shuttle
@@ -125,7 +127,8 @@ class TaglibMediaProvider(
         val startTime = System.currentTimeMillis()
         val folders = folders()
         val primaryStoragePath = primaryStoragePath()
-        val mediaStoreFiles = takeRemapListing(folders.filter).let { listing -> if (listing != null) listing.files else findAudioFiles(folders.filter) }
+        // A thorough import reads MediaStore whole too, rather than trusting the last listing for the rows it didn't read
+        val mediaStoreFiles = takeRemapListing(folders.filter).let { listing -> if (listing != null) listing.files else findAudioFiles(folders.filter, whole = thorough) }
         // A listing with no files in it at all is MediaStore reindexing, not a library gone: a song stored under its file
         // path keeps it (remapLegacySongs leaves it there), for the next listing to find there again
         val keepFilePaths = mediaStoreFiles?.isEmpty() == true
@@ -208,6 +211,11 @@ class TaglibMediaProvider(
         emit(FlowEvent.Success(songs))
     }
 
+    /** Keeps the MediaStore listing the stored songs were found from, for the next import to read only what changed since. */
+    override suspend fun songsStored() {
+        mediaStoreFiles.listingStored()
+    }
+
     /**
      * Stored songs moved to the path [findSongs] gives their file now, so they keep their history: a song under a SAF
      * document URI that MediaStore lists, to its file path (the scanner before #370 stored every song so, and a walk stores
@@ -268,22 +276,15 @@ class TaglibMediaProvider(
         ?.takeIf { listing -> listing.filter == folderFilter }
 
     /**
-     * The audio files MediaStore has indexed, on every volume, limited by [folderFilter].
-     * Null if MediaStore can't be queried, for example without the audio permission.
+     * The audio files MediaStore has indexed, on every volume, limited by [folderFilter]: only those that changed since the
+     * last stored import read again, unless [whole]. Null if MediaStore can't be queried, for example without the audio
+     * permission.
      */
-    private suspend fun findAudioFiles(folderFilter: FolderFilter): List<MediaStoreAudioFile>? = withContext(Dispatchers.IO) {
-        try {
-            context.contentResolver.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                MEDIA_STORE_AUDIO_PROJECTION,
-                MEDIA_STORE_AUDIO_SELECTION,
-                null,
-                null
-            )?.use { cursor -> cursor.readMediaStoreAudioFiles(folderFilter) }
-        } catch (e: SecurityException) {
-            Timber.e(e, "Failed to query MediaStore for audio files")
-            null
-        }
+    private suspend fun findAudioFiles(
+        folderFilter: FolderFilter,
+        whole: Boolean = false
+    ): List<MediaStoreAudioFile>? = withContext(Dispatchers.IO) {
+        mediaStoreFiles.list(whole)?.filter { file -> folderFilter.accepts(file.path) }
     }
 
     /**

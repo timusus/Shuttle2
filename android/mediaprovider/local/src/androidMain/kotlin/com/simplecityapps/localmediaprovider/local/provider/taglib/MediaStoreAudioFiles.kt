@@ -43,7 +43,15 @@ internal const val MEDIA_STORE_AUDIO_SELECTION = "${MediaStore.Audio.Media.IS_MU
  * Reads the audio files in a cursor over [MEDIA_STORE_AUDIO_PROJECTION] that [folderFilter] accepts. A row with no path
  * can't be filtered or matched to a song, so it's skipped.
  */
-internal fun Cursor.readMediaStoreAudioFiles(folderFilter: FolderFilter): List<MediaStoreAudioFile> {
+internal fun Cursor.readMediaStoreAudioFiles(folderFilter: FolderFilter): List<MediaStoreAudioFile> = readMediaStoreAudioRows()
+    .map { row -> row.file }
+    .filter { file -> folderFilter.accepts(file.path) }
+
+/**
+ * Reads every audio row in a cursor over [MEDIA_STORE_AUDIO_PROJECTION], with its `GENERATION_MODIFIED` where the cursor
+ * has that column too (0 where it hasn't). A row with no path can't be filtered or matched to a song, so it's skipped.
+ */
+internal fun Cursor.readMediaStoreAudioRows(): List<MediaStoreAudioRow> {
     val idColumn = getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
     val pathColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
     val displayNameColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
@@ -51,21 +59,25 @@ internal fun Cursor.readMediaStoreAudioFiles(folderFilter: FolderFilter): List<M
     val dateModifiedColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
     val mimeTypeColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
     val durationColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-    val files = mutableListOf<MediaStoreAudioFile>()
+    val generationColumn = getColumnIndex(GENERATION_MODIFIED)
+    val rows = mutableListOf<MediaStoreAudioRow>()
     while (moveToNext()) {
         val path = getStringOrNull(pathColumn) ?: continue
-        if (!folderFilter.accepts(path)) continue
-        files +=
-            MediaStoreAudioFile(
-                id = getLong(idColumn),
-                path = path,
-                displayName = getStringOrNull(displayNameColumn) ?: path.substringAfterLast('/'),
-                size = getLong(sizeColumn),
-                // MediaStore stores seconds
-                lastModified = getLong(dateModifiedColumn) * 1000,
-                mimeType = getStringOrNull(mimeTypeColumn),
-                duration = getLongOrNull(durationColumn)
+        rows +=
+            MediaStoreAudioRow(
+                file =
+                    MediaStoreAudioFile(
+                        id = getLong(idColumn),
+                        path = path,
+                        displayName = getStringOrNull(displayNameColumn) ?: path.substringAfterLast('/'),
+                        size = getLong(sizeColumn),
+                        // MediaStore stores seconds
+                        lastModified = getLong(dateModifiedColumn) * 1000,
+                        mimeType = getStringOrNull(mimeTypeColumn),
+                        duration = getLongOrNull(durationColumn)
+                    ),
+                generation = if (generationColumn != -1) getLong(generationColumn) else 0
             )
     }
-    return files
+    return rows
 }

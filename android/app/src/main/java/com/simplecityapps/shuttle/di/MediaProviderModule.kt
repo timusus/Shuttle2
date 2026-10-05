@@ -2,11 +2,13 @@ package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.KTagLibMediaStoreTagReader
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreTagReader
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
+import com.simplecityapps.localmediaprovider.local.provider.taglib.MediaStoreAudioLister
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.shuttle.di.ApplicationContext
@@ -45,13 +47,15 @@ class MediaProviderModule {
         fileScanner: FileScanner,
         tagReadGuard: TagReadGuard,
         folderStore: SafScannerFolderStore,
-        preferenceManager: GeneralPreferenceManager
+        preferenceManager: GeneralPreferenceManager,
+        database: MediaDatabase
     ): TaglibMediaProvider = TaglibMediaProvider(
         context,
         kTagLib,
         fileScanner,
         tagReadGuard,
         backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
+        mediaStoreFiles = MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao()),
         folders = folderStore::scannerFolders
     )
 
