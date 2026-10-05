@@ -30,12 +30,33 @@ xcodebuild command line.
 
 1. App Store Connect > Users and Access > Integrations > App Store Connect API > Team Keys: generate a
    key with role App Manager (or reuse the Podcasts one) and keep the `.p8` and its Key ID and Issuer ID.
-   The skill reads the key from `ASC_API_KEY_PATH` (default: the Podcasts key
-   `/Users/tim/projects/simplecity-apps/podcasts/AuthKey_98Q5SW65X5.p8`).
+   Put them in `~/.secrets/asc.env` (mode 600; `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`); the
+   skill and `support/scripts/asc` read it (key default `/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8`).
 2. An **Apple Distribution: Simplecity Apps Pty Ltd (9HYNX943MQ)** certificate must be in the login
    keychain of this Mac. Export signs manually with the profile "Shuttle Music App Store" (the team's
    API keys cannot use a cloud-managed distribution certificate); `ensure-store-profiles.sh` creates and
    installs it when the key flags are given, so no manual profile step is needed.
+
+## App Store Connect via API
+
+`support/scripts/asc` (python3 stdlib + openssl, credentials from `~/.secrets/asc.env`) replaces Chrome for
+routine App Store Connect work. `--json` gives raw output; writes print their change and need `--yes`
+(`--dry-run` shows the request). Default app is Shuttle Music; `--app <bundle id>` picks another.
+
+```bash
+support/scripts/asc apps
+support/scripts/asc builds [--limit N]                     # version, build, processing + review state
+support/scripts/asc testflight groups
+support/scripts/asc testflight testers <group>
+support/scripts/asc testflight add-tester <group> <email> [first] [last]
+support/scripts/asc testflight add-build <group> <build-number>
+support/scripts/asc testflight submit-review <build-number>   # beta app review
+support/scripts/asc review-info                            # contact, demo account, notes
+support/scripts/asc review-info set --notes "..." | --contact-email E | --demo-user U --demo-password-env VAR
+support/scripts/asc whats-new <build-number> "text"        # What to Test
+```
+
+Chrome is only for what the API can't do: agreements, tax and banking, the App Privacy questionnaire.
 
 ## Local deploy
 

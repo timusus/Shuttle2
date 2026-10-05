@@ -34,11 +34,12 @@ If iOS changed since the last full verify, also run `ios/scripts/test.sh`. **STO
 ### 3. Pre-flight: App Store Connect key
 
 ```bash
-API_KEY_PATH="${ASC_API_KEY_PATH:-/Users/tim/projects/simplecity-apps/podcasts/AuthKey_98Q5SW65X5.p8}"
-[ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_API_KEY_PATH)"; false; }
+[ -f ~/.secrets/asc.env ] && . ~/.secrets/asc.env
+API_KEY_PATH="${ASC_KEY_PATH:-/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8}"
+[ -f "$API_KEY_PATH" ] || { echo "no .p8 at $API_KEY_PATH (set ASC_KEY_PATH in ~/.secrets/asc.env)"; false; }
 ```
 
-Key ID `98Q5SW65X5`, issuer `9981aa4c-3137-41c0-bf69-4410dd990785`. Never print or commit the `.p8`.
+`~/.secrets/asc.env` holds `ASC_KEY_ID` (`98Q5SW65X5`), `ASC_ISSUER_ID` and `ASC_KEY_PATH`. Never print or commit the `.p8`.
 Missing key: **STOP** and point the user at `ios/DEPLOY.md`.
 
 ### 4. Pick the tag
@@ -67,9 +68,9 @@ and offer a dry run (`--no-upload`, IPA lands in `ios/build/export`) before the 
 ```bash
 support/scripts/longjob.sh start ios-deploy -- ios/archive-and-upload.sh \
   --build-number "$BUILD_NUMBER" \
-  --api-key-path "${ASC_API_KEY_PATH:-/Users/tim/projects/simplecity-apps/podcasts/AuthKey_98Q5SW65X5.p8}" \
-  --api-key-id 98Q5SW65X5 \
-  --api-issuer-id 9981aa4c-3137-41c0-bf69-4410dd990785
+  --api-key-path "$API_KEY_PATH" \
+  --api-key-id "${ASC_KEY_ID:-98Q5SW65X5}" \
+  --api-issuer-id "$ASC_ISSUER_ID"
 # dry run: add --no-upload
 support/scripts/longjob.sh wait ios-deploy
 ```
@@ -95,3 +96,11 @@ git push origin "$TAG"
 
 App Store Connect > Shuttle Music (id 6818057709) > TestFlight. Processing takes 5-30 minutes.
 Report the tag, build number and IPA path.
+
+### App Store Connect via API
+
+Use `support/scripts/asc`, not Chrome (credentials from `~/.secrets/asc.env`): `apps`, `builds [--limit N]`,
+`testflight groups|testers <group>|add-tester <group> <email> [first] [last]|add-build <group> <build>|submit-review <build>`,
+`review-info [set --notes ...|--contact-email ...|--demo-user ... --demo-password-env VAR]`,
+`whats-new <build> "<text>"`. Writes need `--yes` (`--dry-run` shows the request); ask the owner first, they are
+outward-facing. Chrome is only for agreements, tax and banking, and the App Privacy questionnaire. Details: `ios/DEPLOY.md`.

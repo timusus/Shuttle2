@@ -11,6 +11,8 @@ XcodeGen from `ios/project.yml`; it links the static `Shared.framework` that the
 (`shared/`, repo root) builds. Structure and conventions follow Shuttle Podcasts
 (`~/projects/simplecity-apps/podcasts/main/mobile`, its `.claude/rules/ios.md`).
 
+Use `support/scripts/asc`, not Chrome, for App Store Connect (`ios/DEPLOY.md`).
+
 ## Commands
 
 All from the repo root unless noted.

@@ -1,0 +1,345 @@
+#!/usr/bin/env python3
+"""App Store Connect API CLI (stdlib + openssl). Use this, not Chrome (#922).
+
+Credentials: env ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH, else ~/.secrets/asc.env (KEY=VALUE).
+Default app: --app <bundle id>, else $ASC_APP_BUNDLE, else com.simplecityapps.shuttle.
+
+  asc apps
+  asc builds [--app B] [--limit N]
+  asc testflight groups | testers G | add-tester G EMAIL [FIRST [LAST]] | add-build G BUILD | submit-review BUILD
+  asc review-info [--app B]
+  asc review-info set [--notes T] [--contact-email E] [--demo-user U --demo-password-env VAR]
+  asc whats-new BUILD "text"
+
+Global flags: --json (raw output), --yes (perform writes), --dry-run (print the request, send nothing).
+Writes without --yes print what they would change and exit.
+"""
+import argparse
+import base64
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+API = "https://api.appstoreconnect.apple.com"
+DEFAULT_BUNDLE = "com.simplecityapps.shuttle"
+
+
+def die(msg):
+    print(f"error: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def load_env():
+    cfg = {}
+    path = os.path.expanduser("~/.secrets/asc.env")
+    if os.path.isfile(path):
+        for line in open(path):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                cfg[k.strip()] = v.strip().strip('"').strip("'")
+    for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"):
+        if os.environ.get(k):
+            cfg[k] = os.environ[k]
+    return cfg
+
+
+def b64(b):
+    return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+
+def der_to_raw(der):
+    """ECDSA DER signature -> r||s (32 bytes each), as JWS ES256 needs."""
+    assert der[0] == 0x30
+    i = 2 if der[1] < 0x80 else 2 + (der[1] & 0x7F)
+    parts = []
+    for _ in range(2):
+        assert der[i] == 0x02
+        n = der[i + 1]
+        parts.append(der[i + 2:i + 2 + n].lstrip(b"\0").rjust(32, b"\0"))
+        i += 2 + n
+    return parts[0] + parts[1]
+
+
+def make_jwt(cfg, ttl=1200):
+    for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"):
+        if not cfg.get(k):
+            die(f"{k} not set (env or ~/.secrets/asc.env)")
+    now = int(time.time())
+    header = {"alg": "ES256", "kid": cfg["ASC_KEY_ID"], "typ": "JWT"}
+    claims = {"iss": cfg["ASC_ISSUER_ID"], "iat": now, "exp": now + ttl, "aud": "appstoreconnect-v1"}
+    signing = b64(json.dumps(header, separators=(",", ":")).encode()) + "." + \
+        b64(json.dumps(claims, separators=(",", ":")).encode())
+    r = subprocess.run(["openssl", "dgst", "-sha256", "-sign", os.path.expanduser(cfg["ASC_KEY_PATH"])],
+                       input=signing.encode(), capture_output=True)
+    if r.returncode != 0:
+        die("openssl could not sign the JWT (check ASC_KEY_PATH)")
+    return signing + "." + b64(der_to_raw(r.stdout))
+
+
+class Client:
+    def __init__(self):
+        self.cfg = load_env()
+        self.token = None
+
+    def call(self, method, path, params=None, body=None):
+        if not self.token:
+            self.token = make_jwt(self.cfg)
+        url = API + path + ("?" + urllib.parse.urlencode(params, safe="[],") if params else "")
+        data = json.dumps(body).encode() if body is not None else None
+        req = urllib.request.Request(url, data=data, method=method, headers={
+            "Authorization": f"Bearer {self.token}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                raw = resp.read()
+                return json.loads(raw) if raw else {}
+        except urllib.error.HTTPError as e:
+            try:
+                errs = json.loads(e.read()).get("errors", [])
+            except Exception:
+                errs = []
+            if errs:
+                msg = "; ".join(f"{x.get('title', '')}: {x.get('detail', '')}" for x in errs)
+            else:
+                msg = f"HTTP {e.code}"
+            die(f"{method} {path}: {msg}")
+        except urllib.error.URLError as e:
+            die(f"{method} {path}: {e.reason}")
+
+
+def out(args, raw, lines):
+    if args.json:
+        print(json.dumps(raw, indent=2))
+    else:
+        for line in lines:
+            print(line)
+
+
+def write(args, client, what, method, path, body):
+    """Print the change; send only with --yes (and never with --dry-run)."""
+    print(f"{what}\n  {method} {path}")
+    if args.dry_run:
+        print("  body: " + json.dumps(body))
+        print("(dry run: nothing sent)")
+        return None
+    if not args.yes:
+        print("(not applied: pass --yes)")
+        return None
+    return client.call(method, path, body=body)
+
+
+def resolve_app(client, bundle):
+    bundle = bundle or os.environ.get("ASC_APP_BUNDLE") or DEFAULT_BUNDLE
+    d = client.call("GET", "/v1/apps", {"filter[bundleId]": bundle, "limit": "1"})["data"]
+    if not d:
+        die(f"no app with bundle id {bundle}")
+    return d[0]["id"], bundle
+
+
+def resolve_group(client, app_id, name):
+    groups = client.call("GET", f"/v1/apps/{app_id}/betaGroups", {"limit": "200"})["data"]
+    for g in groups:
+        if g["id"] == name or g["attributes"]["name"].lower() == name.lower():
+            return g
+    die(f"no beta group '{name}' (have: {', '.join(g['attributes']['name'] for g in groups)})")
+
+
+def resolve_build(client, app_id, number):
+    d = client.call("GET", "/v1/builds", {"filter[app]": app_id, "filter[version]": number, "limit": "1"})["data"]
+    if not d:
+        die(f"no build number {number}")
+    return d[0]["id"]
+
+
+def cmd_apps(a, c):
+    r = c.call("GET", "/v1/apps", {"limit": "200"})
+    out(a, r, [f"{x['id']}  {x['attributes']['bundleId']}  {x['attributes']['name']}" for x in r["data"]])
+
+
+def cmd_builds(a, c):
+    app_id, _ = resolve_app(c, a.app)
+    r = c.call("GET", "/v1/builds", {
+        "filter[app]": app_id, "sort": "-uploadedDate", "limit": str(a.limit),
+        "include": "preReleaseVersion,buildBetaDetail"})
+    inc = {(i["type"], i["id"]): i for i in r.get("included", [])}
+    lines = []
+    for b in r["data"]:
+        at, rel = b["attributes"], b["relationships"]
+        pre = rel.get("preReleaseVersion", {}).get("data")
+        det = rel.get("buildBetaDetail", {}).get("data")
+        ver = inc.get((pre["type"], pre["id"]), {}).get("attributes", {}).get("version", "?") if pre else "?"
+        da = inc.get((det["type"], det["id"]), {}).get("attributes", {}) if det else {}
+        lines.append(f"{ver} ({at['version']})  {at['processingState']}  {at.get('uploadedDate', '')[:16]}  "
+                     f"review={da.get('externalBuildState', '-')}  internal={da.get('internalBuildState', '-')}")
+    out(a, r, lines)
+
+
+def cmd_testflight(a, c):
+    app_id, _ = resolve_app(c, a.app)
+    sub = a.tf_cmd
+    if sub == "groups":
+        r = c.call("GET", f"/v1/apps/{app_id}/betaGroups", {"limit": "200"})
+        out(a, r, [f"{g['id']}  {g['attributes']['name']}  "
+                   f"{'internal' if g['attributes'].get('isInternalGroup') else 'external'}  "
+                   f"publicLink={'on' if g['attributes'].get('publicLinkEnabled') else 'off'}" for g in r["data"]])
+    elif sub == "testers":
+        g = resolve_group(c, app_id, a.group)
+        r = c.call("GET", f"/v1/betaGroups/{g['id']}/betaTesters", {"limit": "200"})
+        out(a, r, [f"{t['attributes'].get('email', '')}  {t['attributes'].get('firstName') or ''} "
+                   f"{t['attributes'].get('lastName') or ''}  {t['attributes'].get('state', '')}".rstrip()
+                   for t in r["data"]])
+    elif sub == "add-tester":
+        g = resolve_group(c, app_id, a.group)
+        attrs = {"email": a.email}
+        if a.first:
+            attrs["firstName"] = a.first
+        if a.last:
+            attrs["lastName"] = a.last
+        body = {"data": {"type": "betaTesters", "attributes": attrs,
+                         "relationships": {"betaGroups": {"data": [{"type": "betaGroups", "id": g["id"]}]}}}}
+        r = write(a, c, f"Add tester {a.email} to group '{g['attributes']['name']}'", "POST", "/v1/betaTesters", body)
+        if r:
+            print("added")
+    elif sub == "add-build":
+        g = resolve_group(c, app_id, a.group)
+        bid = resolve_build(c, app_id, a.build)
+        r = write(a, c, f"Add build {a.build} to group '{g['attributes']['name']}'", "POST",
+                  f"/v1/betaGroups/{g['id']}/relationships/builds", {"data": [{"type": "builds", "id": bid}]})
+        if r is not None:
+            print("added")
+    elif sub == "submit-review":
+        bid = resolve_build(c, app_id, a.build)
+        body = {"data": {"type": "betaAppReviewSubmissions",
+                         "relationships": {"build": {"data": {"type": "builds", "id": bid}}}}}
+        r = write(a, c, f"Submit build {a.build} for beta app review", "POST", "/v1/betaAppReviewSubmissions", body)
+        if r:
+            print(f"submitted: {r['data']['attributes'].get('betaReviewState', '')}")
+
+
+REVIEW_FIELDS = ["contactFirstName", "contactLastName", "contactPhone", "contactEmail",
+                 "demoAccountRequired", "demoAccountName", "demoAccountPassword", "notes"]
+
+
+def cmd_review_info(a, c):
+    app_id, _ = resolve_app(c, a.app)
+    r = c.call("GET", f"/v1/apps/{app_id}/betaAppReviewDetail")
+    d = r["data"]
+    if not a.set_cmd:
+        at = d["attributes"]
+        lines = [f"contact: {at.get('contactFirstName') or ''} {at.get('contactLastName') or ''} "
+                 f"<{at.get('contactEmail') or ''}> {at.get('contactPhone') or ''}",
+                 f"demo account required: {at.get('demoAccountRequired')}  user: {at.get('demoAccountName') or '-'}  "
+                 f"password: {'set' if at.get('demoAccountPassword') else 'unset'}",
+                 f"notes: {(at.get('notes') or '').replace(chr(10), ' / ')}"]
+        out(a, r, lines)
+        return
+    attrs = {}
+    if a.notes is not None:
+        attrs["notes"] = a.notes
+    if a.contact_email:
+        attrs["contactEmail"] = a.contact_email
+    if a.demo_user:
+        attrs["demoAccountName"] = a.demo_user
+        attrs["demoAccountRequired"] = True
+    if a.demo_password_env:
+        pw = os.environ.get(a.demo_password_env)
+        if not pw:
+            die(f"env var {a.demo_password_env} is empty or unset")
+        attrs["demoAccountPassword"] = pw
+        attrs["demoAccountRequired"] = True
+    if not attrs:
+        die("review-info set needs --notes, --contact-email, --demo-user or --demo-password-env")
+    shown = {k: ("***" if k == "demoAccountPassword" else v) for k, v in attrs.items()}
+    body = {"data": {"type": "betaAppReviewDetails", "id": d["id"], "attributes": attrs}}
+    print("Set review details: " + json.dumps(shown))
+    if a.dry_run:
+        print(f"  PATCH /v1/betaAppReviewDetails/{d['id']}\n  body: "
+              + json.dumps({"data": {**body["data"], "attributes": shown}}))
+        print("(dry run: nothing sent)")
+    elif not a.yes:
+        print("(not applied: pass --yes)")
+    else:
+        c.call("PATCH", f"/v1/betaAppReviewDetails/{d['id']}", body=body)
+        print("updated")
+
+
+def cmd_whats_new(a, c):
+    app_id, _ = resolve_app(c, a.app)
+    bid = resolve_build(c, app_id, a.build)
+    locs = c.call("GET", f"/v1/builds/{bid}/betaBuildLocalizations")["data"]
+    cur = next((l for l in locs if l["attributes"]["locale"] == a.locale), None)
+    what = f"Set What to Test ({a.locale}) for build {a.build}"
+    if cur:
+        body = {"data": {"type": "betaBuildLocalizations", "id": cur["id"], "attributes": {"whatsNew": a.text}}}
+        r = write(a, c, what, "PATCH", f"/v1/betaBuildLocalizations/{cur['id']}", body)
+    else:
+        body = {"data": {"type": "betaBuildLocalizations",
+                         "attributes": {"locale": a.locale, "whatsNew": a.text},
+                         "relationships": {"build": {"data": {"type": "builds", "id": bid}}}}}
+        r = write(a, c, what, "POST", "/v1/betaBuildLocalizations", body)
+    if r:
+        print("updated")
+
+
+def parser():
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--json", action="store_true", help="raw JSON output")
+    common.add_argument("--yes", action="store_true", help="perform write operations")
+    common.add_argument("--dry-run", action="store_true", help="print the write request, send nothing")
+    common.add_argument("--app", help="bundle id (default $ASC_APP_BUNDLE or " + DEFAULT_BUNDLE + ")")
+    p = argparse.ArgumentParser(prog="asc", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+                                parents=[common])
+    s = p.add_subparsers(dest="cmd", required=True)
+    s.add_parser("apps", parents=[common]).set_defaults(fn=cmd_apps)
+    b = s.add_parser("builds", parents=[common])
+    b.add_argument("--limit", type=int, default=10)
+    b.set_defaults(fn=cmd_builds)
+
+    t = s.add_parser("testflight", parents=[common])
+    ts = t.add_subparsers(dest="tf_cmd", required=True)
+    ts.add_parser("groups", parents=[common])
+    x = ts.add_parser("testers", parents=[common])
+    x.add_argument("group")
+    x = ts.add_parser("add-tester", parents=[common])
+    x.add_argument("group")
+    x.add_argument("email")
+    x.add_argument("first", nargs="?")
+    x.add_argument("last", nargs="?")
+    x = ts.add_parser("add-build", parents=[common])
+    x.add_argument("group")
+    x.add_argument("build")
+    x = ts.add_parser("submit-review", parents=[common])
+    x.add_argument("build")
+    t.set_defaults(fn=cmd_testflight)
+
+    r = s.add_parser("review-info", parents=[common])
+    r.add_argument("set_cmd", nargs="?", choices=["set"])
+    r.add_argument("--notes")
+    r.add_argument("--contact-email")
+    r.add_argument("--demo-user")
+    r.add_argument("--demo-password-env", metavar="VAR")
+    r.set_defaults(fn=cmd_review_info)
+
+    w = s.add_parser("whats-new", parents=[common])
+    w.add_argument("build")
+    w.add_argument("text")
+    w.add_argument("--locale", default="en-US")
+    w.set_defaults(fn=cmd_whats_new)
+    return p
+
+
+def main():
+    a = parser().parse_args()
+    a.fn(a, Client())
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except BrokenPipeError:
+        pass
