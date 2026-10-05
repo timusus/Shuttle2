@@ -4,6 +4,7 @@ aboutlibraries = "15.2.0"
 annotation = "1.11.0"
 appcompat = "1.8.0"
 agp = "9.4.1"
+benchmark = "1.5.0"
 billing-ktx = "9.1.0"
 compose = "2026.09.00"
 compose-lint-checks = "1.6.0"
@@ -54,6 +55,7 @@ okhttp = "5.5.0"
 play-services-cast-framework = "22.3.1"
 posthog = "3.71.4"
 preference-ktx = "1.2.1"
+profileinstaller = "1.4.1"
 reorderable = "3.1.0"
 review = "2.0.2"
 room-compiler = "2.8.5"
@@ -67,11 +69,13 @@ sentry = "8.59.0"
 sentry-gradle-plugin = "6.23.0"
 timber = "5.0.1"
 tracing = "2.0.3"
+uiautomator = "2.4.0"
 work-runtime-ktx = "2.12.0"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
+androidx-benchmark-macro-junit4 = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
@@ -101,6 +105,7 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-material = { module = "androidx.compose.material:material" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room-compiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room-compiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room-compiler" }
@@ -113,6 +118,7 @@ androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 androidx-work-testing = { module = "androidx.work:work-testing", version.ref = "work-runtime-ktx" }
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
@@ -180,6 +186,8 @@ kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", ve
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "agp" }
+# Generates the app's Baseline Profile from :android:baselineprofile and packages it (docs/performance/android-startup.md).
+androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
 # Room KMP: sets the schema directory for every target's KSP run (the room.schemaLocation argument is Android-only).
 androidx-room = { id = "androidx.room", version.ref = "room-compiler" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

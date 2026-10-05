@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.sentry) apply false
     alias(libs.plugins.aboutlibraries) apply false
     alias(libs.plugins.roborazzi) apply false
+    alias(libs.plugins.androidx.baselineprofile) apply false
 }
 
 buildscript {

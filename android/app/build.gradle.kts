@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 // Local development keys (see [secret]); declared before `android`, which reads them while the script runs
@@ -258,6 +259,10 @@ android {
         // WorkManager
         implementation(libs.androidx.work.runtime.ktx)
 
+        // Installs the Baseline Profile on sideloaded builds and reports it to the benchmarks; Play installs it itself
+        implementation(libs.androidx.profileinstaller)
+        baselineProfile(project(":android:baselineprofile"))
+
         lintChecks(libs.compose.lint.checks)
     }
 
@@ -272,6 +277,25 @@ kotlin {
             "-Xopt-in=kotlin.time.ExperimentalTime"
         )
     }
+}
+
+// The Baseline Profile :android:baselineprofile generates on its managed device (docs/performance/android-startup.md),
+// kept in src/release/generated/baselineProfiles and packaged into release builds. Regenerate before each release.
+baselineProfile {
+    saveInSrc = true
+    automaticGenerationDuringBuild = false
+}
+
+// The plugin's benchmarkRelease and nonMinifiedRelease build types compile main source, whose previews reach the
+// fixtures, as release does; like release, they never package them.
+configurations.matching { it.name == "benchmarkReleaseCompileOnly" || it.name == "nonMinifiedReleaseCompileOnly" }.configureEach {
+    dependencies.add(project.dependencies.project(":android:fixtures"))
+}
+
+// The plugin's build types copy release's signing, whose keystore only CI has; they're never shipped, so debug signs them
+androidComponents {
+    onVariants(selector().withBuildType("benchmarkRelease")) { it.signingConfig.setConfig(android.signingConfigs.getByName("debug")) }
+    onVariants(selector().withBuildType("nonMinifiedRelease")) { it.signingConfig.setConfig(android.signingConfigs.getByName("debug")) }
 }
 
 // Third-party assets no dependency declares, such as the Google Sans Flex font, listed on the licences screen

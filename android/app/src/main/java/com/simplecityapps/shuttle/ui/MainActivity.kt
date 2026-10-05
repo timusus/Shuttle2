@@ -6,7 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -93,8 +97,11 @@ class MainActivity : AppCompatActivity() {
         setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
                 S2AppTheme {
-                    ShellRoute(tabRequests = tabRequestFlow)
-                    PaywallHost(observePaywallRequests)
+                    // Test tags as resource ids, so UiAutomator (the Baseline Profile journeys) and Maestro find them
+                    Box(Modifier.semantics { testTagsAsResourceId = true }) {
+                        ShellRoute(tabRequests = tabRequestFlow)
+                        PaywallHost(observePaywallRequests)
+                    }
                 }
             }
         }

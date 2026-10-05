@@ -64,6 +64,8 @@ object ModuleLayers {
         ":android:mediaprovider:server-testing" to ModuleLayer.FIXTURES,
         ":android:presentation-testing" to ModuleLayer.FIXTURES,
         ":android:architecture-tests" to ModuleLayer.TOOLING,
+        // Drives the release app on a device to generate its Baseline Profile and benchmark startup; nothing depends on it.
+        ":android:baselineprofile" to ModuleLayer.TOOLING,
     )
 
     /**

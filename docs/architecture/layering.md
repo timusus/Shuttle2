@@ -84,7 +84,7 @@ forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
 | presentation | `designsystem` | core, domain, viewmodel, presentation, fixtures |
 | composition root | `app` | everything but tooling |
 | fixtures | `fixtures`, `mediaprovider:server-testing`, `presentation-testing` | core, domain, viewmodel |
-| tooling | `architecture-tests` | nothing of ours |
+| tooling | `architecture-tests`, `baselineprofile` | nothing of ours |
 
 The shared ViewModel module is its own layer so Gradle, not review, keeps Compose and data out of
 it: it compiles for iOS too, so it sees core and domain only (both multiplatform: core's settings,
