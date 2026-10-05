@@ -245,8 +245,8 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   `OSLogPreferences`), so `sudo log collect --device` after a stall has them: `playback` (Kotlin
   `IosPlayerController` and Swift `PlayIntent`: every command with its source, state changes, transitions,
   failures), `audio-engine` (engine state, gapless or not transitions, underruns, buffer health, restarts),
-  `network` (byte source opens, closes with bytes/duration/throughput, retries, reopens, failures: host and
-  path only, never a query) and `session` (interruptions, route changes with their outputs, and where each
+  `network` (byte source opens, closes with bytes/duration/throughput, retries, reopens, failures: host, and
+  path hashed, never a query) and `session` (interruptions, route changes with their outputs, and where each
   pause came from). Song ids, never titles; nothing per buffer.
 - Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`; nothing plays in the
   background without it.
