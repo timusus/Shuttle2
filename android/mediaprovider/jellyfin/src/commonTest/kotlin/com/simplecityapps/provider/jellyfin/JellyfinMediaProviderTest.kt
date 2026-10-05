@@ -462,6 +462,32 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
+    fun `an incremental sync brings the songs played on the server since it - stopping at the first older play`() {
+        signedIn()
+        server.respond(ITEMS, "empty.json", query = mapOf("includeItemTypes" to "Audio"))
+        server.respond(ITEMS, "played.json", query = mapOf("filters" to "IsPlayed"))
+
+        val songs = provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        songs.map { song -> song.path to song.playCount } shouldBe listOf("jellyfin://item/song-9" to 4)
+        // The second song was played before the last sync, so the next page isn't asked for
+        with(server.requestsTo(ITEMS).single { it.url.parameters["filters"] == "IsPlayed" }.url.parameters) {
+            get("sortBy") shouldBe "DatePlayed,SortName"
+            get("sortOrder") shouldBe "Descending"
+        }
+    }
+
+    @Test
+    fun `a full sync doesn't ask for the songs played`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        sync()
+
+        server.requestsTo(ITEMS).none { it.url.parameters["filters"] == "IsPlayed" } shouldBe true
+    }
+
+    @Test
     fun `an incremental sync short of the server's total says how many it's missing - alongside the favourites`() {
         signedIn()
         server.respond(ITEMS, "songs_short.json", query = mapOf("includeItemTypes" to "Audio"))

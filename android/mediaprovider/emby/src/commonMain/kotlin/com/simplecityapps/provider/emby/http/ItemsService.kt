@@ -54,6 +54,29 @@ class ItemsService(private val client: HttpClient) {
         sortBy = "DateCreated,SortName"
     )
 
+    /**
+     * The songs the user has played, most recently played first, read as [audioItems] reads them: a sync pages through
+     * them until it reaches the plays it has already seen.
+     */
+    suspend fun playedAudioItems(
+        url: String,
+        token: String,
+        userId: String,
+        limit: Int,
+        startIndex: Int
+    ): NetworkResult<QueryResult> = items(
+        url = "$url/Users/$userId/Items",
+        token = token,
+        itemTypes = "Audio",
+        fields = "Genres,ProductionYear,DateCreated,ProviderIds,MediaStreams",
+        limit = limit,
+        startIndex = startIndex,
+        filters = "IsPlayed",
+        enableUserData = true,
+        sortBy = "DatePlayed,SortName",
+        sortOrder = "Descending"
+    )
+
     suspend fun playlists(
         url: String,
         token: String,
@@ -107,7 +130,8 @@ class ItemsService(private val client: HttpClient) {
         minDateLastSaved: Instant? = null,
         filters: String? = null,
         enableUserData: Boolean? = null,
-        sortBy: String? = null
+        sortBy: String? = null,
+        sortOrder: String? = null
     ): NetworkResult<QueryResult> = client.networkResult {
         get(url) {
             header(EMBY_TOKEN, token)
@@ -121,6 +145,7 @@ class ItemsService(private val client: HttpClient) {
             parameter("Filters", filters)
             parameter("EnableUserData", enableUserData)
             parameter("SortBy", sortBy)
+            parameter("SortOrder", sortOrder)
         }
     }
 }

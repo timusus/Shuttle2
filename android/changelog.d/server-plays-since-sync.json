@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Songs played in other Jellyfin, Emby or Plex apps now update their play counts and last played dates here at the next sync, not just at the daily full one.", "commits": [] }

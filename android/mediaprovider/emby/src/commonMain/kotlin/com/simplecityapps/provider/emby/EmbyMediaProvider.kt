@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
+import com.simplecityapps.mediaprovider.server.withPlayedSongs
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
@@ -49,7 +50,8 @@ class EmbyMediaProvider(
 
     /**
      * Every song, or with [since] only those saved on the server (added or changed) at or after it, plus those of
-     * [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved (#497).
+     * [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved (#497), and those
+     * played on the server since (in any client), which doesn't either.
      */
     private fun findSongs(
         existingSongs: List<Song>,
@@ -60,7 +62,7 @@ class EmbyMediaProvider(
         emitAll(
             queryItems(address = address, session = session, since = since, syncedAt = syncedAt).map { event ->
                 if (event is FlowEvent.Success && since != null) {
-                    FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
+                    FlowEvent.Success(event.result.withPlayedSongs(playedSince(address, session, since, syncedAt)).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
                 } else {
                     event
                 }
@@ -126,6 +128,49 @@ class EmbyMediaProvider(
                 }.map { it.toPage() }
             }.last()
         return (event as? FlowEvent.Success)?.result?.toHashSet()
+    }
+
+    /**
+     * The songs last played at or after [since], or null if they couldn't be fetched. Pages through the user's played songs,
+     * most recent first, and stops at the first one played before [since]: a sync reads only the plays since the last one.
+     */
+    private suspend fun playedSince(
+        address: String,
+        session: ServerSession<AuthenticatedCredentials>,
+        since: Instant,
+        syncedAt: Instant
+    ): List<Song>? {
+        val played = mutableListOf<Song>()
+        var offset = 0
+        while (true) {
+            val result =
+                session.request { credentials ->
+                    authenticationManager.checkSession(
+                        credentials,
+                        itemsService.playedAudioItems(
+                            url = address,
+                            token = credentials.accessToken,
+                            userId = credentials.userId,
+                            limit = PLAYED_PAGE_SIZE,
+                            startIndex = offset
+                        )
+                    )
+                }
+            val page =
+                when (result) {
+                    is NetworkResult.Success<QueryResult> -> result.body
+
+                    is NetworkResult.Failure -> {
+                        logger.warn { "Couldn't read the songs played since $since: ${result.error.userDescription()}" }
+                        return null
+                    }
+                }
+            val songs = page.items.map { item -> item.toSong(syncedAt) }
+            val recent = songs.takeWhile { song -> song.lastPlayed?.let { it >= since } == true }
+            played += recent
+            offset += page.items.size
+            if (recent.size < songs.size || page.items.isEmpty() || offset >= page.totalRecordCount) return played
+        }
     }
 
     private fun queryItems(
@@ -215,6 +260,9 @@ class EmbyMediaProvider(
 }
 
 private fun QueryResult.toPage() = Page(items, totalRecordCount)
+
+/** Small, as a sync usually stops on the first page: few songs are played between two syncs. */
+private const val PLAYED_PAGE_SIZE = 100
 
 /**
  * What changes when a playlist is renamed or its items edited: the server saves it again. Its item count too, so an edit

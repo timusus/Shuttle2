@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
+import com.simplecityapps.mediaprovider.server.withPlayedSongs
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
@@ -54,7 +55,8 @@ class PlexMediaProvider(
 
     /**
      * Every track of every music section, or with [since] only those updated on the server at or after it, plus those
-     * of [existingSongs] whose favourite changed on the server: rating a track doesn't change its updatedAt (#497).
+     * of [existingSongs] whose favourite changed on the server: rating a track doesn't change its updatedAt (#497), and those
+     * played on the server since (in any client), which doesn't either.
      */
     private fun findSongs(
         existingSongs: List<Song>,
@@ -72,7 +74,7 @@ class PlexMediaProvider(
                     emitAll(
                         queryAllSections(address, session, sections, since) { metadata -> metadata.toSong(type, syncedAt) }.map { event ->
                             if (event is FlowEvent.Success && since != null) {
-                                FlowEvent.Success(event.result.withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.missing)
+                                FlowEvent.Success(event.result.withPlayedSongs(playedSince(address, session, sections, since, syncedAt)).withFavouriteChanges(existingSongs, favourites(address, session, sections, syncedAt)), event.missing)
                             } else {
                                 event
                             }
@@ -173,6 +175,18 @@ class PlexMediaProvider(
     @Suppress("UNUSED_PARAMETER")
     private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
 
+    /** The tracks in [sections] last played at or after [since], or null if they couldn't be fetched. */
+    private suspend fun playedSince(
+        address: String,
+        session: ServerSession<AuthenticatedCredentials>,
+        sections: List<String>,
+        since: Instant,
+        syncedAt: Instant
+    ): List<Song>? {
+        val event = queryAllSections(address, session, sections, since = null, viewedSince = since) { metadata -> metadata.toSong(type, syncedAt) }.last()
+        return (event as? FlowEvent.Success)?.result
+    }
+
     /** When each of the user's favourite tracks in [sections] was favourited, by song path, or null if they couldn't be fetched. */
     private suspend fun favourites(
         address: String,
@@ -195,13 +209,14 @@ class PlexMediaProvider(
         sections: List<String>,
         since: Instant?,
         favouritesOnly: Boolean = false,
+        viewedSince: Instant? = null,
         convert: (Metadata) -> R
     ): Flow<FlowEvent<List<R>, MessageProgress>> = flow {
         val items = mutableListOf<R>()
         var missing = 0
         for (section in sections) {
             var failed = false
-            queryItems(address, session, section, since, favouritesOnly, convert).collect { event ->
+            queryItems(address, session, section, since, favouritesOnly, viewedSince, convert).collect { event ->
                 when (event) {
                     is FlowEvent.Success -> {
                         items.addAll(event.result)
@@ -227,6 +242,7 @@ class PlexMediaProvider(
         section: String,
         since: Instant?,
         favouritesOnly: Boolean,
+        viewedSince: Instant?,
         convert: (Metadata) -> R
     ): Flow<FlowEvent<List<R>, MessageProgress>> = pagedFlow(key = Metadata::key, convert = convert) { offset, limit ->
         val result = session.request { credentials ->
@@ -239,7 +255,8 @@ class PlexMediaProvider(
                     offset = offset,
                     limit = limit,
                     updatedSince = since,
-                    favouritesOnly = favouritesOnly
+                    favouritesOnly = favouritesOnly,
+                    viewedSince = viewedSince
                 )
             )
         }

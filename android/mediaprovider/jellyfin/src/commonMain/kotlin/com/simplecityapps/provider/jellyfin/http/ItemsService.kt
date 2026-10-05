@@ -55,6 +55,29 @@ class ItemsService(private val client: HttpClient) {
         sortBy = "DateCreated,SortName"
     )
 
+    /**
+     * The songs the user has played, most recently played first, read as [audioItems] reads them: a sync pages through
+     * them until it reaches the plays it has already seen.
+     */
+    suspend fun playedAudioItems(
+        url: String,
+        authorization: String,
+        userId: String,
+        limit: Int,
+        startIndex: Int
+    ): NetworkResult<QueryResult> = items(
+        url = "$url/Users/$userId/Items",
+        authorization = authorization,
+        itemTypes = "Audio",
+        fields = "Genres,DateCreated,ProviderIds,MediaStreams",
+        limit = limit,
+        startIndex = startIndex,
+        filters = "IsPlayed",
+        enableUserData = true,
+        sortBy = "DatePlayed,SortName",
+        sortOrder = "Descending"
+    )
+
     suspend fun playlists(
         url: String,
         authorization: String,
@@ -108,7 +131,8 @@ class ItemsService(private val client: HttpClient) {
         minDateLastSaved: Instant? = null,
         filters: String? = null,
         enableUserData: Boolean? = null,
-        sortBy: String? = null
+        sortBy: String? = null,
+        sortOrder: String? = null
     ): NetworkResult<QueryResult> = client.networkResult {
         get(url) {
             header(HttpHeaders.Authorization, authorization)
@@ -122,6 +146,7 @@ class ItemsService(private val client: HttpClient) {
             parameter("filters", filters)
             parameter("enableUserData", enableUserData)
             parameter("sortBy", sortBy)
+            parameter("sortOrder", sortOrder)
         }
     }
 }
