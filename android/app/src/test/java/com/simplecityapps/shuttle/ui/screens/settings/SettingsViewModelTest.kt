@@ -3,8 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.entitlement.ProFeature
+import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
@@ -57,7 +60,15 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), ObserveEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow)
+    /** Whether the Pro gate lets a Pro option through; allowed by default. Records each feature asked for. */
+    private var proFeatureAllowed = true
+    private val proFeaturesAsked = mutableListOf<ProFeature>()
+    private val tryUseProFeature = TryUseProFeature { feature ->
+        proFeaturesAsked += feature
+        proFeatureAllowed
+    }
+
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), ObserveEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), ReadEqualizerPreset(KeyValueEqualizerPresetStore(prefs)), IsLastFmConfigured { lastFmConfigured }, effects, AndroidSettingsCatalog, backupFlow, tryUseProFeature)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
@@ -96,6 +107,37 @@ class SettingsViewModelTest {
         store.preference(AppearanceSettings.Theme).value shouldBe ThemeMode.Dark
         prefs.getString(AppearanceSettings.Theme.key, null) shouldBe "2"
         effects.changes shouldBe listOf(AppearanceSettings.Theme.key to ThemeMode.Dark)
+    }
+
+    @Test
+    fun `turning ReplayGain on asks the Pro gate and turning it off never does`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        val replayGain = item<SettingItem.Choice<*>>(PlaybackSettings.ReplayGain.key)
+
+        viewModel.onChoiceSelect(replayGain, replayGain.options.indexOfFirst { it.value == ReplayGainMode.Album })
+        runCurrent()
+        store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Album
+        proFeaturesAsked shouldBe listOf(ProFeature.AdvancedAudio)
+
+        proFeatureAllowed = false
+        viewModel.onChoiceSelect(replayGain, replayGain.options.indexOfFirst { it.value == ReplayGainMode.Off })
+        runCurrent()
+        store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Off
+        proFeaturesAsked shouldBe listOf(ProFeature.AdvancedAudio)
+    }
+
+    @Test
+    fun `a refused ReplayGain mode keeps the stored one after the trial`() = runTest(mainDispatcherRule.testDispatcher) {
+        store.preference(PlaybackSettings.ReplayGain).value = ReplayGainMode.Track
+        proFeatureAllowed = false
+        val viewModel = viewModel()
+        val replayGain = item<SettingItem.Choice<*>>(PlaybackSettings.ReplayGain.key)
+
+        viewModel.onChoiceSelect(replayGain, replayGain.options.indexOfFirst { it.value == ReplayGainMode.Album })
+        runCurrent()
+
+        store.preference(PlaybackSettings.ReplayGain).value shouldBe ReplayGainMode.Track
+        effects.changes shouldBe emptyList()
     }
 
     @Test

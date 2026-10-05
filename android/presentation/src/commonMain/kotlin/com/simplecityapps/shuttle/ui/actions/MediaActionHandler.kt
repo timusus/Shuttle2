@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import com.simplecityapps.shuttle.entitlement.ProFeature
+import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import dev.zacsweers.metro.Inject
@@ -32,6 +34,7 @@ class MediaActionHandler @Inject constructor(
     private val downloadSongs: DownloadSongs,
     private val removeFromPlaylist: RemoveFromPlaylist,
     private val restorePlaylistSongs: RestorePlaylistSongs,
+    private val tryUseProFeature: TryUseProFeature,
 ) {
     suspend fun handle(action: MediaAction): MediaActionResult = when (action) {
         is MediaAction.Play -> play(action, resolveSongs(action.selection))
@@ -158,9 +161,11 @@ class MediaActionHandler @Inject constructor(
 
     private suspend fun goTo(selection: MediaSelection, destination: FindGoToTarget.Destination): MediaActionResult = findGoToTarget(selection, destination)?.let { MediaActionResult.Navigate(it) } ?: Message(MediaActionMessage.NotFound)
 
+    /** Editing one song's tags is free; editing several at once is a Pro feature, whose refusal has asked for the paywall. */
     private suspend fun editTags(action: MediaAction.EditTags): MediaActionResult {
         val songs = resolveSongs(action.selection).filter { it.mediaProvider.supportsTagEditing }
         if (songs.isEmpty()) return Message(MediaActionMessage.NoSongs)
+        if (songs.size > 1 && !tryUseProFeature(ProFeature.BatchTagEdit)) return MediaActionResult.None
         return MediaActionResult.Navigate(NavigationTarget.TagEditor(songs))
     }
 

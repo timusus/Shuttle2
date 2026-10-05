@@ -341,12 +341,27 @@ class MediaSessionSpecTest {
         opened.name shouldBe "tone-3s"
     }
 
+    @Test
+    fun `RS-68 a car without Shuttle Music Pro browses one upgrade item`() {
+        val harness = sessionHarness(songs = listOf(song(1), song(2)), mayBrowse = false)
+        val browser = harness.connect()
+
+        val root = harness.await(browser.getLibraryRoot(null)).value!!
+        root.mediaId shouldBe SessionCallback.UPGRADE_ROOT_ID
+        val upgrade = children(harness, browser, root.mediaId).single()
+        upgrade.mediaMetadata.title.toString() shouldBe "Upgrade to Shuttle Music Pro"
+        upgrade.mediaMetadata.subtitle.toString() shouldBe "Android Auto is part of Shuttle Music Pro. Open Shuttle Music on your phone to upgrade."
+        upgrade.mediaMetadata.isPlayable shouldBe false
+        upgrade.mediaMetadata.isBrowsable shouldBe false
+    }
+
     private fun sessionHarness(
         songs: List<Song> = emptyList(),
         albums: List<Album> = emptyList(),
         restored: Boolean = true,
-        trusted: Boolean = true
-    ) = SessionHarness(songs = songs, albums = albums, restored = restored, trusted = trusted).also { harnesses += it }
+        trusted: Boolean = true,
+        mayBrowse: Boolean = true
+    ) = SessionHarness(songs = songs, albums = albums, restored = restored, trusted = trusted, mayBrowse = mayBrowse).also { harnesses += it }
 
     /** Asks the session to play [item], as a voice search or another app does, and waits for it to play. */
     private fun playRequest(

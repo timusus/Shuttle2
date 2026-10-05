@@ -3,17 +3,17 @@
     <!-- Title of the Shuttle Music Pro screen, and its row in Settings -->
     <string name="paywall_title">Shuttle Music Pro</string>
     <!-- Summary of the Shuttle Music Pro row in Settings -->
-    <string name="paywall_settings_summary">Stream from Jellyfin, Emby, Plex and Navidrome</string>
+    <string name="paywall_settings_summary">Servers, Android Auto, batch tag editing and ReplayGain</string>
     <!-- Summary of the Shuttle Music Pro row in Settings when the user has Pro -->
     <string name="paywall_settings_summary_pro">Thank you for your support</string>
     <!-- Shuttle Music Pro screen: status while Google Play hasn't yet said whether the user owns Shuttle Music Pro (e.g. offline) -->
     <string name="paywall_status_checking">Checking your purchases with Google Play…</string>
-    <!-- Shuttle Music Pro screen: status when the user has never had the server trial -->
-    <string name="paywall_status_trial_available">Try streaming from your server free for 14 days. The trial starts the first time you play a server song.</string>
+    <!-- Shuttle Music Pro screen: status when the user has never had the free trial -->
+    <string name="paywall_status_trial_available">Try Shuttle Music Pro free for 14 days. The trial starts the first time you use a Pro feature.</string>
     <!-- Shuttle Music Pro screen: before and during the trial, what stops once it ends -->
-    <string name="paywall_trial_terms">After the trial, server songs won\'t play until you upgrade. Downloaded songs and music on this phone keep playing.</string>
-    <!-- Shuttle Music Pro screen: status when the server trial has ended -->
-    <string name="paywall_status_trial_ended">Your free trial has ended. Upgrade to keep streaming from your servers.</string>
+    <string name="paywall_trial_terms">After the trial, server songs, Android Auto, batch tag editing and turning on ReplayGain ask you to upgrade. Downloaded songs, music on this phone and your saved settings keep working.</string>
+    <!-- Shuttle Music Pro screen: status when the free trial has ended -->
+    <string name="paywall_status_trial_ended">Your free trial has ended. Upgrade to keep using Shuttle Music Pro.</string>
     <!-- Shuttle Music Pro screen: status during the trial, e.g. '3 days left in your free trial' -->
     <plurals name="paywall_status_trial">
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> day left in your free trial</item>
@@ -25,7 +25,24 @@
     <string name="paywall_benefits_heading">What you get</string>
     <string name="paywall_benefit_streaming">Stream from Jellyfin, Emby, Plex and Navidrome</string>
     <string name="paywall_benefit_downloads">Download server songs for offline listening</string>
-    <string name="paywall_benefit_free">Local playback, Chromecast, EQ, Android Auto and downloaded songs stay free</string>
+    <string name="paywall_benefit_android_auto">Browse and play your library in Android Auto</string>
+    <string name="paywall_benefit_batch_tag_edit">Edit the tags of many songs at once</string>
+    <string name="paywall_benefit_replay_gain">ReplayGain volume levelling by track or album</string>
+    <string name="paywall_benefit_free">Local playback, Chromecast, the equalizer, editing one song\'s tags and downloaded songs stay free</string>
+    <!-- Title of the dialog shown once, when the first use of a Shuttle Music Pro feature starts the free trial -->
+    <string name="trial_disclosure_title">Your free trial has started</string>
+    <!-- Trial started dialog: what started it, when it was streaming from a server -->
+    <string name="trial_disclosure_lead_servers">Playing from your server started your 14 day free trial of Shuttle Music Pro.</string>
+    <!-- Trial started dialog: what started it, when it was connecting to Android Auto -->
+    <string name="trial_disclosure_lead_android_auto">Connecting to Android Auto started your 14 day free trial of Shuttle Music Pro.</string>
+    <!-- Trial started dialog: what started it, when it was editing several songs' tags at once -->
+    <string name="trial_disclosure_lead_batch_tag_edit">Editing several songs\' tags at once started your 14 day free trial of Shuttle Music Pro.</string>
+    <!-- Trial started dialog: what started it, when it was turning on ReplayGain -->
+    <string name="trial_disclosure_lead_advanced_audio">Turning on ReplayGain started your 14 day free trial of Shuttle Music Pro.</string>
+    <!-- Trial started dialog: the terms, the same whichever feature started it -->
+    <string name="trial_disclosure_body">Servers, Android Auto, batch tag editing and ReplayGain are all unlocked until it ends. Nothing is charged. After that, these features ask you to upgrade; everything else keeps working, and your settings are kept.</string>
+    <!-- Trial started dialog: the button that closes it -->
+    <string name="trial_disclosure_ok">Got it</string>
     <!-- Shuttle Music Pro screen: heading of the plans -->
     <string name="paywall_plans_heading">Choose a plan</string>
     <string name="paywall_plan_lifetime">Lifetime</string>

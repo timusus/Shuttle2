@@ -8,7 +8,9 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
+import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
@@ -69,6 +71,14 @@ class TestMediaActions(
     /** Whether the user may download from a server (the entitlement gate); allowed by default. */
     var downloadAllowed = true
     val downloadSongs = DownloadSongs(songDownloader, resolveSongs, TryDownloadFromServer { downloadAllowed })
+
+    /** Whether the user may use a Pro feature (the entitlement gate); allowed by default. Records each feature asked for. */
+    var proFeatureAllowed = true
+    val proFeaturesAsked = mutableListOf<ProFeature>()
+    val tryUseProFeature = TryUseProFeature { feature ->
+        proFeaturesAsked += feature
+        proFeatureAllowed
+    }
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
     val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)
@@ -103,5 +113,6 @@ class TestMediaActions(
         downloadSongs = downloadSongs,
         removeFromPlaylist = removeFromPlaylist,
         restorePlaylistSongs = restorePlaylistSongs,
+        tryUseProFeature = tryUseProFeature,
     )
 }

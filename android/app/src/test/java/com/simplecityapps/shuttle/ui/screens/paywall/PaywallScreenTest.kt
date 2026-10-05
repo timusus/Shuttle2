@@ -24,6 +24,9 @@ class PaywallScreenTest {
         robot.assertDisplayed(TRIAL_TERMS)
         robot.assertDisplayed("What you get")
         robot.assertDisplayed("Stream from Jellyfin, Emby, Plex and Navidrome")
+        robot.assertDisplayed("Browse and play your library in Android Auto")
+        robot.assertDisplayed("Edit the tags of many songs at once")
+        robot.assertDisplayed("ReplayGain volume levelling by track or album")
         robot.assertDisplayed("$9.99 once")
         robot.assertDisplayed("$3.99 / year")
         robot.assertDisplayed("Renews yearly · cancel anytime in Google Play")
@@ -126,7 +129,7 @@ class PaywallScreenTest {
     fun `unavailable prices offer a retry`() {
         robot.setContent(PaywallScenarios.pricesUnavailable)
 
-        robot.assertDisplayed("Your free trial has ended. Upgrade to keep streaming from your servers.")
+        robot.assertDisplayed("Your free trial has ended. Upgrade to keep using Shuttle Music Pro.")
         robot.assertShownOnEveryPlan("Price unavailable")
         robot.assertNotEnabled("Get Shuttle Music Pro")
         robot.tapText("Retry")
@@ -153,7 +156,7 @@ class PaywallScreenTest {
     }
 
     private companion object {
-        const val TRIAL_AVAILABLE = "Try streaming from your server free for 14 days. The trial starts the first time you play a server song."
-        const val TRIAL_TERMS = "After the trial, server songs won't play until you upgrade. Downloaded songs and music on this phone keep playing."
+        const val TRIAL_AVAILABLE = "Try Shuttle Music Pro free for 14 days. The trial starts the first time you use a Pro feature."
+        const val TRIAL_TERMS = "After the trial, server songs, Android Auto, batch tag editing and turning on ReplayGain ask you to upgrade. Downloaded songs, music on this phone and your saved settings keep working."
     }
 }

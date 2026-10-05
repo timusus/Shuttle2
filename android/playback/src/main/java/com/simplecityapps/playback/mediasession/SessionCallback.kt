@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
@@ -19,6 +20,7 @@ import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import com.simplecityapps.playback.R
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PlayQueue
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
@@ -57,6 +59,11 @@ class SessionCallback(
     /** The song the saved queue was left on, to offer for resumption before the queue is restored. */
     private val nowPlaying: () -> NowPlayingSnapshot?,
     private val scope: CoroutineScope,
+    /**
+     * Whether a trusted controller may browse the library. A car may only while Android Auto is unlocked (Shuttle
+     * Music Pro or its trial; the first connection starts the trial); otherwise it gets [UPGRADE_ROOT_ID].
+     */
+    private val mayBrowse: suspend (ControllerInfo) -> Boolean,
     private val isTrustedCaller: (ControllerInfo) -> Boolean
 ) : MediaLibrarySession.Callback {
     override fun onConnect(session: MediaSession, controller: ControllerInfo): MediaSession.ConnectionResult = MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -129,9 +136,12 @@ class SessionCallback(
         session: MediaLibrarySession,
         browser: ControllerInfo,
         params: LibraryParams?
-    ): ListenableFuture<LibraryResult<MediaItem>> = Futures.immediateFuture(
-        LibraryResult.ofItem(if (isTrustedCaller(browser)) MediaIdHelper.root else emptyRoot, params)
-    )
+    ): ListenableFuture<LibraryResult<MediaItem>> {
+        if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofItem(emptyRoot, params))
+        return scope.listenableFuture {
+            LibraryResult.ofItem(if (mayBrowse(browser)) MediaIdHelper.root else upgradeRoot(), params)
+        }
+    }
 
     override fun onGetChildren(
         session: MediaLibrarySession,
@@ -142,10 +152,29 @@ class SessionCallback(
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
         if (!isTrustedCaller(browser) || parentId == EMPTY_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
+        if (parentId == UPGRADE_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(upgradeItem()), params))
         return scope.listenableFuture {
             LibraryResult.ofItemList(mediaIdHelper.getChildren(parentId).page(page, pageSize), params)
         }
     }
+
+    private fun upgradeRoot(): MediaItem = MediaItem.Builder()
+        .setMediaId(UPGRADE_ROOT_ID)
+        .setMediaMetadata(MediaMetadata.Builder().setIsBrowsable(true).setIsPlayable(false).build())
+        .build()
+
+    /** Neither playable nor browsable: the upgrade happens on the phone, never in the car. */
+    private fun upgradeItem(): MediaItem = MediaItem.Builder()
+        .setMediaId(UPGRADE_ITEM_ID)
+        .setMediaMetadata(
+            MediaMetadata.Builder()
+                .setTitle(context.getString(R.string.auto_pro_upgrade_title))
+                .setSubtitle(context.getString(R.string.auto_pro_upgrade_subtitle))
+                .setIsBrowsable(false)
+                .setIsPlayable(false)
+                .build()
+        )
+        .build()
 
     override fun onGetItem(
         session: MediaLibrarySession,
@@ -294,9 +323,20 @@ class SessionCallback(
 
         private const val EMPTY_ROOT_ID = "EMPTY_ROOT"
 
+        /** The root a car gets once Android Auto needs Shuttle Music Pro: one item, pointing the user at the phone. */
+        const val UPGRADE_ROOT_ID = "PRO_UPGRADE_ROOT"
+
+        private const val UPGRADE_ITEM_ID = "PRO_UPGRADE"
+
+        /** Android Auto's and Android Automotive's media browsers. */
+        private val carPackages = setOf("com.google.android.projection.gearhead", "com.android.car.media")
+
+        /** Whether [controller] is a car's media browser (Android Auto on the phone, or Android Automotive). */
+        fun isCar(controller: ControllerInfo): Boolean = controller.packageName in carPackages
+
         private val emptyRoot: MediaItem = MediaItem.Builder()
             .setMediaId(EMPTY_ROOT_ID)
-            .setMediaMetadata(androidx.media3.common.MediaMetadata.Builder().setIsBrowsable(true).setIsPlayable(false).build())
+            .setMediaMetadata(MediaMetadata.Builder().setIsBrowsable(true).setIsPlayable(false).build())
             .build()
     }
 }

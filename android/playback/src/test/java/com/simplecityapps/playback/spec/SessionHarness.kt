@@ -36,7 +36,9 @@ class SessionHarness(
     albums: List<Album> = emptyList(),
     playlists: Map<Playlist, List<Song>> = emptyMap(),
     restored: Boolean = true,
-    trusted: Boolean = true
+    trusted: Boolean = true,
+    /** False for a car once Android Auto needs Shuttle Music Pro (the trial has ended without an upgrade). */
+    mayBrowse: Boolean = true
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -69,7 +71,7 @@ class SessionHarness(
                 voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository),
                 songRepository = songRepository
             )
-        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope) { trusted }
+        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, { mayBrowse }) { trusted }
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)

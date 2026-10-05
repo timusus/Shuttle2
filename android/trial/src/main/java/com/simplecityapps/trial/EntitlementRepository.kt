@@ -29,8 +29,9 @@ import timber.log.Timber
  * The single source of the user's [Entitlement].
  *
  * Pro comes from any completed purchase of a [ProductIds] product, legacy ones included. Otherwise the user gets
- * one 14-day server trial, which [com.simplecityapps.shuttle.entitlement.ServerAccessGate] starts the first time they stream or download from a remote server;
- * the old first-launch trial doesn't count against it.
+ * one 14-day trial, which [com.simplecityapps.shuttle.entitlement.ServerAccessGate] starts the first time they use any
+ * Pro feature (a stream or download from a remote server, Android Auto, a batch tag edit, advanced audio); the old
+ * first-launch trial doesn't count against it.
  *
  * @param owned completed purchases from Play, or null until Play has answered.
  */
@@ -82,12 +83,12 @@ class EntitlementRepository(
     }
 
     /**
-     * Starts the server trial, unless it has already started or the user has Pro. Suspends until Play answers, so
-     * a purchaser whose purchases haven't loaded yet (offline, or a fresh install) doesn't use up the trial.
+     * Starts the trial, unless it has already started or the user has Pro. Suspends until Play answers, so a
+     * purchaser whose purchases haven't loaded yet (offline, or a fresh install) doesn't use up the trial.
      *
      * @return true if the trial started.
      */
-    suspend fun startServerTrialIfEligible(): Boolean = trialMutex.withLock {
+    suspend fun startTrialIfEligible(): Boolean = trialMutex.withLock {
         if (trialStartedAt.value != null) return false
         val owned = owned.filterNotNull().first()
         val now = clock.now()

@@ -7,6 +7,7 @@ import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -134,8 +135,9 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         setting = PlaybackSettings.ReplayGain,
                         title = StringKey.DSP_REPLAY_GAIN_TITLE,
                         options = listOf(
-                            ChoiceOption(ReplayGainMode.Track, StringKey.DSP_REPLAY_GAIN_TRACK),
-                            ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM),
+                            // Turning ReplayGain on is Shuttle Music Pro; turning it off stays free
+                            ChoiceOption(ReplayGainMode.Track, StringKey.DSP_REPLAY_GAIN_TRACK, ProFeature.AdvancedAudio),
+                            ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM, ProFeature.AdvancedAudio),
                             ChoiceOption(ReplayGainMode.Off, StringKey.DSP_REPLAY_GAIN_OFF)
                         )
                     ),

@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
+import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
@@ -63,6 +64,13 @@ class IosEntitlementModule {
 
     @Provides
     fun provideObservePaywallRequests(gate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { gate.paywallRequests }
+
+    /**
+     * Only servers need Pro on iOS so far: batch tag edits and replay gain stay free here until iOS gets its own
+     * trial disclosure and paywall copy for them (Android's #939).
+     */
+    @Provides
+    fun provideTryUseProFeature(): TryUseProFeature = TryUseProFeature { true }
 
     /** The sign-in discloses that streaming needs Pro to anyone without Pro or a running trial. */
     @Provides

@@ -18,6 +18,9 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -212,6 +215,9 @@ private fun Benefits() {
         SectionTitle(stringResource(R.string.paywall_benefits_heading))
         Benefit(stringResource(R.string.paywall_benefit_streaming)) { ServerMarks() }
         Benefit(stringResource(R.string.paywall_benefit_downloads)) { BenefitIcon(Icons.Rounded.CloudDownload) }
+        Benefit(stringResource(R.string.paywall_benefit_android_auto)) { BenefitIcon(Icons.Rounded.DirectionsCar) }
+        Benefit(stringResource(R.string.paywall_benefit_batch_tag_edit)) { BenefitIcon(Icons.Rounded.Edit) }
+        Benefit(stringResource(R.string.paywall_benefit_replay_gain)) { BenefitIcon(Icons.Rounded.GraphicEq) }
         Benefit(stringResource(R.string.paywall_benefit_free)) { BenefitIcon(Icons.Rounded.CheckCircle) }
     }
 }

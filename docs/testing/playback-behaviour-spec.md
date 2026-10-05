@@ -278,6 +278,12 @@ remove, move or clear the queue's items, but it can control playback and ask to 
 a trusted controller can do all of it. (#345) — JVM (`spec/MediaSessionSpecTest`); a real third-party app is
 device-only: *Media session through Media3*.
 
+**RS-68: a car without Shuttle Music Pro browses one upgrade item.** Given Android Auto needs Shuttle Music Pro (the
+free trial, which a car's first connection starts, has ended without an upgrade), when the car browses, then its root
+holds a single item, neither playable nor browsable, saying to upgrade from Shuttle Music on the phone; the car never
+opens a paywall, and stored settings and the queue are untouched. (#939) — JVM (`spec/MediaSessionSpecTest`); a real
+head unit is device-only.
+
 **RS-48: a cold start in the foreground stays there until its command has run.** Given S2 not running, when the
 widget, a shortcut or a headset's play button starts the playback service in the foreground, then it's in the
 foreground straight away (with Media3's notification, or a placeholder under the same id) and stays there while the

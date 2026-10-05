@@ -88,7 +88,7 @@ class EntitlementRepositoryTest {
         val repository = repository()
         verify(exactly = 1) { analytics.entitlementResolved(Entitlement.Free(trialUsed = false)) }
 
-        repository.startServerTrialIfEligible()
+        repository.startTrialIfEligible()
         runCurrent()
         verify(exactly = 1) { analytics.entitlementResolved(any()) }
 
@@ -115,7 +115,7 @@ class EntitlementRepositoryTest {
     fun `the trial lasts 14 days from when it starts, then expires`() = runTest {
         val repository = repository()
 
-        assertTrue(repository.startServerTrialIfEligible())
+        assertTrue(repository.startTrialIfEligible())
         runCurrent()
 
         assertEquals(Entitlement.Trial(start + 14.days), repository.entitlement.value)
@@ -134,11 +134,11 @@ class EntitlementRepositoryTest {
     @Test
     fun `the trial is given only once`() = runTest {
         val repository = repository()
-        assertTrue(repository.startServerTrialIfEligible())
+        assertTrue(repository.startTrialIfEligible())
         advanceTimeBy(20.days)
         runCurrent()
 
-        assertFalse(repository.startServerTrialIfEligible())
+        assertFalse(repository.startTrialIfEligible())
         assertEquals(Entitlement.Free(trialUsed = true), repository.entitlement.value)
         verify(exactly = 1) { analytics.trialStarted() }
     }
@@ -154,7 +154,7 @@ class EntitlementRepositoryTest {
         owned.value = setOf(ProductIds.LEGACY_LIFETIME)
         val repository = repository()
 
-        assertFalse(repository.startServerTrialIfEligible())
+        assertFalse(repository.startTrialIfEligible())
         assertNull(store.serverTrialStartedAt)
     }
 
@@ -164,7 +164,7 @@ class EntitlementRepositoryTest {
         val repository = repository()
 
         var started: Boolean? = null
-        backgroundScope.launch { started = repository.startServerTrialIfEligible() }
+        backgroundScope.launch { started = repository.startTrialIfEligible() }
         runCurrent()
         assertNull(started)
 
@@ -181,7 +181,7 @@ class EntitlementRepositoryTest {
         val repository = repository()
         assertEquals(Entitlement.Unknown, repository.entitlement.value)
 
-        backgroundScope.launch { repository.startServerTrialIfEligible() }
+        backgroundScope.launch { repository.startTrialIfEligible() }
         advanceTimeBy(1.hours)
         runCurrent()
 
@@ -201,7 +201,7 @@ class EntitlementRepositoryTest {
         owned.value = null
         val repository = repository()
 
-        backgroundScope.launch { repository.startServerTrialIfEligible() }
+        backgroundScope.launch { repository.startTrialIfEligible() }
         advanceTimeBy(1.hours)
         runCurrent()
         assertNull(store.serverTrialStartedAt)

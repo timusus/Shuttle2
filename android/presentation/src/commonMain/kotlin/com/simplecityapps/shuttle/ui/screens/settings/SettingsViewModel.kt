@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.shuttle.entitlement.TryUseProFeature
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -93,7 +94,8 @@ class SettingsViewModel @Inject constructor(
     isLastFmConfigured: IsLastFmConfigured,
     private val effects: SettingsEffects,
     catalog: SettingsCatalog,
-    private val backupFlow: LibraryBackupFlow
+    private val backupFlow: LibraryBackupFlow,
+    private val tryUseProFeature: TryUseProFeature
 ) : ViewModel() {
     private val catalogSettings = catalog.settings
     private val lastFmConfigured = isLastFmConfigured()
@@ -216,11 +218,20 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    /** A Pro option asks the gate first; a refusal keeps the stored value (the gate has asked for the upgrade). */
     private fun <T> select(
         item: SettingItem.Choice<T>,
         optionIndex: Int
     ) {
-        write(item.setting, item.options[optionIndex].value)
+        val option = item.options[optionIndex]
+        val feature = option.proFeature
+        if (feature == null || readSetting(item.setting) == option.value) {
+            write(item.setting, option.value)
+            return
+        }
+        viewModelScope.launch {
+            if (tryUseProFeature(feature)) write(item.setting, option.value)
+        }
     }
 
     private fun <T> write(

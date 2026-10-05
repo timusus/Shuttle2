@@ -7,5 +7,8 @@ enum class PaywallSource(val value: String) {
     Settings("settings"),
     AddServer("add_server"),
     ServerPlayback("server_playback"),
-    ServerDownload("server_download")
+    ServerDownload("server_download"),
+    AndroidAuto("android_auto"),
+    BatchTagEdit("batch_tag_edit"),
+    AdvancedAudio("advanced_audio")
 }

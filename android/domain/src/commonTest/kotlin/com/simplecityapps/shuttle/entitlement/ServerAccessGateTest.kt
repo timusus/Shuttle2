@@ -172,4 +172,110 @@ class ServerAccessGateTest {
         }
         assertEquals(listOf(PaywallSource.AddServer, PaywallSource.ServerPlayback), requests)
     }
+
+    /** Stands in for Android's repository: one trial, started once, that a later use finds running. */
+    private fun startingGate(): ServerAccessGate = ServerAccessGate(
+        entitlement,
+        startTrial = {
+            if (entitlement.value == Entitlement.Free(trialUsed = false)) {
+                trialStarts++
+                entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
+                true
+            } else {
+                false
+            }
+        }
+    )
+
+    @Test
+    fun `the first use of any Pro feature starts the one shared trial - and holds it for disclosure`() {
+        ProFeature.entries.forEach { feature ->
+            entitlement.value = Entitlement.Free(trialUsed = false)
+            trialStarts = 0
+            val gate = startingGate()
+            val requests = requests(gate) {
+                assertEquals(ServerAccess.Allowed, gate.use(feature))
+                // The trial is running now, so the next use of any feature neither starts it again nor discloses it again
+                gate.onDisclosed()
+                ProFeature.entries.forEach { other -> assertEquals(ServerAccess.Allowed, gate.use(other)) }
+            }
+            assertEquals(emptyList<PaywallSource>(), requests)
+            assertEquals(1, trialStarts, "$feature")
+            assertEquals(null, gate.pending.value)
+        }
+    }
+
+    @Test
+    fun `the feature whose first use started the trial is pending until disclosed`() {
+        val gate = startingGate()
+        requests(gate) { gate.use(ProFeature.BatchTagEdit) }
+        assertEquals(ProFeature.BatchTagEdit, gate.pending.value)
+        gate.onDisclosed()
+        assertEquals(null, gate.pending.value)
+    }
+
+    @Test
+    fun `a running trial or Pro discloses nothing`() {
+        listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.Lifetime)).forEach {
+            entitlement.value = it
+            requests { assertEquals(ServerAccess.Allowed, gate.use(ProFeature.AndroidAuto)) }
+        }
+        assertEquals(null, gate.pending.value)
+        assertEquals(0, trialStarts)
+    }
+
+    @Test
+    fun `once the trial has ended - every Pro feature asks for the upgrade from where it was refused`() {
+        val gate = startingGate()
+        val requests = requests(gate) {
+            assertEquals(ServerAccess.Allowed, gate.use(ProFeature.AndroidAuto))
+            entitlement.value = Entitlement.Free(trialUsed = true)
+            assertEquals(ServerAccess.Refused, gate.use(ProFeature.BatchTagEdit))
+            assertEquals(ServerAccess.Refused, gate.use(ProFeature.AdvancedAudio))
+            assertFalse(gate.tryStreamFromServer())
+        }
+        assertEquals(listOf(PaywallSource.BatchTagEdit, PaywallSource.AdvancedAudio, PaywallSource.ServerPlayback), requests)
+        assertEquals(1, trialStarts)
+    }
+
+    @Test
+    fun `a car refused after the trial doesn't open the paywall`() {
+        entitlement.value = Entitlement.Free(trialUsed = true)
+        val requests = requests { assertEquals(ServerAccess.Refused, gate.use(ProFeature.AndroidAuto, askForPaywall = false)) }
+        assertEquals(emptyList<PaywallSource>(), requests)
+    }
+
+    @Test
+    fun `buying Pro after the trial unlocks every feature again`() {
+        entitlement.value = Entitlement.Free(trialUsed = true)
+        requests { ProFeature.entries.forEach { assertEquals(ServerAccess.Refused, gate.use(it, askForPaywall = false)) } }
+        entitlement.value = Entitlement.Pro(ProSource.Subscription)
+        requests { ProFeature.entries.forEach { assertEquals(ServerAccess.Allowed, gate.use(it)) } }
+        assertEquals(0, trialStarts)
+    }
+
+    @Test
+    fun `legacy buyers stay unlocked for every feature`() {
+        listOf(ProSource.LegacyLifetime, ProSource.LegacySubscription).forEach { source ->
+            entitlement.value = Entitlement.Pro(source)
+            val requests = requests { ProFeature.entries.forEach { assertEquals(ServerAccess.Allowed, gate.use(it)) } }
+            assertEquals(emptyList<PaywallSource>(), requests)
+        }
+        assertEquals(0, trialStarts)
+    }
+
+    @Test
+    fun `while Play hasn't answered no feature starts the trial`() {
+        entitlement.value = Entitlement.Unknown
+        requests { ProFeature.entries.forEach { assertEquals(ServerAccess.Undecided, gate.use(it)) } }
+        assertEquals(0, trialStarts)
+        assertEquals(null, gate.pending.value)
+    }
+
+    @Test
+    fun `where only the paywall can start the trial - a first use opens it and discloses nothing`() {
+        val requests = requests(consentGate) { assertEquals(ServerAccess.Refused, consentGate.use(ProFeature.BatchTagEdit)) }
+        assertEquals(listOf(PaywallSource.BatchTagEdit), requests)
+        assertEquals(null, consentGate.pending.value)
+    }
 }

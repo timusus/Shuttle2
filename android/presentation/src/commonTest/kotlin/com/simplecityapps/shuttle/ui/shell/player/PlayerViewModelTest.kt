@@ -107,9 +107,13 @@ class PlayerViewModelTest {
         Dispatchers.resetMain()
     }
 
+    /** Whether the Pro gate lets the user turn ReplayGain on; allowed by default. */
+    private var advancedAudioAllowed = true
+
     private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
         val sleepTimer = SleepTimer(playbackOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
         val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
+        mediaActions.proFeatureAllowed = advancedAudioAllowed
         return PlayerViewModel(
             observeQueue = ObserveQueue(queueOperations),
             observeQueueSource = ObserveQueueSource(ResolveHomeItems(suggestionsRepository, playlistRepository)),
@@ -127,7 +131,7 @@ class PlayerViewModelTest {
             observeSetting = ObserveSetting(settingsStore),
             saveSetting = SaveSetting(settingsStore),
             replayGainModeSetting = replayGainModeSetting,
-            setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects, replayGainModeSetting),
+            setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects, replayGainModeSetting, mediaActions.tryUseProFeature),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
@@ -585,6 +589,20 @@ class PlayerViewModelTest {
         viewModel.uiState.value.player.replayGainMode shouldBe ReplayGainMode.Album
         ReadSetting(settingsStore)(PlaybackSettings.ReplayGain) shouldBe ReplayGainMode.Album
         settingsEffects.changes shouldBe listOf(PlaybackSettings.ReplayGain.key to ReplayGainMode.Album)
+    }
+
+    @Test
+    fun `after the trial turning ReplayGain on keeps the stored mode and turning it off stays free`() = runTest {
+        SaveSetting(settingsStore)(PlaybackSettings.ReplayGain, ReplayGainMode.Track)
+        advancedAudioAllowed = false
+        val viewModel = viewModel()
+
+        viewModel.setReplayGainMode(ReplayGainMode.Album)
+        ReadSetting(settingsStore)(PlaybackSettings.ReplayGain) shouldBe ReplayGainMode.Track
+        settingsEffects.changes shouldBe emptyList()
+
+        viewModel.setReplayGainMode(ReplayGainMode.Off)
+        ReadSetting(settingsStore)(PlaybackSettings.ReplayGain) shouldBe ReplayGainMode.Off
     }
 
     @Test

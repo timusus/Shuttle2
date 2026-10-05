@@ -9,6 +9,7 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.PlaylistSong
@@ -203,6 +204,30 @@ class MediaActionHandlerTest {
 
         handler.handle(MediaAction.EditTags(MediaSelection.Songs(listOf(song, remote)))) shouldBe
             MediaActionResult.Navigate(NavigationTarget.TagEditor(listOf(song)))
+        actions.proFeaturesAsked shouldBe emptyList()
+    }
+
+    @Test
+    fun `editing several songs' tags at once asks the Pro gate`() = runTest {
+        handler.handle(MediaAction.EditTags(songs)) shouldBe MediaActionResult.Navigate(NavigationTarget.TagEditor(listOf(song, other)))
+
+        actions.proFeaturesAsked shouldBe listOf(ProFeature.BatchTagEdit)
+    }
+
+    @Test
+    fun `a refused batch tag edit opens nothing since the gate has asked for the upgrade`() = runTest {
+        actions.proFeatureAllowed = false
+
+        handler.handle(MediaAction.EditTags(songs)) shouldBe MediaActionResult.None
+    }
+
+    @Test
+    fun `editing one song's tags stays free after the trial`() = runTest {
+        actions.proFeatureAllowed = false
+
+        handler.handle(MediaAction.EditTags(MediaSelection.Songs(song))) shouldBe
+            MediaActionResult.Navigate(NavigationTarget.TagEditor(listOf(song)))
+        actions.proFeaturesAsked shouldBe emptyList()
     }
 
     @Test

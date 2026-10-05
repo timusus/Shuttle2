@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings.model
 
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.text.StringKey
 
@@ -69,9 +70,11 @@ data class SettingOverride(
     val hint: StringKey
 )
 
+/** A choice's option; choosing one with a [proFeature] goes through the Shuttle Music Pro gate first. */
 data class ChoiceOption<T>(
     val value: T,
-    val label: StringKey
+    val label: StringKey,
+    val proFeature: ProFeature? = null
 )
 
 /**

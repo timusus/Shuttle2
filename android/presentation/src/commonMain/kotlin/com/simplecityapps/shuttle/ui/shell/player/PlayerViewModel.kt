@@ -284,7 +284,9 @@ class PlayerViewModel @AssistedInject constructor(
 
     override fun setPlaybackSpeed(speed: Float) = control(PlaybackCommand.SetSpeed(speed))
 
-    override fun setReplayGainMode(mode: ReplayGainMode) = setReplayGainMode.invoke(mode)
+    override fun setReplayGainMode(mode: ReplayGainMode) {
+        viewModelScope.launch { setReplayGainMode.invoke(mode) }
+    }
 
     override fun togglePanel(panel: NowPlayingPanel) = showPanel(panel.takeUnless { it == this.panel.value })
 

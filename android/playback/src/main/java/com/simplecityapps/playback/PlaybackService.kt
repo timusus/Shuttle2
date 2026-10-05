@@ -32,6 +32,9 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.di.appGraph
+import com.simplecityapps.shuttle.entitlement.ProFeature
+import com.simplecityapps.shuttle.entitlement.ServerAccess
+import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import dev.zacsweers.metro.AppScope
@@ -94,6 +97,9 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var foregroundHold: ForegroundHold
 
+    @Inject
+    lateinit var serverAccessGate: ServerAccessGate
+
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -125,7 +131,12 @@ class PlaybackService : MediaLibraryService() {
         )
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope) { controller ->
+        // A car's first connection starts the shared trial; after it ends the car shows the upgrade item, and the phone
+        // app (not the car) offers the upgrade. A store that hasn't answered yet never locks a purchaser out.
+        val mayBrowse: suspend (MediaSession.ControllerInfo) -> Boolean = { controller ->
+            !SessionCallback.isCar(controller) || serverAccessGate.use(ProFeature.AndroidAuto, askForPaywall = false) != ServerAccess.Refused
+        }
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, mayBrowse) { controller ->
             controller.isTrusted || runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
         }
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)

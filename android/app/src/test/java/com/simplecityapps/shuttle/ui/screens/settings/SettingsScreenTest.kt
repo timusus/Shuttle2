@@ -46,7 +46,7 @@ class SettingsScreenTest {
         robot.setRootContent(pro = SettingsProState.Owned)
 
         robot.assertDisplayed("Thank you for your support")
-        robot.assertNotShown("Stream from Jellyfin, Emby, Plex and Navidrome")
+        robot.assertNotShown("Servers, Android Auto, batch tag editing and ReplayGain")
     }
 
     @Test
@@ -54,7 +54,7 @@ class SettingsScreenTest {
         robot.setRootContent(pro = SettingsProState.Neutral)
 
         robot.assertDisplayed("Shuttle Music Pro")
-        robot.assertNotShown("Stream from Jellyfin, Emby, Plex and Navidrome")
+        robot.assertNotShown("Servers, Android Auto, batch tag editing and ReplayGain")
         robot.assertNotShown("Thank you for your support")
     }
 
