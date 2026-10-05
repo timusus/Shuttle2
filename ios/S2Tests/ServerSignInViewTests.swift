@@ -29,7 +29,8 @@ struct ServerSignInViewTests {
             events: [],
             showProDisclosure: false,
             quickConnectEnabled: quickConnectEnabled,
-            discoveredServers: discoveredServers
+            discoveredServers: discoveredServers,
+            localNetworkRequested: false
         )
     }
 
