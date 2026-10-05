@@ -161,6 +161,7 @@ struct PlaybackSystemCoordinatorTests {
         engine.emit(.position(trackId: id, ms: 42_000))
         commands.fire(.pause)
         #expect(await waitUntil { engine.commands.last == "pause" })
+        #expect(intent.lastCommand == PlayIntent.Command(plays: false, source: .remoteCommand))
         engine.emit(.state(.paused, trackId: id))
 
         #expect(await waitUntil { rate == 0 && info.playbackState == .paused })
@@ -272,6 +273,7 @@ struct PlaybackSystemCoordinatorTests {
         ])
 
         #expect(await waitUntil { engine.commands.contains("pause") })
+        #expect(intent.lastCommand == PlayIntent.Command(plays: false, source: .interruption))
     }
 
     @Test func aMediaServicesResetReloadsIntoANewEngine() async throws {

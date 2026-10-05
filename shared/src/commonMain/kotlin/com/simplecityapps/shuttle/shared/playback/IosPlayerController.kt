@@ -13,6 +13,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.concurrent.Volatile
@@ -75,6 +76,9 @@ class IosPlayerController(
     private val resumePosition: (Song) -> Int = PlaybackPolicy::startOf
 ) : PlaybackOperations {
     private val queue = QueueModel(random)
+
+    /** The unified log's `playback` category (#897): commands, state changes, transitions and failures, by song id. */
+    private val log = Logger.tagged("playback")
 
     /** A queue item as handed to the engine, under an id unique to that handing, as part of the play [playId]. */
     private class Feed(
@@ -226,7 +230,7 @@ class IosPlayerController(
         override fun onFailed(
             trackId: String,
             message: String
-        ) = this@IosPlayerController.onFailed(trackId)
+        ) = this@IosPlayerController.onFailed(trackId, message)
 
         override fun onPosition(
             trackId: String,
@@ -330,6 +334,7 @@ class IosPlayerController(
         startMs: Int,
         reopen: Boolean = false
     ) {
+        log.info { "load song ${item.song.id} at $startMs ms${if (reopen) ", re-opening its stream" else ""}, playWhenReady $playWhenReady" }
         loadJob?.cancel()
         val preopenedFeed = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }
         val preopened = preopenedFeed?.stream
@@ -506,6 +511,7 @@ class IosPlayerController(
     /** The engine moved on to its next track: the queue's current item follows. */
     private fun onTransition(trackId: String) {
         val arrived = engineNext?.takeIf { it.id == trackId } ?: return
+        log.info { "transition song ${current?.item?.song?.id} -> ${arrived.item.song.id}, gapless" }
         current?.takeIf { !it.failed }?.let { _trackEndedFlow.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
         nextJob?.cancel()
         current = arrived
@@ -550,7 +556,11 @@ class IosPlayerController(
         }
     }
 
-    private fun onFailed(trackId: String) {
+    private fun onFailed(
+        trackId: String,
+        message: String
+    ) {
+        log.warn { "track $trackId failed: ${message.replace(QUERY, "?…")}" }
         val currentFeed = current
         when {
             currentFeed != null && trackId == currentFeed.id -> onCurrentFailed(currentFeed)
@@ -577,6 +587,7 @@ class IosPlayerController(
             loadFailures++
             val following = queue.following(feed.item.uid)
             if (following != null && loadFailures < PlaybackPolicy.MAX_LOAD_ATTEMPTS) {
+                log.warn { "song ${feed.item.song.id} failed to load; skipping to song ${following.song.id}" }
                 pendingLoad = pending?.let { PendingLoad(it.completion, it.skipUnloadable, attempt = loadFailures + 1) }
                 queue.setCurrent(following.uid)
                 startLoad(following, 0)
@@ -584,6 +595,7 @@ class IosPlayerController(
             }
         }
         loadFailures = 0
+        log.warn { "song ${feed.item.song.id} failed${if (feed.ready) " while playing" else ""}; stopped there" }
         giveUp()
         completePending(Result.failure(IllegalStateException("Failed to load ${feed.item.song.name}")))
         publishState()
@@ -615,6 +627,7 @@ class IosPlayerController(
             next = null
             engineNext = null
             queue.setCurrent(upcoming.item.uid)
+            log.info { "song ${feed.item.song.id} ended; song ${upcoming.item.song.id} next, not gapless" }
             if (upcoming.failed) {
                 current = upcoming
                 onCurrentFailed(upcoming)
@@ -624,6 +637,7 @@ class IosPlayerController(
             return
         }
         completePending(Result.failure(IllegalStateException("Nothing to load")))
+        log.info { "end of queue after song ${feed.item.song.id}: paused" }
         playWhenReady = false
         engineState = IosAudioPlayerState.Ended
         publishState()
@@ -666,6 +680,12 @@ class IosPlayerController(
         val state = derivedState()
         val previous = _playbackStateFlow.value
         _playbackStateFlow.value = state
+        if (state != previous) {
+            log.info {
+                "state ${previous.name} -> ${state.name}${if (_bufferingFlow.value) " (buffering)" else ""}, " +
+                    "song ${current?.item?.song?.id}, playWhenReady $playWhenReady, engine $engineState"
+            }
+        }
         if (state != previous && state is PlaybackState.Paused) {
             current?.let { _pausePositionFlow.tryEmit(SongPosition(it.item.song, getProgress() ?: 0)) }
         }
@@ -725,6 +745,7 @@ class IosPlayerController(
      */
     private fun playNow() {
         val item = queue.currentItem ?: return
+        log.info { "play song ${item.song.id}, ${playbackState().name}" }
         val currentFeed = current
         playWhenReady = true
         when {
@@ -762,6 +783,7 @@ class IosPlayerController(
     }
 
     private fun pauseNow() {
+        log.info { "pause song ${current?.item?.song?.id}, ${playbackState().name}" }
         playWhenReady = false
         if (current == null) return
         // Still told to the engine while the state stays [PlaybackState.Loading], so a load that was going to play stops.
@@ -782,6 +804,7 @@ class IosPlayerController(
         completion: ((Result<Any?>) -> Unit)?
     ) = onMain {
         val next = queue.next(if (ignoreRepeat) RepeatMode.All else queue.repeatMode)
+        log.info { "skip to next: song ${next?.song?.id}" }
         if (next == null) {
             completion?.invoke(Result.failure(IllegalStateException("No next item")))
         } else {
@@ -795,6 +818,7 @@ class IosPlayerController(
         force: Boolean,
         completion: ((Result<Any?>) -> Unit)?
     ) = onMain {
+        log.info { "skip to previous, force $force, at ${getProgress()} ms" }
         if (force || (getProgress() ?: 0) < PlaybackPolicy.RESTART_THRESHOLD_MS) {
             queue.previous()?.let { queue.setCurrent(it.uid) }
             playFromStart(completion)
@@ -806,6 +830,7 @@ class IosPlayerController(
 
     override fun skipTo(position: Int) = onMain {
         if (position != queue.queueStateFlow.value.currentPosition) {
+            log.info { "skip to queue position $position" }
             queue.queueStateFlow.value.items.getOrNull(position)?.let { queue.setCurrent(it.uid) }
             playFromStart(null)
         }
@@ -855,6 +880,7 @@ class IosPlayerController(
      */
     private fun seekNow(positionMs: Int) {
         val feed = current ?: return
+        log.info { "seek song ${feed.item.song.id} to $positionMs ms" }
         when {
             // Also while the last re-open is still resolving: a scrub supersedes it.
             feed.seeksByReopening && feed.opensAtPosition -> startLoad(feed.item, positionMs, reopen = true)
@@ -1086,3 +1112,9 @@ class IosPlayerController(
         private fun <T> eventFlow() = MutableSharedFlow<T>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     }
 }
+
+/** A query string in an engine's failure message: a stream URL's carries the server's token. */
+private val QUERY = Regex("""\?\S*""")
+
+private val PlaybackState.name: String
+    get() = this::class.simpleName ?: toString()

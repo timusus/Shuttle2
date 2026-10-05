@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import os
 import Shared
 
 /// The player `PlayIntent` reads and commands: the Kotlin `IosPlayerController`, or a fake in tests.
@@ -54,6 +55,9 @@ final class PlayIntent {
     @ObservationIgnored let timeout: Duration
     /// The last `begin`'s ticket: a result for any other is a superseded action's.
     @ObservationIgnored private var ticket = 0
+    /// The last play or pause asked of the player, and who asked: what the `playback` log says (#897).
+    @ObservationIgnored private(set) var lastCommand: Command?
+    @ObservationIgnored private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
     @ObservationIgnored private var pending: Pending?
     @ObservationIgnored private var key: String?
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
@@ -95,31 +99,54 @@ final class PlayIntent {
 
     // MARK: - Commands
 
+    /// Who asked for a play or a pause.
+    enum Source: String {
+        case user
+        case remoteCommand = "remote command"
+        case interruption
+        case routeChange = "route change"
+    }
+
+    struct Command: Equatable {
+        let plays: Bool
+        let source: Source
+    }
+
     /// Plays (or resumes) the current item, as the listener asked: a pending play they paused no longer stands.
-    func play() {
+    func play(from source: Source = .user) {
+        record(plays: true, source)
         listenerPlayed()
         player.play()
         refresh()
     }
 
-    /// Resumes for the system (an interruption ending, a rebuilt engine), not the listener: a pending play they paused
-    /// stays paused.
-    func resume() {
-        guard pending?.isPaused != true else { return }
+    /// Resumes for the system (an interruption ending), not the listener: a pending play they paused stays paused.
+    func resume(from source: Source) {
+        guard pending?.isPaused != true else {
+            log.notice("resume from \(source.rawValue, privacy: .public) skipped: the listener paused")
+            return
+        }
+        record(plays: true, source)
         player.play()
         refresh()
     }
 
     /// Pauses, cancelling a pending play.
-    func pause() {
+    func pause(from source: Source = .user) {
+        record(plays: false, source)
         pending?.isPaused = true
         player.pause()
         refresh()
     }
 
     /// Pauses when play is intended, else plays: a play/pause button, whose second tap during a load pauses it.
-    func toggle() {
-        if wantsPlayback { pause() } else { play() }
+    func toggle(from source: Source = .user) {
+        if wantsPlayback { pause(from: source) } else { play(from: source) }
+    }
+
+    private func record(plays: Bool, _ source: Source) {
+        lastCommand = Command(plays: plays, source: source)
+        log.notice("\(plays ? "play" : "pause", privacy: .public) from \(source.rawValue, privacy: .public)")
     }
 
     /// The listener started a play some other way (a skip, a queue row): a pending play they paused, should it start

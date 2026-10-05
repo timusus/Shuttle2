@@ -264,7 +264,7 @@ struct PlayIntentTests {
         let sut = makeSut()
         let ticket = sut.begin()
         sut.pause()
-        sut.resume()
+        sut.resume(from: .interruption)
         #expect(player.commands == ["pause"])
         #expect(!sut.isPlayIntended)
 
@@ -276,7 +276,7 @@ struct PlayIntentTests {
 
     @Test func aSystemResumePlays() {
         let sut = makeSut()
-        sut.resume()
+        sut.resume(from: .interruption)
         #expect(player.commands == ["play"])
         #expect(sut.isPlayIntended)
     }

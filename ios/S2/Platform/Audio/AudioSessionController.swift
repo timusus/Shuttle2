@@ -135,7 +135,8 @@ final class AudioSessionController {
 
     /// A session notification, read on the posting thread so only a value crosses to main.
     enum SessionEvent: Sendable {
-        case interruptionBegan
+        /// `reason`: what the system said interrupted us (another app's audio, a muted built-in mic, a route that went).
+        case interruptionBegan(reason: String)
         case interruptionEnded(shouldResume: Bool)
         case routeChanged(
             reason: AVAudioSession.RouteChangeReason?,
@@ -150,7 +151,9 @@ final class AudioSessionController {
             case AVAudioSession.interruptionNotification:
                 switch (info[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init) {
                 case .began:
-                    self = .interruptionBegan
+                    let reason = (info[AVAudioSessionInterruptionReasonKey] as? UInt)
+                        .flatMap(AVAudioSession.InterruptionReason.init)
+                    self = .interruptionBegan(reason: Self.name(reason))
                 case .ended:
                     let options = AVAudioSession.InterruptionOptions(rawValue: info[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0)
                     self = .interruptionEnded(shouldResume: options.contains(.shouldResume))
@@ -170,6 +173,15 @@ final class AudioSessionController {
                 self = .mediaServicesReset
             default:
                 return nil
+            }
+        }
+
+        private static func name(_ reason: AVAudioSession.InterruptionReason?) -> String {
+            switch reason {
+            case .default: "another app's audio"
+            case .builtInMicMuted: "built-in mic muted"
+            case let other?: "reason \(other.rawValue)"
+            case nil: "unknown"
             }
         }
     }
@@ -196,9 +208,9 @@ final class AudioSessionController {
 
     func handle(_ event: SessionEvent) {
         switch event {
-        case .interruptionBegan:
+        case let .interruptionBegan(reason):
             let wasPlaying = isPlaying()
-            log.notice("interruption began, playing \(wasPlaying)")
+            log.notice("interruption began: \(reason, privacy: .public), playing \(wasPlaying)")
             if wasPlaying { onPause(.interruption) }
             // Set after `onPause`, whose pause may come back through `playbackPaused()`.
             resumeAfterInterruption = wasPlaying

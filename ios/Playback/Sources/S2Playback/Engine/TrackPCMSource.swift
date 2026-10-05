@@ -70,6 +70,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
     private var openFinishedAt: TimeInterval?
     private var probe: StartupTiming.Probe?
     private var readWaiting: (() -> Void)?
+    private var durationSeconds: Double?
 
     public init(url: URL, headers: [String: String] = [:]) {
         self.url = url
@@ -103,6 +104,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
             try decoder.setOutputFormat(sampleRate: sampleRate, channelCount: channelCount)
             outputRate = sampleRate
             outputChannels = channelCount
+            if format.duration > 0 { lock.withLock { durationSeconds = format.duration } }
             return format.duration > 0 ? Int64((format.duration * sampleRate).rounded()) : nil
         } catch StreamDecoderError.cancelled {
             throw TrackSourceError.cancelled
@@ -141,6 +143,15 @@ public final class FFmpegTrackSource: TrackPCMSource {
 
     /// Whether it plays over HTTP, for the start timing.
     var isStreamed: Bool { !url.isFileURL }
+
+    /// Seconds of the track fetched ahead of the decoder and not yet read, at its average bitrate: nil for a file, or
+    /// a stream whose length or duration isn't known. For the buffer health line (#897).
+    var networkBufferedSeconds: Double? {
+        let (reader, duration) = lock.withLock { (reader, durationSeconds) }
+        guard let http = reader as? HTTPRangeByteSource, let duration, let total = http.totalLength, total > 0
+        else { return nil }
+        return Double(http.bufferedAheadBytes) * duration / Double(total)
+    }
 
     /// What the open learned and cost, for the start timing (#687); nil until it began. The
     /// byte source's figures are read as of now.

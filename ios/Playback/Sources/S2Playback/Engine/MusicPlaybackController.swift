@@ -268,6 +268,10 @@ public final class MusicPlaybackController {
     /// playing, but the owner hears loading for as long as it lasts, and playing again once it's over
     /// still playing, so the listener sees the buffering (#897).
     private var underrun: (since: TimeInterval, ms: Int64)?
+    /// The last buffer health line: when, and whether it was under `lowBufferSeconds`.
+    private var lastHealthLog: (at: TimeInterval, low: Bool)?
+    private static let healthLogSeconds: TimeInterval = 10
+    private static let lowBufferSeconds: Double = 5
     /// The queue's last frame is scheduled (current ended with no next).
     private var drained = false
     /// Bumped by every restart; completions from buffers a restart discarded are ignored.
@@ -701,7 +705,11 @@ public final class MusicPlaybackController {
 
     private func setState(_ newState: State) {
         guard newState != state else { return }
+        engineLog.notice(
+            "state \(self.state.rawValue, privacy: .public) -> \(newState.rawValue, privacy: .public) uid \(self.current?.track.uid ?? "-", privacy: .public)"
+        )
         state = newState
+        if newState == .playing { lastHealthLog = nil }
         if newState == .paused || newState == .idle || newState == .ended { pauseEngine() }
         reportState(newState)
     }
@@ -1057,13 +1065,14 @@ public final class MusicPlaybackController {
         current.map(release)
         current = slot
         next = nil
-        reportTransition(to: slot)
+        reportTransition(to: slot, gapless: false)
         openIfNeeded(slot)
         restart(atFrame: frame)
     }
 
-    private func reportTransition(to slot: Slot) {
+    private func reportTransition(to slot: Slot, gapless: Bool) {
         let uid = slot.track.uid
+        engineLog.notice("transition to uid \(uid, privacy: .public), \(gapless ? "gapless" : "restarted", privacy: .public)")
         let callback = callbackLock.withLock { callbacks.transition }
         if let callback { callbackQueue.async { callback(uid) } }
     }
@@ -1264,7 +1273,7 @@ public final class MusicPlaybackController {
             timelineLock.withLock {
                 timeline.segments.removeAll { $0.streamStart < segment.streamStart }
             }
-            reportTransition(to: next)
+            reportTransition(to: next, gapless: true)
         }
         if concludingEnd, drained, state == .playing, stream >= outputIndex {
             player.stop()
@@ -1380,9 +1389,27 @@ public final class MusicPlaybackController {
         timer.setEventHandler { [weak self] in
             self?.fill()
             self?.updateTimeline()
+            self?.logBufferHealth()
         }
         timer.resume()
         ticker = timer
+    }
+
+    /// Seconds buffered ahead of the playhead while playing (#897): scheduled on the node, plus what the stream has
+    /// fetched past the decoder. Logged every `healthLogSeconds`, and as it drops under `lowBufferSeconds`.
+    private func logBufferHealth() {
+        guard state == .playing, let current else { return }
+        let scheduled = Double(max(0, outputIndex - playedStreamIndex())) / outputSampleRate
+        let network = (current.source as? FFmpegTrackSource)?.networkBufferedSeconds
+        let ahead = scheduled + (network ?? 0)
+        let now = StartupTiming.now()
+        let low = ahead < Self.lowBufferSeconds && network != nil && !drained
+        let due = lastHealthLog.map { now - $0.at >= Self.healthLogSeconds } ?? true
+        guard due || (low && lastHealthLog?.low == false) else { return }
+        lastHealthLog = (now, low)
+        let networkText = network.map { String(format: "%.1f", $0) } ?? "-"
+        let line = "buffer: \(String(format: "%.1f", ahead)) s ahead (scheduled \(String(format: "%.1f", scheduled)) s, network \(networkText) s) uid \(current.track.uid)"
+        if low { engineLog.warning("\(line, privacy: .public)") } else { engineLog.info("\(line, privacy: .public)") }
     }
 
     private func stopTicker() {

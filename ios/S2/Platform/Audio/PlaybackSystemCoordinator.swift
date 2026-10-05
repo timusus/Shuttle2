@@ -29,7 +29,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     private let makeEngine: () -> AudioEngine?
     private var observers: [Task<Void, Never>] = []
     private var intentListener: Int?
-    /// Where each pause and resume came from: the session or a remote command (#715).
+    /// Remote skips and seeks; plays and pauses are logged by `PlayIntent` with their source (#715, #897).
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "session")
 
     init(
@@ -57,13 +57,9 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         }
         session.isPlaying = { [weak self] in self?.playerIsPlaying ?? false }
         session.onPause = { [weak self] reason in
-            self?.log.notice("pause from the session: \(String(describing: reason), privacy: .public)")
-            self?.intent.pause()
+            self?.intent.pause(from: reason == .interruption ? .interruption : .routeChange)
         }
-        session.onResume = { [weak self] in
-            self?.log.notice("resume from the session")
-            self?.intent.resume()
-        }
+        session.onResume = { [weak self] in self?.intent.resume(from: .interruption) }
         session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
         player.onWillPlay = { [weak session] in MainActor.assumeIsolated { session?.playRequested() } }
         player.activateOutput = { [weak session] in
@@ -198,31 +194,31 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     // MARK: - NowPlayingCommandHandler
 
     func play() {
-        log.notice("remote play")
-        intent.play()
+        intent.play(from: .remoteCommand)
     }
 
     func pause() {
-        log.notice("remote pause")
-        intent.pause()
+        intent.pause(from: .remoteCommand)
     }
 
     func togglePlayPause() {
-        log.notice("remote togglePlayPause, playing \(self.playerIsPlaying)")
-        intent.toggle()
+        intent.toggle(from: .remoteCommand)
     }
 
     func skipToNext() {
+        log.notice("remote skipToNext")
         intent.listenerPlayed()
         playback.skipToNext(ignoreRepeat: true, completion: nil)
     }
 
     func skipToPrevious() {
+        log.notice("remote skipToPrevious")
         intent.listenerPlayed()
         playback.skipToPrev(force: false, completion: nil)
     }
 
     func seek(to position: TimeInterval) {
+        log.notice("remote seek to \(Int(position)) s")
         playback.seekTo(position: Int32(max(0, position) * 1000))
     }
 

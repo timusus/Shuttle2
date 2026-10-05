@@ -328,6 +328,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// The last byte the CURRENT transaction asked for. Decides whether the tail needs its own
     /// request or is coming in this body anyway.
     private var transactionEndByte: Int64 = 0
+    /// When each transaction was opened (on `queue`), for its close line's duration and throughput.
+    private var taskOpenedAt: [ObjectIdentifier: TimeInterval] = [:]
     private var openIsContinuation = false
     /// The side request for the resource's last bytes, if one is in flight. Routed apart from
     /// `task` in every delegate callback; never counted, never teed, never retried.
@@ -1011,7 +1013,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         let request = makeRequest(url: target, range: "bytes=\(requestStart)-\(endByte)")
         engineLog.info(
             """
-            bytes: open host=\(target.host ?? "?", privacy: .public) start=\(offset) end=\(endByte) \
+            bytes: open host=\(target.host ?? "?", privacy: .public) path=\(target.path, privacy: .public) \
+            start=\(offset) end=\(endByte) \
             overlap=\(offset - requestStart) continuation=\(self.openIsContinuation) resolved=\(self.resolvedURL != nil) \
             remembered=\(self.resolutionUnproven)
             """
@@ -1019,6 +1022,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         let task = session.dataTask(with: request)
         task.delegate = self
         self.task = task
+        taskOpenedAt[ObjectIdentifier(task)] = StartupTiming.now()
         withLock {
             // A fresh task starts running: both pause reasons and the mirror start from nothing.
             pacedTask = task
@@ -1893,12 +1897,18 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
             // Every close, including the ones a newer transaction cancelled, so a device log can
             // pair each `open` with how it ended: the 2026-09-15 log's first four transactions each
             // died a `-999` a few hundred ms after their headers, and that was only visible by hand.
+            // What it carried, over how long: a slow link reads as low throughput before it stalls (#897).
+            let received = task.countOfBytesReceived
+            let seconds = taskOpenedAt.removeValue(forKey: ObjectIdentifier(task)).map { StartupTiming.now() - $0 }
+            let ms = seconds.map { String(Int(($0 * 1000).rounded())) } ?? "-"
+            let kbps = seconds.flatMap { $0 > 0 ? String(Int(Double(received) * 8 / 1000 / $0)) : nil } ?? "-"
             engineLog.info(
                 """
                 bytes: close host=\(task.currentRequest?.url?.host ?? "?", privacy: .public) \
+                path=\(task.currentRequest?.url?.path ?? "-", privacy: .public) \
                 start=\(task.originalRequest?.value(forHTTPHeaderField: "Range") ?? "-", privacy: .public) \
-                at=\(endedAt) current=\(task === self.task) \
-                error=\((error as NSError?)?.code ?? 0, privacy: .public)
+                at=\(endedAt) current=\(task === self.task) bytes=\(received) ms=\(ms, privacy: .public) \
+                kbps=\(kbps, privacy: .public) error=\((error as NSError?)?.code ?? 0, privacy: .public)
                 """
             )
             if !invalidated, task === tailTask {
