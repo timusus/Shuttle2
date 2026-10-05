@@ -1,10 +1,13 @@
 /* CarPlay text (#692), which only iOS shows. Read with `String(localized:table: "CarPlay")` (CarPlayText). */
 
 "carplay_tab_home" = "Home";
-"carplay_tab_albums" = "Albums";
-"carplay_tab_artists" = "Artists";
 "carplay_tab_playlists" = "Playlists";
-"carplay_tab_songs" = "Songs";
+"carplay_tab_library" = "Library";
+"carplay_artists" = "Artists";
+"carplay_albums" = "Albums";
+"carplay_songs" = "Songs";
+"carplay_genres" = "Genres";
+"carplay_auto_playlists" = "Auto Playlists";
 "carplay_shuffle_all" = "Shuffle All";
 "carplay_shuffle" = "Shuffle";
 "carplay_loading" = "Loading…";
@@ -14,8 +17,11 @@
 "carplay_library_empty_detail" = "Add music in Shuttle Music on your iPhone.";
 "carplay_home_empty" = "Nothing played yet";
 "carplay_home_empty_detail" = "What you play shows up here.";
+"carplay_offline_empty" = "Nothing to play offline";
+"carplay_offline_empty_detail" = "Download music in Shuttle Music, or connect to the internet.";
 "carplay_no_albums" = "No albums";
 "carplay_no_artists" = "No artists";
+"carplay_no_genres" = "No genres";
 "carplay_no_playlists" = "No playlists";
 "carplay_no_songs" = "No songs";
 "carplay_unknown" = "Unknown";

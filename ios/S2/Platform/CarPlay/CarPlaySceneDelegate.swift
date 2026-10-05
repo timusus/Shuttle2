@@ -2,16 +2,20 @@ import CarPlay
 import Shared
 import UIKit
 
-/// The CarPlay scene (#692, from Shuttle Podcasts): a tab bar of Home, Albums, Artists, Playlists and Songs, each a
-/// list drawn from the shared view models the phone's screens use. Albums, artists and playlists push their songs;
-/// a song plays its list from it, Shuffle shuffles the list, and a Home item plays (Jump Back In resumes). Playback
-/// goes through `MediaActionsViewModel`, as the phone's does, and Now Playing's transport is the remote commands
-/// `NowPlayingController` already registers.
+/// The CarPlay scene (#692, from Shuttle Podcasts): a tab bar of Home, Playlists and Library, drawn from the shared
+/// view models the phone's screens use. Home is the phone's Home for the car: each shelf, in the phone's order, a row
+/// of artwork whose images play (Jump Back In's resume) and whose row pushes the whole shelf; offline it shows only what
+/// can play. Playlists lists the auto playlists and the user's own; Library pushes Artists, Albums, Songs and Genres.
+/// Albums, artists, genres and playlists push their songs; a song plays its list from it, Shuffle shuffles the list.
+/// Playback goes through `MediaActionsViewModel`, as the phone's does, and Now Playing's transport is the remote
+/// commands `NowPlayingController` already registers.
 @MainActor
 final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPInterfaceControllerDelegate {
     private var interfaceController: CPInterfaceController?
     private var nowPlaying: CarPlayNowPlayingController?
     private var actions: MediaActionsViewModel?
+    private var home: HomeViewModel?
+    private var network: CarPlayNetworkMonitor?
     /// The tabs' view models and their observers, for the connection's life.
     private var viewModels: [Lifecycle_viewmodelViewModel] = []
     private var tasks: [Task<Void, Never>] = []
@@ -20,18 +24,31 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private var lastRendered: [ObjectIdentifier: [CarPlaySectionModel]] = [:]
 
     private let homeTemplate = CPListTemplate(title: CarPlayText.home, sections: [])
-    private let albumsTemplate = CPListTemplate(title: CarPlayText.albums, sections: [])
-    private let artistsTemplate = CPListTemplate(title: CarPlayText.artists, sections: [])
     private let playlistsTemplate = CPListTemplate(title: CarPlayText.playlists, sections: [])
+    private let libraryTemplate = CPListTemplate(title: CarPlayText.library, sections: [])
+    // Library's lists, pushed from it; they follow their view models for the connection's life
+    private let artistsTemplate = CPListTemplate(title: CarPlayText.artists, sections: [])
+    private let albumsTemplate = CPListTemplate(title: CarPlayText.albums, sections: [])
     private let songsTemplate = CPListTemplate(title: CarPlayText.songs, sections: [])
+    private let genresTemplate = CPListTemplate(title: CarPlayText.genres, sections: [])
 
-    // The latest state of each tab, which its rows' ids resolve against
+    // The latest state of each list, which its rows' ids resolve against
+    private var homeState: HomeUiState = HomeUiStateLoading.shared
+    private var homeSections: [CarPlayHomeSection] = []
     private var homeItems: [String: HomeItem] = [:]
-    private var jumpBackInKeys: Set<String> = []
+    /// The Home shelf pushed from its row, which follows Home's state while it's on the stack.
+    private var openShelf: (id: String, template: CPListTemplate)?
     private var albums: [String: Album] = [:]
     private var artists: [String: AlbumArtist] = [:]
+    private var genres: [String: Genre] = [:]
     private var playlists: [String: Playlist] = [:]
+    private var smartPlaylists: [String: SmartPlaylist] = [:]
     private var songs: [Song] = []
+    private var downloads: [String: OfflineDownload] = [:]
+    /// What plays offline, built when Home is drawn offline and dropped when the library or the downloads change.
+    private var offlineIndex: CarPlayOfflineIndex?
+
+    private var isOffline: Bool { !(network?.isOnline ?? true) }
 
     private struct PushedList {
         let viewModel: Lifecycle_viewmodelViewModel
@@ -61,16 +78,17 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
 
         let tabs: [(CPListTemplate, String, String)] = [
             (homeTemplate, CarPlayText.home, "house"),
-            (albumsTemplate, CarPlayText.albums, "square.stack"),
-            (artistsTemplate, CarPlayText.artists, "music.mic"),
             (playlistsTemplate, CarPlayText.playlists, "music.note.list"),
-            (songsTemplate, CarPlayText.songs, "music.note"),
+            (libraryTemplate, CarPlayText.library, "square.stack"),
         ]
         for (template, title, symbol) in tabs {
             template.tabTitle = title
             template.tabImage = UIImage(systemName: symbol)
+        }
+        for template in [homeTemplate, playlistsTemplate, artistsTemplate, albumsTemplate, songsTemplate, genresTemplate] {
             render(CarPlayCatalog.loading(), into: template)
         }
+        render(CarPlayCatalog.library(), into: libraryTemplate)
         // The car decides how many tabs it draws, and CPTabBarTemplate throws, not truncates, past that. Now
         // Playing is never a tab: the car offers it itself, and it's pushed whenever something starts playing.
         let tabBar = CPTabBarTemplate(templates: Array(tabs.map(\.0).prefix(CPTabBarTemplate.maximumTabCount)))
@@ -80,12 +98,15 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         nowPlaying.attach { [weak self] in self?.pushQueue() }
         self.nowPlaying = nowPlaying
         actions = graph.mediaActionsViewModel
+        network = CarPlayNetworkMonitor { [weak self] _ in self?.renderHome() }
 
         observeHome(graph.homeViewModel)
+        observePlaylists(graph.playlistListViewModel)
         observeAlbums(graph.albumListViewModel)
         observeArtists(graph.albumArtistListViewModel)
-        observePlaylists(graph.playlistListViewModel)
+        observeGenres(graph.genreListViewModel)
         observeSongs(graph.songListViewModel)
+        observeDownloads(graph.offlineDownloads)
     }
 
     func templateApplicationScene(
@@ -102,20 +123,35 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         pushed.removeAll()
         actions?.clear()
         actions = nil
+        home = nil
+        network?.cancel()
+        network = nil
+        openShelf = nil
+        offlineIndex = nil
         nowPlaying?.detach()
         nowPlaying = nil
         lastRendered.removeAll()
         self.interfaceController = nil
     }
 
+    /// Home loads as it comes on screen, as the phone's does (`HomeViewModel.onVisibilityChanged`).
+    nonisolated func templateDidAppear(_ aTemplate: CPTemplate, animated: Bool) {
+        MainActor.assumeIsolated {
+            if aTemplate === homeTemplate { home?.onVisibilityChanged(visible: true) }
+        }
+    }
+
     /// A template that left the stack forgets what it drew (its identifier can be reused by the next one, which must
-    /// draw); a pushed list also stops observing and clears its view model.
+    /// draw); a pushed list also stops observing and clears its view model. The tabs never leave.
     nonisolated func templateDidDisappear(_ aTemplate: CPTemplate, animated: Bool) {
         MainActor.assumeIsolated {
+            if aTemplate === homeTemplate { home?.onVisibilityChanged(visible: false) }
             guard let controller = interfaceController,
+                  ![homeTemplate, playlistsTemplate, libraryTemplate].contains(where: { $0 === aTemplate }),
                   !controller.templates.contains(where: { $0 === aTemplate }) else { return }
             let id = ObjectIdentifier(aTemplate)
             lastRendered[id] = nil
+            if openShelf?.template === aTemplate { openShelf = nil }
             guard let list = pushed.removeValue(forKey: id) else { return }
             list.task.cancel()
             list.viewModel.clear()
@@ -136,38 +172,110 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     private func observeHome(_ viewModel: HomeViewModel) {
-        observe(viewModel, viewModel.uiState) { $0.updateHome($1) }
+        home = viewModel
+        // Home is the tab the car opens on
+        viewModel.onVisibilityChanged(visible: true)
+        observe(viewModel, viewModel.uiState) { delegate, state in
+            delegate.homeState = state
+            delegate.renderHome()
+        }
     }
 
-    private func updateHome(_ state: HomeUiState) {
-        switch onEnum(of: state) {
+    /// Draws Home, and the shelf pushed from it, from the latest state, offline only what can play.
+    private func renderHome() {
+        switch onEnum(of: homeState) {
         case .loading:
             render(CarPlayCatalog.loading(), into: homeTemplate)
         case .empty:
+            homeSections = []
             homeItems = [:]
-            render(CarPlayCatalog.home([], budget: Self.budget()), into: homeTemplate)
+            render(CarPlayCatalog.message(CarPlayText.libraryEmpty, detail: CarPlayText.libraryEmptyDetail), into: homeTemplate)
         case .content(let content):
-            var items: [String: HomeItem] = [:]
-            var jumpBackIn: Set<String> = []
-            let sections = content.sections.filter { $0.id != .shuffleAll }.map { section in
-                let resumes = section.id == .jumpBackIn
-                let entries = section.items.map { item in
-                    items[item.key] = item
-                    if resumes { jumpBackIn.insert(item.key) }
-                    return CarPlayEntry(
-                        id: item.key,
-                        title: item.title,
-                        subtitle: item.subtitle(mixed: true),
-                        artwork: Self.artwork(item, covers: content.covers),
-                        progress: resumes ? section.progress[item.key].map { Double($0.fraction) } : nil
-                    )
-                }
-                return CarPlayHomeSection(id: "\(section.id)", header: HomeContent.title(section.title), entries: entries, keepsAll: resumes)
-            }
-            homeItems = items
-            jumpBackInKeys = jumpBackIn
-            render(CarPlayCatalog.home(sections, budget: Self.budget()), into: homeTemplate)
+            homeSections = sections(content)
+            let images = min(CarPlayCatalog.shelfImageLimit, CPMaximumNumberOfGridImages)
+            render(CarPlayCatalog.home(homeSections, offline: isOffline, imageLimit: images, rowLimit: Self.rowLimit()), into: homeTemplate)
         }
+        renderOpenShelf()
+    }
+
+    /// Home's shelves from its state, in its order; Shuffle All's prompt holds no items and isn't one.
+    private func sections(_ content: HomeUiStateContent) -> [CarPlayHomeSection] {
+        let index = isOffline ? currentOfflineIndex() : nil
+        var items: [String: HomeItem] = [:]
+        let sections = content.sections.filter { $0.id != .shuffleAll }.map { section in
+            let resumes = section.id == .jumpBackIn
+            let mixed = Set(section.items.map(\.typeLabel)).count > 1
+            let entries = section.items.map { item in
+                items[item.key] = item
+                return CarPlayEntry(
+                    id: item.key,
+                    title: item.title,
+                    subtitle: item.subtitle(mixed: mixed),
+                    artwork: Self.artwork(item, covers: content.covers),
+                    progress: resumes ? section.progress[item.key].map { Double($0.fraction) } : nil,
+                    symbol: Self.symbol(item),
+                    playableOffline: index?.isPlayable(item, covers: content.covers[item.key]) ?? true
+                )
+            }
+            return CarPlayHomeSection(id: "\(section.id)", header: HomeContent.title(section.title), entries: entries, resumes: resumes)
+        }
+        homeItems = items
+        return sections
+    }
+
+    private func currentOfflineIndex() -> CarPlayOfflineIndex {
+        if let offlineIndex { return offlineIndex }
+        let index = CarPlayOfflineIndex(songs: songs, downloads: downloads)
+        offlineIndex = index
+        return index
+    }
+
+    private func renderOpenShelf() {
+        guard let (id, template) = openShelf else { return }
+        let section = homeSections.first { $0.id == id } ?? CarPlayHomeSection(id: id, header: template.title ?? "", entries: [])
+        render(CarPlayCatalog.shelf(section, offline: isOffline, limit: Self.rowLimit()), into: template) { [weak self] in self?.performHome($0) }
+    }
+
+    private func observeDownloads(_ offlineDownloads: OfflineDownloads) {
+        let flow = offlineDownloads.downloads
+        downloads = flow.value
+        tasks.append(Task { [weak self] in
+            for await downloads in flow {
+                guard let self else { return }
+                self.downloads = downloads
+                self.libraryChanged()
+            }
+        })
+    }
+
+    /// The library or the downloads changed: what plays offline may have too.
+    private func libraryChanged() {
+        offlineIndex = nil
+        if isOffline { renderHome() }
+    }
+
+    private func observePlaylists(_ viewModel: PlaylistListViewModel) {
+        observe(viewModel, viewModel.uiState) { $0.updatePlaylists($1) }
+    }
+
+    private func updatePlaylists(_ state: PlaylistListUiState) {
+        playlists = Dictionary(state.playlists.map { ("\($0.id)", $0) }, uniquingKeysWith: { first, _ in first })
+        smartPlaylists = Dictionary(state.smartPlaylists.map { (Self.smartKey($0), $0) }, uniquingKeysWith: { first, _ in first })
+        let smart = state.smartPlaylists.map { smartPlaylist in
+            CarPlayEntry(id: Self.smartKey(smartPlaylist), title: smartPlaylist.id.title, subtitle: nil, symbol: smartPlaylist.id.symbol)
+        }
+        let own = state.playlists.map { playlist in
+            // A playlist has no artwork of its own: its first song's, as its phone row's mosaic starts with
+            CarPlayEntry(
+                id: "\(playlist.id)",
+                title: playlist.name,
+                subtitle: nil,
+                artwork: state.covers[KotlinLong(value: playlist.id)]?.first.map(ArtworkSource.song),
+                symbol: "music.note.list"
+            )
+        }
+        let loading = state.playlists.isEmpty && state.loadingState != .ready
+        render(loading ? CarPlayCatalog.loading() : CarPlayCatalog.playlists(smart: smart, playlists: own, limit: Self.rowLimit()), into: playlistsTemplate)
     }
 
     private func observeAlbums(_ viewModel: AlbumListViewModel) {
@@ -206,23 +314,17 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         render(loading ? CarPlayCatalog.loading() : CarPlayCatalog.entries(entries, empty: CarPlayText.noArtists, limit: Self.rowLimit()), into: artistsTemplate)
     }
 
-    private func observePlaylists(_ viewModel: PlaylistListViewModel) {
-        observe(viewModel, viewModel.uiState) { $0.updatePlaylists($1) }
+    private func observeGenres(_ viewModel: GenreListViewModel) {
+        observe(viewModel, viewModel.uiState) { $0.updateGenres($1) }
     }
 
-    private func updatePlaylists(_ state: PlaylistListUiState) {
-        playlists = Dictionary(state.playlists.map { ("\($0.id)", $0) }, uniquingKeysWith: { first, _ in first })
-        let entries = state.playlists.map { playlist in
-            // A playlist has no artwork of its own: its first song's, as its phone row's mosaic starts with
-            CarPlayEntry(
-                id: "\(playlist.id)",
-                title: playlist.name,
-                subtitle: nil,
-                artwork: state.covers[KotlinLong(value: playlist.id)]?.first.map(ArtworkSource.song)
-            )
+    private func updateGenres(_ state: GenreListUiState) {
+        genres = Dictionary(state.genres.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        let entries = state.genres.map { genre in
+            CarPlayEntry(id: genre.name, title: genre.name, subtitle: HomeItemGenreItem(genre: genre).detail, symbol: "guitars")
         }
-        let loading = state.playlists.isEmpty && state.loadingState != .ready
-        render(loading ? CarPlayCatalog.loading() : CarPlayCatalog.entries(entries, empty: CarPlayText.noPlaylists, limit: Self.rowLimit()), into: playlistsTemplate)
+        let loading = state.genres.isEmpty && (state.loadingState == .loading || state.loadingState == .scanning)
+        render(loading ? CarPlayCatalog.loading() : CarPlayCatalog.entries(entries, empty: CarPlayText.noGenres, limit: Self.rowLimit()), into: genresTemplate)
     }
 
     private func observeSongs(_ viewModel: SongListViewModel) {
@@ -230,7 +332,10 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     private func updateSongs(_ state: SongListUiState) {
-        songs = state.songs
+        if state.songs != songs {
+            songs = state.songs
+            libraryChanged()
+        }
         let sections: [CarPlaySectionModel] = switch state.loadingState {
         case .empty: CarPlayCatalog.message(CarPlayText.libraryEmpty, detail: CarPlayText.libraryEmptyDetail)
         case .loading where state.songs.isEmpty, .scanning where state.songs.isEmpty: CarPlayCatalog.loading()
@@ -241,16 +346,46 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
 
     // MARK: - Actions
 
+    /// A shelf image (or a pushed shelf's row) plays its item, as the phone's tile does, and Jump Back In's carries on
+    /// where it was left; a shelf's row pushes the whole shelf.
     private func performHome(_ action: CarPlayRowAction) {
         switch action {
         case .shuffle:
             play(AppGraph.shared.appIntentLibrary.shuffleAll())
         case .play(let key):
             guard let item = homeItems[key] else { return }
-            play(jumpBackInKeys.contains(key) ? item.resumeAction() : item.playAction(), key: key)
+            play(item.playAction(), key: key)
+        case .resume(let key):
+            guard let item = homeItems[key] else { return }
+            play(item.resumeAction(), key: key)
+        case .openShelf(let id):
+            pushShelf(id)
         default:
             break
         }
+    }
+
+    private func pushShelf(_ id: String) {
+        guard let controller = interfaceController, openShelf == nil,
+              let section = homeSections.first(where: { $0.id == id }) else { return }
+        let template = CPListTemplate(title: section.header, sections: [])
+        openShelf = (id, template)
+        renderOpenShelf()
+        controller.pushTemplate(template, animated: true, completion: nil)
+    }
+
+    private func performLibrary(_ action: CarPlayRowAction) {
+        guard case .open(let id) = action, let category = CarPlayLibraryCategory(rawValue: id),
+              let controller = interfaceController else { return }
+        let template = switch category {
+        case .artists: artistsTemplate
+        case .albums: albumsTemplate
+        case .songs: songsTemplate
+        case .genres: genresTemplate
+        }
+        // A second tap while the first push is under way would push it twice, which CarPlay refuses
+        guard !controller.templates.contains(where: { $0 === template }) else { return }
+        controller.pushTemplate(template, animated: true, completion: nil)
     }
 
     private func performAlbums(_ action: CarPlayRowAction) {
@@ -275,8 +410,24 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         }
     }
 
+    private func performGenres(_ action: CarPlayRowAction) {
+        guard case .open(let id) = action, let genre = genres[id] else { return }
+        let viewModel = AppGraph.shared.genreDetailViewModelFactory.create(genreName: genre.name)
+        pushSongs(title: genre.name, viewModel: viewModel, flow: viewModel.uiState) { state in
+            SongList(songs: state.songs, context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loading)
+        }
+    }
+
     private func performPlaylists(_ action: CarPlayRowAction) {
-        guard case .open(let id) = action, let playlist = playlists[id] else { return }
+        guard case .open(let id) = action else { return }
+        if let smartPlaylist = smartPlaylists[id] {
+            let viewModel = AppGraph.shared.smartPlaylistDetailViewModelFactory.create(smartPlaylistId: smartPlaylist.id.id)
+            pushSongs(title: smartPlaylist.id.title, viewModel: viewModel, flow: viewModel.uiState) { state in
+                SongList(songs: state.songs, context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loading)
+            }
+            return
+        }
+        guard let playlist = playlists[id] else { return }
         let viewModel = AppGraph.shared.playlistDetailViewModelFactory.create(playlistId: playlist.id)
         pushSongs(title: playlist.name, viewModel: viewModel, flow: viewModel.uiState) { state in
             SongList(songs: state.songs.map(\.song), context: state.playContext, currentSongId: state.currentSong?.id, loading: state.loading)
@@ -374,10 +525,12 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     private func perform(_ action: CarPlayRowAction, from template: CPListTemplate) {
         switch template {
         case homeTemplate: performHome(action)
+        case playlistsTemplate: performPlaylists(action)
+        case libraryTemplate: performLibrary(action)
         case albumsTemplate: performAlbums(action)
         case artistsTemplate: performArtists(action)
-        case playlistsTemplate: performPlaylists(action)
         case songsTemplate: performSongs(action)
+        case genresTemplate: performGenres(action)
         default: break
         }
     }
@@ -388,8 +541,9 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         min(CarPlayCatalog.listRowLimit, CPListTemplate.maximumItemCount)
     }
 
-    private static func budget() -> CarPlayBudget {
-        CarPlayBudget(maxItems: CPListTemplate.maximumItemCount, maxSections: CPListTemplate.maximumSectionCount)
+    /// A smart playlist's row id, kept apart from a playlist's numeric one.
+    private static func smartKey(_ smartPlaylist: SmartPlaylist) -> String {
+        "smart:\(smartPlaylist.id.id)"
     }
 
     private static func song(_ song: Song) -> CarPlaySong {
@@ -406,6 +560,17 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         case .albumItem(let it): .album(it.album)
         case .artistItem(let it): .albumArtist(it.albumArtist)
         default: covers[item.key]?.first.map(ArtworkSource.song)
+        }
+    }
+
+    /// What a Home item shows until its artwork arrives, or with none.
+    private static func symbol(_ item: HomeItem) -> String {
+        switch onEnum(of: item) {
+        case .albumItem: "square.stack"
+        case .artistItem: "music.mic"
+        case .playlistItem: "music.note.list"
+        case .smartPlaylistItem(let it): it.smartPlaylistId.symbol
+        case .genreItem: "guitars"
         }
     }
 }

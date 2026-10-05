@@ -3,15 +3,18 @@ import Testing
 @testable import S2
 
 /// What CarPlay lists (#692, after Shuttle Podcasts' catalog tests): songs with Shuffle first and the playing one
-/// marked, capped lists, Home's sections trimmed to the car's budget with Jump Back In kept whole, empty states that
-/// explain themselves and inert informational rows; and the renderer drawing a row and calling back its action.
+/// marked, capped lists, Home's shelves as rows of artwork in the phone's order (offline only what plays), Library and
+/// Playlists, empty states that explain themselves and inert informational rows; and the renderer drawing a row or an
+/// image row and calling back its actions.
 struct CarPlayCatalogTests {
     private func songs(_ count: Int) -> [CarPlaySong] {
         (0..<count).map { CarPlaySong(id: Int64($0), title: "Song \($0)", subtitle: "Artist") }
     }
 
-    private func entries(_ prefix: String, _ count: Int, progress: Double? = nil) -> [CarPlayEntry] {
-        (0..<count).map { CarPlayEntry(id: "\(prefix)\($0)", title: "\(prefix) \($0)", subtitle: nil, progress: progress) }
+    private func entries(_ prefix: String, _ count: Int, progress: Double? = nil, offline: Bool = true) -> [CarPlayEntry] {
+        (0..<count).map {
+            CarPlayEntry(id: "\(prefix)\($0)", title: "\(prefix) \($0)", subtitle: nil, progress: progress, playableOffline: offline)
+        }
     }
 
     // MARK: - Songs
@@ -75,51 +78,58 @@ struct CarPlayCatalogTests {
 
     // MARK: - Home
 
-    @Test func homeOffersShuffleAllThenEachSectionsItemsWhichPlay() throws {
-        let sections = CarPlayCatalog.home([
-            CarPlayHomeSection(id: "jumpBackIn", header: "Jump Back In", entries: entries("J", 2, progress: 0.333), keepsAll: true),
-            CarPlayHomeSection(id: "heavyRotation", header: "Heavy Rotation", entries: entries("H", 2)),
-        ])
-        #expect(sections.map(\.header) == [nil, "Jump Back In", "Heavy Rotation"])
-        let shuffle = try #require(sections.first?.rows.first)
-        #expect(shuffle.title == CarPlayText.shuffleAll)
-        #expect(shuffle.action == .shuffle)
-        #expect(sections[1].rows.map(\.action) == [.play(id: "J0"), .play(id: "J1")])
-        // Progress to the percent, so a playing item doesn't redraw Home every tick
-        #expect(sections[1].rows.first?.progress == 0.33)
-        #expect(sections[2].rows.first?.progress == nil)
+    @Test func homeIsAnImageRowPerShelfInOrderThenShuffleAll() throws {
+        let rows = CarPlayCatalog.home([
+            CarPlayHomeSection(id: "jumpBackIn", header: "Jump Back In", entries: entries("J", 2), resumes: true),
+            CarPlayHomeSection(id: "heavyRotation", header: "Heavy Rotation", entries: entries("H", 3)),
+        ]).flatMap(\.rows)
+        #expect(rows.map(\.title) == ["Jump Back In", "Heavy Rotation", CarPlayText.shuffleAll])
+        #expect(rows.map(\.action) == [.openShelf(id: "jumpBackIn"), .openShelf(id: "heavyRotation"), .shuffle])
+        // Jump Back In's images resume, the rest play
+        #expect(rows[0].images.map(\.action) == [.resume(id: "J0"), .resume(id: "J1")])
+        #expect(rows[1].images.map(\.action) == [.play(id: "H0"), .play(id: "H1"), .play(id: "H2")])
+        #expect(rows[1].images.map(\.title) == ["H 0", "H 1", "H 2"])
     }
 
-    @Test func homeCapsEachSuggestionSection() {
-        let sections = CarPlayCatalog.home([CarPlayHomeSection(id: "rediscover", header: "Rediscover", entries: entries("R", 30))])
-        #expect(sections[1].rows.count == CarPlayCatalog.homeSectionRowLimit)
-    }
-
-    @Test func homeTrimsSuggestionsToTheBudgetButKeepsJumpBackInWhole() {
-        let sections = CarPlayCatalog.home(
+    @Test func homeHidesEmptyShelvesAndCapsTheImages() {
+        let rows = CarPlayCatalog.home(
             [
-                CarPlayHomeSection(id: "heavyRotation", header: "Heavy Rotation", entries: entries("H", 8)),
-                CarPlayHomeSection(id: "jumpBackIn", header: "Jump Back In", entries: entries("J", 6), keepsAll: true),
-                CarPlayHomeSection(id: "rediscover", header: "Rediscover", entries: entries("R", 8)),
+                CarPlayHomeSection(id: "empty", header: "Empty", entries: []),
+                CarPlayHomeSection(id: "rediscover", header: "Rediscover", entries: entries("R", 30)),
             ],
-            budget: CarPlayBudget(maxItems: 10, maxSections: 10)
-        )
-        // Shuffle All (1) and Jump Back In (6) leave 3 for the suggestions, which go in order
-        #expect(sections.map(\.header) == [nil, "Heavy Rotation", "Jump Back In"])
-        #expect(sections[1].rows.count == 3)
-        #expect(sections[2].rows.count == 6)
+            imageLimit: 5
+        ).flatMap(\.rows)
+        #expect(rows.map(\.title) == ["Rediscover", CarPlayText.shuffleAll])
+        #expect(rows[0].images.count == 5)
+        let uncapped = CarPlayCatalog.home([CarPlayHomeSection(id: "r", header: "R", entries: entries("R", 30))], imageLimit: 50)
+        #expect(uncapped.first?.rows.first?.images.count == CarPlayCatalog.shelfImageLimit)
     }
 
-    @Test func homeDropsSectionsPastTheSectionBudget() {
-        let sections = CarPlayCatalog.home(
-            [
-                CarPlayHomeSection(id: "a", header: "A", entries: entries("A", 1)),
-                CarPlayHomeSection(id: "b", header: "B", entries: entries("B", 1)),
-                CarPlayHomeSection(id: "c", header: "C", entries: entries("C", 1)),
-            ],
-            budget: CarPlayBudget(maxItems: 100, maxSections: 3)
-        )
-        #expect(sections.map(\.header) == [nil, "A", "B"])
+    @Test func shuffleAllOnlyTakesARowThatsLeftOver() {
+        let shelves = (0..<3).map { CarPlayHomeSection(id: "s\($0)", header: "S\($0)", entries: entries("S\($0)-", 1)) }
+        let full = CarPlayCatalog.home(shelves, rowLimit: 3).flatMap(\.rows)
+        #expect(full.map(\.action) == [.openShelf(id: "s0"), .openShelf(id: "s1"), .openShelf(id: "s2")])
+        let short = CarPlayCatalog.home(shelves, rowLimit: 2).flatMap(\.rows)
+        #expect(short.map(\.action) == [.openShelf(id: "s0"), .openShelf(id: "s1")])
+    }
+
+    @Test func offlineHomeShowsOnlyWhatPlaysAndNoShuffleAll() {
+        let sections = [
+            CarPlayHomeSection(id: "jumpBackIn", header: "Jump Back In", entries: entries("J", 2, offline: false) + entries("D", 1), resumes: true),
+            CarPlayHomeSection(id: "rediscover", header: "Rediscover", entries: entries("R", 2, offline: false)),
+        ]
+        let rows = CarPlayCatalog.home(sections, offline: true).flatMap(\.rows)
+        #expect(rows.map(\.title) == ["Jump Back In"])
+        #expect(rows[0].images.map(\.action) == [.resume(id: "D0")])
+        // Online, everything shows
+        #expect(CarPlayCatalog.home(sections).flatMap(\.rows).count == 3)
+    }
+
+    @Test func anOfflineHomeWithNothingDownloadedSaysSo() {
+        let rows = CarPlayCatalog.home([CarPlayHomeSection(id: "r", header: "R", entries: entries("R", 2, offline: false))], offline: true).flatMap(\.rows)
+        #expect(rows.map(\.title) == [CarPlayText.offlineEmpty])
+        #expect(rows.first?.subtitle == CarPlayText.offlineEmptyDetail)
+        #expect(rows.allSatisfy { $0.action == .none })
     }
 
     @Test func anEmptyHomeStillOffersShuffleAllAndSaysHowItFillsIn() {
@@ -127,6 +137,47 @@ struct CarPlayCatalogTests {
         #expect(rows.map(\.action) == [.shuffle, .none])
         #expect(rows.last?.title == CarPlayText.homeEmpty)
         #expect(rows.last?.subtitle == CarPlayText.homeEmptyDetail)
+    }
+
+    @Test func aShelfListsItsItemsAndJumpBackInsResumeWithProgress() throws {
+        let jumpBackIn = CarPlayHomeSection(id: "jumpBackIn", header: "Jump Back In", entries: entries("J", 3, progress: 0.333), resumes: true)
+        let rows = try #require(CarPlayCatalog.shelf(jumpBackIn).first).rows
+        #expect(rows.map(\.action) == [.resume(id: "J0"), .resume(id: "J1"), .resume(id: "J2")])
+        // Progress to the percent, so a playing item doesn't redraw the list every tick
+        #expect(rows.first?.progress == 0.33)
+        let rediscover = CarPlayHomeSection(id: "rediscover", header: "Rediscover", entries: entries("R", 30, progress: 0.5))
+        let suggestions = try #require(CarPlayCatalog.shelf(rediscover, limit: 12).first).rows
+        #expect(suggestions.count == 12)
+        #expect(suggestions.allSatisfy { $0.progress == nil })
+        #expect(suggestions.first?.action == .play(id: "R0"))
+    }
+
+    @Test func anOfflineShelfKeepsOnlyWhatPlays() {
+        let section = CarPlayHomeSection(id: "r", header: "R", entries: entries("R", 2, offline: false) + entries("D", 1))
+        #expect(CarPlayCatalog.shelf(section, offline: true).flatMap(\.rows).map(\.action) == [.play(id: "D0")])
+        let none = CarPlayHomeSection(id: "r", header: "R", entries: entries("R", 2, offline: false))
+        #expect(CarPlayCatalog.shelf(none, offline: true).flatMap(\.rows).map(\.title) == [CarPlayText.offlineEmpty])
+    }
+
+    // MARK: - Library and Playlists
+
+    @Test func libraryOpensArtistsAlbumsSongsAndGenres() throws {
+        let rows = try #require(CarPlayCatalog.library().first).rows
+        #expect(rows.map(\.title) == [CarPlayText.artists, CarPlayText.albums, CarPlayText.songs, CarPlayText.genres])
+        #expect(rows.map(\.action) == CarPlayLibraryCategory.allCases.map { .open(id: $0.rawValue) })
+        #expect(rows.allSatisfy { $0.accessory == .disclosure && $0.symbol != nil })
+    }
+
+    @Test func playlistsListTheAutoPlaylistsThenTheUsersOwnUnderOneCap() {
+        let sections = CarPlayCatalog.playlists(smart: entries("S", 3), playlists: entries("P", 10), limit: 8)
+        #expect(sections.map(\.header) == [CarPlayText.autoPlaylists, CarPlayText.playlists])
+        #expect(sections[0].rows.map(\.action) == [.open(id: "S0"), .open(id: "S1"), .open(id: "S2")])
+        #expect(sections[1].rows.count == 5)
+        #expect(CarPlayCatalog.playlists(smart: [], playlists: entries("P", 2)).map(\.header) == [CarPlayText.playlists])
+    }
+
+    @Test func noPlaylistsAtAllSaysSo() {
+        #expect(CarPlayCatalog.playlists(smart: [], playlists: []).flatMap(\.rows).map(\.title) == [CarPlayText.noPlaylists])
     }
 
     // MARK: - Queue
@@ -148,6 +199,12 @@ struct CarPlayCatalogTests {
         #expect(CarPlayText.home == "Home")
         #expect(CarPlayText.shuffleAll == "Shuffle All")
         #expect(CarPlayText.libraryEmptyDetail == "Add music in Shuttle Music on your iPhone.")
+        #expect(CarPlayText.library == "Library")
+        #expect(CarPlayText.genres == "Genres")
+        #expect(CarPlayText.autoPlaylists == "Auto Playlists")
+        #expect(CarPlayText.noGenres == "No genres")
+        #expect(CarPlayText.offlineEmpty == "Nothing to play offline")
+        #expect(CarPlayText.albums == "Albums")
     }
 
     // MARK: - Now Playing
@@ -194,5 +251,29 @@ struct CarPlayCatalogTests {
         let sections = CarPlayListRenderer.sections(CarPlayCatalog.songs(songs(2))) { _ in }
         #expect(sections.count == 1)
         #expect(sections[0].items.count == 3)
+    }
+
+    @Test @MainActor func theRendererDrawsAShelfAsAnImageRowWhoseImagesAndRowAct() async throws {
+        let row = try #require(CarPlayCatalog.home([
+            CarPlayHomeSection(id: "jumpBackIn", header: "Jump Back In", entries: entries("J", 3), resumes: true),
+        ]).first?.rows.first)
+        let sections = CarPlayListRenderer.sections([CarPlaySectionModel(header: nil, rows: [row])]) { _ in }
+        #expect(sections[0].items.first is CPListImageRowItem)
+        var performed: [CarPlayRowAction] = []
+        let item = CarPlayListRenderer.imageRow(for: row) { performed.append($0) }
+        #expect(item.text == "Jump Back In")
+        let imageHandler = try #require(item.listImageRowHandler)
+        await withCheckedContinuation { continuation in
+            imageHandler(item, 1) { continuation.resume() }
+        }
+        // An index past the images does nothing
+        await withCheckedContinuation { continuation in
+            imageHandler(item, 9) { continuation.resume() }
+        }
+        let rowHandler = try #require(item.handler)
+        await withCheckedContinuation { continuation in
+            rowHandler(item) { continuation.resume() }
+        }
+        #expect(performed == [.resume(id: "J1"), .openShelf(id: "jumpBackIn")])
     }
 }

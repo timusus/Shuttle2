@@ -158,6 +158,7 @@
 		C94DF2D35D4DCF038C4FB9F5 /* PlaybackSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B6E8E6934F436F7FDF2343 /* PlaybackSettingsView.swift */; };
 		C9CB29191B217A73A8835A5A /* CarPlayListRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05BB1FA7030B1074049B037 /* CarPlayListRenderer.swift */; };
 		CA6F3819B1788DCE9222B321 /* Glass.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9F70EFFAD10B452F52E8A77 /* Glass.swift */; };
+		CBE1157F4226D5A0CBD99966 /* CarPlayOffline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A1011AB97BE296DE5D89F5 /* CarPlayOffline.swift */; };
 		CCEAD67EFEF0617F3B75D30D /* MediaRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7679FEB8D9FEE4B1455173CC /* MediaRow.swift */; };
 		D15E8CB1C210263CFE0A4956 /* ViewModelCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */; };
 		D38E4DF3DFD20F788529DAE9 /* SettingsViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E9C9B867D2C9D540A8AF3C /* SettingsViewTests.swift */; };
@@ -235,6 +236,7 @@
 		041ABAC56D609C794639DB1A /* FilterChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterChip.swift; sourceTree = "<group>"; };
 		04C0F71158CC358E0E7CA2D8 /* PaywallViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewTests.swift; sourceTree = "<group>"; };
 		071E70571E51743974A5AC4F /* CombineFlowBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombineFlowBridge.swift; sourceTree = "<group>"; };
+		07A1011AB97BE296DE5D89F5 /* CarPlayOffline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayOffline.swift; sourceTree = "<group>"; };
 		0C8DB2CD3A77191F20ECEF29 /* DownloadBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadBadge.swift; sourceTree = "<group>"; };
 		0E8D9DB18D7662E94052AB35 /* ProSettingsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProSettingsSection.swift; sourceTree = "<group>"; };
 		0F7B25219533CE12C48913F7 /* SearchPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPerformanceTests.swift; sourceTree = "<group>"; };
@@ -650,6 +652,7 @@
 				9EAF9B332A3F86BA130C9B9B /* CarPlayCatalog.swift */,
 				C05BB1FA7030B1074049B037 /* CarPlayListRenderer.swift */,
 				CDBB42D357B96E66B320E1A5 /* CarPlayNowPlayingController.swift */,
+				07A1011AB97BE296DE5D89F5 /* CarPlayOffline.swift */,
 				FDE441BEEA21AC1B5F72DE55 /* CarPlaySceneDelegate.swift */,
 			);
 			path = CarPlay;
@@ -1061,6 +1064,7 @@
 				F0FE842A5CEDE6E8C5437666 /* CarPlayCatalog.swift in Sources */,
 				C9CB29191B217A73A8835A5A /* CarPlayListRenderer.swift in Sources */,
 				E9B5FB75AF55D83806ECDC01 /* CarPlayNowPlayingController.swift in Sources */,
+				CBE1157F4226D5A0CBD99966 /* CarPlayOffline.swift in Sources */,
 				180D0F578E822E01F136A9B4 /* CarPlaySceneDelegate.swift in Sources */,
 				C59FBDB9E91FA89CBA2B6386 /* Colors.swift in Sources */,
 				231078D87B2D4E48A18485EC /* CombineFlowBridge.swift in Sources */,

@@ -20,15 +20,45 @@ struct CarPlayEntry: Equatable {
     var artwork: ArtworkSource?
     /// How far through it the listener got (Jump Back In), 0...1.
     var progress: Double?
+    /// The SF Symbol drawn until (or instead of) its artwork.
+    var symbol: String?
+    /// Whether it has something that plays with no network: a song on this device or downloaded.
+    var playableOffline = true
 }
 
-/// One of Home's sections. Jump Back In's is `keepsAll`: what the listener was in the middle of is never trimmed to
-/// fit the car's limits.
+/// One of Home's shelves, in the phone's order: its items as a row of artwork, and the whole shelf behind it. Jump
+/// Back In's `resumes`: each item carries on where it was left rather than starting over.
 struct CarPlayHomeSection: Equatable {
     let id: String
     let header: String
     let entries: [CarPlayEntry]
-    var keepsAll = false
+    var resumes = false
+}
+
+/// Library's lists, in the order the Library tab offers them.
+enum CarPlayLibraryCategory: String, CaseIterable {
+    case artists
+    case albums
+    case songs
+    case genres
+
+    var title: String {
+        switch self {
+        case .artists: CarPlayText.artists
+        case .albums: CarPlayText.albums
+        case .songs: CarPlayText.songs
+        case .genres: CarPlayText.genres
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .artists: "music.mic"
+        case .albums: "square.stack"
+        case .songs: "music.note"
+        case .genres: "guitars"
+        }
+    }
 }
 
 enum CarPlayAccessory: Equatable {
@@ -44,10 +74,23 @@ enum CarPlayRowAction: Equatable {
     case shuffle
     /// Pushes the entry's songs.
     case open(id: String)
-    /// Plays the entry (a Home item).
+    /// Plays the entry (a Home item) from its start.
     case play(id: String)
+    /// Carries the entry (a Jump Back In item) on where its queue was left.
+    case resume(id: String)
+    /// Pushes the whole of one of Home's shelves.
+    case openShelf(id: String)
     /// An informational row.
     case none
+}
+
+/// One image of an image row (a Home shelf): an item's artwork with its title, which acts when tapped.
+struct CarPlayImage: Equatable {
+    let id: String
+    let title: String
+    var artwork: ArtworkSource?
+    var symbol: String?
+    let action: CarPlayRowAction
 }
 
 struct CarPlayRow: Equatable {
@@ -60,6 +103,8 @@ struct CarPlayRow: Equatable {
     var artwork: ArtworkSource?
     /// An SF Symbol drawn when there's no artwork (Shuffle's row).
     var symbol: String?
+    /// A row of artwork rather than a list row (a Home shelf); `action` is the row's own, each image has its own.
+    var images: [CarPlayImage] = []
     let action: CarPlayRowAction
 
     var isSelectable: Bool { action != .none }
@@ -70,14 +115,6 @@ struct CarPlaySectionModel: Equatable {
     var rows: [CarPlayRow]
 }
 
-/// How much a template may hold, from the car (`CPListTemplate.maximumItemCount` / `maximumSectionCount`).
-struct CarPlayBudget: Equatable {
-    let maxItems: Int
-    let maxSections: Int
-
-    static let unbounded = CarPlayBudget(maxItems: .max, maxSections: .max)
-}
-
 /// The CarPlay text, from the CarPlay strings table.
 enum CarPlayText {
     static func text(_ key: String) -> String {
@@ -85,10 +122,13 @@ enum CarPlayText {
     }
 
     static var home: String { text("carplay_tab_home") }
-    static var albums: String { text("carplay_tab_albums") }
-    static var artists: String { text("carplay_tab_artists") }
     static var playlists: String { text("carplay_tab_playlists") }
-    static var songs: String { text("carplay_tab_songs") }
+    static var library: String { text("carplay_tab_library") }
+    static var albums: String { text("carplay_albums") }
+    static var artists: String { text("carplay_artists") }
+    static var songs: String { text("carplay_songs") }
+    static var genres: String { text("carplay_genres") }
+    static var autoPlaylists: String { text("carplay_auto_playlists") }
     static var shuffleAll: String { text("carplay_shuffle_all") }
     static var shuffle: String { text("carplay_shuffle") }
     static var loading: String { text("carplay_loading") }
@@ -98,9 +138,12 @@ enum CarPlayText {
     static var libraryEmptyDetail: String { text("carplay_library_empty_detail") }
     static var homeEmpty: String { text("carplay_home_empty") }
     static var homeEmptyDetail: String { text("carplay_home_empty_detail") }
+    static var offlineEmpty: String { text("carplay_offline_empty") }
+    static var offlineEmptyDetail: String { text("carplay_offline_empty_detail") }
     static var noAlbums: String { text("carplay_no_albums") }
     static var noArtists: String { text("carplay_no_artists") }
     static var noPlaylists: String { text("carplay_no_playlists") }
+    static var noGenres: String { text("carplay_no_genres") }
     static var noSongs: String { text("carplay_no_songs") }
     static var unknown: String { text("carplay_unknown") }
     static var upNext: String { text("carplay_up_next") }
@@ -111,8 +154,9 @@ enum CarPlayCatalog {
     /// The most rows a library list or song list shows. Driving, nobody scrolls further; the car's own limit
     /// (`CPListTemplate.maximumItemCount`) may be lower and wins.
     static let listRowLimit = 100
-    /// The most rows each of Home's suggestion sections shows.
-    static let homeSectionRowLimit = 8
+    /// The most images a Home shelf offers; the car's own limit (`CPListImageRowItem.maximumImageCount`) may be
+    /// lower and wins, and a narrow screen draws fewer still.
+    static let shelfImageLimit = 8
     static let shuffleRowId = "shuffle"
     static let messageRowId = "message"
 
@@ -158,17 +202,19 @@ enum CarPlayCatalog {
     /// Albums, artists or playlists: one row each that opens its songs, capped at `limit`.
     static func entries(_ entries: [CarPlayEntry], empty: String, limit: Int = listRowLimit) -> [CarPlaySectionModel] {
         guard !entries.isEmpty else { return message(empty) }
-        let rows = entries.prefix(min(limit, listRowLimit)).map { entry in
-            CarPlayRow(
-                id: entry.id,
-                title: entry.title,
-                subtitle: entry.subtitle,
-                accessory: .disclosure,
-                artwork: entry.artwork,
-                action: .open(id: entry.id)
-            )
-        }
-        return [CarPlaySectionModel(header: nil, rows: Array(rows))]
+        return [CarPlaySectionModel(header: nil, rows: entries.prefix(min(limit, listRowLimit)).map(entryRow))]
+    }
+
+    private static func entryRow(_ entry: CarPlayEntry) -> CarPlayRow {
+        CarPlayRow(
+            id: entry.id,
+            title: entry.title,
+            subtitle: entry.subtitle,
+            accessory: .disclosure,
+            artwork: entry.artwork,
+            symbol: entry.symbol,
+            action: .open(id: entry.id)
+        )
     }
 
     /// The queue, from Now Playing's Up Next: each song plays when tapped, the current one marked. No Shuffle row;
@@ -190,46 +236,91 @@ enum CarPlayCatalog {
         return [CarPlaySectionModel(header: nil, rows: Array(rows))]
     }
 
-    /// Home: Shuffle All, then each section's items, which play when tapped. Jump Back In is kept whole; the other
-    /// sections are capped at `homeSectionRowLimit` and then, in order, trimmed to fit the car's budget. Nothing
-    /// played yet still offers Shuffle All, with a line saying how Home fills in.
-    static func home(_ sections: [CarPlayHomeSection], budget: CarPlayBudget = .unbounded) -> [CarPlaySectionModel] {
-        let shuffle = CarPlaySectionModel(header: nil, rows: [shuffleRow(title: CarPlayText.shuffleAll)])
-        let filled = sections.filter { !$0.entries.isEmpty }
-        guard !filled.isEmpty else {
+    /// Home: each shelf, in the phone's order, as a row of artwork under its name, which plays an item when its image
+    /// is tapped (Jump Back In's resumes) and opens the whole shelf when the row is: one row a shelf, so the car's
+    /// limits (`rowLimit`, `imageLimit`) trim from the end. Empty shelves are hidden, and
+    /// offline so is every item with nothing that plays without a network. Shuffle All comes after the shelves, only if
+    /// the car has room for it, so it never pushes a shelf down, and never offline, where most of what it would shuffle
+    /// can't play. Nothing played yet still offers Shuffle All, with a line saying how Home fills in.
+    static func home(
+        _ sections: [CarPlayHomeSection],
+        offline: Bool = false,
+        imageLimit: Int = shelfImageLimit,
+        rowLimit: Int = listRowLimit
+    ) -> [CarPlaySectionModel] {
+        let shelves = sections.map { available($0, offline: offline) }.filter { !$0.entries.isEmpty }
+        let shuffle = shuffleRow(title: CarPlayText.shuffleAll)
+        guard !shelves.isEmpty else {
+            if offline { return message(CarPlayText.offlineEmpty, detail: CarPlayText.offlineEmptyDetail) }
             let empty = CarPlayRow(id: messageRowId, title: CarPlayText.homeEmpty, subtitle: CarPlayText.homeEmptyDetail, action: .none)
-            return [CarPlaySectionModel(header: nil, rows: shuffle.rows + [empty])]
+            return [CarPlaySectionModel(header: nil, rows: [shuffle, empty])]
         }
-        var itemsLeft = budget.maxItems - 1
-        var sectionsLeft = budget.maxSections - 1
-        // The kept sections take their room first, wherever they sit
-        let kept = filled.filter(\.keepsAll)
-        let keptRows = kept.reduce(0) { $0 + $1.entries.count }
-        itemsLeft -= keptRows
-        sectionsLeft -= kept.count
-        var result = [shuffle]
-        for section in filled {
-            let rows: [CarPlayEntry]
-            if section.keepsAll {
-                rows = section.entries
-            } else {
-                guard itemsLeft > 0, sectionsLeft > 0 else { continue }
-                rows = Array(section.entries.prefix(min(homeSectionRowLimit, itemsLeft)))
-                itemsLeft -= rows.count
-                sectionsLeft -= 1
-            }
-            result.append(CarPlaySectionModel(header: section.header, rows: rows.map { entry in
-                CarPlayRow(
-                    id: "\(section.id)-\(entry.id)",
-                    title: entry.title,
-                    subtitle: entry.subtitle,
-                    progress: entry.progress.map(quantised),
-                    artwork: entry.artwork,
-                    action: .play(id: entry.id)
-                )
-            }))
+        let images = max(min(imageLimit, shelfImageLimit), 1)
+        var rows = shelves.prefix(max(rowLimit, 1)).map { shelf in
+            CarPlayRow(
+                id: "shelf-\(shelf.id)",
+                title: shelf.header,
+                images: shelf.entries.prefix(images).map { entry in
+                    CarPlayImage(id: entry.id, title: entry.title, artwork: entry.artwork, symbol: entry.symbol, action: action(entry, in: shelf))
+                },
+                action: .openShelf(id: shelf.id)
+            )
         }
+        if !offline, rows.count < rowLimit {
+            rows.append(shuffle)
+        }
+        return [CarPlaySectionModel(header: nil, rows: rows)]
+    }
+
+    /// The whole of one of Home's shelves, pushed from its row: an item a row, each playing (Jump Back In's resuming,
+    /// with how far through it is), offline only the ones that can play.
+    static func shelf(_ section: CarPlayHomeSection, offline: Bool = false, limit: Int = listRowLimit) -> [CarPlaySectionModel] {
+        let shelf = available(section, offline: offline)
+        guard !shelf.entries.isEmpty else {
+            return offline ? message(CarPlayText.offlineEmpty, detail: CarPlayText.offlineEmptyDetail) : message(CarPlayText.homeEmpty)
+        }
+        let rows = shelf.entries.prefix(min(limit, listRowLimit)).map { entry in
+            CarPlayRow(
+                id: entry.id,
+                title: entry.title,
+                subtitle: entry.subtitle,
+                progress: shelf.resumes ? entry.progress.map(quantised) : nil,
+                artwork: entry.artwork,
+                symbol: entry.symbol,
+                action: action(entry, in: shelf)
+            )
+        }
+        return [CarPlaySectionModel(header: nil, rows: Array(rows))]
+    }
+
+    /// The Library tab: a row for each of its lists, which pushes it.
+    static func library() -> [CarPlaySectionModel] {
+        let rows = CarPlayLibraryCategory.allCases.map { category in
+            CarPlayRow(id: category.rawValue, title: category.title, accessory: .disclosure, symbol: category.symbol, action: .open(id: category.rawValue))
+        }
+        return [CarPlaySectionModel(header: nil, rows: rows)]
+    }
+
+    /// The Playlists tab, as the phone's: the auto playlists, then the user's own, each opening its songs. `limit`
+    /// counts both. Nothing to show says so.
+    static func playlists(smart: [CarPlayEntry], playlists: [CarPlayEntry], limit: Int = listRowLimit) -> [CarPlaySectionModel] {
+        guard !smart.isEmpty || !playlists.isEmpty else { return message(CarPlayText.noPlaylists) }
+        let cap = min(limit, listRowLimit)
+        let smartRows = smart.prefix(cap).map(entryRow)
+        let ownRows = playlists.prefix(max(cap - smartRows.count, 0)).map(entryRow)
+        var result: [CarPlaySectionModel] = []
+        if !smartRows.isEmpty { result.append(CarPlaySectionModel(header: CarPlayText.autoPlaylists, rows: smartRows)) }
+        if !ownRows.isEmpty { result.append(CarPlaySectionModel(header: CarPlayText.playlists, rows: ownRows)) }
         return result
+    }
+
+    private static func available(_ section: CarPlayHomeSection, offline: Bool) -> CarPlayHomeSection {
+        guard offline else { return section }
+        return CarPlayHomeSection(id: section.id, header: section.header, entries: section.entries.filter(\.playableOffline), resumes: section.resumes)
+    }
+
+    private static func action(_ entry: CarPlayEntry, in section: CarPlayHomeSection) -> CarPlayRowAction {
+        section.resumes ? .resume(id: entry.id) : .play(id: entry.id)
     }
 
     /// Progress to the percent, so a playing item's position doesn't redraw Home every tick.
