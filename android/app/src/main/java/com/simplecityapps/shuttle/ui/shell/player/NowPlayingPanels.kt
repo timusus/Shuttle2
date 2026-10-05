@@ -94,11 +94,6 @@ private const val DefaultSleepMinutes = 30
 /** What "+5 min" adds to a running timer. */
 private const val ExtendMinutes = 5
 
-/** The speed ruler: 0.5× to 2× in tenths, labelled every half. */
-private const val MinSpeed = 0.5f
-private const val SpeedStep = 0.1f
-private const val SpeedTicks = 16
-private const val SpeedLabelEvery = 5
 private val SpeedPresets = listOf(0.8f, 1f, 1.2f, 1.5f, 2f)
 private val ReplayGainModes = listOf(ReplayGainMode.Track, ReplayGainMode.Album, ReplayGainMode.Off)
 
@@ -211,8 +206,8 @@ private fun NewSleepTimer(
 }
 
 /**
- * Playback & sound (owner decision 2, the speed UI ported from Shuttle Podcasts): the speed on a ruler
- * and in presets, the ReplayGain mode, and links to the Equalizer and to the rest of Settings'
+ * Playback & sound (owner decision 2, the speed UI ported from Shuttle Podcasts): the speed as a row of
+ * preset chips, the ReplayGain mode, and links to the Equalizer and to the rest of Settings'
  * Playback & sound, so those screens stay the one home of their settings.
  */
 @Composable
@@ -229,15 +224,7 @@ internal fun PlaybackSoundPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PanelHeading(stringResource(R.string.settings_destination_playback_and_sound))
-        RulerValue(formatSpeed(player.playbackSpeed))
-        RulerSlider(
-            value = ((player.playbackSpeed - MinSpeed) / SpeedStep).roundToInt(),
-            count = SpeedTicks,
-            onValueChange = { actions.setPlaybackSpeed(speedAt(it)) },
-            contentDescription = stringResource(R.string.player_speed),
-            stateDescription = formatSpeed(player.playbackSpeed),
-            tickLabel = { index -> if (index % SpeedLabelEvery == 0) formatSpeed(speedAt(index)) else null },
-        )
+        SectionHeader(stringResource(R.string.player_speed), containerColor = Color.Transparent)
         S2ConnectedButtonGroup(
             options = SpeedPresets,
             selected = player.playbackSpeed,
@@ -279,9 +266,6 @@ internal fun PlaybackSoundPanel(
         )
     }
 }
-
-/** Rounds to tenths, so the ruler's float steps land on 0.8 rather than 0.80000001. */
-private fun speedAt(index: Int): Float = ((MinSpeed + index * SpeedStep) * 10).roundToInt() / 10f
 
 /** The panel's title, where focus lands when it opens. */
 @Composable
