@@ -5,22 +5,28 @@ import android.content.Context
 import android.content.Intent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.provider.subsonic.SubsonicAuthenticationManager
+import com.simplecityapps.provider.subsonic.SubsonicMediaProvider
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
  * Debug-build-only: lets `support/scripts/seed-remote-provider.sh` sign the app in to a Jellyfin,
- * Emby or Plex server with an existing access token (or API key) via `adb shell am broadcast`, so
+ * Emby, Plex or Subsonic (Navidrome) server with an existing access token (or API key) via `adb shell am broadcast`, so
  * an emulator run never needs a password typed into the UI. Stores the address and credentials,
  * and enables the provider; the script then triggers an import through
  * [DebugMediaImportReceiver].
@@ -30,6 +36,10 @@ import timber.log.Timber
  * (unlike Jellyfin/Emby, Plex API calls only need the token) -- it's just stored alongside the
  * token for parity with Plex's [ServerCredentialStore.authenticatedCredentials],
  * so the seed script can pass a placeholder instead of looking one up.
+ *
+ * `subsonic` takes the username as `user_id` and the password as `access_token`: Subsonic has no
+ * access token, so the receiver stores them as the saved login, then signs in with `ping` to record
+ * what the server supports (its OpenSubsonic extensions).
  */
 class DebugRemoteProviderReceiver : BroadcastReceiver() {
     @ContributesTo(AppScope::class)
@@ -57,6 +67,16 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var plexMediaProvider: PlexMediaProvider
+
+    @Inject
+    lateinit var subsonicAuthenticationManager: SubsonicAuthenticationManager
+
+    @Inject
+    lateinit var subsonicMediaProvider: SubsonicMediaProvider
+
+    @Inject
+    @field:AppCoroutineScope
+    lateinit var appCoroutineScope: CoroutineScope
 
     @Inject
     lateinit var mediaImporter: MediaImporter
@@ -99,8 +119,26 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
                 MediaProviderType.Plex
             }
 
+            "subsonic" -> {
+                val login = LoginCredentials(username = userId, password = accessToken)
+                subsonicAuthenticationManager.setAddress(address)
+                subsonicAuthenticationManager.setLoginCredentials(login)
+                val pending = goAsync()
+                appCoroutineScope.launch {
+                    try {
+                        subsonicAuthenticationManager.authenticate(address, login)
+                            .onSuccess { Timber.i("DebugRemoteProviderReceiver: Subsonic sign-in recorded ${subsonicAuthenticationManager.serverInfo}") }
+                            .onFailure { Timber.e(it, "DebugRemoteProviderReceiver: Subsonic sign-in failed") }
+                    } finally {
+                        pending.finish()
+                    }
+                }
+                mediaImporter.mediaProviders += subsonicMediaProvider
+                MediaProviderType.Subsonic
+            }
+
             else -> {
-                Timber.e("DebugRemoteProviderReceiver: provider must be jellyfin, emby or plex")
+                Timber.e("DebugRemoteProviderReceiver: provider must be jellyfin, emby, plex or subsonic")
                 return
             }
         }
