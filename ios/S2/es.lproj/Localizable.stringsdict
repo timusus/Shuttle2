@@ -227,5 +227,21 @@
 			<string>%1$d days left in your free trial</string>
 		</dict>
 	</dict>
+	<key>Couldn't download %lld songs. Check you're signed in to the server and try again.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>one</key>
+			<string>Couldn't download %lld song. Check you're signed in to the server and try again.</string>
+			<key>other</key>
+			<string>Couldn't download %lld songs. Check you're signed in to the server and try again.</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

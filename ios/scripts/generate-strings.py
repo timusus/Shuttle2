@@ -34,8 +34,8 @@ TABLE = "Localizable"
 # Plurals only the Swift code uses (Android resource names, matching the Swift call sites).
 IOS_PLURALS = ["songsPlural", "albumsPlural", "paywall_status_trial"]
 
-# Plurals that exist on iOS only (no Android resource), English only: key -> {quantity: text}. The key is the
-# `String(localized:)` key of the call site.
+# Plurals that exist on iOS only (no Android resource), English text for every locale (see plural_fallback): key ->
+# {quantity: text}. The key is the `String(localized:)` key of the call site.
 IOS_ONLY_PLURALS = {
     "Couldn't download %lld songs. Check you're signed in to the server and try again.": {
         "one": "Couldn't download %lld song. Check you're signed in to the server and try again.",
@@ -44,9 +44,12 @@ IOS_ONLY_PLURALS = {
 }
 
 # Android language qualifiers that Apple names differently.
-LANGUAGE_IDS = {"in": "id", "iw": "he", "ji": "yi"}
+LANGUAGE_IDS = {"in": "id", "iw": "he", "ji": "yi", "tl": "fil"}
+# Locales whose `one` category is exactly n=1 (so English `one` is safe as a fallback). Others (ru, pl, fr, pt, hi,
+# ja, tr, zh...) put other numbers (21, 0, 1.5) in `one` or have none.
+ONE_IS_EXACTLY_ONE = {"en", "en-GB", "de", "nl", "it", "es", "es-ES", "sv", "tr"}
 # (language, region) pairs Apple names by script instead.
-SCRIPT_IDS = {("zh", "CN"): "zh-Hans", ("zh", "SG"): "zh-Hans", ("zh", "TW"): "zh-Hant", ("zh", "HK"): "zh-HK"}
+SCRIPT_IDS = {("zh", "CN"): "zh-Hans", ("zh", "SG"): "zh-Hans", ("zh", "TW"): "zh-Hant", ("zh", "HK"): "zh-HK", ("zh", None): "zh-Hans"}
 
 
 def enum_keys(source, enum_name):
@@ -69,6 +72,10 @@ def plural_keys():
 def apple_locale(qualifier):
     """The Apple locale id for an Android `values-<qualifier>` suffix, or None when it isn't a language
     (night, v31, sw600dp, ...). `pt-rBR` -> `pt-BR`, `zh-rCN` -> `zh-Hans`, `in` -> `id`."""
+    bcp47 = re.fullmatch(r"b\+([a-z]{2,3})\+([A-Z][a-z]{3})", qualifier)  # b+sr+Latn
+    if bcp47:
+        language, script = bcp47.groups()
+        return f"{LANGUAGE_IDS.get(language, language)}-{script}"
     match = re.fullmatch(r"([a-z]{2,3})(?:-r([A-Z]{2}))?", qualifier)
     if not match:
         return None
@@ -112,7 +119,8 @@ def ios_text(android):
     else:
         text = re.sub(r"\s+", " ", text)  # Android collapses the whitespace of an unquoted string
     text = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), text)
-    text = text.replace("\\'", "'").replace('\\"', '"').replace("\\n", "\n").replace("\\@", "@").replace("\\?", "?")
+    escapes = {"n": "\n", "t": "\t"}
+    text = re.sub(r"\\(.)", lambda m: escapes.get(m.group(1), m.group(1)), text, flags=re.S)  # \\ -> \, \' -> ', unknown dropped
     return re.sub(r"%(\d+\$)?s", lambda m: f"%{m.group(1) or ''}@", text)
 
 
@@ -163,6 +171,15 @@ def render_stringsdict(plurals):
     return "\n".join(lines) + "\n"
 
 
+def plural_fallback(english_variants, locale):
+    """English plural text for a locale that doesn't translate it. Apple picks the category by the target
+    language's rules, so English `one` is only safe where `one` means exactly n=1; elsewhere (ru 21, fr 0) emit
+    just `other`, so the worst case is "1 songs", never "21 song"."""
+    if locale in ONE_IS_EXACTLY_ONE:
+        return english_variants
+    return {"other": english_variants["other"]}
+
+
 def render_all():
     """{relative path: content} for every generated file."""
     resources = parse_resources()
@@ -173,11 +190,13 @@ def render_all():
     if missing:
         sys.exit(f"No Android resource for StringKey/PluralKey entries: {', '.join(missing)}")
 
-    def plural_variants(table, key):
-        return {q: ios_text(t) for q, t in table["plurals"].get(key, english["plurals"][key]).items()}
+    def plural_variants(table, key, locale):
+        if key in table["plurals"]:
+            return {q: ios_text(t) for q, t in table["plurals"][key].items()}
+        return plural_fallback({q: ios_text(t) for q, t in english["plurals"][key].items()}, locale)
 
     files = {}
-    english_plurals = [(k, plural_variants(english, k)) for k in plurals] + list(IOS_ONLY_PLURALS.items())
+    english_plurals = [(k, plural_variants(english, k, "en")) for k in plurals] + list(IOS_ONLY_PLURALS.items())
     files["en.lproj"] = (render_strings(keys, english["strings"], "en"), render_stringsdict(english_plurals))
     for qualifier, table in sorted(resources.items()):
         locale = apple_locale(qualifier) if qualifier else None
@@ -189,7 +208,10 @@ def render_all():
         texts = {k: table["strings"].get(k, english["strings"][k]) for k in keys}
         files[f"{locale}.lproj"] = (
             render_strings(keys, texts, locale),
-            render_stringsdict([(k, plural_variants(table, k)) for k in plurals]),
+            render_stringsdict(
+                [(k, plural_variants(table, k, locale)) for k in plurals]
+                + [(k, plural_fallback(v, locale)) for k, v in IOS_ONLY_PLURALS.items()]
+            ),
         )
     return {
         f"{folder}/{TABLE}.{ext}": content

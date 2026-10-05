@@ -31,13 +31,13 @@
 "media_action_not_found" = "Not in your library";
 "media_action_undo" = "Undo";
 "media_action_add_anyway" = "Add anyway";
-"playlist_menu_create_playlist_success" = "„%1$@\\“ wurde erfolgreich erstellt";
+"playlist_menu_create_playlist_success" = "„%1$@“ wurde erfolgreich erstellt";
 "playlist_menu_create_playlist_failure" = "Fehler beim Hinzufügen von Songs zur Wiedergabeliste: %1$@";
 "playlist_title_favorites" = "Favoriten";
 "playlist_title_recently_added" = "Zuletzt hinzugefügt";
 "playlist_title_most_played" = "Meist abgespielt";
 "playlist_title_history" = "Verlauf";
-"dialog_delete_message" = "„%1$@\\“ wird dauerhaft gelöscht";
+"dialog_delete_message" = "„%1$@“ wird dauerhaft gelöscht";
 "error_unknown" = "Ein unbekannter Fehler ist aufgetreten";
 "pref_category_title_display" = "Aussehen";
 "settings_destination_playback_and_sound" = "Playback & sound";

@@ -41,8 +41,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d already in %2$@</string>
 			<key>other</key>
 			<string>%1$d already in %2$@</string>
 		</dict>
@@ -57,8 +55,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d song removed from %2$@</string>
 			<key>other</key>
 			<string>%1$d songs removed from %2$@</string>
 		</dict>
@@ -73,8 +69,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d song excluded</string>
 			<key>other</key>
 			<string>%1$d songs excluded</string>
 		</dict>
@@ -89,8 +83,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d song will be permanently deleted</string>
 			<key>other</key>
 			<string>%1$d songs will be permanently deleted</string>
 		</dict>
@@ -105,8 +97,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d song deleted</string>
 			<key>other</key>
 			<string>%1$d songs deleted</string>
 		</dict>
@@ -121,8 +111,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d song couldn't be deleted</string>
 			<key>other</key>
 			<string>%1$d songs couldn't be deleted</string>
 		</dict>
@@ -137,8 +125,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>Downloading %1$d song</string>
 			<key>other</key>
 			<string>Downloading %1$d songs</string>
 		</dict>
@@ -153,8 +139,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d song couldn't be downloaded</string>
 			<key>other</key>
 			<string>%1$d songs couldn't be downloaded</string>
 		</dict>
@@ -169,8 +153,6 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>Download removed</string>
 			<key>other</key>
 			<string>%1$d downloads removed</string>
 		</dict>
@@ -213,10 +195,22 @@
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
-			<key>one</key>
-			<string>%1$d day left in your free trial</string>
 			<key>other</key>
 			<string>%1$d days left in your free trial</string>
+		</dict>
+	</dict>
+	<key>Couldn't download %lld songs. Check you're signed in to the server and try again.</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@count@</string>
+		<key>count</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>lld</string>
+			<key>other</key>
+			<string>Couldn't download %lld songs. Check you're signed in to the server and try again.</string>
 		</dict>
 	</dict>
 </dict>

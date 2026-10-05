@@ -21,6 +21,11 @@ class AppleLocaleTest(unittest.TestCase):
         self.assertEqual(gs.apple_locale("zh-rCN"), "zh-Hans")
         self.assertEqual(gs.apple_locale("zh-rTW"), "zh-Hant")
 
+    def test_script_qualifiers_and_renames(self):
+        self.assertEqual(gs.apple_locale("b+sr+Latn"), "sr-Latn")
+        self.assertEqual(gs.apple_locale("zh"), "zh-Hans")
+        self.assertEqual(gs.apple_locale("tl"), "fil")
+
     def test_non_language_qualifiers(self):
         for qualifier in ("night", "v31", "night-v31", "sw600dp", "land"):
             self.assertIsNone(gs.apple_locale(qualifier), qualifier)
@@ -33,6 +38,30 @@ class TextTest(unittest.TestCase):
     def test_escapes_and_whitespace(self):
         self.assertEqual(gs.ios_text("Couldn\\'t\n      play \\u00e9"), "Couldn't play é")
         self.assertEqual(gs.ios_text('"  kept  "'), "  kept  ")
+
+
+    def test_android_backslash_escapes(self):
+        self.assertEqual(gs.ios_text("\u201e%1$s\\\u201c"), "\u201e%1$@\u201c")  # German `\\u201c`: the backslash is dropped
+        self.assertEqual(gs.ios_text("a\\\\b"), "a\\b")
+        self.assertEqual(gs.ios_text("\\q\\t\\@\\?"), "q\t@?")
+
+
+class PluralFallbackTest(unittest.TestCase):
+    english = {"one": "%1$d song", "other": "%1$d songs"}
+
+    def test_other_only_where_one_is_not_exactly_one(self):
+        for locale in ("ru", "fr", "pt-BR", "hi", "pl", "ja", "zh-Hans"):
+            self.assertEqual(gs.plural_fallback(self.english, locale), {"other": "%1$d songs"}, locale)
+
+    def test_keeps_one_where_it_is_exactly_one(self):
+        for locale in ("en", "de", "nl", "it", "es", "sv"):
+            self.assertEqual(gs.plural_fallback(self.english, locale), self.english, locale)
+
+    def test_ios_only_plural_in_every_locale(self):
+        files = gs.render_all()
+        for name, content in files.items():
+            if name.endswith(".stringsdict"):
+                self.assertIn("Couldn't download %lld songs", content, name)
 
 
 class StringsdictTest(unittest.TestCase):
