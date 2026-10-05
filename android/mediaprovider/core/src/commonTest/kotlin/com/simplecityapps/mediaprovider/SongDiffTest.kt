@@ -139,7 +139,7 @@ class SongDiffTest {
 
     @Test
     fun `a remote song whose size changed clears the stored stream properties the server no longer reports`() = runTest {
-        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(sampleRate = 96000)
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(sampleRate = 96000, size = 5678)
         val resized = createSong(id = 0, lastModified = firstImport).copy(size = 1234)
 
         SongDiff(listOf(existing), listOf(resized)).apply().updates.single().run {
