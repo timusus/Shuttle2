@@ -45,6 +45,8 @@ class FakeSongRepository : SongRepository {
 
     override fun countSongs(): Flow<Int> = songs.filterNotNull().map { songs -> songs.count { !it.blacklisted } }
 
+    override fun countSongsByProvider(): Flow<Map<MediaProviderType, Int>> = songs.filterNotNull().map { songs -> songs.filter { !it.blacklisted }.groupingBy { it.mediaProvider }.eachCount() }
+
     override suspend fun loadLyrics(songId: Long): String? = lyrics[songId]
 
     /** Every [setExcluded] call as (song ids, excluded), in order. */

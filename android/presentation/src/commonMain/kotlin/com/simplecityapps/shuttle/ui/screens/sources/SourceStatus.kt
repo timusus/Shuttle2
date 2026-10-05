@@ -6,12 +6,12 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
-import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 /** How a source's import is going, for its card in Sources (#663). */
 sealed interface SourceStatus {
@@ -85,5 +85,5 @@ class ObserveSourceReachability @Inject constructor(
 class ObserveSongCounts @Inject constructor(
     private val songRepository: SongRepository,
 ) {
-    operator fun invoke(): Flow<Map<MediaProviderType, Int>?> = songRepository.getSongs(SongQuery.All()).map { songs -> songs?.groupingBy { it.mediaProvider }?.eachCount() }
+    operator fun invoke(): Flow<Map<MediaProviderType, Int>?> = songRepository.countSongsByProvider().onStart<Map<MediaProviderType, Int>?> { emit(null) }
 }

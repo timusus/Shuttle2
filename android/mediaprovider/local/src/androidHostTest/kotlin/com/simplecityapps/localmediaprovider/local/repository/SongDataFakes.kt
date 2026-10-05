@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
+import com.simplecityapps.localmediaprovider.local.data.room.dao.ProviderSongCount
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
@@ -48,6 +49,8 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
     override fun getAllSongData(): Flow<List<SongData>> = songs
 
     override fun countVisible(minDurationMs: Int): Flow<Int> = throw NotImplementedError()
+
+    override fun countVisibleByProvider(minDurationMs: Int): Flow<List<ProviderSongCount>> = throw NotImplementedError()
 
     override fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>> = throw NotImplementedError()
 

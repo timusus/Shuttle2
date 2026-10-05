@@ -77,6 +77,12 @@ class LocalSongRepository(
         .distinctUntilChanged()
         .flowOn(Dispatchers.IO)
 
+    override fun countSongsByProvider(): Flow<Map<MediaProviderType, Int>> = minTrackLength
+        .flatMapLatest { min -> songDataDao.countVisibleByProvider(min.seconds * 1000) }
+        .map { rows -> rows.associate { it.mediaProvider to it.count } }
+        .distinctUntilChanged()
+        .flowOn(Dispatchers.IO)
+
     /**
      * Reads the database directly rather than the shared song list, whose requery after a write can take a while for a
      * large library. An album's or album artist's songs (an album's page, playing it) are found in the library's

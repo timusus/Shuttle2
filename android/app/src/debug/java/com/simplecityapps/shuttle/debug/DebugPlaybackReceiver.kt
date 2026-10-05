@@ -25,6 +25,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -221,7 +222,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("speed", playbackOperations.getPlaybackSpeed())
             put("pendingLoad", pendingLoad())
             put("libraryImporting", mediaImporter.isImporting)
-            put("librarySongCount", songRepository.getSongs(SongQuery.All()).firstOrNull()?.size ?: JSONObject.NULL)
+            put("librarySongCount", songRepository.countSongs().first())
             put("libraryPlaylistCount", playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull()?.size ?: JSONObject.NULL)
         }
     }

@@ -1387,6 +1387,8 @@ class MediaImporterTest {
 
         override fun countSongs(): Flow<Int> = flowOf(stored.size)
 
+        override fun countSongsByProvider(): Flow<Map<MediaProviderType, Int>> = flowOf(stored.groupingBy { it.mediaProvider }.eachCount())
+
         override suspend fun loadLyrics(songId: Long): String? = null
 
         override val updatedSongIds: Flow<Set<Long>> = flowOf(emptySet())
