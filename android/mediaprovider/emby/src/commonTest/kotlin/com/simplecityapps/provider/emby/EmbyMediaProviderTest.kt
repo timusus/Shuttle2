@@ -480,11 +480,46 @@ class EmbyMediaProviderTest {
     }
 
     @Test
-    fun `a server without a music library syncs to no songs`() {
+    fun `libraries of no kind - mixed - or an unknown kind are listed - books - folders and other non-music kinds aren't`() {
+        signedIn()
+        server.respond(VIEWS, "views_mixed.json")
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        sync()
+
+        server.requestsTo(ITEMS).map { it.url.parameters["ParentId"] } shouldContainExactly
+            listOf("lib-music", "lib-untyped", "lib-mixed", "lib-unknown")
+    }
+
+    @Test
+    fun `a song in two libraries is listed once`() {
+        signedIn()
+        server.respond(VIEWS, "views_mixed.json")
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        val paths = sync().map { it.path }
+        paths shouldBe paths.distinct()
+        provider.findSongPaths().events().last().shouldBeInstanceOf<FlowEvent.Success<List<String>>>().result shouldContainExactly paths
+    }
+
+    @Test
+    fun `a server whose libraries hold no music fails the sync and lists nothing`() {
+        signedIn()
+        server.respond(VIEWS, "views_no_music.json")
+
+        provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe TestServerStrings.musicLibraryMissing
+        provider.findSongPaths().events().last().shouldBeInstanceOf<FlowEvent.Failure>()
+        runBlocking { provider.countSongs() } shouldBe null
+
+        server.requestsTo(ITEMS).shouldBeEmpty()
+    }
+
+    @Test
+    fun `a server with no libraries fails the sync`() {
         signedIn()
         server.respond(VIEWS, "empty.json")
 
-        sync() shouldBe emptyList()
+        provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe TestServerStrings.musicLibraryMissing
 
         server.requestsTo(ITEMS).shouldBeEmpty()
     }

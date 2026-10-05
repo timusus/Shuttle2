@@ -8,5 +8,7 @@ object TestServerStrings : ServerStrings {
 
     override val authenticationError = "Signing in failed"
 
+    override val musicLibraryMissing = "No music library"
+
     override val unknownName = "Unknown"
 }

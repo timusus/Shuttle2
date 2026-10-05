@@ -8,6 +8,9 @@ interface ServerStrings {
     /** Signing in to the server failed. */
     val authenticationError: String
 
+    /** The server has libraries, but none that could hold music. */
+    val musicLibraryMissing: String
+
     /** Stands in for a name the server didn't send, such as a playlist's. */
     val unknownName: String
 }

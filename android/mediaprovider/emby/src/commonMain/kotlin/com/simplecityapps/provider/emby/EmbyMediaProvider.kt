@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.atStoredPrecision
 import com.simplecityapps.mediaprovider.server.concatenated
+import com.simplecityapps.mediaprovider.server.isMusicLibrary
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.parseServerInstant
 import com.simplecityapps.mediaprovider.server.withFavouriteChanges
@@ -56,8 +57,8 @@ class EmbyMediaProvider(
     /**
      * Every song, or with [since] only those saved on the server (added or changed) at or after it, plus those of
      * [existingSongs] whose favourite changed on the server: that doesn't change the item's DateLastSaved (#497), and those
-     * played on the server since (in any client), which doesn't either. Only the music libraries are read: an audiobook
-     * library holds `Audio` items too (#845).
+     * played on the server since (in any client), which doesn't either. Only the libraries that may hold music are read: an
+     * audiobook library holds `Audio` items too (#845).
      */
     private fun findSongs(
         existingSongs: List<Song>,
@@ -65,66 +66,74 @@ class EmbyMediaProvider(
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now().atStoredPrecision()
-        when (val libraries = musicLibraryIds(address, session)) {
-            is NetworkResult.Success<List<String>> -> {
-                // The plays come from every library, so those of songs stored are kept: a new song is in the listing already
-                val storedPaths = existingSongs.mapTo(HashSet()) { song -> song.path }
-                emitAll(
-                    concatenated(libraries.body.map { libraryId -> queryItems(address = address, session = session, libraryId = libraryId, since = since, syncedAt = syncedAt) }).map { event ->
-                        if (event is FlowEvent.Success && since != null) {
-                            val played = playedSince(address, session, since, syncedAt)?.filter { song -> song.path in storedPaths }
-                            FlowEvent.Success(event.result.withPlayedSongs(played).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
-                        } else {
-                            event
-                        }
+        withMusicLibraries(address, session) { libraries ->
+            // The plays come from every library, so those of songs stored are kept: a new song is in the listing already
+            val storedPaths = existingSongs.mapTo(HashSet()) { song -> song.path }
+            emitAll(
+                concatenated(libraries.map { libraryId -> queryItems(address = address, session = session, libraryId = libraryId, since = since, syncedAt = syncedAt) }, key = Song::path).map { event ->
+                    if (event is FlowEvent.Success && since != null) {
+                        val played = playedSince(address, session, since, syncedAt)?.filter { song -> song.path in storedPaths }
+                        FlowEvent.Success(event.result.withPlayedSongs(played).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
+                    } else {
+                        event
                     }
-                )
-            }
-
-            is NetworkResult.Failure -> emitLibrariesFailure(libraries)
+                }
+            )
         }
     }
 
     override suspend fun countSongs(): Int? = (
         withServerSession<AuthenticatedCredentials, Int>(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
-            when (val libraries = musicLibraryIds(address, session)) {
-                is NetworkResult.Success<List<String>> -> {
-                    var total = 0
-                    for (libraryId in libraries.body) {
-                        // One song asked for, for the total that comes with it
-                        val result = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.audioIds(address, credentials.accessToken, credentials.userId, libraryId, limit = 1)) }
-                        if (result !is NetworkResult.Success<QueryResult>) {
-                            logger.warn { "Couldn't count the songs: ${(result as NetworkResult.Failure).error.userDescription()}" }
-                            return@withServerSession
-                        }
-                        total += result.body.totalRecordCount
+            withMusicLibraries(address, session) { libraries ->
+                var total = 0
+                for (libraryId in libraries) {
+                    // One song asked for, for the total that comes with it
+                    val result = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.audioIds(address, credentials.accessToken, credentials.userId, libraryId, limit = 1)) }
+                    if (result !is NetworkResult.Success<QueryResult>) {
+                        logger.warn { "Couldn't count the songs: ${(result as NetworkResult.Failure).error.userDescription()}" }
+                        return@withMusicLibraries
                     }
-                    emit(FlowEvent.Success(total))
+                    total += result.body.totalRecordCount
                 }
-
-                is NetworkResult.Failure -> logger.warn { "Couldn't count the songs: ${libraries.error.userDescription()}" }
+                emit(FlowEvent.Success(total))
             }
         }.lastOrNull() as? FlowEvent.Success
         )?.result
 
     override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
-        when (val libraries = musicLibraryIds(address, session)) {
-            is NetworkResult.Success<List<String>> -> emitAll(concatenated(libraries.body.map { libraryId -> queryPaths(address, session, libraryId) }))
-            is NetworkResult.Failure -> emitLibrariesFailure(libraries)
+        withMusicLibraries(address, session) { libraries ->
+            emitAll(concatenated(libraries.map { libraryId -> queryPaths(address, session, libraryId) }, key = { path -> path }))
         }
     }
 
-    /** The ids of the user's music libraries: those whose collection type is `music`, not audiobooks (`books`) or the rest. */
-    private suspend fun musicLibraryIds(
+    /**
+     * [read]s the ids of the user's libraries that may hold music ([isMusicLibrary]). A library listing that fails, or that
+     * has none of those (audiobooks and films alone, say), fails: read as no songs, it would delete every song stored.
+     */
+    private suspend fun <T> FlowCollector<FlowEvent<T, MessageProgress>>.withMusicLibraries(
         address: String,
-        session: ServerSession<AuthenticatedCredentials>
-    ): NetworkResult<List<String>> = session.request { credentials ->
-        authenticationManager.checkSession(credentials, itemsService.libraries(address, credentials.accessToken, credentials.userId))
-    }.map { result -> result.items.filter { library -> library.collectionType.equals("music", ignoreCase = true) }.map(Item::id) }
+        session: ServerSession<AuthenticatedCredentials>,
+        read: suspend FlowCollector<FlowEvent<T, MessageProgress>>.(List<String>) -> Unit
+    ) {
+        val libraries =
+            session.request { credentials ->
+                authenticationManager.checkSession(credentials, itemsService.libraries(address, credentials.accessToken, credentials.userId))
+            }.map { result -> result.items.filter { library -> isMusicLibrary(library.collectionType) }.map(Item::id) }
+        when (libraries) {
+            is NetworkResult.Success<List<String>> -> {
+                if (libraries.body.isEmpty()) {
+                    logger.error { "Found no library that may hold music" }
+                    emit(FlowEvent.Failure(strings.musicLibraryMissing))
+                } else {
+                    read(libraries.body)
+                }
+            }
 
-    private suspend fun <T> FlowCollector<FlowEvent<T, MessageProgress>>.emitLibrariesFailure(failure: NetworkResult.Failure) {
-        logger.error(failure.error) { failure.error.userDescription() }
-        emit(FlowEvent.Failure(failure.error.userDescription()))
+            is NetworkResult.Failure -> {
+                logger.error(libraries.error) { libraries.error.userDescription() }
+                emit(FlowEvent.Failure(libraries.error.userDescription()))
+            }
+        }
     }
 
     private fun queryPaths(

@@ -16,5 +16,7 @@ class ResourceServerStrings @Inject constructor(
 
     override val authenticationError: String get() = context.getString(R.string.media_provider_authentication_error)
 
+    override val musicLibraryMissing: String get() = context.getString(R.string.media_provider_music_library_missing)
+
     override val unknownName: String get() = context.getString(com.simplecityapps.core.R.string.unknown)
 }

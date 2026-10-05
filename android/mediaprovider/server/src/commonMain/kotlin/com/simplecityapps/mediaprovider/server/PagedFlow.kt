@@ -172,17 +172,22 @@ fun <T, R> pagedFlow(
 
 /**
  * [listings] run one after another as one listing (a server's libraries, each listed on its own): their progress passes
- * through, their items and [missing][FlowEvent.Success.missing] counts add up, and the first failure ends it.
+ * through, their items and [missing][FlowEvent.Success.missing] counts add up, and the first failure ends it. With a [key],
+ * an item an earlier listing held already (a song in two libraries that share a folder) is listed once.
  */
-fun <T> concatenated(listings: List<Flow<FlowEvent<List<T>, MessageProgress>>>): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
+fun <T> concatenated(
+    listings: List<Flow<FlowEvent<List<T>, MessageProgress>>>,
+    key: ((T) -> Any)? = null
+): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
     val items = mutableListOf<T>()
+    val seen = HashSet<Any>()
     var missing = 0
     for (listing in listings) {
         var failed = false
         listing.collect { event ->
             when (event) {
                 is FlowEvent.Success -> {
-                    items += event.result
+                    items += if (key == null) event.result else event.result.filter { item -> seen.add(key(item)) }
                     missing += event.missing
                 }
 

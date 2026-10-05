@@ -1,0 +1,16 @@
+{
+  "Items": [
+    { "Name": "Music", "Id": "lib-music", "CollectionType": "music" },
+    { "Name": "Everything", "Id": "lib-untyped" },
+    { "Name": "Mixed", "Id": "lib-mixed", "CollectionType": "mixed" },
+    { "Name": "Something New", "Id": "lib-unknown", "CollectionType": "somethingnew" },
+    { "Name": "Audiobooks", "Id": "lib-books", "CollectionType": "books" },
+    { "Name": "Audio Books", "Id": "lib-audiobooks", "CollectionType": "AudioBooks" },
+    { "Name": "Folders", "Id": "lib-folders", "CollectionType": "folders" },
+    { "Name": "Playlists", "Id": "lib-playlists", "CollectionType": "playlists" },
+    { "Name": "Collections", "Id": "lib-boxsets", "CollectionType": "boxsets" },
+    { "Name": "Music Videos", "Id": "lib-musicvideos", "CollectionType": "musicvideos" }
+  ],
+  "TotalRecordCount": 10,
+  "StartIndex": 0
+}

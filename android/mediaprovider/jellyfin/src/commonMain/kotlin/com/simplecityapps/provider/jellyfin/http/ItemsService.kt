@@ -61,7 +61,7 @@ class ItemsService(private val client: HttpClient) {
         sortBy = "DateCreated,SortName"
     )
 
-    /** The user's libraries, each with its [Item.collectionType]: the music ones are the songs a sync reads. */
+    /** The user's libraries, each with its [Item.collectionType]: a sync reads the songs of all but those of kinds that hold no music. */
     suspend fun libraries(
         url: String,
         authorization: String,

@@ -1,1 +1,1 @@
-{ "type": "fixes", "text": "Songs deleted from a Jellyfin, Emby or Plex server now disappear from your library on the next sync, without a full rescan. Jellyfin and Emby no longer pull in audiobook libraries as music.", "commits": [] }
+{ "type": "fixes", "text": "Songs deleted from a Jellyfin, Emby or Plex server now disappear from your library on the next sync, without a full rescan. Jellyfin and Emby no longer pull in audiobook, movie or TV libraries as music, and a server with no music library now says so instead of emptying your library.", "commits": [] }

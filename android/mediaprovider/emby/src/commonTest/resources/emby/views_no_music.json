@@ -1,0 +1,8 @@
+{
+  "Items": [
+    { "Name": "Audiobooks", "Id": "lib-books", "CollectionType": "books" },
+    { "Name": "Movies", "Id": "lib-movies", "CollectionType": "movies" }
+  ],
+  "TotalRecordCount": 2,
+  "StartIndex": 0
+}

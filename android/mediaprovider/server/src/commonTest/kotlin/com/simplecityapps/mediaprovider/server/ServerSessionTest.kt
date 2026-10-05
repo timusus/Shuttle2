@@ -21,6 +21,7 @@ class ServerSessionTest {
         object : ServerStrings {
             override val addressMissing = "No address"
             override val authenticationError = "Sign-in failed"
+            override val musicLibraryMissing = "No music library"
             override val unknownName = "Unknown"
         }
     private val authenticatedAt = mutableListOf<String>()

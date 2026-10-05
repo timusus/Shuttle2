@@ -76,6 +76,8 @@
     <string name="media_provider_address_missing">Server address missing</string>
     <!-- Error message shown when a Plex server has no 'Music' library section -->
     <string name="media_provider_plex_music_library_missing">No Plex music library found</string>
+    <!-- Error message shown when a Jellyfin or Emby server's libraries are all of kinds that hold no music (audiobooks, films, TV and the like) -->
+    <string name="media_provider_music_library_missing">No music library found on the server</string>
     <!-- Import progress: signing in to a media server; the argument is its kind (Jellyfin, Emby or Plex) -->
     <string name="media_import_connecting">Connecting to <xliff:g example="Jellyfin" id="provider">%1$s</xliff:g>…</string>
     <!-- Import progress: asking the library for its songs, before it has said how many there are -->
