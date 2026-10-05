@@ -1,6 +1,7 @@
 import Foundation
 import os
 import PostHog
+import UIKit
 import Shared
 
 /// PostHog product analytics, the shared `IosProductAnalytics`. Set up the first time the user allows analytics (the
@@ -36,6 +37,7 @@ final class PostHogProductAnalytics: NSObject, IosProductAnalytics {
                 if !superProperties.isEmpty { PostHogSDK.shared.register(superProperties) }
                 setUp = true
                 Self.log.notice("PostHog set up")
+                Self.captureMissedLaunchOpen()
             }
             PostHogSDK.shared.optIn()
             Self.log.notice("PostHog opted in")
@@ -43,6 +45,22 @@ final class PostHogProductAnalytics: NSObject, IosProductAnalytics {
             PostHogSDK.shared.optOut()
             Self.log.notice("PostHog opted out")
         }
+    }
+
+    /// PostHog sends "Application Opened" from a `didBecomeActive` observer that `setup` installs. Setup runs after
+    /// the first frame, so on a cold launch the app is usually already active and that notification has gone; send
+    /// the event ourselves then. While the app isn't active yet, the real notification is still to come.
+    private static func captureMissedLaunchOpen() {
+        guard Thread.isMainThread, UIApplication.shared.applicationState == .active else { return }
+        let info = Bundle.main.infoDictionary
+        PostHogSDK.shared.capture(
+            "Application Opened",
+            properties: [
+                "from_background": false,
+                "version": info?["CFBundleShortVersionString"] as? String ?? "",
+                "build": info?["CFBundleVersion"] as? String ?? "",
+            ]
+        )
     }
 
     func capture(event: String, properties: [String: Any]) {
