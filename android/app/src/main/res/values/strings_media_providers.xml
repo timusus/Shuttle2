@@ -38,6 +38,7 @@
     <string name="media_provider_header_value">Value</string>
     <string name="media_provider_add_header">Add header</string>
     <string name="media_provider_remove_header">Remove header</string>
+    <string name="media_provider_local_network_denied">Shuttle needs permission to reach devices on your local network to connect to a server at this address. Tap Retry and allow it, or turn on Nearby devices for Shuttle in system settings.</string>
     <string name="media_provider_untrusted_certificate_title">Untrusted certificate</string>
     <string name="media_provider_untrusted_certificate_message">%1$s presented a certificate this device doesn\'t trust, such as a self-signed one. Trust it only if this SHA-256 fingerprint matches your server\'s certificate.</string>
     <string name="media_provider_trust_certificate">Trust certificate</string>

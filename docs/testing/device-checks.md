@@ -485,3 +485,12 @@ Needs a real head unit (or a wired CarPlay dongle) and a signed device build, so
 - [ ] Now Playing: play, pause, skip and seek work; the shuffle and repeat buttons toggle and their icons follow the phone; Up Next lists the queue from the current song and tapping one plays it.
 - [ ] Unplug mid-song: playback carries on (or pauses, per the route rule) and reconnecting refills the tabs.
 - [ ] Phone locked, play an album for 15+ minutes over CarPlay: the car's progress and the phone's position keep moving. Podcasts saw the engine's render-clock reads fail for most of an episode in exactly this setup while the audio played on (its `ClockStallDetector`, 2026-09-18); S2's Playback package has no such detector, so if the position freezes, `sudo log collect --device` (the `audio-engine` and `playback` categories) and file it.
+
+## Android 17 local-network permission (#527)
+
+Prep only: the app still targets SDK 36, so the permission is declared but never requested and nothing prompts today. These checks apply once targetSdk is 37; on an Android 17 device before that, confirm LAN sign-in works unchanged.
+
+- [ ] targetSdk 37, Android 17, fresh install: Jellyfin sign-in to a `192.168.x.x` address shows the Nearby devices prompt when tapping Sign in (and Use Quick Connect); allowing it signs in. A public HTTPS address never prompts.
+- [ ] Deny the prompt: the dialog shows the local-network explanation with Retry; Retry then re-asks (or, after two denials, the message points to system settings).
+- [ ] Upgrade with a saved LAN server and the permission not granted: library import, streaming and artwork time out (see #527 comment for the hook points: no prompt exists there yet).
+- [ ] Casting to a Chromecast on Wi-Fi with permission denied: note whether the cast HttpServer (incoming TCP) is blocked.
