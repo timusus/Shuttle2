@@ -15,6 +15,7 @@ import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.PlayContext
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.ContinuationInterceptor
@@ -218,6 +219,8 @@ class IosPlayerController(
 
     override val playbackFailureFlow: SharedFlow<Song> = _playbackFailureFlow.asSharedFlow()
 
+    private val logger = Logger.tagged("IosPlayerController")
+
     private val listener = object : IosAudioPlayerListener {
         override fun onStateChanged(
             trackId: String,
@@ -283,6 +286,7 @@ class IosPlayerController(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
+        logger.warn(e) { "Failed to resolve the stream for ${feed.item.song.path}" }
         Result.failure(e)
     }
 
