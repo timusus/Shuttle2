@@ -91,14 +91,15 @@ class IosSettingsCatalogTest {
     }
 
     @Test
-    fun sourcesIsOneStreamingAndDownloadsGroupWithTheNetworkQualitiesTheFormatAndTheDownloadQuality() {
+    fun sourcesIsOneStreamingAndDownloadsGroupWithTheNetworkQualitiesTheFormatTheDownloadQualityAndWifiOnly() {
         val group = catalog.sources.groups.single()
         group.title shouldBe StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS
         group.items.map { it.key } shouldContainExactly listOf(
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
             StreamingSettings.Format.key,
-            StreamingSettings.DownloadQuality.key
+            StreamingSettings.DownloadQuality.key,
+            DownloadSettings.WifiOnly.key
         )
         val format = group.items.filterIsInstance<SettingItem.Choice<*>>().single { it.setting == StreamingSettings.Format }
         format.options.map { it.value } shouldContainExactly TranscodeFormat.entries
