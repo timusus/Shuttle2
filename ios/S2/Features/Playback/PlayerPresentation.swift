@@ -90,15 +90,32 @@ extension View {
         tier: LayoutTier,
         @ViewBuilder content: @escaping (Item) -> Content
     ) -> some View {
+        modifier(ItemPlayerSheet(item: item, tier: tier, sheetContent: content))
+    }
+}
+
+/// Backs `playerSheet(item:)`: dismissal nils the item as it starts, so the content keeps rendering the last
+/// non-nil value through the dismiss animation instead of going blank.
+private struct ItemPlayerSheet<Item: Identifiable, SheetContent: View>: ViewModifier {
+    @Binding var item: Item?
+    let tier: LayoutTier
+    let sheetContent: (Item) -> SheetContent
+    @State private var lastItem: Item?
+
+    func body(content: Content) -> some View {
         let isPresented = Binding<Bool>(
-            get: { item.wrappedValue != nil },
-            set: { if !$0 { item.wrappedValue = nil } }
+            get: { item != nil },
+            set: { if !$0 { item = nil } }
         )
-        return playerSheet(isPresented: isPresented, tier: tier) {
-            if let value = item.wrappedValue {
-                content(value)
+        return content
+            .playerSheet(isPresented: isPresented, tier: tier) {
+                if let value = item ?? lastItem {
+                    sheetContent(value)
+                }
             }
-        }
+            .onChange(of: item?.id) { _, _ in
+                if let item { lastItem = item }
+            }
     }
 }
 

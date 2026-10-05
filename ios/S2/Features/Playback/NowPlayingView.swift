@@ -530,7 +530,7 @@ struct NowPlayingContent: View {
     /// Only the full-screen cover (the form sheet has the system's own), and not behind a player sheet, whose
     /// exposed upper half would otherwise close the whole player (#684).
     private var dismissesByDragging: Bool {
-        NowPlayingPresentationStyle.resolve(for: tier) == .fullScreenCover && !(showQueue || showAudio || showSleepTimer)
+        NowPlayingPresentationStyle.resolve(for: tier) == .fullScreenCover && !(showQueue || showAudio || showSleepTimer || songInfo != nil)
     }
 
     private var dismissDrag: some Gesture {
