@@ -25,7 +25,8 @@ constructor(
         return MediaInfo(
             path = stream.path.toUri(),
             mimeType = stream.mimeType,
-            isRemote = true
+            isRemote = true,
+            isReplaceableTranscode = stream.isTranscode
         )
     }
 

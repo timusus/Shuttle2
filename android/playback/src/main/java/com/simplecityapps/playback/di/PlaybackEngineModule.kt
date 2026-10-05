@@ -192,7 +192,8 @@ class PlaybackEngineModule {
         queueStore: QueueStore,
         playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope,
-        castQueue: CastQueue
+        castQueue: CastQueue,
+        songUriResolver: SongUriResolver
     ): PlaybackOperations = PlaybackFacade(
         queueOperations,
         player,
@@ -202,6 +203,7 @@ class PlaybackEngineModule {
         CallMonitor(context.getSystemService()),
         coroutineScope,
         castQueue,
-        castDeviceName = { CastSessionManager.deviceName(context) }
+        castDeviceName = { CastSessionManager.deviceName(context) },
+        isReplaceableTranscode = songUriResolver::isReplaceableTranscode
     )
 }

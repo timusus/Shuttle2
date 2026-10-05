@@ -89,7 +89,7 @@ class ExoPlayerFactory(
         val dataSourceFactory = downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context, OkHttpDataSource.Factory(okHttpClient))), onDownloadPlayed)
         val extractorsFactory = TimeSeekExtractorsFactory(songUriResolver::isTimeSeekable)
         StreamSniffingMediaSourceFactory(dataSourceFactory, defaultFactory = DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory))
-            .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())
+            .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy(songUriResolver::servesReplaceableTranscode))
     }
 
     private fun renderersFactory(buildAudioSink: (Context, Boolean, Boolean) -> AudioSink): RenderersFactory = object : DefaultRenderersFactory(context) {

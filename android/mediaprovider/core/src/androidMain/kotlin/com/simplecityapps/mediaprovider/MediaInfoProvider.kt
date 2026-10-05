@@ -5,12 +5,17 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import java.io.File
 
-/** Where to play a song from. [timeSeek] is set for a stream that seeks by re-requesting it from a time, not by byte range. */
+/**
+ * Where to play a song from. [timeSeek] is set for a stream that seeks by re-requesting it from a time, not by byte range.
+ * [isReplaceableTranscode] for a transcode the server drops when another starts (Plex runs one per user), so its stream
+ * can answer 404 mid-play; opening it again starts it again.
+ */
 data class MediaInfo(
     val path: Uri,
     val mimeType: String,
     val isRemote: Boolean,
-    val timeSeek: TimeSeekableStream? = null
+    val timeSeek: TimeSeekableStream? = null,
+    val isReplaceableTranscode: Boolean = false
 )
 
 /** Where to download [song] from, and the MIME type of what's actually at [uri] — a provider that transcodes an

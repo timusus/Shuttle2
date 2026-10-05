@@ -1,5 +1,6 @@
 package com.simplecityapps.playback
 
+import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -8,6 +9,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.engine.isResolutionFailure
+import com.simplecityapps.playback.engine.notFound
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.CancellationException
@@ -29,7 +31,12 @@ class ItemLoader(
     private val player: Player,
     private val localPlayer: ExoPlayer,
     /** Stops playback when a load gives up: nothing more can be skipped to, or the item failed while playing. */
-    private val giveUp: () -> Unit
+    private val giveUp: () -> Unit,
+    /**
+     * Whether an item's URI (a song's own) streams a transcode the server drops when another starts, which a 404 on it
+     * re-opens (see [com.simplecityapps.playback.engine.SongUriResolver.isReplaceableTranscode]).
+     */
+    private val isReplaceableTranscode: (Uri) -> Boolean = { false }
 ) : Player.Listener {
     /**
      * The uid of the entry that last became ready to play, or that playback moved on to by playing out the one
@@ -42,6 +49,9 @@ class ItemLoader(
 
     /** Songs skipped in a row because they failed to load. */
     private var loadFailures = 0
+
+    /** The last replaced transcode [reopensReplacedTranscode] opened again, and where. */
+    private var lastReopen: Reopen? = null
 
     /** Buffered, so a collector on the main thread misses no failure even when two arrive before it resumes. */
     private val _failureFlow = MutableSharedFlow<Song>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -112,11 +122,13 @@ class ItemLoader(
      * An item that fails to load is skipped for the next one, up to [PlaybackPolicy.MAX_LOAD_ATTEMPTS] in a row and never past the end of
      * the queue, whether it was loaded directly or reached by playing on. A load that doesn't skip (a restore) leaves
      * it current, paused, unless it's played meanwhile: playing it tries it again, and skips it then. An item that
-     * fails once it's playing stops playback.
+     * fails once it's playing stops playback. A transcode the server replaced is opened again rather than either (see
+     * [reopensReplacedTranscode]).
      */
     override fun onPlayerError(error: PlaybackException) {
         val failedIndex = error.failedIndex() ?: player.currentMediaItemIndex
         val failedEntry = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntryOrNull }
+        if (failedEntry != null && reopensReplacedTranscode(error, failedIndex, failedEntry.uid)) return
         Timber.e(error, "Playback failed for ${failedEntry?.song?.name}")
 
         if (!error.isResolutionFailure()) {
@@ -138,6 +150,30 @@ class ItemLoader(
         giveUp()
     }
 
+    /**
+     * Opens the current item again at its position, playing on if it was, when [error] is a 404 on its stream and it's a
+     * transcode the server drops when another starts: Plex runs one per user, so opening the next item ahead replaced it,
+     * and the player keeps no back buffer to seek back into (#907). Opening it again starts the transcode afresh. Once
+     * per item and position, so one that fails again there is handled as any other failure. Checked before an unready
+     * item is skipped, as one replaced just as playback moved on to it (gaplessly) did load.
+     */
+    private fun reopensReplacedTranscode(
+        error: PlaybackException,
+        failedIndex: Int,
+        uid: Long
+    ): Boolean {
+        if (failedIndex != player.currentMediaItemIndex || error.notFound() == null) return false
+        val uri = player.getMediaItemAt(failedIndex).localConfiguration?.uri ?: return false
+        if (!isReplaceableTranscode(uri)) return false
+        val reopen = Reopen(uid, player.currentPosition)
+        if (reopen == lastReopen) return false
+        lastReopen = reopen
+        Timber.w(error, "Transcode replaced, opening it again at ${reopen.positionMs} ms")
+        player.seekTo(failedIndex, reopen.positionMs)
+        player.prepare()
+        return true
+    }
+
     /** The playlist index of the item [this] failed on, if it says: only the local player does. */
     private fun PlaybackException.failedIndex(): Int? {
         val periodUid = (this as? ExoPlaybackException)?.mediaPeriodId?.periodUid ?: return null
@@ -156,6 +192,11 @@ class ItemLoader(
         val completion: (Result<Boolean>) -> Unit,
         val skipUnloadable: Boolean,
         val attempt: Int = 1
+    )
+
+    private data class Reopen(
+        val uid: Long,
+        val positionMs: Long
     )
 }
 

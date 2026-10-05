@@ -1,5 +1,6 @@
 package com.simplecityapps.playback
 
+import android.net.Uri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
@@ -59,13 +60,15 @@ class PlaybackFacade(
     /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
     castQueue: CastQueue?,
     /** The name of the device the current Cast session plays on (see [CastHandover]). */
-    castDeviceName: () -> String? = { null }
+    castDeviceName: () -> String? = { null },
+    /** Whether an item's URI streams a transcode the server drops when another starts (see [ItemLoader]). */
+    isReplaceableTranscode: (Uri) -> Boolean = { false }
 ) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
 
     private val handover: CastHandover = CastHandover(player, castDeviceName) { remote -> if (!remote) queueStore.saveHandedBack() }
 
-    private val loader = ItemLoader(player, localPlayer, giveUp = ::pause)
+    private val loader = ItemLoader(player, localPlayer, giveUp = ::pause, isReplaceableTranscode = isReplaceableTranscode)
 
     private val speedStore = PlaybackSpeedStore(player, playbackSpeed)
 

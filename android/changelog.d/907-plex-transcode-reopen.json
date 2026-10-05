@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Plex songs that the server converts on the fly no longer stop partway through when the next song starts loading; playback picks up where it was.", "commits": [] }

@@ -14,10 +14,14 @@ import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.update
 
-/** A stream URL and the MIME type it serves. */
+/**
+ * A stream URL and the MIME type it serves. [isTranscode] when it's a transcode, which the server drops once another
+ * one starts for the user (see [PlexStreamUrlProvider]).
+ */
 data class PlexStream(
     val path: String,
-    val mimeType: String
+    val mimeType: String,
+    val isTranscode: Boolean = false
 )
 
 /**
@@ -116,7 +120,7 @@ class PlexStreamUrlProvider(
             val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps, sessionIdentifier(song), codec)
                 ?: throw IllegalStateException("Failed to build plex transcode path")
             streamingPolicy.streamOpened(song.path, codec.delivered(transcodeKbps))
-            PlexStream(path, HLS_MIME_TYPE)
+            PlexStream(path, HLS_MIME_TYPE, isTranscode = true)
         } else {
             val session = if (playId == null) sessionIdentifier(song) else playSession(song, playId)
             val path = authenticationManager.buildPlexProgressiveStreamPath(
@@ -128,7 +132,7 @@ class PlexStreamUrlProvider(
                 sessionIdentifier = sessionIdentifier(song)
             ) ?: throw IllegalStateException("Failed to build plex transcode path")
             streamingPolicy.streamOpened(song.path, TranscodeCodec.Mp3.delivered(transcodeKbps))
-            PlexStream(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
+            PlexStream(path, PROGRESSIVE_TRANSCODE_MIME_TYPE, isTranscode = true)
         }
     }
 

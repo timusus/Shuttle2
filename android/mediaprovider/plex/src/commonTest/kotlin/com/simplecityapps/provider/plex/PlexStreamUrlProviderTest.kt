@@ -84,6 +84,7 @@ class PlexStreamUrlProviderTest {
 
         stream.path shouldStartWith "http://plex.local:32400$PART?"
         stream.mimeType shouldBe "audio/mpeg"
+        stream.isTranscode shouldBe false
     }
 
     @Test
@@ -102,6 +103,7 @@ class PlexStreamUrlProviderTest {
         stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
         stream.path shouldContain "&musicBitrate=192&"
         stream.mimeType shouldBe "application/x-mpegURL"
+        stream.isTranscode shouldBe true
     }
 
     @Test
@@ -223,6 +225,7 @@ class PlexStreamUrlProviderTest {
         stream.path shouldContain "&musicBitrate=192&"
         stream.path shouldNotContain "offset="
         stream.mimeType shouldBe "audio/mpeg"
+        stream.isTranscode shouldBe true
         Url(stream.path).parameters["X-Plex-Client-Profile-Extra"] shouldBe
             "add-transcode-target(type=musicProfile&context=streaming&protocol=http&container=mp3&audioCodec=mp3)"
     }

@@ -5,7 +5,11 @@ import android.os.Looper
 import androidx.media3.common.C
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.TransferListener
+import androidx.media3.exoplayer.source.LoadEventInfo
+import androidx.media3.exoplayer.source.MediaLoadData
+import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import androidx.media3.test.utils.TestExoPlayerBuilder
 import com.simplecityapps.mediaprovider.TimeSeekableStream
 import com.simplecityapps.playback.exoplayer.MediaResolver
@@ -16,6 +20,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.atomic.AtomicInteger
@@ -54,7 +59,11 @@ class SongUriResolverTest {
                 } else {
                     null
                 }
-                ResolvedMedia(uri = "https://server/stream/${song.id}", mimeType = song.mimeType, isRemote = true, timeSeek = timeSeek)
+                if (song.path.startsWith("plex:")) {
+                    ResolvedMedia(uri = "https://plex:32400/music/transcode/start.m3u8?id=${song.id}", mimeType = "application/x-mpegURL", isRemote = true, isReplaceableTranscode = true)
+                } else {
+                    ResolvedMedia(uri = "https://server/stream/${song.id}", mimeType = song.mimeType, isRemote = true, timeSeek = timeSeek)
+                }
             }
         )
 
@@ -193,6 +202,45 @@ class SongUriResolverTest {
         upstream.skipped shouldBe 0
     }
 
+    @Test
+    fun `only a stream that resolved to a replaceable transcode is one - and its server's URLs are`() {
+        val transcode = testSong(5, path = "plex://item/5")
+        runBlocking { queue.setQueue(songs + transcode) }
+
+        resolver.isReplaceableTranscode(Uri.parse(transcode.path)) shouldBe false
+        resolver.servesReplaceableTranscode(PLEX_SEGMENT) shouldBe false
+        dataSource.open(DataSpec(Uri.parse(transcode.path)))
+        dataSource.open(DataSpec(Uri.parse(songs[0].path)))
+
+        resolver.isReplaceableTranscode(Uri.parse(transcode.path)) shouldBe true
+        resolver.isReplaceableTranscode(Uri.parse(songs[0].path)) shouldBe false
+        resolver.servesReplaceableTranscode(PLEX_SEGMENT) shouldBe true
+        resolver.servesReplaceableTranscode(Uri.parse("https://server/stream/1")) shouldBe false
+    }
+
+    @Test
+    fun `a 404 from a replaceable transcode's server fails at once - and other load errors are retried`() {
+        val transcode = testSong(5, path = "plex://item/5")
+        runBlocking { queue.setQueue(songs + transcode) }
+        dataSource.open(DataSpec(Uri.parse(transcode.path)))
+        dataSource.open(DataSpec(Uri.parse(songs[0].path)))
+        val policy = S2LoadErrorHandlingPolicy(resolver::servesReplaceableTranscode)
+
+        policy.retryDelayFor(httpError(404, PLEX_SEGMENT)) shouldBe C.TIME_UNSET
+        policy.retryDelayFor(httpError(500, PLEX_SEGMENT)) shouldNotBe C.TIME_UNSET
+        policy.retryDelayFor(httpError(404, Uri.parse("https://server/stream/1"))) shouldNotBe C.TIME_UNSET
+        policy.retryDelayFor(MediaResolutionException("Server unreachable")) shouldBe C.TIME_UNSET
+    }
+
+    private fun S2LoadErrorHandlingPolicy.retryDelayFor(exception: IOException): Long = getRetryDelayMsFor(
+        LoadErrorHandlingPolicy.LoadErrorInfo(LoadEventInfo(0, DataSpec(Uri.EMPTY), 0), MediaLoadData(C.DATA_TYPE_MEDIA), exception, 1)
+    )
+
+    private fun httpError(
+        responseCode: Int,
+        uri: Uri
+    ) = HttpDataSource.InvalidResponseCodeException(responseCode, null, null, emptyMap(), DataSpec(uri), ByteArray(0))
+
     /** Opens [song]'s URI as the player's loader would, returning the URI the upstream was asked to open. */
     private fun open(song: com.simplecityapps.shuttle.model.Song): Result<Uri> = runCatching {
         dataSource.open(DataSpec(Uri.parse(song.path)))
@@ -227,5 +275,10 @@ class SongUriResolverTest {
         override fun close() = Unit
 
         override fun addTransferListener(transferListener: TransferListener) = Unit
+    }
+
+    private companion object {
+        /** A segment of a Plex HLS transcode, on the server the transcode resolved to but at another path. */
+        val PLEX_SEGMENT: Uri = Uri.parse("https://plex:32400/video/transcode/session/s2-5/base/00001.ts")
     }
 }

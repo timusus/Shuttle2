@@ -5,6 +5,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.TransferListener
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
@@ -80,11 +81,26 @@ class SongUriResolver(
      * Whether [uri] (a song's own URI) resolved to a stream that seeks by time. False until it has resolved, which it has
      * by the time the player picks the stream's extractor: that follows opening it.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun isTimeSeekable(uri: Uri): Boolean {
-        val resolution = resolutions[uri.toString()]?.takeIf { it.isCompleted && it.getCompletionExceptionOrNull() == null } ?: return false
-        return resolution.getCompleted().timeSeek != null
+    fun isTimeSeekable(uri: Uri): Boolean = resolutions[uri.toString()]?.resolved()?.timeSeek != null
+
+    /**
+     * Whether [uri] (a song's own URI) resolved to a transcode the server drops when another starts (see
+     * [com.simplecityapps.playback.exoplayer.ResolvedMedia.isReplaceableTranscode]). Its cached resolution stays valid after that: the URL starts the transcode
+     * afresh each time it's requested, so the player opening it again restarts it.
+     */
+    fun isReplaceableTranscode(uri: Uri): Boolean = resolutions[uri.toString()]?.resolved()?.isReplaceableTranscode == true
+
+    /**
+     * Whether [url] (one the player fetched: a stream, or an HLS playlist or segment) is on the server of a transcode that
+     * it drops when another starts, so a 404 from it means that transcode was replaced: retrying won't bring it back.
+     */
+    fun servesReplaceableTranscode(url: Uri): Boolean = resolutions.values.any { deferred ->
+        val resolution = deferred.resolved() ?: return@any false
+        resolution.isReplaceableTranscode && resolution.uri.scheme == url.scheme && resolution.uri.encodedAuthority == url.encodedAuthority
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun Deferred<Resolution>.resolved(): Resolution? = takeIf { it.isCompleted && it.getCompletionExceptionOrNull() == null }?.getCompleted()
 
     private fun resolve(dataSpec: DataSpec): Resolution {
         val key = dataSpec.uri.toString()
@@ -109,7 +125,7 @@ class SongUriResolver(
             scope.async(start = CoroutineStart.LAZY) {
                 try {
                     val media = mediaResolver.resolve(song)
-                    Resolution(Uri.parse(media.uri), media.timeSeek)
+                    Resolution(Uri.parse(media.uri), media.timeSeek, media.isReplaceableTranscode)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -127,7 +143,8 @@ class SongUriResolver(
 
     private class Resolution(
         val uri: Uri,
-        val timeSeek: TimeSeekableStream?
+        val timeSeek: TimeSeekableStream?,
+        val isReplaceableTranscode: Boolean
     )
 
     /**
@@ -203,10 +220,25 @@ class MediaResolutionException(
     cause: Throwable? = null
 ) : IOException(message, cause)
 
-/** [DefaultLoadErrorHandlingPolicy], except a load that failed to resolve its stream fails at once, with no retry. */
-class S2LoadErrorHandlingPolicy : DefaultLoadErrorHandlingPolicy() {
-    override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long = if (loadErrorInfo.exception.isResolutionFailure()) C.TIME_UNSET else super.getRetryDelayMsFor(loadErrorInfo)
+/**
+ * [DefaultLoadErrorHandlingPolicy], except these loads fail at once, with no retry: one that failed to resolve its stream,
+ * and a 404 from the server of a transcode it drops when another starts ([isReplaceableTranscodeServer]: see
+ * [SongUriResolver.servesReplaceableTranscode]), which [com.simplecityapps.playback.ItemLoader] re-opens instead.
+ */
+class S2LoadErrorHandlingPolicy(private val isReplaceableTranscodeServer: (Uri) -> Boolean = { false }) : DefaultLoadErrorHandlingPolicy() {
+    override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+        val exception = loadErrorInfo.exception
+        val replacedTranscode = exception.notFound()?.let { notFound -> isReplaceableTranscodeServer(notFound.dataSpec.uri) } == true
+        return if (exception.isResolutionFailure() || replacedTranscode) C.TIME_UNSET else super.getRetryDelayMsFor(loadErrorInfo)
+    }
 }
 
 /** Whether this, or anything that caused it, is a [MediaResolutionException]. */
 fun Throwable.isResolutionFailure(): Boolean = generateSequence(this) { it.cause }.any { it is MediaResolutionException }
+
+/** The 404 that this is, or that caused it, if any. */
+fun Throwable.notFound(): HttpDataSource.InvalidResponseCodeException? = generateSequence(this) { it.cause }
+    .filterIsInstance<HttpDataSource.InvalidResponseCodeException>()
+    .firstOrNull { it.responseCode == HTTP_NOT_FOUND }
+
+private const val HTTP_NOT_FOUND = 404
