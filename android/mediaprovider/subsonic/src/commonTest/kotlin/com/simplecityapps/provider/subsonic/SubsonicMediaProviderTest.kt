@@ -81,7 +81,8 @@ class SubsonicMediaProviderTest {
         song.serverArtistIds shouldBe listOf("4XVnsmsEkmk2E0NqAtB0Jx", "2fvetHX8g36Sb6XCnmrlSp")
         song.serverAlbumArtistIds shouldBe listOf("07LA8XP6U5De7mzuoBVPz4")
         song.artworkVersion shouldBe "mf-4S6nihsexXfLEd9rVm2LKr"
-        song.dateAdded shouldBe Instant.parse("2026-10-05T01:03:50.358065972Z")
+        // Read at the library's millisecond precision: the server sends nanoseconds
+        song.dateAdded shouldBe Instant.parse("2026-10-05T01:03:50.358Z")
     }
 
     @Test
