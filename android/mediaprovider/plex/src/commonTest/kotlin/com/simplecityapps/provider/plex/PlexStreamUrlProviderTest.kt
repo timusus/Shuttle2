@@ -24,7 +24,11 @@ import io.kotest.matchers.string.shouldStartWith
 import io.ktor.http.Url
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 
 /** Direct play vs transcode for a Plex song, on Android's profile (HLS, no ALAC) and iOS's (progressive MP3, ALAC). */
 class PlexStreamUrlProviderTest {
@@ -189,12 +193,37 @@ class PlexStreamUrlProviderTest {
     }
 
     @Test
-    fun `each iOS transcode is its own session - so opening the next song doesn't end this one`() {
-        val first = Url(ios.streamUrl(song(externalId = "/library/parts/43/1600000000/file.wma")))
-        val second = Url(ios.streamUrl(song(externalId = "/library/parts/43/1600000000/file.wma")))
+    fun `every transcode of a song carries one session identifier - as Plex answers 400 to another for a track just played`() {
+        val streams = listOf(
+            ios.streamUrl(song(externalId = WMA), playId = "play-1"),
+            ios.streamUrl(song(externalId = WMA), playId = "play-2"),
+            ios.streamUrl(song(externalId = WMA)),
+            android.stream(song(externalId = WMA)).path,
+            ios.downloadSource(song(externalId = WMA))!!.url
+        ).map(::Url)
 
-        first.parameters["session"] shouldBe first.parameters["X-Plex-Session-Identifier"]
-        (first.parameters["session"] == second.parameters["session"]) shouldBe false
+        streams.map { it.parameters["X-Plex-Session-Identifier"] }.toSet() shouldBe setOf("s2-107898")
+    }
+
+    @Test
+    fun `plays of a song share a transcode session while one holds it - so repeat one's next joins the transcode playing`() {
+        val playing = Url(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+        val upNext = Url(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
+
+        playing.parameters["session"] shouldBe "s2-107898-1"
+        upNext.parameters["session"] shouldBe "s2-107898-1"
+    }
+
+    @Test
+    fun `a stream with no play is on the song's own session - which ending a play never stops`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        val hls = Url(android.stream(song(externalId = WMA)).path)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+
+        ios.endPlay("play-1")
+
+        hls.parameters["session"] shouldBe "s2-107898"
+        server.requestsTo(TRANSCODE_STOP).single().url.parameters["session"] shouldBe "s2-107898-1"
     }
 
     @Test
@@ -202,33 +231,64 @@ class PlexStreamUrlProviderTest {
         val opened = ios.streamUrl(song(externalId = WMA), playId = "play-1")
         val reopened = Url(ios.streamUrl(song(externalId = WMA), startPositionMs = 83_045, playId = "play-1"))
 
-        Url(opened).parameters["session"] shouldBe "play-1"
-        reopened.parameters["session"] shouldBe "play-1"
-        reopened.parameters["X-Plex-Session-Identifier"] shouldBe "play-1"
+        reopened.parameters["session"] shouldBe Url(opened).parameters["session"]
         ios.streamUrl(song(externalId = WMA), playId = "play-1") shouldBe opened
-    }
-
-    @Test
-    fun `another play of the same song has its own transcode session - as repeat one opens it ahead`() {
-        val playing = Url(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
-        val upNext = Url(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
-
-        playing.parameters["session"] shouldBe "play-1"
-        upNext.parameters["session"] shouldBe "play-2"
     }
 
     @Test
     fun `ending a play stops its transcode session once`() = runTest {
         server.respond(TRANSCODE_STOP)
         ios.streamUrl(song(externalId = WMA), playId = "play-1")
-        ios.streamUrl(song(externalId = WMA), playId = "play-2")
 
         ios.endPlay("play-1")
         ios.endPlay("play-1")
 
         val stop = server.requestsTo(TRANSCODE_STOP).single()
-        stop.url.parameters["session"] shouldBe "play-1"
+        stop.url.parameters["session"] shouldBe "s2-107898-1"
         stop.headers["X-Plex-Token"] shouldBe "token123"
+    }
+
+    @Test
+    fun `ending a play leaves the session running while another play of the song holds it`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        ios.streamUrl(song(externalId = WMA), playId = "play-2")
+
+        ios.endPlay("play-1")
+        server.requestsTo(TRANSCODE_STOP).shouldBeEmpty()
+
+        ios.endPlay("play-2")
+        server.requestsTo(TRANSCODE_STOP).single().url.parameters["session"] shouldBe "s2-107898-1"
+    }
+
+    @Test
+    fun `a play opened once the song's last play has ended gets a new session - which that play's stop can't reach`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        ios.endPlay("play-1")
+
+        val replay = Url(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
+
+        replay.parameters["session"] shouldBe "s2-107898-2"
+        replay.parameters["X-Plex-Session-Identifier"] shouldBe "s2-107898"
+    }
+
+    @Test
+    fun `a play opened while the song's last play ends is never on the session that's stopped`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        var ending = "play-0"
+        ios.streamUrl(song(externalId = WMA), playId = ending)
+        repeat(200) { i ->
+            val opening = "play-${i + 1}"
+            val session = withContext(Dispatchers.Default) {
+                val opened = async { Url(ios.streamUrl(song(externalId = WMA), playId = opening)).parameters["session"] }
+                launch { ios.endPlay(ending) }
+                opened.await()
+            }
+            val stopped = server.requestsTo(TRANSCODE_STOP).map { it.url.parameters["session"] }
+            (session in stopped) shouldBe false
+            ending = opening
+        }
     }
 
     @Test

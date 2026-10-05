@@ -331,7 +331,8 @@ class IosPlayerController(
      * Replaces the engine's current track with [item] at [startMs], then feeds the next. [reopen] is for a stream the
      * engine can't seek (a progressive transcode): it's resolved again to start at [startMs], and played from its start.
      * A reopen leaves the next item as it was, so it's kept and handed back to the engine as its next, which keeps the
-     * stream it already opened for it.
+     * stream it already opened for it; unless that's a transcode too, which is resolved again: a server that runs one
+     * transcode for the user (Plex) replaces the one the engine may have opened for it with the re-open (#888).
      *
      * An [item] the engine already has as its next (a skip onto it) isn't resolved again: its stream is handed back as
      * the current track, and the engine starts on what it pre-opened for it rather than opening the song afresh (#620).
@@ -345,7 +346,7 @@ class IosPlayerController(
         loadJob?.cancel()
         val preopenedFeed = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }
         val preopened = preopenedFeed?.stream
-        val keepNext = reopen && next?.failed == false
+        val keepNext = reopen && next?.let { !it.failed && !it.opensAtPosition } == true
         if (!keepNext) nextJob?.cancel()
         // A re-open carries on the play it re-opens, and a pre-opened stream the play it was opened for.
         val playId = if (reopen) current?.playId else preopenedFeed?.playId

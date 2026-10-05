@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.concurrent.atomics.fetchAndUpdate
 import kotlin.concurrent.atomics.update
 
 /** A stream URL and the MIME type it serves. */
@@ -32,8 +31,18 @@ data class PlexStream(
  * (Android's Media3), which stays seekable; otherwise one progressive MP3 (iOS's engine), which starts at the position
  * it's asked for.
  *
- * A progressive transcode runs on the server as a session named by the play's id, so a seek's re-open replaces it,
- * and [endPlay] stops it (#722): the server otherwise keeps transcoding a skipped song until it times out idle.
+ * Plex keeps one transcode running for the user: any start replaces it (another song's, or another position's), except
+ * a start on the same session at the start of the song, which joins it. And it answers 400 to a start whose
+ * `X-Plex-Session-Identifier` isn't the last one it saw for the track, until another track is transcoded (#888;
+ * support/scripts/plex-transcode-probe.sh). So every transcode of a song, streamed or downloaded, carries one
+ * identifier, [sessionIdentifier], and plays of a song share one transcode session while any of them holds it: a
+ * replay, or repeat one's next opened while the song plays, joins the transcode the song is playing from rather than
+ * cutting it off. A seek's re-open replaces it at the position.
+ *
+ * [endPlay] stops a progressive transcode (#722) once the last play holding its session ends, and retires the session
+ * in the same step, so a play opened after that gets a new one the stop can't reach; the server otherwise keeps
+ * transcoding a skipped song until it times out idle. A stream with no play (Android's HLS, which the server times out
+ * once its segments stop being read) is on the song's own session, which nothing stops.
  */
 @OptIn(ExperimentalAtomicApi::class)
 @Inject
@@ -45,8 +54,14 @@ class PlexStreamUrlProvider(
 ) : StreamUrlProvider {
     private val logger = Logger.tagged("PlexStreamUrlProvider")
 
-    /** The plays a progressive transcode was opened for, which [endPlay] stops. */
-    private val transcodeSessions = AtomicReference(emptySet<String>())
+    private val transcodeSessions = AtomicReference(TranscodeSessions())
+
+    /** The session each play's progressive transcode was opened on, and the one each song's plays share now. */
+    private data class TranscodeSessions(
+        val byPlay: Map<String, String> = emptyMap(),
+        val bySong: Map<String, String> = emptyMap(),
+        val opened: Int = 0
+    )
 
     override fun handles(scheme: String?): Boolean = scheme == "plex"
 
@@ -57,15 +72,22 @@ class PlexStreamUrlProvider(
     ): String = stream(song, startPositionMs, playId).path
 
     /**
-     * Stops [playId]'s transcode session, if a progressive transcode was opened for it. Best effort: a failure is
-     * logged, and the server times the session out as it would have.
+     * Stops [playId]'s transcode session, if a progressive transcode was opened for it and no other play holds it.
+     * Best effort: a failure is logged, and the server times the session out as it would have.
      */
     override suspend fun endPlay(playId: String) {
-        if (playId !in transcodeSessions.fetchAndUpdate { it - playId }) return
+        var retired: String? = null
+        transcodeSessions.update { sessions ->
+            val session = sessions.byPlay[playId]
+            val byPlay = sessions.byPlay - playId
+            retired = session?.takeIf { it !in byPlay.values }
+            sessions.copy(byPlay = byPlay, bySong = sessions.bySong.filterValues { it != retired })
+        }
+        val session = retired ?: return
         val address = authenticationManager.getAddress() ?: return
         val credentials = authenticationManager.getAuthenticatedCredentials() ?: return
-        val result = transcodeService.stop(url = "$address$TRANSCODE_STOP_PATH", token = credentials.accessToken, session = playId)
-        if (result is NetworkResult.Failure) logger.warn { "Failed to stop transcode session $playId: ${result.error}" }
+        val result = transcodeService.stop(url = "$address$TRANSCODE_STOP_PATH", token = credentials.accessToken, session = session)
+        if (result is NetworkResult.Failure) logger.warn { "Failed to stop transcode session $session: ${result.error}" }
     }
 
     /** @throws IllegalStateException when the server isn't signed in to, or the URL can't be built. */
@@ -86,19 +108,47 @@ class PlexStreamUrlProvider(
         }
         val transcodeKbps = maxBitrateKbps ?: UNCAPPED_TRANSCODE_KBPS
         return if (streamProfile.transcodingProtocol == HLS) {
-            val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps)
+            val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps, sessionIdentifier(song))
                 ?: throw IllegalStateException("Failed to build plex transcode path")
             PlexStream(path, HLS_MIME_TYPE)
         } else {
-            val path = if (playId == null) {
-                authenticationManager.buildPlexProgressiveStreamPath(song, authenticatedCredentials, transcodeKbps, startPositionMs)
-            } else {
-                authenticationManager.buildPlexProgressiveStreamPath(song, authenticatedCredentials, transcodeKbps, startPositionMs, session = playId)
-            } ?: throw IllegalStateException("Failed to build plex transcode path")
-            if (playId != null) transcodeSessions.update { it + playId }
+            val session = if (playId == null) sessionIdentifier(song) else playSession(song, playId)
+            val path = authenticationManager.buildPlexProgressiveStreamPath(
+                song,
+                authenticatedCredentials,
+                transcodeKbps,
+                startPositionMs,
+                session = session,
+                sessionIdentifier = sessionIdentifier(song)
+            ) ?: throw IllegalStateException("Failed to build plex transcode path")
             PlexStream(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
         }
     }
+
+    /**
+     * The session [playId]'s transcode runs on: the one it was opened on, else the one [song]'s plays share now, else a
+     * new one, which its plays share from then on.
+     */
+    private fun playSession(
+        song: Song,
+        playId: String
+    ): String {
+        val identifier = sessionIdentifier(song)
+        var session = ""
+        transcodeSessions.update { sessions ->
+            val shared = sessions.byPlay[playId] ?: sessions.bySong[identifier]
+            session = shared ?: "$identifier-${sessions.opened + 1}"
+            sessions.copy(
+                byPlay = sessions.byPlay + (playId to session),
+                bySong = sessions.bySong + (identifier to session),
+                opened = if (shared == null) sessions.opened + 1 else sessions.opened
+            )
+        }
+        return session
+    }
+
+    /** The `X-Plex-Session-Identifier` every transcode of [song] carries, and the session of a stream with no play. */
+    private fun sessionIdentifier(song: Song): String = "s2-${plexRatingKey(song.path) ?: song.path}"
 
     /**
      * The original part file (`song.externalId`) when the player decodes it; otherwise a progressive MP3 transcode at
@@ -112,7 +162,12 @@ class PlexStreamUrlProvider(
             val path = authenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials) ?: return null
             DownloadSource(path, song.mimeType)
         } else {
-            val path = authenticationManager.buildPlexProgressiveTranscodePath(song, authenticatedCredentials, UNCAPPED_TRANSCODE_KBPS) ?: return null
+            val path = authenticationManager.buildPlexProgressiveTranscodePath(
+                song,
+                authenticatedCredentials,
+                UNCAPPED_TRANSCODE_KBPS,
+                sessionIdentifier(song)
+            ) ?: return null
             DownloadSource(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
         }
     }

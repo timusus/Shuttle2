@@ -55,6 +55,7 @@ class PlexAuthenticationTest {
         path.parameters["directStream"] shouldBe "0"
         path.parameters["musicBitrate"] shouldBe "192"
         path.parameters["session"] shouldBe "session-1"
+        path.parameters["X-Plex-Session-Identifier"] shouldBe "session-1"
         path.parameters["X-Plex-Client-Profile-Extra"] shouldBe
             "add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=aac)"
         path.parameters["X-Plex-Token"] shouldBe "token123"
@@ -66,7 +67,8 @@ class PlexAuthenticationTest {
         authenticationManager.buildPlexTranscodePath(
             song = song(externalId = "/library/parts/42/file.flac", path = "plex:///library/parts/42/file.flac"),
             authenticatedCredentials = credentials,
-            maxBitrateKbps = 192
+            maxBitrateKbps = 192,
+            session = "session-1"
         ) shouldBe null
     }
 
@@ -75,7 +77,8 @@ class PlexAuthenticationTest {
         val path = authenticationManager.buildPlexProgressiveTranscodePath(
             song = song(externalId = "/library/parts/42/file.wma", path = "plex:///library/metadata/107898"),
             authenticatedCredentials = credentials,
-            bitrateKbps = 320
+            bitrateKbps = 320,
+            sessionIdentifier = "s2-107898"
         )!!.let(::Url)
 
         path.encodedPath shouldBe "/music/:/transcode/universal/start.mp3"
@@ -84,6 +87,9 @@ class PlexAuthenticationTest {
         path.parameters["directPlay"] shouldBe "0"
         path.parameters["directStream"] shouldBe "0"
         path.parameters["musicBitrate"] shouldBe "320"
+        // The song's streams' identifier, on a session of its own: another identifier would be answered 400 (#888)
+        path.parameters["X-Plex-Session-Identifier"] shouldBe "s2-107898"
+        path.parameters["session"] shouldBe "s2-107898-download"
         path.parameters["X-Plex-Client-Profile-Extra"] shouldBe
             "add-transcode-target(type=musicProfile&context=static&protocol=http&container=mp3&audioCodec=mp3)"
         path.parameters["X-Plex-Token"] shouldBe "token123"
@@ -95,7 +101,8 @@ class PlexAuthenticationTest {
         authenticationManager.buildPlexProgressiveTranscodePath(
             song = song(externalId = "/library/parts/42/file.wma", path = "plex:///library/parts/42/file.wma"),
             authenticatedCredentials = credentials,
-            bitrateKbps = 320
+            bitrateKbps = 320,
+            sessionIdentifier = "s2-107898"
         ) shouldBe null
     }
 

@@ -14,7 +14,6 @@ import com.simplecityapps.provider.plex.http.formUrlEncode
 import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
-import kotlin.uuid.Uuid
 
 class PlexAuthenticationManager(
     private val userService: UserService,
@@ -90,13 +89,14 @@ class PlexAuthenticationManager(
      * An HLS stream of [song] transcoded to AAC at up to [maxBitrateKbps], from Plex's universal transcoder. HLS keeps
      * the transcode seekable. The client identity goes in the query, since the player's requests don't carry the
      * `X-Plex-*` headers; the profile extra asks for AAC in MPEG-TS whatever profile the server picks for the client.
-     * Null when the address or the song's ratingKey is missing.
+     * [session] names the transcode on the server and is its `X-Plex-Session-Identifier`. Null when the address or the
+     * song's ratingKey is missing.
      */
     fun buildPlexTranscodePath(
         song: Song,
         authenticatedCredentials: AuthenticatedCredentials,
         maxBitrateKbps: Int,
-        session: String = Uuid.random().toString()
+        session: String
     ): String? {
         val address = credentialStore.address ?: run {
             logger.warn { "Invalid plex address (null)" }
@@ -125,20 +125,28 @@ class PlexAuthenticationManager(
      * A single-file MP3 transcode of [song] at [bitrateKbps], from Plex's universal transcoder, for downloading a
      * format the player can't decode. `protocol=http` (rather than [buildPlexTranscodePath]'s `hls`) asks for one
      * continuous file instead of a manifest and segments, since Media3's downloader saves whatever's at the URL as
-     * a single item (#567). Null when the address or the song's ratingKey is missing.
+     * a single item (#567). It carries [sessionIdentifier], the song's streams' `X-Plex-Session-Identifier`, on a
+     * session of its own: Plex answers 400 to a transcode of a track under an identifier other than the last one it saw
+     * for it (#888). Null when the address or the song's ratingKey is missing.
      */
     fun buildPlexProgressiveTranscodePath(
         song: Song,
         authenticatedCredentials: AuthenticatedCredentials,
-        bitrateKbps: Int
-    ): String? = progressiveTranscodePath(song, authenticatedCredentials, bitrateKbps, context = "static")
+        bitrateKbps: Int,
+        sessionIdentifier: String
+    ): String? = progressiveTranscodePath(
+        song = song,
+        authenticatedCredentials = authenticatedCredentials,
+        bitrateKbps = bitrateKbps,
+        context = "static",
+        extra = mapOf("session" to "$sessionIdentifier-download", "X-Plex-Session-Identifier" to sessionIdentifier)
+    )
 
     /**
      * A single-file MP3 stream of [song] transcoded at up to [maxBitrateKbps], starting [startPositionMs] into it, for a
      * player with no HLS (iOS's engine). A progressive transcode has no length to seek in, so a seek opens a new one at
-     * the position (Plex's `offset`, in seconds). [session] names the transcode on the server: one play's, the same
-     * across the re-opens its seeks make, so the same position gives the same URL; each play has its own, so opening the
-     * next song ahead of time (the same song, under repeat one) doesn't end the one playing. Null when the address or the
+     * the position (Plex's `offset`, in seconds). [session] names the transcode on the server, so a re-open at another
+     * position replaces it, and [sessionIdentifier] is its `X-Plex-Session-Identifier`. Null when the address or the
      * song's ratingKey is missing.
      */
     fun buildPlexProgressiveStreamPath(
@@ -146,7 +154,8 @@ class PlexAuthenticationManager(
         authenticatedCredentials: AuthenticatedCredentials,
         maxBitrateKbps: Int,
         startPositionMs: Long = 0,
-        session: String = Uuid.random().toString()
+        session: String,
+        sessionIdentifier: String
     ): String? = progressiveTranscodePath(
         song = song,
         authenticatedCredentials = authenticatedCredentials,
@@ -155,7 +164,7 @@ class PlexAuthenticationManager(
         extra = buildMap {
             if (startPositionMs > 0) put("offset", offsetSeconds(startPositionMs))
             put("session", session)
-            put("X-Plex-Session-Identifier", session)
+            put("X-Plex-Session-Identifier", sessionIdentifier)
         }
     )
 

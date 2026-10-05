@@ -805,6 +805,23 @@ class IosPlayerControllerTest {
         controller.currentSong shouldBe b
     }
 
+    @Test
+    fun `re-opening a transcode resolves a transcoded next again - the re-open takes over the server's transcode`() = test { controller ->
+        server += a.id
+        server += b.id
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+        engine.clearCalls()
+
+        controller.seekTo(30_000)
+        engine.settle()
+
+        engine.calls shouldBe listOf("seek 30000", "load song:1?from=30000@0 playing", "next song:2")
+        val playsOfB = plays.filter { it.first == b.id }.map { it.second }
+        playsOfB.toSet().size shouldBe 2
+        endedPlays shouldBe listOf(playsOfB.first())
+    }
+
     // Plays: the session a server's transcode runs under (#722)
 
     @Test
