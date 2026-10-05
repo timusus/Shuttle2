@@ -1,21 +1,21 @@
 [versions]
 activity = "1.13.0"
 aboutlibraries = "15.2.0"
-annotation = "1.10.0"
+annotation = "1.11.0"
 appcompat = "1.8.0"
 agp = "9.4.1"
-billing-ktx = "8.0.0"
+billing-ktx = "9.1.0"
 compose = "2026.09.00"
 compose-lint-checks = "1.6.0"
 kotlinx-collections-immutable = "0.5.2"
 ksp = "2.3.12"
 constraintlayout = "2.2.2"
-coil = "3.6.2"
+coil = "3.6.3"
 core-ktx-version = "1.7.0"
 desugar-jdk-libs = "2.1.5"
 documentfile = "1.1.0"
 espresso-core = "3.7.0"
-fragment-ktx = "1.9.0"
+fragment-ktx = "1.9.1"
 glance = "1.2.0"
 hamcrest-library = "3.0"
 junit = "4.13.2"
@@ -47,29 +47,29 @@ material3 = "1.5.0-alpha29"
 materialkolor = "5.0.1"
 material3-adaptive = "1.3.0"
 media3 = "1.11.1"
-metro = "1.4.4"
+metro = "1.4.5"
 mockk = "1.14.11"
 nanohttpd-webserver = "2.3.1"
 navigation3 = "1.2.0"
 okhttp = "5.5.0"
 play-services-cast-framework = "22.3.1"
-posthog = "3.67.0"
+posthog = "3.71.4"
 preference-ktx = "1.2.1"
 reorderable = "3.1.0"
 review = "2.0.2"
-room-compiler = "2.8.3"
+room-compiler = "2.8.5"
 robolectric = "4.17"
-roborazzi = "1.75.0"
+roborazzi = "1.76.0"
 runner = "1.7.0"
 security-crypto = "1.1.0"
 # SKIE 0.10.15 is the first release supporting Kotlin 2.4.20 (0.10.14 rejects it); bump the two together.
 skie = "0.10.15"
-sqlite-bundled = "2.6.2"
-sentry = "8.57.0"
-sentry-gradle-plugin = "6.22.0"
+sqlite-bundled = "2.7.1"
+sentry = "8.59.0"
+sentry-gradle-plugin = "6.23.0"
 timber = "5.0.1"
-tracing = "1.2.0"
-work-runtime-ktx = "2.11.2"
+tracing = "2.0.3"
+work-runtime-ktx = "2.12.0"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
@@ -78,7 +78,7 @@ androidx-annotation = { module = "androidx.annotation:annotation", version.ref =
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
-androidx-core = { module = "androidx.core:core-ktx", version = "1.18.0" }
+androidx-core = { module = "androidx.core:core-ktx", version = "1.19.1" }
 androidx-core-ktx = { module = "androidx.test:core-ktx", version.ref = "core-ktx-version" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }

@@ -278,7 +278,7 @@ android {
         androidTestImplementation(libs.androidx.junit)
         androidTestImplementation(libs.androidx.ui.test.junit4)
         debugImplementation(libs.androidx.ui.test.manifest)
-        androidTestUtil("androidx.test:orchestrator:1.5.1")
+        androidTestUtil("androidx.test:orchestrator:1.6.1")
 
         testImplementation(libs.junit)
 
