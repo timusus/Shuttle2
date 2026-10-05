@@ -28,6 +28,19 @@ EOF
   exit 1
 fi
 
+# Refuse private keys. API keys live in ~/.secrets and are read by absolute path, so nothing in the
+# tree ever needs one; a `git add -f` past .gitignore stops here. No bypass on purpose.
+secrets="$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR |
+  grep -E '(^|/)(AuthKey_[^/]*|[^/]*\.p8|asc\.env|\.secrets/.*)$')"
+if [ -z "$secrets" ] && git diff --cached --diff-filter=ACMR -U0 | grep -qE '^\+.*-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'; then
+  secrets="(staged content contains a PRIVATE KEY block)"
+fi
+if [ -n "$secrets" ]; then
+  echo "pre-commit: refusing to commit secrets; keep keys in ~/.secrets and unstage:" >&2
+  printf '%s\n' "$secrets" | sed 's/^/  /' >&2
+  exit 1
+fi
+
 # Format the staged Kotlin with ktlint -F and re-stage it, so a Python-heredoc edit (which skips the
 # Edit-tool format hook) never lands unformatted. Files that also have unstaged changes are left alone,
 # since re-staging would sweep those changes in. Fails only on errors -F cannot fix.

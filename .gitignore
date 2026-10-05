@@ -48,6 +48,11 @@ android/app/keystore.properties
 
 # Deployment secrets
 android/app/deployment_keys.json
+# App Store Connect API keys live in ~/.secrets, read by absolute path; never in the tree
+*.p8
+AuthKey_*
+asc.env
+.secrets/
 
 # Freeline
 freeline.py
