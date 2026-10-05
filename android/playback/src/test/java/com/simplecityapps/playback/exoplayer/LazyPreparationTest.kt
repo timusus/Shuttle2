@@ -9,6 +9,7 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import io.kotest.matchers.shouldBe
+import okhttp3.OkHttpClient
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -29,6 +30,7 @@ class LazyPreparationTest {
         val player =
             ExoPlayerFactory(
                 context,
+                OkHttpClient(),
                 EqualizerAudioProcessor(false),
                 ReplayGainAudioProcessor(ReplayGainMode.Off),
                 AudioTrackMonitor(),

@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import com.simplecityapps.shuttle.di.ApplicationContext
@@ -27,6 +27,8 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.Qualifier
 import dev.zacsweers.metro.SingleIn
 import java.io.File
+import java.util.concurrent.TimeUnit
+import okhttp3.OkHttpClient
 import timber.log.Timber
 
 /** The cache downloaded songs live in: app-private, never evicted. */
@@ -46,7 +48,7 @@ abstract class DownloadsModule {
 
     companion object {
         private const val MAX_PARALLEL_DOWNLOADS = 2
-        private const val TIMEOUT_MS = 30_000
+        private const val TIMEOUT_MS = 30_000L
 
         @Provides
         @SingleIn(AppScope::class)
@@ -84,13 +86,18 @@ abstract class DownloadsModule {
             @ApplicationContext context: Context,
             databaseProvider: DatabaseProvider,
             @DownloadCache cache: Cache,
-            downloadSettings: DownloadSettings
+            downloadSettings: DownloadSettings,
+            okHttpClient: OkHttpClient
         ): DownloadManager {
+            // The app's client, so downloads carry each server's custom headers and trusted certificate (#894)
             val dataSourceFactory =
-                DefaultHttpDataSource.Factory()
-                    .setConnectTimeoutMs(TIMEOUT_MS)
-                    .setReadTimeoutMs(TIMEOUT_MS)
-                    .setAllowCrossProtocolRedirects(true)
+                OkHttpDataSource.Factory(
+                    okHttpClient
+                        .newBuilder()
+                        .connectTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                        .readTimeout(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                        .build(),
+                )
             // Media3's DownloadManager binds to whatever thread's Looper is current when it's
             // constructed (falling back to main only if the calling thread has none at all), and
             // every later call must come from that same thread. Metro resolves this singleton

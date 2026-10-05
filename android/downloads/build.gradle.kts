@@ -39,6 +39,7 @@ dependencies {
 
     // Media3: DownloadManager, DownloadService and the SimpleCache index database
     implementation(libs.media3.exoplayer)
+    implementation(libs.media3.datasourceOkhttp)
     implementation(libs.media3.database)
 
     // Testing

@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.di
 
+import com.simplecityapps.shuttle.server.ServerConnectionStore
+import com.simplecityapps.shuttle.server.applyServerConnections
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -22,15 +24,23 @@ class NetworkingModule {
         level = HttpLoggingInterceptor.Level.NONE
     }
 
+    /**
+     * Every media server request goes through this client, or one built from it: API calls, streams, artwork and
+     * downloads. So each server's custom headers and trusted certificate apply to all of them (#894).
+     */
     @SingleIn(AppScope::class)
     @Provides
-    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient = OkHttpClient.Builder()
+    fun provideOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        serverConnectionStore: ServerConnectionStore
+    ): OkHttpClient = OkHttpClient.Builder()
         .apply {
             if (PROXY_ENABLED) {
                 this.proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress(PROXY_ADDR, PROXY_PORT)))
             }
         }
         .addInterceptor(loggingInterceptor)
+        .applyServerConnections(serverConnectionStore)
         .build()
 
     companion object {

@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.ExoPlayer
@@ -28,6 +29,7 @@ import com.simplecityapps.playback.dsp.crossfade.TailDecoder
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.S2LoadErrorHandlingPolicy
 import com.simplecityapps.playback.engine.SongUriResolver
+import okhttp3.OkHttpClient
 
 /**
  * Builds the app's ExoPlayer, on the main looper: the extension renderers (FLAC, Opus) enabled, a [DefaultAudioSink]
@@ -42,6 +44,8 @@ import com.simplecityapps.playback.engine.SongUriResolver
  */
 class ExoPlayerFactory(
     private val context: Context,
+    /** The app's client, so streams carry each server's custom headers and trusted certificate (#894). */
+    private val okHttpClient: OkHttpClient,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val audioTrackMonitor: AudioTrackMonitor,
@@ -80,7 +84,7 @@ class ExoPlayerFactory(
     }
 
     private val mediaSourceFactory by lazy {
-        val dataSourceFactory = downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context)))
+        val dataSourceFactory = downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context, OkHttpDataSource.Factory(okHttpClient))))
         val extractorsFactory = TimeSeekExtractorsFactory(songUriResolver::isTimeSeekable)
         StreamSniffingMediaSourceFactory(dataSourceFactory, defaultFactory = DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory))
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())

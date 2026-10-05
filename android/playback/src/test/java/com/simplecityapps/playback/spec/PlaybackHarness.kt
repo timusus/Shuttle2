@@ -60,6 +60,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import okhttp3.OkHttpClient
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Implementation
@@ -210,6 +211,7 @@ class PlaybackHarness(
         val factory =
             ExoPlayerFactory(
                 context,
+                OkHttpClient(),
                 equalizer,
                 replayGain,
                 AudioTrackMonitor(),

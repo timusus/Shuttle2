@@ -71,6 +71,7 @@ dependencies {
     // Media3 ExoPlayer
     implementation(libs.media3.cast)
     implementation(libs.media3.exoplayer)
+    implementation(libs.media3.datasourceOkhttp)
     implementation(libs.media3.exoplayerHls)
     implementation(libs.media3.session)
 

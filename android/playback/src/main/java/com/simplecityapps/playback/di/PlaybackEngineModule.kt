@@ -50,6 +50,7 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import okhttp3.OkHttpClient
 
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -105,9 +106,11 @@ class PlaybackEngineModule {
         songUriResolver: SongUriResolver,
         @DownloadCache downloadCache: Cache,
         playbackSettings: PlaybackSettings,
-        analytics: Analytics
+        analytics: Analytics,
+        okHttpClient: OkHttpClient
     ): ExoPlayerFactory = ExoPlayerFactory(
         context,
+        okHttpClient,
         equalizerAudioProcessor,
         replayGainAudioProcessor,
         audioTrackMonitor,
