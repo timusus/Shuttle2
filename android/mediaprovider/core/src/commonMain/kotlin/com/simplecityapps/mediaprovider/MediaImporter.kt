@@ -529,14 +529,16 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
+                        // An incremental sync's removals, read from the source's path listing when its count says it needs one
+                        val removed = (plan as? SyncPlan.Incremental)?.let { songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts) }
                         val guarded =
-                            when (plan) {
-                                SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, event.missing, fullPass = true)
+                            when {
+                                plan == SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, event.missing, fullPass = true)
 
-                                is SyncPlan.Incremental -> {
-                                    val removed = songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts.size)
-                                    guardDeletes(mediaProvider, existingSongs.size, existingSongs.size - removed.songs.size + songDiff.inserts.size, removed.songs, userRemoval, removed.missing, fullPass = false)
-                                }
+                                removed != null -> guardDeletes(mediaProvider, existingSongs.size, existingSongs.size - removed.songs.size + songDiff.inserts.size, removed.songs, userRemoval, removed.missing, fullPass = false)
+
+                                // Nothing listed, so nothing to remove, and what the last listing held back stays as it was
+                                else -> DeleteGuard.Decision(apply = emptyList(), heldUnreadable = 0, heldMassRemoval = emptyList())
                             }
                         val result =
                             songRepository.insertUpdateAndDelete(
@@ -554,14 +556,18 @@ class MediaImporter(
                             if (guarded.awaitsFullPass) {
                                 // A held mass removal, or a listing that left songs out, waits on the next full sync, so that's
                                 // the next sync rather than a week on. The songs it held weren't read, so the tags version stays
-                                // as it was. Not after an incremental pass: it deletes nothing, and what its listing left out a full
-                                // one leaves out too, so bringing the full sync forward gains nothing.
+                                // as it was.
                                 preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
                             } else {
                                 preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
                                 // Every song read again, so this source's songs hold every tag this build reads
                                 preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
                             }
+                        } else if (guarded.awaitsFullPass || (removed?.unfetched ?: 0) > 0) {
+                            // Likewise after an incremental sync, which also brings it forward for songs the source holds that
+                            // it never fetched (unchanged since before they were in reach): until a full sync stores them, the
+                            // count disagrees and every incremental sync would list the paths again. The tags version stays.
+                            preferenceManager.setLastFullSyncStart(mediaProvider.type.name, null)
                         }
                         emit(
                             FlowEvent.Success(
@@ -589,29 +595,39 @@ class MediaImporter(
         }
     }.flowOn(Dispatchers.IO)
 
-    /** The songs [mediaProvider] no longer holds, and how many songs short of what it says it holds its path listing came to. */
-    private class RemovedOnSource(val songs: List<Song>, val missing: Int)
+    /**
+     * What a source's path listing says of an incremental sync: the [songs] it no longer holds, how many songs short of what
+     * it says it holds the listing came to ([missing]), and how many it holds that are neither stored nor were just fetched
+     * ([unfetched]).
+     */
+    private class RemovedOnSource(val songs: List<Song>, val missing: Int, val unfetched: Int)
 
     /**
      * Which of [existingSongs] [mediaProvider] no longer holds, for an incremental sync, which can't tell from the songs it
-     * fetched (#845). [inserted] songs were new, so if the source's count is what's stored plus those, nothing has gone and
-     * that's one request. Otherwise its path listing says: a failed one removes nothing, and one that left songs out has
+     * fetched (#845), or null when it lists nothing. The [inserted] songs were new, so if the source's count is what's
+     * stored plus those (plus the songs its last full listing came up short by, which its count includes), nothing has gone
+     * and that's one request. Otherwise its path listing says: a failed one is null, and one that left songs out has
      * [missing][RemovedOnSource.missing] as many, which [DeleteGuard] holds the removal back for as it does a full listing's.
      */
     private suspend fun songsRemovedOnSource(
         mediaProvider: IncrementalMediaProvider,
         existingSongs: List<Song>,
-        inserted: Int
-    ): RemovedOnSource {
-        val none = RemovedOnSource(emptyList(), missing = 0)
-        if (mediaProvider.countSongs() == existingSongs.size + inserted) return none
+        inserted: List<Song>
+    ): RemovedOnSource? {
+        val expected = existingSongs.size + inserted.size + preferenceManager.listingShortfall(mediaProvider.type.name)
+        if (mediaProvider.countSongs() == expected) return null
         val listing = mediaProvider.findSongPaths().lastOrNull()
         if (listing !is FlowEvent.Success) {
             logger.warn { "Couldn't list the songs ${mediaProvider.type} holds; keeping the ones it may have removed until it can be" }
-            return none
+            return null
         }
         val held = listing.result.toHashSet()
-        return RemovedOnSource(existingSongs.filter { song -> song.path !in held }, listing.missing)
+        val known = (existingSongs.asSequence() + inserted.asSequence()).map { song -> song.path }.toHashSet()
+        val unfetched = held.count { path -> path !in known }
+        if (unfetched > 0) {
+            logger.warn { "${mediaProvider.type} holds $unfetched songs an incremental sync didn't fetch; the next sync is a full one" }
+        }
+        return RemovedOnSource(existingSongs.filter { song -> song.path !in held }, listing.missing, unfetched)
     }
 
     /** Which of [deletes] [deleteGuard] lets [mediaProvider]'s import apply, logging what it held back. */

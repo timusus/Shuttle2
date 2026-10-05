@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 
 /**
- * Which of a full import's deletes [MediaImporter] applies. Deleting a song takes its play history and playlist places
+ * Which of an import's deletes [MediaImporter] applies. Deleting a song takes its play history and playlist places
  * with it, and a source that fails part way can look like one that holds fewer songs, so some deletes are held back:
  * - those under a root the provider couldn't read this time ([MediaProvider.unreadableRoots]), for as long as it can't;
  * - a mass removal, of more than [MAX_DELETED_FRACTION] of the source's songs (and more than [MIN_GUARDED_DELETES]) or
@@ -17,15 +17,19 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
  *   as it was, neither confirmed nor replaced. A listing short by as many as the last full pass's isn't held, though:
  *   a server whose total counts items it never returns (Jellyfin's, rows it can't read) comes up short by the same
  *   number every time, and would otherwise never delete.
- * A pass that held a mass removal or listed incompletely [awaitsFullPass][Decision.awaitsFullPass].
+ * A pass that held a mass removal or listed incompletely [awaitsFullPass][Decision.awaitsFullPass]. The deletes are a full
+ * pass's, or an incremental sync's: the songs its source's path listing no longer holds.
  */
 class DeleteGuard(
-    /** Where the songs each source's last full pass held back as a mass removal are kept, across restarts. */
+    /** Where the songs each source's last complete listing held back as a mass removal are kept, across restarts. */
     private val preferenceManager: GeneralPreferenceManager
 ) {
     /**
-     * [decide]s which of [type]'s [deletes] to apply, from a listing [missing] as many songs as it did. A [fullPass]
-     * remembers how many that was, and the mass removal it held back, for the next one.
+     * [decide]s which of [type]'s [deletes] to apply, from a listing [missing] as many songs as it did. A complete listing
+     * remembers the mass removal it held back, for the next full pass to confirm: a full pass's, or an incremental sync's
+     * path listing, so songs that sync found gone go once the full pass it brings forward finds them gone too. Only a
+     * [fullPass] remembers how many songs short it came: that's the baseline both kinds of listing are measured against,
+     * and a path listing, which asks for nothing but ids, could come up short differently.
      */
     fun deletesToApply(
         type: MediaProviderType,
@@ -39,10 +43,8 @@ class DeleteGuard(
     ): Decision {
         val listingComplete = missing == 0 || missing == preferenceManager.listingShortfall(type.name)
         val decision = decide(existingCount, foundCount, deletes, unreadableRoots, heldLastPass = preferenceManager.heldDeletes(type.name), userRemoval, listingComplete)
-        if (fullPass) {
-            preferenceManager.setListingShortfall(type.name, missing)
-            if (listingComplete) preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
-        }
+        if (fullPass) preferenceManager.setListingShortfall(type.name, missing)
+        if (listingComplete) preferenceManager.setHeldDeletes(type.name, decision.heldMassRemoval.map { song -> song.id }.toSet())
         return decision
     }
 

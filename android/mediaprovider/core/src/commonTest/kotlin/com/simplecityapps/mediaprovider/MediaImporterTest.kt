@@ -822,10 +822,13 @@ class MediaImporterTest {
         importer.sync(SyncTrigger.Foreground)
 
         songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+        // Brought forward, so the count stops disagreeing rather than listing the paths every sync
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
+        preferences.songTagsOutdated(server.type) shouldBe false
     }
 
     @Test
-    fun `an incremental sync that would remove every song holds the removal back`() = runBlocking<Unit> {
+    fun `an incremental sync that would remove every song holds the removal back - until the full sync it brings forward finds them gone too`() = runBlocking<Unit> {
         incrementalServer()
         server.count = 0
         server.held = emptyList()
@@ -833,6 +836,69 @@ class MediaImporterTest {
         importer.sync(SyncTrigger.Foreground)
 
         songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
+
+        importer.sync(SyncTrigger.Periodic)
+
+        server.requests.last() shouldBe null
+        songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/1", "/2", "/3")
+        server.pathListings shouldBe 1
+    }
+
+    @Test
+    fun `songs an incremental sync finds out of reach go once - through the full sync it brings forward when there are many`() = runBlocking<Unit> {
+        // 30 audiobooks stored before the sync left their library out, and three songs
+        val audiobooks = (10L..39L).map { id -> song(id, "/book/$id") }
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song(1, "/1"), song(2, "/2"), song(3, "/3")) + audiobooks
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setLastSyncStart(server.type.name, clock.time - 1.hours)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+        server.count = 3
+        server.held = listOf("/1", "/2", "/3")
+        server.found = listOf(song(1, "/1"), song(2, "/2"), song(3, "/3"))
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
+
+        importer.sync(SyncTrigger.Periodic)
+
+        server.requests.last() shouldBe null
+        songRepository.deleted[server.type]?.map { it.path } shouldBe audiobooks.map { it.path }
+        preferences.lastFullSyncStart(server.type.name) shouldBe clock.time
+
+        // The audiobooks gone, the count agrees, so the next incremental sync lists nothing
+        songRepository.stored = server.found
+        importer.sync(SyncTrigger.Periodic)
+
+        server.requests.last() shouldBe clock.time - SyncPolicy.OVERLAP
+        server.pathListings shouldBe 1
+    }
+
+    @Test
+    fun `an incremental sync counts the songs the last full sync came up short by as held - and lists nothing`() = runBlocking<Unit> {
+        incrementalServer()
+        preferences.setListingShortfall(server.type.name, 2)
+        server.count = 5
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.pathListings shouldBe 0
+    }
+
+    @Test
+    fun `an incremental sync whose server holds songs it never fetched brings the full sync forward`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 4
+        server.held = listOf("/1", "/2", "/3", "/old-but-unseen")
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+        preferences.lastFullSyncStart(server.type.name) shouldBe null
     }
 
     @Test

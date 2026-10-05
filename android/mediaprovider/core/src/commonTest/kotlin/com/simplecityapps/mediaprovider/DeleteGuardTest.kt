@@ -173,16 +173,25 @@ class DeleteGuardTest {
     }
 
     @Test
-    fun `an incremental pass neither records its shortfall nor forgets the mass removal held before it`() {
+    fun `an incremental pass doesn't record its shortfall - or forget the mass removal held before it when its listing is short`() {
         val guard = DeleteGuard(preferences)
         val deletes = songs(1L..30L)
         guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply.shouldBeEmpty()
 
-        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 3, deletes = emptyList(), unreadableRoots = emptySet(), missing = 2, fullPass = false)
-        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 3, deletes = emptyList(), unreadableRoots = emptySet(), fullPass = false)
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 3, deletes = emptyList(), unreadableRoots = emptySet(), missing = 2, fullPass = false).listingComplete shouldBe false
 
         guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
         guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 35, deletes = songs(1L..3L), unreadableRoots = emptySet(), missing = 2).apply.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a mass removal an incremental pass held back is applied by the full pass that finds it gone too`() {
+        val guard = DeleteGuard(preferences)
+        val deletes = songs(1L..30L)
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet(), fullPass = false).heldMassRemoval shouldBe deletes
+
+        guard.deletesToApply(MediaProviderType.Jellyfin, existingCount = 40, foundCount = 10, deletes = deletes, unreadableRoots = emptySet()).apply shouldBe deletes
     }
 
     private fun songs(

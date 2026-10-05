@@ -238,8 +238,9 @@ class GeneralPreferenceManager @Inject constructor(
     ) = store.putInstant("last_full_sync_start_$source", start)
 
     /**
-     * The ids of the songs of [source] (a media provider type's name) its last full import held back as a mass removal
-     * (`DeleteGuard`), which the next full import deletes if it finds them gone too. Kept across restarts: that import
+     * The ids of the songs of [source] (a media provider type's name) its last complete listing (a full import's, or an
+     * incremental sync's path listing) held back as a mass removal (`DeleteGuard`), which the next full import deletes if
+     * it finds them gone too. Kept across restarts: that import
      * usually runs in another process. Stored sorted, as base-36 gaps between ids, so a large removal stays small.
      */
     fun heldDeletes(source: String): Set<Long> {
