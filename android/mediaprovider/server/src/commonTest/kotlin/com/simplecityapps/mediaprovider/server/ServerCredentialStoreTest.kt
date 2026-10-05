@@ -101,15 +101,6 @@ class ServerCredentialStoreTest {
     }
 
     @Test
-    fun `never stores a two-factor code`() {
-        val store = store("plex", addressKey = "plex_host")
-
-        store.loginCredentials = LoginCredentials("tim", "secret", authCode = "123456")
-
-        store.loginCredentials shouldBe LoginCredentials("tim", "secret", authCode = null)
-    }
-
-    @Test
     fun `null clears the credentials`() {
         val store = store("emby")
         store.loginCredentials = LoginCredentials("tim", "secret")

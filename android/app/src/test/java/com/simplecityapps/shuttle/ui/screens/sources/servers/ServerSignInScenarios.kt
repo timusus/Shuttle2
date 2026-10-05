@@ -13,6 +13,13 @@ fun serverSignInAuthenticating(type: MediaProviderType = MediaProviderType.Jelly
 
 fun serverSignInAwaitingCode(code: String, type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.AwaitingCode(code))
 
+fun serverSignInAwaitingPin(
+    code: String = "H7KQ",
+    authUrl: String = "https://app.plex.tv/auth#?code=H7KQ",
+) = ServerSignInUiState(MediaProviderType.Plex, step = ServerSignInStep.AwaitingPin(code, authUrl, "https://plex.tv/link"))
+
+fun serverSignInChoosingServer(vararg servers: ServerChoice) = ServerSignInUiState(MediaProviderType.Plex, step = ServerSignInStep.ChoosingServer(servers.toList()))
+
 fun serverSignInConnected(type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.Connected)
 
 fun serverSignInFailed(

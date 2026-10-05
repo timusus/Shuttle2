@@ -5,12 +5,14 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.PinAuthentication
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexFavouriteWriter
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.provider.plex.PlexPinAuthentication
 import com.simplecityapps.provider.plex.PlexPlaybackReporter
 import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
 import com.simplecityapps.provider.plex.PlexServerAuthentication
@@ -97,4 +99,9 @@ class PlexMediaProviderModule {
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Plex)
     fun provideServerAuthentication(authentication: PlexServerAuthentication): ServerAuthentication = authentication
+
+    @Provides
+    @IntoMap
+    @MediaProviderTypeKey(MediaProviderType.Plex)
+    fun providePinAuthentication(authentication: PlexPinAuthentication): PinAuthentication = authentication
 }

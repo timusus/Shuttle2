@@ -111,7 +111,7 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.screens.songinfo.SongInfoScreen` | Scaffold, Text |
 | [ ] | `ui.screens.sources.FolderRulesScreen` | Text |
 | [ ] | `ui.screens.sources.SourcesScreen` | Text |
-| [ ] | `ui.screens.sources.servers.ServerSignInScreen` | BasicAlertDialog, CircularProgressIndicator, Icon, IconButton, OutlinedTextField, Switch, Text |
+| [ ] | `ui.screens.sources.servers.ServerSignInScreen` | BasicAlertDialog, CircularProgressIndicator, Icon, IconButton, ListItem, OutlinedTextField, Switch, Text |
 | [ ] | `ui.screens.tageditor.TagEditorScreen` | OutlinedTextField, Scaffold, Surface, Text |
 | [ ] | `ui.shell.AppShell` | Surface |
 | [ ] | `ui.shell.ShellSheetSceneStrategy` | ModalBottomSheet |

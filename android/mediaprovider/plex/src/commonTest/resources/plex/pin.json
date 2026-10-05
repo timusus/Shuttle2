@@ -1,0 +1,14 @@
+{
+  "id": 1234567890,
+  "code": "ABCD",
+  "product": "Shuttle2.0",
+  "trusted": false,
+  "qr": "https://plex.tv/api/v2/pins/qr/ABCD",
+  "clientIdentifier": "device-1",
+  "location": {"code": "AU", "country": "Australia"},
+  "expiresIn": 900,
+  "createdAt": "2026-10-05T01:00:00Z",
+  "expiresAt": "2026-10-05T01:15:00Z",
+  "authToken": null,
+  "newRegistration": null
+}

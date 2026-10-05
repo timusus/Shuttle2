@@ -9,7 +9,5 @@
     <string name="media_provider_config_hint_address">Dirección</string>
     <string name="media_provider_config_hint_username">Nombre de usuario</string>
     <string name="media_provider_config_hint_password">Contraseña</string>
-    <string name="media_provider_config_hint_code">2FA Código</string>
-    <string name="media_provider_config_helper_code">Opcional</string>    
     <string name="media_provider_config_switch_remember_password">Recordar contraseña</string>
 </resources>

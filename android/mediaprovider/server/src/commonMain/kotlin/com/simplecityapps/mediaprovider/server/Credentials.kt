@@ -3,9 +3,7 @@ package com.simplecityapps.mediaprovider.server
 /** What the user signs in to a media server with. */
 data class LoginCredentials(
     val username: String,
-    val password: String,
-    /** Plex's two-factor code, used for the sign-in request only and never stored. */
-    val authCode: String? = null
+    val password: String
 ) {
     companion object {
         val Empty = LoginCredentials(

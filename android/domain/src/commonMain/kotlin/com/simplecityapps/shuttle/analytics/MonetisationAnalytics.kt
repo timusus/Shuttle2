@@ -73,11 +73,14 @@ enum class PurchaseFailureReason(
 enum class SignInMethod(
     val value: String
 ) {
-    /** Username and password, with Plex's two-factor code when it asks for one. */
+    /** Username and password. */
     Password("password"),
 
     /** Jellyfin Quick Connect: a code approved in another client. */
     QuickConnect("quick_connect"),
+
+    /** Plex: a plex.tv PIN approved on the web, then one of the account's servers. */
+    Pin("pin"),
 }
 
 /** Why a server sign-in failed, as a bucket: the error's own text never leaves the device. */
@@ -101,7 +104,7 @@ enum class SignInFailureReason(
     /** The server answered with a 5xx. */
     ServerError("server_error"),
 
-    /** A Quick Connect code ran out before it was approved. */
+    /** A Quick Connect code or sign-in PIN ran out before it was approved. */
     Expired("expired"),
 
     /** A Quick Connect code was denied in the other client. */

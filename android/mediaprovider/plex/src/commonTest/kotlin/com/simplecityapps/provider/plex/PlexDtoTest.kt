@@ -2,9 +2,10 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.server.readFixture
 import com.simplecityapps.networking.S2Json
-import com.simplecityapps.provider.plex.http.AuthenticationResult
 import com.simplecityapps.provider.plex.http.Metadata
+import com.simplecityapps.provider.plex.http.Pin
 import com.simplecityapps.provider.plex.http.QueryResult
+import com.simplecityapps.provider.plex.http.Resource
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -24,16 +25,17 @@ class PlexDtoTest {
     }
 
     @Test
-    fun `a sign-in result decodes - its numeric user id read as text`() {
-        val user = S2Json.decodeFromString<AuthenticationResult>(fixture("sign_in.json")).user
-
-        user.id shouldBe "12345678"
-        user.authToken shouldBe "token-2"
+    fun `a pin decodes - with no token until it's approved`() {
+        S2Json.decodeFromString<Pin>(fixture("pin.json")).authToken.shouldBeNull()
+        S2Json.decodeFromString<Pin>(fixture("pin_approved.json")).authToken shouldBe "account-token"
     }
 
     @Test
-    fun `a sign-in result with a string user id decodes`() {
-        S2Json.decodeFromString<AuthenticationResult>("""{"user":{"id":"12345678","authToken":"token-2"}}""").user.id shouldBe "12345678"
+    fun `resources decode - and only those providing a server are servers`() {
+        val resources = S2Json.decodeFromString<List<Resource>>(fixture("resources.json"))
+
+        resources.filter { it.isServer }.map { it.clientIdentifier } shouldBe listOf("server-shared", "server-home")
+        resources.single { it.clientIdentifier == "server-home" }.connections.single { it.relay }.port shouldBe 8443
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.mediaprovider.server.AccountServer
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
@@ -41,7 +42,6 @@ data class ServerSignInForm(
     val address: String = "",
     val username: String = "",
     val password: String = "",
-    val authCode: String = "",
     val rememberPassword: Boolean = true,
     /** False while the saved password fills its field: it can't be revealed until it's cleared. */
     val passwordRevealable: Boolean = true,
@@ -56,6 +56,15 @@ sealed interface ServerSignInStep {
 
     /** Quick Connect's code is up, waiting for the user to approve it in another Jellyfin client. */
     data class AwaitingCode(val code: String) : ServerSignInStep
+
+    /**
+     * A sign-in PIN is up, waiting for the user to approve it on the web: at [authUrl] on this device, or by entering
+     * [code] at [linkUrl] on another. Plex only.
+     */
+    data class AwaitingPin(val code: String, val authUrl: String, val linkUrl: String) : ServerSignInStep
+
+    /** The PIN was approved, and the account has more than one server to choose from. */
+    data class ChoosingServer(val servers: List<ServerChoice>) : ServerSignInStep
 
     data object Connected : ServerSignInStep
 
@@ -72,12 +81,15 @@ data class ServerSignInUiState(
     /** True when [type]'s server at the typed address reports Quick Connect support. Jellyfin only. */
     val quickConnectEnabled: Boolean = false,
 ) {
-    /** Plex takes a two-factor code, and needs the password. */
-    val asksForAuthCode: Boolean get() = type == MediaProviderType.Plex
+    /** Plex signs in with a plex.tv PIN and a choice of the account's servers, rather than an address and password. */
+    val signsInWithPin: Boolean get() = type == MediaProviderType.Plex
 
     /** A Subsonic server takes an OpenSubsonic API key in the password field in place of a username and password. */
     val acceptsApiKey: Boolean get() = type == MediaProviderType.Subsonic
 }
+
+/** One of the account's servers, as [ServerSignInStep.ChoosingServer] lists it: the user's own, or shared with them. */
+data class ServerChoice(val id: String, val name: String, val owned: Boolean)
 
 sealed interface ServerSignInEvent {
     /** The server is signed in: the library can import from it. */
@@ -85,13 +97,16 @@ sealed interface ServerSignInEvent {
 
     /** The success message has shown for long enough: the dialog can close. */
     data object Finished : ServerSignInEvent
+
+    /** The sign-in PIN's web page, for the user to approve it on: open it in the browser. */
+    data class OpenUrl(val url: String) : ServerSignInEvent
 }
 
 /**
- * A Jellyfin, Emby or Plex server's sign-in: the address and login, starting from the saved ones, then the
- * authentication's progress and outcome. Signing in to a different server (another address or user) than the one signed
- * in when the sign-in opened removes the downloads of the old server's songs: their paths don't say which server they
- * came from.
+ * A Jellyfin, Emby or Subsonic server's sign-in: the address and login, starting from the saved ones, then the
+ * authentication's progress and outcome. Plex's is a plex.tv PIN instead, then a choice of the account's servers.
+ * Signing in to a different server (another address or user) than the one signed in when the sign-in opened removes the
+ * downloads of the old server's songs: their paths don't say which server they came from.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ServerSignInViewModel @AssistedInject constructor(
@@ -102,6 +117,8 @@ class ServerSignInViewModel @AssistedInject constructor(
     observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
     checkQuickConnectAvailable: CheckQuickConnectAvailable,
     private val signInWithQuickConnect: SignInWithQuickConnect,
+    private val signInWithPin: SignInWithPin,
+    private val connectToAccountServer: ConnectToAccountServer,
     private val songDownloader: SongDownloader,
 ) : ViewModel() {
     @AssistedFactory
@@ -138,6 +155,10 @@ class ServerSignInViewModel @AssistedInject constructor(
         .mapLatest { address -> serverAddress(address)?.let { checkQuickConnectAvailable(type, it) } ?: false }
         .onStart { emit(false) }
     private var quickConnectJob: Job? = null
+    private var pinJob: Job? = null
+
+    /** The account's servers, once its PIN has been approved: what [ServerSignInStep.ChoosingServer] lists. */
+    private var accountServers: List<AccountServer> = emptyList()
 
     val uiState: StateFlow<ServerSignInUiState> =
         combine(form, step, events.flow, needsPro, quickConnectEnabled) { form, step, events, needsPro, quickConnectEnabled ->
@@ -156,8 +177,6 @@ class ServerSignInViewModel @AssistedInject constructor(
         it.copy(password = password, passwordRevealable = it.passwordRevealable || password.isEmpty(), missing = it.missing - ServerSignInField.Password)
     }
 
-    fun onAuthCodeChange(authCode: String) = form.update { it.copy(authCode = authCode) }
-
     /** Turning it off forgets the saved login straight away. */
     fun onRememberPasswordChange(remember: Boolean) {
         form.update { it.copy(rememberPassword = remember) }
@@ -166,6 +185,7 @@ class ServerSignInViewModel @AssistedInject constructor(
 
     fun onAuthenticate() {
         if (step.value != ServerSignInStep.Form) return
+        if (type == MediaProviderType.Plex) return onSignInWithPin()
         val form = form.value
         val missing = missingFields(form)
         if (missing.isNotEmpty()) {
@@ -173,15 +193,12 @@ class ServerSignInViewModel @AssistedInject constructor(
             return
         }
         step.value = ServerSignInStep.Authenticating
-        val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password, form.authCode.takeIf { uiState.value.asksForAuthCode })
+        val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password)
         viewModelScope.launch {
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
                     onSignedIn(login.address, login.username)
-                    step.value = ServerSignInStep.Connected
-                    events.post(ServerSignInEvent.Connected)
-                    delay(SUCCESS_SHOWN_MILLIS)
-                    events.post(ServerSignInEvent.Finished)
+                    finishSignIn()
                 }
 
                 is SignInToServer.Result.Failure -> step.value = ServerSignInStep.Failed(result.message)
@@ -209,10 +226,7 @@ class ServerSignInViewModel @AssistedInject constructor(
                     SignInWithQuickConnect.State.Success -> {
                         // Quick Connect doesn't take a username, so only a different address tells it's another server
                         onSignedIn(address, username = null)
-                        step.value = ServerSignInStep.Connected
-                        events.post(ServerSignInEvent.Connected)
-                        delay(SUCCESS_SHOWN_MILLIS)
-                        events.post(ServerSignInEvent.Finished)
+                        finishSignIn()
                     }
 
                     SignInWithQuickConnect.State.Expired -> step.value = ServerSignInStep.Failed(QUICK_CONNECT_EXPIRED_MESSAGE)
@@ -231,15 +245,88 @@ class ServerSignInViewModel @AssistedInject constructor(
     }
 
     /**
+     * Starts a plex.tv sign-in: shows the PIN and opens its web page, polls until the user approves it, then connects
+     * to the account's server, or lists its servers to choose from when it has more than one.
+     */
+    fun onSignInWithPin() {
+        if (step.value != ServerSignInStep.Form) return
+        if (pinJob?.isActive == true) return
+        pinJob = viewModelScope.launch {
+            signInWithPin(type).collect { state ->
+                when (state) {
+                    is SignInWithPin.State.AwaitingApproval -> {
+                        step.value = ServerSignInStep.AwaitingPin(state.pin.code, state.pin.authUrl, state.pin.linkUrl)
+                        events.post(ServerSignInEvent.OpenUrl(state.pin.authUrl))
+                    }
+
+                    is SignInWithPin.State.Approved -> {
+                        accountServers = state.servers
+                        val only = state.servers.singleOrNull()
+                        if (only != null) {
+                            connectTo(only)
+                        } else {
+                            step.value = ServerSignInStep.ChoosingServer(state.servers.map { ServerChoice(it.id, it.name, it.owned) })
+                        }
+                    }
+
+                    SignInWithPin.State.Expired -> step.value = ServerSignInStep.Failed(PIN_EXPIRED_MESSAGE)
+
+                    is SignInWithPin.State.Failed -> step.value = ServerSignInStep.Failed(state.message)
+                }
+            }
+        }
+    }
+
+    /** Signs in to the account's server [id], from [ServerSignInStep.ChoosingServer]. */
+    fun onChooseServer(id: String) {
+        if (step.value !is ServerSignInStep.ChoosingServer) return
+        val server = accountServers.firstOrNull { it.id == id } ?: return
+        pinJob = viewModelScope.launch { connectTo(server) }
+    }
+
+    /** Stops waiting on the PIN, or choosing a server, and goes back to the start. */
+    fun onCancelPin() {
+        pinJob?.cancel()
+        pinJob = null
+        accountServers = emptyList()
+        step.value = ServerSignInStep.Form
+    }
+
+    /**
      * The sign-in has left the screen (iOS: its view disappeared, while the view model stays cached for the rest of the
-     * setup): a Quick Connect code nobody can see any more stops polling. A sign-in that has already connected is left
-     * to finish.
+     * setup): a Quick Connect code or PIN nobody can see any more stops polling. A sign-in that has already connected
+     * is left to finish.
      */
     fun onLeave() {
-        if (step.value is ServerSignInStep.AwaitingCode) onCancelQuickConnect()
+        when (step.value) {
+            is ServerSignInStep.AwaitingCode -> onCancelQuickConnect()
+            is ServerSignInStep.AwaitingPin, is ServerSignInStep.ChoosingServer -> onCancelPin()
+            else -> Unit
+        }
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    /** Signs in to the account's [server]; switching from another server removes the downloads of the old one's songs. */
+    private suspend fun connectTo(server: AccountServer) {
+        step.value = ServerSignInStep.Authenticating
+        when (val result = connectToAccountServer(type, server)) {
+            is ConnectToAccountServer.Result.Success -> {
+                if (result.switchedServer) songDownloader.removeAll(type)
+                finishSignIn()
+            }
+
+            is ConnectToAccountServer.Result.Failure -> step.value = ServerSignInStep.Failed(result.message)
+        }
+    }
+
+    /** Shows the success message for a moment, then lets the dialog close. */
+    private suspend fun finishSignIn() {
+        step.value = ServerSignInStep.Connected
+        events.post(ServerSignInEvent.Connected)
+        delay(SUCCESS_SHOWN_MILLIS)
+        events.post(ServerSignInEvent.Finished)
+    }
 
     /** Removes the downloads when [address] and [username] (if known) name another server than [signedInServer]. */
     private suspend fun onSignedIn(address: String, username: String?) {
@@ -254,7 +341,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         if (serverAddress(form.address) == null) add(ServerSignInField.Address)
         // A Subsonic sign-in with no username is an API key's, in the password field
         if (form.username.isEmpty() && type != MediaProviderType.Subsonic) add(ServerSignInField.Username)
-        if ((type == MediaProviderType.Plex || type == MediaProviderType.Subsonic) && form.password.isEmpty()) add(ServerSignInField.Password)
+        if (type == MediaProviderType.Subsonic && form.password.isEmpty()) add(ServerSignInField.Password)
     }
 
     private companion object {
@@ -262,6 +349,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         const val SUCCESS_SHOWN_MILLIS = 1_000L
         const val QUICK_CONNECT_CHECK_DEBOUNCE_MILLIS = 500L
         const val QUICK_CONNECT_EXPIRED_MESSAGE = "The code expired before it was approved."
+        const val PIN_EXPIRED_MESSAGE = "The sign-in code expired before it was approved."
     }
 }
 

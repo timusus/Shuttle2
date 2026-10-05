@@ -1,33 +1,27 @@
 package com.simplecityapps.provider.plex
 
-import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerLogin
-import com.simplecityapps.networking.userDescription
 import dev.zacsweers.metro.Inject
 
-/** Plex's password sign-in, for the shared sign-in form. */
+/**
+ * Plex's part of the shared sign-in form: the saved server, and forgetting it. Plex signs in with a plex.tv PIN
+ * ([PlexPinAuthentication]) rather than a password, so [authenticate] always fails and there's no login to remember.
+ */
 class PlexServerAuthentication @Inject constructor(
     private val authenticationManager: PlexAuthenticationManager,
 ) : ServerAuthentication {
-    override fun savedLogin(): SavedServerLogin {
-        val credentials = authenticationManager.getLoginCredentials()
-        return SavedServerLogin(authenticationManager.getAddress(), credentials?.username, credentials?.password)
+    override fun savedLogin(): SavedServerLogin = SavedServerLogin(address = authenticationManager.getAddress())
+
+    override suspend fun authenticate(login: ServerLogin): Result<Unit> = Result.failure(UnsupportedOperationException("Plex signs in with plex.tv."))
+
+    override fun rememberLogin(login: ServerLogin) = Unit
+
+    /** Forgets any password the old plex.tv sign-in saved. */
+    override fun forgetLogin() {
+        authenticationManager.credentialStore.loginCredentials = null
     }
-
-    override suspend fun authenticate(login: ServerLogin): Result<Unit> {
-        authenticationManager.setAddress(login.address)
-        return authenticationManager.authenticate(login.address, login.credentials())
-            .map {}
-            .recoverCatching { error -> throw Exception(error.userDescription(), error) }
-    }
-
-    override fun rememberLogin(login: ServerLogin) = authenticationManager.setLoginCredentials(login.credentials())
-
-    override fun forgetLogin() = authenticationManager.setLoginCredentials(null)
 
     override fun forgetServer() = authenticationManager.forgetServer()
-
-    private fun ServerLogin.credentials() = LoginCredentials(username, password, authCode)
 }

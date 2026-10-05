@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -28,26 +29,32 @@ fun ServerSignInRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnConnected by rememberUpdatedState(onConnected)
     val currentOnDismiss by rememberUpdatedState(onDismiss)
+    val uriHandler = LocalUriHandler.current
+    // No browser to open leaves the PIN on screen, for plex.tv/link on another device
+    val openUrl: (String) -> Unit = { url -> runCatching { uriHandler.openUri(url) } }
 
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         when (event) {
             ServerSignInEvent.Connected -> currentOnConnected(type)
             ServerSignInEvent.Finished -> currentOnDismiss()
+            is ServerSignInEvent.OpenUrl -> openUrl(event.url)
         }
     }
 
-    val actions = remember(viewModel) {
+    val actions = remember(viewModel, uriHandler) {
         ServerSignInActions(
             onAddressChange = viewModel::onAddressChange,
             onUsernameChange = viewModel::onUsernameChange,
             onPasswordChange = viewModel::onPasswordChange,
-            onAuthCodeChange = viewModel::onAuthCodeChange,
             onRememberPasswordChange = viewModel::onRememberPasswordChange,
             onAuthenticate = viewModel::onAuthenticate,
             onRetry = viewModel::onRetry,
             onDismiss = { currentOnDismiss() },
             onUseQuickConnect = viewModel::onUseQuickConnect,
             onCancelQuickConnect = viewModel::onCancelQuickConnect,
+            onOpenUrl = openUrl,
+            onChooseServer = viewModel::onChooseServer,
+            onCancelPin = viewModel::onCancelPin,
         )
     }
     ServerSignInDialog(uiState, actions)

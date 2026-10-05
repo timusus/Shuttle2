@@ -28,7 +28,7 @@ class ServerCredentialStore(
     // Guards the session keys, which are written together
     private val lock = Lock()
 
-    /** The saved sign-in, for re-authenticating once the session expires. Never holds an [LoginCredentials.authCode]. */
+    /** The saved sign-in, for re-authenticating once the session expires. */
     var loginCredentials: LoginCredentials?
         get() {
             val userName = securePreferenceManager.getString(userNameKey) ?: return null

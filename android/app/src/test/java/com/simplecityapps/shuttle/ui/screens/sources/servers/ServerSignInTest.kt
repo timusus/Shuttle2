@@ -23,7 +23,6 @@ class ServerSignInTest {
         robot.assertTextDisplayed("e.g. http://my.server.com:8080")
         robot.assertTextDisplayed("Remember password")
         robot.assertFieldCount(3)
-        robot.assertTextNotDisplayed("2FA Code")
     }
 
     @Test
@@ -34,14 +33,39 @@ class ServerSignInTest {
     }
 
     @Test
-    fun `Plex also asks for an optional two-factor code`() {
+    fun `Plex asks for no address or password - it signs in with plex_tv`() {
         robot.setContent(serverSignInForm(MediaProviderType.Plex))
 
         robot.assertTextDisplayed("Plex Media Server")
-        robot.assertTextDisplayed("e.g. http://my.plex.server.com:32400")
-        robot.assertTextDisplayed("2FA Code")
-        robot.assertTextDisplayed("Optional")
-        robot.assertFieldCount(4)
+        robot.assertTextDisplayed("Sign in to your Plex account in the browser, then come back here. Shuttle Music connects to your Plex Media Server for you.")
+        robot.assertFieldCount(0)
+        robot.clickText("Sign in with Plex")
+
+        robot.authenticated shouldBe 1
+    }
+
+    @Test
+    fun `awaiting the Plex PIN shows the code - where to enter it - and reopens the browser`() {
+        robot.setContent(serverSignInAwaitingPin())
+
+        robot.assertTextDisplayed("H7KQ")
+        robot.assertTextDisplayed("Approve the sign-in in your browser. On another device, go to plex.tv/link and enter this code:")
+        robot.clickText("Open browser")
+        robot.clickText("Cancel")
+
+        robot.openedUrls shouldBe listOf("https://app.plex.tv/auth#?code=H7KQ")
+        robot.pinCancelled shouldBe 1
+    }
+
+    @Test
+    fun `the account's servers are listed - a shared one says so - and tapping one chooses it`() {
+        robot.setContent(serverSignInChoosingServer(ServerChoice("home", "Home", owned = true), ServerChoice("friend", "Sam's Server", owned = false)))
+
+        robot.assertTextDisplayed("Choose a server")
+        robot.assertTextCount("Shared with you", 1)
+        robot.clickText("Sam's Server")
+
+        robot.chosenServers shouldBe listOf("friend")
     }
 
     @Test
@@ -51,22 +75,19 @@ class ServerSignInTest {
         robot.assertTextDisplayed("Navidrome / Subsonic server")
         robot.assertTextDisplayed("e.g. http://my.server.com:4533")
         robot.assertTextDisplayed("Leave empty to sign in with an API key as the password")
-        robot.assertTextNotDisplayed("2FA Code")
         robot.assertFieldCount(3)
     }
 
     @Test
     fun `the fields show what's filled in and report typing`() {
-        robot.setContent(serverSignInForm(MediaProviderType.Plex, ServerSignInForm(address = "http://plex:32400", username = "sam")))
+        robot.setContent(serverSignInForm(MediaProviderType.Emby, ServerSignInForm(address = "http://emby:8096", username = "sam")))
 
-        robot.assertTextDisplayed("http://plex:32400")
+        robot.assertTextDisplayed("http://emby:8096")
         robot.assertTextDisplayed("sam")
         robot.typeInto("Password", "secret")
-        robot.typeInto("2FA Code", "123456")
 
         // A controlled field reports each edit; the state here never changes, so only the first matters.
         robot.passwords.first() shouldBe "secret"
-        robot.authCodes.first() shouldBe "123456"
     }
 
     @Test

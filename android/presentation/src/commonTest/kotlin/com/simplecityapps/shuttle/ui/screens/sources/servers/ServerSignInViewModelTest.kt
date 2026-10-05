@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
+import com.simplecityapps.fakes.FakePinAuthentication
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
 import com.simplecityapps.fakes.FakeSongDownloader
@@ -43,6 +44,7 @@ class ServerSignInViewModelTest {
 
     private val server = FakeServerAuthentication()
     private val quickConnect = FakeQuickConnectAuthentication()
+    private val plex = FakePinAuthentication()
     private val analytics = RecordingAnalytics()
     private val songDownloader = FakeSongDownloader()
     private val needsPro = MutableStateFlow(false)
@@ -54,6 +56,7 @@ class ServerSignInViewModelTest {
     ): ServerSignInViewModel {
         val servers = mapOf(type to server)
         val quickConnects = mapOf(MediaProviderType.Jellyfin to quickConnect)
+        val pins = mapOf(MediaProviderType.Plex to plex)
         val monetisation = MonetisationAnalytics(analytics)
         val classifyFailure = SignInFailureClassifier { SignInFailureReason.Other }
         return ServerSignInViewModel(
@@ -64,6 +67,8 @@ class ServerSignInViewModelTest {
             ObserveServerStreamingNeedsPro { needsPro },
             CheckQuickConnectAvailable(quickConnects),
             SignInWithQuickConnect(quickConnects, monetisation, classifyFailure),
+            SignInWithPin(pins, monetisation, classifyFailure),
+            ConnectToAccountServer(pins, monetisation, classifyFailure),
             songDownloader,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -114,13 +119,89 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `Plex needs the password too`() = runTest {
+    fun `Plex signs in with a PIN - opens its page - then connects to the account's only server`() = runTest {
+        plex.approveAfterChecks = 1
         val viewModel = viewModel(MediaProviderType.Plex)
-        viewModel.onUsernameChange("sam")
+        viewModel.uiState.value.signsInWithPin shouldBe true
 
         viewModel.onAuthenticate()
 
-        viewModel.form.missing shouldBe setOf(ServerSignInField.Password)
+        viewModel.uiState.value.step shouldBe ServerSignInStep.AwaitingPin("ABCD", plex.pin.authUrl, "https://plex.tv/link")
+        viewModel.events shouldBe listOf(ServerSignInEvent.OpenUrl(plex.pin.authUrl))
+        server.authenticated shouldBe emptyList()
+
+        advanceTimeBy(4_001)
+        runCurrent()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        plex.connected.map { it.id } shouldBe listOf("home")
+        songDownloader.removedAll shouldBe listOf(MediaProviderType.Plex)
+        analytics.names shouldBe listOf("server_connected")
+
+        advanceTimeBy(1_001)
+        viewModel.events shouldBe listOf(ServerSignInEvent.OpenUrl(plex.pin.authUrl), ServerSignInEvent.Connected, ServerSignInEvent.Finished)
+    }
+
+    @Test
+    fun `Plex with several servers lists them to choose from`() = runTest {
+        plex.servers = listOf(FakePinAuthentication.server("home", "Home"), FakePinAuthentication.server("friend", "Friend's", owned = false))
+        plex.signedInTo = "friend"
+        val viewModel = viewModel(MediaProviderType.Plex)
+
+        viewModel.onAuthenticate()
+        advanceTimeBy(2_001)
+        runCurrent()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.ChoosingServer(
+            listOf(ServerChoice("home", "Home", owned = true), ServerChoice("friend", "Friend's", owned = false)),
+        )
+
+        viewModel.onChooseServer("friend")
+        runCurrent()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        plex.connected.map { it.id } shouldBe listOf("friend")
+        songDownloader.removedAll shouldBe emptyList()
+    }
+
+    @Test
+    fun `a Plex server that can't be reached shows why - and retry goes back to the start`() = runTest {
+        plex.connectFailure = IllegalStateException("Couldn't reach Home.")
+        val viewModel = viewModel(MediaProviderType.Plex)
+
+        viewModel.onAuthenticate()
+        advanceTimeBy(2_001)
+        runCurrent()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Failed("Couldn't reach Home.")
+
+        viewModel.onRetry()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Form
+    }
+
+    @Test
+    fun `cancelling the Plex PIN stops the polling`() = runTest {
+        plex.approveAfterChecks = null
+        val viewModel = viewModel(MediaProviderType.Plex)
+        viewModel.onAuthenticate()
+        advanceTimeBy(4_001)
+        val checks = plex.checkCount
+
+        viewModel.onCancelPin()
+        advanceTimeBy(60_000)
+
+        plex.checkCount shouldBe checks
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Form
+    }
+
+    @Test
+    fun `leaving the sign-in while its PIN shows stops the polling`() = runTest {
+        plex.approveAfterChecks = null
+        val viewModel = viewModel(MediaProviderType.Plex)
+        viewModel.onAuthenticate()
+
+        viewModel.onLeave()
+        advanceTimeBy(60_000)
+
+        plex.checkCount shouldBe 0
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Form
     }
 
     @Test
@@ -158,11 +239,10 @@ class ServerSignInViewModelTest {
     @Test
     fun `a sign-in shows its progress - reports the connection - then finishes a second later`() = runTest {
         server.pending = CompletableDeferred()
-        val viewModel = viewModel(MediaProviderType.Plex)
-        viewModel.onAddressChange("http://plex:32400")
+        val viewModel = viewModel(MediaProviderType.Emby)
+        viewModel.onAddressChange("http://emby:8096")
         viewModel.onUsernameChange("sam")
         viewModel.onPasswordChange("secret")
-        viewModel.onAuthCodeChange("123456")
 
         viewModel.onAuthenticate()
         viewModel.uiState.value.step shouldBe ServerSignInStep.Authenticating
@@ -170,8 +250,8 @@ class ServerSignInViewModelTest {
         server.pending?.complete(Unit)
         runCurrent()
         viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
-        server.authenticated shouldBe listOf(ServerLogin("http://plex:32400", "sam", "secret", "123456"))
-        server.remembered shouldBe ServerLogin("http://plex:32400", "sam", "secret", "123456")
+        server.authenticated shouldBe listOf(ServerLogin("http://emby:8096", "sam", "secret"))
+        server.remembered shouldBe ServerLogin("http://emby:8096", "sam", "secret")
         analytics.names shouldBe listOf("server_connected")
         viewModel.events shouldBe listOf(ServerSignInEvent.Connected)
 

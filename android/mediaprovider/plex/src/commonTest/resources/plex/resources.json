@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Living Room TV",
+    "product": "Plex for Android (TV)",
+    "productVersion": "10.0",
+    "platform": "Android",
+    "clientIdentifier": "player-1",
+    "provides": "client,player,pubsub-player",
+    "owned": true,
+    "accessToken": "player-token",
+    "publicAddressMatches": true,
+    "presence": true,
+    "connections": []
+  },
+  {
+    "name": "Friend's Server",
+    "product": "Plex Media Server",
+    "productVersion": "1.41.0",
+    "platform": "Linux",
+    "clientIdentifier": "server-shared",
+    "provides": "server",
+    "owned": false,
+    "accessToken": "shared-token",
+    "publicAddressMatches": false,
+    "presence": true,
+    "connections": [
+      {"protocol": "https", "address": "203.0.113.9", "port": 32400, "uri": "https://203-0-113-9.bbbb.plex.direct:32400", "local": false, "relay": false, "IPv6": false}
+    ]
+  },
+  {
+    "name": "Home",
+    "product": "Plex Media Server",
+    "productVersion": "1.41.0",
+    "platform": "Linux",
+    "clientIdentifier": "server-home",
+    "provides": "server,client",
+    "owned": true,
+    "accessToken": "home-token",
+    "publicAddressMatches": true,
+    "presence": true,
+    "connections": [
+      {"protocol": "https", "address": "198.51.100.4", "port": 32400, "uri": "https://198-51-100-4.aaaa.plex.direct:32400", "local": false, "relay": false, "IPv6": false},
+      {"protocol": "https", "address": "192.168.1.20", "port": 32400, "uri": "https://192-168-1-20.aaaa.plex.direct:32400", "local": true, "relay": false, "IPv6": false},
+      {"protocol": "https", "address": "10.0.0.1", "port": 8443, "uri": "https://10-0-0-1.aaaa.plex.direct:8443", "local": false, "relay": true, "IPv6": false}
+    ]
+  }
+]

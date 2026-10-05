@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -31,6 +34,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -52,13 +56,15 @@ class ServerSignInActions(
     val onAddressChange: (String) -> Unit,
     val onUsernameChange: (String) -> Unit,
     val onPasswordChange: (String) -> Unit,
-    val onAuthCodeChange: (String) -> Unit,
     val onRememberPasswordChange: (Boolean) -> Unit,
     val onAuthenticate: () -> Unit,
     val onRetry: () -> Unit,
     val onDismiss: () -> Unit,
     val onUseQuickConnect: () -> Unit,
     val onCancelQuickConnect: () -> Unit,
+    val onOpenUrl: (String) -> Unit,
+    val onChooseServer: (String) -> Unit,
+    val onCancelPin: () -> Unit,
 )
 
 /** A Jellyfin, Emby, Plex or Subsonic server's sign-in dialog. */
@@ -85,18 +91,22 @@ internal fun ServerSignInForm(
     S2DialogContent(
         title = stringResource(uiState.type.longTitleRes),
         onDismiss = actions.onDismiss,
-        confirmLabel = stringResource(R.string.media_provider_button_authenticate),
+        confirmLabel = stringResource(if (uiState.signsInWithPin) R.string.media_provider_button_sign_in_with_plex else R.string.media_provider_button_authenticate),
         onConfirm = actions.onAuthenticate,
         dismissLabel = stringResource(R.string.dialog_button_close),
         confirmEnabled = uiState.step == ServerSignInStep.Form,
         error = (uiState.step as? ServerSignInStep.Failed)?.message,
     ) {
         when (val step = uiState.step) {
-            ServerSignInStep.Form -> SignInFields(uiState, actions)
+            ServerSignInStep.Form -> if (uiState.signsInWithPin) PinSignInIntro(uiState) else SignInFields(uiState, actions)
 
             ServerSignInStep.Authenticating -> Progress(stringResource(R.string.media_provider_authenticating), showSpinner = true)
 
             is ServerSignInStep.AwaitingCode -> QuickConnectCode(step.code, actions.onCancelQuickConnect)
+
+            is ServerSignInStep.AwaitingPin -> SignInPinCode(step, onOpenBrowser = { actions.onOpenUrl(step.authUrl) }, onCancel = actions.onCancelPin)
+
+            is ServerSignInStep.ChoosingServer -> ServerChoices(step.servers, actions.onChooseServer, actions.onCancelPin)
 
             ServerSignInStep.Connected -> Progress(stringResource(R.string.media_provider_authentication_success), showSpinner = false)
 
@@ -138,6 +148,15 @@ private fun SignInFields(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth(),
         )
+        // Quick Connect needs no password, so it comes first once the server reports it enabled
+        if (uiState.quickConnectEnabled) {
+            S2Button(
+                text = stringResource(R.string.media_provider_button_use_quick_connect),
+                onClick = actions.onUseQuickConnect,
+                style = S2ButtonStyle.Filled,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         val usernameMissing = ServerSignInField.Username in form.missing
         OutlinedTextField(
             value = form.username,
@@ -158,17 +177,6 @@ private fun SignInFields(
             missing = ServerSignInField.Password in form.missing,
             onPasswordChange = actions.onPasswordChange,
         )
-        if (uiState.asksForAuthCode) {
-            OutlinedTextField(
-                value = form.authCode,
-                onValueChange = actions.onAuthCodeChange,
-                label = { Text(stringResource(R.string.media_provider_config_hint_code)) },
-                supportingText = { Text(stringResource(R.string.media_provider_config_helper_code)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
@@ -178,12 +186,82 @@ private fun SignInFields(
             Spacer(Modifier.width(S2Spacing.medium))
             Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
         }
-        if (uiState.quickConnectEnabled) {
+    }
+}
+
+/** Plex's form: what signing in with plex.tv does, before the confirm button opens the browser. */
+@Composable
+private fun PinSignInIntro(uiState: ServerSignInUiState) {
+    Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+        if (uiState.showProDisclosure) {
+            Text(stringResource(R.string.paywall_server_disclosure))
+        }
+        Text(stringResource(R.string.media_provider_plex_sign_in_intro))
+    }
+}
+
+/** The sign-in PIN, up until the user approves it in the browser (here, or on another device) or cancels. */
+@Composable
+private fun SignInPinCode(
+    step: ServerSignInStep.AwaitingPin,
+    onOpenBrowser: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = S2Spacing.medium),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
+    ) {
+        Text(
+            stringResource(R.string.media_provider_plex_pin_instructions, step.linkUrl.removePrefix("https://")),
+            textAlign = TextAlign.Center,
+        )
+        Text(step.code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+        CircularProgressIndicator()
+        Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
             S2Button(
-                text = stringResource(R.string.media_provider_button_use_quick_connect),
-                onClick = actions.onUseQuickConnect,
+                text = stringResource(R.string.dialog_button_cancel),
+                onClick = onCancel,
                 style = S2ButtonStyle.Outlined,
-                modifier = Modifier.fillMaxWidth(),
+            )
+            S2Button(
+                text = stringResource(R.string.media_provider_button_open_browser),
+                onClick = onOpenBrowser,
+                style = S2ButtonStyle.Tonal,
+            )
+        }
+    }
+}
+
+/** The account's servers, the user's own first; tapping one signs in to it. */
+@Composable
+private fun ServerChoices(
+    servers: List<ServerChoice>,
+    onChoose: (String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
+    ) {
+        Text(stringResource(R.string.media_provider_plex_choose_server), style = MaterialTheme.typography.titleSmall)
+        servers.forEach { server ->
+            ListItem(
+                headlineContent = { Text(server.name) },
+                supportingContent = if (server.owned) null else ({ Text(stringResource(R.string.media_provider_plex_server_shared)) }),
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onChoose(server.id) },
+            )
+        }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            S2Button(
+                text = stringResource(R.string.dialog_button_cancel),
+                onClick = onCancel,
+                style = S2ButtonStyle.Outlined,
             )
         }
     }
@@ -277,19 +355,43 @@ private val MediaProviderType.longTitleRes: Int
 @get:StringRes
 private val MediaProviderType.addressHelperRes: Int
     get() = when (this) {
-        MediaProviderType.Plex -> R.string.media_provider_config_helper_address_plex
         MediaProviderType.Subsonic -> R.string.media_provider_config_helper_address_subsonic
         else -> R.string.media_provider_config_helper_address
     }
 
-private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview
 @Composable
 private fun PlexSignIn() {
     S2Preview(darkTheme = false) {
         ServerSignInForm(
-            ServerSignInUiState(MediaProviderType.Plex, ServerSignInForm(address = "http://192.168.1.20:32400", username = "sam")),
+            ServerSignInUiState(MediaProviderType.Plex),
+            previewActions,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PlexSignInAwaitingPin() {
+    S2Preview(darkTheme = false) {
+        ServerSignInForm(
+            ServerSignInUiState(MediaProviderType.Plex, step = ServerSignInStep.AwaitingPin("H7KQ", "https://app.plex.tv/auth", "https://plex.tv/link")),
+            previewActions,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PlexSignInChoosingServer() {
+    S2Preview(darkTheme = false) {
+        ServerSignInForm(
+            ServerSignInUiState(
+                MediaProviderType.Plex,
+                step = ServerSignInStep.ChoosingServer(listOf(ServerChoice("home", "Home", owned = true), ServerChoice("friend", "Sam's Server", owned = false))),
+            ),
             previewActions,
         )
     }

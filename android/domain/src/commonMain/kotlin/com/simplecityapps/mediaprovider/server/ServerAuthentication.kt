@@ -1,11 +1,10 @@
 package com.simplecityapps.mediaprovider.server
 
-/** What a server's sign-in form submits. [authCode] is Plex's optional two-factor code. */
+/** What a server's sign-in form submits. */
 data class ServerLogin(
     val address: String,
     val username: String,
     val password: String,
-    val authCode: String? = null,
 )
 
 /** A server's saved address and login, which its sign-in form starts from. */

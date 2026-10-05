@@ -154,9 +154,12 @@ class PlexMediaProvider(
         }.map { it.toPage() }
     }
 
+    /**
+     * The saved session. There's no password to sign in again with: once the server rejects the session, the user signs
+     * in again with plex.tv.
+     */
+    @Suppress("UNUSED_PARAMETER")
     private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
-        ?: authenticationManager.getLoginCredentials()
-            ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() }
 
     /** When each of the user's favourite tracks in [sections] was favourited, by song path, or null if they couldn't be fetched. */
     private suspend fun favourites(

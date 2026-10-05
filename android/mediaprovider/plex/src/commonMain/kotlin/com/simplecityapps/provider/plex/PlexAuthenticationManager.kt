@@ -1,12 +1,13 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AccountServer
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerConnection
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.SignInPin
 import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.provider.plex.http.AuthenticationResult
 import com.simplecityapps.provider.plex.http.PLEX_PLATFORM
 import com.simplecityapps.provider.plex.http.PLEX_TOKEN
 import com.simplecityapps.provider.plex.http.UserService
@@ -21,12 +22,6 @@ class PlexAuthenticationManager(
     private val clientIdentity: ClientIdentity
 ) {
     private val logger = Logger.tagged("PlexAuthenticationManager")
-
-    fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
-
-    fun setLoginCredentials(loginCredentials: LoginCredentials?) {
-        credentialStore.loginCredentials = loginCredentials
-    }
 
     fun getAuthenticatedCredentials(): AuthenticatedCredentials? = credentialStore.authenticatedCredentials
 
@@ -45,30 +40,64 @@ class PlexAuthenticationManager(
         result: NetworkResult<T>
     ): NetworkResult<T> = credentialStore.checkSession(credentials, result)
 
-    suspend fun authenticate(
-        address: String,
-        loginCredentials: LoginCredentials
-    ): Result<AuthenticatedCredentials> {
-        logger.debug { "authenticate(address: $address)" }
-        val authenticationResult =
-            userService.authenticate(
-                username = loginCredentials.username,
-                password = loginCredentials.password,
-                authCode = loginCredentials.authCode
-            )
+    /** A new plex.tv sign-in PIN, with the web sign-in that approves it on this device. */
+    suspend fun createPin(): Result<SignInPin> = userService.createPin().toResult().map { pin ->
+        SignInPin(
+            id = pin.id,
+            code = pin.code,
+            authUrl = authUrl(pin.code),
+            linkUrl = LINK_URL,
+            expiresInSeconds = pin.expiresIn ?: DEFAULT_PIN_EXPIRY_SECONDS
+        )
+    }
 
-        return when (authenticationResult) {
-            is NetworkResult.Success<AuthenticationResult> -> {
-                val authenticatedCredentials = AuthenticatedCredentials(authenticationResult.body.user.authToken, authenticationResult.body.user.id)
-                credentialStore.authenticatedCredentials = authenticatedCredentials
-                Result.success(authenticatedCredentials)
-            }
+    /** The account's token once the user has approved [pin]; null while it's still waiting. */
+    suspend fun checkPin(pin: SignInPin): Result<String?> = userService.pin(pin.id, pin.code).toResult().map { it.authToken?.takeIf(String::isNotEmpty) }
 
-            // Leaves the stored session alone: a mistyped password in the sign-in dialog mustn't sign out a working
-            // session (#596). A session the server rejects is cleared by checkSession, when it's used.
-            is NetworkResult.Failure -> Result.failure(authenticationResult.error)
+    /** The Plex Media Servers on the account signed in with [accountToken], owned or shared, that have a token and an address. */
+    suspend fun servers(accountToken: String): Result<List<AccountServer>> = userService.resources(accountToken).toResult().map { resources ->
+        resources.filter { it.isServer }.mapNotNull { resource ->
+            val token = resource.accessToken?.takeIf(String::isNotEmpty) ?: return@mapNotNull null
+            AccountServer(
+                id = resource.clientIdentifier,
+                name = resource.name,
+                owned = resource.owned,
+                accessToken = token,
+                connections = resource.connections.map { ServerConnection(it.uri, it.local, it.relay, it.address, it.port) }
+            ).takeIf { it.connections.isNotEmpty() }
         }
     }
+
+    /** Whether [server] is the one signed in now: its id is the saved session's, or one of its connections is the saved address. */
+    fun isSignedInTo(server: AccountServer): Boolean {
+        if (credentialStore.authenticatedCredentials?.userId == server.id) return true
+        val address = credentialStore.address ?: return false
+        return server.connections.any { connection -> connection.matches(address) }
+    }
+
+    /**
+     * Saves the first of [server]'s connections to answer, in [orderConnections]' order, as the address, and the server's
+     * own token as the session; a shared server rejects the account's. The session's user id is the server's id, so a
+     * later sign-in can tell it's the same server whichever of its connections answers. Any password saved by the old
+     * plex.tv sign-in is forgotten. Fails, leaving the saved server alone, when none of them answers.
+     */
+    suspend fun connect(server: AccountServer): Result<Unit> {
+        logger.debug { "connect(server: ${server.name})" }
+        val uri = firstReachable(server.connections) { uri -> userService.isReachable(uri) }
+            ?: return Result.failure(Exception("Couldn't reach ${server.name}. Check it's running, then try again."))
+        credentialStore.address = uri
+        credentialStore.loginCredentials = null
+        credentialStore.authenticatedCredentials = AuthenticatedCredentials(server.accessToken, server.id)
+        return Result.success(Unit)
+    }
+
+    /** Plex's web sign-in, which approves [code] for this client once the user signs in. */
+    private fun authUrl(code: String): String = "$AUTH_URL#?" +
+        listOf(
+            "clientID" to clientIdentity.id,
+            "code" to code,
+            "context[device][product]" to clientIdentity.clientName
+        ).joinToString("&") { (name, value) -> "${formUrlEncode(name)}=${formUrlEncode(value)}" }
 
     fun buildPlexPath(
         song: Song,
@@ -199,4 +228,15 @@ class PlexAuthenticationManager(
 
     /** [positionMs] as the seconds Plex's `offset` takes, to the millisecond. */
     private fun offsetSeconds(positionMs: Long): String = "${positionMs / 1000}.${(positionMs % 1000).toString().padStart(3, '0')}"
+
+    private fun <T : Any> NetworkResult<T>.toResult(): Result<T> = when (this) {
+        is NetworkResult.Success -> Result.success(body)
+        is NetworkResult.Failure -> Result.failure(error)
+    }
+
+    private companion object {
+        const val AUTH_URL = "https://app.plex.tv/auth"
+        const val LINK_URL = "https://plex.tv/link"
+        const val DEFAULT_PIN_EXPIRY_SECONDS = 900
+    }
 }

@@ -22,7 +22,9 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
     var quickConnectStarted = 0
     var quickConnectCancelled = 0
     val passwords = mutableListOf<String>()
-    val authCodes = mutableListOf<String>()
+    val openedUrls = mutableListOf<String>()
+    val chosenServers = mutableListOf<String>()
+    var pinCancelled = 0
     val rememberPassword = mutableListOf<Boolean>()
 
     fun setContent(uiState: ServerSignInUiState) {
@@ -33,13 +35,15 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
                     onAddressChange = {},
                     onUsernameChange = {},
                     onPasswordChange = { passwords += it },
-                    onAuthCodeChange = { authCodes += it },
                     onRememberPasswordChange = { rememberPassword += it },
                     onAuthenticate = { authenticated++ },
                     onRetry = { retried++ },
                     onDismiss = { dismissed++ },
                     onUseQuickConnect = { quickConnectStarted++ },
                     onCancelQuickConnect = { quickConnectCancelled++ },
+                    onOpenUrl = { openedUrls += it },
+                    onChooseServer = { chosenServers += it },
+                    onCancelPin = { pinCancelled++ },
                 ),
             )
         }
