@@ -138,7 +138,7 @@ sealed interface ServerSignInEvent {
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ServerSignInViewModel @AssistedInject constructor(
     @Assisted private val type: MediaProviderType,
-    readServerLogin: ReadServerLogin,
+    private val readServerLogin: ReadServerLogin,
     private val signInToServer: SignInToServer,
     private val forgetServerLogin: ForgetServerLogin,
     observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
@@ -189,6 +189,12 @@ class ServerSignInViewModel @AssistedInject constructor(
 
     /** The sign-in to try again once the user trusts the certificate that failed it. */
     private var retryAfterTrust: (() -> Unit)? = null
+
+    /**
+     * The servers whose custom headers or trusted certificate this sign-in may have saved: the one it opened with and
+     * each address it tried. Only the server's saved address keeps them (see [forgetUnusedConnections]).
+     */
+    private val touchedOrigins = listOfNotNull(signedInServer.address?.let(ServerOrigin::parse)).toMutableSet()
     private var pinJob: Job? = null
 
     /** The account's servers, once its PIN has been approved: what [ServerSignInStep.ChoosingServer] lists. */
@@ -270,6 +276,7 @@ class ServerSignInViewModel @AssistedInject constructor(
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
                     onSignedIn(login.address, login.username)
+                    forgetUnusedConnections(inUse = origin)
                     finishSignIn()
                 }
 
@@ -299,6 +306,7 @@ class ServerSignInViewModel @AssistedInject constructor(
                     SignInWithQuickConnect.State.Success -> {
                         // Quick Connect doesn't take a username, so only a different address tells it's another server
                         onSignedIn(address, username = null)
+                        forgetUnusedConnections(inUse = origin)
                         finishSignIn()
                     }
 
@@ -315,6 +323,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         quickConnectJob?.cancel()
         quickConnectJob = null
         step.value = ServerSignInStep.Form
+        forgetUnusedConnections()
     }
 
     /**
@@ -374,8 +383,13 @@ class ServerSignInViewModel @AssistedInject constructor(
         when (step.value) {
             is ServerSignInStep.AwaitingCode -> onCancelQuickConnect()
             is ServerSignInStep.AwaitingPin, is ServerSignInStep.ChoosingServer -> onCancelPin()
+            ServerSignInStep.Form, is ServerSignInStep.Failed, is ServerSignInStep.UntrustedCertificate -> forgetUnusedConnections()
             else -> Unit
         }
+    }
+
+    override fun onCleared() {
+        forgetUnusedConnections()
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
@@ -416,10 +430,24 @@ class ServerSignInViewModel @AssistedInject constructor(
      */
     private fun prepareConnection(address: String, retry: () -> Unit): ServerOrigin? {
         val origin = ServerOrigin.parse(address) ?: return null
+        forgetUnusedConnections(inUse = origin)
+        touchedOrigins += origin
         serverConnections.setHeaders(origin, form.value.headers)
         serverConnections.clearRejectedCertificate(origin)
         retryAfterTrust = retry
         return origin
+    }
+
+    /**
+     * Forgets the headers and trusted certificate this sign-in saved for any server but the one whose address is saved
+     * (which removing the server forgets, [ForgetServer]) and [inUse]: an address the user tried and moved on from, or
+     * the server another one replaced, keeps no proxy token or trusted certificate behind.
+     */
+    private fun forgetUnusedConnections(inUse: ServerOrigin? = null) {
+        val saved = readServerLogin(type).address?.let(ServerOrigin::parse)
+        val unused = touchedOrigins.filter { it != saved && it != inUse }
+        unused.forEach(serverConnections::forget)
+        touchedOrigins -= unused.toSet()
     }
 
     /** The step a failed sign-in to [origin] shows: the certificate to trust when it refused one, else [message]. */

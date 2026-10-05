@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.server.CustomHeader
+import com.simplecityapps.shuttle.server.ServerConnection
 import com.simplecityapps.shuttle.server.ServerConnectionStore
 import com.simplecityapps.shuttle.server.ServerOrigin
 import io.kotest.matchers.shouldBe
@@ -92,7 +93,7 @@ class ServerSignInViewModelTest {
     private val ServerSignInViewModel.events get() = uiState.value.events.map { it.value }
 
     @Test
-    fun `the headers typed are saved for the server before signing in, and the form starts from them`() = runTest {
+    fun `the headers typed are saved for the server before signing in and the form starts from them`() = runTest {
         val origin = ServerOrigin.of("server", 8096)
         server.onAuthenticate = { connections.connection(origin).headers shouldBe listOf(CustomHeader("X-Token", "t")) }
         val viewModel = viewModel()
@@ -113,7 +114,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `a refused certificate offers to trust it, and trusting it signs in again`() = runTest {
+    fun `a refused certificate offers to trust it and trusting it signs in again`() = runTest {
         val origin = ServerOrigin.of("server", 8096)
         server.failure = IllegalStateException("Couldn't connect securely")
         server.onAuthenticate = { if (!connections.acceptRefusedCertificate(origin, "ab:cd")) Unit else server.failure = null }
@@ -142,6 +143,59 @@ class ServerSignInViewModelTest {
         viewModel.onAuthenticate()
 
         uiStateStep(viewModel) shouldBe ServerSignInStep.Failed("Wrong password")
+    }
+
+    @Test
+    fun `an address tried and moved on from keeps no headers or trusted certificate`() = runTest {
+        val first = ServerOrigin.of("server", 8096)
+        server.failure = IllegalStateException("Couldn't connect securely")
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+        viewModel.onAddHeader()
+        viewModel.onHeaderChange(0, "X-Token", "t")
+        viewModel.onAuthenticate()
+        connections.trustCertificate(first, "ab:cd")
+        viewModel.onRetry()
+
+        server.failure = null
+        viewModel.onAddressChange("http://other:8096")
+        viewModel.onAuthenticate()
+
+        uiStateStep(viewModel) shouldBe ServerSignInStep.Connected
+        connections.connection(first) shouldBe ServerConnection.None
+        connections.connection(ServerOrigin.of("other", 8096)).headers shouldBe listOf(CustomHeader("X-Token", "t"))
+    }
+
+    @Test
+    fun `signing in to another server forgets the headers and certificate of the one it replaced`() = runTest {
+        val old = ServerOrigin.of("old", 8096)
+        server.saved = SavedServerLogin("http://old:8096")
+        connections.setHeaders(old, listOf(CustomHeader("X-Token", "old")))
+        connections.trustCertificate(old, "ab:cd")
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+
+        viewModel.onAuthenticate()
+
+        connections.connection(old) shouldBe ServerConnection.None
+    }
+
+    @Test
+    fun `leaving after a failed sign-in keeps only the saved address's headers`() = runTest {
+        val old = ServerOrigin.of("old", 8096)
+        server.saved = SavedServerLogin("http://old:8096")
+        connections.setHeaders(old, listOf(CustomHeader("X-Token", "old")))
+        server.failure = IllegalStateException("Wrong password")
+        val viewModel = viewModel()
+        viewModel.onUsernameChange("sam")
+        viewModel.onAddHeader()
+        viewModel.onHeaderChange(0, "X-Token", "new")
+        viewModel.onAuthenticate()
+
+        viewModel.onLeave()
+
+        connections.connection(old) shouldBe ServerConnection.None
+        connections.connection(ServerOrigin.of("server", 8096)).headers shouldBe listOf(CustomHeader("X-Token", "new"))
     }
 
     private fun uiStateStep(viewModel: ServerSignInViewModel) = viewModel.uiState.value.step
