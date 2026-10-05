@@ -1,14 +1,18 @@
 package com.simplecityapps.playback
 
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.PendingIntent
 import android.app.SearchManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.util.LruCache
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -173,6 +177,22 @@ class PlaybackService : MediaLibraryService() {
     }
 
     companion object {
+        /**
+         * Starts the service in the foreground ([ACTION_START]), for playback that has started, or is about to, in the
+         * app. From the background Android may refuse (API 31+), which is logged.
+         */
+        fun start(context: Context) {
+            try {
+                ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java).setAction(ACTION_START))
+            } catch (e: IllegalStateException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                    Timber.w(e, "Cannot start foreground service from background - likely audio focus regained while app in background")
+                } else {
+                    throw e
+                }
+            }
+        }
+
         /** Starts the service in the foreground, for playback that has started in the app. */
         const val ACTION_START: String = "com.simplecityapps.playback.start"
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"

@@ -62,7 +62,9 @@ class PlaybackFacade(
     /** The name of the device the current Cast session plays on (see [CastHandover]). */
     castDeviceName: () -> String? = { null },
     /** Whether an item's URI streams a transcode the server drops when another starts (see [ItemLoader]). */
-    isReplaceableTranscode: (Uri) -> Boolean = { false }
+    isReplaceableTranscode: (Uri) -> Boolean = { false },
+    /** Starts the playback service in the foreground, when a play is held for a call (see [CallHold]). */
+    onPlayHeld: () -> Unit = {}
 ) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
 
@@ -72,7 +74,7 @@ class PlaybackFacade(
 
     private val speedStore = PlaybackSpeedStore(player, playbackSpeed)
 
-    private val callHold = CallHold(player, callMonitor, isRemote = { handover.isRemote })
+    private val callHold = CallHold(player, callMonitor, isRemote = { handover.isRemote }, onHeld = onPlayHeld)
 
     private val progressTicker = ProgressTicker(player, appCoroutineScope)
 

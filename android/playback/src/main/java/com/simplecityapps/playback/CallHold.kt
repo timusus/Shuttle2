@@ -15,7 +15,12 @@ class CallHold(
     player: Player,
     private val callMonitor: CallMonitor,
     /** Whether playback is on a Cast receiver, where a call doesn't matter. */
-    private val isRemote: () -> Boolean
+    private val isRemote: () -> Boolean,
+    /**
+     * Runs when a play is held, while the user is present: the playback service starts in the foreground then, as the
+     * held play may run from the background, where Android 17 mutes a play with no foreground service.
+     */
+    private val onHeld: () -> Unit = {}
 ) : Player.Listener {
     private val playerThread = PlayerThread(player)
 
@@ -31,6 +36,7 @@ class CallHold(
         if (isRemote() || !callMonitor.isInCall) return false
         if (callMonitor.awaitCallEnd(playerExecutor, play)) {
             Timber.w("play() held until the call ends")
+            onHeld()
         } else {
             Timber.w("play() dropped: in a call")
         }

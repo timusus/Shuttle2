@@ -16,6 +16,7 @@ import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
@@ -204,6 +205,7 @@ class PlaybackEngineModule {
         coroutineScope,
         castQueue,
         castDeviceName = { CastSessionManager.deviceName(context) },
-        isReplaceableTranscode = songUriResolver::isReplaceableTranscode
+        isReplaceableTranscode = songUriResolver::isReplaceableTranscode,
+        onPlayHeld = { PlaybackService.start(context) }
     )
 }

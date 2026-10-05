@@ -1,11 +1,7 @@
 package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
-import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Context
-import android.content.Intent
-import android.os.Build
-import androidx.core.content.ContextCompat
 import com.simplecityapps.playback.BitPerfectOutput
 import com.simplecityapps.playback.CastStarter
 import com.simplecityapps.playback.PlaybackOperations
@@ -70,19 +66,7 @@ constructor(
         val playbackState = playbackOperations.playbackStateFlow.value
         appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
             if (current is PlaybackState.Playing) {
-                startPlaybackService()
-            }
-        }
-    }
-
-    private fun startPlaybackService() {
-        try {
-            ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java).setAction(PlaybackService.ACTION_START))
-        } catch (e: IllegalStateException) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
-                Timber.w(e, "Cannot start foreground service from background - likely audio focus regained while app in background")
-            } else {
-                throw e
+                PlaybackService.start(context)
             }
         }
     }

@@ -20,7 +20,9 @@ class CallHoldTest {
 
     private var remote = false
 
-    private val callHold = CallHold(FakeListenedPlayer(), CallMonitor(audioManager), isRemote = { remote })
+    private var held = 0
+
+    private val callHold = CallHold(FakeListenedPlayer(), CallMonitor(audioManager), isRemote = { remote }, onHeld = { held++ })
 
     private var plays = 0
 
@@ -34,6 +36,7 @@ class CallHoldTest {
     @Test
     fun `a play with no call goes ahead`() {
         callHold.holds(play) shouldBe false
+        held shouldBe 0
     }
 
     @Test
@@ -42,6 +45,7 @@ class CallHoldTest {
 
         callHold.holds(play) shouldBe true
         plays shouldBe 0
+        held shouldBe 1
 
         setAudioMode(AudioManager.MODE_NORMAL)
         plays shouldBe 1
@@ -53,6 +57,7 @@ class CallHoldTest {
         remote = true
 
         callHold.holds(play) shouldBe false
+        held shouldBe 0
     }
 
     @Test

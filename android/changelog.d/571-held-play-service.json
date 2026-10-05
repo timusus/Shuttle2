@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Music you press play on during a phone call now starts again when the call ends, even if the app is in the background on Android 17.", "commits": [] }
