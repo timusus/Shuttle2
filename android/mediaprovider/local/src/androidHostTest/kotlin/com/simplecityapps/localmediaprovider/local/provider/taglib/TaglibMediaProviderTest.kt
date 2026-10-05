@@ -11,10 +11,10 @@ import android.provider.DocumentsContract
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.ktaglib.KTagLib
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
 import com.simplecityapps.localmediaprovider.local.provider.testTagReadGuard
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.TagReadFile
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.shuttle.model.MediaProviderType

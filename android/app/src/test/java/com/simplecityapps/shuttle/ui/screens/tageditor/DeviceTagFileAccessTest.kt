@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.createSong
 import com.simplecityapps.ktaglib.KTagLib
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
+import com.simplecityapps.mediaprovider.TagReadFile
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.nulls.shouldBeNull

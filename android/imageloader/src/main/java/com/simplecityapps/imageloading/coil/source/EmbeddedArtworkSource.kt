@@ -3,8 +3,8 @@ package com.simplecityapps.imageloading.coil.source
 import android.content.Context
 import android.net.Uri
 import com.simplecityapps.imageloading.coil.ArtworkSource
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
+import com.simplecityapps.mediaprovider.TagReadFile
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song

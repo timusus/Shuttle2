@@ -9,11 +9,11 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder
+import com.simplecityapps.mediaprovider.TagReadFile
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song

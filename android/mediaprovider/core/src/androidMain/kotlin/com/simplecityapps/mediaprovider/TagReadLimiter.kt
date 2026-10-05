@@ -1,4 +1,4 @@
-package com.simplecityapps.localmediaprovider.local.provider
+package com.simplecityapps.mediaprovider
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore

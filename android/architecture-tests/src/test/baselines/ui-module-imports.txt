@@ -29,6 +29,8 @@ com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> c
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.getAudioFile (:android:mediaprovider:local)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner (:android:mediaprovider:local)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder (:android:mediaprovider:local)
+com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.mediaprovider.TagReadFile (:android:mediaprovider:core)
+com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.mediaprovider.TagReadGuard (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.shell.player.PlayerModule -> com.simplecityapps.playback.chromecast.CastSessionManager (:android:playback)
 com.simplecityapps.shuttle.ui.shell.player.PlayerModule -> com.simplecityapps.playback.persistence.PlaybackPreferenceManager (:android:playback:core)
 com.simplecityapps.shuttle.ui.shell.player.PlayerModule -> com.simplecityapps.playback.settings.PlaybackSettings (:android:playback:core)

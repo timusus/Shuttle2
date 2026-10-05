@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.di
 import android.content.Context
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.KTagLibMediaStoreTagReader
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreTagReader
@@ -11,6 +10,7 @@ import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.MediaStoreAudioLister
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager

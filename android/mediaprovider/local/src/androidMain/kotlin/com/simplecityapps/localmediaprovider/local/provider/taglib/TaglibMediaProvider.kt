@@ -10,8 +10,6 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
@@ -27,6 +25,8 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongPathRemap
+import com.simplecityapps.mediaprovider.TagReadFile
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.saf.DocumentNodeTree

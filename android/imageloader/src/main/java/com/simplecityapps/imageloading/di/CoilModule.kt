@@ -35,10 +35,10 @@ import com.simplecityapps.imageloading.coil.source.S2AlbumArtistArtworkSource
 import com.simplecityapps.imageloading.coil.source.S2AlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.S2SongArtworkSource
 import com.simplecityapps.ktaglib.KTagLib
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
 import com.simplecityapps.mediaprovider.S2ArtworkApi
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Album

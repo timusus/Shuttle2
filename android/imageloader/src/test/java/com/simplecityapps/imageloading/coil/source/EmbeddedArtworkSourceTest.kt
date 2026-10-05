@@ -1,8 +1,8 @@
 package com.simplecityapps.imageloading.coil.source
 
 import androidx.test.core.app.ApplicationProvider
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
+import com.simplecityapps.mediaprovider.TagReadFile
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager

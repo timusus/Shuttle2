@@ -1,4 +1,4 @@
-package com.simplecityapps.localmediaprovider.local.provider
+package com.simplecityapps.mediaprovider
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
@@ -12,6 +12,8 @@ import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -56,6 +58,12 @@ class TagReadGuard(
     // A read holds at least one permit, so there's always a free slot for it
     private val freeSlots = ArrayDeque((0 until limiter.permits).toList())
 
+    // Serialises taking markers, so the import's recover and the first read's don't race over the same files
+    private val recoverMutex = Mutex()
+
+    @Volatile
+    private var recovered = false
+
     @Volatile
     private var quarantine: Set<String>? = null
 
@@ -78,8 +86,18 @@ class TagReadGuard(
      * Takes the markers a process that died left, and quarantines or suspects the files they name; called at the start of
      * each of [source]'s imports, so the quarantine Sources' retry cleared is read again too.
      */
-    suspend fun recover(source: MediaProviderType) = withContext(Dispatchers.IO) {
+    suspend fun recover(source: MediaProviderType) {
         skipped.remove(source)
+        recoverMutex.withLock { takeMarkers() }
+    }
+
+    /** Takes the markers once before the first [read] of the process, so an artwork or editor read after a crash sees its quarantine. */
+    private suspend fun recoverOnce() {
+        if (recovered) return
+        recoverMutex.withLock { if (!recovered) takeMarkers() }
+    }
+
+    private suspend fun takeMarkers() = withContext(Dispatchers.IO) {
         var quarantine = preferences.tagReadQuarantine()
         var strikes = preferences.tagReadStrikes()
         val suspects = mutableSetOf<String>()
@@ -133,6 +151,7 @@ class TagReadGuard(
         this@TagReadGuard.quarantine = quarantine
         this@TagReadGuard.strikes = strikes
         this@TagReadGuard.suspects += suspects
+        recovered = true
     }
 
     /**
@@ -144,6 +163,7 @@ class TagReadGuard(
         source: MediaProviderType,
         read: suspend () -> T?
     ): T? {
+        recoverOnce()
         val key = file.key
         if (key in quarantine()) {
             Timber.w("Not reading quarantined file ${file.path}")

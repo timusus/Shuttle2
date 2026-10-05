@@ -40,9 +40,6 @@ dependencies {
     // Shuttle MediaProvider Core
     implementation project(':android:mediaprovider:core')
 
-    // The tag read guard that quarantines files crashing TagLib
-    implementation project(':android:mediaprovider:local')
-
     // TagLib
     implementation(libs.timusus.ktaglib)
 

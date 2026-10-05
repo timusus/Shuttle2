@@ -1,4 +1,4 @@
-package com.simplecityapps.localmediaprovider.local.provider
+package com.simplecityapps.mediaprovider
 
 import io.kotest.matchers.shouldBe
 import java.util.concurrent.atomic.AtomicInteger

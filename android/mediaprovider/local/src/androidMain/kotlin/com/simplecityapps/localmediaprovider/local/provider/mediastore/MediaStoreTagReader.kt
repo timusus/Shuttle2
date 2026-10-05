@@ -7,12 +7,12 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FileTags
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
-import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
-import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.matroskaTitleOf
 import com.simplecityapps.localmediaprovider.local.provider.taglibBitDepth
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.localmediaprovider.local.provider.toYearDate
+import com.simplecityapps.mediaprovider.TagReadFile
+import com.simplecityapps.mediaprovider.TagReadGuard
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song

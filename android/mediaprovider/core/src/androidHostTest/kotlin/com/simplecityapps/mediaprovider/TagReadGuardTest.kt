@@ -1,4 +1,4 @@
-package com.simplecityapps.localmediaprovider.local.provider
+package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -20,7 +20,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /** A guard over a fresh marker folder, as the process [pid], where Android records [processExits]. */
-fun testTagReadGuard(
+private fun testTagReadGuard(
     preferences: GeneralPreferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
     markerDir: File = Files.createTempDirectory("tag-reads").toFile(),
     processExits: () -> List<ProcessExit>? = { null },
@@ -53,14 +53,16 @@ class TagReadGuardTest {
         vararg files: TagReadFile,
         pid: Int = 1
     ) = runBlocking {
-        val guard = guard(pid)
+        // Its own folder and preferences, so its first read doesn't recover the markers earlier crashes left in markerDir
+        val crashDir = Files.createTempDirectory("tag-reads-crash").toFile()
+        val guard = testTagReadGuard(markerDir = crashDir, pid = pid)
         val started = files.map { CompletableDeferred<Unit>() }
         val jobs = files.mapIndexed { index, file -> launch { guard.read(file, source) { started[index].complete(Unit).also { CompletableDeferred<Unit>().await() } } } }
         started.awaitAll()
         // The process is gone: its reads never finish, so their markers stay where the next one finds them
-        val left = markerDir.listFiles().orEmpty().associateWith { it.readText() }
+        val left = crashDir.listFiles().orEmpty().associate { it.name to it.readText() }
         jobs.forEach { it.cancelAndJoin() }
-        left.forEach { (file, text) -> file.writeText(text) }
+        left.forEach { (name, text) -> File(markerDir, name).writeText(text) }
     }
 
     @Test
@@ -110,6 +112,20 @@ class TagReadGuardTest {
         guard.skippedPaths(source) shouldBe setOf(a.path)
         preferences.tagReadQuarantine() shouldBe setOf(a.key)
         markers().shouldBeEmpty()
+    }
+
+    @Test
+    fun `the first read recovers a crash's markers itself, without an import's recover`() = runTest {
+        crashDuring(a)
+        val guard = guard(pid = 2, processExits = { listOf(exit(pid = 1)) })
+
+        guard.read(a, source) { "tags" } shouldBe null
+
+        preferences.tagReadQuarantine() shouldBe setOf(a.key)
+        markers().shouldBeEmpty()
+        // And an import's recover after it finds nothing left to take
+        guard.recover(source)
+        preferences.tagReadQuarantine() shouldBe setOf(a.key)
     }
 
     @Test
