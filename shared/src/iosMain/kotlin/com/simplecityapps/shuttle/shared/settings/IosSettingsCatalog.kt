@@ -124,7 +124,8 @@ object IosSettingsCatalog : SettingsCatalog {
                     SettingItem.Choice(
                         setting = StreamingSettings.Format,
                         title = StringKey.PREF_TRANSCODE_FORMAT_TITLE,
-                        options = TranscodeFormatOptions
+                        options = TranscodeFormatOptions,
+                        summary = StringKey.PREF_TRANSCODE_FORMAT_SUMMARY
                     ),
                     SettingItem.Choice(
                         setting = StreamingSettings.DownloadQuality,

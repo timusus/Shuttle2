@@ -44,6 +44,7 @@ import com.simplecityapps.shuttle.downloads.di.DownloadCache
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
+import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -107,7 +108,8 @@ class PlaybackEngineModule {
         @DownloadCache downloadCache: Cache,
         playbackSettings: PlaybackSettings,
         analytics: Analytics,
-        okHttpClient: OkHttpClient
+        okHttpClient: OkHttpClient,
+        deliveredFormats: DeliveredFormats
     ): ExoPlayerFactory = ExoPlayerFactory(
         context,
         okHttpClient,
@@ -117,7 +119,8 @@ class PlaybackEngineModule {
         songUriResolver,
         downloadCache,
         { playbackSettings.crossfadeDurationMs.value.toLong() },
-        analytics::crossfadeSkipped
+        analytics::crossfadeSkipped,
+        onDownloadPlayed = { path -> deliveredFormats.record(path, null) }
     )
 
     // The local player: it owns the queue, and plays it when not casting. It lives on the main looper.

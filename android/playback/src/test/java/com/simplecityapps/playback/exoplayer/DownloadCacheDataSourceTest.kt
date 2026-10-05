@@ -53,8 +53,10 @@ class DownloadCacheDataSourceTest {
         cache.release()
     }
 
+    private val openedDownloads = mutableListOf<String>()
+
     private fun read(uri: Uri): ByteArray {
-        val source = downloadCacheDataSourceFactory(cache, upstream).createDataSource()
+        val source = downloadCacheDataSourceFactory(cache, upstream, openedDownloads::add).createDataSource()
         source.open(DataSpec(uri))
         return try {
             source.readAllBytes()
@@ -128,5 +130,14 @@ class DownloadCacheDataSourceTest {
         source.open(DataSpec(streamed))
         source.close()
         upstreams.all { it.isOpened.not() } shouldBe true
+    }
+
+    @Test
+    fun `only a song opened from its download is reported as played from it`() {
+        read(streamed)
+        openedDownloads shouldBe emptyList()
+
+        read(downloaded)
+        openedDownloads shouldBe listOf(downloaded.toString())
     }
 }

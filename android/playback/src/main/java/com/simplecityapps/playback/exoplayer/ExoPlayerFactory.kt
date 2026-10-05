@@ -56,6 +56,8 @@ class ExoPlayerFactory(
     private val crossfadeDurationMs: () -> Long = { 0 },
     /** Told of each song that should have crossfaded into the next but didn't, and why. */
     private val onCrossfadeSkipped: (CrossfadeSkip) -> Unit = {},
+    /** Told the path of each song opened from its download. */
+    private val onDownloadPlayed: (String) -> Unit = {},
     /** Builds the ExoPlayer around these renderers and sources. A test builds it on a fake clock. */
     private val buildPlayer: (RenderersFactory, MediaSource.Factory) -> ExoPlayer = { renderersFactory, mediaSourceFactory ->
         ExoPlayer.Builder(context, renderersFactory)
@@ -84,7 +86,7 @@ class ExoPlayerFactory(
     }
 
     private val mediaSourceFactory by lazy {
-        val dataSourceFactory = downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context, OkHttpDataSource.Factory(okHttpClient))))
+        val dataSourceFactory = downloadCacheDataSourceFactory(downloadCache, songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context, OkHttpDataSource.Factory(okHttpClient))), onDownloadPlayed)
         val extractorsFactory = TimeSeekExtractorsFactory(songUriResolver::isTimeSeekable)
         StreamSniffingMediaSourceFactory(dataSourceFactory, defaultFactory = DefaultMediaSourceFactory(dataSourceFactory, extractorsFactory))
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())

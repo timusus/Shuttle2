@@ -20,26 +20,31 @@ import androidx.media3.datasource.cache.ContentMetadata
  * a different stream than [upstream]'s (a transcode), so filling its holes from [upstream] would stitch two streams.
  * It streams from [upstream] alone instead.
  *
+ * [onDownloadOpened] is told the path of each song opened from its download, so a transcode badge recorded when it
+ * last streamed doesn't outlive it.
+ *
  * Read-only: streaming a song never writes into the cache, which holds downloads and nothing else.
  */
 @UnstableApi
 fun downloadCacheDataSourceFactory(
     downloadCache: Cache,
-    upstream: DataSource.Factory
+    upstream: DataSource.Factory,
+    onDownloadOpened: (String) -> Unit = {}
 ): DataSource.Factory {
     val cached = CacheDataSource.Factory()
         .setCache(downloadCache)
         .setCacheWriteDataSinkFactory(null)
         .setUpstreamDataSourceFactory(upstream)
         .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-    return DataSource.Factory { CompleteDownloadsOnlyDataSource(downloadCache, cached, upstream) }
+    return DataSource.Factory { CompleteDownloadsOnlyDataSource(downloadCache, cached, upstream, onDownloadOpened) }
 }
 
 @UnstableApi
 private class CompleteDownloadsOnlyDataSource(
     private val cache: Cache,
     private val cachedFactory: DataSource.Factory,
-    private val upstreamFactory: DataSource.Factory
+    private val upstreamFactory: DataSource.Factory,
+    private val onDownloadOpened: (String) -> Unit
 ) : DataSource {
     private val listeners = mutableListOf<TransferListener>()
     private var opened: DataSource? = null
@@ -50,7 +55,9 @@ private class CompleteDownloadsOnlyDataSource(
 
     override fun open(dataSpec: DataSpec): Long {
         close()
-        val source = (if (isFullyCached(dataSpec)) cachedFactory else upstreamFactory).createDataSource()
+        val downloaded = isFullyCached(dataSpec)
+        if (downloaded) onDownloadOpened(dataSpec.uri.toString())
+        val source = (if (downloaded) cachedFactory else upstreamFactory).createDataSource()
         listeners.forEach(source::addTransferListener)
         opened = source
         return source.open(dataSpec)

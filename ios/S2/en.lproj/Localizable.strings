@@ -51,6 +51,7 @@
 "pref_streaming_quality_128" = "128 kbps";
 "pref_download_quality_title" = "Download quality";
 "pref_transcode_format_title" = "Transcode format";
+"pref_transcode_format_summary" = "Plex always uses MP3.";
 "pref_transcode_format_auto" = "Automatic";
 "pref_transcode_format_opus" = "Opus";
 "pref_transcode_format_aac" = "AAC";

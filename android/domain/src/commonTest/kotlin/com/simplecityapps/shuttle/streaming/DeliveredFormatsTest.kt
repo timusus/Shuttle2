@@ -21,4 +21,23 @@ class DeliveredFormatsTest {
 
         formats.byPath.value.shouldBeEmpty()
     }
+
+    @Test
+    fun theMostRecentlyRecordedPathsAreKept() {
+        repeat(DeliveredFormats.MAX_ENTRIES + 5) { formats.record("jellyfin://item/$it", DeliveredFormat("MP3", 128)) }
+
+        formats.byPath.value.size shouldBe DeliveredFormats.MAX_ENTRIES
+        formats.byPath.value.containsKey("jellyfin://item/0") shouldBe false
+        formats.byPath.value.containsKey("jellyfin://item/${DeliveredFormats.MAX_ENTRIES + 4}") shouldBe true
+    }
+
+    @Test
+    fun rerecordingAPathKeepsItNewest() {
+        formats.record("a", DeliveredFormat("MP3", 128))
+        repeat(DeliveredFormats.MAX_ENTRIES - 1) { formats.record("p$it", DeliveredFormat("MP3", 128)) }
+        formats.record("a", DeliveredFormat("AAC", 128))
+        formats.record("last", DeliveredFormat("MP3", 128))
+
+        formats.byPath.value["a"] shouldBe DeliveredFormat("AAC", 128)
+    }
 }

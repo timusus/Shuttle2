@@ -210,6 +210,8 @@
     <string name="pref_download_quality_title">Download quality</string>
     <!-- Settings: Title of the choice of audio format a server converts songs to when it lowers their quality -->
     <string name="pref_transcode_format_title">Transcode format</string>
+    <!-- Settings: Summary under the transcode format choice, naming the servers that can't follow it -->
+    <string name="pref_transcode_format_summary">Plex streams as AAC or MP3 and downloads as MP3. Subsonic streams Opus as MP3.</string>
     <!-- Settings: Transcode format option that lets the app pick the format that suits this device -->
     <string name="pref_transcode_format_auto">Automatic</string>
     <!-- Settings: Transcode format option for the Opus audio format -->

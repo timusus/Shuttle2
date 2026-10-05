@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Settings now says which servers ignore the transcode format: Plex only streams as AAC or MP3, and Subsonic streams Opus as MP3. A song played from its download no longer shows a stale streaming-format badge.", "commits": [] }

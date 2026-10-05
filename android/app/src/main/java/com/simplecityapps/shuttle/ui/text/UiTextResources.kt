@@ -82,6 +82,7 @@ val StringKey.resId: Int
         StringKey.PREF_STREAMING_QUALITY_128 -> R.string.pref_streaming_quality_128
         StringKey.PREF_DOWNLOAD_QUALITY_TITLE -> R.string.pref_download_quality_title
         StringKey.PREF_TRANSCODE_FORMAT_TITLE -> R.string.pref_transcode_format_title
+        StringKey.PREF_TRANSCODE_FORMAT_SUMMARY -> R.string.pref_transcode_format_summary
         StringKey.PREF_TRANSCODE_FORMAT_AUTO -> R.string.pref_transcode_format_auto
         StringKey.PREF_TRANSCODE_FORMAT_OPUS -> R.string.pref_transcode_format_opus
         StringKey.PREF_TRANSCODE_FORMAT_AAC -> R.string.pref_transcode_format_aac
