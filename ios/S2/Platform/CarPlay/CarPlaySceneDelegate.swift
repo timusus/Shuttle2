@@ -50,6 +50,12 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     /// The ids of the playlists with a song that plays offline, nil until known; restarted when the playlists or the downloads change.
     private var playablePlaylists: Set<Int64>?
     private var playablePlaylistsTask: Task<Void, Never>?
+    private var playablePlaylistsInputs: PlayablePlaylistsInputs?
+
+    private struct PlayablePlaylistsInputs: Equatable {
+        let playlistIds: Set<Int64>
+        let downloaded: Set<String>
+    }
 
     private var isOffline: Bool { !(network?.isOnline ?? true) }
 
@@ -101,7 +107,10 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         nowPlaying.attach { [weak self] in self?.pushQueue() }
         self.nowPlaying = nowPlaying
         actions = graph.mediaActionsViewModel
-        network = CarPlayNetworkMonitor { [weak self] _ in self?.renderHome() }
+        network = CarPlayNetworkMonitor { [weak self] _ in
+            self?.observePlayablePlaylists()
+            self?.renderHome()
+        }
 
         observeHome(graph.homeViewModel)
         observePlaylists(graph.playlistListViewModel)
@@ -122,6 +131,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         tasks.removeAll()
         playablePlaylistsTask?.cancel()
         playablePlaylistsTask = nil
+        playablePlaylistsInputs = nil
         playablePlaylists = nil
         viewModels.forEach { $0.clear() }
         viewModels.removeAll()
@@ -256,9 +266,20 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     }
 
     /// Re-asks which playlists have a song that plays offline (#925), for the current playlists and completed downloads.
+    /// Only while offline, and only when the playlist ids or the completed download paths changed: `downloads` emits on
+    /// every progress tick, and each restart re-reads every playlist's songs.
     private func observePlayablePlaylists() {
-        playablePlaylistsTask?.cancel()
+        guard isOffline else {
+            playablePlaylistsTask?.cancel()
+            playablePlaylistsTask = nil
+            playablePlaylistsInputs = nil
+            return
+        }
         let downloaded = Set(downloads.compactMap { $0.value.state == .completed ? $0.key : nil })
+        let inputs = PlayablePlaylistsInputs(playlistIds: Set(playlists.values.map(\.id)), downloaded: downloaded)
+        guard inputs != playablePlaylistsInputs else { return }
+        playablePlaylistsInputs = inputs
+        playablePlaylistsTask?.cancel()
         let flow = AppGraph.shared.observePlayablePlaylists.invoke(playlists: Array(playlists.values), downloadedPaths: downloaded)
         playablePlaylistsTask = Task { [weak self] in
             for await ids in flow {

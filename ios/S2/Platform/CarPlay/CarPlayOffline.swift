@@ -15,12 +15,10 @@ struct CarPlayOfflineIndex {
     private let albums: Set<AlbumGroupKey>
     private let artists: Set<AlbumArtistGroupKey>
     private let genres: Set<String>
-    private let downloaded: Set<String>
 
     init(songs: [Song], downloads: [String: OfflineDownload]) {
         let downloaded = Set(downloads.compactMap { $0.value.state == .completed ? $0.key : nil })
         let playable = songs.filter { Self.isPlayable($0, downloaded: downloaded) }
-        self.downloaded = downloaded
         self.playable = playable
         albums = Set(playable.map(\.albumGroupKey))
         artists = Set(playable.map(\.albumArtistGroupKey))

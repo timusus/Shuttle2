@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
@@ -30,9 +31,8 @@ class ObservePlayablePlaylists(
                 }
             },
         ) { results -> results.filter { it.second }.map { it.first }.toSet() }
+            .distinctUntilChanged()
     }
 
-    companion object {
-        fun Song.isPlayableOffline(downloadedPaths: Set<String>): Boolean = !mediaProvider.remote || path in downloadedPaths
-    }
+    private fun Song.isPlayableOffline(downloadedPaths: Set<String>): Boolean = !mediaProvider.remote || path in downloadedPaths
 }
