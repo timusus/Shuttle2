@@ -6,6 +6,8 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.ALL_MIGRATIONS
 import com.simplecityapps.shuttle.logging.Logger
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.TimeSource
 
 /** The database's file name, the same on every platform. */
@@ -32,21 +34,23 @@ class DatabaseProvider(
             .trackingIdentityChanges()
             .addCallback(OpenTiming(started))
             .build()
-            .also { logger.info { "Database: built in ${started.elapsedNow()}" } }
+            // build() only sets Room up; the file opens on the first query (OpenTiming logs that).
+            .also { logger.info { "Database: builder set up in ${started.elapsedNow()}" } }
     }
 
     /**
      * Logs when Room first opens the database (the file opened, its schema validated or migrated), which the first
-     * query waits for, timed from the build: the cold-start measurements read it (docs/performance/ios-startup.md).
+     * query waits for, timed from the build: the cold-start measurements read it (docs/performance/ios-startup.md). Once,
+     * whichever thread opens it first.
      */
+    @OptIn(ExperimentalAtomicApi::class)
     private class OpenTiming(
         private val built: TimeSource.Monotonic.ValueTimeMark
     ) : RoomDatabase.Callback() {
-        private var opened = false
+        private val opened = AtomicBoolean(false)
 
         override fun onOpen(connection: SQLiteConnection) {
-            if (opened) return
-            opened = true
+            if (!opened.compareAndSet(false, true)) return
             logger.info { "Database: opened ${built.elapsedNow()} after the build began" }
         }
     }

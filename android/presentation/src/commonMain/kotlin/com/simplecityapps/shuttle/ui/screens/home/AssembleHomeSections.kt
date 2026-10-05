@@ -7,6 +7,8 @@ import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.Inject
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -217,6 +219,7 @@ class LoadHomeSections @Inject constructor(
 ) {
     operator fun invoke(hasHistory: Boolean): Flow<List<HomeSection>> = channelFlow {
         val started = TimeSource.Monotonic.markNow()
+        val log = StartupLog.sections()
         val now = homeTime.clock.now()
         val timeZone = homeTime.timeZone()
         val candidates = MutableStateFlow(HomeCandidates(hasHistory))
@@ -227,7 +230,7 @@ class LoadHomeSections @Inject constructor(
             block: suspend () -> T,
             set: HomeCandidates.(T) -> HomeCandidates,
         ) = launch {
-            val loaded = timed(stage) { block() }
+            val loaded = timed(log, stage) { block() }
             candidates.update { it.set(loaded) }
         }
         load("Jump back in", { jumpBackIn(reads) }) { copy(jumpBackIn = it) }
@@ -242,38 +245,34 @@ class LoadHomeSections @Inject constructor(
         candidates.transformWhile { loaded ->
             val sections = assembleHomeSections(loaded, now, timeZone).map { section ->
                 if (section.id == HomeSectionId.JumpBackIn) {
-                    section.copy(progress = jumpBackInProgress ?: timed("Resume points") { progress(section.items) }.also { jumpBackInProgress = it })
+                    section.copy(progress = jumpBackInProgress ?: timed(log, "Resume points") { progress(section.items) }.also { jumpBackInProgress = it })
                 } else {
                     section
                 }
             }
             if (sections != last && (sections.isNotEmpty() || loaded.complete)) {
-                if (last == null) logger.info { "Home: first sections in ${started.elapsedNow()}" }
+                if (last == null) log { "Home: first sections in ${started.elapsedNow()}" }
                 last = sections
                 emit(sections)
             }
             !loaded.complete
         }.collect { send(it) }
-        logger.info { "Home: sections loaded in ${started.elapsedNow()}" }
+        log { "Home: sections loaded in ${started.elapsedNow()}" }
     }
 
-    /** Runs [block], logging how long the stage of the load it is took. */
+    /** Runs [block], logging to [log] how long the stage of the load it is took. */
     private suspend fun <T> timed(
+        log: StartupLog,
         stage: String,
         block: suspend () -> T,
     ): T {
         val started = TimeSource.Monotonic.markNow()
-        return block().also { logger.info { "Home: $stage loaded in ${started.elapsedNow()}" } }
+        return block().also { log { "Home: $stage loaded in ${started.elapsedNow()}" } }
     }
 
     private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> {
         val points = playHistoryRepository.resumePointsFor(items.map { it.playContext })
         return items.mapNotNull { item -> points[item.playContext]?.let { item.key to HomeItemProgress.of(it) } }.toMap()
-    }
-
-    private companion object {
-        /** In Release too: the cold-start measurements read Home's load (docs/performance/ios-startup.md). */
-        val logger = Logger.tagged("Startup")
     }
 }
 
@@ -303,16 +302,17 @@ class ObserveHomeSections @Inject constructor(
         val loads = visible.distinctUntilChanged()
             .flatMapLatest { visible -> if (visible) merge(flowOf(Unit), refreshes, importsCompleted(), libraryFilledOrEmptied()) else hourTurns() }
             .transformLatest {
+                val log = StartupLog.counts()
                 val counting = TimeSource.Monotonic.markNow()
                 val songCount = suggestionsRepository.songCount().first()
-                logger.info { "Home: songCount in ${counting.elapsedNow()}" }
+                log { "Home: songCount in ${counting.elapsedNow()}" }
                 if (songCount == 0) {
                     shown = false
                     emit(null)
                 } else {
                     val countingEvents = TimeSource.Monotonic.markNow()
                     val hasHistory = playHistoryRepository.eventCount().first() > 0
-                    logger.info { "Home: eventCount in ${countingEvents.elapsedNow()}" }
+                    log { "Home: eventCount in ${countingEvents.elapsedNow()}" }
                     val sections = loadHomeSections(hasHistory = hasHistory)
                     if (shown) emit(sections.last()) else emitAll(sections.onEach { shown = true })
                 }
@@ -332,8 +332,31 @@ class ObserveHomeSections @Inject constructor(
             delay((60 - now.minute).times(60).seconds - now.second.seconds)
         }
     }.distinctUntilChanged().drop(1).map { }
+}
 
-    private companion object {
-        val logger = Logger.tagged("Startup")
+/**
+ * Logs one Home load's timings under the Startup tag: at info for the process's first load, which the cold-start
+ * measurements read in Release too (docs/performance/ios-startup.md), and at debug for every load after it.
+ */
+internal fun interface StartupLog {
+    operator fun invoke(message: () -> String)
+
+    @OptIn(ExperimentalAtomicApi::class)
+    companion object {
+        private val logger = Logger.tagged("Startup")
+        private val countsLogged = AtomicBoolean(false)
+        private val sectionsLogged = AtomicBoolean(false)
+
+        /** For a load's song and event counts ([ObserveHomeSections]). */
+        fun counts(): StartupLog = firstOnce(countsLogged)
+
+        /** For a load's sections ([LoadHomeSections]). */
+        fun sections(): StartupLog = firstOnce(sectionsLogged)
+
+        private fun firstOnce(logged: AtomicBoolean): StartupLog = if (logged.compareAndSet(false, true)) {
+            StartupLog { logger.info(message = it) }
+        } else {
+            StartupLog { logger.debug(message = it) }
+        }
     }
 }
