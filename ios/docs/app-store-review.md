@@ -14,7 +14,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 3. Check the published `ffmpeg-n7.1.5-source` release on timusus/Shuttle2 is still up (the About link points at it, #610).
 4. App Store Connect > App Information: paste `en-AU/*.txt`, set the privacy policy URL, category
    Music, content rights and age rating from `asc-answers.md`.
-5. App Privacy: Data Not Collected, publish.
+5. App Privacy: the seven data types in `asc-answers.md` (#776; not "Data Not Collected"), publish.
 6. Version > Previews and Screenshots: upload `ios/store/screenshots/en-AU/{iphone-6.9,iphone-6.5,ipad-13}`
    once rendered from artwork we may show (#610 guideline 5.2 note).
 7. Version > App Review Information: paste the notes below with the placeholders filled;
@@ -59,8 +59,9 @@ user's Wi-Fi. Many Jellyfin, Emby and Plex servers are plain http on the LAN or 
 certificates, which is why App Transport Security allows arbitrary loads; the app only contacts the
 server the user entered.
 
-Privacy: the app collects no data. There is no analytics or crash reporting, no account with us, and
-server credentials stay in the device Keychain and go only to the user's server.
+Privacy: the app sends crash reports (Sentry) and anonymous usage analytics (PostHog), not linked to
+the user's identity and not used for tracking; both can be turned off in Settings > Privacy. There is no
+account with us, and server credentials stay in the device Keychain and go only to the user's server.
 
 Open source: playback uses FFmpeg (LGPL-2.1+ build, dynamically linked, unmodified frameworks) to
 decode formats such as FLAC. The FFmpeg licence notice is in Settings > About, and the matching
@@ -82,6 +83,7 @@ Contact: <owner email / phone as in ASC>.
 | No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |
 | Never rename the FFmpeg frameworks (#610) | do not touch `ios/scripts/build-ffmpeg.sh` naming |
 | Background modes: audio, plus fetch for library refresh and scrobbles (#771) | `ios/project.yml` `UIBackgroundModes: [audio, fetch]` |
-| Privacy manifest matches "Data Not Collected" | verified 2026-10-03, see `asc-answers.md` |
+| App Privacy answers match Sentry/PostHog (#776) | see `asc-answers.md` |
+| Built with release (GM) Xcode, not beta | App Review rejects beta-Xcode builds |
 | Paywall, trial and Restore Purchases (#609) | other worker; re-check the notes above once it lands |
 | Downloads on iOS | no download UI yet, so the listing does not mention downloads |
