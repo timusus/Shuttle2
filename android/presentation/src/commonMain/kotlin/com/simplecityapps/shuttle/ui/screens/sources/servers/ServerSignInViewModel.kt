@@ -10,7 +10,6 @@ import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.server.CustomHeader
-import com.simplecityapps.shuttle.server.ServerConnectionStore
 import com.simplecityapps.shuttle.server.ServerOrigin
 import com.simplecityapps.shuttle.server.displayFingerprint
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
@@ -148,7 +147,11 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val connectToAccountServer: ConnectToAccountServer,
     private val songDownloader: SongDownloader,
     serverDiscovery: ServerDiscovery,
-    private val serverConnections: ServerConnectionStore,
+    private val readServerHeaders: ReadServerHeaders,
+    private val prepareServerConnection: PrepareServerConnection,
+    private val trustServerCertificate: TrustServerCertificate,
+    private val rejectedServerCertificate: RejectedServerCertificate,
+    private val forgetServerConnection: ForgetServerConnection,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -171,7 +174,7 @@ class ServerSignInViewModel @AssistedInject constructor(
                 username = saved.username.orEmpty(),
                 password = saved.password.orEmpty(),
                 passwordRevealable = saved.password == null,
-                headers = saved.address?.let { serverConnections.connection(it).headers }.orEmpty(),
+                headers = saved.address?.let(readServerHeaders::invoke).orEmpty(),
             ).let { it.copy(showAdvanced = it.headers.isNotEmpty()) }
         },
     )
@@ -249,7 +252,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     /** Trusts the certificate [ServerSignInStep.UntrustedCertificate] showed, for its server alone, and signs in again. */
     fun onTrustCertificate() {
         val untrusted = step.value as? ServerSignInStep.UntrustedCertificate ?: return
-        serverConnections.trustCertificate(untrusted.origin, untrusted.fingerprint)
+        trustServerCertificate(untrusted.origin, untrusted.fingerprint)
         step.value = ServerSignInStep.Form
         retryAfterTrust?.invoke()
     }
@@ -432,8 +435,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         val origin = ServerOrigin.parse(address) ?: return null
         forgetUnusedConnections(inUse = origin)
         touchedOrigins += origin
-        serverConnections.setHeaders(origin, form.value.headers)
-        serverConnections.clearRejectedCertificate(origin)
+        prepareServerConnection(origin, form.value.headers)
         retryAfterTrust = retry
         return origin
     }
@@ -446,13 +448,13 @@ class ServerSignInViewModel @AssistedInject constructor(
     private fun forgetUnusedConnections(inUse: ServerOrigin? = null) {
         val saved = readServerLogin(type).address?.let(ServerOrigin::parse)
         val unused = touchedOrigins.filter { it != saved && it != inUse }
-        unused.forEach(serverConnections::forget)
+        unused.forEach { forgetServerConnection(it) }
         touchedOrigins -= unused.toSet()
     }
 
     /** The step a failed sign-in to [origin] shows: the certificate to trust when it refused one, else [message]. */
     private fun failedStep(origin: ServerOrigin?, message: String): ServerSignInStep {
-        val fingerprint = origin?.let(serverConnections::rejectedCertificate)
+        val fingerprint = origin?.let { rejectedServerCertificate(it) }
         return if (fingerprint != null) ServerSignInStep.UntrustedCertificate(origin, fingerprint, message) else ServerSignInStep.Failed(message)
     }
 

@@ -81,7 +81,11 @@ class ServerSignInViewModelTest {
             ConnectToAccountServer(pins, monetisation, classifyFailure),
             songDownloader,
             discovery,
-            connections,
+            ReadServerHeaders(connections),
+            PrepareServerConnection(connections),
+            TrustServerCertificate(connections),
+            RejectedServerCertificate(connections),
+            ForgetServerConnection(connections),
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             address?.let(viewModel::onAddressChange)
