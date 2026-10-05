@@ -134,6 +134,19 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 - [ ] An app on the old session library (the same controller test app in its MediaControllerCompat mode) plays a song by its media id and plays a search, and an empty search resumes the queue (RS-46, RS-61; Robolectric can't route a platform MediaController to the session).
 - [ ] A 10,000-song queue: the notification and lock screen stay responsive when the queue changes (docs/architecture/media3-playback-design.md, "10k queue spike").
 
+## Android 17 background-audio hardening (#571), needs an API 37 image and targetSdk 37
+
+At targetSdk 37, playback, audio focus requests and volume changes from the background fail unless a foreground service with while-in-use capability (`mediaPlayback`) is running. Run these on an API 37 emulator once targetSdk is bumped (#527 slice 5); until then they can only be tried with the app-compat flag, if one exists for it.
+
+- [ ] Play, press Home, wait for the notification to settle, then play/pause and skip from the notification and the lock screen: playback follows each command.
+- [ ] Widget buttons (play/pause, next, previous, shuffle, repeat) with the app swiped away and no notification showing: each starts playback or does its action, with no crash.
+- [ ] Launcher shortcuts (toggle playback, shuffle all) and a voice search ("play <artist>"), app not running: playback starts and the notification appears.
+- [ ] Headset or Bluetooth play button after a reboot, with no app running: the saved queue resumes.
+- [ ] Android Auto (or the Desktop Head Unit), app not running: browsing and tapping a song plays it.
+- [ ] Call during playback, hang up, with the app in the background: playback resumes if it was playing, with the notification back. If it doesn't, the play held by `CallHold` ran with no foreground service running; the fix is to start the service before the held play runs.
+- [ ] Pause for longer than the notification lingers (service leaves the foreground), then play from a Bluetooth device while the app is in the background: it plays or fails with a logged message, never a crash.
+- [ ] Sleep timer ending and a Cast handover with the screen off: no crash and no stuck notification.
+
 ## Audio focus (#345 step 3)
 
 ExoPlayer handles audio focus now, in place of S2's own helper, and keeps focus while paused; `CallHold` holds
