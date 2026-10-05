@@ -4,7 +4,6 @@
 # queue sheet (opened by taps, support/maestro/nav/open-queue.yaml) shows One, Three, Four, Five.
 source "$(dirname "$0")/_lib.sh"
 
-device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
 start_playback
 s2 REMOVE_QUEUE_ITEM --ei position 1 >/dev/null
 s2 NEXT >/dev/null
@@ -24,9 +23,7 @@ echo "  restored paused on Playback Three at ${after} ms (${before} ms before th
 screenshot f-restored-mini-player
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
-MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-    "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-    -e TITLE="Playback Three" \
+maestro_flow -e TITLE="Playback Three" \
     "${CHECKS_ROOT}/support/maestro/nav/open-queue.yaml" || fail "the Maestro flow failed (output in ${out})"
 shown="$(queue_titles)"
 echo "  restored queue: ${shown}"

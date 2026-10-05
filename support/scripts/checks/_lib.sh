@@ -84,6 +84,41 @@ adb_retry() {
     return "$status"
 }
 
+# maestro_flow [maestro test args...] <flow.yaml>: runs `maestro --device <lane> test --test-output-dir
+# $MAESTRO_OUT <args>` (#387). Maestro talks to the lane's direct `localhost:<port>` adb connection
+# on the default adb server, which can drop mid-run without adb_retry noticing (checks mostly use
+# the lane's own adb server). So: if that device isn't in the `device` state first, reconnect the
+# lane via `remote-emu.sh reconnect`; and if the run fails with Maestro's "not connected" error,
+# reconnect and run it once more. Any other failure returns Maestro's status untouched. Honours
+# MAESTRO_DEVICE / MAESTRO_OUT / MAESTRO.
+_maestro_device_state() {
+    ( unset ANDROID_ADB_SERVER_PORT; _run_adb -s "$1" get-state 2>/dev/null ) || true
+}
+
+maestro_flow() {
+    local device out maestro_bin log status=0
+    device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
+    out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
+    maestro_bin="${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}"
+    mkdir -p "$out"
+    if [ "$(_maestro_device_state "$device")" != "device" ]; then
+        echo "maestro-flow: ${device} not connected, reconnecting the lane ..." >&2
+        "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reconnect >&2 || true
+    fi
+    log="$(mktemp)"
+    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+        "$maestro_bin" --device "$device" test --test-output-dir "$out" "$@" 2>&1 | tee "$log" || status="${PIPESTATUS[0]}"
+    if [ "$status" -ne 0 ] && grep -qi 'was requested, but it is not connected' "$log"; then
+        echo "maestro-flow: ${device} dropped mid-run, reconnecting the lane and retrying once ..." >&2
+        "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reconnect >&2 || true
+        status=0
+        MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+            "$maestro_bin" --device "$device" test --test-output-dir "$out" "$@" || status=$?
+    fi
+    rm -f "$log"
+    return "$status"
+}
+
 # The field of the current DUMP_STATE, as JSON renders it (strings unquoted, null as None).
 state() { s2 DUMP_STATE | python3 -c 'import json,sys; print(json.load(sys.stdin)[sys.argv[1]])' "$1"; }
 
@@ -150,13 +185,8 @@ setup_taglib_provider() {
     [ -x "$maestro_bin" ] || fail "maestro not found at '$maestro_bin' (tried \$MAESTRO, PATH and $HOME/.maestro/bin/maestro); install it: brew install mobile-dev-inc/tap/maestro (the homebrew-cask 'maestro' is an unrelated app)"
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
     "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" taglib --skip-onboarding --s2-scanner >/dev/null
-    local device out
-    device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
-    out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
-    mkdir -p "$out"
-    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "$maestro_bin" --device "$device" test --test-output-dir "$out" \
-        -e FOLDER_NAME=taglib-seed \
+    local out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
+    maestro_flow -e FOLDER_NAME=taglib-seed \
         "${CHECKS_ROOT}/support/maestro/nav/setup-taglib-provider.yaml" \
         || fail "adding the Shuttle/TagLib provider failed (output in ${out})"
     # The Maestro flow's own "Song import complete" wait already confirms the UI-visible import;

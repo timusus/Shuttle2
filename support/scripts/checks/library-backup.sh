@@ -11,9 +11,8 @@ source "$(dirname "$0")/_lib.sh"
 
 SHOTS="${SHOTS:-${CHECKS_ROOT}/tmp/maestro/library-backup-shots}"
 mkdir -p "$SHOTS"
-device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
-out="$SHOTS"  # takeScreenshot may only write inside the test output dir
-mkdir -p "$out"
+export MAESTRO_OUT="$SHOTS"  # takeScreenshot may only write inside the test output dir
+out="$MAESTRO_OUT"
 BACKUP_FILE=/sdcard/Download/shuttle-library-backup.json
 GARBAGE_FILE=/sdcard/Download/garbage.json
 trap 'adb shell cmd uimode night no >/dev/null 2>&1 || true' EXIT
@@ -21,9 +20,7 @@ trap 'adb shell cmd uimode night no >/dev/null 2>&1 || true' EXIT
 # Runs a flow from support/maestro/settings with the shots dir; extra args are -e KEY=VALUE pairs.
 run_flow() {
     local flow="$1"; shift
-    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-        "$@" "${CHECKS_ROOT}/support/maestro/settings/${flow}.yaml" \
+    maestro_flow "$@" "${CHECKS_ROOT}/support/maestro/settings/${flow}.yaml" \
         || fail "Maestro flow ${flow} failed (output in ${out})"
 }
 

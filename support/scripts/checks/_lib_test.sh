@@ -14,6 +14,7 @@ trap 'pkill -f "sleep $$\$" 2>/dev/null || true; rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/support/scripts/checks" "$TMP/bin" "$TMP/fake-adb"
 cp "$REAL_ROOT/support/scripts/checks/_lib.sh" "$TMP/support/scripts/checks/_lib.sh"
 cp "$REAL_ROOT/support/scripts/checks/_timeout_fallback.sh" "$TMP/support/scripts/checks/_timeout_fallback.sh"
+cp "$REAL_ROOT/support/scripts/_adb-path.sh" "$TMP/support/scripts/_adb-path.sh"
 
 cat >"$TMP/support/scripts/remote-emu.sh" <<'EOF'
 #!/usr/bin/env bash
@@ -112,6 +113,56 @@ status=0
 # shellcheck disable=SC2034 # consumed by _run_adb, sourced from _lib.sh above
 ( _ADB_TIMEOUT_BIN=""; ADB_CALL_TIMEOUT=1; _run_adb shell true >"$TMP/t5.out" 2>"$TMP/t5.err" ) || status=$?
 check "hung call under the fallback times out with 124" "$([ "$status" -eq 124 ] && echo 1 || echo 0)"
+
+# Tests 6-9 (#387): maestro_flow. A fake `maestro` (MAESTRO) plays back $FAKE_MAESTRO_DIR/run<N>.{out,exit}
+# and counts runs; the fake adb answers the `get-state` pre-check, the fake remote-emu.sh counts reconnects.
+cat >"$TMP/bin/maestro" <<'EOF'
+#!/usr/bin/env bash
+dir="$FAKE_MAESTRO_DIR"
+n=$(( $(cat "$dir/count" 2>/dev/null || echo 0) + 1 ))
+echo "$n" >"$dir/count"
+[ -f "$dir/run${n}.out" ] && cat "$dir/run${n}.out"
+exit "$(cat "$dir/run${n}.exit" 2>/dev/null || echo 0)"
+EOF
+chmod +x "$TMP/bin/maestro"
+export MAESTRO="$TMP/bin/maestro" MAESTRO_DEVICE="localhost:15601" MAESTRO_OUT="$TMP/maestro-out"
+NOT_CONNECTED='Device localhost:15601 was requested, but it is not connected.'
+
+setup_maestro_case() {
+    FAKE_ADB_DIR="$TMP/fake-adb/$1"; FAKE_MAESTRO_DIR="$TMP/fake-maestro/$1"; export FAKE_ADB_DIR FAKE_MAESTRO_DIR
+    reset_fake_adb; rm -rf "$FAKE_MAESTRO_DIR"; mkdir -p "$FAKE_MAESTRO_DIR"
+}
+maestro_runs() { cat "$FAKE_MAESTRO_DIR/count" 2>/dev/null || echo 0; }
+reconnects() { grep -c 'fake-reconnect: called' "$1" || true; }
+
+# Test 6: device connected, flow passes -- no reconnect, one run.
+setup_maestro_case t6
+printf 'device\n' >"$FAKE_ADB_DIR/call1.out"
+status=0; maestro_flow flow.yaml >"$TMP/t6.out" 2>"$TMP/t6.err" || status=$?
+check "connected device: flow passes, no reconnect, one run" "$([ "$status" -eq 0 ] && [ "$(reconnects "$TMP/t6.err")" -eq 0 ] && [ "$(maestro_runs)" -eq 1 ] && echo 1 || echo 0)"
+
+# Test 7: the localhost device is gone before the run -- reconnect first, then run once.
+setup_maestro_case t7
+printf "error: device 'localhost:15601' not found\n" >"$FAKE_ADB_DIR/call1.err"
+echo 1 >"$FAKE_ADB_DIR/call1.exit"
+status=0; maestro_flow flow.yaml >"$TMP/t7.out" 2>"$TMP/t7.err" || status=$?
+check "disconnected device: reconnects before the run" "$([ "$status" -eq 0 ] && [ "$(reconnects "$TMP/t7.err")" -eq 1 ] && [ "$(maestro_runs)" -eq 1 ] && echo 1 || echo 0)"
+
+# Test 8: the connection drops mid-run -- Maestro's 'not connected' failure reconnects and retries once.
+setup_maestro_case t8
+printf 'device\n' >"$FAKE_ADB_DIR/call1.out"
+printf '%s\n' "$NOT_CONNECTED" >"$FAKE_MAESTRO_DIR/run1.out"
+echo 1 >"$FAKE_MAESTRO_DIR/run1.exit"
+status=0; maestro_flow flow.yaml >"$TMP/t8.out" 2>"$TMP/t8.err" || status=$?
+check "dropped mid-run: reconnects and the retry passes" "$([ "$status" -eq 0 ] && [ "$(reconnects "$TMP/t8.err")" -eq 1 ] && [ "$(maestro_runs)" -eq 2 ] && echo 1 || echo 0)"
+
+# Test 9: a real flow failure is not retried and keeps Maestro's exit status.
+setup_maestro_case t9
+printf 'device\n' >"$FAKE_ADB_DIR/call1.out"
+printf 'Assertion is false: "Songs" is visible\n' >"$FAKE_MAESTRO_DIR/run1.out"
+echo 3 >"$FAKE_MAESTRO_DIR/run1.exit"
+status=0; maestro_flow flow.yaml >"$TMP/t9.out" 2>"$TMP/t9.err" || status=$?
+check "flow failure: no retry, status kept" "$([ "$status" -eq 3 ] && [ "$(reconnects "$TMP/t9.err")" -eq 0 ] && [ "$(maestro_runs)" -eq 1 ] && echo 1 || echo 0)"
 
 echo "-- ${pass_count} passed, ${fail_count} failed --"
 [ "$fail_count" -eq 0 ]

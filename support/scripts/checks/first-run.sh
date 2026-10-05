@@ -8,7 +8,6 @@
 # fixture), so it can run in any order.
 source "$(dirname "$0")/_lib.sh"
 
-device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
 
@@ -18,9 +17,7 @@ new_user() {
 }
 
 maestro_test() {
-    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-        "${CHECKS_ROOT}/support/maestro/$1" || fail "$1 failed (output in ${out})"
+    maestro_flow "${CHECKS_ROOT}/support/maestro/$1" || fail "$1 failed (output in ${out})"
 }
 
 trap 'restore_playback_fixture >/dev/null 2>&1' EXIT

@@ -12,13 +12,7 @@
 # and the queue auto-advancing on its own (which is fine -- undisturbed playback, not a bug).
 source "$(dirname "$0")/_lib.sh"
 
-device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
-mkdir -p "$out"
-maestro_run() {
-    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" "$1"
-}
 
 setup_taglib_provider
 trap restore_playback_fixture EXIT
@@ -34,7 +28,7 @@ before="$(state positionMs)"
 # The setup/PLAY_ALL/sleep above is enough idle time for the display to blank (see wake_screen);
 # without this the flow's first tap lands on a dark screen.
 wake_screen
-maestro_run "${CHECKS_ROOT}/support/maestro/tag-edit-playing.yaml" \
+maestro_flow "${CHECKS_ROOT}/support/maestro/tag-edit-playing.yaml" \
     || fail "editing the playing song's title failed (output in ${out})"
 
 wait_for 10 "s['state'] == 'Playing' and s['title'] == 'Taglib One (edited)' and s['queuePosition'] == 0"
@@ -45,7 +39,7 @@ assert_progressing
 adb_retry shell dumpsys notification --noredact | grep -q "android.title=String (Taglib One (edited))" \
     || fail "the media notification doesn't show the edited title"
 
-maestro_run "${CHECKS_ROOT}/support/maestro/tag-edit-not-playing.yaml" \
+maestro_flow "${CHECKS_ROOT}/support/maestro/tag-edit-not-playing.yaml" \
     || fail "editing a queued (not playing) song's title failed (output in ${out})"
 
 # queue_titles reads the queue sheet via a raw uiautomator dump (support/scripts/remote-emu.sh

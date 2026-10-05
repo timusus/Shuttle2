@@ -5,8 +5,6 @@
 # shuffle and repeat set in the app show on the notification's buttons.
 source "$(dirname "$0")/_lib.sh"
 
-emu="${CHECKS_ROOT}/support/scripts/remote-emu.sh"
-device="${MAESTRO_DEVICE:-$("$emu" serial)}"
 trap 'adb_retry shell cmd statusbar collapse >/dev/null 2>&1 || true' EXIT
 
 start_playback
@@ -19,9 +17,7 @@ adb_retry shell cmd statusbar expand-notifications >/dev/null
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
 run_flow() {
-    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-        "${CHECKS_ROOT}/support/maestro/$1.yaml" || fail "the Maestro flow $1 failed (output in ${out})"
+    maestro_flow "${CHECKS_ROOT}/support/maestro/$1.yaml" || fail "the Maestro flow $1 failed (output in ${out})"
 }
 run_flow notification-controls
 wait_for 5 "s['state'] == 'Paused' and s['title'] == 'Playback Two'"
