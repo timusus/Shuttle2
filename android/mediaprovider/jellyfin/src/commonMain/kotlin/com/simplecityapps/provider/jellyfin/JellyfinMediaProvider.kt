@@ -151,7 +151,8 @@ class JellyfinMediaProvider(
 
     /**
      * A playlist per one of [playlistItems], holding the library songs its items refer to, in playlist order. A playlist whose
-     * items fail to load is listed as [unread][MediaImporter.PlaylistListing.unread], so the one stored from it is left as it is.
+     * items fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
+     * so the one stored from it is never deleted; the songs a short one did return are still added to it.
      */
     private suspend fun findSongsForPlaylists(
         address: String,
@@ -171,7 +172,8 @@ class JellyfinMediaProvider(
                         songs = event.result.mapNotNull { item -> existingSongs.firstOrNull { it.externalId == item.id } },
                         externalId = playlistItem.id
                     )
-            } else {
+            }
+            if (event !is FlowEvent.Success || !event.complete) {
                 unread += playlistItem.id
             }
         }

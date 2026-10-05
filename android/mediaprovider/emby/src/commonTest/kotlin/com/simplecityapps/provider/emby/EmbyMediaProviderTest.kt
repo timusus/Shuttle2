@@ -200,7 +200,7 @@ class EmbyMediaProviderTest {
     }
 
     @Test
-    fun `only the server's music playlists are listed`() {
+    fun `every playlist is listed - whatever its media type`() {
         signedIn()
         server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
         server.respond("/Playlists/401/Items", "empty.json")
@@ -208,7 +208,23 @@ class EmbyMediaProviderTest {
 
         syncPlaylists(emptyList())
 
-        server.requestsTo(ITEMS).single().url.parameters["MediaTypes"] shouldBe "Audio"
+        server.requestsTo(ITEMS).single().url.parameters["MediaTypes"] shouldBe null
+    }
+
+    @Test
+    fun `a playlist whose items come to fewer than the server counts is listed as unread - with the songs it did return`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/401/Items", "playlist_items_short.json")
+        server.respond("/Playlists/402/Items", "playlist_items_none.json")
+        val library = sync()
+
+        val listing = syncListing(library)
+
+        listing.result.unread shouldBe setOf("401", "402")
+        listing.result.playlists.map { it.externalId to it.songs.map { song -> song.externalId } } shouldContainExactly
+            listOf("401" to listOf("103"), "402" to emptyList())
     }
 
     @Test

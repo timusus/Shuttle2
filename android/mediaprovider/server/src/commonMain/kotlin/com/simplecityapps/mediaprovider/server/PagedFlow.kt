@@ -84,10 +84,10 @@ private const val CONCURRENT_PAGES = 3
  * 429) waits and tries again, any other failure ends the listing at once.
  *
  * With a [key], an item already received is dropped (a server whose listing shifts mid-paging repeats items across
- * pages), and when the server gave a total and the result falls short of it, the listing is emitted with how many it's
- * [missing][FlowEvent.Success.missing], so an import doesn't delete against it: a server's total can count items it never
- * returns (Jellyfin's counts rows it can't read), so a short listing is still a listing, just not a complete one. A
- * listing that legitimately repeats an item (a playlist) passes no key and gets neither.
+ * pages); a listing that legitimately repeats an item (a playlist) passes no key. When the server gave a total and the
+ * result falls short of it, the listing is emitted with how many it's [missing][FlowEvent.Success.missing], so an import
+ * doesn't delete against it: a server's total can count items it never returns (Jellyfin's counts rows it can't read),
+ * so a short listing is still a listing, just not a complete one.
  */
 fun <T, R> pagedFlow(
     pageSize: Int = DEFAULT_PAGE_SIZE,
@@ -163,7 +163,7 @@ fun <T, R> pagedFlow(
     }
     if (failure != null) return@flow fail(failure)
 
-    val missing = if (key != null) (reportedTotal - items.size).coerceAtLeast(0) else 0
+    val missing = (reportedTotal - items.size).coerceAtLeast(0)
     if (missing > 0) {
         logger.warn { "The server reported $reportedTotal items but the listing came to ${items.size}; treating it as incomplete" }
     }

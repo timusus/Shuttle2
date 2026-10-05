@@ -223,7 +223,7 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `only the server's music playlists are listed`() {
+    fun `every playlist is listed - whatever its media type`() {
         signedIn()
         server.respond(ITEMS, "playlists.json", query = mapOf("includeItemTypes" to "Playlist"))
         server.respond("/Playlists/playlist-1/Items", "empty.json")
@@ -231,7 +231,23 @@ class JellyfinMediaProviderTest {
 
         syncPlaylists(emptyList())
 
-        server.requestsTo(ITEMS).single().url.parameters["mediaTypes"] shouldBe "Audio"
+        server.requestsTo(ITEMS).single().url.parameters["mediaTypes"] shouldBe null
+    }
+
+    @Test
+    fun `a playlist whose items come to fewer than the server counts is listed as unread - with the songs it did return`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+        server.respond(ITEMS, "playlists.json", query = mapOf("includeItemTypes" to "Playlist"))
+        server.respond("/Playlists/playlist-1/Items", "playlist_items_short.json")
+        server.respond("/Playlists/playlist-2/Items", "playlist_items_none.json")
+        val library = sync()
+
+        val listing = syncListing(library)
+
+        listing.result.unread shouldBe setOf("playlist-1", "playlist-2")
+        listing.result.playlists.map { it.externalId to it.songs.map { song -> song.externalId } } shouldContainExactly
+            listOf("playlist-1" to listOf("song-3"), "playlist-2" to emptyList())
     }
 
     @Test

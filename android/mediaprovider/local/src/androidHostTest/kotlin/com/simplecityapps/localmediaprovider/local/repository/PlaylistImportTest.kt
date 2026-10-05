@@ -154,17 +154,28 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a playlist emptied on the server is deleted - and an empty one is never created`() = runBlocking<Unit> {
+    fun `a playlist that matches no songs is never created`() = runBlocking<Unit> {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
-        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to emptyList())
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(D))
+
         importer.import()
+
         importedPlaylists() shouldBe mapOf(PLAYLIST_ID to listOf(A, B))
+    }
 
-        provider.playlists = mapOf(PLAYLIST_ID to emptyList(), OTHER_PLAYLIST_ID to emptyList())
+    @Test
+    fun `a listed playlist that matches no songs but still holds some is kept`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        provider.songPaths = listOf(A, B, C)
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
         importer.import()
 
-        importedPlaylists() shouldBe emptyMap()
+        // Emptied on the server, or left listing only songs the library doesn't hold: the songs it holds stay
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(D))
+        importer.import()
+
+        importedPlaylists() shouldBe mapOf(PLAYLIST_ID to listOf(A, B))
     }
 
     @Test
@@ -180,6 +191,35 @@ class PlaylistImportTest {
         importer.import()
 
         importedPlaylists() shouldBe mapOf(OTHER_PLAYLIST_ID to listOf(C))
+    }
+
+    @Test
+    fun `a full import whose song import fails deletes no playlists`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        provider.songPaths = listOf(A, B, C)
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
+        importer.import()
+
+        // The listing still reads, but against a song import that failed: every playlist would match nothing
+        provider.songsFail = true
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(D))
+        runCatching { importer.import() }
+
+        importedPlaylists() shouldBe mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C))
+    }
+
+    @Test
+    fun `a full import of a server none of whose songs are in the library deletes no playlists`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        // Imported before, say, signing in again (#879), whose songs aren't in the library yet
+        playlistRepository.createPlaylist(PLAYLIST_NAME, MediaProviderType.Jellyfin, songs = null, externalId = PLAYLIST_ID)
+        playlistRepository.createPlaylist(PLAYLIST_NAME, MediaProviderType.Jellyfin, songs = null, externalId = OTHER_PLAYLIST_ID)
+        provider.songPaths = emptyList()
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A))
+
+        importer.import()
+
+        importedPlaylists() shouldBe mapOf(PLAYLIST_ID to emptyList(), OTHER_PLAYLIST_ID to emptyList())
     }
 
     @Test
@@ -272,6 +312,7 @@ class PlaylistImportTest {
     /**
      * A provider that finds a song at each of [songPaths] and lists [playlists], each the paths of its songs by its id, those
      * whose songs it couldn't read as [unread], coming [missing] short of its total; or fails to list them if [listingFails].
+     * Its song import fails if [songsFail].
      */
     private class FakeProvider(override val type: MediaProviderType = MediaProviderType.Shuttle) : MediaProvider {
         @Volatile var songPaths: List<String> = emptyList()
@@ -284,7 +325,11 @@ class PlaylistImportTest {
 
         @Volatile var listingFails: Boolean = false
 
-        override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flowOf(FlowEvent.Success(songPaths.map { path -> song(path, type) }))
+        @Volatile var songsFail: Boolean = false
+
+        override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flowOf(
+            if (songsFail) FlowEvent.Failure("The server didn't answer") else FlowEvent.Success(songPaths.map { path -> song(path, type) })
+        )
 
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
             if (listingFails) {

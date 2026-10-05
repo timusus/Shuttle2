@@ -83,9 +83,9 @@ abstract class PlaylistDataDao {
     /**
      * Makes the playlists [mediaProviderType] imported match its server's listing, as one transaction: stores each of
      * [playlists] that holds songs as [storeImported] does, adding the songs it doesn't hold yet, then deletes each playlist
-     * imported from a source the listing names that matched no songs or holds none, and, if [deleteUnlisted], each one
-     * imported from a source it doesn't name. One imported from an [unread] source, whose songs the listing couldn't read,
-     * is left as it is.
+     * imported from a source that, after that, holds no songs, and, if [deleteUnlisted], each one imported from a source the
+     * listing doesn't name. One that still holds songs, though its source matched none in the library (songs added in S2,
+     * say), stays. One imported from an [unread] source, whose songs the listing couldn't read in full, is never deleted.
      */
     @Transaction
     open suspend fun reconcileImported(
@@ -99,13 +99,13 @@ abstract class PlaylistDataDao {
                 storeImported(playlistData, songIds, replaceSongs = false)
             }
         }
-        val listedSongIds = playlists.associate { (playlistData, songIds) -> playlistData.externalId to songIds }
+        val listed = playlists.mapTo(HashSet()) { (playlistData, _) -> playlistData.externalId }
         getImportedPlaylistData(mediaProviderType).forEach { stored ->
             val gone =
                 when (stored.externalId) {
                     in unread -> false
-                    in listedSongIds -> listedSongIds.getValue(stored.externalId).isEmpty() || getSongIds(stored.id).isEmpty()
-                    else -> deleteUnlisted
+                    in listed -> getSongIds(stored.id).isEmpty()
+                    else -> deleteUnlisted || getSongIds(stored.id).isEmpty()
                 }
             if (gone) {
                 delete(stored.id)

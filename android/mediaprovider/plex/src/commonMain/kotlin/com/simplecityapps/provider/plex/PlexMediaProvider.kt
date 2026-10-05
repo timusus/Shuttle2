@@ -105,7 +105,8 @@ class PlexMediaProvider(
 
     /**
      * A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items
-     * fail to load is listed as [unread][MediaImporter.PlaylistListing.unread], so the one stored from it is left as it is.
+     * fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
+     * so the one stored from it is never deleted; the songs a short one did return are still added to it.
      */
     private suspend fun findSongsForPlaylists(
         address: String,
@@ -126,7 +127,8 @@ class PlexMediaProvider(
                         songs = event.result.mapNotNull { item -> songsByPart[item.media.firstOrNull()?.parts?.firstOrNull()?.key] },
                         externalId = ratingKey
                     )
-            } else {
+            }
+            if (event !is FlowEvent.Success || !event.complete) {
                 unread += ratingKey
             }
         }

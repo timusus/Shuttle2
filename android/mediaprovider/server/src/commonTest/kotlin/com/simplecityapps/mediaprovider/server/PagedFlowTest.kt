@@ -165,11 +165,23 @@ class PagedFlowTest {
     }
 
     @Test
-    fun `a listing without a key isn't missing anything - whatever its total`() = runTest {
-        val listing = pagedFlow<Int>(pageSize = 4) { _, _ -> NetworkResult.Success(Page(listOf(0, 1), totalCount = 2)) }
+    fun `a listing without a key keeps its repeats - and isn't missing them`() = runTest {
+        val listing = pagedFlow<Int>(pageSize = 4) { _, _ -> NetworkResult.Success(Page(listOf(0, 0), totalCount = 2)) }
             .toList().last() as FlowEvent.Success
 
+        listing.result shouldBe listOf(0, 0)
         listing.missing shouldBe 0
+    }
+
+    @Test
+    fun `a listing without a key that falls short of its total is missing what it didn't return`() = runTest {
+        val short = pagedFlow<Int>(pageSize = 4) { _, _ -> NetworkResult.Success(Page(listOf(0), totalCount = 3)) }
+            .toList().last() as FlowEvent.Success
+        val empty = pagedFlow<Int>(pageSize = 4) { _, _ -> NetworkResult.Success(Page(emptyList(), totalCount = 3)) }
+            .toList().last() as FlowEvent.Success
+
+        short.missing shouldBe 2
+        empty.missing shouldBe 3
     }
 
     @Test

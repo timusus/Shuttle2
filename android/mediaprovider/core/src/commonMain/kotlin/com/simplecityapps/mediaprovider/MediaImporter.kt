@@ -354,7 +354,7 @@ class MediaImporter(
                 }
             }
             if (playlistsDue(plan, stored)) {
-                importPlaylists(mediaProvider, timings).collect { event ->
+                importPlaylists(mediaProvider, timings, songsStored = stored != null).collect { event ->
                     if (event is FlowEvent.Failure) logger.warn { "$type playlist import failed: ${event.message}" }
                 }
             }
@@ -580,9 +580,23 @@ class MediaImporter(
         val mediaProviderType: MediaProviderType
     )
 
-    private fun importPlaylists(mediaProvider: MediaProvider, timings: ImportTimings): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
+    /**
+     * Fetches and stores [mediaProvider]'s playlists. A remote server's are reconciled with its listing, deleting the stale
+     * ones, only when this pass stored its songs ([songsStored]) and the library holds some: against a song import that
+     * failed, or a library that holds none of its songs yet, every playlist would match nothing and be deleted. Otherwise
+     * the playlists that hold songs are stored and nothing is deleted.
+     */
+    private fun importPlaylists(
+        mediaProvider: MediaProvider,
+        timings: ImportTimings,
+        songsStored: Boolean
+    ): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
         // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
         val existingSongs = songRepository.loadProviderSongs(mediaProvider.type)
+        val reconcile = mediaProvider.type.remote && songsStored && existingSongs.isNotEmpty()
+        if (mediaProvider.type.remote && !reconcile) {
+            logger.info { "${mediaProvider.type} playlists stored without reconciling: songs stored $songsStored, library songs ${existingSongs.size}" }
+        }
 
         val findPlaylistsMark = TimeSource.Monotonic.markNow()
         mediaProvider.findPlaylists(existingSongs).collect { event ->
@@ -592,7 +606,7 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Success -> {
-                    if (mediaProvider.type.remote) {
+                    if (reconcile) {
                         playlistStore.reconcilePlaylists(mediaProvider.type, event.result, listingComplete = event.complete)
                     } else {
                         event.result.playlists.forEach { playlistUpdateData ->
@@ -624,8 +638,8 @@ class MediaImporter(
 
     /**
      * The playlists a provider found: [playlists], each with the songs of its source, and [unread], the [PlaylistUpdateData.externalId]s
-     * of those it listed but couldn't read the songs of. A playlist stored from an [unread] source is left as it is, never
-     * taken as gone from it.
+     * of those it listed but couldn't read all the songs of (one it read in part is in [playlists] too, so what it read is
+     * added). A playlist stored from an [unread] source is never deleted, never taken as gone from it.
      */
     data class PlaylistListing(
         val playlists: List<PlaylistUpdateData>,
