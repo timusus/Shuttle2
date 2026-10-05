@@ -7,7 +7,7 @@ This audit asks how close Shuttle Music is to being the go-to client for Jellyfi
 - **Jellyfin, Android (about 55%).**
   - **Sign-in:** Quick Connect works (`JellyfinQuickConnectAuthentication.kt`).
   - **Song sync:** brings multiple artists and genres per track and MusicBrainz ids (`JellyfinMediaProvider.kt:166-214`).
-  - **Playback:** direct play, or a transcode to HLS AAC with separate bitrate caps for metered and unmetered networks (`StreamProfile.kt:26`, `StreamingBitrateCap.kt`).
+  - **Playback:** direct play, or a transcode to HLS AAC with separate bitrate caps for metered and unmetered networks (`StreamProfile.kt:26`, `StreamingPolicy.kt`).
   - **Play reporting:** start, progress and stop are sent, and missed reports are replayed later (`PlaybackReportSender.kt:4-15`).
   - **Gaps:** sync only flows from server to app, it goes stale, and no user data comes down.
 - **Emby, Android:** the same as Jellyfin, minus Quick Connect and Emby Connect.

@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -48,7 +48,7 @@ class PlexMediaInfoProviderTest {
 
     private val streamUrls = PlexStreamUrlProvider(
         authenticationManager,
-        StreamingBitrateCap(streamingSettings) { metered },
+        StreamingPolicy(streamingSettings) { metered },
         StreamProfile.Android,
         TranscodeService(createHttpClient(FixtureServer { error("not called") }.engine))
     )

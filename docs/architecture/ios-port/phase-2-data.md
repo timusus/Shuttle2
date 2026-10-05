@@ -237,7 +237,7 @@ The Room conversion (§1), preferences (§2) and logging (§3) landed first. The
 
 **`:android:mediaprovider:core` is `s2.kmp-library`.** In commonMain: `MediaProvider`, `MediaImporter`,
 `FlowEvent`/`MessageProgress`, `M3uParser` (it now takes the file's text), `M3uWriter`, `SongDiff`,
-`ImportedPlaylistStore`, `RemoteArtworkProvider`, `PlaybackReporter`, `ClientIdentity`, `StreamingBitrateCap`,
+`ImportedPlaylistStore`, `RemoteArtworkProvider`, `PlaybackReporter`, `ClientIdentity`, `StreamingPolicy`,
 `LibrarySettings`, `ImportFrequency` and library search. The JVM-only APIs they used have KMP replacements:
 - `kotlin.concurrent.atomics` replaces `java.util.concurrent.atomic`.
 - `kotlin.uuid.Uuid` replaces `java.util.UUID`.

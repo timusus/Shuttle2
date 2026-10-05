@@ -2,15 +2,18 @@ package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 
-/** A Jellyfin song's authenticated stream URL, direct play where the player decodes the file, else a capped transcode, and its download URL. */
+/**
+ * A Jellyfin song's authenticated stream URL, direct play where the player decodes the file, else a capped transcode in the
+ * chosen codec, and its download URL: the original, or a transcode at the download cap when the song is over it.
+ */
 @Inject
 class JellyfinStreamUrlProvider(
     private val authenticationManager: JellyfinAuthenticationManager,
-    private val streamingBitrateCap: StreamingBitrateCap
+    private val streamingPolicy: StreamingPolicy
 ) : StreamUrlProvider {
     override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
@@ -22,17 +25,32 @@ class JellyfinStreamUrlProvider(
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
         return authenticationManager.buildJellyfinPath(
-            itemId = song.path.substringAfterLast('/'),
+            itemId = song.itemId(),
             authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps(),
-            startPositionMs = startPositionMs
+            maxBitrateKbps = streamingPolicy.maxBitrateKbps(),
+            startPositionMs = startPositionMs,
+            format = streamingPolicy.transcodeFormat()
         ) ?: throw IllegalStateException("Failed to build jellyfin path")
     }
 
-    /** The original file ([JellyfinAuthenticationManager.buildDownloadPath]), recorded as the song's own type. */
+    /**
+     * The original file ([JellyfinAuthenticationManager.buildDownloadPath]), recorded as the song's own type, unless the
+     * download quality caps it below the song's bitrate (or the bitrate is unknown): then a progressive transcode at
+     * the cap in the chosen codec.
+     */
     override fun downloadSource(song: Song): DownloadSource? {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
-        val url = authenticationManager.buildDownloadPath(song.path.substringAfterLast('/'), authenticatedCredentials) ?: return null
+        val maxBitrateKbps = streamingPolicy.downloadMaxBitrateKbps()
+        val bitRate = song.bitRate
+        if (maxBitrateKbps != null && (bitRate == null || bitRate > maxBitrateKbps)) {
+            return authenticationManager.buildTranscodedDownloadPath(
+                itemId = song.itemId(),
+                authenticatedCredentials = authenticatedCredentials,
+                maxBitrateKbps = maxBitrateKbps,
+                format = streamingPolicy.transcodeFormat()
+            )
+        }
+        val url = authenticationManager.buildDownloadPath(song.itemId(), authenticatedCredentials) ?: return null
         return DownloadSource(url, song.mimeType)
     }
 
@@ -44,4 +62,6 @@ class JellyfinStreamUrlProvider(
         if (httpStatus == 403) authenticationManager.disableDownloadPermission()
         return super.downloadFallback(song, httpStatus)
     }
+
+    private fun Song.itemId(): String = path.substringAfterLast('/')
 }

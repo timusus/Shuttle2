@@ -3,7 +3,7 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.shuttle.model.Song
 
 /**
- * The URL a remote song plays from, signed in to its server and capped by the current [StreamingBitrateCap], and the
+ * The URL a remote song plays from, signed in to its server and capped by the current [StreamingPolicy], and the
  * one it downloads from for offline play: the platform-neutral half of a provider's [MediaInfoProvider], which the iOS
  * player and downloads resolve songs through.
  */

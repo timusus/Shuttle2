@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -50,7 +50,7 @@ class EmbyMediaInfoProviderTest {
     private val provider = EmbyMediaInfoProvider(
         authenticationManager,
         EmbyTranscodeService(client),
-        StreamingBitrateCap(streamingSettings) { metered }
+        StreamingPolicy(streamingSettings) { metered }
     )
 
     @Test

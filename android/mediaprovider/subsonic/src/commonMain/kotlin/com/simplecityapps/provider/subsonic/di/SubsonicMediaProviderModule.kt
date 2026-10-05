@@ -5,7 +5,7 @@ import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
@@ -71,10 +71,10 @@ class SubsonicMediaProviderModule {
     fun provideSubsonicStreams(
         authenticationManager: SubsonicAuthenticationManager,
         service: SubsonicService,
-        streamingBitrateCap: StreamingBitrateCap,
+        streamingPolicy: StreamingPolicy,
         streamProfile: StreamProfile,
         clientIdentity: ClientIdentity
-    ): SubsonicStreams = SubsonicStreams(authenticationManager, service, streamingBitrateCap, streamProfile, clientIdentity.clientName)
+    ): SubsonicStreams = SubsonicStreams(authenticationManager, service, streamingPolicy, streamProfile, clientIdentity.clientName)
 
     @Provides
     fun provideSubsonicStreamUrlProvider(streams: SubsonicStreams): SubsonicStreamUrlProvider = SubsonicStreamUrlProvider(streams)

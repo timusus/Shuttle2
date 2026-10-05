@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -104,7 +104,7 @@ class JellyfinStreamProfileTest {
         val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore())).apply {
             unmeteredQuality.value = quality
         }
-        val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { false })
+        val provider = JellyfinStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings) { false })
         return provider.streamUrl(song(), startPositionMs)
     }
 

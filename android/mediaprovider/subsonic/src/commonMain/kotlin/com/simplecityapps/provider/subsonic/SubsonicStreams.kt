@@ -2,11 +2,12 @@ package com.simplecityapps.provider.subsonic
 
 import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.TimeSeekableStream
 import com.simplecityapps.mediaprovider.isLosslessCodec
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.TranscodeCodec
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.subsonic.http.ClientInfoDto
 import com.simplecityapps.provider.subsonic.http.DirectPlayProfileDto
@@ -14,6 +15,7 @@ import com.simplecityapps.provider.subsonic.http.SubsonicService
 import com.simplecityapps.provider.subsonic.http.TranscodingProfileDto
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 
 /**
  * Where a song streams from. A transcode the server can start part way in has [timeSeek]: it has no byte ranges to seek
@@ -26,12 +28,13 @@ data class SubsonicStream(
 )
 
 /**
- * A Subsonic song's stream, under the current [StreamingBitrateCap]:
+ * A Subsonic song's stream, under the current [StreamingPolicy]:
  *
  * 1. The original file (`stream?format=raw`), seekable by byte range, when the player decodes it and it's within the cap.
  * 2. Otherwise, on a server with OpenSubsonic's `transcoding` extension, what `getTranscodeDecision` decides for this
- *    player: the original after all, or a transcode (`getTranscodeStream`), MP3 first.
- * 3. Otherwise, or when that fails, the classic `stream?format=mp3&maxBitRate=...` transcode, which every server has.
+ *    player: the original after all, or a transcode (`getTranscodeStream`), the chosen codec first, then MP3.
+ * 3. Otherwise, or when that fails, the classic `stream?format=<codec>&maxBitRate=...` transcode, which every server
+ *    has, in the chosen codec ([transcodeCodec]).
  *
  * A transcode is seekable by time where the server can start it part way in: `getTranscodeStream` always takes an
  * `offset` in seconds (it's part of the `transcoding` extension), while the classic `stream` honours `timeOffset` for
@@ -43,7 +46,7 @@ data class SubsonicStream(
 class SubsonicStreams(
     private val authenticationManager: SubsonicAuthenticationManager,
     private val service: SubsonicService,
-    private val streamingBitrateCap: StreamingBitrateCap,
+    private val streamingPolicy: StreamingPolicy,
     private val streamProfile: StreamProfile,
     private val clientName: String
 ) {
@@ -52,12 +55,12 @@ class SubsonicStreams(
     /** @throws IllegalStateException when the server isn't signed in to. */
     suspend fun stream(song: Song): SubsonicStream {
         val signedIn = signedIn()
-        val maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
         if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return direct(signedIn, song)
         if (authenticationManager.serverInfo?.supports(SubsonicServerInfo.TRANSCODING) == true) {
             decided(signedIn, song, maxBitrateKbps)?.let { return it }
         }
-        return legacyTranscode(signedIn, song, maxBitrateKbps)
+        return legacyTranscode(signedIn, song, maxBitrateKbps, transcodeCodec())
     }
 
     /**
@@ -68,34 +71,55 @@ class SubsonicStreams(
      */
     fun immediateStream(song: Song, startPositionMs: Long = 0): SubsonicStream {
         val signedIn = signedIn()
-        val maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
         if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return direct(signedIn, song)
-        val transcode = legacyTranscode(signedIn, song, maxBitrateKbps)
+        val transcode = legacyTranscode(signedIn, song, maxBitrateKbps, transcodeCodec())
         val timeSeek = transcode.timeSeek
         return if (startPositionMs > 0 && timeSeek != null) transcode.copy(url = timeSeek.urlAt(startPositionMs / 1000)) else transcode
     }
 
     /**
      * For Cast, which can't be handed a seek of our own: the original where it plays it, otherwise the classic MP3
-     * transcode, which the server sizes (`estimateContentLength`) so the receiver can seek it.
+     * transcode, whatever the chosen codec (every receiver plays MP3), which the server sizes (`estimateContentLength`)
+     * so the receiver can seek it.
      */
     fun castStream(song: Song): SubsonicStream {
         val signedIn = signedIn()
-        val maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
         if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) return direct(signedIn, song)
-        return legacyTranscode(signedIn, song, maxBitrateKbps).copy(timeSeek = null)
+        return legacyTranscode(signedIn, song, maxBitrateKbps, TranscodeCodec.Mp3).copy(timeSeek = null)
     }
 
     /**
-     * The original file (`download`) where the player decodes it, recorded as the song's own type; otherwise the classic
-     * MP3 transcode, uncapped, so the download is something it plays. The cap doesn't apply.
+     * The original file (`download`) where the player decodes it and it's within the download cap, recorded as the
+     * song's own type; otherwise the classic transcode in the chosen codec at the cap (uncapped without one), so the
+     * download is something it plays. A downloaded file seeks by its own index, so Opus is fine on Android here.
      */
     fun downloadSource(song: Song): DownloadSource? {
         val signedIn = runCatching { signedIn() }.getOrNull() ?: return null
-        if (isDecodable(song)) {
+        val maxBitrateKbps = streamingPolicy.downloadMaxBitrateKbps()
+        if (isDecodable(song) && isWithinCap(song, maxBitrateKbps)) {
             return DownloadSource(service.url(signedIn.address, "download", signedIn.auth(), "id" to song.externalId), song.mimeType)
         }
-        return DownloadSource(legacyTranscode(signedIn, song, maxBitrateKbps = null).url, MP3_MIME_TYPE)
+        val transcode = legacyTranscode(signedIn, song, maxBitrateKbps, codecFor(streamingPolicy.transcodeFormat()))
+        return DownloadSource(transcode.url, transcode.mimeType)
+    }
+
+    /**
+     * The codec a stream is transcoded to: the chosen one, Auto being MP3 on both platforms. Media3 seeks a time-seekable
+     * transcode by mapping bytes to times at a constant bitrate, which works for MP3 and ADTS AAC but not Ogg, whose
+     * seeker reads granule positions; so a streamed Opus transcode is MP3 on Android (which plays HLS), and Opus on iOS,
+     * whose engine re-opens a transcode at the time sought instead.
+     */
+    internal fun transcodeCodec(): TranscodeCodec {
+        val codec = codecFor(streamingPolicy.transcodeFormat())
+        return if (codec == TranscodeCodec.Opus && streamProfile.playsHls) TranscodeCodec.Mp3 else codec
+    }
+
+    private fun codecFor(format: TranscodeFormat): TranscodeCodec = when (format) {
+        TranscodeFormat.Auto, TranscodeFormat.Mp3 -> TranscodeCodec.Mp3
+        TranscodeFormat.Aac -> TranscodeCodec.Aac
+        TranscodeFormat.Opus -> TranscodeCodec.Opus
     }
 
     fun isDecodable(song: Song): Boolean = streamProfile.directPlayFormats.isDecodable(container = song.container(), audioCodec = song.audioCodec)
@@ -111,10 +135,10 @@ class SubsonicStreams(
     )
 
     /**
-     * The classic transcode: an MP3 at [transcodeKbps], which `timeOffset` starts part way in on a server with the
-     * `transcodeOffset` extension.
+     * The classic transcode: [codec] at [transcodeKbps] (`format` naming one of the server's transcodings, which have
+     * the codecs' own names), which `timeOffset` starts part way in on a server with the `transcodeOffset` extension.
      */
-    private fun legacyTranscode(signedIn: SignedIn, song: Song, maxBitrateKbps: Int?): SubsonicStream {
+    private fun legacyTranscode(signedIn: SignedIn, song: Song, maxBitrateKbps: Int?, codec: TranscodeCodec): SubsonicStream {
         val kbps = transcodeKbps(song, maxBitrateKbps)
         val urlAt = { offsetSeconds: Long ->
             service.url(
@@ -122,14 +146,14 @@ class SubsonicStreams(
                 "stream",
                 signedIn.auth(),
                 "id" to song.externalId,
-                "format" to "mp3",
+                "format" to codec.codec,
                 "maxBitRate" to kbps,
                 "estimateContentLength" to true,
                 "timeOffset" to offsetSeconds.takeIf { it > 0 }
             )
         }
         val timeSeek = TimeSeekableStream(kbps, song.duration.toLong(), urlAt).takeIf { authenticationManager.serverInfo?.supports(SubsonicServerInfo.TRANSCODE_OFFSET) == true }
-        return SubsonicStream(urlAt(0), MP3_MIME_TYPE, timeSeek)
+        return SubsonicStream(urlAt(0), codec.mimeType, timeSeek)
     }
 
     /** What `getTranscodeDecision` says; null when it fails, or the server can do neither. */
@@ -174,8 +198,9 @@ class SubsonicStreams(
 
     /**
      * What this player plays, for `getTranscodeDecision`. Direct play is offered by container and codec (an `.m4a` of
-     * ALAC isn't playable, one of AAC is), and the transcode targets are MP3 first: a constant-bitrate MP3 is the one
-     * whose byte offsets map to times, which [TimeSeekableStream] relies on. A transcode is at most [transcodeKbps].
+     * ALAC isn't playable, one of AAC is), and the transcode targets are the chosen [transcodeCodec] first, then MP3: a
+     * constant-bitrate MP3 is the one whose byte offsets map to times exactly, which [TimeSeekableStream] relies on. A
+     * transcode is at most [transcodeKbps].
      */
     internal fun clientInfo(maxBitrateKbps: Int?, transcodeKbps: Int): ClientInfoDto {
         val containers = streamProfile.directPlayFormats.containers
@@ -187,7 +212,9 @@ class SubsonicStreams(
             directPlayProfiles = DIRECT_PLAY_CODECS.mapNotNull { (container, codecs) ->
                 container.filter { it in containers }.takeIf { it.isNotEmpty() }?.let { DirectPlayProfileDto(containers = it, audioCodecs = codecs) }
             },
-            transcodingProfiles = listOf(TranscodingProfileDto(container = "mp3", audioCodec = "mp3"))
+            transcodingProfiles = listOf(transcodeCodec(), TranscodeCodec.Mp3).distinct().map { codec ->
+                TranscodingProfileDto(container = codec.progressiveContainer, audioCodec = codec.codec)
+            }
         )
     }
 

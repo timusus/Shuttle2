@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -104,7 +104,7 @@ class EmbyStreamProfileTest {
         val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore())).apply {
             unmeteredQuality.value = quality
         }
-        val provider = EmbyStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { false })
+        val provider = EmbyStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings) { false })
         return provider.streamUrl(song(), startPositionMs)
     }
 

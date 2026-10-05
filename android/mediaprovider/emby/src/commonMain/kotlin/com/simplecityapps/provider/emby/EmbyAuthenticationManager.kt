@@ -1,10 +1,12 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.TranscodeTarget
 import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -12,6 +14,7 @@ import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.emby.http.AuthenticationResult
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import io.ktor.http.HttpStatusCode
 import kotlin.uuid.Uuid
 
@@ -123,14 +126,56 @@ class EmbyAuthenticationManager(
 
     /**
      * The universal stream URL. The server direct-plays the original when it's a format the [StreamProfile] lists and,
-     * with a [maxBitrateKbps] cap, when its bitrate is under the cap; otherwise it transcodes to the profile's target
-     * (AAC over HLS on Android, which stays seekable). A null cap streams the original, whatever its bitrate.
-     * [startPositionMs] starts a transcode that far in (`StartTimeTicks`): a progressive transcode can't be
+     * with a [maxBitrateKbps] cap, when its bitrate is under the cap; otherwise it transcodes to [format] (Auto being
+     * the profile's own: AAC over HLS on Android, which stays seekable). A null cap streams the original, whatever its
+     * bitrate. [startPositionMs] starts a transcode that far in (`StartTimeTicks`): a progressive transcode can't be
      * range-seeked, so a seek restarts it there. The server ignores it for direct play, which seeks by range.
      */
     fun buildEmbyPath(
         itemId: String,
         authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int?,
+        startPositionMs: Long = 0,
+        format: TranscodeFormat = TranscodeFormat.Auto
+    ): String? = universalPath(
+        itemId = itemId,
+        authenticatedCredentials = authenticatedCredentials,
+        directPlayContainers = streamProfile.directPlayContainers,
+        target = streamProfile.streamTarget(format),
+        maxBitrateKbps = maxBitrateKbps,
+        startPositionMs = startPositionMs
+    )
+
+    /**
+     * A download transcoded to one progressive file in [format] at up to [maxBitrateKbps], and its MIME type. The
+     * server sends the original only when it's already that codec and within the cap, so the file is the type
+     * recorded either way.
+     */
+    fun buildTranscodedDownloadPath(
+        itemId: String,
+        authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int,
+        format: TranscodeFormat
+    ): DownloadSource? {
+        val target = streamProfile.downloadTarget(format)
+        val path = universalPath(
+            itemId = itemId,
+            authenticatedCredentials = authenticatedCredentials,
+            directPlayContainers = "${target.container}|${target.codec.codec}",
+            target = target,
+            maxBitrateKbps = maxBitrateKbps
+        ) ?: return null
+        return DownloadSource(path, target.mimeType)
+    }
+
+    /** What the [StreamProfile] transcodes a stream to in [format]. */
+    fun streamTarget(format: TranscodeFormat): TranscodeTarget = streamProfile.streamTarget(format)
+
+    private fun universalPath(
+        itemId: String,
+        authenticatedCredentials: AuthenticatedCredentials,
+        directPlayContainers: String,
+        target: TranscodeTarget,
         maxBitrateKbps: Int?,
         startPositionMs: Long = 0
     ): String? {
@@ -145,13 +190,13 @@ class EmbyAuthenticationManager(
             "?UserId=${authenticatedCredentials.userId}" +
             "&DeviceId=${clientIdentity.id}" +
             "&PlaySessionId=${Uuid.random()}" +
-            "&Container=${streamProfile.directPlayContainers}" +
-            "&TranscodingContainer=${streamProfile.transcodingContainer}" +
-            "&TranscodingProtocol=${streamProfile.transcodingProtocol}" +
+            "&Container=$directPlayContainers" +
+            "&TranscodingContainer=${target.container}" +
+            "&TranscodingProtocol=${target.protocol}" +
             "&MaxSampleRate=48000" +
             "&EnableRedirection=true" +
             "&EnableRemoteMedia=true" +
-            "&AudioCodec=${streamProfile.transcodingAudioCodec}" +
+            "&AudioCodec=${target.codec.codec}" +
             maxBitrateKbps?.let { kbps -> "&MaxStreamingBitrate=${kbps * 1000}" }.orEmpty() +
             startPositionMs.takeIf { it > 0 }?.let { ms -> "&StartTimeTicks=${StreamProfile.startTimeTicks(ms)}" }.orEmpty() +
             "&api_key=${authenticatedCredentials.accessToken}"

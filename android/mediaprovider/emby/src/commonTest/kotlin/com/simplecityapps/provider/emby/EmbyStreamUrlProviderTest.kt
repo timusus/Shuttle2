@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -40,7 +41,7 @@ class EmbyStreamUrlProviderTest {
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
-    private val provider = EmbyStreamUrlProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered })
+    private val provider = EmbyStreamUrlProvider(authenticationManager, StreamingPolicy(streamingSettings) { metered })
 
     @Test
     fun `handles only emby paths`() {
@@ -82,11 +83,79 @@ class EmbyStreamUrlProviderTest {
     }
 
     @Test
+    fun `Auto transcodes to AAC in HLS segments on Android`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        val path = provider.streamUrl(song())
+
+        path shouldContain "&TranscodingContainer=ts&TranscodingProtocol=hls&"
+        path shouldContain "&AudioCodec=aac&"
+    }
+
+    @Test
+    fun `the chosen codec is what a stream transcodes to`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Mp3
+        provider.streamUrl(song()) shouldContain "&TranscodingContainer=ts&TranscodingProtocol=hls&"
+        provider.streamUrl(song()) shouldContain "&AudioCodec=mp3&"
+
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
+        provider.streamUrl(song()) shouldContain "&TranscodingContainer=mp4&TranscodingProtocol=hls&"
+        provider.streamUrl(song()) shouldContain "&AudioCodec=opus&"
+    }
+
+    @Test
+    fun `a download keeps the original at Original download quality`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.meteredQuality.value = StreamingQuality.Kbps128
+        metered = true
+
+        val source = provider.downloadSource(song(bitRate = 900))!!
+
+        source.url shouldBe "http://emby.local:8096/emby/Items/item789/Download?api_key=token123"
+        source.mimeType shouldBe "Audio/*"
+    }
+
+    @Test
+    fun `a download over the download cap is a progressive transcode in the chosen codec`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
+
+        val source = provider.downloadSource(song(bitRate = 900))!!
+
+        source.url shouldContain "/emby/Audio/item789/universal?"
+        source.url shouldContain "&Container=ogg|opus&TranscodingContainer=ogg&TranscodingProtocol=http&"
+        source.url shouldContain "&AudioCodec=opus&MaxStreamingBitrate=192000&"
+        source.mimeType shouldBe "audio/ogg"
+    }
+
+    @Test
+    fun `Auto downloads transcode to a single AAC file on Android`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps128
+
+        val source = provider.downloadSource(song(bitRate = null))!!
+
+        source.url shouldContain "&TranscodingContainer=aac&TranscodingProtocol=http&"
+        source.mimeType shouldBe "audio/aac"
+    }
+
+    @Test
+    fun `a download within the download cap keeps the original`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
+
+        provider.downloadSource(song(bitRate = 128))!!.url shouldContain "/Items/item789/Download?"
+    }
+
+    @Test
     fun `a signed-out server fails the stream`() {
         shouldThrow<IllegalStateException> { provider.streamUrl(song()) }
     }
 
-    private fun song() = Song(
+    private fun song(bitRate: Int? = null) = Song(
         id = 0,
         name = "Song",
         albumArtist = "Artist",
@@ -110,7 +179,7 @@ class EmbyStreamUrlProviderTest {
         mediaProvider = MediaProviderType.Emby,
         lyrics = null,
         grouping = null,
-        bitRate = null,
+        bitRate = bitRate,
         bitDepth = null,
         sampleRate = null,
         channelCount = null

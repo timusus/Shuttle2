@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.createHttpClient
@@ -58,6 +58,6 @@ class JellyfinAndroidModule {
     fun provideJellyfinMediaInfoProvider(
         authenticationManager: JellyfinAuthenticationManager,
         transcodeService: JellyfinTranscodeService,
-        streamingBitrateCap: StreamingBitrateCap
-    ): MediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService, streamingBitrateCap)
+        streamingPolicy: StreamingPolicy
+    ): MediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService, streamingPolicy)
 }

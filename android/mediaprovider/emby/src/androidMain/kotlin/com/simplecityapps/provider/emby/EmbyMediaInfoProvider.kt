@@ -5,7 +5,7 @@ import androidx.core.net.toUri
 import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
@@ -15,9 +15,9 @@ class EmbyMediaInfoProvider
 constructor(
     private val embyAuthenticationManager: EmbyAuthenticationManager,
     private val embyTranscodeService: EmbyTranscodeService,
-    private val streamingBitrateCap: StreamingBitrateCap
+    private val streamingPolicy: StreamingPolicy
 ) : MediaInfoProvider {
-    private val streamUrls = EmbyStreamUrlProvider(embyAuthenticationManager, streamingBitrateCap)
+    private val streamUrls = EmbyStreamUrlProvider(embyAuthenticationManager, streamingPolicy)
 
     override fun handles(scheme: String?): Boolean = scheme == "emby"
 
@@ -36,7 +36,7 @@ constructor(
     }
 
     /**
-     * String form of [getMediaInfo]'s path, capped by the current [StreamingBitrateCap], kept separate so tests can
+     * String form of [getMediaInfo]'s path, capped by the current [StreamingPolicy], kept separate so tests can
      * assert on it without pulling Robolectric into this module for `Uri.parse`.
      */
     @Throws(IllegalStateException::class)

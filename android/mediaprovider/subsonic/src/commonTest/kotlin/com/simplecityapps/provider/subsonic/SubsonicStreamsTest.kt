@@ -1,6 +1,6 @@
 package com.simplecityapps.provider.subsonic
 
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.bodyText
 import com.simplecityapps.provider.subsonic.TestSubsonic.Companion.TRANSCODE_DECISION
@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -25,9 +26,9 @@ class SubsonicStreamsTest {
     private val server = subsonic.server
 
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
-    private val bitrateCap = StreamingBitrateCap(streamingSettings) { false }
+    private val streamingPolicy = StreamingPolicy(streamingSettings) { false }
 
-    private val streams = SubsonicStreams(subsonic.authenticationManager, subsonic.service, bitrateCap, StreamProfile.Android, "Shuttle")
+    private val streams = SubsonicStreams(subsonic.authenticationManager, subsonic.service, streamingPolicy, StreamProfile.Android, "Shuttle")
 
     private val flac = subsonicSong()
     private val mp3 = subsonicSong(externalId = "0ZVb9IcFZ0wbcBgwwir582", mimeType = "audio/mpeg", bitRate = 192, audioCodec = "mp3")
@@ -212,7 +213,7 @@ class SubsonicStreamsTest {
     }
 
     @Test
-    fun `a decodable song downloads its original file - ignoring the cap`() {
+    fun `a decodable song downloads its original file at Original download quality - ignoring the stream cap`() {
         subsonic.signIn()
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
 
@@ -231,6 +232,66 @@ class SubsonicStreamsTest {
 
         Url(download.url).parameters["format"] shouldBe "mp3"
         download.mimeType shouldBe "audio/mpeg"
+    }
+
+    @Test
+    fun `a song over the download cap downloads as a transcode at the cap in the chosen codec`() {
+        subsonic.signIn()
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
+
+        val download = streams.downloadSource(flac).shouldNotBeNull()
+
+        Url(download.url).parameters["format"] shouldBe "opus"
+        Url(download.url).parameters["maxBitRate"] shouldBe "192"
+        download.mimeType shouldBe "audio/ogg"
+    }
+
+    @Test
+    fun `a song within the download cap downloads its original file`() {
+        subsonic.signIn()
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps320
+
+        Url(streams.downloadSource(mp3).shouldNotBeNull().url).encodedPath shouldBe "/rest/download.view"
+    }
+
+    @Test
+    fun `the classic transcode is in the chosen codec`() {
+        subsonic.signIn(extensions = "extensions_transcode_offset.json")
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Aac
+
+        val stream = runBlocking { streams.stream(flac) }
+
+        Url(stream.url).parameters["format"] shouldBe "aac"
+        stream.mimeType shouldBe "audio/aac"
+    }
+
+    @Test
+    fun `a streamed Opus transcode is MP3 on Android - whose time seeking needs a constant bitrate - and Opus on iOS`() {
+        subsonic.signIn()
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
+        val ios = SubsonicStreams(subsonic.authenticationManager, subsonic.service, streamingPolicy, StreamProfile.Ios, "Shuttle")
+
+        Url(streams.immediateStream(flac).url).parameters["format"] shouldBe "mp3"
+        Url(ios.immediateStream(flac).url).parameters["format"] shouldBe "opus"
+    }
+
+    @Test
+    fun `the transcode decision is offered the chosen codec first - then MP3`() {
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Aac
+
+        streams.clientInfo(maxBitrateKbps = 128, transcodeKbps = 128).transcodingProfiles.map { it.audioCodec } shouldBe listOf("aac", "mp3")
+    }
+
+    @Test
+    fun `Cast gets an MP3 transcode whatever the chosen codec`() {
+        subsonic.signIn()
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Aac
+
+        Url(streams.castStream(flac).url).parameters["format"] shouldBe "mp3"
     }
 
     @Test

@@ -2,8 +2,9 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.StreamUrlProvider
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.TranscodeCodec
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.shuttle.logging.Logger
@@ -21,15 +22,17 @@ data class PlexStream(
 
 /**
  * A Plex song's authenticated stream: the original part file when it's a format this platform's player decodes
- * ([StreamProfile.directPlayFormats]) and there's no [StreamingBitrateCap] or the song's bitrate is known to be within
+ * ([StreamProfile.directPlayFormats]) and there's no [StreamingPolicy] or the song's bitrate is known to be within
  * it; otherwise a transcode at the cap, or at [UNCAPPED_TRANSCODE_KBPS] without one. An unknown bitrate transcodes, as
  * Jellyfin does. Plex, unlike Jellyfin and Emby's universal endpoint, serves a part file as it is, so a format the
  * player can't decode (WMA, or ALAC inside an otherwise-playable container on Android) would fail to load and be
  * skipped (#362, #567).
  *
- * The transcode follows [StreamProfile.transcodingProtocol]: an HLS stream of AAC where the player plays HLS
- * (Android's Media3), which stays seekable; otherwise one progressive MP3 (iOS's engine), which starts at the position
- * it's asked for.
+ * The transcode follows [StreamProfile.playsHls]: an HLS stream where the player plays HLS (Android's Media3), which
+ * stays seekable, in the chosen codec ([StreamingPolicy.transcodeFormat]: AAC or MP3; Plex's HLS is MPEG-TS, which
+ * carries no Opus, so Opus falls back to AAC); otherwise one progressive MP3 (iOS's engine), which starts at the
+ * position it's asked for. MP3 is the one progressive target Plex's transcoder reliably serves, so a progressive
+ * transcode stays MP3 whatever the choice.
  *
  * Plex keeps one transcode running for the user: any start replaces it (another song's, or another position's), except
  * a start on the same session at the start of the song, which joins it. And it answers 400 to a start whose
@@ -48,7 +51,7 @@ data class PlexStream(
 @Inject
 class PlexStreamUrlProvider(
     private val authenticationManager: PlexAuthenticationManager,
-    private val streamingBitrateCap: StreamingBitrateCap,
+    private val streamingPolicy: StreamingPolicy,
     private val streamProfile: StreamProfile,
     private val transcodeService: TranscodeService
 ) : StreamUrlProvider {
@@ -98,7 +101,7 @@ class PlexStreamUrlProvider(
     ): PlexStream {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
-        val maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
         val bitRate = song.bitRate
         val withinCap = maxBitrateKbps == null || (bitRate != null && bitRate <= maxBitrateKbps)
         if (withinCap && isDecodable(song)) {
@@ -107,8 +110,8 @@ class PlexStreamUrlProvider(
             return PlexStream(path, song.mimeType)
         }
         val transcodeKbps = maxBitrateKbps ?: UNCAPPED_TRANSCODE_KBPS
-        return if (streamProfile.transcodingProtocol == HLS) {
-            val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps, sessionIdentifier(song))
+        return if (streamProfile.playsHls) {
+            val path = authenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, transcodeKbps, sessionIdentifier(song), hlsCodec())
                 ?: throw IllegalStateException("Failed to build plex transcode path")
             PlexStream(path, HLS_MIME_TYPE)
         } else {
@@ -147,25 +150,32 @@ class PlexStreamUrlProvider(
         return session
     }
 
+    /** The codec an HLS transcode is in: the chosen one, except Opus, which MPEG-TS can't carry. */
+    private fun hlsCodec(): TranscodeCodec = streamProfile.streamTarget(streamingPolicy.transcodeFormat()).codec
+        .takeIf { it != TranscodeCodec.Opus } ?: TranscodeCodec.Aac
+
     /** The `X-Plex-Session-Identifier` every transcode of [song] carries, and the session of a stream with no play. */
     private fun sessionIdentifier(song: Song): String = "s2-${plexRatingKey(song.path) ?: song.path}"
 
     /**
-     * The original part file (`song.externalId`) when the player decodes it; otherwise a progressive MP3 transcode at
-     * [UNCAPPED_TRANSCODE_KBPS], the same bitrate as an uncapped stream, so the download is one file of real, playable
-     * audio recorded under the type it actually is: not the HLS transcode Android streams, whose manifest would be saved
-     * as the "file" (#567). The cap doesn't apply: a download keeps the original.
+     * The original part file (`song.externalId`) when the player decodes it and it's within the download cap
+     * ([StreamingPolicy.downloadMaxBitrateKbps]); otherwise a progressive MP3 transcode at the cap, or at
+     * [UNCAPPED_TRANSCODE_KBPS] without one, so the download is one file of real, playable audio recorded under the type
+     * it actually is: not the HLS transcode Android streams, whose manifest would be saved as the "file" (#567).
      */
     override fun downloadSource(song: Song): DownloadSource? {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null
-        return if (isDecodable(song)) {
+        val maxBitrateKbps = streamingPolicy.downloadMaxBitrateKbps()
+        val bitRate = song.bitRate
+        val withinCap = maxBitrateKbps == null || (bitRate != null && bitRate <= maxBitrateKbps)
+        return if (withinCap && isDecodable(song)) {
             val path = authenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials) ?: return null
             DownloadSource(path, song.mimeType)
         } else {
             val path = authenticationManager.buildPlexProgressiveTranscodePath(
                 song,
                 authenticatedCredentials,
-                UNCAPPED_TRANSCODE_KBPS,
+                maxBitrateKbps ?: UNCAPPED_TRANSCODE_KBPS,
                 sessionIdentifier(song)
             ) ?: return null
             DownloadSource(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
@@ -187,8 +197,6 @@ class PlexStreamUrlProvider(
 
         /** The bitrate a format the player can't decode is transcoded to when streaming isn't capped. */
         const val UNCAPPED_TRANSCODE_KBPS = 320
-
-        private const val HLS = "hls"
 
         /** Plex's universal transcoder takes a stop for any media type at its video path. */
         private const val TRANSCODE_STOP_PATH = "/video/:/transcode/universal/stop"

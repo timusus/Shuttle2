@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
@@ -103,7 +103,7 @@ class SettingsViewModelTest {
         store.preference(StreamingSettings.MeteredQuality).value shouldBe StreamingQuality.Kbps128
         store.preference(StreamingSettings.UnmeteredQuality).value shouldBe StreamingQuality.Original
         prefs.getString(StreamingSettings.MeteredQuality.key, null) shouldBe "Kbps128"
-        StreamingBitrateCap(StreamingSettings(store)) { true }.maxBitrateKbps() shouldBe 128
+        StreamingPolicy(StreamingSettings(store)) { true }.maxBitrateKbps() shouldBe 128
     }
 
     @Test

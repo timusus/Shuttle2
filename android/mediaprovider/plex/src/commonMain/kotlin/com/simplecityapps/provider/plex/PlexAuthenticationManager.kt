@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.ServerConnection
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.SignInPin
+import com.simplecityapps.mediaprovider.server.TranscodeCodec
 import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.PLEX_PLATFORM
@@ -115,9 +116,10 @@ class PlexAuthenticationManager(
     }
 
     /**
-     * An HLS stream of [song] transcoded to AAC at up to [maxBitrateKbps], from Plex's universal transcoder. HLS keeps
-     * the transcode seekable. The client identity goes in the query, since the player's requests don't carry the
-     * `X-Plex-*` headers; the profile extra asks for AAC in MPEG-TS whatever profile the server picks for the client.
+     * An HLS stream of [song] transcoded to [codec] (AAC or MP3) at up to [maxBitrateKbps], from Plex's universal
+     * transcoder. HLS keeps the transcode seekable. The client identity goes in the query, since the player's requests
+     * don't carry the `X-Plex-*` headers; the profile extra asks for [codec] in MPEG-TS whatever profile the server picks
+     * for the client.
      * [session] names the transcode on the server and is its `X-Plex-Session-Identifier`. Null when the address or the
      * song's ratingKey is missing.
      */
@@ -125,7 +127,8 @@ class PlexAuthenticationManager(
         song: Song,
         authenticatedCredentials: AuthenticatedCredentials,
         maxBitrateKbps: Int,
-        session: String
+        session: String,
+        codec: TranscodeCodec = TranscodeCodec.Aac
     ): String? {
         val address = credentialStore.address ?: run {
             logger.warn { "Invalid plex address (null)" }
@@ -143,7 +146,7 @@ class PlexAuthenticationManager(
             "musicBitrate" to maxBitrateKbps.toString(),
             "session" to session,
             "X-Plex-Session-Identifier" to session,
-            "X-Plex-Client-Profile-Extra" to "add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=aac)"
+            "X-Plex-Client-Profile-Extra" to "add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=${codec.codec})"
         ) + plexClientHeaders(clientIdentity) + (PLEX_TOKEN to authenticatedCredentials.accessToken)
 
         return "$address/music/:/transcode/universal/start.m3u8?" +

@@ -1,7 +1,7 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -51,12 +52,12 @@ class PlexStreamUrlProviderTest {
 
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
-    private val bitrateCap = StreamingBitrateCap(streamingSettings) { metered }
+    private val streamingPolicy = StreamingPolicy(streamingSettings) { metered }
 
     private val transcodeService = TranscodeService(createHttpClient(server.engine))
 
-    private val android = PlexStreamUrlProvider(authenticationManager, bitrateCap, StreamProfile.Android, transcodeService)
-    private val ios = PlexStreamUrlProvider(authenticationManager, bitrateCap, StreamProfile.Ios, transcodeService)
+    private val android = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Android, transcodeService)
+    private val ios = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService)
 
     @AfterTest
     fun tearDown() {
@@ -100,6 +101,51 @@ class PlexStreamUrlProviderTest {
         stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
         stream.path shouldContain "&musicBitrate=192&"
         stream.mimeType shouldBe "application/x-mpegURL"
+    }
+
+    @Test
+    fun `an HLS transcode is in the chosen codec - AAC for Auto`() {
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps192
+        val flac = song(externalId = PART, bitRate = 1_411)
+
+        Url(android.stream(flac).path).parameters["X-Plex-Client-Profile-Extra"]!! shouldContain "audioCodec=aac"
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Mp3
+        Url(android.stream(flac).path).parameters["X-Plex-Client-Profile-Extra"]!! shouldContain "container=mpegts&audioCodec=mp3"
+    }
+
+    @Test
+    fun `an HLS transcode falls back to AAC for Opus - which MPEG-TS can't carry`() {
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps192
+        streamingSettings.transcodeFormat.value = TranscodeFormat.Opus
+
+        Url(android.stream(song(externalId = PART, bitRate = 1_411)).path).parameters["X-Plex-Client-Profile-Extra"]!! shouldContain "audioCodec=aac"
+    }
+
+    @Test
+    fun `a download keeps the original part file at Original download quality - whatever the stream cap`() {
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+
+        val source = android.downloadSource(song(externalId = PART, bitRate = 1_411))!!
+
+        source.url shouldNotContain "/transcode/"
+    }
+
+    @Test
+    fun `a download over the download cap is a progressive MP3 transcode at the cap`() {
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
+
+        val source = android.downloadSource(song(externalId = PART, bitRate = 1_411))!!
+
+        source.url shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.mp3?"
+        source.url shouldContain "&musicBitrate=192&"
+        source.mimeType shouldBe "audio/mpeg"
+    }
+
+    @Test
+    fun `a download within the download cap keeps the original part file`() {
+        streamingSettings.downloadQuality.value = StreamingQuality.Kbps192
+
+        android.downloadSource(song(externalId = PART, bitRate = 128))!!.url shouldNotContain "/transcode/"
     }
 
     @Test
