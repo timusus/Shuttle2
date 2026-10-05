@@ -739,7 +739,11 @@ public final class MusicPlaybackController {
 
     private func reportFailure(_ slot: Slot, _ error: Error) {
         slot.failed = true
-        engineLog.error("track \(slot.track.uid, privacy: .public) failed: \(String(describing: error), privacy: .public)")
+        // The description can carry a URL and its query: only the domain and code are public.
+        let nsError = error as NSError
+        engineLog.error(
+            "track \(slot.track.uid, privacy: .public) failed: \(nsError.domain, privacy: .public) \(nsError.code) \(String(describing: error), privacy: .private)"
+        )
         let uid = slot.track.uid
         let callback = callbackLock.withLock { callbacks.failed }
         if let callback { callbackQueue.async { callback(uid, error) } }

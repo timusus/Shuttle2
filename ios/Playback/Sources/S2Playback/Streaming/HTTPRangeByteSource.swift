@@ -746,7 +746,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         condition.unlock()
     }
 
-    /// **Rule 8's one lever**: drop the transaction in flight and open a fresh one at the frontier.
+    /// **Rule 8's one lever**: drop the transaction in flight and open a fresh one at the frontier, on
+    /// `queue`. What a path change does to a body that has gone quiet (``pathDidChange()``).
     ///
     /// A `seek(to:)` inside the window never touches the network — it is the whole point of the
     /// window — so a player whose decoder is parked in a read at the frontier, on a body the host
@@ -754,15 +755,9 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// `AVPlayer` re-seek did for AVFoundation, spelled out: cancel the request the host went quiet
     /// on and ask again for the same bytes. A continuation, so the window and its offsets survive
     /// and nothing already decoded is thrown away. A no-op on a source that has ended, been
-    /// cancelled or never opened.
-    func reopen() {
-        queue.async { self.reopenAtFrontier(reason: "asked") }
-    }
-
-    /// ``reopen()``'s body, on `queue`: also what the stall watchdog and a path change do. A pending
-    /// retry is superseded, since this is that retry, sooner. At the ceiling nothing is opened: the
-    /// task is dropped and the throttle opens the continuation once the window has room, as it does
-    /// for a body that ended short.
+    /// cancelled or never opened. A pending retry is superseded, since this is that retry, sooner.
+    /// At the ceiling nothing is opened: the task is dropped and the throttle opens the continuation
+    /// once the window has room, as it does for a body that ended short.
     private func reopenAtFrontier(reason: String) {
         guard !invalidated, hasOpened, !isComplete, diskCursor == nil else { return }
         let (at, failed) = withLock { (frontier, failureMessage != nil) }
@@ -1013,7 +1008,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         let request = makeRequest(url: target, range: "bytes=\(requestStart)-\(endByte)")
         engineLog.info(
             """
-            bytes: open host=\(target.host ?? "?", privacy: .public) path=\(target.path, privacy: .public) \
+            bytes: open host=\(target.host ?? "?", privacy: .public) path=\(target.path, privacy: .private(mask: .hash)) \
             start=\(offset) end=\(endByte) \
             overlap=\(offset - requestStart) continuation=\(self.openIsContinuation) resolved=\(self.resolvedURL != nil) \
             remembered=\(self.resolutionUnproven)
@@ -1905,7 +1900,7 @@ extension HTTPRangeByteSource: URLSessionDataDelegate {
             engineLog.info(
                 """
                 bytes: close host=\(task.currentRequest?.url?.host ?? "?", privacy: .public) \
-                path=\(task.currentRequest?.url?.path ?? "-", privacy: .public) \
+                path=\(task.currentRequest?.url?.path ?? "-", privacy: .private(mask: .hash)) \
                 start=\(task.originalRequest?.value(forHTTPHeaderField: "Range") ?? "-", privacy: .public) \
                 at=\(endedAt) current=\(task === self.task) bytes=\(received) ms=\(ms, privacy: .public) \
                 kbps=\(kbps, privacy: .public) error=\((error as NSError?)?.code ?? 0, privacy: .public)

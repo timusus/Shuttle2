@@ -64,7 +64,9 @@ final class CachedRunTests: XCTestCase {
     private func makeSource(
         _ server: LoopbackMediaServer,
         windowBytes: Int,
-        tee: AudioByteTee? = nil
+        tee: AudioByteTee? = nil,
+        scheduler: RecoveryScheduler = DispatchRecoveryScheduler.shared,
+        pathMonitor: NetworkPathMonitoring? = nil
     ) -> HTTPRangeByteSource {
         let policy = ReadAheadPolicy(
             windowSeconds: 60,
@@ -81,7 +83,9 @@ final class CachedRunTests: XCTestCase {
             session: Self.testSession,
             tee: tee,
             runStore: store,
-            resolvedURLs: nil
+            resolvedURLs: nil,
+            scheduler: scheduler,
+            pathMonitor: pathMonitor
         )
         source = made
         return made
@@ -241,12 +245,16 @@ final class CachedRunTests: XCTestCase {
         let stallAt = 150 * Self.kib
         server.stallsAfterBodyBytes = stallAt
         let tee = CountingTee()
-        let source = makeSource(server, windowBytes: 4 * 1024 * 1024, tee: tee)
+        let scheduler = FakeRecoveryScheduler()
+        let paths = FakeNetworkPathMonitor()
+        let source = makeSource(server, windowBytes: 4 * 1024 * 1024, tee: tee, scheduler: scheduler, pathMonitor: paths)
 
         XCTAssertEqual(try read(source, upTo: stallAt), stitchA.prefix(stallAt))
         XCTAssertEqual(store.run(for: key)?.start, Int64(runStart), "untouched until the run is reached")
         server.stallsAfterBodyBytes = nil
-        source.reopen()
+        // The body has gone quiet when the path changes: it's reopened at the frontier.
+        scheduler.advance(by: HTTPRangeByteSource.pathQuietSeconds)
+        paths.post()
 
         let rest = try read(source, upTo: stitchA.count - stallAt)
         XCTAssertEqual(rest, stitchA.suffix(from: stallAt), "nothing of the other stitch is heard")
