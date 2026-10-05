@@ -47,6 +47,7 @@ class MediaImporterTest {
     private val clock = FakeClock(Instant.parse("2026-10-04T09:00:00Z"))
     private val songRepository = FakeSongRepository()
     private val server = ServerProvider()
+    private val playlistStore = FakePlaylistStore()
 
     /** What each [MediaImporter] afterImport was told: whether every source's songs hold every tag. */
     private val afterImports = mutableListOf<Boolean>()
@@ -54,18 +55,7 @@ class MediaImporterTest {
         MediaImporter(
             strings = FakeMediaImportStrings,
             songRepository = songRepository,
-            playlistStore = object : ImportedPlaylistStore {
-                override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
-
-                override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = emptySet()
-
-                override suspend fun reconcilePlaylists(
-                    type: MediaProviderType,
-                    listing: MediaImporter.PlaylistListing,
-                    listingComplete: Boolean,
-                    lastServerSongs: Map<String, Set<Long>>
-                ) = error("ImportedPlaylistStore.reconcilePlaylists isn't faked")
-            },
+            playlistStore = playlistStore,
             preferenceManager = preferences,
             afterImport = { songTagsCurrent -> afterImports += songTagsCurrent },
             clock = clock
@@ -641,6 +631,57 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `an incremental sync that added no songs passes the playlist versions of the playlists still stored - and keeps the new ones`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        playlistStore.storedIds = setOf("1")
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setPlaylistVersions(server.type.name, mapOf("1" to "v1", "gone" to "v9"))
+        server.playlistListing = MediaImporter.PlaylistListing(emptyList(), unchanged = setOf("1"), versions = mapOf("1" to "v1", "2" to "v2"))
+        preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+
+        importer.sync(SyncTrigger.Periodic)
+
+        // "gone" was deleted (or emptied) since: its version isn't passed, so it's read again
+        server.knownVersionRequests shouldBe listOf(mapOf("1" to "v1"))
+        playlistStore.reconciled.single().versions shouldBe mapOf("1" to "v1", "2" to "v2")
+        preferences.playlistVersions(server.type.name) shouldBe mapOf("1" to "v1", "2" to "v2")
+    }
+
+    @Test
+    fun `a sync that added songs reads every playlist again`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        server.found = listOf(song(id = 0, path = "jellyfin://item/2"))
+        playlistStore.storedIds = setOf("1")
+        preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
+        preferences.setPlaylistVersions(server.type.name, mapOf("1" to "v1"))
+        preferences.setLastSyncStart(server.type.name, clock.time - 5.minutes)
+        preferences.setLastFullSyncStart(server.type.name, clock.time - 1.days)
+
+        importer.sync(SyncTrigger.Periodic)
+
+        server.knownVersionRequests shouldBe listOf(emptyMap())
+    }
+
+    @Test
+    fun `a full sync reads every playlist again`() = runBlocking<Unit> {
+        importer.mediaProviders -= provider
+        importer.mediaProviders += server
+        songRepository.stored = listOf(song())
+        playlistStore.storedIds = setOf("1")
+        preferences.setPlaylistVersions(server.type.name, mapOf("1" to "v1"))
+
+        importer.sync(SyncTrigger.Foreground)
+
+        server.playlistRequests shouldBe 1
+        server.knownVersionRequests shouldBe listOf(emptyMap())
+    }
+
+    @Test
     fun `a sync waits for the first import - and for the one a build with new tags is due`() = runBlocking<Unit> {
         importer.mediaProviders -= provider
         importer.mediaProviders += server
@@ -1187,18 +1228,7 @@ class MediaImporterTest {
     private fun serverImporter() = MediaImporter(
         strings = FakeMediaImportStrings,
         songRepository = songRepository,
-        playlistStore = object : ImportedPlaylistStore {
-            override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
-
-            override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = emptySet()
-
-            override suspend fun reconcilePlaylists(
-                type: MediaProviderType,
-                listing: MediaImporter.PlaylistListing,
-                listingComplete: Boolean,
-                lastServerSongs: Map<String, Set<Long>>
-            ) = error("ImportedPlaylistStore.reconcilePlaylists isn't faked")
-        },
+        playlistStore = playlistStore,
         preferenceManager = preferences,
         afterImport = {},
         clock = clock
@@ -1211,6 +1241,10 @@ class MediaImporterTest {
 
         val requests = mutableListOf<Instant?>()
         var playlistRequests = 0
+
+        /** The versions each playlist listing was told the stored playlists had, and the listing it answers with. */
+        val knownVersionRequests = mutableListOf<Map<String, String>>()
+        var playlistListing: MediaImporter.PlaylistListing? = null
 
         /** What it finds, or the failure it reports instead. */
         var found: List<Song> = emptyList()
@@ -1255,6 +1289,27 @@ class MediaImporterTest {
 
         override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
             playlistRequests++
+            knownVersionRequests += knownVersions
+            playlistListing?.let { emit(FlowEvent.Success(it)) }
+        }
+    }
+
+    /** A playlist store holding the playlists of [storedIds], which records each listing it was asked to reconcile. */
+    private class FakePlaylistStore : ImportedPlaylistStore {
+        var storedIds: Set<String> = emptySet()
+        val reconciled = mutableListOf<MediaImporter.PlaylistListing>()
+
+        override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
+
+        override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = storedIds
+
+        override suspend fun reconcilePlaylists(
+            type: MediaProviderType,
+            listing: MediaImporter.PlaylistListing,
+            listingComplete: Boolean,
+            lastServerSongs: Map<String, Set<Long>>
+        ) {
+            reconciled += listing
         }
     }
 

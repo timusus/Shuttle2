@@ -254,6 +254,48 @@ class PlexMediaProviderTest {
     }
 
     @Test
+    fun `a playlist read in full is listed with its version - one the server sent none for has none`() {
+        signedIn()
+        server.respond(PLAYLISTS, "playlists_versioned.json")
+        server.respond("/playlists/11/items", "playlist_11_items.json")
+        server.respond("/playlists/12/items", "empty.json")
+
+        val listing = syncListing(emptyList())
+
+        listing.result.versions shouldBe mapOf("11" to "1759300000/3")
+        listing.result.unchanged.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a playlist whose version is the known one isn't read - and one whose version changed is`() {
+        signedIn()
+        server.respond(PLAYLISTS, "playlists_versioned.json")
+        server.respond("/playlists/11/items", "playlist_11_items.json")
+        server.respond("/playlists/12/items", "empty.json")
+
+        val unchanged = provider.findPlaylists(emptyList(), mapOf("11" to "1759300000/3")).events().last().shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>().result
+        unchanged.unchanged shouldBe setOf("11")
+        unchanged.versions shouldBe mapOf("11" to "1759300000/3")
+        unchanged.playlists.map { it.externalId } shouldContainExactly listOf("12")
+        server.requestsTo("/playlists/11/items").shouldBeEmpty()
+
+        val changed = provider.findPlaylists(emptyList(), mapOf("11" to "1759300000/2")).events().last().shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>().result
+        changed.unchanged.shouldBeEmpty()
+        changed.playlists.map { it.externalId } shouldContainExactly listOf("11", "12")
+        server.requestsTo("/playlists/11/items").size shouldBe 1
+    }
+
+    @Test
+    fun `a playlist that fails to load keeps no version - so it is read again next time`() {
+        signedIn()
+        server.respond(PLAYLISTS, "playlists_versioned.json")
+        server.respond("/playlists/11/items", code = 500)
+        server.respond("/playlists/12/items", "empty.json")
+
+        syncListing(emptyList()).result.versions shouldBe emptyMap()
+    }
+
+    @Test
     fun `a failed playlists request fails the sync with the server's error`() {
         signedIn()
         server.respond(PLAYLISTS, code = 500)
@@ -335,6 +377,35 @@ class PlexMediaProviderTest {
         // B-Side, rated 6, is in the reply as a server ignoring the filter would send it, and stays unfavourited
         songs.associate { song -> song.name to song.favouritedAt } shouldBe mapOf("Opening" to null, "Duet" to Instant.fromEpochSeconds(1_759_305_600))
         server.requestsTo(ITEMS).single { it.url.parameters["userRating"] == "10" }.url.parameters["sort"] shouldBe "addedAt,titleSort"
+    }
+
+    @Test
+    fun `an incremental sync brings the tracks played since - asked for with a second's margin`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        val stored = sync()
+        val since = Instant.parse("2026-10-01T08:00:00Z")
+        server.respond(ITEMS, "empty.json")
+        server.respond(ITEMS, "played.json", query = mapOf("lastViewedAt>>" to "${since.epochSeconds - 1}"))
+
+        val songs = provider.findSongsChangedSince(stored, since).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        songs.map { song -> song.name } shouldContainExactly listOf("Duet")
+        songs.single().playCount shouldBe 3
+        songs.single().lastPlayed shouldBe Instant.fromEpochSeconds(1_759_400_000)
+    }
+
+    @Test
+    fun `an incremental sync whose played tracks fail to load leaves the plays as they are`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, "songs.json")
+        val stored = sync()
+        server.respond(ITEMS, "empty.json")
+        server.respond(ITEMS, code = 500, query = mapOf("lastViewedAt>>" to "${Instant.parse("2026-10-01T08:00:00Z").epochSeconds - 1}"))
+
+        provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result.shouldBeEmpty()
     }
 
     @Test

@@ -1,0 +1,25 @@
+{
+  "MediaContainer": {
+    "size": 2,
+    "Metadata": [
+      {
+        "ratingKey": "11",
+        "key": "/playlists/11/items",
+        "type": "playlist",
+        "title": "Road Trip",
+        "playlistType": "audio",
+        "smart": false,
+        "updatedAt": 1759300000,
+        "leafCount": 3
+      },
+      {
+        "ratingKey": "12",
+        "key": "/playlists/12/items",
+        "type": "playlist",
+        "title": "Empty One",
+        "playlistType": "audio",
+        "smart": false
+      }
+    ]
+  }
+}

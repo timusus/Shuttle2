@@ -1,0 +1,16 @@
+{
+  "MediaContainer": {
+    "totalSize": 1,
+    "Metadata": [
+      {
+        "key": "/library/metadata/2",
+        "type": "track",
+        "guid": "plex://track/2",
+        "title": "Duet",
+        "viewCount": 3,
+        "lastViewedAt": 1759400000,
+        "Media": [ { "id": 2, "Part": [ { "id": 2, "key": "/library/parts/2/file.mp3" } ] } ]
+      }
+    ]
+  }
+}
