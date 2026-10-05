@@ -21,18 +21,18 @@ class AlbumArtistDetailScreenTest {
     private val robot = LibraryDetailRobot(composeTestRule)
 
     @Test
-    fun `grouped by album, the albums head the song list and there is no separate Albums section`() {
+    fun `grouped by album, the albums head the song list and there is no separate albums shelf`() {
         robot.setAlbumArtist(readyAlbumArtistDetail())
 
         robot.assertTextDisplayed("Juniper Static")
         robot.assertTextDisplayed("1 album · 3 songs")
-        robot.assertTextNotDisplayed("Albums")
-        robot.assertTextDisplayed("Albums & Songs")
+        robot.assertTextShownTimes("Albums", 1)
+        robot.assertTextNotDisplayed("Songs")
         robot.assertTextShownTimes("Phase Garden", 1)
     }
 
     @Test
-    fun `listed flat, the Albums section comes first, then every song`() {
+    fun `listed flat, the albums shelf comes first, then every song`() {
         robot.setAlbumArtist(readyAlbumArtistDetail(sortOrder = ArtistSongSortOrder.SongTitle))
 
         robot.assertTextDisplayed("Albums")
@@ -40,6 +40,67 @@ class AlbumArtistDetailScreenTest {
         robot.scrollTo("Songs")
         robot.assertTextDisplayed("Songs")
         robot.assertTextShownTimes("Soft Machines at Dawn", 1)
+    }
+
+    @Test
+    fun `listed flat, a tap on an album in the shelf opens it`() {
+        val songs = phaseGardenSongs()
+        val album = albumOf(songs)
+        robot.setAlbumArtist(readyAlbumArtistDetail(songs = songs, albums = listOf(album), sortOrder = ArtistSongSortOrder.SongTitle))
+
+        robot.clickText("Phase Garden")
+
+        robot.lastAlbumClicked shouldBe album
+        robot.lastAlbumToggled shouldBe null
+    }
+
+    @Test
+    fun `the songs header's menu picks the sort, labelled with the current one`() {
+        robot.setAlbumArtist(readyAlbumArtistDetail(sortOrder = ArtistSongSortOrder.AlbumOldest))
+
+        robot.assertContentDescriptionShown("Sort: Album, oldest first")
+        robot.openArtistSortMenu()
+        robot.clickMenuItem("Most played")
+
+        robot.lastArtistSortOrder shouldBe ArtistSongSortOrder.MostPlayed
+    }
+
+    @Test
+    fun `Expand all unfolds the albums`() {
+        robot.setAlbumArtist(readyAlbumArtistDetail())
+
+        robot.clickContentDescription("Expand all")
+
+        robot.expandedAll shouldBe true
+    }
+
+    @Test
+    fun `once every album is unfolded, Collapse all folds them`() {
+        val album = albumOf(phaseGardenSongs())
+        robot.setAlbumArtist(readyAlbumArtistDetail(albums = listOf(album), expandedAlbums = setOfNotNull(album.groupKey)))
+        robot.assertContentDescriptionShown("Expand all", shown = false)
+        robot.clickContentDescription("Collapse all")
+        robot.collapsedAll shouldBe true
+    }
+
+    @Test
+    fun `listed flat, there are no albums to fold`() {
+        robot.setAlbumArtist(readyAlbumArtistDetail(sortOrder = ArtistSongSortOrder.SongTitle))
+
+        robot.assertContentDescriptionShown("Expand all", shown = false)
+        robot.assertContentDescriptionShown("Collapse all", shown = false)
+    }
+
+    @Test
+    fun `an unfolded album's header pins under the bar while its songs scroll by`() {
+        val songs = (1..40).map { createSong(id = 100L + it, name = "Long Track $it", albumArtist = "Juniper Static", album = "Endless Loop", track = it) }
+        val album = albumOf(songs)
+        robot.setAlbumArtist(readyAlbumArtistDetail(songs = songs, albums = listOf(album), expandedAlbums = setOfNotNull(album.groupKey)))
+        robot.assertPinnedAlbum(null)
+
+        robot.scrollTo("Long Track 40")
+
+        robot.assertPinnedAlbum("Endless Loop")
     }
 
     @Test
@@ -90,16 +151,14 @@ class AlbumArtistDetailScreenTest {
     }
 
     @Test
-    @Config(qualifiers = "w411dp-h2000dp") // tall enough that the Songs section below the unfolded album is composed
-    fun `listed flat, an unfolded album in the Albums section plays within the album`() {
-        val songs = phaseGardenSongs()
-        val album = albumOf(songs)
-        robot.setAlbumArtist(readyAlbumArtistDetail(songs = songs, albums = listOf(album), sortOrder = ArtistSongSortOrder.SongTitle, expandedAlbums = setOfNotNull(album.groupKey)))
+    @Config(qualifiers = "w411dp-h2000dp") // tall enough that everything below the album sections is composed
+    fun `grouped by album, Appears On follows the artist's albums, ahead of their other songs`() {
+        val stray = createSong(id = 60, name = "Loose Thread", albumArtist = "Juniper Static", album = "Loose Tracks")
+        val compilation = createAlbum(name = "Low Tide Sessions, Vol. 2", albumArtist = "Various Artists", year = 2022)
+        robot.setAlbumArtist(readyAlbumArtistDetail(songs = phaseGardenSongs() + stray, albums = listOf(albumOf(phaseGardenSongs())), appearsOn = listOf(compilation)))
 
-        robot.assertTextShownTimes("Soft Machines at Dawn", 2)
-        robot.clickText("Soft Machines at Dawn")
-
-        robot.lastPlayed shouldBe (songs to 1)
+        robot.assertTextAbove("Phase Garden", "Appears On")
+        robot.assertTextAbove("Appears On", "Other Songs")
     }
 
     @Test

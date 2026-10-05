@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -49,7 +51,8 @@ enum class DetailContentState { Loading, NotFound, Ready }
 
 /**
  * A library detail screen: [DetailScaffold] with a [DetailHero] (the artwork, title and Play / Shuffle, then [header]),
- * or with [bleed] a [DetailBleedHero] showing [artwork] full-bleed (an artist page's, #781), and an overflow that opens the item's actions sheet, after any screen-specific [actions]. [content] follows the hero.
+ * or with [bleed] a [DetailBleedHero] showing [artwork] full-bleed (an artist page's, #781), and an overflow that opens the item's actions sheet, after any screen-specific [actions]. [content] follows the hero;
+ * [overlay] draws over it, under the bar, given the bar's height.
  */
 @Composable
 fun LibraryDetailScaffold(
@@ -67,6 +70,7 @@ fun LibraryDetailScaffold(
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     header: @Composable () -> Unit = {},
+    overlay: (@Composable BoxScope.(topInset: Dp) -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     when (state) {
@@ -114,6 +118,7 @@ fun LibraryDetailScaffold(
                     modifier = Modifier.testTag("detail-more"),
                 )
             },
+            overlay = overlay,
             content = content,
         )
     }
@@ -131,7 +136,8 @@ private fun BleedArtwork(model: Any?) {
 
 /**
  * A titled row of [albums] as grid tiles: a tap goes to [onClick], a long press to [onLongClick]. [key] names the
- * section, keying its items apart from the page's others, and is the row's test tag.
+ * section, keying its items apart from the page's others, and is the row's test tag. Each tile's [subtitle] is whose
+ * album it is unless the caller says otherwise (an artist's own albums show their year).
  */
 fun LazyListScope.albumShelf(
     key: String,
@@ -140,6 +146,8 @@ fun LazyListScope.albumShelf(
     unknown: String,
     onClick: (Album) -> Unit,
     onLongClick: (Album) -> Unit,
+    // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+    subtitle: (Album) -> String? = { it.albumArtist ?: it.friendlyArtistName },
 ) {
     item(key = "$key-header", contentType = "header") { SectionHeader(title = title) }
     item(key = key, contentType = "album-shelf") {
@@ -151,8 +159,7 @@ fun LazyListScope.albumShelf(
             items(albums, key = { "$key-${it.groupKey}" }) { album ->
                 GridTile(
                     title = album.name ?: unknown,
-                    // Whose album it is: the album artist, not the track artists friendlyArtistName joins
-                    subtitle = album.albumArtist ?: album.friendlyArtistName,
+                    subtitle = subtitle(album),
                     onClick = { onClick(album) },
                     onLongClick = { onLongClick(album) },
                     artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },

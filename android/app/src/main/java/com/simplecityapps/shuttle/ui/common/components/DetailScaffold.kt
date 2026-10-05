@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.common.components
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -34,6 +36,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2DetailTopBar
  * It scrolls with the list: no parallax, no scrim. The bar shows [title] and [subtitle] once the hero has scrolled
  * under it. Without one (loading, not found), the list sits below the bar and the bar shows the title throughout.
  * [heroBleeds]: the hero is a `DetailBleedHero`, whose image runs up behind the bar, so the bar's icons are white over it.
+ * [overlay] draws over the list, under the bar, given the bar's height (an artist page's pinned album header, #631).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +49,7 @@ fun DetailScaffold(
     hero: (@Composable (topInset: Dp) -> Unit)? = null,
     heroBleeds: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
+    overlay: (@Composable BoxScope.(topInset: Dp) -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
@@ -73,23 +77,26 @@ fun DetailScaffold(
         },
     ) { innerPadding ->
         val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            state = listState,
-            contentPadding = if (hero != null) {
-                PaddingValues(
-                    start = innerPadding.calculateStartPadding(layoutDirection),
-                    end = innerPadding.calculateEndPadding(layoutDirection),
-                    bottom = innerPadding.calculateBottomPadding(),
-                )
-            } else {
-                innerPadding
-            },
-        ) {
-            if (hero != null) {
-                item(key = "detail-hero", contentType = "hero") { hero(innerPadding.calculateTopPadding()) }
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                state = listState,
+                contentPadding = if (hero != null) {
+                    PaddingValues(
+                        start = innerPadding.calculateStartPadding(layoutDirection),
+                        end = innerPadding.calculateEndPadding(layoutDirection),
+                        bottom = innerPadding.calculateBottomPadding(),
+                    )
+                } else {
+                    innerPadding
+                },
+            ) {
+                if (hero != null) {
+                    item(key = "detail-hero", contentType = "hero") { hero(innerPadding.calculateTopPadding()) }
+                }
+                content()
             }
-            content()
+            overlay?.invoke(this, innerPadding.calculateTopPadding())
         }
     }
 }

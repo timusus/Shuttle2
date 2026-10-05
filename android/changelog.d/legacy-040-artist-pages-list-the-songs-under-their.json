@@ -1,5 +1,5 @@
 {
   "type": "improvements",
-  "text": "Artist pages list the songs under their albums, which unfold in place, instead of showing the albums again above one long song list",
-  "commits": []
+  "text": "Artist pages list the songs under their albums, which unfold in place, with a sort menu, Expand all and Collapse all, and the album you're scrolling through pinned at the top. Sorted by song, the albums show as a row of covers above the songs",
+  "commits": ["3cd2a4b05"]
 }

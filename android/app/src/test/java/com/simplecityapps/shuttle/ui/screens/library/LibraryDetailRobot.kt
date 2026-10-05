@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasTestTag
@@ -24,6 +25,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
@@ -67,6 +69,14 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         private set
     var lastDescending: Boolean? = null
         private set
+
+    /** The sort picked from an artist's songs header, and whether its Expand all / Collapse all was tapped. */
+    var lastArtistSortOrder: ArtistSongSortOrder? = null
+        private set
+    var expandedAll = false
+        private set
+    var collapsedAll = false
+        private set
     var exported = false
         private set
 
@@ -90,6 +100,9 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
             onAlbumMore = ::more,
             onSongMore = ::more,
             onAppearsOnClick = { lastAppearsOnOpened = it },
+            onSortOrderSelected = { lastArtistSortOrder = it },
+            onExpandAll = { expandedAll = true },
+            onCollapseAll = { collapsedAll = true },
         )
     }
 
@@ -175,6 +188,30 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         rule.onAllNodesWithContentDescription("Now playing")[0].assertIsDisplayed()
     }
 
+    /** [upper] is laid out above [lower] in the list; both must be composed. */
+    fun assertTextAbove(upper: String, lower: String) {
+        val top = rule.onAllNodesWithText(upper)[0].fetchSemanticsNode().boundsInRoot.top
+        val bottom = rule.onAllNodesWithText(lower)[0].fetchSemanticsNode().boundsInRoot.top
+        check(top < bottom) { "\"$upper\" ($top) is not above \"$lower\" ($bottom)" }
+    }
+
+    /** Whether a node labelled [label] (a content description) is composed. */
+    fun assertContentDescriptionShown(label: String, shown: Boolean = true) {
+        val count = rule.onAllNodesWithContentDescription(label).fetchSemanticsNodes().size
+        check((count > 0) == shown) { "\"$label\" shown $count times" }
+    }
+
+    /** Whether an artist's pinned album header shows over the list, and that it names [albumTitle]. */
+    fun assertPinnedAlbum(albumTitle: String?) {
+        val pinned = rule.onAllNodes(hasTestTag("artist-pinned-album")).fetchSemanticsNodes()
+        if (albumTitle == null) {
+            check(pinned.isEmpty()) { "an album header is pinned" }
+        } else {
+            check(pinned.size == 1) { "no album header is pinned" }
+            rule.onNode(hasText(albumTitle) and hasAnyAncestor(hasTestTag("artist-pinned-album"))).assertExists()
+        }
+    }
+
     fun assertReorderHandlesShown() {
         rule.onAllNodesWithContentDescription("Reorder")[0].assertIsDisplayed()
     }
@@ -239,9 +276,21 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
 
     fun openSortMenu() = clickContentDescription("Sort by")
 
+    /** Opens an artist's sort menu, from its songs header, labelled with the current sort. */
+    fun openArtistSortMenu() {
+        scrollToTag("artist-sort")
+        rule.onNodeWithTag("artist-sort").performClick()
+        rule.waitForIdle()
+    }
+
     /** Taps an item in an open menu, which renders in a popup outside the screen's list. */
     fun clickMenuItem(text: String, substring: Boolean = false) {
         rule.onNodeWithText(text, substring = substring).performClick()
+        rule.waitForIdle()
+    }
+
+    fun scrollToTag(tag: String) {
+        rule.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).performScrollToNode(hasTestTag(tag))
         rule.waitForIdle()
     }
 

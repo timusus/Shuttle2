@@ -78,14 +78,38 @@
     <string name="artist_detail_albums">Albums</string>
     <!-- Artist detail section over the artist's songs -->
     <string name="artist_detail_songs">Songs</string>
-    <!-- Artist detail section over the artist's songs when they're grouped under their albums, which stand in for the Albums section -->
-    <string name="artist_detail_albums_and_songs">Albums &amp; Songs</string>
     <!-- Artist detail: the section after the album groups, of the artist's songs on none of their own albums -->
     <string name="artist_detail_other_songs">Other Songs</string>
     <!-- Artist detail: opens the album named, from its thumbnail in the song list (spoken by screen readers) -->
     <string name="artist_detail_open_album">Open <xliff:g example="Album name" id="album">%1$s</xliff:g></string>
     <!-- Artist detail: the section of other artists' albums crediting this artist (features, compilations) -->
     <string name="artist_detail_appears_on">Appears On</string>
+    <!-- Artist detail sort menu: songs grouped under their albums, newest album first -->
+    <string name="artist_sort_album_newest">Album, newest first</string>
+    <!-- Artist detail sort menu: songs grouped under their albums, oldest album first -->
+    <string name="artist_sort_album_oldest">Album, oldest first</string>
+    <!-- Artist detail sort menu: songs grouped under their albums, albums A to Z -->
+    <string name="artist_sort_album_title">Album title</string>
+    <!-- Artist detail sort menu: every song in one list, A to Z -->
+    <string name="artist_sort_song_title">Song title</string>
+    <!-- Artist detail sort menu: every song in one list, most played first -->
+    <string name="artist_sort_most_played">Most played</string>
+    <!-- Artist detail sort button label: the current sort in a word or two (Album, newest first) -->
+    <string name="artist_sort_short_album_newest">Newest</string>
+    <!-- Artist detail sort button label: the current sort in a word or two (Album, oldest first) -->
+    <string name="artist_sort_short_album_oldest">Oldest</string>
+    <!-- Artist detail sort button label: the current sort in a word or two (Album title) -->
+    <string name="artist_sort_short_album_title">Album A–Z</string>
+    <!-- Artist detail sort button label: the current sort in a word or two (Song title) -->
+    <string name="artist_sort_short_song_title">Title A–Z</string>
+    <!-- Artist detail: unfolds every album's songs in the song list -->
+    <string name="artist_detail_expand_all">Expand all</string>
+    <!-- Artist detail: folds every album's songs away in the song list -->
+    <string name="artist_detail_collapse_all">Collapse all</string>
+    <!-- Artist detail: an album row's state when its songs are shown under it (spoken by screen readers) -->
+    <string name="artist_detail_album_expanded">Expanded</string>
+    <!-- Artist detail: an album row's state when its songs are folded away (spoken by screen readers) -->
+    <string name="artist_detail_album_collapsed">Collapsed</string>
     <string name="album_detail_more_by">More by <xliff:g example="Artist name" id="artist">%1$s</xliff:g></string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->
     <string name="detail_shuffle_albums">Shuffle albums</string>
