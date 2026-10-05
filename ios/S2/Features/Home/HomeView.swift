@@ -31,13 +31,16 @@ struct HomeView: View {
                 onShuffleAll: {
                     if let action = models.home.shuffleAll() { models.actions.send(action) }
                 },
+                onPlaySection: { models.home.playSection(id: $0) },
                 onOpen: { item in navigator.open(Self.route(item)) },
                 onAction: { models.actions.send($0) },
                 pendingPlayKey: intent.loadingKey,
                 onPlay: { item, action in models.actions.send(action, key: item.key) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
-            .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
+            .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { event in
+                if let shelf = event as? HomeEventPlayShelf { models.actions.send(shelf.action) }
+            }
             .warmsUpSearch(once: !(state is HomeUiStateLoading))
         }
         .refreshable {
@@ -88,7 +91,7 @@ final class HomeModels: ViewModelGroup {
 
 /// Home from a `HomeUiState`. `showWhatsNew` has no iOS surface yet (no changelog screen until phase 7, #589), and
 /// `HomeEvent.AnalyticsNowOn` never fires on iOS: the first run's welcome discloses telemetry instead (#776), so
-/// Home's events are consumed and dropped.
+/// that event is consumed and dropped; `HomeEvent.PlayShelf` (a shelf header's Play, #865) is dispatched as a `MediaAction`.
 ///
 /// A `ScrollView` of a `LazyVStack`, not a `List`: the grid and the shelves are full-bleed, and the
 /// content is capped at `AdaptiveLayout.contentMaxWidth` and centred on an iPad.
@@ -96,6 +99,8 @@ struct HomeContent: View {
     let state: HomeUiState
     var importStatus: ImportStatus = .idle
     var onShuffleAll: () -> Void = {}
+    /// Plays a whole shelf from its header (`HomeSection.playable` ones only).
+    var onPlaySection: (HomeSectionId) -> Void = { _ in }
     /// Opens the item's screen.
     var onOpen: (HomeItem) -> Void = { _ in }
     /// Dispatches a play or queue action.
@@ -203,10 +208,15 @@ struct HomeContent: View {
     private func header(_ section: HomeSection) -> some View {
         let title = Self.title(section.title)
         let subtitle = section.subtitle?.localized()
-        switch section.id {
+        let header = switch section.id {
         case .recentlyAdded: SectionHeader(title, subtitle: subtitle, seeAll: .smartPlaylist(id: "recently-added"))
         case .genrePicks: SectionHeader(title, subtitle: subtitle, seeAll: .libraryCategory(.genres))
         default: SectionHeader(title, subtitle: subtitle)
+        }
+        if section.playable {
+            header.play { onPlaySection(section.id) }
+        } else {
+            header
         }
     }
 

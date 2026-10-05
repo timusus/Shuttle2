@@ -65,6 +65,19 @@ struct DesignSystemTests {
         #expect((try? sut.inspect().find(ViewType.NavigationLink.self)) == nil)
     }
 
+    @Test func aHeaderPlayButtonIsLabelledWithItsTitleAndRunsItsAction() throws {
+        var played = false
+        let sut = SectionHeader("Heavy Rotation").play { played = true }
+        let button = try sut.inspect().find(ViewType.Button.self)
+        #expect(try button.accessibilityLabel().string() == "Play Heavy Rotation")
+        try button.tap()
+        #expect(played)
+    }
+
+    @Test func aHeaderWithoutPlayHasNoButton() throws {
+        #expect((try? SectionHeader("Heavy Rotation").inspect().find(ViewType.Button.self)) == nil)
+    }
+
     @Test func seeAllRunsItsAction() throws {
         var tapped = false
         let sut = SectionHeader("Most Played") { tapped = true }

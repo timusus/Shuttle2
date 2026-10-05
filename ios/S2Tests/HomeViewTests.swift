@@ -406,6 +406,22 @@ struct HomeViewTests {
         #expect(shuffled)
     }
 
+    @Test func playableShelvesOfferAHeaderPlayAndTheRestDoNot() throws {
+        var played: [HomeSectionId] = []
+        let sut = HomeContent(
+            state: content([
+                section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))]),
+                section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Kid A"))]),
+                section(.genrePicks, .genrePicks, [HomeItemGenreItem(genre: genre("Trip Hop"))]),
+            ]),
+            onPlaySection: { played.append($0) }
+        )
+        let buttons = try sut.inspect().findAll(viewWithAccessibilityIdentifier: "sectionHeader.play")
+        #expect(buttons.count == 1)
+        try sut.inspect().find(viewWithAccessibilityLabel: "Play Heavy Rotation").button().tap()
+        #expect(played == [.heavyRotation])
+    }
+
     @Test func aHomeWithHistoryHasNoColdStartHint() throws {
         let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))])]))
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "home.coldStartHint")) == nil)

@@ -14,6 +14,7 @@ struct SectionHeader: View {
     let title: String
     let subtitle: String?
     private let seeAll: SeeAll?
+    private var playAction: (() -> Void)?
 
     private enum SeeAll {
         case route(Route)
@@ -38,6 +39,13 @@ struct SectionHeader: View {
         self.title = title
         self.subtitle = subtitle
         seeAll = .action(action)
+    }
+
+    /// Adds a trailing Play button (44pt, "Play <title>") that runs `action`, after See All when there is one.
+    func play(_ action: @escaping () -> Void) -> SectionHeader {
+        var copy = self
+        copy.playAction = action
+        return copy
     }
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -74,6 +82,18 @@ struct SectionHeader: View {
                     .buttonStyle(.plain)
             case nil:
                 EmptyView()
+            }
+            if let playAction {
+                Button(action: playAction) {
+                    Image(systemName: "play.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Play \(title)")
+                .accessibilityIdentifier("sectionHeader.play")
             }
         }
     }
