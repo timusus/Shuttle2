@@ -47,6 +47,15 @@ abstract class PlaylistDataDao {
     @Query("SELECT * FROM playlists WHERE mediaProvider = :mediaProviderType AND externalId IS NOT NULL")
     abstract suspend fun getImportedPlaylistData(mediaProviderType: MediaProviderType): List<PlaylistData>
 
+    @Query(
+        """
+            SELECT DISTINCT playlists.externalId FROM playlists
+            INNER JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId
+            WHERE playlists.mediaProvider = :mediaProviderType AND playlists.externalId IS NOT NULL
+            """
+    )
+    abstract suspend fun importedPlaylistIdsWithSongs(mediaProviderType: MediaProviderType): List<String>
+
     @Query("SELECT songId FROM playlist_song_join WHERE playlistId = :playlistId ORDER BY sortOrder")
     abstract suspend fun getSongIds(playlistId: Long): List<Long>
 
@@ -81,21 +90,27 @@ abstract class PlaylistDataDao {
     }
 
     /**
-     * Makes the playlists [mediaProviderType] imported match its server's listing, as one transaction: stores each of
-     * [playlists] that holds songs as [storeImported] does, adding the songs it doesn't hold yet, then deletes each playlist
-     * imported from a source that, after that, holds no songs, and, if [deleteUnlisted], each one imported from a source the
-     * listing doesn't name. One that still holds songs, though its source matched none in the library (songs added in S2,
-     * say), stays. One imported from an [unread] source, whose songs the listing couldn't read in full, is never deleted.
+     * Makes the playlists [mediaProviderType] imported match its server's listing, as one transaction: gives each of
+     * [playlists] read in full exactly its songs, in the server's order (dropping songs added in S2, which the server never
+     * heard of), adds to each one from an [unread] source the songs it doesn't hold yet, then deletes each playlist imported
+     * from a source that, after that, holds no songs, and, if [deleteUnlisted], each one imported from a source the listing
+     * doesn't name. One imported from an [unread] source, whose songs the listing couldn't read in full, or an [unchanged]
+     * one, which it didn't read as the server hasn't changed it, is never deleted.
      */
     @Transaction
     open suspend fun reconcileImported(
         mediaProviderType: MediaProviderType,
         playlists: List<Pair<PlaylistData, List<Long>>>,
         unread: Set<String>,
+        unchanged: Set<String>,
         deleteUnlisted: Boolean
     ) {
         playlists.forEach { (playlistData, songIds) ->
-            if (songIds.isNotEmpty()) {
+            val readInFull = playlistData.externalId !in unread
+            if (readInFull) {
+                // The server's playlist as it is now, so a song removed or moved there is here too
+                storeImported(playlistData, songIds, replaceSongs = true)
+            } else if (songIds.isNotEmpty()) {
                 storeImported(playlistData, songIds, replaceSongs = false)
             }
         }
@@ -103,7 +118,7 @@ abstract class PlaylistDataDao {
         getImportedPlaylistData(mediaProviderType).forEach { stored ->
             val gone =
                 when (stored.externalId) {
-                    in unread -> false
+                    in unread, in unchanged -> false
                     in listed -> getSongIds(stored.id).isEmpty()
                     else -> deleteUnlisted || getSongIds(stored.id).isEmpty()
                 }

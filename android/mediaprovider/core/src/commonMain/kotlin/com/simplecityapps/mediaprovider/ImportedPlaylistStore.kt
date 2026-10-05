@@ -13,13 +13,19 @@ interface ImportedPlaylistStore {
 
     /**
      * Makes the playlists stored from [type]'s server match its [listing], as one transaction: stores each playlist it read
-     * as [storePlaylist] does, then deletes each stored playlist that holds no songs after that, and, if the listing is
-     * [listingComplete], each one from a source it no longer lists. One from an [unread][MediaImporter.PlaylistListing.unread]
-     * source is never deleted, and the playlists made in S2 are left as they are.
+     * in full exactly as the server holds it (its name, songs and their order: songs added to it in S2 go, as the server never
+     * heard of them), one it read in part as [storePlaylist] does, then deletes each stored playlist that holds no songs after
+     * that, and, if the listing is [listingComplete], each one from a source it no longer lists. One from an
+     * [unread][MediaImporter.PlaylistListing.unread] or [unchanged][MediaImporter.PlaylistListing.unchanged] source is never
+     * deleted, and the playlists made in S2 are left as they are.
      */
+
     suspend fun reconcilePlaylists(
         type: MediaProviderType,
         listing: MediaImporter.PlaylistListing,
         listingComplete: Boolean
     )
+
+    /** The [externalId][MediaImporter.PlaylistUpdateData.externalId]s of the playlists stored from [type] that hold songs. */
+    suspend fun storedPlaylistIds(type: MediaProviderType): Set<String>
 }

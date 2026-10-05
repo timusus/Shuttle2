@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Playlists from Jellyfin, Emby and Plex now follow the server: songs removed or reordered there are removed or reordered here too, and only the playlists that changed are downloaded again.", "commits": [] }

@@ -186,6 +186,50 @@ class EmbyMediaProviderTest {
     }
 
     @Test
+    fun `a playlist read in full carries its version - its save date and item count`() {
+        signedIn()
+        server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/401/Items", "playlist_1_items.json")
+        server.respond("/Playlists/402/Items", "empty.json")
+
+        val listing = syncListing(emptyList())
+
+        server.requestsTo(ITEMS).single().url.parameters.getAll("Fields").orEmpty().single().split(',') shouldContainExactly listOf("DateLastSaved", "ChildCount")
+        // 402 has no save date, so has no version and is read every time
+        listing.result.versions shouldBe mapOf("401" to "$SAVED/2")
+        listing.result.unchanged.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a playlist at the version last read isn't read again - it's listed as unchanged`() {
+        signedIn()
+        server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/402/Items", "empty.json")
+
+        val listing = syncListing(emptyList(), knownVersions = mapOf("401" to "$SAVED/2", "402" to "anything"))
+
+        server.requestsTo("/Playlists/401/Items").shouldBeEmpty()
+        server.requestsTo("/Playlists/402/Items").size shouldBe 1
+        listing.result.playlists.map { it.externalId } shouldContainExactly listOf("402")
+        listing.result.unchanged shouldBe setOf("401")
+        listing.result.versions shouldBe mapOf("401" to "$SAVED/2")
+    }
+
+    @Test
+    fun `a playlist saved since it was last read is read again`() {
+        signedIn()
+        server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/401/Items", "playlist_1_items.json")
+        server.respond("/Playlists/402/Items", "empty.json")
+
+        val listing = syncListing(emptyList(), knownVersions = mapOf("401" to "2026-08-01T10:00:00.0000000Z/2"))
+
+        server.requestsTo("/Playlists/401/Items").size shouldBe 1
+        listing.result.unchanged.shouldBeEmpty()
+        listing.result.versions shouldBe mapOf("401" to "$SAVED/2")
+    }
+
+    @Test
     fun `a playlist whose items fail to load is listed as unread - not taken as gone from the server`() {
         signedIn()
         server.respond(ITEMS, "playlists.json", query = mapOf("IncludeItemTypes" to "Playlist"))
@@ -425,7 +469,10 @@ class EmbyMediaProviderTest {
 
     private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = syncListing(library).result.playlists
 
-    private fun syncListing(library: List<Song>): FlowEvent.Success<MediaImporter.PlaylistListing> = provider.findPlaylists(library).events().last()
+    private fun syncListing(
+        library: List<Song>,
+        knownVersions: Map<String, String> = emptyMap()
+    ): FlowEvent.Success<MediaImporter.PlaylistListing> = provider.findPlaylists(library, knownVersions).events().last()
         .shouldBeInstanceOf<FlowEvent.Success<MediaImporter.PlaylistListing>>()
 
     private fun <T> Flow<T>.events(): List<T> = runBlocking { toList() }
@@ -434,6 +481,8 @@ class EmbyMediaProviderTest {
         get() = headers["X-Emby-Token"]
 
     private companion object {
+        const val SAVED = "2026-09-01T10:00:00.0000000Z"
+
         const val ITEMS = "/Users/user-1/Items"
     }
 }

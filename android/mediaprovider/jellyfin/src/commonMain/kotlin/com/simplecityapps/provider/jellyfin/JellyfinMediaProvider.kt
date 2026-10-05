@@ -68,7 +68,7 @@ class JellyfinMediaProvider(
         )
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (
             val queryResult =
                 session.request { credentials ->
@@ -85,7 +85,7 @@ class JellyfinMediaProvider(
             is NetworkResult.Success<QueryResult> -> {
                 val playlists = queryResult.body.items
                 // The listing isn't paged: one that left playlists out can't have them taken as gone from the server
-                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlists, existingSongs), missing = (queryResult.body.totalRecordCount - playlists.size).coerceAtLeast(0)))
+                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlists, existingSongs, knownVersions), missing = (queryResult.body.totalRecordCount - playlists.size).coerceAtLeast(0)))
             }
 
             is NetworkResult.Failure -> {
@@ -152,32 +152,45 @@ class JellyfinMediaProvider(
     /**
      * A playlist per one of [playlistItems], holding the library songs its items refer to, in playlist order. A playlist whose
      * items fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
-     * so the one stored from it is never deleted; the songs a short one did return are still added to it.
+     * so the one stored from it is never deleted; the songs a short one did return are still added to it. One whose
+     * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][MediaImporter.PlaylistListing.unchanged].
      */
     private suspend fun findSongsForPlaylists(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         playlistItems: List<Item>,
-        existingSongs: List<Song>
+        existingSongs: List<Song>,
+        knownVersions: Map<String, String>
     ): MediaImporter.PlaylistListing {
+        val songsById = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
         val playlists = mutableListOf<MediaImporter.PlaylistUpdateData>()
         val unread = mutableSetOf<String>()
+        val unchanged = mutableSetOf<String>()
+        val versions = mutableMapOf<String, String>()
         for (playlistItem in playlistItems) {
+            val version = playlistItem.playlistVersion
+            if (version != null && knownVersions[playlistItem.id] == version) {
+                unchanged += playlistItem.id
+                versions[playlistItem.id] = version
+                continue
+            }
             val event = queryPlaylistItems(address, session, playlistItem.id).last()
             if (event is FlowEvent.Success) {
                 playlists +=
                     MediaImporter.PlaylistUpdateData(
                         mediaProviderType = type,
                         name = playlistItem.name ?: strings.unknownName,
-                        songs = event.result.mapNotNull { item -> existingSongs.firstOrNull { it.externalId == item.id } },
+                        songs = event.result.mapNotNull { item -> songsById[item.id] },
                         externalId = playlistItem.id
                     )
             }
             if (event !is FlowEvent.Success || !event.complete) {
                 unread += playlistItem.id
+            } else if (version != null) {
+                versions[playlistItem.id] = version
             }
         }
-        return MediaImporter.PlaylistListing(playlists, unread)
+        return MediaImporter.PlaylistListing(playlists, unread, unchanged, versions)
     }
 
     private fun queryPlaylistItems(
@@ -202,6 +215,13 @@ class JellyfinMediaProvider(
 }
 
 private fun QueryResult.toPage() = Page(items, totalRecordCount)
+
+/**
+ * What changes when a playlist is renamed or its items edited: the server saves it again. Its item count too, so an edit
+ * that somehow kept the save date still shows. Null when the server didn't send the save date: the playlist is always read.
+ */
+internal val Item.playlistVersion: String?
+    get() = dateLastSaved?.let { saved -> "$saved/${childCount ?: ""}" }
 
 /** [syncedAt] is when the sync that read the item started: a favourite's time, as the server keeps none. */
 internal fun Item.toSong(syncedAt: Instant): Song {

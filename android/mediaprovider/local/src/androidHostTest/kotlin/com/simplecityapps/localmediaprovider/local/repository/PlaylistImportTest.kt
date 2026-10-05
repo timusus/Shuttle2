@@ -127,7 +127,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rescan keeps the songs added in S2 to a playlist from a media server`() = runBlocking<Unit> {
+    fun `a rescan gives a playlist from a media server the server's songs, dropping those added in S2`() = runBlocking<Unit> {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -137,7 +137,47 @@ class PlaylistImportTest {
 
         importer.import()
 
+        importedPlaylistPaths() shouldBe listOf(A, B)
+    }
+
+    @Test
+    fun `a rescan follows the songs removed from and reordered in a playlist on the server`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        provider.songPaths = listOf(A, B, C, D)
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
+        importer.import()
+
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(C, A, D))
+        importer.import()
+
+        importedPlaylistPaths() shouldBe listOf(C, A, D)
+    }
+
+    @Test
+    fun `a playlist read in part only gains songs, and loses none`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        provider.songPaths = listOf(A, B, C)
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        importer.import()
+
+        provider.partlyRead = mapOf(PLAYLIST_ID to listOf(C))
+        importer.import()
+
         importedPlaylistPaths() shouldBe listOf(A, B, C)
+    }
+
+    @Test
+    fun `a playlist the server reports unchanged is kept as it is, though the listing doesn't read it`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        provider.songPaths = listOf(A, B)
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        importer.import()
+
+        provider.unchanged = setOf(PLAYLIST_ID)
+        importer.import()
+
+        importedPlaylistPaths() shouldBe listOf(A, B)
+        playlistRepository.storedPlaylistIds(MediaProviderType.Jellyfin) shouldBe setOf(PLAYLIST_ID)
     }
 
     @Test
@@ -321,6 +361,12 @@ class PlaylistImportTest {
 
         @Volatile var unread: Set<String> = emptySet()
 
+        /** Playlists the listing doesn't read, reporting the server hasn't changed them. */
+        @Volatile var unchanged: Set<String> = emptySet()
+
+        /** Playlists read in part: listed as unread, holding just these songs. */
+        @Volatile var partlyRead: Map<String, List<String>> = emptyMap()
+
         @Volatile var missing: Int = 0
 
         @Volatile var listingFails: Boolean = false
@@ -331,16 +377,16 @@ class PlaylistImportTest {
             if (songsFail) FlowEvent.Failure("The server didn't answer") else FlowEvent.Success(songPaths.map { path -> song(path, type) })
         )
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
             if (listingFails) {
                 emit(FlowEvent.Failure("The server didn't answer"))
                 return@flow
             }
             val read =
-                playlists.filterKeys { id -> id !in unread }.map { (id, paths) ->
+                (playlists.filterKeys { id -> id !in unread && id !in unchanged && id !in partlyRead } + partlyRead).map { (id, paths) ->
                     MediaImporter.PlaylistUpdateData(type, PLAYLIST_NAME, paths.mapNotNull { path -> existingSongs.firstOrNull { song -> song.path == path } }, id)
                 }
-            emit(FlowEvent.Success(MediaImporter.PlaylistListing(read, unread), missing = missing))
+            emit(FlowEvent.Success(MediaImporter.PlaylistListing(read, unread + partlyRead.keys, unchanged), missing = missing))
         }
     }
 

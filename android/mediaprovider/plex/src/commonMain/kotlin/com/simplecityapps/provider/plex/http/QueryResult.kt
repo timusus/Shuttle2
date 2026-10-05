@@ -41,6 +41,8 @@ data class Metadata(
     // Epoch seconds
     @SerialName("addedAt") val addedAt: Long? = null,
     @SerialName("updatedAt") val updatedAt: Long? = null,
+    // A playlist's item count
+    @SerialName("leafCount") val leafCount: Int? = null,
     // Server-relative image paths, resolved against the server address and signed with its token
     @SerialName("thumb") val thumb: String? = null,
     @SerialName("parentThumb") val parentThumb: String? = null,

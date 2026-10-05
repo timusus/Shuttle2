@@ -232,7 +232,7 @@ class MediaStoreMediaProvider(
 
     // Playlists
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
         val mediaStorePlaylists = findMediaStorePlaylists().toList()
         val updates =
             mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->

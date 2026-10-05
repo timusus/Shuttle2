@@ -78,7 +78,7 @@ class IosLocalMediaProvider(
     }
 
     /** Playlist files aren't read on iOS. */
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
         emit(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
     }
 }

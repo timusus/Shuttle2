@@ -188,6 +188,21 @@ class GeneralPreferenceManager @Inject constructor(
         start: Instant?
     ) = store.putInstant("last_sync_start_$source", start)
 
+    /**
+     * The server's version of each playlist last read in full from [source], by its external id: a playlist whose version
+     * is the same at the next sync isn't read again (#843).
+     */
+    fun playlistVersions(source: String): Map<String, String> = store.getString("playlist_versions_$source", null)
+        ?.lineSequence()
+        ?.mapNotNull { line -> line.split('\t', limit = 2).takeIf { it.size == 2 }?.let { (id, version) -> id to version } }
+        ?.toMap()
+        .orEmpty()
+
+    fun setPlaylistVersions(
+        source: String,
+        versions: Map<String, String>
+    ) = store.putString("playlist_versions_$source", versions.entries.joinToString("\n") { (id, version) -> "$id\t$version" }.ifEmpty { null })
+
     /** When the last successful full sync of [source] started: the one that also removes songs the server no longer has. */
     fun lastFullSyncStart(source: String): Instant? = store.getInstant("last_full_sync_start_$source")
 

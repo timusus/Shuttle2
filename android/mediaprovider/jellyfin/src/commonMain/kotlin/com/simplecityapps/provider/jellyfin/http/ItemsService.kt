@@ -65,6 +65,7 @@ class ItemsService(private val client: HttpClient) {
         url = "$url/Users/$userId/Items",
         authorization = authorization,
         itemTypes = "Playlist",
+        fields = "DateLastSaved,ChildCount",
         limit = limit,
         startIndex = startIndex
     )

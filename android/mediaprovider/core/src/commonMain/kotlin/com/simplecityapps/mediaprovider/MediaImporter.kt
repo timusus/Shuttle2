@@ -354,7 +354,9 @@ class MediaImporter(
                 }
             }
             if (playlistsDue(plan, stored)) {
-                importPlaylists(mediaProvider, timings, songsStored = stored != null).collect { event ->
+                // A full sync, or one that added songs a playlist might now match, reads every playlist again
+                val reuseVersions = plan != SyncPlan.Full && stored != null && stored.inserts == 0
+                importPlaylists(mediaProvider, timings, songsStored = stored != null, reuseVersions = reuseVersions).collect { event ->
                     if (event is FlowEvent.Failure) logger.warn { "$type playlist import failed: ${event.message}" }
                 }
             }
@@ -585,11 +587,15 @@ class MediaImporter(
      * ones, only when this pass stored its songs ([songsStored]) and the library holds some: against a song import that
      * failed, or a library that holds none of its songs yet, every playlist would match nothing and be deleted. Otherwise
      * the playlists that hold songs are stored and nothing is deleted.
+     *
+     * With [reuseVersions], a reconcile passes the provider the version each stored playlist had when it was last read, so it
+     * reads only the playlists changed on the server since (#843). The versions are recorded once a reconcile stores them.
      */
     private fun importPlaylists(
         mediaProvider: MediaProvider,
         timings: ImportTimings,
-        songsStored: Boolean
+        songsStored: Boolean,
+        reuseVersions: Boolean
     ): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
         // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
         val existingSongs = songRepository.loadProviderSongs(mediaProvider.type)
@@ -598,8 +604,18 @@ class MediaImporter(
             logger.info { "${mediaProvider.type} playlists stored without reconciling: songs stored $songsStored, library songs ${existingSongs.size}" }
         }
 
+        val source = mediaProvider.type.name
+        val knownVersions =
+            if (reconcile && reuseVersions) {
+                // Only a playlist still stored, holding songs, can be left as it is
+                val stored = playlistStore.storedPlaylistIds(mediaProvider.type)
+                preferenceManager.playlistVersions(source).filterKeys { externalId -> externalId in stored }
+            } else {
+                emptyMap()
+            }
+
         val findPlaylistsMark = TimeSource.Monotonic.markNow()
-        mediaProvider.findPlaylists(existingSongs).collect { event ->
+        mediaProvider.findPlaylists(existingSongs, knownVersions).collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
                     emit(FlowEvent.Progress<PlaylistImportResult, MessageProgress>(event.data))
@@ -608,6 +624,7 @@ class MediaImporter(
                 is FlowEvent.Success -> {
                     if (reconcile) {
                         playlistStore.reconcilePlaylists(mediaProvider.type, event.result, listingComplete = event.complete)
+                        preferenceManager.setPlaylistVersions(source, event.result.versions)
                     } else {
                         event.result.playlists.forEach { playlistUpdateData ->
                             if (playlistUpdateData.songs.isNotEmpty()) {
@@ -639,11 +656,16 @@ class MediaImporter(
     /**
      * The playlists a provider found: [playlists], each with the songs of its source, and [unread], the [PlaylistUpdateData.externalId]s
      * of those it listed but couldn't read all the songs of (one it read in part is in [playlists] too, so what it read is
-     * added). A playlist stored from an [unread] source is never deleted, never taken as gone from it.
+     * added). A playlist stored from an [unread] source is never deleted, never taken as gone from it. [unchanged] are those
+     * whose songs it didn't read, as the server reports the version they were last read at; they stay as they are.
+     * [versions] holds the server's version of each playlist it read in full or left [unchanged], by
+     * [PlaylistUpdateData.externalId], for the next sync to pass back.
      */
     data class PlaylistListing(
         val playlists: List<PlaylistUpdateData>,
-        val unread: Set<String> = emptySet()
+        val unread: Set<String> = emptySet(),
+        val unchanged: Set<String> = emptySet(),
+        val versions: Map<String, String> = emptyMap()
     )
 
     /** A playlist [mediaProviderType] found, holding the [songs] of its source, which [externalId] identifies within that provider. */

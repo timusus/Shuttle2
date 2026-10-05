@@ -1,6 +1,6 @@
 {
   "Items": [
-    { "Name": "Road Trip", "Id": "playlist-1" },
+    { "Name": "Road Trip", "Id": "playlist-1", "DateLastSaved": "2026-09-01T10:00:00.0000000Z", "ChildCount": 2 },
     { "Id": "playlist-2" }
   ],
   "TotalRecordCount": 2,

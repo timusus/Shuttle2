@@ -36,6 +36,8 @@ class MediaImportWorkerTest {
             playlistStore = object : ImportedPlaylistStore {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = Unit
 
+                override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = emptySet()
+
                 override suspend fun reconcilePlaylists(
                     type: MediaProviderType,
                     listing: MediaImporter.PlaylistListing,
@@ -114,7 +116,7 @@ class MediaImportWorkerTest {
             emit(failure?.let { FlowEvent.Failure(it) } ?: FlowEvent.Success(emptyList()))
         }
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
+        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = emptyFlow()
     }
 
     private object FakeStrings : MediaImportStrings {

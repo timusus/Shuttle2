@@ -38,8 +38,15 @@ interface MediaProvider {
      * listing, which the importer makes the playlists stored from it match ([ImportedPlaylistStore.reconcilePlaylists]): it
      * must name every playlist the server listed, those whose songs it couldn't read as [MediaImporter.PlaylistListing.unread],
      * and come [FlowEvent.Success.missing] as many as the listing left out. A listing that failed is a [FlowEvent.Failure].
+     *
+     * [knownVersions] is the [version][MediaImporter.PlaylistListing.versions] of each playlist as last stored, by its
+     * [MediaImporter.PlaylistUpdateData.externalId]: a server that reports the same version for one now can skip reading its
+     * songs and list it as [unchanged][MediaImporter.PlaylistListing.unchanged] instead.
      */
-    fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>>
+    fun findPlaylists(
+        existingSongs: List<Song>,
+        knownVersions: Map<String, String> = emptyMap()
+    ): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>>
 }
 
 /**

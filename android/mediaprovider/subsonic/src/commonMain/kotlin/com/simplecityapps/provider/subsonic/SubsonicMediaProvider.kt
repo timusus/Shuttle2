@@ -62,7 +62,7 @@ class SubsonicMediaProvider(
         emit(FlowEvent.Success(songs.filter(SongDto::isSong).map(SongDto::toSong), searched.missing))
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val playlists = when (val result = session.request { credentials -> authenticationManager.request(credentials) { auth -> service.playlists(address, auth) } }) {
             is NetworkResult.Success -> result.body
             is NetworkResult.Failure -> return@withServerSession fail(result.error)

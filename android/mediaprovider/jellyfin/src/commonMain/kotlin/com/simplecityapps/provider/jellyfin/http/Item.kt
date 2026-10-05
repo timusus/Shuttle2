@@ -51,6 +51,9 @@ data class Item(
     @SerialName("AlbumPrimaryImageTag") val albumPrimaryImageTag: String? = null,
     // Only returned when requested in 'fields'
     @SerialName("DateCreated") val dateCreated: String? = null,
+    // A playlist's: when it was last saved (renamed, or its items edited), and how many items it holds
+    @SerialName("DateLastSaved") val dateLastSaved: String? = null,
+    @SerialName("ChildCount") val childCount: Int? = null,
     // Only returned when requested in 'fields': the file's MusicBrainz tags, keyed "MusicBrainzRecording" (the recording,
     // which is what a file's MUSICBRAINZ_TRACKID holds), "MusicBrainzTrack" (the release track), "MusicBrainzAlbum",
     // "MusicBrainzReleaseGroup", "MusicBrainzArtist" and "MusicBrainzAlbumArtist"

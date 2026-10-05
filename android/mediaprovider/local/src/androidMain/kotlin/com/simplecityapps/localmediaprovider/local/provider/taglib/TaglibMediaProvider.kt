@@ -585,7 +585,7 @@ class TaglibMediaProvider(
         .toList()
         .flatten()
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flow {
         val sanitisedSongPaths = M3uEntryMatcher.sanitisedPathsByFilename(existingSongs)
 
         val playlistFiles = findPlaylistFiles()

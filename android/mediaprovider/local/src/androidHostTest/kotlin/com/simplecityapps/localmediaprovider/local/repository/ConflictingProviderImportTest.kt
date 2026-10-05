@@ -120,6 +120,6 @@ class ConflictingProviderImportTest {
             )
         )
 
-        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flowOf(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
+        override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = flowOf(FlowEvent.Success(MediaImporter.PlaylistListing(emptyList())))
     }
 }

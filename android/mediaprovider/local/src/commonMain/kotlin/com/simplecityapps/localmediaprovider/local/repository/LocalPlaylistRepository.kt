@@ -108,8 +108,13 @@ class LocalPlaylistRepository(
             mediaProviderType = type,
             playlists = listing.playlists.map { playlist -> playlist.toPlaylistData() to playlist.songs.inLibrary().map { song -> song.id } },
             unread = listing.unread,
+            unchanged = listing.unchanged,
             deleteUnlisted = listingComplete
         )
+    }
+
+    override suspend fun storedPlaylistIds(type: MediaProviderType): Set<String> = withContext(Dispatchers.IO) {
+        playlistDataDao.importedPlaylistIdsWithSongs(type).toSet()
     }
 
     private fun MediaImporter.PlaylistUpdateData.toPlaylistData() = PlaylistData(

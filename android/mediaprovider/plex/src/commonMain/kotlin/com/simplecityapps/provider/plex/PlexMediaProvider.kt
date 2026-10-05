@@ -88,12 +88,12 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
+    override fun findPlaylists(existingSongs: List<Song>, knownVersions: Map<String, String>): Flow<FlowEvent<MediaImporter.PlaylistListing, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         when (val playlistsResult = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.playlists(url = address, token = credentials.accessToken)) }) {
             is NetworkResult.Success<QueryResult> -> {
                 val songsByPart = existingSongs.filter { it.externalId != null }.associateBy { it.externalId }
                 // Not paged, so the listing holds every audio playlist on the server
-                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart)))
+                emit(FlowEvent.Success(findSongsForPlaylists(address, session, playlistsResult.body.mediaContainer.metadata.orEmpty(), songsByPart, knownVersions)))
             }
 
             is NetworkResult.Failure -> {
@@ -106,18 +106,28 @@ class PlexMediaProvider(
     /**
      * A playlist per one of [playlists], holding the library songs its items refer to, by media part. A playlist whose items
      * fail to load, or come to fewer than the server counts for it, is listed as [unread][MediaImporter.PlaylistListing.unread],
-     * so the one stored from it is never deleted; the songs a short one did return are still added to it.
+     * so the one stored from it is never deleted; the songs a short one did return are still added to it. One whose
+     * [playlistVersion] is its version in [knownVersions] isn't read: it's [unchanged][MediaImporter.PlaylistListing.unchanged].
      */
     private suspend fun findSongsForPlaylists(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
         playlists: List<Metadata>,
-        songsByPart: Map<String?, Song>
+        songsByPart: Map<String?, Song>,
+        knownVersions: Map<String, String>
     ): MediaImporter.PlaylistListing {
         val found = mutableListOf<MediaImporter.PlaylistUpdateData>()
         val unread = mutableSetOf<String>()
+        val unchanged = mutableSetOf<String>()
+        val versions = mutableMapOf<String, String>()
         for (playlist in playlists) {
             val ratingKey = playlist.ratingKey ?: continue
+            val version = playlist.playlistVersion
+            if (version != null && knownVersions[ratingKey] == version) {
+                unchanged += ratingKey
+                versions[ratingKey] = version
+                continue
+            }
             val event = queryPlaylistItems(address, session, ratingKey).last()
             if (event is FlowEvent.Success) {
                 found +=
@@ -130,9 +140,11 @@ class PlexMediaProvider(
             }
             if (event !is FlowEvent.Success || !event.complete) {
                 unread += ratingKey
+            } else if (version != null) {
+                versions[ratingKey] = version
             }
         }
-        return MediaImporter.PlaylistListing(found, unread)
+        return MediaImporter.PlaylistListing(found, unread, unchanged, versions)
     }
 
     private fun queryPlaylistItems(
@@ -282,6 +294,13 @@ class PlexMediaProvider(
 private const val BIT_DEPTH_CHUNK_SIZE = 100
 
 private fun QueryResult.toPage() = Page(mediaContainer.metadata.orEmpty(), mediaContainer.totalSize)
+
+/**
+ * What changes when a playlist is renamed or its items edited: Plex updates its updatedAt. Its item count too, so an edit
+ * within the same second still shows. Null when the server sent no updatedAt: the playlist is always read.
+ */
+internal val Metadata.playlistVersion: String?
+    get() = updatedAt?.let { updated -> "$updated/${leafCount ?: ""}" }
 
 /** [syncedAt] is when the sync that read the track started: a favourite's time when the server sends none. */
 internal fun Metadata.toSong(
