@@ -38,7 +38,7 @@ struct SystemIntentsTests {
         try await with(performer) {
             _ = try await TogglePlaybackIntent().perform()
             _ = try await SkipToNextIntent().perform()
-            var set = SetPlaybackIntent()
+            let set = SetPlaybackIntent()
             set.value = false
             _ = try await set.perform()
         }
@@ -65,9 +65,12 @@ struct SystemIntentsTests {
         let performer = FakePerformer()
         try await with(performer) {
             let query = PlaylistEntityQuery()
-            #expect(try await query.entities(for: [4]).map(\.name) == ["Evening Jazz"])
-            #expect(try await query.entities(matching: "jazz").map(\.id) == [4])
-            #expect(try await query.suggestedEntities().count == 2)
+            let byID = try await query.entities(for: [4])
+            let byName = try await query.entities(matching: "jazz")
+            let suggested = try await query.suggestedEntities()
+            #expect(byID.map(\.name) == ["Evening Jazz"])
+            #expect(byName.map(\.id) == [4])
+            #expect(suggested.count == 2)
         }
     }
 }

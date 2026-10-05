@@ -416,7 +416,7 @@ struct HomeViewTests {
             ]),
             onPlaySection: { played.append($0) }
         )
-        let buttons = try sut.inspect().findAll(viewWithAccessibilityIdentifier: "sectionHeader.play")
+        let buttons = try sut.inspect().findAll(where: { view in (try? view.accessibilityIdentifier()) == "sectionHeader.play" })
         #expect(buttons.count == 1)
         try sut.inspect().find(viewWithAccessibilityLabel: "Play Heavy Rotation").button().tap()
         #expect(played == [.heavyRotation])
