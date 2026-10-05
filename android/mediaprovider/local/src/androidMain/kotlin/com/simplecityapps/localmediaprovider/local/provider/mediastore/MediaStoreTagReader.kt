@@ -9,6 +9,7 @@ import com.simplecityapps.localmediaprovider.local.provider.FileTags
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
 import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
 import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
+import com.simplecityapps.localmediaprovider.local.provider.matroskaTitleOf
 import com.simplecityapps.localmediaprovider.local.provider.taglibBitDepth
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.localmediaprovider.local.provider.toYearDate
@@ -44,14 +45,19 @@ class KTagLibMediaStoreTagReader(
     ): FileTags? = tagReadGuard.read(file, MediaProviderType.MediaStore) {
         withContext(Dispatchers.IO) {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                kTagLib.getMetadata(pfd.fd, file.path.substringAfterLast('/'))?.let { metadata ->
+                val fileName = file.path.substringAfterLast('/')
+                kTagLib.getMetadata(pfd.fd, fileName)?.let { metadata ->
                     val audio = metadata.audioProperties
-                    metadata.propertyMap?.toFileTags()?.copy(
-                        bitRate = audio?.bitrate,
-                        bitDepth = taglibBitDepth(audio?.codec, audio?.bitsPerSample),
-                        sampleRate = audio?.sampleRate,
-                        channelCount = audio?.channelCount
-                    )
+                    metadata.propertyMap?.toFileTags()?.let { tags ->
+                        tags.copy(
+                            // TagLib's property map has no Matroska segment title (#523)
+                            title = tags.title ?: matroskaTitleOf(pfd.fd, fileName),
+                            bitRate = audio?.bitrate,
+                            bitDepth = taglibBitDepth(audio?.codec, audio?.bitsPerSample),
+                            sampleRate = audio?.sampleRate,
+                            channelCount = audio?.channelCount
+                        )
+                    }
                 }
             }
         }

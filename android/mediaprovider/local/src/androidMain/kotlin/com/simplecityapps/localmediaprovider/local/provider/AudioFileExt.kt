@@ -65,7 +65,7 @@ fun KTagLib.getAudioFile(
         size = size,
         lastModified = lastModified,
         mimeType = mimeType ?: "audio/*",
-        title = tags.title ?: fileName.substringBeforeLast("."),
+        title = tags.title ?: matroskaTitleOf(fileDescriptor, fileName) ?: fileName.substringBeforeLast("."),
         albumArtist = tags.albumArtist,
         artists = tags.artists,
         album = tags.album,
