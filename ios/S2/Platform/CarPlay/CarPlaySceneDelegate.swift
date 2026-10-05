@@ -273,6 +273,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
             playablePlaylistsTask?.cancel()
             playablePlaylistsTask = nil
             playablePlaylistsInputs = nil
+            playablePlaylists = nil
             return
         }
         let downloaded = Set(downloads.compactMap { $0.value.state == .completed ? $0.key : nil })
