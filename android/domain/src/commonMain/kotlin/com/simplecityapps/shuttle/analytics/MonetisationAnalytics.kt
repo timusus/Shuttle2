@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.analytics
 
+import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.PaywallSource
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -52,8 +54,38 @@ constructor(
     /** The first-run setup finished: [path] is how (iOS only; Android has no first run). */
     fun onboardingCompleted(path: OnboardingPath) = analytics.capture("onboarding_completed", mapOf("path" to path.value))
 
+    /**
+     * The first time the entitlement is known on this install; [source] is where it came from: none, trial, pro, legacy
+     * (an old purchase) or debug. Tells how many existing buyers there are, with [mediaSourcesChanged] for what they use.
+     */
+    fun entitlementResolved(entitlement: Entitlement) = analytics.capture("entitlement_resolved", mapOf("source" to entitlement.analyticsSource))
+
+    /** The `media_sources` property: which kinds of source are set up, sent with every later event. */
+    fun mediaSourcesChanged(types: Collection<MediaProviderType>) = analytics.register("media_sources", mediaSourcesValue(types))
+
     private val MediaProviderType.analyticsValue: String get() = name.lowercase()
 }
+
+/** The `media_sources` value: the configured source kinds, sorted and comma-separated; "none" when there are no sources. */
+fun mediaSourcesValue(types: Collection<MediaProviderType>): String = types
+    .map { if (it.remote) it.name.lowercase() else "local" }
+    .distinct()
+    .sorted()
+    .joinToString(",")
+    .ifEmpty { "none" }
+
+private val Entitlement.analyticsSource: String
+    get() = when (this) {
+        is Entitlement.Unknown, is Entitlement.Free -> "none"
+
+        is Entitlement.Trial -> "trial"
+
+        is Entitlement.Pro -> when (source) {
+            ProSource.Lifetime, ProSource.Subscription -> "pro"
+            ProSource.LegacyLifetime, ProSource.LegacySubscription -> "legacy"
+            ProSource.Debug -> "debug"
+        }
+    }
 
 /** Why a purchase didn't complete. */
 enum class PurchaseFailureReason(

@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.MediaImportWorker
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.sources.DefaultMediaSources
@@ -24,6 +25,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val librarySettings: LibrarySettings,
     private val mediaSources: DefaultMediaSources,
+    private val monetisationAnalytics: MonetisationAnalytics,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
     override fun init(application: Application) {
@@ -46,6 +48,10 @@ constructor(
                 .collect { hasRemoteSource ->
                     MediaImportWorker.updateWork(context, librarySettings.rescanFrequency.value, hasRemoteSource)
                 }
+        }
+
+        appCoroutineScope.launch {
+            mediaSources.enabledTypes.collect { types -> monetisationAnalytics.mediaSourcesChanged(types) }
         }
 
         // Each return to the app brings the servers up to date, at most every few minutes (#771)

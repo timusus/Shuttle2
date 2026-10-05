@@ -91,6 +91,11 @@ object IosTelemetryModule {
             event: String,
             properties: Map<String, Any>
         ) = telemetry.analytics.capture(event, properties)
+
+        override fun register(
+            name: String,
+            value: Any
+        ) = telemetry.analytics.register(mapOf(name to value))
     }
 }
 

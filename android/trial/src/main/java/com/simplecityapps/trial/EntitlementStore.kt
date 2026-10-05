@@ -11,6 +11,9 @@ interface EntitlementStore {
     var serverTrialStartedAt: Instant?
 
     var cachedPro: CachedPro?
+
+    /** Whether `entitlement_resolved` has been logged, so it's logged once per install. */
+    var entitlementResolvedLogged: Boolean
 }
 
 /**
@@ -35,6 +38,10 @@ class KeyValueEntitlementStore(
             putInstant(KEY_CACHED_PRO_SEEN_AT, value?.seenAt)
         }
 
+    override var entitlementResolvedLogged: Boolean
+        get() = store.getBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, false)
+        set(value) = store.edit { putBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, value) }
+
     private fun KeyValueStore.getInstant(key: String): Instant? = if (contains(key)) Instant.fromEpochMilliseconds(getLong(key, 0)) else null
 
     private fun KeyValueStore.Editor.putInstant(
@@ -49,5 +56,6 @@ class KeyValueEntitlementStore(
         private const val KEY_SERVER_TRIAL_STARTED_AT = "server_trial_started_at"
         private const val KEY_CACHED_PRO_SOURCE = "cached_pro_source"
         private const val KEY_CACHED_PRO_SEEN_AT = "cached_pro_seen_at"
+        private const val KEY_ENTITLEMENT_RESOLVED_LOGGED = "entitlement_resolved_logged"
     }
 }

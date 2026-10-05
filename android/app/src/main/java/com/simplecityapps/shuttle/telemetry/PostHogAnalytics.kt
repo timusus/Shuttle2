@@ -26,6 +26,9 @@ class PostHogAnalytics @Inject constructor(
 
     private var setUp = false
 
+    /** Super properties registered so far; handed to PostHog once it's set up, since opt-in can come later. */
+    private val superProperties = mutableMapOf<String, Any>()
+
     @Synchronized
     override fun setEnabled(enabled: Boolean) {
         this.enabled = enabled
@@ -47,6 +50,15 @@ class PostHogAnalytics @Inject constructor(
         }
     }
 
+    @Synchronized
+    override fun register(
+        name: String,
+        value: Any
+    ) {
+        superProperties[name] = value
+        if (setUp) PostHog.register(name, value)
+    }
+
     private fun setUp() {
         val config = PostHogAndroidConfig(
             apiKey = BuildConfig.POSTHOG_API_KEY,
@@ -65,6 +77,7 @@ class PostHogAnalytics @Inject constructor(
         PostHog.register("app_version", BuildConfig.VERSION_NAME)
         PostHog.register("app_version_code", BuildConfig.VERSION_CODE)
         PostHog.register("build_type", if (BuildConfig.DEBUG) "debug" else "release")
+        superProperties.forEach { (name, value) -> PostHog.register(name, value) }
         setUp = true
     }
 }

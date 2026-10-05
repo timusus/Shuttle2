@@ -30,6 +30,15 @@ class KeyValueEntitlementStoreTest {
     }
 
     @Test
+    fun `the entitlement_resolved flag defaults to false and is saved under its key`() {
+        assertEquals(false, entitlementStore.entitlementResolvedLogged)
+
+        entitlementStore.entitlementResolvedLogged = true
+
+        assertEquals(mapOf("entitlement_resolved_logged" to true), store.values)
+    }
+
+    @Test
     fun `values saved by an older build read back`() {
         val saved = InMemoryKeyValueStore(
             mapOf(

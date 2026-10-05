@@ -31,7 +31,8 @@ import org.junit.Test
 class EntitlementRepositoryTest {
     private class FakeStore(
         override var serverTrialStartedAt: Instant? = null,
-        override var cachedPro: CachedPro? = null
+        override var cachedPro: CachedPro? = null,
+        override var entitlementResolvedLogged: Boolean = false
     ) : EntitlementStore
 
     private val start = Instant.fromEpochMilliseconds(1_800_000_000_000)
@@ -52,6 +53,33 @@ class EntitlementRepositoryTest {
     ): Purchase = mockk {
         every { products } returns listOf(productId)
         every { purchaseState } returns state
+    }
+
+    @Test
+    fun `entitlement_resolved is logged once the store answers, with what it resolved`() = runTest {
+        owned.value = null
+        repository()
+        verify(exactly = 0) { analytics.entitlementResolved(any()) }
+
+        owned.value = listOf(purchase(ProductIds.LEGACY_SUBSCRIPTION_YEARLY_LOW, Purchase.PurchaseState.PURCHASED)).purchasedProductIds()
+        runCurrent()
+
+        verify(exactly = 1) { analytics.entitlementResolved(Entitlement.Pro(ProSource.LegacySubscription)) }
+        assertTrue(store.entitlementResolvedLogged)
+    }
+
+    @Test
+    fun `entitlement_resolved is logged once per install, not on a later launch or change`() = runTest {
+        val repository = repository()
+        verify(exactly = 1) { analytics.entitlementResolved(Entitlement.Free(trialUsed = false)) }
+
+        repository.startServerTrialIfEligible()
+        runCurrent()
+        verify(exactly = 1) { analytics.entitlementResolved(any()) }
+
+        // A later launch with the same persisted store
+        repository()
+        verify(exactly = 1) { analytics.entitlementResolved(any()) }
     }
 
     @Test

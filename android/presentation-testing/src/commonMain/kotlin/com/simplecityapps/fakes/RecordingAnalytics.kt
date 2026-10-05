@@ -18,6 +18,16 @@ class RecordingAnalytics : Analytics {
         events += Event(event, properties)
     }
 
+    /** The super properties registered, by name. */
+    val registered = mutableMapOf<String, Any>()
+
+    override fun register(
+        name: String,
+        value: Any
+    ) {
+        registered[name] = value
+    }
+
     /** The captured events' names, in order. */
     val names: List<String> get() = events.map { it.name }
 }

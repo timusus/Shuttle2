@@ -130,4 +130,6 @@ private final class RecordingAnalytics: NSObject, Analytics {
     func capture(event: String, properties: [String: Any]) {
         events.append((event, properties))
     }
+
+    func register(name: String, value: Any) {}
 }

@@ -9,4 +9,10 @@ interface Analytics {
         event: String,
         properties: Map<String, Any> = emptyMap()
     )
+
+    /** A super property sent with every later event, replacing an earlier value of the same [name]. */
+    fun register(
+        name: String,
+        value: Any
+    )
 }

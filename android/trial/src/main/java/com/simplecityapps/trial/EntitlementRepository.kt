@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -69,6 +70,15 @@ class EntitlementRepository(
         owned.filterNotNull()
             .onEach { owned -> store.cachedPro = owned.proSource()?.let { CachedPro(it, clock.now()) } }
             .launchIn(coroutineScope)
+
+        // The first answer, once per install: how many existing buyers there are is what this measures
+        coroutineScope.launch {
+            val resolved = entitlement.first { it !is Entitlement.Unknown }
+            if (!store.entitlementResolvedLogged) {
+                store.entitlementResolvedLogged = true
+                analytics.entitlementResolved(resolved)
+            }
+        }
     }
 
     /**
