@@ -400,3 +400,11 @@ previous and new outputs, and where each pause came from.
 - [ ] Play a song past half its length (or 4 minutes): it appears on the last.fm profile within a minute, and Now Playing shows there while it plays.
 - [ ] In airplane mode, play two songs through, then turn the network back on and reopen the app: both scrobbles arrive once, with their original times.
 - [ ] Sign out: the screen reads "Not signed in", and later plays don't reach last.fm.
+
+## Play Billing 8 → 9.1 (3cb98b130)
+
+Billing is mocked in the JVM tests; the upgrade needs a real Play-signed build on a device with a Play account.
+- [ ] Buy Shuttle Music Pro (licence-tester account). The purchase completes and Pro unlocks without a restart.
+- [ ] Reinstall (or clear data) and restore purchases. Pro comes back.
+- [ ] Trial state: a fresh install shows the trial with the right days left, and when the trial has ended without a purchase the paywall appears.
+- [ ] Pro state after a force-stop and a cold start, with the device offline. It stays Pro.
