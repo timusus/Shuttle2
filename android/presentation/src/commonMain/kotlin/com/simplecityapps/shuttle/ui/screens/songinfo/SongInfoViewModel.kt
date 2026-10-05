@@ -122,7 +122,7 @@ internal fun MediaProviderType.songInfoSourceRow(): SongInfoRow = when (this) {
 
 /** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */
 fun Song.infoChips(): List<String> = listOfNotNull(
-    formatName(mimeType),
+    audioCodec?.takeIf { it.startsWith("pcm_", ignoreCase = true) }?.let { "PCM" } ?: formatName(mimeType),
     bitRate?.let(::formatBitRate),
     sampleRate?.let(::formatSampleRate),
 )
@@ -146,7 +146,7 @@ internal fun formatBitRate(kbps: Int): String = "$kbps kb/s"
 internal fun formatName(mimeType: String): String? {
     val subtype = mimeType.substringAfter('/', missingDelimiterValue = "").substringBefore(';').removePrefix("x-").trim().lowercase()
     return when (subtype) {
-        "" -> null
+        "", "*" -> null
         "mpeg", "mp3" -> "MP3"
         "mp4", "m4a", "mp4a-latm" -> "M4A"
         "vorbis" -> "OGG"

@@ -161,6 +161,64 @@ class SongDiffTest {
     }
 
     @Test
+    fun `a remote song with no modified time keeps the stored stream properties`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(sampleRate = 96000)
+        val unchanged = createSong(id = 0, lastModified = null).copy(dateAdded = existing.dateAdded)
+
+        SongDiff(listOf(existing), listOf(unchanged)).update(existing, unchanged).run {
+            audioCodec shouldBe "flac"
+            bitRate shouldBe 1411
+            sampleRate shouldBe 96000
+        }
+    }
+
+    @Test
+    fun `a remote song with a new modified time clears the stored stream properties`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411)
+        val touched = createSong(id = 0, lastModified = Instant.fromEpochSeconds(1_800_000_000))
+
+        SongDiff(listOf(existing), listOf(touched)).update(existing, touched).run {
+            audioCodec shouldBe null
+            bitRate shouldBe null
+        }
+    }
+
+    @Test
+    fun `placeholder size and mime type are not a re-encode`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411).copy(size = 5000, mimeType = "audio/flac")
+        val listed = createSong(id = 0, lastModified = firstImport).copy(size = 0, mimeType = "Audio/*")
+
+        SongDiff(listOf(existing), listOf(listed)).update(existing, listed).run {
+            audioCodec shouldBe "flac"
+            bitRate shouldBe 1411
+        }
+    }
+
+    @Test
+    fun `a codec differing only in case is not a re-encode`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitRate = 1411)
+        val listed = createSong(id = 0, lastModified = firstImport, audioCodec = "FLAC")
+
+        SongDiff(listOf(existing), listOf(listed)).update(existing, listed).bitRate shouldBe 1411
+    }
+
+    @Test
+    fun `an unchanged lossless song keeps its stored bit depth`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitDepth = 24)
+        val listed = createSong(id = 0, lastModified = firstImport, audioCodec = "flac")
+
+        SongDiff(listOf(existing), listOf(listed)).update(existing, listed).bitDepth shouldBe 24
+    }
+
+    @Test
+    fun `a re-encoded song clears the stored bit depth`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport, audioCodec = "flac", bitDepth = 24)
+        val listed = createSong(id = 0, lastModified = firstImport, audioCodec = "alac")
+
+        SongDiff(listOf(existing), listOf(listed)).update(existing, listed).bitDepth shouldBe null
+    }
+
+    @Test
     fun `a full listing deletes the songs it no longer holds`() = runTest {
         val kept = createSong(id = 1, lastModified = firstImport, path = "jellyfin://item/1")
         val gone = createSong(id = 2, lastModified = firstImport, path = "jellyfin://item/2")

@@ -118,6 +118,7 @@ class SongInfoViewModelTest {
     fun `chips show the format - bit rate and sample rate the song has`() {
         createSong().copy(mimeType = "audio/flac", bitRate = 1024, sampleRate = 96000).infoChips() shouldBe listOf("FLAC", "1024 kb/s", "96 kHz")
         createSong().copy(mimeType = "audio/mpeg", bitRate = null, sampleRate = 44100).infoChips() shouldBe listOf("MP3", "44.1 kHz")
+        createSong().copy(mimeType = "audio/x-wav", audioCodec = "pcm_s24le", bitRate = null, sampleRate = 96000).infoChips() shouldBe listOf("PCM", "96 kHz")
     }
 
     @Test

@@ -91,17 +91,23 @@ class SongDiff(
      * Whether this song's file is no longer [old]'s: a different codec when both are known, or, for a remote song, a
      * different size, container or modified time. A local scan's size and time move with a tag edit, which leaves the
      * stream properties as they were, so only its codec counts.
+     *
+     * Only evidence both sides actually hold counts, as a provider that doesn't know a value reports a placeholder or
+     * nothing, and that must not look like a new file: Jellyfin and Emby always report size 0 and the mime type
+     * "Audio/\*" (so they signal only through the codec and the modified time), a Plex listing without Media reports
+     * size 0, and Jellyfin/Emby `createdAt` and Plex `addedAt`/`updatedAt` can be null (the stored date is kept then).
      */
     private fun Song.isReencodeOf(old: Song): Boolean {
         val codecChanged = audioCodec != null && old.audioCodec != null && !audioCodec.equals(old.audioCodec, ignoreCase = true)
-        return codecChanged || (
-            old.mediaProvider.remote && (
-                size != old.size ||
-                    mimeType != old.mimeType ||
-                    lastModified.atStoredPrecision() != old.lastModified.atStoredPrecision()
-                )
-            )
+        if (codecChanged) return true
+        if (!old.mediaProvider.remote) return false
+        val sizeChanged = size > 0 && old.size > 0 && size != old.size
+        val mimeTypeChanged = !mimeType.isPlaceholderMimeType() && !old.mimeType.isPlaceholderMimeType() && !mimeType.equals(old.mimeType, ignoreCase = true)
+        val modifiedChanged = lastModified != null && lastModified.atStoredPrecision() != old.lastModified.atStoredPrecision()
+        return sizeChanged || mimeTypeChanged || modifiedChanged
     }
+
+    private fun String.isPlaceholderMimeType(): Boolean = isBlank() || endsWith("/*")
 
     private class PlayStats(
         val playCount: Int,
