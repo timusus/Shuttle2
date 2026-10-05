@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import com.simplecityapps.localmediaprovider.local.data.room.Converters
+import com.simplecityapps.localmediaprovider.local.data.room.dao.MediaStoreFileDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PinnedCollectionDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
@@ -15,6 +16,8 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.SmartPlaylistDa
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.IdentityGenerationData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.MediaStoreFileData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.MediaStoreScanStateData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollectionData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
@@ -34,9 +37,11 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         PendingFavouriteData::class,
         PlayEventData::class,
         ResumePointData::class,
-        IdentityGenerationData::class
+        IdentityGenerationData::class,
+        MediaStoreFileData::class,
+        MediaStoreScanStateData::class
     ],
-    version = 55,
+    version = 56,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -57,6 +62,8 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun suggestionsDao(): SuggestionsDao
 
     abstract fun resumePointDao(): ResumePointDao
+
+    abstract fun mediaStoreFileDao(): MediaStoreFileDao
 }
 
 // Room generates the actual for each target.
