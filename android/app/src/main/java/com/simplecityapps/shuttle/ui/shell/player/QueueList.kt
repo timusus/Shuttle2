@@ -13,7 +13,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -319,33 +320,33 @@ private fun QueueItem(
 ) {
     val swipeState = rememberSwipeToDismissBoxState()
     SwipeToDismissBox(
-            state = swipeState,
-            modifier = modifier.testTag(PlayerTestTags.QueueRow),
-            gesturesEnabled = swipeEnabled,
-            onDismiss = { onRemove() },
-            backgroundContent = {
-                val alignment = if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
-                Box(
-                    Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = S2Spacing.large),
-                    contentAlignment = alignment,
-                ) {
-                    Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
-                }
-            },
-        ) {
-            QueueRow(
-                title = row.title,
-                subtitle = row.artist.orEmpty(),
-                onClick = onClick,
-                modifier = Modifier.background(PanelColor),
-                position = row.position,
-                artwork = { SongArtwork(row.song) },
-                duration = formatDuration(row.durationMs.toLong()),
-                dragging = dragging,
-                dragHandleModifier = dragHandleModifier,
-                onLongClick = onLongClick,
-            )
-        }
+        state = swipeState,
+        modifier = modifier.testTag(PlayerTestTags.QueueRow),
+        gesturesEnabled = swipeEnabled,
+        onDismiss = { onRemove() },
+        backgroundContent = {
+            val alignment = if (swipeState.dismissDirection == SwipeToDismissBoxValue.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
+            Box(
+                Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer).padding(horizontal = S2Spacing.large),
+                contentAlignment = alignment,
+            ) {
+                Icon(Icons.Rounded.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+            }
+        },
+    ) {
+        QueueRow(
+            title = row.title,
+            subtitle = row.artist.orEmpty(),
+            onClick = onClick,
+            modifier = Modifier.background(PanelColor),
+            position = row.position,
+            artwork = { SongArtwork(row.song) },
+            duration = formatDuration(row.durationMs.toLong()),
+            dragging = dragging,
+            dragHandleModifier = dragHandleModifier,
+            onLongClick = onLongClick,
+        )
+    }
 }
 
 /** How near either edge of the list a dragged row starts it scrolling, and the fastest it scrolls, per second, at the edge itself. */
