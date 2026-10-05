@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -28,6 +29,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var rescanClicks = 0
     var retrySkippedClicks = 0
     var thisDeviceClicks = 0
+    var navigateUpClicks = 0
     var syncClicks = 0
     var signInClicks = 0
     var removeClicks = 0
@@ -71,9 +73,20 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
         composeTestRule.setContent { S2Theme { ThisDeviceScreen(uiState = uiState, folders = folders, actions = actions, onNavigateUp = {}, now = SourcesScenarios.now) } }
     }
 
+    private val shownServer = mutableStateOf<ServerSource?>(null)
+
     fun setServerDetail(server: ServerSource) {
+        shownServer.value = server
         val actions = ServerDetailActions(onSync = { syncClicks++ }, onSignIn = { signInClicks++ }, onRemove = { removeClicks++ })
-        composeTestRule.setContent { S2Theme { ServerDetailScreen(type = server.type, server = server, actions = actions, onNavigateUp = {}, now = SourcesScenarios.now) } }
+        composeTestRule.setContent {
+            S2Theme { ServerDetailScreen(type = server.type, server = shownServer.value, actions = actions, onNavigateUp = { navigateUpClicks++ }, now = SourcesScenarios.now) }
+        }
+    }
+
+    /** Changes the server the open page shows, as the sources' state would. */
+    fun updateServerDetail(server: ServerSource?) {
+        shownServer.value = server
+        composeTestRule.waitForIdle()
     }
 
     fun assertScanNowEnabled(enabled: Boolean) {

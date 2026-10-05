@@ -135,6 +135,27 @@ class OnboardingTest {
     }
 
     @Test
+    fun `a server's page closes when the server disconnects while it's open`() {
+        val server = SourcesScenarios.configured.servers.first { it.connected }
+        robot.setServerDetail(server)
+
+        robot.updateServerDetail(server.copy(connected = false))
+
+        robot.navigateUpClicks shouldBe 1
+    }
+
+    @Test
+    fun `a server's page waits for the sources to load rather than closing`() {
+        val server = SourcesScenarios.configured.servers.first { it.connected }
+        robot.setServerDetail(server.copy(connected = false))
+
+        robot.updateServerDetail(server)
+
+        robot.navigateUpClicks shouldBe 0
+        robot.assertTextDisplayed("tim@jellyfin.local")
+    }
+
+    @Test
     fun `a syncing server's page can't start another sync`() {
         robot.setServerDetail(SourcesScenarios.scanning.servers.first { it.connected })
 

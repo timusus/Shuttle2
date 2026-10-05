@@ -74,13 +74,21 @@ fun ServerDetailEntry(typeName: String, onNavigateUp: () -> Unit) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var confirmingRemove by rememberSaveable { mutableStateOf(false) }
     var signingIn by rememberSaveable { mutableStateOf(false) }
+    // Removing the server leaves, and so does the page once it sees the server gone: leave once
+    var left by remember { mutableStateOf(false) }
+    val leave = {
+        if (!left) {
+            left = true
+            onNavigateUp()
+        }
+    }
 
     ServerDetailDialogHost(
         type = type,
         visible = confirmingRemove,
         onRemoveServer = {
             viewModel.onRemoveServer(type)
-            onNavigateUp()
+            leave()
         },
         onDismiss = { confirmingRemove = false },
     )
@@ -93,7 +101,7 @@ fun ServerDetailEntry(typeName: String, onNavigateUp: () -> Unit) {
             onSignIn = { signingIn = true },
             onRemove = { confirmingRemove = true },
         ),
-        onNavigateUp = onNavigateUp,
+        onNavigateUp = leave,
     )
 }
 

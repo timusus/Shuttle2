@@ -8,6 +8,11 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -46,12 +51,22 @@ fun ServerDetailScreen(
     modifier: Modifier = Modifier,
     now: Instant = Clock.System.now(),
 ) {
+    // A server that disconnects or is removed while its page is open leaves nothing to show, so the page closes. One not
+    // yet connected (the sources still loading) keeps it open.
+    val connected = server?.connected == true
+    var wasConnected by remember { mutableStateOf(false) }
+    LaunchedEffect(connected) {
+        if (connected) {
+            wasConnected = true
+        } else if (wasConnected) {
+            onNavigateUp()
+        }
+    }
     SettingsScaffold(
         title = stringResource(type.titleRes),
         onNavigateUp = onNavigateUp,
         modifier = modifier,
     ) {
-        // A server that's gone (just removed) has nothing left to show
         if (server == null || !server.connected) return@SettingsScaffold
         item(key = "server-status") {
             SettingsGroup(
