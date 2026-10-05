@@ -21,7 +21,7 @@ struct NowPlayingState: Equatable {
     var durationMs = 0
     var queue: [NowPlayingQueueRow] = []
     /// What the queue was started from (#909), the album, artist, playlist or genre its "Playing from" line opens.
-    var queueSource: HomeItem?
+    var queueSource: QueueSource?
     var shuffleOn = false
     var repeatMode: NowPlayingRepeat = .off
     /// 1 being normal speed.
@@ -44,6 +44,16 @@ struct NowPlayingState: Equatable {
 
     /// Nothing queued.
     static let idle = NowPlayingState()
+}
+
+/// What the queue was started from. A Kotlin `HomeItem` isn't `Equatable` in Swift, so this compares it as Kotlin
+/// does (its data class equality), keeping `NowPlayingState` `Equatable`.
+struct QueueSource: Equatable {
+    let item: HomeItem
+
+    static func == (lhs: QueueSource, rhs: QueueSource) -> Bool {
+        (lhs.item as AnyObject).isEqual(rhs.item)
+    }
 }
 
 /// One row in the queue list.
@@ -315,7 +325,7 @@ final class PlayerBinding {
             next.artwork = artwork
             // A transcode's badge is what the server sends, not the file it holds (#902).
             next.quality = current.map { playing in player.delivered.map(AudioQuality.init(delivered:)) ?? AudioQuality(song: playing.song) }
-            next.queueSource = player.queueSource
+            next.queueSource = player.queueSource.map(QueueSource.init)
             next.queue = player.items.map { item in
                 NowPlayingQueueRow(
                     id: item.uid,

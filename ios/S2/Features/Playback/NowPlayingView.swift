@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// Now Playing, after Shuttle Podcasts' player and Apple Music (#624, #644): the cover over a ground in its own colour
@@ -437,7 +438,7 @@ struct NowPlayingContent: View {
             .playerSheet(isPresented: $showQueue, tier: tier, keepsPlayerTappable: true) {
                 NowPlayingQueueList(
                     queue: state.queue,
-                    source: state.queueSource,
+                    source: state.queueSource?.item,
                     isPlaying: state.isPlaying,
                     actions: actions,
                     notice: notice
