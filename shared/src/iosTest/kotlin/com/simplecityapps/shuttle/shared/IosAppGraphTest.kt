@@ -65,6 +65,7 @@ class IosAppGraphTest {
         graph.licencesViewModel
         graph.whatsNewViewModel
         graph.sourcesViewModel
+        graph.folderRulesViewModel
         graph.sourceSetupViewModel
         graph.settingsViewModel
         graph.equalizerViewModel

@@ -77,10 +77,10 @@ fun sourcesRows(onOpenFolderRules: () -> Unit): LazyListScope.() -> Unit {
     return { sourcesContent(uiState, actions) }
 }
 
-/** Settings > Sources > Folder rules: wires [FolderRulesScreen] to [SourcesViewModel] and the SAF folder picker. */
+/** Settings > Sources > Folder rules: wires [FolderRulesScreen] to [FolderRulesViewModel] and the SAF folder picker. */
 @Composable
 fun FolderRulesEntry(onNavigateUp: () -> Unit) {
-    val viewModel: SourcesViewModel = metroViewModel()
+    val viewModel: FolderRulesViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -106,7 +106,7 @@ fun FolderRulesEntry(onNavigateUp: () -> Unit) {
     }
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         when (event) {
-            SourcesEvent.FolderNotOnDevice -> snackbarHostState.showSnackbar(context.getString(R.string.sources_folder_not_on_device))
+            FolderRulesEvent.FolderNotOnDevice -> snackbarHostState.showSnackbar(context.getString(R.string.sources_folder_not_on_device))
         }
     }
     LifecycleResumeEffect(viewModel) {

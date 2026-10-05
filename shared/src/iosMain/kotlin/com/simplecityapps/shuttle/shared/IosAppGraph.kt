@@ -49,6 +49,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsView
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewModel
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerLogin
@@ -155,6 +156,7 @@ interface IosAppGraph : ViewModelGraph {
     val licencesViewModel: LicencesViewModel
     val whatsNewViewModel: WhatsNewViewModel
     val sourcesViewModel: SourcesViewModel
+    val folderRulesViewModel: FolderRulesViewModel
     val sourceSetupViewModel: SourceSetupViewModel
     val settingsViewModel: SettingsViewModel
     val scrobblingViewModel: ScrobblingViewModel

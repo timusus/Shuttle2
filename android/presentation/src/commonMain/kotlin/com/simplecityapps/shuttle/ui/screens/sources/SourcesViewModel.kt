@@ -7,8 +7,6 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SourceReachability
-import com.simplecityapps.shuttle.ui.common.PendingEvent
-import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
 import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
@@ -56,28 +54,20 @@ data class SourcesUiState(
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
     /** When any import last finished, if one ever has: iOS's scan row shows it. */
     val lastImport: Instant? = null,
-    val events: List<PendingEvent<SourcesEvent>> = emptyList(),
 )
-
-sealed interface SourcesEvent {
-    /** An exclude needs a folder on this device's storage, which the picked one isn't. */
-    data object FolderNotOnDevice : SourcesEvent
-}
 
 val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex, MediaProviderType.Subsonic)
 
 /**
- * Settings > Sources (#379): this device on or off, the S2 scanner's folders, a rescan, and the media servers, each
- * source with its import status and song count (#663). Folder and source changes start a scan, so the library follows
- * them straight away.
+ * Settings > Sources (#379): this device on or off, a rescan, and the media servers, each
+ * source with its import status and song count (#663). Source changes start a scan, so the library follows them
+ * straight away; the folder rules have their own [FolderRulesViewModel] (#881).
  */
 @ViewModelKey(SourcesViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class SourcesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
     observeScannerFolders: ObserveScannerFolders,
-    private val addScannerFolder: AddScannerFolder,
-    private val removeScannerFolder: RemoveScannerFolder,
     private val refreshScannerFolders: RefreshScannerFolders,
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
@@ -91,13 +81,11 @@ class SourcesViewModel @Inject constructor(
     observeDeviceSkippedFiles: ObserveDeviceSkippedFiles,
     private val clearSkippedFiles: ClearSkippedFiles,
 ) : ViewModel() {
-    private val events = PendingEvents<SourcesEvent>()
-
     private val imports: Flow<Imports> =
         combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), combine(observeSourceReachability(), observeSourceUpdated(), observeListingShortfalls(), observeDeviceSkippedFiles(), ::Stored), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
-        combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate(), events.flow) { types, folders, imports, lastImport, events ->
+        combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate()) { types, folders, imports, lastImport ->
             val latest = imports.latest
             SourcesUiState(
                 thisDevice = types.any { it.isLocal },
@@ -113,10 +101,10 @@ class SourcesViewModel @Inject constructor(
                     ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type], imports.reachability[type]), songs = imports.songCounts?.let { it[type] ?: 0 }, updated = imports.updated[type], listingShortfall = imports.shortfalls[type] ?: 0)
                 },
                 lastImport = lastImport,
-                events = events,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SourcesUiState())
 
+    /** Re-reads the folders' access, which the This device card flags when a grant was revoked. */
     fun onResume() = refreshScannerFolders()
 
     fun onThisDeviceChange(enabled: Boolean) {
@@ -126,21 +114,6 @@ class SourcesViewModel @Inject constructor(
         } else {
             mediaSources.enabledTypes.value.filter { it.isLocal }.forEach(mediaSources::disable)
         }
-    }
-
-    /** The folder picker's result: null when it was cancelled. */
-    fun onFolderPicked(kind: FolderKind, treeUri: String?) {
-        if (treeUri == null) return
-        if (addScannerFolder(kind, treeUri)) {
-            mediaSources.scan(foldersChanged = true)
-        } else {
-            events.post(SourcesEvent.FolderNotOnDevice)
-        }
-    }
-
-    fun onRemoveFolder(kind: FolderKind, folder: SourceFolder) {
-        removeScannerFolder(kind, folder)
-        mediaSources.scan(foldersChanged = true)
     }
 
     fun onRescan() = mediaSources.scan()
@@ -162,8 +135,6 @@ class SourcesViewModel @Inject constructor(
         mediaSources.disable(type)
         forgetServer(type)
     }
-
-    fun onEventHandled(id: Long) = events.consume(id)
 
     /** The importer's latest state, each provider's own, the library's songs per provider, how each server's last import ended, when each source last updated, and each server's listing shortfall. */
     private data class Imports(

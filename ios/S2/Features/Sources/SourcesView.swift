@@ -25,10 +25,10 @@ struct SourcesView: View {
                 onThisDeviceChange: { models.sources.onThisDeviceChange(enabled: $0) },
                 onAddFolder: { url in
                     let picked = AppGraph.dependencies.localLibrary.stage(url)
-                    models.sources.onFolderPicked(kind: .extra, treeUri: picked)
+                    models.folderRules.onFolderPicked(kind: .extra, treeUri: picked)
                 },
                 onRemoveFolder: { folder in
-                    models.sources.onRemoveFolder(
+                    models.folderRules.onRemoveFolder(
                         kind: .extra,
                         folder: SourceFolder(uri: folder.id, path: folder.path, name: folder.name, hasAccess: folder.hasAccess)
                     )
@@ -37,8 +37,6 @@ struct SourcesView: View {
                 onRemove: { models.sources.onRemoveServer(type: $0) },
                 onRescan: { models.sources.onRescan() }
             )
-            // The only event is an exclude folder off this device's storage; iOS only adds folders to read in full.
-            .consumeEvents(state.events, handled: { models.sources.onEventHandled(id: $0) }) { _ in }
         }
         .sheet(item: $setup, onDismiss: { logins = ServerLogin.readAll() }) { start in
             SourceSetupFlow(start: start, navigator: navigator, onClose: { setup = nil })
@@ -54,14 +52,17 @@ struct SourcesView: View {
 /// Sources' ViewModel and the import's state, cached together under its route's key.
 final class SourcesModels: ViewModelGroup {
     let sources: SourcesViewModel
+    /// Adds and removes the folders this device reads in full; its one event, an exclude off this device's storage, can't happen on iOS.
+    let folderRules: FolderRulesViewModel
     let importState: SkieSwiftStateFlow<SongImportState>
 
     init(graph: IosAppGraph) {
         sources = graph.sourcesViewModel
+        folderRules = graph.folderRulesViewModel
         importState = graph.songImportStateProvider.songImportState
     }
 
-    var members: [Lifecycle_viewmodelViewModel] { [sources] }
+    var members: [Lifecycle_viewmodelViewModel] { [sources, folderRules] }
 
     /// Sources' group, shared with a server's detail pushed on top of it.
     @MainActor

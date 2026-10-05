@@ -31,8 +31,7 @@ struct SourcesViewTests {
             deviceUpdated: deviceUpdated,
             deviceSkippedFiles: 0,
             servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil, updated: serverUpdated, listingShortfall: Int32(listingShortfall)) },
-            lastImport: lastImport,
-            events: []
+            lastImport: lastImport
         )
     }
 
