@@ -29,7 +29,7 @@ struct NowPlayingView: View {
     }
 
     var body: some View {
-        NowPlayingContent(state: binding.nowPlaying, actions: binding.actions, notice: $notice, onClose: { dismiss() })
+        NowPlayingContent(state: binding.nowPlaying, actions: actions, notice: $notice, onClose: { dismiss() })
             .consumeEvents(binding.events, handled: { binding.eventHandled($0) }) { event in
                 switch binding.outcome(for: event) {
                 case .notice(let next): notice = next
@@ -39,6 +39,16 @@ struct NowPlayingView: View {
                 case nil: break
                 }
             }
+    }
+
+    /// The binding's actions, with screens opened from inside Now Playing closing it first.
+    private var actions: PlayerActions {
+        var actions = binding.actions
+        actions.openRoute = { route in
+            dismiss()
+            onOpen(route)
+        }
+        return actions
     }
 }
 
@@ -425,7 +435,13 @@ struct NowPlayingContent: View {
             .accessibilityLabel("Queue")
             .accessibilityIdentifier("nowPlaying.queue")
             .playerSheet(isPresented: $showQueue, tier: tier, keepsPlayerTappable: true) {
-                NowPlayingQueueList(queue: state.queue, isPlaying: state.isPlaying, actions: actions, notice: notice)
+                NowPlayingQueueList(
+                    queue: state.queue,
+                    source: state.queueSource,
+                    isPlaying: state.isPlaying,
+                    actions: actions,
+                    notice: notice
+                )
                     .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
             }
             .frame(maxWidth: .infinity)
@@ -784,6 +800,8 @@ struct NowPlayingTransport: View {
 /// are keyed by the queue item's uid, never its position.
 struct NowPlayingQueueList: View {
     let queue: [NowPlayingQueueRow]
+    /// What the queue was started from, shown as "Playing from <title>" over the list; tapping it opens it.
+    var source: HomeItem?
     var isPlaying = false
     var actions: PlayerActions = .none
     var notice: Binding<PlayerNotice?> = .constant(nil)
@@ -793,11 +811,13 @@ struct NowPlayingQueueList: View {
 
     init(
         queue: [NowPlayingQueueRow],
+        source: HomeItem? = nil,
         isPlaying: Bool = false,
         actions: PlayerActions = .none,
         notice: Binding<PlayerNotice?> = .constant(nil)
     ) {
         self.queue = queue
+        self.source = source
         self.isPlaying = isPlaying
         self.actions = actions
         self.notice = notice
@@ -849,6 +869,10 @@ struct NowPlayingQueueList: View {
 
     private var list: some View {
         List {
+            if let source {
+                sourceLine(source)
+            }
+
             if let currentIndex {
                 Section {
                     row(rows[currentIndex])
@@ -893,6 +917,23 @@ struct NowPlayingQueueList: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(.s2SurfaceElevated)
+    }
+
+    /// "Playing from <title>": the album, artist, playlist or genre the queue was started from, which a tap opens.
+    private func sourceLine(_ source: HomeItem) -> some View {
+        Button {
+            actions.openRoute(HomeView.route(source))
+        } label: {
+            Text("Playing from \(source.title)")
+                .font(.subheadline)
+                .foregroundStyle(.s2TextSecondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(source.goToLabel)
+        .accessibilityIdentifier("queue.source")
+        .rowSeparator(.none)
     }
 
     private func sectionHeader(_ title: String, subtitle: String? = nil) -> some View {

@@ -20,6 +20,8 @@ struct NowPlayingState: Equatable {
     var positionMs = 0
     var durationMs = 0
     var queue: [NowPlayingQueueRow] = []
+    /// What the queue was started from (#909), the album, artist, playlist or genre its "Playing from" line opens.
+    var queueSource: HomeItem?
     var shuffleOn = false
     var repeatMode: NowPlayingRepeat = .off
     /// 1 being normal speed.
@@ -198,6 +200,8 @@ struct PlayerActions {
     /// Excludes the song of the queue row with this id from the library, which also takes it out of the queue.
     var excludeQueueItem: (Int64) -> Void = { _ in }
     var clearQueue: () -> Void = {}
+    /// Opens a screen, closing Now Playing first (the queue's "Playing from" line).
+    var openRoute: (Route) -> Void = { _ in }
     var toggleFavourite: () -> Void = {}
     /// Runs a song action on the current song; Add to Playlist goes through `addToPlaylist`.
     var songAction: (NowPlayingSongAction) -> Void = { _ in }
@@ -310,6 +314,7 @@ final class PlayerBinding {
             next.album = current?.album
             next.artwork = artwork
             next.quality = current.map { AudioQuality(song: $0.song) }
+            next.queueSource = player.queueSource
             next.queue = player.items.map { item in
                 NowPlayingQueueRow(
                     id: item.uid,
