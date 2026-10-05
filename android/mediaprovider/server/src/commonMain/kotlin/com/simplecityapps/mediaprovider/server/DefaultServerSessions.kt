@@ -1,6 +1,5 @@
-package com.simplecityapps.shuttle.sources
+package com.simplecityapps.mediaprovider.server
 
-import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.shell.ServerSessions
 import dev.zacsweers.metro.AppScope
