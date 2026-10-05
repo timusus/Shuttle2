@@ -121,7 +121,7 @@ for i in json.load(sys.stdin)['Items']:
       echo "  $name (container=$container)"
       for tp in "${token_params[@]}"; do
         url="$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)"
-        url+="&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts"
+        url+="&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts"
         url+="&TranscodingProtocol=hls${extra}&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac&$tp=$API_KEY"
         echo "   GET universal ($tp, no auth header):"
         probe "$url" ""
@@ -134,7 +134,7 @@ for i in json.load(sys.stdin)['Items']:
       done
       echo "   HEAD universal (as CastPlayback's MediaInfoProvider does):"
       curl -s -m 20 -I -o /dev/null -w '    %{http_code}  type=%{content_type}\n' \
-        "$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts&TranscodingProtocol=hls${extra}&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac&${token_params[0]}=$API_KEY" || true
+        "$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts&TranscodingProtocol=hls${extra}&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac&${token_params[0]}=$API_KEY" || true
       # StreamProfile.Ios. Each request takes a fresh PlaySessionId, as the app's do: Emby serves a session's
       # running transcode again and ignores StartTimeTicks.
       ios_url() { # [StartTimeTicks]

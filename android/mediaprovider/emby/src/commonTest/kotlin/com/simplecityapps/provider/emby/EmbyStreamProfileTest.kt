@@ -29,7 +29,7 @@ class EmbyStreamProfileTest {
     fun `android asks for direct play of what Media3 plays - else an AAC transcode over HLS`() {
         urlFor(StreamProfile.Android, StreamingQuality.Kbps320) shouldBe
             "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
-            "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
+            "&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
             "&TranscodingProtocol=hls&MaxSampleRate=48000&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
             "&MaxStreamingBitrate=320000&api_key=token123"
     }
@@ -38,7 +38,7 @@ class EmbyStreamProfileTest {
     fun `android at original quality sends no cap`() {
         urlFor(StreamProfile.Android, StreamingQuality.Original) shouldBe
             "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
-            "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
+            "&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
             "&TranscodingProtocol=hls&MaxSampleRate=48000&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
             "&api_key=token123"
     }

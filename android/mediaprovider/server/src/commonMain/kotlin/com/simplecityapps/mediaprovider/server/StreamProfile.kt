@@ -45,7 +45,7 @@ data class StreamProfile(
          * codec. Direct play is a subset of [DirectPlayFormats.Android] (webma being Jellyfin's name for weba).
          */
         val Android = StreamProfile(
-            directPlayContainers = "opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg",
+            directPlayContainers = "opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg",
             playsHls = true,
             autoCodec = TranscodeCodec.Aac,
             directPlayFormats = DirectPlayFormats.Android

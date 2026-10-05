@@ -29,7 +29,7 @@ class JellyfinStreamProfileTest {
     fun `android asks for direct play of what Media3 plays - else an AAC transcode over HLS`() {
         urlFor(StreamProfile.Android, StreamingQuality.Kbps320) shouldBe
             "http://jellyfin.local:8096/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
-            "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
+            "&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
             "&TranscodingProtocol=hls&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
             "&MaxStreamingBitrate=320000&ApiKey=token123"
     }
@@ -38,7 +38,7 @@ class JellyfinStreamProfileTest {
     fun `android at original quality sends no cap`() {
         urlFor(StreamProfile.Android, StreamingQuality.Original) shouldBe
             "http://jellyfin.local:8096/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
-            "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
+            "&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
             "&TranscodingProtocol=hls&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
             "&ApiKey=token123"
     }
