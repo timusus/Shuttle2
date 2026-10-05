@@ -88,6 +88,20 @@ fun S2InputChip(
     )
 }
 
+/** A tappable prompt that isn't a filter (a trial's days left in a top bar): a `SuggestionChip` that runs [onClick]. */
+@Composable
+fun S2ActionChip(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SuggestionChip(
+        onClick = onClick,
+        label = { Text(label) },
+        modifier = modifier,
+    )
+}
+
 /**
  * A read-only fact about an item ("FLAC", "96 kHz"): a `SuggestionChip` that can't be tapped. M3
  * chips are all clickable, so it is the disabled chip drawn in the enabled chip's colours, and it

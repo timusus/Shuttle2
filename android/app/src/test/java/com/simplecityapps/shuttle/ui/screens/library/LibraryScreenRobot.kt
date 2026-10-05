@@ -106,6 +106,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var settingsOpened = false
         private set
+    var trialOpened = false
+        private set
     var newPlaylistClicked = false
         private set
     var lastViewModeChange: ViewMode? = null
@@ -124,13 +126,14 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         chrome: LibraryTabChrome = LibraryTabChrome(),
         layoutDirection: LayoutDirection = LayoutDirection.Ltr,
         fontScale: Float = 1f,
+        trialDaysLeft: Int? = null,
     ) {
         this.layoutDirection = layoutDirection
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             val density = LocalDensity.current
             CompositionLocalProvider(LocalLayoutDirection provides layoutDirection, LocalDensity provides Density(density.density, fontScale)) {
-                S2Theme { Screen(uiState, chrome, controls, pages) }
+                S2Theme { Screen(uiState, chrome, controls, pages, trialDaysLeft) }
             }
         }
         rule.waitForIdle()
@@ -156,7 +159,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     }
 
     @Composable
-    private fun Screen(uiState: LibraryUiState, chrome: LibraryTabChrome, controls: LibraryTabControls, pages: LibraryPageStates) {
+    private fun Screen(uiState: LibraryUiState, chrome: LibraryTabChrome, controls: LibraryTabControls, pages: LibraryPageStates, trialDaysLeft: Int?) {
         val capturingChrome = LibraryTabChrome(
             selection = chrome.selection,
             selectedCount = chrome.selectedCount,
@@ -193,6 +196,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             onTabsChanged = { order, enabled -> lastTabsChanged = order to enabled },
             onSelectionAction = { lastSelectionAction = it },
             onOpenSettings = { settingsOpened = true },
+            trialDaysLeft = trialDaysLeft,
+            onOpenTrial = { trialOpened = true },
         ) { tab -> Page(tab, pages, capturingControls) }
     }
 
@@ -395,6 +400,13 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         }
         rule.waitForIdle()
     }
+
+    fun openTrial() {
+        rule.onNodeWithTag("library-trial-chip").performClick()
+        rule.waitForIdle()
+    }
+
+    fun trialChipShown(): Boolean = rule.onAllNodesWithTag("library-trial-chip").fetchSemanticsNodes().isNotEmpty()
 
     fun openSettings() {
         rule.onNodeWithContentDescription("Settings").performClick()

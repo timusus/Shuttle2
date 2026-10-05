@@ -140,6 +140,23 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `the last days of the trial show a chip that opens the Pro screen`() {
+        robot.setContent(libraryState(), trialDaysLeft = 2)
+
+        robot.assertTextDisplayed("2 days left")
+        robot.openTrial()
+
+        robot.trialOpened shouldBe true
+    }
+
+    @Test
+    fun `no chip shows outside the trial's last days`() {
+        robot.setContent(libraryState())
+
+        robot.trialChipShown() shouldBe false
+    }
+
+    @Test
     fun `the overflow holds only Edit tabs`() {
         robot.setContent(libraryState(), libraryControls(sortOptions = sorts("Song Name", "Year")))
 

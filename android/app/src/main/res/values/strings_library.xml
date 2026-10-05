@@ -62,6 +62,11 @@
     <string name="library_show_as_grid">Show as grid</string>
     <!-- Library controls row: content description of the button that shows the tab as a list -->
     <string name="library_show_as_list">Show as list</string>
+    <!-- Library top bar chip in the last days of the server trial, e.g. '2 days left'; opens the Pro screen -->
+    <plurals name="library_trial_chip">
+        <item quantity="one">%1$d day left</item>
+        <item quantity="other">%1$d days left</item>
+    </plurals>
     <!-- Content description of the Library top bar's overflow button -->
     <string name="library_more_options">More options</string>
     <!-- Content description of the up button on detail screens and folders -->

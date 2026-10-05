@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -58,6 +59,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2Action
+import com.simplecityapps.shuttle.designsystem.component.S2ActionChip
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
@@ -66,6 +68,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
@@ -91,6 +94,7 @@ import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
+import com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoute
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
@@ -121,6 +125,9 @@ fun LibraryScreen(
     onSelectionAction: (MediaActionType) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Days left in the server trial, in its last days only: shown as a chip in the top bar that runs [onOpenTrial]. */
+    trialDaysLeft: Int? = null,
+    onOpenTrial: () -> Unit = {},
     /** Shown in place of the tabs while the library has no songs (#379). */
     emptyLibrary: (@Composable (Modifier) -> Unit)? = null,
     page: @Composable (LibraryTab) -> Unit,
@@ -164,6 +171,13 @@ fun LibraryScreen(
                         title = stringResource(R.string.title_library),
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
+                            trialDaysLeft?.let { days ->
+                                S2ActionChip(
+                                    label = pluralStringResource(R.plurals.library_trial_chip, days, days),
+                                    onClick = onOpenTrial,
+                                    modifier = Modifier.testTag("library-trial-chip"),
+                                )
+                            }
                             S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                             S2IconButton(
                                 icon = Icons.Rounded.MoreVert,
@@ -360,6 +374,8 @@ fun LibraryDestination(
 ) {
     val viewModel: LibraryViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val trialViewModel: LibraryTrialChipViewModel = metroViewModel()
+    val trialDaysLeft by trialViewModel.daysLeft.collectAsStateWithLifecycle()
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
@@ -396,6 +412,8 @@ fun LibraryDestination(
                 chrome.onClearSelection()
             },
             onOpenSettings = { onOpen(SettingsRoute) },
+            trialDaysLeft = trialDaysLeft,
+            onOpenTrial = { onOpen(PaywallRoute(PaywallSource.LibraryTrialChip)) },
             emptyLibrary = (content as? LibraryAvailability.Empty)?.let { empty ->
                 @Composable { modifier: Modifier ->
                     LibraryEmptyScreen(
