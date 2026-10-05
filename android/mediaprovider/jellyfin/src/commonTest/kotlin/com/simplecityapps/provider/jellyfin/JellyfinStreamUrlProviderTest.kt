@@ -103,7 +103,6 @@ class JellyfinStreamUrlProviderTest {
         streamingSettings.transcodeFormat.value = TranscodeFormat.Mp3
         provider.streamUrl(song()) shouldContain "&TranscodingContainer=ts&TranscodingProtocol=hls&"
         provider.streamUrl(song()) shouldContain "&AudioCodec=mp3&"
-
     }
 
     @Test
