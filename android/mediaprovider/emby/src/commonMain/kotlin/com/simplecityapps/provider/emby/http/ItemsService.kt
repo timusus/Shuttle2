@@ -67,6 +67,8 @@ class ItemsService(private val client: HttpClient) {
         userId: String
     ): NetworkResult<QueryResult> = client.networkResult {
         get("$url/Users/$userId/Views") {
+            // A library hidden from the user's home screen still holds their music; leaving it out would delete its songs
+            parameter("IncludeHidden", true)
             header(EMBY_TOKEN, token)
         }
     }
