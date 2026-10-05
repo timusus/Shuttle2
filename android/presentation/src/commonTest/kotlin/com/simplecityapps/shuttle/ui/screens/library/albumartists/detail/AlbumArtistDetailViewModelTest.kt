@@ -519,6 +519,34 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
+    fun `every album section is expanded only once the last folded one unfolds`() = runTest {
+        val viewModel = loadedViewModel()
+        viewModel.uiState.value.allAlbumsExpanded shouldBe false
+
+        viewModel.onToggleAlbum(lanternHours)
+        viewModel.onToggleAlbum(cassetteSummer)
+        advanceUntilIdle()
+        viewModel.uiState.value.allAlbumsExpanded shouldBe false
+
+        viewModel.onToggleAlbum(looseChange)
+        advanceUntilIdle()
+        viewModel.uiState.value.allAlbumsExpanded shouldBe true
+    }
+
+    @Test
+    fun `with no album sections the albums aren't all expanded - there's nothing to fold`() = runTest {
+        val viewModel = loadedViewModel(albums = listOf(cassetteSummer), songs = listOf(song(1, "Stray", "Loose Tracks")))
+
+        viewModel.onExpandAll()
+        advanceUntilIdle()
+        viewModel.uiState.value.allAlbumsExpanded shouldBe false
+
+        viewModel.onSortOrderSelected(ArtistSongSortOrder.SongTitle)
+        advanceUntilIdle()
+        viewModel.uiState.value.allAlbumsExpanded shouldBe false
+    }
+
+    @Test
     fun `the albums shelf hides while songs group by album - their headers are the albums`() = runTest {
         val viewModel = loadedViewModel()
 

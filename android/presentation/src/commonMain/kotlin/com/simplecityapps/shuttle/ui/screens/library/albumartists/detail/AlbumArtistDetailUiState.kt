@@ -7,7 +7,6 @@ import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
-import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
@@ -45,15 +44,19 @@ data class AlbumArtistDetailUiState(
     /** Whether any section has an album: an album order can still resolve to nothing but the songs on none of them. */
     val hasAlbumSections: Boolean get() = sections.any { it.album != null }
 
+    /**
+     * Whether every album section is unfolded, which turns the songs header's Expand all into Collapse all (#631). False
+     * with no album sections, where the header has no toggle to show.
+     */
+    val allAlbumsExpanded: Boolean
+        get() = sections.mapNotNull { it.album }.let { albums ->
+            albums.isNotEmpty() && albums.all { album -> album.groupKey?.let { it in expandedAlbums } ?: false }
+        }
+
     /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = albumArtist?.playContext ?: PlayContext.None
 
     enum class LoadingState { Loading, Ready, Empty }
-
-    /** The artist's songs belonging to [album], in track order. */
-    fun songsForAlbum(album: Album): List<Song> = album.groupKey?.let { key ->
-        songs.filter { it.albumGroupKey == key }.sortedWith(ArtistSongComparator.trackOrder)
-    }.orEmpty()
 
     /** A run of the song list: [album]'s songs in track order, or, with no album, songs listed flat or without an album. */
     data class SongSection(val album: Album?, val songs: List<Song>)
