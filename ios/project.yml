@@ -74,13 +74,6 @@ targets:
     configFiles:
       Debug: Config/S2.xcconfig
       Release: Config/S2.xcconfig
-    # The App Group the widgets read Now Playing from (#758), and CarPlay's audio app category (#692; the app only,
-    # not the widgets)
-    entitlements:
-      path: S2/S2.entitlements
-      properties:
-        com.apple.security.application-groups: ["$(S2_APP_GROUP)"]
-        com.apple.developer.carplay-audio: true
     # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
     # generated keys below (GENERATE_INFOPLIST_FILE stays on).
     info:
@@ -138,6 +131,10 @@ targets:
                 UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).CarPlaySceneDelegate
     settings:
       base:
+        # Hand-written, not XcodeGen `entitlements:` (which would override the Debug config's file): the App Group
+        # the widgets read Now Playing from (#758), and CarPlay's audio app category (#692; the app only, not the
+        # widgets, and Release only)
+        CODE_SIGN_ENTITLEMENTS: S2/S2.entitlements
         # Debug installs beside the store app; Release is the App Store Connect bundle id (configs below).
         PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.dev
         PRODUCT_NAME: S2
@@ -159,6 +156,9 @@ targets:
         # first Shared.framework on the search path, and the simulator slice does not link for a device.
         # Build the one you need first with scripts/build-framework.sh.
         Debug:
+          # Debug signs as com.simplecityapps.shuttle.dev, which CarPlay is never granted to, so its entitlements
+          # leave carplay-audio out and device installs sign (#917).
+          CODE_SIGN_ENTITLEMENTS: S2/S2Debug.entitlements
           "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]":
             - "$(inherited)"
             - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
