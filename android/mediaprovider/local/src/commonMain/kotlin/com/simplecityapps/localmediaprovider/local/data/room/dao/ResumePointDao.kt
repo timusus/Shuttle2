@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.data.room.dao
 import androidx.room.Dao
 import androidx.room.Embedded
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.simplecityapps.localmediaprovider.local.data.room.entity.ResumePointData
 
@@ -26,6 +27,50 @@ interface ResumePointDao {
 
     @Query("DELETE FROM resume_points")
     suspend fun clear()
+
+    /** The ids of the contexts of [contextType] with a resume point. */
+    @Query("SELECT contextId FROM resume_points WHERE contextType = :contextType")
+    suspend fun contextIds(contextType: String): List<String>
+
+    /**
+     * Moves the resume point of [from] to [to]. When [to] has one already (two old keys naming one album now), the one
+     * with the later updatedAt stays (the target on a tie): one resume point remains, the newest.
+     */
+    @Transaction
+    suspend fun move(
+        contextType: String,
+        from: String,
+        to: String
+    ) {
+        deleteOlderThan(contextType, from, to)
+        moveIfFree(contextType, from, to)
+        delete(contextType, from)
+    }
+
+    @Query(
+        """
+        DELETE FROM resume_points WHERE contextType = :contextType AND contextId = :to
+        AND updatedAt < (SELECT updatedAt FROM resume_points WHERE contextType = :contextType AND contextId = :from)
+        """
+    )
+    suspend fun deleteOlderThan(
+        contextType: String,
+        from: String,
+        to: String
+    )
+
+    @Query("UPDATE OR IGNORE resume_points SET contextId = :to WHERE contextType = :contextType AND contextId = :from")
+    suspend fun moveIfFree(
+        contextType: String,
+        from: String,
+        to: String
+    )
+
+    @Query("DELETE FROM resume_points WHERE contextType = :contextType AND contextId = :contextId")
+    suspend fun delete(
+        contextType: String,
+        contextId: String
+    )
 }
 
 /** A resume point and its song as the library has it now: null [songName] and [songDuration] once it's gone. */

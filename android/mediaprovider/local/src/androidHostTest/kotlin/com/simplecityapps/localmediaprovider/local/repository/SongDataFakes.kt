@@ -86,6 +86,11 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
         path: String
     ): Int = throw NotImplementedError()
 
+    override suspend fun updateArtists(
+        id: Long,
+        artists: List<String>
+    ): Int = throw NotImplementedError()
+
     override suspend fun movePlaylistEntries(
         fromSongIds: List<Long>,
         songId: Long

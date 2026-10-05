@@ -145,6 +145,18 @@ abstract class SongDataDao {
         path: String
     ): Int
 
+    @Query("UPDATE songs SET artists = :artists WHERE id = :id")
+    abstract suspend fun updateArtists(
+        id: Long,
+        artists: List<String>
+    ): Int
+
+    /** Sets each song's artists, by song id, together. */
+    @Transaction
+    open suspend fun updateArtists(artists: Map<Long, List<String>>) {
+        artists.forEach { (id, songArtists) -> updateArtists(id, songArtists) }
+    }
+
     @Query("UPDATE playlist_song_join SET songId = :songId WHERE songId IN (:fromSongIds)")
     abstract suspend fun movePlaylistEntries(
         fromSongIds: List<Long>,

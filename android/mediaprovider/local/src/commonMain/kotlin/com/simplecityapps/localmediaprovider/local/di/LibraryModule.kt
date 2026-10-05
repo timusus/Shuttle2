@@ -87,7 +87,7 @@ abstract class LibraryModule {
             preferenceManager: GeneralPreferenceManager,
             database: MediaDatabase
         ): MediaImporter {
-            val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.pinnedCollectionDao(), preferenceManager)
+            val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.resumePointDao(), database.pinnedCollectionDao(), preferenceManager)
             return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue)
         }
 
