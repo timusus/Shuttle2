@@ -277,6 +277,6 @@ struct PlaylistRow: View {
 
     /// "12 songs · 43 min": the count and, from a minute up, the runtime.
     static func subtitle(_ playlist: Playlist) -> String {
-        eyebrow(pluralized(Int(playlist.songCount), "song"), runtime(ms: Int64(playlist.duration)))
+        eyebrow(pluralized(Int(playlist.songCount), .song), runtime(ms: Int64(playlist.duration)))
     }
 }

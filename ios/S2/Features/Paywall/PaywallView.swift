@@ -50,7 +50,7 @@ enum ProStatus: Equatable {
         switch self {
         case .checking: "Checking your purchases with the App Store…"
         case .trialAvailable: "Try streaming from your server free for \(ProFeatures.trialDays) days."
-        case .trial(let daysLeft): daysLeft == 1 ? "1 day left in your free trial" : "\(daysLeft) days left in your free trial"
+        case .trial(let daysLeft): localizedPlural("paywall_status_trial", Int(daysLeft))
         case .trialEnded: "Your free trial has ended. Upgrade to keep \(ProFeatures.afterTrial)."
         case .pro: "You have Shuttle Music Pro. Thank you for supporting Shuttle Music."
         }

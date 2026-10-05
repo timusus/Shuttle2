@@ -994,7 +994,7 @@ struct NowPlayingQueueList: View {
     /// The playing song's remainder is left out, so the line doesn't change with every progress tick.
     static func upNextSummary(_ rows: [NowPlayingQueueRow], locale: Locale = .current) -> String? {
         guard !rows.isEmpty else { return nil }
-        return eyebrow(pluralized(rows.count, "song"), remainingTime(rows, locale: locale))
+        return eyebrow(pluralized(rows.count, .song), remainingTime(rows, locale: locale))
     }
 
     // MARK: - Editing

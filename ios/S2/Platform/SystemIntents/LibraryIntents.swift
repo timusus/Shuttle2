@@ -77,7 +77,7 @@ struct PlaylistEntity: AppEntity, Equatable {
     let songCount: Int
 
     var displayRepresentation: DisplayRepresentation {
-        let subtitle: LocalizedStringResource = songCount == 1 ? "1 song" : "\(songCount) songs"
+        let subtitle: LocalizedStringResource = LocalizedStringResource(stringLiteral: pluralized(songCount, .song))
         return DisplayRepresentation(title: "\(name)", subtitle: subtitle)
     }
 }

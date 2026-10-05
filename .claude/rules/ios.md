@@ -31,8 +31,10 @@ ios/scripts/build-framework.sh --device        # Debug, device (--all for both, 
 # 2. Regenerate the Xcode project (after editing project.yml or adding/removing Swift files)
 cd ios && xcodegen generate
 
-# Shared code's strings (StringKey) on iOS: after adding a StringKey or changing its Android text,
-# regenerate ios/S2/en.lproj/Localizable.strings (--check exits 1 if it's stale)
+# Strings on iOS: after adding a StringKey/PluralKey (or a plural in IOS_PLURALS) or changing its Android text or
+# translation, regenerate ios/S2/<locale>.lproj/Localizable.strings + .stringsdict, one per Android values-<locale>
+# with translations (--check exits 1 if stale or if project.yml's CFBundleLocalizations disagrees).
+# Swift plurals: pluralized(n, .song) / localizedPlural(key, n, args...). Test: python3 -m unittest discover -s ios/scripts
 ios/scripts/generate-strings.py
 
 # 3. Build for the simulator (Debug `build-for-testing` into ios/build/DerivedData; skipped when nothing

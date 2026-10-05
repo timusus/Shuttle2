@@ -72,7 +72,7 @@ struct SmartPlaylistDetailContent: View {
             DetailScaffold(title: smartPlaylist.id.title, tintSource: nil) { layout in
                 DetailHero(
                     title: smartPlaylist.id.title,
-                    subtitle: eyebrow(pluralized(state.songs.count, "song"), totalDuration(state.songs)),
+                    subtitle: eyebrow(pluralized(state.songs.count, .song), totalDuration(state.songs)),
                     layout: layout,
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle

@@ -111,7 +111,7 @@ struct AlbumArtistDetailContent: View {
     private func ready(_ artist: AlbumArtist) -> some View {
         let name = artist.name ?? artist.friendlyArtistName ?? "Unknown Artist"
         // An artist only credited on others' albums (#637) has none of their own to count
-        let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song"))
+        let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, .album), pluralized(state.songs.count, .song))
         // The shared rule's image (#781): the artist's own, the online one only on a confident match, else their top
         // album's cover. It fills the hero and seeds the tint, so the colours follow the image shown.
         let source = ArtworkSource.artistHero(state.hero ?? ArtistHeroArtwork(artist: artist, onlineLookup: false, fallbackAlbum: nil))

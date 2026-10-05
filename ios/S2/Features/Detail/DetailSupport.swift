@@ -708,8 +708,20 @@ func spokenDuration(ms: Int64, locale: Locale = .current) -> String {
     Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide).locale(locale))
 }
 
-/// "1 song" / "N songs" (or any other noun), the pluralisation every detail hero's subtitle repeats.
-func pluralized(_ count: Int, _ noun: String) -> String { count == 1 ? "1 \(noun)" : "\(count) \(noun)s" }
+/// A noun with a generated plural of the same name (`ios/scripts/generate-strings.py`, from Android's plurals).
+enum CountNoun: String {
+    case song = "songsPlural"
+    case album = "albumsPlural"
+}
+
+/// "1 song" / "N songs" (or albums) in the app's language, the pluralisation every subtitle repeats.
+func pluralized(_ count: Int, _ noun: CountNoun) -> String { localizedPlural(noun.rawValue, count) }
+
+/// The `.stringsdict` plural [key] for [count] (its first argument, `%1$d`), then [args] (`%2$@`...).
+func localizedPlural(_ key: String, _ count: Int, _ args: String...) -> String {
+    let format = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+    return String(format: format, locale: .current, arguments: [Int32(clamping: count)] + args as [CVarArg])
+}
 
 extension PlayerBinding {
     /// Whether the player is playing, for a detail screen's playing row. Reads only the mini player's state, so a

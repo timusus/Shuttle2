@@ -163,6 +163,6 @@ struct AlbumArtistRow: View {
     /// "3 albums · 12 songs" in the Library and Search alike; a track artist found by their credits (#637) has no
     /// albums of their own, so only their songs.
     static func subtitle(_ albumArtist: AlbumArtist) -> String {
-        eyebrow(albumArtist.isAlbumArtist ? pluralized(Int(albumArtist.albumCount), "album") : nil, pluralized(Int(albumArtist.songCount), "song"))
+        eyebrow(albumArtist.isAlbumArtist ? pluralized(Int(albumArtist.albumCount), .album) : nil, pluralized(Int(albumArtist.songCount), .song))
     }
 }

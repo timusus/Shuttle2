@@ -156,7 +156,7 @@ struct AlbumRow: View {
         var parts: [String] = []
         if let artist = album.albumArtist { parts.append(artist) }
         if let year = album.year { parts.append(String(year.intValue)) }
-        parts.append(album.songCount == 1 ? "1 song" : "\(album.songCount) songs")
+        parts.append(pluralized(Int(album.songCount), .song))
         if sortOrder == .dateAdded, let added = libraryDateAdded(album.dateAdded) { parts.append(added) }
         return parts.joined(separator: " · ")
     }

@@ -122,7 +122,7 @@ struct GenreRow: View {
         // its title apart from every other list's (#643); the name itself stays the key.
         MediaRow(
             genre.name.trimmingCharacters(in: .whitespacesAndNewlines),
-            subtitle: genre.songCount == 1 ? "1 song" : "\(genre.songCount) songs",
+            subtitle: pluralized(Int(genre.songCount), .song),
             mosaic: .genre(genre.name, covers: covers),
             artworkSize: artworkSize
         )

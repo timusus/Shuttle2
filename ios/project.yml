@@ -82,6 +82,9 @@ targets:
         # XcodeGen writes 1.0 / 1 otherwise, and the file wins over the build settings.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # The languages with a Localizable table (S2/<id>.lproj), one per Android translation:
+        # ios/scripts/generate-strings.py writes them and --check holds this list to them.
+        CFBundleLocalizations: [en, de, en-GB, es, es-ES, fr, hi, it, ja, nl, pl, pt-BR, pt-PT, ru, tr, zh-Hans]
         # Keep playing with the screen locked or the app in the background (#588), and sync the servers daily in the
         # background (#771, BackgroundRefresh.swift).
         UIBackgroundModes: [audio, fetch]

@@ -105,7 +105,7 @@ struct PlaylistDetailContent: View {
             DetailScaffold(title: playlist.name, tintSource: cover) { layout in
                 DetailHero(
                     title: playlist.name,
-                    subtitle: eyebrow(pluralized(Int(playlist.songCount), "song"), totalDuration(state.songs.map(\.song))),
+                    subtitle: eyebrow(pluralized(Int(playlist.songCount), .song), totalDuration(state.songs.map(\.song))),
                     layout: layout,
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle,

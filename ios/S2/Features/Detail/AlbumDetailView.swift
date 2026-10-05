@@ -215,7 +215,7 @@ struct AlbumDetailContent: View {
         eyebrow(
             artistLink(album) == nil ? artistName(album) : nil,
             album.year.map { String($0.intValue) },
-            pluralized(state.songs.count, "song"),
+            pluralized(state.songs.count, .song),
             totalDuration(state.songs),
             AudioQuality.sharedBadge(of: state.songs)
         )

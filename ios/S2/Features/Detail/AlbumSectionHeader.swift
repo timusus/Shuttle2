@@ -19,7 +19,7 @@ struct AlbumSectionHeader: View {
     @ScaledMetric(relativeTo: .body) private var thumbSize = ArtworkSize.row
 
     private var title: String { album.name ?? "Unknown Album" }
-    private var subtitle: String { eyebrow(album.year.map { String($0.intValue) }, pluralized(songCount, "song")) }
+    private var subtitle: String { eyebrow(album.year.map { String($0.intValue) }, pluralized(songCount, .song)) }
 
     var body: some View {
         HStack(spacing: 0) {

@@ -40,7 +40,7 @@ extension HomeItem {
     var detail: String? {
         switch onEnum(of: self) {
         case .albumItem(let it): it.album.albumArtist ?? it.album.friendlyArtistName
-        case .artistItem(let it): it.albumArtist.albumCount == 1 ? "1 album" : "\(it.albumArtist.albumCount) albums"
+        case .artistItem(let it): pluralized(Int(it.albumArtist.albumCount), .album)
         case .playlistItem(let it): Self.songCount(Int(it.playlist.songCount))
         case .smartPlaylistItem: nil
         case .genreItem(let it): Self.songCount(Int(it.genre.songCount))
@@ -82,7 +82,7 @@ extension HomeItem {
     }
 
     private static func songCount(_ count: Int) -> String {
-        count == 1 ? "1 song" : "\(count) songs"
+        pluralized(count, .song)
     }
 }
 

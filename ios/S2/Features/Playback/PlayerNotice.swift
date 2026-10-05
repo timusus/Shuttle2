@@ -69,19 +69,19 @@ extension MediaActionText {
     static func notice(for message: any MediaActionMessage) -> String? {
         switch message {
         case let added as MediaActionMessageAddedToPlaylist:
-            songs(added.songCount, "added to \(added.playlistName)")
+            localizedPlural("playlist_songs_added", Int(added.songCount), added.playlistName)
         case let duplicate as MediaActionMessageAlreadyInPlaylist:
-            "\(duplicate.duplicateCount) already in \(duplicate.playlistName)"
+            localizedPlural("media_action_already_in_playlist", Int(duplicate.duplicateCount), duplicate.playlistName)
         case let failed as MediaActionMessageAddToPlaylistFailed:
             "Failed to add songs to playlist: \(failed.reason ?? "An unknown error occurred")"
         case let created as MediaActionMessagePlaylistCreated:
             "‘\(created.playlistName)’ successfully created"
         case let favourited as MediaActionMessageAddedToFavourites:
-            songs(favourited.songCount, "added to Favorites")
+            localizedPlural("playlist_songs_added", Int(favourited.songCount), favorites)
         case let unfavourited as MediaActionMessageRemovedFromFavourites:
-            songs(unfavourited.songCount, "removed from Favorites")
+            localizedPlural("media_action_removed_from_playlist", Int(unfavourited.songCount), favorites)
         case let excluded as MediaActionMessageExcluded:
-            songs(excluded.songCount, "excluded")
+            localizedPlural("media_action_excluded", Int(excluded.songCount))
         case is MediaActionMessageNotFound:
             "Not in your library"
         default:
@@ -97,9 +97,7 @@ extension MediaActionText {
         }
     }
 
-    private static func songs(_ count: Int32, _ what: String) -> String {
-        count == 1 ? "1 song \(what)" : "\(count) songs \(what)"
-    }
+    private static var favorites: String { Bundle.main.localizedString(forKey: "playlist_title_favorites", value: nil, table: nil) }
 }
 
 /// The notice itself: its message and button on a material capsule, dismissed by a tap.

@@ -82,7 +82,7 @@ struct GenreDetailContent: View {
             DetailScaffold(title: genre.name, tintSource: nil) { layout in
                 DetailHero(
                     title: genre.name,
-                    subtitle: eyebrow(pluralized(Int(genre.songCount), "song"), totalDuration(state.songs)),
+                    subtitle: eyebrow(pluralized(Int(genre.songCount), .song), totalDuration(state.songs)),
                     layout: layout,
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle
