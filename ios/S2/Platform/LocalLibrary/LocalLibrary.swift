@@ -73,6 +73,15 @@ final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
     /// Folders the picker returned, by their URL string, until Kotlin adds them: the picker's URL carries the
     /// security scope, which a URL rebuilt from its string doesn't.
     private var staged: [String: URL] = [:]
+    /// Artwork already read: a song's by its path, a folder's image by the folder's (`folder:`-prefixed), each nil when
+    /// there's none. A cover drawn at several sizes (a row, the album page, Now Playing, the widgets) reads its file once,
+    /// and an album's songs share their folder's image. Every listing clears it, as files may have changed by then.
+    private let artworkCache: NSCache<NSString, ReadArtwork> = {
+        let cache = NSCache<NSString, ReadArtwork>()
+        cache.totalCostLimit = 32 * 1024 * 1024
+        cache.countLimit = 2000
+        return cache
+    }()
 
     init(
         defaults: UserDefaults = .standard,
@@ -273,21 +282,36 @@ final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
         return root.appendingPathComponent(relative, isDirectory: false)
     }
 
-    /// The picture embedded in song [path]'s file, else an image beside it (cover.jpg, folder.png...).
+    /// The picture embedded in song [path]'s file, else an image beside it (cover.jpg, folder.png...). Read once until the
+    /// next listing.
     func artwork(forSongPath path: String) -> Data? {
         guard let url = fileURL(forSongPath: path), fileManager.fileExists(atPath: url.path) else { return nil }
-        if let picture = AudioFileTags.embeddedPicture(fileAt: url) { return picture }
-        let directory = url.deletingLastPathComponent()
-        guard let names = try? fileManager.contentsOfDirectory(atPath: directory.path) else { return nil }
-        let byLowercased = Dictionary(names.map { ($0.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
-        for name in Self.folderImageNames {
-            for ext in Self.folderImageExtensions {
-                if let match = byLowercased["\(name).\(ext)"], let data = try? Data(contentsOf: directory.appendingPathComponent(match)) {
-                    return data
+        return cachedArtwork(path) {
+            AudioFileTags.embeddedPicture(fileAt: url) ?? folderImage(in: url.deletingLastPathComponent())
+        }
+    }
+
+    /// The first of the folder image names [directory] has, in their order and with any case.
+    private func folderImage(in directory: URL) -> Data? {
+        cachedArtwork("folder:\(directory.path)") {
+            guard let names = try? fileManager.contentsOfDirectory(atPath: directory.path) else { return nil }
+            let byLowercased = Dictionary(names.map { ($0.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
+            for name in Self.folderImageNames {
+                for ext in Self.folderImageExtensions {
+                    if let match = byLowercased["\(name).\(ext)"], let data = try? Data(contentsOf: directory.appendingPathComponent(match)) {
+                        return data
+                    }
                 }
             }
+            return nil
         }
-        return nil
+    }
+
+    private func cachedArtwork(_ key: String, read: () -> Data?) -> Data? {
+        if let hit = artworkCache.object(forKey: key as NSString) { return hit.data }
+        let data = read()
+        artworkCache.setObject(ReadArtwork(data), forKey: key as NSString, cost: data?.count ?? 0)
+        return data
     }
 
     /// The artwork of the song an `s2local:` artwork url names: Kotlin's `ArtworkUrls` percent-encodes the song's path.
@@ -328,6 +352,7 @@ final class LocalLibrary: NSObject, IosLocalFiles, @unchecked Sendable {
     /// of reach is unread.
     func listAudioFiles() -> Listing {
         waitForResolution()
+        artworkCache.removeAllObjects()
         let (picked, unreachable) = lock.withLock {
             (saved.compactMap { folder in reachable[folder.id].map { (folder.id, $0.url) } }, saved.map(\.id).filter { reachable[$0] == nil })
         }
@@ -424,5 +449,14 @@ extension IosLocalTags {
             bitRate: tags.bitRateKbps.map { KotlinInt(int: Int32(clamping: $0)) },
             codec: tags.codec
         )
+    }
+}
+
+/// A read of a song's or folder's artwork, for `NSCache`, which holds objects: nil data is a file with none.
+private final class ReadArtwork {
+    let data: Data?
+
+    init(_ data: Data?) {
+        self.data = data
     }
 }

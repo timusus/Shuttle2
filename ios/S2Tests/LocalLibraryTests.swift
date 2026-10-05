@@ -1,4 +1,5 @@
 import Foundation
+import S2PlaybackTestSupport
 import Shared
 import Testing
 @testable import S2
@@ -333,6 +334,71 @@ struct LocalLibraryTests {
         let url = try #require(URL(string: "s2local://\(id.lowercased())/song.wav"))
 
         #expect(library().artwork(forArtworkURL: url) == cover)
+    }
+
+    /// The PNG cover embedded in each `S2PlaybackTestSupport` fixture: ID3 APIC, FLAC PICTURE and MP4 covr.
+    private static let png: [UInt8] = [0x89, 0x50, 0x4E, 0x47]
+
+    @Test(arguments: [("tagged", "mp3"), ("tagged", "flac"), ("tagged-alac", "m4a")])
+    func aFilesEmbeddedPictureComesBeforeAnImageBesideIt(name: String, ext: String) throws {
+        defer { cleanUp() }
+        let fixture = try #require(LoopbackMediaServer.fixtureURL(name, withExtension: ext))
+        try write(try Data(contentsOf: fixture), to: documents.appendingPathComponent("Album/01.\(ext)"))
+        try write(Data([0xFF, 0xD8, 0xFF, 0xE0]), to: documents.appendingPathComponent("Album/cover.jpg"))
+
+        let artwork = try #require(library().artwork(forSongPath: "s2local://documents/Album/01.\(ext)"))
+
+        #expect(Array(artwork.prefix(4)) == Self.png)
+    }
+
+    @Test func aFileWithoutAPictureFallsBackToTheFolderImage() throws {
+        defer { cleanUp() }
+        let cover = Data([0xFF, 0xD8, 0xFF, 0xE0])
+        let untagged = try #require(LoopbackMediaServer.fixtureURL("tagged", withExtension: "opus"))
+        try write(try Data(contentsOf: untagged), to: documents.appendingPathComponent("Album/01.opus"))
+        try write(cover, to: documents.appendingPathComponent("Album/FRONT.jpeg"))
+
+        #expect(library().artwork(forSongPath: "s2local://documents/Album/01.opus") == cover)
+    }
+
+    @Test func folderImagesAreMatchedInNameOrderWithAnyCase() throws {
+        defer { cleanUp() }
+        let album = documents.appendingPathComponent("Album")
+        try write(Self.wav(info: [:]), to: album.appendingPathComponent("01.wav"))
+        try write(Data("back".utf8), to: album.appendingPathComponent("back.jpg"))
+        try write(Data("front".utf8), to: album.appendingPathComponent("Front.PNG"))
+        try write(Data("folder".utf8), to: album.appendingPathComponent("Folder.jpg"))
+        try write(Data("cover".utf8), to: album.appendingPathComponent("COVER.png"))
+
+        #expect(library().artwork(forSongPath: "s2local://documents/Album/01.wav") == Data("cover".utf8))
+
+        try FileManager.default.removeItem(at: album.appendingPathComponent("COVER.png"))
+        #expect(library().artwork(forSongPath: "s2local://documents/Album/01.wav") == Data("folder".utf8))
+
+        try FileManager.default.removeItem(at: album.appendingPathComponent("Folder.jpg"))
+        #expect(library().artwork(forSongPath: "s2local://documents/Album/01.wav") == Data("front".utf8))
+
+        // Not one of the names
+        try FileManager.default.removeItem(at: album.appendingPathComponent("Front.PNG"))
+        #expect(library().artwork(forSongPath: "s2local://documents/Album/01.wav") == nil)
+    }
+
+    @Test func artworkIsReadOnceUntilTheNextListing() throws {
+        defer { cleanUp() }
+        let album = documents.appendingPathComponent("Album")
+        try write(Self.wav(info: [:]), to: album.appendingPathComponent("01.wav"))
+        try write(Self.wav(info: [:]), to: album.appendingPathComponent("02.wav"))
+        try write(Data("old".utf8), to: album.appendingPathComponent("cover.jpg"))
+        let sut = library()
+        #expect(sut.artwork(forSongPath: "s2local://documents/Album/01.wav") == Data("old".utf8))
+
+        try write(Data("new".utf8), to: album.appendingPathComponent("cover.jpg"))
+        // The same song, and its album's next, without reading the folder again
+        #expect(sut.artwork(forSongPath: "s2local://documents/Album/01.wav") == Data("old".utf8))
+        #expect(sut.artwork(forSongPath: "s2local://documents/Album/02.wav") == Data("old".utf8))
+
+        _ = sut.listAudioFiles()
+        #expect(sut.artwork(forSongPath: "s2local://documents/Album/01.wav") == Data("new".utf8))
     }
 
     /// One second of 8 kHz mono 16-bit silence, with [info] as its RIFF INFO tags.

@@ -106,6 +106,7 @@
 		8D35BFA6D0DEA168AF80AD0C /* NowPlayingAudioSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADA676570793AAB2B73A604 /* NowPlayingAudioSheets.swift */; };
 		8DB510F3C2861DAE2E6D79ED /* NowPlayingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E0B40EF9B1410AFE3490A4 /* NowPlayingViewTests.swift */; };
 		8DB654A84EBD8D0D7A13656B /* LibraryGridTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796A3B12BBE0B079F29CF480 /* LibraryGridTests.swift */; };
+		8F984E3361A062F82D8991FD /* S2PlaybackTestSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 223BCE871853A0BF4F40A55A /* S2PlaybackTestSupport */; };
 		93D233652CC46C6E38907D72 /* AppIntentPerformerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A32C881A8D93D6882BACD56 /* AppIntentPerformerTests.swift */; };
 		93DD15E62C41B25164D1E3B0 /* ScrobblingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADEF53D63691B13FBD04E048 /* ScrobblingView.swift */; };
 		952FFA6805354B6A7B73D0E7 /* RouteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D3127BEC11A3D89D92CAA2 /* RouteTests.swift */; };
@@ -423,6 +424,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C49D068C77F250C823A5A2A9 /* ViewInspector in Frameworks */,
+				8F984E3361A062F82D8991FD /* S2PlaybackTestSupport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -909,6 +911,7 @@
 			name = S2Tests;
 			packageProductDependencies = (
 				B8D3D385DF619051CF4D4D12 /* ViewInspector */,
+				223BCE871853A0BF4F40A55A /* S2PlaybackTestSupport */,
 			);
 			productName = S2Tests;
 			productReference = 6C03B6D3CCE903CAEB601182 /* S2Tests.xctest */;
@@ -1613,6 +1616,10 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		223BCE871853A0BF4F40A55A /* S2PlaybackTestSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = S2PlaybackTestSupport;
+		};
 		2C08565004895C8B70923EDF /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DE25CAB1E4BD6F34AF7E2EE0 /* XCRemoteSwiftPackageReference "posthog-ios" */;

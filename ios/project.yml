@@ -215,6 +215,9 @@ targets:
     dependencies:
       - target: S2
       - package: ViewInspector
+      # The tagged audio fixtures, for the local library's embedded artwork
+      - package: S2Playback
+        product: S2PlaybackTestSupport
     settings:
       base:
         BUNDLE_LOADER: $(TEST_HOST)
