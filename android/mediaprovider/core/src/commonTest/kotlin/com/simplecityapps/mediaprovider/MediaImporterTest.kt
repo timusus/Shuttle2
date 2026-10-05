@@ -752,6 +752,31 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `an incremental sync keeps a song a shifted listing page skipped - and removes the one the server did drop`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 2
+        // Song 1 went mid-listing, so a page shifted and skipped song 2; the second listing has it
+        server.earlierListings += listOf("/3")
+        server.held = listOf("/2", "/3")
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/1")
+    }
+
+    @Test
+    fun `an incremental sync whose confirming listing fails removes nothing`() = runBlocking<Unit> {
+        incrementalServer()
+        server.count = 2
+        server.earlierListings += listOf("/1", "/3")
+        server.held = null
+
+        importer.sync(SyncTrigger.Foreground)
+
+        songRepository.deleted[server.type].orEmpty() shouldBe emptyList()
+    }
+
+    @Test
     fun `an incremental sync whose server count is what is stored lists nothing`() = runBlocking<Unit> {
         incrementalServer()
         server.count = 3
@@ -795,7 +820,7 @@ class MediaImporterTest {
 
         importer.sync(SyncTrigger.Foreground)
 
-        server.pathListings shouldBe 1
+        server.pathListings shouldBe 2
         songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/3")
     }
 
@@ -842,7 +867,7 @@ class MediaImporterTest {
 
         server.requests.last() shouldBe null
         songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/1", "/2", "/3")
-        server.pathListings shouldBe 1
+        server.pathListings shouldBe 2
     }
 
     @Test
@@ -875,7 +900,7 @@ class MediaImporterTest {
         importer.sync(SyncTrigger.Periodic)
 
         server.requests.last() shouldBe clock.time - SyncPolicy.OVERLAP
-        server.pathListings shouldBe 1
+        server.pathListings shouldBe 2
     }
 
     @Test
@@ -1204,11 +1229,15 @@ class MediaImporterTest {
         var heldMissing = 0
         var pathListings = 0
 
+        /** Listings returned before [held], one per request, for a library that changes between them. */
+        val earlierListings = ArrayDeque<List<String>>()
+
         override suspend fun countSongs(): Int? = count
 
         override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = flow {
             pathListings++
-            held?.let { paths -> emit(FlowEvent.Success(paths, heldMissing)) } ?: emit(FlowEvent.Failure("The listing failed"))
+            val paths = earlierListings.removeFirstOrNull() ?: held
+            paths?.let { emit(FlowEvent.Success(it, heldMissing)) } ?: emit(FlowEvent.Failure("The listing failed"))
         }
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = songs(since = null)

@@ -608,6 +608,7 @@ class MediaImporter(
      * stored plus those (plus the songs its last full listing came up short by, which its count includes), nothing has gone
      * and that's one request. Otherwise its path listing says: a failed one is null, and one that left songs out has
      * [missing][RemovedOnSource.missing] as many, which [DeleteGuard] holds the removal back for as it does a full listing's.
+     * Songs missing from that listing are confirmed by a second, since a shifting page can skip one that's still there (#934).
      */
     private suspend fun songsRemovedOnSource(
         mediaProvider: IncrementalMediaProvider,
@@ -622,6 +623,16 @@ class MediaImporter(
             return null
         }
         val held = listing.result.toHashSet()
+        // Offset pages shift when a song goes mid-listing, skipping another that's still there and totalling as if nothing
+        // were skipped. So a song absent from one listing is removed only if a second one lacks it too.
+        if (existingSongs.any { song -> song.path !in held }) {
+            val confirmation = mediaProvider.findSongPaths().lastOrNull()
+            if (confirmation !is FlowEvent.Success) {
+                logger.warn { "Couldn't confirm the songs ${mediaProvider.type} no longer holds; keeping them until it can be" }
+                return null
+            }
+            held += confirmation.result
+        }
         val known = (existingSongs.asSequence() + inserted.asSequence()).map { song -> song.path }.toHashSet()
         val unfetched = held.count { path -> path !in known }
         if (unfetched > 0) {
