@@ -25,6 +25,7 @@ struct SettingsView: View {
                     title: title,
                     showsAbout: destinations == nil,
                     showsPro: destinations == nil,
+                    showsDownloads: destinations == nil,
                     onToggle: { key, isOn in
                         if let item = catalog.item(key: key) as? SettingItemSwitch {
                             viewModel.onSwitchChange(item: item, checked: isOn)
@@ -209,6 +210,8 @@ struct SettingsContent: View {
     var showsAbout = true
     /// The Shuttle Music Pro section, which reads the app's graph; off for tests of the catalog rows.
     var showsPro = false
+    /// The Downloads row, which opens the storage screen (#852); off where Settings shows only some of its screens.
+    var showsDownloads = false
     var onToggle: (String, Bool) -> Void = { _, _ in }
     var onChoose: (String, Int) -> Void = { _, _ in }
     var onSlide: (String, Float) -> Void = { _, _ in }
@@ -228,6 +231,14 @@ struct SettingsContent: View {
         Form {
             if showsPro {
                 ProSettingsSection()
+            }
+            if showsDownloads {
+                Section {
+                    NavigationLink(value: Route.downloads) {
+                        Label { Text("Downloads") } icon: { IconSquare(systemImage: "arrow.down.circle.fill", style: .filled(SettingsIcon(id: "settings.downloads").color)) }
+                    }
+                    .accessibilityIdentifier("settings.downloads")
+                }
             }
             ForEach(sections) { section in
                 Section {
@@ -380,6 +391,7 @@ struct SettingsIcon: Equatable {
         case "settings.sources": ("server.rack", .blue)
         case "settings.equalizer": ("slider.vertical.3", .pink)
         case "settings.scrobbling": ("dot.radiowaves.up.forward", .red)
+        case "settings.downloads": ("arrow.down.circle.fill", .green)
         case "pref_retain_shuffle_on_new_queue": ("shuffle", .orange)
         case "replaygain_mode": ("waveform", .purple)
         case "preamp_gain": ("speaker.wave.2.fill", .indigo)

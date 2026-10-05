@@ -39,6 +39,8 @@ struct RouteDestinationView: View {
             EqualizerView()
         case .scrobbling:
             ScrobblingView()
+        case .downloads:
+            DownloadsView()
         }
     }
 }

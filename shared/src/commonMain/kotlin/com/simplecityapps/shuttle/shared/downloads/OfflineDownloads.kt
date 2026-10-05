@@ -44,6 +44,9 @@ class OfflineDownloads(
      */
     private val removedPrefixes = MutableStateFlow<Set<String>>(emptySet())
 
+    /** The song each download of this launch was started for, so a failed one can be retried; not those found at launch. */
+    private val requested = MutableStateFlow<Map<String, Song>>(emptyMap())
+
     /** Every song's download that's running, completed or failed, by `Song.path`. */
     val downloads: StateFlow<Map<String, OfflineDownload>> = _downloads.asStateFlow()
 
@@ -81,25 +84,36 @@ class OfflineDownloads(
         if (_downloads.value[song.path]?.state.let { it == OfflineDownload.State.Downloading || it == OfflineDownload.State.Completed }) return true
         val source = streamUrls.forPath(song.path)?.downloadSource(song) ?: return false
         removedPaths.update { it - song.path }
+        requested.update { it + (song.path to song) }
         _downloads.update { it + (song.path to OfflineDownload(OfflineDownload.State.Downloading, 0f)) }
         transport.start(song.path, source)
         return true
     }
 
-    override fun remove(song: Song) {
-        removedPaths.update { it + song.path }
-        _downloads.update { it - song.path }
-        transport.remove(song.path)
-    }
+    override fun remove(song: Song) = removePath(song.path)
 
-    override suspend fun removeAll(type: MediaProviderType) {
+    override suspend fun removeAll(type: MediaProviderType) = removeProvider(type)
+
+    /** Removes every download of every provider, as the storage screen's Remove All does. */
+    fun removeEverything() = MediaProviderType.entries.forEach(::removeProvider)
+
+    /** The song [path]'s download was started for in this launch, so a failed one can be tried again; null for any other. */
+    fun requestedSong(path: String): Song? = requested.value[path]
+
+    /** Forgets [path]'s failed download, for a list that dismisses it. A running or completed one is left alone. */
+    fun dismissFailed(path: String) = update(path) { current -> current?.takeUnless { it.state == OfflineDownload.State.Failed } }
+
+    private fun removeProvider(type: MediaProviderType) {
         val prefix = type.pathScheme?.let { "$it://" } ?: return
         removedPrefixes.update { it + prefix }
-        _downloads.value.keys.filter { it.startsWith(prefix) }.forEach { path ->
-            removedPaths.update { it + path }
-            _downloads.update { it - path }
-            transport.remove(path)
-        }
+        _downloads.value.keys.filter { it.startsWith(prefix) }.forEach(::removePath)
+    }
+
+    private fun removePath(path: String) {
+        removedPaths.update { it + path }
+        requested.update { it - path }
+        _downloads.update { it - path }
+        transport.remove(path)
     }
 
     /** Whether [path] is one this hasn't heard of, of a provider whose downloads were all removed since launch. */

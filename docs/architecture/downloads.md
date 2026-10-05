@@ -89,6 +89,17 @@ and in each track's context menu (`DownloadMenuItems`), and the hero shows Downl
 (`DownloadStatusLabel`). A failed download raises an alert. Queued and removed downloads show no notice:
 the hero says what happened.
 
+**Where downloads show.** A small badge (`DownloadBadgeView`) sits on every `SongRow`, from one observation of
+`OfflineDownloads.downloads` at the root (`observingDownloadBadges`, an environment value, redrawn only when a
+download starts, finishes, fails or goes, not on progress). Song menus in Library > Songs, Search, genres and smart
+playlists offer Download and Remove Download too (`SongRowMenu`). Library > Songs has a Downloaded toggle in its
+toolbar, shown once a song is downloaded (Android's Library has no such filter yet); with it on, the list, Play and
+Shuffle cover only the downloaded songs. Settings > Downloads (`DownloadsView`) shows the count and size on disk
+(the completed files' own sizes), Remove All (`OfflineDownloads.removeEverything`, behind a confirmation), the
+running downloads and the failed ones, which can be retried (through the gated Download action, from the song
+`OfflineDownloads.requestedSong` remembers for this launch) or dismissed. A download that was running before a
+relaunch and then fails has no remembered song, so it can only be dismissed.
+
 **Tests.** `OfflineDownloadsTest`, `DownloadFileNamesTest` and `SongStreamResolverTest` (commonTest, run on
 the JVM with `:shared:testAndroidHostTest`). An isolated test graph (`IosStorage(isolatedName)`) gets a plain
 session and its own directory under tmp, so tests never touch the app's downloads.
@@ -100,6 +111,5 @@ Each is its own issue (label `design`):
 - Retrying a 401 or 403 with the stream URL, as Android's `DownloadFallbackObserver` does.
 - Removing a server's downloads with the server, and a server id in the file names (see above).
 - Download on Wi-Fi only (Android's setting), and a cellular rule.
-- A Downloaded filter in the Library, storage management, download quality.
-- A badge on each downloaded song's row in the lists.
+- Download quality.
 - iOS plurals (`.stringsdict`) for the download messages.

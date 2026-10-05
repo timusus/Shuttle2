@@ -223,5 +223,31 @@ class OfflineDownloadsTest {
         downloads.summary(listOf(song(id = 3))) shouldBe DownloadSummary(DownloadSummary.Status.NotDownloaded, canDownload = false, canRemove = false)
     }
 
+    @Test
+    fun aFailedDownloadCanBeRetriedFromItsSongOrDismissed() = runTest {
+        downloads.download(remote(2))
+        transport.listener!!.onFailed("jellyfin://item/2")
+
+        downloads.downloads.value["jellyfin://item/2"]?.state shouldBe OfflineDownload.State.Failed
+        downloads.requestedSong("jellyfin://item/2")?.id shouldBe 2L
+        downloads.requestedSong("jellyfin://item/1") shouldBe null
+
+        downloads.dismissFailed("jellyfin://item/1")
+        downloads.downloads.value.keys shouldBe setOf("jellyfin://item/1", "jellyfin://item/2")
+        downloads.dismissFailed("jellyfin://item/2")
+        downloads.downloads.value.keys shouldBe setOf("jellyfin://item/1")
+    }
+
+    @Test
+    fun removeEverythingDeletesEveryDownloadAndIgnoresTheirLateReports() = runTest {
+        downloads.download(remote(2))
+        downloads.removeEverything()
+
+        downloads.downloads.value shouldBe emptyMap()
+        transport.removed.toSet() shouldBe setOf("jellyfin://item/1", "jellyfin://item/2")
+        transport.listener!!.onProgress("jellyfin://item/2", 50, 100)
+        downloads.downloads.value shouldBe emptyMap()
+    }
+
     private fun remote(id: Long) = song(id = id, path = "jellyfin://item/$id").copy(mediaProvider = MediaProviderType.Jellyfin)
 }
