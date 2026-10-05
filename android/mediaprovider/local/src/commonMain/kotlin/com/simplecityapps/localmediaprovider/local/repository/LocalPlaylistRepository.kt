@@ -102,14 +102,16 @@ class LocalPlaylistRepository(
     override suspend fun reconcilePlaylists(
         type: MediaProviderType,
         listing: MediaImporter.PlaylistListing,
-        listingComplete: Boolean
+        listingComplete: Boolean,
+        lastServerSongs: Map<String, Set<Long>>
     ) = withContext(Dispatchers.IO) {
         playlistDataDao.reconcileImported(
             mediaProviderType = type,
             playlists = listing.playlists.map { playlist -> playlist.toPlaylistData() to playlist.songs.inLibrary().map { song -> song.id } },
             unread = listing.unread,
             unchanged = listing.unchanged,
-            deleteUnlisted = listingComplete
+            deleteUnlisted = listingComplete,
+            lastServerSongIds = lastServerSongs
         )
     }
 

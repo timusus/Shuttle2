@@ -57,6 +57,12 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
 
     override suspend fun get(): List<SongData> = throw NotImplementedError()
 
+    override suspend fun applyServerPlayStats(
+        id: Long,
+        playCount: Int,
+        lastPlayed: Instant?
+    ): Unit = throw NotImplementedError()
+
     override suspend fun getByProvider(mediaProvider: MediaProviderType): List<SongData> = throw NotImplementedError()
 
     override suspend fun songDataByIds(ids: List<Long>): List<SongData> = throw NotImplementedError()

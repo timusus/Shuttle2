@@ -623,8 +623,17 @@ class MediaImporter(
 
                 is FlowEvent.Success -> {
                     if (reconcile) {
-                        playlistStore.reconcilePlaylists(mediaProvider.type, event.result, listingComplete = event.complete)
-                        preferenceManager.setPlaylistVersions(source, event.result.versions)
+                        val listing = event.result
+                        val lastServerSongs = preferenceManager.playlistServerSongs(source)
+                        val songIds by lazy { existingSongs.associate { song -> song.path to song.id } }
+                        playlistStore.reconcilePlaylists(
+                            mediaProvider.type,
+                            listing,
+                            listingComplete = event.complete,
+                            lastServerSongs = lastServerSongs.mapValues { (_, paths) -> paths.mapNotNullTo(HashSet()) { path -> songIds[path] } }
+                        )
+                        preferenceManager.setPlaylistVersions(source, listing.versions)
+                        preferenceManager.setPlaylistServerSongs(source, serverSongsAfter(listing, lastServerSongs))
                     } else {
                         event.result.playlists.forEach { playlistUpdateData ->
                             if (playlistUpdateData.songs.isNotEmpty()) {
@@ -641,6 +650,23 @@ class MediaImporter(
         }
         timings.findPlaylists = findPlaylistsMark.elapsedNow()
         emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
+    }
+
+    /**
+     * The songs, by path, each playlist holds on the server after [listing], from those it held at the last read
+     * ([lastServerSongs]): a playlist read in full holds what was read; one read in part, or left unchanged, holds what it
+     * did, and anything the part read found. A playlist the listing doesn't name is gone.
+     */
+    private fun serverSongsAfter(
+        listing: PlaylistListing,
+        lastServerSongs: Map<String, List<String>>
+    ): Map<String, List<String>> {
+        val read = listing.playlists.associate { playlist -> playlist.externalId to playlist.songs.map { song -> song.path } }
+        val readInFull = read.filterKeys { externalId -> externalId !in listing.unread }
+        val kept = (listing.unread + listing.unchanged).associateWith { externalId ->
+            (lastServerSongs[externalId].orEmpty() + read[externalId].orEmpty()).distinct()
+        }
+        return (kept + readInFull).filterValues { paths -> paths.isNotEmpty() }
     }
 
     /**

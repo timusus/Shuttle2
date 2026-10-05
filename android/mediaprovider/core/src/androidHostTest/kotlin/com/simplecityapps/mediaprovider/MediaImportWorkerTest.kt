@@ -41,7 +41,8 @@ class MediaImportWorkerTest {
                 override suspend fun reconcilePlaylists(
                     type: MediaProviderType,
                     listing: MediaImporter.PlaylistListing,
-                    listingComplete: Boolean
+                    listingComplete: Boolean,
+                    lastServerSongs: Map<String, Set<Long>>
                 ) = Unit
             },
             preferenceManager = preferences,

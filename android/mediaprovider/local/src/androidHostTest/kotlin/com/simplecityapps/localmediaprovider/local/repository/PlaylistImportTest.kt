@@ -127,7 +127,7 @@ class PlaylistImportTest {
     }
 
     @Test
-    fun `a rescan gives a playlist from a media server the server's songs, dropping those added in S2`() = runBlocking<Unit> {
+    fun `a rescan keeps the songs added in S2 to a playlist from a media server`() = runBlocking<Unit> {
         val provider = serverProvider()
         provider.songPaths = listOf(A, B, C)
         provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
@@ -137,7 +137,22 @@ class PlaylistImportTest {
 
         importer.import()
 
-        importedPlaylistPaths() shouldBe listOf(A, B)
+        importedPlaylistPaths() shouldBe listOf(A, B, C)
+    }
+
+    @Test
+    fun `a rescan follows the server's removals and order and keeps the songs added in S2 after them`() = runBlocking<Unit> {
+        val provider = serverProvider()
+        provider.songPaths = listOf(A, B, C, D)
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(A, B))
+        importer.import()
+        val imported = database.playlistDataDao().getAll().first().single { playlist -> playlist.externalId == PLAYLIST_ID }
+        playlistRepository.addToPlaylist(imported, database.songDataDao().get().filter { song -> song.path == C }.map { song -> song.toSong() })
+
+        provider.playlists = mapOf(PLAYLIST_ID to listOf(D, A))
+        importer.import()
+
+        importedPlaylistPaths() shouldBe listOf(D, A, C)
     }
 
     @Test
@@ -301,7 +316,7 @@ class PlaylistImportTest {
         provider.unread = setOf(PLAYLIST_ID)
         importer.import()
 
-        importedPlaylists() shouldBe mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(C, B))
+        importedPlaylists() shouldBe mapOf(PLAYLIST_ID to listOf(A, B), OTHER_PLAYLIST_ID to listOf(B, C))
     }
 
     @Test

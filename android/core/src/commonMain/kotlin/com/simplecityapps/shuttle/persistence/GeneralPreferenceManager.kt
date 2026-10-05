@@ -203,6 +203,21 @@ class GeneralPreferenceManager @Inject constructor(
         versions: Map<String, String>
     ) = store.putString("playlist_versions_$source", versions.entries.joinToString("\n") { (id, version) -> "$id\t$version" }.ifEmpty { null })
 
+    /**
+     * The songs, by path, each playlist held on [source]'s server when it was last read, by its external id: the next read
+     * removes only the songs the server dropped since, keeping those added to the playlist in S2 (#843).
+     */
+    fun playlistServerSongs(source: String): Map<String, List<String>> = store.getString("playlist_server_songs_$source", null)
+        ?.lineSequence()
+        ?.mapNotNull { line -> line.split('\t').takeIf { it.isNotEmpty() && it[0].isNotEmpty() }?.let { fields -> fields[0] to fields.drop(1) } }
+        ?.toMap()
+        .orEmpty()
+
+    fun setPlaylistServerSongs(
+        source: String,
+        songs: Map<String, List<String>>
+    ) = store.putString("playlist_server_songs_$source", songs.entries.joinToString("\n") { (id, paths) -> (listOf(id) + paths).joinToString("\t") }.ifEmpty { null })
+
     /** When the last successful full sync of [source] started: the one that also removes songs the server no longer has. */
     fun lastFullSyncStart(source: String): Instant? = store.getInstant("last_full_sync_start_$source")
 

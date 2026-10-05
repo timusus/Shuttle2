@@ -12,18 +12,20 @@ interface ImportedPlaylistStore {
     suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData)
 
     /**
-     * Makes the playlists stored from [type]'s server match its [listing], as one transaction: stores each playlist it read
-     * in full exactly as the server holds it (its name, songs and their order: songs added to it in S2 go, as the server never
-     * heard of them), one it read in part as [storePlaylist] does, then deletes each stored playlist that holds no songs after
-     * that, and, if the listing is [listingComplete], each one from a source it no longer lists. One from an
-     * [unread][MediaImporter.PlaylistListing.unread] or [unchanged][MediaImporter.PlaylistListing.unchanged] source is never
-     * deleted, and the playlists made in S2 are left as they are.
+     * Makes the playlists stored from [type]'s server match its [listing], as one transaction: gives each playlist it read
+     * in full the server's name and songs, in the server's order, dropping the songs [lastServerSongs] (by external id: the
+     * ids of the songs it held on the server when last read) shows the server has removed since, and keeping, after them,
+     * those added to it in S2, which the server never heard of. One it read in part is stored as [storePlaylist] does. Then
+     * it deletes each stored playlist that holds no songs after that, and, if the listing is [listingComplete], each one from
+     * a source it no longer lists. One from an [unread][MediaImporter.PlaylistListing.unread] or
+     * [unchanged][MediaImporter.PlaylistListing.unchanged] source is never deleted, and the playlists made in S2 are left
+     * as they are.
      */
-
     suspend fun reconcilePlaylists(
         type: MediaProviderType,
         listing: MediaImporter.PlaylistListing,
-        listingComplete: Boolean
+        listingComplete: Boolean,
+        lastServerSongs: Map<String, Set<Long>>
     )
 
     /** The [externalId][MediaImporter.PlaylistUpdateData.externalId]s of the playlists stored from [type] that hold songs. */

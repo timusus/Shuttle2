@@ -62,7 +62,8 @@ class MediaImporterTest {
                 override suspend fun reconcilePlaylists(
                     type: MediaProviderType,
                     listing: MediaImporter.PlaylistListing,
-                    listingComplete: Boolean
+                    listingComplete: Boolean,
+                    lastServerSongs: Map<String, Set<Long>>
                 ) = error("ImportedPlaylistStore.reconcilePlaylists isn't faked")
             },
             preferenceManager = preferences,
@@ -876,7 +877,8 @@ class MediaImporterTest {
             override suspend fun reconcilePlaylists(
                 type: MediaProviderType,
                 listing: MediaImporter.PlaylistListing,
-                listingComplete: Boolean
+                listingComplete: Boolean,
+                lastServerSongs: Map<String, Set<Long>>
             ) = error("ImportedPlaylistStore.reconcilePlaylists isn't faked")
         },
         preferenceManager = preferences,

@@ -31,7 +31,7 @@ class MediaStoreAudioFilesTest {
     fun `reads each row's generation where the cursor has the column, and 0 where it hasn't`() {
         val withGeneration =
             MatrixCursor(MEDIA_STORE_AUDIO_PROJECTION + GENERATION_MODIFIED).apply {
-                addRow(arrayOf(7L, "/storage/emulated/0/Music/a.flac", "a.flac", 2_048L, 1_700_000_000L, "audio/flac", 185_000L, 42L))
+                addRow(arrayOf<Any>(7L, "/storage/emulated/0/Music/a.flac", "a.flac", 2_048L, 1_700_000_000L, "audio/flac", 185_000L, 42L))
             }
         val withoutGeneration = cursorOf(arrayOf(7L, "/storage/emulated/0/Music/a.flac", "a.flac", 2_048L, 1_700_000_000L, "audio/flac", 185_000L))
 

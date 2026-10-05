@@ -91,8 +91,11 @@ abstract class PlaylistDataDao {
 
     /**
      * Makes the playlists [mediaProviderType] imported match its server's listing, as one transaction: gives each of
-     * [playlists] read in full exactly its songs, in the server's order (dropping songs added in S2, which the server never
-     * heard of), adds to each one from an [unread] source the songs it doesn't hold yet, then deletes each playlist imported
+     * [playlists] read in full its songs, in the server's order, followed by the songs added to it in S2: those it holds that
+     * neither the server lists now nor [lastServerSongIds] (by external id) shows it listed when last read. One the server
+     * listed then and doesn't now was removed there, so it goes. A playlist with no record of its last read loses nothing,
+     * and one that now matches no songs in the library is left as it is.
+     * It adds to each one from an [unread] source the songs it doesn't hold yet, then deletes each playlist imported
      * from a source that, after that, holds no songs, and, if [deleteUnlisted], each one imported from a source the listing
      * doesn't name. One imported from an [unread] source, whose songs the listing couldn't read in full, or an [unchanged]
      * one, which it didn't read as the server hasn't changed it, is never deleted.
@@ -103,15 +106,28 @@ abstract class PlaylistDataDao {
         playlists: List<Pair<PlaylistData, List<Long>>>,
         unread: Set<String>,
         unchanged: Set<String>,
-        deleteUnlisted: Boolean
+        deleteUnlisted: Boolean,
+        lastServerSongIds: Map<String, Set<Long>>
     ) {
         playlists.forEach { (playlistData, songIds) ->
-            val readInFull = playlistData.externalId !in unread
-            if (readInFull) {
-                // The server's playlist as it is now, so a song removed or moved there is here too
-                storeImported(playlistData, songIds, replaceSongs = true)
-            } else if (songIds.isNotEmpty()) {
-                storeImported(playlistData, songIds, replaceSongs = false)
+            val externalId = checkNotNull(playlistData.externalId)
+            when {
+                externalId in unread -> if (songIds.isNotEmpty()) storeImported(playlistData, songIds, replaceSongs = false)
+
+                // Emptied on the server, or listing only songs the library doesn't hold: what it holds stays, rather than a
+                // library mismatch wiping it
+                songIds.isEmpty() -> Unit
+
+                else -> {
+                    // The server's playlist as it is now, so a song removed or moved there is here too, then what S2 added
+                    val onServer = songIds.toHashSet()
+                    val lastOnServer = lastServerSongIds[externalId].orEmpty()
+                    val addedInS2 = getImportedPlaylistData(mediaProviderType, externalId)
+                        ?.let { stored -> getSongIds(stored.id) }
+                        .orEmpty()
+                        .filter { songId -> songId !in onServer && songId !in lastOnServer }
+                    storeImported(playlistData, songIds + addedInS2, replaceSongs = true)
+                }
             }
         }
         val listed = playlists.mapTo(HashSet()) { (playlistData, _) -> playlistData.externalId }
