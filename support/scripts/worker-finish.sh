@@ -5,8 +5,10 @@
 #
 # Steps: lint -F, native test names, `unit-test --changed-tests`, then (driven by the diff vs the
 # merge-base with origin/main) :android:architecture-tests when Kotlin changed, a module's
-# compileTestKotlinIosSimulatorArm64 when its commonMain/commonTest changed, and verifyRoborazziDebug
-# when main source changed in a Roborazzi module (or a @Composable file elsewhere), then commit.
+# compileTestKotlinIosSimulatorArm64 when a KMP module's commonMain/commonTest/iosMain/iosTest changed
+# (deletions count), and verifyRoborazziDebug (plus :android:app's) when main source (src/main,
+# src/androidMain, src/commonMain) changed in a Roborazzi module, a docs/design file changed, or a
+# @Composable file elsewhere changed, then commit.
 # The message must carry the `Changelog:` trailer when the commit-msg hook asks for one
 # (`Changelog: none` for tooling). --no-test skips the test run, for docs-only changes.
 # Exits non-zero WITHOUT committing if lint or the tests fail, naming the first error.
@@ -88,7 +90,7 @@ changed_files() {
   local base
   base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
   {
-    git -c core.quotePath=false diff --name-only --diff-filter=d "$base" --
+    git -c core.quotePath=false diff --name-only "$base" --
     git -c core.quotePath=false ls-files --others --exclude-standard
   } | sort -u
 }
@@ -120,10 +122,20 @@ if [ "$run_tests" = 1 ]; then
   # Kotlin/Native compiles commonMain/commonTest (and iosMain/iosTest) that the JVM run never sees.
   ios_tasks=()
   if [ -n "$kt" ]; then
-    # shellcheck disable=SC2046
+    kt_args=()
+    while IFS= read -r f; do kt_args+=("$f"); done <<EOF3
+$kt
+EOF3
+    if ! native_tasks="$(support/scripts/unit-test --kmp-native-tasks "${kt_args[@]}" 2>"$log")"; then
+      echo "ios test compile: FAILED (not committed): unit-test --kmp-native-tasks exited non-zero"
+      first_error
+      exit 1
+    fi
     while IFS= read -r t; do
       [ -n "$t" ] && ios_tasks+=("${t%:iosSimulatorArm64Test}:compileTestKotlinIosSimulatorArm64")
-    done < <(support/scripts/unit-test --kmp-native-tasks $(printf '%s\n' "$kt" | tr '\n' ' '))
+    done <<EOF4
+$native_tasks
+EOF4
   fi
   if [ "${#ios_tasks[@]}" -gt 0 ]; then
     gradle_check "ios test compile (${#ios_tasks[@]} modules)" "" "${ios_tasks[@]}"
@@ -140,17 +152,22 @@ if [ "$run_tests" = 1 ]; then
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     case "$f" in
-      android/*/src/main/*|android/*/src/androidMain/*)
+      docs/design/*) add_shot_task :android:app ;;
+      android/*/src/main/*|android/*/src/androidMain/*|android/*/src/commonMain/*|shared/*/src/main/*|shared/*/src/androidMain/*|shared/*/src/commonMain/*)
         mdir="${f%%/src/*}"
-        if grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$mdir/build.gradle.kts" 2>/dev/null; then
+        if grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$mdir"/build.gradle* 2>/dev/null; then
           add_shot_task ":${mdir//\//:}"
-        elif grep -q '@Composable' "$f" 2>/dev/null; then
+        elif [ "${f%.kt}" != "$f" ] && grep -q '@Composable' "$f" 2>/dev/null; then
           add_shot_task :android:app
         fi ;;
+      *.kt)
+        if grep -q '@Composable' "$f" 2>/dev/null; then add_shot_task :android:app; fi ;;
     esac
   done <<EOF2
-$kt
+$changed
 EOF2
+  # :android:app's screenshots render other modules' components (designsystem), so any trigger runs it too.
+  if [ "${#shot_tasks[@]}" -gt 0 ]; then add_shot_task :android:app; fi
   if [ "${#shot_tasks[@]}" -gt 0 ]; then
     gradle_check "screenshots (${shot_tasks[*]})" \
       "intended UI change? re-record with record mode (recordRoborazziDebug), inspect the compare image, commit the PNGs" \
