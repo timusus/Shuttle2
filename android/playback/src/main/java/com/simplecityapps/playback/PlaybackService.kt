@@ -91,6 +91,9 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var castStarter: CastStarter
 
+    @Inject
+    lateinit var foregroundHold: ForegroundHold
+
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -154,7 +157,7 @@ class PlaybackService : MediaLibraryService() {
         startId: Int
     ): Int {
         val result = super.onStartCommand(intent, flags, startId)
-        if (intent != null) handleStart(intent, foregroundStarts, playbackOperations, queueOperations, playRequests::playSearch, playRequests::shuffleAll)
+        if (intent != null) handleStart(intent, foregroundStarts, foregroundHold, playbackOperations, queueOperations, playRequests::playSearch, playRequests::shuffleAll)
         return result
     }
 
@@ -178,8 +181,8 @@ class PlaybackService : MediaLibraryService() {
 
     companion object {
         /**
-         * Starts the service in the foreground ([ACTION_START]), for playback that has started, or is about to, in the
-         * app. From the background Android may refuse (API 31+), which is logged.
+         * Starts the service in the foreground ([ACTION_START]), for playback that has started in the app, or a play
+         * held for a call ([ForegroundHold]). From the background Android may refuse (API 31+), which is logged.
          */
         fun start(context: Context) {
             try {
@@ -193,7 +196,10 @@ class PlaybackService : MediaLibraryService() {
             }
         }
 
-        /** Starts the service in the foreground, for playback that has started in the app. */
+        /**
+         * Starts the service in the foreground, for playback that has started in the app, or to stay there while a play
+         * is held for a call, until [ForegroundHold] is released.
+         */
         const val ACTION_START: String = "com.simplecityapps.playback.start"
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"
         const val ACTION_SKIP_PREV: String = "com.simplecityapps.playback.prev"
@@ -215,6 +221,7 @@ class PlaybackService : MediaLibraryService() {
         internal fun handleStart(
             intent: Intent,
             foregroundStarts: ForegroundStarts,
+            foregroundHold: ForegroundHold,
             playbackOperations: PlaybackOperations,
             queueOperations: QueueOperations,
             playSearch: suspend (query: String?, extras: Bundle?) -> Unit,
@@ -232,7 +239,7 @@ class PlaybackService : MediaLibraryService() {
                     foregroundStarts.start {
                         queueOperations.queueStateFlow.awaitRestored()
                         when (action) {
-                            ACTION_START -> Unit
+                            ACTION_START -> foregroundHold.awaitRelease()
                             ACTION_TOGGLE_PLAYBACK -> playbackOperations.togglePlayback()
                             ACTION_SKIP_PREV -> playbackOperations.skipToPrev()
                             ACTION_SKIP_NEXT -> playbackOperations.skipToNext(ignoreRepeat = true)

@@ -143,8 +143,9 @@ At targetSdk 37, playback, audio focus requests and volume changes from the back
 - [ ] Launcher shortcuts (toggle playback, shuffle all) and a voice search ("play <artist>"), app not running: playback starts and the notification appears.
 - [ ] Headset or Bluetooth play button after a reboot, with no app running: the saved queue resumes.
 - [ ] Android Auto (or the Desktop Head Unit), app not running: browsing and tapping a song plays it.
-- [ ] Call during playback, hang up, with the app in the background: playback resumes if it was playing, with the notification back. If it doesn't, the play held by `CallHold` ran with no foreground service running; the fix is to start the service before the held play runs.
-- [ ] Press play during a call, send the app to the background, hang up: audio resumes after hang-up, with the notification showing (the service started when the play was held), on an API 37 image with the hardening enabled.
+- [ ] Call during playback, hang up, with the app in the background: playback resumes if it was playing, with the notification back.
+- [ ] Press play during a call, send the app to the background, stay on the call for over a minute, hang up: audio starts after hang-up, with the notification showing, on an API 37 image with the hardening enabled. The service stays in the foreground from the press until the held play starts (`ForegroundHold`); `dumpsys activity services com.simplecityapps.shuttle.dev` shows it foreground throughout the call.
+- [ ] Press play during a call, then pause or change the queue in the app before hanging up: no "Loading" notification is left showing, and nothing plays after hang-up.
 - [ ] Pause for longer than the notification lingers (service leaves the foreground), then play from a Bluetooth device while the app is in the background: it plays or fails with a logged message, never a crash.
 - [ ] Sleep timer ending and a Cast handover with the screen off: no crash and no stuck notification.
 

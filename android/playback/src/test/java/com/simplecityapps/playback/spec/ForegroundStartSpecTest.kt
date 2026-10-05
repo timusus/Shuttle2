@@ -1,9 +1,11 @@
 package com.simplecityapps.playback.spec
 
 import android.app.Notification
+import android.app.NotificationManager
 import android.app.SearchManager
 import android.content.ComponentName
 import android.content.Intent
+import android.media.AudioManager
 import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
 import androidx.media3.common.util.UnstableApi
@@ -12,6 +14,7 @@ import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.simplecityapps.playback.ForegroundHold
 import com.simplecityapps.playback.ForegroundStarts
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
@@ -45,11 +48,19 @@ class ForegroundStartSpecTest {
 
     private val library = listOf(song(3).copy(name = "Clair de Lune", albumArtist = "Debussy"), song(4).copy(name = "Gymnopédie No. 1", albumArtist = "Satie"))
 
-    private val harness = SessionHarness(songs = library, restored = false)
+    /** How many times a held play has started the service, as the app does with [PlaybackService.start]. */
+    private var heldStarts = 0
+
+    private val harness = SessionHarness(PlaybackHarness(foregroundHold = ForegroundHold { heldStarts++ }), songs = library, restored = false)
 
     private val queue = harness.playback.queueOperations
 
     private lateinit var service: ServiceController<StartedService>
+
+    private companion object {
+        /** How long a call lasts in the tests, of the player's clock. */
+        const val CALL_MS = 5_000L
+    }
 
     @After
     fun tearDown() {
@@ -122,6 +133,76 @@ class ForegroundStartSpecTest {
         queue.getShuffleMode() shouldBe ShuffleMode.On
     }
 
+    @Test
+    fun `a start for playback with no play held leaves the foreground once the queue is restored if nothing plays`() {
+        val foreground = start(Intent(PlaybackService.ACTION_START))
+        stayForegroundUntil(foreground) { true }
+
+        restore(foreground)
+        harness.playback.runUntil { foreground.isForegroundStopped }
+    }
+
+    @Test
+    fun `RS-55 a play held for a call keeps the service in the foreground for the whole call, until the play starts`() {
+        val foreground = holdPlayForCall()
+
+        // Media3 would take a paused player's service out of the foreground.
+        stayForegroundFor(foreground, CALL_MS)
+        isPlaying() shouldBe false
+        harness.playback.foregroundHold.isHeld shouldBe true
+
+        harness.playback.setAudioMode(AudioManager.MODE_NORMAL)
+        stayForegroundUntil(foreground) { isPlaying() && foreground.isMedia3Notification() }
+        harness.playback.foregroundHold.isHeld shouldBe false
+        stayForegroundFor(foreground, CALL_MS)
+    }
+
+    @Test
+    fun `RS-55 a held play dropped during the call lets the service leave the foreground, with no placeholder left showing`() {
+        val foreground = holdPlayForCall()
+        stayForegroundFor(foreground, CALL_MS)
+
+        harness.playback.playbackOperations.pause()
+        harness.playback.runUntil { foreground.isForegroundStopped }
+        harness.playback.foregroundHold.isHeld shouldBe false
+        activeNotifications().forEach { it.extras.containsKey(Notification.EXTRA_MEDIA_SESSION) shouldBe true }
+
+        harness.playback.setAudioMode(AudioManager.MODE_NORMAL)
+        isPlaying() shouldBe false
+    }
+
+    /**
+     * As the app is in use, with its queue restored: a call comes in, and a play during it is held, which starts the
+     * service in the foreground.
+     */
+    private fun holdPlayForCall(): ShadowService {
+        harness.playback.run { queue.setQueue(saved, position = 1) }
+        queue.hasRestoredQueue = true
+        harness.playback.setAudioMode(AudioManager.MODE_IN_CALL)
+
+        harness.playback.playbackOperations.play()
+        harness.playback.idle()
+        heldStarts shouldBe 1
+        return start(Intent(PlaybackService.ACTION_START))
+    }
+
+    /** Turns the main looper for [ms] of the player's clock, failing if the service leaves the foreground. */
+    private fun stayForegroundFor(
+        foreground: ShadowService,
+        ms: Long
+    ) {
+        var elapsedMs = 0L
+        stayForegroundUntil(foreground) {
+            elapsedMs += ClockDriver.STEP_MS
+            elapsedMs > ms
+        }
+    }
+
+    private fun activeNotifications(): List<Notification> = harness.playback.context.getSystemService(NotificationManager::class.java)
+        .activeNotifications
+        .filter { it.id == PlaybackService.NOTIFICATION_ID }
+        .map { it.notification }
+
     private fun start(intent: Intent): ShadowService {
         StartedService.harness = harness
         service = Robolectric.buildService(StartedService::class.java, intent).create().startCommand(0, 1)
@@ -178,7 +259,7 @@ class ForegroundStartSpecTest {
             startId: Int
         ): Int {
             val result = super.onStartCommand(intent, flags, startId)
-            if (intent != null) PlaybackService.handleStart(intent, foregroundStarts, harness.playback.playbackOperations, harness.playback.queueOperations, harness.playRequests::playSearch, harness.playRequests::shuffleAll)
+            if (intent != null) PlaybackService.handleStart(intent, foregroundStarts, harness.playback.foregroundHold, harness.playback.playbackOperations, harness.playback.queueOperations, harness.playRequests::playSearch, harness.playRequests::shuffleAll)
             return result
         }
 

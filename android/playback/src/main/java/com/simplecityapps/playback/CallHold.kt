@@ -9,7 +9,8 @@ import timber.log.Timber
 /**
  * Holds a play made during a call (ringing or in progress, phone or VoIP) until the call ends, as the player would
  * start playback over it: Media3 takes the delayed audio focus a call gives as focus (RS-54). A queue change drops the
- * hold, as the play was for the queue as it was; so do a pause and a load ([cancel]).
+ * hold, as the play was for the queue as it was; so do a pause and a load ([cancel]). While a play is held, the
+ * playback service stays in the foreground ([ForegroundHold]).
  */
 class CallHold(
     player: Player,
@@ -17,10 +18,11 @@ class CallHold(
     /** Whether playback is on a Cast receiver, where a call doesn't matter. */
     private val isRemote: () -> Boolean,
     /**
-     * Runs when a play is held, while the user is present: the playback service starts in the foreground then, as the
-     * held play may run from the background, where Android 17 mutes a play with no foreground service.
+     * Keeps the playback service in the foreground while a play is held, from when it's held, while the user is
+     * present, until it has started: the held play may run from the background, where Android 17 mutes a play with no
+     * foreground service.
      */
-    private val onHeld: () -> Unit = {}
+    private val foregroundHold: ForegroundHold
 ) : Player.Listener {
     private val playerThread = PlayerThread(player)
 
@@ -34,17 +36,27 @@ class CallHold(
      */
     fun holds(play: () -> Unit): Boolean {
         if (isRemote() || !callMonitor.isInCall) return false
-        if (callMonitor.awaitCallEnd(playerExecutor, play)) {
+        val held =
+            callMonitor.awaitCallEnd(playerExecutor) {
+                play()
+                // Released once the play has started, as Media3 then keeps the service in the foreground; not if another
+                // call has begun, and held the play again.
+                if (!callMonitor.isInCall) foregroundHold.release()
+            }
+        if (held) {
             Timber.w("play() held until the call ends")
-            onHeld()
+            foregroundHold.acquire()
         } else {
             Timber.w("play() dropped: in a call")
         }
         return true
     }
 
-    /** Drops a held play, if any. */
-    fun cancel() = callMonitor.cancel()
+    /** Drops a held play, if any, letting the service leave the foreground. */
+    fun cancel() {
+        callMonitor.cancel()
+        foregroundHold.release()
+    }
 
     override fun onTimelineChanged(
         timeline: Timeline,

@@ -15,6 +15,7 @@ import androidx.media3.test.utils.TestExoPlayerBuilder
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
+import com.simplecityapps.playback.ForegroundHold
 import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastQueue
@@ -107,7 +108,9 @@ class PlaybackHarness(
     /** Handles what the harness's coroutines throw, where a test expects them to; by default they fail the test. */
     exceptionHandler: CoroutineExceptionHandler? = null,
     /** The crossfade length to set, in ms, or null to leave the setting as it is (off by default). */
-    crossfadeDurationMs: Int? = null
+    crossfadeDurationMs: Int? = null,
+    /** What keeps the playback service in the foreground while a play is held for a call; starts nothing by default. */
+    val foregroundHold: ForegroundHold = ForegroundHold {}
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -259,7 +262,8 @@ class PlaybackHarness(
                 playbackSpeed = playbackSettings.playbackSpeed,
                 callMonitor = CallMonitor(audioManager),
                 appCoroutineScope = scope,
-                castQueue = cast
+                castQueue = cast,
+                foregroundHold = foregroundHold
             )
     }
 

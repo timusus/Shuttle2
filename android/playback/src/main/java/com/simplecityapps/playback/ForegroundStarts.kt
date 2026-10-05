@@ -30,6 +30,9 @@ import timber.log.Timber
  * id if not, and [mayUpdateNotification] (the service's onUpdateNotificationAsync) keeps Media3 from taking it down
  * until the command has run. Then, once the player plays, Media3 puts its own notification in the foreground; if it
  * doesn't play, Media3 shows the paused notification, or none, and leaves the foreground as it would anyway.
+ *
+ * A play held for a call is a start whose command runs until the hold is released ([ForegroundHold]), so the service
+ * stays in the foreground for the whole call, and the held play can start from the background when it ends.
  */
 @UnstableApi
 class ForegroundStarts(

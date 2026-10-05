@@ -20,13 +20,21 @@ class CallHoldTest {
 
     private var remote = false
 
-    private var held = 0
+    private var serviceStarts = 0
 
-    private val callHold = CallHold(FakeListenedPlayer(), CallMonitor(audioManager), isRemote = { remote }, onHeld = { held++ })
+    private val foregroundHold = ForegroundHold { serviceStarts++ }
+
+    private val callHold = CallHold(FakeListenedPlayer(), CallMonitor(audioManager), isRemote = { remote }, foregroundHold)
 
     private var plays = 0
 
-    private val play: () -> Unit = { plays++ }
+    /** Whether the service was still held in the foreground as each play started. */
+    private val heldAtPlay = mutableListOf<Boolean>()
+
+    private val play: () -> Unit = {
+        plays++
+        heldAtPlay += foregroundHold.isHeld
+    }
 
     private fun setAudioMode(mode: Int) {
         audioManager.mode = mode
@@ -36,19 +44,42 @@ class CallHoldTest {
     @Test
     fun `a play with no call goes ahead`() {
         callHold.holds(play) shouldBe false
-        held shouldBe 0
+        serviceStarts shouldBe 0
+        foregroundHold.isHeld shouldBe false
     }
 
     @Test
-    fun `a play during a call waits for the call to end`() {
+    fun `a play during a call waits for the call to end, with the service held in the foreground until it has started`() {
         setAudioMode(AudioManager.MODE_IN_CALL)
 
         callHold.holds(play) shouldBe true
         plays shouldBe 0
-        held shouldBe 1
+        serviceStarts shouldBe 1
+        foregroundHold.isHeld shouldBe true
 
         setAudioMode(AudioManager.MODE_NORMAL)
         plays shouldBe 1
+        heldAtPlay shouldBe listOf(true)
+        foregroundHold.isHeld shouldBe false
+    }
+
+    @Test
+    fun `a held play held again by another call keeps the service held`() {
+        setAudioMode(AudioManager.MODE_IN_CALL)
+        var replays = 0
+        callHold.holds {
+            // Another call begins as the first ends: the play is held again.
+            audioManager.mode = AudioManager.MODE_RINGTONE
+            callHold.holds { replays++ } shouldBe true
+        }
+
+        setAudioMode(AudioManager.MODE_NORMAL)
+        foregroundHold.isHeld shouldBe true
+        replays shouldBe 0
+
+        setAudioMode(AudioManager.MODE_NORMAL)
+        replays shouldBe 1
+        foregroundHold.isHeld shouldBe false
     }
 
     @Test
@@ -57,26 +88,28 @@ class CallHoldTest {
         remote = true
 
         callHold.holds(play) shouldBe false
-        held shouldBe 0
+        serviceStarts shouldBe 0
     }
 
     @Test
-    fun `a queue change drops the held play`() {
+    fun `a queue change drops the held play and releases the service`() {
         setAudioMode(AudioManager.MODE_RINGTONE)
         callHold.holds(play)
 
         callHold.onTimelineChanged(FakePlaylistTimeline(emptyList()), Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED)
+        foregroundHold.isHeld shouldBe false
         setAudioMode(AudioManager.MODE_NORMAL)
 
         plays shouldBe 0
     }
 
     @Test
-    fun `cancel drops the held play`() {
+    fun `cancel drops the held play and releases the service`() {
         setAudioMode(AudioManager.MODE_IN_CALL)
         callHold.holds(play)
 
         callHold.cancel()
+        foregroundHold.isHeld shouldBe false
         setAudioMode(AudioManager.MODE_NORMAL)
 
         plays shouldBe 0
