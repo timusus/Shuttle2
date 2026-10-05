@@ -236,3 +236,26 @@ Not yet measured on the device; the effects below are expected from the measurem
   the remote commands at launch. Deferring it would mean a lazy stand-in player and a second start-up order for
   playback, so it stays on the launch path.
 - **Not changed here: Home's song count.** The `COUNT(*)` change (#900) landed separately with #882.
+
+## After the changes (Release, iPhone 16, 2026-10-05)
+
+Release build of `51a053f7d` installed as `com.simplecityapps.shuttle.dev`, same library and method as the Release
+section (5 cold launches per start tab, `syslog live`, launch arguments only). Median (min–max), ms.
+
+| Milestone | Before | After |
+|---|---|---|
+| AppGraph: telemetry start (duration) | 40 (36–49) | 25 (22–77) |
+| S2App.init done | 153 | 144 (136–212) |
+| First frame | 210 (195–260) | 190 (184–272), Library start 182 |
+| Home: songCount (duration) | 200 (184–226) | 9 (6–20) |
+| Home: first sections (duration) | 249 (158–273) | 224 (214–312) |
+| Home: Resume points loaded (duration) | 116 | 80 (63–92) |
+| **Home first content** | **731 (690–792)** | **580 (516–609)** |
+| **Library first content** | **594 (549–741)** | **719 (634–818)** |
+| Search warm-up: songs loaded / index ready (duration) | 354 / 805 | 107 / 419 |
+
+- Home is ~150 ms faster, mostly from the song count (#900) and search warm-up no longer competing for the DB.
+- Library got slower (n=5, ranges overlap, so possibly noise). Both start tabs now log
+  `Album index of 8196 songs built in ~215 ms` (`LibraryAlbumIndex`), which sits on the first-content path; it wasn't
+  logged in the earlier run.
+- The audio engine (48 ms) and dependencies (76 ms) still run on main before the first frame.
