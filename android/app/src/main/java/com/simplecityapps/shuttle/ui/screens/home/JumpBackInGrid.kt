@@ -127,7 +127,7 @@ private fun jumpBackInDescription(
         }
         relativeTime?.let { parts += it }
     }
-    return parts.joinToString(", ")
+    return parts.joinToString(stringResource(R.string.home_cd_separator))
 }
 
 /**
@@ -149,9 +149,10 @@ private fun JumpBackInResumeCard(
     val title = item.title()
     val kind = stringResource(item.kind.label)
     val shuffles = item is HomeItem.GenreItem && (progress == null || progress.finished)
-    val now = remember { System.currentTimeMillis() }
+    val now = remember(progress) { System.currentTimeMillis() }
     val relativeTime = progress?.let { jumpBackInRelativeTime(it.updatedAt.toEpochMilliseconds(), now) }
     val overline = relativeTime?.let { stringResource(R.string.home_tile_subtitle, kind, it) } ?: kind
+    val description = jumpBackInDescription(title, kind, progress, relativeTime)
     val playLabel = stringResource(
         when {
             progress != null && !progress.finished -> R.string.home_resume_item
@@ -167,7 +168,7 @@ private fun JumpBackInResumeCard(
                     .weight(1f)
                     .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
                     .semantics {
-                        contentDescription = jumpBackInDescription(title, kind, progress, relativeTime)
+                        contentDescription = description
                         customActions = actions.accessibilityActions
                     }
                     .testTag(JUMP_BACK_IN_CARD_TAG)
@@ -240,6 +241,7 @@ private fun JumpBackInTile(
         else -> progress.songName
     }
     val detail = state?.let { stringResource(R.string.home_tile_subtitle, kind, it) } ?: kind
+    val description = jumpBackInDescription(title, kind, progress, relativeTime = null)
     JumpBackInSurface(MaterialTheme.shapes.medium, modifier) {
         Row(
             modifier = Modifier
@@ -247,7 +249,7 @@ private fun JumpBackInTile(
                 .heightIn(min = ArtworkSize.Medium.dp)
                 .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
                 .semantics {
-                    contentDescription = jumpBackInDescription(title, kind, progress, relativeTime = null)
+                    contentDescription = description
                     customActions = actions.accessibilityActions
                 }
                 .testTag(JUMP_BACK_IN_CELL_TAG),

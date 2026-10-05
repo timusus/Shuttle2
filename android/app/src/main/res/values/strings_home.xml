@@ -58,6 +58,8 @@
     <string name="home_finished_play_again">Finished · Play again</string>
     <!-- Home: TalkBack, part of a Jump back in item's description: the item was played through -->
     <string name="home_cd_finished">finished</string>
+    <!-- Joins the parts of a Jump Back In card's TalkBack description: "OK Computer, Album, on Airbag" -->
+    <string name="home_cd_separator">", "</string>
     <!-- Home: TalkBack, part of a Jump back in item's description: the queue was shuffled -->
     <string name="home_cd_shuffled">shuffled</string>
     <!-- Home: TalkBack, part of a Jump back in item's description: the song the queue was left on -->

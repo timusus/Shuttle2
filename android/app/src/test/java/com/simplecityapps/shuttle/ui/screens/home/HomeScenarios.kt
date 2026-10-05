@@ -57,7 +57,7 @@ object HomeScenarios {
 
     val smartPlaylist = HomeItem.SmartPlaylistItem(SmartPlaylistId.Favourites)
 
-    /** Eight things played lately, of every kind: two full rows of the grid at any width. */
+    /** Eight things played lately, of every kind: the resume card and six tiles, and one more than the grid shows. */
     val jumpBackIn = section(
         HomeSectionId.JumpBackIn,
         HomeSectionTitle.JumpBackIn,
