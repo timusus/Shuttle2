@@ -15,7 +15,6 @@ import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.PlayContext
-import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.ContinuationInterceptor
