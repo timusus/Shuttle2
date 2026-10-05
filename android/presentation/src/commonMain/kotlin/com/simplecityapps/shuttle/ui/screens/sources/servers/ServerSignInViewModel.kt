@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.server.AccountServer
+import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.mediaprovider.server.ServerDiscovery
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -80,7 +82,13 @@ data class ServerSignInUiState(
     val showProDisclosure: Boolean = false,
     /** True when [type]'s server at the typed address reports Quick Connect support. Jellyfin only. */
     val quickConnectEnabled: Boolean = false,
+    /** Servers of [type] that answered on the local network. */
+    val discoveredServers: List<DiscoveredServer> = emptyList(),
 ) {
+    /** The discovered servers to offer as addresses: all but the one already typed. */
+    val addressSuggestions: List<DiscoveredServer>
+        get() = discoveredServers.filterNot { it.address.equals(form.address.trim().trimEnd('/'), ignoreCase = true) }
+
     /** Plex signs in with a plex.tv PIN and a choice of the account's servers, rather than an address and password. */
     val signsInWithPin: Boolean get() = type == MediaProviderType.Plex
 
@@ -120,6 +128,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val signInWithPin: SignInWithPin,
     private val connectToAccountServer: ConnectToAccountServer,
     private val songDownloader: SongDownloader,
+    serverDiscovery: ServerDiscovery,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -154,6 +163,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         .debounce(QUICK_CONNECT_CHECK_DEBOUNCE_MILLIS)
         .mapLatest { address -> serverAddress(address)?.let { checkQuickConnectAvailable(type, it) } ?: false }
         .onStart { emit(false) }
+    private val discoveredServers = MutableStateFlow(emptyList<DiscoveredServer>())
     private var quickConnectJob: Job? = null
     private var pinJob: Job? = null
 
@@ -161,13 +171,32 @@ class ServerSignInViewModel @AssistedInject constructor(
     private var accountServers: List<AccountServer> = emptyList()
 
     val uiState: StateFlow<ServerSignInUiState> =
-        combine(form, step, events.flow, needsPro, quickConnectEnabled) { form, step, events, needsPro, quickConnectEnabled ->
-            ServerSignInUiState(type, form, step, events, showProDisclosure = needsPro, quickConnectEnabled = quickConnectEnabled)
+        combine(
+            form,
+            step,
+            events.flow,
+            needsPro,
+            combine(quickConnectEnabled, discoveredServers, ::Pair),
+        ) { form, step, events, needsPro, (quickConnectEnabled, discoveredServers) ->
+            ServerSignInUiState(
+                type,
+                form,
+                step,
+                events,
+                showProDisclosure = needsPro,
+                quickConnectEnabled = quickConnectEnabled,
+                discoveredServers = discoveredServers,
+            )
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
             ServerSignInUiState(type, form.value, step.value, showProDisclosure = needsPro.value),
         )
+
+    init {
+        // Looked for once, as the sign-in opens (Jellyfin and Emby only): a server that answers later can still be typed in
+        viewModelScope.launch { discoveredServers.value = serverDiscovery.discover(type) }
+    }
 
     fun onAddressChange(address: String) = form.update { it.copy(address = address, missing = it.missing - ServerSignInField.Address) }
 

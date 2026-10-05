@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
+import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 
 fun serverSignInForm(
@@ -7,7 +8,8 @@ fun serverSignInForm(
     form: ServerSignInForm = ServerSignInForm(address = "http://"),
     showProDisclosure: Boolean = false,
     quickConnectEnabled: Boolean = false,
-) = ServerSignInUiState(type, form, showProDisclosure = showProDisclosure, quickConnectEnabled = quickConnectEnabled)
+    discoveredServers: List<DiscoveredServer> = emptyList(),
+) = ServerSignInUiState(type, form, showProDisclosure = showProDisclosure, quickConnectEnabled = quickConnectEnabled, discoveredServers = discoveredServers)
 
 fun serverSignInAuthenticating(type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.Authenticating)
 

@@ -421,3 +421,15 @@ Sign in with `support/scripts/seed-remote-provider.sh navidrome` (`~/.config/s2-
 - [ ] Cast a Subsonic song, direct and transcoded. It plays on the receiver, and seeking a transcode works.
 - [ ] Download a Subsonic song, then play it in airplane mode.
 - [ ] A server without the `transcoding` or `transcodeOffset` extensions (e.g. Gonic, Airsonic-Advanced): a capped song transcodes and plays, but isn't seekable; nothing hangs or errors.
+
+## Easier server sign-in (#505)
+Plex's sign-in and the local-network suggestions talk to real plex.tv and real servers on the same Wi-Fi, which the JVM tests replace with fixtures and a fake broadcast.
+- [ ] Plex: Settings → Sources → Plex → Sign in with Plex opens the browser at app.plex.tv. Approving there brings the app to "Authentication Successful" and the library fills. An account with one server connects straight away.
+- [ ] Plex, code on another device: cancel the browser, enter the 4-character code at plex.tv/link on a laptop. The app signs in within a few seconds of approving.
+- [ ] Plex with a shared server on the account: the server list shows both, the shared one labelled "Shared with you", and the chosen one is the one that syncs.
+- [ ] Plex on the same Wi-Fi as the server: the saved address (Settings → Sources) is the server's local `plex.direct` or LAN address, not the remote or relay one.
+- [ ] An existing Plex sign-in from the previous version keeps playing after the update without signing in again.
+- [ ] Jellyfin on the same Wi-Fi as the server: the sign-in shows the server under "On your network"; tapping it fills in the address.
+- [ ] Emby on the same Wi-Fi as an Emby server: the same suggestion appears (Emby answers "who is EmbyServer?" on UDP 7359).
+- [ ] On mobile data, or a network with no server, the Jellyfin and Emby sign-ins show no suggestions and nothing errors.
+- [ ] Jellyfin with Quick Connect enabled: "Use Quick Connect" is the filled button above the username and password.

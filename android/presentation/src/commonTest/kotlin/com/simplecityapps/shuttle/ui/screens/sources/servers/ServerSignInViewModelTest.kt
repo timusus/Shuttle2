@@ -3,8 +3,10 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import com.simplecityapps.fakes.FakePinAuthentication
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.fakes.FakeServerDiscovery
 import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.RecordingAnalytics
+import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerLogin
@@ -45,6 +47,7 @@ class ServerSignInViewModelTest {
     private val server = FakeServerAuthentication()
     private val quickConnect = FakeQuickConnectAuthentication()
     private val plex = FakePinAuthentication()
+    private val discovery = FakeServerDiscovery()
     private val analytics = RecordingAnalytics()
     private val songDownloader = FakeSongDownloader()
     private val needsPro = MutableStateFlow(false)
@@ -70,6 +73,7 @@ class ServerSignInViewModelTest {
             SignInWithPin(pins, monetisation, classifyFailure),
             ConnectToAccountServer(pins, monetisation, classifyFailure),
             songDownloader,
+            discovery,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             address?.let(viewModel::onAddressChange)
@@ -556,5 +560,20 @@ class ServerSignInViewModelTest {
 
         viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
         viewModel.events shouldBe listOf(ServerSignInEvent.Connected, ServerSignInEvent.Finished)
+    }
+
+    @Test
+    fun `servers found on the local network are offered as addresses - all but the one typed`() = runTest {
+        val livingRoom = DiscoveredServer("Living Room", "http://192.168.1.10:8096")
+        val nas = DiscoveredServer("NAS", "http://192.168.1.11:8096")
+        discovery.servers = listOf(livingRoom, nas)
+
+        val viewModel = viewModel(MediaProviderType.Emby, address = null)
+
+        discovery.searched shouldBe listOf(MediaProviderType.Emby)
+        viewModel.uiState.value.addressSuggestions shouldBe listOf(livingRoom, nas)
+
+        viewModel.onAddressChange("http://192.168.1.10:8096/")
+        viewModel.uiState.value.addressSuggestions shouldBe listOf(nas)
     }
 }

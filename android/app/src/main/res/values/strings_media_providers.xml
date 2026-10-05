@@ -19,6 +19,8 @@
     <string name="media_provider_config_hide_password">Hide password</string>
     <string name="media_provider_button_use_quick_connect">Use Quick Connect</string>
     <string name="media_provider_quick_connect_instructions">Enter this code in another Jellyfin app to sign in</string>
+    <!-- Jellyfin/Emby sign-in: above the servers that answered on the local network; tapping one fills in its address -->
+    <string name="media_provider_discovered_servers">On your network</string>
     <!-- Plex sign-in: the form's explanation, before the browser opens -->
     <string name="media_provider_plex_sign_in_intro">Sign in to your Plex account in the browser, then come back here. Shuttle Music connects to your Plex Media Server for you.</string>
     <string name="media_provider_button_sign_in_with_plex">Sign in with Plex</string>

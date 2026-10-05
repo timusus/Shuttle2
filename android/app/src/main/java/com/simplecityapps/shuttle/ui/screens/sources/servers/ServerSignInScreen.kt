@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.R as MediaProviderR
+import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
@@ -148,6 +151,9 @@ private fun SignInFields(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             modifier = Modifier.fillMaxWidth(),
         )
+        if (uiState.addressSuggestions.isNotEmpty()) {
+            AddressSuggestions(uiState.addressSuggestions, actions.onAddressChange)
+        }
         // Quick Connect needs no password, so it comes first once the server reports it enabled
         if (uiState.quickConnectEnabled) {
             S2Button(
@@ -185,6 +191,25 @@ private fun SignInFields(
             Text(stringResource(R.string.media_provider_config_switch_remember_password))
             Spacer(Modifier.width(S2Spacing.medium))
             Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
+        }
+    }
+}
+
+/** Servers that answered on the local network; tapping one fills in its address. */
+@Composable
+private fun AddressSuggestions(
+    servers: List<DiscoveredServer>,
+    onChoose: (String) -> Unit,
+) {
+    Column {
+        Text(stringResource(R.string.media_provider_discovered_servers), style = MaterialTheme.typography.labelMedium)
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
+        ) {
+            servers.forEach { server ->
+                SuggestionChip(onClick = { onChoose(server.address) }, label = { Text(server.name) })
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.mediaprovider.server.DiscoveredServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -203,5 +204,21 @@ class ServerSignInTest {
         robot.clickText("Cancel")
 
         robot.quickConnectCancelled shouldBe 1
+    }
+
+    @Test
+    fun `servers on the local network are offered - and tapping one fills in its address`() {
+        robot.setContent(serverSignInForm(discoveredServers = listOf(DiscoveredServer("Living Room", "http://192.168.1.10:8096"))))
+
+        robot.assertTextDisplayed("On your network")
+        robot.clickText("Living Room")
+
+        robot.addresses shouldBe listOf("http://192.168.1.10:8096")
+    }
+
+    @Test
+    fun `with nothing found on the network no suggestions show`() {
+        robot.setContent(serverSignInForm())
+        robot.assertTextNotDisplayed("On your network")
     }
 }
