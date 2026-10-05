@@ -8,58 +8,27 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 
 ## Working in This Repo
 
-- Launch Claude from the repo root (`claude`, or `claude -w <name>` for a worktree), never from a module
-  directory — auto-memory is keyed by launch directory.
-- The orchestrator plans; workers implement. Writing code, running test suites and builds, and multi-file
-  refactors go to a worker via `/brief`. The tier table and `worker`/`worker-brief` invocation live in the
-  user's global `~/.claude/CLAUDE.md`, which is authoritative.
-- **Briefs must demand foreground builds.** A headless `claude -p` worker that backgrounds a Gradle build
-  or emulator run ends its run there — no commit, no report — because there is no next turn to receive the
-  notification. Every brief involving a build or test run says: run it in the FOREGROUND with a generous
-  timeout; never background it and end your turn. A worker whose last line reads like "waiting on the
-  build" is a failed run: check `git status` before re-briefing.
-- **Never chain briefs in one job.** Launch the next worker only after reviewing and committing the
-  previous one's tree.
+- Launch Claude from the repo root (`claude`, or `claude -w <name>`), never a module directory: auto-memory is keyed by launch directory.
+- Delegation, worker tiers and `worker`/`worker-brief` live in the user's global `~/.claude/CLAUDE.md` (authoritative). Implementation goes to a worker via `/brief`.
+- **Briefs must demand foreground builds.** A headless worker that backgrounds a Gradle build or emulator run ends its run there, with no commit and no report. Say: run it in the FOREGROUND with a generous timeout; never background it and end your turn. A worker whose last line reads "waiting on the build" failed: check `git status` before re-briefing.
+- **Workers finish with `support/scripts/worker-finish.sh "<message>"`** (lint -F, `unit-test --changed-tests`, commit; message carries `Changelog:`), and verify narrowly: no full suite, no emulator/simulator lease unless a screenshot is needed.
+- **Never chain briefs in one job.** Launch the next worker only after reviewing and committing the previous one's tree.
 - Anything Sonnet or GLM wrote gets a fresh-context `reviewer` pass before it lands.
-- Use `/delegate-verbose` before a Gradle test sweep, emulator run or lint sweep, so the raw output
-  never enters the orchestrator's context.
-- In an interactive session, anything over ~2 minutes (builds, emulator runs) goes through
-  `support/scripts/longjob.sh start <name> -- <cmd>` and one `longjob.sh wait`, not a foreground call.
-- `/note` a finding the moment it appears so it survives `/clear` and compaction. Then, if context is
-  comfortably under ~150k, the fix is small and verifiable, and it does not touch files a running worker
-  owns, fix it in the same session and close the issue in the landing commit.
-- **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
-  A worker's brief asks for `unit-test --changed` and nothing wider — no full suite, no emulator/simulator
-  lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]`
-  cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
-  (Android: `lint` (check only), `unit-test --changed`, `:android:architecture-tests:testDebugUnitTest` (always, so a layer violation fails the batch that adds it; its own phase, so a failure there still runs assembleDebug), a compile of dependent modules' test sources when domain/shared/core/commonMain sources changed, + assembleDebug; one automatic retry per verify run (so per bisect iteration) with `-Pkotlin.incremental=false` on an `Incremental compilation failed` flake; iOS, only when the picked commits touch `ios/`,
-  `shared/`, `android/domain|presentation|core`, or a KMP module's commonMain/commonTest/iosMain/iosTest: framework build, `:<module>:iosSimulatorArm64Test` for just the KMP modules whose commonMain/commonTest/iosMain/iosTest changed (none changed, no Kotlin/Native tests) + app build and just the `S2Tests` classes
-  mapped from the changed files), pushes (if another session pushed meanwhile, it rebases onto the new `origin/main` and pushes again, re-verifying once only when the incoming commits touch the batch's files; a push that still fails resets the checkout to `origin/main`), closes issues and cleans up the landed worktrees (`--close
-  BRANCH:N` closes only when BRANCH landed; a bare `--close N` only when every branch landed). Run it as a
-  `longjob.sh` batch, never twice for the same batch. `support/scripts/full-verify.sh` (via `longjob.sh
-  start full-verify -- ...`) runs the whole suites (including `iosSimulatorArm64Test`) at `origin/main` and records the sha as the watermark;
-  `--status` shows how far main is past it, SessionStart prints the same, and `/deploy-android` runs it
-  before tagging if the watermark isn't the release commit.
-- `support/scripts/worktree-report.sh` prints a one-line worktree count/size; `--prune` removes the
-  ones that are safely disposable (merged, clean, unlocked, not mid-edit) via `worktree-clean.sh`.
+- `/delegate-verbose` before a Gradle test sweep, emulator run or lint sweep, so raw output stays out of the orchestrator's context.
+- Interactive sessions: anything over ~2 minutes goes through `support/scripts/longjob.sh start <name> -- <cmd>` and one `longjob.sh wait`.
+- `/note` a finding the moment it appears. Then, if context is under ~150k, the fix is small and verifiable, and no running worker owns the files, fix it in the same session and close the issue in the landing commit.
+- Landing (`land.sh`, one light verify under `machine-lock`) and the full-verify watermark: `.claude/rules/landing.md`. Run `land.sh` as a `longjob.sh` batch, never twice for one batch.
+- `support/scripts/worktree-report.sh` prints worktree count/size; `--prune` removes the safely disposable ones via `worktree-clean.sh`.
 
 ## Build Commands
 
 All commands run from the repository root.
 
-`support/scripts/unit-test` and `remote-emu.sh install` run Gradle through
-[`build-brief`](https://bb.staticvar.dev/) when it's on PATH (`brew install static-var/tap/build-brief`),
-condensing the console output while keeping the exit code and compile-error file:line; they fall
-back to plain `./gradlew` when it isn't installed.
+`support/scripts/unit-test` and `remote-emu.sh install` run Gradle through [`build-brief`](https://bb.staticvar.dev/) when on PATH (`brew install static-var/tap/build-brief`), condensing output but keeping the exit code and compile-error file:line; otherwise plain `./gradlew`.
 
 ```bash
-# Build debug APK
-./gradlew :android:app:assembleDebug
-
-# Run all unit tests
-./gradlew testDebugUnitTest
-# Or via script:
-./support/scripts/unit-test
+./gradlew :android:app:assembleDebug   # debug APK
+./support/scripts/unit-test            # all unit tests
 
 # One module / filter (short name or Gradle path; see the `check` skill)
 ./support/scripts/unit-test playback --tests '*SleepTimerTest*'
@@ -71,20 +40,19 @@ back to plain `./gradlew` when it isn't installed.
 # (never queues for the box; --box / --local force one — see .claude/rules/android.md)
 ./support/scripts/remote-build.sh -q :android:app:assembleDebug
 
-# Landing: cherry-picks approved branches onto main, light-verifies once under machine-lock, pushes,
-# closes issues, cleans up worktrees. Run via longjob.sh, not a foreground call.
+# Wrap up a worker run: lint -F, unit-test --changed-tests, commit
+support/scripts/worker-finish.sh [--no-test] "<conventional message incl. Changelog: trailer>"
+
+# Landing and full verify (via longjob.sh): see .claude/rules/landing.md
 support/scripts/longjob.sh start land -- support/scripts/land.sh <branch>... [--close N|BRANCH:N ...]
-
-# Full verify (Android + iOS, reusable locked worktree .claude/worktrees/full-verify so caches stay warm, records the watermark; before every Play release):
 support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh
-support/scripts/full-verify.sh --status
 
-# Its Android half by hand, for build-config/cross-module changes. Each module's tests
+# Full verify's Android half by hand, for build-config/cross-module changes. Each module's tests
 # run once, in Roborazzi verify mode (docs/testing/strategy.md)
 ./support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
 
-# Lint (KTLint)
-./support/scripts/lint
+# Lint (KTLint): changed Kotlin files only (vs merge-base with origin/main + working tree); --all for the tree
+./support/scripts/lint [-F] [--all]
 
 # Build release bundle
 ./gradlew :android:app:bundleRelease
@@ -99,28 +67,25 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 
 ### Module Structure
 
-- **`:android:app`** — Main application: UI screens, DI setup, presenters, navigation
-- **`:android:playback`** — ExoPlayer wrapper, PlaybackFacade, PlaybackService, queue management, audio focus
-- **`:android:mediaprovider:core`** — MediaProvider interface, MediaImporter, M3U, import worker
-- **`:android:mediaprovider:server`** — What the Jellyfin/Emby/Plex providers share: paging, the sync session skeleton, credential storage, direct-play formats
-- **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
-- **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
-- **`:android:mediaprovider:subsonic`** — Subsonic/OpenSubsonic (Navidrome) provider: `search3` sync with an album-by-album fallback, raw or transcoded streams under the streaming quality cap, seeking a transcode by time
-- **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders, the repository interfaces (Song, Album, Playlist, Genre), the playback and queue operations interfaces, and the shared `ui/actions` use cases (no Android)
-- **`:android:downloads`** — Offline downloads of remote-provider songs
-- **`:android:saf`** — Storage Access Framework helpers
-- **`:android:core`** — Shared utilities, logging, DI qualifiers and the Metro worker factory
-- **`:android:networking`** — Ktor + OkHttp (Darwin on iOS) network layer, kotlinx.serialization for JSON
-- **`:android:imageloader`** — Coil artwork loading: per-model fetchers, keys and the app ImageLoader
-- **`:android:trial`** — Trial/subscription management via Play Billing
+- **`:android:app`**: UI screens, DI setup, presenters, navigation
+- **`:android:playback`**: ExoPlayer wrapper, PlaybackFacade, PlaybackService, queue, audio focus
+- **`:android:mediaprovider:core`**: MediaProvider interface, MediaImporter, M3U, import worker
+- **`:android:mediaprovider:server`**: shared by Jellyfin/Emby/Plex: paging, sync session skeleton, credential storage, direct-play formats
+- **`:android:mediaprovider:local`**: MediaStore/TagLib provider; **`jellyfin|emby|plex`**: remote providers
+- **`:android:mediaprovider:subsonic`**: Subsonic/OpenSubsonic (Navidrome): `search3` sync with album-by-album fallback, raw or transcoded streams under the quality cap, time-seeking a transcode
+- **`:android:domain`**: plain Kotlin/JVM (no Android): domain models, song queries and sort orders, repository interfaces (Song, Album, Playlist, Genre), playback and queue operations interfaces, shared `ui/actions` use cases
+- **`:android:downloads`** offline downloads; **`:android:saf`** Storage Access Framework helpers; **`:android:trial`** Play Billing trial/subscription
+- **`:android:core`**: utilities, logging, DI qualifiers, Metro worker factory
+- **`:android:networking`**: Ktor + OkHttp (Darwin on iOS), kotlinx.serialization
+- **`:android:imageloader`**: Coil artwork: per-model fetchers, keys, app ImageLoader
 
 ### UI Patterns
 
-Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Metro (see principle #8a in the UDF doc). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, the player sheet or pane); see [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). There is no View-based UI left; the Jellyfin/Emby/Plex server sign-in dialogs are Compose too (`ServerSignInDialog`).
+Compose + ViewModel with unidirectional data flow: canonical patterns in [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md). Non-trivial ViewModel action logic goes in **use cases** (one `operator fun invoke`, injected via Metro; UDF doc principle #8a). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, player sheet or pane): [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). No View-based UI is left, including the Jellyfin/Emby/Plex sign-in dialogs (`ServerSignInDialog`).
 
 ### Playback Flow
 
-The Media3 player (ExoPlayer, or the Cast player while casting) is the source of truth for the queue and playback state, and also handles audio focus and unplugged headphones; PlaybackService (a Media3 MediaLibraryService) publishes its session. Consumers inject `PlaybackOperations` and `QueueOperations`, which live in `:android:domain` with the state types they expose. `PlaybackFacade` (the PlaybackOperations binding) forwards to the player and QueueOperations and derives flows from player events; each remaining concern is a small `Player.Listener` it registers: `CastHandover`, `ItemLoader` (load completion, skipping failed items), `QueueStore` (saves the queue, modes and resume position to prefs as the player changes, and restores them at start-up), `CallHold`, `PlaybackSpeedStore`, `WakeModeUpdater`. `QueueFacade` (the QueueOperations binding) forwards the same way to `QueueStatePublisher` (derives the queue flows from player events), `PlaylistEditor` (makes each change on the player, with `S2ShuffleOrder`) and `QueueBuilder` (builds new items off the main thread, applying changes in order). State is published as flows: PlaybackOperations exposes `playbackStateFlow`, `progressFlow`, `playbackSpeedFlow`, `trackEndedFlow` and `pausePositionFlow`; QueueOperations exposes `queueStateFlow`, `shuffleModeFlow` and `repeatModeFlow`. Consumers collect them against a baseline snapshot (`launchCollectingChanges` in `:android:core`).
+The Media3 player (ExoPlayer, or the Cast player while casting) is the source of truth for queue and playback state, and handles audio focus and unplugged headphones; PlaybackService (a Media3 MediaLibraryService) publishes its session. Consumers inject `PlaybackOperations` and `QueueOperations` (in `:android:domain` with their state types). `PlaybackFacade` (the PlaybackOperations binding) forwards to the player and QueueOperations and derives flows from player events; each other concern is a small `Player.Listener` it registers: `CastHandover`, `ItemLoader` (load completion, skipping failed items), `QueueStore` (saves/restores queue, modes and resume position via prefs), `CallHold`, `PlaybackSpeedStore`, `WakeModeUpdater`. `QueueFacade` (the QueueOperations binding) forwards to `QueueStatePublisher` (queue flows from player events), `PlaylistEditor` (each change on the player, with `S2ShuffleOrder`) and `QueueBuilder` (builds items off the main thread, applying changes in order). Flows: PlaybackOperations exposes `playbackStateFlow`, `progressFlow`, `playbackSpeedFlow`, `trackEndedFlow`, `pausePositionFlow`; QueueOperations exposes `queueStateFlow`, `shuffleModeFlow`, `repeatModeFlow`. Consumers collect them against a baseline snapshot (`launchCollectingChanges`, `:android:core`).
 
 ### Data Layer
 
@@ -128,11 +93,11 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 
 ### DI
 
-[Metro](https://zacsweers.github.io/metro/), one scope: Metro's built-in `AppScope`. `ShuttleApplication` creates the `@DependencyGraph(AppScope::class)` `AppGraph` (`app/di/`); every module contributes `@ContributesTo(AppScope::class) @BindingContainer`s and `@ContributesBinding`s to it, and app-level containers live in `app/di/` (AppModule, AppBindsModule, DatabaseModule, RepositoryModule, MediaProviderModule, ImageLoaderModule, ...). Android entry points (activities, services, receivers) declare a nested `@ContributesTo(AppScope::class) interface Injector { fun inject(x) }` and call `context.appGraph<Injector>().inject(this)` (`:android:core`). Workers contribute a nested `@AssistedFactory` `WorkerInstanceFactory` keyed with `@WorkerKey`, built by `MetroWorkerFactory`. ViewModels use metrox-viewmodel: `@ViewModelKey` + `@ContributesIntoMap(AppScope::class)`, or a nested factory keyed with `@ManualViewModelAssistedFactoryKey` (assisted arguments) or `@ViewModelAssistedFactoryKey` (`SavedStateHandle`); composables get them with `metroViewModel()` / `assistedMetroViewModel()` from the `LocalMetroViewModelFactory` that `MainActivity` provides.
+[Metro](https://zacsweers.github.io/metro/), one scope: `AppScope`. `ShuttleApplication` creates the `@DependencyGraph(AppScope::class)` `AppGraph` (`app/di/`); every module contributes `@ContributesTo(AppScope::class) @BindingContainer`s and `@ContributesBinding`s, and app-level containers live in `app/di/`. Entry points (activities, services, receivers) declare a nested `@ContributesTo(AppScope::class) interface Injector { fun inject(x) }` and call `context.appGraph<Injector>().inject(this)` (`:android:core`). Workers contribute a nested `@AssistedFactory` `WorkerInstanceFactory` keyed with `@WorkerKey`, built by `MetroWorkerFactory`. ViewModels use metrox-viewmodel: `@ViewModelKey` + `@ContributesIntoMap(AppScope::class)`, or a nested factory keyed with `@ManualViewModelAssistedFactoryKey` (assisted arguments) or `@ViewModelAssistedFactoryKey` (`SavedStateHandle`); composables get them with `metroViewModel()` / `assistedMetroViewModel()` from `LocalMetroViewModelFactory`, provided by `MainActivity`.
 
 ## Build Configuration
 
-- **Gradle memory**: `gradle.properties` pins the Kotlin daemon to 4g and `org.gradle.workers.max=6` (the Gradle daemon's 6g comes from `~/.gradle/gradle.properties`), sized for a 32 GB/10-core Mac running two builds at once; `remote-build.sh --max-workers` overrides the worker cap. `:android:app` tests fork twice on macOS (2g each)
+- **Gradle memory**: `gradle.properties` pins the Kotlin daemon to 4g and `org.gradle.workers.max=6` (the Gradle daemon's 6g is in `~/.gradle/gradle.properties`), sized for a 32 GB/10-core Mac running two builds; `remote-build.sh --max-workers` overrides. `:android:app` tests fork twice on macOS (2g each)
 - **Kotlin 2.x**, **Java 17** (with core library desugaring)
 - **Gradle daemon runs on JDK 21**, pinned by `gradle/gradle-daemon-jvm.properties` (foojay resolver in `settings.gradle` downloads it if missing), so builds don't depend on `JAVA_HOME`. If Android Studio sync complains, set Gradle JDK to a 21 (e.g. the bundled JBR)
 - **Min SDK 24** (Compose 1.13), Target/Compile SDK 36
@@ -147,15 +112,7 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 - KTLint with `android_studio` style (`.editorconfig`)
 - Composable functions exempt from naming rules
 - Property naming, filename, package-name, wildcard-imports, and backing-property-naming rules disabled
-- A Claude Code hook auto-formats Kotlin files on every edit (`support/scripts/lint -F`)
-
-```bash
-# Check lint
-support/scripts/lint
-
-# Auto-fix lint
-support/scripts/lint -F
-```
+- A Claude Code hook formats Kotlin on every Edit, and `.githooks/pre-commit` runs `ktlint -F` on staged Kotlin (`SKIP_LINT=1` bypasses); `support/scripts/lint [-F]` checks changed files, `--all` the tree
 
 ## Branch Conventions
 
