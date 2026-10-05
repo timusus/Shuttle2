@@ -112,7 +112,7 @@ fun SongInfoScreen(
         },
     ) { padding ->
         when {
-            song != null -> SongInfoContent(song, Modifier.padding(padding))
+            song != null -> SongInfoContent(song, uiState.lyrics, Modifier.padding(padding))
             uiState.loading -> LoadingState(Modifier.padding(padding).padding(vertical = StateVerticalPadding))
             else -> EmptyState(title = stringResource(R.string.song_info_not_found), modifier = Modifier.padding(padding).padding(vertical = StateVerticalPadding))
         }
@@ -122,10 +122,11 @@ fun SongInfoScreen(
 @Composable
 private fun SongInfoContent(
     song: Song,
+    lyrics: String?,
     modifier: Modifier = Modifier,
 ) {
     val unknown = stringResource(R.string.song_info_unknown)
-    val sections = song.infoSections()
+    val sections = song.infoSections(lyrics)
     SelectionContainer(modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize().testTag("song-info-list"),

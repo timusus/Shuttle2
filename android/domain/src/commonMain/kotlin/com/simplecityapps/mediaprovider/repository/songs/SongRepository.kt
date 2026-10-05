@@ -23,6 +23,12 @@ interface SongRepository {
     suspend fun loadSongs(query: SongQuery): List<Song> = getSongs(query).filterNotNull().first()
 
     /**
+     * The lyrics stored for the song with [songId], or null when it has none. The songs [getSongs] and [loadSongs] return
+     * leave their [Song.lyrics] out, so a library's lyrics aren't held in memory: read them here when they're shown.
+     */
+    suspend fun loadLyrics(songId: Long): String?
+
+    /**
      * Every song stored for [mediaProviderType], unfiltered: what an import diffs against, so it sees the songs a minimum
      * track length hides in the library.
      */

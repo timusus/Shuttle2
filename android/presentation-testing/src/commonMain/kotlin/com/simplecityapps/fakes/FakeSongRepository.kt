@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.map
 class FakeSongRepository : SongRepository {
     private val songs = MutableStateFlow<List<Song>?>(null)
 
+    /** The lyrics [loadLyrics] returns, by song id. */
+    val lyrics: MutableMap<Long, String> = mutableMapOf()
+
     fun setSongs(value: List<Song>) {
         songs.value = value
     }
@@ -41,6 +44,8 @@ class FakeSongRepository : SongRepository {
     }
 
     override fun countSongs(): Flow<Int> = songs.filterNotNull().map { songs -> songs.count { !it.blacklisted } }
+
+    override suspend fun loadLyrics(songId: Long): String? = lyrics[songId]
 
     /** Every [setExcluded] call as (song ids, excluded), in order. */
     val excludedChanges: MutableList<Pair<List<Long>, Boolean>> = threadSafeList()

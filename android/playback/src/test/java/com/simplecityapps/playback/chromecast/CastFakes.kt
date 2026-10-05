@@ -30,6 +30,8 @@ class FakeSongRepository(private var songs: List<Song>) : SongRepository {
 
     override fun countSongs(): Flow<Int> = flow { emit(songs.count { !it.blacklisted }) }
 
+    override suspend fun loadLyrics(songId: Long): String? = null
+
     override suspend fun insert(
         songs: List<Song>,
         mediaProviderType: MediaProviderType

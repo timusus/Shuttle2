@@ -33,6 +33,9 @@ class SongDiff(
             blacklisted = old.blacklisted,
             mediaProvider = old.mediaProvider,
             albumIdentity = old.albumIdentity,
+            // The stored songs are read without their lyrics (#873), so there are none to compare: a changed tag moves
+            // the file's modified time, and the update writes the new lyrics
+            lyrics = old.lyrics,
             // Stored as a year only
             date = if (updated.date?.year == old.date?.year) old.date else updated.date,
             // A server stamps all of its favourites with the sync time, and the merge keeps the stored time anyway,

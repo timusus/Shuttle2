@@ -6,6 +6,7 @@ import androidx.room.Query
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS_QUALIFIED
 import com.simplecityapps.shuttle.model.PlaylistSong
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,7 +21,7 @@ abstract class PlaylistSongJoinDao {
 
     @Query(
         """
-            SELECT songs.*, playlist_song_join.id as playlistSongId, playlist_song_join.sortOrder as sortOrder 
+            SELECT $SONG_COLUMNS_QUALIFIED, playlist_song_join.id as playlistSongId, playlist_song_join.sortOrder as sortOrder 
             FROM songs 
             LEFT JOIN playlist_song_join ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
             WHERE playlist_song_join.playlistId = :playlistId AND songs.blacklisted == 0;
@@ -45,7 +46,7 @@ abstract class PlaylistSongJoinDao {
      */
     @Query(
         """
-            SELECT MIN(playlist_song_join.sortOrder) as sortOrder, playlist_song_join.id as playlistSongId, songs.*
+            SELECT MIN(playlist_song_join.sortOrder) as sortOrder, playlist_song_join.id as playlistSongId, $SONG_COLUMNS_QUALIFIED
             FROM playlist_song_join
             JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
             WHERE playlist_song_join.playlistId = :playlistId

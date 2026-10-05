@@ -30,7 +30,7 @@ struct SongInfoSheet: View {
         }
         NavigationStack {
             Observing(viewModel.uiState) { state in
-                SongInfoContent(song: state.song, isLoading: state.loading)
+                SongInfoContent(song: state.song, lyrics: state.lyrics, isLoading: state.loading)
             }
             .navigationTitle("Song Info")
             .navigationBarTitleDisplayMode(.inline)
@@ -54,11 +54,12 @@ struct SongInfoSheet: View {
 /// The grouped sections for a song, or a placeholder while it loads or if it's gone from the library.
 struct SongInfoContent: View {
     let song: Song?
+    var lyrics: String?
     var isLoading = false
 
     var body: some View {
         if let song {
-            let sections = SongInfoSections.make(for: song)
+            let sections = SongInfoSections.make(for: song, lyrics: lyrics)
             List {
                 ForEach(sections) { section in
                     Section {

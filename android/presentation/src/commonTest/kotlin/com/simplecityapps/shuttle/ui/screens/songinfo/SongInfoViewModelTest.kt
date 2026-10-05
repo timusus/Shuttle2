@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.songinfo
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.collections.shouldContain
@@ -38,7 +39,7 @@ class SongInfoViewModelTest {
         val song = createSong(id = 2, name = "Two")
         songRepository.setSongs(listOf(createSong(id = 1), song))
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -46,10 +47,29 @@ class SongInfoViewModelTest {
     }
 
     @Test
+    fun `loads the song's lyrics apart from the song`() = runTest {
+        songRepository.setSongs(listOf(createSong(id = 2)))
+        songRepository.lyrics[2] = "la la la"
+
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository))
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.lyrics shouldBe "la la la"
+    }
+
+    @Test
+    fun `the lyrics row shows the lyrics it is given`() {
+        val rows = createSong().infoSections(lyrics = "la la la").flatMap { it.rows }.associate { it.label to it.value }
+
+        rows[StringKey.SONG_INFO_LYRICS] shouldBe "la la la"
+    }
+
+    @Test
     fun `a song no longer in the library is not found`() = runTest {
         songRepository.setSongs(emptyList())
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -60,7 +80,7 @@ class SongInfoViewModelTest {
     fun `rows format the file details`() {
         val song = createSong().copy(size = 5 * 1024 * 1024, bitRate = 320, bitDepth = 24, sampleRate = 44100, replayGainTrack = -6.5, artists = listOf("A", "B"))
 
-        val rows = song.infoSections().flatMap { it.rows }.associate { it.label to it.value }
+        val rows = song.infoSections(lyrics = null).flatMap { it.rows }.associate { it.label to it.value }
 
         rows[StringKey.SONG_INFO_SIZE] shouldBe "5.00 MB"
         rows[StringKey.SONG_INFO_BIT_RATE] shouldBe "320 kb/s"
@@ -73,7 +93,7 @@ class SongInfoViewModelTest {
 
     @Test
     fun `source row names the provider`() {
-        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections().flatMap { it.rows }.first { it.label == StringKey.SONG_INFO_SOURCE }
+        fun source(type: MediaProviderType) = createSong().copy(mediaProvider = type).infoSections(lyrics = null).flatMap { it.rows }.first { it.label == StringKey.SONG_INFO_SOURCE }
 
         source(MediaProviderType.Shuttle) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
         source(MediaProviderType.MediaStore) shouldBe SongInfoRow(StringKey.SONG_INFO_SOURCE, value = null, valueKey = StringKey.SONG_INFO_SOURCE_THIS_DEVICE)
@@ -85,7 +105,7 @@ class SongInfoViewModelTest {
 
     @Test
     fun `rows are grouped into tags - file and playback cards`() {
-        val sections = createSong().infoSections().associate { it.title to it.rows.map(SongInfoRow::label) }
+        val sections = createSong().infoSections(lyrics = null).associate { it.title to it.rows.map(SongInfoRow::label) }
 
         sections.keys.toList() shouldBe listOf(StringKey.SONG_INFO_SECTION_TAGS, StringKey.SONG_INFO_SECTION_FILE, StringKey.SONG_INFO_SECTION_PLAYBACK)
         sections.getValue(StringKey.SONG_INFO_SECTION_TAGS) shouldContain StringKey.SONG_INFO_ALBUM
@@ -121,7 +141,7 @@ class SongInfoViewModelTest {
 
     @Test
     fun `zero track - disc and channel count are missing`() {
-        val rows = createSong().copy(track = 0, disc = 0, channelCount = 0).infoSections().flatMap { it.rows }.associate { it.label to it.value }
+        val rows = createSong().copy(track = 0, disc = 0, channelCount = 0).infoSections(lyrics = null).flatMap { it.rows }.associate { it.label to it.value }
 
         rows[StringKey.SONG_INFO_TRACK_NUMBER] shouldBe null
         rows[StringKey.SONG_INFO_DISC] shouldBe null

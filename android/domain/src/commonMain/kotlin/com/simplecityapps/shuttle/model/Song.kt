@@ -27,6 +27,9 @@ data class Song(
     val mediaProvider: MediaProviderType,
     val replayGainTrack: Double? = null,
     val replayGainAlbum: Double? = null,
+    // What a scan or tag edit reads, for the update to store. The library's songs leave it null, so the whole library's
+    // lyrics aren't held in memory (#873): [com.simplecityapps.mediaprovider.repository.songs.SongRepository.loadLyrics]
+    // reads one song's.
     val lyrics: String?,
     val grouping: String?,
     val bitRate: Int?,

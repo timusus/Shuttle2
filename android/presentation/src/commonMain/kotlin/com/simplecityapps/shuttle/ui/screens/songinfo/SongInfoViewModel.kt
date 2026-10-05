@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
@@ -25,6 +26,8 @@ import kotlinx.coroutines.flow.stateIn
 
 data class SongInfoUiState(
     val song: Song? = null,
+    // Loaded apart from the song, which doesn't carry its lyrics (#873).
+    val lyrics: String? = null,
     val loading: Boolean = true,
 )
 
@@ -32,6 +35,7 @@ data class SongInfoUiState(
 class SongInfoViewModel @AssistedInject constructor(
     @Assisted songId: Long,
     observeSongs: ObserveSongs,
+    loadLyrics: LoadLyrics,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -41,7 +45,10 @@ class SongInfoViewModel @AssistedInject constructor(
     }
 
     val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)))
-        .map { songs -> SongInfoUiState(song = songs.firstOrNull(), loading = false) }
+        .map { songs ->
+            val song = songs.firstOrNull()
+            SongInfoUiState(song = song, lyrics = song?.let { loadLyrics(it.id) }, loading = false)
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
 }
 
@@ -61,8 +68,8 @@ data class SongInfoSection(
     val rows: List<SongInfoRow>,
 )
 
-/** Everything song info shows about [this] song, grouped into its cards, in order. */
-fun Song.infoSections(): List<SongInfoSection> = listOf(
+/** Everything song info shows about [this] song and its [lyrics], grouped into its cards, in order. */
+fun Song.infoSections(lyrics: String?): List<SongInfoSection> = listOf(
     SongInfoSection(
         StringKey.SONG_INFO_SECTION_TAGS,
         listOf(

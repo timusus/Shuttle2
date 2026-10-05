@@ -94,6 +94,8 @@ class LocalSongRepository(
             .matching(query)
     }
 
+    override suspend fun loadLyrics(songId: Long): String? = withContext(Dispatchers.IO) { songDataDao.lyrics(songId) }
+
     override suspend fun loadProviderSongs(mediaProviderType: MediaProviderType): List<Song> = withContext(Dispatchers.IO) {
         songDataDao.getByProvider(mediaProviderType).map { songData -> songData.toSong() }.withAlbumIdentities(albumIndex.albumIndex().identities)
     }

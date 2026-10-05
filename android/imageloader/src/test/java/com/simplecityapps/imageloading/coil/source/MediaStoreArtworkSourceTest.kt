@@ -111,6 +111,8 @@ class MediaStoreArtworkSourceTest {
 
         override fun countSongs(): Flow<Int> = flowOf(songs.size)
 
+        override suspend fun loadLyrics(songId: Long): String? = null
+
         override suspend fun insert(
             songs: List<Song>,
             mediaProviderType: MediaProviderType

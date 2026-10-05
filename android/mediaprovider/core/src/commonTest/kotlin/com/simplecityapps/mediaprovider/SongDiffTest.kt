@@ -21,6 +21,22 @@ class SongDiffTest {
     }
 
     @Test
+    fun `lyrics alone are not a change, as the stored songs are read without them`() = runTest {
+        val existing = createSong(id = 7, lastModified = firstImport)
+        val scanned = createSong(id = 0, lastModified = firstImport).copy(lyrics = "la la la")
+
+        SongDiff(listOf(existing), listOf(scanned)).apply().updates shouldBe emptyList()
+    }
+
+    @Test
+    fun `an update carries the scanned lyrics to be stored`() {
+        val existing = createSong(id = 7, lastModified = firstImport)
+        val scanned = createSong(id = 0, lastModified = Instant.fromEpochSeconds(1_800_000_000)).copy(lyrics = "la la la")
+
+        SongDiff(listOf(existing), listOf(scanned)).update(existing, scanned).lyrics shouldBe "la la la"
+    }
+
+    @Test
     fun `an update without a date keeps the date from the first import`() {
         val existing = createSong(id = 7, lastModified = firstImport)
         val new = createSong(id = 0, lastModified = null)

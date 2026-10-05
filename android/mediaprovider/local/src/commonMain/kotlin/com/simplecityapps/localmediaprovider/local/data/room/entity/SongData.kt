@@ -137,3 +137,28 @@ private fun Song.resolvedDateAdded(): Instant {
 }
 
 fun List<Song>.toSongData(mediaProviderType: MediaProviderType): List<SongData> = map { song -> song.toSongData(mediaProviderType) }
+
+/**
+ * Every `songs` column but `lyrics`, which a whole library's worth of text would otherwise load with every song list
+ * (#873). A song's lyrics are read by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.lyrics]
+ * when shown. Room leaves [SongData.lyrics] null for a query that omits it; a new column must be added here too (see
+ * `SongColumnsTest`).
+ */
+const val SONG_COLUMNS =
+    "id, name, track, disc, duration, year, genres, path, albumArtist, artists, album, size, mimeType, lastModified, " +
+        "playbackPosition, playCount, lastPlayed, lastCompleted, blacklisted, externalId, mediaProvider, " +
+        "replayGainTrack, replayGainAlbum, grouping, bitRate, bitDepth, sampleRate, channelCount, audioCodec, " +
+        "artworkVersion, dateAdded, favouritedAt, albumArtists, artistsTag, artistDisplay, compilation, mbTrackId, " +
+        "mbAlbumId, mbReleaseGroupId, mbArtistIds, mbAlbumArtistIds, serverAlbumId, serverArtistIds, " +
+        "serverAlbumArtistIds"
+
+/** [SONG_COLUMNS], each qualified by the `songs` table, for a join. */
+const val SONG_COLUMNS_QUALIFIED =
+    "songs.id, songs.name, songs.track, songs.disc, songs.duration, songs.year, songs.genres, songs.path, " +
+        "songs.albumArtist, songs.artists, songs.album, songs.size, songs.mimeType, songs.lastModified, " +
+        "songs.playbackPosition, songs.playCount, songs.lastPlayed, songs.lastCompleted, songs.blacklisted, " +
+        "songs.externalId, songs.mediaProvider, songs.replayGainTrack, songs.replayGainAlbum, songs.grouping, " +
+        "songs.bitRate, songs.bitDepth, songs.sampleRate, songs.channelCount, songs.audioCodec, songs.artworkVersion, " +
+        "songs.dateAdded, songs.favouritedAt, songs.albumArtists, songs.artistsTag, songs.artistDisplay, " +
+        "songs.compilation, songs.mbTrackId, songs.mbAlbumId, songs.mbReleaseGroupId, songs.mbArtistIds, " +
+        "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds"

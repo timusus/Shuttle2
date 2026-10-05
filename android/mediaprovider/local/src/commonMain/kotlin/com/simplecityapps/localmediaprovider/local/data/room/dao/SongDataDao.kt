@@ -9,6 +9,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
@@ -29,17 +30,21 @@ import kotlinx.datetime.LocalDate
 
 @Dao
 abstract class SongDataDao {
+    /** One song's lyrics, which the song lists leave out; null where it has none (or no such song). */
+    @Query("SELECT lyrics FROM songs WHERE id = :id")
+    abstract suspend fun lyrics(id: Long): String?
+
     @Transaction
-    @Query("SELECT * FROM songs")
+    @Query("SELECT $SONG_COLUMNS FROM songs")
     abstract suspend fun get(): List<SongData>
 
     /** One provider's songs as stored, whatever the user's filters, for the importer to diff against. */
     @Transaction
-    @Query("SELECT * FROM songs WHERE mediaProvider = :mediaProvider")
+    @Query("SELECT $SONG_COLUMNS FROM songs WHERE mediaProvider = :mediaProvider")
     abstract suspend fun getByProvider(mediaProvider: MediaProviderType): List<SongData>
 
     @Transaction
-    @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
+    @Query("SELECT $SONG_COLUMNS FROM songs ORDER BY albumArtist, album, track")
     abstract fun getAllSongData(): Flow<List<SongData>>
 
     /** The songs not excluded, and at least [minDurationMs] long (or of no known duration): what the library shows. */
@@ -58,7 +63,7 @@ abstract class SongDataDao {
     abstract suspend fun identityGeneration(): Long?
 
     @Transaction
-    @Query("SELECT * FROM songs WHERE id IN (:ids)")
+    @Query("SELECT $SONG_COLUMNS FROM songs WHERE id IN (:ids)")
     abstract fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>>
 
     /**
@@ -73,7 +78,7 @@ abstract class SongDataDao {
     }
 
     @Transaction
-    @Query("SELECT * FROM songs WHERE id IN (:ids)")
+    @Query("SELECT $SONG_COLUMNS FROM songs WHERE id IN (:ids)")
     abstract suspend fun songDataByIds(ids: List<Long>): List<SongData>
 
     /** [getByIds], read once. */
@@ -425,7 +430,7 @@ fun SongData.toSong(): Song = Song(
     mediaProvider = mediaProvider,
     replayGainTrack = replayGainTrack,
     replayGainAlbum = replayGainAlbum,
-    lyrics = lyrics,
+    lyrics = null,
     grouping = grouping,
     bitRate = bitRate,
     bitDepth = bitDepth,

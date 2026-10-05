@@ -18,8 +18,8 @@ struct SongInfoSection: Equatable, Identifiable {
 /// What Song Info shows for a song: the sections, labels and values of Android's, from the shared `infoSections()`,
 /// with the labels and the source's value localised, and the rows the song has no value for left out.
 enum SongInfoSections {
-    static func make(for song: Song) -> [SongInfoSection] {
-        make(from: song.infoSections())
+    static func make(for song: Song, lyrics: String? = nil) -> [SongInfoSection] {
+        make(from: song.infoSections(lyrics: lyrics))
     }
 
     static func make(from shared: [Shared.SongInfoSection]) -> [SongInfoSection] {
