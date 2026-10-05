@@ -20,10 +20,31 @@ data class ArtistCredit(
  * - Any other credit belongs to its name's key ([AlbumIdentityRule.artistKey]): the key an album artist of that name has.
  */
 object ArtistCredits {
+    private val VARIOUS_ARTISTS_KEY = AlbumArtistGroupKey(AlbumIdentityRule.artistKey(AlbumIdentityRule.VARIOUS_ARTISTS))
+
     private val SEPARATOR = Regex("\\s*;\\s+|\\s+/\\s+|\\s+[(\\[]?(?:feat\\.?|ft\\.?|featuring)\\s+", RegexOption.IGNORE_CASE)
 
     /** The artists [tags] credits, each once, in credit order; [identity] is the song's album identity. */
-    fun credits(tags: AlbumIdentityTags, identity: AlbumIdentity): List<ArtistCredit> {
+    fun credits(tags: AlbumIdentityTags, identity: AlbumIdentity): List<ArtistCredit> = creditsWithServerIds(tags, identity).map { (credit, _) -> credit }.distinctBy { it.groupKey }
+
+    /**
+     * The media server's own id for the artist [key] (#653): the song's album artist's when that's [key] and the song names
+     * exactly one, else the id paired with [key]'s credit. Null when the song doesn't pin one down, and for "Various
+     * Artists", who has no one face: a server image is then never borrowed from another artist on the same song (a duet
+     * partner's, or a compilation track's performer for its album artist).
+     */
+    fun serverArtistId(tags: AlbumIdentityTags, identity: AlbumIdentity, key: AlbumArtistGroupKey): String? {
+        if (key.key == null || key == VARIOUS_ARTISTS_KEY) return null
+        if (identity.albumArtistGroupKey == key) return tags.serverAlbumArtistIds.single()
+        return creditsWithServerIds(tags, identity)
+            .filter { (credit, _) -> credit.groupKey == key }
+            .mapNotNull { (_, serverId) -> serverId?.takeIf { it.isNotEmpty() } }
+            .distinct()
+            .singleOrNull()
+    }
+
+    /** Each credit in order, before deduplication, with the server artist id paired with it (null when ids don't pair). */
+    private fun creditsWithServerIds(tags: AlbumIdentityTags, identity: AlbumIdentity): List<Pair<ArtistCredit, String?>> {
         val multiValue = tags.artistsTag.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
         val names = multiValue.ifEmpty { tags.artists.flatMap(::split) }
         val albumArtistKey = identity.albumArtistGroupKey
@@ -34,8 +55,8 @@ object ArtistCredits {
         return names.mapIndexed { index, name ->
             val isAlbumArtist = (albumArtistMbId != null && mbIds?.get(index)?.equals(albumArtistMbId, ignoreCase = true) == true) ||
                 (albumArtistServerId != null && serverIds?.get(index) == albumArtistServerId)
-            ArtistCredit(name, if (isAlbumArtist) albumArtistKey else AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name)))
-        }.distinctBy { it.groupKey }
+            ArtistCredit(name, if (isAlbumArtist) albumArtistKey else AlbumArtistGroupKey(AlbumIdentityRule.artistKey(name))) to serverIds?.get(index)
+        }
     }
 
     /** One ARTIST value's artists: "A feat. B" is A and B, "A (feat. B)" too; "A & B" and "AC/DC" are one each. */
@@ -57,3 +78,6 @@ object ArtistCredits {
 
 /** Whether this song is [key]'s: its album's album artist, or credited on it. */
 fun Song.isByArtist(key: AlbumArtistGroupKey?): Boolean = albumArtistGroupKey == key || (key != null && artistCredits.any { it.groupKey == key })
+
+/** The media server's own id for the artist [key] on this song ([ArtistCredits.serverArtistId]): whose server image is theirs. */
+fun Song.serverArtistId(key: AlbumArtistGroupKey): String? = ArtistCredits.serverArtistId(identityTags, resolvedAlbumIdentity, key)

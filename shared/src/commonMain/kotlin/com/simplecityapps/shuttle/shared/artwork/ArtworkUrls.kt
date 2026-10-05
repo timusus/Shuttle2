@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.serverArtistId
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.shared.percentEncodedPath
@@ -70,7 +71,7 @@ class ArtworkUrls(
             emptyList()
         } else {
             listOfNotNull(
-                firstSongOf(hero.artist)?.let { song -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song) } },
+                serverArtistSong(hero.artist)?.let { (song, id) -> serverRequest { remoteArtworkProvider.getArtistArtworkUrl(song, id) } },
                 (hero.artist.name ?: hero.artist.friendlyArtistName)?.takeIf { hero.onlineLookup }?.let { artist -> s2Request(S2ArtworkApi.artistArtworkUrl(artist)) },
             ).map { it.copy(minimumSize = ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE) }
         }
@@ -134,11 +135,15 @@ class ArtworkUrls(
         .orEmpty()
         .firstOrNull()
 
-    /** One of their own albums' songs, else one crediting them elsewhere (a credited-only artist's). */
-    private suspend fun firstSongOf(albumArtist: AlbumArtist): Song? = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
+    /**
+     * The first of their songs that pins down the server's id for them ([serverArtistId], #653), with that id: their own
+     * albums' songs first, then those crediting them elsewhere (a credited-only artist's).
+     */
+    private suspend fun serverArtistSong(albumArtist: AlbumArtist): Pair<Song, String>? = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
         .firstOrNull()
         .orEmpty()
-        .let { songs -> songs.firstOrNull { song -> song.albumArtistGroupKey == albumArtist.groupKey } ?: songs.firstOrNull() }
+        .sortedByDescending { song -> song.albumArtistGroupKey == albumArtist.groupKey }
+        .firstNotNullOfOrNull { song -> song.serverArtistId(albumArtist.groupKey)?.let { id -> song to id } }
 
     private companion object {
         const val LOCAL_PREFIX = "s2local://"

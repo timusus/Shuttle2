@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.serverArtistId
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 
 /** Album art served by the media server a song streams from. */
@@ -29,7 +30,10 @@ internal class MediaServerAlbumArtworkSource(
     override suspend fun url(model: Album): String? = songRepository.firstSongOf(model)?.let { song -> remoteArtworkProvider.getAlbumArtworkUrl(song) }
 }
 
-/** Artist art served for the artist's first song. */
+/**
+ * The artist's own image on the media server (#653): the server's id for them comes from the first of their songs that
+ * pins one down ([serverArtistId]), never another artist credited on the same song.
+ */
 internal class MediaServerAlbumArtistArtworkSource(
     private val artworkSettings: ArtworkSettings,
     private val songRepository: SongRepository,
@@ -37,5 +41,7 @@ internal class MediaServerAlbumArtistArtworkSource(
 ) : ArtworkSource.Remote<AlbumArtist> {
     override fun handles(model: AlbumArtist): Boolean = !artworkSettings.localOnly.value
 
-    override suspend fun url(model: AlbumArtist): String? = songRepository.firstSongOf(model)?.let { song -> remoteArtworkProvider.getArtistArtworkUrl(song) }
+    override suspend fun url(model: AlbumArtist): String? = songRepository.songsOf(model)
+        .firstNotNullOfOrNull { song -> song.serverArtistId(model.groupKey)?.let { id -> song to id } }
+        ?.let { (song, id) -> remoteArtworkProvider.getArtistArtworkUrl(song, id) }
 }

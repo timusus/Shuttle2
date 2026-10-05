@@ -9,7 +9,14 @@ interface RemoteArtworkProvider {
 
     suspend fun getAlbumArtworkUrl(song: Song): String?
 
-    suspend fun getArtistArtworkUrl(song: Song): String?
+    /**
+     * The image of the artist the server knows as [serverArtistId], one of [song]'s artists ([com.simplecityapps.shuttle.model.serverArtistId]):
+     * the caller names the artist, so the image is never another artist's on the same song (#653).
+     */
+    suspend fun getArtistArtworkUrl(
+        song: Song,
+        serverArtistId: String
+    ): String?
 
     /**
      * The headers a request for [url], one of this provider's artwork urls, must carry to be authenticated: none by default.
@@ -31,7 +38,10 @@ class AggregateRemoteArtworkProvider(private val providers: Set<RemoteArtworkPro
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.getAlbumArtworkUrl(song)
 
-    override suspend fun getArtistArtworkUrl(song: Song): String? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.getArtistArtworkUrl(song)
+    override suspend fun getArtistArtworkUrl(
+        song: Song,
+        serverArtistId: String
+    ): String? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.getArtistArtworkUrl(song, serverArtistId)
 
     /** Each provider adds headers only for its own server's urls, so the union is the headers for [url]'s. */
     override fun requestHeaders(url: String): Map<String, String> = providers.fold(emptyMap()) { headers, provider -> headers + provider.requestHeaders(url) }

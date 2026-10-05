@@ -108,12 +108,12 @@ class SubsonicReportingTest {
     }
 
     @Test
-    fun `artist art is the first artist's cover art`() {
+    fun `artist art is the named artist's cover art`() {
         subsonic.signIn()
         server.respond(ARTIST, "artist.json", query = mapOf("id" to "07LA8XP6U5De7mzuoBVPz4"))
         val artwork = SubsonicRemoteArtworkProvider(subsonic.authenticationManager, subsonic.service)
 
-        val url = Url(runBlocking { artwork.getArtistArtworkUrl(song) }!!)
+        val url = Url(runBlocking { artwork.getArtistArtworkUrl(song, "07LA8XP6U5De7mzuoBVPz4") }!!)
 
         url.parameters["id"] shouldBe "ar-07LA8XP6U5De7mzuoBVPz4_0"
         url.parameters["u"].shouldBeNull()

@@ -25,11 +25,13 @@ class SubsonicRemoteArtworkProvider(
         return coverArtUrl(address, coverArt)
     }
 
-    /** The first artist's cover art, from `getArtist`; null when the server has none. */
-    override suspend fun getArtistArtworkUrl(song: Song): String? {
+    /** The artist's cover art, from `getArtist`; null when the server has none. */
+    override suspend fun getArtistArtworkUrl(
+        song: Song,
+        serverArtistId: String
+    ): String? {
         val address = authenticationManager.getAddress() ?: return null
-        val artistId = song.serverArtistIds?.firstOrNull() ?: return null
-        val result = authenticationManager.request { requestAddress, auth -> service.artist(requestAddress, auth, artistId) }
+        val result = authenticationManager.request { requestAddress, auth -> service.artist(requestAddress, auth, serverArtistId) }
         val coverArt = (result as? NetworkResult.Success)?.body?.coverArt ?: return null
         return coverArtUrl(address, coverArt)
     }

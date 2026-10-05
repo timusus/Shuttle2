@@ -79,11 +79,15 @@ class PlexRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `artist artwork url is the item's grandparent thumb`() = runTest {
-        respond(metadata(grandparentThumb = "/library/metadata/1/thumb/1700000000"))
+    fun `artist artwork url is the named artist's own thumb`() = runTest {
+        server.respond(
+            "/library/metadata/1",
+            S2Json.encodeToString(QueryResult(MediaContainer(metadata = listOf(metadata(thumb = "/library/metadata/1/thumb/1700000000").copy(key = "/library/metadata/1", type = "artist")))))
+        )
 
-        provider.getArtistArtworkUrl(song) shouldBe
+        provider.getArtistArtworkUrl(song, serverArtistId = "1") shouldBe
             "${server.address}/library/metadata/1/thumb/1700000000"
+        server.requestsTo(ITEM).shouldBeEmpty()
     }
 
     @Test

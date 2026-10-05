@@ -95,7 +95,20 @@ class ArtworkUrlsTest {
             ArtworkRequest("https://example.com/song-1/album"),
             s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"),
         )
-        remoteArtworkProvider.artistArtworkRequests shouldBe listOf(song)
+        remoteArtworkProvider.artistArtworkRequests shouldBe listOf(song to "artist-1")
+    }
+
+    @Test
+    fun `the server's artist image is never another artist's on the same song`() = runTest {
+        // A compilation track: its performer's server id isn't the album artist's (#653)
+        val song = song("song-1").copy(albumArtist = "Various Artists", artistsTag = listOf("Someone"), serverArtistIds = listOf("someone"), serverAlbumArtistIds = listOf("va"))
+        library(song)
+
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(
+            ArtworkRequest("https://example.com/song-1/album"),
+            s2("$S2_URL?artist=Various+Artists&album=Album+%26+Co"),
+        )
+        remoteArtworkProvider.artistArtworkRequests shouldBe emptyList()
     }
 
     @Test
@@ -222,7 +235,8 @@ class ArtworkUrlsTest {
         bitRate = null,
         bitDepth = null,
         sampleRate = null,
-        channelCount = null
+        channelCount = null,
+        serverAlbumArtistIds = listOf("artist-1")
     )
 
     /** An album whose group key matches [song], the way the real repository derives it from an imported song. */
@@ -252,7 +266,7 @@ class ArtworkUrlsTest {
 
     private class FakeRemoteArtworkProvider : RemoteArtworkProvider {
         val albumArtworkRequests = mutableListOf<Song>()
-        val artistArtworkRequests = mutableListOf<Song>()
+        val artistArtworkRequests = mutableListOf<Pair<Song, String>>()
         var hasArtwork = true
         var failure: Exception? = null
 
@@ -272,8 +286,11 @@ class ArtworkUrlsTest {
             return "https://example.com/${song.externalId}/album".takeIf { hasArtwork }
         }
 
-        override suspend fun getArtistArtworkUrl(song: Song): String? {
-            artistArtworkRequests += song
+        override suspend fun getArtistArtworkUrl(
+            song: Song,
+            serverArtistId: String
+        ): String? {
+            artistArtworkRequests += song to serverArtistId
             failure?.let { throw it }
             return "https://example.com/${song.externalId}/artist".takeIf { hasArtwork }
         }

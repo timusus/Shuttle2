@@ -17,22 +17,26 @@ constructor(
 ) : RemoteArtworkProvider {
     override fun handles(scheme: String?): Boolean = scheme == "plex"
 
-    override suspend fun getAlbumArtworkUrl(song: Song): String? = artworkUrl(song) { metadata -> metadata.parentThumb ?: metadata.thumb }
+    override suspend fun getAlbumArtworkUrl(song: Song): String? = plexRatingKey(song.path)?.let { ratingKey -> artworkUrl(ratingKey) { metadata -> metadata.parentThumb ?: metadata.thumb } }
 
-    override suspend fun getArtistArtworkUrl(song: Song): String? = artworkUrl(song) { metadata -> metadata.grandparentThumb }
+    /** The artist's own thumb, from their metadata: [serverArtistId] is their rating key. */
+    override suspend fun getArtistArtworkUrl(
+        song: Song,
+        serverArtistId: String
+    ): String? = artworkUrl(serverArtistId) { metadata -> metadata.thumb }
 
     override fun requestHeaders(url: String): Map<String, String> {
         val token = plexArtworkToken(url, authenticationManager.getAddress(), authenticationManager.getAuthenticatedCredentials()?.accessToken)
         return if (token == null) emptyMap() else mapOf(PLEX_TOKEN to token)
     }
 
+    /** [thumb] of the item with [ratingKey]. */
     private suspend fun artworkUrl(
-        song: Song,
+        ratingKey: String,
         thumb: (Metadata) -> String?
     ): String? {
         val address = authenticationManager.getAddress() ?: return null
         val credentials = authenticationManager.getAuthenticatedCredentials() ?: return null
-        val ratingKey = plexRatingKey(song.path) ?: return null
 
         val result = authenticationManager.checkSession(credentials, itemsService.item(url = address, token = credentials.accessToken, key = "$METADATA_PATH$ratingKey"))
         if (result is NetworkResult.Success) {

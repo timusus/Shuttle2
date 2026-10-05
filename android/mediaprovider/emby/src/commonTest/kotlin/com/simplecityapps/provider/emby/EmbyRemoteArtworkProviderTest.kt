@@ -57,10 +57,9 @@ class EmbyRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `artist artwork is the first artist's primary image`() = runTest {
-        server.respond("/Users/user-1/Items/102", "item.json")
-
-        provider.getArtistArtworkUrl(song("emby://item/102")) shouldBe "${server.address}/Items/301/Images/Primary?maxWidth=1000&maxHeight=1000"
+    fun `artist artwork is the named artist's primary image - without asking for the song`() = runTest {
+        provider.getArtistArtworkUrl(song("emby://item/102"), serverArtistId = "301") shouldBe "${server.address}/Items/301/Images/Primary?maxWidth=1000&maxHeight=1000"
+        server.requests.shouldBeEmpty()
     }
 
     @Test
@@ -71,22 +70,13 @@ class EmbyRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `a song without artists has no artist artwork`() = runTest {
-        server.respond("/Users/user-1/Items/104", "loose_item.json")
-
-        provider.getArtistArtworkUrl(song("emby://item/104")) shouldBe null
-    }
-
-    @Test
     fun `no artwork when the server can't find the song`() = runTest {
         provider.getAlbumArtworkUrl(song("emby://item/102")) shouldBe null
-        provider.getArtistArtworkUrl(song("emby://item/102")) shouldBe null
     }
 
     @Test
     fun `no artwork for a path without an item id - without asking the server`() = runTest {
         provider.getAlbumArtworkUrl(song("emby://item")) shouldBe null
-        provider.getArtistArtworkUrl(song("emby://item")) shouldBe null
         server.requests.shouldBeEmpty()
     }
 
@@ -95,6 +85,7 @@ class EmbyRemoteArtworkProviderTest {
         credentialStore.authenticatedCredentials = null
 
         provider.getAlbumArtworkUrl(song("emby://item/102")) shouldBe null
+        provider.getArtistArtworkUrl(song("emby://item/102"), serverArtistId = "301") shouldBe null
         server.requests.shouldBeEmpty()
     }
 

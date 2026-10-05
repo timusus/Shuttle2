@@ -58,10 +58,9 @@ class JellyfinRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `artist artwork is the first artist's primary image`() = runTest {
-        server.respond("/Users/user-1/Items/song-2", "item.json")
-
-        provider.getArtistArtworkUrl(song("jellyfin://item/song-2")) shouldBe "${server.address}/Items/artist-1/Images/Primary?maxWidth=1000&maxHeight=1000"
+    fun `artist artwork is the named artist's primary image - without asking for the song`() = runTest {
+        provider.getArtistArtworkUrl(song("jellyfin://item/song-2"), serverArtistId = "artist-1") shouldBe "${server.address}/Items/artist-1/Images/Primary?maxWidth=1000&maxHeight=1000"
+        server.requests.shouldBeEmpty()
     }
 
     @Test
@@ -72,22 +71,13 @@ class JellyfinRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `a song without artists has no artist artwork`() = runTest {
-        server.respond("/Users/user-1/Items/song-4", "loose_item.json")
-
-        provider.getArtistArtworkUrl(song("jellyfin://item/song-4")) shouldBe null
-    }
-
-    @Test
     fun `no artwork when the server can't find the song`() = runTest {
         provider.getAlbumArtworkUrl(song("jellyfin://item/song-2")) shouldBe null
-        provider.getArtistArtworkUrl(song("jellyfin://item/song-2")) shouldBe null
     }
 
     @Test
     fun `no artwork for a path without an item id - without asking the server`() = runTest {
         provider.getAlbumArtworkUrl(song("jellyfin://item")) shouldBe null
-        provider.getArtistArtworkUrl(song("jellyfin://item")) shouldBe null
         server.requests.shouldBeEmpty()
     }
 
@@ -96,6 +86,7 @@ class JellyfinRemoteArtworkProviderTest {
         credentialStore.authenticatedCredentials = null
 
         provider.getAlbumArtworkUrl(song("jellyfin://item/song-2")) shouldBe null
+        provider.getArtistArtworkUrl(song("jellyfin://item/song-2"), serverArtistId = "artist-1") shouldBe null
         server.requests.shouldBeEmpty()
     }
 

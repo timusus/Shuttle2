@@ -105,4 +105,56 @@ class ArtistCreditsTest {
         index.songIds(key("André 3000")) shouldBe listOf(blonde.songId)
         index.songIds(key(AlbumIdentityRule.VARIOUS_ARTISTS)) shouldBe listOf(nowAdele.songId, nowColdplay.songId)
     }
+
+    private fun serverArtistId(song: AlbumIdentityTags, artist: String): String? = ArtistCredits.serverArtistId(song, AlbumIdentityRule.resolve(listOf(song)).getValue(song.songId), key(artist))
+
+    @Test
+    fun `an artist's server id is never another artist's on the same song`() {
+        // Their own album, where a duet partner is credited first (#653)
+        val duet = tags(
+            "The Lockdown Sessions",
+            emptyList(),
+            albumArtist = "Elton John",
+            artistsTag = listOf("Dua Lipa", "Elton John"),
+            serverArtistIds = listOf("dua", "elton"),
+            serverAlbumArtistIds = listOf("elton"),
+            mediaProvider = MediaProviderType.Jellyfin
+        )
+
+        serverArtistId(duet, "Elton John") shouldBe "elton"
+        serverArtistId(duet, "Dua Lipa") shouldBe "dua"
+        serverArtistId(duet, "Someone Else") shouldBe null
+    }
+
+    @Test
+    fun `a song with several album artists or unpaired ids pins none down`() {
+        val joint = tags(
+            "Blade Runner 2049",
+            emptyList(),
+            albumArtists = listOf("Hans Zimmer", "Benjamin Wallfisch"),
+            artistsTag = listOf("Hans Zimmer", "Benjamin Wallfisch"),
+            serverArtistIds = listOf("hans"),
+            serverAlbumArtistIds = listOf("hans", "ben"),
+            mediaProvider = MediaProviderType.Jellyfin
+        )
+        val albumArtist = AlbumIdentityRule.resolve(listOf(joint)).getValue(joint.songId).albumArtistName!!
+
+        serverArtistId(joint, albumArtist) shouldBe null
+        serverArtistId(joint, "Hans Zimmer") shouldBe null
+    }
+
+    @Test
+    fun `Various Artists has no server artist image`() {
+        val compilation = tags(
+            "Now 100",
+            listOf("Adele"),
+            albumArtist = AlbumIdentityRule.VARIOUS_ARTISTS,
+            serverArtistIds = listOf("adele"),
+            serverAlbumArtistIds = listOf("va"),
+            mediaProvider = MediaProviderType.Jellyfin
+        )
+
+        serverArtistId(compilation, AlbumIdentityRule.VARIOUS_ARTISTS) shouldBe null
+        serverArtistId(compilation, "Adele") shouldBe "adele"
+    }
 }
