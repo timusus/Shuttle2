@@ -3,10 +3,10 @@ package com.simplecityapps.shuttle.shared.telemetry
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.logging.Logger
-import com.simplecityapps.shuttle.logging.OsLogLogger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
+import com.simplecityapps.shuttle.shared.logging.OsLogLogger
 import com.simplecityapps.shuttle.telemetry.TelemetryConsentGate
 import com.simplecityapps.shuttle.telemetry.TelemetryScrubber
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources

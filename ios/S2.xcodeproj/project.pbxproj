@@ -100,6 +100,7 @@
 		76888FE5233E4B90ED2A244A /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA31930A8CB79E30E7CB606 /* Motion.swift */; };
 		76E94E7833435C1AF3752B49 /* ProSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8D9DB18D7662E94052AB35 /* ProSettingsSection.swift */; };
 		7A701E93B15CFAEEF3311D42 /* LibraryListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191927F39E29CE059057C079 /* LibraryListTests.swift */; };
+		83383C1E9DCF9FF60907D62A /* KotlinLogSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */; };
 		842361F9758C975E8AAB0BDB /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = CB2C91FE8406D6ED46243D9D /* Localizable.strings */; };
 		85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5961F296B2738309AF66BC /* AppGraph.swift */; };
 		879F7220E10417FE86AEA528 /* ArtworkSource+Testing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A070F599F25063A5506E523 /* ArtworkSource+Testing.swift */; };
@@ -401,6 +402,7 @@
 		DB04BA19C3A256E1B0383B7F /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Settings.strings; sourceTree = "<group>"; };
 		DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		DF69F9EF58C01511DA169401 /* NowPlayingSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingSnapshot.swift; sourceTree = "<group>"; };
+		E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotlinLogSink.swift; sourceTree = "<group>"; };
 		E12ADD59D6091FBDE4935520 /* TelemetryConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryConfigTests.swift; sourceTree = "<group>"; };
 		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E961F30A527AB450C8572B47 /* Separator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Separator.swift; sourceTree = "<group>"; };
@@ -612,6 +614,7 @@
 		8014A9F64992F3B55A584FFB /* Diagnostics */ = {
 			isa = PBXGroup;
 			children = (
+				E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */,
 				ADB774BE523C8AEA273FC182 /* StartupTrace.swift */,
 			);
 			path = Diagnostics;
@@ -1094,6 +1097,7 @@
 				210B036A0CC1AF2D9E0E1286 /* ImportActivity.swift in Sources */,
 				4B7D96BE34E44984943545EE /* JumpBackInGrid.swift in Sources */,
 				140C0EE1B9DAE1FF6D153099 /* KotlinCrashEvent.swift in Sources */,
+				83383C1E9DCF9FF60907D62A /* KotlinLogSink.swift in Sources */,
 				9F1FD3B78D286A40F4A9857C /* KotlinServerConnectionPolicy.swift in Sources */,
 				9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */,
 				3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */,

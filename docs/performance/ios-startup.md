@@ -18,9 +18,8 @@ Everything logs under subsystem `com.simplecityapps.shuttle`, category `Startup`
   load, and the search index warm-up (songs query, index ready). These carry durations; their log timestamps place them
   on the same timeline.
 
-`log show` can't render the Kotlin lines: `OsLogLogger` passes its format string from Kotlin data rather than the
-`__oslogstring` section, so the archived entries read `<compose failure>`. `log stream` renders them live, so the method
-streams.
+Kotlin lines reach OSLog through Swift (`KotlinLogSink`, a literal `"\(message, privacy: .public)"` format), so they
+render in both `log stream` and `log show`. The measurements below were taken by streaming, before that fix.
 
 ## Method
 
@@ -122,7 +121,6 @@ and the per-item resume-point loop (Jump Back In is empty here; recheck with pla
 
 - Device numbers, and a library with play history (Jump Back In's resume points, Around This Time, Heavy Rotation).
 - Library and Search first content: relaunch with each as the start tab (Settings) and rerun.
-- `OsLogLogger`'s `<compose failure>` in `log show` (archived Kotlin logs unreadable, sysdiagnoses included).
 
 ## Physical device (Debug build)
 

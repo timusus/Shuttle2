@@ -250,7 +250,8 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   stopped, so the rebuild starts where the last tick heard it (`Timeline.heard`, #714); a start that fails
   then reports loading and is retried a few times before staying paused (#715).
 - Logging (#897): everything under subsystem `com.simplecityapps.shuttle2`, the Kotlin `Logger` included
-  (`OsLogLogger`, its tag as the category). Playback's four categories persist at info (project.yml
+  (`OsLogLogger` in :shared, its tag as the category, writing through Swift's `KotlinLogSink`: the format string
+  must be a Swift literal or `log show` renders `<compose failure>`, #899). Playback's four categories persist at info (project.yml
   `OSLogPreferences`), so `sudo log collect --device` after a stall has them: `playback` (Kotlin
   `IosPlayerController` and Swift `PlayIntent`: every command with its source, state changes, transitions,
   failures), `audio-engine` (engine state, gapless or not transitions, underruns, buffer health, restarts),

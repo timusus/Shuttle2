@@ -28,6 +28,7 @@ enum AppGraph {
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
+        OsLogLoggerKt.installNativeLogging(sink: Self.kotlinLogSink)
         // Each step's time goes to the Startup log (`StartupTrace`, docs/performance/ios-startup.md)
         let dependencies = StartupTrace.step("dependencies") { IosAppDependencies() }
         StartupTrace.step("telemetryStartup") { dependencies.graph.telemetryStartup.start() }
@@ -53,6 +54,7 @@ enum AppGraph {
         _dependencies = dependencies
     }
 
+    private static let kotlinLogSink = KotlinLogSink()
     private static var startedAfterFirstFrame = false
     private static var searchWarmUpStarted = false
 
