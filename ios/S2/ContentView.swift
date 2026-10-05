@@ -38,6 +38,7 @@ struct ContentView: View {
             .environment(\.nowPlayingNamespace, nowPlayingNamespace)
             // For screens that push without a `NavigationLink`, such as Sources after its type picker closes.
             .environment(navigator)
+            .observingDownloadBadges(AppGraph.shared.offlineDownloads)
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
                 // Go to Album/Artist closes Now Playing and pushes onto the selected root.
                 NowPlayingView(onOpen: { route in navigator.open(route) })

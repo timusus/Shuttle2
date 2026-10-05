@@ -620,9 +620,15 @@ extension DetailDownloads {
     /// `OfflineDownloads.downloads`, so it's redrawn, and the summary read again, as a download moves on.
     @MainActor
     init(actions: MediaActionsViewModel, downloads: OfflineDownloads = AppGraph.shared.offlineDownloads) {
+        self.init(downloads: downloads, send: { actions.send($0) })
+    }
+
+    /// The same, sending the actions through `send`, for a screen that has no `MediaActionsViewModel` of its own (Search).
+    @MainActor
+    init(downloads: OfflineDownloads = AppGraph.shared.offlineDownloads, send: @escaping (any MediaAction) -> Void) {
         summary = { downloads.summary(songs: $0) }
-        onDownload = { actions.send(MediaActionDownload(selection: MediaSelectionSongs(songs: $0))) }
-        onRemove = { actions.send(MediaActionRemoveDownload(selection: MediaSelectionSongs(songs: $0))) }
+        onDownload = { send(MediaActionDownload(selection: MediaSelectionSongs(songs: $0))) }
+        onRemove = { send(MediaActionRemoveDownload(selection: MediaSelectionSongs(songs: $0))) }
     }
 }
 

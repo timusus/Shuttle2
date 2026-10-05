@@ -63,13 +63,15 @@ private extension RelativeDateTimeFormatter {
 /// - `omittingArtist` drops the screen's own artist from the credits (artist detail), leaving the album, or only
 ///   the other artists credited when they differ;
 /// - `key` adds the sort key where it's the point (`SongRowKey`);
-/// - the trailing side holds a small heart for a favourite, then the duration (under the title at accessibility text sizes).
+/// - the trailing side holds a small heart for a favourite, then the duration, after a badge when it's on the device (#853) (under the title at accessibility text sizes).
 struct SongRow: View {
     let song: Song
     var playback: MediaRowPlayback = .none
     var key: SongRowKey?
     var omittingArtist: String?
     var artworkSize: CGFloat
+
+    @Environment(\.downloadBadges) private var downloadBadges
 
     /// The Library's sort, which adds its key to the subtitle: a play count, or the date added.
     init(song: Song, playback: MediaRowPlayback = .none, sortOrder: SongSortOrder? = nil, key: SongRowKey? = nil, omittingArtist: String? = nil, artworkSize: CGFloat = ArtworkSize.row) {
@@ -94,6 +96,9 @@ struct SongRow: View {
                     Image(systemName: "heart.fill")
                         .accessibilityLabel("Favourite")
                         .accessibilityIdentifier("songRow.favourite")
+                }
+                if let badge = downloadBadges[song.path] {
+                    DownloadBadgeView(badge: badge)
                 }
                 SongDurationText(durationMs: Int64(song.duration))
             }

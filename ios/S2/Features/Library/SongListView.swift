@@ -28,6 +28,7 @@ struct SongListView: View {
                     onExclude: { song in
                         models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                     },
+                    downloads: DetailDownloads(actions: models.actions),
                     onShuffle: {
                         models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
                     },
@@ -64,6 +65,7 @@ struct SongListContent: View {
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
     var onExclude: (Song) -> Void = { _ in }
+    var downloads = DetailDownloads()
     var onShuffle: () -> Void = {}
     var onSortOrder: (SongSortOrder) -> Void = { _ in }
 
@@ -107,7 +109,7 @@ struct SongListContent: View {
                 Button { onPlay(index) } label: { SongRow(song: song, playback: playback, sortOrder: state.sortOrder) }
                     .buttonStyle(.pressScale)
                     .contextMenu {
-                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
+                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
                     }
                     .nowPlayingRowBackground(playback)
             }
@@ -116,7 +118,7 @@ struct SongListContent: View {
 }
 
 /// A song row's context menu in the song lists: Play Next, Add to Queue, Song Info (when the screen presents it) and
-/// Exclude (#650), marked destructive as in Now Playing's menu, which hides the song from the library through the
+/// Download or Remove Download, and Exclude (#650), marked destructive as in Now Playing's menu, which hides the song from the library through the
 /// shared action.
 struct SongRowMenu: View {
     let song: Song
@@ -124,6 +126,8 @@ struct SongRowMenu: View {
     let onAddToQueue: (Song) -> Void
     let onExclude: (Song) -> Void
     var onSongInfo: ((Song) -> Void)?
+    /// Download and Remove Download for the song (#853); hidden by the default, as for a screen that doesn't offer them.
+    var downloads = DetailDownloads()
 
     var body: some View {
         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
@@ -131,6 +135,7 @@ struct SongRowMenu: View {
         if let onSongInfo {
             Button("Song Info", systemImage: "info.circle") { onSongInfo(song) }
         }
+        DownloadMenuItems(songs: [song], downloads: downloads)
         let exclude = NowPlayingSongAction.exclude
         Button(exclude.title, systemImage: exclude.systemImage, role: .destructive) { onExclude(song) }
     }

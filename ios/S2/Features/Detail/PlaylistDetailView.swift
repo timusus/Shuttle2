@@ -125,8 +125,7 @@ struct PlaylistDetailContent: View {
                         .buttonStyle(.plain)
                         .rowSeparator(.none)
                         .contextMenu {
-                            SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
-                            DownloadMenuItems(songs: [entry.song], downloads: downloads)
+                            SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
                             Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }
                         }
                         .swipeActions(edge: .trailing) {

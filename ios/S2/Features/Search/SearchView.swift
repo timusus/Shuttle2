@@ -246,6 +246,8 @@ struct SearchResultList: View {
     private let items: SearchResultItems
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// Download and Remove Download in a song result's menu, sent through `onAction`.
+    private var downloads: DetailDownloads { DetailDownloads(send: onAction) }
     @State private var expanded: SearchCategory?
     @State private var songInfo: SongInfoTarget?
 
@@ -387,7 +389,8 @@ struct SearchResultList: View {
                         onPlayNext: { onAction(MediaActionPlayNext(selection: MediaSelectionSongs(song: $0))) },
                         onAddToQueue: { onAction(MediaActionAddToQueue(selection: MediaSelectionSongs(song: $0))) },
                         onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) },
-                        onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }
+                        onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) },
+                        downloads: downloads
                     )
                 }
         case .genres:

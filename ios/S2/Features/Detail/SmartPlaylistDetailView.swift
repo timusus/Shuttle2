@@ -29,7 +29,8 @@ struct SmartPlaylistDetailView: View {
                 },
                 onExclude: { song in
                     models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
-                }
+                },
+                downloads: DetailDownloads(actions: models.actions)
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
         }
@@ -58,6 +59,7 @@ struct SmartPlaylistDetailContent: View {
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
     var onExclude: (Song) -> Void = { _ in }
+    var downloads = DetailDownloads()
 
     @State private var songInfo: SongInfoTarget?
 
@@ -85,7 +87,7 @@ struct SmartPlaylistDetailContent: View {
                     .buttonStyle(.plain)
                     .rowSeparator(.none)
                     .contextMenu {
-                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
+                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }, downloads: downloads)
                     }
                 }
             }

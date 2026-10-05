@@ -102,7 +102,44 @@ struct SongRowTests {
         #expect((try? SongRow(song: remote).inspect().find(viewWithAccessibilityIdentifier: "songRow.server")) == nil)
     }
 
+    @Test func aDownloadedOrDownloadingSongShowsABadgeAndOthersDoNot() throws {
+        let song = TestSongs.demo[0]
+        let downloaded = SongRow(song: song).environment(\.downloadBadges, [song.path: .downloaded])
+        #expect((try? downloaded.inspect().find(viewWithAccessibilityIdentifier: "songRow.downloaded")) != nil)
+        let downloading = SongRow(song: song).environment(\.downloadBadges, [song.path: .downloading])
+        #expect((try? downloading.inspect().find(viewWithAccessibilityIdentifier: "songRow.downloading")) != nil)
+        let other = SongRow(song: song).environment(\.downloadBadges, ["jellyfin://item/other": .downloaded])
+        #expect((try? other.inspect().find(viewWithAccessibilityIdentifier: "songRow.downloaded")) == nil)
+    }
+
+    @Test func aFailedDownloadHasNoBadge() {
+        let downloads = [
+            "a": OfflineDownload(state: .completed, progress: 1),
+            "b": OfflineDownload(state: .downloading, progress: 0.4),
+            "c": OfflineDownload(state: .failed, progress: 0.4)
+        ]
+        #expect(DownloadBadge.badges(downloads) == ["a": .downloaded, "b": .downloading])
+    }
+
     // MARK: - Menu
+
+    @Test func theMenuOffersDownloadAndRemoveDownloadByTheSummary() throws {
+        var downloaded: [Song] = []
+        var removed: [Song] = []
+        let song = TestSongs.demo[1]
+        let offers = DetailDownloads(
+            summary: { _ in DownloadSummary(status: .notDownloaded, canDownload: true, canRemove: true) },
+            onDownload: { downloaded = $0 },
+            onRemove: { removed = $0 }
+        )
+        let menu = SongRowMenu(song: song, onPlayNext: { _ in }, onAddToQueue: { _ in }, onExclude: { _ in }, downloads: offers)
+        try menu.inspect().find(button: "Download").tap()
+        try menu.inspect().find(button: "Remove Download").tap()
+        #expect(downloaded.map(\.id) == [song.id])
+        #expect(removed.map(\.id) == [song.id])
+        let none = SongRowMenu(song: song, onPlayNext: { _ in }, onAddToQueue: { _ in }, onExclude: { _ in })
+        #expect((try? none.inspect().find(button: "Download")) == nil)
+    }
 
     @Test func theMenuOffersSongInfoOnlyWhereTheScreenPresentsIt() throws {
         var info: Song?
