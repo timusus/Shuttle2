@@ -144,10 +144,10 @@ private fun SignInFields(
             onValueChange = actions.onUsernameChange,
             label = { Text(stringResource(R.string.media_provider_config_hint_username)) },
             supportingText = when {
-                usernameMissing -> ({ Text(required) })
-                uiState.acceptsApiKey -> ({ Text(stringResource(R.string.media_provider_config_helper_username_api_key)) })
+                usernameMissing -> required
+                uiState.acceptsApiKey -> stringResource(R.string.media_provider_config_helper_username_api_key)
                 else -> null
-            },
+            }?.let { helper -> { Text(helper) } },
             isError = usernameMissing,
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
