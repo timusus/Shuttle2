@@ -49,7 +49,8 @@ data class PlexStream(
  * [endPlay] stops a progressive transcode (#722) once the last play holding its session ends, and retires the session
  * in the same step, so a play opened after that gets a new one the stop can't reach; the server otherwise keeps
  * transcoding a skipped song until it times out idle. A stream with no play (Android's HLS, which the server times out
- * once its segments stop being read) is on the song's own session, which nothing stops.
+ * once its segments stop being read) is on the song's own session, which nothing stops. Sessions live in memory only, so
+ * a transcode running when the app is killed is left to Plex's idle timeout.
  */
 @OptIn(ExperimentalAtomicApi::class)
 @Inject

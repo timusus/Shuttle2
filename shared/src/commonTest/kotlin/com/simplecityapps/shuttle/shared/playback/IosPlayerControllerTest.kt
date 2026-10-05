@@ -877,6 +877,31 @@ class IosPlayerControllerTest {
     }
 
     @Test
+    fun `playing the last track out ends its play as nothing follows it`() = test { controller ->
+        controller.start(listOf(a))
+        val playOfA = plays.single { it.first == a.id }.second
+        endedPlays shouldBe emptyList()
+
+        engine.finishTrack()
+
+        endedPlays shouldBe listOf(playOfA)
+    }
+
+    @Test
+    fun `a resolve cancelled after the provider opened its play ends it`() = test { controller ->
+        resolveGate = CompletableDeferred()
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.load { }
+        controller.play()
+        val playOfA = plays.single { it.first == a.id }.second
+        endedPlays shouldBe emptyList()
+
+        controller.queueOperations.clear()
+
+        endedPlays shouldBe listOf(playOfA)
+    }
+
+    @Test
     fun `emptying the queue ends the current and next plays`() = test { controller ->
         controller.start(listOf(a, b))
 

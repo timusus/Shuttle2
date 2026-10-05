@@ -283,6 +283,9 @@ class IosPlayerController(
             endAbandonedPlays()
         }
     } catch (e: CancellationException) {
+        // A resolve cancelled part-way may have opened the play's session before it was: end it unless the play is still live
+        resolvedPlays[feed.playId] = feed.item.song
+        endAbandonedPlays()
         throw e
     } catch (e: Exception) {
         logger.warn(e) { "Failed to resolve the stream for ${feed.item.song.path}" }
@@ -293,17 +296,22 @@ class IosPlayerController(
     private fun endAbandonedPlays() {
         if (resolvedPlays.isEmpty()) return
         val live = setOfNotNull(current?.playId, next?.playId, engineNext?.playId)
-        val abandoned = resolvedPlays.filterKeys { it !in live }
-        abandoned.forEach { (playId, song) ->
-            resolvedPlays.remove(playId)
-            scope.launch {
-                // Best effort: a provider that fails to end a play must not take playback down with it
-                try {
-                    resolver.endPlay(song, playId)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                }
+        resolvedPlays.filterKeys { it !in live }.keys.forEach(::endPlay)
+    }
+
+    /**
+     * Ends [playId]'s play. The provider retires the play's session before its first suspension, and it's started
+     * undispatched, so a stream resolved for the play afterwards opens a new session the stop can't reach.
+     */
+    private fun endPlay(playId: String) {
+        val song = resolvedPlays.remove(playId) ?: return
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            // Best effort: a provider that fails to end a play must not take playback down with it
+            try {
+                resolver.endPlay(song, playId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
             }
         }
     }
@@ -645,6 +653,8 @@ class IosPlayerController(
             return
         }
         completePending(Result.failure(IllegalStateException("Nothing to load")))
+        // Nothing follows, so the server stops the ended track's transcode now rather than when it times out idle
+        endPlay(feed.playId)
         log.info { "end of queue after song ${feed.item.song.id}: paused" }
         playWhenReady = false
         engineState = IosAudioPlayerState.Ended
