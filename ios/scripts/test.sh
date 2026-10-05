@@ -78,6 +78,7 @@ fi
 "$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
 cd "$ios_dir"
 echo "==> xcodebuild test -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
+# One SPM clone cache for every worktree; no index store, which only Xcode's own UI reads.
 xcodebuild test -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
-  -derivedDataPath build/DerivedData -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
+  -derivedDataPath build/DerivedData -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" COMPILER_INDEX_STORE_ENABLE=NO -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
 echo "==> S2 tests passed"

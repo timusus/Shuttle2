@@ -65,6 +65,8 @@ echo "==> Building S2 ($CONFIGURATION) for device $DEVICE with team $TEAM"
   -configuration "$CONFIGURATION" \
   -destination "id=$DEVICE" \
   -derivedDataPath "$OUT/dd" \
+  -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" \
+  COMPILER_INDEX_STORE_ENABLE=NO \
   -allowProvisioningUpdates \
   -allowProvisioningDeviceRegistration \
   DEVELOPMENT_TEAM="$TEAM" \

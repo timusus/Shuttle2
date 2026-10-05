@@ -45,6 +45,10 @@ ios/scripts/test.sh --package                  # swift test in ios/Playback (the
                                                # extra args go to swift test (--filter ...)
 ```
 
+The xcodebuild calls under `ios/scripts/` share one SPM clone cache (`~/Library/Caches/s2-spm`, via
+`-clonedSourcePackagesDirPath`) across worktrees and skip the index store. Don't set the scheme's S2Tests
+`parallelizable`: Swift Testing already runs in parallel in-process, and cloning made the suite slower and flaky.
+
 `xcrun simctl list devices available` lists UDIDs. `test.sh`, `run-sim-server.sh` and
 `maestro-sim.sh` all get their simulator from the shared ios-sim lease pool (`~/.claude/scripts/ios-sim/device.sh`)
 when it's set up; `$S2_SIM_HOLDER` leases as a different holder, for parallel workers. Set
