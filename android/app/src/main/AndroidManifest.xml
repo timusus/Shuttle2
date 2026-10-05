@@ -132,8 +132,10 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- androidx.startup runs only ProfileInstallerInitializer, which installs the Baseline Profile on
-             sideloaded APKs. WorkManager is configured on demand through Configuration.Provider. -->
+        <!-- androidx.startup runs ProfileInstallerInitializer, which installs the Baseline Profile on
+             sideloaded APKs, and ProcessLifecycleInitializer, whose ProcessLifecycleOwner.init()
+             drives MediaProviderInitializer's sync-on-return-to-app observer (#771). WorkManager is
+             configured on demand through Configuration.Provider. -->
 
         <provider
             android:name="androidx.startup.InitializationProvider"
@@ -142,9 +144,6 @@
             tools:node="merge">
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
-                tools:node="remove" />
-            <meta-data
-                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
                 tools:node="remove" />
             <meta-data
                 android:name="androidx.emoji2.text.EmojiCompatInitializer"

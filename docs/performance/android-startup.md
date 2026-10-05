@@ -96,9 +96,12 @@ Nothing moved. Two sections account for about 90% of `onCreate`, and neither can
 - **ContentProviders stay.** The merged release manifest declares only `FileProvider` (which does nothing at
   startup), Sentry's `SentryNdkPreloadProvider`, which preloads the NDK library for crash reporting, and
   androidx.startup's `InitializationProvider`. The app manifest merges that provider but removes every initializer
-  except profileinstaller's `ProfileInstallerInitializer` (WorkManager, ProcessLifecycle, EmojiCompat and OkHttp's
-  `PlatformInitializer` are removed with `tools:node="remove"`). WorkManager is configured on demand through
-  `Configuration.Provider`.
+  except profileinstaller's `ProfileInstallerInitializer` and lifecycle's `ProcessLifecycleInitializer`
+  (WorkManager, EmojiCompat and OkHttp's `PlatformInitializer` are removed with `tools:node="remove"`). WorkManager
+  is configured on demand through `Configuration.Provider`. `ProcessLifecycleInitializer` stays because it is the
+  only caller of `ProcessLifecycleOwner.init()`: `MediaProviderInitializer` observes
+  `ProcessLifecycleOwner` to sync servers when you return to the app (#771), and without the initializer that
+  observer never fires.
 
 So the before and after numbers for the audit are the table above.
 
@@ -107,6 +110,7 @@ So the before and after numbers for the audit are the table above.
 profileinstaller's `ProfileInstallerInitializer` runs from androidx.startup's `InitializationProvider`, so a sideloaded
 APK (GitHub release, `adb install`) writes its Baseline Profile shortly after first launch; it takes effect on the next
 cold start. Play installs compile from the profile in the bundle at install time and the benchmark installs it through
-`ProfileInstallReceiver`, so neither depends on this. The provider is kept with only that initializer; the merged debug
-and release manifests were checked to confirm no other initializer remains. A device check (sideload a release APK,
+`ProfileInstallReceiver`, so neither depends on this. The provider is kept with that initializer and
+`ProcessLifecycleInitializer` (see the audit above for why the latter must stay); the merged debug and release
+manifests were checked to confirm no other initializer remains. A device check (sideload a release APK,
 `adb shell dumpsys package dexopt` after a second launch) is still open.
