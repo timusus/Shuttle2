@@ -209,6 +209,18 @@ class PaywallViewModelTest {
     }
 
     @Test
+    fun `Pro arriving after a restore reported it is the restore - not a thank you`() = runTest {
+        val viewModel = collectedViewModel()
+        billing.restoreResult = RestoreResult.Restored
+
+        viewModel.onRestore()
+        entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+
+        viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(PaywallMessage.Restored)
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
     fun `a purchase made while the paywall is open is thanked`() = runTest {
         val viewModel = collectedViewModel()
 

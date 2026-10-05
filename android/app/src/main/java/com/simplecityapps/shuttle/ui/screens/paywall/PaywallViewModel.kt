@@ -105,6 +105,9 @@ class PaywallViewModel @AssistedInject constructor(
     private val selectedPlan = MutableStateFlow(PaywallPlan.Lifetime)
     private val restoring = MutableStateFlow(false)
 
+    // A restore that found Pro: the entitlement may turn Pro after it says so, and that's the restore, not a purchase
+    private var restored = false
+
     private val events = PendingEvents<PaywallUiEvent>()
 
     val uiState: StateFlow<PaywallUiState> = combine(entitlement, billing.offers, selectedPlan, restoring, events.flow) { entitlement, offers, plan, restoring, events ->
@@ -127,12 +130,12 @@ class PaywallViewModel @AssistedInject constructor(
     /**
      * Says thank you once when Free or Trial turns into Pro while the paywall is open: a purchase or a promo code just
      * went through. Not from Unknown (Play answering late says nothing of a purchase made now), and not for a restore,
-     * which has its own message.
+     * which has its own message, whether the entitlement changes while it runs or after it reports Pro restored.
      */
     private suspend fun thankPurchaser() {
         var previous = entitlement.value
         entitlement.collect { current ->
-            if (current is Entitlement.Pro && (previous is Entitlement.Free || previous is Entitlement.Trial) && !restoring.value) {
+            if (current is Entitlement.Pro && (previous is Entitlement.Free || previous is Entitlement.Trial) && !restoring.value && !restored) {
                 events.post(PaywallUiEvent.ShowMessage(PaywallMessage.ThankYou))
             }
             previous = current
@@ -163,7 +166,7 @@ class PaywallViewModel @AssistedInject constructor(
         restoring.value = true
         viewModelScope.launch {
             val message = when (billing.restorePurchases()) {
-                RestoreResult.Restored -> PaywallMessage.Restored
+                RestoreResult.Restored -> PaywallMessage.Restored.also { restored = true }
                 RestoreResult.NothingToRestore -> PaywallMessage.NothingToRestore
                 RestoreResult.Failed -> PaywallMessage.RestoreFailed
             }
