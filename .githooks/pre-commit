@@ -27,4 +27,39 @@ pre-commit: refusing to commit directly on main.
 EOF
   exit 1
 fi
+
+# Format the staged Kotlin with ktlint -F and re-stage it, so a Python-heredoc edit (which skips the
+# Edit-tool format hook) never lands unformatted. Files that also have unstaged changes are left alone,
+# since re-staging would sweep those changes in. Fails only on errors -F cannot fix.
+# Bypass:  SKIP_LINT=1 git commit ...
+[ "${SKIP_LINT:-}" = "1" ] && exit 0
+
+root="$(git rev-parse --show-toplevel)" || exit 0
+cd "$root" || exit 0
+ktlint="support/vendor/ktlint/ktlint"
+[ -x "$ktlint" ] || exit 0
+
+files=()
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in */generated/*|*/build/*|generated/*|build/*) continue ;; esac
+  if ! git diff --quiet -- "$f"; then
+    echo "pre-commit: not formatting $f (it has unstaged changes); run: support/scripts/lint -F $f" >&2
+    continue
+  fi
+  files+=("$f")
+done <<EOF2
+$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.kts?$')
+EOF2
+
+[ ${#files[@]} -eq 0 ] && exit 0
+
+out="$("$ktlint" -F "${files[@]}" 2>&1)"
+rc=$?
+git add -- "${files[@]}"
+if [ "$rc" -ne 0 ]; then
+  echo "pre-commit: ktlint errors that -F cannot fix (SKIP_LINT=1 bypasses):" >&2
+  printf '%s\n' "$out" | grep -E '\.kts?:[0-9]+:[0-9]+' | sed "s|^$root/||" >&2
+  exit 1
+fi
 exit 0
