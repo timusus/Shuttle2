@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "A damaged music file that crashed the tag reader no longer crashes the app again when its artwork loads or when you open it in the tag editor.", "commits": [] }

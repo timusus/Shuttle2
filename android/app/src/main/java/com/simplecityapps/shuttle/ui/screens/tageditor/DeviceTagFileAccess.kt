@@ -9,6 +9,8 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.TagReadFile
+import com.simplecityapps.localmediaprovider.local.provider.TagReadGuard
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder
@@ -43,11 +45,15 @@ class DeviceTagFileAccess @Inject constructor(
     @ApplicationContext private val context: Context,
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
+    private val tagReadGuard: TagReadGuard,
 ) : TagFileAccess {
-    override suspend fun read(song: Song): AudioFile? = when (val target = target(song)) {
-        is TagTarget.Document -> fileScanner.getAudioFile(context, kTagLib, target.uri)
-        is TagTarget.Media -> readMedia(song, target.uri)
-        null -> null
+    // A file TagLib crashed on is left unread, so opening it in the editor shows it as unreadable rather than crashing again (#874)
+    override suspend fun read(song: Song): AudioFile? = tagReadGuard.read(tagReadFile(song), song.mediaProvider) {
+        when (val target = target(song)) {
+            is TagTarget.Document -> fileScanner.getAudioFile(context, kTagLib, target.uri)
+            is TagTarget.Media -> readMedia(song, target.uri)
+            null -> null
+        }
     }
 
     override suspend fun writeConsent(songs: List<Song>): WriteConsent? {
@@ -62,6 +68,16 @@ class DeviceTagFileAccess @Inject constructor(
         metadata: Map<String, List<String>>,
     ): Boolean {
         val target = target(song) ?: return false
+        return tagReadGuard.read(tagReadFile(song), song.mediaProvider) { writeTags(song, target, metadata) } ?: false
+    }
+
+    private fun tagReadFile(song: Song) = TagReadFile(song.path, song.size, song.lastModified?.toEpochMilliseconds() ?: 0L)
+
+    private suspend fun writeTags(
+        song: Song,
+        target: TagTarget,
+        metadata: Map<String, List<String>>,
+    ): Boolean {
         // KTagLib picks the tag format by the name's extension; a MediaStore URI's last segment is only its id
         val fileName = if (target is TagTarget.Media) File(song.path).name else target.uri.lastPathSegment
         return withContext(Dispatchers.IO) {
