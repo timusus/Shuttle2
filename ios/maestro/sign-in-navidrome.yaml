@@ -1,0 +1,56 @@
+# Signs in to the Navidrome test server through the real sign-in screen (#502): from a signed-out launch, Home's empty
+# state > Add a Source > Add a Server > the Navidrome / Subsonic card, type the address, username and password, then Sign
+# In. Ends back on Sources with the server connected and its import running.
+#
+# Env (from ~/.config/s2-test/navidrome.env, passed with -e; never commit or print them): MAESTRO_SERVER_URL,
+# MAESTRO_SERVER_USER, MAESTRO_SERVER_PASSWORD.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    id: "onboarding.skip"
+- tapOn: "Home"
+- tapOn:
+    id: "homeEmpty.addSource"
+- tapOn:
+    id: "sources.addServer"
+- tapOn:
+    id: "serverTypePicker.Subsonic"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.address"
+    timeout: 10000
+- tapOn:
+    id: "serverSignIn.address"
+- eraseText: 40
+- inputText: ${MAESTRO_SERVER_URL}
+- tapOn:
+    id: "serverSignIn.username"
+- inputText: ${MAESTRO_SERVER_USER}
+# Dismiss the keyboard before moving on: a tap on the password field while it's up can leave the focus on the
+# username, which then takes the password too.
+- swipe:
+    start: 50%, 22%
+    end: 50%, 50%
+- tapOn:
+    id: "serverSignIn.password"
+- inputText: ${MAESTRO_SERVER_PASSWORD}
+# Not hideKeyboard: on iOS it can press Return and sign in early. Dragging the form by its header dismisses it.
+- swipe:
+    start: 50%, 22%
+    end: 50%, 50%
+- tapOn:
+    id: "serverSignIn.signIn"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.continue"
+    timeout: 30000
+- tapOn:
+    id: "onboarding.continue"
+- extendedWaitUntil:
+    visible:
+      id: "sources.server.Subsonic"
+    timeout: 30000
+- takeScreenshot: 1-sources-connected

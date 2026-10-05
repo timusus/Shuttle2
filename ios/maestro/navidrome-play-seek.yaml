@@ -1,0 +1,92 @@
+# Plays from the Navidrome test server (#502): signs in (sign-in-navidrome.yaml), plays the first song from Library >
+# Songs at the default Original quality (a direct-play stream) and seeks in it, then caps Wi-Fi streaming at 128 kbps
+# and plays a FLAC from its album page (Library > Albums > Aladdin, One Jump Ahead), which the server transcodes, and
+# seeks in that.
+#
+# Env: as sign-in-navidrome.yaml.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: sign-in-navidrome.yaml
+- tapOn:
+    text: "Library"
+    id: "music.note.list"
+- extendedWaitUntil:
+    visible: "Songs"
+    timeout: 60000
+- tapOn: "Songs"
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 120000
+- tapOn:
+    id: "songRow.title"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 20000
+- tapOn:
+    id: "miniPlayer.open"
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.scrubber"
+    timeout: 10000
+# Direct play: drag the scrubber most of the way along; it seeks on release.
+- swipe:
+    from:
+      id: "nowPlaying.scrubber"
+    direction: RIGHT
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.playPause"
+      text: "Pause"
+    timeout: 20000
+- takeScreenshot: 2-direct-play-seeked
+- tapOn:
+    id: "nowPlaying.close"
+# Cap Wi-Fi streaming at 128 kbps, which a FLAC can only meet transcoded.
+- tapOn:
+    id: "settings.open"
+- scrollUntilVisible:
+    element:
+      id: "settings.pref_streaming_quality_unmetered"
+- tapOn:
+    id: "settings.pref_streaming_quality_unmetered"
+- tapOn: "128 kbps"
+- tapOn:
+    text: "Library"
+    index: 0
+- tapOn: "Albums"
+- scrollUntilVisible:
+    element:
+      text: "Aladdin.*"
+    timeout: 60000
+- tapOn:
+    text: "Aladdin.*"
+- scrollUntilVisible:
+    element:
+      text: "One Jump Ahead"
+- tapOn: "One Jump Ahead"
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.title"
+      text: "One Jump Ahead"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 20000
+- tapOn:
+    id: "miniPlayer.open"
+- swipe:
+    from:
+      id: "nowPlaying.scrubber"
+    direction: RIGHT
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.playPause"
+      text: "Pause"
+    timeout: 20000
+- takeScreenshot: 3-transcode-seeked
