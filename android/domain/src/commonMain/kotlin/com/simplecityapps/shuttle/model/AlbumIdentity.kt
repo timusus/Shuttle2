@@ -25,9 +25,19 @@ data class AlbumIdentityTags(
 /** The album a song belongs to ([groupKey]) and the album artist that album shows ([albumArtistName]). */
 data class AlbumIdentity(
     val groupKey: AlbumGroupKey,
-    val albumArtistName: String?
+    val albumArtistName: String?,
+    /**
+     * The artists whose album it is, each listing it among their own albums: usually its one album artist, but each of
+     * an ALBUMARTISTS list's artists, and only A of an album artist "A feat. B". [groupKey] keeps the album artist as
+     * tagged, so these never move an album's key.
+     */
+    val albumArtists: List<ArtistCredit> = listOf(ArtistCredit(albumArtistName.orEmpty(), groupKey.albumArtistGroupKey ?: AlbumArtistGroupKey(null))),
+    /** The artists the album artist tag features ("A feat. B"'s B): credited on its every song, so it's on their Appears On. */
+    val featuredArtists: List<String> = emptyList()
 ) {
     val albumArtistGroupKey: AlbumArtistGroupKey get() = groupKey.albumArtistGroupKey ?: AlbumArtistGroupKey(null)
+
+    val albumArtistKeys: List<AlbumArtistGroupKey> get() = albumArtists.map { it.groupKey }
 }
 
 /**
@@ -46,6 +56,10 @@ data class AlbumIdentity(
  *    else when every song has a server album id, by that, scoped to its source. One untagged song keeps its album on
  *    the name rule, so a partly tagged album never splits.
  * 3. Songs one id gathers from several name albums take the name and album artist of the largest of them.
+ *
+ * Whose albums it lists ([AlbumIdentity.albumArtists]) follows the tags without moving a key: an ALBUMARTISTS list of
+ * several makes it each one's (while "A & B" in one value stays one artist), and an album artist featuring others
+ * ("A feat. B") makes it A's alone, with B credited on its songs ([AlbumIdentity.featuredArtists]).
  */
 object AlbumIdentityRule {
     const val VARIOUS_ARTISTS = "Various Artists"
@@ -61,7 +75,7 @@ object AlbumIdentityRule {
         songs.forEach { song ->
             val explicit = explicitAlbumArtist(song)
             nameAlbums[song.songId] = when {
-                explicit != null -> NameAlbum(albumKey(song.album), artistKey(explicit), null, explicit)
+                explicit != null -> NameAlbum(albumKey(song.album), artistKey(explicit), null, explicit, taggedAlbumArtists(song, explicit))
                 song.compilation == true -> NameAlbum(albumKey(song.album), VARIOUS_ARTISTS_KEY, null, VARIOUS_ARTISTS)
                 song.album.isNullOrBlank() -> NameAlbum(albumKey(song.album), trackArtistsKey(song.artists), null, song.artists.joinToString(", ").ifEmpty { null })
                 else -> null.also { untagged += song }
@@ -97,11 +111,16 @@ object AlbumIdentityRule {
                 val largest = names.groupingBy { it.key }.eachCount().entries
                     .sortedWith(compareByDescending<Map.Entry<NameKey, Int>> { it.value }.thenBy { it.key.toString() })
                     .first().key
-                val displayNames = names.filter { it.key == largest }.mapNotNull { it.albumArtistName }
-                val albumArtistName = displayNames.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+                val largestNames = names.filter { it.key == largest }
+                val albumArtistName = largestNames.mapNotNull { it.albumArtistName }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
+                val groupKey = AlbumGroupKey(largest.album, AlbumArtistGroupKey(largest.albumArtist), (bucket as? AlbumBucket.ById)?.id ?: largest.identity)
+                // Whose album it is, as most of its songs tag it
+                val tagged = largestNames.mapNotNull { it.albumArtists }.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
                 val identity = AlbumIdentity(
-                    groupKey = AlbumGroupKey(largest.album, AlbumArtistGroupKey(largest.albumArtist), (bucket as? AlbumBucket.ById)?.id ?: largest.identity),
-                    albumArtistName = albumArtistName
+                    groupKey = groupKey,
+                    albumArtistName = albumArtistName,
+                    albumArtists = tagged?.albumArtists ?: listOf(ArtistCredit(albumArtistName.orEmpty(), AlbumArtistGroupKey(largest.albumArtist))),
+                    featuredArtists = tagged?.featured.orEmpty()
                 )
                 album.forEach { song -> identities[song.songId] = identity }
             }
@@ -118,6 +137,24 @@ object AlbumIdentityRule {
 
     private fun explicitAlbumArtist(song: AlbumIdentityTags): String? = song.albumArtist?.takeIf { it.isNotBlank() }
         ?: song.albumArtists?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }?.joinToString(", ")
+
+    /**
+     * The artists a song's album artist tags make it the album of (#637): each of an ALBUMARTISTS list of several, else
+     * the album artist [explicit]; each without whoever it features, who are credited instead.
+     */
+    private fun taggedAlbumArtists(
+        song: AlbumIdentityTags,
+        explicit: String
+    ): TaggedAlbumArtists {
+        val listed = song.albumArtists.orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
+        val names = (listed.takeIf { it.size > 1 } ?: listOf(explicit)).map { name -> ArtistCredits.splitFeaturing(name).ifEmpty { listOf(name.trim()) } }
+        // One album artist featuring no one is the album's own, keyed exactly as the album is
+        if (names.size == 1 && names.single().size == 1) return TaggedAlbumArtists(listOf(ArtistCredit(explicit, AlbumArtistGroupKey(artistKey(explicit)))), emptyList())
+        return TaggedAlbumArtists(
+            albumArtists = names.map { it.first() }.map { name -> ArtistCredit(name, AlbumArtistGroupKey(artistKey(name))) }.distinctBy { it.groupKey },
+            featured = names.flatMap { it.drop(1) }
+        )
+    }
 
     /** The song's first credited artist, without whoever it features. */
     private fun primaryArtist(artists: List<String>): String? = artists.firstOrNull { it.isNotBlank() }?.let { artist -> FEATURING.split(artist).first().trim() }?.ifEmpty { null }
@@ -142,10 +179,17 @@ object AlbumIdentityRule {
         album: String?,
         albumArtist: String?,
         identity: String?,
-        val albumArtistName: String?
+        val albumArtistName: String?,
+        /** Whose album its album artist tags make it; null for an album without them, its album artist's alone. */
+        val albumArtists: TaggedAlbumArtists? = null
     ) {
         val key = NameKey(album, albumArtist, identity)
     }
+
+    private data class TaggedAlbumArtists(
+        val albumArtists: List<ArtistCredit>,
+        val featured: List<String>
+    )
 
     private sealed interface AlbumBucket {
         data class ById(val id: String) : AlbumBucket

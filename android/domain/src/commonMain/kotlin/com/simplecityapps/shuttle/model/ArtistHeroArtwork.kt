@@ -55,7 +55,7 @@ data class ArtistHeroArtwork(
             songs: List<Song>,
         ): String? {
             val ids = songs.mapNotNullTo(HashSet()) { song ->
-                val ids = if (song.albumArtistGroupKey == artist.groupKey) {
+                val ids = if (song.isAlbumArtist(artist.groupKey)) {
                     song.mbAlbumArtistIds
                 } else {
                     song.mbArtistIds?.takeIf { song.artistCredits.singleOrNull()?.groupKey == artist.groupKey }

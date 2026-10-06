@@ -13,7 +13,7 @@ struct DetailSupportTests {
             name: name, albumArtist: "Radiohead", artists: ["Radiohead"], songCount: 1, duration: 0,
             year: nil, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead"), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil, albumArtistKeys: []
         )
     }
 

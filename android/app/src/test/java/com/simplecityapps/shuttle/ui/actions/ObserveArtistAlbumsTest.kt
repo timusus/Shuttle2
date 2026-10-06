@@ -41,8 +41,25 @@ class ObserveArtistAlbumsTest {
             identified.groupBy { it.albumGroupKey }.map { (key, albumSongs) ->
                 val first = albumSongs.first()
                 createAlbum(name = first.album!!, albumArtist = first.resolvedAlbumIdentity.albumArtistName, year = first.date?.year, groupKey = key)
+                    .copy(albumArtistKeys = first.resolvedAlbumIdentity.albumArtistKeys)
             }
         )
+    }
+
+    @Test
+    fun `an album with several album artists is each one's own - and one featured by its album artist is on their Appears On`() = runTest {
+        library(
+            createSong(id = 1, album = "Watch the Throne", albumArtist = "", artists = listOf("Jay-Z"), path = "/m/1.mp3").copy(albumArtist = null, albumArtists = listOf("Jay-Z", "Kanye West")),
+            createSong(id = 2, album = "Motion", albumArtist = "Calvin Harris feat. Rihanna", artists = listOf("Calvin Harris"), path = "/m/2.mp3"),
+        )
+
+        settled(key("Jay-Z")).albums.map { it.name } shouldBe listOf("Watch the Throne")
+        settled(key("Kanye West")).albums.map { it.name } shouldBe listOf("Watch the Throne")
+        settled(key("Calvin Harris")).albums.map { it.name } shouldBe listOf("Motion")
+
+        val rihanna = settled(key("Rihanna"))
+        rihanna.albums shouldBe emptyList()
+        rihanna.appearsOn.map { it.name } shouldBe listOf("Motion")
     }
 
     @Test

@@ -41,6 +41,41 @@ class AlbumIdentityRuleTest {
     }
 
     @Test
+    fun `each artist of an album artists list owns the album - its key unchanged`() {
+        val (song) = resolve(tags("Watch the Throne", albumArtists = listOf("Jay-Z", "Kanye West")))
+
+        song.albumArtistKeys shouldBe listOf(AlbumArtistGroupKey("jay-z"), AlbumArtistGroupKey("kanye west"))
+        song.albumArtists.map { it.name } shouldBe listOf("Jay-Z", "Kanye West")
+        song.featuredArtists shouldBe emptyList()
+    }
+
+    @Test
+    fun `an album artist tag with an ampersand is one artist`() {
+        val (song) = resolve(tags("Fire on Fire", albumArtist = "Jon Hopkins & King Creosote"))
+
+        song.groupKey shouldBe AlbumGroupKey("fire on fire", AlbumArtistGroupKey("jon hopkins & king creosote"))
+        song.albumArtistKeys shouldBe listOf(AlbumArtistGroupKey("jon hopkins & king creosote"))
+    }
+
+    @Test
+    fun `a featured album artist doesn't own the album - it keeps its key`() {
+        val (song) = resolve(tags("Song Album", albumArtist = "Calvin Harris feat. Rihanna"))
+
+        song.groupKey shouldBe AlbumGroupKey("song album", AlbumArtistGroupKey("calvin harris feat rihanna"))
+        song.albumArtistName shouldBe "Calvin Harris feat. Rihanna"
+        song.albumArtistKeys shouldBe listOf(AlbumArtistGroupKey("calvin harris"))
+        song.featuredArtists shouldBe listOf("Rihanna")
+    }
+
+    @Test
+    fun `an album artist tag alone owns its album - as before`() {
+        val (song) = resolve(tags("The Bends", albumArtist = "The Radiohead"))
+
+        song.albumArtistKeys shouldBe listOf(song.albumArtistGroupKey)
+        song.featuredArtists shouldBe emptyList()
+    }
+
+    @Test
     fun `songs of one MusicBrainz release are one album - however their tags differ`() {
         val songs = resolve(
             tags("OK Computer", albumArtist = "Radiohead", mbAlbumId = "0B6B4BA0"),

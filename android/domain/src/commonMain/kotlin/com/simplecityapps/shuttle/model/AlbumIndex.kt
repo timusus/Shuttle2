@@ -19,7 +19,7 @@ class AlbumIndex(private val songs: Collection<AlbumIdentityTags>) {
         songs.forEach { tags ->
             val identity = identities[tags.songId] ?: return@forEach
             val artists = LinkedHashSet<AlbumArtistGroupKey>().apply {
-                add(identity.albumArtistGroupKey)
+                addAll(identity.albumArtistKeys)
                 ArtistCredits.credits(tags, identity).mapTo(this) { credit -> credit.groupKey }
             }
             artists.forEach { key -> byArtist.getOrPut(key) { mutableListOf() } += tags.songId }

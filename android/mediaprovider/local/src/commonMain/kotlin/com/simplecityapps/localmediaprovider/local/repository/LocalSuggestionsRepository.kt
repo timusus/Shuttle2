@@ -46,9 +46,9 @@ class LocalSuggestionsRepository(
     override suspend fun albumArtists(keys: List<AlbumArtistGroupKey>): List<AlbumArtist> {
         val wanted = keys.distinct()
         if (wanted.isEmpty()) return emptyList()
-        val albumArtists = songRepository.loadSongs(SongQuery.ArtistGroupKeys(wanted.map { SongQuery.ArtistGroupKey(it) }))
-            .groupBy { it.albumArtistGroupKey }
-            .mapValues { (key, songs) -> songs.toAlbumArtist(key) }
+        val songs = songRepository.loadSongs(SongQuery.ArtistGroupKeys(wanted.map { SongQuery.ArtistGroupKey(it) }))
+        // An album with several album artists is each one's own, so a song can count for more than one of them
+        val albumArtists = wanted.associateWith { key -> songs.toAlbumArtist(key) }.filterValues { it.songCount > 0 }
         return keys.mapNotNull { albumArtists[it] }.distinct()
     }
 

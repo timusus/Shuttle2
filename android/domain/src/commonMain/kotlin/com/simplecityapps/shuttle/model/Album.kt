@@ -18,7 +18,9 @@ data class Album(
     // Changes whenever any of the album's songs' artworkVersion does.
     val artworkVersion: String? = null,
     /** When its most recently added song was added; null when none of its songs has a date. */
-    val dateAdded: Instant? = null
+    val dateAdded: Instant? = null,
+    /** The artists whose album it is ([AlbumIdentity.albumArtists]): it's among each one's own albums. */
+    val albumArtistKeys: List<AlbumArtistGroupKey> = listOfNotNull(groupKey?.albumArtistGroupKey)
 ) {
     val friendlyArtistName: String?
         by lazy {

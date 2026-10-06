@@ -50,7 +50,7 @@ class ResolveSongs(
                 selection.albumArtists.forEachIndexed { index, artist -> if (artist.groupKey !in artistIndex) artistIndex[artist.groupKey] = index }
                 val ranked = songs.map { song ->
                     val rank = minOf(
-                        artistIndex[song.albumArtistGroupKey] ?: Int.MAX_VALUE,
+                        song.resolvedAlbumIdentity.albumArtistKeys.minOfOrNull { artistIndex[it] ?: Int.MAX_VALUE } ?: Int.MAX_VALUE,
                         song.artistCredits.minOfOrNull { artistIndex[it.groupKey] ?: Int.MAX_VALUE } ?: Int.MAX_VALUE,
                     )
                     rank to song

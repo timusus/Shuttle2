@@ -106,6 +106,55 @@ class ArtistCreditsTest {
         index.songIds(key(AlbumIdentityRule.VARIOUS_ARTISTS)) shouldBe listOf(nowAdele.songId, nowColdplay.songId)
     }
 
+    @Test
+    fun `an album artist splits on feat only`() {
+        ArtistCredits.splitFeaturing("Calvin Harris feat. Rihanna") shouldBe listOf("Calvin Harris", "Rihanna")
+        ArtistCredits.splitFeaturing("Mark Ronson (ft. Bruno Mars)") shouldBe listOf("Mark Ronson", "Bruno Mars")
+        ArtistCredits.splitFeaturing("Simon & Garfunkel") shouldBe listOf("Simon & Garfunkel")
+        ArtistCredits.splitFeaturing("AC/DC") shouldBe listOf("AC/DC")
+    }
+
+    @Test
+    fun `an album artist's featured artist is credited on every song - and owns none of it`() {
+        val song = tags("Song Album", listOf("Calvin Harris"), albumArtist = "Calvin Harris feat. Rihanna")
+        val identity = AlbumIdentityRule.resolve(listOf(song)).getValue(song.songId)
+
+        credits(song).map { it.groupKey } shouldBe listOf(key("Calvin Harris"), key("Rihanna"))
+        AlbumIndex(listOf(song)).songIds(key("Rihanna")) shouldBe listOf(song.songId)
+        (key("Rihanna") in identity.albumArtistKeys) shouldBe false
+    }
+
+    @Test
+    fun `each of several album artists has their own server id - when the ids pair with the names`() {
+        val paired = tags(
+            "Watch the Throne",
+            listOf("Jay-Z"),
+            albumArtists = listOf("Jay-Z", "Kanye West"),
+            serverAlbumArtistIds = listOf("jay", "ye"),
+            mediaProvider = MediaProviderType.Jellyfin
+        )
+        val unpaired = tags(
+            "Watch the Throne",
+            listOf("Jay-Z"),
+            albumArtists = listOf("Jay-Z", "Kanye West"),
+            serverAlbumArtistIds = listOf("both"),
+            mediaProvider = MediaProviderType.Jellyfin
+        )
+
+        serverArtistId(paired, "Jay-Z") shouldBe "jay"
+        serverArtistId(paired, "Kanye West") shouldBe "ye"
+        serverArtistId(unpaired, "Kanye West") shouldBe null
+    }
+
+    @Test
+    fun `an artist's songs include every album they're one of the album artists of`() {
+        val throne = tags("Watch the Throne", emptyList(), albumArtists = listOf("Jay-Z", "Kanye West"))
+        val index = AlbumIndex(listOf(throne))
+
+        index.songIds(key("Jay-Z")) shouldBe listOf(throne.songId)
+        index.songIds(key("Kanye West")) shouldBe listOf(throne.songId)
+    }
+
     private fun serverArtistId(song: AlbumIdentityTags, artist: String): String? = ArtistCredits.serverArtistId(song, AlbumIdentityRule.resolve(listOf(song)).getValue(song.songId), key(artist))
 
     @Test
@@ -127,7 +176,7 @@ class ArtistCreditsTest {
     }
 
     @Test
-    fun `a song with several album artists or unpaired ids pins none down`() {
+    fun `several album artists' paired ids pin each down - but not their joint name or an unpaired track artist id`() {
         val joint = tags(
             "Blade Runner 2049",
             emptyList(),
@@ -140,7 +189,8 @@ class ArtistCreditsTest {
         val albumArtist = AlbumIdentityRule.resolve(listOf(joint)).getValue(joint.songId).albumArtistName!!
 
         serverArtistId(joint, albumArtist) shouldBe null
-        serverArtistId(joint, "Hans Zimmer") shouldBe null
+        serverArtistId(joint, "Hans Zimmer") shouldBe "hans"
+        serverArtistId(joint, "Benjamin Wallfisch") shouldBe "ben"
     }
 
     @Test

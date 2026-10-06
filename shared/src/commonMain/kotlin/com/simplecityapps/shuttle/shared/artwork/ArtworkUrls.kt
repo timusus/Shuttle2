@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.isAlbumArtist
 import com.simplecityapps.shuttle.model.serverArtistId
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -142,7 +143,7 @@ class ArtworkUrls(
     private suspend fun serverArtistSong(albumArtist: AlbumArtist): Pair<Song, String>? = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
         .firstOrNull()
         .orEmpty()
-        .sortedByDescending { song -> song.albumArtistGroupKey == albumArtist.groupKey }
+        .sortedByDescending { song -> song.isAlbumArtist(albumArtist.groupKey) }
         .firstNotNullOfOrNull { song -> song.serverArtistId(albumArtist.groupKey)?.let { id -> song to id } }
 
     private companion object {

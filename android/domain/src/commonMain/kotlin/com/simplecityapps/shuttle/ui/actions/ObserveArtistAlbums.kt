@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
+import com.simplecityapps.shuttle.model.isAlbumArtist
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import dev.zacsweers.metro.Inject
@@ -54,7 +55,7 @@ class ObserveArtistAlbums(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun appearsOn(key: AlbumArtistGroupKey): Flow<List<Album>> = songRepository.getSongs(SongQuery.ArtistGroupKey(key))
         .filterNotNull()
-        .map { songs -> songs.filter { song -> song.albumArtistGroupKey != key && !song.album.isNullOrBlank() }.mapTo(HashSet()) { song -> song.albumGroupKey } }
+        .map { songs -> songs.filter { song -> !song.isAlbumArtist(key) && !song.album.isNullOrBlank() }.mapTo(HashSet()) { song -> song.albumGroupKey } }
         .distinctUntilChanged()
         .flatMapLatest { albums ->
             if (albums.isEmpty()) flowOf(emptyList()) else albumRepository.getAlbums(AlbumQuery.AlbumGroupKeys(albums.map { AlbumQuery.AlbumGroupKey(it) }))

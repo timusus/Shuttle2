@@ -13,7 +13,7 @@ struct LibrarySortMenuTests {
             name: "Kid A", albumArtist: "Radiohead", artists: ["Radiohead"], songCount: 10, duration: 0,
             year: KotlinInt(int: 2000), playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: "kid a", albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead"), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: added
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: added, albumArtistKeys: []
         )
     }
 
