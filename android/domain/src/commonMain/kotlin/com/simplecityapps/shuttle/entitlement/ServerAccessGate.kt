@@ -73,8 +73,13 @@ class ServerAccessGate(
      * for a surface that can't ask again (a car's browse tree) to refresh.
      */
     val locked: Flow<Boolean> = entitlement
-        .map { it is Entitlement.Free && (it.trialUsed || startTrial == null) }
+        .map(::locks)
         .distinctUntilChanged()
+
+    /** Whether Pro features are locked right now, as [locked] next emits: its starting value for a surface that holds it. */
+    val isLocked: Boolean get() = locks(entitlement.value)
+
+    private fun locks(entitlement: Entitlement): Boolean = entitlement is Entitlement.Free && (entitlement.trialUsed || startTrial == null)
 
     /** True if the user may add a remote server: anyone but a user whose trial has ended without Pro. */
     fun tryAddServer(): Boolean {

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.settings
 
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
@@ -88,6 +89,17 @@ class IosSettingsCatalogTest {
     fun theLinksAreTheEqualizerAndScrobblingAndTheOnlySliderTheReplayGainPreamp() {
         catalog.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly listOf(SettingsLink.Equalizer, SettingsLink.Scrobbling)
         catalog.items.filterIsInstance<SettingItem.Slider<*>>().map { it.setting } shouldContainExactly listOf(PlaybackSettings.PreAmpGain)
+    }
+
+    /** #946: as on Android (#939), turning ReplayGain on asks the Pro gate; turning it off stays free. */
+    @Test
+    fun replayGainTrackAndAlbumAreProAndOffIsFree() {
+        val replayGain = catalog.items.filterIsInstance<SettingItem.Choice<*>>().single { it.setting == PlaybackSettings.ReplayGain }
+        replayGain.options.associate { it.value to it.proFeature } shouldBe mapOf(
+            ReplayGainMode.Track to ProFeature.AdvancedAudio,
+            ReplayGainMode.Album to ProFeature.AdvancedAudio,
+            ReplayGainMode.Off to null
+        )
     }
 
     @Test

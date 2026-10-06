@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.entitlement.TryUseProFeature
+import com.simplecityapps.shuttle.shared.entitlement.CarPlayAccess
 import com.simplecityapps.shuttle.shared.entitlement.GatedServerStreams
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
@@ -31,7 +32,8 @@ import kotlinx.coroutines.flow.stateIn
 /**
  * Shuttle Music Pro on iOS: the entitlement StoreKit answers ([StoreEntitlements], fed by Swift's `StoreKitManager`)
  * behind the same [ServerAccessGate] Android uses. The trial is a free App Store purchase the user starts from the
- * paywall, so the gate never starts it itself: a stream or download before the trial refuses and opens the paywall.
+ * paywall, so the gate never starts it itself: a stream, a download or turning ReplayGain on before the trial refuses
+ * and opens the paywall, and CarPlay ([CarPlayAccess]) shows only an upgrade message.
  * StoreKit answers from its on-device cache soon after launch; until it has, a stream waits up to
  * [STORE_ANSWER_WAIT] for it rather than refusing a purchaser.
  */
@@ -66,11 +68,19 @@ class IosEntitlementModule {
     fun provideObservePaywallRequests(gate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { gate.paywallRequests }
 
     /**
-     * Only servers need Pro on iOS so far: batch tag edits and replay gain stay free here until iOS gets its own
-     * trial disclosure and paywall copy for them (Android's #939).
+     * Pro features beyond servers, as on Android (#939, #946): turning ReplayGain on asks the gate, whose refusal opens
+     * the paywall offering the trial; a store that hasn't answered within [STORE_ANSWER_WAIT] lets it through. iOS
+     * has no tag editor, so batch tag edits never ask.
      */
     @Provides
-    fun provideTryUseProFeature(): TryUseProFeature = TryUseProFeature { true }
+    fun provideTryUseProFeature(gate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> gate.tryUse(feature) }
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideCarPlayAccess(
+        gate: ServerAccessGate,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): CarPlayAccess = CarPlayAccess(gate, appCoroutineScope)
 
     /** The sign-in discloses that streaming needs Pro to anyone without Pro or a running trial. */
     @Provides

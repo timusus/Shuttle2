@@ -50,6 +50,7 @@ class IosAppGraphTest {
     fun everyTypedPropertyResolves() {
         graph.telemetryStartup
         graph.monetisationAnalytics
+        graph.carPlayAccess
         graph.appIntentLibrary
         graph.shellViewModel
         graph.homeViewModel

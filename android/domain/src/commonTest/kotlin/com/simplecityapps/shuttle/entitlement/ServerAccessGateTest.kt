@@ -325,6 +325,22 @@ class ServerAccessGateTest {
     }
 
     @Test
+    fun `isLocked answers now what locked emits`() {
+        val states = listOf(
+            Entitlement.Unknown,
+            Entitlement.Free(trialUsed = false),
+            Entitlement.Free(trialUsed = true),
+            Entitlement.Trial(Instant.DISTANT_FUTURE),
+            Entitlement.Pro(ProSource.Lifetime)
+        )
+        val locked = states.map {
+            entitlement.value = it
+            gate.isLocked to consentGate.isLocked
+        }
+        assertEquals(listOf(false to false, false to true, true to true, false to false, false to false), locked)
+    }
+
+    @Test
     fun `where only the paywall can start the trial - a first use opens it and discloses nothing`() {
         val requests = requests(consentGate) { assertEquals(ServerAccess.Refused, consentGate.use(ProFeature.BatchTagEdit)) }
         assertEquals(listOf(PaywallSource.BatchTagEdit), requests)

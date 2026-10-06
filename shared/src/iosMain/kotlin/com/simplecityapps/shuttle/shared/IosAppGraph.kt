@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.scrobbling.flush.InProcessScrobbleFlushSchedul
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.downloads.OfflineDownloads
 import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
+import com.simplecityapps.shuttle.shared.entitlement.CarPlayAccess
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.intents.AppIntentLibrary
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
@@ -131,6 +132,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** A gated action's paywall requests, which Swift's `PaywallPresenter` answers. */
     val observePaywallRequests: ObservePaywallRequests
+
+    /** Whether CarPlay is locked behind Shuttle Music Pro, which `CarPlaySceneDelegate` follows. */
+    val carPlayAccess: CarPlayAccess
 
     /** Crash reporting, analytics and their consent; Swift starts it first of all, at launch. */
     val telemetryStartup: IosTelemetryStartup
