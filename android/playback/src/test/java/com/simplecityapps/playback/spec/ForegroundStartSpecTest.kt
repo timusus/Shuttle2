@@ -124,6 +124,8 @@ class ForegroundStartSpecTest {
 
     @Test
     fun `a shuffle all that cold-starts the app shuffles the library once the saved queue is restored`() {
+        // The test turns the player's clock past the production 15 s load wait (#943), which would give up before the play.
+        harness.playRequests.shuffleAllLoadWaitMs = Long.MAX_VALUE
         val foreground = start(Intent(PlaybackService.ACTION_SHUFFLE_ALL))
         stayForegroundUntil(foreground) { true }
 

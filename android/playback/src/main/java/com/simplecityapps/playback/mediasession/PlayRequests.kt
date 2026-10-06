@@ -51,6 +51,9 @@ constructor(
     private val voiceSearchResolver: VoiceSearchResolver,
     private val songRepository: SongRepository
 ) {
+    /** How long [shuffleAll] waits for the first song to load; tests that run the player's clock far ahead raise it. */
+    internal var shuffleAllLoadWaitMs = SHUFFLE_ALL_LOAD_WAIT_MS
+
     /** The songs for the playable item [mediaId], or null for an id that isn't one. */
     suspend fun songsForMediaId(mediaId: String): PlayQueue? = mediaIdHelper.getPlayQueue(mediaId)
 
@@ -134,7 +137,7 @@ constructor(
         val loaded = CompletableDeferred<Result<Any?>>()
         playbackOperations.shuffle(songs, PlayContext.None) { loaded.complete(it) }
         // A replaced load answers with a CancellationException; still, don't wait forever on one that never answers.
-        val result = withTimeoutOrNull(SHUFFLE_ALL_LOAD_WAIT_MS) { loaded.await() }
+        val result = withTimeoutOrNull(shuffleAllLoadWaitMs) { loaded.await() }
         if (result == null) {
             Timber.w("shuffleAll: timed out waiting for playback to load")
             return
