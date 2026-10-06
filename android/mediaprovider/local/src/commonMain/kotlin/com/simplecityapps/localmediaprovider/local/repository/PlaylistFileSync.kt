@@ -25,6 +25,12 @@ interface PlaylistFileSync {
      */
     fun currentId(externalId: String): String = externalId
 
+    /** Carries the unwritten-edits mark of a playlist whose id changes from [former] to [current] (see [currentId]). */
+    fun moveUnwrittenMark(
+        former: String,
+        current: String
+    ) = Unit
+
     companion object {
         /** For a platform that imports no playlist files, so has none to keep in sync (iOS, until it imports m3u files). */
         val None =

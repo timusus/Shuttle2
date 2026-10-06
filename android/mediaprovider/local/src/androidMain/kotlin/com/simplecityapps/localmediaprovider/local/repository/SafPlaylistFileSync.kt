@@ -70,6 +70,13 @@ class SafPlaylistFileSync(
 
     override fun holdsUnwrittenEdits(externalId: String): Boolean = unwritten.getBoolean(externalId, false)
 
+    override fun moveUnwrittenMark(
+        former: String,
+        current: String
+    ) {
+        if (unwritten.getBoolean(former, false)) unwritten.edit().remove(former).putBoolean(current, true).apply()
+    }
+
     override fun currentId(externalId: String): String = currentPlaylistFileId(externalId, primaryStoragePath())
 
     /**

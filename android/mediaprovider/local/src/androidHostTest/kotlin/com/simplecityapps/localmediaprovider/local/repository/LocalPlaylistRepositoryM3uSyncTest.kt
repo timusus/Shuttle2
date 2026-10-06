@@ -233,6 +233,27 @@ class LocalPlaylistRepositoryM3uSyncTest {
     }
 
     @Test
+    fun `a legacy playlist holding unwritten edits keeps them when moved to its file path`() = runTest {
+        @Suppress("DEPRECATION")
+        val primary = Environment.getExternalStorageDirectory().path
+        val tree = DocumentsContract.buildTreeDocumentUri("com.android.externalstorage.documents", "primary:Music")
+        val documentId = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString()
+        val song1 = createSong(path = "/music/song1.mp3", id = 1).let { it.copy(id = insertSong(it)) }
+        val song2 = createSong(path = "/music/song2.mp3", id = 2).let { it.copy(id = insertSong(it)) }
+        val id =
+            database.playlistDataDao().insert(
+                PlaylistData(name = "Imported", sortOrder = PlaylistSongSortOrder.SongName, mediaProviderType = MediaProviderType.Shuttle, externalId = documentId),
+                songIds = listOf(song1.id, song2.id)
+            )
+        context.getSharedPreferences("unwritten_playlist_files", Context.MODE_PRIVATE).edit().putBoolean(documentId, true).commit()
+        val fileId = Uri.fromFile(File("$primary/Music/p.m3u")).toString()
+
+        repository.storePlaylist(scanned(fileId, listOf(song1)))
+
+        database.playlistDataDao().getSongIds(id) shouldBe listOf(song1.id, song2.id)
+    }
+
+    @Test
     fun `isM3uSynced is true only for local playlists with an external id`() {
         val base = Playlist(
             id = 1,

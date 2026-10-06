@@ -33,7 +33,7 @@ object M3uEntryMatcher {
         entry: Entry,
         index: Index
     ): Song? {
-        val entrySegments = segments(entry.location)
+        val entrySegments = segments(Uri.decode(entry.location))
         val candidates = entrySegments.lastOrNull()?.let { index.candidatesByFilename[it] } ?: return null
 
         candidates.firstOrNull { it.segments == entrySegments }?.let { return it.song }

@@ -737,8 +737,10 @@ private fun DocumentNode.toPlaylistFile() = PlaylistFile(uri, displayName, size 
 /** Whether [text] is an HLS stream's index (an `.m3u8` a streaming app left behind), which names no songs. */
 private fun isHlsIndex(text: String) = "#EXT-X-" in text
 
-/** Whether every one of [entries] names a stream, none a file a song could be at. */
-private fun allStreams(entries: List<Entry>) = entries.isNotEmpty() && entries.all { entry -> "://" in entry.location && !entry.location.startsWith("file://", ignoreCase = true) }
+private val streamSchemes = setOf("http", "https", "rtsp", "rtmp", "rtmps", "mms", "mmsh", "icy", "ftp")
+
+/** Whether every one of [entries] names a network stream, none a file or document a song could be at (`file://`, `content://`). */
+private fun allStreams(entries: List<Entry>) = entries.isNotEmpty() && entries.all { entry -> entry.location.substringBefore("://", "").lowercase() in streamSchemes }
 
 /** A tree by its authority and document id, which is the same however the grant that names it was encoded. */
 private fun treeKey(tree: Uri): String = "${tree.authority}/${try {

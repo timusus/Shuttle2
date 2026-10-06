@@ -181,6 +181,24 @@ class TaglibMediaProviderTest {
     }
 
     @Test
+    fun `a playlist of content URIs is imported, as SAF-walked songs are at those`() {
+        val song = storedSong("a.mp3", size = 10, lastModified = MODIFIED)
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/saf.m3u" to "saf.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Music/saf.m3u" to "${song.path}\n")
+
+        val playlists =
+            runBlocking {
+                provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(song))
+                    .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>()
+                    .first()
+                    .result
+                    .playlists
+            }
+
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/saf.m3u"))
+    }
+
+    @Test
     fun `a playlist in an extra tree that can't be walked keeps the id the walk gave it, from MediaStore`() {
         val locked = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Locked")
         FakeMediaProvider.playlistRows = listOf("$primary/Locked/x.m3u" to "x.m3u")

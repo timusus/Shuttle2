@@ -126,6 +126,7 @@ class LocalPlaylistRepository(
             ?.let { stored ->
                 logger.debug { "Playlist ${stored.name} moved from ${stored.externalId} to $externalId" }
                 playlistDataDao.update(stored.copy(externalId = externalId))
+                fileSync.moveUnwrittenMark(checkNotNull(stored.externalId), externalId)
             }
     }
 
