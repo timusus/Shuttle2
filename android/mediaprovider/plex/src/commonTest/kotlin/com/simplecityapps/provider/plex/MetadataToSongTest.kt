@@ -66,7 +66,8 @@ class MetadataToSongTest {
         song.artistsTag shouldBe listOf("A", "B")
         song.serverArtistIds shouldBe emptyList()
         song.serverAlbumArtistIds shouldBe listOf("99")
-        song.serverArtistId(song.albumArtistGroupKey) shouldBe "99"
+        // #637: the album artist's id is the one Plex artist "A; B", which has no page of its own now that the album's artists are A and B
+        song.albumArtistKeys.map { key -> song.serverArtistId(key) } shouldBe listOf(null, null)
         song.artistCredits.map { credit -> credit.name to song.serverArtistId(credit.groupKey) } shouldBe listOf("A" to null, "B" to null)
         // The album keeps its key: the album artist isn't split, and the album is the server's
         song.albumArtist shouldBe "A; B"
