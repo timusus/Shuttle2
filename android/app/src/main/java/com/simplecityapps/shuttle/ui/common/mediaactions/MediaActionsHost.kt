@@ -1,8 +1,11 @@
 package com.simplecityapps.shuttle.ui.common.mediaactions
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,6 +45,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -155,10 +159,22 @@ fun MediaActionsHost(
     systemDeletes: Boolean = true,
     content: @Composable (MediaActionsState) -> Unit,
 ) {
-    val state = remember(viewModel) { MediaActionsState(viewModel::dispatch) }
+    val context = LocalContext.current
+    // Download progress shows as a notification; the download starts whatever the answer
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    val state = remember(viewModel) {
+        MediaActionsState { action ->
+            if (action is MediaAction.Download &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            viewModel.dispatch(action)
+        }
+    }
     val snackbarHostState = LocalShellSnackbarHostState.current
     val resources = LocalResources.current
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
