@@ -33,6 +33,9 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -169,7 +172,9 @@ private fun HomeContent(
     ScrollToTopOnReselect(ShellTab.Home, listState)
     // Rows that fit the viewport leave nothing to scroll, so the large bar must not collapse (and shift them) on a drag;
     // a bar that's already collapsed stays connected so a drag down can still expand it.
-    val barFollowsList = listState.canScrollForward || listState.canScrollBackward || scrollBehavior.state.collapsedFraction > 0f
+    val barFollowsList by remember(listState, scrollBehavior) {
+        derivedStateOf { listState.canScrollForward || listState.canScrollBackward || scrollBehavior.state.collapsedFraction > 0f }
+    }
     LazyColumn(
         state = listState,
         modifier = if (barFollowsList) modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else modifier,
