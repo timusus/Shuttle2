@@ -89,6 +89,9 @@ object HomeScenarios {
 
     val whatsNew = content.copy(showWhatsNew = true)
 
+    /** Two shelves: every row fits on a phone screen with room to spare (#942). */
+    val fewRows = content.copy(sections = content.sections.filter { it.id == HomeSectionId.HeavyRotation || it.id == HomeSectionId.RecentlyAdded })
+
     private fun progress(
         songName: String?,
         fraction: Float,

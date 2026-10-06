@@ -17,6 +17,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeUp
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -83,6 +84,15 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         rule.onAllNodes(hasScrollToIndexAction())[0].performTouchInput { swipeDown() }
         rule.waitForIdle()
     }
+
+    /** Drags Home's list up, as a finger scrolling it would. */
+    fun dragListUp() {
+        rule.onAllNodes(hasScrollToIndexAction())[0].performTouchInput { swipeUp() }
+        rule.waitForIdle()
+    }
+
+    /** Where the bar's title sits, from the top of the screen: it moves once the bar collapses. */
+    fun titleTop(): Float = rule.onNodeWithText("Home").fetchSemanticsNode().boundsInRoot.top
 
     fun tapText(text: String) {
         scrollTo(text)

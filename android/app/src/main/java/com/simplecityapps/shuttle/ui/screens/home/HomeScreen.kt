@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -136,7 +137,7 @@ fun HomeScreen(
                 onRefresh = callbacks.onRefresh,
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
-                HomeContent(uiState, callbacks, Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection))
+                HomeContent(uiState, callbacks, scrollBehavior, Modifier.fillMaxSize())
             }
         }
     }
@@ -150,10 +151,12 @@ val HomeUiState.Content.coldStart: Boolean
 val HomeSectionId.hasSeeAll: Boolean
     get() = this == HomeSectionId.RecentlyAdded
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeContent(
     content: HomeUiState.Content,
     callbacks: HomeCallbacks,
+    scrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier,
 ) {
     val wide = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
@@ -164,7 +167,14 @@ private fun HomeContent(
     val leadSection = content.sections.firstOrNull { it.id != HomeSectionId.ShuffleAll && it.items.isNotEmpty() }?.id
     val listState = rememberLazyListState()
     ScrollToTopOnReselect(ShellTab.Home, listState)
-    LazyColumn(state = listState, modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {
+    // Rows that fit the viewport leave nothing to scroll, so the large bar must not collapse (and shift them) on a drag;
+    // a bar that's already collapsed stays connected so a drag down can still expand it.
+    val barFollowsList = listState.canScrollForward || listState.canScrollBackward || scrollBehavior.state.collapsedFraction > 0f
+    LazyColumn(
+        state = listState,
+        modifier = if (barFollowsList) modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else modifier,
+        contentPadding = PaddingValues(bottom = S2Spacing.large)
+    ) {
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks, Modifier.animateItem()) }
         }

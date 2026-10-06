@@ -75,6 +75,26 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `rows that fit the screen don't scroll, and the bar stays expanded`() {
+        robot.setContent(HomeScenarios.fewRows)
+        val titleTop = robot.titleTop()
+
+        robot.dragListUp()
+
+        robot.titleTop() shouldBe titleTop
+    }
+
+    @Test
+    fun `a long Home collapses the bar as it scrolls`() {
+        robot.setContent(HomeScenarios.content)
+        val titleTop = robot.titleTop()
+
+        robot.dragListUp()
+
+        (robot.titleTop() < titleTop) shouldBe true
+    }
+
+    @Test
     fun `cold start shows recently added, genre picks, a prominent shuffle all and how home fills in`() {
         robot.setContent(HomeScenarios.unplayed)
 
