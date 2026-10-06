@@ -1,10 +1,12 @@
 package com.simplecityapps.shuttle.shared.telemetry
 
+import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
+import com.simplecityapps.shuttle.shared.entitlement.EntitlementResolvedReporter
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.logging.OsLogLogger
 import com.simplecityapps.shuttle.telemetry.TelemetryConsentGate
@@ -36,6 +38,8 @@ class IosTelemetryStartup @Inject constructor(
     private val consentGate: TelemetryConsentGate,
     private val entitlements: StoreEntitlements,
     private val mediaSources: MediaSources,
+    private val monetisationAnalytics: MonetisationAnalytics,
+    private val entitlementResolvedReporter: EntitlementResolvedReporter,
     private val analyticsConsentSettings: AnalyticsConsentSettings,
     @AppCoroutineScope private val scope: CoroutineScope,
 ) {
@@ -59,6 +63,10 @@ class IosTelemetryStartup @Inject constructor(
                 .distinctUntilChanged()
                 .collect(telemetry.analytics::register)
         }
+        scope.launch {
+            mediaSources.enabledTypes.collect(monetisationAnalytics::mediaSourcesChanged)
+        }
+        scope.launch { entitlementResolvedReporter.report() }
     }
 
     companion object {
