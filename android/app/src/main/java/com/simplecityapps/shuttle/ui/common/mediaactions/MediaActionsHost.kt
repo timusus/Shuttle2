@@ -249,8 +249,9 @@ fun MediaActionsHost(
 
 /**
  * Launches the system dialogs that confirm deleting MediaStore songs and hands the user's answer back to the deleter. Only
- * the host on the resumed screen collects, so a request isn't taken by one that's behind it. The deleter keeps the
- * request in flight, so an answer that reaches the recreated activity after a rotation still completes it.
+ * the shell's host is always resumed, so it collects alongside the destination's host; the deleter's atomic claim
+ * ([confirmations] `launch`) hands each request to exactly one of them, so a request is never shown twice. The deleter
+ * keeps the request in flight, so an answer that reaches the recreated activity after a rotation still completes it.
  */
 @Composable
 private fun SystemDeleteRequestLauncher() {

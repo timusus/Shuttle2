@@ -1,19 +1,15 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
@@ -118,7 +114,6 @@ fun AlbumDetailDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val resources = LocalResources.current
     val viewModel = assistedMetroViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     MediaActionsHost(onNavigate = onNavigate) { actions ->
@@ -130,17 +125,7 @@ fun AlbumDetailDestination(
             onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onOpenAlbum = { album -> onOpen(album.route) },
-            onMoreByAlbumMore = { album ->
-                actions.showActions(
-                    MediaActionsTarget(
-                        title = album.name.orEmpty(),
-                        subtitle = album.friendlyArtistName,
-                        selection = MediaSelection.Albums(album),
-                        placeholder = ArtworkPlaceholder.Album,
-                        extraActions = listOf(S2Action(resources.getString(R.string.menu_title_view_album), { onOpen(album.route) }, Icons.Rounded.Album)),
-                    ),
-                )
-            },
+            onMoreByAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
         )
     }
 }

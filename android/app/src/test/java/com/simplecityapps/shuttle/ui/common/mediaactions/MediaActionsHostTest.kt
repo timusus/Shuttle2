@@ -4,6 +4,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.simplecityapps.createPlaylist
@@ -14,6 +16,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
@@ -42,8 +45,13 @@ class MediaActionsHostTest {
     private fun setContent(target: MediaActionsTarget) {
         val handler = mockk<MediaActionHandler>()
         coEvery { handler.handle(any()) } answers {
-            handled += firstArg<MediaAction>()
-            MediaActionResult.None
+            val action = firstArg<MediaAction>()
+            handled += action
+            if (action is MediaAction.Delete && !action.confirmed) {
+                MediaActionResult.ConfirmationRequired(MediaActionMessage.ConfirmDelete(song.name, 1), action.copy(confirmed = true))
+            } else {
+                MediaActionResult.None
+            }
         }
         val available = mockk<AvailableMediaActions>()
         every { available(any()) } returns flowOf(MediaActionType.entries.toList())
@@ -106,5 +114,33 @@ class MediaActionsHostTest {
         rule.waitForIdle()
 
         handled shouldBe listOf(MediaAction.AddToPlaylist(MediaSelection.Songs(song), roadTrip))
+    }
+
+    @Test
+    fun `confirming a Delete sends it again, confirmed`() {
+        setContent(target(onlyTypes = setOf(MediaActionType.Delete)))
+        rule.onNodeWithText("Delete").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("'Phase Garden' will be permanently deleted").assertIsDisplayed()
+
+        rule.onAllNodesWithText("Delete").onLast().performClick()
+        rule.waitForIdle()
+
+        val selection = MediaSelection.Songs(song)
+        handled shouldBe listOf(MediaAction.Delete(selection), MediaAction.Delete(selection, confirmed = true))
+        rule.onNodeWithText("'Phase Garden' will be permanently deleted").assertDoesNotExist()
+    }
+
+    @Test
+    fun `cancelling a Delete confirmation sends nothing more`() {
+        setContent(target(onlyTypes = setOf(MediaActionType.Delete)))
+        rule.onNodeWithText("Delete").performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithText("Cancel").performClick()
+        rule.waitForIdle()
+
+        handled shouldBe listOf(MediaAction.Delete(MediaSelection.Songs(song)))
+        rule.onNodeWithText("'Phase Garden' will be permanently deleted").assertDoesNotExist()
     }
 }

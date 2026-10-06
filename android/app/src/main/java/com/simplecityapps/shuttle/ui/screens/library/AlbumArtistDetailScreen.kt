@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.UnfoldLess
@@ -433,17 +432,7 @@ fun AlbumArtistDetailDestination(
             onExpandAll = viewModel::onExpandAll,
             onCollapseAll = viewModel::onCollapseAll,
             onOpenAlbum = { album -> onOpen(album.route) },
-            onAlbumMore = { album ->
-                actions.showActions(
-                    MediaActionsTarget(
-                        title = album.name.orEmpty(),
-                        subtitle = album.friendlyArtistName,
-                        selection = MediaSelection.Albums(album),
-                        placeholder = ArtworkPlaceholder.Album,
-                        extraActions = listOf(S2Action(resources.getString(R.string.menu_title_view_album), { onOpen(album.route) }, Icons.Rounded.Album)),
-                    ),
-                )
-            },
+            onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onAppearsOnClick = { album -> onOpen(album.route) },
         )
