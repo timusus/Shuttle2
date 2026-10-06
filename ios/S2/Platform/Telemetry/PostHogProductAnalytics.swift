@@ -16,6 +16,8 @@ final class PostHogProductAnalytics: NSObject, IosProductAnalytics {
     private let lock = NSLock()
     private var enabled = false
     private var setUp = false
+    /// True while PostHog is set up and opted in, the shared `Analytics.capturing`; updated under `lock`.
+    let capturingState = IosCapturingState()
     /// The super properties, registered with PostHog once it's set up. `build_type` is the app's own, as on Android;
     /// the rest come from the shared `IosTelemetryStartup`.
     private(set) var superProperties: [String: Any]
@@ -40,9 +42,11 @@ final class PostHogProductAnalytics: NSObject, IosProductAnalytics {
                 Self.captureMissedLaunchOpen()
             }
             PostHogSDK.shared.optIn()
+            capturingState.update(capturing: true)
             Self.log.notice("PostHog opted in")
         } else if setUp {
             PostHogSDK.shared.optOut()
+            capturingState.update(capturing: false)
             Self.log.notice("PostHog opted out")
         }
     }

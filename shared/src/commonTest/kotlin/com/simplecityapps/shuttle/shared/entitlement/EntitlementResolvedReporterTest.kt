@@ -39,6 +39,8 @@ class EntitlementResolvedReporterTest {
         }
     )
 
+    private val logged get() = SettingsStore(prefs).preference(EntitlementResolvedReporter.Logged).value
+
     private fun TestScope.reporter(entitlements: StoreEntitlements) = EntitlementResolvedReporter(entitlements, analytics, SettingsStore(prefs))
 
     private fun TestScope.entitlements() = StoreEntitlements(Clock.System, backgroundScope, isDebug = false)
@@ -53,10 +55,12 @@ class EntitlementResolvedReporterTest {
         entitlements.storeAnswered(emptyList())
         runCurrent()
         events shouldBe emptyList()
+        logged shouldBe false
 
         capturingFlow.value = true
         runCurrent()
         events shouldBe listOf("entitlement_resolved" to mapOf("source" to "none"))
+        logged shouldBe true
     }
 
     @Test
@@ -68,6 +72,7 @@ class EntitlementResolvedReporterTest {
         reporter(entitlements).report()
 
         events.size shouldBe 1
+        logged shouldBe true
     }
 
     @Test

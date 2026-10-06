@@ -8,6 +8,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 /** Sentry, set up in Swift (`SentryCrashReporter`). Swift calls Kotlin on main; these may be called from any thread. */
 interface IosCrashReporter {
@@ -22,8 +24,24 @@ interface IosCrashReporter {
     )
 }
 
+/**
+ * Whether PostHog is set up and opted in, owned by Swift (which can't implement a `StateFlow`): it calls [update] from
+ * setup and `setEnabled`, and shared code reads [flow] to wait until events reach PostHog.
+ */
+class IosCapturingState {
+    private val state = MutableStateFlow(false)
+    val flow: StateFlow<Boolean> get() = state
+
+    fun update(capturing: Boolean) {
+        state.value = capturing
+    }
+}
+
 /** PostHog, set up in Swift (`PostHogProductAnalytics`). */
 interface IosProductAnalytics {
+    /** True once PostHog is set up and the user has opted in; [capture] drops events otherwise. */
+    val capturingState: IosCapturingState
+
     /** Opts in, setting PostHog up the first time, or opts out. Idempotent; a no-op without an API key. */
     fun setEnabled(enabled: Boolean)
 
@@ -58,6 +76,8 @@ class IosTelemetry(
                 ) = Unit
             },
             analytics = object : IosProductAnalytics {
+                override val capturingState = IosCapturingState()
+
                 override fun setEnabled(enabled: Boolean) = Unit
 
                 override fun capture(
@@ -86,17 +106,23 @@ object IosTelemetryModule {
     }
 
     @Provides
-    fun provideAnalytics(telemetry: IosTelemetry): Analytics = object : Analytics {
-        override fun capture(
-            event: String,
-            properties: Map<String, Any>
-        ) = telemetry.analytics.capture(event, properties)
+    fun provideAnalytics(telemetry: IosTelemetry): Analytics = IosAnalytics(telemetry.analytics)
+}
 
-        override fun register(
-            name: String,
-            value: Any
-        ) = telemetry.analytics.register(mapOf(name to value))
-    }
+/** [Analytics] over PostHog in Swift; [capturing] follows its set-up and consent, as on Android. */
+internal class IosAnalytics(private val bridge: IosProductAnalytics) : Analytics {
+    override val capturing: StateFlow<Boolean> get() = bridge.capturingState.flow
+    override val isCapturing: Boolean get() = capturing.value
+
+    override fun capture(
+        event: String,
+        properties: Map<String, Any>
+    ) = bridge.capture(event, properties)
+
+    override fun register(
+        name: String,
+        value: Any
+    ) = bridge.register(mapOf(name to value))
 }
 
 /** [TelemetryScrubber] for Swift's Sentry hooks: `IosTelemetryKt.scrubForTelemetry(text:)`. */
