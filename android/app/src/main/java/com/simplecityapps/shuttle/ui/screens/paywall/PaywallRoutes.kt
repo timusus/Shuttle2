@@ -160,6 +160,7 @@ private val PaywallMessage.text: Int
     get() = when (this) {
         PaywallMessage.PurchaseFailed -> R.string.paywall_purchase_failed
         PaywallMessage.Restored -> R.string.paywall_restored
+        PaywallMessage.PurchasePending -> R.string.paywall_purchase_pending
         PaywallMessage.NothingToRestore -> R.string.paywall_nothing_to_restore
         PaywallMessage.RestoreFailed -> R.string.paywall_restore_failed
         PaywallMessage.ThankYou -> R.string.paywall_thank_you

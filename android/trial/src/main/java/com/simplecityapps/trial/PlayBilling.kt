@@ -38,9 +38,12 @@ class PlayBilling(
 
     override val ownedProductIds: StateFlow<Set<String>?> = _ownedProductIds.asStateFlow()
 
+    private val _pendingProductIds = MutableStateFlow<Set<String>>(emptySet())
+
+    override val pendingProductIds: StateFlow<Set<String>> = _pendingProductIds.asStateFlow()
+
     private val _offers = MutableStateFlow<PaywallOffers>(PaywallOffers.Loading)
 
-    /** The S2 Pro products once they exist in Play, otherwise the legacy ones still on sale. */
     override val offers: StateFlow<PaywallOffers> = _offers.asStateFlow()
 
     /** The details Play returned for each product on sale, which the purchase flow needs. */
@@ -157,9 +160,8 @@ class PlayBilling(
     }
 
     private suspend fun queryProductDetails() {
-        val offered = listOf(ProductIds.PRO_SUBSCRIPTION, ProductIds.PRO_LIFETIME) + ProductIds.legacyOffered
         val details = listOf(BillingClient.ProductType.SUBS, BillingClient.ProductType.INAPP).flatMap { productType ->
-            val productList = offered
+            val productList = ProductIds.offered
                 .filter { productId -> (productId in ProductIds.subscriptions) == (productType == BillingClient.ProductType.SUBS) }
                 .map { productId ->
                     QueryProductDetailsParams.Product.newBuilder()
@@ -186,13 +188,8 @@ class PlayBilling(
 
     override suspend fun restorePurchases(): RestoreResult {
         val owned = queryOwnedProducts() ?: return RestoreResult.Failed
-        val restored = owned.restoredProductId()
-        return if (restored != null) {
-            analytics.purchaseRestored(restored)
-            RestoreResult.Restored
-        } else {
-            RestoreResult.NothingToRestore
-        }
+        owned.restoredProductId()?.let { analytics.purchaseRestored(it) }
+        return restoreResult(owned, _pendingProductIds.value)
     }
 
     /** Asks Play for every owned product and publishes them. Returns null if Play couldn't answer for every product type. */
@@ -205,6 +202,7 @@ class PlayBilling(
         val productTypes = listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS)
         val pass = OwnedProductsQuery(productTypes.toSet())
         var outcome: OwnedProductsQuery.Outcome = OwnedProductsQuery.Outcome.Pending
+        val pending = mutableSetOf<String>()
         productTypes.forEach { productType ->
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(productType)
@@ -212,6 +210,7 @@ class PlayBilling(
             val result = billingClient.queryPurchasesAsync(params)
             val purchased = if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 acknowledge(result.purchasesList)
+                pending += result.purchasesList.pendingProProductIds()
                 result.purchasesList.purchasedProductIds()
             } else {
                 Timber.e("queryPurchasesAsync($productType): ${result.billingResult.responseCode} ${result.billingResult.debugMessage}")
@@ -219,12 +218,18 @@ class PlayBilling(
             }
             outcome = pass.onResult(productType, purchased)
         }
-        return onQueryResult(outcome)
+        return onQueryResult(outcome, pending)
     }
 
     @Synchronized
-    private fun onQueryResult(outcome: OwnedProductsQuery.Outcome): Set<String>? = when (outcome) {
-        is OwnedProductsQuery.Outcome.Complete -> outcome.owned.also { _ownedProductIds.value = it }
+    private fun onQueryResult(
+        outcome: OwnedProductsQuery.Outcome,
+        pending: Set<String>
+    ): Set<String>? = when (outcome) {
+        is OwnedProductsQuery.Outcome.Complete -> outcome.owned.also {
+            _ownedProductIds.value = it
+            _pendingProductIds.value = pending
+        }
 
         is OwnedProductsQuery.Outcome.Failed -> {
             Timber.e("queryPurchases: ${outcome.failedTypes} failed; keeping the last owned products (${_ownedProductIds.value})")
@@ -241,6 +246,8 @@ class PlayBilling(
         if (purchased.isNotEmpty()) {
             _ownedProductIds.value = _ownedProductIds.value.orEmpty() + purchased
         }
+        // A completed purchase is no longer pending; Play reports a cancelled pending one only to the next query
+        _pendingProductIds.value = _pendingProductIds.value - purchased + purchases.pendingProProductIds()
         acknowledge(purchases)
     }
 
@@ -297,6 +304,24 @@ internal class OwnedProductsQuery(private val productTypes: Set<String>) {
 internal fun List<Purchase>.purchasedProductIds(): Set<String> = filter { purchase -> purchase.purchaseState == Purchase.PurchaseState.PURCHASED }
     .flatMap { purchase -> purchase.products }
     .toSet()
+
+/** Pro products whose purchase is waiting on payment. */
+internal fun List<Purchase>.pendingProProductIds(): Set<String> = filter { purchase -> purchase.purchaseState == Purchase.PurchaseState.PENDING }
+    .flatMap { purchase -> purchase.products }
+    .filter { productId -> ProductIds.proSource(productId) != null }
+    .toSet()
+
+/**
+ * What a restore found in [owned]: Pro, or else a Pro purchase still waiting on payment ([pending]), or nothing.
+ */
+internal fun restoreResult(
+    owned: Set<String>,
+    pending: Set<String>
+): RestoreResult = when {
+    owned.proSource() != null -> RestoreResult.Restored
+    pending.isNotEmpty() -> RestoreResult.Pending
+    else -> RestoreResult.NothingToRestore
+}
 
 /**
  * Completed purchases that haven't been acknowledged yet. Only PURCHASED purchases can be acknowledged;

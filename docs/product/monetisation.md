@@ -1,8 +1,8 @@
 # Monetisation
 
 Status: strategy settled 2026-10-06 (owner decisions on #380, which replace the 2026-09-25 ones). The entitlement layer
-(`:android:trial`) and the server gate are implemented; widening Pro to the bundle below, and the paywall changes it
-needs, are separate work.
+(`:android:trial`), the Pro gates (#939) and the Android paywall (#380: disclosure and offline + car pitch first,
+Lifetime and Yearly only, pending purchases shown) are implemented; iOS is separate work.
 
 ## Strategy
 
@@ -61,8 +61,11 @@ unbuyable from January, and no orders have come in since 13 September (#230).
 ## Current model, from the code
 
 - Five legacy products: subscriptions `s2_subscription_full_version_monthly`, `_yearly`, `_yearly_low`; one-time
-  `s2_iap_full_version` and `s2_iap_full_version_low` (`android/trial/.../BillingManager.kt`). Despite the name, `_low`
-  is the higher lifetime price ($7.99 against $3.49).
+  `s2_iap_full_version` and `s2_iap_full_version_low` (`android/trial/.../ProductIds.kt`). Despite the name, `_low`
+  is the higher lifetime price ($7.99 against $3.49). They still grant Pro but are never offered again: the paywall
+  sells only `s2_pro_lifetime` and `s2_pro`.
+- A PENDING purchase (Play waiting on cash or a slow card) doesn't grant Pro; the paywall says it's pending, blocks a
+  second purchase, and Restore purchases reports it rather than "nothing to restore".
 - `EntitlementRepository` exposes `StateFlow<Entitlement>` (Free, Trial, Pro(source), Unknown). Pro is any PURCHASED
   (not PENDING) purchase among the new and legacy SKUs; INAPP and SUBS are queried on start and foreground, and the
   last-known Pro is cached and fails open for 7 days when Play is unreachable. Playback speed never reads it.

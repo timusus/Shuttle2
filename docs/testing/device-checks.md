@@ -522,10 +522,14 @@ Needs a server with an ALAC (`.m4a`) song, signed in on each of Emby and Jellyfi
 
 Failed restores draw 1-star reviews in every paid music player sampled, and a January 2026 review said the yearly button did nothing (#372, missing offerToken). On a Play device signed in to a licence-test account, take the seven product IDs one at a time, with only the one under test owned when you restore.
 
-- [ ] For each legacy SKU in turn — `s2_iap_full_version`, `s2_iap_full_version_low`, `s2_subscription_full_version_monthly`, `s2_subscription_full_version_yearly`, `s2_subscription_full_version_yearly_low` — acquire it on the licence-test account (the old paywall still offers the two `-low` IDs until the `s2_pro*` products are live; reactivate the other three in Play Console for the test, then deactivate them again), clear data or reinstall, open the Shuttle Music Pro screen and tap Restore purchases: Pro unlocks.
+- [ ] For each legacy SKU in turn — `s2_iap_full_version`, `s2_iap_full_version_low`, `s2_subscription_full_version_monthly`, `s2_subscription_full_version_yearly`, `s2_subscription_full_version_yearly_low` — acquire it on the licence-test account (this build's paywall never offers a legacy ID, so buy it from the production 1.0.10 build, which still offers the two `-low` IDs; reactivate the other three in Play Console for the test, then deactivate them again), install the release candidate over it or clear data, open the Shuttle Music Pro screen and tap Restore purchases: Pro unlocks, and the status reads "You already own Shuttle Music Pro through your earlier purchase".
+- [ ] With the legacy SKUs active in Play Console, open the paywall as a free user: only Lifetime and Yearly (`s2_pro_lifetime`, `s2_pro`) are offered, never a legacy price.
 - [ ] Same for `s2_pro` and `s2_pro_lifetime`: own exactly one, clear data or reinstall, Restore purchases, Pro unlocks.
 - [ ] Buy the Yearly plan end to end: the button opens Google Play, the purchase completes, and Pro unlocks without a restart.
 - [ ] Cancel and refund the annual subscription in Play Console: the entitlement lapses, and after the licence-test account's cache catches up the paywall offers the plan again.
+- [ ] Buy Lifetime with the licence-test card "Slow test card, approves after a few minutes": once Play's sheet closes, a snackbar says the purchase is pending, the status card reads "Your purchase is waiting for payment…" and the buy button is disabled. Close and reopen the paywall, and tap Restore purchases: it says pending, not "nothing to restore". When the card approves, Pro unlocks without a restart.
+- [ ] Repeat with "Slow test card, declines after a few minutes": after the decline the pending status clears (reopen the paywall, or restore) and the plans can be bought again.
+- [ ] The paywall's first lines read "Your server, offline and in the car" and "Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial."; the trial or buy buttons stay pinned at the bottom above the navigation bar while scrolling, in light and dark theme and with 3-button navigation.
 
 ## Android Auto behind Shuttle Music Pro (#939)
 

@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.iconResId
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ErrorState
+import com.simplecityapps.shuttle.designsystem.component.S2BottomActionBar
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
@@ -62,10 +63,12 @@ import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.PaywallPlan
 
 /**
- * The S2 Pro paywall: where the user stands, what Pro unlocks, and the plans with Play's prices. While Play's
- * prices load or can't be loaded the plans show placeholders, and nothing can be bought. A user who hasn't had the
- * trial is offered it first, with buying second. Everyone without Pro can redeem a Play promo code. A Pro user sees their status instead of the plans, and a subscriber
- * can manage their subscription.
+ * The S2 Pro paywall: the pitch and what's free, where the user stands, what Pro unlocks, and the plans with Play's
+ * prices. The buy (or trial) button stays pinned at the bottom, so it's in reach wherever the user has scrolled.
+ * While Play's prices load or can't be loaded the plans show placeholders, and nothing can be bought; nor can it
+ * while a purchase waits on payment. A user who hasn't had the trial is offered it first, with buying second.
+ * Everyone without Pro can restore purchases and redeem a Play promo code. A Pro user sees their status instead of
+ * the plans, and a subscriber can manage their subscription.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,10 +87,14 @@ fun PaywallScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val status = uiState.status
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets(0),
         topBar = { S2LargeTopBar(title = stringResource(R.string.paywall_title), onBack = onClose, scrollBehavior = scrollBehavior) },
+        bottomBar = {
+            if (status !is PaywallStatus.Pro) PurchaseBar(uiState, onPurchase, onStartTrial)
+        },
         snackbarHost = { S2SnackbarHost(snackbarHostState) }
     ) { padding ->
         LazyColumn(
@@ -95,9 +102,9 @@ fun PaywallScreen(
             contentPadding = PaddingValues(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
             verticalArrangement = Arrangement.spacedBy(S2Spacing.medium)
         ) {
-            item(key = "status") { StatusCard(uiState.status, uiState.explainsTrialEnd) }
+            item(key = "pitch") { Pitch() }
+            item(key = "status") { StatusCard(status, uiState.explainsTrialEnd) }
             item(key = "benefits") { Benefits() }
-            val status = uiState.status
             if (status is PaywallStatus.Pro) {
                 if (status.source == ProSource.Subscription || status.source == ProSource.LegacySubscription) {
                     item(key = "manage") {
@@ -120,34 +127,8 @@ fun PaywallScreen(
                         )
                     }
                 }
-                item(key = "purchase") {
+                item(key = "account") {
                     Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
-                        when (uiState.primaryAction) {
-                            PaywallPrimaryAction.StartTrial -> {
-                                S2Button(
-                                    text = stringResource(R.string.paywall_start_trial),
-                                    onClick = onStartTrial,
-                                    size = S2ButtonSize.Medium,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                S2Button(
-                                    text = stringResource(R.string.paywall_buy_now),
-                                    onClick = onPurchase,
-                                    style = S2ButtonStyle.Outlined,
-                                    size = S2ButtonSize.Medium,
-                                    enabled = uiState.selectedOffer != null,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-
-                            PaywallPrimaryAction.Purchase -> S2Button(
-                                text = stringResource(R.string.paywall_purchase),
-                                onClick = onPurchase,
-                                size = S2ButtonSize.Medium,
-                                enabled = uiState.selectedOffer != null,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
                         S2Button(
                             text = stringResource(R.string.paywall_restore),
                             onClick = onRestore,
@@ -177,6 +158,56 @@ fun PaywallScreen(
     }
 }
 
+/** The pitch, then what's free and what Pro costs, in the first lines as Play's disclosure rules expect. */
+@Composable
+private fun Pitch() {
+    Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+        S2Text(stringResource(R.string.paywall_headline), style = MaterialTheme.typography.headlineSmall)
+        S2Text(
+            stringResource(R.string.paywall_disclosure),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/** The main action, pinned below the list: start the trial with buying second, or buy the selected plan. */
+@Composable
+private fun PurchaseBar(
+    uiState: PaywallUiState,
+    onPurchase: () -> Unit,
+    onStartTrial: () -> Unit
+) {
+    S2BottomActionBar {
+        when (uiState.primaryAction) {
+            PaywallPrimaryAction.StartTrial -> {
+                S2Button(
+                    text = stringResource(R.string.paywall_start_trial),
+                    onClick = onStartTrial,
+                    size = S2ButtonSize.Medium,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                S2Button(
+                    text = stringResource(R.string.paywall_buy_now),
+                    onClick = onPurchase,
+                    style = S2ButtonStyle.Outlined,
+                    size = S2ButtonSize.Medium,
+                    enabled = uiState.canPurchase,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            PaywallPrimaryAction.Purchase -> S2Button(
+                text = stringResource(R.string.paywall_purchase),
+                onClick = onPurchase,
+                size = S2ButtonSize.Medium,
+                enabled = uiState.canPurchase,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
 @Composable
 private fun StatusCard(
     status: PaywallStatus,
@@ -187,7 +218,8 @@ private fun StatusCard(
         PaywallStatus.TrialAvailable -> stringResource(R.string.paywall_status_trial_available)
         PaywallStatus.TrialEnded -> stringResource(R.string.paywall_status_trial_ended)
         is PaywallStatus.Trial -> pluralStringResource(R.plurals.paywall_status_trial, status.daysLeft, status.daysLeft)
-        is PaywallStatus.Pro -> stringResource(R.string.paywall_status_pro)
+        PaywallStatus.PurchasePending -> stringResource(R.string.paywall_status_purchase_pending)
+        is PaywallStatus.Pro -> stringResource(if (status.isLegacy) R.string.paywall_status_pro_legacy else R.string.paywall_status_pro)
     }
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
@@ -213,9 +245,10 @@ private fun StatusCard(
 private fun Benefits() {
     Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium)) {
         SectionTitle(stringResource(R.string.paywall_benefits_heading))
-        Benefit(stringResource(R.string.paywall_benefit_streaming)) { ServerMarks() }
+        // Offline and the car lead: that's what Plex Pass and Emby Premiere charge for, while streaming alone is free elsewhere
         Benefit(stringResource(R.string.paywall_benefit_downloads)) { BenefitIcon(Icons.Rounded.CloudDownload) }
         Benefit(stringResource(R.string.paywall_benefit_android_auto)) { BenefitIcon(Icons.Rounded.DirectionsCar) }
+        Benefit(stringResource(R.string.paywall_benefit_streaming)) { ServerMarks() }
         Benefit(stringResource(R.string.paywall_benefit_batch_tag_edit)) { BenefitIcon(Icons.Rounded.Edit) }
         Benefit(stringResource(R.string.paywall_benefit_replay_gain)) { BenefitIcon(Icons.Rounded.GraphicEq) }
         Benefit(stringResource(R.string.paywall_benefit_free)) { BenefitIcon(Icons.Rounded.CheckCircle) }

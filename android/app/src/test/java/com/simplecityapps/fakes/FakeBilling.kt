@@ -13,6 +13,7 @@ class FakeBilling(
     offers: PaywallOffers = PaywallOffers.Available(SAMPLE_OFFERS)
 ) : Billing {
     override val ownedProductIds = MutableStateFlow<Set<String>?>(emptySet())
+    override val pendingProductIds = MutableStateFlow<Set<String>>(emptySet())
     override val offers = MutableStateFlow(offers)
 
     var restoreResult = RestoreResult.NothingToRestore

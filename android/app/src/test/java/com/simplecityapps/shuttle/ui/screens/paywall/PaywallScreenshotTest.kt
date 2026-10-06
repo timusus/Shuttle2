@@ -73,6 +73,9 @@ class PaywallScreenshotTest {
     @Test
     fun pricesUnavailable() = shot("prices-unavailable", PaywallScenarios.pricesUnavailable)
 
+    @Test
+    fun pending() = shot("pending", PaywallScenarios.pending)
+
     private companion object {
         val shotsDir: File by lazy {
             generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }

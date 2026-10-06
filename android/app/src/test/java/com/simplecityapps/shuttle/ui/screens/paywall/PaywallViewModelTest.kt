@@ -198,6 +198,7 @@ class PaywallViewModelTest {
         val viewModel = collectedViewModel()
         for ((result, message) in listOf(
             RestoreResult.Restored to PaywallMessage.Restored,
+            RestoreResult.Pending to PaywallMessage.PurchasePending,
             RestoreResult.NothingToRestore to PaywallMessage.NothingToRestore,
             RestoreResult.Failed to PaywallMessage.RestoreFailed
         )) {
@@ -206,6 +207,47 @@ class PaywallViewModelTest {
             viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(message)
             viewModel.uiState.value.restoring shouldBe false
         }
+    }
+
+    @Test
+    fun `a purchase waiting on payment replaces the trial status, blocks another purchase and gives way to Pro`() = runTest {
+        val viewModel = collectedViewModel()
+
+        billing.pendingProductIds.value = setOf("s2_pro_lifetime")
+        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending
+        viewModel.uiState.value.canPurchase shouldBe false
+        viewModel.uiState.value.primaryAction shouldBe PaywallPrimaryAction.Purchase
+
+        entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+        viewModel.uiState.value.status shouldBe PaywallStatus.Pro(ProSource.Lifetime)
+    }
+
+    @Test
+    fun `a purchase going pending while the paywall is open says so once`() = runTest {
+        val viewModel = collectedViewModel()
+
+        billing.pendingProductIds.value = setOf("s2_pro_lifetime")
+        billing.pendingProductIds.value = setOf("s2_pro_lifetime")
+
+        viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(PaywallMessage.PurchasePending)
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `a purchase already pending when the paywall opens shows in the status, not as a message`() = runTest {
+        billing.pendingProductIds.value = setOf("s2_pro")
+        val viewModel = collectedViewModel()
+
+        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `Pro from a product no longer sold is legacy`() {
+        PaywallStatus.Pro(ProSource.LegacyLifetime).isLegacy shouldBe true
+        PaywallStatus.Pro(ProSource.LegacySubscription).isLegacy shouldBe true
+        PaywallStatus.Pro(ProSource.Lifetime).isLegacy shouldBe false
+        PaywallStatus.Pro(ProSource.Subscription).isLegacy shouldBe false
     }
 
     @Test

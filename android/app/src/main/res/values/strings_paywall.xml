@@ -8,8 +8,12 @@
     <string name="paywall_settings_summary_pro">Thank you for your support</string>
     <!-- Shuttle Music Pro screen: status while Google Play hasn't yet said whether the user owns Shuttle Music Pro (e.g. offline) -->
     <string name="paywall_status_checking">Checking your purchases with Google Play…</string>
+    <!-- Shuttle Music Pro screen: headline at the top, the pitch -->
+    <string name="paywall_headline">Your server, offline and in the car</string>
+    <!-- Shuttle Music Pro screen: the first line under the headline; says plainly what is free and what Pro costs -->
+    <string name="paywall_disclosure">Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial.</string>
     <!-- Shuttle Music Pro screen: status when the user has never had the free trial -->
-    <string name="paywall_status_trial_available">Try Shuttle Music Pro free for 14 days. The trial starts the first time you use a Pro feature.</string>
+    <string name="paywall_status_trial_available">Your 14-day free trial starts the first time you use a Pro feature. Nothing is charged.</string>
     <!-- Shuttle Music Pro screen: before and during the trial, what stops once it ends -->
     <string name="paywall_trial_terms">After the trial, server songs, Android Auto, batch tag editing and turning on ReplayGain ask you to upgrade. Downloaded songs, music on this phone and your saved settings keep working.</string>
     <!-- Shuttle Music Pro screen: status when the free trial has ended -->
@@ -21,11 +25,15 @@
     </plurals>
     <!-- Shuttle Music Pro screen: status when the user has Pro -->
     <string name="paywall_status_pro">You have Shuttle Music Pro. Thank you for supporting Shuttle Music.</string>
+    <!-- Shuttle Music Pro screen: status when the user has Pro from a purchase made before Shuttle Music Pro existed -->
+    <string name="paywall_status_pro_legacy">You already own Shuttle Music Pro through your earlier purchase. Thank you for supporting Shuttle Music.</string>
+    <!-- Shuttle Music Pro screen: status when a purchase is waiting on payment, e.g. cash at a shop -->
+    <string name="paywall_status_purchase_pending">Your purchase is waiting for payment. Shuttle Music Pro unlocks as soon as Google Play confirms it.</string>
     <!-- Shuttle Music Pro screen: heading of the list of what Pro unlocks -->
     <string name="paywall_benefits_heading">What you get</string>
-    <string name="paywall_benefit_streaming">Stream from Jellyfin, Emby, Plex and Navidrome</string>
-    <string name="paywall_benefit_downloads">Download server songs for offline listening</string>
-    <string name="paywall_benefit_android_auto">Browse and play your library in Android Auto</string>
+    <string name="paywall_benefit_downloads">Download songs from your server to play offline</string>
+    <string name="paywall_benefit_android_auto">Your whole library in Android Auto</string>
+    <string name="paywall_benefit_streaming">Jellyfin, Emby, Plex and Navidrome in one app</string>
     <string name="paywall_benefit_batch_tag_edit">Edit the tags of many songs at once</string>
     <string name="paywall_benefit_replay_gain">ReplayGain volume levelling by track or album</string>
     <string name="paywall_benefit_free">Local playback, Chromecast, the equalizer, editing one song\'s tags and downloaded songs stay free</string>
@@ -78,6 +86,8 @@
     <!-- Shuttle Music Pro screen: snackbar once a purchase or promo code has gone through -->
     <string name="paywall_thank_you">Thank you for supporting Shuttle Music!</string>
     <string name="paywall_restored">Your purchase has been restored</string>
+    <!-- Shuttle Music Pro screen: snackbar when a purchase, or a restore, is waiting on payment (e.g. cash at a shop) -->
+    <string name="paywall_purchase_pending">Purchase pending. Shuttle Music Pro unlocks once Google Play confirms your payment.</string>
     <string name="paywall_nothing_to_restore">No Shuttle Music Pro purchase found for this Google account</string>
     <string name="paywall_restore_failed">Couldn\'t reach Google Play. Please try again.</string>
     <!-- Add-server sign-in dialog: shown to Free users before they connect to a Jellyfin, Emby, Plex or Subsonic server -->

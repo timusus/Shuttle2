@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
@@ -59,7 +60,13 @@ class PaywallRobot(private val rule: ComposeContentTestRule) {
         }
     }
 
+    /** Scrolls the list to [text]; the purchase buttons sit in a bar outside it, always in view. */
     fun scrollTo(text: String) {
+        if (rule.onAllNodes(hasText(text) and hasAnyAncestor(hasScrollAction())).fetchSemanticsNodes().isEmpty() &&
+            rule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        ) {
+            return
+        }
         rule.onNode(hasScrollAction()).performScrollToNode(hasText(text))
     }
 

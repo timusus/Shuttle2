@@ -8,6 +8,12 @@ interface Billing {
     /** Product IDs with a completed purchase, or null until Play has answered. */
     val ownedProductIds: StateFlow<Set<String>?>
 
+    /**
+     * Pro products bought but still waiting on payment (cash at a shop, a bank transfer). They grant nothing until
+     * Play completes them, which can take days, or drop them if the payment never arrives.
+     */
+    val pendingProductIds: StateFlow<Set<String>>
+
     /** What the paywall can sell. */
     val offers: StateFlow<PaywallOffers>
 
@@ -43,6 +49,9 @@ sealed interface PaywallOffers {
 enum class RestoreResult {
     /** A purchase that grants Pro was found. */
     Restored,
+
+    /** Nothing grants Pro yet, but a Pro purchase is waiting on payment. */
+    Pending,
 
     /** Play answered, and none of the user's purchases grants Pro. */
     NothingToRestore,

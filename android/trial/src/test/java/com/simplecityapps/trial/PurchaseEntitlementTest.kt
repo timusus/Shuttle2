@@ -53,4 +53,30 @@ class PurchaseEntitlementTest {
         )
         assertEquals(listOf("completed"), purchases.needingAcknowledgement().map { it.purchaseToken })
     }
+
+    @Test
+    fun `only pending Pro purchases count as pending`() {
+        val purchases = listOf(
+            purchase(productId = "s2_pro_lifetime", state = Purchase.PurchaseState.PENDING),
+            purchase(productId = "s2_subscription_full_version_yearly", state = Purchase.PurchaseState.PENDING),
+            purchase(productId = "something_else", state = Purchase.PurchaseState.PENDING),
+            purchase(productId = "s2_pro")
+        )
+        assertEquals(setOf("s2_pro_lifetime", "s2_subscription_full_version_yearly"), purchases.pendingProProductIds())
+    }
+
+    @Test
+    fun `a restore that finds Pro restores it, even with another purchase pending`() {
+        assertEquals(RestoreResult.Restored, restoreResult(owned = setOf("s2_iap_full_version"), pending = setOf("s2_pro")))
+    }
+
+    @Test
+    fun `a restore that finds only a pending purchase says it is pending`() {
+        assertEquals(RestoreResult.Pending, restoreResult(owned = emptySet(), pending = setOf("s2_pro_lifetime")))
+    }
+
+    @Test
+    fun `a restore that finds nothing says so`() {
+        assertEquals(RestoreResult.NothingToRestore, restoreResult(owned = setOf("something_else"), pending = emptySet()))
+    }
 }

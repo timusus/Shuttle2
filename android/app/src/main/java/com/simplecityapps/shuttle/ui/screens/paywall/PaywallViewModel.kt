@@ -40,7 +40,16 @@ sealed interface PaywallStatus {
 
     data class Trial(val daysLeft: Int) : PaywallStatus
 
-    data class Pro(val source: ProSource) : PaywallStatus
+    /**
+     * Bought, but Play is waiting on the payment (cash at a shop, a bank transfer): Pro unlocks by itself once it
+     * arrives. Shown in place of the trial states; Pro, once it comes, wins.
+     */
+    data object PurchasePending : PaywallStatus
+
+    data class Pro(val source: ProSource) : PaywallStatus {
+        /** Pro from a product no longer sold: the user is thanked for an earlier purchase rather than a new one. */
+        val isLegacy: Boolean get() = source == ProSource.LegacyLifetime || source == ProSource.LegacySubscription
+    }
 }
 
 data class PaywallUiState(
@@ -55,6 +64,9 @@ data class PaywallUiState(
 
     /** The offer the purchase button buys, or null if there's nothing to buy yet. */
     val selectedOffer: PaywallOffer? get() = available.firstOrNull { it.plan == selectedPlan } ?: available.firstOrNull()
+
+    /** Whether the purchase button can buy: an offer is selected, and no purchase is already waiting on payment. */
+    val canPurchase: Boolean get() = selectedOffer != null && status != PaywallStatus.PurchasePending
 
     /** The trial comes first for a user who hasn't had it; everyone else is offered Pro. */
     val primaryAction: PaywallPrimaryAction
@@ -76,6 +88,7 @@ enum class PaywallPrimaryAction {
 enum class PaywallMessage {
     PurchaseFailed,
     Restored,
+    PurchasePending,
     NothingToRestore,
     RestoreFailed,
     ThankYou
@@ -110,12 +123,14 @@ class PaywallViewModel @AssistedInject constructor(
 
     private val events = PendingEvents<PaywallUiEvent>()
 
-    val uiState: StateFlow<PaywallUiState> = combine(entitlement, billing.offers, selectedPlan, restoring, events.flow) { entitlement, offers, plan, restoring, events ->
-        PaywallUiState(entitlement.toStatus(), offers, plan, restoring, events)
+    private val status = combine(entitlement, billing.pendingProductIds) { entitlement, pending -> entitlement.toStatus(pending) }
+
+    val uiState: StateFlow<PaywallUiState> = combine(status, billing.offers, selectedPlan, restoring, events.flow) { status, offers, plan, restoring, events ->
+        PaywallUiState(status, offers, plan, restoring, events)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = PaywallUiState(entitlement.value.toStatus(), billing.offers.value, selectedPlan.value)
+        initialValue = PaywallUiState(entitlement.value.toStatus(billing.pendingProductIds.value), billing.offers.value, selectedPlan.value)
     )
 
     // Unlike iOS, which logs a dismissal for a user who opened it as Pro, a paywall opened as Pro is never a dismissal
@@ -125,6 +140,18 @@ class PaywallViewModel @AssistedInject constructor(
         analytics.paywallShown(source)
         if (billing.offers.value == PaywallOffers.Unavailable) billing.refreshOffers()
         viewModelScope.launch { thankPurchaser() }
+        viewModelScope.launch { reportPendingPurchase() }
+    }
+
+    /** Says so when a purchase made while the paywall is open goes pending, since Play's sheet closes without Pro. */
+    private suspend fun reportPendingPurchase() {
+        var previous = billing.pendingProductIds.value
+        billing.pendingProductIds.collect { current ->
+            if ((current - previous).isNotEmpty() && entitlement.value !is Entitlement.Pro) {
+                events.post(PaywallUiEvent.ShowMessage(PaywallMessage.PurchasePending))
+            }
+            previous = current
+        }
     }
 
     /**
@@ -167,6 +194,7 @@ class PaywallViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val message = when (billing.restorePurchases()) {
                 RestoreResult.Restored -> PaywallMessage.Restored.also { restored = true }
+                RestoreResult.Pending -> PaywallMessage.PurchasePending
                 RestoreResult.NothingToRestore -> PaywallMessage.NothingToRestore
                 RestoreResult.Failed -> PaywallMessage.RestoreFailed
             }
@@ -188,9 +216,10 @@ class PaywallViewModel @AssistedInject constructor(
     }
 }
 
-private fun Entitlement.toStatus(): PaywallStatus = when (this) {
-    Entitlement.Unknown -> PaywallStatus.Checking
-    is Entitlement.Free -> if (trialUsed) PaywallStatus.TrialEnded else PaywallStatus.TrialAvailable
-    is Entitlement.Trial -> PaywallStatus.Trial(daysRemaining())
-    is Entitlement.Pro -> PaywallStatus.Pro(source)
+private fun Entitlement.toStatus(pendingProductIds: Set<String>): PaywallStatus = when {
+    this is Entitlement.Pro -> PaywallStatus.Pro(source)
+    pendingProductIds.isNotEmpty() -> PaywallStatus.PurchasePending
+    this is Entitlement.Free -> if (trialUsed) PaywallStatus.TrialEnded else PaywallStatus.TrialAvailable
+    this is Entitlement.Trial -> PaywallStatus.Trial(daysRemaining())
+    else -> PaywallStatus.Checking
 }

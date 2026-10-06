@@ -58,14 +58,16 @@ class PaywallOffersTest {
     }
 
     @Test
-    fun `falls back to the legacy products until the S2 Pro products exist in Play`() {
+    fun `never offers a legacy product, even when Play returns only those`() {
         val offers = listOf(
-            oneTime(ProductIds.LEGACY_LIFETIME_LOW, "$4.99"),
+            oneTime(ProductIds.LEGACY_LIFETIME, "$3.49"),
+            oneTime(ProductIds.LEGACY_LIFETIME_LOW, "$7.99"),
+            subscription(ProductIds.LEGACY_SUBSCRIPTION_MONTHLY, basePlan("P1M", "$0.99")),
+            subscription(ProductIds.LEGACY_SUBSCRIPTION_YEARLY, basePlan("P1Y", "$4.99")),
             subscription(ProductIds.LEGACY_SUBSCRIPTION_YEARLY_LOW, basePlan("P1Y", "$2.99"))
         ).toPaywallOffers()
 
-        assertEquals(listOf(PaywallPlan.Lifetime, PaywallPlan.Annual), offers.map { it.plan })
-        assertEquals(listOf(ProductIds.LEGACY_LIFETIME_LOW, ProductIds.LEGACY_SUBSCRIPTION_YEARLY_LOW), offers.map { it.productId })
+        assertEquals(emptyList<PaywallOffer>(), offers)
     }
 
     @Test

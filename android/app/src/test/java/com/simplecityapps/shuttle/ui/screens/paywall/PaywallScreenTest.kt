@@ -23,8 +23,9 @@ class PaywallScreenTest {
         robot.assertDisplayed(TRIAL_AVAILABLE)
         robot.assertDisplayed(TRIAL_TERMS)
         robot.assertDisplayed("What you get")
-        robot.assertDisplayed("Stream from Jellyfin, Emby, Plex and Navidrome")
-        robot.assertDisplayed("Browse and play your library in Android Auto")
+        robot.assertDisplayed("Download songs from your server to play offline")
+        robot.assertDisplayed("Your whole library in Android Auto")
+        robot.assertDisplayed("Jellyfin, Emby, Plex and Navidrome in one app")
         robot.assertDisplayed("Edit the tags of many songs at once")
         robot.assertDisplayed("ReplayGain volume levelling by track or album")
         robot.assertDisplayed("$9.99 once")
@@ -147,6 +148,35 @@ class PaywallScreenTest {
     }
 
     @Test
+    fun `the pitch says what is free and what Pro costs before anything else`() {
+        robot.setContent(PaywallScenarios.free)
+
+        robot.assertDisplayed("Your server, offline and in the car")
+        robot.assertDisplayed("Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial.")
+    }
+
+    @Test
+    fun `a purchase waiting on payment says so, and another can't be bought meanwhile`() {
+        robot.setContent(PaywallScenarios.pending)
+
+        robot.assertDisplayed("Your purchase is waiting for payment. Shuttle Music Pro unlocks as soon as Google Play confirms it.")
+        robot.assertNotEnabled("Get Shuttle Music Pro")
+        robot.assertNotShown(TRIAL_AVAILABLE)
+        robot.tapText("Restore purchases")
+
+        robot.restores shouldBe 1
+    }
+
+    @Test
+    fun `an earlier purchase is thanked as already owning Pro`() {
+        robot.setContent(PaywallScenarios.legacyPro)
+
+        robot.assertDisplayed("You already own Shuttle Music Pro through your earlier purchase. Thank you for supporting Shuttle Music.")
+        robot.assertNotShown("Get Shuttle Music Pro")
+        robot.assertNotShown("Manage subscription")
+    }
+
+    @Test
     fun `a subscriber can manage their subscription`() {
         robot.setContent(PaywallScenarios.subscriber)
 
@@ -156,7 +186,7 @@ class PaywallScreenTest {
     }
 
     private companion object {
-        const val TRIAL_AVAILABLE = "Try Shuttle Music Pro free for 14 days. The trial starts the first time you use a Pro feature."
+        const val TRIAL_AVAILABLE = "Your 14-day free trial starts the first time you use a Pro feature. Nothing is charged."
         const val TRIAL_TERMS = "After the trial, server songs, Android Auto, batch tag editing and turning on ReplayGain ask you to upgrade. Downloaded songs, music on this phone and your saved settings keep working."
     }
 }

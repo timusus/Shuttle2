@@ -26,8 +26,8 @@ object ProductIds {
 
     val subscriptions = listOf(PRO_SUBSCRIPTION, LEGACY_SUBSCRIPTION_MONTHLY, LEGACY_SUBSCRIPTION_YEARLY, LEGACY_SUBSCRIPTION_YEARLY_LOW)
 
-    /** The legacy products the old paywall offers until the `s2_pro*` products exist in Play Console. */
-    val legacyOffered = listOf(LEGACY_SUBSCRIPTION_YEARLY_LOW, LEGACY_LIFETIME_LOW)
+    /** The products the paywall sells. The legacy ones are never offered again. */
+    val offered = listOf(PRO_SUBSCRIPTION, PRO_LIFETIME)
 
     /** Where Pro comes from when [productId] is owned, or null if it doesn't grant Pro. */
     fun proSource(productId: String): ProSource? = when (productId) {

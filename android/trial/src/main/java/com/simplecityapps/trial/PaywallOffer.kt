@@ -23,23 +23,20 @@ data class PaywallOffer(
 }
 
 /**
- * The offers for [this] product details: the S2 Pro products if Play returned any, otherwise the legacy ones still
- * on sale. One offer per one-time product and per annual subscription base plan, lifetime first.
+ * The offers for [this] product details, from the [ProductIds.offered] products only: one per one-time product and
+ * per annual subscription base plan, lifetime first.
  */
-internal fun List<ProductDetails>.toPaywallOffers(): List<PaywallOffer> {
-    val pro = filter { it.productId == ProductIds.PRO_SUBSCRIPTION || it.productId == ProductIds.PRO_LIFETIME }
-    return pro.ifEmpty { filter { it.productId in ProductIds.legacyOffered } }
-        .flatMap { details ->
-            details.oneTimePurchaseOfferDetails?.let { oneTime ->
-                listOf(PaywallOffer(details.productId, PaywallPlan.Lifetime, oneTime.formattedPrice, offerToken = null))
-            } ?: details.subscriptionOfferDetails.orEmpty()
-                // Base plans only; developer-defined offers (offerId != null) aren't sold here.
-                .filter { it.offerId == null }
-                .mapNotNull { offer ->
-                    val phase = offer.pricingPhases.pricingPhaseList.lastOrNull() ?: return@mapNotNull null
-                    if (phase.billingPeriod != "P1Y") return@mapNotNull null
-                    PaywallOffer(details.productId, PaywallPlan.Annual, phase.formattedPrice, offer.offerToken)
-                }
-        }
-        .sortedBy { it.plan }
-}
+internal fun List<ProductDetails>.toPaywallOffers(): List<PaywallOffer> = filter { it.productId in ProductIds.offered }
+    .flatMap { details ->
+        details.oneTimePurchaseOfferDetails?.let { oneTime ->
+            listOf(PaywallOffer(details.productId, PaywallPlan.Lifetime, oneTime.formattedPrice, offerToken = null))
+        } ?: details.subscriptionOfferDetails.orEmpty()
+            // Base plans only; developer-defined offers (offerId != null) aren't sold here.
+            .filter { it.offerId == null }
+            .mapNotNull { offer ->
+                val phase = offer.pricingPhases.pricingPhaseList.lastOrNull() ?: return@mapNotNull null
+                if (phase.billingPeriod != "P1Y") return@mapNotNull null
+                PaywallOffer(details.productId, PaywallPlan.Annual, phase.formattedPrice, offer.offerToken)
+            }
+    }
+    .sortedBy { it.plan }
