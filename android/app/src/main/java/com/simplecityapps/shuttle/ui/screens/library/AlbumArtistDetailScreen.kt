@@ -435,7 +435,7 @@ fun AlbumArtistDetailDestination(
             onExpandAll = viewModel::onExpandAll,
             onCollapseAll = viewModel::onCollapseAll,
             onOpenAlbum = { album -> onOpen(album.route) },
-            onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
+            onAlbumMore = { album -> actions.showActions(albumMoreTarget(album, resources.getString(R.string.menu_title_view_album)) { onOpen(album.route) }) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onAppearsOnClick = { album -> onOpen(album.route) },
         )

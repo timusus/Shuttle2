@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createAlbum
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -119,5 +120,18 @@ class AlbumDetailScreenTest {
         robot.clickNavigateUp()
 
         robot.navigatedUp shouldBe true
+    }
+
+    @Test
+    fun `an album's overflow menu offers Go to album, which opens the album`() {
+        val album = albumOf(phaseGardenSongs())
+        var opened = false
+
+        val target = albumMoreTarget(album, "Go to album") { opened = true }
+
+        target.selection shouldBe MediaSelection.Albums(album)
+        target.extraActions.map { it.label } shouldBe listOf("Go to album")
+        target.extraActions.single().onClick()
+        opened shouldBe true
     }
 }

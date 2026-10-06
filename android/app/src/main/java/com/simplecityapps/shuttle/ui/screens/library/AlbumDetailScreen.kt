@@ -2,15 +2,19 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Album
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
+import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
@@ -104,6 +108,15 @@ fun AlbumDetailScreen(
 /** The song's artist when it isn't [album]'s own (a guest, a compilation's track), else null: the hero already names it (#739). */
 internal fun Song.artistUnlessAlbumArtist(album: Album?): String? = friendlyArtistName?.takeIf { it.isNotBlank() && it != (album?.albumArtist ?: album?.friendlyArtistName) }
 
+/** The actions target for an album's overflow menu, with a "Go to album" action that runs [onOpen]. */
+internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () -> Unit): MediaActionsTarget = MediaActionsTarget(
+    title = album.name.orEmpty(),
+    subtitle = album.friendlyArtistName,
+    selection = MediaSelection.Albums(album),
+    placeholder = ArtworkPlaceholder.Album,
+    extraActions = listOf(S2Action(goToAlbumLabel, onOpen, Icons.Rounded.Album)),
+)
+
 /** "Artist · year · N songs · duration". */
 @Composable
 private fun albumSubtitle(album: Album): String = listOfNotNull(
@@ -120,6 +133,7 @@ fun AlbumDetailDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
+    val resources = LocalResources.current
     val viewModel = assistedMetroViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     MediaActionsHost(onNavigate = onNavigate) { actions ->
@@ -131,7 +145,7 @@ fun AlbumDetailDestination(
             onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onOpenAlbum = { album -> onOpen(album.route) },
-            onMoreByAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
+            onMoreByAlbumMore = { album -> actions.showActions(albumMoreTarget(album, resources.getString(R.string.menu_title_view_album)) { onOpen(album.route) }) },
         )
     }
 }
