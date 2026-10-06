@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
+import com.simplecityapps.shuttle.ui.common.downloads.DownloadStatusHeader
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
@@ -131,6 +132,7 @@ fun PlaylistDetailScreen(
                 }
             },
             header = {
+                DownloadStatusHeader(songs, Modifier.padding(top = S2Spacing.smallMedium))
                 if (playlist != null && !uiState.canReorder && uiState.songs.isNotEmpty()) {
                     val sortLabel = stringResource(PlaylistSorts.firstOrNull { it.first == playlist.sortOrder }?.second ?: R.string.menu_title_sort_custom)
                     Text(

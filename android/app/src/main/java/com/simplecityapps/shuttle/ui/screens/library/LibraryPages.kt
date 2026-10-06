@@ -59,6 +59,7 @@ import com.simplecityapps.shuttle.ui.common.components.FastScrollableState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.NoPopup
 import com.simplecityapps.shuttle.ui.common.components.rememberFastScrollableState
+import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.albumThumbLabel
@@ -262,6 +263,7 @@ fun LibrarySongRow(
         duration = formatDuration(song.duration.toLong()),
         playing = playing,
         selected = selected,
+        offlineState = song.offlineState(),
         onLongClick = onLongClick,
         onMore = onMore,
     )

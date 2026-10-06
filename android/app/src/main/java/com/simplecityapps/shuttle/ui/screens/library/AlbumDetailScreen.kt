@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,12 +14,15 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.downloads.DownloadStatusHeader
+import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
@@ -60,6 +64,7 @@ fun AlbumDetailScreen(
             onPlay = { onPlay(songs, 0) },
             onShuffle = onShuffle,
             onMore = { album?.let(onAlbumMore) },
+            header = { DownloadStatusHeader(songs, Modifier.padding(top = S2Spacing.smallMedium)) },
             modifier = modifier.testTag("album-detail"),
         ) {
             val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
@@ -77,6 +82,7 @@ fun AlbumDetailScreen(
                         trackNumber = song.track,
                         duration = formatDuration(song.duration.toLong()),
                         playing = song.id == uiState.currentSong?.id,
+                        offlineState = song.offlineState(),
                         onMore = { onSongMore(song) },
                     )
                 }

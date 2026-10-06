@@ -18,6 +18,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.downloads.DownloadStatusViewModel
+import com.simplecityapps.shuttle.ui.common.downloads.ProvideDownloadStatuses
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
 import com.simplecityapps.shuttle.ui.screens.sources.titleRes
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
@@ -36,6 +38,7 @@ fun ShellRoute(
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = metroViewModel(),
     shellViewModel: ShellViewModel = metroViewModel(),
+    downloadStatus: DownloadStatusViewModel = metroViewModel(),
     tabRequests: Flow<ShellTab> = emptyFlow(),
 ) {
     val playerState = viewModel.uiState.collectAsStateWithLifecycle()
@@ -49,15 +52,17 @@ fun ShellRoute(
     signingIn?.let { type ->
         ServerSignInRoute(type, onConnected = shellViewModel::onServerConnected, onDismiss = { signingIn = null })
     }
-    AppShell(
-        playerUi = playerUi,
-        progress = { playerState.value.progress },
-        actions = viewModel,
-        modifier = modifier,
-        snackbarHostState = snackbarHostState,
-        startTab = shellUi.startTab,
-        tabRequests = tabRequests,
-    )
+    ProvideDownloadStatuses(downloadStatus.uiState.collectAsStateWithLifecycle()) {
+        AppShell(
+            playerUi = playerUi,
+            progress = { playerState.value.progress },
+            actions = viewModel,
+            modifier = modifier,
+            snackbarHostState = snackbarHostState,
+            startTab = shellUi.startTab,
+            tabRequests = tabRequests,
+        )
+    }
 }
 
 /** Tells the user a server signed them out, with Sign in to open that server's dialog (#595). */

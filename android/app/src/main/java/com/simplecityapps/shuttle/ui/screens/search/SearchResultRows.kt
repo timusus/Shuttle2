@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 
@@ -78,6 +79,7 @@ internal fun SongResult(hit: SearchHit<Song>, index: Int, callbacks: SearchCallb
         subtitle = subtitleText,
         onClick = { callbacks.onSongClick(index) },
         artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
+        offlineState = song.offlineState(),
         onLongClick = showActions,
         onMore = showActions,
     )

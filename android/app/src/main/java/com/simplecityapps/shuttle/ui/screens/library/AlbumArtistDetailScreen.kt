@@ -63,6 +63,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
+import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailEvent
@@ -190,6 +191,7 @@ fun AlbumArtistDetailScreen(
                                 trackNumber = song.track,
                                 duration = formatDuration(song.duration.toLong()),
                                 playing = song.id == uiState.currentSong?.id,
+                                offlineState = song.offlineState(),
                                 onMore = { onSongMore(song) },
                             )
                         }
@@ -207,6 +209,7 @@ fun AlbumArtistDetailScreen(
                             artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
                             duration = formatDuration(song.duration.toLong()),
                             playing = song.id == uiState.currentSong?.id,
+                            offlineState = song.offlineState(),
                             onMore = { onSongMore(song) },
                         )
                     }

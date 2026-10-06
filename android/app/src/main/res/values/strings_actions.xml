@@ -63,4 +63,10 @@
     <string name="media_action_download">Download</string>
     <!-- Actions sheet item: delete the offline copy of downloaded songs -->
     <string name="media_action_remove_download">Remove download</string>
+    <!-- Album or playlist header while its songs download: how many of its songs are on the device so far -->
+    <string name="download_status_downloading">Downloading <xliff:g example="3" id="downloaded">%1$d</xliff:g> of <xliff:g example="12" id="total">%2$d</xliff:g></string>
+    <!-- Album or playlist header when only some of its songs are downloaded and none are running -->
+    <string name="download_status_partial"><xliff:g example="3" id="downloaded">%1$d</xliff:g> of <xliff:g example="12" id="total">%2$d</xliff:g> songs downloaded</string>
+    <!-- Album or playlist header when every song is downloaded for offline playback -->
+    <string name="download_status_downloaded">Downloaded</string>
 </resources>
