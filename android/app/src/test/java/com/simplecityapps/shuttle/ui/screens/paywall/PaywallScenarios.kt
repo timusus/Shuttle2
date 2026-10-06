@@ -20,7 +20,7 @@ object PaywallScenarios {
 
     val legacyPro = pro.copy(status = PaywallStatus.Pro(ProSource.LegacyLifetime))
 
-    val pending = free.copy(status = PaywallStatus.PurchasePending)
+    val pending = free.copy(status = PaywallStatus.PurchasePending())
 
     val loading = free.copy(offers = PaywallOffers.Loading)
 

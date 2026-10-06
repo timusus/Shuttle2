@@ -152,7 +152,7 @@ class PaywallScreenTest {
         robot.setContent(PaywallScenarios.free)
 
         robot.assertDisplayed("Your server, offline and in the car")
-        robot.assertDisplayed("Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial.")
+        robot.assertDisplayed("Free for music on this phone. Pro is a yearly plan or a one-time unlock, with a 14-day free trial.")
     }
 
     @Test

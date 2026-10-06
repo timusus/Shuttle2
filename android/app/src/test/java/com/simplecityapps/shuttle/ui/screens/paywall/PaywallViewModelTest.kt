@@ -211,15 +211,26 @@ class PaywallViewModelTest {
 
     @Test
     fun `a purchase waiting on payment replaces the trial status, blocks another purchase and gives way to Pro`() = runTest {
+        entitlement.value = Entitlement.Free(trialUsed = true)
         val viewModel = collectedViewModel()
 
         billing.pendingProductIds.value = setOf("s2_pro_lifetime")
-        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending
+        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending(trialAvailable = false)
         viewModel.uiState.value.canPurchase shouldBe false
         viewModel.uiState.value.primaryAction shouldBe PaywallPrimaryAction.Purchase
 
         entitlement.value = Entitlement.Pro(ProSource.Lifetime)
         viewModel.uiState.value.status shouldBe PaywallStatus.Pro(ProSource.Lifetime)
+    }
+
+    @Test
+    fun `a purchase waiting on payment keeps an unused trial startable while buying stays blocked`() = runTest {
+        val viewModel = collectedViewModel()
+
+        billing.pendingProductIds.value = setOf("s2_pro_lifetime")
+        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending(trialAvailable = true)
+        viewModel.uiState.value.primaryAction shouldBe PaywallPrimaryAction.StartTrial
+        viewModel.uiState.value.canPurchase shouldBe false
     }
 
     @Test
@@ -238,7 +249,7 @@ class PaywallViewModelTest {
         billing.pendingProductIds.value = setOf("s2_pro")
         val viewModel = collectedViewModel()
 
-        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending
+        viewModel.uiState.value.status shouldBe PaywallStatus.PurchasePending(trialAvailable = true)
         viewModel.uiState.value.events shouldBe emptyList()
     }
 

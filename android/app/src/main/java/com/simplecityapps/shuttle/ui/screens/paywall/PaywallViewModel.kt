@@ -42,9 +42,10 @@ sealed interface PaywallStatus {
 
     /**
      * Bought, but Play is waiting on the payment (cash at a shop, a bank transfer): Pro unlocks by itself once it
-     * arrives. Shown in place of the trial states; Pro, once it comes, wins.
+     * arrives. Shown in place of the trial states; Pro, once it comes, wins. [trialAvailable] keeps an unused trial
+     * startable meanwhile.
      */
-    data object PurchasePending : PaywallStatus
+    data class PurchasePending(val trialAvailable: Boolean = false) : PaywallStatus
 
     data class Pro(val source: ProSource) : PaywallStatus {
         /** Pro from a product no longer sold: the user is thanked for an earlier purchase rather than a new one. */
@@ -66,11 +67,15 @@ data class PaywallUiState(
     val selectedOffer: PaywallOffer? get() = available.firstOrNull { it.plan == selectedPlan } ?: available.firstOrNull()
 
     /** Whether the purchase button can buy: an offer is selected, and no purchase is already waiting on payment. */
-    val canPurchase: Boolean get() = selectedOffer != null && status != PaywallStatus.PurchasePending
+    val canPurchase: Boolean get() = selectedOffer != null && status !is PaywallStatus.PurchasePending
 
-    /** The trial comes first for a user who hasn't had it; everyone else is offered Pro. */
+    /** The trial comes first for a user who hasn't had it, even with a purchase pending; everyone else is offered Pro. */
     val primaryAction: PaywallPrimaryAction
-        get() = if (status == PaywallStatus.TrialAvailable) PaywallPrimaryAction.StartTrial else PaywallPrimaryAction.Purchase
+        get() = if (status == PaywallStatus.TrialAvailable || (status as? PaywallStatus.PurchasePending)?.trialAvailable == true) {
+            PaywallPrimaryAction.StartTrial
+        } else {
+            PaywallPrimaryAction.Purchase
+        }
 
     /** Before and during the trial, the paywall says what stops once it ends, so the trial holds no surprise. */
     val explainsTrialEnd: Boolean get() = status == PaywallStatus.TrialAvailable || status is PaywallStatus.Trial
@@ -218,7 +223,7 @@ class PaywallViewModel @AssistedInject constructor(
 
 private fun Entitlement.toStatus(pendingProductIds: Set<String>): PaywallStatus = when {
     this is Entitlement.Pro -> PaywallStatus.Pro(source)
-    pendingProductIds.isNotEmpty() -> PaywallStatus.PurchasePending
+    pendingProductIds.isNotEmpty() -> PaywallStatus.PurchasePending(trialAvailable = this is Entitlement.Free && !trialUsed)
     this is Entitlement.Free -> if (trialUsed) PaywallStatus.TrialEnded else PaywallStatus.TrialAvailable
     this is Entitlement.Trial -> PaywallStatus.Trial(daysRemaining())
     else -> PaywallStatus.Checking

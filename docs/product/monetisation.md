@@ -23,8 +23,8 @@ offline and car, set against Plex Pass and Emby Premiere.
 - **Trial:** 14 days, no card, app-side (not a Play trial offer), starting on first use of any Pro feature: first
   server, first Android Auto connection, first batch edit (extends #488). The use is disclosed at that moment. Current
   non-payers get one fresh trial at cutover, announced in the changelog.
-- **Disclosure:** the first lines of the listing and the paywall say "free for local files; Pro is a one-time unlock
-  with a 14-day trial". The listing has a "What's free / what's Pro" block. Play's misleading-claims policy expects paid
+- **Disclosure:** the first lines of the listing and the paywall say "free for local files; Pro is a yearly plan or a one-time
+  unlock, with a 14-day free trial". The listing has a "What's free / what's Pro" block. Play's misleading-claims policy expects paid
   features disclosed, so the current "Stream your music via Jellyfin, Emby or Plex" line must change before release.
 - **At expiry:** Pro features lock where they are used (server libraries stay browsable with a lock; playing a server
   song, connecting Android Auto or starting a batch edit opens the paywall). Local playback, settings and downloaded

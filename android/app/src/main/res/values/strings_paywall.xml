@@ -11,7 +11,7 @@
     <!-- Shuttle Music Pro screen: headline at the top, the pitch -->
     <string name="paywall_headline">Your server, offline and in the car</string>
     <!-- Shuttle Music Pro screen: the first line under the headline; says plainly what is free and what Pro costs -->
-    <string name="paywall_disclosure">Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial.</string>
+    <string name="paywall_disclosure">Free for music on this phone. Pro is a yearly plan or a one-time unlock, with a 14-day free trial.</string>
     <!-- Shuttle Music Pro screen: status when the user has never had the free trial -->
     <string name="paywall_status_trial_available">Your 14-day free trial starts the first time you use a Pro feature. Nothing is charged.</string>
     <!-- Shuttle Music Pro screen: before and during the trial, what stops once it ends -->

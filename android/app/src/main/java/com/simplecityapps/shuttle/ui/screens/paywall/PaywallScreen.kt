@@ -218,7 +218,7 @@ private fun StatusCard(
         PaywallStatus.TrialAvailable -> stringResource(R.string.paywall_status_trial_available)
         PaywallStatus.TrialEnded -> stringResource(R.string.paywall_status_trial_ended)
         is PaywallStatus.Trial -> pluralStringResource(R.plurals.paywall_status_trial, status.daysLeft, status.daysLeft)
-        PaywallStatus.PurchasePending -> stringResource(R.string.paywall_status_purchase_pending)
+        is PaywallStatus.PurchasePending -> stringResource(R.string.paywall_status_purchase_pending)
         is PaywallStatus.Pro -> stringResource(if (status.isLegacy) R.string.paywall_status_pro_legacy else R.string.paywall_status_pro)
     }
     Surface(
