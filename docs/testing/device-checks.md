@@ -394,6 +394,10 @@ previous and new outputs, and where each pause came from.
 - [ ] Still in airplane mode, play a song that was not downloaded: it fails to play with the usual error and the queue skips on, rather than hanging.
 - [ ] Back online, play the downloaded song again and a non-downloaded one: both play, and the downloads list shows the same size as before (streaming adds nothing to the download cache).
 
+## Notification permission on the first download (#88)
+- [ ] Android 13+, fresh install (or Settings, Apps, Notifications off), signed in to a server with Pro or the trial: download a song. The song queues and the system asks to allow notifications once. Deny it: the download still completes and the song plays offline.
+- [ ] Download another song afterwards: no second prompt appears, even though the permission is still denied. With Pro lapsed (the paywall opens instead of a download) or a local-only selection, no prompt appears either.
+
 ## Crossfade (#570)
 - [ ] Settings, Playback: set Crossfade to 6 s and play two songs from different albums: the first fades out as the second fades in near the end. Songs that are consecutive on the same album still play gaplessly with no fade. While casting, no fade happens.
 

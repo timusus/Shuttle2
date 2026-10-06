@@ -62,7 +62,9 @@ import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
@@ -73,6 +75,8 @@ import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.text.getString
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
@@ -146,6 +150,12 @@ class MediaActionsState internal constructor(
     }
 }
 
+/** The host reads whether the notification permission was asked for from the graph. */
+@ContributesTo(AppScope::class)
+interface DownloadSettingsEntryPoint {
+    fun downloadSettings(): DownloadSettings
+}
+
 /**
  * Hosts one destination's media actions: hands [MediaActionsUiState.events] to the shell snackbar (with
  * Undo / Add anyway), confirmation dialogs, shares and [onNavigate]; renders the actions sheet and the
@@ -157,20 +167,30 @@ fun MediaActionsHost(
     onNavigate: (NavigationTarget) -> Unit,
     viewModel: MediaActionsViewModel = metroViewModel(),
     systemDeletes: Boolean = true,
+    // Null in tests, which have no app graph
+    downloadSettings: DownloadSettings? = if (systemDeletes) LocalContext.current.appGraph<DownloadSettingsEntryPoint>().downloadSettings() else null,
     content: @Composable (MediaActionsState) -> Unit,
 ) {
     val context = LocalContext.current
-    // Download progress shows as a notification; the download starts whatever the answer
+    // Download progress shows as a notification: ask once, after a download has gone ahead, and never hold it back
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val state = remember(viewModel) {
         MediaActionsState { action ->
-            if (action is MediaAction.Download &&
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-            ) {
-                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            if (action is MediaAction.Download) {
+                viewModel.dispatch(action) { result ->
+                    val queued = result is MediaActionResult.Message && result.message is MediaActionMessage.DownloadQueued
+                    val asked = downloadSettings?.notificationPermissionAsked
+                    if (queued && asked != null && !asked.value &&
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        asked.value = true
+                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            } else {
+                viewModel.dispatch(action)
             }
-            viewModel.dispatch(action)
         }
     }
     val snackbarHostState = LocalShellSnackbarHostState.current
