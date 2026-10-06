@@ -40,7 +40,7 @@ The rows are the parity checklist in
 | 1.0.10 feature | Compose replacement | Coverage | Gap |
 |---|---|---|---|
 | Song actions: Play next, Add to queue, Add to playlist, Song info, Exclude, Edit tags, Delete, Remove | `actions/*`, the list and detail menus | `PlaySongsTest`, `EnqueueSongsTest`, `ExcludeSongsTest`, `DeleteSongsTest`, `AvailableMediaActionsTest`, `MediaActionHandlerTest` | |
-| Create, rename, clear, delete playlists; duplicate-song handling | `actions/CreatePlaylist`, `actions/AddToPlaylist`, `screens/playlistmenu` | `CreatePlaylistTest`, `AddToPlaylistTest`, `NewPlaylistFormTest` | |
+| Create, rename, clear, delete playlists; duplicate-song handling | `actions/CreatePlaylist`, `actions/AddToPlaylist`, `screens/playlistmenu` | `CreatePlaylistTest`, `AddToPlaylistTest`, `CreatePlaylistFormTest` | |
 | Tag editor: all 11 fields, batch mode, provider gating | `screens/tageditor/TagEditorScreen`, `WriteSongTags` | `TagEditorScreenTest`, `TagEditorViewModelTest`, `WriteSongTagsTest`; `shell-tag-editor`, `shell-tag-editor-rescanned`, `tag-edit-playing`, `tag-edit-not-playing` | |
 | Song info: all 17 fields | `screens/songinfo/SongInfoScreen` | `SongInfoScreenTest`, `SongInfoViewModelTest`, `SongInfoScreenshotTest` | |
 | Sleep timer: presets, play to end of track, countdown, stop | `shell/player/NowPlayingPanels` | `PlayerViewModelTest`; `sleep-timer` | |
@@ -54,7 +54,7 @@ The rows are the parity checklist in
 | Home sections and Shuffle all (redesigned per owner decision 4) | `screens/home/HomeScreen`, `HomeSections`, `HomeViewModel` | `HomeScreenTest`, `HomeSectionsTest`, `HomeViewModelTest`, `HomeScreenshotTest` | |
 | Mini player: progress, play/pause, skip, long-press seek | `shell/player/MiniPlayer` | `AppShellTest`, `ShellScreenshotTest`; `playback-controls` | Long-press seek: #430 |
 | Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue | `shell/player/NowPlaying`, `PlayerContent`, `PlayerViewModel` | `PlayerViewModelTest`, `PlayerLevelTest`, `PlayerExtrasScreenshotTest`, `AppShellTest`; `PlaybackSpecTest` (repeat modes, #543) | Long-press and audiobook seek: #430. Lyrics: #429 |
-| Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear | `shell/player/QueueList` | `PlayerViewModelTest`, `NewPlaylistFormTest`, `AppShellTest`; `PlaybackSpecTest` (queue actions, shuffle, #543) | |
+| Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear | `shell/player/QueueList` | `PlayerViewModelTest`, `CreatePlaylistFormTest`, `AppShellTest`; `PlaybackSpecTest` (queue actions, shuffle, #543) | |
 
 ## Sources and settings
 

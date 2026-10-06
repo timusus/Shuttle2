@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,6 +54,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
@@ -89,6 +91,12 @@ data class MediaActionsTarget(
      */
     val playAction: MediaAction? = null,
     val playFromStart: S2Action? = null,
+    /** Actions only this screen offers that lead the sheet (the queue's Play next and Remove), before the shared ones. */
+    val leadingActions: List<S2Action> = emptyList(),
+    /** Offers only these of the shared actions, when the selection already sits in the queue (the player's menus). */
+    val onlyTypes: Set<MediaActionType>? = null,
+    /** The header's artwork when the placeholder isn't enough, such as a song's own cover. */
+    val artwork: (@Composable () -> Unit)? = null,
 )
 
 /**
@@ -144,6 +152,7 @@ class MediaActionsState internal constructor(
 fun MediaActionsHost(
     onNavigate: (NavigationTarget) -> Unit,
     viewModel: MediaActionsViewModel = metroViewModel(),
+    systemDeletes: Boolean = true,
     content: @Composable (MediaActionsState) -> Unit,
 ) {
     val state = remember(viewModel) { MediaActionsState(viewModel::dispatch) }
@@ -175,7 +184,8 @@ fun MediaActionsHost(
         }
     }
 
-    SystemDeleteRequestLauncher()
+    // Off in tests, which have no app graph to take the deleter from.
+    if (systemDeletes) SystemDeleteRequestLauncher()
 
     content(state)
 
@@ -184,8 +194,8 @@ fun MediaActionsHost(
         S2ActionsSheet(
             title = target.title,
             subtitle = target.subtitle,
-            artwork = { Artwork(target.placeholder, size = ArtworkSize.Small) },
-            actions = types.flatMap { type ->
+            artwork = target.artwork ?: { Artwork(target.placeholder, size = ArtworkSize.Small) },
+            actions = target.leadingActions + types.filter { target.onlyTypes?.contains(it) ?: true }.flatMap { type ->
                 val playAction = target.playAction?.takeIf { type == MediaActionType.Play }
                 val action = S2Action(
                     label = type.label(),
@@ -285,7 +295,7 @@ private fun PlaylistPickerSheet(
     )
 }
 
-/** Names a new playlist; [onCreate] gets the trimmed name. */
+/** Names a new playlist (or renames one); [onCreate] gets the trimmed name. */
 @Composable
 fun CreatePlaylistDialog(
     onCreate: (String) -> Unit,
@@ -294,7 +304,7 @@ fun CreatePlaylistDialog(
     initialName: String = "",
     confirmLabel: String = stringResource(R.string.dialog_button_save),
 ) {
-    var name by remember { mutableStateOf(initialName) }
+    var name by rememberSaveable { mutableStateOf(initialName) }
     S2Dialog(
         title = title,
         confirmLabel = confirmLabel,
@@ -306,14 +316,47 @@ fun CreatePlaylistDialog(
         },
         onDismissRequest = onDismissRequest,
     ) {
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text(stringResource(R.string.playlist_create_dialog_playlist_name_hint)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        PlaylistNameField(name, onChange = { name = it })
     }
+}
+
+/**
+ * The [CreatePlaylistDialog]'s surface, without its window. Under Robolectric a text field in a dialog
+ * window never lets Compose idle, so tests render this.
+ */
+@Composable
+internal fun CreatePlaylistForm(
+    onCreate: (String) -> Unit,
+    onDismiss: () -> Unit,
+    title: String = stringResource(R.string.playlist_menu_create_playlist),
+    initialName: String = "",
+    confirmLabel: String = stringResource(R.string.dialog_button_save),
+) {
+    var name by rememberSaveable { mutableStateOf(initialName) }
+    S2DialogContent(
+        title = title,
+        onDismiss = onDismiss,
+        confirmLabel = confirmLabel,
+        onConfirm = {
+            onCreate(name.trim())
+            onDismiss()
+        },
+        dismissLabel = stringResource(R.string.dialog_button_cancel),
+        confirmEnabled = name.isNotBlank(),
+    ) {
+        PlaylistNameField(name, onChange = { name = it })
+    }
+}
+
+@Composable
+private fun PlaylistNameField(name: String, onChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = name,
+        onValueChange = onChange,
+        label = { Text(stringResource(R.string.playlist_create_dialog_playlist_name_hint)) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

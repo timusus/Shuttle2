@@ -158,12 +158,11 @@ private fun UpNextDivider(
 
 /**
  * What the queue's rows share across the list that holds them: the reorder in progress, the
- * long-press menu and the latest items, which a drag that began on older ones reads.
+ * latest items, which a drag that began on older ones reads.
  */
 @Stable
 internal class QueueListState(
     val reorder: QueueReorderState,
-    val songActions: SongActionsState,
     items: State<List<PlayerSong>>,
 ) {
     val items: List<PlayerSong> by items
@@ -175,7 +174,6 @@ internal fun rememberQueueListState(
     items: List<PlayerSong>,
 ): QueueListState {
     val reorder = remember(listState) { QueueReorderState(listState) }
-    val songActions = rememberSongActionsState()
     val currentItems = rememberUpdatedState(items)
     val density = LocalDensity.current
 
@@ -183,12 +181,12 @@ internal fun rememberQueueListState(
     LaunchedEffect(reorder.held) {
         if (reorder.held) with(density) { reorder.autoScroll(edge = AutoScrollEdge.toPx(), maxSpeed = AutoScrollMaxSpeed.toPx()) }
     }
-    return remember(reorder, songActions, currentItems) { QueueListState(reorder, songActions, currentItems) }
+    return remember(reorder, currentItems) { QueueListState(reorder, currentItems) }
 }
 
 /**
  * The queue's rows: tap a row to play it, drag its handle to reorder, swipe it away to remove it, or
- * long-press it for its song actions ([QueueSongActions] shows the menu). Rows are keyed by their
+ * long-press it for its song actions ([PlayerSong.actionsTarget]). Rows are keyed by their
  * queue uid. The "Up Next" divider is its own item after the current row, left out while a row is
  * dragged, so it never moves with a row or counts in the reorder's row heights.
  */
@@ -215,13 +213,20 @@ internal fun LazyListScope.queueItems(
     val queueRow: @Composable LazyItemScope.(PlayerSong) -> Unit = { row ->
         val playNext = stringResource(R.string.menu_title_play_next)
         val remove = stringResource(R.string.menu_title_remove_from_queue)
+        val mediaActions = LocalPlayerMediaActions.current
         val dragging = reorder.draggingUid == row.uid
         QueueItem(
             row = row,
             dragging = dragging,
             swipeEnabled = reorder.draggingUid == null,
             onClick = { actions.skipToQueueItem(row.uid) },
-            onLongClick = { queue.songActions.menuFor = row },
+            onLongClick = {
+                val leading = listOf(
+                    S2Action(label = playNext, onClick = { actions.playNext(row.uid) }, icon = Icons.Rounded.QueuePlayNext),
+                    S2Action(label = remove, onClick = { actions.removeQueueItem(row.uid) }, icon = Icons.Rounded.RemoveCircleOutline),
+                )
+                mediaActions.showActions(row.actionsTarget(leadingActions = leading))
+            },
             onRemove = { actions.removeQueueItem(row.uid) },
             dragHandleModifier = Modifier.pointerInput(row.uid) {
                 detectDragGestures(
@@ -267,22 +272,6 @@ internal fun LazyListScope.queueItems(
     }
 }
 
-/** The long-press menu of a queue row: Play next and Remove, then the song's actions. */
-@Composable
-internal fun QueueSongActions(
-    queue: QueueListState,
-    actions: PlayerActions,
-) {
-    val playNext = stringResource(R.string.menu_title_play_next)
-    val remove = stringResource(R.string.menu_title_remove_from_queue)
-    SongActionsHost(queue.songActions, actions, leading = { row ->
-        listOf(
-            S2Action(label = playNext, onClick = { actions.playNext(row.uid) }, icon = Icons.Rounded.QueuePlayNext),
-            S2Action(label = remove, onClick = { actions.removeQueueItem(row.uid) }, icon = Icons.Rounded.RemoveCircleOutline),
-        )
-    })
-}
-
 /** The queue on its own, beside the player on wider windows. It opens on the current song, with the played ones above it. */
 @Composable
 internal fun QueueList(
@@ -304,7 +293,6 @@ internal fun QueueList(
     LazyColumn(state = listState, modifier = modifier.testTag(PlayerTestTags.QueueList), contentPadding = contentPadding) {
         queueItems(items, queue, actions, scope)
     }
-    QueueSongActions(queue, actions)
 }
 
 @Composable

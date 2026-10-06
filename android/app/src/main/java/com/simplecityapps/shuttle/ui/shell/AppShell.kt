@@ -84,11 +84,13 @@ import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
-import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
+import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.library.openTarget
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.shell.adaptive.listDetailDirective
+import com.simplecityapps.shuttle.ui.shell.player.LocalPlayerMediaActions
 import com.simplecityapps.shuttle.ui.shell.player.MiniPlayer
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
@@ -102,6 +104,7 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetState
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
 import com.simplecityapps.shuttle.ui.shell.player.playerPaneWidth
 import com.simplecityapps.shuttle.ui.shell.player.rememberPlayerSheetState
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -124,8 +127,9 @@ fun AppShell(
     startTab: ShellTab = ShellTab.Home,
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfoV2(),
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey> = ::shellEntryProvider,
-    navigationRequests: Flow<NavigationTarget> = emptyFlow(),
     tabRequests: Flow<ShellTab> = emptyFlow(),
+    mediaActionsViewModel: MediaActionsViewModel = metroViewModel(),
+    systemDeletes: Boolean = true,
 ) {
     val layout = remember(windowAdaptiveInfo) { ShellLayout.from(windowAdaptiveInfo) }
     val navigator = rememberAppNavigator(startTab)
@@ -145,8 +149,6 @@ fun AppShell(
         }
     }
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
-    // Screens the player's song actions open, such as Go to album.
-    LaunchedEffect(navigationRequests) { navigationRequests.collect { target -> navigate { navigator.openTarget(target) } } }
     // A tab another entry point asks for, such as the Search launcher shortcut.
     LaunchedEffect(tabRequests) { tabRequests.collect { tab -> onSelectTab(tab) } }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
@@ -160,6 +162,27 @@ fun AppShell(
     val playerContent = PlayerContent(playerUi, progress, actions, openRoute = { route -> navigate { navigator.open(route) } })
     // No tab is lit, and the nav bar or rail slides away, while a utility destination shows.
     val selectedTab = navigator.selectedTab.takeIf { navigator.showsNavigation }
+    // The player's song menus and its queue's save-to-playlist share the destinations' media action path; the screens a result opens settle the player first.
+    CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {
+        MediaActionsHost(onNavigate = { target -> navigate { navigator.openTarget(target) } }, viewModel = mediaActionsViewModel, systemDeletes = systemDeletes) { mediaActions ->
+            CompositionLocalProvider(LocalPlayerMediaActions provides mediaActions) {
+                ShellSurface(modifier, layout, player, playerContent, selectedTab, onSelectTab, destinations, snackbarHostState)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShellSurface(
+    modifier: Modifier,
+    layout: ShellLayout,
+    player: PlayerSheetState,
+    playerContent: PlayerContent,
+    selectedTab: ShellTab?,
+    onSelectTab: (ShellTab) -> Unit,
+    destinations: @Composable () -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Box(Modifier.fillMaxSize()) {
             // The compact shell reports how far up the docked chrome has slid this frame, for the snackbar to ride.

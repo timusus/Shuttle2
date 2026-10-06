@@ -72,6 +72,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PanelSheet
 import com.simplecityapps.shuttle.designsystem.component.S2SheetHandle
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.home.route
 
@@ -174,16 +175,14 @@ internal fun PlayerPanel(
         val scrolling = Modifier.verticalScroll(scrollState).padding(contentPadding)
         when (panel) {
             NowPlayingPanel.Queue -> {
-                val saveActions = rememberSongActionsState()
-                val queueName = stringResource(R.string.player_queue)
+                val mediaActions = LocalPlayerMediaActions.current
                 QueueHeader(
                     source = player.queueSource,
                     onOpenSource = { source -> onOpenRoute(source.route) },
-                    onSave = { saveActions.playlistFor = PlaylistPick(MediaSelection.Queue, queueName) },
+                    onSave = { mediaActions.perform(MediaActionType.AddToPlaylist, MediaSelection.Queue) },
                     onClear = actions::clearQueue,
                     modifier = grip,
                 )
-                SongActionsHost(saveActions, actions)
                 QueueList(player.items, actions, Modifier.weight(1f), contentPadding = contentPadding)
             }
 
@@ -214,7 +213,8 @@ internal fun NowPlayingBar(
     onPanel: (NowPlayingPanel) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val songActions = rememberSongActionsState()
+    val mediaActions = LocalPlayerMediaActions.current
+    val clearQueue = S2Action(label = stringResource(R.string.menu_title_sort_clear_queue), onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true)
     val currentSelected by rememberUpdatedState(selected)
     val currentOnPanel by rememberUpdatedState(onPanel)
     CompositionLocalProvider(LocalContentColor provides PlayerControlsColor) {
@@ -280,19 +280,12 @@ internal fun NowPlayingBar(
             BarLabelled(stringResource(R.string.player_queue), stringResource(R.string.player_queue), queueOpen, openQueue) { button ->
                 BarButton(Icons.AutoMirrored.Rounded.QueueMusic, queueOpen, openQueue, button)
             }
-            val showMore = { songActions.menuFor = player.current }
+            val showMore = { player.current?.let { mediaActions.showActions(it.actionsTarget(extraActions = listOf(clearQueue))) } ?: Unit }
             BarLabelled(stringResource(R.string.player_bar_more), stringResource(DesignR.string.ds_more_options), selected = null, onClick = { showMore() }) { button ->
                 S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = null, onClick = { showMore() }, modifier = button)
             }
         }
     }
-    SongActionsHost(
-        songActions,
-        actions,
-        trailing = listOf(
-            S2Action(label = stringResource(R.string.menu_title_sort_clear_queue), onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true),
-        ),
-    )
 }
 
 /** How far a swipe up on the bar has to travel to open the queue. */

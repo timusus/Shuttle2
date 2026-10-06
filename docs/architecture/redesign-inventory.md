@@ -195,6 +195,11 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   Exclude and Remove become immediate with an Undo snackbar; Delete keeps its confirm.
 - Maestro: `nav/create-testlist` (Add to playlist); Play next, Add to queue in `PlaybackSpecTest`
   (#543, was `queue-actions`).
+- Done (#377): every Android destination and the player (Now Playing menu, queue rows, queue save)
+  run on the shell's `MediaActionsHost`; the player's own copy of the sheet, picker and New Playlist
+  dialog is deleted. A target's `leadingActions`/`extraActions` carry the screen-only rows (Play next,
+  Remove, Clear queue) and `onlyTypes` narrows the shared set. A Download action (#88) is one more
+  `MediaActionType`. iOS still posts through `PlayerActions.onMediaAction`.
 
 ### Add to playlist, create playlist, duplicates — Change
 - Submenu lists "Create playlist…" then every playlist; create validates non-empty only (duplicate

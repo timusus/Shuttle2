@@ -5,7 +5,7 @@
     <!-- Menu option to shuffle artist/album/all songs -->
     <string name="menu_title_shuffle">Shuffle</string>
     <!-- Menu option to open the album's own detail screen -->
-    <string name="menu_title_view_album">View Album</string>
+    <string name="menu_title_view_album">Go to album</string>
     <!-- Menu option to start 'album shuffle' mode (plays a random album, where tracks are played in order)-->
     <string name="menu_title_album_shuffle">Album Shuffle</string>
     <!-- Menu option to add this song to the queue, to play next -->

@@ -64,12 +64,6 @@
     <string name="player_removed_from_queue">Removed from queue</string>
     <!-- Snackbar shown when a queued song is skipped because streaming it needs Shuttle Music Pro; %1$s is the song title -->
     <string name="player_server_song_skipped">Skipped “%1$s” — streaming needs Shuttle Music Pro</string>
-    <!-- Song menu option: opens the song's album -->
-    <string name="player_go_to_album">Go to album</string>
-    <!-- Song menu option: opens the song's album artist -->
-    <string name="player_go_to_artist">Go to artist</string>
-    <!-- Button that creates the playlist named in the New Playlist dialog -->
-    <string name="player_create_playlist">Create</string>
     <!-- Snackbar after a media server rejects the saved sign-in mid-session; %1$s is the server's name, such as Jellyfin -->
     <string name="shell_server_signed_out">Signed out of %1$s</string>
     <!-- Snackbar action that opens the server's sign-in dialog -->

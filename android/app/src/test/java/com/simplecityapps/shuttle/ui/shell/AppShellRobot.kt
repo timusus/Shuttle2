@@ -77,12 +77,16 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import com.simplecityapps.shuttle.ui.sampleSeed
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
@@ -95,6 +99,9 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
 import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
 import com.simplecityapps.shuttle.ui.shell.player.description
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -295,14 +302,12 @@ class RecordingPlayerActions(
         state.value = state.value.copy(panel = panel)
     }
 
+    // Only iOS runs song actions through the player's ViewModel: Android's shell hosts them (see [mediaActionsViewModel]).
     override fun songActions(song: Song): Flow<List<MediaActionType>> = flowOf(songActions)
 
     override fun playlists(): Flow<List<Playlist>> = flowOf(playlists)
 
-    override fun onMediaAction(action: MediaAction) {
-        mediaActions += action
-        events.post(PlayerUiEvent.MediaActionDone(mediaActionResult(action)))
-    }
+    override fun onMediaAction(action: MediaAction) = Unit
 
     fun onEventHandled(id: Long) = events.consume(id)
 }
@@ -342,6 +347,21 @@ class AppShellRobot(
 
     val actions = RecordingPlayerActions(queueState)
 
+    /** The shell's song actions on the real ViewModel, over a handler that records each action in [RecordingPlayerActions.mediaActions]. */
+    private val mediaActionsViewModel: MediaActionsViewModel by lazy {
+        val handler = mockk<MediaActionHandler>()
+        coEvery { handler.handle(any()) } answers {
+            val action = firstArg<MediaAction>()
+            actions.mediaActions += action
+            actions.mediaActionResult(action)
+        }
+        val available = mockk<AvailableMediaActions>()
+        every { available(any()) } answers { flowOf(actions.songActions) }
+        val observePlaylists = mockk<ObservePlaylists>()
+        every { observePlaylists(any()) } answers { flowOf(actions.playlists) }
+        MediaActionsViewModel(handler, available, observePlaylists)
+    }
+
     val calls: List<String> get() = actions.calls
 
     private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
@@ -376,7 +396,6 @@ class AppShellRobot(
             val currentProgress by progressState
             val currentEvents by actions.events.flow.collectAsState()
             val snackbarHostState = remember { SnackbarHostState().also { this.snackbarHostState = it } }
-            val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
             CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
                 WithSystemBars(systemBars) {
                     S2Theme {
@@ -385,7 +404,6 @@ class AppShellRobot(
                             actions::onEventHandled,
                             snackbarHostState,
                             actions = actions,
-                            onNavigate = { targets.trySend(it) },
                         )
                         AppShell(
                             playerUi = currentQueue,
@@ -395,8 +413,9 @@ class AppShellRobot(
                             startTab = startTab,
                             windowAdaptiveInfo = currentWindow,
                             entryProvider = entryProvider,
-                            navigationRequests = remember(targets) { targets.receiveAsFlow() },
                             tabRequests = remember { tabRequests.receiveAsFlow() },
+                            mediaActionsViewModel = mediaActionsViewModel,
+                            systemDeletes = false,
                         )
                     }
                 }
@@ -929,7 +948,8 @@ class AppShellRobot(
         frames: Int = 3,
     ) {
         rule.mainClock.autoAdvance = false
-        actions.events.post(PlayerUiEvent.MediaActionDone(MediaActionResult.Navigate(target)))
+        actions.mediaActionResult = { MediaActionResult.Navigate(target) }
+        mediaActionsViewModel.dispatch(MediaAction.GoToAlbum(MediaSelection.Songs(emptyList())))
         repeat(frames) { rule.mainClock.advanceTimeByFrame() }
     }
 

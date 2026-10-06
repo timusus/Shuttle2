@@ -1,9 +1,5 @@
 package com.simplecityapps.shuttle.ui.shell
 
-import android.app.Activity
-import android.content.Intent
-import android.content.res.Resources
-import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -20,10 +16,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.ui.actions.MediaActionResult
-import com.simplecityapps.shuttle.ui.actions.NavigationTarget
-import com.simplecityapps.shuttle.ui.actions.text
-import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
@@ -31,12 +23,9 @@ import com.simplecityapps.shuttle.ui.screens.sources.titleRes
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
-import com.simplecityapps.shuttle.ui.text.getString
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 
 /**
  * The shell wired to its ViewModels: the start tab from [shellViewModel], and the player's state, progress and
@@ -55,8 +44,7 @@ fun ShellRoute(
     val shellUi by shellViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
-    val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
-    PlayerEventsEffect(playerState.value.events, viewModel::onEventHandled, snackbarHostState, actions = viewModel, onNavigate = { targets.trySend(it) })
+    PlayerEventsEffect(playerState.value.events, viewModel::onEventHandled, snackbarHostState, actions = viewModel)
     ShellEventsEffect(shellUi.events, shellViewModel::onEventHandled, snackbarHostState, onSignIn = { signingIn = it })
     signingIn?.let { type ->
         ServerSignInRoute(type, onConnected = shellViewModel::onServerConnected, onDismiss = { signingIn = null })
@@ -69,7 +57,6 @@ fun ShellRoute(
         snackbarHostState = snackbarHostState,
         startTab = shellUi.startTab,
         tabRequests = tabRequests,
-        navigationRequests = remember(targets) { targets.receiveAsFlow() },
     )
 }
 
@@ -98,8 +85,7 @@ internal fun ShellEventsEffect(
 
 /**
  * Carries out the player's events, one at a time, as the state holds them pending: a cleared queue or
- * removed row offers Undo, and a song action's result shows its message, opens its album or artist
- * screen through [onNavigate] or opens the legacy tag editor and song info dialogs.
+ * removed row offers Undo, and a skipped server song says why.
  */
 @Composable
 internal fun PlayerEventsEffect(
@@ -107,13 +93,11 @@ internal fun PlayerEventsEffect(
     onEventHandled: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
     actions: PlayerActions,
-    onNavigate: (NavigationTarget) -> Unit,
 ) {
     val queueCleared = stringResource(R.string.player_queue_cleared)
     val removedFromQueue = stringResource(R.string.player_removed_from_queue)
     val undo = stringResource(R.string.player_undo)
     val resources = LocalContext.current.resources
-    val activity = LocalActivity.current
     ConsumeEvents(events, onEventHandled) { event ->
         when (event) {
             is PlayerUiEvent.QueueCleared -> {
@@ -126,42 +110,13 @@ internal fun PlayerEventsEffect(
                 if (result == SnackbarResult.ActionPerformed) actions.undoRemoveQueueItem()
             }
 
-            is PlayerUiEvent.MediaActionDone -> onMediaActionResult(event.result, snackbarHostState, resources, activity, actions, onNavigate)
+            // The destinations' MediaActionsHost shows Android's song action results; only iOS posts this.
+            is PlayerUiEvent.MediaActionDone -> Unit
 
             is PlayerUiEvent.ServerSongSkipped -> snackbarHostState.showSnackbar(
                 resources.getString(R.string.player_server_song_skipped, event.songTitle),
                 duration = SnackbarDuration.Short,
             )
         }
-    }
-}
-
-private suspend fun onMediaActionResult(
-    result: MediaActionResult,
-    snackbarHostState: SnackbarHostState,
-    resources: Resources,
-    activity: Activity?,
-    actions: PlayerActions,
-    onNavigate: (NavigationTarget) -> Unit,
-) {
-    when (result) {
-        is MediaActionResult.None -> Unit
-
-        is MediaActionResult.Message -> {
-            val action = result.action
-            val shown = snackbarHostState.showSnackbar(
-                resources.getString(result.message.text()),
-                actionLabel = action?.label?.let { resources.getString(it.text()) },
-                duration = if (action != null) SnackbarDuration.Long else SnackbarDuration.Short,
-            )
-            if (shown == SnackbarResult.ActionPerformed && action != null) actions.onMediaAction(action.action)
-        }
-
-        is MediaActionResult.Navigate -> onNavigate(result.target)
-
-        is MediaActionResult.Share -> activity?.startActivity(Intent.createChooser(result.request.toIntent(), null))
-
-        // The player offers no action that asks first (Delete isn't in its menus).
-        is MediaActionResult.ConfirmationRequired -> Unit
     }
 }
