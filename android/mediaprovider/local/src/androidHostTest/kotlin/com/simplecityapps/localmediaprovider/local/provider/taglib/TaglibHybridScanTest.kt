@@ -267,7 +267,7 @@ class TaglibHybridScanTest {
                     .playlists
             }
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Hidden/x.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(Uri.fromFile(File("$primary/Music/Hidden/x.m3u")).toString())
     }
 
     private fun provider() = TaglibMediaProvider(context, kTagLibWithoutNativeLibrary(), scanner, tagReadGuard, grantedTrees = { listOf(tree) }, mountedRoots = { setOf("$primary/") }) {

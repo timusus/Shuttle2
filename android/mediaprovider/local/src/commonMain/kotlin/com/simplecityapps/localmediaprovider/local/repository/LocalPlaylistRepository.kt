@@ -32,9 +32,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 /**
- * True for playlists imported from a local .m3u file (their [Playlist.externalId] is the file's
- * SAF document URI, set by `TaglibMediaProvider.findPlaylists`) - the only ones with a file to
- * keep in sync when their songs change.
+ * True for playlists imported from a local .m3u file (their [Playlist.externalId] is the file's path as a `file://` URI, or
+ * its SAF document URI if it has no path, set by `TaglibMediaProvider.findPlaylists`) - the only ones with a file to keep in
+ * sync when their songs change.
  */
 internal fun Playlist.isM3uSynced(): Boolean = isM3uSynced(mediaProvider, externalId)
 
@@ -91,16 +91,42 @@ class LocalPlaylistRepository(
     }
 
     /**
-     * Doesn't write the playlist back to its m3u file: it has just been read from it. That file already holds the edits made to
-     * the playlist in S2 ([syncM3uFile]), so the playlist is given exactly its songs; a media server's playlist never hears of
-     * them, so it keeps the songs added in S2 and gains the server's new ones.
+     * An m3u file's playlist is usually not written back: it has just been read from the file, which already holds the edits
+     * made to it in S2 ([syncM3uFile]), so it's given exactly the file's songs. One holding edits its file couldn't take (it
+     * isn't writable, as one MediaStore lists outside every granted folder) keeps them, as a media server's playlist does,
+     * which never hears of them: it keeps the songs added in S2 and gains the file's or server's new ones. Its file is then
+     * written, as it may be writable now (its folder granted since).
      */
     override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = withContext(Dispatchers.IO) {
+        val m3u = isM3uSynced(playlist.mediaProviderType, playlist.externalId)
+        if (m3u) {
+            adoptFormerId(playlist.externalId)
+        }
+        val unwrittenEdits = m3u && fileSync.holdsUnwrittenEdits(playlist.externalId)
         playlistDataDao.storeImported(
             playlist.toPlaylistData(),
             songIds = playlist.songs.inLibrary().map { song -> song.id },
-            replaceSongs = isM3uSynced(playlist.mediaProviderType, playlist.externalId)
+            replaceSongs = m3u && !unwrittenEdits
         )
+        if (unwrittenEdits) {
+            playlistDataDao.getImportedPlaylistData(playlist.mediaProviderType, playlist.externalId)?.let { stored -> syncM3uFile(playlistDataDao.getPlaylist(stored.id)) }
+        }
+    }
+
+    /**
+     * Moves the playlist stored under an older id for the m3u file [externalId] names (its document URI, before playlists were
+     * known by their file path, or the same path in another case) to [externalId], keeping its songs, order and name, so the
+     * file isn't imported again as a second playlist.
+     */
+    private suspend fun adoptFormerId(externalId: String) {
+        if (playlistDataDao.getImportedPlaylistData(MediaProviderType.Shuttle, externalId) != null) return
+        playlistDataDao.getImportedPlaylistData(MediaProviderType.Shuttle)
+            .filter { stored -> fileSync.currentId(checkNotNull(stored.externalId)).equals(externalId, ignoreCase = true) }
+            .minByOrNull { stored -> stored.id }
+            ?.let { stored ->
+                logger.debug { "Playlist ${stored.name} moved from ${stored.externalId} to $externalId" }
+                playlistDataDao.update(stored.copy(externalId = externalId))
+            }
     }
 
     override suspend fun reconcilePlaylists(

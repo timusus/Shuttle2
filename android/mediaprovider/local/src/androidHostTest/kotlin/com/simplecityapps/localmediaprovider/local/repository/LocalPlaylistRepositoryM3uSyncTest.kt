@@ -2,6 +2,8 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import android.content.Context
 import android.net.Uri
+import android.os.Environment
+import android.provider.DocumentsContract
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -11,6 +13,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.mediaprovider.M3uParser
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -166,6 +169,67 @@ class LocalPlaylistRepositoryM3uSyncTest {
 
         val parsed = M3uParser().parse(path = file.path, fileName = file.name, text = file.readText())
         parsed.entries.map { it.location } shouldBe listOf("/music/unresolved.mp3", "/music/song2.mp3")
+    }
+
+    private fun scanned(
+        externalId: String,
+        songs: List<Song>
+    ) = MediaImporter.PlaylistUpdateData(MediaProviderType.Shuttle, "Imported", songs, externalId)
+
+    private suspend fun songIds(playlist: Playlist) = repository.getSongsForPlaylist(playlist).first().map { it.song.id }
+
+    @Test
+    fun `an edit a playlist's file can't take survives the next scan, and goes to the file once it can be written`() = runTest {
+        // A playlist MediaStore lists outside every granted folder: its file can't be written
+        val folder = File(context.cacheDir, "Playlists")
+        val file = File(folder, "mix.m3u")
+        val externalId = Uri.fromFile(file).toString()
+        val song1 = createSong(path = "/music/song1.mp3", id = 1).let { it.copy(id = insertSong(it)) }
+        val song2 = createSong(path = "/music/song2.mp3", id = 2).let { it.copy(id = insertSong(it)) }
+        repository.storePlaylist(scanned(externalId, listOf(song1)))
+        val playlist = database.playlistDataDao().getPlaylist(checkNotNull(database.playlistDataDao().getImportedPlaylistData(MediaProviderType.Shuttle, externalId)).id)
+
+        repository.addToPlaylist(playlist, listOf(song2))
+        repository.storePlaylist(scanned(externalId, listOf(song1)))
+
+        songIds(playlist) shouldBe listOf(song1.id, song2.id)
+        file.exists() shouldBe false
+
+        // Its folder granted since: the same file, by the same id, so the same playlist, and its file now takes the edit
+        folder.mkdirs()
+        repository.storePlaylist(scanned(externalId, listOf(song1)))
+
+        database.playlistDataDao().getImportedPlaylistData(MediaProviderType.Shuttle).map { it.id } shouldBe listOf(playlist.id)
+        songIds(playlist) shouldBe listOf(song1.id, song2.id)
+        M3uParser().parse(path = file.path, fileName = file.name, text = file.readText()).entries.map { it.location } shouldBe listOf(song1.path, song2.path)
+
+        // Written, so the next scan gives it the file's songs again
+        repository.storePlaylist(scanned(externalId, listOf(song2)))
+
+        songIds(playlist) shouldBe listOf(song2.id)
+    }
+
+    @Test
+    fun `a playlist stored under its file's document URI is moved to its file path, keeping its songs and order`() = runTest {
+        @Suppress("DEPRECATION")
+        val primary = Environment.getExternalStorageDirectory().path
+        val tree = DocumentsContract.buildTreeDocumentUri("com.android.externalstorage.documents", "primary:Music")
+        val documentId = DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString()
+        val song1 = createSong(path = "/music/song1.mp3", id = 1).let { it.copy(id = insertSong(it)) }
+        val song2 = createSong(path = "/music/song2.mp3", id = 2).let { it.copy(id = insertSong(it)) }
+        val id =
+            database.playlistDataDao().insert(
+                PlaylistData(name = "Imported", sortOrder = PlaylistSongSortOrder.SongName, mediaProviderType = MediaProviderType.Shuttle, externalId = documentId),
+                songIds = listOf(song1.id, song2.id)
+            )
+        val fileId = Uri.fromFile(File("$primary/Music/p.m3u")).toString()
+
+        repository.storePlaylist(scanned(fileId, listOf(song1, song2)))
+
+        val stored = database.playlistDataDao().getImportedPlaylistData(MediaProviderType.Shuttle)
+        stored.map { it.id to it.externalId } shouldBe listOf(id to fileId)
+        stored.single().sortOrder shouldBe PlaylistSongSortOrder.SongName
+        database.playlistDataDao().getSongIds(id) shouldBe listOf(song1.id, song2.id)
     }
 
     @Test

@@ -129,8 +129,8 @@ class TaglibMediaProviderTest {
 
         playlists.map { it.externalId } shouldContainExactlyInAnyOrder
             listOf(
-                DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Lists/a.m3u").toString(),
-                DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/top.M3U8").toString()
+                fileId("$primary/Music/Lists/a.m3u"),
+                fileId("$primary/Music/top.M3U8")
             )
         queried.toList() shouldBe emptyList()
     }
@@ -145,7 +145,51 @@ class TaglibMediaProviderTest {
         playlists.size shouldBe 1
         playlists.single().name shouldBe "mix"
         playlists.single().songs.map { it.path } shouldBe listOf("$primary/Music/a.mp3")
-        playlists.single().externalId shouldBe ContentUris.withAppendedId(MediaStore.Files.getContentUri("external"), 0).toString()
+        // Known by its file path, the id a granted folder holding it gives too
+        playlists.single().externalId shouldBe fileId("$primary/Playlists/mix.m3u")
+    }
+
+    @Test
+    fun `a playlist MediaStore lists in an excluded folder isn't imported`() {
+        FakeMediaProvider.playlistRows = listOf("$primary/Playlists/mix.m3u" to "mix.m3u", "$primary/Music/keep.m3u" to "keep.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Playlists/mix.m3u" to "../Music/a.mp3\n", "$primary/Music/keep.m3u" to "a.mp3\n")
+
+        val playlists = runBlocking { provider(excludes = listOf("$primary/Playlists"), trees = emptyList()).playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/keep.m3u"))
+    }
+
+    @Test
+    fun `an HLS index and a list of streams aren't imported as playlists`() {
+        FakeMediaProvider.playlistRows =
+            listOf(
+                "$primary/Movies/index.m3u8" to "index.m3u8",
+                "$primary/Music/radio.m3u" to "radio.m3u",
+                "$primary/Music/mix.m3u" to "mix.m3u"
+            )
+        FakeMediaProvider.playlistContents =
+            mapOf(
+                // A segment beside the index whose name matches a song is still not a playlist entry
+                "$primary/Movies/index.m3u8" to "#EXTM3U\n#EXT-X-TARGETDURATION:10\n../Music/a.mp3\n",
+                "$primary/Music/radio.m3u" to "#EXTM3U\nhttps://host/a.mp3\nhttp://host/b.mp3\n",
+                "$primary/Music/mix.m3u" to "a.mp3\nhttps://host/a.mp3\n"
+            )
+
+        val playlists = findPlaylists(trees = emptyList())
+
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/mix.m3u"))
+    }
+
+    @Test
+    fun `a playlist in an extra tree that can't be walked keeps the id the walk gave it, from MediaStore`() {
+        val locked = DocumentsContract.buildTreeDocumentUri(AUTHORITY, "primary:Locked")
+        FakeMediaProvider.playlistRows = listOf("$primary/Locked/x.m3u" to "x.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Locked/x.m3u" to "/storage/emulated/0/Music/a.mp3\n")
+        val provider = provider(excludes = emptyList(), trees = listOf(locked), grantedTrees = listOf(locked))
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Locked/x.m3u"))
     }
 
     @Test
@@ -165,7 +209,7 @@ class TaglibMediaProviderTest {
     }
 
     @Test
-    fun `a playlist both a granted folder and MediaStore give is one playlist, under the folder's document URI`() {
+    fun `a playlist both a granted folder and MediaStore give is one playlist, under its file path`() {
         FakeMediaProvider.playlistRows = listOf("$primary/Music/p.m3u" to "p.m3u")
         FakeMediaProvider.playlistContents = mapOf("$primary/Music/p.m3u" to "/storage/emulated/0/Music/a.mp3\n")
         // The extra tree is walked, so its playlist isn't taken from MediaStore's listing
@@ -173,7 +217,7 @@ class TaglibMediaProviderTest {
 
         val playlists = runBlocking { provider.playlists() }
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
     }
 
     @Test
@@ -183,7 +227,7 @@ class TaglibMediaProviderTest {
 
         val playlists = findPlaylists(trees = listOf(tree))
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Lists/a.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/Lists/a.m3u"))
     }
 
     @Test
@@ -214,7 +258,7 @@ class TaglibMediaProviderTest {
 
         val playlists = runBlocking { provider.playlists() }
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
         queried.toList() shouldBe emptyList()
     }
 
@@ -226,7 +270,7 @@ class TaglibMediaProviderTest {
 
         val playlists = runBlocking { provider.playlists() }
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
     }
 
     @Test
@@ -235,7 +279,7 @@ class TaglibMediaProviderTest {
 
         val playlists = findPlaylists(trees = listOf(tree))
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/a.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/a.m3u"))
     }
 
     @Test
@@ -249,8 +293,8 @@ class TaglibMediaProviderTest {
 
         playlists.map { it.externalId } shouldContainExactlyInAnyOrder
             listOf(
-                DocumentsContract.buildDocumentUriUsingTree(listsTree, "primary:Lists/k.m3u").toString(),
-                DocumentsContract.buildDocumentUriUsingTree(listsTree, "primary:Lists/Hidden/h.m3u").toString()
+                fileId("$primary/Lists/k.m3u"),
+                fileId("$primary/Lists/Hidden/h.m3u")
             )
     }
 
@@ -269,7 +313,7 @@ class TaglibMediaProviderTest {
 
         val playlists = runBlocking { provider.playlists() }
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/p.m3u"))
         // Walked again, not read from the map of the import before
         queried.toList().isEmpty() shouldBe false
     }
@@ -284,7 +328,7 @@ class TaglibMediaProviderTest {
 
         val playlists = runBlocking { provider.playlists() }
 
-        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Lists/a.m3u").toString())
+        playlists.map { it.externalId } shouldBe listOf(fileId("$primary/Music/Lists/a.m3u"))
     }
 
     @Test
@@ -482,6 +526,8 @@ class TaglibMediaProviderTest {
     @Suppress("DEPRECATION")
     private val primary = android.os.Environment.getExternalStorageDirectory().path
 
+    private fun fileId(path: String) = Uri.fromFile(File(path)).toString()
+
     private fun storedSong(
         name: String,
         size: Long,
@@ -541,7 +587,19 @@ class TaglibMediaProviderTest {
             sortOrder: String?
         ): Cursor = MatrixCursor(projection).also { cursor ->
             if (uri.pathSegments.contains("file")) {
-                playlistRows.forEachIndexed { index, (path, name) -> cursor.addRow(arrayOf<Any>(path, name, index.toLong())) }
+                playlistRows.forEachIndexed { index, (path, name) ->
+                    cursor.addRow(
+                        projection!!.map { column ->
+                            when (column) {
+                                MediaStore.Files.FileColumns.DATA -> path
+                                MediaStore.Files.FileColumns.DISPLAY_NAME -> name
+                                MediaStore.Files.FileColumns._ID -> index.toLong()
+                                MediaStore.Files.FileColumns.SIZE -> playlistContents[path]?.length?.toLong()
+                                else -> null
+                            }
+                        }
+                    )
+                }
             } else {
                 audioQueries.incrementAndGet()
                 rows.forEach { row -> cursor.addRow(row) }
