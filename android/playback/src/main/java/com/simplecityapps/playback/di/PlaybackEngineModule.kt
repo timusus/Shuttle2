@@ -22,6 +22,7 @@ import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.CastStreams
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeOutputTap
 import com.simplecityapps.playback.dsp.crossfade.crossfadeSkipped
 import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -52,6 +53,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
+import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.OkHttpClient
 
@@ -111,7 +113,9 @@ class PlaybackEngineModule {
         playbackSettings: PlaybackSettings,
         analytics: Analytics,
         okHttpClient: OkHttpClient,
-        deliveredFormats: DeliveredFormats
+        deliveredFormats: DeliveredFormats,
+        // Only a debug build binds one; release falls back to the default.
+        crossfadeOutputTap: Optional<CrossfadeOutputTap> = Optional.empty()
     ): ExoPlayerFactory = ExoPlayerFactory(
         context,
         okHttpClient,
@@ -122,7 +126,8 @@ class PlaybackEngineModule {
         downloadCache,
         { playbackSettings.crossfadeDurationMs.value.toLong() },
         analytics::crossfadeSkipped,
-        onDownloadPlayed = { path -> deliveredFormats.record(path, null) }
+        onDownloadPlayed = { path -> deliveredFormats.record(path, null) },
+        crossfadeOutputTap = crossfadeOutputTap.orElse(null)
     )
 
     // The local player: it owns the queue, and plays it when not casting. It lives on the main looper.

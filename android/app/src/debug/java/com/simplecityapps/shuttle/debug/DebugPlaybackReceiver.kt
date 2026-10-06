@@ -15,12 +15,14 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.debug.crossfadetap.WavTapAudioProcessor
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
+import java.io.File
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +72,9 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     @Inject
     lateinit var sleepTimer: SleepTimer
 
+    @Inject
+    lateinit var wavTap: WavTapAudioProcessor
+
     override fun onReceive(
         context: Context,
         intent: Intent
@@ -79,7 +84,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         scope.launch {
             try {
-                val detail = handle(action, intent)
+                val detail = handle(context, action, intent)
                 Log.i(TAG, if (action == "DUMP_STATE") detail!! else "$action ok${detail?.let { ": $it" }.orEmpty()}")
             } catch (e: CancellationException) {
                 Log.i(TAG, "$action dropped: replaced by a later request")
@@ -93,6 +98,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
     /** Runs [action]; returns an optional detail for the reply line, or throws with the reason it failed. */
     private suspend fun handle(
+        context: Context,
         action: String,
         intent: Intent
     ): String? = when (action) {
@@ -198,6 +204,22 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             "${seconds}s, playToEnd=$playToEnd"
         }
 
+        "TAP_START" -> {
+            val name = intent.getStringExtra("name") ?: "crossfade-tap"
+            require(name.matches(Regex("[A-Za-z0-9._-]+"))) { "--es name must be letters, digits, '.', '_' or '-'" }
+            val dir = File(context.getExternalFilesDir(null) ?: context.filesDir, TAP_DIR)
+            val file = File(dir, "$name.wav")
+            wavTap.start(file)
+            file.absolutePath
+        }
+
+        "TAP_STOP" -> {
+            val result = checkNotNull(wavTap.stop()) { "nothing recorded: not started, or no audio reached the mixer" }
+            val seconds = result.dataBytes / (result.sampleRate.toDouble() * result.channelCount * result.bitsPerSample / 8)
+            "${result.file.absolutePath} ${result.sampleRate}Hz ${result.channelCount}ch ${result.bitsPerSample}bit %.2fs".format(seconds) +
+                (if (result.skippedBytes > 0) ", ${result.skippedBytes} bytes skipped (format change)" else "")
+        }
+
         "DUMP_STATE" -> dumpState().toString()
 
         else -> throw IllegalArgumentException("unknown action")
@@ -232,6 +254,9 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "S2Debug"
+
+        /** Under the app's external files dir, so `adb pull` reaches it. */
+        const val TAP_DIR = "crossfade-tap"
         const val ACTION_PREFIX = "com.simplecityapps.shuttle.debug."
 
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

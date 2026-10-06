@@ -12,6 +12,7 @@
 #   support/scripts/s2-debug.sh REPEAT [--es mode off|all|one] toggle (Off -> All -> One), or set
 #   support/scripts/s2-debug.sh SPEED --ef multiplier 1.5  set the playback speed
 #   support/scripts/s2-debug.sh SLEEP_TIMER --el seconds 3 [--ez play_to_end true]  start the sleep timer
+#   support/scripts/s2-debug.sh TAP_START [--es name NAME] | TAP_STOP  record the crossfade mixer's output to a WAV (adb pull it)
 #   support/scripts/s2-debug.sh DUMP_STATE                 print the state as one JSON line
 #   support/scripts/s2-debug.sh IMPORT                     reimport the library (as a rescan does)
 #   support/scripts/s2-debug.sh SYNC                       run the scheduled background sync (local sources trust MediaStore)

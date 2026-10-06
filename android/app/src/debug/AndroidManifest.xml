@@ -28,6 +28,8 @@
                 <action android:name="com.simplecityapps.shuttle.debug.NEXT" />
                 <action android:name="com.simplecityapps.shuttle.debug.PREV" />
                 <action android:name="com.simplecityapps.shuttle.debug.SEEK" />
+                <action android:name="com.simplecityapps.shuttle.debug.TAP_START" />
+                <action android:name="com.simplecityapps.shuttle.debug.TAP_STOP" />
                 <action android:name="com.simplecityapps.shuttle.debug.REMOVE_QUEUE_ITEM" />
                 <action android:name="com.simplecityapps.shuttle.debug.REMOVE_PLAYLIST_SONG" />
                 <action android:name="com.simplecityapps.shuttle.debug.REORDER_QUEUE" />

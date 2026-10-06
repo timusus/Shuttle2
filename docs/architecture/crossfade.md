@@ -165,6 +165,14 @@ start; casting standing down and a receiver's own transition reported as `cast`.
 The test queues the songs, waits for the first two tails, then plays. The decoder works in wall time while
 the fake clock runs the whole queue through the sink at once.
 
+## Capturing the output (debug builds)
+
+`TAP_START` / `TAP_STOP` (`support/scripts/s2-debug.sh`, see the debug-receivers skill) record the mixer's output to a
+WAV in the app's external files dir (`crossfade-tap/`), for checking fades and joins from the samples. The tap is a
+`WavTapAudioProcessor` between the mixer and the equalizer (`ExoPlayerFactory`'s `crossfadeOutputTap`); only the debug
+build binds one (`CrossfadeTapDebugModule`), so release has an unchanged processor chain. Not yet built: seeded tone
+fixtures and an envelope/overlap analysis script (#568).
+
 ## What remains
 
 - A settings UI for F.

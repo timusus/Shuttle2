@@ -26,6 +26,8 @@ failing.
 | `REMOVE_QUEUE_ITEM` | `--ei position N` | `PlaybackOperations.removeQueueItem`, the queue screen's "Remove from Queue" path. N indexes the queue in its displayed (shuffle-aware) order |
 | `REMOVE_PLAYLIST_SONG` | `--es playlist NAME --es song TITLE` | `PlaylistRepository.removeFromPlaylist`, the playlist detail screen's per-row "Remove" path (the `RemoveFromPlaylist` use case) |
 | `REORDER_QUEUE` | `--ei from N --ei to N` | `QueueOperations.move(from, to)`, the queue screen's drag-to-reorder path. Both indices are in the displayed (shuffle-aware) order |
+| `TAP_START` | `[--es name NAME]` | Start recording what `CrossfadeMixer` outputs (before the equalizer) to `<externalFilesDir>/crossfade-tap/NAME.wav` (default `crossfade-tap`); replies with the path. See below |
+| `TAP_STOP` | | Finish the WAV; replies with path, format and duration |
 | `SHUFFLE` | `[--ez enabled true\|false]` | Toggle, or set, the shuffle mode |
 | `REPEAT` | `[--es mode off\|all\|one]` | Toggle (Off → All → One), or set, the repeat mode |
 | `SPEED` | `--ef multiplier 1.5` | `PlaybackOperations.setPlaybackSpeed(multiplier)` |
@@ -51,6 +53,21 @@ order -- `queueTitles[queuePosition + 1]` is the item that will auto-advance to 
 
 ```json
 {"state":"Playing","reportedState":"Playing","positionMs":3225,"progressMs":3153,"durationMs":60029,"savedPositionMs":3050,"queuePosition":0,"queueSize":5,"title":"Playback One","queueTitles":["Playback One","Playback Two","Playback Three","Playback Four","Playback Five"],"shuffle":"Off","repeat":"Off","speed":1.0,"pendingLoad":false}
+```
+
+## Capturing the crossfade output
+
+`TAP_START` / `TAP_STOP` record the mixer's PCM (16/24-bit, the stream's rate) as a WAV, across song joins, so a fade or
+a gap can be checked from the file instead of by ear. Debug builds only: `WavTapAudioProcessor` is bound by
+`CrossfadeTapDebugModule` in `src/debug`; release binds none. Start before the join, stop after; pausing writes
+nothing. A stream in a different format from the first is left out and reported.
+
+```bash
+support/scripts/s2-debug.sh TAP_START --es name join1      # prints the device path
+support/scripts/s2-debug.sh PLAY_ALL
+# ... let it cross a join ...
+support/scripts/s2-debug.sh TAP_STOP
+adb pull /sdcard/Android/data/com.simplecityapps.shuttle.dev/files/crossfade-tap/join1.wav build/
 ```
 
 ## Typical check

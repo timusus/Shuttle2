@@ -24,6 +24,7 @@ import com.simplecityapps.playback.dsp.crossfade.CapturingAudioOutputProvider
 import com.simplecityapps.playback.dsp.crossfade.Crossfade
 import com.simplecityapps.playback.dsp.crossfade.CrossfadeClippingMediaSourceFactory
 import com.simplecityapps.playback.dsp.crossfade.CrossfadeMixer
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeOutputTap
 import com.simplecityapps.playback.dsp.crossfade.CrossfadeSkip
 import com.simplecityapps.playback.dsp.crossfade.TailDecoder
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -58,6 +59,8 @@ class ExoPlayerFactory(
     private val onCrossfadeSkipped: (CrossfadeSkip) -> Unit = {},
     /** Told the path of each song opened from its download. */
     private val onDownloadPlayed: (String) -> Unit = {},
+    /** A debug build's tap on the crossfade mixer's output; none in release. */
+    private val crossfadeOutputTap: CrossfadeOutputTap? = null,
     /** Builds the ExoPlayer around these renderers and sources. A test builds it on a fake clock. */
     private val buildPlayer: (RenderersFactory, MediaSource.Factory) -> ExoPlayer = { renderersFactory, mediaSourceFactory ->
         ExoPlayer.Builder(context, renderersFactory)
@@ -80,7 +83,7 @@ class ExoPlayerFactory(
                 .setAudioCapabilities(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
-                .setAudioProcessors(arrayOf(replayGainAudioProcessor, crossfadeMixer, equalizerAudioProcessor))
+                .setAudioProcessors(listOfNotNull(replayGainAudioProcessor, crossfadeMixer, crossfadeOutputTap?.processor, equalizerAudioProcessor).toTypedArray())
                 .build()
         }
     }
