@@ -10,6 +10,7 @@ import com.simplecityapps.playback.fakes.FakeAlbumRepository
 import com.simplecityapps.playback.fakes.FakePlaylistRepository
 import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.PlayRequests
+import com.simplecityapps.playback.mediasession.SHUFFLE_ALL_LOAD_WAIT_MS
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.mediasession.SessionPlayer
 import com.simplecityapps.playback.mediasession.UriSongResolver
@@ -48,6 +49,8 @@ class SessionHarness(
     restored: Boolean = true,
     trusted: Boolean = true,
     car: Boolean = false,
+    /** How long a shuffle-all waits for the first song to load; tests that run the player's clock far ahead raise it. */
+    shuffleAllLoadWaitMs: Long = SHUFFLE_ALL_LOAD_WAIT_MS,
     /** What the store says the user has: Pro by default. */
     val entitlement: MutableStateFlow<Entitlement> = MutableStateFlow(Entitlement.Pro(ProSource.Lifetime))
 ) {
@@ -82,7 +85,8 @@ class SessionHarness(
                 mediaIdHelper = mediaIdHelper,
                 uriSongResolver = UriSongResolver(context, songRepository),
                 voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository),
-                songRepository = songRepository
+                songRepository = songRepository,
+                shuffleAllLoadWaitMs = shuffleAllLoadWaitMs
             )
         val gate = ServerAccessGate(entitlement, startTrial = {
             val eligible = entitlement.value == Entitlement.Free(trialUsed = false)

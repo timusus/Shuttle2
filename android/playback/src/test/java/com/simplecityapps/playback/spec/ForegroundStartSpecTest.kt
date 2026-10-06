@@ -51,7 +51,15 @@ class ForegroundStartSpecTest {
     /** How many times a held play has started the service, as the app does with [PlaybackService.start]. */
     private var heldStarts = 0
 
-    private val harness = SessionHarness(PlaybackHarness(foregroundHold = ForegroundHold { heldStarts++ }), songs = library, restored = false)
+    // The cold starts turn the player's clock far past the production 15 s load wait (#943), which would give up on a
+    // shuffle-all's load before the play.
+    private val harness =
+        SessionHarness(
+            PlaybackHarness(foregroundHold = ForegroundHold { heldStarts++ }),
+            songs = library,
+            restored = false,
+            shuffleAllLoadWaitMs = Long.MAX_VALUE
+        )
 
     private val queue = harness.playback.queueOperations
 
@@ -124,8 +132,6 @@ class ForegroundStartSpecTest {
 
     @Test
     fun `a shuffle all that cold-starts the app shuffles the library once the saved queue is restored`() {
-        // The test turns the player's clock past the production 15 s load wait (#943), which would give up before the play.
-        harness.playRequests.shuffleAllLoadWaitMs = Long.MAX_VALUE
         val foreground = start(Intent(PlaybackService.ACTION_SHUFFLE_ALL))
         stayForegroundUntil(foreground) { true }
 

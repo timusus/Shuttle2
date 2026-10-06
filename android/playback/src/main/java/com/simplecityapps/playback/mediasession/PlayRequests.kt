@@ -49,10 +49,10 @@ constructor(
     private val mediaIdHelper: MediaIdHelper,
     private val uriSongResolver: UriSongResolver,
     private val voiceSearchResolver: VoiceSearchResolver,
-    private val songRepository: SongRepository
-) {
+    private val songRepository: SongRepository,
     /** How long [shuffleAll] waits for the first song to load; tests that run the player's clock far ahead raise it. */
-    internal var shuffleAllLoadWaitMs = SHUFFLE_ALL_LOAD_WAIT_MS
+    private val shuffleAllLoadWaitMs: Long = SHUFFLE_ALL_LOAD_WAIT_MS
+) {
 
     /** The songs for the playable item [mediaId], or null for an id that isn't one. */
     suspend fun songsForMediaId(mediaId: String): PlayQueue? = mediaIdHelper.getPlayQueue(mediaId)
