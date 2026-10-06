@@ -10,7 +10,7 @@ import java.nio.ByteOrder
  * Writes little-endian integer PCM ([bitsPerSample] 16 or 24) to a canonical 44-byte-header WAV file. The header goes
  * out with zero sizes first; [close] patches in the real ones.
  */
-class WavWriter(
+open class WavWriter(
     private val file: File,
     val sampleRate: Int,
     val channelCount: Int,
@@ -33,7 +33,7 @@ class WavWriter(
     }
 
     /** Appends the buffer's remaining bytes (PCM in the writer's format, little-endian) and consumes them. */
-    fun write(buffer: ByteBuffer) {
+    open fun write(buffer: ByteBuffer) {
         check(!closed) { "closed" }
         while (buffer.hasRemaining()) {
             val count = minOf(buffer.remaining(), scratch.size)
