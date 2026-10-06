@@ -92,6 +92,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         AppGraph.initialize()
         let locked = AppGraph.shared.carPlayAccess.locked
         showAccess(locked: locked.value.boolValue)
+        accessTask?.cancel()
         accessTask = Task { [weak self] in
             for await isLocked in locked {
                 self?.showAccess(locked: isLocked.boolValue)
