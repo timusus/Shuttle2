@@ -13,6 +13,9 @@
 #     gapless         one album of 5 x 12 s sine tones played back to back: an MP3, two
 #                     FLAC-in-Matroska (.mka) tracks and two native FLACs, so gapless transitions
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
+#     crossfade       two albums of 3 x 10 s FLAC sine tones, "Crossfade 16" (16-bit: 330/550/770 Hz)
+#                     and "Crossfade 24" (24-bit: 440/660/880 Hz), a distinct frequency per song so
+#                     support/scripts/crossfade-analyse.py can tell which song is in the mix
 #     library         the sample library the screenshot tests use: 16 invented albums (97 x 32 s
 #                     tracks, long enough to count as plays) with their generated covers embedded,
 #                     plus its 4 playlists as .m3u
@@ -67,6 +70,7 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-sca
   playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
+  crossfade       two albums of 3 x 10 s FLAC tones (16-bit and 24-bit), a distinct frequency per song
   library         the screenshot tests' sample library: 16 invented albums with embedded covers
                   (97 x 32 s tracks, long enough to count as plays) plus 4 .m3u playlists
   podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
@@ -92,7 +96,7 @@ FIXTURE="${1:-}"
 case "$FIXTURE" in
     -h|--help) usage; exit 0 ;;
     "") usage >&2; exit 2 ;;
-    two-disc|many-tracks|playlist-basic|playback|gapless|library|podcast|taglib) ;;
+    two-disc|many-tracks|playlist-basic|playback|gapless|crossfade|library|podcast|taglib) ;;
     *) echo "seed-test-media: unknown fixture '$FIXTURE'" >&2; usage >&2; exit 2 ;;
 esac
 shift
@@ -150,6 +154,27 @@ generate_tone() {
         -metadata title="$title" -metadata artist="Gapless Artist" -metadata album_artist="Gapless Artist" \
         -metadata album="Gapless Album" -metadata track="${track}/5" -metadata date="2023" \
         "$@" -y "$out" >/dev/null
+}
+
+# Two albums of three 10 s FLAC sine tones, one per bit depth (a tap WAV holds one format only), each song
+# its own frequency. The amplitude stays well under full scale so clipping in the tap is the mixer's doing.
+build_crossfade() {
+    local dir="$1" album bits freq i n=0 sample_fmt
+    mkdir -p "$dir"
+    for album in "Crossfade 16:16:330 550 770" "Crossfade 24:24:440 660 880"; do
+        bits="$(cut -d: -f2 <<<"$album")"
+        sample_fmt=s16
+        [ "$bits" = "24" ] && sample_fmt=s32
+        i=0
+        for freq in $(cut -d: -f3 <<<"$album"); do
+            i=$((i + 1))
+            [ -f "${dir}/crossfade${bits}-${i}.flac" ] && continue
+            ffmpeg -nostdin -loglevel error -f lavfi -i "sine=frequency=${freq}:sample_rate=44100:duration=10" -ac 2 \
+                -metadata title="Crossfade ${bits} ${i}" -metadata artist="Crossfade Artist" -metadata album_artist="Crossfade Artist" \
+                -metadata album="$(cut -d: -f1 <<<"$album")" -metadata track="${i}/3" -metadata date="2024" \
+                -c:a flac -sample_fmt "$sample_fmt" -bits_per_raw_sample "$bits" -y "${dir}/crossfade${bits}-${i}.flac" >/dev/null
+        done
+    done
 }
 
 build_gapless() {
@@ -302,6 +327,7 @@ case "$FIXTURE" in
     playlist-basic) build_playlist_basic "$FIXTURE_DIR" ;;
     playback) build_playback "$FIXTURE_DIR" ;;
     gapless) build_gapless "$FIXTURE_DIR" ;;
+    crossfade) build_crossfade "$FIXTURE_DIR" ;;
     library) build_library "$FIXTURE_DIR" ;;
     podcast) build_podcast "$FIXTURE_DIR" ;;
     taglib) build_taglib "$FIXTURE_DIR" ;;

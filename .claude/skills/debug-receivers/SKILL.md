@@ -70,6 +70,12 @@ support/scripts/s2-debug.sh TAP_STOP
 adb pull /sdcard/Android/data/com.simplecityapps.shuttle.dev/files/crossfade-tap/join1.wav build/
 ```
 
+To have the capture judged for you: `support/scripts/seed-test-media.sh crossfade` seeds tone songs (a distinct frequency
+each, 16- and 24-bit albums), `support/scripts/crossfade-analyse.py tap.wav --freqs 330,550,770 --crossfade-ms 3000`
+reports per-transition overlap, fade envelopes, gaps and clipping (exit 1 on a problem; its tests are
+`python3 -I support/scripts/crossfade_analyse_test.py`), and `support/scripts/crossfade-check.sh [ms]` does the whole
+seed, set, play, tap, pull, analyse run on the current lane.
+
 ## Typical check
 
 ```bash
