@@ -81,8 +81,9 @@ unbuyable from January, and no orders have come in since 13 September (#230).
 
 ## iOS (StoreKit 2, #609)
 
-Pro is servers today: Jellyfin, Emby and Plex streaming need Pro after a 14-day trial. Android Auto, downloads and
-batch edits join Pro when iOS has them, and not before: the paywall, Settings and App Store Connect descriptions name
+Pro is servers, CarPlay and ReplayGain, as on Android (#946, after #939): Jellyfin, Emby, Plex and Navidrome
+streaming, CarPlay and turning ReplayGain on need Pro after a 14-day trial. Downloads and batch edits join Pro when iOS
+has them, and not before: the paywall, Settings and App Store Connect descriptions name
 only what the app does (guidelines 2.3 and 3.1.1), from one place in Swift (`ProFeatures` in `PaywallView.swift`).
 There is no subscription on iOS, only the trial and Lifetime. The trial length is `AppStoreProducts.TRIAL_DAYS` in
 `:shared`.
@@ -100,6 +101,13 @@ There is no subscription on iOS, only the trial and Lifetime. The trial length i
   resolves Pro > Trial > Free > Unknown with the same `resolveEntitlement` as Android. While Unknown, a server stream
   waits up to 5 seconds, then is refused as undecided (no paywall, played again when asked). A queue restored at
   launch never opens the paywall. Restore is `AppStore.sync()`.
+- **CarPlay and ReplayGain (#946).** Both go through the same `ServerAccessGate` (`IosEntitlementModule`), which on
+  iOS has no `startTrial`, so a user who hasn't had the trial is refused too. Choosing Track or Album in Settings asks
+  `TryUseProFeature(AdvancedAudio)`: refused, it keeps the stored mode, which keeps applying (as Android's #939), and
+  opens the paywall; Off stays free. CarPlay follows `CarPlayAccess.locked`: without Pro its root is one upgrade row
+  saying to upgrade on the iPhone, with nothing to browse or play, and it redraws when the entitlement changes. Both fail
+  open while the store hasn't answered. Now Playing on the car's own screen, for playback started on the phone, isn't
+  gated (Android leaves non-car controllers alone too).
 - **Paywall:** opened by a refused action and from Settings (Pro row, Restore Purchases); links the Privacy Policy and
   Apple's standard EULA.
 - **Testing:** the S2 scheme runs with `ios/S2.storekit`. Debug builds resolve Pro unless Settings' "Debug
