@@ -14,9 +14,15 @@ sealed class AlbumQuery(
         )
 
     /** The albums the artist is the album artist of: their own, not those they only appear on. */
-    class ArtistGroupKey(val key: AlbumArtistGroupKey?) :
+    class ArtistGroupKey(val key: AlbumArtistGroupKey) :
         AlbumQuery(
             predicate = { album -> key in album.albumArtistKeys }
+        )
+
+    /** The albums any of [keys] is an album artist of. */
+    class ArtistGroupKeys(val keys: Set<AlbumArtistGroupKey>) :
+        AlbumQuery(
+            predicate = { album -> album.albumArtistKeys.any { it in keys } }
         )
 
     class AlbumGroupKey(val albumGroupKey: com.simplecityapps.shuttle.model.AlbumGroupKey?) :

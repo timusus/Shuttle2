@@ -174,6 +174,31 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `more by lists each album artist's albums and the featuring artist's own`() = runTest {
+        // Keyed as createAlbum keys its album artist
+        val orchards = AlbumArtistGroupKey("The Tin Orchards")
+        val pines = AlbumArtistGroupKey("Pines")
+        // "The Tin Orchards feat. Pines" is the Orchards' album, keyed by its album artist as tagged
+        val featuring = createAlbum(name = "Duets", albumArtist = "The Tin Orchards feat. Pines", year = 1970).copy(albumArtistKeys = listOf(orchards))
+        val several = createAlbum(name = "Split", albumArtist = "The Tin Orchards, Pines", year = 1971).copy(albumArtistKeys = listOf(orchards, pines))
+        val orchardsOwn = createAlbum(name = "Porch Light", albumArtist = "The Tin Orchards", year = 1975)
+        val pinesOwn = createAlbum(name = "Needles", albumArtist = "Pines", year = 1980)
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.applyQueryPredicates = true
+        fakeAlbumRepository.setAlbums(listOf(featuring, several, orchardsOwn, pinesOwn))
+
+        val featuringPage = createViewModel(featuring.groupKey)
+        backgroundScope.launch { featuringPage.uiState.collect {} }
+        advanceUntilIdle()
+        featuringPage.uiState.value.moreByArtist shouldBe listOf(orchardsOwn, several)
+
+        val severalPage = createViewModel(several.groupKey)
+        backgroundScope.launch { severalPage.uiState.collect {} }
+        advanceUntilIdle()
+        severalPage.uiState.value.moreByArtist shouldBe listOf(pinesOwn, orchardsOwn, featuring)
+    }
+
+    @Test
     fun `more by the artist is empty when the album is their only one`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1)))
         fakeAlbumRepository.applyQueryPredicates = true
@@ -202,7 +227,7 @@ class AlbumDetailViewModelTest {
     fun `the album is ready before more by has emitted`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1)))
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
-        fakeAlbumRepository.neverEmits = { it is AlbumQuery.ArtistGroupKey }
+        fakeAlbumRepository.neverEmits = { it is AlbumQuery.ArtistGroupKeys }
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
