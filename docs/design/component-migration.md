@@ -88,10 +88,10 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.common.components.LinearProgressIndicatorWithText` | LinearProgressIndicator, Text |
 | [ ] | `ui.common.components.LoadingStatusIndicator` | CircularProgressIndicator, HorizontalDivider, Icon, OutlinedButton, Text |
 | [ ] | `ui.common.mediaactions.MediaActionsHost` | OutlinedTextField, Text |
-| [ ] | `ui.screens.equalizer.FrequencyResponseChart` | Text |
+| [x] | `ui.screens.equalizer.FrequencyResponseChart` | Text |
 | [x] | `ui.screens.home.HomeItemTile` | Text |
-| [ ] | `ui.screens.home.HomeScreen` | ElevatedCard, Icon, Scaffold, Text, pulltorefresh.PullToRefreshBox |
-| [ ] | `ui.screens.home.JumpBackInGrid` | Surface |
+| [x] | `ui.screens.home.HomeScreen` | ElevatedCard, Icon, Scaffold, Text, pulltorefresh.PullToRefreshBox |
+| [x] | `ui.screens.home.JumpBackInGrid` | Surface |
 | [ ] | `ui.screens.library.AddToPlaylistSubmenu` | DropdownMenu, DropdownMenuItem, Text |
 | [x] | `ui.screens.library.LibraryControls` | — |
 | [x] | `ui.screens.library.LibraryDetailComponents` | Text |
@@ -106,13 +106,13 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [x] | `ui.screens.search.SearchScreen` | Icon, Surface, Text |
 | [ ] | `ui.screens.settings.SettingsScreens` | Scaffold, Text |
 | [ ] | `ui.screens.settings.about.WhatsNewScreen` | Surface, Text |
-| [ ] | `ui.screens.settings.equalizer.EqualizerScreen` | Surface, Text, VerticalDivider |
+| [x] | `ui.screens.settings.equalizer.EqualizerScreen` | Surface, Text, VerticalDivider |
 | [ ] | `ui.screens.settings.excluded.ExcludedSongsScreen` | Text |
-| [ ] | `ui.screens.songinfo.SongInfoScreen` | Scaffold, Text |
+| [x] | `ui.screens.songinfo.SongInfoScreen` | Scaffold, Text |
 | [ ] | `ui.screens.sources.FolderRulesScreen` | Text |
 | [ ] | `ui.screens.sources.SourcesScreen` | Text |
 | [ ] | `ui.screens.sources.servers.ServerSignInScreen` | BasicAlertDialog, CircularProgressIndicator, Icon, IconButton, ListItem, OutlinedTextField, Switch, Text |
-| [ ] | `ui.screens.tageditor.TagEditorScreen` | OutlinedTextField, Scaffold, Surface, Text |
+| [x] | `ui.screens.tageditor.TagEditorScreen` | OutlinedTextField, Scaffold, Surface, Text |
 | [ ] | `ui.shell.AppShell` | Surface |
 | [ ] | `ui.shell.ShellSheetSceneStrategy` | ModalBottomSheet |
 | [x] | `ui.shell.player.FullPlayer` | Surface, Text |

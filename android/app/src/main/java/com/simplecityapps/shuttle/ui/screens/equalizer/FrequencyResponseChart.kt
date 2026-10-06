@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,8 +19,10 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import kotlin.math.log10
 import kotlinx.collections.immutable.ImmutableList
 
@@ -76,10 +77,10 @@ fun FrequencyResponseChart(
                 val plotHeight = maxHeight - PLOT_VERTICAL_INSET * 2
                 DB_GRIDLINES.forEach { db ->
                     val centreY = PLOT_VERTICAL_INSET + plotHeight * yFraction(db)
-                    Text(
+                    S2Text(
                         text = "%.0f dB".format(db),
                         color = labelColor,
-                        fontSize = 10.sp,
+                        style = TextStyle(fontSize = 10.sp),
                         maxLines = 1,
                         modifier = Modifier
                             .padding(end = 6.dp)
@@ -119,10 +120,10 @@ fun FrequencyResponseChart(
 
         BoxWithConstraints(Modifier.fillMaxWidth().padding(start = DB_LABEL_GUTTER)) {
             visibleTicks.filter { hz -> hz in LABELED_FREQUENCY_TICKS_HZ }.forEach { hz ->
-                Text(
+                S2Text(
                     text = frequencyLabel(hz),
                     color = labelColor,
-                    fontSize = 10.sp,
+                    style = TextStyle(fontSize = 10.sp),
                     modifier = Modifier.offset(x = ((maxWidth * xFraction(hz)) - 14.dp).coerceIn(0.dp, maxWidth - 40.dp)),
                 )
             }

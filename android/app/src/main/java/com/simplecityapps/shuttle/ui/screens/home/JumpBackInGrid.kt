@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -40,6 +39,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2Surface
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -274,7 +274,7 @@ private fun JumpBackInSurface(
     modifier: Modifier,
     content: @Composable () -> Unit,
 ) {
-    Surface(modifier = modifier, shape = shape, color = MaterialTheme.colorScheme.surfaceContainerHigh, content = content)
+    S2Surface(modifier = modifier, shape = shape, color = MaterialTheme.colorScheme.surfaceContainerHigh, content = content)
 }
 
 /** The item's artwork, with the progress bar along its foot while the queue is under way. */

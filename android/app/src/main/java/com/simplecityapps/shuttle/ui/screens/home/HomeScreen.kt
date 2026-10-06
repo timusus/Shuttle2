@@ -22,16 +22,11 @@ import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -51,8 +46,13 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2Card
+import com.simplecityapps.shuttle.designsystem.component.S2Icon
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
+import com.simplecityapps.shuttle.designsystem.component.S2PullToRefreshBox
+import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
@@ -102,7 +102,7 @@ fun HomeScreen(
     // library has loaded: the sections, or the empty state.
     ReportDrawnWhen { uiState !is HomeUiState.Loading }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    Scaffold(
+    S2Scaffold(
         modifier = modifier,
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
@@ -135,7 +135,7 @@ fun HomeScreen(
             }
 
             // The bar's scroll behaviour sits inside the pull, so pulling down expands the bar before it refreshes.
-            is HomeUiState.Content -> PullToRefreshBox(
+            is HomeUiState.Content -> S2PullToRefreshBox(
                 isRefreshing = uiState.refreshing,
                 onRefresh = callbacks.onRefresh,
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -306,8 +306,8 @@ private fun ColdStartCard(
             modifier = Modifier.fillMaxWidth().testTag(HOME_SHUFFLE_ALL_TAG),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
-            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
+            S2Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            S2Text(
                 text = stringResource(R.string.home_cold_start_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -325,17 +325,17 @@ private fun WhatsNewCard(
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    ElevatedCard(modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
+    S2Card(modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
         Row(modifier = Modifier.padding(start = S2Spacing.medium, top = S2Spacing.smallMedium), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.NewReleases, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-            Text(
+            S2Icon(Icons.Rounded.NewReleases, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            S2Text(
                 text = stringResource(R.string.home_whats_new_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.smallMedium),
             )
             S2IconButton(icon = Icons.Rounded.Close, contentDescription = stringResource(R.string.home_whats_new_dismiss), onClick = callbacks.onDismissWhatsNew)
         }
-        Text(
+        S2Text(
             text = stringResource(R.string.home_whats_new_message, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +23,9 @@ import com.simplecityapps.shuttle.designsystem.component.ChoiceSetting
 import com.simplecityapps.shuttle.designsystem.component.EqBand
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.designsystem.component.S2Surface
+import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2VerticalDivider
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -72,7 +72,7 @@ fun EqualizerScreen(
             )
         }
         item(key = "bands") {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.largeIncreased) {
+            S2Surface {
                 Column(Modifier.fillMaxWidth().padding(vertical = S2Spacing.medium)) {
                     FrequencyResponseChart(
                         points = uiState.frequencyResponse,
@@ -92,7 +92,7 @@ fun EqualizerScreen(
                             contentDescription = stringResource(R.string.dsp_preamp)
                         )
                         // Sets the preamp, which shifts every band, apart from the bands themselves.
-                        VerticalDivider(Modifier.height(200.dp).padding(horizontal = 6.dp))
+                        S2VerticalDivider(Modifier.height(200.dp).padding(horizontal = 6.dp))
                         uiState.bands.forEach { band ->
                             EqBand(
                                 frequency = frequencyLabel(band.frequency),
@@ -130,7 +130,7 @@ fun EqualizerScreen(
 
 @Composable
 private fun Caption(text: String) {
-    Text(
+    S2Text(
         text = text,
         modifier = Modifier.padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
         style = MaterialTheme.typography.bodySmall,

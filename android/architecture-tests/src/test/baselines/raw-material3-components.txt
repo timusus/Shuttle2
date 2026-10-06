@@ -13,13 +13,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/Loadin
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|OutlinedTextField|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|Text|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|Text|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|ElevatedCard|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Icon|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Scaffold|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Text|4
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|pulltorefresh.PullToRefreshBox|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|Surface|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|LinearWavyProgressIndicator|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|ListItem|1
@@ -40,12 +33,7 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/Setting
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/SettingsScreens.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|Surface|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|Text|5
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|Surface|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|Text|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|VerticalDivider|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/excluded/ExcludedSongsScreen.kt|Text|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Scaffold|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ServerDetailScreen.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/ThisDeviceScreen.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|BasicAlertDialog|1
@@ -54,10 +42,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Icon|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|5
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Switch|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|OutlinedTextField|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Scaffold|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Surface|3
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Text|6
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/AppShell.kt|Surface|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/ShellSheetSceneStrategy.kt|ModalBottomSheet|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/FullPlayer.kt|Text|2

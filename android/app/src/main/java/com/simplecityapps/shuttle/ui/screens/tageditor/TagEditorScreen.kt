@@ -24,10 +24,6 @@ import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
@@ -53,6 +50,10 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
+import com.simplecityapps.shuttle.designsystem.component.S2Surface
+import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2TextField
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
@@ -139,7 +140,7 @@ fun TagEditorScreen(
     BackHandler(enabled = writing || hasChanges, onBack = onBack)
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    Scaffold(
+    S2Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection).testTag("tag-editor"),
         topBar = {
             S2TopBar(
@@ -177,7 +178,7 @@ fun TagEditorScreen(
                 is TagEditorUiState.Editing -> {
                     TagEditorForm(uiState, onFieldChange = onFieldChange, onFieldReset = onFieldReset, enabled = !writing)
                     uiState.writing?.let { progress ->
-                        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)) {
+                        S2Surface(Modifier.fillMaxSize(), shape = RectangleShape, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)) {
                             Box(contentAlignment = Alignment.Center) {
                                 LoadingState(message = progressText(R.string.edit_tags_writing_tags, progress), progress = { progress.fraction })
                             }
@@ -225,7 +226,7 @@ private fun TagEditorForm(
         verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         if (state.songCount > 1) {
-            Text(
+            S2Text(
                 text = pluralStringResource(R.plurals.edit_tags_editing_count_songs, state.songCount, state.songCount),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
@@ -259,7 +260,7 @@ private fun TagSectionCard(
     Column {
         SectionHeader(title, containerColor = Color.Transparent)
 
-        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth()) {
+        S2Surface(modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(start = S2Spacing.medium, end = S2Spacing.medium, top = S2Spacing.small, bottom = S2Spacing.medium), verticalArrangement = Arrangement.spacedBy(S2Spacing.small), content = content)
         }
     }
@@ -267,15 +268,15 @@ private fun TagSectionCard(
 
 @Composable
 private fun SkippedSongs(state: TagEditorUiState.Editing) {
-    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth().testTag("tag-editor-skipped")) {
+    S2Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth().testTag("tag-editor-skipped")) {
         Column(Modifier.padding(S2Spacing.medium), verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall)) {
-            Text(
+            S2Text(
                 text = pluralStringResource(R.plurals.edit_tags_skipped, state.skipped.size, state.skipped.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer,
             )
             state.skipped.forEach { song ->
-                Text(
+                S2Text(
                     text = listOfNotNull(song.name, song.friendlyArtistName).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onErrorContainer,
@@ -295,14 +296,14 @@ private fun TagTextField(
 ) {
     val label = stringResource(state.field.hint)
     val multiple = stringResource(R.string.edit_tags_multiple_values)
-    OutlinedTextField(
+    S2TextField(
         value = state.text,
         onValueChange = { onFieldChange(state.field, it) },
+        label = label,
         modifier = modifier.fillMaxWidth().testTag("tag-field-${state.field.name}"),
         enabled = enabled,
-        label = { Text(label) },
-        placeholder = if (state.mixed) ({ Text(multiple) }) else null,
-        supportingText = if (state.mixed && !state.changed) ({ Text(multiple) }) else null,
+        placeholder = multiple.takeIf { state.mixed },
+        supportingText = multiple.takeIf { state.mixed && !state.changed },
         trailingIcon = if (state.changed) {
             {
                 S2IconButton(

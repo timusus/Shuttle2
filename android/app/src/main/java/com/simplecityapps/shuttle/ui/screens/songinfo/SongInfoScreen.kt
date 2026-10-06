@@ -20,8 +20,6 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,6 +42,8 @@ import com.simplecityapps.shuttle.designsystem.component.InfoSetting
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2InfoChip
+import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -96,7 +96,7 @@ fun SongInfoScreen(
 ) {
     val song = uiState.song
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    Scaffold(
+    S2Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection).testTag("song-info"),
         topBar = {
             S2TopBar(
@@ -161,9 +161,9 @@ private fun SongInfoHero(
         verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
     ) {
         LibraryArtwork(song, ArtworkPlaceholder.Song, size = if (LocalInShellSheet.current) ArtworkSize.Grid else ArtworkSize.Hero, modifier = Modifier.padding(bottom = S2Spacing.smallMedium))
-        Text(song.name ?: unknown, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        S2Text(song.name ?: unknown, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
         song.friendlyArtistName?.let {
-            Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            S2Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         val chips = song.infoChips()
         if (chips.isNotEmpty()) {
