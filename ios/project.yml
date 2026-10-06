@@ -90,6 +90,10 @@ targets:
         UIBackgroundModes: [audio, fetch]
         # Siri's media domain (#951): "play <artist> on Shuttle Music", on the phone and in CarPlay
         INIntentsSupported: [INPlayMediaIntent]
+        # "play <artist> on Shuttle": Siri and App Shortcuts also answer to the short name
+        INAlternativeAppNames:
+          - INAlternativeAppName: Shuttle
+            INAlternativeAppNamePronunciationHint: shuttle
         NSSiriUsageDescription: Shuttle Music uses Siri to play the songs, albums, artists and playlists in your library when you ask for them by voice.
         # Playback diagnostics (#897): the four categories keep their info lines in the unified log, so
         # `log collect` after a stall on the device has them; debug stays in memory only.
