@@ -43,8 +43,6 @@ class FakeSongDownloadManager : SongDownloadManager {
         removedPaths += path
     }
 
-    override fun removeAll() {}
-
     override fun setRequirements(wifiOnly: Boolean) {}
 }
 
@@ -52,12 +50,6 @@ class FakeSongDownloadRepository : SongDownloadRepository {
     val downloads = MutableStateFlow<List<SongDownload>>(emptyList())
 
     override fun observeDownloads(): Flow<List<SongDownload>> = downloads
-
-    override fun observeDownload(path: String): Flow<SongDownload?> = downloads.map { list -> list.firstOrNull { it.path == path } }
-
-    override fun observeDownloadedPaths(): Flow<Set<String>> = downloads.map { list ->
-        list.filter { it.state == SongDownload.State.Completed }.mapTo(mutableSetOf()) { it.path }
-    }
 
     override suspend fun getDownload(path: String): SongDownload? = downloads.value.firstOrNull { it.path == path }
 }

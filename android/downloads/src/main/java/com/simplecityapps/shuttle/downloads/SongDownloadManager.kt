@@ -40,8 +40,6 @@ interface SongDownloadManager {
     /** Removes the download at [path], the key [download] recorded it under. */
     fun remove(path: String)
 
-    fun removeAll()
-
     fun setRequirements(wifiOnly: Boolean)
 }
 
@@ -83,10 +81,6 @@ class DefaultSongDownloadManager @Inject constructor(
 
     override fun remove(path: String) = send("remove") {
         DownloadService.sendRemoveDownload(context, SongDownloadService::class.java, path, true)
-    }
-
-    override fun removeAll() = send("removeAll") {
-        DownloadService.sendRemoveAllDownloads(context, SongDownloadService::class.java, true)
     }
 
     override fun setRequirements(wifiOnly: Boolean) = send("setRequirements") {

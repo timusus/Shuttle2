@@ -24,12 +24,6 @@ import kotlinx.coroutines.withContext
 interface SongDownloadRepository {
     fun observeDownloads(): Flow<List<SongDownload>>
 
-    /** Emits null while [path] has no download. */
-    fun observeDownload(path: String): Flow<SongDownload?>
-
-    /** The paths whose download has completed, i.e. that play offline. */
-    fun observeDownloadedPaths(): Flow<Set<String>>
-
     suspend fun getDownload(path: String): SongDownload?
 }
 
@@ -47,14 +41,6 @@ class DefaultSongDownloadRepository @Inject constructor(
     override fun observeDownloads(): Flow<List<SongDownload>> = observe { current ->
         val active = current.associateBy { it.request.id }
         downloadIndex.readAll().map { (active[it.request.id] ?: it).toSongDownload() }
-    }
-
-    override fun observeDownload(path: String): Flow<SongDownload?> = observe { current ->
-        (current.firstOrNull { it.request.id == path } ?: downloadIndex.getDownload(path))?.toSongDownload()
-    }
-
-    override fun observeDownloadedPaths(): Flow<Set<String>> = observe {
-        downloadIndex.readAll(Download.STATE_COMPLETED).mapTo(mutableSetOf()) { it.request.id }
     }
 
     override suspend fun getDownload(path: String): SongDownload? = withContext(ioDispatcher) {
