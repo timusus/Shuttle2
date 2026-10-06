@@ -260,7 +260,6 @@ extension MediaActionsViewModel {
     /// player takes it up (`PlayIntent.begin`); `key` names what it plays, for a spinner on that item.
     @MainActor
     func send(_ action: any MediaAction, key: String? = nil, intent: PlayIntent? = nil) {
-        SiriDonation.donate(action)
         guard PlayIntent.plays(action) else {
             dispatch(action: action)
             return
@@ -269,7 +268,13 @@ extension MediaActionsViewModel {
         let ticket = intent.begin(key: key)
         // Kotlin hands the result back on the main thread.
         dispatch(action: action) { result in
-            MainActor.assumeIsolated { intent.finished(ticket, result: result) }
+            MainActor.assumeIsolated {
+                intent.finished(ticket, result: result)
+                // Siri learns plays that started, and asks for its permission at the first one
+                guard !PlayIntent.isFailure(result) else { return }
+                SiriDonation.donate(action)
+                SiriAuthorization.playbackStarted()
+            }
         }
     }
 }

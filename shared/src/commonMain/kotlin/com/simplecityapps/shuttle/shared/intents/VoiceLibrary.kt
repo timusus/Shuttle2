@@ -50,20 +50,20 @@ class VoiceLibrary(
         val categories = kinds.map { it.category }.toSet()
         val results = searchLibrary(query, categories).first()
         val byKind = mapOf(
-            VoiceMediaKind.Artist to results.artists.map { it.item }.map { artist ->
-                VoiceMatch(VoiceMediaKind.Artist, artist.friendlyArtistName ?: artist.name.orEmpty(), null, MediaSelection.AlbumArtists(artist))
+            VoiceMediaKind.Artist to results.artists.map { it.item }.mapNotNull { artist ->
+                named(artist.friendlyArtistName ?: artist.name) { VoiceMatch(VoiceMediaKind.Artist, it, null, MediaSelection.AlbumArtists(artist)) }
             },
-            VoiceMediaKind.Album to results.albums.map { it.item }.map { album ->
-                VoiceMatch(VoiceMediaKind.Album, album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album))
+            VoiceMediaKind.Album to results.albums.map { it.item }.mapNotNull { album ->
+                named(album.name) { VoiceMatch(VoiceMediaKind.Album, it, album.friendlyArtistName, MediaSelection.Albums(album)) }
             },
-            VoiceMediaKind.Song to results.songs.map { it.item }.map { song ->
-                VoiceMatch(VoiceMediaKind.Song, song.name.orEmpty(), song.albumArtist ?: song.artists.firstOrNull(), MediaSelection.Songs(song))
+            VoiceMediaKind.Song to results.songs.map { it.item }.mapNotNull { song ->
+                named(song.name) { VoiceMatch(VoiceMediaKind.Song, it, song.albumArtist ?: song.artists.firstOrNull(), MediaSelection.Songs(song)) }
             },
-            VoiceMediaKind.Playlist to results.playlists.map { it.item }.map { playlist ->
-                VoiceMatch(VoiceMediaKind.Playlist, playlist.name, null, MediaSelection.Playlists(playlist))
+            VoiceMediaKind.Playlist to results.playlists.map { it.item }.mapNotNull { playlist ->
+                named(playlist.name) { VoiceMatch(VoiceMediaKind.Playlist, it, null, MediaSelection.Playlists(playlist)) }
             },
-            VoiceMediaKind.Genre to results.genres.map { it.item }.map { genre ->
-                VoiceMatch(VoiceMediaKind.Genre, genre.name, null, MediaSelection.Genres(genre))
+            VoiceMediaKind.Genre to results.genres.map { it.item }.mapNotNull { genre ->
+                named(genre.name) { VoiceMatch(VoiceMediaKind.Genre, it, null, MediaSelection.Genres(genre)) }
             },
         )
         val lead = results.top?.kind
@@ -95,6 +95,9 @@ class VoiceLibrary(
         .sortedByDescending { it.songCount }
         .map { it.name }
         .take(limit)
+
+    /** [build] of [name], or null when it's blank: a nameless item can't be spoken, so it isn't offered. */
+    private inline fun named(name: String?, build: (String) -> VoiceMatch): VoiceMatch? = name?.takeIf { it.isNotBlank() }?.let(build)
 
     private val VoiceMediaKind.category: SearchCategory
         get() = when (this) {

@@ -1,5 +1,8 @@
+import AVFAudio
+import CarPlay
 import Intents
 import Shared
+import UIKit
 
 /// Siri's media domain (#951): "Hey Siri, play <artist, album, song, playlist or genre> on Shuttle Music", on the phone
 /// and in CarPlay, and a bare "play music", which Siri may route here without naming the app once Shuttle is the
@@ -13,6 +16,47 @@ import Shared
 enum CarPlayConnection {
     /// Set by `CarPlaySceneDelegate` for the life of a car connection.
     static var isConnected = false
+
+    /// Whether a request is made through CarPlay. The scene delegate's flag is late when Siri launches the app from
+    /// the car, so the connected CarPlay scene and the car's audio route count too.
+    static var isActive: Bool {
+        isActive(
+            sceneConnected: isConnected,
+            hasCarPlayScene: UIApplication.shared.connectedScenes.contains { $0 is CPTemplateApplicationScene },
+            routeOutputs: AVAudioSession.sharedInstance().currentRoute.outputs.map(\.portType)
+        )
+    }
+
+    static func isActive(sceneConnected: Bool, hasCarPlayScene: Bool, routeOutputs: [AVAudioSession.Port]) -> Bool {
+        sceneConnected || hasCarPlayScene || routeOutputs.contains(.carAudio)
+    }
+}
+
+/// The latest matches handed out, at most `capacity`, the oldest dropped first.
+struct RecentMatches<Match> {
+    private var order: [String] = []
+    private var matches: [String: Match] = [:]
+    let capacity: Int
+
+    init(capacity: Int) {
+        self.capacity = capacity
+    }
+
+    subscript(identifier: String) -> Match? {
+        get { matches[identifier] }
+        set {
+            order.removeAll { $0 == identifier }
+            guard let newValue else {
+                matches[identifier] = nil
+                return
+            }
+            matches[identifier] = newValue
+            order.append(identifier)
+            while order.count > capacity { matches[order.removeFirst()] = nil }
+        }
+    }
+
+    var identifiers: [String] { order }
 }
 
 /// The Kotlin `VoiceLibrary` as `SiriMediaSearching`, keeping the matches it hands out so the play that follows a
@@ -20,7 +64,7 @@ enum CarPlayConnection {
 @MainActor
 final class KotlinSiriLibrary: SiriMediaSearching {
     private let library: VoiceLibrary
-    private var matches: [String: VoiceMatch] = [:]
+    private var matches = RecentMatches<VoiceMatch>(capacity: 50)
 
     init(_ library: VoiceLibrary) {
         self.library = library
@@ -94,7 +138,7 @@ final class SiriMediaPlayer {
     /// locked car is refused as the car's own browse is. The phone's Siri plays what the phone's buttons do, which
     /// local playback never gates.
     var isBlockedByCarPlayGate: Bool {
-        CarPlayConnection.isConnected && graph.carPlayAccess.locked.value.boolValue
+        CarPlayConnection.isActive && graph.carPlayAccess.locked.value.boolValue
     }
 
     func resolve(_ intent: INPlayMediaIntent) async -> [INPlayMediaMediaItemResolutionResult] {

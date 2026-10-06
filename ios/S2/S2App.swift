@@ -33,6 +33,7 @@ struct S2App: App {
                 .onChange(of: scenePhase) { _, phase in
                     switch phase {
                     case .active:
+                        SiriAuthorization.askIfDue()
                         LibraryImport.syncIfStale()
                         Task { await LibraryImport.whenLocalFilesChange() }
                         // Scrobbles queued while offline or suspended

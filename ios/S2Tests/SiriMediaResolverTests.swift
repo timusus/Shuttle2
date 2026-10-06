@@ -1,4 +1,5 @@
 import Foundation
+import AVFAudio
 import Intents
 import Testing
 @testable import S2
@@ -117,11 +118,46 @@ struct SiriMediaResolverTests {
         #expect(SiriVocabulary.strings(from: names, limit: 2) == ["Radiohead", "Björk"])
     }
 
-    @Test func siriIsAskedOnceAfterTheFirstImportOnly() {
-        #expect(SiriAuthorization.shouldAsk(status: .notDetermined, libraryItems: 120, asked: false))
-        #expect(!SiriAuthorization.shouldAsk(status: .notDetermined, libraryItems: 0, asked: false))
-        #expect(!SiriAuthorization.shouldAsk(status: .notDetermined, libraryItems: 120, asked: true))
-        #expect(!SiriAuthorization.shouldAsk(status: .authorized, libraryItems: 120, asked: false))
-        #expect(!SiriAuthorization.shouldAsk(status: .denied, libraryItems: 120, asked: false))
+    @Test func vocabularySkipsGenericTitlesAndStaysWithinTheLimit() {
+        let names = ["Various Artists", "Unknown Artist", "Favorites", "Radiohead"] + (0..<150).map { "Artist \($0)" }
+
+        let strings = SiriVocabulary.strings(from: names)
+
+        #expect(strings.first == "Radiohead")
+        #expect(strings.count == SiriVocabulary.limit)
+        #expect(!strings.contains("Various Artists"))
+    }
+
+    @Test func siriIsAskedOnlyAfterAPlayWhileActive() {
+        #expect(SiriAuthorization.shouldAsk(status: .notDetermined, hasPlayed: true, isActive: true))
+        #expect(!SiriAuthorization.shouldAsk(status: .notDetermined, hasPlayed: false, isActive: true))
+        #expect(!SiriAuthorization.shouldAsk(status: .notDetermined, hasPlayed: true, isActive: false))
+        #expect(!SiriAuthorization.shouldAsk(status: .authorized, hasPlayed: true, isActive: true))
+        #expect(!SiriAuthorization.shouldAsk(status: .denied, hasPlayed: true, isActive: true))
+    }
+
+    @Test func aContainerDonationNamesTheContainer() {
+        #expect(SiriDonation.intent(for: roadTrip, shuffled: false).mediaContainer?.identifier == roadTrip.identifier)
+        let song = SiriMediaCandidate(kind: .song, title: "Something", artist: "The Beatles")
+        #expect(SiriDonation.intent(for: song, shuffled: false).mediaContainer == nil)
+    }
+
+    @Test func recentMatchesDropTheOldestPastCapacity() {
+        var matches = RecentMatches<Int>(capacity: 2)
+        matches["a"] = 1
+        matches["b"] = 2
+        matches["a"] = 3
+        matches["c"] = 4
+
+        #expect(matches.identifiers == ["a", "c"])
+        #expect(matches["b"] == nil)
+        #expect(matches["a"] == 3)
+    }
+
+    @Test func aRequestIsMadeThroughCarPlayByAnyOfItsSigns() {
+        #expect(!CarPlayConnection.isActive(sceneConnected: false, hasCarPlayScene: false, routeOutputs: [.builtInSpeaker]))
+        #expect(CarPlayConnection.isActive(sceneConnected: true, hasCarPlayScene: false, routeOutputs: []))
+        #expect(CarPlayConnection.isActive(sceneConnected: false, hasCarPlayScene: true, routeOutputs: []))
+        #expect(CarPlayConnection.isActive(sceneConnected: false, hasCarPlayScene: false, routeOutputs: [.carAudio]))
     }
 }
