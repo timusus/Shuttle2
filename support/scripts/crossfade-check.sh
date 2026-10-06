@@ -22,7 +22,11 @@ set_crossfade_ms() {
     local tmp
     tmp="$(mktemp)"
     adb_retry shell am force-stop "$APP_ID"
-    adb_retry shell "run-as ${APP_ID} cat shared_prefs/${PREFS_FILE}" 2>/dev/null | tr -d '\r' | grep -v 'name="crossfade_duration_ms"' | grep -v '^</map>' > "$tmp"
+    adb_retry shell "run-as ${APP_ID} cat shared_prefs/${PREFS_FILE}" 2>/dev/null | tr -d '\r' | grep -v 'name="crossfade_duration_ms"' | grep -v '^</map>' > "$tmp" || true
+    # A missing file, an empty one or a self-closed `<map />` leaves no open `<map>`: start a fresh one.
+    if ! grep -q '^<map>' "$tmp"; then
+        printf "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n" > "$tmp"
+    fi
     printf '    <int name="crossfade_duration_ms" value="%s" />\n</map>\n' "$1" >> "$tmp"
     adb_retry shell "run-as ${APP_ID} sh -c 'cat > shared_prefs/${PREFS_FILE}'" < "$tmp"
     rm -f "$tmp"
@@ -37,7 +41,7 @@ check_album() {
     s2 TAP_START --es name "crossfade-${bits}" >/dev/null
     s2 PLAY_ALL --es album "$album" >/dev/null
     # Past the last join (and its fade) by a couple of seconds: the tap has then seen every transition.
-    wait_for 150 "s['title'] == '${last}' and s['positionMs'] >= $((CROSSFADE_MS + 2000))"
+    wait_for 300 "s['title'] == '${last}' and s['positionMs'] >= $((CROSSFADE_MS + 2000))"
     reply="$(s2 TAP_STOP)"
     reply="${reply#TAP_STOP ok: }"
     s2 PAUSE >/dev/null
@@ -45,6 +49,7 @@ check_album() {
     path="${reply%% *}"
     wav="${OUT}/crossfade-${bits}.wav"
     adb_retry pull "$path" "$wav" >/dev/null
+    case "$reply" in *" ${bits}bit "*) ;; *) fail "${album}: tap is not ${bits}-bit, so this run did not exercise that path: ${reply}" ;; esac
     case "$reply" in *skipped*) fail "${album}: tap skipped audio in a different format: ${reply}" ;; esac
     python3 -I "${CHECKS_ROOT}/support/scripts/crossfade-analyse.py" "$wav" --freqs "$freqs" --crossfade-ms "$CROSSFADE_MS" \
         || fail "${album}: the tap does not look like a clean ${CROSSFADE_MS} ms crossfade (WAV: ${wav})"

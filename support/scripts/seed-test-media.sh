@@ -13,7 +13,7 @@
 #     gapless         one album of 5 x 12 s sine tones played back to back: an MP3, two
 #                     FLAC-in-Matroska (.mka) tracks and two native FLACs, so gapless transitions
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
-#     crossfade       two albums of 3 x 30 s FLAC sine tones, "Crossfade-16" (16-bit: 330/550/770 Hz)
+#     crossfade       two albums of 3 x 75 s sine tones (FLAC; WAV at 24-bit), "Crossfade-16" (16-bit: 330/550/770 Hz)
 #                     and "Crossfade-24" (24-bit: 440/660/880 Hz), a distinct frequency per song so
 #                     support/scripts/crossfade-analyse.py can tell which song is in the mix
 #     library         the sample library the screenshot tests use: 16 invented albums (97 x 32 s
@@ -70,7 +70,7 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-sca
   playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
-  crossfade       two albums of 3 x 30 s FLAC tones (16-bit and 24-bit), a distinct frequency per song
+  crossfade       two albums of 3 x 75 s tones (16-bit FLAC and 24-bit WAV), a distinct frequency per song
   library         the screenshot tests' sample library: 16 invented albums with embedded covers
                   (97 x 32 s tracks, long enough to count as plays) plus 4 .m3u playlists
   podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
@@ -156,23 +156,38 @@ generate_tone() {
         "$@" -y "$out" >/dev/null
 }
 
-# Two albums of three 30 s FLAC sine tones, one per bit depth (a tap WAV holds one format only), each song
-# its own frequency. The amplitude stays well under full scale so clipping in the tap is the mixer's doing.
+# Two albums of three 75 s tones, one per bit depth (a tap WAV holds one format only), each song its own
+# frequency. Shaped so the player behaves as it does on real songs rather than tiny files:
+#  - Each song has its own album artist: songs of one album join gaplessly and never crossfade.
+#  - A faint noise floor (-66 dB, far under the analyser's thresholds) keeps each FLAC at several MB. A pure tone
+#    compresses to under 1 MB, which ExoPlayer loads in one chunk, so the whole song is buffered before its tail is
+#    decoded and cannot be clipped any more (skip short_song_loaded).
+#  - aevalsrc computes in float, so the 24-bit files carry real 24-bit content (`sine` emits s16: empty low bits).
+#  - The 24-bit album is WAV, not FLAC: the platform FLAC decoder hands the sink 16-bit PCM whatever the file's
+#    depth, so only PCM WAV reaches the audio processors (the mixer) as 24-bit. Its tags are ID3v2 (WAV INFO has
+#    no album artist).
+# The amplitude stays well under full scale so clipping in the tap is the mixer's doing.
 build_crossfade() {
-    local dir="$1" album bits freq i n=0 sample_fmt
+    local dir="$1" album bits freq i n=0 ext source
+    local -a codec
     mkdir -p "$dir"
     for album in "Crossfade-16:16:330 550 770" "Crossfade-24:24:440 660 880"; do
         bits="$(cut -d: -f2 <<<"$album")"
-        sample_fmt=s16
-        [ "$bits" = "24" ] && sample_fmt=s32
+        codec=(-c:a flac -sample_fmt s16 -bits_per_raw_sample 16)
+        ext=flac
+        if [ "$bits" = "24" ]; then
+            codec=(-c:a pcm_s24le -write_id3v2 1 -id3v2_version 3)
+            ext=wav
+        fi
         i=0
         for freq in $(cut -d: -f3 <<<"$album"); do
             i=$((i + 1))
-            [ -f "${dir}/crossfade${bits}-${i}.flac" ] && continue
-            ffmpeg -nostdin -loglevel error -f lavfi -i "sine=frequency=${freq}:sample_rate=44100:duration=30" -ac 2 \
-                -metadata title="Crossfade ${bits} ${i}" -metadata artist="Crossfade Artist" -metadata album_artist="Crossfade Artist" \
+            [ -f "${dir}/crossfade${bits}-${i}.${ext}" ] && continue
+            source="aevalsrc=0.2*sin(2*PI*${freq}*t)+0.001*(random(0)-0.5):sample_rate=44100:duration=75"
+            ffmpeg -nostdin -loglevel error -f lavfi -i "$source" -ac 2 \
+                -metadata title="Crossfade ${bits} ${i}" -metadata artist="Crossfade Artist ${i}" -metadata album_artist="Crossfade Artist ${i}" \
                 -metadata album="$(cut -d: -f1 <<<"$album")" -metadata track="${i}/3" -metadata date="2024" \
-                -c:a flac -sample_fmt "$sample_fmt" -bits_per_raw_sample "$bits" -y "${dir}/crossfade${bits}-${i}.flac" >/dev/null
+                "${codec[@]}" -y "${dir}/crossfade${bits}-${i}.${ext}" >/dev/null
         done
     done
 }

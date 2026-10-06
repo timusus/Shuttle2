@@ -122,6 +122,21 @@ class CrossfadeAnalyseTest(unittest.TestCase):
         self.assertTrue(any("silent" in f for f in report["failures"]))
         self.assertTrue(any("never heard" in f for f in report["failures"]))
 
+    def test_a_missing_song_with_neighbour_leakage_fails(self):
+        # Songs 1 and 3 play, song 2 never does; its bin still sees a little of both neighbours.
+        tone = lambda f, n: [AMP * math.sin(2 * math.pi * f * k / RATE) + 0.002 * math.sin(2 * math.pi * 550 * k / RATE) for k in range(n)]
+        report = run(tone(FREQS[0], SONG_S * RATE) + tone(FREQS[2], SONG_S * RATE), crossfade_ms=0)
+        self.assertTrue(any("song 2" in f and "never heard" in f for f in report["failures"]))
+
+    def test_unaligned_hard_cut_passes_with_no_crossfade(self):
+        # Cuts half a window off the 20 ms grid: one window holds both tones, which is not an overlap.
+        lengths = [SONG_S * RATE + 80, SONG_S * RATE + 80, SONG_S * RATE]
+        samples = []
+        for freq, n in zip(FREQS, lengths):
+            samples += [AMP * math.sin(2 * math.pi * freq * k / RATE) for k in range(n)]
+        report = run(samples, crossfade_ms=0)
+        self.assertEqual([], report["failures"])
+
 
 if __name__ == "__main__":
     unittest.main()

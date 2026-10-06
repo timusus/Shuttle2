@@ -56,6 +56,7 @@ import dev.zacsweers.metro.SingleIn
 import java.util.Optional
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.OkHttpClient
+import timber.log.Timber
 
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -125,7 +126,11 @@ class PlaybackEngineModule {
         songUriResolver,
         downloadCache,
         { playbackSettings.crossfadeDurationMs.value.toLong() },
-        analytics::crossfadeSkipped,
+        { skip ->
+            analytics.crossfadeSkipped(skip)
+            // The tap is bound in debug builds only: there, say why a transition played without its crossfade.
+            if (crossfadeOutputTap.isPresent) Timber.w("Crossfade skipped: ${skip.value}")
+        },
         onDownloadPlayed = { path -> deliveredFormats.record(path, null) },
         crossfadeOutputTap = crossfadeOutputTap.orElse(null)
     )

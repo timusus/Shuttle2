@@ -23,6 +23,7 @@ import sys
 
 WINDOW_MS = 20
 OVERLAP_FLOOR = 0.03
+NEVER_HEARD_RATIO = 0.1
 OVERLAP_TOLERANCE = 0.10
 OVERLAP_TOLERANCE_MIN_MS = 150
 MONOTONIC_SLACK = 0.15
@@ -93,8 +94,11 @@ def goertzel_amplitudes(mono, rate, freqs, window):
 
 
 def steady_level(amps):
-    top = sorted(amps)[int(len(amps) * 0.9):]
-    return sum(top) / len(top) if top else 0.0
+    """The median of the windows within half of the peak: the tone's level while it plays on its own. A song that
+    only plays for a short stretch of the tap (the last one) must not be averaged with the silence around it."""
+    peak = max(amps, default=0.0)
+    active = sorted(v for v in amps if v >= peak * 0.5)
+    return active[len(active) // 2] if active and peak > 0 else 0.0
 
 
 def find_runs(flags, min_len):
@@ -118,16 +122,23 @@ def analyse(rate, channels, samples, freqs, crossfade_ms):
     norm = [[v / lvl if lvl > 0 else 0.0 for v in a] for a, lvl in zip(amps, levels)]
     failures = []
 
+    # A song that never played still shows the neighbours' leakage in its bin, so the floor is relative to the others.
     for i, lvl in enumerate(levels):
-        if lvl <= 0.0:
+        others = [v for j, v in enumerate(levels) if j != i]
+        if lvl <= 0.0 or (others and lvl < NEVER_HEARD_RATIO * max(others)):
             failures.append(f"song {i + 1} ({freqs[i]} Hz) never heard in the tap")
 
     transitions = []
     for i in range(len(freqs) - 1):
         out_env, in_env = norm[i], norm[i + 1]
         both = [a > OVERLAP_FLOOR and b > OVERLAP_FLOOR for a, b in zip(out_env, in_env)]
-        runs = find_runs(both, 1)
+        # One window of both-audible is a hard cut that fell between window edges, not an overlap.
+        runs = [r for r in find_runs(both, 1) if r[1] - r[0] > 1]
         t = {"from_hz": freqs[i], "to_hz": freqs[i + 1]}
+        if not runs and crossfade_ms == 0:
+            t["overlap_ms"] = 0
+            transitions.append(t)
+            continue
         if not runs:
             t["problems"] = ["no overlap: the songs never play together"]
             failures.append(f"transition {i + 1}: no overlap ({freqs[i]} -> {freqs[i + 1]} Hz)")
