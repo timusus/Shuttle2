@@ -722,6 +722,7 @@ class MediaImporterTest {
         preferences.songTagsOutdated(server.type) shouldBe true
 
         server.missing = 0
+        server.held = listOf("/added")
         importer.sync(SyncTrigger.Periodic)
 
         server.requests shouldBe listOf(null, null)
@@ -743,6 +744,8 @@ class MediaImporterTest {
         songRepository.changes shouldBe Triple(1, 0, 0)
         preferences.lastFullSyncStart(server.type.name) shouldBe null
 
+        server.held = listOf("/added")
+        server.heldMissing = 2
         importer.sync(SyncTrigger.Periodic)
 
         server.requests shouldBe listOf(null, null)
@@ -908,7 +911,8 @@ class MediaImporterTest {
 
         server.requests.last() shouldBe null
         songRepository.deleted[server.type]?.map { it.path } shouldBe listOf("/1", "/2", "/3")
-        server.pathListings shouldBe 2
+        // The incremental sync's two, and the full sync's confirmation
+        server.pathListings shouldBe 3
     }
 
     @Test
@@ -941,7 +945,8 @@ class MediaImporterTest {
         importer.sync(SyncTrigger.Periodic)
 
         server.requests.last() shouldBe clock.time - SyncPolicy.OVERLAP
-        server.pathListings shouldBe 2
+        // The incremental sync's two, and the full sync's confirmation
+        server.pathListings shouldBe 3
     }
 
     @Test
@@ -1009,10 +1014,36 @@ class MediaImporterTest {
     }
 
     @Test
+    fun `a full import keeps a song a shifted listing page skipped - and removes the one the server did drop`() = runBlocking<Unit> {
+        val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
+        songRepository.stored = songs
+        // Song 1 went mid-listing, so a page shifted and skipped song 2: the listing lacks both, the confirming one has song 2
+        server.found = songs.drop(2)
+        server.held = songs.drop(1).map { it.path }
+
+        serverImporter().import()
+
+        songRepository.deleted[server.type].orEmpty().map { song -> song.id } shouldBe listOf(1L)
+    }
+
+    @Test
+    fun `a full import whose confirming listing fails removes nothing`() = runBlocking<Unit> {
+        val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
+        songRepository.stored = songs
+        server.found = songs.drop(1)
+        server.held = null
+
+        serverImporter().import()
+
+        songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
+    }
+
+    @Test
     fun `a full import that would remove most of a source's songs keeps them until the next one finds them gone too`() = runBlocking<Unit> {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.take(5)
+        server.held = server.found.map { it.path }
 
         serverImporter().import()
         songRepository.deleted[server.type].orEmpty().shouldBeEmpty()
@@ -1029,6 +1060,7 @@ class MediaImporterTest {
         val cardSongs = (31L..32L).map { id -> song(id = id, path = "/storage/CARD/Music/$id.mp3") }
         songRepository.stored = deviceSongs + cardSongs
         device.found = deviceSongs.take(5)
+        device.held = device.found.map { it.path }
         device.unreadableRoots = setOf("/storage/CARD/")
         server.found = emptyList()
         val importer = serverImporter().apply { mediaProviders += device }
@@ -1044,6 +1076,7 @@ class MediaImporterTest {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs
         server.found = songs.take(5)
+        server.held = server.found.map { it.path }
         preferences.setSongTagsVersion(server.type.name, MediaImporter.SONG_TAGS_VERSION)
         preferences.setLastSyncStart(server.type.name, clock.time - 8.days)
         preferences.setLastFullSyncStart(server.type.name, clock.time - 8.days)
@@ -1065,6 +1098,7 @@ class MediaImporterTest {
     fun `a full import keeps the songs under a root the source couldn't read`() = runBlocking<Unit> {
         songRepository.stored = listOf(song(id = 1, path = "jellyfin://library/a/1"), song(id = 2, path = "jellyfin://library/b/2"), song(id = 3))
         server.found = listOf(song(id = 3))
+        server.held = server.found.map { it.path }
         server.unreadableRoots = setOf("jellyfin://library/a/")
 
         serverImporter().import()

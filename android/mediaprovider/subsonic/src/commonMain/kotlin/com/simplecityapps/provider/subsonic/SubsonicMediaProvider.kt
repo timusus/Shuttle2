@@ -3,8 +3,8 @@ package com.simplecityapps.provider.subsonic
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.PathListingMediaProvider
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.losslessBitDepth
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
@@ -30,6 +30,7 @@ import io.ktor.http.encodeURLPathPart
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 
 /**
@@ -42,10 +43,19 @@ class SubsonicMediaProvider(
     private val strings: ServerStrings,
     private val authenticationManager: SubsonicAuthenticationManager,
     private val service: SubsonicService
-) : MediaProvider {
+) : PathListingMediaProvider {
     private val logger = Logger.tagged("SubsonicMediaProvider")
 
     override val type = MediaProviderType.Subsonic
+
+    /** Subsonic has no lighter listing than its songs, so this lists them again. */
+    override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = findSongs(emptyList()).map { event ->
+        when (event) {
+            is FlowEvent.Success -> FlowEvent.Success(event.result.map(Song::path), event.missing)
+            is FlowEvent.Progress -> FlowEvent.Progress(event.data)
+            is FlowEvent.Failure -> FlowEvent.Failure(event.message)
+        }
+    }
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         val searched = forwardingProgress(

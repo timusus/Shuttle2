@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Fixed songs occasionally disappearing from a Jellyfin, Emby, Plex or Navidrome library while the server was changing during a sync.", "commits": [] }

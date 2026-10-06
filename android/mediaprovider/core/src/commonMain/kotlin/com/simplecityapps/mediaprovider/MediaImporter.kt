@@ -529,11 +529,13 @@ class MediaImporter(
                     try {
                         emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result, deleteMissing = plan == SyncPlan.Full).apply()
+                        // A remote listing pages by offset, so a shifted page can skip a song that's still there (#934)
+                        val fullDeletes = if (plan == SyncPlan.Full) confirmedRemovals(mediaProvider, songDiff.deletes) else emptyList()
                         // An incremental sync's removals, read from the source's path listing when its count says it needs one
                         val removed = (plan as? SyncPlan.Incremental)?.let { songsRemovedOnSource(mediaProvider as IncrementalMediaProvider, existingSongs, songDiff.inserts) }
                         val guarded =
                             when {
-                                plan == SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, event.result.size, songDiff.deletes, userRemoval, event.missing, fullPass = true)
+                                plan == SyncPlan.Full -> guardDeletes(mediaProvider, existingSongs.size, event.result.size, fullDeletes, userRemoval, event.missing, fullPass = true)
 
                                 removed != null -> guardDeletes(mediaProvider, existingSongs.size, existingSongs.size - removed.songs.size + songDiff.inserts.size, removed.songs, userRemoval, removed.missing, fullPass = false)
 
@@ -639,6 +641,25 @@ class MediaImporter(
             logger.warn { "${mediaProvider.type} holds $unfetched songs an incremental sync didn't fetch; the next sync is a full one" }
         }
         return RemovedOnSource(existingSongs.filter { song -> song.path !in held }, listing.missing, unfetched)
+    }
+
+    /**
+     * Which of a full listing's [deletes] to go on with. A [PathListingMediaProvider]'s pages shift when a song goes
+     * mid-listing, skipping another that's still there and totalling as if nothing were skipped (#934), so a song is
+     * removed only if a second listing lacks it too; none is if that fails. Other sources' are as listed.
+     */
+    private suspend fun confirmedRemovals(
+        mediaProvider: MediaProvider,
+        deletes: List<Song>
+    ): List<Song> {
+        if (deletes.isEmpty() || mediaProvider !is PathListingMediaProvider) return deletes
+        val confirmation = mediaProvider.findSongPaths().lastOrNull()
+        if (confirmation !is FlowEvent.Success) {
+            logger.warn { "Couldn't confirm the songs ${mediaProvider.type} no longer holds; keeping them until it can be" }
+            return emptyList()
+        }
+        val held = confirmation.result.toHashSet()
+        return deletes.filter { song -> song.path !in held }
     }
 
     /** Which of [deletes] [deleteGuard] lets [mediaProvider]'s import apply, logging what it held back. */
