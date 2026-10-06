@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.ContentProvider
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
@@ -8,6 +9,7 @@ import android.database.MatrixCursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.DocumentsContract
+import android.provider.MediaStore
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.ktaglib.KTagLib
@@ -108,6 +110,7 @@ class TaglibMediaProviderTest {
         Robolectric.setupContentProvider(FakeDocumentsProvider::class.java, CLOUD_AUTHORITY)
         FakeMediaProvider.rows = emptyList()
         FakeMediaProvider.playlistRows = emptyList()
+        FakeMediaProvider.playlistContents = emptyMap()
         queried.clear()
     }
 
@@ -130,6 +133,68 @@ class TaglibMediaProviderTest {
                 DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/top.M3U8").toString()
             )
         queried.toList() shouldBe emptyList()
+    }
+
+    @Test
+    fun `a playlist MediaStore lists outside every granted folder is imported, its relative entries resolved against its folder`() {
+        FakeMediaProvider.playlistRows = listOf("$primary/Playlists/mix.m3u" to "mix.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Playlists/mix.m3u" to "#EXTM3U\n../Music/a.mp3\nmissing.mp3\n")
+
+        val playlists = findPlaylists(trees = emptyList())
+
+        playlists.size shouldBe 1
+        playlists.single().name shouldBe "mix"
+        playlists.single().songs.map { it.path } shouldBe listOf("$primary/Music/a.mp3")
+        playlists.single().externalId shouldBe ContentUris.withAppendedId(MediaStore.Files.getContentUri("external"), 0).toString()
+    }
+
+    @Test
+    fun `a relative entry names the song beside the playlist, not one of the same name elsewhere`() {
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/mix.m3u" to "mix.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Music/mix.m3u" to "a.mp3\n")
+        val beside = mediaStoreSong("a.mp3", size = 10, lastModified = MODIFIED)
+        val elsewhere = beside.copy(path = "$primary/Other/a.mp3")
+
+        val playlists =
+            runBlocking {
+                provider(excludes = emptyList(), trees = emptyList(), grantedTrees = emptyList()).findPlaylists(listOf(elsewhere, beside))
+                    .filterIsInstance<FlowEvent.Success<MediaImporter.PlaylistListing>>().first().result.playlists
+            }
+
+        playlists.single().songs.map { it.path } shouldBe listOf(beside.path)
+    }
+
+    @Test
+    fun `a playlist both a granted folder and MediaStore give is one playlist, under the folder's document URI`() {
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/p.m3u" to "p.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Music/p.m3u" to "/storage/emulated/0/Music/a.mp3\n")
+        // The extra tree is walked, so its playlist isn't taken from MediaStore's listing
+        val provider = provider(excludes = emptyList(), trees = listOf(tree), grantedTrees = listOf(tree))
+
+        val playlists = runBlocking { provider.playlists() }
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/p.m3u").toString())
+    }
+
+    @Test
+    fun `a playlist in a granted folder isn't imported again from MediaStore`() {
+        FakeMediaProvider.playlistRows = listOf("$primary/Music/Lists/a.m3u" to "a.m3u")
+        FakeMediaProvider.playlistContents = mapOf("$primary/Music/Lists/a.m3u" to "/storage/emulated/0/Music/a.mp3\n")
+
+        val playlists = findPlaylists(trees = listOf(tree))
+
+        playlists.map { it.externalId } shouldBe listOf(DocumentsContract.buildDocumentUriUsingTree(tree, "primary:Music/Lists/a.m3u").toString())
+    }
+
+    @Test
+    fun `an entry that names a place of its own isn't put under the playlist's folder`() {
+        fun entry(location: String) = com.simplecityapps.shuttle.model.Entry(location, null, null, null)
+
+        resolveEntry(entry("a.mp3"), "/sd/Lists").location shouldBe "/sd/Lists/a.mp3"
+        resolveEntry(entry("/sd/Music/a.mp3"), "/sd/Lists").location shouldBe "/sd/Music/a.mp3"
+        resolveEntry(entry("C:\\Music\\a.mp3"), "/sd/Lists").location shouldBe "C:\\Music\\a.mp3"
+        resolveEntry(entry("https://host/a.mp3"), "/sd/Lists").location shouldBe "https://host/a.mp3"
+        resolveEntry(entry("a.mp3"), null).location shouldBe "a.mp3"
     }
 
     @Test
@@ -459,6 +524,9 @@ class TaglibMediaProviderTest {
             // Path and display name of the playlist files in the Files table
             var playlistRows: List<Pair<String, String>> = emptyList()
 
+            // What the Files table's playlists read as, by path; a playlist not in it can't be opened
+            var playlistContents: Map<String, String> = emptyMap()
+
             // How many times the audio table was listed
             val audioQueries = java.util.concurrent.atomic.AtomicInteger()
         }
@@ -473,11 +541,20 @@ class TaglibMediaProviderTest {
             sortOrder: String?
         ): Cursor = MatrixCursor(projection).also { cursor ->
             if (uri.pathSegments.contains("file")) {
-                playlistRows.forEach { (path, name) -> cursor.addRow(arrayOf(path, name)) }
+                playlistRows.forEachIndexed { index, (path, name) -> cursor.addRow(arrayOf<Any>(path, name, index.toLong())) }
             } else {
                 audioQueries.incrementAndGet()
                 rows.forEach { row -> cursor.addRow(row) }
             }
+        }
+
+        override fun openFile(
+            uri: Uri,
+            mode: String
+        ): ParcelFileDescriptor {
+            val text = playlistRows.getOrNull(ContentUris.parseId(uri).toInt())?.let { (path, _) -> playlistContents[path] } ?: throw FileNotFoundException("Gone")
+            val file = File.createTempFile("playlist", ".m3u").apply { writeText(text) }
+            return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         }
 
         override fun getType(uri: Uri): String? = null

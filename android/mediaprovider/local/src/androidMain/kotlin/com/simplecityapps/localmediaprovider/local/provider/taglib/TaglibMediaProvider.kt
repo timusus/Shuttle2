@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
+import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -32,6 +33,7 @@ import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
+import com.simplecityapps.shuttle.model.Entry
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.storage.documentIdForPath
@@ -531,15 +533,21 @@ class TaglibMediaProvider(
         val mediaStoreVolumes = mediaStoreVolumes()
         // Queried once, and only if a tree needs it
         val indexed by lazy { queryPlaylistFiles() }
-        trees
-            .flatMap { tree ->
-                val key = treeKey(tree)
-                val folder = if (key in extraTrees) null else indexedTreeFolder(tree, primaryStoragePath, mediaStoreVolumes)
-                walked[key]
-                    ?: folder?.let { indexed?.let { files -> playlistFilesIn(tree, folder, files) } }
-                    ?: walkPlaylistFiles(tree)
-            }
-            .distinctBy { it.uri }
+        val inTrees =
+            trees
+                .flatMap { tree ->
+                    val key = treeKey(tree)
+                    val folder = if (key in extraTrees) null else indexedTreeFolder(tree, primaryStoragePath, mediaStoreVolumes)
+                    walked[key]
+                        ?: folder?.let { indexed?.let { files -> playlistFilesIn(tree, folder, files) } }
+                        ?: walkPlaylistFiles(tree)
+                }
+                .distinctBy { it.uri }
+        // The rest of what MediaStore lists, for a user who granted no folder (or not the one holding the playlist): a file
+        // a tree already gave is the same playlist, found by its path, and keeps the tree's document URI as its identity
+        val treePaths = inTrees.mapNotNull { file -> songFilePath(file.uri.toString(), primaryStoragePath)?.lowercase() }.toSet()
+        val outsideTrees = indexed.orEmpty().filter { file -> file.path.lowercase() !in treePaths }
+        inTrees + outsideTrees.map { file -> PlaylistFile(file.uri, file.displayName, file.path) }
     }
 
     /** The folder of [tree] if it's on a volume MediaStore indexes, else null. */
@@ -562,7 +570,7 @@ class TaglibMediaProvider(
     private fun queryPlaylistFiles(): List<IndexedPlaylistFile>? = try {
         context.contentResolver.query(
             MediaStore.Files.getContentUri("external"),
-            arrayOf(MediaStore.Files.FileColumns.DATA, MediaStore.Files.FileColumns.DISPLAY_NAME),
+            arrayOf(MediaStore.Files.FileColumns.DATA, MediaStore.Files.FileColumns.DISPLAY_NAME, MediaStore.Files.FileColumns._ID),
             "${MediaStore.Files.FileColumns.DISPLAY_NAME} LIKE '%.m3u' OR ${MediaStore.Files.FileColumns.DISPLAY_NAME} LIKE '%.m3u8'",
             null,
             null
@@ -570,7 +578,8 @@ class TaglibMediaProvider(
             val files = mutableListOf<IndexedPlaylistFile>()
             while (cursor.moveToNext()) {
                 val path = cursor.getString(0) ?: continue
-                files += IndexedPlaylistFile(path, cursor.getString(1) ?: path.substringAfterLast('/'))
+                val uri = ContentUris.withAppendedId(MediaStore.Files.getContentUri("external"), cursor.getLong(2))
+                files += IndexedPlaylistFile(path, cursor.getString(1) ?: path.substringAfterLast('/'), uri)
             }
             files
         }
@@ -590,10 +599,12 @@ class TaglibMediaProvider(
         val sanitisedSongPaths = M3uEntryMatcher.sanitisedPathsByFilename(existingSongs)
 
         val playlistFiles = findPlaylistFiles()
+        val primaryStoragePath = primaryStoragePath()
         val m3uPlaylists =
             playlistFiles
                 .mapNotNull { file ->
                     try {
+                        val folder = (file.path ?: songFilePath(file.uri.toString(), primaryStoragePath))?.substringBeforeLast('/', "")?.ifEmpty { null }
                         context.contentResolver.openInputStream(file.uri)
                             ?.use { inputStream ->
                                 M3uParser().parse(
@@ -602,6 +613,8 @@ class TaglibMediaProvider(
                                     text = inputStream.readBytes().decodeToString()
                                 )
                             }
+                            // Entries relative to the file are resolved against its folder, so the matcher sees the path they name
+                            ?.let { parsed -> parsed.copy(entries = parsed.entries.map { entry -> resolveEntry(entry, folder) }) }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -651,7 +664,8 @@ class TaglibMediaProvider(
     }
 }
 
-private data class PlaylistFile(val uri: Uri, val displayName: String)
+/** A playlist file: a tree's document, or a MediaStore row outside every tree, which has its file [path]. */
+private data class PlaylistFile(val uri: Uri, val displayName: String, val path: String? = null)
 
 /** MediaStore's audio [files] limited by [filter], or null [files] if it couldn't be queried. */
 private class MediaStoreListing(val filter: FolderFilter, val files: List<MediaStoreAudioFile>?)
@@ -681,7 +695,26 @@ private data class TreeWalk(
  */
 private fun DocumentNode.atSecondPrecision() = DocumentNode(uri, documentId, displayName, mimeType, lastModified = lastModified / 1000 * 1000, size = size)
 
-private data class IndexedPlaylistFile(val path: String, val displayName: String)
+private data class IndexedPlaylistFile(val path: String, val displayName: String, val uri: Uri)
+
+/** Whether [location] names a place on its own (a path from the root, a drive, a URL) rather than relative to the playlist file. */
+private fun isAbsoluteLocation(location: String) = location.startsWith("/") || location.startsWith("\\") || "://" in location || Regex("^[A-Za-z]:").containsMatchIn(location)
+
+/** [entry] with a relative location put under the folder [playlistFolder] of the playlist that holds it, as players resolve it. */
+internal fun resolveEntry(
+    entry: Entry,
+    playlistFolder: String?
+): Entry = if (playlistFolder == null || isAbsoluteLocation(entry.location)) {
+    entry
+} else {
+    Entry(
+        location = "${playlistFolder.trimEnd('/')}/${entry.location}",
+        duration = entry.duration,
+        artist = entry.artist,
+        track = entry.track,
+        rawLines = entry.rawLines
+    )
+}
 
 private fun DocumentNode.isPlaylist() = ext == "m3u" || ext == "m3u8"
 
