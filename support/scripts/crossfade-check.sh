@@ -28,7 +28,7 @@ set_crossfade_ms() {
     rm -f "$tmp"
 }
 
-# check_album <album> <freqs> <last title> <bits>: plays the album once through under the tap.
+# check_album <album (no spaces: the receiver extra goes through the device shell)> <freqs> <last title> <bits>: plays the album once through under the tap.
 check_album() {
     local album="$1" freqs="$2" last="$3" bits="$4" reply path wav
     launch_app
@@ -36,9 +36,10 @@ check_album() {
     s2 REPEAT --es mode off >/dev/null
     s2 TAP_START --es name "crossfade-${bits}" >/dev/null
     s2 PLAY_ALL --es album "$album" >/dev/null
-    # The last song's join is 3 s in at the latest; a few more seconds shows the fade has finished.
-    wait_for 90 "s['title'] == '${last}' and s['positionMs'] >= $((CROSSFADE_MS + 2000))"
+    # Past the last join (and its fade) by a couple of seconds: the tap has then seen every transition.
+    wait_for 150 "s['title'] == '${last}' and s['positionMs'] >= $((CROSSFADE_MS + 2000))"
     reply="$(s2 TAP_STOP)"
+    reply="${reply#TAP_STOP ok: }"
     s2 PAUSE >/dev/null
     echo "  ${album}: ${reply}"
     path="${reply%% *}"
@@ -52,6 +53,6 @@ check_album() {
 "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
 "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" crossfade --skip-onboarding >/dev/null
 set_crossfade_ms "$CROSSFADE_MS"
-check_album "Crossfade 16" 330,550,770 "Crossfade 16 3" 16
-check_album "Crossfade 24" 440,660,880 "Crossfade 24 3" 24
+check_album "Crossfade-16" 330,550,770 "Crossfade 16 3" 16
+check_album "Crossfade-24" 440,660,880 "Crossfade 24 3" 24
 pass
