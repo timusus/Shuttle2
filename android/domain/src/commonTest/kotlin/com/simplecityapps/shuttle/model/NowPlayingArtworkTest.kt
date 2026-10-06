@@ -18,8 +18,19 @@ class NowPlayingArtworkTest {
         val model = nowPlayingArtworkModel(song, artistImage = true) as ArtistImageArtwork
 
         model.artist.name shouldBe "Radiohead"
-        model.artist.groupKey shouldBe song.albumArtistGroupKey
+        model.artist.groupKey shouldBe AlbumArtistGroupKey("radiohead")
         model.song shouldBe song
+    }
+
+    @Test
+    fun `an album artist featuring another or one of several pictures the primary artist`() {
+        val featuring = nowPlayingArtworkModel(song(albumArtist = "Radiohead feat. Björk"), artistImage = true) as ArtistImageArtwork
+        featuring.artist.name shouldBe "Radiohead"
+        featuring.artist.groupKey shouldBe AlbumArtistGroupKey("radiohead")
+
+        val several = nowPlayingArtworkModel(song(albumArtist = null).copy(albumArtists = listOf("Radiohead", "Thom Yorke")), artistImage = true) as ArtistImageArtwork
+        several.artist.name shouldBe "Radiohead"
+        several.artist.groupKey shouldBe AlbumArtistGroupKey("radiohead")
     }
 
     @Test

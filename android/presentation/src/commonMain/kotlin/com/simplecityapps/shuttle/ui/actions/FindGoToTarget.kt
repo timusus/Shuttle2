@@ -26,9 +26,10 @@ class FindGoToTarget @Inject constructor(
         }
 
         Destination.AlbumArtist -> {
+            // The primary album artist: an album of several goes to its first, "A feat. B"'s to A
             val groupKey = when (selection) {
-                is MediaSelection.Songs -> selection.songs.singleOrNull()?.albumArtistGroupKey
-                is MediaSelection.Albums -> selection.albums.singleOrNull()?.groupKey?.albumArtistGroupKey
+                is MediaSelection.Songs -> selection.songs.singleOrNull()?.albumArtistKeys?.firstOrNull()
+                is MediaSelection.Albums -> selection.albums.singleOrNull()?.albumArtistKeys?.firstOrNull()
                 else -> null
             }
             groupKey?.let {

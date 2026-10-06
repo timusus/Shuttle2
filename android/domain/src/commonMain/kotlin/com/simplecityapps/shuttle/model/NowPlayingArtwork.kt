@@ -20,14 +20,16 @@ fun nowPlayingArtworkModel(
     artistImage: Boolean,
 ): Any {
     if (!artistImage) return song
-    val name = song.albumArtist?.takeIf { it.isNotBlank() } ?: return song
+    if (song.albumArtist.isNullOrBlank() && song.albumArtists.orEmpty().all { it.isBlank() }) return song
+    // The primary album artist: an album of several pictures its first, "A feat. B"'s pictures A
+    val primary = song.resolvedAlbumIdentity.albumArtists.firstOrNull()?.takeIf { it.name.isNotBlank() } ?: return song
     val artist = AlbumArtist(
-        name = name,
-        artists = listOf(name),
+        name = primary.name,
+        artists = listOf(primary.name),
         albumCount = 0,
         songCount = 0,
         playCount = 0,
-        groupKey = song.albumArtistGroupKey,
+        groupKey = primary.groupKey,
         mediaProviders = listOf(song.mediaProvider)
     )
     return ArtistImageArtwork(artist, song)

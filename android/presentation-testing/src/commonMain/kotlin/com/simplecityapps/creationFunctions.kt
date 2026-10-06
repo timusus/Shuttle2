@@ -30,10 +30,12 @@ fun createSong(
     grouping: String? = null,
     path: String = "/path/to/song",
     artists: List<String> = emptyList(),
+    albumArtists: List<String>? = null,
 ) = Song(
     id = id,
     name = name,
     albumArtist = albumArtist,
+    albumArtists = albumArtists,
     artists = artists,
     album = album,
     track = track,

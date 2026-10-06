@@ -90,7 +90,11 @@ data class Song(
 
     val albumGroupKey: AlbumGroupKey get() = resolvedAlbumIdentity.groupKey
 
+    /** The album artist as the album's key holds it ("a feat. b", "a, b"): for sorting and album keys, not an artist page. */
     val albumArtistGroupKey: AlbumArtistGroupKey get() = resolvedAlbumIdentity.albumArtistGroupKey
+
+    /** The artists whose album this song's is ([AlbumIdentity.albumArtists]), each an artist page; the first is its primary. */
+    val albumArtistKeys: List<AlbumArtistGroupKey> get() = resolvedAlbumIdentity.albumArtistKeys
 
     /** The artists this song credits, each as the artist page it belongs to ([ArtistCredits]). */
     val artistCredits: List<ArtistCredit> by lazy { ArtistCredits.credits(identityTags, resolvedAlbumIdentity) }

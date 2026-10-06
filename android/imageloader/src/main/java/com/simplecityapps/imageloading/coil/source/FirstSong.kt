@@ -21,6 +21,6 @@ internal suspend fun SongRepository.firstSongOf(album: Album): Song? = songsOf(a
 internal suspend fun SongRepository.songsOf(albumArtist: AlbumArtist): List<Song> = getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
     .firstOrNull()
     .orEmpty()
-    .sortedByDescending { song -> song.albumArtistGroupKey == albumArtist.groupKey }
+    .sortedByDescending { song -> albumArtist.groupKey in song.albumArtistKeys }
 
 internal suspend fun SongRepository.firstSongOf(albumArtist: AlbumArtist): Song? = songsOf(albumArtist).firstOrNull()
