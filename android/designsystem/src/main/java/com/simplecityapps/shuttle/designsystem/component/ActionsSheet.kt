@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,17 @@ fun S2ActionsSheet(
     ModalBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier, sheetState = sheetState) {
         ActionsSheetContent(title, actions, onDismissRequest, subtitle = subtitle, artwork = artwork)
     }
+}
+
+/** A modal bottom sheet over arbitrary [content], for a sheet that is not a list of actions. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun S2ModalSheet(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier, content = content)
 }
 
 /** The body of an [S2ActionsSheet] without the sheet, for laying one out in place. */

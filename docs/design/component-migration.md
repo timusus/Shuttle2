@@ -71,7 +71,7 @@ approved; **missing** = specified in design-language.md §3 with no catalogue en
 
 These are flagged by the rule today but have no designsystem component to swap to. Each needs either a
 wrapper (add it to the catalogue first) or a decision that screens may use the raw call:
-`Icon`, `Surface`, `Scaffold`, `Switch`, `RadioButton`, `OutlinedTextField`, `Card`/`OutlinedCard`/`ElevatedCard`,
+`Icon`, `Surface`, `Scaffold` (`S2Scaffold`), `Switch` (`S2Switch`), `RadioButton`, `OutlinedTextField`, `Card`/`OutlinedCard`/`ElevatedCard`,
 `ListItem`, `HorizontalDivider`/`VerticalDivider`, `LinearProgressIndicator`/`CircularProgressIndicator`
 (partly `InlineLoadingIndicator`), `SwipeToDismissBox`, `PullToRefreshBox`, `ModalBottomSheet`
 (`S2ActionsSheet` covers the song-actions case only). Plain text swaps to `S2Text` (`component/Text.kt`); it is the biggest group still to migrate.
@@ -83,7 +83,7 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | Done | File (under `com.simplecityapps.shuttle`) | Raw material3 components |
 |---|---|---|
 | [ ] | `debug.livelog.LiveLogScreen` | Scaffold, Text |
-| [ ] | `ui.common.components.DetailScaffold` | Scaffold |
+| [x] | `ui.common.components.DetailScaffold` | — |
 | [ ] | `ui.common.components.FastScroller` | Text |
 | [ ] | `ui.common.components.LinearProgressIndicatorWithText` | LinearProgressIndicator, Text |
 | [ ] | `ui.common.components.LoadingStatusIndicator` | CircularProgressIndicator, HorizontalDivider, Icon, OutlinedButton, Text |
@@ -95,13 +95,12 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.screens.library.AddToPlaylistSubmenu` | DropdownMenu, DropdownMenuItem, Text |
 | [x] | `ui.screens.library.LibraryControls` | — |
 | [x] | `ui.screens.library.LibraryDetailComponents` | Text |
-| [ ] | `ui.screens.library.LibraryEmptyScreen` | LinearWavyProgressIndicator, Text |
+| [x] | `ui.screens.library.LibraryEmptyScreen` | — |
 | [ ] | `ui.screens.library.LibraryOverflowMenu` | DropdownMenu, DropdownMenuItem, Icon, IconButton, Text |
 | [x] | `ui.screens.library.LibraryPages` | — |
-| [ ] | `ui.screens.library.LibraryScreen` | ListItem, ModalBottomSheet, Scaffold, Switch |
-| [ ] | `ui.screens.library.PlaylistDetailScreen` | Text |
-| [ ] | `ui.screens.library.PlaylistDialogs` | Text |
-| [ ] | `ui.screens.library.songs.ShuffleListItem` | Text |
+| [x] | `ui.screens.library.LibraryScreen` | — |
+| [x] | `ui.screens.library.PlaylistDetailScreen` | — |
+| [x] | `ui.screens.library.PlaylistDialogs` | — |
 | [ ] | `ui.screens.paywall.PaywallScreen` | Card, Icon, OutlinedCard, RadioButton, Scaffold, Surface, Text |
 | [x] | `ui.screens.search.SearchScreen` | Icon, Surface, Text |
 | [ ] | `ui.screens.settings.SettingsScreens` | Scaffold, Text |

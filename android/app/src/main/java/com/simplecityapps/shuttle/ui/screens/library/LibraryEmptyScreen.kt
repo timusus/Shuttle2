@@ -16,9 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
+import com.simplecityapps.shuttle.designsystem.component.S2PlaybackProgress
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
@@ -59,13 +59,9 @@ fun LibraryEmptyScreen(
             EmptyState(title = stringResource(R.string.sources_scanning_title), icon = Icons.Rounded.Search)
             val progressModifier = Modifier.widthIn(max = 320.dp).fillMaxWidth().padding(horizontal = S2Spacing.large)
             val fraction = scan.fraction
-            if (fraction != null) {
-                LinearWavyProgressIndicator(progress = { fraction }, modifier = progressModifier)
-            } else {
-                LinearWavyProgressIndicator(modifier = progressModifier)
-            }
+            S2PlaybackProgress(progress = fraction?.let { { it } }, playing = true, modifier = progressModifier)
             scan.message?.let { message ->
-                Text(
+                S2Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

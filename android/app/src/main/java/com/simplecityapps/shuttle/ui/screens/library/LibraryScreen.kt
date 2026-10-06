@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,11 +31,6 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
@@ -63,7 +60,10 @@ import com.simplecityapps.shuttle.designsystem.component.S2ActionChip
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
+import com.simplecityapps.shuttle.designsystem.component.S2ModalSheet
+import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.component.S2Switch
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
@@ -137,7 +137,7 @@ fun LibraryScreen(
     var editingTabs by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = chrome.selectedCount > 0, onBack = chrome.onClearSelection)
 
-    Scaffold(
+    S2Scaffold(
         modifier = modifier,
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
@@ -317,46 +317,44 @@ fun LibraryTab.label(): String = stringResource(
 )
 
 /** Shows, hides and reorders the tabs; every change saves straight away. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTabsSheet(
     uiState: LibraryUiState,
     onTabsChanged: (order: List<LibraryTab>, enabled: Set<LibraryTab>) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismissRequest) {
+    S2ModalSheet(onDismissRequest = onDismissRequest) {
         S2Text(stringResource(R.string.library_edit_tabs), modifier = Modifier.padding(horizontal = S2Spacing.large, vertical = S2Spacing.small))
         val order = uiState.allTabs
         order.forEachIndexed { index, tab ->
             val enabled = tab in uiState.enabledTabs
             val setEnabled = { checked: Boolean -> onTabsChanged(order, if (checked) uiState.enabledTabs + tab else uiState.enabledTabs - tab) }
-            ListItem(
-                onClick = { setEnabled(!enabled) },
-                leadingContent = {
-                    Switch(
-                        checked = enabled,
-                        onCheckedChange = setEnabled,
-                        modifier = Modifier.testTag("library-tab-switch-${tab.name}"),
-                    )
-                },
-                trailingContent = {
-                    Row {
-                        S2IconButton(
-                            icon = Icons.Rounded.ArrowUpward,
-                            contentDescription = stringResource(R.string.library_tab_move_up),
-                            enabled = index > 0,
-                            onClick = { onTabsChanged(order.move(index, index - 1), uiState.enabledTabs) },
-                        )
-                        S2IconButton(
-                            icon = Icons.Rounded.ArrowDownward,
-                            contentDescription = stringResource(R.string.library_tab_move_down),
-                            enabled = index < order.lastIndex,
-                            onClick = { onTabsChanged(order.move(index, index + 1), uiState.enabledTabs) },
-                        )
-                    }
-                },
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { setEnabled(!enabled) }
+                    .padding(horizontal = S2Spacing.large, vertical = S2Spacing.xsmall),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             ) {
-                S2Text(tab.label())
+                S2Switch(
+                    checked = enabled,
+                    onCheckedChange = setEnabled,
+                    modifier = Modifier.testTag("library-tab-switch-${tab.name}"),
+                )
+                S2Text(tab.label(), modifier = Modifier.weight(1f))
+                S2IconButton(
+                    icon = Icons.Rounded.ArrowUpward,
+                    contentDescription = stringResource(R.string.library_tab_move_up),
+                    enabled = index > 0,
+                    onClick = { onTabsChanged(order.move(index, index - 1), uiState.enabledTabs) },
+                )
+                S2IconButton(
+                    icon = Icons.Rounded.ArrowDownward,
+                    contentDescription = stringResource(R.string.library_tab_move_down),
+                    enabled = index < order.lastIndex,
+                    onClick = { onTabsChanged(order.move(index, index + 1), uiState.enabledTabs) },
+                )
             }
         }
     }

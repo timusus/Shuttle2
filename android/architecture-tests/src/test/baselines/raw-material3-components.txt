@@ -2,7 +2,6 @@
 # Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
 android/app/src/debug/java/com/simplecityapps/shuttle/debug/livelog/LiveLogScreen.kt|Scaffold|1
 android/app/src/debug/java/com/simplecityapps/shuttle/debug/livelog/LiveLogScreen.kt|Text|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/DetailScaffold.kt|Scaffold|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/FastScroller.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LinearProgressIndicatorWithText.kt|LinearProgressIndicator|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LinearProgressIndicatorWithText.kt|Text|1
@@ -13,15 +12,6 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/Loadin
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|OutlinedTextField|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|Text|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|LinearWavyProgressIndicator|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|Text|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|ListItem|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|ModalBottomSheet|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|Scaffold|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|Switch|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/PlaylistDetailScreen.kt|Text|1
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/PlaylistDialogs.kt|Text|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/songs/ShuffleListItem.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Card|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Icon|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|OutlinedCard|1

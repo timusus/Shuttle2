@@ -20,7 +20,6 @@ import androidx.compose.material.icons.rounded.PlaylistRemove
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +39,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Playlist
@@ -136,7 +136,7 @@ fun PlaylistDetailScreen(
                 DownloadStatusHeader(songs, Modifier.padding(top = S2Spacing.smallMedium))
                 if (playlist != null && !uiState.canReorder && uiState.songs.isNotEmpty()) {
                     val sortLabel = stringResource(PlaylistSorts.firstOrNull { it.first == playlist.sortOrder }?.second ?: R.string.menu_title_sort_custom)
-                    Text(
+                    S2Text(
                         text = stringResource(R.string.playlist_detail_reorder_hint, sortLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

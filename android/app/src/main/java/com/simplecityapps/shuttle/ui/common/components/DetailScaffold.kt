@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import com.simplecityapps.shuttle.designsystem.component.S2DetailTopBar
+import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 
 /**
  * A detail screen: a single LazyColumn under a pinned [S2DetailTopBar] with back navigation and the overflow [actions].
@@ -61,7 +61,7 @@ fun DetailScaffold(
         }
     }
 
-    Scaffold(
+    S2Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             S2DetailTopBar(

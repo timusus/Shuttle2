@@ -5,12 +5,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.common.mediaactions.CreatePlaylistDialog
 
@@ -61,7 +61,7 @@ fun PlaylistDialogHost(
             },
             onDismissRequest = onDismissRequest,
         ) {
-            Text(playlistSubtitle(R.string.playlist_dialog_subtitle_clear, dialog.playlist))
+            S2Text(playlistSubtitle(R.string.playlist_dialog_subtitle_clear, dialog.playlist))
         }
 
         is PlaylistDialog.Delete -> S2Dialog(
@@ -75,7 +75,7 @@ fun PlaylistDialogHost(
             },
             onDismissRequest = onDismissRequest,
         ) {
-            Text(playlistSubtitle(R.string.playlist_dialog_subtitle_delete, dialog.playlist))
+            S2Text(playlistSubtitle(R.string.playlist_dialog_subtitle_delete, dialog.playlist))
         }
     }
 }

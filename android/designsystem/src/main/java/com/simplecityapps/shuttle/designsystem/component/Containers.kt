@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -53,6 +54,17 @@ fun S2Card(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     ElevatedCard(modifier = modifier, colors = CardDefaults.elevatedCardColors(), content = content)
+}
+
+/** An on/off switch; a null [onCheckedChange] leaves it to the row around it to toggle. */
+@Composable
+fun S2Switch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = modifier, enabled = enabled)
 }
 
 /** A decorative or labelled glyph, in the surrounding content colour unless [tint] is given. */
