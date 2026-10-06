@@ -139,7 +139,8 @@ class AlbumDetailViewModel @AssistedInject constructor(
             },
             seed = seed,
             moreByArtist = moreByArtist,
-            moreByArtistNames = moreByArtistNames,
+            // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
+            moreByArtistNames = moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
         )
     }.stateIn(
         scope = viewModelScope,

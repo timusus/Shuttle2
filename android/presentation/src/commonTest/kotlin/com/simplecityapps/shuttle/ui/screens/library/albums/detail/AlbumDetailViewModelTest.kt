@@ -205,6 +205,23 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `more by names fall back to the album's artist tag when no artist row resolves`() = runTest {
+        val orchards = AlbumArtistGroupKey("The Tin Orchards")
+        val album = createAlbum(name = "Duets", albumArtist = "The Tin Orchards", year = 1970).copy(albumArtistKeys = listOf(orchards))
+        val other = createAlbum(name = "Porch Light", albumArtist = "The Tin Orchards", year = 1975)
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.applyQueryPredicates = true
+        fakeAlbumRepository.setAlbums(listOf(album, other))
+        fakeAlbumArtistRepository.setAlbumArtists(emptyList())
+
+        val page = createViewModel(album.groupKey)
+        backgroundScope.launch { page.uiState.collect {} }
+        advanceUntilIdle()
+        page.uiState.value.moreByArtist shouldBe listOf(other)
+        page.uiState.value.moreByArtistNames shouldBe listOf("The Tin Orchards")
+    }
+
+    @Test
     fun `more by the artist is empty when the album is their only one`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1)))
         fakeAlbumRepository.applyQueryPredicates = true

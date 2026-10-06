@@ -115,6 +115,7 @@
     <string name="artist_detail_album_expanded">Expanded</string>
     <!-- Artist detail: an album row's state when its songs are folded away (spoken by screen readers) -->
     <string name="artist_detail_album_collapsed">Collapsed</string>
+    <string name="album_detail_more_by_artist">More by this artist</string>
     <string name="album_detail_more_by">More by <xliff:g example="Artist name" id="artist">%1$s</xliff:g></string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->
     <string name="detail_shuffle_albums">Shuffle albums</string>

@@ -99,6 +99,16 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `More by still shows when no artist name resolved`() {
+        val album = createAlbum(name = "Duets", albumArtist = "Juniper Static", songCount = 3, year = 2021)
+        val other = createAlbum(name = "Solo", albumArtist = "Juniper Static", year = 2019)
+        robot.setAlbum(readyAlbumDetail(album = album, moreByArtist = listOf(other), moreByArtistNames = emptyList()))
+
+        robot.scrollTo("More by this artist")
+        robot.assertTextDisplayed("More by this artist")
+    }
+
+    @Test
     fun `More by is titled from the album artists, not the album's raw tag`() {
         val album = createAlbum(name = "Duets", albumArtist = "Juniper Static feat. Verdigris", songCount = 3, year = 2021)
         val other = createAlbum(name = "Solo", albumArtist = "Verdigris", year = 2019)

@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +18,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
@@ -332,16 +333,13 @@ private fun EditTabsSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { setEnabled(!enabled) }
+                    .testTag("library-tab-switch-${tab.name}")
+                    .toggleable(value = enabled, role = Role.Switch, onValueChange = setEnabled)
                     .padding(horizontal = S2Spacing.large, vertical = S2Spacing.xsmall),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             ) {
-                S2Switch(
-                    checked = enabled,
-                    onCheckedChange = setEnabled,
-                    modifier = Modifier.testTag("library-tab-switch-${tab.name}"),
-                )
+                S2Switch(checked = enabled, onCheckedChange = null)
                 S2Text(tab.label(), modifier = Modifier.weight(1f))
                 S2IconButton(
                     icon = Icons.Rounded.ArrowUpward,
