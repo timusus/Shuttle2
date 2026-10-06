@@ -70,8 +70,8 @@ data class VoiceSearch(
 
 /** What a [VoiceSearch] resolves to. */
 sealed interface VoiceSearchResult {
-    /** Play [songs] from [position]. */
-    data class Songs(val songs: List<Song>, val position: Int) : VoiceSearchResult
+    /** Play [songs] from [position], in a random order when [shuffled] (a genre has no order of its own). */
+    data class Songs(val songs: List<Song>, val position: Int, val shuffled: Boolean = false) : VoiceSearchResult
 
     /** A search for nothing in particular ([VoiceSearch.isBlank]): play whatever there is. */
     data object Anything : VoiceSearchResult
@@ -165,7 +165,7 @@ constructor(
                 .flatMap { song -> song.genres.map { genre -> genre.searchKey() to song } }
                 .groupBy({ (genre, _) -> genre }, { (_, song) -> song })
                 .filterKeys { genre -> genre.isNotEmpty() }
-                .map { (genre, songs) -> Candidate(matchScore(key, genre) + bonus) { VoiceSearchResult.Songs(songs.distinct(), 0) } }
+                .map { (genre, songs) -> Candidate(matchScore(key, genre) + bonus) { VoiceSearchResult.Songs(songs.distinct(), 0, shuffled = true) } }
         }
 
         fun playlists(query: String?, bonus: Double = 0.0): List<Candidate> {

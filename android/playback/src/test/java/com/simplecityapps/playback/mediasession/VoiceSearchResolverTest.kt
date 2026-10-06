@@ -69,8 +69,9 @@ class VoiceSearchResolverTest {
 
     @Test
     fun `RS-60 a genre focus plays the genre's songs`() = runTest {
-        resolve(VoiceSearch("rock", Focus.Genre, genre = "Rock")) shouldBe VoiceSearchResult.Songs(abbeyRoad, 0)
-        resolve(VoiceSearch("electronica", Focus.Genre, genre = "Electronica")) shouldBe VoiceSearchResult.Songs(listOf(joga), 0)
+        // A genre has no order of its own, so it's played shuffled.
+        resolve(VoiceSearch("rock", Focus.Genre, genre = "Rock")) shouldBe VoiceSearchResult.Songs(abbeyRoad, 0, shuffled = true)
+        resolve(VoiceSearch("electronica", Focus.Genre, genre = "Electronica")) shouldBe VoiceSearchResult.Songs(listOf(joga), 0, shuffled = true)
     }
 
     @Test
@@ -108,7 +109,7 @@ class VoiceSearchResolverTest {
         resolve(VoiceSearch("Creep by Radiohead")) shouldBe VoiceSearchResult.Songs(pabloHoney, 1)
         resolve(VoiceSearch("radiohead creep")) shouldBe VoiceSearchResult.Songs(pabloHoney, 1)
         resolve(VoiceSearch("Road Trip")) shouldBe VoiceSearchResult.Songs(listOf(karmaPolice, comeTogether), 0)
-        resolve(VoiceSearch("rock")) shouldBe VoiceSearchResult.Songs(abbeyRoad, 0)
+        resolve(VoiceSearch("rock")) shouldBe VoiceSearchResult.Songs(abbeyRoad, 0, shuffled = true)
         // Words added around a name still find it.
         resolve(VoiceSearch("songs by radiohead")) shouldBe VoiceSearchResult.Songs(okComputer + pabloHoney, 0)
     }

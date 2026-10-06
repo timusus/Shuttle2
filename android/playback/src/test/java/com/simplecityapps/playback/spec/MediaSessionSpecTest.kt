@@ -262,7 +262,9 @@ class MediaSessionSpecTest {
         queue.queueStateFlow.value.currentItem?.song shouldBe blue[1]
 
         playRequest(harness, browser, searchItem("folk", MediaStore.Audio.Genres.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_GENRE to "Folk"))
-        queue.getQueue().map { it.song } shouldBe blue
+        // A genre plays shuffled: all its songs, in any order.
+        queue.getQueue().map { it.song }.toSet() shouldBe blue.toSet()
+        queue.getQueue().size shouldBe blue.size
 
         playRequest(harness, browser, searchItem("sunday morning", MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_PLAYLIST to "Sunday Morning"))
         queue.getQueue().map { it.song } shouldBe listOf(other, blue[0])

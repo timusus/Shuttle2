@@ -66,7 +66,7 @@ constructor(
      * that finds nothing (an empty library) is an empty queue.
      */
     suspend fun queueForSearch(query: String?, extras: Bundle?): PlayQueue? = when (val result = voiceSearchResolver.resolve(VoiceSearch.from(query, extras))) {
-        is VoiceSearchResult.Songs -> PlayQueue(result.songs, result.position)
+        is VoiceSearchResult.Songs -> if (result.shuffled) PlayQueue(result.songs.shuffled(), 0) else PlayQueue(result.songs, result.position)
 
         VoiceSearchResult.Empty -> PlayQueue(emptyList(), 0)
 
@@ -83,7 +83,7 @@ constructor(
      * every song for a search for nothing in particular.
      */
     suspend fun songsForSearch(query: String?, extras: Bundle?): List<Song> = when (val result = voiceSearchResolver.resolve(VoiceSearch.from(query, extras))) {
-        is VoiceSearchResult.Songs -> result.songs.drop(result.position)
+        is VoiceSearchResult.Songs -> if (result.shuffled) result.songs.shuffled() else result.songs.drop(result.position)
         VoiceSearchResult.Empty -> emptyList()
         VoiceSearchResult.Anything -> librarySongs()
     }
