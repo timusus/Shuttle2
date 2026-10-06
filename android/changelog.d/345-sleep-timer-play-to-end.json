@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "The sleep timer now pauses right at the end of the song when it waits for the song to finish, instead of a moment into the next one.", "commits": [] }

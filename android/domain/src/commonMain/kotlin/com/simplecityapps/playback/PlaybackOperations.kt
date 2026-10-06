@@ -63,6 +63,14 @@ interface PlaybackOperations {
     )
     fun play()
     fun pause()
+
+    /**
+     * Lets the current item play to its end and pauses there, rather than moving on to the next one, then returns: the
+     * pause comes before the next item starts, which [trackEndedFlow] (emitted as the queue moves on, after a gapless
+     * start) can't give. An item skipped to before then plays to its end instead. Cancelling it lets playback move on
+     * as before.
+     */
+    suspend fun pauseAtEndOfItem()
     fun togglePlayback()
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null)
     fun skipToPrev(force: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null)

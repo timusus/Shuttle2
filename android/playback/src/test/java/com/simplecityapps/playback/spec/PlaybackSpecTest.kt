@@ -659,6 +659,43 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-69 a pause at the end of a song stops before the next one starts, then playback carries on as before`() {
+        startPlaying(listOf(song(1, file = TONE_1S), song(2, file = TONE_1S), song(3)))
+        val ended = harness.record(playback.trackEndedFlow.map { it.song.id })
+        var pausedAtEnd = false
+        harness.launch {
+            playback.pauseAtEndOfItem()
+            pausedAtEnd = true
+        }
+
+        harness.runUntil { pausedAtEnd }
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 1L
+        ended.shouldBeEmpty()
+
+        playback.play()
+        harness.runUntil { ended.size == 2 }
+
+        ended shouldBe listOf(1L, 2L)
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 3L
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `RS-69 a cancelled pause at the end of a song lets playback move on`() {
+        startPlaying(listOf(song(1, file = TONE_1S), song(2)))
+        val ended = harness.record(playback.trackEndedFlow.map { it.song.id })
+        val wait = harness.launch { playback.pauseAtEndOfItem() }
+
+        wait.cancel()
+        harness.runUntil { ended.isNotEmpty() }
+
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 2L
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+    }
+
+    @Test
     fun `RS-34 a seek on a song reached by playing on shows it playing, not loading`() {
         startPlaying(listOf(song(1, file = TONE_1S), song(2, file = TONE_3S)))
         harness.runUntil { queue.queueStateFlow.value.currentItem?.song?.id == 2L && (playback.getProgress() ?: 0) > 0 }

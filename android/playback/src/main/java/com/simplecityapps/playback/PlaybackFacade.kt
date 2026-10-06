@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -49,7 +50,7 @@ class PlaybackFacade(
     private val queueOperations: QueueOperations,
     private val player: Player,
     /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
-    localPlayer: ExoPlayer,
+    private val localPlayer: ExoPlayer,
     /** Saves the queue and the position to resume from; registered here with the other listeners. */
     private val queueStore: QueueStore,
     /** Where the player's speed is kept across restarts. */
@@ -113,6 +114,15 @@ class PlaybackFacade(
 
     override val playbackFailureFlow: SharedFlow<Song> = loader.failureFlow
 
+    /** Each pause at the end of an item: the local player's (see [pauseAtEndOfItem]), a Cast receiver's, or the queue's last. */
+    private val _endOfItemPauses = MutableSharedFlow<Unit>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** The [pauseAtEndOfItem] calls waiting for their pause. The local player pauses at the end of each item while any are. */
+    private var pauseAtEndRequests = 0
+
+    /** The local player's own pause-at-end setting before the first waiting [pauseAtEndOfItem] call, put back after the last. */
+    private var pauseAtEndBefore = false
+
     init {
         // A Cast receiver never reports an end of its own, so the Cast queue says when it played the queue out.
         castQueue?.onPlayedOut = { entry -> onPlayedOut(entry) }
@@ -159,7 +169,10 @@ class PlaybackFacade(
         override fun onPlayWhenReadyChanged(
             playWhenReady: Boolean,
             reason: Int
-        ) = publishState()
+        ) {
+            if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) _endOfItemPauses.tryEmit(Unit)
+            publishState()
+        }
 
         // A transient audio focus loss holds playback off without changing whether it's set to play.
         override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) = publishState()
@@ -182,6 +195,11 @@ class PlaybackFacade(
                 oldPosition.mediaItem?.queueEntryOrNull?.let { entry ->
                     Timber.v("onTrackEnded(${entry.song.name})")
                     _trackEndedFlow.tryEmit(TrackEnd(entry.uid, entry.song))
+                }
+                // A Cast receiver can't pause at the end of an item, so playback pauses as soon as it moves on.
+                if (pauseAtEndRequests > 0 && handover.isRemote) {
+                    pause()
+                    _endOfItemPauses.tryEmit(Unit)
                 }
             }
             progressTicker.publish()
@@ -206,6 +224,7 @@ class PlaybackFacade(
             if (player.playWhenReady) {
                 pause()
             }
+            if (entry != null) _endOfItemPauses.tryEmit(Unit)
         }
     }
 
@@ -327,6 +346,23 @@ class PlaybackFacade(
         Timber.v("pause()")
         callHold.cancel()
         player.playWhenReady = false
+    }
+
+    /**
+     * Sets the local player to pause at the end of each item until the next pause there, then puts its setting back.
+     * Waiting calls share the setting, so one cancelled while another waits leaves it set. A Cast receiver can't pause
+     * at the end of an item, so while casting playback pauses as the receiver moves on instead.
+     */
+    override suspend fun pauseAtEndOfItem() = withContext(Dispatchers.Main.immediate) {
+        if (pauseAtEndRequests++ == 0) {
+            pauseAtEndBefore = localPlayer.pauseAtEndOfMediaItems
+            localPlayer.pauseAtEndOfMediaItems = true
+        }
+        try {
+            _endOfItemPauses.first()
+        } finally {
+            if (--pauseAtEndRequests == 0) localPlayer.pauseAtEndOfMediaItems = pauseAtEndBefore
+        }
     }
 
     /** Pauses if playing or loading to play; otherwise plays, including a song still loading paused (a restore's). */

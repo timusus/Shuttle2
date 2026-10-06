@@ -121,6 +121,11 @@ the current song in both the shuffled and the unshuffled queue, in the order cho
 **RS-33: previous goes back early, else restarts.** Given a song playing, when previous is pressed within its first
 2 seconds, then the song before it becomes current; after 2 seconds, the song restarts instead. (#345) — JVM.
 
+**RS-69: the sleep timer's play to end pauses before the next song.** Given a song playing with a pause at its end
+asked for (the sleep timer playing to the end), when it plays to its end, then playback pauses there, still on it,
+before the next song starts (gapless would otherwise have started it); play moves on and carries on as before.
+Cancelled before then (the timer stopped), playback moves on without pausing. (#345) — JVM.
+
 **RS-34: a song reached by playing on is playing, not loading.** Given a song that playback moved on to by playing
 out the one before, when the user seeks in it (or it rebuffers), then it shows as playing, not loading; and when it
 fails once playing (its file deleted or its stream dropped), then playback stops on it, paused, rather than skipping

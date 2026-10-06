@@ -8,13 +8,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Pauses playback once a delay has elapsed, or, when playing to the end, at the first track end after it.
- * The countdown runs on [context] in [appCoroutineScope]; the play-to-end wait then collects
- * [PlaybackOperations.trackEndedFlow], which replays nothing, so only a track end after the deadline counts.
+ * Pauses playback once a delay has elapsed, or, when playing to the end, at the end of the song playing after it
+ * ([PlaybackOperations.pauseAtEndOfItem], so the next song never starts). The countdown runs on [context] in
+ * [appCoroutineScope]; stopping or restarting the timer cancels a play-to-end wait, letting playback move on.
  */
 class SleepTimer(
     private val playbackOperations: PlaybackOperations,
@@ -51,9 +50,11 @@ class SleepTimer(
             appCoroutineScope.launch(context) {
                 delay(delay)
                 if (playToEnd) {
-                    playbackOperations.trackEndedFlow.first()
+                    playbackOperations.pauseAtEndOfItem()
+                } else {
+                    playbackOperations.pause()
                 }
-                sleep()
+                stopTimer()
             }
     }
 
@@ -76,11 +77,6 @@ class SleepTimer(
         }
 
         return null
-    }
-
-    private fun sleep() {
-        playbackOperations.pause()
-        stopTimer()
     }
 }
 

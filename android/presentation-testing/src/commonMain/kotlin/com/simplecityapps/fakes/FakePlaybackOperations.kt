@@ -52,6 +52,7 @@ class FakePlaybackOperations : PlaybackOperations {
     }
 
     override fun pause() {}
+    override suspend fun pauseAtEndOfItem() {}
     override fun play() {
         calls += "play()"
     }

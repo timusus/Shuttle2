@@ -1,8 +1,6 @@
 package com.simplecityapps.playback.sleeptimer
 
-import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.fakes.FakePlaybackOperations
-import com.simplecityapps.playback.fakes.testSong
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -23,9 +21,9 @@ class SleepTimerTest {
     /** The number of pauses the timer asked for. */
     private fun pauses() = playbackOperations.pauses
 
-    /** Ends the current track the way the playback reports it, and runs whatever it resumes. */
+    /** Plays the current track to its end, and runs whatever it resumes. */
     private fun TestScope.endTrack() {
-        playbackOperations.trackEndedFlow.tryEmit(TrackEnd(1, testSong(1)))
+        playbackOperations.endItem()
         runCurrent()
     }
 
@@ -95,20 +93,23 @@ class SleepTimerTest {
     }
 
     @Test
-    fun `playing to the end waits for the track to end after the deadline`() = runTest {
+    fun `playing to the end pauses at the end of the track playing after the deadline`() = runTest {
         val sleepTimer = sleepTimer()
         sleepTimer.startTimer(60_000, playToEnd = true)
 
         advance(30_000)
         endTrack()
         pauses() shouldBe 0
+        playbackOperations.pausingAtEnd shouldBe 0
 
         advance(60_000)
         pauses() shouldBe 0
+        playbackOperations.pausingAtEnd shouldBe 1
         sleepTimer.timeRemaining() shouldBe 0L
 
         endTrack()
         pauses() shouldBe 1
+        playbackOperations.pausingAtEnd shouldBe 0
         sleepTimer.timeRemaining() shouldBe null
 
         endTrack()
@@ -116,14 +117,43 @@ class SleepTimerTest {
     }
 
     @Test
-    fun `a timer stopped while waiting for the track end never pauses`() = runTest {
+    fun `a timer that doesn't play to the end never waits for the track end`() = runTest {
+        val sleepTimer = sleepTimer()
+        sleepTimer.startTimer(60_000, playToEnd = false)
+
+        advance(60_000)
+
+        pauses() shouldBe 1
+        playbackOperations.pausingAtEnd shouldBe 0
+    }
+
+    @Test
+    fun `a timer stopped while waiting for the track end never pauses, and stops waiting`() = runTest {
         val sleepTimer = sleepTimer()
         sleepTimer.startTimer(60_000, playToEnd = true)
         advance(60_000)
+        playbackOperations.pausingAtEnd shouldBe 1
 
         sleepTimer.stopTimer()
-        endTrack()
+        runCurrent()
+        playbackOperations.pausingAtEnd shouldBe 0
 
+        endTrack()
+        pauses() shouldBe 0
+    }
+
+    @Test
+    fun `restarting the timer while waiting for the track end waits for the new deadline`() = runTest {
+        val sleepTimer = sleepTimer()
+        sleepTimer.startTimer(0, playToEnd = true)
+        advance(0)
+        playbackOperations.pausingAtEnd shouldBe 1
+
+        sleepTimer.startTimer(60_000, playToEnd = true)
+        runCurrent()
+        playbackOperations.pausingAtEnd shouldBe 0
+
+        endTrack()
         pauses() shouldBe 0
     }
 }

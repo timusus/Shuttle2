@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 
 /** A [PlaybackOperations] that records what it's asked to do and emits only what a test sends it. */
 class FakePlaybackOperations : PlaybackOperations {
@@ -42,6 +43,27 @@ class FakePlaybackOperations : PlaybackOperations {
 
     override fun pause() {
         pauses++
+    }
+
+    /** The [pauseAtEndOfItem] calls waiting for the current item to end ([endItem]). */
+    var pausingAtEnd = 0
+        private set
+
+    private val itemEnds = MutableSharedFlow<Unit>(extraBufferCapacity = 64)
+
+    /** Plays the current item to its end: a [pauseAtEndOfItem] call waiting for it pauses there. */
+    fun endItem() {
+        itemEnds.tryEmit(Unit)
+    }
+
+    override suspend fun pauseAtEndOfItem() {
+        pausingAtEnd++
+        try {
+            itemEnds.first()
+            pauses++
+        } finally {
+            pausingAtEnd--
+        }
     }
     override fun play() {}
     override fun togglePlayback() {}

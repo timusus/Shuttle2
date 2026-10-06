@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -803,6 +804,15 @@ class IosPlayerController(
     override fun pause() = onMain {
         pauseNow()
         publishState()
+    }
+
+    /**
+     * Pauses at the first track end. The engine has no pause at the end of a track yet, so after a gapless join the
+     * next song has just started by then.
+     */
+    override suspend fun pauseAtEndOfItem() {
+        trackEndedFlow.first()
+        pause()
     }
 
     private fun pauseNow() {
