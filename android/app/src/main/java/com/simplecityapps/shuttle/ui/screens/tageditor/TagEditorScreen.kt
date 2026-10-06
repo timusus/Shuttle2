@@ -260,7 +260,7 @@ private fun TagSectionCard(
     Column {
         SectionHeader(title, containerColor = Color.Transparent)
 
-        S2Surface(modifier = Modifier.fillMaxWidth()) {
+        S2Surface(color = MaterialTheme.colorScheme.surfaceContainer, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(start = S2Spacing.medium, end = S2Spacing.medium, top = S2Spacing.small, bottom = S2Spacing.medium), verticalArrangement = Arrangement.spacedBy(S2Spacing.small), content = content)
         }
     }

@@ -35,12 +35,12 @@ fun S2Scaffold(
     Scaffold(modifier = modifier, topBar = topBar, snackbarHost = snackbarHost, contentWindowInsets = contentWindowInsets, content = content)
 }
 
-/** A flat container in [color] (a tonal surface by default), clipped to [shape]. */
+/** A flat container in [color], clipped to [shape]. */
 @Composable
 fun S2Surface(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.largeIncreased,
-    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+    color: Color,
     content: @Composable () -> Unit,
 ) {
     Surface(modifier = modifier, shape = shape, color = color, content = content)

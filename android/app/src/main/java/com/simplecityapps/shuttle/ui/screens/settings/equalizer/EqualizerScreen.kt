@@ -72,7 +72,7 @@ fun EqualizerScreen(
             )
         }
         item(key = "bands") {
-            S2Surface {
+            S2Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
                 Column(Modifier.fillMaxWidth().padding(vertical = S2Spacing.medium)) {
                     FrequencyResponseChart(
                         points = uiState.frequencyResponse,
