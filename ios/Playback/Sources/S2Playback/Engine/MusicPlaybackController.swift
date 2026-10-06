@@ -1231,7 +1231,13 @@ public final class MusicPlaybackController {
             self?.engineQueue.async {
                 guard let self, self.generation == generation else { return }
                 self.buffersInFlight -= 1
-                if self.buffersInFlight == 0, !self.drained, self.state == .playing { self.beginUnderrun() }
+                // A stopped engine's node plays nothing: it hands its buffers back unplayed. A route change
+                // stops the engine before it's reported, so those completions can reach this queue ahead of
+                // the rebuild; they're not an underrun (#944). Only this queue starts the engine, and a
+                // restart's `generation` drops anything handed back before it.
+                if self.buffersInFlight == 0, !self.drained, self.state == .playing, self.engine.isRunning {
+                    self.beginUnderrun()
+                }
                 self.fill()
             }
         }
