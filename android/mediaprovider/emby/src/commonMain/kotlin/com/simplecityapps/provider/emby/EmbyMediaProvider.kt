@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.server.ServerSession
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.atStoredPrecision
 import com.simplecityapps.mediaprovider.server.concatenated
+import com.simplecityapps.mediaprovider.server.countsAcrossLibraries
 import com.simplecityapps.mediaprovider.server.isMusicLibrary
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.parseServerInstant
@@ -66,7 +67,7 @@ class EmbyMediaProvider(
     ): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
         // The server keeps no time for a favourite, so one is a favourite as of the sync that found it
         val syncedAt = Clock.System.now().atStoredPrecision()
-        withMusicLibraries(address, session) { libraries ->
+        withMusicLibraries(address, session) { libraries, _ ->
             // The plays come from every library, so those of songs stored are kept: a new song is in the listing already
             val storedPaths = existingSongs.mapTo(HashSet()) { song -> song.path }
             emitAll(
@@ -84,9 +85,12 @@ class EmbyMediaProvider(
 
     override suspend fun countSongs(): Int? = (
         withServerSession<AuthenticatedCredentials, Int>(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
-            withMusicLibraries(address, session) { libraries ->
+            withMusicLibraries(address, session) { libraries, countsTogether ->
+                // A song in two libraries is in both their totals, so when the music libraries are the only ones with audio the
+                // server counts across them, once per song, in one request (#934)
+                val parents = if (countsTogether) listOf(null) else libraries
                 var total = 0
-                for (libraryId in libraries) {
+                for (libraryId in parents) {
                     // One song asked for, for the total that comes with it
                     val result = session.request { credentials -> authenticationManager.checkSession(credentials, itemsService.audioIds(address, credentials.accessToken, credentials.userId, libraryId, limit = 1)) }
                     if (result !is NetworkResult.Success<QueryResult>) {
@@ -101,31 +105,32 @@ class EmbyMediaProvider(
         )?.result
 
     override fun findSongPaths(): Flow<FlowEvent<List<String>, MessageProgress>> = withServerSession(strings, authenticationManager.credentialStore, authenticationManager.getAddress(), ::authenticate) { address, session ->
-        withMusicLibraries(address, session) { libraries ->
+        withMusicLibraries(address, session) { libraries, _ ->
             emitAll(concatenated(libraries.map { libraryId -> queryPaths(address, session, libraryId) }, key = { path -> path }))
         }
     }
 
     /**
      * [read]s the ids of the user's libraries that may hold music ([isMusicLibrary]). A library listing that fails, or that
-     * has none of those (audiobooks and films alone, say), fails: read as no songs, it would delete every song stored.
+     * has none of those (audiobooks and films alone, say), fails: read as no songs, it would delete every song stored. The
+     * second argument says whether one query over every library finds just the songs of those libraries ([countsAcrossLibraries]).
      */
     private suspend fun <T> FlowCollector<FlowEvent<T, MessageProgress>>.withMusicLibraries(
         address: String,
         session: ServerSession<AuthenticatedCredentials>,
-        read: suspend FlowCollector<FlowEvent<T, MessageProgress>>.(List<String>) -> Unit
+        read: suspend FlowCollector<FlowEvent<T, MessageProgress>>.(List<String>, Boolean) -> Unit
     ) {
         val libraries =
             session.request { credentials ->
                 authenticationManager.checkSession(credentials, itemsService.libraries(address, credentials.accessToken, credentials.userId))
-            }.map { result -> result.items.filter { library -> isMusicLibrary(library.collectionType) }.map(Item::id) }
+            }.map { result -> result.items.filter { library -> isMusicLibrary(library.collectionType) }.map(Item::id) to countsAcrossLibraries(result.items.map(Item::collectionType)) }
         when (libraries) {
-            is NetworkResult.Success<List<String>> -> {
-                if (libraries.body.isEmpty()) {
+            is NetworkResult.Success<Pair<List<String>, Boolean>> -> {
+                if (libraries.body.first.isEmpty()) {
                     logger.error { "Found no library that may hold music" }
                     emit(FlowEvent.Failure(strings.musicLibraryMissing))
                 } else {
-                    read(libraries.body)
+                    read(libraries.body.first, libraries.body.second)
                 }
             }
 

@@ -1,0 +1,9 @@
+{
+  "Items": [
+    { "Name": "Music", "Id": "lib-music", "CollectionType": "music" },
+    { "Name": "More Music", "Id": "lib-music-2", "CollectionType": "music" },
+    { "Name": "Movies", "Id": "lib-movies", "CollectionType": "movies" }
+  ],
+  "TotalRecordCount": 3,
+  "StartIndex": 0
+}

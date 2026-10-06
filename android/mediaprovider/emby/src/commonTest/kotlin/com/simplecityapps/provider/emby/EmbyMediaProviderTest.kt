@@ -557,6 +557,30 @@ class EmbyMediaProviderTest {
     }
 
     @Test
+    fun `songs in overlapping music libraries are counted once - by one request across the libraries`() {
+        signedIn()
+        server.respond(VIEWS, "views_overlapping_music.json")
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        runBlocking { provider.countSongs() } shouldBe 3
+
+        val request = server.requestsTo(ITEMS).single()
+        request.url.parameters["parentId"] shouldBe null
+        request.url.parameters["limit"] shouldBe "1"
+    }
+
+    @Test
+    fun `an audiobook library keeps the songs counted library by library - one across the libraries would count its audio`() {
+        signedIn()
+        server.respond(VIEWS, "views_mixed.json")
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        runBlocking { provider.countSongs() }
+
+        server.requestsTo(ITEMS).map { it.url.parameters["parentId"] } shouldContainExactly listOf("lib-music", "lib-untyped", "lib-mixed", "lib-unknown")
+    }
+
+    @Test
     fun `songs that can't be counted come back as unknown`() {
         signedIn()
         server.respond(ITEMS, code = 500)

@@ -37,7 +37,7 @@ class ItemsService(private val client: HttpClient) {
     )
 
     /**
-     * The ids of the songs in the music library [parentId], with nothing else (no fields, user data or images): what the
+     * The ids of the songs in the music library [parentId] (in every library the user has if null), with nothing else (no fields, user data or images): what the
      * server still holds, which an incremental sync removes the rest against. A [limit] of 1 and [startIndex] 0 reads the
      * [QueryResult.totalRecordCount] cheaply.
      */
@@ -45,7 +45,7 @@ class ItemsService(private val client: HttpClient) {
         url: String,
         authorization: String,
         userId: String,
-        parentId: String,
+        parentId: String?,
         limit: Int = 2500,
         startIndex: Int = 0
     ): NetworkResult<QueryResult> = items(
