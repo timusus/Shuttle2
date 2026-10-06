@@ -717,7 +717,10 @@ final class MusicPlaybackControllerTests: XCTestCase {
         _ = try renderer.render(frames: 24_000)
         let before = log.seeksUnsupported.count
 
-        controller.engine.stop()
+        // The engine is left running: stopping it makes the node complete its scheduled buffers on
+        // another thread, and a completion that reaches the engine queue before the rebuild reads as
+        // an underrun (an extra loading/playing). The rebuild's own `player.stop()` completes them
+        // under the old generation, which is ignored.
         controller.onEngineQueueForTesting {
             for _ in 0..<3 {
                 NotificationCenter.default.post(name: .AVAudioEngineConfigurationChange, object: controller.engine)
