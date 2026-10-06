@@ -117,7 +117,7 @@ static int avio_read_packet(void *opaque, uint8_t *buf, int buf_size) {
     /* Never 0: libavformat reads a 0 as "nothing yet, ask again" and spins on it forever. */
     switch (n) {
         case STREAM_READ_EOF:       return AVERROR_EOF;
-        /* Latch it. During `stream_decoder_open` there is no handle for the caller's `cancel` to
+        /* Latch it. During `stream_decoder_open_ex` there is no handle for the caller's `cancel` to
          * reach, so the reader's own refusal is the only evidence that this was a cancel and not a
          * broken file — and the two must not be reported the same way. */
         case STREAM_READ_CANCELLED: d->cancelled = 1; return AVERROR_EXIT;
@@ -177,7 +177,7 @@ static int64_t avio_seek_packet(void *opaque, int64_t offset, int whence) {
  * Measured on a Darknet Diaries enclosure (`darknet-diaries-ep179`, 108 MB): a 13 782 278-byte
  * ID3v2 tag holding a 3000x3000 PNG cover, which `mp3_read_header` READS — not seeks over, because
  * it parses every APIC frame and turns the picture into an attached-pic stream nobody asked for.
- * `stream_decoder_open` cost 13.8 MB of cellular data before a note was heard. `probesize` does not
+ * `stream_decoder_open_ex` cost 13.8 MB of cellular data before a note was heard. `probesize` does not
  * bound it: the tag is consumed before the demuxer ever gets to probe audio.
  *
  * So the tag is stepped over here and FFmpeg's byte 0 is the first MPEG frame. The artwork and the
@@ -426,7 +426,22 @@ static int header_described_audio_stream(const AVFormatContext *fmt) {
     int codec_ok = 0;
     if (is_flac) codec_ok = par->codec_id == AV_CODEC_ID_FLAC;
     else if (is_mp4) codec_ok = par->codec_id == AV_CODEC_ID_ALAC;
-    else codec_ok = par->codec_id >= AV_CODEC_ID_PCM_S16LE && par->codec_id <= AV_CODEC_ID_PCM_F64LE;
+    else {
+        /* Exactly the codecs the wav demuxer emits; anything else a wav can carry (ADPCM, a-law,
+         * MPEG in a RIFF hack) keeps the probe. */
+        switch (par->codec_id) {
+        case AV_CODEC_ID_PCM_U8:
+        case AV_CODEC_ID_PCM_S16LE:
+        case AV_CODEC_ID_PCM_S24LE:
+        case AV_CODEC_ID_PCM_S32LE:
+        case AV_CODEC_ID_PCM_F32LE:
+        case AV_CODEC_ID_PCM_F64LE:
+            codec_ok = 1;
+            break;
+        default:
+            break;
+        }
+    }
     if (!codec_ok) return -1;
 
     if (is_flac) {
@@ -440,19 +455,15 @@ static int header_described_audio_stream(const AVFormatContext *fmt) {
             && par->bits_per_coded_sample <= 0) {
             return -1;
         }
+        /* The ALAC decoder reads its setup from the magic cookie the moov `alac` atom carries as
+         * extradata (36 bytes); without it the open below fails, so let the probe have the file. */
+        if (is_mp4 && par->extradata_size < 36) return -1;
     }
     /* The duration must already be known without the probe, from the stream or the format. */
     if (stream->duration == AV_NOPTS_VALUE || stream->duration <= 0) {
         if (fmt->duration == AV_NOPTS_VALUE || fmt->duration <= 0) return -1;
     }
     return audio;
-}
-
-StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
-                                   void *opaque,
-                                   StreamAudioInfo *info,
-                                   int *status) {
-    return stream_decoder_open_ex(callbacks, opaque, 0, info, status);
 }
 
 StreamDecoder *stream_decoder_open_ex(const StreamDecodeCallbacks *callbacks,

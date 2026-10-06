@@ -73,7 +73,7 @@ typedef struct {
     int64_t (*size)(void *opaque);
 } StreamDecodeCallbacks;
 
-/** What the container says about the audio, filled in by `stream_decoder_open`. */
+/** What the container says about the audio, filled in by `stream_decoder_open_ex`. */
 typedef struct {
     int    sample_rate;      /* the SOURCE's rate; the player runs at it */
     int    channel_count;
@@ -95,13 +95,9 @@ typedef struct StreamDecoder StreamDecoder;
  * A failed open is ALWAYS a failure, never silence: the player above turns it into the `AVPlayer`
  * fallback with a counter (plan §1), and a decoder that opened nothing but reported success would
  * present as an episode that plays no audio and never ends.
+ *
+ * `flags` is 0 or a bitwise-or of `STREAM_DECODE_*`.
  */
-StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
-                                   void *opaque,
-                                   StreamAudioInfo *info,
-                                   int *status);
-
-/** `stream_decoder_open` with `STREAM_DECODE_*` flags. */
 StreamDecoder *stream_decoder_open_ex(const StreamDecodeCallbacks *callbacks,
                                       void *opaque,
                                       int flags,
@@ -141,7 +137,7 @@ int stream_decoder_read(StreamDecoder *decoder, float *out, int max_frames, int 
 /**
  * S2: convert everything this decoder hands out to `sample_rate` Hz and `channels` channels
  * (swresample; mono is spread to both sides at full level, more than two channels are downmixed).
- * Call after `stream_decoder_open` and before the first read; refused with
+ * Call after `stream_decoder_open_ex` and before the first read; refused with
  * `STREAM_DECODE_ERR_ARGS` while decoded audio is pending. `info` keeps describing the SOURCE.
  * A seek's landed time stays in media seconds, whatever the output rate.
  */
