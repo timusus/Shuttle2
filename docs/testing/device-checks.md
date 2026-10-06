@@ -122,6 +122,7 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 
 - [ ] Android Auto (DHU): browse Artists, Albums, Playlists and a song list; play a song. Its album plays from that song, and the queue view lists the queue and skips to a chosen item (RS-42, RS-43).
 - [ ] Android Auto (DHU): Shuffle All plays, and search ("play <song>") finds and plays the song.
+- [ ] Android Auto (DHU), on a phone where Android Auto came from Play rather than with the system: the root lists Artists, Albums, Playlists and Shuffle All, not an empty list, so Auto is still trusted by its package name now that the signature check is gone (RS-47). Ask Google Assistant on the phone to "play <song> on Shuttle Music": it plays.
 - [ ] Lock screen: title, artist and artwork show; play, pause, skip and seek work; the shuffle and repeat buttons change the modes and their icons follow (RS-45).
 - [ ] Notification: the same controls work, the artwork shows, and there's only one S2 media notification. Paused, it can be swiped away.
 - [x] With Settings, "Media session artwork" turned off, the lock screen shows no artwork. — automated: `emu-verify.sh --check notification-art` (asserts the media notification has no large icon; the lock screen reads the same session metadata, so eyeball it once on a device)

@@ -17,6 +17,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.SessionCallback
+import com.simplecityapps.playback.mediasession.TrustedCallers
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
@@ -526,6 +527,24 @@ class MediaSessionSpecTest {
 
         listOf("com.google.android.projection.gearhead", "com.android.car.media", "com.google.android.autosimulator", "com.example.player")
             .map { carAccess.isCar(controller(it)) } shouldBe listOf(true, true, true, false)
+    }
+
+    @Test
+    fun `RS-47 a controller Media3 trusts, Android Auto, Wear OS and Google Assistant are trusted, another app isn't`() {
+        fun controller(
+            packageName: String,
+            trusted: Boolean = false
+        ) = MediaSession.ControllerInfo.createTestOnlyControllerInfo(packageName, 0, 0, 0, 0, trusted, Bundle.EMPTY, false)
+
+        TrustedCallers.isTrusted(controller("com.example.player", trusted = true)) shouldBe true
+        listOf(
+            "com.google.android.projection.gearhead",
+            "com.google.android.autosimulator",
+            "com.google.android.wearable.app",
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.carassistant",
+            "com.example.player"
+        ).map { TrustedCallers.isTrusted(controller(it)) } shouldBe listOf(true, true, true, true, true, false)
     }
 
     private fun sessionHarness(

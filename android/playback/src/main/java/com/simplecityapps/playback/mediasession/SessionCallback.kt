@@ -47,7 +47,7 @@ import timber.log.Timber
  * hands the session the player's own items, which [SessionPlayer] recognises and leaves alone.
  *
  * [isTrustedCaller] says whether a controller may browse the library and edit the queue: the system, S2 itself, and
- * the callers the app knows (Android Auto). The service is exported, so any other app can connect, and gets the
+ * the callers the app knows (Android Auto, Wear OS, Google Assistant; see [TrustedCallers]). The service is exported, so any other app can connect, and gets the
  * transport controls and requests to play something (a media id, a URI or a search, as the old session had), but
  * not the queue's contents.
  *

@@ -278,7 +278,8 @@ app on the old session library (`MediaControllerCompat` play-from-id and play-fr
 Robolectric's platform `MediaController` never reaches the session: *Media session through Media3*.
 
 **RS-47: an app that isn't trusted can play but can't browse or change the queue.** Given a controller that isn't the
-system, S2 or a caller the app knows (Android Auto), when it connects, then its browse root is empty and it can't add,
+system, S2 or a caller the app knows (Android Auto and its desktop head unit, Android Automotive, Wear OS or Google
+Assistant, by package name), when it connects, then its browse root is empty and it can't add,
 remove, move or clear the queue's items, but it can control playback and ask to play a media id, a file or a search;
 a trusted controller can do all of it. (#345) — JVM (`spec/MediaSessionSpecTest`); a real third-party app is
 device-only: *Media session through Media3*.

@@ -22,12 +22,12 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.androidauto.MediaIdHelper
-import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.ArtworkBitmapLoader
 import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.mediasession.SessionPlayer
+import com.simplecityapps.playback.mediasession.TrustedCallers
 import com.simplecityapps.playback.mediasession.awaitRestored
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
@@ -99,8 +99,6 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var serverAccessGate: ServerAccessGate
 
-    private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
-
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private lateinit var session: MediaLibrarySession
@@ -130,9 +128,7 @@ class PlaybackService : MediaLibraryService() {
         )
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate)) { controller ->
-            controller.isTrusted || runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
-        }
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate), TrustedCallers::isTrusted)
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
             .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, artworkSettings) { player.currentMediaItem?.queueEntryOrNull?.song })
