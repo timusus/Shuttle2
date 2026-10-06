@@ -9,6 +9,7 @@ import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import dev.zacsweers.metro.Inject
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -49,8 +50,8 @@ data class PlexStream(
  * [endPlay] stops a progressive transcode (#722) once the last play holding its session ends, and retires the session
  * in the same step, so a play opened after that gets a new one the stop can't reach; the server otherwise keeps
  * transcoding a skipped song until it times out idle. A stream with no play (Android's HLS, which the server times out
- * once its segments stop being read) is on the song's own session, which nothing stops. Sessions live in memory only, so
- * a transcode running when the app is killed is left to Plex's idle timeout.
+ * once its segments stop being read) is on the song's own session, which nothing stops. The open sessions are also
+ * kept in [store], so the ones a killed app left running are stopped at the next launch ([stopLeftoverSessions]).
  */
 @OptIn(ExperimentalAtomicApi::class)
 @Inject
@@ -58,11 +59,15 @@ class PlexStreamUrlProvider(
     private val authenticationManager: PlexAuthenticationManager,
     private val streamingPolicy: StreamingPolicy,
     private val streamProfile: StreamProfile,
-    private val transcodeService: TranscodeService
+    private val transcodeService: TranscodeService,
+    private val store: KeyValueStore
 ) : StreamUrlProvider {
     private val logger = Logger.tagged("PlexStreamUrlProvider")
 
     private val transcodeSessions = AtomicReference(TranscodeSessions())
+
+    /** The sessions a previous run left open, read before this run opens any. */
+    private val leftoverSessions = store.getString(OPEN_SESSIONS_KEY, null)?.split(SESSION_SEPARATOR)?.filter(String::isNotEmpty).orEmpty()
 
     /** The session each play's progressive transcode was opened on, and the one each song's plays share now. */
     private data class TranscodeSessions(
@@ -91,11 +96,35 @@ class PlexStreamUrlProvider(
             retired = session?.takeIf { it !in byPlay.values }
             sessions.copy(byPlay = byPlay, bySong = sessions.bySong.filterValues { it != retired })
         }
+        persistOpenSessions()
         val session = retired ?: return
+        stop(session)
+    }
+
+    /**
+     * Stops the sessions a previous run left open (the app was killed with a transcode running), then forgets them.
+     * Best effort and off the launch path: a session this run has since opened under the same name is left alone, and
+     * one that can't be stopped now is left to the server's idle timeout.
+     */
+    suspend fun stopLeftoverSessions() {
+        if (leftoverSessions.isEmpty()) return
+        val open = transcodeSessions.load().byPlay.values.toSet()
+        leftoverSessions.filter { it !in open }.forEach { stop(it) }
+        // Clear the leftovers from the store, keeping what this run has opened since
+        persistOpenSessions()
+    }
+
+    private suspend fun stop(session: String) {
         val address = authenticationManager.getAddress() ?: return
         val credentials = authenticationManager.getAuthenticatedCredentials() ?: return
         val result = transcodeService.stop(url = "$address$TRANSCODE_STOP_PATH", token = credentials.accessToken, session = session)
         if (result is NetworkResult.Failure) logger.warn { "Failed to stop transcode session $session: ${result.error}" }
+    }
+
+    /** Writes the sessions this run holds open, replacing what a previous run left. */
+    private fun persistOpenSessions() {
+        val open = transcodeSessions.load().byPlay.values.toSet()
+        store.edit { putString(OPEN_SESSIONS_KEY, open.takeIf { it.isNotEmpty() }?.joinToString(SESSION_SEPARATOR)) }
     }
 
     /** @throws IllegalStateException when the server isn't signed in to, or the URL can't be built. */
@@ -156,6 +185,7 @@ class PlexStreamUrlProvider(
                 opened = if (shared == null) sessions.opened + 1 else sessions.opened
             )
         }
+        persistOpenSessions()
         return session
     }
 
@@ -208,5 +238,8 @@ class PlexStreamUrlProvider(
 
         /** Plex's universal transcoder takes a stop for any media type at its video path. */
         private const val TRANSCODE_STOP_PATH = "/video/:/transcode/universal/stop"
+
+        private const val OPEN_SESSIONS_KEY = "plex_open_transcode_sessions"
+        private const val SESSION_SEPARATOR = ","
     }
 }

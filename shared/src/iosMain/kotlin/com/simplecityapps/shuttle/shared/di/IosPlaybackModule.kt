@@ -39,6 +39,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 /**
  * iOS playback: the [IosPlayerController] over the Swift engine the graph's factory is given, as the app's
@@ -123,7 +124,8 @@ class IosPlaybackModule {
         playbackSettings: PlaybackSettings,
         playbackPreferenceManager: PlaybackPreferenceManager,
         songRepository: SongRepository,
-        random: Random
+        random: Random,
+        plex: PlexStreamUrlProvider
     ): IosPlayerController {
         val retainShuffle = playbackSettings.retainShuffleOnNewQueue
         val scope = CoroutineScope(job + Dispatchers.Main.immediate + exceptionHandler)
@@ -136,6 +138,8 @@ class IosPlaybackModule {
             resumePosition = playbackPreferenceManager::resumePosition
         )
         IosPlaybackStore(controller, playbackPreferenceManager, playbackSettings.playbackSpeed, songRepository, scope).start()
+        // Plex transcodes a killed run left open: stopped in the background, never holding up launch
+        scope.launch { plex.stopLeftoverSessions() }
         return controller
     }
 

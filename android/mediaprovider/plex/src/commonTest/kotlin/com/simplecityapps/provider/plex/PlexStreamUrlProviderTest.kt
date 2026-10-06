@@ -57,8 +57,10 @@ class PlexStreamUrlProviderTest {
 
     private val transcodeService = TranscodeService(createHttpClient(server.engine))
 
-    private val android = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Android, transcodeService)
-    private val ios = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService)
+    private val openSessions = InMemoryKeyValueStore()
+
+    private val android = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Android, transcodeService, InMemoryKeyValueStore())
+    private val ios = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService, openSessions)
 
     @AfterTest
     fun tearDown() {
@@ -361,6 +363,49 @@ class PlexStreamUrlProviderTest {
         server.requestsTo(TRANSCODE_STOP).size shouldBe 1
     }
 
+    @Test
+    fun `open sessions are kept until their play ends`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        openSessions.getString(OPEN_SESSIONS, null) shouldBe "s2-107898-1"
+
+        ios.endPlay("play-1")
+
+        openSessions.getString(OPEN_SESSIONS, null) shouldBe null
+    }
+
+    @Test
+    fun `the sessions a killed run left open are stopped and cleared at the next launch`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+
+        val relaunched = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService, openSessions)
+        relaunched.stopLeftoverSessions()
+
+        server.requestsTo(TRANSCODE_STOP).single().url.parameters["session"] shouldBe "s2-107898-1"
+        openSessions.getString(OPEN_SESSIONS, null) shouldBe null
+    }
+
+    @Test
+    fun `a leftover session a new play has since reused is not stopped`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val relaunched = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService, openSessions)
+        relaunched.streamUrl(song(externalId = WMA), playId = "play-2")
+
+        relaunched.stopLeftoverSessions()
+
+        server.requestsTo(TRANSCODE_STOP).shouldBeEmpty()
+        openSessions.getString(OPEN_SESSIONS, null) shouldBe "s2-107898-1"
+    }
+
+    @Test
+    fun `with nothing left open launch makes no request`() = runTest {
+        ios.stopLeftoverSessions()
+
+        server.requestsTo(TRANSCODE_STOP).shouldBeEmpty()
+    }
+
     private fun song(
         externalId: String?,
         bitRate: Int? = null,
@@ -400,5 +445,6 @@ class PlexStreamUrlProviderTest {
         const val PART = "/library/parts/42/file.flac"
         const val WMA = "/library/parts/43/1600000000/file.wma"
         const val TRANSCODE_STOP = "/video/:/transcode/universal/stop"
+        const val OPEN_SESSIONS = "plex_open_transcode_sessions"
     }
 }

@@ -888,6 +888,48 @@ class IosPlayerControllerTest {
     }
 
     @Test
+    fun `playing the last track out under repeat all ends only its own play - the wrap-around song's play carries on`() = test { controller ->
+        controller.start(listOf(a, b), position = 1)
+        controller.queueOperations.setRepeatMode(RepeatMode.All)
+        val playOfB = plays.single { it.first == b.id }.second
+        val playOfA = plays.single { it.first == a.id }.second
+
+        engine.finishTrack()
+
+        controller.currentSong shouldBe a
+        endedPlays shouldBe listOf(playOfB)
+        endedPlays shouldNotContain playOfA
+    }
+
+    @Test
+    fun `playing a track out under repeat one ends the play it leaves but not the repeat's`() = test { controller ->
+        controller.start(listOf(a))
+        controller.queueOperations.setRepeatMode(RepeatMode.One)
+        val repeat = plays.last { it.first == a.id }.second
+
+        engine.finishTrack()
+
+        endedPlays.size shouldBe 1
+        endedPlays shouldNotContain repeat
+    }
+
+    @Test
+    fun `a re-open cancelled while it shares the current play does not end that play`() = test { controller ->
+        server += a.id
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+        val playOfA = plays.single { it.first == a.id }.second
+        resolveGate = CompletableDeferred()
+
+        controller.seekTo(30_000)
+        controller.seekTo(10_000)
+        resolveGate?.complete(Unit)
+        engine.settle()
+
+        endedPlays shouldNotContain playOfA
+    }
+
+    @Test
     fun `a resolve cancelled after the provider opened its play ends it`() = test { controller ->
         resolveGate = CompletableDeferred()
         controller.queueOperations.setQueue(listOf(a, b), null, 0)

@@ -51,7 +51,8 @@ class PlexMediaInfoProviderTest {
         authenticationManager,
         StreamingPolicy(streamingSettings, DeliveredFormats()) { metered },
         StreamProfile.Android,
-        TranscodeService(createHttpClient(FixtureServer { error("not called") }.engine))
+        TranscodeService(createHttpClient(FixtureServer { error("not called") }.engine)),
+        InMemoryKeyValueStore()
     )
 
     private val provider = PlexMediaInfoProvider(streamUrls)
