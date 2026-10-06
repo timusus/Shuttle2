@@ -80,7 +80,11 @@ typedef struct {
     double duration_sec;     /* 0 when the container does not know (AV_NOPTS_VALUE) */
     char   codec_name[32];   /* "mp3", "aac", ... */
     char   container_name[64];
+    int    skipped_probe;    /* 1 when the header sufficed and `avformat_find_stream_info` was skipped */
 } StreamAudioInfo;
+
+/** `stream_decoder_open_ex` flag: always run `avformat_find_stream_info` (tests compare both paths). */
+#define STREAM_DECODE_FORCE_PROBE 1
 
 typedef struct StreamDecoder StreamDecoder;
 
@@ -96,6 +100,13 @@ StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
                                    void *opaque,
                                    StreamAudioInfo *info,
                                    int *status);
+
+/** `stream_decoder_open` with `STREAM_DECODE_*` flags. */
+StreamDecoder *stream_decoder_open_ex(const StreamDecodeCallbacks *callbacks,
+                                      void *opaque,
+                                      int flags,
+                                      StreamAudioInfo *info,
+                                      int *status);
 
 /**
  * Seek to `seconds` and report where the stream actually landed in `landed_seconds`.

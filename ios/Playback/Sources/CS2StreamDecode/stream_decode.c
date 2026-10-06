@@ -398,10 +398,68 @@ static int pump(StreamDecoder *d) {
 
 /* ── public API ──────────────────────────────────────────────────────────── */
 
+/*
+ * Whether the container header alone has described the stream, so `avformat_find_stream_info` (which
+ * reads ahead, often several network round trips on a stream) would only add latency. True only for
+ * lossless codecs whose header carries everything: FLAC (STREAMINFO), ALAC (moov `alac` atom) and
+ * PCM in WAV. Lossy codecs (MP3, AAC, Opus, Vorbis) keep the probe: their parameters and duration
+ * come from the frames or a stream-level estimate.
+ */
+static int header_described_audio_stream(const AVFormatContext *fmt) {
+    if (!fmt->iformat || !fmt->iformat->name) return -1;
+    const char *container = fmt->iformat->name;
+    int is_mp4 = strstr(container, "mp4") != NULL;
+    int is_flac = strcmp(container, "flac") == 0;
+    int is_wav = strcmp(container, "wav") == 0;
+    if (!is_mp4 && !is_flac && !is_wav) return -1;
+
+    int audio = -1;
+    for (unsigned i = 0; i < fmt->nb_streams; i++) {
+        if (fmt->streams[i]->codecpar->codec_type != AVMEDIA_TYPE_AUDIO) continue;
+        if (audio >= 0) return -1;   /* more than one audio stream: let the probe choose */
+        audio = (int)i;
+    }
+    if (audio < 0) return -1;
+    const AVStream *stream = fmt->streams[audio];
+    const AVCodecParameters *par = stream->codecpar;
+
+    int codec_ok = 0;
+    if (is_flac) codec_ok = par->codec_id == AV_CODEC_ID_FLAC;
+    else if (is_mp4) codec_ok = par->codec_id == AV_CODEC_ID_ALAC;
+    else codec_ok = par->codec_id >= AV_CODEC_ID_PCM_S16LE && par->codec_id <= AV_CODEC_ID_PCM_F64LE;
+    if (!codec_ok) return -1;
+
+    if (is_flac) {
+        /* The flac demuxer leaves the parameters to its parser (they stay 0 until the probe), but
+         * hands the decoder the STREAMINFO block as extradata, which is where the decoder reads its
+         * rate, channels and bit depth from. */
+        if (par->extradata_size < 34) return -1;
+    } else {
+        if (par->sample_rate <= 0 || par->ch_layout.nb_channels <= 0) return -1;
+        if (par->format == AV_SAMPLE_FMT_NONE && par->bits_per_raw_sample <= 0
+            && par->bits_per_coded_sample <= 0) {
+            return -1;
+        }
+    }
+    /* The duration must already be known without the probe, from the stream or the format. */
+    if (stream->duration == AV_NOPTS_VALUE || stream->duration <= 0) {
+        if (fmt->duration == AV_NOPTS_VALUE || fmt->duration <= 0) return -1;
+    }
+    return audio;
+}
+
 StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
                                    void *opaque,
                                    StreamAudioInfo *info,
                                    int *status) {
+    return stream_decoder_open_ex(callbacks, opaque, 0, info, status);
+}
+
+StreamDecoder *stream_decoder_open_ex(const StreamDecodeCallbacks *callbacks,
+                                      void *opaque,
+                                      int flags,
+                                      StreamAudioInfo *info,
+                                      int *status) {
     int local_status = STREAM_DECODE_ERR_ALLOC;
     if (!callbacks || !callbacks->read || !callbacks->seek || !callbacks->size || !info) {
         if (status) *status = STREAM_DECODE_ERR_ARGS;
@@ -458,10 +516,19 @@ StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
         local_status = d->cancelled ? STREAM_DECODE_ERR_CANCELLED : STREAM_DECODE_ERR_OPEN;
         goto fail;
     }
-    /* Best effort, as in spine_decode.c: some containers decode fine with thinner metadata. */
-    (void)avformat_find_stream_info(d->fmt, NULL);
-
-    d->audio_idx = av_find_best_stream(d->fmt, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+    /* Best effort, as in spine_decode.c: some containers decode fine with thinner metadata.
+     * Skipped when the header already describes a lossless stream (#822): the probe's read-ahead is
+     * pure play-start latency there. */
+    int header_audio = (flags & STREAM_DECODE_FORCE_PROBE) ? -1 : header_described_audio_stream(d->fmt);
+    if (header_audio >= 0) {
+        info->skipped_probe = 1;
+        /* av_find_best_stream ignores a FLAC stream whose rate and channels are still 0, so take
+         * the one audio stream the check above found. */
+        d->audio_idx = header_audio;
+    } else {
+        (void)avformat_find_stream_info(d->fmt, NULL);
+        d->audio_idx = av_find_best_stream(d->fmt, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+    }
     if (d->audio_idx < 0) { local_status = STREAM_DECODE_ERR_NO_AUDIO; goto fail; }
 
     AVStream *stream = d->fmt->streams[d->audio_idx];

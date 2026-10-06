@@ -86,9 +86,17 @@ public final class FFmpegStreamDecoder {
     private var outputChannels: Int = 0
     private var handle: OpaquePointer?
 
-    public init(reader: StreamByteReader) {
+    /// Always run FFmpeg's stream-info probe, even where the header suffices. Tests set it to compare
+    /// the two paths.
+    private let forcesProbe: Bool
+    /// True when `open()` skipped `avformat_find_stream_info` because the header already described a
+    /// FLAC, ALAC or WAV stream (#822).
+    public private(set) var skippedProbe = false
+
+    public init(reader: StreamByteReader, forcesProbe: Bool = false) {
         self.reader = reader
         self.box = ReaderBox(reader: reader)
+        self.forcesProbe = forcesProbe
     }
 
     deinit {
@@ -132,13 +140,15 @@ public final class FFmpegStreamDecoder {
         var info = StreamAudioInfo()
         var status: Int32 = 0
         let opaque = Unmanaged.passUnretained(box).toOpaque()
-        guard let opened = stream_decoder_open(&callbacks, opaque, &info, &status) else {
+        let flags = forcesProbe ? Int32(STREAM_DECODE_FORCE_PROBE) : 0
+        guard let opened = stream_decoder_open_ex(&callbacks, opaque, flags, &info, &status) else {
             reason = status == Int32(STREAM_DECODE_ERR_CANCELLED.rawValue) ? .cancelled : .failure
             throw status == Int32(STREAM_DECODE_ERR_CANCELLED.rawValue)
                 ? StreamDecoderError.cancelled
                 : StreamDecoderError.failed(status: status)
         }
         handle = opened
+        skippedProbe = info.skipped_probe != 0
         let format = StreamAudioFormat(
             sampleRate: Double(info.sample_rate),
             channelCount: Int(info.channel_count),
