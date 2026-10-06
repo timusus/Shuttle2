@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import com.simplecityapps.createAlbum
+import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
@@ -69,6 +71,7 @@ class AlbumDetailViewModelTest {
 
     private val fakeSongRepository = FakeSongRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()
+    private val fakeAlbumArtistRepository = FakeAlbumArtistRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeQueueOperations = FakeQueueOperations()
 
@@ -186,6 +189,7 @@ class AlbumDetailViewModelTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1)))
         fakeAlbumRepository.applyQueryPredicates = true
         fakeAlbumRepository.setAlbums(listOf(featuring, several, orchardsOwn, pinesOwn))
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(createAlbumArtist(name = "The Tin Orchards", groupKey = orchards), createAlbumArtist(name = "Pines", groupKey = pines)))
 
         val featuringPage = createViewModel(featuring.groupKey)
         backgroundScope.launch { featuringPage.uiState.collect {} }
@@ -196,6 +200,8 @@ class AlbumDetailViewModelTest {
         backgroundScope.launch { severalPage.uiState.collect {} }
         advanceUntilIdle()
         severalPage.uiState.value.moreByArtist shouldBe listOf(pinesOwn, orchardsOwn, featuring)
+        severalPage.uiState.value.moreByArtistNames shouldBe listOf("The Tin Orchards", "Pines")
+        featuringPage.uiState.value.moreByArtistNames shouldBe listOf("The Tin Orchards")
     }
 
     @Test
@@ -259,11 +265,13 @@ class AlbumDetailViewModelTest {
             FakeQueueOperations(),
             playbackOperations = FakePlaybackOperations(),
             albumRepository = fakeAlbumRepository,
+            albumArtistRepository = fakeAlbumArtistRepository,
         )
         return AlbumDetailViewModel(
             groupKey = groupKey,
             observeSongs = testMediaActions.observeSongs,
             observeAlbums = testMediaActions.observeAlbums,
+            observeArtists = testMediaActions.observeArtists,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
         )

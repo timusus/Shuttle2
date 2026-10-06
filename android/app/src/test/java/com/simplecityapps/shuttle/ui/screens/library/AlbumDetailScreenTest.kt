@@ -99,6 +99,16 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `More by is titled from the album artists, not the album's raw tag`() {
+        val album = createAlbum(name = "Duets", albumArtist = "Juniper Static feat. Verdigris", songCount = 3, year = 2021)
+        val other = createAlbum(name = "Solo", albumArtist = "Verdigris", year = 2019)
+        robot.setAlbum(readyAlbumDetail(album = album, moreByArtist = listOf(other), moreByArtistNames = listOf("Juniper Static", "Verdigris")))
+
+        robot.scrollTo("More by Juniper Static, Verdigris")
+        robot.assertTextDisplayed("More by Juniper Static, Verdigris")
+    }
+
+    @Test
     fun `without other albums by the artist there is no More by shelf`() {
         robot.setAlbum(readyAlbumDetail())
 

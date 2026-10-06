@@ -40,7 +40,8 @@ fun readyAlbumDetail(
     songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
     moreByArtist: List<Album> = emptyList(),
-) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready, moreByArtist = moreByArtist)
+    moreByArtistNames: List<String> = if (moreByArtist.isEmpty()) emptyList() else listOfNotNull(album.albumArtist),
+) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready, moreByArtist = moreByArtist, moreByArtistNames = moreByArtistNames)
 
 val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.LoadingState.Loading)
 

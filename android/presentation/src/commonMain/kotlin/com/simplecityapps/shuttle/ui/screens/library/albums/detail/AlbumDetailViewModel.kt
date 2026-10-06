@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
+import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.PlayContext
@@ -12,6 +14,7 @@ import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
@@ -45,6 +48,8 @@ data class AlbumDetailUiState(
     val seed: ArtworkSeed = ArtworkSeed.None,
     /** The album artist's other albums, newest first, for the More by shelf; empty when the album has no album artist or is a compilation. */
     val moreByArtist: List<Album> = emptyList(),
+    /** The album artists [moreByArtist] is from, by name in the album's order ("A", "B" for "A feat. B"), for the shelf's title. */
+    val moreByArtistNames: List<String> = emptyList(),
 ) {
     /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = album?.playContext ?: PlayContext.None
@@ -60,6 +65,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumGroupKey?,
     observeSongs: ObserveSongs,
     observeAlbums: ObserveAlbums,
+    observeArtists: ObserveArtists,
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
 ) : ViewModel() {
@@ -83,10 +89,12 @@ class AlbumDetailViewModel @AssistedInject constructor(
      * empty so the Ready state never waits on it; it is empty for an album with no album artist, and for a compilation,
      * whose "Various Artists" is nobody's catalogue.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val moreByArtist: Flow<List<Album>> = album
+    private val moreByArtistKeys: Flow<Set<AlbumArtistGroupKey>> = album
         .map { album -> album?.albumArtistKeys.orEmpty().filterTo(LinkedHashSet()) { it.key != null && it.key != AlbumIdentityRule.artistKey(AlbumIdentityRule.VARIOUS_ARTISTS) } }
         .distinctUntilChanged()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val moreByArtist: Flow<List<Album>> = moreByArtistKeys
         .flatMapLatest { artistKeys ->
             if (artistKeys.isEmpty()) {
                 flowOf(emptyList())
@@ -97,13 +105,29 @@ class AlbumDetailViewModel @AssistedInject constructor(
         }
         .onStart { emit(emptyList()) }
 
+    /** The names of [moreByArtistKeys], in their order, so the shelf is titled from the artists it lists, not from the album's raw tag. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val moreByArtistNames: Flow<List<String>> = moreByArtistKeys
+        .flatMapLatest { artistKeys ->
+            if (artistKeys.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                observeArtists(AlbumArtistQuery.Credited()).map { artists ->
+                    val namesByKey = artists.associate { it.groupKey to it.name }
+                    artistKeys.mapNotNull { namesByKey[it]?.takeIf { name -> name.isNotBlank() } }
+                }
+            }
+        }
+        .distinctUntilChanged()
+        .onStart { emit(emptyList()) }
+
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        moreByArtist,
-    ) { songs, album, currentSong, seed, moreByArtist ->
+        combine(moreByArtist, moreByArtistNames, ::Pair),
+    ) { songs, album, currentSong, seed, (moreByArtist, moreByArtistNames) ->
         AlbumDetailUiState(
             album = album,
             songs = songs,
@@ -115,6 +139,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             },
             seed = seed,
             moreByArtist = moreByArtist,
+            moreByArtistNames = moreByArtistNames,
         )
     }.stateIn(
         scope = viewModelScope,
