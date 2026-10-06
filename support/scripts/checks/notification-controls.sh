@@ -5,6 +5,7 @@
 # shuffle and repeat set in the app show on the notification's buttons.
 source "$(dirname "$0")/_lib.sh"
 
+emu="${CHECKS_ROOT}/support/scripts/remote-emu.sh"
 trap 'adb_retry shell cmd statusbar collapse >/dev/null 2>&1 || true' EXIT
 
 start_playback

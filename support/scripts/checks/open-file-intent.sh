@@ -49,6 +49,9 @@ content_uri_for() { # remote_file
 }
 
 adb logcat -c -b crash
+# A fresh process, so back below acts on the opened file's screen, not a player or queue sheet an
+# earlier check in the suite left open (back would close that sheet first and stay in S2).
+adb_retry shell am force-stop "$APP_ID" >/dev/null
 
 # --- content:// (mp3) and file:// (FLAC) variants: each just has to play ---
 REMOTE_CONTENT_MP3="/sdcard/Download/opened-content.mp3"

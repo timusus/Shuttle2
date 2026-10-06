@@ -207,30 +207,25 @@ setup_taglib_provider() {
     [ "$(state libraryPlaylistCount)" -ge 2 ] || fail "the Shuttle/TagLib 'taglib' playlist never appeared after ${imports_sent} reimport attempt(s) -- see #371"
 }
 
-# The open queue sheet's song titles, top to bottom, comma-separated. The dump also holds the
-# player's header and bar and the library behind the sheet; the queue's nodes run from its "Up Next"
-# header to the bar's "Queue" button (or the older player's "Now Playing"). Each row is title, then an "Artist • Album" subtitle, then a duration; a
-# title is identified structurally (the text node right before a subtitle node), not by fixture
-# name, so this also matches the `taglib` fixture's titles and a tag edit's " (edited)" suffix.
-# A row's node dumped twice at the same bounds (seen once on API 37) is still one row.
+# The open queue sheet's song titles, top to bottom, comma-separated: history, the playing song
+# and Up Next, all in one list. Each row is title, artist subtitle, duration, then a Reorder handle,
+# so a title is identified structurally (the text three nodes before a Reorder), not by fixture
+# name; this also matches the `taglib` fixture's titles and a tag edit's " (edited)" suffix.
+# A row's handle dumped twice at the same bounds (seen once on API 37) is still one row.
 queue_titles() {
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" dump-texts \
         | python3 -c '
 import re, sys
-titles, seen, inside, prev = [], set(), False, None
+# Each queue row reads title, artist, duration, then its Reorder handle (the playing row also has a
+# "Now playing" desc between title and artist, which has no text= and is skipped here).
+texts, titles, seen = [], [], set()
 for line in sys.stdin:
-    if line.startswith("text=\"Up Next\""):
-        inside = True
-    elif line.startswith("text=\"Queue\"") or line.startswith("text=\"Now Playing\""):
-        inside = False  # read on to the end: an early exit would SIGPIPE dump-texts
-    elif inside:
-        m = re.match(r"text=\"([^\"]*)\" bounds=(\S+)", line)
-        if m and m.group(0) not in seen:
-            seen.add(m.group(0))
-            text = m.group(1)
-            if " • " in text and prev is not None:
-                titles.append(prev)
-            prev = text
+    m = re.match(r"text=\"([^\"]*)\" bounds=(\S+)", line)
+    if m:
+        texts.append(m.group(0))
+    elif line.startswith("desc=\"Reorder\"") and len(texts) >= 3 and line not in seen:
+        seen.add(line)
+        titles.append(re.match(r"text=\"([^\"]*)\"", texts[-3]).group(1))
 print(",".join(titles))'
 }
 

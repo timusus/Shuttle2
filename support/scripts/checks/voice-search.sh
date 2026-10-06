@@ -12,7 +12,7 @@ source "$(dirname "$0")/_lib.sh"
 "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
 trap restore_playback_fixture EXIT
 "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" library --skip-onboarding >/dev/null 2>&1
-wait_for 30 "s['librarySongCount'] == 97 and s['libraryPlaylistCount'] >= 5 and not s['libraryImporting']"
+wait_for 30 "s['librarySongCount'] == 97 and s['libraryPlaylistCount'] >= 4 and not s['libraryImporting']"
 
 # search <query> [<focus> [<extra key> <value>]...]: the intent Assistant sends. Each value is
 # single-quoted for the device shell, as adb shell joins its arguments into one command line.

@@ -1,11 +1,11 @@
-# #381: Now Playing in landscape. Opens the player from the mini player (tapped by position: its
-# title also matches the Songs page row behind it), rotates, and checks the title and transport
+# #381: Now Playing in landscape. Opens the player from the mini player (nav/open-now-playing.yaml,
+# which taps it by test tag), rotates, and checks the title and transport
 # controls are still there. Setup: something queued and paused (the wrapper, or any earlier check).
 appId: com.simplecityapps.shuttle.dev
 ---
-- runFlow: ../nav/launch-fresh.yaml
-- tapOn:
-    point: "30%, 86%"
+- runFlow: ../nav/open-now-playing.yaml
+- waitForAnimationToEnd:
+    timeout: 5000
 - extendedWaitUntil:
     visible: "Queue"
     timeout: 10000
