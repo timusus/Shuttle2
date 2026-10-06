@@ -133,8 +133,8 @@ val Song.rowSubtitle: String
 private val MosaicGap = 2.dp
 
 /**
- * Artwork from [covers] (#491, #646): a 2x2 mosaic of four albums' covers, the one cover when there are fewer, or
- * [placeholder] with none. [size] is the whole mosaic's; the caller's [modifier] may override it, as for [Artwork].
+ * Artwork from [covers] (#491, #646, #135): a 2x2 mosaic of four albums' covers, two or three filling the tile, the one
+ * cover alone, or [placeholder] with none. [size] is the whole mosaic's; the caller's [modifier] may override it, as for [Artwork].
  */
 @Composable
 fun CoverMosaic(
@@ -143,17 +143,34 @@ fun CoverMosaic(
     modifier: Modifier = Modifier,
     size: ArtworkSize = ArtworkSize.Medium,
 ) {
-    if (covers.size < MOSAIC_COVERS) {
+    if (covers.size < 2) {
         LibraryArtwork(covers.firstOrNull(), placeholder, modifier, size = size)
         return
     }
     val cellSize = if (size == ArtworkSize.Grid || size == ArtworkSize.Hero) ArtworkSize.Medium else ArtworkSize.Small
-    Column(modifier.size(size.dp), verticalArrangement = Arrangement.spacedBy(MosaicGap)) {
-        covers.take(MOSAIC_COVERS).chunked(2).forEach { pair ->
-            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MosaicGap)) {
-                pair.forEach { song ->
-                    LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.weight(1f).fillMaxHeight(), size = cellSize)
+    val gap = Arrangement.spacedBy(MosaicGap)
+
+    @Composable
+    fun Cell(song: Song, cellModifier: Modifier) = LibraryArtwork(song, ArtworkPlaceholder.Album, cellModifier, size = cellSize)
+    if (covers.size < MOSAIC_COVERS) {
+        // Two covers split the tile; three give the first the left half and stack the others on the right.
+        Row(modifier.size(size.dp), horizontalArrangement = gap) {
+            Cell(covers[0], Modifier.weight(1f).fillMaxHeight())
+            if (covers.size == 2) {
+                Cell(covers[1], Modifier.weight(1f).fillMaxHeight())
+            } else {
+                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = gap) {
+                    Cell(covers[1], Modifier.weight(1f).fillMaxWidth())
+                    Cell(covers[2], Modifier.weight(1f).fillMaxWidth())
                 }
+            }
+        }
+        return
+    }
+    Column(modifier.size(size.dp), verticalArrangement = gap) {
+        covers.take(MOSAIC_COVERS).chunked(2).forEach { pair ->
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = gap) {
+                pair.forEach { song -> Cell(song, Modifier.weight(1f).fillMaxHeight()) }
             }
         }
     }

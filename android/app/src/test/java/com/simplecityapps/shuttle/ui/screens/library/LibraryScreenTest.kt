@@ -492,6 +492,20 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `genres page still lists and opens a genre that has a cover patchwork (#135)`() {
+        val genre = createGenre(name = "Shoegaze")
+        val covers = (1..4L).map { createSong(id = it, name = "Track $it", album = "Album $it") }
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Genres),
+            pages = LibraryPageStates(genres = readyGenreList(listOf(genre)), genreCovers = mapOf("Shoegaze" to covers)),
+        )
+
+        robot.clickText("Shoegaze")
+
+        robot.lastGenreClicked shouldBe genre
+    }
+
+    @Test
     fun `playlists page lists smart playlists, opens a playlist and starts a new one`() {
         val playlist = createPlaylist(name = "Road trip")
         val smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist }

@@ -64,6 +64,7 @@ data class LibraryPageStates(
     val genres: GenreListUiState? = null,
     val playlists: PlaylistListUiState? = null,
     val folders: FolderListUiState? = null,
+    val genreCovers: Map<String, List<Song>> = emptyMap(),
 )
 
 /**
@@ -218,7 +219,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             }
 
             LibraryTab.Genres -> pages.genres?.let {
-                GenresPage(it, onGenreClick = { g -> lastGenreClicked = g }, onGenreMore = { g -> lastMore = g }, controls = controls)
+                GenresPage(it, onGenreClick = { g -> lastGenreClicked = g }, onGenreMore = { g -> lastMore = g }, controls = controls, covers = pages.genreCovers)
             }
 
             LibraryTab.Playlists -> pages.playlists?.let {

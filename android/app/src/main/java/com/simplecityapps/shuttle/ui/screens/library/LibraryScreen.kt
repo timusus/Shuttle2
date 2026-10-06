@@ -90,6 +90,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListEvent
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.genres.GenreCoversViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
@@ -490,8 +491,11 @@ private fun LibraryPage(
         LibraryTab.Genres -> {
             val viewModel: GenreListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val coversViewModel: GenreCoversViewModel = metroViewModel()
+            val covers by coversViewModel.uiState.collectAsStateWithLifecycle()
             GenresPage(
                 state = state,
+                covers = covers,
                 onGenreClick = { genre -> onOpen(GenreRoute(genre.name)) },
                 onGenreMore = { genre -> actions.showActions(MediaActionsTarget(genre.name, null, MediaSelection.Genres(genre), ArtworkPlaceholder.Genre)) },
                 controls = controls,

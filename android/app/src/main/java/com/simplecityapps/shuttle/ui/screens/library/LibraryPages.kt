@@ -411,7 +411,7 @@ private fun artistThumbLabel(sortOrder: AlbumArtistSortOrder): ((AlbumArtist) ->
     AlbumArtistSortOrder.Default, AlbumArtistSortOrder.PlayCount -> null
 }
 
-/** Genres: a list, no multi-select (inventory §1). */
+/** Genres: a list, no multi-select (inventory §1). [covers] are each genre's album covers by name (#135), the placeholder until they load. */
 @Composable
 fun GenresPage(
     state: GenreListUiState,
@@ -419,6 +419,7 @@ fun GenresPage(
     onGenreMore: (Genre) -> Unit,
     modifier: Modifier = Modifier,
     controls: LibraryTabControls? = null,
+    covers: Map<String, List<Song>> = emptyMap(),
 ) {
     val content = when (state.loadingState) {
         GenreListUiState.LoadingState.Loading -> LibraryContentState.Loading
@@ -439,7 +440,7 @@ fun GenresPage(
                         songCount = pluralString(R.plurals.songsPlural, genre.songCount),
                         onClick = { onGenreClick(genre) },
                         onMore = { onGenreMore(genre) },
-                        artwork = { LibraryArtwork(null, ArtworkPlaceholder.Genre) },
+                        artwork = { CoverMosaic(covers[genre.name].orEmpty(), ArtworkPlaceholder.Genre) },
                     )
                 }
             }

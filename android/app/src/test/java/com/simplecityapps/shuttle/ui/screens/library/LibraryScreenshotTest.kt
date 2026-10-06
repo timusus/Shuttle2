@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.readyAlbumArtistList
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
+import com.simplecityapps.shuttle.ui.screens.library.genres.readyGenreList
 import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
 import java.io.File
@@ -160,6 +161,24 @@ class LibraryScreenshotTest {
             ),
         )
         shot("phone-playlists")
+    }
+
+    /** Each genre's tile is a 2x2 patchwork of its albums' covers (#135). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneGenres() {
+        val genres = SampleLibrary.genres.map { it.toGenre() }
+        library.setContent(
+            libraryState(currentTab = LibraryTab.Genres),
+            libraryControls("${genres.size} genres", sorts("Genre Name", "Song Count"), ViewMode.List, onPlay = {}, onShuffle = {}),
+            LibraryPageStates(
+                genres = readyGenreList(genres),
+                genreCovers = SampleLibrary.genres.associate { genre ->
+                    genre.name to genre.songs.map { it.toSong() }.distinctBy { it.albumGroupKey }.take(4)
+                },
+            ),
+        )
+        shot("phone-genres")
     }
 
     @Test
