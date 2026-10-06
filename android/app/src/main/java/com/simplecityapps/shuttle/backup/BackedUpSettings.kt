@@ -6,6 +6,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -37,6 +38,7 @@ internal object BackedUpSettings {
         AppearanceSettings.ShowHomeOnLaunch,
         AppearanceSettings.WidgetBackgroundOpacity,
         PlayerSettings.ShowRemainingTime,
+        ArtistSettings.ShowCreditedArtists,
         ArtworkSettings.WifiOnly,
         ArtworkSettings.LocalOnly,
         ArtworkSettings.MediaSessionArtwork,

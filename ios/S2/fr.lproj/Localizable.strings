@@ -128,6 +128,10 @@
 "pref_artwork_local_only_subtitle" = "Ne pas télécharger de pochettes à partir de sources distantes (Internet)";
 "pref_media_session_artwork_title" = "Pochette de la session médiatique";
 "pref_media_session_artwork_subtitle" = "Fournir des pochettes à la session multimédia d'Android. Désactiver pour empêcher les illustrations de l'écran de verrouillage";
+"pref_now_playing_artwork_title" = "Now playing artwork";
+"pref_now_playing_artwork_subtitle" = "Show the album art, or the artist's image for every song by them. Falls back to the album art when an artist has no image";
+"now_playing_artwork_entry_album_art" = "Album art";
+"now_playing_artwork_entry_artist_image" = "Artist image";
 "pref_clear_artwork_title" = "Effacer la pochette";
 "pref_clear_artwork_subtitle" = "Supprime toutes les pochettes mises en cache";
 "settings_dialog_title_clear_artwork" = "Effacer l'illustration";
@@ -146,6 +150,9 @@
 "settings_group_advanced" = "Advanced";
 "settings_group_streaming_and_downloads" = "Streaming & downloads";
 "settings_group_scanning" = "Scanning";
+"settings_group_artists" = "Artists";
+"pref_show_credited_artists_title" = "Show featured artists";
+"pref_show_credited_artists_summary" = "List artists who only appear on other artists' albums or compilations";
 "pref_file_logging_title" = "Journalisation des fichiers";
 "pref_file_logging_subtitle" = "Écrit les journaux dans un fichier sur le disque";
 "pref_share_debug_logs_title" = "Partager les journaux de débogage";

@@ -128,6 +128,10 @@
 "pref_artwork_local_only_subtitle" = "No descargar portadas de fuentes remotas (Internet)";
 "pref_media_session_artwork_title" = "Portada de sesión multimedia";
 "pref_media_session_artwork_subtitle" = "Suministra la portada de la sesión multimedia de Android. Desactivar para evitar las portadas de la pantalla de bloqueo";
+"pref_now_playing_artwork_title" = "Now playing artwork";
+"pref_now_playing_artwork_subtitle" = "Show the album art, or the artist's image for every song by them. Falls back to the album art when an artist has no image";
+"now_playing_artwork_entry_album_art" = "Album art";
+"now_playing_artwork_entry_artist_image" = "Artist image";
 "pref_clear_artwork_title" = "Borrar portada";
 "pref_clear_artwork_subtitle" = "Elimina todas las portadas almacenadas en caché";
 "settings_dialog_title_clear_artwork" = "Borrar portadas";
@@ -146,6 +150,9 @@
 "settings_group_advanced" = "Advanced";
 "settings_group_streaming_and_downloads" = "Streaming & downloads";
 "settings_group_scanning" = "Scanning";
+"settings_group_artists" = "Artists";
+"pref_show_credited_artists_title" = "Show featured artists";
+"pref_show_credited_artists_summary" = "List artists who only appear on other artists' albums or compilations";
 "pref_file_logging_title" = "Registro de depuración";
 "pref_file_logging_subtitle" = "Escribe registros en un archivo en el disco";
 "pref_share_debug_logs_title" = "Compartir registros de depuración";

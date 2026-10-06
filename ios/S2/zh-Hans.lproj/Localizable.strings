@@ -128,6 +128,10 @@
 "pref_artwork_local_only_subtitle" = "不要从远程（互联网）资源中下载专辑封面";
 "pref_media_session_artwork_title" = "主屏幕";
 "pref_media_session_artwork_subtitle" = "设置专辑封面为主屏幕。";
+"pref_now_playing_artwork_title" = "Now playing artwork";
+"pref_now_playing_artwork_subtitle" = "Show the album art, or the artist's image for every song by them. Falls back to the album art when an artist has no image";
+"now_playing_artwork_entry_album_art" = "Album art";
+"now_playing_artwork_entry_artist_image" = "Artist image";
 "pref_clear_artwork_title" = "清除专辑封面";
 "pref_clear_artwork_subtitle" = "移除所有已缓存封面";
 "settings_dialog_title_clear_artwork" = "清除封面";
@@ -146,6 +150,9 @@
 "settings_group_advanced" = "Advanced";
 "settings_group_streaming_and_downloads" = "Streaming & downloads";
 "settings_group_scanning" = "Scanning";
+"settings_group_artists" = "Artists";
+"pref_show_credited_artists_title" = "Show featured artists";
+"pref_show_credited_artists_summary" = "List artists who only appear on other artists' albums or compilations";
 "pref_file_logging_title" = "调试日志";
 "pref_file_logging_subtitle" = "将调试日志写入到设备文件";
 "pref_share_debug_logs_title" = "分享调试日志";

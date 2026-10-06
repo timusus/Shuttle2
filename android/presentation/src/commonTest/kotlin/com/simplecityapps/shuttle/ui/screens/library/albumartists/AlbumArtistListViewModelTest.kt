@@ -8,6 +8,11 @@ import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.settings.ArtistSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
+import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
@@ -40,15 +45,38 @@ class AlbumArtistListViewModelTest {
     private val repository = FakeAlbumArtistRepository()
     private val sortPreferences = FakeSortPreferences()
     private val preferences = fakeLibraryViewPreferences(sort = sortPreferences)
+    private val settingsStore = SettingsStore(InMemoryKeyValueStore())
 
     private val importState = FakeSongImportStateProvider()
 
     private fun viewModel() = AlbumArtistListViewModel(
         observeArtists = ObserveArtists(repository),
+        observeSetting = ObserveSetting(settingsStore),
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
     )
+
+    @Test
+    fun `the list holds album artists only until the setting adds those only credited on others' albums`() = runTest {
+        repository.applyQueryPredicates = true
+        repository.setAlbumArtists(
+            listOf(
+                createAlbumArtist(name = "Calvin Harris", albumCount = 1),
+                createAlbumArtist(name = "Rihanna", albumCount = 0),
+            )
+        )
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.albumArtists.map { it.name } shouldBe listOf("Calvin Harris")
+
+        SaveSetting(settingsStore)(ArtistSettings.ShowCreditedArtists, true)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.albumArtists.map { it.name } shouldBe listOf("Calvin Harris", "Rihanna")
+    }
 
     @Test
     fun `artists list by name with a letter index until another sort is chosen`() = runTest {

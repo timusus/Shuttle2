@@ -181,6 +181,9 @@ val StringKey.resId: Int
         StringKey.SETTINGS_GROUP_ADVANCED -> R.string.settings_group_advanced
         StringKey.SETTINGS_GROUP_STREAMING_AND_DOWNLOADS -> R.string.settings_group_streaming_and_downloads
         StringKey.SETTINGS_GROUP_SCANNING -> R.string.settings_group_scanning
+        StringKey.SETTINGS_GROUP_ARTISTS -> R.string.settings_group_artists
+        StringKey.PREF_SHOW_CREDITED_ARTISTS_TITLE -> R.string.pref_show_credited_artists_title
+        StringKey.PREF_SHOW_CREDITED_ARTISTS_SUMMARY -> R.string.pref_show_credited_artists_summary
         StringKey.PREF_FILE_LOGGING_TITLE -> R.string.pref_file_logging_title
         StringKey.PREF_FILE_LOGGING_SUBTITLE -> R.string.pref_file_logging_subtitle
         StringKey.PREF_SHARE_DEBUG_LOGS_TITLE -> R.string.pref_share_debug_logs_title

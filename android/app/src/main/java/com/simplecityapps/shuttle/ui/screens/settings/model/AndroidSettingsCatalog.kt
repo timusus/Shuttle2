@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MinTrackLength
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.DownloadSettings
@@ -257,6 +258,16 @@ object AndroidSettingsCatalog : SettingsCatalog {
                             ChoiceOption(MinTrackLength.ThirtySeconds, StringKey.PREF_MIN_TRACK_LENGTH_30_SECONDS),
                             ChoiceOption(MinTrackLength.SixtySeconds, StringKey.PREF_MIN_TRACK_LENGTH_60_SECONDS)
                         )
+                    )
+                )
+            ),
+            SettingsGroup(
+                title = StringKey.SETTINGS_GROUP_ARTISTS,
+                items = listOf(
+                    SettingItem.Switch(
+                        setting = ArtistSettings.ShowCreditedArtists,
+                        title = StringKey.PREF_SHOW_CREDITED_ARTISTS_TITLE,
+                        summary = StringKey.PREF_SHOW_CREDITED_ARTISTS_SUMMARY
                     )
                 )
             ),

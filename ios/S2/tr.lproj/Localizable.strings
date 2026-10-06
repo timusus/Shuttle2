@@ -128,6 +128,10 @@
 "pref_artwork_local_only_subtitle" = "Uzak (internet) kaynaklardan resim indirmeyin";
 "pref_media_session_artwork_title" = "Medya oturumu resmi";
 "pref_media_session_artwork_subtitle" = "Android'in Medya Oturumuna sanat eseri sağlayın. Kilit ekranı resmini önlemek için devre dışı bırak";
+"pref_now_playing_artwork_title" = "Now playing artwork";
+"pref_now_playing_artwork_subtitle" = "Show the album art, or the artist's image for every song by them. Falls back to the album art when an artist has no image";
+"now_playing_artwork_entry_album_art" = "Album art";
+"now_playing_artwork_entry_artist_image" = "Artist image";
 "pref_clear_artwork_title" = "Albüm Kapağını temizle";
 "pref_clear_artwork_subtitle" = "Önbelleğe alınmış tüm resimleri kaldırır";
 "settings_dialog_title_clear_artwork" = "Albüm Kapaklarını Sil";
@@ -146,6 +150,9 @@
 "settings_group_advanced" = "Advanced";
 "settings_group_streaming_and_downloads" = "Streaming & downloads";
 "settings_group_scanning" = "Scanning";
+"settings_group_artists" = "Artists";
+"pref_show_credited_artists_title" = "Show featured artists";
+"pref_show_credited_artists_summary" = "List artists who only appear on other artists' albums or compilations";
 "pref_file_logging_title" = "Hata ayıklama günlüğü";
 "pref_file_logging_subtitle" = "Hata ayıklama günlüklerini diskteki bir dosyaya yazar";
 "pref_share_debug_logs_title" = "Hata ayıklama günlüklerini paylaş";

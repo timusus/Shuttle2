@@ -180,6 +180,12 @@
     <string name="settings_group_streaming_and_downloads">Streaming &amp; downloads</string>
     <!-- Settings: Title of the Library group that holds the scan schedule and excluded songs -->
     <string name="settings_group_scanning">Scanning</string>
+    <!-- Settings: Title of the Library group that holds the Artists list's options -->
+    <string name="settings_group_artists">Artists</string>
+    <!-- Settings: Title of the switch that also lists artists who have no album of their own, only songs on others' albums -->
+    <string name="pref_show_credited_artists_title">Show featured artists</string>
+    <!-- Settings: Summary of the switch that also lists artists who have no album of their own -->
+    <string name="pref_show_credited_artists_summary">List artists who only appear on other artists\' albums or compilations</string>
     <!-- Settings: Summary of the Sources row on the Settings screen. %1$s is the streaming quality used on mobile data, e.g. "320 kbps" -->
     <string name="settings_sources_summary_streaming">%1$s on mobile data</string>
     <!-- Settings: Summary of the Library row on the Settings screen. %1$s is how often the library rescans, e.g. "Weekly" or "Never" -->

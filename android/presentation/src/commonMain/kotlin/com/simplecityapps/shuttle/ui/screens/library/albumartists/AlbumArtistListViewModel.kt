@@ -5,8 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.comparator
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.settings.ArtistSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.albumArtistLetterIndex
@@ -21,10 +24,13 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 
 data class AlbumArtistListUiState(
@@ -47,6 +53,7 @@ data class AlbumArtistListUiState(
 @ContributesIntoMap(AppScope::class)
 class AlbumArtistListViewModel @Inject constructor(
     observeArtists: ObserveArtists,
+    observeSetting: ObserveSetting,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
@@ -59,7 +66,13 @@ class AlbumArtistListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.ArtistSort))
 
     // Sorted and indexed as the library or the sort changes, not on each import progress tick (#627).
-    private val sortedArtists = combine(observeArtists(), _sortOrder) { albumArtists, sortOrder ->
+    // The album artists, or with ArtistSettings.ShowCreditedArtists on, every artist a song credits as well (#637).
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val artists = observeSetting(ArtistSettings.ShowCreditedArtists)
+        .distinctUntilChanged()
+        .flatMapLatest { showCredited -> observeArtists(if (showCredited) AlbumArtistQuery.Credited() else AlbumArtistQuery.All()) }
+
+    private val sortedArtists = combine(artists, _sortOrder) { albumArtists, sortOrder ->
         val sorted = albumArtists.sortedWith(sortOrder.comparator)
         IndexedList(sorted, sortOrder, albumArtistLetterIndex(sorted, sortOrder))
     }
