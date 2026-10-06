@@ -133,7 +133,7 @@ class LocalPlaylistRepository(
     override suspend fun addToPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) {
+    ) = serverEdit(playlist) {
         val next = (playlistSongJoinDao.maxSortOrder(playlist.id) ?: -1L) + 1
         playlistSongJoinDao.insert(
             songs.inLibrary().mapIndexed { i, song ->
@@ -151,7 +151,7 @@ class LocalPlaylistRepository(
     override suspend fun removeFromPlaylist(
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
-    ) {
+    ) = serverEdit(playlist) {
         playlistSongJoinDao.delete(
             playlistId = playlist.id,
             playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
@@ -163,7 +163,7 @@ class LocalPlaylistRepository(
     override suspend fun removeSongsFromPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) {
+    ) = serverEdit(playlist) {
         playlistSongJoinDao.deleteSongs(
             playlistId = playlist.id,
             songIds = songs.map { it.id }.toTypedArray()
@@ -192,14 +192,14 @@ class LocalPlaylistRepository(
         entries.map { entry -> index.identities[entry.song.id]?.let { entry.copy(song = entry.song.copy(albumIdentity = it)) } ?: entry }
     }
 
-    override suspend fun deletePlaylist(playlist: Playlist) {
+    override suspend fun deletePlaylist(playlist: Playlist) = serverEdit(playlist) {
         playlistDataDao.delete(playlist.id)
         sendToServer(playlist) { playlistId -> PlaylistEdit.Delete(playlistId) }
     }
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = playlistDataDao.deleteAll(mediaProviderType)
 
-    override suspend fun clearPlaylist(playlist: Playlist) {
+    override suspend fun clearPlaylist(playlist: Playlist) = serverEdit(playlist) {
         val songs = if (sendsToServer(playlist)) playlistSongJoinDao.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty().map { playlistSong -> playlistSong.song } else emptyList()
         playlistDataDao.clear(playlist.id)
         syncM3uFile(playlist)
@@ -209,7 +209,7 @@ class LocalPlaylistRepository(
     override suspend fun renamePlaylist(
         playlist: Playlist,
         name: String
-    ) {
+    ) = serverEdit(playlist) {
         playlistDataDao.update(
             PlaylistData(
                 id = playlist.id,
@@ -243,7 +243,7 @@ class LocalPlaylistRepository(
     override suspend fun updatePlaylistSongsSortOder(
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
-    ) {
+    ) = serverEdit(playlist) {
         playlistSongJoinDao.updateSortOrder(
             playlistSongs.map { playlistSong ->
                 PlaylistSongJoin(
@@ -261,6 +261,18 @@ class LocalPlaylistRepository(
             val songs = playlistSongJoinDao.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty().sortedBy { playlistSong -> playlistSong.sortOrder }
             sendToServer(playlist, songs.map { playlistSong -> playlistSong.song }) { playlistId, paths -> PlaylistEdit.Reorder(playlistId, paths) }
         }
+    }
+
+    /**
+     * Runs [edit], an edit to [playlist] in S2 that ends by queueing it for the server, as one step against an import's write of
+     * the server's playlists (#919): the import can't overwrite the edit before it's queued.
+     */
+    private suspend fun serverEdit(
+        playlist: Playlist,
+        edit: suspend () -> Unit
+    ) {
+        val sync = serverSync
+        if (sync != null && sendsToServer(playlist)) sync.editing(edit) else edit()
     }
 
     private fun sendsToServer(playlist: Playlist): Boolean = playlist.mediaProvider.remote && playlist.externalId != null && serverSync?.handles(playlist.mediaProvider) == true

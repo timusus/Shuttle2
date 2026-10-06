@@ -729,29 +729,9 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Success -> {
-                    val held = playlistSync?.pendingPlaylistIds(mediaProvider.type).orEmpty()
-                    if (held.isNotEmpty()) {
-                        logger.info { "${mediaProvider.type}: ${held.size} playlists left as they are until their edits reach the server" }
-                    }
-                    if (reconcile) {
-                        val listing = event.result.holdingBack(held)
-                        val lastServerSongs = preferenceManager.playlistServerSongs(source)
-                        val songIds by lazy { existingSongs.associate { song -> song.path to song.id } }
-                        playlistStore.reconcilePlaylists(
-                            mediaProvider.type,
-                            listing,
-                            listingComplete = event.complete,
-                            lastServerSongs = lastServerSongs.mapValues { (_, paths) -> paths.mapNotNullTo(HashSet()) { path -> songIds[path] } }
-                        )
-                        preferenceManager.setPlaylistVersions(source, listing.versions)
-                        preferenceManager.setPlaylistServerSongs(source, serverSongsAfter(listing, lastServerSongs))
-                    } else {
-                        event.result.playlists.forEach { playlistUpdateData ->
-                            if (playlistUpdateData.songs.isNotEmpty() && playlistUpdateData.externalId !in held) {
-                                playlistStore.storePlaylist(playlistUpdateData)
-                            }
-                        }
-                    }
+                    // The edits are read as the playlists are written, with the queue held, so none lands in between
+                    val write: suspend (Set<String>) -> Unit = { held -> writePlaylists(mediaProvider.type, event, held, reconcile, existingSongs) }
+                    playlistSync?.withPendingPlaylistIds(mediaProvider.type, write) ?: write(emptySet())
                 }
 
                 is FlowEvent.Failure -> {
@@ -761,6 +741,39 @@ class MediaImporter(
         }
         timings.findPlaylists = findPlaylistsMark.elapsedNow()
         emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
+    }
+
+    /** Stores the playlists [event] found, leaving those in [held] (edited in S2, not yet on the server) as they are. */
+    private suspend fun writePlaylists(
+        type: MediaProviderType,
+        event: FlowEvent.Success<PlaylistListing>,
+        held: Set<String>,
+        reconcile: Boolean,
+        existingSongs: List<Song>
+    ) {
+        val source = type.name
+        if (held.isNotEmpty()) {
+            logger.info { "$type: ${held.size} playlists left as they are until their edits reach the server" }
+        }
+        if (reconcile) {
+            val listing = event.result.holdingBack(held)
+            val lastServerSongs = preferenceManager.playlistServerSongs(source)
+            val songIds by lazy { existingSongs.associate { song -> song.path to song.id } }
+            playlistStore.reconcilePlaylists(
+                type,
+                listing,
+                listingComplete = event.complete,
+                lastServerSongs = lastServerSongs.mapValues { (_, paths) -> paths.mapNotNullTo(HashSet()) { path -> songIds[path] } }
+            )
+            preferenceManager.setPlaylistVersions(source, listing.versions)
+            preferenceManager.setPlaylistServerSongs(source, serverSongsAfter(listing, lastServerSongs))
+        } else {
+            event.result.playlists.forEach { playlistUpdateData ->
+                if (playlistUpdateData.songs.isNotEmpty() && playlistUpdateData.externalId !in held) {
+                    playlistStore.storePlaylist(playlistUpdateData)
+                }
+            }
+        }
     }
 
     /**

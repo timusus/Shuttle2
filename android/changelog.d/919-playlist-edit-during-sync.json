@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Fixed a playlist change made while a Jellyfin, Emby or Plex library sync was running sometimes being undone.", "commits": [] }

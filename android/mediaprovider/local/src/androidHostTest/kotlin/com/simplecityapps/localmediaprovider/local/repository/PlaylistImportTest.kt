@@ -9,6 +9,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
@@ -30,12 +31,15 @@ import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -397,6 +401,47 @@ class PlaylistImportTest {
 
         server.playlists[PLAYLIST_ID] shouldBe listOf(A, C)
         importedPlaylistPaths() shouldBe listOf(A, C)
+        playlistSync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
+    }
+
+    @Test
+    fun `an edit made as an import writes the playlists waits for the write - then stays in S2 and reaches the server`() = runBlocking<Unit> {
+        server.songPaths = listOf(A, B, C)
+        server.playlists = mapOf(PLAYLIST_ID to listOf(A, B, C))
+        syncedImporter.import()
+        val playlist = serverPlaylist()
+        val entriesOfB = database.playlistSongJoinDataDao().getSongsForPlaylist(playlist.id).first().filter { entry -> entry.song.path == B }
+        var edited: Job? = null
+        // The edit starts once the import has fetched the server's playlist, just before it writes it
+        val racingStore =
+            object : ImportedPlaylistStore by syncedPlaylistRepository {
+                override suspend fun reconcilePlaylists(
+                    type: MediaProviderType,
+                    listing: MediaImporter.PlaylistListing,
+                    listingComplete: Boolean,
+                    lastServerSongs: Map<String, Set<Long>>
+                ) {
+                    edited = scope.launch { syncedPlaylistRepository.removeFromPlaylist(playlist, entriesOfB) }
+                    delay(200)
+                    syncedPlaylistRepository.reconcilePlaylists(type, listing, listingComplete, lastServerSongs)
+                }
+            }
+        val racingImporter =
+            MediaImporter(
+                strings = ResourceMediaImportStrings(context),
+                songRepository = songRepository,
+                playlistStore = racingStore,
+                preferenceManager = preferences,
+                afterImport = {},
+                playlistSync = playlistSync
+            ).apply { mediaProviders += server }
+
+        racingImporter.import()
+        edited!!.join()
+
+        importedPlaylistPaths() shouldBe listOf(A, C)
+        playlistSync.send(MediaProviderType.Jellyfin)
+        server.playlists[PLAYLIST_ID] shouldBe listOf(A, C)
         playlistSync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
     }
 

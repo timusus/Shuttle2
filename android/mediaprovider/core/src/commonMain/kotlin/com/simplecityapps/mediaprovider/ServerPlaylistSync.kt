@@ -75,6 +75,9 @@ class ServerPlaylistSync(
     /** Guards each read-modify-write of the queue: edits are added while it's being sent. */
     private val queueLock = Mutex()
 
+    /** Held by an edit in S2 from making it until it's queued, and by an import while it reads the queue and writes playlists. Taken before [queueLock]. */
+    private val editLock = Mutex()
+
     /** One sender per server at a time, so edits go in order; an import holds it while it reads that server's playlists. */
     private val sendLocks = this.writers.mapValues { Mutex() }
 
@@ -121,6 +124,22 @@ class ServerPlaylistSync(
      * edits yet, so reading its playlist now would undo them.
      */
     suspend fun pendingPlaylistIds(type: MediaProviderType): Set<String> = queueLock.withLock { pending(type) }.mapTo(mutableSetOf()) { edit -> edit.playlistId }
+
+    /**
+     * Runs [block], which writes the imported playlists, with the ids [pendingPlaylistIds] holds, and holds off [editing] until
+     * it's done: an edit is never made, nor queued, between reading the ids and writing, where the import would overwrite it
+     * with the server's playlist from before it (#919).
+     */
+    suspend fun <T> withPendingPlaylistIds(
+        type: MediaProviderType,
+        block: suspend (Set<String>) -> T
+    ): T = editLock.withLock { block(pendingPlaylistIds(type)) }
+
+    /**
+     * Runs [block], which makes an edit in S2 and [enqueue]s it, as one step against [withPendingPlaylistIds]: an import
+     * writes either before the edit or once it's queued, so it leaves the edit in S2 until the server has it.
+     */
+    suspend fun <T> editing(block: suspend () -> T): T = editLock.withLock { block() }
 
     private suspend fun sendQueued(type: MediaProviderType) {
         val writer = writers[type] ?: return
