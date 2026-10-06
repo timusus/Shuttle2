@@ -326,4 +326,5 @@ constructor(
     }
 }
 
-class PlayQueue(val songs: List<Song>, val position: Int)
+/** [songs] to play from [position]; when [shuffled], with shuffle mode on and [songs] kept in their own order underneath. */
+class PlayQueue(val songs: List<Song>, val position: Int, val shuffled: Boolean = false)

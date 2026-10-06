@@ -262,9 +262,13 @@ class MediaSessionSpecTest {
         queue.queueStateFlow.value.currentItem?.song shouldBe blue[1]
 
         playRequest(harness, browser, searchItem("folk", MediaStore.Audio.Genres.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_GENRE to "Folk"))
-        // A genre plays shuffled: all its songs, in any order.
-        queue.getQueue().map { it.song }.toSet() shouldBe blue.toSet()
-        queue.getQueue().size shouldBe blue.size
+        // A genre plays with shuffle on: the base queue stays in library order, so turning shuffle off restores it.
+        queue.getShuffleMode() shouldBe ShuffleMode.On
+        queue.getQueue(ShuffleMode.Off).map { it.song } shouldBe blue
+        queue.getQueue(ShuffleMode.On).map { it.song }.toSet() shouldBe blue.toSet()
+
+        // Shuffle mode stays on for the next request, so turn it off to read the playlist's own order.
+        harness.playback.run { queue.setShuffleMode(ShuffleMode.Off, reshuffle = false) }
 
         playRequest(harness, browser, searchItem("sunday morning", MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_PLAYLIST to "Sunday Morning"))
         queue.getQueue().map { it.song } shouldBe listOf(other, blue[0])
@@ -283,7 +287,9 @@ class MediaSessionSpecTest {
 
         // "Play music" with no queue: every song, shuffled.
         playRequest(harness, browser, searchItem("  "))
-        queue.getQueue().map { it.song }.toSet() shouldBe songs.toSet()
+        queue.getShuffleMode() shouldBe ShuffleMode.On
+        queue.getQueue(ShuffleMode.Off).map { it.song } shouldBe songs
+        queue.getQueue(ShuffleMode.On).map { it.song }.toSet() shouldBe songs.toSet()
 
         // With a queue: it plays as it is, from where it was, whether the search is blank or names nothing at all.
         harness.playback.run { queue.setQueue(songs.take(3), position = 1) }

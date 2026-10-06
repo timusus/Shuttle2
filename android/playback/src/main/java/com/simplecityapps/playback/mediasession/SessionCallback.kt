@@ -271,7 +271,7 @@ class SessionCallback(
         if (playQueue == null || playQueue.songs.isEmpty()) {
             throw UnsupportedOperationException("Nothing to play for ${mediaItems.map { it.mediaId }}")
         }
-        playRequests.setQueue(playQueue.songs, playQueue.position.coerceAtLeast(0), source = "onSetMediaItems")
+        playRequests.setQueue(playQueue.songs, playQueue.position.coerceAtLeast(0), source = "onSetMediaItems", shuffled = playQueue.shuffled)
         currentItems(mediaSession.player)
     }
 

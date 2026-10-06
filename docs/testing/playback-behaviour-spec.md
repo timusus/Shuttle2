@@ -338,7 +338,7 @@ recents doesn't open the file again. (#425) — device-only (`checks/open-file-i
 
 **RS-60: a voice search plays the closest match for what it names.** Given a library, when a voice search
 ("play Radiohead on S2") focuses on an artist, album, song, genre or playlist, by the parts Assistant parses out or
-by its words, then that plays: an artist's songs, an album or a playlist in order, a genre's songs shuffled, or a song followed by
+by its words, then that plays: an artist's songs, an album or a playlist in order, a genre's songs with shuffle on (the queue itself stays in library order), or a song followed by
 the rest of its album. A search with no focus matches every kind and plays the best match, an artist over an album,
 a playlist, a song and a genre where they match as well; a song can be named with its artist ("Creep by
 Radiohead"). Case, accents, punctuation and a leading "the" don't count, and a name misheard, misspelt or with words

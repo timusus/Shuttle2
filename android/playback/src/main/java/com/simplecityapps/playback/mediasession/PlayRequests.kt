@@ -66,13 +66,13 @@ constructor(
      * that finds nothing (an empty library) is an empty queue.
      */
     suspend fun queueForSearch(query: String?, extras: Bundle?): PlayQueue? = when (val result = voiceSearchResolver.resolve(VoiceSearch.from(query, extras))) {
-        is VoiceSearchResult.Songs -> if (result.shuffled) PlayQueue(result.songs.shuffled(), 0) else PlayQueue(result.songs, result.position)
+        is VoiceSearchResult.Songs -> PlayQueue(result.songs, if (result.shuffled) 0 else result.position, result.shuffled)
 
         VoiceSearchResult.Empty -> PlayQueue(emptyList(), 0)
 
         VoiceSearchResult.Anything -> {
             queueOperations.queueStateFlow.awaitRestored()
-            if (queueOperations.getQueue().isNotEmpty()) null else PlayQueue(librarySongs().shuffled(), 0)
+            if (queueOperations.getQueue().isNotEmpty()) null else PlayQueue(librarySongs(), 0, shuffled = true)
         }
     }.also { playQueue ->
         if (playQueue?.songs?.isEmpty() == true) Timber.v("Search query $query with extras $extras yielded no results")
@@ -80,10 +80,10 @@ constructor(
 
     /**
      * The songs a voice search names, to add to the queue: those it would play, from the one it would start at, and
-     * every song for a search for nothing in particular.
+     * every song for a search for nothing in particular, all in their own order (the queue's shuffle mode orders them).
      */
     suspend fun songsForSearch(query: String?, extras: Bundle?): List<Song> = when (val result = voiceSearchResolver.resolve(VoiceSearch.from(query, extras))) {
-        is VoiceSearchResult.Songs -> if (result.shuffled) result.songs.shuffled() else result.songs.drop(result.position)
+        is VoiceSearchResult.Songs -> result.songs.drop(result.position)
         VoiceSearchResult.Empty -> emptyList()
         VoiceSearchResult.Anything -> librarySongs()
     }
@@ -93,12 +93,23 @@ constructor(
     /**
      * Replaces the queue with [songs], starting at [position], and loads it, returning once it has loaded (or failed
      * to). Waits for the saved queue to be restored first, so a request arriving as the app starts isn't overwritten
-     * by the restore.
+     * by the restore. When [shuffled], it starts the way the app's own shuffle does: shuffle mode on, [songs] kept in
+     * their own order underneath (so turning shuffle off restores it), from the first song of a new shuffled order.
      *
      * @return false if the queue was left alone.
      */
-    suspend fun setQueue(songs: List<Song>, position: Int, source: String): Boolean {
+    suspend fun setQueue(songs: List<Song>, position: Int, source: String, shuffled: Boolean = false): Boolean {
         queueOperations.queueStateFlow.awaitRestored()
+        if (shuffled) {
+            return suspendCancellableCoroutine { continuation ->
+                appCoroutineScope.launch {
+                    playbackOperations.shuffle(songs, PlayContext.None) { result ->
+                        result.onFailure { error -> logLoadFailure(error, "playback after $source") }
+                        continuation.resume(result.isSuccess)
+                    }
+                }
+            }
+        }
         if (!queueOperations.setQueue(songs = songs, position = position)) return false
         return suspendCancellableCoroutine { continuation ->
             playbackOperations.load { result ->
@@ -117,7 +128,7 @@ constructor(
         when {
             playQueue == null -> playbackOperations.play()
             playQueue.songs.isEmpty() -> Unit
-            setQueue(playQueue.songs, playQueue.position, source = "playFromSearch") -> playbackOperations.play()
+            setQueue(playQueue.songs, playQueue.position, source = "playFromSearch", shuffled = playQueue.shuffled) -> playbackOperations.play()
         }
     }
 
