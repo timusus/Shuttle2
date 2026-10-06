@@ -177,6 +177,7 @@ private class FakePlaybackOperations : PlaybackOperations {
     override fun load(seekPosition: Int?, skipUnloadable: Boolean, playWhenReady: Boolean, completion: (Result<Boolean>) -> Unit) = unused()
     override fun play() = unused()
     override fun pause() = unused()
+    override suspend fun pauseAtEndOfItem() = unused()
     override fun togglePlayback() = unused()
     override fun skipToNext(ignoreRepeat: Boolean, completion: ((Result<Any?>) -> Unit)?) = unused()
     override fun skipToPrev(force: Boolean, completion: ((Result<Any?>) -> Unit)?) = unused()
