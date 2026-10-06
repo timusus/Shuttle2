@@ -31,6 +31,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesScreen
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadedAlbum
 import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadsScreen
 import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
@@ -45,6 +46,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewM
 import com.simplecityapps.shuttle.ui.screens.sources.ServerDetailEntry
 import com.simplecityapps.shuttle.ui.screens.sources.ThisDeviceEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
+import com.simplecityapps.shuttle.ui.shell.AlbumRoute
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.LocalListBesideDetail
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
@@ -130,7 +132,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     entry<ServerDetailRoute>(metadata = SettingsDetailPane) { route -> ServerDetailEntry(route.typeName, onNavigateUp = { navigateUp() }) }
     entry<EqualizerRoute>(metadata = SettingsDetailPane) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
     entry<ExcludedSongsRoute>(metadata = SettingsDetailPane) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
-    entry<DownloadsRoute>(metadata = SettingsDetailPane) { DownloadsEntry(onNavigateUp = { navigateUp() }) }
+    entry<DownloadsRoute>(metadata = SettingsDetailPane) { DownloadsEntry(onNavigateUp = { navigateUp() }, onOpenAlbum = { album -> navigator.open(album.cover.albumGroupKey.let { AlbumRoute(it.key, it.albumArtistGroupKey?.key, it.identity) }) }) }
     entry<ScrobblingRoute>(metadata = SettingsDetailPane) { ScrobblingEntry(onNavigateUp = { navigateUp() }) }
     entry<LiveLogRoute>(metadata = SettingsDetailPane) { LiveLogEntry(onNavigateUp = { navigateUp() }) }
     entry<WhatsNewRoute>(metadata = SettingsDetailPane) {
@@ -276,13 +278,14 @@ private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
 }
 
 @Composable
-private fun DownloadsEntry(onNavigateUp: () -> Unit) {
+private fun DownloadsEntry(onNavigateUp: () -> Unit, onOpenAlbum: (DownloadedAlbum) -> Unit) {
     val viewModel: DownloadsViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     DownloadsScreen(
         uiState = uiState,
         onNavigateUp = onNavigateUp,
-        onRemoveAll = viewModel::onRemoveAll
+        onRemoveAll = viewModel::onRemoveAll,
+        onOpenAlbum = onOpenAlbum
     )
 }
 

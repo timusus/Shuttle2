@@ -28,12 +28,16 @@ import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
+/** Nothing is downloaded, in progress or kept: when something is, the screen shows the storage and Remove all even before an album is listed. */
+private val DownloadsUiState.isEmpty: Boolean get() = albums.isEmpty() && storageBytes == 0L
+
 /** The albums downloaded for offline playback and the storage they use; the top bar removes every download. */
 @Composable
 fun DownloadsScreen(
     uiState: DownloadsUiState,
     onNavigateUp: () -> Unit,
     onRemoveAll: () -> Unit,
+    onOpenAlbum: (DownloadedAlbum) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var confirmRemoveAll by rememberSaveable { mutableStateOf(false) }
@@ -46,7 +50,7 @@ fun DownloadsScreen(
         contentPadding = PaddingValues(),
         verticalArrangement = Arrangement.Top,
         actions = {
-            if (uiState.storageBytes > 0 || uiState.albums.isNotEmpty()) {
+            if (!uiState.isEmpty) {
                 S2IconButton(
                     icon = Icons.Rounded.ClearAll,
                     contentDescription = stringResource(R.string.downloads_remove_all),
@@ -58,7 +62,7 @@ fun DownloadsScreen(
         when {
             uiState.loading -> item(key = "loading") { LoadingState() }
 
-            uiState.albums.isEmpty() -> item(key = "empty") {
+            uiState.isEmpty -> item(key = "empty") {
                 EmptyState(title = stringResource(R.string.downloads_empty), icon = Icons.Rounded.FileDownloadOff)
             }
 
@@ -70,7 +74,7 @@ fun DownloadsScreen(
                     AlbumRow(
                         title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
                         artist = album.artist.orEmpty(),
-                        onClick = {},
+                        onClick = { onOpenAlbum(album) },
                         artwork = { LibraryArtwork(album.cover, ArtworkPlaceholder.Album) },
                         meta = pluralStringResource(R.plurals.downloads_album_meta, album.songCount, album.songCount, Formatter.formatShortFileSize(context, album.bytes))
                     )

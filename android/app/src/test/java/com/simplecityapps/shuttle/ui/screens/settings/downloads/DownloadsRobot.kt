@@ -13,13 +13,17 @@ class DownloadsRobot(private val rule: ComposeContentTestRule) {
     var removeAllCount = 0
         private set
 
+    var openedAlbum: DownloadedAlbum? = null
+        private set
+
     fun setContent(uiState: DownloadsUiState) {
         rule.setContent {
             S2AppTheme(AppThemeState()) {
                 DownloadsScreen(
                     uiState = uiState,
                     onNavigateUp = {},
-                    onRemoveAll = { removeAllCount++ }
+                    onRemoveAll = { removeAllCount++ },
+                    onOpenAlbum = { openedAlbum = it }
                 )
             }
         }

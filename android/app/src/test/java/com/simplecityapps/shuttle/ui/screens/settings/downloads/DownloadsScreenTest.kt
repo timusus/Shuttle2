@@ -63,4 +63,23 @@ class DownloadsScreenTest {
         robot.removeAllCount shouldBe 0
         robot.assertDisplayed("Night Drive")
     }
+
+    @Test
+    fun `tapping an album opens it`() {
+        val albums = listOf(downloadedAlbum(), downloadedAlbum(name = "Low Tide", songCount = 1))
+        robot.setContent(readyDownloads(albums))
+
+        robot.tapText("Low Tide")
+
+        robot.openedAlbum shouldBe albums[1]
+    }
+
+    @Test
+    fun `storage held without a complete album still shows the storage and Remove all, not the empty state`() {
+        robot.setContent(DownloadsUiState(storageBytes = 5_000_000L, loading = false))
+
+        robot.assertDisplayed("5.0 MB used")
+        robot.assertRemoveAllAvailable(true)
+        robot.assertNotShown("No downloads yet")
+    }
 }

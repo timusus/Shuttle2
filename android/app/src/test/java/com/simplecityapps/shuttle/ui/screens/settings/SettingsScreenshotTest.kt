@@ -187,7 +187,8 @@ class SettingsScreenshotTest {
                 loading = false
             ),
             onNavigateUp = {},
-            onRemoveAll = {}
+            onRemoveAll = {},
+            onOpenAlbum = {}
         )
     }
 
