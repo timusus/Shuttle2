@@ -258,6 +258,16 @@ class MediaActionHandlerTest {
     }
 
     @Test
+    fun `a download the entitlement refuses downloads nothing and shows no message`() = runTest {
+        actions.downloadAllowed = false
+        val remote = MediaSelection.Songs(createSong(id = 3, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://3"))
+
+        handler.handle(MediaAction.Download(remote)) shouldBe MediaActionResult.None
+        actions.songDownloader.downloaded shouldBe emptyList()
+        handler.handle(MediaAction.RemoveDownload(remote)) shouldBe Message(MediaActionMessage.DownloadRemoved(1))
+    }
+
+    @Test
     fun `a download without a URL fails`() = runTest {
         actions.songDownloader.unavailable += "jellyfin://3"
         val remote = MediaSelection.Songs(createSong(id = 3, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://3"))
