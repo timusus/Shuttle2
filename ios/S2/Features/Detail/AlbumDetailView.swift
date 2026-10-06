@@ -195,10 +195,11 @@ struct AlbumDetailContent: View {
         return artist
     }
 
-    /// The More by shelf's artist: the album artist, only when there are other albums to show.
+    /// The More by shelf's title: the album's credited artists (the view model falls back to the raw
+    /// album artist tag), only when there are other albums to show.
     private func moreByName(_ album: Album) -> String? {
-        guard !state.moreByArtist.isEmpty, let name = album.albumArtist?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return nil }
-        return name
+        guard !state.moreByArtist.isEmpty, !state.moreByArtistNames.isEmpty else { return nil }
+        return state.moreByArtistNames.joined(separator: ", ")
     }
 
     private func artistName(_ album: Album) -> String? {
