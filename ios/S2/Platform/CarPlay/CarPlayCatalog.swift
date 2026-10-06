@@ -148,6 +148,8 @@ enum CarPlayText {
     static var unknown: String { text("carplay_unknown") }
     static var upNext: String { text("carplay_up_next") }
     static var queueEmpty: String { text("carplay_queue_empty") }
+    static var upgrade: String { text("carplay_pro_upgrade") }
+    static var upgradeDetail: String { text("carplay_pro_upgrade_detail") }
 }
 
 enum CarPlayCatalog {
@@ -171,6 +173,11 @@ enum CarPlayCatalog {
 
     static func unavailable() -> [CarPlaySectionModel] {
         message(CarPlayText.unavailable, detail: CarPlayText.unavailableDetail)
+    }
+
+    /// CarPlay's root without Shuttle Music Pro (#946): one inert row, since the paywall only opens on the phone.
+    static func upgrade() -> [CarPlaySectionModel] {
+        message(CarPlayText.upgrade, detail: CarPlayText.upgradeDetail)
     }
 
     static func shuffleRow(title: String = CarPlayText.shuffle) -> CarPlayRow {

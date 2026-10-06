@@ -55,22 +55,37 @@ struct PaywallViewTests {
         let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99")
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
 
-        #expect(disclosure.contains("14 days"))
-        #expect(disclosure.contains("streaming from Jellyfin, Emby, Plex and Navidrome stops"))
+        #expect(disclosure.contains("\(ProFeatures.trialDays) days"))
+        #expect(disclosure.contains("streaming from Jellyfin, Emby, Plex or Navidrome, CarPlay and turning on ReplayGain need Shuttle Music Pro"))
         #expect(disclosure.contains("$14.99"))
-        #expect((try? sut.inspect().find(text: "Start 14-day free trial")) != nil)
+        #expect((try? sut.inspect().find(text: "Start \(ProFeatures.trialDays)-day free trial")) != nil)
         #expect((try? sut.inspect().find(text: "$14.99 once")) != nil)
+    }
+
+    /// #946: servers, CarPlay and ReplayGain, as Android's Pro lists servers, Android Auto and ReplayGain.
+    @Test func listsWhatProUnlocks() throws {
+        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99")
+
+        for benefit in ["Stream from Jellyfin, Emby, Plex and Navidrome", "Browse and play your library in CarPlay",
+                        "ReplayGain volume levelling by track or album"] {
+            #expect((try? sut.inspect().find(text: benefit)) != nil)
+        }
+        #expect(ProFeatures.summary == "Servers, CarPlay and ReplayGain")
+        #expect(ProStatus.trialAvailable.message == "Try Shuttle Music Pro free for \(ProFeatures.trialDays) days.")
     }
 
     @Test func namesOnlyWhatIOSHas() throws {
         let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99")
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
-        let copy = [disclosure, ProFeatures.headline, ProFeatures.signInDisclosure, ProStatus.trialEnded.message]
+        let restored = StoreKitManager.RestoreOutcome.trialEnded.message
+        let copy = [disclosure, ProFeatures.headline, ProFeatures.signInDisclosure, restored]
 
-        #expect((try? sut.inspect().find(text: "Stream from Jellyfin, Emby, Plex and Navidrome")) != nil)
         for line in copy {
             #expect(line.contains("Plex"))
+        }
+        for line in copy + [ProFeatures.summary, ProStatus.trialEnded.message] {
             #expect(!line.localizedCaseInsensitiveContains("download"))
+            #expect(!line.contains("Android"))
         }
     }
 

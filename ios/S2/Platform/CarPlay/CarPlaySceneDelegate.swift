@@ -8,7 +8,8 @@ import UIKit
 /// can play. Playlists lists the auto playlists and the user's own; Library pushes Artists, Albums, Songs and Genres.
 /// Albums, artists, genres and playlists push their songs; a song plays its list from it, Shuffle shuffles the list.
 /// Playback goes through `MediaActionsViewModel`, as the phone's does, and Now Playing's transport is the remote
-/// commands `NowPlayingController` already registers.
+/// commands `NowPlayingController` already registers. CarPlay is Shuttle Music Pro (#946): without it the root is one
+/// upgrade message, with nothing to browse or play, until the entitlement changes.
 @MainActor
 final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPInterfaceControllerDelegate {
     private var interfaceController: CPInterfaceController?
@@ -22,6 +23,12 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     /// What each pushed list observes, until it leaves the stack.
     private var pushed: [ObjectIdentifier: PushedList] = [:]
     private var lastRendered: [ObjectIdentifier: [CarPlaySectionModel]] = [:]
+    /// Follows `CarPlayAccess.locked` for the connection's life; nil until the root is first set.
+    private var accessTask: Task<Void, Never>?
+    private var showsUpgrade: Bool?
+
+    /// The root without Shuttle Music Pro (#946).
+    private let upgradeTemplate = CPListTemplate(title: CarPlayText.upgrade, sections: [])
 
     private let homeTemplate = CPListTemplate(title: CarPlayText.home, sections: [])
     private let playlistsTemplate = CPListTemplate(title: CarPlayText.playlists, sections: [])
@@ -83,8 +90,32 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         // The car can launch the app on its own, with no phone scene; S2App.init has built the graph by then, but
         // building it here too costs nothing (it's idempotent) and a CarPlay-only launch never sees an empty graph.
         AppGraph.initialize()
-        let graph = AppGraph.shared
+        let locked = AppGraph.shared.carPlayAccess.locked
+        showAccess(locked: locked.value.boolValue)
+        accessTask = Task { [weak self] in
+            for await isLocked in locked {
+                self?.showAccess(locked: isLocked.boolValue)
+            }
+        }
+    }
 
+    /// The library, or without Shuttle Music Pro only the upgrade message (#946), redrawn as the entitlement changes:
+    /// a purchase or a trial started on the phone opens the library, and an ended trial closes it. Open while the
+    /// store hasn't answered (`CarPlayAccess`).
+    private func showAccess(locked: Bool) {
+        guard let interfaceController, showsUpgrade != locked else { return }
+        showsUpgrade = locked
+        if locked {
+            stopLibrary()
+            render(CarPlayCatalog.upgrade(), into: upgradeTemplate)
+            interfaceController.setRootTemplate(upgradeTemplate, animated: true, completion: nil)
+        } else {
+            startLibrary(interfaceController)
+        }
+    }
+
+    private func startLibrary(_ interfaceController: CPInterfaceController) {
+        let graph = AppGraph.shared
         let tabs: [(CPListTemplate, String, String)] = [
             (homeTemplate, CarPlayText.home, "house"),
             (playlistsTemplate, CarPlayText.playlists, "music.note.list"),
@@ -127,6 +158,15 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     ) {
         // Nothing runs once the car is gone: the phone keeps playing, and a collector per connection would pile
         // up. A reconnect calls didConnect again and fills the templates afresh.
+        accessTask?.cancel()
+        accessTask = nil
+        showsUpgrade = nil
+        stopLibrary()
+        self.interfaceController = nil
+    }
+
+    /// Stops everything the library runs: on disconnecting, and when Shuttle Music Pro ends with the car connected.
+    private func stopLibrary() {
         tasks.forEach { $0.cancel() }
         tasks.removeAll()
         playablePlaylistsTask?.cancel()
@@ -147,7 +187,6 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         nowPlaying?.detach()
         nowPlaying = nil
         lastRendered.removeAll()
-        self.interfaceController = nil
     }
 
     /// Home loads as it comes on screen, as the phone's does (`HomeViewModel.onVisibilityChanged`).

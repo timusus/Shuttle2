@@ -9,18 +9,28 @@ enum ProFeatures {
     static let servers = ["Jellyfin", "Emby", "Plex", "Navidrome"]
 
     /// "Jellyfin, Emby, Plex and Navidrome".
-    static var serverList: String {
-        servers.count < 2 ? servers.joined() : servers.dropLast().joined(separator: ", ") + " and " + servers.last!
-    }
+    static var serverList: String { list(servers, joinedBy: "and") }
 
-    /// The paywall's headline feature and Settings' row: "Stream from Jellyfin, Emby, Plex and Navidrome".
+    /// The paywall's headline feature: "Stream from Jellyfin, Emby, Plex and Navidrome".
     static var headline: String { "Stream from \(serverList)" }
+
+    /// The paywall's other features (#946), worded as Android's.
+    static let carPlay = "Browse and play your library in CarPlay"
+    static let replayGain = "ReplayGain volume levelling by track or album"
+
+    /// Settings' row, as Android's Pro summary: "Servers, CarPlay and ReplayGain".
+    static let summary = "Servers, CarPlay and ReplayGain"
 
     /// The trial's length in days, from :shared's `AppStoreProducts`: the one place it is defined.
     static var trialDays: Int { Int(AppStoreProducts.shared.TRIAL_DAYS) }
 
-    /// What stops when the trial ends, mid-sentence: "streaming from Jellyfin, Emby, Plex and Navidrome".
-    static var afterTrial: String { "streaming from \(serverList)" }
+    /// Everything Pro unlocks, mid-sentence: "streaming from Jellyfin, Emby, Plex or Navidrome, CarPlay and turning on
+    /// ReplayGain" (the servers joined by "or", so the list's own "and" stays unambiguous).
+    static var unlocks: String { "streaming from \(list(servers, joinedBy: "or")), CarPlay and turning on ReplayGain" }
+
+    private static func list(_ items: [String], joinedBy conjunction: String) -> String {
+        items.count < 2 ? items.joined() : items.dropLast().joined(separator: ", ") + " \(conjunction) " + items.last!
+    }
 
     /// Server sign-in's disclosure, for anyone without Pro or a running trial.
     static var signInDisclosure: String { "Streaming from \(serverList) is part of Shuttle Music Pro. Free for \(ProFeatures.trialDays) days." }
@@ -49,9 +59,9 @@ enum ProStatus: Equatable {
     var message: String {
         switch self {
         case .checking: "Checking your purchases with the App Store…"
-        case .trialAvailable: "Try streaming from your server free for \(ProFeatures.trialDays) days."
+        case .trialAvailable: "Try Shuttle Music Pro free for \(ProFeatures.trialDays) days."
         case .trial(let daysLeft): localizedPlural("paywall_status_trial", Int(daysLeft))
-        case .trialEnded: "Your free trial has ended. Upgrade to keep \(ProFeatures.afterTrial)."
+        case .trialEnded: "Your free trial has ended. Upgrade to keep using Shuttle Music Pro."
         case .pro: "You have Shuttle Music Pro. Thank you for supporting Shuttle Music."
         }
     }
@@ -178,7 +188,7 @@ extension StoreKitManager.RestoreOutcome {
         switch self {
         case .pro: "Shuttle Music Pro has been restored."
         case .trial(let daysLeft): "Your free trial has been restored. " + ProStatus.trial(daysLeft: daysLeft).message + "."
-        case .trialEnded: "This Apple ID has already used its free trial. Get Shuttle Music Pro to keep \(ProFeatures.afterTrial)."
+        case .trialEnded: "This Apple ID has already used its free trial. Get Shuttle Music Pro for \(ProFeatures.unlocks)."
         case .nothingToRestore: "No Shuttle Music Pro purchase or free trial found for this Apple ID."
         case .failed: "Couldn't reach the App Store. Please try again."
         }
@@ -211,6 +221,8 @@ struct PaywallContent: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("What you get").font(.headline)
                     Label(ProFeatures.headline, systemImage: "server.rack")
+                    Label(ProFeatures.carPlay, systemImage: "car")
+                    Label(ProFeatures.replayGain, systemImage: "speaker.wave.2")
                     Label("AirPlay, the equalizer and the rest of the app stay free", systemImage: "checkmark.circle")
                 }
 
@@ -244,7 +256,7 @@ struct PaywallContent: View {
     }
 
     private var trialDisclosure: String {
-        "The trial is free and lasts \(ProFeatures.trialDays) days. After it ends, \(ProFeatures.afterTrial) stops until you buy Shuttle "
+        "The trial is free and lasts \(ProFeatures.trialDays) days. After it ends, \(ProFeatures.unlocks) need Shuttle "
             + "Music Pro, a one-time purchase of \(lifetimePrice ?? "the price shown"). Nothing is charged when the trial ends."
     }
 

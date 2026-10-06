@@ -24,7 +24,7 @@ private struct ProSettingsRows: View {
                 Label {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Shuttle Music Pro")
-                        Text(status == .trialAvailable ? ProFeatures.headline : status.message)
+                        Text(status == .trialAvailable ? ProFeatures.summary : status.message)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }

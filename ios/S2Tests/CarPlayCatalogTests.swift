@@ -1,4 +1,5 @@
 import CarPlay
+import Shared
 import Testing
 @testable import S2
 
@@ -74,6 +75,33 @@ struct CarPlayCatalogTests {
             #expect(sections.flatMap(\.rows).allSatisfy { $0.action == .none && !$0.isSelectable })
         }
         #expect(CarPlayCatalog.unavailable().first?.rows.first?.subtitle == CarPlayText.unavailableDetail)
+    }
+
+    /// What `CarPlaySceneDelegate` follows for its root (#946): the library while the App Store hasn't answered (fails
+    /// open) and with Pro; the upgrade message without it, and back to the library once Pro arrives.
+    @MainActor @Test func carPlayIsLockedOnlyWithoutProOnceTheStoreHasAnswered() async {
+        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
+        let locked = graph.carPlayAccess.locked
+        graph.storeEntitlements.setDebugOverrideNamed(name: "Store")
+        #expect(await waitUntil { ProStatus(graph.storeEntitlements.entitlement.value) == .checking })
+        #expect(!locked.value.boolValue)
+
+        _ = graph.storeEntitlements.storeAnswered(purchases: [])
+        #expect(await waitUntil { locked.value.boolValue })
+
+        graph.storeEntitlements.setDebugOverrideNamed(name: "Pro")
+        #expect(await waitUntil { !locked.value.boolValue })
+    }
+
+    /// Without Shuttle Music Pro the root is this alone (#946): nothing to browse or play, and the way to upgrade.
+    @Test func theUpgradeRootIsOneInertRowSayingToUpgradeOnTheIPhone() throws {
+        let rows = CarPlayCatalog.upgrade().flatMap(\.rows)
+        let row = try #require(rows.first)
+
+        #expect(rows.count == 1)
+        #expect(row.action == .none && !row.isSelectable)
+        #expect(row.title == "Upgrade to Shuttle Music Pro")
+        #expect(row.subtitle == "CarPlay is part of Shuttle Music Pro. Open Shuttle Music on your iPhone to upgrade.")
     }
 
     // MARK: - Home

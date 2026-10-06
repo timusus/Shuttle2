@@ -27,3 +27,5 @@
 "carplay_unknown" = "Unknown";
 "carplay_up_next" = "Up Next";
 "carplay_queue_empty" = "Nothing queued";
+"carplay_pro_upgrade" = "Upgrade to Shuttle Music Pro";
+"carplay_pro_upgrade_detail" = "CarPlay is part of Shuttle Music Pro. Open Shuttle Music on your iPhone to upgrade.";

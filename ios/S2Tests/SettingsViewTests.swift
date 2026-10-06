@@ -40,6 +40,51 @@ struct SettingsViewTests {
         #expect(replayGain.footer?.contains("separate from the Equalizer's Preamp") == true)
     }
 
+    /// #946, as Android's #939: choosing Track or Album asks the shared Pro gate. Without Pro the stored mode stays,
+    /// and keeps applying, and the paywall is asked for; with Pro the choice is stored. Off is never gated.
+    @Test func turningReplayGainOnWithoutProKeepsTheStoredModeAndAsksForThePaywall() async throws {
+        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
+        let item = try #require(catalog.item(key: key(catalog.playbackAndSound, 2)) as? SettingItemChoice<AnyObject>)
+        let viewModel = graph.settingsViewModel
+        // uiState is shared while collected, and the paywall requests aren't replayed: both need a collector
+        let observed = Observed()
+        let observers = [
+            Task { for await source in graph.observePaywallRequests.invoke() { observed.requests.append(source) } },
+            Task { for await state in viewModel.uiState { observed.selected = state.selectedIndex(item: item) } },
+        ]
+        defer { observers.forEach { $0.cancel() } }
+
+        // The entitlement resolves on the graph's scope, after the call that changes it returns
+        func status() -> ProStatus { ProStatus(graph.storeEntitlements.entitlement.value) }
+
+        // Free, as the App Store answers with nothing bought
+        graph.storeEntitlements.setDebugOverrideNamed(name: "Store")
+        _ = graph.storeEntitlements.storeAnswered(purchases: [])
+        #expect(await waitUntil { status() == .trialAvailable })
+        viewModel.onChoiceSelect(item: item, optionIndex: 2)
+        #expect(await waitUntil { observed.selected == 2 })
+        // Album, again until the requests' collector has started: each one is refused
+        #expect(await waitUntil {
+            if observed.requests.isEmpty { viewModel.onChoiceSelect(item: item, optionIndex: 1) }
+            return !observed.requests.isEmpty
+        })
+        await drainMainQueue()
+        #expect(observed.selected == 2)
+        #expect(Set(observed.requests) == [PaywallSource.advancedAudio])
+
+        graph.storeEntitlements.setDebugOverrideNamed(name: "Pro")
+        #expect(await waitUntil { status() == .pro })
+        let refusals = observed.requests.count
+        viewModel.onChoiceSelect(item: item, optionIndex: 0)
+        #expect(await waitUntil { observed.selected == 0 })
+        #expect(observed.requests.count == refusals)
+    }
+
+    @MainActor private final class Observed {
+        var requests: [PaywallSource] = []
+        var selected: Int32?
+    }
+
     /// #765: the Equalizer row reads Off until the equalizer is enabled, then names the preset in use.
     @Test func theEqualizerRowNamesThePresetInUseOnceEnabled() throws {
         let link = try #require(catalog.playbackAndSound.items.compactMap { $0 as? SettingItemNavigate }.first)
