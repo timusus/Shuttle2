@@ -159,6 +159,21 @@ class HomeSuggestionsTest {
     }
 
     @Test
+    fun `a day of an album of two album artists is a day of each`() = runTest {
+        val radiohead = createAlbumArtist("radiohead")
+        val split = createAlbum("split", "joni mitchell, radiohead").copy(albumArtistKeys = listOf(joni.groupKey, radiohead.groupKey))
+        suggestions.albums = listOf(split)
+        suggestions.albumArtists = listOf(joni, radiohead)
+        playHistory.albumDays = listOf(day(split.groupKey, today, 3).copy(albumArtistKeys = split.albumArtistKeys))
+
+        HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
+            HeavyRotationCandidate(HomeItem.AlbumItem(split), days = 1, lastPlayedAt = now),
+            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 1, lastPlayedAt = now),
+            HeavyRotationCandidate(HomeItem.ArtistItem(radiohead), days = 1, lastPlayedAt = now),
+        )
+    }
+
+    @Test
     fun `rediscover asks for its window and recently added for the newest albums with none`() = runTest {
         suggestions.toRediscover = listOf(blue.groupKey!!)
         suggestions.recentlyAdded = listOf(kidA.groupKey!!)

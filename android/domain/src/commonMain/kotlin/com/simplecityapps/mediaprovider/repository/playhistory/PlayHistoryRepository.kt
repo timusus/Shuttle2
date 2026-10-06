@@ -143,11 +143,10 @@ data class AlbumDay(
     val day: Long,
     val songs: Int,
     val trackCount: Int,
-    val lastCompletedAt: Instant
-) {
-    /** The album's artist, as the album artist repository groups them. */
-    val albumArtistGroupKey: AlbumArtistGroupKey get() = groupKey.albumArtistGroupKey ?: AlbumArtistGroupKey(null)
-}
+    val lastCompletedAt: Instant,
+    /** The artists whose album it is ([com.simplecityapps.shuttle.model.AlbumIdentity.albumArtists]): a day of it is a day of each. */
+    val albumArtistKeys: List<AlbumArtistGroupKey> = listOfNotNull(groupKey.albumArtistGroupKey)
+)
 
 data class GenrePlays(
     val genre: String,

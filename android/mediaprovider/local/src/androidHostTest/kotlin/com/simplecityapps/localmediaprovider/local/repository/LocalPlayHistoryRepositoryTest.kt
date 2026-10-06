@@ -149,7 +149,23 @@ class LocalPlayHistoryRepositoryTest {
         days.map { Triple(it.groupKey.key, today - it.day, it.songs) } shouldBe listOf(Triple("blue", 1L, 2), Triple("blue", 2L, 1))
         days.map { it.trackCount } shouldBe listOf(3, 3)
         days.first().lastCompletedAt shouldBe now - 1.days + 1.hours
-        days.first().albumArtistGroupKey shouldBe AlbumArtistGroupKey("joni mitchell")
+        days.first().albumArtistKeys shouldBe listOf(AlbumArtistGroupKey("joni mitchell"))
+    }
+
+    @Test
+    fun `an album day names each of the album's album artists and not its featured one`() = runTest {
+        songDao.insert(
+            listOf(
+                createSongData(album = "Watch the Throne", track = 1).copy(albumArtist = null, albumArtists = listOf("Jay-Z", "Kanye West")),
+                createSongData(album = "Duets", albumArtist = "Radiohead feat. Björk", track = 1)
+            )
+        )
+        songDao.get().forEach { repository.recordPlay(it.toSong(), now - 1.days, 200_000, true, PlayContext.None) }
+
+        repository.albumDays(since = now - 28.days).associate { it.groupKey.key to it.albumArtistKeys } shouldBe mapOf(
+            "watch the throne" to listOf(AlbumArtistGroupKey("jay-z"), AlbumArtistGroupKey("kanye west")),
+            "duets" to listOf(AlbumArtistGroupKey("radiohead"))
+        )
     }
 
     @Test
@@ -203,7 +219,7 @@ class LocalPlayHistoryRepositoryTest {
         val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao).getAlbums(AlbumQuery.All()).first()
         val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao).getAlbumArtists(AlbumArtistQuery.All()).first()
         days.map { Triple(it.groupKey, it.songs, it.trackCount) } shouldBe listOf(Triple(repositoryAlbums.single().groupKey, 3, 3))
-        days.single().albumArtistGroupKey shouldBe repositoryArtists.single().groupKey
+        days.single().albumArtistKeys shouldBe listOf(repositoryArtists.single().groupKey)
     }
 
     @Test

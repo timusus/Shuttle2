@@ -111,11 +111,18 @@ class LocalPlayHistoryRepository(
         if (rows.isEmpty()) return emptyList()
         val index = albumIndex.albumIndex()
         return rows
-            .mapNotNull { row -> index.identities[row.songId]?.let { identity -> identity.groupKey to row } }
-            .groupBy({ (groupKey, row) -> groupKey to row.day }, { (_, row) -> row })
+            .mapNotNull { row -> index.identities[row.songId]?.let { identity -> identity to row } }
+            .groupBy({ (identity, row) -> identity.groupKey to row.day })
             .map { (albumDay, rows) ->
                 val (groupKey, day) = albumDay
-                AlbumDay(groupKey, day, songs = rows.size, trackCount = index.songIds(groupKey).size, lastCompletedAt = rows.maxOf { it.lastPlayedAt })
+                AlbumDay(
+                    groupKey,
+                    day,
+                    songs = rows.size,
+                    trackCount = index.songIds(groupKey).size,
+                    lastCompletedAt = rows.maxOf { (_, row) -> row.lastPlayedAt },
+                    albumArtistKeys = rows.first().first.albumArtistKeys
+                )
             }
     }
 

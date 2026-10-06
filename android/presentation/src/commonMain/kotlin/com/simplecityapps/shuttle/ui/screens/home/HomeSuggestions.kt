@@ -169,10 +169,14 @@ class HeavyRotation @Inject constructor(
         val albums = albumDays.groupBy { it.groupKey }.map { (key, days) ->
             Tally(PlayContext.Album(key), days.count { it.counts }, days.maxOf { it.lastCompletedAt })
         }
-        val artists = albumDays.groupBy { it.albumArtistGroupKey }.map { (key, albums) ->
-            val days = albums.groupBy { it.day }.values.count { day -> day.sumOf { it.songs } >= MIN_SONGS_A_DAY || day.any { it.counts } }
-            Tally(PlayContext.AlbumArtist(key), days, albums.maxOf { it.lastCompletedAt })
-        }
+        // A day of an album of several album artists is a day of each of them, as playing any of them plays it
+        val artists = albumDays
+            .flatMap { albumDay -> albumDay.albumArtistKeys.distinct().map { key -> key to albumDay } }
+            .groupBy({ (key, _) -> key }, { (_, albumDay) -> albumDay })
+            .map { (key, albums) ->
+                val days = albums.groupBy { it.day }.values.count { day -> day.sumOf { it.songs } >= MIN_SONGS_A_DAY || day.any { it.counts } }
+                Tally(PlayContext.AlbumArtist(key), days, albums.maxOf { it.lastCompletedAt })
+            }
         val tallies = (albums + artists)
             .filter { it.days > 0 }
             .sortedWith(compareByDescending<Tally> { it.days }.thenByDescending { it.lastPlayedAt })
