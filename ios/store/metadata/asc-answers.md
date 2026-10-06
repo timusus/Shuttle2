@@ -14,10 +14,12 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
   attestation.
 - Pricing: Free, available in all 175 countries.
 - In-app purchases: both are in all countries, with en-US name and description and review notes. Each
-  carries the 7-day paywall (`iap-review/paywall.png`) as its review screenshot.
-  - Trial (6818776748): $0, "7-day Free Trial". Family Sharing off.
-  - Lifetime (6818777051): $9.99, the launch price. The plan is US$14.99 two to four weeks after launch
-    (#762). Family Sharing is on, which can't be turned off.
+  carries the 14-day paywall (`iap-review/paywall.png`) as its review screenshot.
+  - Trial (6818776748): $0, "14-day Free Trial". Family Sharing off.
+  - Lifetime (6818777051): $14.99 for the launch month, then $19.99 (#762). Owner steps in App Store
+    Connect: rename the trial product to "14-day Free Trial" (description "free for 14 days"), set the
+    Lifetime base price to $14.99, then schedule a price change to $19.99 about a month after launch.
+    Family Sharing is on, which can't be turned off.
 - Version 1.0 has these saved:
   - Promotional text, description and keywords.
   - Support URL, marketing URL and copyright ("2026 Simplecity Apps Pty Ltd").
@@ -90,7 +92,7 @@ Both products cover what the app sells (playing files on the device is free and 
 descriptions stay in step with the paywall copy (`ProFeatures` in `ios/S2/Features/Paywall/PaywallView.swift`,
 which names all three) and with `docs/product/monetisation.md`'s iOS section (guidelines 2.3 and 3.1.1).
 
-- `com.simplecityapps.shuttle.pro.trial`: display name "7-day Free Trial", description "Stream from
-  Jellyfin, Emby and Plex free for 7 days".
+- `com.simplecityapps.shuttle.pro.trial`: display name "14-day Free Trial", description "Stream from
+  Jellyfin, Emby and Plex free for 14 days".
 - `com.simplecityapps.shuttle.pro.lifetime`: display name "Shuttle Music Pro (Lifetime)", description
   "Stream from Jellyfin, Emby and Plex, for life".

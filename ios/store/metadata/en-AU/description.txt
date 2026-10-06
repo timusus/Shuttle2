@@ -17,7 +17,7 @@ FEATURES
 
 FREE TRIAL, THEN PAY ONCE
 
-Shuttle Music is free to download, and playing music stored on your device is always free. Streaming from your Jellyfin, Emby or Plex server is part of Shuttle Music Pro. The first time you play a song from your server, the app offers a 7-day free trial that you start with one tap, and after that Pro is a single one-off lifetime purchase. There is no subscription and no ads, and you can restore your purchases from the paywall or in Settings at any time.
+Shuttle Music is free to download, and playing music stored on your device is always free. Streaming from your Jellyfin, Emby or Plex server is part of Shuttle Music Pro. The first time you play a song from your server, the app offers a 14-day free trial that you start with one tap, and after that Pro is a single one-off lifetime purchase. There is no subscription and no ads, and you can restore your purchases from the paywall or in Settings at any time.
 
 PRIVATE BY DESIGN
 

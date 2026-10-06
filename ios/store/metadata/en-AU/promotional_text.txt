@@ -1,1 +1,1 @@
-Play music on your device or stream from Jellyfin, Emby or Plex. Gapless, FLAC, EQ and ReplayGain. Streaming has a 7-day free trial, then pay once. No ads, no tracking.
+Play music on your device or stream from Jellyfin, Emby or Plex. Gapless, FLAC, EQ and ReplayGain. Streaming has a 14-day free trial, then pay once. No ads, no tracking.

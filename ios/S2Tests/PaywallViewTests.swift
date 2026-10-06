@@ -52,18 +52,18 @@ struct PaywallViewTests {
     // MARK: Content
 
     @Test func beforeTheTrialItDisclosesItsLengthWhatStopsAndThePrice() throws {
-        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$9.99")
+        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99")
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
 
-        #expect(disclosure.contains("7 days"))
+        #expect(disclosure.contains("14 days"))
         #expect(disclosure.contains("streaming from Jellyfin, Emby, Plex and Navidrome stops"))
-        #expect(disclosure.contains("$9.99"))
-        #expect((try? sut.inspect().find(text: "Start 7-day free trial")) != nil)
-        #expect((try? sut.inspect().find(text: "$9.99 once")) != nil)
+        #expect(disclosure.contains("$14.99"))
+        #expect((try? sut.inspect().find(text: "Start 14-day free trial")) != nil)
+        #expect((try? sut.inspect().find(text: "$14.99 once")) != nil)
     }
 
     @Test func namesOnlyWhatIOSHas() throws {
-        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$9.99")
+        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99")
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
         let copy = [disclosure, ProFeatures.headline, ProFeatures.signInDisclosure, ProStatus.trialEnded.message]
 
@@ -89,7 +89,7 @@ struct PaywallViewTests {
     @Test func startingTheTrialAndBuyingCallTheirActions() throws {
         var started = false
         var bought = false
-        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$9.99", onStartTrial: { started = true }, onBuy: { bought = true })
+        let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99", onStartTrial: { started = true }, onBuy: { bought = true })
 
         try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.startTrial").button().tap()
         try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.buy").button().tap()
@@ -99,7 +99,7 @@ struct PaywallViewTests {
     }
 
     @Test func afterTheTrialOnlyProIsOffered() {
-        let sut = PaywallContent(status: .trialEnded, lifetimePrice: "$9.99")
+        let sut = PaywallContent(status: .trialEnded, lifetimePrice: "$14.99")
 
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.startTrial")) == nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure")) == nil)
@@ -107,7 +107,7 @@ struct PaywallViewTests {
     }
 
     @Test func proOffersNothingToBuyButKeepsRestoreAndTheLegalLinks() {
-        let sut = PaywallContent(status: .pro, lifetimePrice: "$9.99")
+        let sut = PaywallContent(status: .pro, lifetimePrice: "$14.99")
 
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.buy")) == nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.restore")) != nil)

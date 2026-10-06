@@ -10,7 +10,7 @@ import kotlin.time.Duration.Companion.days
  */
 object AppStoreProducts {
     /** How many days the iOS trial runs; the one place the length is defined (Swift's copy reads it too). */
-    const val TRIAL_DAYS = 7
+    const val TRIAL_DAYS = 14
 
     val TRIAL_LENGTH: Duration = TRIAL_DAYS.days
 

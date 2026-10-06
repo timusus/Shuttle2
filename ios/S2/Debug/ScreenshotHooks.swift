@@ -16,7 +16,7 @@ import SwiftUI
 ///     settings?open=1|0                      the Settings sheet
 ///     player?open=1|0[&fullScreen=1]         Now Playing; fullScreen=1 covers the screen on iPad too, rather than
 ///                                            a form sheet over a dimmed library
-///     paywall?price=$9.99                    show the paywall's loaded state with this price (omit price to undo)
+///     paywall?price=$14.99                    show the paywall's loaded state with this price (omit price to undo)
 ///     miniplayer?hidden=1|0                  hide the mini player (set before opening the screen it would cover)
 ///     reset                                  close every sheet and pop the selected root
 ///

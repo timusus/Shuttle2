@@ -53,6 +53,6 @@
   "paywall": {
     "screen": "Shuttle Music Pro paywall, unframed, for App Store Connect's in-app purchase review",
     "appearance": "light",
-    "steps": ["entitlement:Free", "hook:reset", "hook:paywall?price=%249.99", "sleep:1", "hook:settings?open=1", "sleep:2", "maestro:open-paywall.yaml", "sleep:2"]
+    "steps": ["entitlement:Free", "hook:reset", "hook:paywall?price=%2414.99", "sleep:1", "hook:settings?open=1", "sleep:2", "maestro:open-paywall.yaml", "sleep:2"]
   }
 }

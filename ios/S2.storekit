@@ -10,17 +10,17 @@
       "internalID" : "6740000001",
       "localizations" : [
         {
-          "description" : "Stream from Jellyfin, Emby and Plex free for 7 days.",
-          "displayName" : "7-day Free Trial",
+          "description" : "Stream from Jellyfin, Emby and Plex free for 14 days.",
+          "displayName" : "14-day Free Trial",
           "locale" : "en_US"
         }
       ],
       "productID" : "com.simplecityapps.shuttle.pro.trial",
-      "referenceName" : "Pro 7-day Trial",
+      "referenceName" : "Pro 14-day Trial",
       "type" : "NonConsumable"
     },
     {
-      "displayPrice" : "9.99",
+      "displayPrice" : "14.99",
       "familyShareable" : false,
       "internalID" : "6740000002",
       "localizations" : [

@@ -59,7 +59,7 @@ claim what iOS has today.
 `paywall` is App Store Connect's in-app purchase review screenshot: the Pro paywall as a free user, captured on the
 iPhone after the slots and written by `render.py` unframed, scaled to the 6.9" canvas, to
 `ios/store/screenshots/en-AU/iap-review/paywall.png`. StoreKit's test configuration (`S2.storekit`) only applies
-when Xcode runs the app, so the capture's `paywall?price=$9.99` hook gives `StoreKitManager` a stand-in price, which
+when Xcode runs the app, so the capture's `paywall?price=$14.99` hook gives `StoreKitManager` a stand-in price, which
 the paywall shows as it does once the products load.
 
 ## Artwork

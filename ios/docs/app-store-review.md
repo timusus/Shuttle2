@@ -6,7 +6,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 
 ## Launch checklist (owner, in order)
 
-1. Land the StoreKit/paywall work (#609): the review notes below describe a 7-day trial and a one-off
+1. Land the StoreKit/paywall work (#609): the review notes below describe a 14-day trial and a one-off
    Pro purchase, so the IAP product must exist and be attached to the version.
 2. The demo server is Emby at https://emby.mediaserver.timmalseed.dev, user `appreview`. The owner enters the
    password in the demo account fields in App Store Connect (it is never written in the repo). Keep the server up
@@ -45,7 +45,7 @@ to Files > On My iPhone > Shuttle Music, or from a Mac through Finder, or pick a
 in the Library and play without Pro or a sign-in.
 
 In-app purchase: Shuttle Music is free to download. Streaming from Jellyfin, Emby or Plex is part of Shuttle Music
-Pro: the first time a server song is played the paywall opens, and tapping Start 7-day free trial begins a
+Pro: the first time a server song is played the paywall opens, and tapping Start 14-day free trial begins a
 free App Store trial (nothing is charged), after which Pro is a
 one-off lifetime purchase (no subscription). A sandbox Apple Account is enough to test the purchase,
 and Restore Purchases is on the paywall and in Settings.

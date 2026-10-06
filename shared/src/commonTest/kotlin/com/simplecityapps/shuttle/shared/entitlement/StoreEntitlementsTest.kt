@@ -58,18 +58,18 @@ class StoreEntitlementsTest {
     }
 
     @Test
-    fun theTrialRunsSevenDaysFromItsPurchase() = runTest {
+    fun theTrialRunsFourteenDaysFromItsPurchase() = runTest {
         val store = entitlements()
         store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 2.days)))
         runCurrent()
-        store.entitlement.value shouldBe Entitlement.Trial(endsAt = start + 5.days)
-        (store.entitlement.value as Entitlement.Trial).daysRemaining(start) shouldBe 5
+        store.entitlement.value shouldBe Entitlement.Trial(endsAt = start + 12.days)
+        (store.entitlement.value as Entitlement.Trial).daysRemaining(start) shouldBe 12
     }
 
     @Test
-    fun aTrialBoughtMoreThanSevenDaysAgoIsUsedUp() = runTest {
+    fun aTrialBoughtMoreThanFourteenDaysAgoIsUsedUp() = runTest {
         val store = entitlements()
-        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 8.days)))
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 15.days)))
         runCurrent()
         store.entitlement.value shouldBe Entitlement.Free(trialUsed = true)
     }
@@ -77,7 +77,7 @@ class StoreEntitlementsTest {
     @Test
     fun theTrialExpiresWhileTheAppRuns() = runTest {
         val store = entitlements()
-        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 7.days + 1.hours)))
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 14.days + 1.hours)))
         runCurrent()
         store.entitlement.value shouldBe Entitlement.Trial(endsAt = start + 1.hours)
 
@@ -108,7 +108,7 @@ class StoreEntitlementsTest {
         runCurrent()
         store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start), purchase(AppStoreProducts.LIFETIME, start)))
         runCurrent()
-        seen shouldBe listOf(Entitlement.Unknown, Entitlement.Trial(start + 7.days), Entitlement.Pro(ProSource.Lifetime))
+        seen shouldBe listOf(Entitlement.Unknown, Entitlement.Trial(start + 14.days), Entitlement.Pro(ProSource.Lifetime))
     }
 
     @Test
@@ -121,7 +121,7 @@ class StoreEntitlementsTest {
         store.entitlement.value shouldBe Entitlement.Free(trialUsed = false)
 
         store.setDebugOverride(DebugEntitlementOverride.Store)
-        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 8.days)))
+        store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 15.days)))
         runCurrent()
         store.entitlement.value shouldBe Entitlement.Free(trialUsed = true)
     }
@@ -131,10 +131,10 @@ class StoreEntitlementsTest {
         val store = entitlements()
         store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 4.days)))
         runCurrent()
-        store.entitlement.value shouldBe Entitlement.Trial(start + 3.days)
+        store.entitlement.value shouldBe Entitlement.Trial(start + 10.days)
 
         // StoreKit reports the trial's original purchase on every device and after every restore.
-        advanceTimeBy(4.days)
+        advanceTimeBy(11.days)
         store.storeAnswered(listOf(purchase(AppStoreProducts.TRIAL, start - 4.days)))
         runCurrent()
         store.entitlement.value shouldBe Entitlement.Free(trialUsed = true)

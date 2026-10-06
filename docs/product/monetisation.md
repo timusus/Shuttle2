@@ -90,8 +90,8 @@ There is no subscription on iOS, only the trial and Lifetime. The trial length i
 - **Products** (ids in `shared/.../entitlement/AppStoreProducts.kt`): `com.simplecityapps.shuttle.pro.trial`, a free
   non-consumable whose purchase starts the trial, running 14 days from the transaction's `originalPurchaseDate` (a
   restore, reinstall or new device reports the same date, so none restarts it; a refunded trial counts as used); and
-  `com.simplecityapps.shuttle.pro.lifetime` ($19.99 in `S2.storekit`, $14.99 launch month set in App Store
-  Connect; a refund removes Pro).
+  `com.simplecityapps.shuttle.pro.lifetime` ($14.99 in `S2.storekit`; App Store Connect charges $14.99 for the launch month, then
+  $19.99 on a scheduled price change, #762; a refund removes Pro).
 - **Trial consent.** App Review wants a knowing start, so on iOS the first server stream before the trial is refused
   and opens the paywall, which discloses the length, what stops after it and Lifetime's localized `displayPrice` above
   "Start 14-day free trial". Adding a server stays allowed until the trial has been used.
