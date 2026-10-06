@@ -12,6 +12,7 @@ import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
+import com.simplecityapps.shuttle.model.ArtistImageArtwork
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -32,6 +33,8 @@ class CoilArtworkSeedSource(
     override suspend fun seedFor(song: Song): ArtworkSeed = cache.getOrExtract(song.artworkCacheKey()) { loadBitmap(song, song.name) }
 
     override suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed = cache.getOrExtract(hero.artworkCacheKey()) { loadBitmap(hero, hero.artist.name) }
+
+    override suspend fun seedFor(artwork: ArtistImageArtwork): ArtworkSeed = cache.getOrExtract(artwork.artworkCacheKey()) { loadBitmap(artwork, artwork.artist.name) }
 
     private suspend fun loadBitmap(model: Any, name: String?): Bitmap? {
         val request = ImageRequest.Builder(context)

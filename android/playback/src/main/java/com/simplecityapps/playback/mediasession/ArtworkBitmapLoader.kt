@@ -17,11 +17,9 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.simplecityapps.imageloading.ArtworkImageLoader
-import com.simplecityapps.imageloading.coil.artworkCacheKey
-import com.simplecityapps.imageloading.coil.nowPlayingArtworkModel
+import com.simplecityapps.imageloading.coil.NowPlayingArtwork
+import com.simplecityapps.imageloading.coil.nowPlayingArtwork
 import com.simplecityapps.playback.R
-import com.simplecityapps.playback.getArtworkCacheKey
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 
@@ -30,7 +28,7 @@ import com.simplecityapps.shuttle.settings.ArtworkSettings
  * (the lock screen, Android Auto, a Bluetooth head unit). Queue items carry no artwork URI, as an S2 artwork key isn't a
  * URI another app could open, so the song comes from [currentSong]: the session asks only for the current item's.
  *
- * With "Now playing artwork" set to the artist image, it's the song's album artist's image the loader asks for. A song
+ * With "Now playing artwork" set to the artist image, it's the song's album artist's image the loader asks for, else the song's own. A song
  * with no artwork gets a placeholder; with media session artwork turned off in settings there's none at all.
  */
 @UnstableApi
@@ -48,13 +46,13 @@ class ArtworkBitmapLoader(
     override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap>? {
         if (!artworkSettings.mediaSessionArtwork.value) return null
         val song = currentSong() ?: return null
-        // The song, or its album artist when the setting asks for the artist's image (#952); one cache entry per artist then
-        val model = nowPlayingArtworkModel(song, artworkSettings.nowPlayingArtwork.value)
-        val key = if (model is AlbumArtist) "${model.artworkCacheKey()}_${ARTWORK_SIZE}_$ARTWORK_SIZE" else song.getArtworkCacheKey(ARTWORK_SIZE, ARTWORK_SIZE)
+        // The song, or its album artist's image falling back to the song's, when the setting asks for it (#952)
+        val artwork = nowPlayingArtwork(song, artworkSettings.nowPlayingArtwork.value)
+        val key = sessionArtworkKey(artwork, artworkSettings.localOnly.value, artworkSettings.wifiOnly.value)
         synchronized(artworkCache) { artworkCache[key] }?.let { cached -> return Futures.immediateFuture(cached) }
 
         val future = SettableFuture.create<Bitmap>()
-        val request = artworkImageLoader.loadBitmap(data = model, width = ARTWORK_SIZE, height = ARTWORK_SIZE) { image ->
+        val request = artworkImageLoader.loadBitmap(data = artwork.model, width = ARTWORK_SIZE, height = ARTWORK_SIZE) { image ->
             if (image != null) {
                 synchronized(artworkCache) { artworkCache.put(key, image) }
             }
@@ -72,8 +70,19 @@ class ArtworkBitmapLoader(
 
     override fun loadBitmap(uri: Uri): ListenableFuture<Bitmap> = Futures.immediateFailedFuture(UnsupportedOperationException("Artwork is loaded by song, not by URI"))
 
-    private companion object {
+    internal companion object {
         const val ARTWORK_SIZE = 512
+
+        /**
+         * The session cache's key for [artwork]: what it resolves to, plus the artwork settings that decide whether a remote image
+         * is reachable, so a bitmap loaded (or fallen back to the song's own art) under one setting isn't served under another.
+         * The Clear artwork cache setting empties the cache itself.
+         */
+        fun sessionArtworkKey(
+            artwork: NowPlayingArtwork,
+            localOnly: Boolean,
+            wifiOnly: Boolean
+        ): String = "${artwork.cacheKey}_${ARTWORK_SIZE}_${ARTWORK_SIZE}|local=$localOnly|wifi=$wifiOnly"
 
         fun drawableToBitmap(drawable: Drawable): Bitmap {
             if (drawable is BitmapDrawable && drawable.bitmap != null) return drawable.bitmap

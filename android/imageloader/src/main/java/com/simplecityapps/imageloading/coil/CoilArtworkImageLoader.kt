@@ -3,6 +3,7 @@ package com.simplecityapps.imageloading.coil
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
+import android.util.LruCache
 import coil3.ImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -23,7 +24,8 @@ import kotlinx.coroutines.withContext
 
 class CoilArtworkImageLoader @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val imageLoader: ImageLoader
+    private val imageLoader: ImageLoader,
+    private val sessionArtworkCache: LruCache<String, Bitmap>
 ) : ArtworkImageLoader {
     override fun loadBitmap(
         data: Any,
@@ -61,6 +63,8 @@ class CoilArtworkImageLoader @Inject constructor(
     }
 
     override suspend fun clearCache() {
+        // The media session's bitmaps are kept apart from Coil's, and would otherwise outlive the clear
+        synchronized(sessionArtworkCache) { sessionArtworkCache.evictAll() }
         imageLoader.memoryCache?.clear()
         withContext(Dispatchers.IO) { imageLoader.diskCache?.clear() }
     }

@@ -1,19 +1,24 @@
 package com.simplecityapps.imageloading.coil
 
+import com.simplecityapps.shuttle.model.ArtistImageArtwork
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.albumArtistStandIn
+import com.simplecityapps.shuttle.model.nowPlayingArtworkModel
 import com.simplecityapps.shuttle.settings.NowPlayingImage
 
+/** The image-loader [model] that pictures a song on the media session (#952), and the [cacheKey] identifying what it resolves to. */
+class NowPlayingArtwork(
+    val model: Any,
+    val cacheKey: String,
+)
+
 /**
- * The image-loader model that pictures [song] on the media session (#952): the song itself, or, for
- * [NowPlayingImage.ArtistImage], its album artist, whose image every one of their songs then shares. The artist model
- * resolves through the shared artist rule (own image, the online lookup the artwork settings allow, then their top album's
- * cover), so an artist with no image still shows artwork; a song with no album artist shows its own.
+ * [song]'s [NowPlayingArtwork] for the Now playing artwork setting [image]: the one selection ([nowPlayingArtworkModel]) the
+ * player's screens use too, keyed so a song falling back to its own art doesn't share an entry with the artist's image.
  */
-fun nowPlayingArtworkModel(
+fun nowPlayingArtwork(
     song: Song,
     image: NowPlayingImage
-): Any = when (image) {
-    NowPlayingImage.AlbumArt -> song
-    NowPlayingImage.ArtistImage -> song.albumArtistStandIn() ?: song
+): NowPlayingArtwork {
+    val model = nowPlayingArtworkModel(song, image == NowPlayingImage.ArtistImage)
+    return NowPlayingArtwork(model, if (model is ArtistImageArtwork) model.artworkCacheKey() else song.artworkCacheKey())
 }

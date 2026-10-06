@@ -3,6 +3,7 @@ package com.simplecityapps.imageloading.coil
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
+import com.simplecityapps.shuttle.model.ArtistImageArtwork
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.NowPlayingImage
@@ -76,30 +77,38 @@ class ArtworkKeysTest {
     }
 
     @Test
-    fun `album art now playing artwork is the song itself`() {
-        val song = createSong(artworkVersion = null)
+    fun `album art now playing artwork is the song itself, keyed as the song`() {
+        val song = createSong(artworkVersion = "v1")
 
-        nowPlayingArtworkModel(song, NowPlayingImage.AlbumArt) shouldBe song
+        val artwork = nowPlayingArtwork(song, NowPlayingImage.AlbumArt)
+
+        artwork.model shouldBe song
+        artwork.cacheKey shouldBe song.artworkCacheKey()
     }
 
     @Test
-    fun `artist image now playing artwork is the album artist, the same key for every song by them`() {
+    fun `artist image now playing artwork is the album artist's image, falling back to the song, keyed by both`() {
         val first = createSong(artworkVersion = "v1")
         val second = createSong(artworkVersion = "v2").copy(name = "Other", album = "Other Album")
 
-        val firstModel = nowPlayingArtworkModel(first, NowPlayingImage.ArtistImage)
-        val secondModel = nowPlayingArtworkModel(second, NowPlayingImage.ArtistImage)
+        val firstArtwork = nowPlayingArtwork(first, NowPlayingImage.ArtistImage)
+        val secondArtwork = nowPlayingArtwork(second, NowPlayingImage.ArtistImage)
 
-        (firstModel as AlbumArtist).name shouldBe "Artist"
-        (firstModel as AlbumArtist).artworkCacheKey() shouldBe (secondModel as AlbumArtist).artworkCacheKey()
+        (firstArtwork.model as ArtistImageArtwork).artist.name shouldBe "Artist"
+        (firstArtwork.model as ArtistImageArtwork).song shouldBe first
+        // A song that falls back to its own art can't share an entry with another song's
+        firstArtwork.cacheKey shouldNotBe secondArtwork.cacheKey
+        firstArtwork.cacheKey shouldNotBe nowPlayingArtwork(first, NowPlayingImage.AlbumArt).cacheKey
     }
 
     @Test
     fun `artist image now playing artwork keeps a song with no album artist as itself`() {
         val song = createSong(artworkVersion = null).copy(albumArtist = null)
 
-        nowPlayingArtworkModel(song, NowPlayingImage.ArtistImage) shouldBe song
-        nowPlayingArtworkModel(song.copy(albumArtist = " "), NowPlayingImage.ArtistImage) shouldBe song.copy(albumArtist = " ")
+        val artwork = nowPlayingArtwork(song, NowPlayingImage.ArtistImage)
+
+        artwork.model shouldBe song
+        artwork.cacheKey shouldBe song.artworkCacheKey()
     }
 
     private fun createSong(

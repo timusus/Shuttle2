@@ -154,7 +154,7 @@ class PlayerViewModel @AssistedInject constructor(
 
     private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
-    private val seed: Flow<ArtworkSeed> = observeArtworkSeed(currentSong)
+    private val seed: Flow<ArtworkSeed> = observeArtworkSeed(currentSong, observeSetting(ArtworkSettings.NowPlayingArtworkSource))
 
     // Ticks only while a timer runs, so it notices the timer going off (the timer has no flow of its own).
     private val sleepTimerActive: Flow<Boolean> =

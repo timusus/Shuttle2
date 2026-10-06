@@ -19,7 +19,7 @@ interface ArtworkImageLoader {
     /** [data]'s artwork at full size, encoded as a JPEG, or null when it has none. */
     suspend fun loadBitmap(data: Any): ByteArray?
 
-    /** Empties the memory and disk caches, so artwork loads from its sources again. */
+    /** Empties the memory and disk caches, and the media session's, so artwork loads from its sources again. */
     suspend fun clearCache()
 
     fun interface Request {

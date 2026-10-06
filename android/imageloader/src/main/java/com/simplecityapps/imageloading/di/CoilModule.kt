@@ -14,6 +14,8 @@ import com.simplecityapps.imageloading.coil.AlbumArtistArtworkFetcher
 import com.simplecityapps.imageloading.coil.AlbumArtistArtworkKeyer
 import com.simplecityapps.imageloading.coil.AlbumArtworkKeyer
 import com.simplecityapps.imageloading.coil.ArtistHeroArtworkKeyer
+import com.simplecityapps.imageloading.coil.ArtistImageArtworkFetcher
+import com.simplecityapps.imageloading.coil.ArtistImageArtworkKeyer
 import com.simplecityapps.imageloading.coil.ArtworkFetcher
 import com.simplecityapps.imageloading.coil.ArtworkSource
 import com.simplecityapps.imageloading.coil.CoilArtworkImageLoader
@@ -121,6 +123,7 @@ object CoilModule {
                 addAll(albumSources.map { source -> source.on { it.fallbackAlbum } })
             }
         val artistHeroFetcher = ArtworkFetcher.Factory(ArtistHeroArtwork::artworkCacheKey, artistHeroSources)
+        val songFetcher = ArtworkFetcher.Factory(Song::artworkCacheKey, songSources)
 
         return ImageLoader.Builder(context)
             // Every component is registered here, so a stray library can't add fetchers or decoders behind our back
@@ -131,9 +134,11 @@ object CoilModule {
                 add(AlbumArtworkKeyer)
                 add(AlbumArtistArtworkKeyer)
                 add(ArtistHeroArtworkKeyer)
-                add(ArtworkFetcher.Factory(Song::artworkCacheKey, songSources))
+                add(ArtistImageArtworkKeyer)
+                add(songFetcher)
                 add(ArtworkFetcher.Factory(Album::artworkCacheKey, albumSources))
                 add(AlbumArtistArtworkFetcher.Factory(loadArtistArtwork::invoke, artistHeroFetcher))
+                add(ArtistImageArtworkFetcher.Factory(loadArtistArtwork::invoke, artistHeroFetcher, songFetcher))
                 add(artistHeroFetcher)
             }
             .memoryCache {

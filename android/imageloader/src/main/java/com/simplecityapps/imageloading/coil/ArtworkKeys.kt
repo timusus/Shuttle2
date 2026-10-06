@@ -5,6 +5,7 @@ import coil3.request.Options
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
+import com.simplecityapps.shuttle.model.ArtistImageArtwork
 import com.simplecityapps.shuttle.model.Song
 
 /**
@@ -22,6 +23,12 @@ fun AlbumArtist.artworkCacheKey(): String = "artist:${name ?: friendlyArtistName
  * back to, and the smallest artist image it takes, so an image cached under an older minimum is looked up again.
  */
 fun ArtistHeroArtwork.artworkCacheKey(): String = "artistHero:${artist.artworkCacheKey()}|online=$onlineLookup|${fallbackAlbum?.artworkCacheKey()}|min=${ArtistHeroArtwork.MIN_ARTIST_IMAGE_SIZE}"
+
+/**
+ * Keys a song shown as its artist (#952): the artist, and the song, whose own artwork shows when the artist has no image, so
+ * each such song keeps its own entry until the artist gets one.
+ */
+fun ArtistImageArtwork.artworkCacheKey(): String = "artistImage:${artist.artworkCacheKey()}|${song.artworkCacheKey()}"
 
 /**
  * Appends the provider's artwork version, so the key changes exactly when the artwork does. Without a version
@@ -46,6 +53,13 @@ internal object AlbumArtworkKeyer : Keyer<Album> {
 internal object AlbumArtistArtworkKeyer : Keyer<AlbumArtist> {
     override fun key(
         data: AlbumArtist,
+        options: Options
+    ): String = data.artworkCacheKey()
+}
+
+internal object ArtistImageArtworkKeyer : Keyer<ArtistImageArtwork> {
+    override fun key(
+        data: ArtistImageArtwork,
         options: Options
     ): String = data.artworkCacheKey()
 }

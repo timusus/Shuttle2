@@ -9,7 +9,7 @@ enum class NowPlayingImage {
     /** The song's own album art. */
     AlbumArt,
 
-    /** The song's album artist's image, the same for every song by them; their album art where they have none. */
+    /** The song's album artist's image, the same for every song by them; the song's own art where they have none. */
     ArtistImage
 }
 
