@@ -199,7 +199,6 @@ class EmbyAuthenticationManager(
             "&Container=$directPlayContainers" +
             "&TranscodingContainer=${target.container}" +
             "&TranscodingProtocol=${target.protocol}" +
-            "&MaxSampleRate=48000" +
             "&EnableRedirection=true" +
             "&EnableRemoteMedia=true" +
             "&AudioCodec=${target.codec.codec}" +

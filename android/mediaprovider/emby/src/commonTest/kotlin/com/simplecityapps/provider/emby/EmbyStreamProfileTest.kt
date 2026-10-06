@@ -32,7 +32,7 @@ class EmbyStreamProfileTest {
         urlFor(StreamProfile.Android, StreamingQuality.Kbps320) shouldBe
             "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
             "&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
-            "&TranscodingProtocol=hls&MaxSampleRate=48000&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
+            "&TranscodingProtocol=hls&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
             "&MaxStreamingBitrate=320000&api_key=token123"
     }
 
@@ -41,7 +41,7 @@ class EmbyStreamProfileTest {
         urlFor(StreamProfile.Android, StreamingQuality.Original) shouldBe
             "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
             "&Container=opus,mp3|mp3,aac|aac,m4a|aac,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts" +
-            "&TranscodingProtocol=hls&MaxSampleRate=48000&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
+            "&TranscodingProtocol=hls&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac" +
             "&api_key=token123"
     }
 
@@ -51,8 +51,14 @@ class EmbyStreamProfileTest {
             "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456&DeviceId=device-1&PlaySessionId=<session>" +
             "&Container=mp3|mp3,aac|aac,m4a|aac,m4a|alac,m4b|aac,m4b|alac,mp4|aac,mp4|alac," +
             "flac,ogg,oga,opus,mka,matroska,webm,webma,wav,aiff,aif" +
-            "&TranscodingContainer=mp3&TranscodingProtocol=http&MaxSampleRate=48000&EnableRedirection=true&EnableRemoteMedia=true" +
+            "&TranscodingContainer=mp3&TranscodingProtocol=http&EnableRedirection=true&EnableRemoteMedia=true" +
             "&AudioCodec=mp3&MaxStreamingBitrate=128000&api_key=token123"
+    }
+
+    @Test
+    fun `no profile caps the sample rate so hi-res FLAC direct plays`() {
+        urlFor(StreamProfile.Android, StreamingQuality.Original) shouldNotContain "MaxSampleRate"
+        urlFor(StreamProfile.Ios, StreamingQuality.Original) shouldNotContain "MaxSampleRate"
     }
 
     @Test
