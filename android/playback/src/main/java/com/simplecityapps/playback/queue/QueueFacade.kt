@@ -1,6 +1,8 @@
 package com.simplecityapps.playback.queue
 
+import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.S2ShuffleOrder
@@ -29,7 +31,7 @@ import timber.log.Timber
  * any thread, and return the last published state.
  */
 class QueueFacade(
-    player: ExoPlayer,
+    private val player: ExoPlayer,
     playbackSettings: PlaybackSettings,
     songUriResolver: SongUriResolver,
     /** Where new queue entries are built: off the main thread, as a long queue takes a while. */
@@ -120,32 +122,54 @@ class QueueFacade(
 
     /**
      * The item after the current one, as the player would play it. [ignoreRepeat] treats the repeat mode as
-     * [RepeatMode.All].
+     * [RepeatMode.All]. From the last published queue, as [skipToNext] finds it on the player's timeline.
      */
     override fun getNext(ignoreRepeat: Boolean): QueueItem? = queueStateFlow.value.next(if (ignoreRepeat) RepeatMode.All else repeatModeFlow.value)
 
+    /** The item before the current one, from the last published queue, as [skipToPrevious] finds it on the player's timeline. */
     override fun getPrevious(): QueueItem? = queueStateFlow.value.previous()
 
-    /** The playlist index of the item after the current one under [repeatMode], or null if there's none. */
-    private fun nextIndex(repeatMode: RepeatMode): Int? {
-        val next = queueStateFlow.value.next(repeatMode) ?: return null
-        return publisher.lists.base.indexOf(next).takeIf { it != -1 }
+    /**
+     * The playlist index of the item after the current one, from the player's timeline under its repeat mode
+     * ([Player.REPEAT_MODE_ALL] if [ignoreRepeat]) and shuffle order; null if there's none. On the player's thread.
+     */
+    private fun nextIndex(ignoreRepeat: Boolean): Int? = adjacentIndex { timeline, index ->
+        timeline.getNextWindowIndex(index, if (ignoreRepeat) Player.REPEAT_MODE_ALL else player.repeatMode, player.shuffleModeEnabled)
     }
 
+    /**
+     * The playlist index of the item before the current one, from the player's timeline in its shuffle order; null at
+     * the first. It doesn't wrap round, whatever the repeat mode. On the player's thread.
+     */
+    private fun previousIndex(): Int? = adjacentIndex { timeline, index ->
+        timeline.getPreviousWindowIndex(index, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+    }
+
+    private fun adjacentIndex(step: (timeline: Timeline, index: Int) -> Int): Int? {
+        val timeline = player.currentTimeline
+        if (timeline.isEmpty) return null
+        return step(timeline, player.currentMediaItemIndex).takeIf { it != C.INDEX_UNSET }
+    }
+
+    /** Off the player's thread, posted to it, returning whether the last published queue has a next item. */
     override fun skipToNext(ignoreRepeat: Boolean): Boolean {
+        if (!playerThread.isCurrent) {
+            playerThread.run { skipToNext(ignoreRepeat) }
+            return getNext(ignoreRepeat) != null
+        }
         Timber.v("skipToNext()")
-        val next = nextIndex(if (ignoreRepeat) RepeatMode.All else repeatModeFlow.value)
+        val next = nextIndex(ignoreRepeat)
         if (next == null) {
             Timber.v("No next track to skip to")
             return false
         }
-        playerThread.run { editor.seekTo(next) }
+        editor.seekTo(next)
         return true
     }
 
-    override fun skipToPrevious() {
+    override fun skipToPrevious() = playerThread.run {
         Timber.v("skipToPrevious()")
-        getPrevious()?.let(::setCurrentItem) ?: Timber.v("No previous track to skip to")
+        previousIndex()?.let(editor::seekTo) ?: Timber.v("No previous track to skip to")
     }
 
     override fun skipTo(position: Int) {
