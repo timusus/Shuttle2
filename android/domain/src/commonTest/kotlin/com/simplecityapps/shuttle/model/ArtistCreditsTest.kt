@@ -115,6 +115,19 @@ class ArtistCreditsTest {
     }
 
     @Test
+    fun `an album artist needs feat or ft with its dot or featuring so a band named Feat stays whole`() {
+        ArtistCredits.splitFeaturing("The Feat Band") shouldBe listOf("The Feat Band")
+        ArtistCredits.splitFeaturing("Little Feat") shouldBe listOf("Little Feat")
+        ArtistCredits.splitFeaturing("Little Feat ft Someone") shouldBe listOf("Little Feat ft Someone")
+        ArtistCredits.splitFeaturing("Little Feat featuring Bonnie Raitt") shouldBe listOf("Little Feat", "Bonnie Raitt")
+        ArtistCredits.splitFeaturing("Daft Punk FEAT. Pharrell Williams") shouldBe listOf("Daft Punk", "Pharrell Williams")
+        val song = tags(album = "Live", artists = listOf("The Feat Band"), albumArtist = "The Feat Band")
+        val identity = AlbumIdentityRule.resolve(listOf(song)).getValue(song.songId)
+        identity.albumArtists.map { it.name } shouldBe listOf("The Feat Band")
+        identity.featuredArtists shouldBe emptyList()
+    }
+
+    @Test
     fun `an album artist's featured artist is credited on every song - and owns none of it`() {
         val song = tags("Song Album", listOf("Calvin Harris"), albumArtist = "Calvin Harris feat. Rihanna")
         val identity = AlbumIdentityRule.resolve(listOf(song)).getValue(song.songId)

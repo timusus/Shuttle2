@@ -27,7 +27,11 @@ object ArtistCredits {
 
     private val SEPARATOR = Regex("\\s*;\\s+|\\s+/\\s+|$FEATURING_PATTERN", RegexOption.IGNORE_CASE)
 
-    private val FEATURING = Regex(FEATURING_PATTERN, RegexOption.IGNORE_CASE)
+    /**
+     * "feat." and "ft." with their dot, or "featuring": an album artist is a band's name more often than a track artist,
+     * and "Little Feat" or "The Feat Band" is no featuring.
+     */
+    private val FEATURING = Regex("\\s+[(\\[]?(?:feat\\.|ft\\.|featuring)\\s+", RegexOption.IGNORE_CASE)
 
     /** The artists [tags] credits, each once, in credit order; [identity] is the song's album identity. */
     fun credits(tags: AlbumIdentityTags, identity: AlbumIdentity): List<ArtistCredit> = creditsWithServerIds(tags, identity).map { (credit, _) -> credit }.distinctBy { it.groupKey }
