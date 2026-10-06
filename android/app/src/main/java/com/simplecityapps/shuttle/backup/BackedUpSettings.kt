@@ -40,6 +40,7 @@ internal object BackedUpSettings {
         ArtworkSettings.WifiOnly,
         ArtworkSettings.LocalOnly,
         ArtworkSettings.MediaSessionArtwork,
+        ArtworkSettings.NowPlayingArtworkSource,
         PlaybackSettings.RetainShuffleOnNewQueue,
         PlaybackSettings.UsbDacDirectOutput,
         PlaybackSettings.ReplayGain,

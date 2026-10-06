@@ -78,7 +78,7 @@ internal fun MiniPlayer(
                             },
                         )
                     },
-                artwork = { SongArtwork(current.song) },
+                artwork = { SongArtwork(current.song, image = player.nowPlayingImage) },
                 buffering = player.buffering,
                 nextIcon = if (seekable) Icons.Rounded.Forward30 else Icons.Rounded.SkipNext,
                 nextContentDescription = if (seekable) stringResource(R.string.player_seek_forward) else stringResource(DesignR.string.ds_next),

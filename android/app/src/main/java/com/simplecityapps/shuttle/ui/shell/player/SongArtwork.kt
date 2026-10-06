@@ -13,20 +13,32 @@ import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumArtistStandIn
+import com.simplecityapps.shuttle.settings.NowPlayingImage
 
-/** A song's artwork, loaded by Coil from the song itself; the song placeholder shows until it loads, and stays if it can't. */
+/**
+ * A song's artwork, loaded by Coil from the song itself, or from its album artist for [NowPlayingImage.ArtistImage] (#952);
+ * the song placeholder shows until it loads, and stays if it can't.
+ */
 @Composable
 internal fun SongArtwork(
     song: Song,
     modifier: Modifier = Modifier,
     size: ArtworkSize = ArtworkSize.Small,
+    image: NowPlayingImage = NowPlayingImage.AlbumArt,
 ) {
-    var loaded by remember(song) { mutableStateOf(false) }
+    val model: Any = remember(song, image) {
+        when (image) {
+            NowPlayingImage.AlbumArt -> song
+            NowPlayingImage.ArtistImage -> song.albumArtistStandIn() ?: song
+        }
+    }
+    var loaded by remember(model) { mutableStateOf(false) }
     Artwork(ArtworkPlaceholder.Song, modifier, size = size) {
         // Composed under the placeholder's tone until the image arrives, so a song without art keeps the placeholder shape.
         if (!loaded) ArtworkPlaceholderShape(size)
         AsyncImage(
-            model = song,
+            model = model,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,

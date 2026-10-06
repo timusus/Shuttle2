@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.NowPlayingImage
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.time.Instant
@@ -72,6 +73,33 @@ class ArtworkKeysTest {
         val album = createAlbum(artworkVersion = null).copy(albumArtist = "Artist", name = "Album_Song")
 
         createSong(artworkVersion = null).artworkCacheKey() shouldNotBe album.artworkCacheKey()
+    }
+
+    @Test
+    fun `album art now playing artwork is the song itself`() {
+        val song = createSong(artworkVersion = null)
+
+        nowPlayingArtworkModel(song, NowPlayingImage.AlbumArt) shouldBe song
+    }
+
+    @Test
+    fun `artist image now playing artwork is the album artist, the same key for every song by them`() {
+        val first = createSong(artworkVersion = "v1")
+        val second = createSong(artworkVersion = "v2").copy(name = "Other", album = "Other Album")
+
+        val firstModel = nowPlayingArtworkModel(first, NowPlayingImage.ArtistImage)
+        val secondModel = nowPlayingArtworkModel(second, NowPlayingImage.ArtistImage)
+
+        (firstModel as AlbumArtist).name shouldBe "Artist"
+        (firstModel as AlbumArtist).artworkCacheKey() shouldBe (secondModel as AlbumArtist).artworkCacheKey()
+    }
+
+    @Test
+    fun `artist image now playing artwork keeps a song with no album artist as itself`() {
+        val song = createSong(artworkVersion = null).copy(albumArtist = null)
+
+        nowPlayingArtworkModel(song, NowPlayingImage.ArtistImage) shouldBe song
+        nowPlayingArtworkModel(song.copy(albumArtist = " "), NowPlayingImage.ArtistImage) shouldBe song.copy(albumArtist = " ")
     }
 
     private fun createSong(

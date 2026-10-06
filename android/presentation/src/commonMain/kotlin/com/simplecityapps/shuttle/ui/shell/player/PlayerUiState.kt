@@ -5,6 +5,7 @@ import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.NowPlayingImage
 import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
@@ -64,6 +65,8 @@ data class PlayerUiState(
     val delivered: DeliveredFormat? = null,
     /** The seek bar's end label counts down the time left, rather than showing the song's length. */
     val showRemainingTime: Boolean = true,
+    /** Whether Now Playing and the mini player picture a song by its album art or its artist's image (#952). */
+    val nowPlayingImage: NowPlayingImage = NowPlayingImage.AlbumArt,
     /** The panel the bar has open, or null at rest. */
     val panel: NowPlayingPanel? = null,
     /** What the queue is playing from (#909), shown and opened from the queue's header; null for none ([ObserveQueueSource]). */

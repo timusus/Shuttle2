@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
+import com.simplecityapps.shuttle.settings.NowPlayingImage
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
@@ -293,6 +294,15 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         setting = ArtworkSettings.MediaSessionArtwork,
                         title = StringKey.PREF_MEDIA_SESSION_ARTWORK_TITLE,
                         summary = StringKey.PREF_MEDIA_SESSION_ARTWORK_SUBTITLE
+                    ),
+                    SettingItem.Choice(
+                        setting = ArtworkSettings.NowPlayingArtworkSource,
+                        title = StringKey.PREF_NOW_PLAYING_ARTWORK_TITLE,
+                        summary = StringKey.PREF_NOW_PLAYING_ARTWORK_SUBTITLE,
+                        options = listOf(
+                            ChoiceOption(NowPlayingImage.AlbumArt, StringKey.NOW_PLAYING_ARTWORK_ENTRY_ALBUM_ART),
+                            ChoiceOption(NowPlayingImage.ArtistImage, StringKey.NOW_PLAYING_ARTWORK_ENTRY_ARTIST_IMAGE)
+                        )
                     ),
                     SettingItem.Action(
                         action = SettingsAction.ClearArtworkCache,

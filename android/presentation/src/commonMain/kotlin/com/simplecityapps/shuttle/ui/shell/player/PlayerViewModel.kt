@@ -13,6 +13,7 @@ import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -204,6 +205,8 @@ class PlayerViewModel @AssistedInject constructor(
             )
         }.combine(observeSetting(PlayerSettings.ShowRemainingTime)) { state, showRemainingTime ->
             state.copy(showRemainingTime = showRemainingTime)
+        }.combine(observeSetting(ArtworkSettings.NowPlayingArtworkSource)) { state, image ->
+            state.copy(nowPlayingImage = image)
         }.combine(deliveredFormats.byPath) { state, delivered ->
             state.copy(delivered = state.current?.song?.path?.let(delivered::get))
         }.combine(panel) { state, panel ->

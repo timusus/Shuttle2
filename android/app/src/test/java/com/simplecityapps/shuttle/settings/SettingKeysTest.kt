@@ -52,6 +52,7 @@ class SettingKeysTest {
             "ArtworkSettings.WifiOnly: artwork_wifi_only = true",
             "ArtworkSettings.LocalOnly: artwork_local_only = false",
             "ArtworkSettings.MediaSessionArtwork: media_session_artwork = true",
+            "ArtworkSettings.NowPlayingArtworkSource: pref_now_playing_artwork = AlbumArt",
             "DebugSettings.FileLogging: pref_file_logging = false",
             "PrivacySettings.CrashReporting: pref_crash_reporting = true",
             "PrivacySettings.Analytics: pref_firebase_analytics = true",

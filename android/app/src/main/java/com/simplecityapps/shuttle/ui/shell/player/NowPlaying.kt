@@ -113,7 +113,7 @@ internal fun NowPlayingArtwork(
     if (player.current != null) boxModifier = boxModifier.skipSwipe(onNext = actions::skipToNext, onPrevious = actions::skipToPrevious)
     Box(boxModifier, contentAlignment = Alignment.Center) {
         player.current?.let { current ->
-            SongArtwork(current.song, Modifier.widthIn(max = MaxArtworkSize).aspectRatio(1f, matchHeightConstraintsFirst = true), size = ArtworkSize.Hero)
+            SongArtwork(current.song, Modifier.widthIn(max = MaxArtworkSize).aspectRatio(1f, matchHeightConstraintsFirst = true), size = ArtworkSize.Hero, image = player.nowPlayingImage)
         }
     }
 }

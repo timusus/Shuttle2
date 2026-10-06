@@ -125,6 +125,14 @@
     <string name="pref_media_session_artwork_title">Media session artwork</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Supply artwork to Android\'s Media Session. Disable to prevent lockscreen artwork</string>
+    <!-- Settings: Title for the option choosing which image Now Playing, the notification and Android Auto show -->
+    <string name="pref_now_playing_artwork_title">Now playing artwork</string>
+    <!-- Settings: Description for the option choosing between the album art and the artist's image -->
+    <string name="pref_now_playing_artwork_subtitle">Show the album art, or the artist\'s image for every song by them. Falls back to the album art when an artist has no image</string>
+    <!-- Settings: Option to show the song's album art as the now playing artwork -->
+    <string name="now_playing_artwork_entry_album_art">Album art</string>
+    <!-- Settings: Option to show the artist's image as the now playing artwork -->
+    <string name="now_playing_artwork_entry_artist_image">Artist image</string>
     <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
     <string name="pref_disable_shuffle_on_queue_title">Keep shuffle mode</string>
     <!-- Settings: Description for the option to disable shuffle when starting a new queue -->

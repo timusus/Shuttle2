@@ -56,6 +56,7 @@ class SettingsRepositoriesTest {
             "artwork_wifi_only" to true,
             "artwork_local_only" to false,
             "media_session_artwork" to true,
+            "pref_now_playing_artwork" to NowPlayingImage.AlbumArt,
             "pref_crash_reporting" to true,
             "pref_firebase_analytics" to true,
             "pref_file_logging" to false,
@@ -81,6 +82,7 @@ class SettingsRepositoriesTest {
         appearance.theme.value = ThemeMode.Dark
         appearance.accent.value = Accent.Amber
         appearance.widgetBackgroundOpacity.value = 40
+        ArtworkSettings(store).nowPlayingArtwork.value = NowPlayingImage.ArtistImage
         val playback = PlaybackSettings(store)
         playback.replayGainMode.value = ReplayGainMode.Album
         playback.preAmpGain.value = -3.5f
@@ -93,6 +95,7 @@ class SettingsRepositoriesTest {
         val reread = SettingsStore(SharedPreferencesKeyValueStore(context.defaultSharedPreferences()))
         AppearanceSettings(reread).theme.value shouldBe ThemeMode.Dark
         AppearanceSettings(reread).accent.value shouldBe Accent.Amber
+        ArtworkSettings(reread).nowPlayingArtwork.value shouldBe NowPlayingImage.ArtistImage
         AppearanceSettings(reread).widgetBackgroundOpacity.value shouldBe 40
         PlaybackSettings(reread).replayGainMode.value shouldBe ReplayGainMode.Album
         PlaybackSettings(reread).preAmpGain.value shouldBe -3.5f
@@ -254,6 +257,7 @@ class SettingsRepositoriesTest {
             artwork.wifiOnly,
             artwork.localOnly,
             artwork.mediaSessionArtwork,
+            artwork.nowPlayingArtwork,
             privacy.crashReporting,
             privacy.analytics,
             debug.fileLogging,

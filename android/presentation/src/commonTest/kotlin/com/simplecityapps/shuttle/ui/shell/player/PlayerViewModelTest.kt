@@ -31,6 +31,8 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.settings.NowPlayingImage
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.PlayerSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -404,6 +406,16 @@ class PlayerViewModelTest {
 
         viewModel.uiState.value.player.seed shouldBe ArtworkSeed.None
         seededSongs shouldBe emptyList()
+    }
+
+    @Test
+    fun `now playing shows the album art until the setting asks for the artist image`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.value.player.nowPlayingImage shouldBe NowPlayingImage.AlbumArt
+
+        SaveSetting(settingsStore)(ArtworkSettings.NowPlayingArtworkSource, NowPlayingImage.ArtistImage)
+
+        viewModel.uiState.value.player.nowPlayingImage shouldBe NowPlayingImage.ArtistImage
     }
 
     @Test

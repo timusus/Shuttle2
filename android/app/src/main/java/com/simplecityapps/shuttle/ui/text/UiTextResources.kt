@@ -159,6 +159,10 @@ val StringKey.resId: Int
         StringKey.PREF_ARTWORK_LOCAL_ONLY_SUBTITLE -> R.string.pref_artwork_local_only_subtitle
         StringKey.PREF_MEDIA_SESSION_ARTWORK_TITLE -> R.string.pref_media_session_artwork_title
         StringKey.PREF_MEDIA_SESSION_ARTWORK_SUBTITLE -> R.string.pref_media_session_artwork_subtitle
+        StringKey.PREF_NOW_PLAYING_ARTWORK_TITLE -> R.string.pref_now_playing_artwork_title
+        StringKey.PREF_NOW_PLAYING_ARTWORK_SUBTITLE -> R.string.pref_now_playing_artwork_subtitle
+        StringKey.NOW_PLAYING_ARTWORK_ENTRY_ALBUM_ART -> R.string.now_playing_artwork_entry_album_art
+        StringKey.NOW_PLAYING_ARTWORK_ENTRY_ARTIST_IMAGE -> R.string.now_playing_artwork_entry_artist_image
         StringKey.PREF_CLEAR_ARTWORK_TITLE -> R.string.pref_clear_artwork_title
         StringKey.PREF_CLEAR_ARTWORK_SUBTITLE -> R.string.pref_clear_artwork_subtitle
         StringKey.SETTINGS_DIALOG_TITLE_CLEAR_ARTWORK -> R.string.settings_dialog_title_clear_artwork

@@ -17,8 +17,11 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.simplecityapps.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.coil.artworkCacheKey
+import com.simplecityapps.imageloading.coil.nowPlayingArtworkModel
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.getArtworkCacheKey
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 
@@ -27,7 +30,8 @@ import com.simplecityapps.shuttle.settings.ArtworkSettings
  * (the lock screen, Android Auto, a Bluetooth head unit). Queue items carry no artwork URI, as an S2 artwork key isn't a
  * URI another app could open, so the song comes from [currentSong]: the session asks only for the current item's.
  *
- * A song with no artwork gets a placeholder; with media session artwork turned off in settings there's none at all.
+ * With "Now playing artwork" set to the artist image, it's the song's album artist's image the loader asks for. A song
+ * with no artwork gets a placeholder; with media session artwork turned off in settings there's none at all.
  */
 @UnstableApi
 class ArtworkBitmapLoader(
@@ -44,11 +48,13 @@ class ArtworkBitmapLoader(
     override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap>? {
         if (!artworkSettings.mediaSessionArtwork.value) return null
         val song = currentSong() ?: return null
-        val key = song.getArtworkCacheKey(ARTWORK_SIZE, ARTWORK_SIZE)
+        // The song, or its album artist when the setting asks for the artist's image (#952); one cache entry per artist then
+        val model = nowPlayingArtworkModel(song, artworkSettings.nowPlayingArtwork.value)
+        val key = if (model is AlbumArtist) "${model.artworkCacheKey()}_${ARTWORK_SIZE}_$ARTWORK_SIZE" else song.getArtworkCacheKey(ARTWORK_SIZE, ARTWORK_SIZE)
         synchronized(artworkCache) { artworkCache[key] }?.let { cached -> return Futures.immediateFuture(cached) }
 
         val future = SettableFuture.create<Bitmap>()
-        val request = artworkImageLoader.loadBitmap(data = song, width = ARTWORK_SIZE, height = ARTWORK_SIZE) { image ->
+        val request = artworkImageLoader.loadBitmap(data = model, width = ARTWORK_SIZE, height = ARTWORK_SIZE) { image ->
             if (image != null) {
                 synchronized(artworkCache) { artworkCache.put(key, image) }
             }
