@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,6 +22,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
+import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.PlaylistSong
@@ -28,6 +30,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
+import com.simplecityapps.shuttle.ui.common.downloads.LocalDownloadOfflineStates
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 
@@ -119,24 +122,26 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         )
     }
 
-    fun setPlaylist(uiState: PlaylistDetailUiState) = render {
-        PlaylistDetailScreen(
-            uiState,
-            onNavigateUp = ::up,
-            onPlay = ::play,
-            onShuffle = ::shuffle,
-            onPlaylistMore = ::more,
-            onSongMore = ::more,
-            onToggleSelected = { lastToggled = it },
-            onClearSelection = { selectionCleared = true },
-            onRemoveSelected = { removedSelected = true },
-            onSelectionAction = { lastSelectionAction = it },
-            onSortOrderSelected = { lastSortOrder = it },
-            onSortDescendingChanged = { lastDescending = it },
-            onExport = { exported = true },
-            onMove = { _, _ -> },
-            onMoveFinished = {},
-        )
+    fun setPlaylist(uiState: PlaylistDetailUiState, offline: Map<String, SongOfflineState> = emptyMap()) = render {
+        CompositionLocalProvider(LocalDownloadOfflineStates provides offline) {
+            PlaylistDetailScreen(
+                uiState,
+                onNavigateUp = ::up,
+                onPlay = ::play,
+                onShuffle = ::shuffle,
+                onPlaylistMore = ::more,
+                onSongMore = ::more,
+                onToggleSelected = { lastToggled = it },
+                onClearSelection = { selectionCleared = true },
+                onRemoveSelected = { removedSelected = true },
+                onSelectionAction = { lastSelectionAction = it },
+                onSortOrderSelected = { lastSortOrder = it },
+                onSortDescendingChanged = { lastDescending = it },
+                onExport = { exported = true },
+                onMove = { _, _ -> },
+                onMoveFinished = {},
+            )
+        }
     }
 
     fun setSmartPlaylist(uiState: SmartPlaylistDetailUiState) = render {

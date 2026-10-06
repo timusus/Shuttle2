@@ -52,6 +52,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.downloads.DownloadStatusHeader
+import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
@@ -105,7 +106,7 @@ fun PlaylistDetailScreen(
     val selecting = uiState.selectedIds.isNotEmpty()
     // Reordering needs the playlist's own order, and pauses while a selection is open so rows can show it.
     val reorderable = uiState.canReorder && !selecting
-    val songs = uiState.songs.map { it.song }
+    val songs = remember(uiState.songs) { uiState.songs.map { it.song } }
     val listState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(listState) { from, to ->
         val fromId = from.key as? Long
@@ -158,6 +159,7 @@ fun PlaylistDetailScreen(
                                 artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
                                 duration = formatDuration(song.duration.toLong()),
                                 dragging = dragging,
+                                offlineState = song.offlineState(),
                                 dragHandleModifier = Modifier.draggableHandle(onDragStopped = onMoveFinished),
                                 onLongClick = { onToggleSelected(entry) },
                             )

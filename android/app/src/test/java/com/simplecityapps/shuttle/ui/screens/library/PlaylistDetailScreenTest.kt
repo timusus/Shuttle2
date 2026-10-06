@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createPlaylist
+import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import io.kotest.matchers.shouldBe
@@ -33,6 +34,14 @@ class PlaylistDetailScreenTest {
 
         robot.assertReorderHandlesShown()
         robot.assertTextNotDisplayed("Choose Custom to reorder", substring = true)
+    }
+
+    @Test
+    fun `in its custom order a downloaded song's row shows it is available offline`() {
+        val entries = playlistEntries()
+        robot.setPlaylist(readyPlaylistDetail(songs = entries), offline = mapOf(entries[0].song.path to SongOfflineState.Offline))
+
+        robot.assertContentDescriptionShown("Available offline")
     }
 
     @Test

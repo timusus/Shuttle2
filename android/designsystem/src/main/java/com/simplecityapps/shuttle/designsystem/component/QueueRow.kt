@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DownloadDone
+import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material.icons.rounded.DragHandle
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material3.Icon
@@ -42,6 +44,7 @@ fun QueueRow(
     duration: String? = null,
     dragging: Boolean = false,
     dragHandleModifier: Modifier = Modifier,
+    offlineState: SongOfflineState = SongOfflineState.None,
     onLongClick: (() -> Unit)? = null,
 ) {
     val current = position == QueuePosition.Current
@@ -63,8 +66,15 @@ fun QueueRow(
             meta = duration,
             leading = artwork,
             // On the current row's secondaryContainer, primary isn't guaranteed 3:1 under every dynamic scheme.
-            supportingLeading = if (current) {
-                { SupportingIcon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), MaterialTheme.colorScheme.onSecondaryContainer) }
+            supportingLeading = if (current || offlineState != SongOfflineState.None) {
+                {
+                    if (current) SupportingIcon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), MaterialTheme.colorScheme.onSecondaryContainer)
+                    when (offlineState) {
+                        SongOfflineState.None -> Unit
+                        SongOfflineState.Downloading -> SupportingIcon(Icons.Rounded.Downloading, stringResource(R.string.ds_downloading))
+                        SongOfflineState.Offline -> SupportingIcon(Icons.Rounded.DownloadDone, stringResource(R.string.ds_available_offline))
+                    }
+                }
             } else {
                 null
             },
