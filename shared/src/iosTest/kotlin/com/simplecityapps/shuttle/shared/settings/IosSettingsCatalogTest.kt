@@ -4,6 +4,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.DownloadSettings
@@ -50,6 +51,7 @@ class IosSettingsCatalogTest {
             StreamingSettings.Format.key,
             StreamingSettings.DownloadQuality.key,
             DownloadSettings.WifiOnly.key,
+            ArtistSettings.ShowCreditedArtists.key,
             ArtworkSettings.LocalOnly.key,
             AppearanceSettings.ColourFromArtwork.key,
             AppearanceSettings.ShowHomeOnLaunch.key,

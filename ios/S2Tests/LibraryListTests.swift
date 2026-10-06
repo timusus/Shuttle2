@@ -203,6 +203,17 @@ struct LibraryListTests {
         #expect(LibraryNowPlaying.none.playback(song: song) == .none)
     }
 
+    @Test func eachAlbumArtistOfThePlayingSongsAlbumIsMarked() {
+        let playing = LibraryNowPlaying(albumKey: "split", albumArtistKey: "radiohead, thom yorke", albumArtistKeys: ["radiohead", "thom yorke"], isPlaying: true)
+        let artist = { (key: String) in
+            AlbumArtist(name: key, artists: [key], albumCount: 1, songCount: 1, playCount: 0, groupKey: AlbumArtistGroupKey(key: key), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0)
+        }
+        #expect(playing.playback(albumArtist: artist("radiohead")) == .playing)
+        #expect(playing.playback(albumArtist: artist("thom yorke")) == .playing)
+        #expect(playing.playback(albumArtist: artist("radiohead, thom yorke")) == .none)
+        #expect(LibraryNowPlaying.none.playback(albumArtist: artist("radiohead")) == .none)
+    }
+
     @Test func albumsPlaceholders() throws {
         #expect((try? AlbumListContent(state: albumState([], .empty)).inspect().find(text: "No Albums")) != nil)
         #expect((try? AlbumListContent(state: albumState([], .scanning)).inspect().find(text: "Importing your library…")) != nil)

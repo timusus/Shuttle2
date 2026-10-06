@@ -21,7 +21,8 @@ struct CarPlayOfflineIndex {
         let playable = songs.filter { Self.isPlayable($0, downloaded: downloaded) }
         self.playable = playable
         albums = Set(playable.map(\.albumGroupKey))
-        artists = Set(playable.map(\.albumArtistGroupKey))
+        // An artist plays the songs they're by (`isByArtist`): each album artist of the song's album, and each it credits
+        artists = Set(playable.flatMap { $0.albumArtistKeys + $0.artistCredits.map(\.groupKey) })
         genres = Set(playable.flatMap(\.genres))
     }
 

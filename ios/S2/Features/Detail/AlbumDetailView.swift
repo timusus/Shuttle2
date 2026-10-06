@@ -231,7 +231,8 @@ struct AlbumArtistLink: Equatable {
     let route: Route
 
     init?(_ album: Album) {
-        self.init(name: album.albumArtist, key: album.groupKey?.albumArtistGroupKey?.key)
+        // The primary album artist: an album of several opens its first, "A feat. B"'s opens A
+        self.init(name: album.albumArtist, key: album.albumArtistKeys.first?.key)
     }
 
     init?(name: String?, key: String?) {

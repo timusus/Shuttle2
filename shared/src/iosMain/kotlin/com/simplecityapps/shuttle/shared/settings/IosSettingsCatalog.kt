@@ -5,6 +5,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.EqualizerSettings
@@ -155,6 +156,17 @@ object IosSettingsCatalog : SettingsCatalog {
                         title = StringKey.PREF_MEDIA_RESCAN_TITLE,
                         summary = StringKey.PREF_MEDIA_RESCAN_SUMMARY,
                         key = "pref_media_rescan"
+                    )
+                )
+            ),
+            // Read by the shared AlbumArtistListViewModel behind Library > Artists (#637)
+            SettingsGroup(
+                title = StringKey.SETTINGS_GROUP_ARTISTS,
+                items = listOf(
+                    SettingItem.Switch(
+                        setting = ArtistSettings.ShowCreditedArtists,
+                        title = StringKey.PREF_SHOW_CREDITED_ARTISTS_TITLE,
+                        summary = StringKey.PREF_SHOW_CREDITED_ARTISTS_SUMMARY
                     )
                 )
             ),

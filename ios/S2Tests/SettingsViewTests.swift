@@ -19,7 +19,7 @@ struct SettingsViewTests {
 
     @Test func mapsEachScreenToItsTitledSectionsInCatalogOrder() {
         let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, equalizerPreset: Equalizer.Presets.shared.custom, lastFmConfigured: false, events: []))
-        #expect(sections.map(\.title) == ["Playback & sound", nil, "Replay Gain", "Sources", "Streaming & downloads", "Library", "Artwork", "Appearance", "Privacy"])
+        #expect(sections.map(\.title) == ["Playback & sound", nil, "Replay Gain", "Sources", "Streaming & downloads", "Library", "Artists", "Artwork", "Appearance", "Privacy"])
     }
 
     /// #645: the Equalizer (with its own Preamp) and ReplayGain's pre-amp are separate sections, the pre-amp named

@@ -412,20 +412,24 @@ struct IconSquare: View {
     }
 }
 
-/// What's playing, as the library lists mark it: the current song, and the album and album artist it belongs to.
+/// What's playing, as the library lists mark it: the current song, and the album and album artists it belongs to.
+/// `albumArtistKey` is the album's own key's artist part, as tagged ("A, B"); `albumArtistKeys` are the artists whose
+/// album it is, each marked in the artist list.
 struct LibraryNowPlaying: Equatable {
     var songId: Int64?
     var albumKey: String?
     var albumArtistKey: String?
+    var albumArtistKeys: [String] = []
     var albumIdentity: String?
     var isPlaying = false
 
     static let none = LibraryNowPlaying()
 
-    init(songId: Int64? = nil, albumKey: String? = nil, albumArtistKey: String? = nil, albumIdentity: String? = nil, isPlaying: Bool = false) {
+    init(songId: Int64? = nil, albumKey: String? = nil, albumArtistKey: String? = nil, albumArtistKeys: [String] = [], albumIdentity: String? = nil, isPlaying: Bool = false) {
         self.songId = songId
         self.albumKey = albumKey
         self.albumArtistKey = albumArtistKey
+        self.albumArtistKeys = albumArtistKeys
         self.albumIdentity = albumIdentity
         self.isPlaying = isPlaying
     }
@@ -436,6 +440,7 @@ struct LibraryNowPlaying: Equatable {
             songId: song?.id,
             albumKey: song?.albumGroupKey.key,
             albumArtistKey: song?.albumArtistGroupKey.key,
+            albumArtistKeys: song?.albumArtistKeys.compactMap(\.key) ?? [],
             albumIdentity: song?.albumGroupKey.identity,
             isPlaying: playback is PlaybackState.Playing
         )
@@ -455,7 +460,7 @@ struct LibraryNowPlaying: Equatable {
     }
 
     func playback(albumArtist: AlbumArtist) -> MediaRowPlayback {
-        state(albumArtistKey != nil && albumArtist.groupKey.key == albumArtistKey)
+        state(albumArtist.groupKey.key.map(albumArtistKeys.contains) == true)
     }
 }
 

@@ -23,12 +23,13 @@ struct AlbumDetailTests {
         )
     }
 
-    private func album(songCount: Int32 = 2, year: Int32? = 1997, albumArtist: String? = "Radiohead", artists: [String] = ["Radiohead"], artistKey: String? = "radiohead") -> Album {
+    private func album(songCount: Int32 = 2, year: Int32? = 1997, albumArtist: String? = "Radiohead", artists: [String] = ["Radiohead"], artistKey: String? = "radiohead", albumArtistKeys: [String]? = nil) -> Album {
         Album(
             name: "OK Computer", albumArtist: albumArtist, artists: artists, songCount: songCount, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: "ok computer", albumArtistGroupKey: AlbumArtistGroupKey(key: artistKey), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil, albumArtistKeys: []
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil,
+            albumArtistKeys: (albumArtistKeys ?? artistKey.map { [$0] } ?? []).map { AlbumArtistGroupKey(key: $0) }
         )
     }
 
@@ -129,6 +130,11 @@ struct AlbumDetailTests {
         let compilation = AlbumArtistLink(album(albumArtist: "Various Artists", artists: ["A", "B"], artistKey: "various artists"))
         #expect(compilation?.name == "Various Artists")
         #expect(compilation?.route == .albumArtist(albumArtistKey: "various artists"))
+        // An album of several album artists, or one featuring another, opens its primary artist, not their joint key
+        let several = AlbumArtistLink(album(albumArtist: "Radiohead, Thom Yorke", artistKey: "radiohead, thom yorke", albumArtistKeys: ["radiohead", "thom yorke"]))
+        #expect(several?.route == .albumArtist(albumArtistKey: "radiohead"))
+        let featuring = AlbumArtistLink(album(albumArtist: "Radiohead feat. Björk", artistKey: "radiohead feat. björk", albumArtistKeys: ["radiohead"]))
+        #expect(featuring?.route == .albumArtist(albumArtistKey: "radiohead"))
         #expect(AlbumArtistLink(name: "Radiohead", key: nil) == nil)
         #expect(AlbumArtistLink(album(artistKey: nil)) == nil)
         #expect(AlbumArtistLink(name: nil, key: "radiohead") == nil)
