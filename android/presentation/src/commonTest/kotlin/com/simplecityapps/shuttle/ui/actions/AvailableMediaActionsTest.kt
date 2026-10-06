@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType.RemoveDownload
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Share
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Shuffle
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.SongInfo
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -52,6 +53,15 @@ class AvailableMediaActionsTest {
     fun `a single album goes to its artist but not an album`() = runTest {
         actionsFor(MediaSelection.Albums(createAlbum())) shouldBe
             listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, GoToArtist, EditTags, Share, Exclude)
+    }
+
+    @Test
+    fun `a MediaStore song can be deleted but a server song can't`() = runTest {
+        val mediaStore = createSong(id = 2, mediaProvider = MediaProviderType.MediaStore).copy(externalId = "7")
+
+        actionsFor(MediaSelection.Songs(mediaStore)) shouldContain Delete
+        actionsFor(MediaSelection.Songs(listOf(mediaStore, remote))) shouldNotContain Delete
+        actionsFor(MediaSelection.Songs(remote)) shouldNotContain Delete
     }
 
     @Test

@@ -116,7 +116,8 @@ data class Song(
         }
     }
 
-    fun canBeDeleted(): Boolean = externalId == null
+    /** A Shuttle (SAF) song, or a MediaStore one, whose [externalId] is its MediaStore row; never a remote provider's. */
+    fun canBeDeleted(): Boolean = externalId == null || mediaProvider == MediaProviderType.MediaStore
 
     /**
      * False for a file opened from another app that isn't in the library: it plays as a transient song with a

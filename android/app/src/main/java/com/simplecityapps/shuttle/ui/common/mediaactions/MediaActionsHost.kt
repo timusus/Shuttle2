@@ -1,6 +1,11 @@
 package com.simplecityapps.shuttle.ui.common.mediaactions
 
+import android.app.Activity
 import android.content.Intent
+import android.content.IntentSender
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
@@ -24,6 +29,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +41,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.Artwork
@@ -44,13 +53,16 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.MediaStoreDeleteEntryPoint
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.actions.SystemDeleteRequest
 import com.simplecityapps.shuttle.ui.actions.text
 import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
@@ -164,6 +176,8 @@ fun MediaActionsHost(
         }
     }
 
+    SystemDeleteRequestLauncher()
+
     content(state)
 
     state.sheet?.let { target ->
@@ -220,6 +234,35 @@ fun MediaActionsHost(
             onDismissRequest = { state.confirmation = null },
         ) {
             Text(resources.getString(confirmation.message.text()))
+        }
+    }
+}
+
+/**
+ * Launches the system dialogs that confirm deleting MediaStore songs and hands the user's answer back to the deleter. Only
+ * the host on the resumed screen collects, so a request isn't taken by one that's behind it.
+ */
+@Composable
+private fun SystemDeleteRequestLauncher() {
+    val context = LocalContext.current
+    val deleter = remember { context.appGraph<MediaStoreDeleteEntryPoint>().mediaStoreSongDeleter() }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var pending by remember { mutableStateOf<SystemDeleteRequest?>(null) }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        pending?.result?.complete(result.resultCode == Activity.RESULT_OK)
+        pending = null
+    }
+    LaunchedEffect(deleter, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            deleter.requests.collect { request ->
+                pending = request
+                try {
+                    launcher.launch(IntentSenderRequest.Builder(request.intentSender).build())
+                } catch (e: IntentSender.SendIntentException) {
+                    request.result.complete(false)
+                    pending = null
+                }
+            }
         }
     }
 }
