@@ -86,6 +86,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         didConnect interfaceController: CPInterfaceController
     ) {
         self.interfaceController = interfaceController
+        CarPlayConnection.isConnected = true
         interfaceController.delegate = self
         // The car can launch the app on its own, with no phone scene; S2App.init has built the graph by then, but
         // building it here too costs nothing (it's idempotent) and a CarPlay-only launch never sees an empty graph.
@@ -159,6 +160,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
     ) {
         // Nothing runs once the car is gone: the phone keeps playing, and a collector per connection would pile
         // up. A reconnect calls didConnect again and fills the templates afresh.
+        CarPlayConnection.isConnected = false
         accessTask?.cancel()
         accessTask = nil
         showsUpgrade = nil

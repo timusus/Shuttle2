@@ -1,3 +1,4 @@
+import Intents
 import Shared
 import SwiftUI
 
@@ -25,6 +26,8 @@ struct S2App: App {
                     LibraryImport.syncIfStale()
                     // Siri and Spotlight learn the playlists' names for "Play <playlist> in Shuttle Music"
                     ShuttleShortcuts.updateAppShortcutParameters()
+                    // ... and "Play <artist> on Shuttle Music" learns the library (#951)
+                    AppGraph.dependencies.siriContext.start()
                     await LibraryImport.whenLocalFilesChange()
                 }
                 .onChange(of: scenePhase) { _, phase in
@@ -63,6 +66,24 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) {
         if !AppGraph.shared.urlSessionDownloads.handleBackgroundEvents(identifier: identifier, completionHandler: completionHandler) {
             completionHandler()
+        }
+    }
+
+    /// Siri's "play <something>" (#951): the media intent is handled here, in the app's process.
+    func application(_ application: UIApplication, handlerFor intent: INIntent) -> Any? {
+        intent is INPlayMediaIntent ? SiriMediaHandler.shared : nil
+    }
+
+    /// Siri resolved the request and the handler answered `.handleInApp`: start playing, with the app awake in the
+    /// background.
+    func application(_ application: UIApplication, handle intent: INIntent, completionHandler: @escaping (INIntentResponse) -> Void) {
+        guard let intent = intent as? INPlayMediaIntent else {
+            completionHandler(INIntentResponse())
+            return
+        }
+        Task { @MainActor in
+            let code = await AppGraph.dependencies.siriPlayer.play(intent)
+            completionHandler(INPlayMediaIntentResponse(code: code, userActivity: nil))
         }
     }
 }

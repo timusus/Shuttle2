@@ -42,6 +42,10 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>INIntentsSupported</key>
+	<array>
+		<string>INPlayMediaIntent</string>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -53,6 +57,8 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Shuttle Music uses your local network to find and connect to Jellyfin, Emby, Plex and Navidrome media servers on your Wi-Fi network.</string>
+	<key>NSSiriUsageDescription</key>
+	<string>Shuttle Music uses Siri to play the songs, albums, artists and playlists in your library when you ask for them by voice.</string>
 	<key>OSLogPreferences</key>
 	<dict>
 		<key>com.simplecityapps.shuttle2</key>

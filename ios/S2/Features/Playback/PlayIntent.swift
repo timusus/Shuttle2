@@ -260,6 +260,7 @@ extension MediaActionsViewModel {
     /// player takes it up (`PlayIntent.begin`); `key` names what it plays, for a spinner on that item.
     @MainActor
     func send(_ action: any MediaAction, key: String? = nil, intent: PlayIntent? = nil) {
+        SiriDonation.donate(action)
         guard PlayIntent.plays(action) else {
             dispatch(action: action)
             return

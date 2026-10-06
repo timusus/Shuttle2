@@ -34,6 +34,7 @@
 		21FE30A773E2FAFEEB422155 /* DetailSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346675B16296BE8F1612838A /* DetailSupport.swift */; };
 		22061B66DFCCC943591B60BA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB3130910D39D3EBAB25744C /* Assets.xcassets */; };
 		231078D87B2D4E48A18485EC /* CombineFlowBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071E70571E51743974A5AC4F /* CombineFlowBridge.swift */; };
+		25746A1ACCE33576F069D27D /* SiriMediaHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B978B9B3C55A633270BD4F30 /* SiriMediaHandler.swift */; };
 		27EDE8BF878B3F8D7F1580AE /* Shimmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8477763CCDC4966B330DC086 /* Shimmer.swift */; };
 		281D9E79BCC63A754372C691 /* PostHogProductAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78CF5B64D5117B6414664084 /* PostHogProductAnalytics.swift */; };
 		28BC962B531FFE397879547B /* DebugArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE223215219F6F97AC1D9FD2 /* DebugArtwork.swift */; };
@@ -82,6 +83,7 @@
 		5CB5C5912DA7AF5DF32CE0B4 /* RemoteArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442479EA4A659CDC3E88462B /* RemoteArtwork.swift */; };
 		5DF9EB33C38E447BC8F2378C /* DebugArtworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */; };
 		5E3B09AB807AB94FC257FAC9 /* AirPlayButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7AADEAF2F8D24AC514AD547 /* AirPlayButton.swift */; };
+		6069991FA7A8C780BC291A2E /* SiriLibraryContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42A88714D4CEF508D39A626 /* SiriLibraryContext.swift */; };
 		60BBF73144A8BF93DF2A2D70 /* ScrobblingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76FFB737346ADAB913A47F6F /* ScrobblingViewTests.swift */; };
 		624E2C6798581CD66B607606 /* ArtworkBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC86FB5219FFA411079E834 /* ArtworkBackground.swift */; };
 		6431833B8D6C0A0B282E0F5F /* AlbumArtistListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 969D7BE4B5B0AC1094B37103 /* AlbumArtistListView.swift */; };
@@ -93,6 +95,7 @@
 		6AEB0AC592D2378BF49D2D41 /* PlayIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4145D11B811DE85C2F3F718A /* PlayIntentTests.swift */; };
 		6E5F162D0C7883B79420E471 /* FakeAudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0563753774CA8C18BFCA94 /* FakeAudioEngine.swift */; };
 		6EA145E4CCCF5A2D66E95C7C /* ArtworkLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6B428E35216AC97CDD0502 /* ArtworkLoaderTests.swift */; };
+		6FCD52F9E616A87BD3E500FA /* SiriMediaResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFF3AA03943A0FF17FE8063 /* SiriMediaResolverTests.swift */; };
 		73304BDD0F5F554C34287560 /* ArtworkImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 163103F43F01EBA86D007C5F /* ArtworkImage.swift */; };
 		7470E4F2218A8D38E42764C1 /* LibraryLetterIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B1B9EE110E1BFA6AF478F22 /* LibraryLetterIndexTests.swift */; };
 		74DD184C2EBBB3F4E997B71D /* LibraryLetterIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6D121E3E347AC1642C1D039 /* LibraryLetterIndex.swift */; };
@@ -138,6 +141,7 @@
 		B085B4392432468B9A77DB85 /* KotlinCrashEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FAE1605FEA8DC6066A59B46 /* KotlinCrashEventTests.swift */; };
 		B0FB022FA7D066955A64D070 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57C06B74E49F7F95F50A62E /* MarqueeText.swift */; };
 		B2017C3E5F7DB5964CD434D0 /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */; };
+		B5CE183AF8327807FD36E750 /* SiriMediaResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D362BB4A3C5D207E453137 /* SiriMediaResolver.swift */; };
 		B72F8880FF3CF21C649FB03E /* GenreListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 219D34D59A017AC9E82F0C9E /* GenreListView.swift */; };
 		B8399C63B96189E50C51B76E /* LibraryImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52FDEC92D75DB433244B1C2E /* LibraryImport.swift */; };
 		B853C3B025A218C9E08FA400 /* EqualizerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8D3E5BE60A178860D1F22FA /* EqualizerViewTests.swift */; };
@@ -268,6 +272,7 @@
 		1A070F599F25063A5506E523 /* ArtworkSource+Testing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ArtworkSource+Testing.swift"; sourceTree = "<group>"; };
 		1C0AE66B5E1BD8BA73E3BDBF /* ScreenshotHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotHooks.swift; sourceTree = "<group>"; };
 		1C4156A63D9F30E876660749 /* LayoutTierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTierTests.swift; sourceTree = "<group>"; };
+		1CFF3AA03943A0FF17FE8063 /* SiriMediaResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriMediaResolverTests.swift; sourceTree = "<group>"; };
 		205F2D98E447A246625BE4A5 /* LibraryCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCollection.swift; sourceTree = "<group>"; };
 		20E688A48CB9963C2F8837D2 /* S2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = S2App.swift; sourceTree = "<group>"; };
 		2105451B4A503DA93D9DAC70 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
@@ -298,6 +303,7 @@
 		44644E2B6A5193A7940D1633 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		4508034A93DD7E7D4C59E362 /* PlayerBindingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBindingTests.swift; sourceTree = "<group>"; };
 		467103A9C583DD5E8967EABF /* LayoutTier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTier.swift; sourceTree = "<group>"; };
+		47D362BB4A3C5D207E453137 /* SiriMediaResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriMediaResolver.swift; sourceTree = "<group>"; };
 		48E0B40EF9B1410AFE3490A4 /* NowPlayingViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingViewTests.swift; sourceTree = "<group>"; };
 		4ADA676570793AAB2B73A604 /* NowPlayingAudioSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingAudioSheets.swift; sourceTree = "<group>"; };
 		4DA5E1F9413A15219BA5C23E /* SentryCrashReporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryCrashReporter.swift; sourceTree = "<group>"; };
@@ -406,6 +412,7 @@
 		B4EABE937DFDA953B4A4F31C /* PlayerPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPalette.swift; sourceTree = "<group>"; };
 		B68CE2B34453BFF2F0D8C705 /* PlayerNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerNotice.swift; sourceTree = "<group>"; };
 		B7AADEAF2F8D24AC514AD547 /* AirPlayButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirPlayButton.swift; sourceTree = "<group>"; };
+		B978B9B3C55A633270BD4F30 /* SiriMediaHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriMediaHandler.swift; sourceTree = "<group>"; };
 		B9B0D7D971C30D4A0B6D6D8E /* NowPlayingControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingControllerTests.swift; sourceTree = "<group>"; };
 		BA3C4C66EB5919CB2CD27F60 /* EngineAudioPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineAudioPlayerTests.swift; sourceTree = "<group>"; };
 		BB1F6A8475DD9D2EA014187B /* AlbumSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumSectionHeader.swift; sourceTree = "<group>"; };
@@ -415,6 +422,7 @@
 		BE88914EACE56038FA6DEBE1 /* LocalLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLibraryTests.swift; sourceTree = "<group>"; };
 		C05BB1FA7030B1074049B037 /* CarPlayListRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayListRenderer.swift; sourceTree = "<group>"; };
 		C32DBA1BFA689E63E9C474A4 /* SourceSetupFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceSetupFlow.swift; sourceTree = "<group>"; };
+		C42A88714D4CEF508D39A626 /* SiriLibraryContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriLibraryContext.swift; sourceTree = "<group>"; };
 		C5AE98ADA18F0CF420E11EFA /* ScrobbleFlush.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrobbleFlush.swift; sourceTree = "<group>"; };
 		C646ADA121ECD50C73F27ECA /* SongInfoSections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SongInfoSections.swift; sourceTree = "<group>"; };
 		C72BD30E191F8DDEFB8D6B41 /* ArtworkTintTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkTintTests.swift; sourceTree = "<group>"; };
@@ -665,6 +673,9 @@
 				BD66C879846D3F834EDD2953 /* LibraryIntents.swift */,
 				ADFD81748E26469954F8D070 /* NowPlayingWidgetPublisher.swift */,
 				4FBE2409766007909DE78800 /* ShuttleShortcuts.swift */,
+				C42A88714D4CEF508D39A626 /* SiriLibraryContext.swift */,
+				B978B9B3C55A633270BD4F30 /* SiriMediaHandler.swift */,
+				47D362BB4A3C5D207E453137 /* SiriMediaResolver.swift */,
 			);
 			path = SystemIntents;
 			sourceTree = "<group>";
@@ -894,6 +905,7 @@
 				73605108B41272213DD11931 /* ServerConnectionSessionTests.swift */,
 				AD2EF810FC899B3829DAD4FA /* ServerSignInViewTests.swift */,
 				F2E9C9B867D2C9D540A8AF3C /* SettingsViewTests.swift */,
+				1CFF3AA03943A0FF17FE8063 /* SiriMediaResolverTests.swift */,
 				AE1248F23C192E471CE3403C /* SmartPlaylistDetailTests.swift */,
 				7041C95EB2787868FD153782 /* SongInfoTests.swift */,
 				123D81D04E01D0A27CB6D60B /* SongRowTests.swift */,
@@ -1195,6 +1207,9 @@
 				6A67D7A370D304760B517B8D /* ShellContainer.swift in Sources */,
 				27EDE8BF878B3F8D7F1580AE /* Shimmer.swift in Sources */,
 				980207C00AC3BA14C05F6215 /* ShuttleShortcuts.swift in Sources */,
+				6069991FA7A8C780BC291A2E /* SiriLibraryContext.swift in Sources */,
+				25746A1ACCE33576F069D27D /* SiriMediaHandler.swift in Sources */,
+				B5CE183AF8327807FD36E750 /* SiriMediaResolver.swift in Sources */,
 				EB31CEEE4B03748EA4BD2A1E /* SmartPlaylistDetailView.swift in Sources */,
 				890A154886B1B157CAAFDFEA /* SongInfoSections.swift in Sources */,
 				2EB0A626190F975E4FDEBDC5 /* SongInfoView.swift in Sources */,
@@ -1268,6 +1283,7 @@
 				AE59B7457387D4A73420E24D /* ServerConnectionSessionTests.swift in Sources */,
 				F7C5229F897F3B344B93DAC9 /* ServerSignInViewTests.swift in Sources */,
 				D38E4DF3DFD20F788529DAE9 /* SettingsViewTests.swift in Sources */,
+				6FCD52F9E616A87BD3E500FA /* SiriMediaResolverTests.swift in Sources */,
 				4F5AE3ED0FF9CCAC0F5ED871 /* SmartPlaylistDetailTests.swift in Sources */,
 				57F9789CC5776E74E0B9857B /* SongInfoTests.swift in Sources */,
 				ECA5089D7B73ECF4C8B9AD4F /* SongRowTests.swift in Sources */,

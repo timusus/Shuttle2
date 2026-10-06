@@ -110,6 +110,10 @@ final class IosAppDependencies {
     let paywallPresenter: PaywallPresenter
     /// Carries out the App Intents: Siri, Shortcuts, the widgets' buttons and the Control Center control (#758).
     let intentPerformer: AppIntentPerformer
+    /// Plays what Siri's media domain resolved (#951).
+    let siriPlayer: SiriMediaPlayer
+    /// Tells Siri about the library: its size, and the artists and playlists to listen for.
+    let siriContext: SiriLibraryContext
 
     init() {
         let audioPlayer = StartupTrace.step("audioEngine") { EngineAudioPlayer(engine: Self.makeEngine()) }
@@ -146,6 +150,8 @@ final class IosAppDependencies {
         storeKit = StoreKitManager(entitlements: graph.storeEntitlements, analytics: graph.monetisationAnalytics)
         paywallPresenter = PaywallPresenter(requests: graph.observePaywallRequests, store: storeKit)
         intentPerformer = AppIntentPerformer(graph: graph, intent: playIntent)
+        siriPlayer = SiriMediaPlayer(graph: graph, performer: intentPerformer)
+        siriContext = SiriLibraryContext(graph: graph)
     }
 
     /// The engine only fails to build without a stereo float format, which every device has.

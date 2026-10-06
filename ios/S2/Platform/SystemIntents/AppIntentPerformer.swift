@@ -138,7 +138,7 @@ final class AppIntentPerformer: PlaybackIntentPerforming, LibraryIntentPerformin
     }
 
     /// Dispatches a play as a screen does: the intent is the listener's from now until the player takes it up.
-    private func play(_ action: any MediaAction) async throws {
+    func play(_ action: any MediaAction) async throws {
         let ticket = intent.begin()
         let result = await dispatch(action)
         intent.finished(ticket, result: result)

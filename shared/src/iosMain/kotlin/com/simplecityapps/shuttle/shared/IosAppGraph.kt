@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.shared.downloads.UrlSessionDownloads
 import com.simplecityapps.shuttle.shared.entitlement.CarPlayAccess
 import com.simplecityapps.shuttle.shared.entitlement.StoreEntitlements
 import com.simplecityapps.shuttle.shared.intents.AppIntentLibrary
+import com.simplecityapps.shuttle.shared.intents.VoiceLibrary
 import com.simplecityapps.shuttle.shared.local.IosLocalFiles
 import com.simplecityapps.shuttle.shared.network.ServerRequestPolicy
 import com.simplecityapps.shuttle.shared.platform.BackgroundSync
@@ -160,6 +161,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
     val appIntentLibrary: AppIntentLibrary
+
+    /** What Siri's media domain searches and plays (`INPlayMediaIntent`, #951). */
+    val voiceLibrary: VoiceLibrary
 
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel
