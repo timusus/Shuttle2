@@ -27,6 +27,8 @@ kotlin {
             implementation(project(":android:core"))
             implementation(project(":android:domain"))
             implementation(libs.kotlinx.datetime)
+            // SynchronizedObject: a common lock (PlexStreamUrlProvider); already on the classpath through Ktor
+            implementation(libs.kotlinx.atomicfu)
         }
 
         androidMain.dependencies {

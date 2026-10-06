@@ -6,14 +6,16 @@ import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.TranscodeCodec
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.plex.http.TranscodeService
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import dev.zacsweers.metro.Inject
-import kotlin.concurrent.atomics.AtomicReference
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.concurrent.atomics.update
+import io.ktor.http.HttpStatusCode
+import kotlin.uuid.Uuid
+import kotlinx.atomicfu.locks.SynchronizedObject
+import kotlinx.atomicfu.locks.synchronized
 
 /**
  * A stream URL and the MIME type it serves. [isTranscode] when it's a transcode, which the server drops once another
@@ -50,10 +52,11 @@ data class PlexStream(
  * [endPlay] stops a progressive transcode (#722) once the last play holding its session ends, and retires the session
  * in the same step, so a play opened after that gets a new one the stop can't reach; the server otherwise keeps
  * transcoding a skipped song until it times out idle. A stream with no play (Android's HLS, which the server times out
- * once its segments stop being read) is on the song's own session, which nothing stops. The open sessions are also
- * kept in [store], so the ones a killed app left running are stopped at the next launch ([stopLeftoverSessions]).
+ * once its segments stop being read) is on the song's own session, which nothing stops. The open sessions, and the
+ * retired ones not yet stopped, are also kept in [store], so the ones a killed app left running (or a stop that failed)
+ * are stopped at the next launch ([stopLeftoverSessions]). Each run's sessions carry its own [run] id, so a session
+ * this run opens is never one a previous run left.
  */
-@OptIn(ExperimentalAtomicApi::class)
 @Inject
 class PlexStreamUrlProvider(
     private val authenticationManager: PlexAuthenticationManager,
@@ -64,17 +67,39 @@ class PlexStreamUrlProvider(
 ) : StreamUrlProvider {
     private val logger = Logger.tagged("PlexStreamUrlProvider")
 
-    private val transcodeSessions = AtomicReference(TranscodeSessions())
+    /** Guards [transcodeSessions] and its copy in [store], so concurrent changes are each written with the other. */
+    private val lock = SynchronizedObject()
 
-    /** The sessions a previous run left open, read before this run opens any. */
-    private val leftoverSessions = store.getString(OPEN_SESSIONS_KEY, null)?.split(SESSION_SEPARATOR)?.filter(String::isNotEmpty).orEmpty()
+    private var transcodeSessions = TranscodeSessions(
+        unstopped = store.getString(OPEN_SESSIONS_KEY, null)?.split(SESSION_SEPARATOR)?.filter(String::isNotEmpty)?.toSet().orEmpty()
+    )
 
-    /** The session each play's progressive transcode was opened on, and the one each song's plays share now. */
+    /** Part of every session this run opens, telling them from the ones a previous run left. */
+    private val run = Uuid.random().toHexString().take(8)
+
+    /**
+     * The session each play's progressive transcode was opened on, the one each song's plays share now, and the
+     * sessions no play holds that haven't been stopped yet: a previous run's, or one whose stop failed.
+     */
     private data class TranscodeSessions(
         val byPlay: Map<String, String> = emptyMap(),
         val bySong: Map<String, String> = emptyMap(),
-        val opened: Int = 0
-    )
+        val opened: Int = 0,
+        val unstopped: Set<String> = emptySet()
+    ) {
+        /** What [store] keeps: every session that may still be running on the server. */
+        val running: Set<String> get() = byPlay.values.toSet() + unstopped
+    }
+
+    /** Applies [change] to the sessions and writes them to [store] in one step. */
+    private fun updateSessions(change: (TranscodeSessions) -> TranscodeSessions) = synchronized(lock) {
+        val updated = change(transcodeSessions)
+        val running = updated.running
+        if (running != transcodeSessions.running) {
+            store.edit { putString(OPEN_SESSIONS_KEY, running.takeIf { it.isNotEmpty() }?.joinToString(SESSION_SEPARATOR)) }
+        }
+        transcodeSessions = updated
+    }
 
     override fun handles(scheme: String?): Boolean = scheme == "plex"
 
@@ -86,45 +111,46 @@ class PlexStreamUrlProvider(
 
     /**
      * Stops [playId]'s transcode session, if a progressive transcode was opened for it and no other play holds it.
-     * Best effort: a failure is logged, and the server times the session out as it would have.
+     * Best effort: a session that can't be stopped now is kept, and stopped at the next launch.
      */
     override suspend fun endPlay(playId: String) {
         var retired: String? = null
-        transcodeSessions.update { sessions ->
+        updateSessions { sessions ->
             val session = sessions.byPlay[playId]
             val byPlay = sessions.byPlay - playId
             retired = session?.takeIf { it !in byPlay.values }
-            sessions.copy(byPlay = byPlay, bySong = sessions.bySong.filterValues { it != retired })
+            sessions.copy(
+                byPlay = byPlay,
+                bySong = sessions.bySong.filterValues { it != retired },
+                unstopped = sessions.unstopped + listOfNotNull(retired)
+            )
         }
-        persistOpenSessions()
         val session = retired ?: return
-        stop(session)
+        if (stop(session)) updateSessions { it.copy(unstopped = it.unstopped - session) }
     }
 
     /**
-     * Stops the sessions a previous run left open (the app was killed with a transcode running), then forgets them.
-     * Best effort and off the launch path: a session this run has since opened under the same name is left alone, and
-     * one that can't be stopped now is left to the server's idle timeout.
+     * Stops the sessions a previous run left open (the app was killed with a transcode running, or a stop failed),
+     * forgetting each once it's stopped. Off the launch path; one that can't be stopped now (signed out, offline) is
+     * kept for the next launch. A session a play of this run holds is never stopped.
      */
     suspend fun stopLeftoverSessions() {
-        if (leftoverSessions.isEmpty()) return
-        val open = transcodeSessions.load().byPlay.values.toSet()
-        leftoverSessions.filter { it !in open }.forEach { stop(it) }
-        // Clear the leftovers from the store, keeping what this run has opened since
-        persistOpenSessions()
+        val leftovers = synchronized(lock) { transcodeSessions.unstopped }
+        leftovers.forEach { session ->
+            val held = synchronized(lock) { session in transcodeSessions.byPlay.values }
+            if (held || stop(session)) updateSessions { it.copy(unstopped = it.unstopped - session) }
+        }
     }
 
-    private suspend fun stop(session: String) {
-        val address = authenticationManager.getAddress() ?: return
-        val credentials = authenticationManager.getAuthenticatedCredentials() ?: return
+    /** Whether [session] is stopped: the server stopped it, or answered that it's gone (404). */
+    private suspend fun stop(session: String): Boolean {
+        val address = authenticationManager.getAddress() ?: return false
+        val credentials = authenticationManager.getAuthenticatedCredentials() ?: return false
         val result = transcodeService.stop(url = "$address$TRANSCODE_STOP_PATH", token = credentials.accessToken, session = session)
-        if (result is NetworkResult.Failure) logger.warn { "Failed to stop transcode session $session: ${result.error}" }
-    }
-
-    /** Writes the sessions this run holds open, replacing what a previous run left. */
-    private fun persistOpenSessions() {
-        val open = transcodeSessions.load().byPlay.values.toSet()
-        store.edit { putString(OPEN_SESSIONS_KEY, open.takeIf { it.isNotEmpty() }?.joinToString(SESSION_SEPARATOR)) }
+        if (result !is NetworkResult.Failure) return true
+        if ((result.error as? RemoteServiceHttpError)?.httpStatusCode == HttpStatusCode.NotFound) return true
+        logger.warn { "Failed to stop transcode session $session: ${result.error}" }
+        return false
     }
 
     /** @throws IllegalStateException when the server isn't signed in to, or the URL can't be built. */
@@ -176,16 +202,15 @@ class PlexStreamUrlProvider(
     ): String {
         val identifier = sessionIdentifier(song)
         var session = ""
-        transcodeSessions.update { sessions ->
+        updateSessions { sessions ->
             val shared = sessions.byPlay[playId] ?: sessions.bySong[identifier]
-            session = shared ?: "$identifier-${sessions.opened + 1}"
+            session = shared ?: "$identifier-$run-${sessions.opened + 1}"
             sessions.copy(
                 byPlay = sessions.byPlay + (playId to session),
                 bySong = sessions.bySong + (identifier to session),
                 opened = if (shared == null) sessions.opened + 1 else sessions.opened
             )
         }
-        persistOpenSessions()
         return session
     }
 

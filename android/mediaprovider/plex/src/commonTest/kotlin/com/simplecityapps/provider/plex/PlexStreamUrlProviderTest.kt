@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.settings.TranscodeFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
@@ -259,23 +260,23 @@ class PlexStreamUrlProviderTest {
 
     @Test
     fun `plays of a song share a transcode session while one holds it - so repeat one's next joins the transcode playing`() {
-        val playing = Url(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
-        val upNext = Url(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
+        val playing = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+        val upNext = session(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
 
-        playing.parameters["session"] shouldBe "s2-107898-1"
-        upNext.parameters["session"] shouldBe "s2-107898-1"
+        playing shouldStartWith "s2-107898-"
+        upNext shouldBe playing
     }
 
     @Test
     fun `a stream with no play is on the song's own session - which ending a play never stops`() = runTest {
         server.respond(TRANSCODE_STOP)
         val hls = Url(android.stream(song(externalId = WMA)).path)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val play = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
 
         ios.endPlay("play-1")
 
         hls.parameters["session"] shouldBe "s2-107898"
-        server.requestsTo(TRANSCODE_STOP).single().url.parameters["session"] shouldBe "s2-107898-1"
+        stopped() shouldBe listOf(play)
     }
 
     @Test
@@ -290,38 +291,38 @@ class PlexStreamUrlProviderTest {
     @Test
     fun `ending a play stops its transcode session once`() = runTest {
         server.respond(TRANSCODE_STOP)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val play = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
 
         ios.endPlay("play-1")
         ios.endPlay("play-1")
 
         val stop = server.requestsTo(TRANSCODE_STOP).single()
-        stop.url.parameters["session"] shouldBe "s2-107898-1"
+        stop.url.parameters["session"] shouldBe play
         stop.headers["X-Plex-Token"] shouldBe "token123"
     }
 
     @Test
     fun `ending a play leaves the session running while another play of the song holds it`() = runTest {
         server.respond(TRANSCODE_STOP)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val play = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
         ios.streamUrl(song(externalId = WMA), playId = "play-2")
 
         ios.endPlay("play-1")
         server.requestsTo(TRANSCODE_STOP).shouldBeEmpty()
 
         ios.endPlay("play-2")
-        server.requestsTo(TRANSCODE_STOP).single().url.parameters["session"] shouldBe "s2-107898-1"
+        stopped() shouldBe listOf(play)
     }
 
     @Test
     fun `a play opened once the song's last play has ended gets a new session - which that play's stop can't reach`() = runTest {
         server.respond(TRANSCODE_STOP)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val first = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
         ios.endPlay("play-1")
 
         val replay = Url(ios.streamUrl(song(externalId = WMA), playId = "play-2"))
 
-        replay.parameters["session"] shouldBe "s2-107898-2"
+        replay.parameters["session"] shouldNotBe first
         replay.parameters["X-Plex-Session-Identifier"] shouldBe "s2-107898"
     }
 
@@ -354,49 +355,119 @@ class PlexStreamUrlProviderTest {
     }
 
     @Test
-    fun `a stop the server fails is not thrown`() = runTest {
+    fun `a stop the server fails is not thrown - and the session is kept for the next launch`() = runTest {
         server.respond(TRANSCODE_STOP, code = 500)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val play = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
 
         ios.endPlay("play-1")
 
         server.requestsTo(TRANSCODE_STOP).size shouldBe 1
+        storedSessions() shouldBe setOf(play)
     }
 
     @Test
     fun `open sessions are kept until their play ends`() = runTest {
         server.respond(TRANSCODE_STOP)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
-        openSessions.getString(OPEN_SESSIONS, null) shouldBe "s2-107898-1"
+        val play = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+        storedSessions() shouldBe setOf(play)
 
         ios.endPlay("play-1")
 
-        openSessions.getString(OPEN_SESSIONS, null) shouldBe null
+        storedSessions().shouldBeEmpty()
     }
 
     @Test
     fun `the sessions a killed run left open are stopped and cleared at the next launch`() = runTest {
         server.respond(TRANSCODE_STOP)
-        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        val leftover = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
 
-        val relaunched = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService, openSessions)
-        relaunched.stopLeftoverSessions()
+        relaunch().stopLeftoverSessions()
 
-        server.requestsTo(TRANSCODE_STOP).single().url.parameters["session"] shouldBe "s2-107898-1"
-        openSessions.getString(OPEN_SESSIONS, null) shouldBe null
+        stopped() shouldBe listOf(leftover)
+        storedSessions().shouldBeEmpty()
     }
 
     @Test
-    fun `a leftover session a new play has since reused is not stopped`() = runTest {
-        server.respond(TRANSCODE_STOP)
+    fun `a session the server no longer has counts as stopped`() = runTest {
+        server.respond(TRANSCODE_STOP, code = 404)
         ios.streamUrl(song(externalId = WMA), playId = "play-1")
-        val relaunched = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService, openSessions)
-        relaunched.streamUrl(song(externalId = WMA), playId = "play-2")
+
+        relaunch().stopLeftoverSessions()
+
+        server.requestsTo(TRANSCODE_STOP).size shouldBe 1
+        storedSessions().shouldBeEmpty()
+    }
+
+    @Test
+    fun `a new run's play never takes a leftover session - and is never stopped with them`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        val leftover = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+        val relaunched = relaunch()
+        val play = session(relaunched.streamUrl(song(externalId = WMA), playId = "play-1"))
 
         relaunched.stopLeftoverSessions()
 
-        server.requestsTo(TRANSCODE_STOP).shouldBeEmpty()
-        openSessions.getString(OPEN_SESSIONS, null) shouldBe "s2-107898-1"
+        play shouldNotBe leftover
+        stopped() shouldBe listOf(leftover)
+        storedSessions() shouldBe setOf(play)
+    }
+
+    @Test
+    fun `leftovers outlive a play opened before they're stopped - so a kill before the stop still leaves them`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        val leftover = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+        val play = session(relaunch().streamUrl(song(externalId = WMA, path = OTHER_SONG), playId = "play-1"))
+
+        storedSessions() shouldBe setOf(leftover, play)
+
+        relaunch().stopLeftoverSessions()
+
+        stopped().toSet() shouldBe setOf(leftover, play)
+        storedSessions().shouldBeEmpty()
+    }
+
+    @Test
+    fun `leftovers that can't be stopped at launch are kept for the next one`() = runTest {
+        server.respond(TRANSCODE_STOP, code = 503)
+        val leftover = session(ios.streamUrl(song(externalId = WMA), playId = "play-1"))
+
+        relaunch().stopLeftoverSessions()
+        storedSessions() shouldBe setOf(leftover)
+
+        server.respond(TRANSCODE_STOP)
+        relaunch().stopLeftoverSessions()
+
+        stopped() shouldBe listOf(leftover, leftover)
+        storedSessions().shouldBeEmpty()
+    }
+
+    @Test
+    fun `leftovers are kept while signed out - to be stopped once signed in`() = runTest {
+        ios.streamUrl(song(externalId = WMA), playId = "play-1")
+        credentialStore.authenticatedCredentials = null
+
+        relaunch().stopLeftoverSessions()
+
+        server.requests.shouldBeEmpty()
+        storedSessions().size shouldBe 1
+    }
+
+    @Test
+    fun `a play opened while another ends keeps both changes in the store`() = runTest {
+        server.respond(TRANSCODE_STOP)
+        var ending = "play-0"
+        ios.streamUrl(song(externalId = WMA), playId = ending)
+        repeat(200) { i ->
+            val opening = "play-${i + 1}"
+            val path = if (i % 2 == 0) OTHER_SONG else SONG
+            val session = withContext(Dispatchers.Default) {
+                val opened = async { session(ios.streamUrl(song(externalId = WMA, path = path), playId = opening)) }
+                launch { ios.endPlay(ending) }
+                opened.await()
+            }
+            storedSessions() shouldBe setOf(session)
+            ending = opening
+        }
     }
 
     @Test
@@ -406,10 +477,20 @@ class PlexStreamUrlProviderTest {
         server.requestsTo(TRANSCODE_STOP).shouldBeEmpty()
     }
 
+    /** The same app launched again over the store a killed run left. */
+    private fun relaunch() = PlexStreamUrlProvider(authenticationManager, streamingPolicy, StreamProfile.Ios, transcodeService, openSessions)
+
+    private fun session(url: String) = Url(url).parameters["session"]!!
+
+    private fun stopped() = server.requestsTo(TRANSCODE_STOP).map { it.url.parameters["session"] }
+
+    private fun storedSessions() = openSessions.getString(OPEN_SESSIONS, null)?.split(",")?.toSet().orEmpty()
+
     private fun song(
         externalId: String?,
         bitRate: Int? = null,
-        audioCodec: String? = null
+        audioCodec: String? = null,
+        path: String = SONG
     ) = Song(
         id = 0,
         name = "Song",
@@ -421,7 +502,7 @@ class PlexStreamUrlProviderTest {
         duration = 180_000,
         date = null,
         genres = emptyList(),
-        path = "plex:///library/metadata/107898",
+        path = path,
         size = 0,
         mimeType = "audio/mpeg",
         lastModified = null,
@@ -446,5 +527,7 @@ class PlexStreamUrlProviderTest {
         const val WMA = "/library/parts/43/1600000000/file.wma"
         const val TRANSCODE_STOP = "/video/:/transcode/universal/stop"
         const val OPEN_SESSIONS = "plex_open_transcode_sessions"
+        const val SONG = "plex:///library/metadata/107898"
+        const val OTHER_SONG = "plex:///library/metadata/107899"
     }
 }
