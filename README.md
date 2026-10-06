@@ -2,7 +2,7 @@
 
 ### Welcome!
 
-Shuttle Music is an app for managing and playing local music on an Android device, as well as music streamed via Jellyfin, Emby or Plex
+Shuttle Music is an app for managing and playing local music on an Android device, as well as music streamed via Jellyfin, Emby, Plex or Navidrome/Subsonic. Find out more at [shuttlemusicplayer.com](https://shuttlemusicplayer.com).
 
 The aim is to provide all of the options you'd expect from a music player, wrapped up in a minimalist, intuitive and modern design.
 
@@ -20,11 +20,11 @@ The aim is to provide all of the options you'd expect from a music player, wrapp
 - Custom EQ & Preamp
 - Replay Gain
 - Day/Night & Themes
-- Jellyfin, Emby & Plex
+- Jellyfin, Emby, Plex & Navidrome/Subsonic
 - Dedicated artwork server
 - Embedded lyrics
 
-Shuttle Music is currently available for download on the [Google Play Store](https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle)
+Shuttle Music is currently available for download on the [Google Play Store](https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle). Support, privacy and the iOS release: [shuttlemusicplayer.com](https://shuttlemusicplayer.com).
 
 The app is limited to a 2 week free trial, after which playback speed is slowly increased.
 
