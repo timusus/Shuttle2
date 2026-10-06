@@ -62,7 +62,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.MediaStoreDeleteEntryPoint
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
-import com.simplecityapps.shuttle.ui.actions.SystemDeleteRequest
 import com.simplecityapps.shuttle.ui.actions.text
 import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
@@ -240,27 +239,25 @@ fun MediaActionsHost(
 
 /**
  * Launches the system dialogs that confirm deleting MediaStore songs and hands the user's answer back to the deleter. Only
- * the host on the resumed screen collects, so a request isn't taken by one that's behind it.
+ * the host on the resumed screen collects, so a request isn't taken by one that's behind it. The deleter keeps the
+ * request in flight, so an answer that reaches the recreated activity after a rotation still completes it.
  */
 @Composable
 private fun SystemDeleteRequestLauncher() {
     val context = LocalContext.current
-    val deleter = remember { context.appGraph<MediaStoreDeleteEntryPoint>().mediaStoreSongDeleter() }
+    val confirmations = remember { context.appGraph<MediaStoreDeleteEntryPoint>().mediaStoreSongDeleter().confirmations }
     val lifecycleOwner = LocalLifecycleOwner.current
-    var pending by remember { mutableStateOf<SystemDeleteRequest?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        pending?.result?.complete(result.resultCode == Activity.RESULT_OK)
-        pending = null
+        confirmations.deliver(result.resultCode == Activity.RESULT_OK)
     }
-    LaunchedEffect(deleter, lifecycleOwner) {
+    LaunchedEffect(confirmations, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            deleter.requests.collect { request ->
-                pending = request
+            confirmations.requests.collect { request ->
+                if (!confirmations.launch(request)) return@collect
                 try {
-                    launcher.launch(IntentSenderRequest.Builder(request.intentSender).build())
+                    launcher.launch(IntentSenderRequest.Builder(request.payload).build())
                 } catch (e: IntentSender.SendIntentException) {
-                    request.result.complete(false)
-                    pending = null
+                    confirmations.deliver(false)
                 }
             }
         }

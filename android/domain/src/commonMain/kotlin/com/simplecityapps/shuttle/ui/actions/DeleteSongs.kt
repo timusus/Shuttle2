@@ -23,9 +23,9 @@ class DeleteSongs(
     suspend operator fun invoke(selection: MediaSelection): Result {
         val songs = resolveSongs(selection)
         val (mediaStoreSongs, otherSongs) = songs.filter { it.canBeDeleted() }.partition { it.mediaProvider == MediaProviderType.MediaStore }
-        // One system confirmation covers every MediaStore song, so they're deleted together
-        val mediaStoreDeleted = if (mediaStoreSongs.isNotEmpty() && mediaStoreDeleter.delete(mediaStoreSongs)) mediaStoreSongs else emptyList()
-        val deleted = mediaStoreDeleted + otherSongs.filter { fileDeleter.delete(it) }
+        // MediaStore songs go to the deleter together, so the system can confirm the whole batch at once
+        val mediaStoreDeleted = if (mediaStoreSongs.isEmpty()) emptySet() else mediaStoreDeleter.delete(mediaStoreSongs)
+        val deleted = mediaStoreSongs.filter { it in mediaStoreDeleted } + otherSongs.filter { fileDeleter.delete(it) }
         val failed = songs.filter { it !in deleted }
         deleted.forEach { songRepository.remove(it) }
         if (deleted.isNotEmpty()) {
@@ -37,12 +37,12 @@ class DeleteSongs(
 }
 
 /**
- * Deletes MediaStore songs' files in one request, which the app implements with the system's delete confirmation; the
- * user may decline it.
+ * Deletes MediaStore songs' files, which the app implements with the system's delete confirmation; the user may decline
+ * it.
  */
 fun interface MediaStoreSongDeleter {
-    /** @return true if every file is gone, false if the user declined or the delete failed. */
-    suspend fun delete(songs: List<Song>): Boolean
+    /** @return the songs whose files are gone: none if the user declined, fewer than [songs] if only some deleted. */
+    suspend fun delete(songs: List<Song>): Set<Song>
 }
 
 /** Deletes a song's file; the app implements it with the Storage Access Framework. */

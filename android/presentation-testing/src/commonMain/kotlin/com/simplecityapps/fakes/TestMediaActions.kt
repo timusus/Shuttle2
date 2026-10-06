@@ -62,8 +62,8 @@ class TestMediaActions(
     /** Whether a song's file deletes; every delete succeeds by default. */
     var fileDeleter: SongFileDeleter = SongFileDeleter { true }
 
-    /** Whether the user confirms the system's MediaStore delete request; they do by default. */
-    var mediaStoreDeleter: MediaStoreSongDeleter = MediaStoreSongDeleter { true }
+    /** Which MediaStore songs' files delete; the user confirms the system's request for all of them by default. */
+    var mediaStoreDeleter: MediaStoreSongDeleter = MediaStoreSongDeleter { it.toSet() }
 
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository))
     val playSongs = PlaySongs(queueOperations, playbackOperations)

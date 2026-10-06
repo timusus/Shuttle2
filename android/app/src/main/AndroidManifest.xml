@@ -8,6 +8,11 @@
 
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
+    <!-- Deleting a device song's file up to Android 9; requested with READ_EXTERNAL_STORAGE (see MusicPermission). -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <!-- Android 17 gates LAN access behind this at targetSdk 37; below that the system grants it with INTERNET and it
          is never requested at runtime (see LocalNetworkPermission). -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />

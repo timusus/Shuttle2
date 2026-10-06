@@ -51,7 +51,7 @@ class DeleteSongsTest {
         val requests = mutableListOf<List<Song>>()
         actions.mediaStoreDeleter = MediaStoreSongDeleter {
             requests += it
-            true
+            it.toSet()
         }
         actions.fileDeleter = SongFileDeleter { error("MediaStore songs don't go through SAF") }
         val first = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
@@ -67,7 +67,7 @@ class DeleteSongsTest {
 
     @Test
     fun `declining the MediaStore request changes nothing`() = runTest {
-        actions.mediaStoreDeleter = MediaStoreSongDeleter { false }
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { emptySet() }
         val mediaStore = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
 
         val result = actions.deleteSongs(MediaSelection.Songs(mediaStore))
@@ -75,6 +75,43 @@ class DeleteSongsTest {
         result shouldBe DeleteSongs.Result(deleted = emptyList(), failed = listOf(mediaStore))
         songRepository.removed.shouldBeEmpty()
         queueOperations.removedItems.shouldBeEmpty()
+    }
+
+    @Test
+    fun `when only some MediaStore files delete, only those songs leave the library and the queue`() = runTest {
+        val first = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
+        val second = other.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "11")
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { setOf(second) }
+
+        val result = actions.deleteSongs(MediaSelection.Songs(listOf(first, second)))
+
+        result shouldBe DeleteSongs.Result(deleted = listOf(second), failed = listOf(first))
+        songRepository.removed shouldBe listOf(second)
+        queueOperations.removedItems shouldBe listOf(queue[1])
+    }
+
+    @Test
+    fun `a mixed selection sends MediaStore songs to the system and the rest through SAF`() = runTest {
+        val mediaStoreRequests = mutableListOf<List<Song>>()
+        val safDeletes = mutableListOf<Song>()
+        actions.mediaStoreDeleter = MediaStoreSongDeleter {
+            mediaStoreRequests += it
+            it.toSet()
+        }
+        actions.fileDeleter = SongFileDeleter {
+            safDeletes += it
+            true
+        }
+        val mediaStore = other.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "11")
+
+        val result = actions.deleteSongs(MediaSelection.Songs(listOf(song, mediaStore)))
+
+        mediaStoreRequests shouldBe listOf(listOf(mediaStore))
+        safDeletes shouldBe listOf(song)
+        result.deleted.toSet() shouldBe setOf(song, mediaStore)
+        result.failed.shouldBeEmpty()
+        songRepository.removed.toSet() shouldBe setOf(song, mediaStore)
+        queueOperations.removedItems.toSet() shouldBe queue.toSet()
     }
 
     @Test

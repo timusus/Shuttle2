@@ -1,12 +1,15 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import android.Manifest
 import android.app.RecoverableSecurityException
 import android.content.ContentUris
 import android.content.Context
 import android.content.IntentSender
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import androidx.core.content.ContextCompat
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
@@ -16,69 +19,70 @@ import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import kotlinx.coroutines.CompletableDeferred
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-/** A system dialog the UI has to launch for [SystemMediaStoreSongDeleter]; [result] completes true when the user accepts. */
-class SystemDeleteRequest(val intentSender: IntentSender) {
-    val result = CompletableDeferred<Boolean>()
-}
-
 /**
  * Deletes MediaStore songs through the system: one `MediaStore.createDeleteRequest` confirmation for the whole batch on
- * API 30+, a `RecoverableSecurityException` confirmation per song on API 29, a direct delete before that. The
- * confirmations are launched by the UI, which collects [requests].
+ * API 30+, a `RecoverableSecurityException` confirmation per song on API 29, a direct delete (with write access to
+ * storage) before that. The UI launches the confirmations it takes from [confirmations].
  */
 @SingleIn(AppScope::class)
 class SystemMediaStoreSongDeleter @Inject constructor(
     @ApplicationContext private val context: Context,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : MediaStoreSongDeleter {
-    private val requestChannel = Channel<SystemDeleteRequest>(Channel.BUFFERED)
+    val confirmations = ConfirmationHandoff<IntentSender>()
 
-    val requests: Flow<SystemDeleteRequest> = requestChannel.receiveAsFlow()
-
-    override suspend fun delete(songs: List<Song>): Boolean {
+    override suspend fun delete(songs: List<Song>): Set<Song> {
+        // A song without a valid MediaStore row isn't deleted, but doesn't hold up the rest
         val uris = songs.mapNotNull { song ->
-            song.externalId?.toLongOrNull()?.let { ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, it) }
+            song.externalId?.toLongOrNull()?.let { song to ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, it) }
         }
-        if (uris.size != songs.size) return false
-        return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                confirm(MediaStore.createDeleteRequest(context.contentResolver, uris).intentSender)
-            } else {
-                uris.all { deleteLegacy(it) }
+        if (uris.isEmpty()) return emptySet()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // All or nothing: the user accepts or declines the whole batch
+            val accepted = try {
+                confirmations.confirm(MediaStore.createDeleteRequest(context.contentResolver, uris.map { it.second }).intentSender)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete ${uris.size} MediaStore songs")
+                false
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to delete ${songs.size} MediaStore songs")
-            false
+            return if (accepted) uris.mapTo(mutableSetOf()) { it.first } else emptySet()
         }
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P && !hasWriteAccess()) {
+            Timber.w("Not deleting ${uris.size} MediaStore songs without write access to storage")
+            return emptySet()
+        }
+        return uris.filter { (_, uri) -> deleteLegacy(uri) }.mapTo(mutableSetOf()) { it.first }
     }
+
+    private fun hasWriteAccess() = ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
 
     /** Before API 30: a delete the app isn't permitted throws; on API 29 the exception carries the user's way out. */
     private suspend fun deleteLegacy(uri: Uri): Boolean {
-        fun deleteNow() = context.contentResolver.delete(uri, null, null) > 0
+        suspend fun deleteNow() = withContext(ioDispatcher) { context.contentResolver.delete(uri, null, null) > 0 }
         return try {
-            withContext(ioDispatcher) { deleteNow() }
-        } catch (e: SecurityException) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
-                confirm(e.userAction.actionIntent.intentSender) && withContext(ioDispatcher) { deleteNow() }
-            } else {
-                Timber.e(e, "Not permitted to delete $uri")
-                false
+            try {
+                deleteNow()
+            } catch (e: SecurityException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
+                    confirmations.confirm(e.userAction.actionIntent.intentSender) && deleteNow()
+                } else {
+                    Timber.e(e, "Not permitted to delete $uri")
+                    false
+                }
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to delete $uri")
+            false
         }
-    }
-
-    private suspend fun confirm(intentSender: IntentSender): Boolean {
-        val request = SystemDeleteRequest(intentSender)
-        requestChannel.send(request)
-        return request.result.await()
     }
 }
 

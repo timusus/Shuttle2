@@ -33,4 +33,16 @@ class MusicPermissionTest {
         onSdk(Build.VERSION_CODES.TIRAMISU)
         MusicPermission.name shouldBe Manifest.permission.READ_MEDIA_AUDIO
     }
+
+    @Test
+    fun `Android 9 and earlier also ask to write external storage, for deleting songs`() {
+        onSdk(Build.VERSION_CODES.P)
+        MusicPermission.names.toList() shouldBe listOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+        onSdk(Build.VERSION_CODES.Q)
+        MusicPermission.names.toList() shouldBe listOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+
+        onSdk(Build.VERSION_CODES.TIRAMISU)
+        MusicPermission.names.toList() shouldBe listOf(Manifest.permission.READ_MEDIA_AUDIO)
+    }
 }

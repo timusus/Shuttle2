@@ -84,7 +84,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var reviewPrompt: ReviewPrompt
 
     private val musicPermissionRequest =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            // Absent when only write access was missing: the music permission was already held
+            val granted = results[MusicPermission.name] ?: return@registerForActivityResult
             sourcesSettings.musicPermissionRequested.value = true
             if (granted) mediaSources.scanThisDevice()
         }
@@ -115,8 +117,13 @@ class MainActivity : AppCompatActivity() {
         // No onboarding (#379): ask for the music permission once, on first launch, and scan when it's granted.
         // A later grant goes through Settings > Media > Sources, or the system settings. One already held at startup
         // scans from MediaSources.scanIfNeverScanned.
-        if (savedInstanceState == null && !MusicPermission.isGranted(this) && !sourcesSettings.musicPermissionRequested.value) {
-            musicPermissionRequest.launch(MusicPermission.name)
+        // Up to Android 9, someone who granted it before deleting needed write access is asked for that alone; it's in the
+        // same storage group, so the system grants it without a prompt.
+        val missingPermissions = MusicPermission.missing(this)
+        if (savedInstanceState == null && missingPermissions.isNotEmpty()) {
+            if (MusicPermission.name !in missingPermissions || !sourcesSettings.musicPermissionRequested.value) {
+                musicPermissionRequest.launch(missingPermissions.toTypedArray())
+            }
         }
 
         // Not on recreation, or on a relaunch from recents, which redeliver the intent that opened the file

@@ -116,15 +116,15 @@ class MusicAccessRequests(val request: () -> Unit, val openAppSettings: () -> Un
 fun rememberMusicAccessRequests(viewModel: LibraryEmptyViewModel): MusicAccessRequests {
     val activity = LocalActivity.current
     val showRationale = { activity?.shouldShowRequestPermissionRationale(MusicPermission.name) == true }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        viewModel.onAccessResult(granted, showRationale())
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        viewModel.onAccessResult(results[MusicPermission.name] == true, showRationale())
     }
     LifecycleResumeEffect(viewModel, activity) {
         activity?.let { viewModel.onAccessChecked(MusicPermission.isGranted(it), showRationale()) }
         onPauseOrDispose {}
     }
     return remember(launcher, activity) {
-        MusicAccessRequests(request = { launcher.launch(MusicPermission.name) }, openAppSettings = { activity?.openAppSettings() })
+        MusicAccessRequests(request = { launcher.launch(MusicPermission.names) }, openAppSettings = { activity?.openAppSettings() })
     }
 }
 
