@@ -133,8 +133,9 @@ val Song.rowSubtitle: String
 private val MosaicGap = 2.dp
 
 /**
- * Artwork from [covers] (#491, #646, #135): a 2x2 mosaic of four albums' covers, two or three filling the tile, the one
- * cover alone, or [placeholder] with none. [size] is the whole mosaic's; the caller's [modifier] may override it, as for [Artwork].
+ * Artwork from [covers] (#491, #646, #135): a 2x2 mosaic of four albums' covers, or fewer repeated so every cell stays a
+ * square, uncropped cover ([mosaicCells]); the one cover alone, or [placeholder] with none. [size] is the whole mosaic's;
+ * the caller's [modifier] may override it, as for [Artwork].
  */
 @Composable
 fun CoverMosaic(
@@ -149,31 +150,21 @@ fun CoverMosaic(
     }
     val cellSize = if (size == ArtworkSize.Grid || size == ArtworkSize.Hero) ArtworkSize.Medium else ArtworkSize.Small
     val gap = Arrangement.spacedBy(MosaicGap)
-
-    @Composable
-    fun Cell(song: Song, cellModifier: Modifier) = LibraryArtwork(song, ArtworkPlaceholder.Album, cellModifier, size = cellSize)
-    if (covers.size < MOSAIC_COVERS) {
-        // Two covers split the tile; three give the first the left half and stack the others on the right.
-        Row(modifier.size(size.dp), horizontalArrangement = gap) {
-            Cell(covers[0], Modifier.weight(1f).fillMaxHeight())
-            if (covers.size == 2) {
-                Cell(covers[1], Modifier.weight(1f).fillMaxHeight())
-            } else {
-                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = gap) {
-                    Cell(covers[1], Modifier.weight(1f).fillMaxWidth())
-                    Cell(covers[2], Modifier.weight(1f).fillMaxWidth())
-                }
-            }
-        }
-        return
-    }
     Column(modifier.size(size.dp), verticalArrangement = gap) {
-        covers.take(MOSAIC_COVERS).chunked(2).forEach { pair ->
+        mosaicCells(covers).chunked(2).forEach { pair ->
             Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = gap) {
-                pair.forEach { song -> Cell(song, Modifier.weight(1f).fillMaxHeight()) }
+                pair.forEach { song -> LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.weight(1f).fillMaxHeight(), size = cellSize) }
             }
         }
     }
 }
 
-private const val MOSAIC_COVERS = 4
+/**
+ * The four cells of a 2x2 mosaic, row by row, for two to four [covers]: two alternate as a checkerboard (A B / B A),
+ * three repeat the first (A B / C A), four fill it as they are.
+ */
+internal fun mosaicCells(covers: List<Song>): List<Song> = when (covers.size) {
+    2 -> listOf(covers[0], covers[1], covers[1], covers[0])
+    3 -> listOf(covers[0], covers[1], covers[2], covers[0])
+    else -> covers.take(4)
+}

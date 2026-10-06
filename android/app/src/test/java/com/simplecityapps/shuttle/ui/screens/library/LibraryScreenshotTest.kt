@@ -173,8 +173,10 @@ class LibraryScreenshotTest {
             libraryControls("${genres.size} genres", sorts("Genre Name", "Song Count"), ViewMode.List, onPlay = {}, onShuffle = {}),
             LibraryPageStates(
                 genres = readyGenreList(genres),
+                // The sample genres hold one or two albums; Indie Rock borrows three so the shot shows every mosaic layout.
                 genreCovers = SampleLibrary.genres.associate { genre ->
-                    genre.name to genre.songs.map { it.toSong() }.distinctBy { it.albumGroupKey }.take(4)
+                    val songs = if (genre.name == "Indie Rock") SampleLibrary.songs else genre.songs
+                    genre.name to songs.map { it.toSong() }.distinctBy { it.albumGroupKey }.take(if (genre.name == "Indie Rock") 3 else 4)
                 },
             ),
         )

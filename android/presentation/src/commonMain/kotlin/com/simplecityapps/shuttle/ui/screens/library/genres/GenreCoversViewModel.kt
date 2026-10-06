@@ -17,8 +17,8 @@ import kotlinx.coroutines.flow.stateIn
 
 /**
  * Each genre's mosaic covers by genre name (#643): up to four songs from different albums. Apart from
- * [GenreListViewModel] so a screen that draws no genre artwork (Android's list) never runs the per-genre queries;
- * the list shows first and a screen that also observes this fills its artwork in as the covers load.
+ * [GenreListViewModel] so the list shows first and the artwork fills in as the covers load, and a screen that draws no
+ * genre artwork never runs the per-genre queries.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @ViewModelKey(GenreCoversViewModel::class)
