@@ -211,6 +211,11 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         title = StringKey.PREF_DOWNLOAD_QUALITY_TITLE,
                         options = StreamingQualityOptions
                     ),
+                    SettingItem.Navigate(
+                        target = SettingsLink.Downloads,
+                        title = StringKey.PREF_DOWNLOADS_TITLE,
+                        summary = StringKey.PREF_DOWNLOADS_SUMMARY
+                    ),
                     SettingItem.Switch(
                         setting = DownloadSettings.WifiOnly,
                         title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,

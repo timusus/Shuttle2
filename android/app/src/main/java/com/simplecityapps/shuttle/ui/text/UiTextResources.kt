@@ -145,6 +145,8 @@ val StringKey.resId: Int
         StringKey.PREF_RESCAN_FREQUENCY_WEEKLY -> R.string.pref_rescan_frequency_weekly
         StringKey.PREF_EXCLUDE_TITLE -> R.string.pref_exclude_title
         StringKey.PREF_EXCLUDE_SUMMARY -> R.string.pref_exclude_summary
+        StringKey.PREF_DOWNLOADS_TITLE -> R.string.pref_downloads_title
+        StringKey.PREF_DOWNLOADS_SUMMARY -> R.string.pref_downloads_summary
         StringKey.PREF_MIN_TRACK_LENGTH_TITLE -> R.string.pref_min_track_length_title
         StringKey.PREF_MIN_TRACK_LENGTH_SUMMARY -> R.string.pref_min_track_length_summary
         StringKey.PREF_MIN_TRACK_LENGTH_OFF -> R.string.pref_min_track_length_off

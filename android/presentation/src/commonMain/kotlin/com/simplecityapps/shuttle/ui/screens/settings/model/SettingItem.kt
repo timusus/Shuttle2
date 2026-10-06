@@ -41,6 +41,7 @@ data class SettingsGroup(
 enum class SettingsLink {
     Equalizer,
     ExcludedSongs,
+    Downloads,
     WhatsNew,
     Licences,
     LiveLog,

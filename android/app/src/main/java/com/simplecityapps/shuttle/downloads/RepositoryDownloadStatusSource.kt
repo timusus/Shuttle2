@@ -16,7 +16,8 @@ class RepositoryDownloadStatusSource @Inject constructor(
     override fun observe(): Flow<DownloadStatuses> = songDownloadRepository.observeDownloads().map { downloads ->
         val states = downloads.mapNotNull { download -> download.status()?.let { download.path to it } }.toMap()
         val progress = downloads.filter { it.status() == SongDownloadStatus.Downloading }.associate { it.path to it.progress }
-        DownloadStatuses(states, progress)
+        val sizes = downloads.filter { it.status() != null }.associate { it.path to it.bytesDownloaded }
+        DownloadStatuses(states, progress, sizes)
     }
 }
 

@@ -12,6 +12,9 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
+import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadedAlbum
+import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadsScreen
+import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadsUiState
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.ComputeFrequencyResponse
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerBandState
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
@@ -163,6 +166,28 @@ class SettingsScreenshotTest {
             onNavigateUp = {},
             onInclude = {},
             onIncludeAll = {}
+        )
+    }
+
+    @Test
+    fun downloads() = shot("downloads") {
+        DownloadsScreen(
+            uiState = DownloadsUiState(
+                albums = sampleSongs(3).mapIndexed { index, song ->
+                    DownloadedAlbum(
+                        key = "album-$index",
+                        name = song.album,
+                        artist = song.friendlyArtistName,
+                        songCount = 8 + index,
+                        bytes = (60L + index * 25) * 1_000_000,
+                        cover = song
+                    )
+                },
+                storageBytes = 240_000_000,
+                loading = false
+            ),
+            onNavigateUp = {},
+            onRemoveAll = {}
         )
     }
 

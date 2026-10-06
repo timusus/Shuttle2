@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
+import com.simplecityapps.shuttle.designsystem.component.S2DownloadStatus
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
@@ -339,6 +340,18 @@ fun GridTileBoard(width: BoardWidth) {
                     ArtistTile(SampleLibrary.artist("Pale Meridian"), art = false)
                 }
             },
+        ),
+    )
+}
+
+@Composable
+fun DownloadStatusBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Downloading") { S2DownloadStatus("Downloading 3 of 12", progress = 0.25f) },
+            BoardSection("Partly downloaded") { S2DownloadStatus("3 of 12 songs downloaded") },
+            BoardSection("Downloaded") { S2DownloadStatus("Downloaded") },
         ),
     )
 }

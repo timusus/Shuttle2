@@ -16,6 +16,7 @@ val SettingsLink.route: NavKey
     get() = when (this) {
         SettingsLink.Equalizer -> EqualizerRoute
         SettingsLink.ExcludedSongs -> ExcludedSongsRoute
+        SettingsLink.Downloads -> DownloadsRoute
         SettingsLink.WhatsNew -> WhatsNewRoute
         SettingsLink.Licences -> LicencesRoute
         SettingsLink.LiveLog -> LiveLogRoute

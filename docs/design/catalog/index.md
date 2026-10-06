@@ -44,6 +44,7 @@ existing lines as they are.
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —
 - [ ] `section-header`: [boards](section-header.md) · approved: — · boards hash: —
+- [ ] `download-status`: [boards](download-status.md) · approved: — · boards hash: —
 - [x] `state-empty`: [boards](state-empty.md) · approved: 2026-09-25 @ 0713114f · boards hash: e5d121e29682
 - [x] `state-loading`: [boards](state-loading.md) · approved: 2026-09-25 @ 0713114f · boards hash: efbeb412ce71
 - [x] `state-error`: [boards](state-error.md) · approved: 2026-09-25 @ 0713114f · boards hash: 0248595fb2ed

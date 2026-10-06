@@ -31,6 +31,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesScreen
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadsScreen
+import com.simplecityapps.shuttle.ui.screens.settings.downloads.DownloadsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsScreen
@@ -63,6 +65,9 @@ data object EqualizerRoute : UtilityRoute
 
 @Serializable
 data object ExcludedSongsRoute : UtilityRoute
+
+@Serializable
+data object DownloadsRoute : UtilityRoute
 
 @Serializable
 data object ScrobblingRoute : UtilityRoute
@@ -125,6 +130,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     entry<ServerDetailRoute>(metadata = SettingsDetailPane) { route -> ServerDetailEntry(route.typeName, onNavigateUp = { navigateUp() }) }
     entry<EqualizerRoute>(metadata = SettingsDetailPane) { EqualizerEntry(onNavigateUp = { navigateUp() }) }
     entry<ExcludedSongsRoute>(metadata = SettingsDetailPane) { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
+    entry<DownloadsRoute>(metadata = SettingsDetailPane) { DownloadsEntry(onNavigateUp = { navigateUp() }) }
     entry<ScrobblingRoute>(metadata = SettingsDetailPane) { ScrobblingEntry(onNavigateUp = { navigateUp() }) }
     entry<LiveLogRoute>(metadata = SettingsDetailPane) { LiveLogEntry(onNavigateUp = { navigateUp() }) }
     entry<WhatsNewRoute>(metadata = SettingsDetailPane) {
@@ -266,6 +272,17 @@ private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
         onNavigateUp = onNavigateUp,
         onInclude = viewModel::onInclude,
         onIncludeAll = viewModel::onIncludeAll
+    )
+}
+
+@Composable
+private fun DownloadsEntry(onNavigateUp: () -> Unit) {
+    val viewModel: DownloadsViewModel = metroViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    DownloadsScreen(
+        uiState = uiState,
+        onNavigateUp = onNavigateUp,
+        onRemoveAll = viewModel::onRemoveAll
     )
 }
 

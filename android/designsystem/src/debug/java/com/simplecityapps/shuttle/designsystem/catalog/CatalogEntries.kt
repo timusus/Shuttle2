@@ -109,6 +109,7 @@ val CatalogEntries = listOf(
         listOf("album, artist, playlist", "playing", "selected", "long text", "placeholder"),
     ) { GridTileBoard(it) },
     CatalogEntry("section-header", "Section header", listOf("with action", "plain", "title with play and action", "title with a long title and action", "title with subtitle and action", "sticky letter header")) { SectionHeaderBoard(it) },
+    CatalogEntry("download-status", "Download status", listOf("downloading with progress", "partly downloaded", "downloaded")) { DownloadStatusBoard(it) },
     CatalogEntry("state-empty", "Empty state", listOf("with action", "without action")) { EmptyStateBoard(it) },
     CatalogEntry("state-loading", "Loading state", listOf("full screen", "determinate", "inline and pull to refresh")) { LoadingStateBoard(it) },
     CatalogEntry("state-error", "Error state", listOf("retry", "provider sign-in")) { ErrorStateBoard(it) },

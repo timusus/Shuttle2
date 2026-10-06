@@ -73,6 +73,27 @@
     <string name="pref_exclude_title">Excluded</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_summary">View/Edit excluded</string>
+    <!-- Settings: Title for the option that opens the list of albums downloaded for offline playback -->
+    <string name="pref_downloads_title">Downloads</string>
+    <!-- Settings: Description for the option that opens the list of downloaded albums -->
+    <string name="pref_downloads_summary">Manage music saved for offline playback</string>
+    <!-- Downloads screen: top bar title -->
+    <string name="downloads_title">Downloads</string>
+    <!-- Downloads screen: total storage used by downloads, e.g. "128 MB used" -->
+    <string name="downloads_storage_used">%1$s used</string>
+    <!-- Downloads screen: an album row's size, e.g. "12 songs · 128 MB" -->
+    <plurals name="downloads_album_meta">
+        <item quantity="one">%1$d song · %2$s</item>
+        <item quantity="other">%1$d songs · %2$s</item>
+    </plurals>
+    <!-- Downloads screen: shown when nothing is downloaded -->
+    <string name="downloads_empty">No downloads yet</string>
+    <!-- Downloads screen: top bar action that removes every download -->
+    <string name="downloads_remove_all">Remove all</string>
+    <!-- Downloads screen: confirmation dialog title for removing every download -->
+    <string name="downloads_remove_all_title">Remove all downloads?</string>
+    <!-- Downloads screen: confirmation dialog message for removing every download -->
+    <string name="downloads_remove_all_message">Downloaded music is deleted from this device. It stays on your server.</string>
     <!-- Settings: Title for the option that hides songs shorter than a chosen length from the library -->
     <string name="pref_min_track_length_title">Minimum song length</string>
     <!-- Settings: Description for the minimum song length option; ringtones and voice notes are the short songs it hides -->
