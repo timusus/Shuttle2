@@ -10,92 +10,55 @@ private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", categor
 
 /// **The byte layer of the streaming player: one HTTP transaction, read blocking, teed to the spine.**
 ///
-/// Plan: `mobile/ios/docs/plans/2026-09-09-streaming-audio-pipeline.md` §1 (the picture), §4
-/// (bandwidth) and §5 items 2 and 8. FFmpeg drives a custom `AVIOContext` whose read and seek
-/// callbacks land on ``StreamByteReader``; this is the HTTP implementation of it, and the same bytes
-/// leave through ``AudioByteTee`` for the ad-skip scanner. There is no second fetch. What was
-/// fetched is kept in ``CachedRunStore`` as one contiguous run, and replayed in a later session
-/// ONLY across a seam the host's own bytes have validated: hosts re-stitch ads behind stable
-/// URLs, so every transaction that would extend the run asks for `overlapBytes` before its start
-/// and compares them with the run's tail (design: `docs/plans/2026-09-16-streaming-playback-cache.md`).
-/// A match means the two bodies agree at the seam and the new bytes are appended; anything else
-/// — a differing byte, a `200` instead of a `206`, an overlap too silent to tell — drops the run
-/// and the live transaction becomes it. Bytes the run already holds are pumped into the window
-/// from disk exactly as a body would be, teed and all, so nothing above this class can tell.
+/// FFmpeg drives a custom `AVIOContext` whose read and seek callbacks land on ``StreamByteReader``;
+/// the same bytes leave through ``AudioByteTee`` for the ad-skip scanner. There is no second fetch.
+/// What was fetched is kept in ``CachedRunStore`` as one contiguous run and replayed in a later
+/// session ONLY across a seam the host's own bytes have validated: hosts re-stitch ads behind
+/// stable URLs, so a transaction that would extend the run asks for `overlapBytes` before its start
+/// and compares them with the run's tail. A match appends; anything else (a differing byte, a `200`
+/// instead of a `206`, an overlap too silent to tell) drops the run and the live transaction
+/// becomes it. Bytes the run already holds are pumped into the window as a body would be.
 ///
-/// The transaction, throttle and read-ahead rules are lifted from ``SpineByteTeeResourceLoader``,
-/// which earned each of them on device. The differences are all consequences of who is reading:
-///
-///  - **The read position IS the playhead.** The loader had to ask `AVPlayer` where the listener
-///    was, because `AVPlayer` buffers minutes ahead of what it plays. The decoder above this class
-///    pulls only a second or so ahead of the renderer, so ``position`` is the playhead proxy the
-///    ceiling is measured from — the quantity the loader spent two device gates trying to obtain.
-///  - **A `Range` is always bounded.** `bytes=X-` lets the host push the whole file before any
-///    client-side `suspend()` can take hold, which on the 2026-09-03 gate raced the fetch 25 minutes
-///    past the playhead and evicted bytes the scan had never read. The end byte is this
-///    transaction's own ceiling, so there is nothing past the window in the body to arrive.
-///  - **A body that ends short is a CONTINUATION.** A bounded range running out, an idle connection
-///    the host dropped, a retried transport failure: the stream is picked up at the frontier, the
-///    tee is told `isContinuation: true`, and nothing is paired with a position.
-///  - **A seek inside the window opens nothing.** It moves ``position``; the back window
-///    (`ReadAheadPolicy.backWindowBytes`) is kept for exactly that. Only a byte outside the window
-///    cancels the task, drops the buffer and opens a new transaction.
-///  - **Redirects are followed once, not once per transaction.** An enclosure URL is routinely two
-///    `302`s from its CDN (feed host → tracking prefix → CDN), each hop a fresh TLS connection.
-///    Every transaction used to start from the ORIGINAL URL and pay the whole chain again — on
-///    the phone's 2026-09-15 log, five transactions before the first note, ~20 s from the tap.
-///    The final URL is recorded from the redirect delegate and reused for every later transaction
-///    of this source — and, through ``ResolvedURLCache``, by the NEXT play of the same enclosure,
-///    whose first transaction then opens at the chain's end. The remembered end is only a hint:
-///    anything but a `2xx` from it, or a failure to connect, sends this one transaction back to
-///    the original URL (once) and drops the entry (#193: 5 hops cost 5.3 s before the first byte).
+///  - **The read position IS the playhead.** The decoder pulls only a second or so ahead of the
+///    renderer, so ``position`` is what the read-ahead ceiling is measured from.
+///  - **A `Range` is always bounded.** `bytes=X-` lets the host push the whole file past the
+///    playhead before a client-side `suspend()` takes hold; the end byte is the transaction's ceiling.
+///  - **A body that ends short is a CONTINUATION.** A bounded range running out, a dropped idle
+///    connection or a retried failure resumes at the frontier with `isContinuation: true` on the tee.
+///  - **A seek inside the window opens nothing.** It moves ``position``; only a byte outside the
+///    window cancels the task, drops the buffer and opens a new transaction.
+///  - **Redirects are followed once.** The final URL is recorded from the redirect delegate and
+///    reused by every later transaction of this source and, through ``ResolvedURLCache``, by the next
+///    play. It is only a hint: anything but a `2xx` from it, or a connect failure, sends that
+///    transaction back to the original URL (once) and drops the entry.
 ///  - **The file's last bytes are fetched beside the first, not after them.** FFmpeg's mp3 open
-///    looks for an ID3v1 footer: a seek to `size - 128`, a 128-byte read, a seek back. Over HTTP
-///    that was two extra transactions in SERIES on the critical path — cancel the head, connect
-///    for the tail, cancel the tail, connect for the head again — ~2.5 s of the 8 s the phone
-///    measured on The Daily (#193). Now the first `206` fires one side request for the tail, the
-///    decoder's seek into it opens nothing and leaves the window alone, and the tail is kept in
-///    the run's sidecar so the next play never asks for it. It is never counted as a transaction
-///    and never teed: 128 bytes of footer are not audio. It is also excluded from ``inFlightBytes``
-///    below, for the same reason (#261). **The side fetch is never waited on.**
-///    A look that comes before it lands is answered with end-of-stream, which `ff_id3v1_read`
-///    treats as "no footer" and seeks back from; the app takes its metadata from the feed, so
-///    nothing is lost, and the tail still lands in the sidecar for the next play. Waiting was
-///    the whole probe on a cache-served resume: the head came off disk in milliseconds and the
-///    footer look then sat on a full network round trip — chain and all, since a disk head
-///    remembers no URL — for 4–10 s, with no transaction counted and no first response charged.
+///    reads an ID3v1 footer (seek to `size - 128`, read, seek back); over HTTP that is two extra
+///    serial transactions on the critical path. The first `206` fires one side request for the tail,
+///    kept in the run's sidecar. It is never counted as a transaction, never teed, and excluded from
+///    ``inFlightBytes``. **The side fetch is never waited on:** a look before it lands gets
+///    end-of-stream, which `ff_id3v1_read` treats as "no footer".
 ///
 /// Threading: `queue` owns every transaction decision and runs the body of every `URLSession`
-/// delegate call. The session is shared (``sharedSession``, #225) and delivers on ONE serial queue
-/// for every source in the process; each callback hops onto `queue` with `async` and returns at
-/// once, so a source whose queue is busy — a run write, a seam compare, a sniff — never holds the
-/// delegate queue and with it the OTHER source's bytes. Two sources are live on every seek and
-/// every episode switch (the old reader is cancelled and the new one built before the old task's
-/// close has fired), so a `sync` hop there coupled the new play's first byte to the old body's
-/// last write. Per-source order survives the hop: the delegate queue is serial and `queue` is
-/// serial, so what was enqueued in order runs in order, and the session hands over no body byte
-/// before the response's disposition has been answered from `queue`. What the hop gives up is
-/// the session's own back-pressure — it no longer waits for the delegate to return — so the bytes
-/// on the hop are metered: see ``inFlightBytes``. The window itself is behind an `NSCondition`
-/// because the caller is FFmpeg's read callback on the decoder's own thread and it BLOCKS — an
-/// actor cannot express that. ``cancel()`` is the one call from another thread and it wakes the
-/// blocked reader.
+/// delegate call. The session is shared (``sharedSession``) and delivers on ONE serial queue for
+/// every source in the process; each callback hops onto `queue` with `async` and returns at once, so
+/// a busy source never holds the delegate queue and with it another source's bytes. Per-source order
+/// survives the hop (both queues are serial). The hop gives up the session's back-pressure, so the
+/// bytes on it are metered: see ``inFlightBytes``. The window is behind an `NSCondition` because the
+/// caller is FFmpeg's read callback on the decoder's own thread and it BLOCKS. ``cancel()`` is the
+/// one call from another thread and it wakes the blocked reader.
 ///
-/// **``cancel()`` must be called.** Each task retains its delegate (this object, via
-/// `URLSessionTask.delegate`) until the task completes, so an open transaction holds this object
-/// alive; `cancel()` is what ends it. This mirrors `SpineByteTeeResourceLoader.invalidate()`.
+/// **``cancel()`` must be called.** Each task retains its delegate (this object) until it completes,
+/// so an open transaction holds this object alive; `cancel()` is what ends it.
 final class HTTPRangeByteSource: NSObject, StreamByteReader {
 
     /// How often the throttle is re-asked with nothing else happening. A suspended body produces no
     /// delegate callbacks, so something has to notice that the ceiling moved.
     private static let throttleTickSeconds: Double = 0.5
 
-    /// How many times a transport failure is retried before a read is failed. With
-    /// ``retryBackoff(attempt:)`` that is ~19 s of waiting: a Wi-Fi to cellular handoff aborts every
-    /// connection and takes seconds to settle, and the old budget (3 tries, ~0.7 s) was spent
-    /// before the new path was up (#896). A stall spends it as an error does; only a byte past
-    /// ``progressMark`` gives it back, so neither a hung host nor a range-ignoring one's prefix,
-    /// re-sent on every reopen, can keep a read waiting for ever.
+    /// Retries before a read is failed: ~19 s of waiting with ``retryBackoff(attempt:)``, enough
+    /// for a Wi-Fi to cellular handoff to settle (#896). A stall spends it as an error does; only a
+    /// byte past ``progressMark`` gives it back, so a hung host or a range-ignoring one's re-sent
+    /// prefix cannot keep a read waiting for ever.
     static let maxRetryAttempts = 9
     private static let retryBaseSeconds: Double = 0.25
     private static let retryCapSeconds: Double = 3
@@ -105,25 +68,19 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
         min(retryBaseSeconds * pow(2, Double(max(attempt, 1) - 1)), retryCapSeconds)
     }
 
-    /// How long a body that should be arriving may go without a byte before it is dropped and asked
-    /// for again at the frontier (#896). A trickling connection on weak Wi-Fi never errors; it just
-    /// stops, and the request timeout was all that would ever notice.
+    /// How long a body may go without a byte before it is dropped and re-requested at the frontier
+    /// (#896); a trickling connection never errors, it just stops.
     static let stallTimeoutSeconds: Double = 5
-    /// How long a body must have brought nothing for a path change to drop it. `NWPath` reports a
-    /// change whenever its preferred interface does — Wi-Fi coming back, a VPN coming up — not
-    /// only when the one the body is on goes, so a body still bringing bytes is left alone and the
-    /// watchdog judges it if it stops (#896).
+    /// How long a body must have brought nothing for a path change to drop it: `NWPath` reports
+    /// changes of the preferred interface too, so a body still bringing bytes is left to the watchdog.
     static let pathQuietSeconds: Double = 1
-    /// How often the stall watchdog looks.
     private static let watchdogTickSeconds: Double = 1
-    /// The streaming session's `timeoutIntervalForRequest`: the longest a request waits between
-    /// packets before it fails into the retry (#896). The default is 60 s. A suspended task is not
-    /// subject to it, so the throttle's hold never times out.
+    /// The streaming session's `timeoutIntervalForRequest` (#896). A suspended task is not subject
+    /// to it, so the throttle's hold never times out.
     static let requestTimeoutSeconds: Double = 10
 
-    /// The safety net on a blocked read's wait, not its pacing. Every event that can end the wait —
-    /// a chunk, a completion, a failure, a cancel, a learned length, a throttle change — broadcasts
-    /// the condition, so a timeout this coarse is only ever reached when something went unsignalled.
+    /// The safety net on a blocked read's wait, not its pacing: every event that can end the wait
+    /// broadcasts the condition.
     private static let blockedWaitSeconds: Double = 1
 
     /// Trimming copies, so the dead prefix is allowed to grow to this before it is dropped.
@@ -146,59 +103,44 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
 
     // MARK: - Immutable collaborators
 
-    /// The URL the caller gave. Requests go to ``resolvedURL`` when there is one; the auth-header
-    /// scope and every log line are this.
+    /// The URL the caller gave; the auth-header scope and every log line use it.
     private let url: URL
-    /// Already resolved by `FeedRequestAuthorizing` before construction: a private feed's audio
-    /// needs its `Authorization` header, and resolving it is an `async` lookup the decoder's
-    /// blocking read cannot make. Values never reach a log — host and header count only.
+    /// Resolved before construction: the decoder's blocking read cannot make the `async` lookup.
+    /// Values never reach a log — host and header count only.
     private let authHeaders: [String: String]
-    /// A policy handed in by a test; otherwise the app's, read per request because a source made while the app's graph is
-    /// still being created (a restored queue) is made before it is set.
+    /// A policy handed in by a test; otherwise the app's, read per request because a source made
+    /// while the app's graph is still being created (a restored queue) precedes it.
     private let serverPolicyOverride: ServerConnectionPolicy?
-    /// The server's custom headers and pinned certificate (#921); nil in tests that want the system's trust. Header values
-    /// are secrets and, like ``authHeaders``, go on the request only.
+    /// The server's custom headers and pinned certificate (#921); nil in tests that want the system's trust.
     private var serverPolicy: ServerConnectionPolicy? { serverPolicyOverride ?? ServerConnections.policy }
     private let policy: ReadAheadPolicy
-    /// Held strongly: the spine capture's lifetime is this playback, and a weak tee that died
-    /// mid-episode would silently stop teeing while playback continued.
+    /// Held strongly: a weak tee that died mid-episode would silently stop teeing.
     private let tee: AudioByteTee?
-    /// Where fetched bytes are kept between sessions. Nil in tests that want the network only.
+    /// Nil in tests that want the network only.
     private let runStore: CachedRunStore?
-    /// The run's key: the URL as given, so a later play of the same enclosure finds it.
-    /// S2: less its per-play session id and token (``StreamCacheKey``), which change on every play (#822).
+    /// The URL as given, less its per-play session id and token (``StreamCacheKey``, #822).
     private let runKey: String
-    /// S2: what ``resolvedURLs`` is keyed by, the URL less its per-play parameters, as ``runKey`` is.
+    /// What ``resolvedURLs`` is keyed by: the URL less its per-play parameters, as ``runKey`` is.
     private let resolvedKey: URL
-    /// Where the chain's end is kept between plays. Nil in tests that want every hop walked.
+    /// Nil in tests that want every hop walked.
     private let resolvedURLs: ResolvedURLCache?
 
     private let queue = DispatchQueue(label: "audio.http-range-byte-source", qos: .userInitiated)
-    /// Shared across sources; see ``sharedSession``. Tasks are addressed to this object with
-    /// `URLSessionTask.delegate`, so the session itself has no delegate and no source sees another
-    /// source's callbacks.
+    /// Shared across sources; tasks are addressed to this object with `URLSessionTask.delegate`, so
+    /// no source sees another source's callbacks.
     private let session: URLSession
-    /// The stall watchdog's and the retry backoff's clock and timer.
     private let scheduler: RecoveryScheduler
-    /// Tells this source when the network moved under it; observed from construction to ``cancel()``.
+    /// Observed from construction to ``cancel()``.
     private let pathMonitor: NetworkPathMonitoring?
     private var pathObserver: UUID?
 
-    /// The one session every source in the process uses (#225).
-    ///
-    /// A `URLSession` owns its connection pool. With a session per source, the second play from a
-    /// host paid DNS, TCP and TLS again — a cold handshake on every tap — and the `ttfa-net` line
-    /// never once said `reused=true`. One session keeps the host's connection warm between plays
-    /// and across the retire-and-restart the engine does on a seek.
+    /// One session for the process (#225): it owns the connection pool, so the host's connection
+    /// stays warm between plays and across a seek's retire-and-restart.
     static let sharedSession: URLSession = makeSession(configuration: .default)
 
-    /// A session shaped for this class. `configuration` is edited: URLCache is not the cache — it
-    /// validates on headers, and a host's re-stitched ad break arrives with the same
-    /// Content-Length and a fresh ETag every time. The run store validates on bytes. The request
-    /// timeout is ``requestTimeoutSeconds``; connectivity waiting is left as the caller set it.
-    /// The delegate queue is serial, as `URLSession` requires for ordered delivery; every callback
-    /// for every task hops from it onto its source's own `queue` and returns at once (see the
-    /// type's threading note), so no source's work is ever done on it.
+    /// `URLCache` is disabled: it validates on headers, but a re-stitched ad break keeps its
+    /// Content-Length with a fresh ETag. The run store validates on bytes. The delegate queue is
+    /// serial for ordered delivery; every callback hops onto its source's `queue` at once.
     static func makeSession(configuration: URLSessionConfiguration) -> URLSession {
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.urlCache = nil
@@ -221,9 +163,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     private var windowStart: Int64 = 0
     /// One past the last byte held: `windowStart + window.count`.
     private var frontier: Int64 = 0
-    /// Bumped on every ``resetWindowLocked(at:)``: the identity of the window a transaction's
-    /// verdict was computed against, so a later reset can be told apart from one that coincidentally
-    /// lands the frontier back on the same value. See ``urlSession(_:task:didCompleteWithError:)``.
+    /// Bumped on every ``resetWindowLocked(at:)``, so a later reset can be told from one that
+    /// coincidentally lands the frontier on the same value. See ``urlSession(_:task:didCompleteWithError:)``.
     private var windowGeneration: UInt64 = 0
     private var positionValue: Int64 = 0
     private var totalLengthValue: Int64?
@@ -232,98 +173,72 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     private var isCancelled = false
     /// This source holds ``runStore``'s run open (``CachedRunStore/retain(_:)``). Under `condition`.
     private var runRetained = false
-    /// A blocked read has been asked to come back so the caller can seek. Unlike ``isCancelled``
-    /// this is cleared — by ``clearInterrupt()``, which the decoder calls as part of that seek —
-    /// and the transaction it was waiting on is left alone, because the seek that follows will
-    /// either be served from the window or open its own.
+    /// A blocked read has been asked to come back so the caller can seek. Unlike ``isCancelled`` it
+    /// is cleared by ``clearInterrupt()``, and the transaction is left alone: the seek that follows
+    /// is served from the window or opens its own.
     private var isInterrupted = false
-    /// Which seek the transaction opened next belongs to. The engine controller's seek generation,
-    /// carried through so the tee can tell an anchor that is for THIS seek from one a later seek
-    /// has already superseded.
+    /// The engine controller's seek generation, so the tee can tell an anchor for THIS seek from
+    /// one a later seek has superseded.
     private var seekGenerationValue = 0
     /// No more bytes will ever arrive: the resource was read to its end.
     private var streamEnded = false
-    /// The resource's last ``tailBytes``, once fetched or loaded from the sidecar; `tailStart` is
-    /// the absolute offset of `tail[0]`. Served by ``read(into:maxLength:)`` when the position is
-    /// inside it, without touching the window.
+    /// The resource's last ``tailBytes``, fetched or loaded from the sidecar; `tailStart` is the
+    /// absolute offset of `tail[0]`. Served by ``read(into:maxLength:)`` without touching the window.
     private var tail: Data?
     private var tailStart: Int64 = 0
-    /// The side request for the tail is in flight. A seek into the tail's range opens nothing
-    /// while it is; a read there before it lands is answered with end-of-stream, never a wait.
+    /// The side request for the tail is in flight; a read there before it lands gets end-of-stream.
     private var tailPending = false
-    /// How the footer look went, for the `ttfa` line. `late` is sticky: once the decoder looked
-    /// before the side fetch landed, a later arrival does not make the probe's answer any better.
+    /// For the `ttfa` line. `late` is sticky.
     private var tailStatusValue: StartupTiming.Tail = .none
     /// The read position was put inside the tail by a seek. While set the window is not trimmed
-    /// (the position is far ahead of it and would otherwise drop every byte) and the throttle is
-    /// measured from the window's start: the decoder is about to seek straight back.
+    /// and the throttle is measured from the window's start: the decoder is about to seek back.
     private var readingTail = false
     private var bytesFetchedValue: Int64 = 0
     private var transactionCountValue: Int = 0
-    /// `3xx` hops followed so far, and each one's destination host. With the resolved URL reused
-    /// these only grow on the first transaction, which is the one the start timing charges.
     private var redirectHopsValue: Int = 0
     private var redirectHostsValue: [String] = []
-    /// The first response this source received, stamped when it landed. Measurement only (#193).
+    // Measurement only (#193).
     private var firstResponseValue: StartupTiming.FirstResponse?
     private var firstResponseAtValue: TimeInterval?
-    /// The identity of the task that produced ``firstResponseValue``, so the metrics delegate
-    /// (which can fire for a retried or superseded task too) knows which one to keep. Measurement
-    /// only (#193).
+    /// Which task produced ``firstResponseValue``; the metrics delegate also fires for retried or
+    /// superseded tasks.
     private var firstResponseTaskIdentifier: ObjectIdentifier?
-    /// When `resume()` was called on the request that led to ``firstResponseValue``. Reset by
-    /// ``fallBackFromRememberedURL(reason:)`` along with the redirect counters, for the same
-    /// reason: a remembered URL's failed attempt is not the request the timing charges.
+    /// Reset by ``fallBackFromRememberedURL(reason:)`` with the redirect counters: a remembered
+    /// URL's failed attempt is not the request the timing charges.
     private var requestIssuedAtValue: TimeInterval?
-    /// What `URLSessionTaskMetrics` reported for ``firstResponseTaskIdentifier``'s task. Measurement
-    /// only (#193); see ``StartupTiming/NetMetrics``.
     private var netMetricsValue: StartupTiming.NetMetrics?
 
     // MARK: - Pacing the body, behind `condition`
 
-    /// `task`, mirrored where the delegate queue can see it: the one task whose `suspend()` and
-    /// `resume()` the two pause reasons below are applied to. Set when a transaction opens,
-    /// cleared when its task closes or is cancelled, always under `condition`.
+    /// `task`, mirrored where the delegate queue can see it: the one task the two pause reasons
+    /// below suspend and resume. Always under `condition`.
     private var pacedTask: URLSessionDataTask?
-    /// The read-ahead throttle wants the body held: the frontier has reached the ceiling. Decided
-    /// on `queue` by ``applyThrottle()``.
+    /// The frontier has reached the read-ahead ceiling. Decided on `queue` by ``applyThrottle()``.
     private var pausedForThrottle = false
-    /// The hop wants the body held: more than ``inFlightHighWaterBytes`` are queued for `queue`
-    /// and not yet handled. Raised on the delegate queue as the chunk that crossed the mark is
-    /// enqueued, lowered on `queue` as the backlog drains past ``inFlightLowWaterBytes``.
+    /// More than ``inFlightHighWaterBytes`` are queued for `queue`; raised on the delegate queue,
+    /// lowered on `queue` once the backlog drains past ``inFlightLowWaterBytes``.
     private var pausedForInbound = false
-    /// What `pacedTask` has actually been told. `suspend()` and `resume()` are called from exactly
-    /// one place, ``syncPacingLocked()``, on the OR of the two reasons, so neither reason can undo
-    /// the other's hold and neither depends on whether the task counts its suspends.
+    /// `suspend()`/`resume()` are called only from ``syncPacingLocked()``, on the OR of the two
+    /// reasons, so neither can undo the other's hold.
     private var taskIsSuspended = false
-    /// Body bytes handed over by the session and enqueued for `queue`, not yet handled there.
-    /// The bound the async hop needs: a `Range` is always bounded, so for an honouring host the
-    /// backlog can never exceed one window anyway, but a host that answers `200` to a `Range`
-    /// sends the whole episode, and before the hop the only thing holding it at the ceiling was
-    /// the session waiting on the delegate. Now this is: past the high-water mark the task is
-    /// suspended from the delegate queue itself, without waiting for `queue` to get a turn.
-    /// `suspend()` stops the socket being read, not the delivery of what CFNetwork had already
-    /// read — on loopback that is up to ~2 MiB more after the mark — so the worst case is the
-    /// mark plus CFNetwork's own read-ahead, which is a constant, not the episode.
+    /// Body bytes handed over by the session and not yet handled on `queue`. A host that answers
+    /// `200` to a `Range` sends the whole episode; past the high-water mark the task is suspended
+    /// from the delegate queue itself. `suspend()` doesn't stop delivery of what CFNetwork already
+    /// read (up to ~2 MiB on loopback), so the worst case is the mark plus a constant.
     ///
-    /// Excludes the tail fetch's chunks (see ``tailTaskMirror``): they are ``tailBytes`` (128)
-    /// total, too small to matter against the 512 KiB mark on their own, and counting them broke
-    /// the bound instead of protecting it — the gate below only suspends ``pacedTask``, which the
-    /// tail task is never, so a tail chunk that happened to cross the mark left the counter over
-    /// it with nothing suspended until the paced task's own next chunk arrived (#261).
+    /// Excludes the tail fetch's chunks (see ``tailTaskMirror``): the gate only suspends
+    /// ``pacedTask``, so a tail chunk crossing the mark would leave the counter over it with
+    /// nothing suspended (#261).
     private var inFlightBytes = 0
     private var peakInFlightBytes = 0
     private var inboundPauseCount = 0
-    /// Tail-fetch bytes handed over and left out of ``inFlightBytes`` (#261). Written on every
-    /// build by ``inboundDidEnqueue(_:for:)``, so it lives outside the tests-only block: declared
-    /// inside it, every Release build failed to compile.
+    /// Tail-fetch bytes left out of ``inFlightBytes`` (#261). Outside the tests-only block because
+    /// it is written on every build.
     private var tailBytesEnqueued = 0
     private static let inFlightHighWaterBytes = 512 * 1024
     private static let inFlightLowWaterBytes = 128 * 1024
-    /// ``tailTask``, mirrored where the delegate queue can see it: `tailTask` itself is on `queue`
-    /// only, but ``inboundDidEnqueue(_:for:)`` runs on the delegate queue and needs to tell the
-    /// tail task's chunks apart from the paced task's before they are counted. Set when the side
-    /// request opens, cleared when it closes, always under `condition`.
+    /// ``tailTask``, mirrored where the delegate queue can see it, to tell the tail task's chunks
+    /// from the paced task's before they are counted. Always under `condition`.
     private var tailTaskMirror: URLSessionDataTask?
 
     // MARK: - Transaction state, on `queue`
