@@ -33,7 +33,7 @@ major competitor redesigns.
 The music-app baseline an audit compares Shuttle against, distilled from the tables above. The
 whole-app audit (evaluate.md) walks every row per platform, marks it present / partial / absent, and
 files each miss as a finding — a missing expectation is a defect even when everything that exists is
-beautiful. Rows in [native-surfaces.md](native-surfaces.md) say where each surface is checked.
+beautiful. Rows in the mobile-design skill's native-surfaces.md say where each surface is checked.
 
 Core playback (both platforms):
 

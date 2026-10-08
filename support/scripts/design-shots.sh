@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deterministic Maestro screenshot tour of both apps, for design audits (#728). One call produces a
 # fixed set of screenshots across themes, text sizes and form factors; the mobile-design skill reads
-# the PNGs afterwards (.claude/skills/mobile-design/evaluate.md), so nobody drives a device
+# the PNGs afterwards (global mobile-design skill, evaluate.md), so nobody drives a device
 # screenshot-by-screenshot.
 #
 #   support/scripts/design-shots.sh --platform android|ios|both [--screens a,b,...]
