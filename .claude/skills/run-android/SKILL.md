@@ -19,7 +19,7 @@ build-brief ./gradlew :android:app:installDebug && adb shell am start -n com.sim
 ## 2. A lane on the WSL desktop box (the default when no device is attached)
 
 `support/scripts/remote-emu.sh status`, then `start` and `eval "$(support/scripts/remote-emu.sh env)"`
-— lane protocol, ports and stop discipline are in `.claude/rules/android.md`'s Desktop Emulator section.
+— lane protocol, ports and stop discipline are in `.claude/rules/emulator.md`.
 
 ```bash
 support/scripts/remote-emu.sh install   # runs :android:app:assembleDebug and installs over the tunnel
