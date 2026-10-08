@@ -16,8 +16,9 @@ import kotlin.reflect.KClass
  * `SavedStateHandle`), and `@ManualViewModelAssistedFactoryKey` for those given arguments at the call site.
  *
  * In commonMain so a ViewModel contributes once, beside its class, whichever platform builds it: Android's
- * `AppGraph` hands this factory to `metroViewModel()`; the iOS graph (phase 5) exposes each ViewModel, or its
- * assisted `Factory`, as a property Swift reads. */
+ * `AppGraph` hands this factory to `metroViewModel()`; the iOS graph exposes each ViewModel, or its
+ * assisted `Factory`, as a property Swift reads.
+ */
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 class AppViewModelFactory

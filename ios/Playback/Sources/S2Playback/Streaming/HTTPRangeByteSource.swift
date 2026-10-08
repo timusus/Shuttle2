@@ -42,7 +42,8 @@ private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", categor
 /// delegate call. The session is shared (``sharedSession``) and delivers on ONE serial queue for
 /// every source in the process; each callback hops onto `queue` with `async` and returns at once, so
 /// a busy source never holds the delegate queue and with it another source's bytes. Per-source order
-/// survives the hop (both queues are serial). The hop gives up the session's back-pressure, so the
+/// survives the hop (both queues are serial), and the session hands over no body byte before the
+/// response's disposition has been answered from `queue`. The hop gives up the session's back-pressure, so the
 /// bytes on it are metered: see ``inFlightBytes``. The window is behind an `NSCondition` because the
 /// caller is FFmpeg's read callback on the decoder's own thread and it BLOCKS. ``cancel()`` is the
 /// one call from another thread and it wakes the blocked reader.
@@ -112,6 +113,7 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// while the app's graph is still being created (a restored queue) precedes it.
     private let serverPolicyOverride: ServerConnectionPolicy?
     /// The server's custom headers and pinned certificate (#921); nil in tests that want the system's trust.
+    /// Header values are secrets: on the request only, never in a log.
     private var serverPolicy: ServerConnectionPolicy? { serverPolicyOverride ?? ServerConnections.policy }
     private let policy: ReadAheadPolicy
     /// Held strongly: a weak tee that died mid-episode would silently stop teeing.
