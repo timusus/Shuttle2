@@ -9,6 +9,11 @@ public enum TrackSourceError: Error, Equatable {
     case cancelled
     /// ``TrackPCMSource/interrupt()`` ended the read so a seek could be applied; not terminal.
     case interrupted
+    /// ``TrackPCMSource/seek(toFrame:)`` needed bytes the stream couldn't serve (a transcode whose
+    /// length was estimated). Terminal: every read after it throws it too, and the source reports
+    /// itself unseekable. The controller reports it through `onSeekUnsupported`, as it does a
+    /// source that was never seekable, and reads nothing more until the owner re-opens the track.
+    case unseekable
 }
 
 /// One track's audio as interleaved float32 in the controller's output format.
@@ -133,8 +138,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
     /// from a frame of known time, which lands on an estimate from its Xing table or bitrate; one
     /// that lands early is read forward to the target here.
     ///
-    /// A reader that refuses the offset (a forward-only stream) ends the decode, and the track
-    /// reports itself unseekable from then on (``isSeekable``).
+    /// A reader that refuses the offset (a forward-only stream) ends the decode with
+    /// ``TrackSourceError/unseekable``, and the track reports itself unseekable from then on
+    /// (``isSeekable``).
     public func seek(toFrame frame: Int64) throws {
         guard let decoder else { throw TrackSourceError.failed("seek before open") }
         let landed: TimeInterval
@@ -146,7 +152,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
             throw TrackSourceError.cancelled
         } catch StreamDecoderError.unseekable {
             lock.withLock { seekRefused = true }
-            throw TrackSourceError.failed("seek \(url.lastPathComponent): the stream can't seek")
+            throw TrackSourceError.unseekable
         } catch {
             throw TrackSourceError.failed("seek \(url.lastPathComponent): \(error)")
         }
@@ -209,7 +215,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
         case .eof, .running: return 0
         case .cancelled: throw TrackSourceError.cancelled
         case .interrupted: throw TrackSourceError.interrupted
-        case .failure: throw TrackSourceError.failed("decode \(url.lastPathComponent) failed mid-stream")
+        case .failure:
+            if lock.withLock({ seekRefused }) { throw TrackSourceError.unseekable }
+            throw TrackSourceError.failed("decode \(url.lastPathComponent) failed mid-stream")
         }
     }
 

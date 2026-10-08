@@ -758,7 +758,9 @@ public final class MusicPlaybackController {
     }
 
     /// A seek that didn't happen may have interrupted the next track, already being read behind an
-    /// unseekable current one. Sought to exactly where it was read to, it carries on seamlessly.
+    /// unseekable current one. Sought to exactly where it was read to, it carries on seamlessly. One
+    /// that refuses the seek (``TrackSourceError/unseekable``) can't carry on, and isn't the current
+    /// track the owner could re-open at a position: it failed.
     private func resumeReadingNext() {
         guard let slot = reading, slot !== current, slot.opened, !slot.failed else { return }
         let streamStart = timelineLock.withLock { timeline.segments.last { $0.slot == slot.id }?.streamStart }
@@ -1033,19 +1035,23 @@ public final class MusicPlaybackController {
         // S2: a source still at its first frame is not sought to frame 0. The decoder's start trims
         // the encoder delay (an MP4's edit list, Opus pre-skip); FFmpeg's seek to the start of an
         // AAC-in-MP4 track does not, and ~2,100 frames of priming would open every load.
-        if current.opened, !current.failed, !current.source.isSeekable, !(frame == 0 && current.atStart) {
-            // A progressive transcode: it plays on from where it was read to, and the owner is told
-            // so it can re-open the stream at the frame. After a load that is its start; after a
-            // speed or output change it is about where it was heard.
-            if current.atStart { startFrame = 0 }
-            reportSeekUnsupported(current, ms: ms(frames: frame))
-        } else if current.opened, !(frame == 0 && current.atStart) {
+        if current.opened, !current.failed, current.source.isSeekable, !(frame == 0 && current.atStart) {
             do {
                 try seek(current, toFrame: frame)
+            } catch TrackSourceError.unseekable {
+                // Refused (an estimated length the stream can't serve): unseekable from now on, below.
             } catch {
                 reportFailure(current, error)
                 startFrame = 0
             }
+        }
+        if current.opened, !current.failed, !current.source.isSeekable, !(frame == 0 && current.atStart) {
+            // A progressive transcode: it plays on from where it was read to, and the owner is told
+            // so it can re-open the stream at the frame. After a load that is its start; after a
+            // speed or output change it is about where it was heard. One that refused the seek
+            // reads nothing more (``readChunk()``) until the owner re-opens it.
+            if current.atStart { startFrame = 0 }
+            reportSeekUnsupported(current, ms: ms(frames: frame))
         }
         appendSegment(for: current, mediaStart: startFrame)
         if startTiming?.positionedAt == nil { startTiming?.positionedAt = StartupTiming.now() }
@@ -1164,6 +1170,11 @@ public final class MusicPlaybackController {
                     do {
                         got = try slot.source.read(into: base + filled * channels, maxFrames: Self.chunkFrames - filled)
                     } catch TrackSourceError.interrupted {
+                        interrupted = true
+                        return
+                    } catch TrackSourceError.unseekable where slot === current {
+                        // It refused a seek, reported as unsupported: neither ended nor failed, it
+                        // waits, as an interrupted read does, for the owner to re-open it.
                         interrupted = true
                         return
                     } catch {

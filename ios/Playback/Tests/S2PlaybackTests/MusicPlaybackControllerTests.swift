@@ -188,6 +188,33 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.failures, [])
     }
 
+    /// A transcode whose length was estimated looks seekable until a seek past what the stream can
+    /// serve is refused. That is reported as unsupported, once, so the owner re-opens it at the
+    /// position: never as a failure, and the dead stream is neither read to a failure nor ended
+    /// into the next track.
+    func testASeekTheSourceRefusesIsReportedAsUnsupportedNotAFailure() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 48_000, seed: 10)
+        let b = TestSignal.noise(frames: 24_000, seed: 11)
+        let source = RefusingTrackSource(samples: a)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: track("B", b), playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 9_600, log: log)
+
+        controller.seek(toMs: 800)
+        controller.syncForTesting()
+        _ = try renderer.render(frames: 48_000, log: log)
+        controller.syncForTesting()
+
+        XCTAssertEqual(source.seeks, 1)
+        XCTAssertFalse(source.isSeekable)
+        XCTAssertEqual(log.seeksUnsupported, ["A 800"])
+        XCTAssertEqual(log.failures, [])
+        XCTAssertEqual(log.transitions, [], "not ended into the next track")
+        XCTAssertEqual(controller.position?.uid, "A")
+    }
+
     func testReplacingAnAlreadyScheduledNextPlaysTheNewOne() throws {
         let (controller, log) = try makeController(scheduleAhead: 1.0)
         let a = TestSignal.noise(frames: 24_000, seed: 6)

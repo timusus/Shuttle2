@@ -40,6 +40,42 @@ final class InMemoryTrackSource: TrackPCMSource {
     func interrupt() {}
 }
 
+/// A transcode whose length was estimated: seekable until the first seek, which it refuses, as
+/// ``FFmpegTrackSource`` does when its reader can't serve the offset. Unseekable from then on, and
+/// every read throws ``TrackSourceError/unseekable``.
+final class RefusingTrackSource: TrackPCMSource {
+    private let source: InMemoryTrackSource
+    private let lock = NSLock()
+    private var refused = false
+    private(set) var seeks = 0
+
+    init(samples: [Float]) {
+        source = InMemoryTrackSource(samples: samples)
+    }
+
+    var isSeekable: Bool { lock.withLock { !refused } }
+
+    func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
+        try source.open(sampleRate: sampleRate, channelCount: channelCount)
+    }
+
+    func seek(toFrame frame: Int64) throws {
+        lock.withLock {
+            seeks += 1
+            refused = true
+        }
+        throw TrackSourceError.unseekable
+    }
+
+    func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        if lock.withLock({ refused }) { throw TrackSourceError.unseekable }
+        return try source.read(into: buffer, maxFrames: maxFrames)
+    }
+
+    func cancel() {}
+    func interrupt() {}
+}
+
 /// A stream that stalls at `gateFrame`: reads there wait, saying so to the wait hook every 50 ms as a stalled
 /// ``HTTPRangeByteSource`` does, until ``release()``. An interrupt ends the wait, and every read until a seek,
 /// with ``TrackSourceError/interrupted``, as the real source's does.

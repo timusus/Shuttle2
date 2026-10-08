@@ -70,20 +70,23 @@ Paths under `~/projects/simplecity-apps/podcasts/main/mobile/`.
 - `ios/Playback/` (iOS 17, depends on `ios/Spine` for `SpineNative`): `AVAudioEnginePlaybackController`
   (2.4k lines, single episode; chain `reader -> SilenceGate -> VoiceEnhance -> SkipCueMixer ->
   playerNode -> mixer -> timePitch -> fadeMixer -> main`), `StreamingPCMReader` (FFmpeg pull decode,
-  `file://` or HTTP, auth headers), `Streaming/HTTPRangeByteSource` (range reads, read-ahead),
+  `file://` or HTTP, auth headers; retired in S2 by #957 for shuttle-playback's `FFmpegStreamDecoder`),
+  `Streaming/HTTPRangeByteSource` (range reads, read-ahead),
   `CachedRunStore`, `ResolvedURLCache`, `ClockStallDetector`, `PlayerStallRecovery`, `DSP/{Biquad,
   LookaheadLimiter,LufsMeter}`, `PlaybackTestSupport/LoopbackMediaServer`; interruption and route
   change handling live in the controller.
-- FFmpeg (Podcasts' `ios/scripts/build-ffmpeg.sh`, static LGPL xcframework; S2's is dynamic) is built with only
+- FFmpeg (Podcasts' `ios/scripts/build-ffmpeg.sh`, static LGPL xcframework; S2 links the same static
+  FFmpeg from the shuttle-playback package since #957) is built with only
   `mp3,aac` decoders and `mp3,aac,mov` demuxers, no network protocols; HLS is a load error.
 - `RemoteCommandHandler.swift` / `NowPlayingInfoManager.swift`: play/pause/toggle, skip ±interval,
   change position, change rate; rate/elapsed written on state change, not per tick.
 
-**Reusable directly (copy into S2 `ios/Playback`)**: `HTTPRangeByteSource`, `StreamingPCMReader` and
-`CStreamDecode`, `ResolvedURLCache`, `ClockStallDetector`, `PlayerStallRecovery`, `Biquad`,
-`LookaheadLimiter`, `LoopbackMediaServer` + fixtures, the build-ffmpeg script, the bridge's main-hop
-helper, the session/interruption/route handling, and `RemoteCommandHandler`/`NowPlayingInfoManager`
-as starting points.
+**Reusable directly (copy into S2 `ios/Playback`)**: `HTTPRangeByteSource`, `ResolvedURLCache`,
+`ClockStallDetector`, `PlayerStallRecovery`, `Biquad`, `LookaheadLimiter`, `LoopbackMediaServer` +
+fixtures, the bridge's main-hop helper, the session/interruption/route handling, and
+`RemoteCommandHandler`/`NowPlayingInfoManager` as starting points. `StreamingPCMReader`, `CStreamDecode`
+and the build-ffmpeg script were copied too, then retired (#957): decode and FFmpeg now come from the
+shuttle-playback package.
 
 **Not reusable**: the controller itself (single item, prepare/play per URL, podcast stages),
 `SilenceGate`, `VoiceEnhanceProcessor`, `SkipCueMixer`, the `AudioByteTee`/Spine skip layer.
@@ -379,11 +382,11 @@ and `IosAppGraphTest`/`EngineAudioPlayerTests` (the saved EQ reaches the engine 
    the millisecond, checked against the test server); network-loss recovery remains.
 3. **Queue parity drift**: iOS `QueueModel` vs Android's Media3 playlist semantics; the shared
    contract suite (step 3) is the guard.
-4. **FFmpeg LGPL in an App Store build and binary size.** Resolved by linking dynamically: the four
-   frameworks are 1.7 MB on device and can be swapped, which meets the LGPL's relink right without
-   Podcasts' static-build object-file offer. Still to confirm at submission:
-   - whether FFmpeg needs a privacy manifest entry (it isn't on Apple's list of commonly used SDKs);
-   - that App Store processing accepts the four frameworks' ad-hoc-then-re-signed bundles.
+4. **FFmpeg LGPL in an App Store build and binary size.** Resolved by linking shuttle-playback's static
+   FFmpeg into the app binary (owner decision, #957), nothing embedded. The relink right is met by both
+   sources being public and the relink steps in the Settings bundle (`ios/Playback/README.md`, "LGPL
+   notes"). Still to confirm at submission: whether FFmpeg needs a privacy manifest entry (it isn't on
+   Apple's list of commonly used SDKs).
 5. **Kotlin/Native threading**: main-actor hops can deadlock if misused; Kotlin must never run on the
    render thread (GC pauses).
 

@@ -111,8 +111,8 @@ final class FFmpegMusicDecodeTests: XCTestCase {
 
     /// A forward-only stream (a transcode streamed as it is made) whose length turns up while it
     /// plays: the track looks seekable then, but the reader refuses a seek behind what it has
-    /// served. The decoder's `.unseekable` makes the track report itself unseekable, and reads end
-    /// instead of crashing.
+    /// served. The decoder's `.unseekable` is the seek's error and every later read's, and the track
+    /// reports itself unseekable.
     func testAForwardOnlyReaderMakesTheTrackUnseekable() throws {
         let url = try fixture("tone", "mp3")
         let reader = ForwardOnlyByteReader(try Data(contentsOf: url))
@@ -127,13 +127,14 @@ final class FFmpegMusicDecodeTests: XCTestCase {
         }
         reader.knowsLength = true
         XCTAssertTrue(source.isSeekable)
-        XCTAssertThrowsError(try source.seek(toFrame: 22_050))
+        XCTAssertThrowsError(try source.seek(toFrame: 22_050)) {
+            XCTAssertEqual($0 as? TrackSourceError, .unseekable)
+        }
         XCTAssertFalse(source.isSeekable)
-        do {
-            let frames = try buffer.withUnsafeMutableBufferPointer { try source.read(into: $0.baseAddress!, maxFrames: 4096) }
-            XCTAssertEqual(frames, 0)
-        } catch {
-            XCTAssertNotEqual(error as? TrackSourceError, .cancelled)
+        XCTAssertThrowsError(
+            try buffer.withUnsafeMutableBufferPointer { try source.read(into: $0.baseAddress!, maxFrames: 4096) }
+        ) {
+            XCTAssertEqual($0 as? TrackSourceError, .unseekable)
         }
     }
 

@@ -103,6 +103,10 @@ seeks or interrupts such a source. A seek leaves it playing where it was. A load
 it at 0. Both are reported through `onSeekUnsupported(uid, ms)`, and the owner (Kotlin's
 `IosPlayerController`) re-opens the stream at the position with `StartTimeTicks`. A next track that
 the skipped seek interrupted is sought back to where it was read to, so the join stays gapless.
+A stream whose length was only estimated (a Subsonic transcode) looks seekable until a seek it can't
+serve: the source throws `TrackSourceError.unseekable`, is unseekable from then on, and the decode is
+over. The controller reports that seek through `onSeekUnsupported` too, never `onFailed`, and reads
+nothing more from the track (no failure, no move to the next) until the owner re-opens it.
 
 **Threading.** Public methods return at once. Source seeks and reads and all node operations run on
 one serial engine queue; a next track's open runs on a background queue, and nothing touches its
