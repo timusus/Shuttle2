@@ -1,12 +1,29 @@
 ---
 paths:
   - "android/**/src/test/**"
-  - "android/**/src/androidTest/**"
   - "**/src/commonTest/**"
   - "**/src/iosTest/**"
 ---
 
-# Android tests
+# Tests
+
+**Bias toward JVM tests (unit, Robolectric characterisation) over device tests.** Unit (`src/test/`): ViewModels, use
+cases, repositories, mappers. Compose characterisation (`src/test/`, Robolectric): screens and their ViewModels. Device
+(Maestro, `support/maestro/`, `support/scripts/checks/`): platform integration only (`PlaybackService`, Android Auto, SAF,
+Chromecast, real `AudioManager` focus). There is no `src/androidTest` suite. A new device check must explain why it can't
+run on JVM; "it's a UI change" or "I want to see the real app" is not a reason. Layers, the landing baseline and speed
+levers: `docs/testing/strategy.md`.
+
+- Behaviour changes update tests; bug fixes start with a failing test.
+- A Room version bump commits the new schema JSON and extends the migration tests in
+  `android/mediaprovider/local/src/test/.../data/room/migrations/` (`MigrationTestHelper`): add the migration to
+  `ALL_MIGRATIONS`; the full-chain test covers it.
+
+**Coroutines:** `kotlinx-coroutines-test` is on the classpath; replace Main with the repo's `MainDispatcherRule`
+(`android/app/src/test/java/com/simplecityapps/testing/MainDispatcherRule.kt`, defaults to `UnconfinedTestDispatcher`;
+pass a `StandardTestDispatcher(testScheduler)` when execution order matters). Inject dispatchers; never hardcode
+`Dispatchers.IO`. There is no Turbine: collect into a list in `backgroundScope` (`flow.toList(results)`) or use
+`first()`/`take(n).toList()`. MockK (`libs.mockk`) is available, but prefer a simple real fake over a mock.
 
 **commonTest/iosTest names:** no commas or other Kotlin/Native-illegal characters (`, ; : . / \ < > [ ]`) in backticked test names — `iosSimulatorArm64Test` refuses to compile them. `support/scripts/native-test-names` (run by `worker-finish.sh` and `lint`) catches them in seconds, and `unit-test --changed` runs `NativeTestNameRules` when commonTest/iosTest changed.
 
@@ -75,15 +92,9 @@ Rules:
   whole — that cross-module safety net belongs to the full/final verify, not the fast iteration loop.
 - Prints the class count and first few names per module before running.
 
-### Compose UI Characterisation Tests
+### Compose UI characterisation tests
 
-Robolectric-based Compose tests that verify observable UI behaviour. These allow safe rearchitecting of Compose screens and ViewModels — if the UI still looks right, the tests pass.
-
-**Run them:**
-```bash
-./gradlew :android:app:testDebugUnitTest --tests "com.simplecityapps.shuttle.ui.screens.library.songs.SongListTest"
-./gradlew :android:app:testDebugUnitTest --tests "com.simplecityapps.shuttle.ui.screens.library.genres.GenreListTest"
-```
+Robolectric tests of observable UI behaviour, so screens and ViewModels can be re-architected safely.
 
 **Configuration:** `android/app/src/test/resources/robolectric.properties` sets `sdk=34`, `qualifiers`, `graphicsMode=NATIVE` (every test renders natively, so screenshot classes need no `@GraphicsMode`), and `application=android.app.Application` (bypasses the app graph and initializers for fast, isolated tests).
 
@@ -99,30 +110,11 @@ songs/
   SongListScenarios.kt   # ViewState factories
 ```
 
-**Robot responsibilities:**
-- `setContent(viewState)` — renders the composable with callback captures
-- `assertTextDisplayed(text)` / `assertTextNotDisplayed(text)` — hides node selectors
-- `openContextMenu()` — hides content description selectors
-- `clickText(text)` / `clickMenuItem(text)` — interaction primitives
-- Callback capture fields (`lastAddedToQueue`, `lastDeleted`, etc.) — avoid verbose lambda setup in tests
+**Robot responsibilities:** `setContent(viewState)` (renders with callback captures), `assertTextDisplayed/NotDisplayed`,
+`openContextMenu()`, `clickText`/`clickMenuItem`, and callback capture fields (`lastAddedToQueue`, `lastDeleted`).
 
-**Robot boundaries — keep it thin:**
-- The robot hides *selectors* (content descriptions, test tags, node matchers)
-- The robot does NOT hide *behaviour* — tests compose primitives to describe what they verify
-- Assertions use user-visible text, not implementation details
-- No screen-specific compound assertions like `assertContextMenuComplete()` — tests list what they expect
-
-**Example test:**
-```kotlin
-@Test
-fun `context menu invokes onAddToQueue`() {
-    val song = createSong(name = "Queue Me")
-    robot.setContent(readySongList(songs = listOf(song)))
-    robot.openContextMenu()
-    robot.clickMenuItem("Add to Queue")
-    robot.lastAddedToQueue shouldBe song
-}
-```
+**Keep it thin:** the robot hides *selectors* (content descriptions, test tags), not *behaviour*; tests compose the
+primitives and assert on user-visible text. No screen-specific compound assertions like `assertContextMenuComplete()`.
 
 ## Scenario Factories
 
