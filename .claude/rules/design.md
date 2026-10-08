@@ -36,10 +36,50 @@ literal `dp`/`Color(0x…)`/`Font.system(size:)`.
 - Artwork-derived colour on media screens beats dynamic colour (dynamic colour for chrome only).
 - iOS is the current quality reference for intent; Android's usual gap is screens bypassing the design
   system, so most Android polish is moving screens onto tokens.
-- Whole-app audits load `docs/design/competitors.md` for the feature-expectations pass.
-- Screenshot evidence: `support/scripts/design-shots.sh` (via `longjob.sh`), goldens in `docs/design/**`,
-  `emulator-check` and `ios/scripts/maestro-sim.sh` for ad hoc states. Issue evidence images go on the
-  orphan `design-evidence` branch of `timusus/Shuttle2` (raw URLs); file findings with `/note` (label
-  `design`).
-- Native-surface state: CarPlay, Wear/watchOS and a QS tile are absent; the Android widget is Glance
-  `NowPlayingWidget`, iOS is `S2Widgets`, shortcuts are `IntentPerformers`.
+- Whole-app audits load `docs/design/competitors.md` for the feature-expectations pass; shape and
+  critique cite it too (shape's Reference step as prior art, critiques for its anti-patterns), not
+  only whole-app audits.
+- Native-surface state: `PlaybackService` (Android) and `NowPlayingController` (iOS) own the media
+  session; Android Auto, Cast and the AirPlay picker are present; predictive back is on (targetSdk 36 —
+  verify the animations); CarPlay, Wear/watchOS and a QS tile are absent; widgets are Glance
+  `NowPlayingWidget` (Android) / `S2Widgets` (iOS); shortcuts are `IntentPerformers`.
+
+## Screenshot evidence
+
+- **`support/scripts/design-shots.sh`**, one background call that leases emulator/simulator lanes and
+  writes the whole set:
+  `support/scripts/longjob.sh start design-shots -- support/scripts/design-shots.sh --platform both [--screens home,now-playing] [--devices …] [--matrix quick|full] [--contact-sheet]`,
+  then `longjob.sh wait design-shots`.
+- `--devices` picks form factors: Android `phone,tablet,foldable`, iOS `iphone,ipad`; default
+  `phone,iphone` (tablet/foldable are `wm size` overrides, not AVDs). `--matrix` picks theme × text:
+  `quick` = light + dark at default text, `full` adds font scale 2.0 / AX5. **Audits use `--matrix full`
+  with the default devices** (4 cells per screen per platform). `--ios-source jellyfin` streams from the
+  test server instead of importing the artwork `library` fixture locally; `--ios-profile default`
+  targets iOS 18.5 instead of the iOS 26 simulator.
+- Before the matrix each device plays a seeded listening history (four albums by four artists, two of
+  them twice, then Blue Hours paused part-way) so Home shows Jump Back In with a resume card; the plays
+  are all from today, so Heavy Rotation, Around This Time and Rediscover stay hidden. `--no-history`
+  skips this and saves about 6 minutes per device.
+- Output lands in `shots/<run>/<platform>/<screen>__<device>__<theme>__<text>.png` with
+  `shots/<run>/manifest.md` (every shot, and every failed flow with its step and last error). Read
+  manifest.md first, then only the PNGs needed. `--help` lists the screen names.
+- Ad hoc states: `emulator-check` (Maestro `takeScreenshot`) and `ios/scripts/maestro-sim.sh`; real
+  devices via the `android-device` / `ios-device` skills (haptics, real colour). Lanes: `remote-emu.sh`
+  (lock screen: `remote-emu.sh lockscreen on`) and the `sim-lease.sh` simulator lease — never
+  `simctl create`.
+- Goldens: Roborazzi in `docs/design/**`, recorded on the Mac via `/verify-ui` /
+  `recordRoborazziDebug`; compare with `git diff` of the PNGs or side by side.
+- Issue evidence: `gh` cannot upload images, so crop each screenshot to the defect, push the PNGs to
+  the orphan `design-evidence` branch of `timusus/Shuttle2` and embed via raw URL
+  `![before](https://raw.githubusercontent.com/timusus/Shuttle2/design-evidence/<issue>-<slug>.png)`:
+
+```bash
+git fetch origin design-evidence
+git worktree add .claude/worktrees/design-evidence design-evidence
+cp <cropped>.png .claude/worktrees/design-evidence/<issue>-<slug>.png
+git -C .claude/worktrees/design-evidence add . && git -C .claude/worktrees/design-evidence commit -m "#<issue> <slug>"
+git -C .claude/worktrees/design-evidence push origin design-evidence
+git worktree remove .claude/worktrees/design-evidence
+```
+
+File findings with `/note` (label `design`).
