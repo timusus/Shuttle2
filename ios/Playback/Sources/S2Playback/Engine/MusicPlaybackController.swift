@@ -8,7 +8,7 @@ private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", categor
 
 /// One queue item as the engine sees it: an id, its ReplayGain, and where its audio comes from.
 ///
-/// The Kotlin side (`EnginePlayerController`, phase-6-playback.md) owns the queue, shuffle and
+/// The Kotlin side (`EnginePlayerController`) owns the queue, shuffle and
 /// repeat; it hands the engine the current item and the next one and nothing else.
 public struct PlaybackTrack {
     /// This hand-over of the track, for telling reports apart: the owner gives every hand-over a new

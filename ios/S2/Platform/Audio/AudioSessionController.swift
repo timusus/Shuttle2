@@ -14,7 +14,7 @@ protocol AudioSession: AnyObject {
 
 extension AVAudioSession: AudioSession {}
 
-/// Owns the app's audio session for music playback (phase 6, docs/architecture/ios-port/phase-6-playback.md):
+/// Owns the app's audio session for music playback:
 /// the category, activation, interruptions, route changes and a media-services reset. It never touches
 /// the player; it tells the player's owner what to do through the closures below.
 ///
@@ -29,7 +29,7 @@ extension AVAudioSession: AudioSession {}
 ///   personal output went away (``pausesOnRouteChange(reason:previousOutputs:currentOutputs:)``): a
 ///   Bluetooth profile or codec switch on the same device is reported the same way (#715).
 /// - **Output sample rate**: none of its business. The engine renders at a fixed 48 kHz and the EQ is
-///   designed for that; the main mixer converts to whatever the route runs at (phase-6-playback.md).
+///   designed for that; the main mixer converts to whatever the route runs at.
 /// - **Media services reset**: the session is configured again and the player's owner is told to
 ///   rebuild its engine and reload the current item at its position.
 ///

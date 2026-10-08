@@ -28,8 +28,7 @@ data class FolderLists(
 )
 
 /**
- * The folders picked in Sources, which the S2 scanner reads at the start of each import (S7 in
- * docs/architecture/ios-port/phase-4-platform-seams.md): Android's `SafScannerFolderStore` keeps SAF grants.
+ * The folders picked in Sources, which the S2 scanner reads at the start of each import: Android's `SafScannerFolderStore` keeps SAF grants.
  */
 interface ScannerFolderStore {
     val folders: StateFlow<FolderLists>

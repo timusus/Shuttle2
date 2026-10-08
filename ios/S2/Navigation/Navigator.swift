@@ -44,8 +44,7 @@ enum AppTab: Hashable, CaseIterable {
 }
 
 /// What's selected at the root of the shell: a plain tab (compact, and Home/Search everywhere), or
-/// (regular and wide) one of the library categories promoted into the sidebar in place of a "Library" tab
-/// (`ios-port/phase-5-ios-app.md` section 2, "Library root: categories, not a tab strip").
+/// (regular and wide) one of the library categories promoted into the sidebar in place of a "Library" tab.
 enum RootSelection: Hashable {
     case tab(AppTab)
     case libraryCategory(LibraryCategory)

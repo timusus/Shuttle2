@@ -35,7 +35,7 @@ data class ArtworkRequest(
 )
 
 /**
- * Where to look for a song's, album's or album artist's artwork (docs/architecture/ios-port/phase-5-ios-app.md, "Artwork"):
+ * Where to look for a song's, album's or album artist's artwork:
  * the requests come from shared Kotlin, pixels stay in Swift's `ArtworkLoader`, which tries them in order until one
  * yields an image.
  *

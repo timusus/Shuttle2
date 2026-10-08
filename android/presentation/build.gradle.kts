@@ -1,4 +1,4 @@
-// Shared presentation layer (iOS port phase 4, #586, docs/architecture/ios-port/phase-4-viewmodels.md): the
+// Shared presentation layer (#586): the
 // ViewModels, their UI state and the screen use cases, in commonMain so Android's Compose screens and iOS's
 // SwiftUI views drive the same ViewModels. Sees core and domain only; no Compose, no Android resources.
 plugins {

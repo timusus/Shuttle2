@@ -1,5 +1,5 @@
 // swift-tools-version: 5.9
-// S2's iOS player engine (#588; design: docs/architecture/ios-port/phase-6-playback.md): the HTTP byte
+// S2's iOS player engine (#588): the HTTP byte
 // source copied from Shuttle Podcasts, and `MusicPlaybackController`, the gapless two-item
 // AVAudioEngine controller the Kotlin `EnginePlayerController` drives. Demux, decode, resampling and
 // seeking are shuttle-playback's `PlaybackDecode` (#957).

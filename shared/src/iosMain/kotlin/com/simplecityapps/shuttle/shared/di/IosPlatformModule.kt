@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * The platform seams iOS doesn't have yet (docs/architecture/ios-port/phase-4-platform-seams.md): no widgets or Cast,
+ * The platform seams iOS doesn't have yet: no widgets or Cast,
  * so each is off or a no-op, and the screens hide what they would offer. Offline downloads are [IosDownloadsModule]'s,
  * entitlements [IosEntitlementModule]'s and this device's files `local/`'s.
  */

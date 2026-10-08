@@ -3,7 +3,7 @@ import Shared
 
 /// When the library imports on iOS: after a sign-in (`SourcesViewModel`), on the Library's pull-to-refresh and
 /// Sources' Rescan, and at launch only until an import has finished once, as Android's `scanIfNeverScanned`
-/// (`ios-port/phase-5-ios-app.md` section 3). The library lives in Room, so a relaunch shows it straight away; a
+/// The library lives in Room, so a relaunch shows it straight away; a
 /// re-import on every launch blanked the lists for minutes (#623). This device's files are the exception: at launch
 /// and on every return to the foreground they're listed again, and the library imports when one was added, removed or
 /// changed since the last import (#590), as a file copied in through Files or Finder should show up without a pull to

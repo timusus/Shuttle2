@@ -58,7 +58,7 @@ protocol NowPlayingInfoCenter: AnyObject {
 extension MPNowPlayingInfoCenter: NowPlayingInfoCenter {}
 
 /// Publishes the current song to `MPNowPlayingInfoCenter` and routes `MPRemoteCommandCenter` commands to
-/// a `NowPlayingCommandHandler` (phase 6, docs/architecture/ios-port/phase-6-playback.md). Adapted from
+/// a `NowPlayingCommandHandler`. Adapted from
 /// Shuttle Podcasts' `NowPlayingInfoManager` and `RemoteCommandHandler`.
 ///
 /// Elapsed time and rate are written when the playback state changes or the position jumps, not per

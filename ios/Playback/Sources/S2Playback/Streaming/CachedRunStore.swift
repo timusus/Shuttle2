@@ -7,7 +7,7 @@ private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", categor
 
 /// **One contiguous run of streamed bytes per episode, on disk.**
 ///
-/// Plan: `docs/plans/2026-09-16-streaming-playback-cache.md`. The bytes ``HTTPRangeByteSource``
+/// The bytes ``HTTPRangeByteSource``
 /// fetched for the listener are kept so a re-listen, a cold-start resume and a back-seek read from
 /// here instead of the network, and so the ad-skip scanner can read a finished episode whole.
 ///

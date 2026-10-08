@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Keeps a remote song on the device for offline playback (S4 in docs/architecture/ios-port/phase-4-platform-seams.md):
+ * Keeps a remote song on the device for offline playback:
  * Android's `ServerSongDownloader` asks the song's provider for a download URL and queues it with the downloads
  * module; iOS's `OfflineDownloads` (:shared) fetches it with a background `URLSession` (docs/architecture/downloads.md).
  */

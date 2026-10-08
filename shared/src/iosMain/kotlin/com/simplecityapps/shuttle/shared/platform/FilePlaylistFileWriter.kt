@@ -22,7 +22,7 @@ import platform.Foundation.create
 import platform.Foundation.writeToFile
 
 /**
- * Writes an exported playlist to a file path, UTF-8 (S3, phase-4-platform-seams.md). The iOS route passes a path
+ * Writes an exported playlist to a file path, UTF-8. The iOS route passes a path
  * in the temporary directory and shares the file once it's written; nothing on iOS offers the export until the
  * playlist screen lands (phase 7).
  */

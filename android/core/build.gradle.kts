@@ -1,5 +1,5 @@
 // Shared utilities, DI qualifiers, the settings framework and the key-value, secure and logging abstractions every
-// module builds on. Multiplatform for the iOS port (#584, docs/architecture/ios-port/phase-2-data.md): the settings,
+// module builds on. Multiplatform for the iOS port (#584): the settings,
 // preference managers, KeyValueStore/SecureStore/Logger and coroutine helpers live in commonMain; the Android wiring
 // (SharedPreferences, EncryptedSharedPreferences, Timber, OkHttp, WorkManager) is androidMain.
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget

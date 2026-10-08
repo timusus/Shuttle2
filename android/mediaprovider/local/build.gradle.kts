@@ -1,5 +1,5 @@
 // The local library: the Room database every provider's songs and playlists are stored in, the repositories over it,
-// and the MediaStore/TagLib providers. Multiplatform for the iOS port (#584, docs/architecture/ios-port/phase-2-data.md):
+// and the MediaStore/TagLib providers. Multiplatform for the iOS port (#584):
 // the database and the repositories live in commonMain; the MediaStore/TagLib providers and the SAF m3u file sync
 // (SafPlaylistFileSync, behind PlaylistFileSync) are androidMain.
 import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension

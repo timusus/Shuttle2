@@ -4,7 +4,7 @@ import SwiftUI
 /// The Library tab's root on compact: a pinned rail of category chips over the chosen category's own screen, shown in
 /// place with its chip tinted, as Android's library tabs switch in place (#643). It opens on the category last
 /// chosen, kept across launches, or the first enabled one. Regular and wide show the same categories directly in the
-/// sidebar instead (`AppShell`), `docs/architecture/ios-port/phase-5-ios-app.md` section 2.
+/// sidebar instead (`AppShell`).
 ///
 /// `LibraryViewModel`'s enabled tabs, in the user's order, pick the categories; `LibraryEmptyViewModel` swaps them
 /// for the empty state while there are no songs; the import's progress shows under the rail. Each category's own

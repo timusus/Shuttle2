@@ -71,7 +71,7 @@ import dev.zacsweers.metro.createGraphFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 
 /**
- * The iOS app's dependency graph, the twin of Android's `AppGraph` (docs/architecture/ios-port/phase-5-ios-app.md):
+ * The iOS app's dependency graph, the twin of Android's `AppGraph`:
  * every `AppScope` contribution the shared modules make, merged from their klibs, plus :shared's iOS containers
  * (`di/`: persistence, networking, playback, the platform seams). Swift builds it once at launch with
  * [createIosAppGraph], handing over what only Swift can make, and reaches a ViewModel through its typed property: a
@@ -81,9 +81,9 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  *
  * `SettingsViewModel` reads `IosSettingsCatalog` (only the rows iOS acts on) through `IosSettingsEffects`.
  *
- * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters (phase-6-playback.md).
+ * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters.
  *
- * Shared ViewModels are excluded until iOS binds what they need (phase-4-viewmodels.md, "Wave 4"):
+ * Shared ViewModels are excluded until iOS binds what they need:
  * `TagEditorViewModel` needs a `TagFileAccess`, a tag writer iOS doesn't have: it reads local files' tags with FFmpeg,
  * which doesn't write them in place. Until then nothing offers tag editing on iOS.
  */

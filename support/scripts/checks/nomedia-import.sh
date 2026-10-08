@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # A folder marked with `.nomedia` is excluded from import: MediaStore itself never indexes a file
-# under such a folder (docs/architecture/spike-taglib-mediastore.md), even after an explicit
+# under such a folder, even after an explicit
 # scan_file call, so S2's MediaStore-backed query never sees it either -- this is platform
 # behaviour, not S2 filtering logic. Pushes a `.nomedia` marker and a song next to it, confirms
 # MediaStore excludes the file, then reimports and confirms S2's library count doesn't grow.

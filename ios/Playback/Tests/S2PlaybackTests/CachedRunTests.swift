@@ -5,7 +5,7 @@ import S2PlaybackTestSupport
 
 /// The run on disk, over a real loopback origin that re-stitches between requests.
 ///
-/// Every case is one of the seams `docs/plans/2026-09-16-streaming-playback-cache.md` names: the
+/// Every case is one of the run store's seams: the
 /// overlap that agrees, the overlap that does not, the overlap that is all silence, the host that
 /// answers 200 to a range, and the resume that lands inside what the disk already holds. The
 /// origin serves a different stitch per request, which is exactly what a real host does.

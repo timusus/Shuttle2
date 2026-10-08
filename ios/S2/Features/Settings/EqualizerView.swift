@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The equalizer (#604): the shared `EqualizerViewModel`, as one grouped `Form`, pushed from Settings' Equalizer row
 /// (`Route.equalizer`). Each change plays straight away through `IosEqualizer`, which designs the bands at the engine's
-/// fixed 48 kHz and hands their coefficients to the engine (`docs/architecture/ios-port/phase-6-playback.md`).
+/// fixed 48 kHz and hands their coefficients to the engine.
 struct EqualizerView: View {
     var body: some View {
         let viewModel = ViewModelCache.shared.viewModel(Route.equalizer.cacheKey) { AppGraph.shared.equalizerViewModel }

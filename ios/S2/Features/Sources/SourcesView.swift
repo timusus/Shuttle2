@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Sources (#587, #624, #645, #590; phases 7 and 8 in `docs/architecture/ios-port/phase-5-ios-app.md`): this device's
+/// Sources (#587, #624, #645, #590): this device's
 /// music and the media servers the library imports from, on the shared `SourcesViewModel`, as an inset-grouped list in
 /// the Settings style. On This iPhone turns the device's music on, lists where it's read from (the app's folder in
 /// Files, and each folder picked there) and adds a folder through the Files picker. Each server row shows its host and

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The screen for every `Route`, keyed by case. `navigationDestination(for: Route.self)` and each library
-/// category's own root (regular/wide) resolve to this (`docs/architecture/ios-port/phase-5-ios-app.md` section 3).
+/// category's own root (regular/wide) resolve to this.
 struct RouteDestinationView: View {
     let route: Route
 

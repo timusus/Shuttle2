@@ -1,5 +1,5 @@
 // The HTTP layer the media-server providers share: a Ktor client factory (OkHttp on Android, Darwin on iOS), the
-// shared Json, and the NetworkResult every call returns (docs/architecture/ios-port/phase-3-network.md, #585).
+// shared Json, and the NetworkResult every call returns (#585).
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {

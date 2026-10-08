@@ -4,8 +4,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * The media providers the library imports from, and the scan that imports them (S8 in
- * docs/architecture/ios-port/phase-4-platform-seams.md). Android's `DefaultMediaSources` persists the enabled set in
+ * The media providers the library imports from, and the scan that imports them. Android's `DefaultMediaSources` persists the enabled set in
  * `PlaybackPreferenceManager.mediaProviderTypes` and mirrors it into `MediaImporter.mediaProviders`.
  */
 interface MediaSources {

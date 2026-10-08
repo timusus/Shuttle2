@@ -31,7 +31,7 @@ import dev.zacsweers.metro.Provides
  * iOS's settings: only the rows something on iOS acts on, so no row is a switch that does nothing. Swift's
  * `SettingsView` renders it as one grouped `Form`, with a Sources row of its own above the Sources rows.
  *
- * Left out, with why (`docs/architecture/ios-port/phase-5-ios-app.md`, "Settings"):
+ * Left out, with why:
  * - Appearance: theme, dynamic colour, accent and pure black restyle Android's Material theme, which iOS doesn't
  *   draw; widget opacity has no widget. Colour from artwork stays: `ArtworkTintModifier` falls back to the accent
  *   when it's off. Show Home on launch stays: the shell starts on

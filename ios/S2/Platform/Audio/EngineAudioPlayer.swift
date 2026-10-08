@@ -1,7 +1,7 @@
 import Foundation
 import Shared
 
-/// The Kotlin `IosAudioPlayer` over the S2Playback engine (phase 6, docs/architecture/ios-port/phase-6-playback.md):
+/// The Kotlin `IosAudioPlayer` over the S2Playback engine:
 /// each method is one engine call, and each engine report goes to the Kotlin listener. The queue, what comes next
 /// and what to do about a failed track are the Kotlin `IosPlayerController`'s.
 ///

@@ -34,7 +34,7 @@ class IosArtworkModule {
     ): RemoteArtworkProvider = AggregateRemoteArtworkProvider(setOf(jellyfin, emby, plex, subsonic))
 
     /**
-     * No artwork seed on iOS yet (S9, phase-4-platform-seams.md): Swift decodes the artwork, and nothing extracts a
+     * No artwork seed on iOS yet: Swift decodes the artwork, and nothing extracts a
      * colour from it until the themed surfaces arrive with the player and detail screens (phase 7). [ArtworkSeed.None]
      * is what Android reports for artwork it can't seed from, so those surfaces keep the app's own scheme.
      */

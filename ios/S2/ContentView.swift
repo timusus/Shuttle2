@@ -85,7 +85,7 @@ struct ContentView: View {
 
 /// The adaptive shell (Android: `ui/shell`): Home, Library and Search as a tab bar on compact, and as a
 /// sidebar on regular/wide with the library categories promoted into it in place of a "Library" tab
-/// (`docs/architecture/ios-port/phase-5-ios-app.md` section 2). Each root has its own `NavigationStack`,
+/// Each root has its own `NavigationStack`,
 /// the mini player inset at the bottom of every screen, and a wide-only inspector slot for phase 6.
 struct AppShell: View {
     let tier: LayoutTier
@@ -268,7 +268,7 @@ struct AppShell: View {
 }
 
 /// Settings' sheet: its own `NavigationStack` on `Navigator.settingsPath`, so Sources and a server sign-in push
-/// inside it, closed with Done (`docs/architecture/ios-port/phase-5-ios-app.md`, "Settings entry").
+/// inside it, closed with Done.
 struct SettingsSheet: View {
     let navigator: Navigator
     @Binding var showNowPlaying: Bool

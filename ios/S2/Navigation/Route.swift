@@ -1,7 +1,7 @@
 import Foundation
 
 /// The library categories under Library (Android's `LibraryTab`, minus `Folders`: hidden on iOS until
-/// local files land, `docs/architecture/ios-port/phase-5-ios-app.md` section 3). Order matches the
+/// local files land). Order matches the
 /// compact root's list and the sidebar's `TabSection` on regular and wide (`AppShell`).
 enum LibraryCategory: String, Hashable, Codable, CaseIterable {
     case songs
@@ -32,7 +32,7 @@ enum LibraryCategory: String, Hashable, Codable, CaseIterable {
 }
 
 /// The shell's typed navigation destinations, mirroring `ui/shell/Routes.kt` and
-/// `screens/library/LibraryRoutes.kt` case for case (`ios-port/phase-5-ios-app.md` section 2). A `Route`
+/// `screens/library/LibraryRoutes.kt` case for case. A `Route`
 /// carries keys, never models, same as Android's `NavKey`s, and is `Codable` so a path can be persisted
 /// under `@SceneStorage` (`Navigator.StoredPath`).
 enum Route: Hashable, Codable {

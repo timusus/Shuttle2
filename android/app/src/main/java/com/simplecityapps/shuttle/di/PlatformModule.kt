@@ -8,7 +8,7 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 
-/** Android's side of the shared presentation layer's platform seams (docs/architecture/ios-port/phase-4-platform-seams.md). */
+/** Android's side of the shared presentation layer's platform seams. */
 @ContributesTo(AppScope::class)
 @BindingContainer
 object PlatformModule {
