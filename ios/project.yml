@@ -56,11 +56,12 @@ targets:
     resources:
       - path: S2/PrivacyInfo.xcprivacy
     dependencies:
-      # Brings the four FFmpeg frameworks (the package's binary targets, from
-      # ios/scripts/build-ffmpeg.sh). Xcode embeds and signs a package's dynamic binary targets in
-      # S2.app/Frameworks by itself, so there is no `embed:` entry: one would copy them twice.
+      # The engine and the local-file tag reader. Both link shuttle-playback's one static FFmpeg (#957):
+      # nothing is embedded in S2.app/Frameworks.
       - package: S2Playback
         product: S2Playback
+      - package: S2Playback
+        product: S2Tags
       # The widgets and the Control Center control (#758), embedded in S2.app/PlugIns
       - target: S2Widgets
       - package: Sentry

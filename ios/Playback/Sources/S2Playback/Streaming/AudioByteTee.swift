@@ -13,18 +13,6 @@ import Foundation
 /// or a jump only ever appears as a new transaction, announced first.
 public protocol AudioByteTee: AnyObject {
 
-    /// The fetch this tee is attached to exists. Handed over once per media load, before the first
-    /// transaction opens, so the tee may hold it (weakly: the fetch holds the tee) for appetite.
-    func byteSourceDidStart(readAhead: any ReadAheadControl)
-
-    /// The player is about to move the decoder to `ms`. Announced BEFORE the decoder is told, so
-    /// the transaction the seek opens can carry the target it was opened to play from — the only
-    /// moment the target is known with certainty. `generation` is the same seek counter the
-    /// transaction will carry in `seekGeneration`, so a tee can pair the two and refuse to anchor
-    /// a body a later seek has already overtaken. A re-anchoring the player does for its own
-    /// reasons (an engine restart, a stall recovery) announces the position it is already at.
-    func playerWillSeek(toMs ms: Int64, generation: Int)
-
     /// A response body has been accepted and its bytes are about to start arriving.
     ///
     /// `isContinuation` is true when the stream is being picked up where it stopped — a dropped

@@ -52,7 +52,7 @@ data class StreamProfile(
         )
 
         /**
-         * The iOS engine's FFmpeg (ios/scripts/build-ffmpeg.sh) has no network or HLS demuxers, so a transcode is one
+         * The iOS engine's FFmpeg (shuttle-playback's scripts/build-ffmpeg.sh) has no network or HLS demuxers, so a transcode is one
          * progressive stream, MP3 unless the user picks another codec: both servers label it `audio/mpeg` (Emby calls
          * its ADTS AAC `audio/mp4`). Direct play covers the build's demuxers (ogg, matroska, which reads WebM too, wav,
          * flac, mov, mp3, aac, aiff) with the codecs it decodes; `mov` holding AAC or ALAC. Jellyfin names WebM audio

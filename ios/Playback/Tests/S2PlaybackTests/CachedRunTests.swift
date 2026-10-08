@@ -660,8 +660,6 @@ private final class CountingTee: AudioByteTee {
     var closes: [Int64] { lock.lock(); defer { lock.unlock() }; return _closes }
     var bytes: Data { lock.lock(); defer { lock.unlock() }; return _bytes }
 
-    func byteSourceDidStart(readAhead: any ReadAheadControl) {}
-    func playerWillSeek(toMs ms: Int64, generation: Int) {}
 
     func byteSourceDidOpenTransaction(startByte: Int64, totalBytes: Int64?, isContinuation: Bool, seekGeneration: Int) {
         lock.lock(); _opens.append(Open(startByte: startByte, isContinuation: isContinuation)); lock.unlock()

@@ -67,8 +67,8 @@ support/scripts/longjob.sh start ios-deploy -- ios/archive-and-upload.sh \
 support/scripts/longjob.sh wait ios-deploy
 ```
 
-The script builds FFmpeg and the Release iosArm64 `Shared.framework` itself (add
-`--skip-shared-framework` only if they were just built). On failure: `ios/build/archive.log` /
+The script links the Release iosArm64 `Shared.framework` itself (add
+`--skip-shared-framework` only if it was just built). On failure: `ios/build/archive.log` /
 `ios/build/export.log`; a spent build number needs `NN+1`, so move to a fresh tag.
 
 ### 6. Record the release

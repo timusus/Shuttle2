@@ -44,14 +44,11 @@ if [[ -z "${DEVELOPER_DIR:-}" ]]; then
     fi
 fi
 
-# Keyed by checkout: one shared derived-data dir is reused across worktrees, and its cached CS2StreamDecode
-# module (headers listed at the time) goes stale when another checkout adds one (tag_read.h, #590), which
+# Keyed by checkout: one shared derived-data dir is reused across worktrees, and its cached C modules
+# (headers listed at the time) go stale when another checkout adds one (tag_read.h, #590), which
 # fails the device build with "cannot find 's2_read_tags' in scope". Simulator builds use a per-tree dir.
 OUT="${S2_DEVICE_BUILD_DIR:-$HOME/Library/Caches/s2-device/$(printf %s "$IOS_DIR" | shasum | cut -c1-12)}"
 mkdir -p "$OUT"
-
-echo "==> Building FFmpeg frameworks"
-"$IOS_DIR/scripts/build-ffmpeg.sh"
 
 echo "==> Building the shared framework (device, $CONFIGURATION)"
 CONFIG_FLAG=(--device)

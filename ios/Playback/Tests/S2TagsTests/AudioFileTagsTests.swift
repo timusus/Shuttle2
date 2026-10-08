@@ -1,5 +1,5 @@
 import XCTest
-@testable import S2Playback
+@testable import S2Tags
 import S2PlaybackTestSupport
 
 /// The local library's tag reader (#590): the `tagged*` fixtures were written by the ffmpeg CLI, each in the

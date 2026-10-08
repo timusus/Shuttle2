@@ -12,8 +12,8 @@ locally instead, and the `ios/vYYMMDDNN` tag is pushed only afterwards, as the r
 The skill runs `ios/archive-and-upload.sh` with a build number `YYMMDDNN` (CFBundleVersion; marketing
 version `20YY.MM.DD` is derived from it):
 
-1. `ios/scripts/build-framework.sh --device --release` installs the FFmpeg frameworks
-   (`ios/Playback/Frameworks`) and links the Release iosArm64 `Shared.framework`;
+1. `ios/scripts/build-framework.sh --device --release` links the Release iosArm64 `Shared.framework`
+   (FFmpeg is a static library inside the shuttle-playback package, resolved with the others);
 2. `xcodegen generate`, then the script archives scheme `S2` (Release, bundle id
    `com.simplecityapps.shuttle`), checks the archive carries the build number and exports, which
    uploads to App Store Connect. Without API-key flags the export signs automatically with Xcode's
@@ -77,7 +77,7 @@ ios/archive-and-upload.sh --no-upload --build-number 26100301
 | `--build-number N` | CFBundleVersion, eight digits `YYMMDDNN`. |
 | `--marketing-version V` | CFBundleShortVersionString; derived from the build number (`20YY.MM.DD`) when omitted. |
 | `--no-upload` | Export the IPA to `ios/build/export` instead of uploading. |
-| `--skip-shared-framework` | Skip FFmpeg and `Shared.framework` (built separately first). |
+| `--skip-shared-framework` | Skip `Shared.framework` (built separately first). |
 | `--api-key-path P --api-key-id K --api-issuer-id I` | Optional, all three or none: headless upload with manual signing (see above). Without them Xcode's signed-in account signs automatically. |
 
 Logs: `ios/build/archive.log`, `ios/build/export.log`.
@@ -90,10 +90,9 @@ the export-compliance answer (the Info.plist already sets `ITSAppUsesNonExemptEn
 
 ## Known caveats
 
-- FFmpeg's four frameworks are dynamic and re-signed by Xcode when embedding; App Store processing
-  accepting them is still to be confirmed with the first upload (`docs/architecture/ios-port/phase-6-playback.md`).
-- The export warns that dSYMs for Sentry and the four FFmpeg frameworks are missing. Expected, not a
-  build-setting gap: S2 itself already gets a dSYM (Release default), but the FFmpeg frameworks are
-  stripped prebuilt binaries and Sentry's SPM binary framework ships none. Only S2's dSYM (which holds
-  Shared.framework's code) is uploaded to Sentry by `scripts/upload-dsyms.sh`.
+- FFmpeg is linked statically into S2 (shuttle-playback's `FFmpeg.xcframework`, #957); nothing of it is
+  embedded in `S2.app/Frameworks`.
+- The export warns that Sentry's dSYM is missing. Expected, not a build-setting gap: S2 itself already
+  gets a dSYM (Release default, holding Shared.framework's and FFmpeg's code), but Sentry's SPM binary
+  framework ships none. Only S2's dSYM is uploaded to Sentry by `scripts/upload-dsyms.sh`.
 - Build numbers must increase per upload; never reuse a tag.

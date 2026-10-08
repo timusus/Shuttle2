@@ -1,10 +1,11 @@
 // Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Sources/Playback/Streaming/HTTPRangeByteSource.swift — see ios/Playback/README.md.
 import Foundation
 import OSLog
+import PlaybackDecode
 
-/// Same category as the engine controller's and ``StreamingPCMReader``'s, with a `bytes:` prefix, so
-/// one `log stream --predicate 'category == "audio-engine"'` shows the fetch and the decode of a
-/// stall together — which side ran dry is the first question every streaming stall asks.
+/// The fetch's own category, with a `bytes:` prefix; `log stream` on it and the engine controller's
+/// `audio-engine` shows the fetch and the decode of a stall together — which side ran dry is the
+/// first question every streaming stall asks.
 private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "network")
 
 /// **The byte layer of the streaming player: one HTTP transaction, read blocking, teed to the spine.**

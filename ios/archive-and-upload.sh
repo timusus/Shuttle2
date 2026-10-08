@@ -14,8 +14,8 @@ set -euo pipefail
 #      ExportOptions.plist (scripts/ensure-store-profiles.sh creates/installs them; an "Apple
 #      Distribution: Simplecity Apps Pty Ltd" certificate must be in the login keychain). Without
 #      them, export signs automatically (the plist's manual entries are dropped at runtime).
-#   2. Gradle and the FFmpeg frameworks: scripts/build-framework.sh installs ios/Playback/Frameworks
-#      (scripts/build-ffmpeg.sh) and links the Release iosArm64 Shared.framework.
+#   2. Gradle: scripts/build-framework.sh links the Release iosArm64 Shared.framework. FFmpeg is
+#      static, inside the shuttle-playback package the S2Playback package resolves.
 #   3. Optional: sentry-cli and SENTRY_AUTH_TOKEN (environment or ~/.config/s2-telemetry/ios.env) to
 #      upload the dSYMs to Sentry (scripts/upload-dsyms.sh); without them that step is skipped.
 #
@@ -29,7 +29,7 @@ set -euo pipefail
 #   --marketing-version V    CFBundleShortVersionString. Derived from --build-number
 #                            (20YY.MM.DD) when omitted.
 #   --no-upload              Export the IPA to build/export instead of uploading; local dry runs.
-#   --skip-shared-framework  Do not build FFmpeg or link Shared.framework (both freshly built).
+#   --skip-shared-framework  Do not link Shared.framework (already freshly built).
 #   --api-key-path P         App Store Connect API key (.p8); with --api-key-id and
 #                            --api-issuer-id this makes signing and upload headless.
 
@@ -105,7 +105,7 @@ pretty() { if command -v xcbeautify >/dev/null 2>&1; then xcbeautify; else cat; 
 mkdir -p "$BUILD_DIR"
 
 if [ "$BUILD_SHARED" = 1 ]; then
-    echo "==> Building FFmpeg frameworks and the shared KMP framework (release, iosArm64)..."
+    echo "==> Building the shared KMP framework (release, iosArm64)..."
     "$SCRIPT_DIR/scripts/build-framework.sh" --device --release -q
 fi
 

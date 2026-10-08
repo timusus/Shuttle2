@@ -1,4 +1,5 @@
 import XCTest
+import PlaybackDecode
 @testable import S2Playback
 import S2PlaybackTestSupport
 
@@ -31,8 +32,10 @@ final class StreamInfoProbeTests: XCTestCase {
         XCTAssertEqual(skipFormat.channelCount, probeFormat.channelCount, file: file, line: line)
         XCTAssertEqual(skipFormat.codec, probeFormat.codec, file: file, line: line)
         XCTAssertEqual(skipFormat.container, probeFormat.container, file: file, line: line)
-        XCTAssertGreaterThan(skipFormat.duration, 0, file: file, line: line)
-        XCTAssertEqual(skipFormat.duration, probeFormat.duration, accuracy: 0.001, file: file, line: line)
+        let skipDuration = try XCTUnwrap(skipFormat.duration, file: file, line: line)
+        XCTAssertGreaterThan(skipDuration, 0, file: file, line: line)
+        XCTAssertEqual(skipDuration, try XCTUnwrap(probeFormat.duration, file: file, line: line), accuracy: 0.001,
+                       file: file, line: line)
         let channels = skipFormat.channelCount
         let skipped = firstSamples(skipping, channels: channels)
         XCTAssertFalse(skipped.isEmpty, file: file, line: line)

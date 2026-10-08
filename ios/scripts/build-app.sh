@@ -2,7 +2,7 @@
 # Builds the S2 app and its test bundle for the simulator (Debug, `build-for-testing`) into the one
 # shared DerivedData, ios/build/DerivedData, so incremental builds stay warm. The build is skipped when
 # the stamp in DerivedData matches: nothing under ios/ or shared/ (tracked, modified or untracked), the
-# gitignored local xcconfigs, ios/Playback/Frameworks (file list, sizes, mtimes), the linked
+# gitignored local xcconfigs, the linked
 # Shared.framework, Xcode and the simulator SDK are unchanged, and S2.app and the recorded xctestrun
 # still exist. test.sh and run-sim-server.sh call this, then run `test-without-building` / install the
 # built S2.app. Does not rebuild Shared.framework: run ios/scripts/build-framework.sh after a Kotlin
@@ -60,9 +60,8 @@ state() {
     git rev-parse HEAD:ios HEAD:shared 2>/dev/null || true
     git diff HEAD -- ios shared | shasum
     git ls-files -o --exclude-standard -z ios shared | xargs -0 shasum 2>/dev/null || true
-    # Gitignored inputs: the Telemetry and Last.fm keys, and the Playback frameworks (by listing).
+    # Gitignored inputs: the Telemetry and Last.fm keys.
     cat ios/Config/*.local.xcconfig 2>/dev/null || true
-    find ios/Playback/Frameworks -type f -exec stat -f '%N %z %m' {} + 2>/dev/null | sort || true
     # The framework is built outside ios/ (Kotlin in android/ and shared/), so its binary is state too.
     framework_state
     xcodebuild -version 2>&1 || true
@@ -86,7 +85,6 @@ if [[ "$force" == 0 && "$stamped_state" == "$current" && -d "$app" \
   exit 0
 fi
 
-"$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
 cd "$ios_dir"
 rm -f "$stamp"
 if [[ "$force" == 1 || "$stamped_framework" != "$current_framework" ]]; then

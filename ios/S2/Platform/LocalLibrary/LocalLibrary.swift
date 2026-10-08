@@ -1,6 +1,6 @@
 import Foundation
 import os
-import S2Playback
+import S2Tags
 import Shared
 
 /// This device's music files (#590), the Kotlin `IosLocalFiles` the library's local provider imports through: the

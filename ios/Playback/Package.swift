@@ -1,35 +1,48 @@
 // swift-tools-version: 5.9
-// S2's iOS player engine (#588; design: docs/architecture/ios-port/phase-6-playback.md): the byte
-// sources and FFmpeg pull decoder copied from Shuttle Podcasts, and `MusicPlaybackController`, the
-// gapless two-item AVAudioEngine controller the Kotlin `EnginePlayerController` drives.
+// S2's iOS player engine (#588; design: docs/architecture/ios-port/phase-6-playback.md): the HTTP byte
+// source copied from Shuttle Podcasts, and `MusicPlaybackController`, the gapless two-item
+// AVAudioEngine controller the Kotlin `EnginePlayerController` drives. Demux, decode, resampling and
+// seeking are shuttle-playback's `PlaybackDecode` (#957).
 //
 // Builds for iOS 17 and macOS 14. The macOS platform is only there so `swift test` runs the
 // offline-rendering and decoder tests on the Mac without a simulator; nothing here touches
 // AVAudioSession (the app owns the session, phase 6 step 7).
 import PackageDescription
 
-// FFmpeg is four dynamic xcframeworks, one per library, built by ios/scripts/build-ffmpeg.sh into
-// Frameworks/ (gitignored; see README.md). Dynamic because FFmpeg is LGPL and a user must be able to
-// replace it in the app. There is no fallback without them: a package that built without FFmpeg
-// would give an app that links, runs and decodes nothing. `ios/scripts/build-framework.sh` and
-// `ios/scripts/test.sh` run the build script first, which only copies from its cache once built.
-let ffmpegLibraries = ["libavutil", "libswresample", "libavcodec", "libavformat"]
-
 let package = Package(
     name: "S2Playback",
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "S2Playback", targets: ["S2Playback"]),
+        // The local library's tag reader, on the same FFmpeg the engine decodes with.
+        .library(name: "S2Tags", targets: ["S2Tags"]),
         // The loopback HTTP origin and the fixtures, for the app's own tests.
         .library(name: "S2PlaybackTestSupport", targets: ["S2PlaybackTestSupport"]),
     ],
+    dependencies: [
+        // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one static xcframework,
+        // committed in the package (LGPL notes in README.md).
+        .package(url: "https://github.com/timusus/shuttle-playback.git", exact: "0.4.0"),
+    ],
     targets: [
-        .target(name: "S2Playback", dependencies: ["CS2StreamDecode"]),
-        // The decode step in C, next to the FFmpeg API it calls. `<libavcodec/avcodec.h>` resolves
-        // through the framework search path because each framework is named after its library.
         .target(
-            name: "CS2StreamDecode",
-            dependencies: ffmpegLibraries.map { .target(name: $0) }
+            name: "S2Playback",
+            dependencies: [.product(name: "PlaybackDecode", package: "shuttle-playback")]
+        ),
+        .target(name: "S2Tags", dependencies: ["CS2Tags"]),
+        // The tag reader in C, next to the libavformat API it calls. It links the package's `FFmpeg`
+        // product, the same static FFmpeg `PlaybackDecode` links, so the app carries one copy. A
+        // binary target carries no linker settings, so the system libraries the static FFmpeg calls
+        // are listed here, as the package's `CStreamDecode` lists them: zlib (ID3v2, MP4 `cmov`),
+        // iconv (metadata conversion) and libavutil's VideoToolbox hardware context.
+        .target(
+            name: "CS2Tags",
+            dependencies: [.product(name: "FFmpeg", package: "shuttle-playback")],
+            linkerSettings: [
+                .linkedLibrary("z"), .linkedLibrary("iconv"),
+                .linkedFramework("CoreFoundation"), .linkedFramework("CoreMedia"),
+                .linkedFramework("CoreVideo"), .linkedFramework("VideoToolbox"),
+            ]
         ),
         .target(
             name: "S2PlaybackTestSupport",
@@ -37,7 +50,14 @@ let package = Package(
         ),
         .testTarget(
             name: "S2PlaybackTests",
-            dependencies: ["S2Playback", "S2PlaybackTestSupport"]
+            dependencies: [
+                "S2Playback", "S2PlaybackTestSupport",
+                .product(name: "PlaybackDecode", package: "shuttle-playback"),
+            ]
         ),
-    ] + ffmpegLibraries.map { .binaryTarget(name: $0, path: "Frameworks/\($0).xcframework") }
+        .testTarget(
+            name: "S2TagsTests",
+            dependencies: ["S2Tags", "S2PlaybackTestSupport"]
+        ),
+    ]
 )

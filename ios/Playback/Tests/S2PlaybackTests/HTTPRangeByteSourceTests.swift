@@ -1,5 +1,6 @@
 // Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Tests/PlaybackTests/HTTPRangeByteSourceTests.swift — see ios/Playback/README.md.
 import XCTest
+import PlaybackDecode
 @testable import S2Playback
 import S2PlaybackTestSupport
 
@@ -1414,8 +1415,6 @@ private final class HoldingTee: AudioByteTee {
         self.released = released
     }
 
-    func byteSourceDidStart(readAhead: any ReadAheadControl) {}
-    func playerWillSeek(toMs ms: Int64, generation: Int) {}
     func byteSourceDidOpenTransaction(startByte: Int64, totalBytes: Int64?, isContinuation: Bool, seekGeneration: Int) {}
     func byteSourceDidCloseTransaction(endedAtByte: Int64) {}
     func byteSource(didLearnTotalBytes: Int64) {}
@@ -1434,8 +1433,6 @@ private final class HoldingTee: AudioByteTee {
 /// Records every tee callback, off the byte source's own queue.
 private final class RecordingTee: AudioByteTee {
 
-    func byteSourceDidStart(readAhead: any ReadAheadControl) {}
-    func playerWillSeek(toMs ms: Int64, generation: Int) {}
 
     struct Open {
         let startByte: Int64

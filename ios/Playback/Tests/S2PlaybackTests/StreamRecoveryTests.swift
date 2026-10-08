@@ -1,4 +1,5 @@
 import XCTest
+import PlaybackDecode
 @testable import S2Playback
 import S2PlaybackTestSupport
 

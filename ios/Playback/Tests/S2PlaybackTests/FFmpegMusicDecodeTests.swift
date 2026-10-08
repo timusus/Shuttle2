@@ -1,8 +1,9 @@
 import XCTest
+import PlaybackDecode
 @testable import S2Playback
 import S2PlaybackTestSupport
 
-/// The formats S2 adds over Podcasts decode through the FFmpeg build (`ios/scripts/build-ffmpeg.sh`),
+/// The formats S2 adds over Podcasts decode through shuttle-playback's FFmpeg build,
 /// and the decoder converts them to the engine's output format. Fixtures were made with the
 /// ffmpeg CLI; see ios/Playback/README.md.
 final class FFmpegMusicDecodeTests: XCTestCase {
@@ -108,6 +109,34 @@ final class FFmpegMusicDecodeTests: XCTestCase {
         }
     }
 
+    /// A forward-only stream (a transcode streamed as it is made) whose length turns up while it
+    /// plays: the track looks seekable then, but the reader refuses a seek behind what it has
+    /// served. The decoder's `.unseekable` makes the track report itself unseekable, and reads end
+    /// instead of crashing.
+    func testAForwardOnlyReaderMakesTheTrackUnseekable() throws {
+        let url = try fixture("tone", "mp3")
+        let reader = ForwardOnlyByteReader(try Data(contentsOf: url))
+        let source = FFmpegTrackSource(url: url) { reader }
+        _ = try source.open(sampleRate: 44_100, channelCount: 2)
+        XCTAssertFalse(source.isSeekable, "no length yet")
+        var buffer = [Float](repeating: 0, count: 4096 * 2)
+        // Far enough that the start has left libavformat's read buffer, so the seek reaches the reader.
+        while reader.position < 100_000 {
+            let frames = try buffer.withUnsafeMutableBufferPointer { try source.read(into: $0.baseAddress!, maxFrames: 4096) }
+            XCTAssertGreaterThan(frames, 0)
+        }
+        reader.knowsLength = true
+        XCTAssertTrue(source.isSeekable)
+        XCTAssertThrowsError(try source.seek(toFrame: 22_050))
+        XCTAssertFalse(source.isSeekable)
+        do {
+            let frames = try buffer.withUnsafeMutableBufferPointer { try source.read(into: $0.baseAddress!, maxFrames: 4096) }
+            XCTAssertEqual(frames, 0)
+        } catch {
+            XCTAssertNotEqual(error as? TrackSourceError, .cancelled)
+        }
+    }
+
     func testMonoIsSpreadToBothSidesAtFullLevel() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("s2-mono-\(UUID().uuidString).wav")
         defer { try? FileManager.default.removeItem(at: url) }
@@ -130,4 +159,32 @@ final class FFmpegMusicDecodeTests: XCTestCase {
         XCTAssertEqual(pcm[100], 0.25, accuracy: 1e-4)
         XCTAssertEqual(pcm[101], 0.25, accuracy: 1e-4)
     }
+}
+
+/// Refuses any seek behind its read position; reports its length only once `knowsLength`.
+private final class ForwardOnlyByteReader: StreamByteReader {
+    private let data: Data
+    private(set) var position: Int64 = 0
+    var knowsLength = false
+
+    init(_ data: Data) { self.data = data }
+
+    var totalLength: Int64? { knowsLength ? Int64(data.count) : nil }
+
+    func read(into buffer: UnsafeMutableRawPointer, maxLength: Int) throws -> Int {
+        let take = min(Int(Int64(data.count) - position), maxLength)
+        if take <= 0 { return 0 }
+        data.withUnsafeBytes { memcpy(buffer, $0.baseAddress!.advanced(by: Int(position)), take) }
+        position += Int64(take)
+        return take
+    }
+
+    func seek(to offset: Int64) throws {
+        guard offset >= position else { throw StreamByteReaderError.unseekable }
+        position = offset
+    }
+
+    func cancel() {}
+    func interrupt() {}
+    func clearInterrupt() {}
 }

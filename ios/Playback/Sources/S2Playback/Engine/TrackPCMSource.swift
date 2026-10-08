@@ -1,4 +1,5 @@
 import Foundation
+import PlaybackDecode
 
 /// Why a ``TrackPCMSource`` could not deliver audio.
 public enum TrackSourceError: Error, Equatable {
@@ -53,19 +54,24 @@ public extension TrackPCMSource {
     func onReadWaiting(_ handler: @escaping () -> Void) {}
 }
 
-/// A track decoded by FFmpeg from a file or an HTTP(S) URL.
+/// A track decoded by shuttle-playback's `FFmpegStreamDecoder` from a file or an HTTP(S) URL.
 ///
-/// File URLs are read through ``FileByteReader``; anything else through ``HTTPRangeByteSource``
-/// (range requests, read-ahead and the on-disk run cache Podcasts built for streaming).
+/// File URLs are read through `FileByteReader`; anything else through ``HTTPRangeByteSource``
+/// (range requests, read-ahead and the on-disk run cache Podcasts built for streaming). The decoder
+/// owns demux, decode, the conversion to the controller's format and sample-accurate seeking; this
+/// picks the byte source and maps the decoder's errors to ``TrackSourceError``.
 public final class FFmpegTrackSource: TrackPCMSource {
     private let url: URL
-    private let headers: [String: String]
+    private let makeReader: () throws -> StreamByteReader
     private let lock = NSLock()
     private var reader: StreamByteReader?
     private var decoder: FFmpegStreamDecoder?
     private var outputRate: Double = 0
     private var outputChannels = 2
     private var cancelled = false
+    /// The decoder refused a seek because the reader couldn't serve the offset: from then on the
+    /// track reports itself unseekable.
+    private var seekRefused = false
     private var openStartedAt: TimeInterval?
     private var openFinishedAt: TimeInterval?
     private var probe: StartupTiming.Probe?
@@ -74,15 +80,22 @@ public final class FFmpegTrackSource: TrackPCMSource {
 
     public init(url: URL, headers: [String: String] = [:]) {
         self.url = url
-        self.headers = headers
+        makeReader = {
+            if url.isFileURL { return try FileByteReader(url: url) }
+            return HTTPRangeByteSource(url: url, authHeaders: headers)
+        }
+    }
+
+    /// Tests: reads `url`'s bytes through `makeReader`'s reader, not one picked by its scheme.
+    init(url: URL, makeReader: @escaping () throws -> StreamByteReader) {
+        self.url = url
+        self.makeReader = makeReader
     }
 
     public func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
         let reader: StreamByteReader
         do {
-            reader = url.isFileURL
-                ? try FileByteReader(url: url)
-                : HTTPRangeByteSource(url: url, authHeaders: headers)
+            reader = try makeReader()
         } catch {
             throw TrackSourceError.failed("open \(url.lastPathComponent): \(error)")
         }
@@ -104,8 +117,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
             try decoder.setOutputFormat(sampleRate: sampleRate, channelCount: channelCount)
             outputRate = sampleRate
             outputChannels = channelCount
-            if format.duration > 0 { lock.withLock { durationSeconds = format.duration } }
-            return format.duration > 0 ? Int64((format.duration * sampleRate).rounded()) : nil
+            guard let duration = format.duration else { return nil }
+            lock.withLock { durationSeconds = duration }
+            return Int64((duration * sampleRate).rounded())
         } catch StreamDecoderError.cancelled {
             throw TrackSourceError.cancelled
         } catch StreamDecoderError.interrupted {
@@ -115,8 +129,12 @@ public final class FFmpegTrackSource: TrackPCMSource {
         }
     }
 
-    /// Exact: the decoder lands at or before the target (the first decoded frame's timestamp), and
-    /// the frames between the landing and the target are read and dropped here.
+    /// Exact: the decoder lands on the requested sample. The one exception is a VBR MP3 sought far
+    /// from a frame of known time, which lands on an estimate from its Xing table or bitrate; one
+    /// that lands early is read forward to the target here.
+    ///
+    /// A reader that refuses the offset (a forward-only stream) ends the decode, and the track
+    /// reports itself unseekable from then on (``isSeekable``).
     public func seek(toFrame frame: Int64) throws {
         guard let decoder else { throw TrackSourceError.failed("seek before open") }
         let landed: TimeInterval
@@ -126,6 +144,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
             throw TrackSourceError.interrupted
         } catch StreamDecoderError.cancelled {
             throw TrackSourceError.cancelled
+        } catch StreamDecoderError.unseekable {
+            lock.withLock { seekRefused = true }
+            throw TrackSourceError.failed("seek \(url.lastPathComponent): the stream can't seek")
         } catch {
             throw TrackSourceError.failed("seek \(url.lastPathComponent): \(error)")
         }
@@ -172,12 +193,12 @@ public final class FFmpegTrackSource: TrackPCMSource {
         return stats
     }
 
-    /// A file, or an HTTP stream whose length the host gave (`Content-Range` or `Content-Length`).
-    /// A transcode streamed as it is made has neither.
+    /// A file, or an HTTP stream whose length the host gave (`Content-Range` or `Content-Length`),
+    /// that hasn't refused a seek. A transcode streamed as it is made has no length.
     public var isSeekable: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return reader?.totalLength != nil
+        return !seekRefused && reader?.totalLength != nil
     }
 
     public func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {

@@ -35,7 +35,7 @@ data class DirectPlayFormats(
         )
 
         /**
-         * The iOS engine's FFmpeg build (ios/scripts/build-ffmpeg.sh): its demuxers (ogg, matroska, which reads WebM
+         * The iOS engine's FFmpeg build (shuttle-playback's scripts/build-ffmpeg.sh): its demuxers (ogg, matroska, which reads WebM
          * and MKA, wav, flac, mov, mp3, aac, aiff) and decoders (flac, alac, opus, vorbis, mp3, aac, PCM). Any other
          * codec, even inside a container it demuxes (a Matroska file with AC3, an m4a with E-AC3), has no decoder, so
          * the server transcodes it instead of the player failing.

@@ -11,7 +11,8 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 2. The demo server is Emby at https://emby.mediaserver.timmalseed.dev, user `appreview`. The owner enters the
    password in the demo account fields in App Store Connect (it is never written in the repo). Keep the server up
    until approval.
-3. Check the published `ffmpeg-n7.1.5-source` release on timusus/Shuttle2 is still up (the About link points at it, #610).
+3. Check https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts is still up (the About link points at it, the
+   FFmpeg build script and patch, #610, #957).
 4. App Store Connect > App Information: paste `en-AU/*.txt`, set the privacy policy URL, category
    Music, content rights and age rating from `asc-answers.md`.
 5. App Privacy: the seven data types in `asc-answers.md` (#776; not "Data Not Collected"), publish.
@@ -19,7 +20,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
    once rendered from artwork we may show (#610 guideline 5.2 note).
 7. Version > App Review Information: paste the notes below with the placeholders filled;
    leave the demo-account toggle off (the credentials go in the notes); contact phone and email filled.
-8. Confirm the Info.plist background modes are `audio` and `fetch` only and the FFmpeg frameworks are not renamed.
+8. Confirm the Info.plist background modes are `audio` and `fetch` only.
 9. Push the archive tag, wait for TestFlight to process, install on a device, play from the demo server
    and run through the purchase with a sandbox account, then submit.
 
@@ -63,9 +64,10 @@ Privacy: the app sends crash reports (Sentry) and anonymous usage analytics (Pos
 the user's identity and not used for tracking; both can be turned off in Settings > Privacy. There is no
 account with us, and server credentials stay in the device Keychain and go only to the user's server.
 
-Open source: playback uses FFmpeg (LGPL-2.1+ build, dynamically linked, unmodified frameworks) to
-decode formats such as FLAC. The FFmpeg licence notice is in Settings > About, and the matching
-source is available at https://github.com/timusus/Shuttle2/releases/tag/ffmpeg-n7.1.5-source.
+Open source: playback uses FFmpeg (LGPL-2.1+ build, statically linked) to decode formats such as
+FLAC. The FFmpeg licence notice is in Settings > About. The source is FFmpeg's n7.1 tag plus one
+patch, built by the script at https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts; the
+app's own source is public too, so it can be relinked against a modified FFmpeg.
 
 Contact: <owner email / phone as in ASC>.
 ```
@@ -78,10 +80,9 @@ Contact: <owner email / phone as in ASC>.
 |---|---|
 | Public demo server and reviewer credentials (#610) | open: owner to provide; never commit credentials |
 | Local-file playback with no server (#590) | built; the listing and review notes describe it |
-| FFmpeg source tarball hosted (#610) | done: published release `ffmpeg-n7.1.5-source` on timusus/Shuttle2 |
+| FFmpeg source available (#610) | done: n7.1 plus the patch and build script in shuttle-playback (#957), pinned by tag |
 | FFmpeg LGPL notice in About (#610) | done: Acknowledgements names FFmpeg and LGPL-2.1+; About has an FFmpeg source code link |
 | No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |
-| Never rename the FFmpeg frameworks (#610) | do not touch `ios/scripts/build-ffmpeg.sh` naming |
 | Background modes: audio, plus fetch for library refresh and scrobbles (#771) | `ios/project.yml` `UIBackgroundModes: [audio, fetch]` |
 | App Privacy answers match Sentry/PostHog (#776) | see `asc-answers.md` |
 | Built with release (GM) Xcode, not beta | App Review rejects beta-Xcode builds |

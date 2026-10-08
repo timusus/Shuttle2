@@ -6,11 +6,11 @@
 	<array>
 		<dict>
 			<key>FooterText</key>
-			<string>Shuttle Music decodes audio with FFmpeg n7.1.5 (https://ffmpeg.org), licensed under the GNU Lesser General Public License version 2.1 or later. The build enables LGPL components only, with no GPL or non-free parts. FFmpeg is a trademark of Fabrice Bellard.
+			<string>Shuttle Music decodes audio with FFmpeg n7.1 (https://ffmpeg.org), licensed under the GNU Lesser General Public License version 2.1 or later. The build enables LGPL components only, with no GPL or non-free parts. FFmpeg is a trademark of Fabrice Bellard.
 
-Source: https://github.com/timusus/Shuttle2/releases/tag/ffmpeg-n7.1.5-source (the exact n7.1.5 source the app is built from, FFmpeg's release tarball and the build script). FFmpeg's n7.1.5 tag (commit 3a0867c2bfda4a4d4309ca1a8cbdc6175e67f587) at https://git.ffmpeg.org/ffmpeg.git, unmodified, built by ios/scripts/build-ffmpeg.sh in https://github.com/timusus/Shuttle2, which lists the configure options.
+Source: FFmpeg's n7.1 tag at https://git.ffmpeg.org/ffmpeg.git, with one patch (0001-mp3dec-keep-xing-frames-when-size-unknown.patch), built by scripts/build-ffmpeg.sh in https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts, which lists the configure options and holds the patch. The build's VERSION.txt (Frameworks/FFmpeg.xcframework) records the tag, the options and the patch.
 
-Relinking: FFmpeg is not linked into the app binary. It ships as four dynamic frameworks in S2.app/Frameworks: libavutil (59), libswresample (5), libavcodec (61) and libavformat (61). To run Shuttle Music with a modified FFmpeg, build the same major versions with the configure options that script lists (it builds any FFmpeg commit you set as FFMPEG_COMMIT in it), replace those frameworks in S2.app/Frameworks and re-sign the app.</string>
+Relinking: FFmpeg is linked statically into the app. Shuttle Music's source (https://github.com/timusus/Shuttle2) and shuttle-playback's (https://github.com/timusus/shuttle-playback) are public, with their build scripts, so the app can be rebuilt and relinked with a modified FFmpeg: build it with that script (FFMPEG_SRC points it at your FFmpeg) and build the app against the result.</string>
 			<key>Title</key>
 			<string>FFmpeg</string>
 			<key>Type</key>
@@ -23,6 +23,14 @@ Relinking: FFmpeg is not linked into the app binary. It ships as four dynamic fr
 			<string>GNU LGPL v2.1</string>
 			<key>Type</key>
 			<string>PSChildPaneSpecifier</string>
+		</dict>
+		<dict>
+			<key>FooterText</key>
+			<string>shuttle-playback, © Tim Malseed, used in Shuttle Music under licence from the copyright holder</string>
+			<key>Title</key>
+			<string>shuttle-playback</string>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
 		</dict>
 	</array>
 </dict>

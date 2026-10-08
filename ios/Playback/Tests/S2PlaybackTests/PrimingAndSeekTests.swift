@@ -49,11 +49,9 @@ final class PrimingAndSeekTests: XCTestCase {
     // MARK: Seek
 
     func testAACSeekIsSampleExact() throws { try assertSeeksExactly(aac) }
-    /// Not exact: FFmpeg's MP3 seek (the Xing TOC, or scaling by the bitrate for CBR) stamps the
-    /// frame it syncs to with the time asked for, so the landing is off by up to one MP3 frame
-    /// (1,152 frames, 26 ms). A seek to the start is exact. Exact MP3 seeking needs an index of
-    /// frame offsets, built by walking the file.
-    func testMP3SeekIsWithinOneFrame() throws { try assertSeeksExactly(mp3, tolerance: 1152) }
+    /// FFmpeg's own MP3 seek stamps the frame it syncs to with the time asked for, a frame (1,152
+    /// samples) out; shuttle-playback's walks the frames from one of known time, so it is exact (#619).
+    func testMP3SeekIsSampleExact() throws { try assertSeeksExactly(mp3) }
     func testOpusSeekIsSampleExact() throws { try assertSeeksExactly(opus) }
 
     func testAACSeekBackToStartTrimsPriming() throws { try assertSeekBackToStart(aac) }

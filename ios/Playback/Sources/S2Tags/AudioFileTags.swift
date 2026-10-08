@@ -1,4 +1,4 @@
-import CS2StreamDecode
+import CS2Tags
 import Foundation
 
 /// A local audio file's tags and audio properties (#590), read with the FFmpeg build the engine plays with

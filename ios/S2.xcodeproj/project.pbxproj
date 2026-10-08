@@ -50,7 +50,7 @@
 		3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205F2D98E447A246625BE4A5 /* LibraryCollection.swift */; };
 		3276AA0BF67F5F0A9B6E0D28 /* PlayerBindingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4508034A93DD7E7D4C59E362 /* PlayerBindingTests.swift */; };
 		34C47AF9BC740718A6B15B47 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */; };
-		34EE44A329EA00DDAABAEF79 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 2C08565004895C8B70923EDF /* PostHog */; };
+		34EE44A329EA00DDAABAEF79 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E1CF29EA73E2E84524801440 /* Sentry */; };
 		35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C6644D4642CD20178A704 /* MiniPlayerView.swift */; };
 		36448DF63FDD4D6333FB9DD2 /* DesignSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA8F70031E091A9E05A0ABE8 /* DesignSystemTests.swift */; };
 		364F5DB5B5BC1C174907D5ED /* AlbumListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB97ABD546F19AAB459025C /* AlbumListView.swift */; };
@@ -103,6 +103,7 @@
 		76888FE5233E4B90ED2A244A /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA31930A8CB79E30E7CB606 /* Motion.swift */; };
 		76E94E7833435C1AF3752B49 /* ProSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E8D9DB18D7662E94052AB35 /* ProSettingsSection.swift */; };
 		7A701E93B15CFAEEF3311D42 /* LibraryListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 191927F39E29CE059057C079 /* LibraryListTests.swift */; };
+		807B002033B439F30DB6F44E /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 2C08565004895C8B70923EDF /* PostHog */; };
 		83383C1E9DCF9FF60907D62A /* KotlinLogSink.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0FAEE3FBBE47AD9BFB7A8E3 /* KotlinLogSink.swift */; };
 		842361F9758C975E8AAB0BDB /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = CB2C91FE8406D6ED46243D9D /* Localizable.strings */; };
 		85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5961F296B2738309AF66BC /* AppGraph.swift */; };
@@ -120,7 +121,7 @@
 		9540757E9ACE353785C393B7 /* LocalLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE88914EACE56038FA6DEBE1 /* LocalLibraryTests.swift */; };
 		97C1316CB57AA5EC7C3219A5 /* PlayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F2835E631713B620C844627 /* PlayIntent.swift */; };
 		980207C00AC3BA14C05F6215 /* ShuttleShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FBE2409766007909DE78800 /* ShuttleShortcuts.swift */; };
-		980E6C1CAAFE8E1F5BB5F288 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = E1CF29EA73E2E84524801440 /* Sentry */; };
+		980E6C1CAAFE8E1F5BB5F288 /* S2Tags in Frameworks */ = {isa = PBXBuildFile; productRef = 2D67CECE5865302F1EC5EC0D /* S2Tags */; };
 		9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F74B98EFB99516DD895C476 /* LibraryView.swift */; };
 		9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467103A9C583DD5E8967EABF /* LayoutTier.swift */; };
 		9F1FD3B78D286A40F4A9857C /* KotlinServerConnectionPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93A7435F3E54B803C6E2C542 /* KotlinServerConnectionPolicy.swift */; };
@@ -474,8 +475,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E36BC6BB4AFF482C902E8F1 /* S2Playback in Frameworks */,
-				980E6C1CAAFE8E1F5BB5F288 /* Sentry in Frameworks */,
-				34EE44A329EA00DDAABAEF79 /* PostHog in Frameworks */,
+				980E6C1CAAFE8E1F5BB5F288 /* S2Tags in Frameworks */,
+				34EE44A329EA00DDAABAEF79 /* Sentry in Frameworks */,
+				807B002033B439F30DB6F44E /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1017,6 +1019,7 @@
 			name = S2;
 			packageProductDependencies = (
 				991A0127927C490EA585B9CC /* S2Playback */,
+				2D67CECE5865302F1EC5EC0D /* S2Tags */,
 				E1CF29EA73E2E84524801440 /* Sentry */,
 				2C08565004895C8B70923EDF /* PostHog */,
 			);
@@ -1773,6 +1776,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DE25CAB1E4BD6F34AF7E2EE0 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		2D67CECE5865302F1EC5EC0D /* S2Tags */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = S2Tags;
 		};
 		991A0127927C490EA585B9CC /* S2Playback */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,7 +1,7 @@
 import AVFoundation
 import os
 
-/// The byte source's and ``StreamingPCMReader``'s category, for the underruns: one
+/// The engine's category, for the underruns: one
 /// `log stream --predicate 'category == "audio-engine"'` shows the node running dry beside the
 /// fetch that let it (#896).
 private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "audio-engine")

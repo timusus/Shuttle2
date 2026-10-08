@@ -1,4 +1,4 @@
-/* S2: the tag reader for local files (#590). Not part of the Podcasts decoder this target was adapted from. */
+/* S2: the tag reader for local files (#590), on shuttle-playback's FFmpeg product (#957). */
 /*
  * tag_read.h — a local audio file's tags, audio properties and embedded picture, read with the same
  * libavformat build the player decodes with, so every format the player plays (MP3, AAC/ALAC in MP4,

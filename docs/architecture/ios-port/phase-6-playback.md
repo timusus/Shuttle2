@@ -291,11 +291,10 @@ Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:
 - `AppGraph.initialize()` (from `S2App.init`) builds the engine, the adapter, `IosAppGraphKt.createIosAppGraph(audioPlayer:)`
   and the coordinator once.
 
-FFmpeg ships (#588). `ios/scripts/build-ffmpeg.sh` builds n7.1.5 as four dynamic LGPL frameworks,
-cached in `~/Library/Caches/s2-ffmpeg-ios` and installed into `ios/Playback/Frameworks`. Xcode
-embeds them in `S2.app/Frameworks`, and the app's Settings bundle carries the LGPL notice and relink
-note (`ios/Playback/README.md`, "FFmpeg build" and "LGPL notes"). The package requires FFmpeg; there
-is no longer a build without it. Its tests run with nothing skipped, and `MusicPlaybackFormatsTests`
+FFmpeg ships (#588). Since #957 decode and FFmpeg come from the shuttle-playback package: one static
+LGPL `FFmpeg.xcframework` (n7.1 plus one patch) linked into the app, with nothing embedded. The
+app's Settings bundle carries the LGPL notice and relink note (`ios/Playback/README.md`, "FFmpeg" and
+"LGPL notes"). Its tests run with nothing skipped, and `MusicPlaybackFormatsTests`
 plays each format through the controller: MP3, AAC and ALAC in MP4, FLAC, Opus, Vorbis, WAV and AIFF.
 `ios/scripts/test.sh` runs the S2 scheme on an available simulator; `--package` runs `swift test`.
 

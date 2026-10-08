@@ -5,12 +5,17 @@ S2's iOS player engine, phase 6 of the iOS port (#588, epic #581; design:
 It is a Swift package for iOS 17. It also has a macOS 14 platform, so `swift test` runs on the Mac
 without a simulator.
 
-It holds three things:
+Demux, decode, the conversion to the engine's format, sample-accurate seeking, `FileByteReader` and
+the `StreamByteReader` protocol come from [shuttle-playback](https://github.com/timusus/shuttle-playback)
+(its `PlaybackDecode` product, pinned `exact:` in `Package.swift`), with its one static, LGPL-only
+FFmpeg (#957). This package holds:
 
-- the byte sources and FFmpeg pull decoder copied from Shuttle Podcasts;
-- the package's link to a dynamic, LGPL-only FFmpeg build (`ios/scripts/build-ffmpeg.sh`);
 - `MusicPlaybackController`, the gapless two-track AVAudioEngine player that the Kotlin
-  `EnginePlayerController` drives.
+  `EnginePlayerController` drives, with its DSP and pre-open;
+- `FFmpegTrackSource`, the `TrackPCMSource` over shuttle-playback's decoder;
+- `HTTPRangeByteSource` and its run cache, the streaming `StreamByteReader` copied from Shuttle Podcasts;
+- `S2Tags` (product `S2Tags`): the local-file tag reader (`AudioFileTags`, `CS2Tags/tag_read.c`) on the
+  package's `FFmpeg` product, so the app links exactly one FFmpeg.
 
 ## Architecture
 
@@ -27,8 +32,8 @@ PlaybackTrack(uid, gainDb, source) ──► TrackPCMSource ──► PCMProcess
 ReplayGain resolution. It calls `load(current:next:startMs:playWhenReady:)` and `setNext(_:)`, plus
 the play, pause, seek, stop, speed, volume and EQ calls.
 
-**Gapless.** Each source converts its track to the one output format: swresample in the C decoder,
-via `stream_decoder_set_output`. When the current source ends, the same buffer continues with the
+**Gapless.** Each source converts its track to the one output format: swresample in shuttle-playback's
+decoder, via `setOutputFormat`. When the current source ends, the same buffer continues with the
 next track's first frames. The player node never sees a boundary, only one stream, so the join is
 sample-exact whatever the two tracks' rates are.
 
@@ -117,23 +122,21 @@ On a device: Console.app, filter `engine: ttfa`, or `log stream --predicate 'eve
 
 Copied from Shuttle Podcasts at `podcasts@9ee6e0954`. Each file's first line names its upstream
 path. The only edits are these renames: the log subsystem becomes `com.simplecityapps.shuttle2`,
-`CStreamDecode` becomes `CS2StreamDecode`, the `SpineNative` import is dropped, and the test imports
-change. They are kept diffable so a later shared AudioCore can take them back.
+the `SpineNative` import is dropped, and the test imports change. They are kept diffable so a later
+shared package can take them back.
+
+The decoder S2 once adapted from Podcasts (its own `stream_decode.c`, `FFmpegStreamDecoder`,
+`StreamingPCMReader` and the byte-reader protocol) now lives in shuttle-playback, with S2's
+additions (an output rate and channel count, mono spread, sample-accurate seeks) upstream (#957).
 
 - **Copied**:
-  - `Decode/`: `StreamByteReader`, `FileByteReader`, `ReadAheadTunables`, `StreamingPCMReader`.
-  - `Streaming/`: `CachedRunStore`, `ResolvedURLCache`, `ReadAheadPolicy`,
-    `ReadAheadControl`, `AudioByteTee`. The tee and appetite hooks are nil by default.
+  - `Decode/`: `ReadAheadTunables`.
+  - `Streaming/`: `CachedRunStore`, `ResolvedURLCache`, `ReadAheadPolicy`, `AudioByteTee`. The tee
+    and appetite hooks are nil by default.
   - Test support: `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`, `tone_moov_last.m4a`.
   - Their tests.
 - **Adapted.** S2 additions are marked `S2:`.
-  - `CS2StreamDecode/stream_decode.{c,h}` adds:
-    - an output rate and channel count;
-    - mono spread at full level;
-    - a resampler rebuilt on a mid-stream format change;
-    - frame timestamps after a byte-estimate seek for FLAC and PCM.
-  - `FFmpegStreamDecoder` adds `setOutputFormat` and `read(into:maxFrames:)`.
-  - `HTTPRangeByteSource` keys its kept run and remembered redirect end on `StreamCacheKey`, the URL
+  - `HTTPRangeByteSource` (a shuttle-playback `StreamByteReader`) keys its kept run and remembered redirect end on `StreamCacheKey`, the URL
     less its per-play session id and token, and fetches the 128-byte tail only for what might be an mp3
     (#822).
   - `StartupTiming` keeps Podcasts' nested types and its `ttfa-net` line, but its record is the
@@ -143,93 +146,41 @@ change. They are kept diffable so a later shared AudioCore can take them back.
   - `LookaheadLimiter` is now stereo-linked and frame-interleaved, and its window includes the
     emitted frame.
 - **New**:
-  - `Engine/TrackPCMSource.swift`: the protocol and `FFmpegTrackSource`, with frame-exact seek.
+  - `Engine/TrackPCMSource.swift`: the protocol and `FFmpegTrackSource`, the adapter to
+    shuttle-playback's decoder. A seek the reader refuses (`.unseekable`) makes the track unseekable.
   - `Engine/MusicPlaybackController.swift`.
   - `Streaming/StreamCacheKey.swift`.
   - `DSP/PCMProcessor.swift`.
-  - `ios/scripts/build-ffmpeg.sh`, widened from the Podcasts script and built dynamic.
+  - `S2Tags`: `AudioFileTags` and `CS2Tags/tag_read.c` (#590).
   - The music tests and the FLAC, Opus, Vorbis, ALAC, AIFF and 24-bit WAV fixtures.
-- **Dropped**: Podcasts' `#if canImport(CStreamDecode)` fallback and `FFmpegStreamDecoder.isAvailable`.
-  FFmpeg is required, so a package without it fails to resolve rather than building an engine that
-  can't decode.
 - **Left behind**:
   - SilenceGate, VoiceEnhance, SkipCueMixer, the compressor, K-weighting and LUFS meter;
   - the Podcasts `AVAudioEnginePlaybackController`;
   - the Spine/ad-skip code;
   - `PlaybackControlling` and the enhancement settings.
 
-## FFmpeg build
+## FFmpeg
 
-```sh
-ios/scripts/build-ffmpeg.sh            # build if the cache has no match, then install; 0.2 s once installed
-ios/scripts/build-ffmpeg.sh --force    # rebuild the cache entry
-FFMPEG_SRC=/path/to/ffmpeg ios/scripts/build-ffmpeg.sh   # an existing checkout of the pinned commit
-```
+FFmpeg comes from shuttle-playback: its `FFmpeg` product, one static `Frameworks/FFmpeg.xcframework`
+committed in that repo (iOS arm64, iOS Simulator arm64 and macOS arm64 slices; the macOS one is for
+`swift test`). Nothing is built here, and a new worktree needs no step: SwiftPM resolves the pinned tag.
 
-`ios/scripts/build-framework.sh` and `ios/scripts/test.sh` run it first, so a new worktree needs no
-separate step.
-
-It builds FFmpeg **n7.1.5** (commit `3a0867c2bf`) as four **dynamic** frameworks, one xcframework per
-library: `libavutil`, `libswresample`, `libavcodec`, `libavformat`. Each has iOS arm64, iOS Simulator
-arm64 and macOS arm64 slices; the macOS one is for `swift test`. A framework is named after its
-library, so `#include <libavcodec/avcodec.h>` resolves through the framework search path. The install
-names are `@rpath/libavcodec.framework/libavcodec`, and each framework is stripped (`-x`) and ad-hoc
-signed; Xcode re-signs it when it embeds it.
-
-- **Cache.** The build goes to `${S2_FFMPEG_CACHE:-~/Library/Caches/s2-ffmpeg-ios}/n7.1.5-<key>/`,
-  outside git. The key is the first 12 hex digits of the script's SHA-256, so any change to the pin,
-  flags or packaging builds a new entry. The entry holds `VERSION.txt` (tag, commit, flags, library
-  versions), `SHA256SUMS` and `COPYING.LGPLv2.1`. The FFmpeg clone is kept in `.../src/`. Old entries
-  are never deleted by the script.
-- **Install.** The entry is checked against `SHA256SUMS` and copied to `ios/Playback/Frameworks/`
-  (gitignored). An install whose `VERSION.txt` matches and whose checksums pass is left alone.
-- **Package.** `Package.swift` always declares the four binary targets, and `CS2StreamDecode` depends
-  on them. No system library is linked by the package: the dylibs carry their own `libz` link.
-- **App.** Xcode embeds and signs a package's dynamic binary targets in `S2.app/Frameworks` itself,
-  so `project.yml` has no `embed:` entry for them.
-
-A cold build takes 1.5 to 3 minutes, including the clone. Binary sizes (bytes):
-
-| Library | iOS device | iOS Simulator |
-|---|---|---|
-| libavutil | 533,168 | 516,672 |
-| libswresample | 103,072 | 86,656 |
-| libavcodec | 622,608 | 606,144 |
-| libavformat | 434,960 | 418,528 |
-| total | 1,693,808 | 1,628,000 |
-
-The library versions are avutil 59.39.100, swresample 5.3.100, avcodec 61.19.101 and avformat
-61.7.103. Configure flags:
-
-```
---disable-everything --disable-programs --disable-doc --disable-htmlpages --disable-manpages
---disable-podpages --disable-txtpages --disable-avdevice --disable-swscale --disable-postproc
---disable-avfilter --disable-network --disable-protocols --disable-devices --disable-filters
---disable-bsfs --disable-encoders --disable-muxers --disable-debug
---disable-audiotoolbox --disable-autodetect --enable-zlib
---enable-decoder=flac,alac,opus,vorbis,mp3,mp3float,aac,aac_latm,pcm_s16le,pcm_s24le,pcm_s32le,
-                 pcm_f32le,pcm_f64le,pcm_u8,pcm_s16be,pcm_s24be,pcm_s32be,pcm_f32be,pcm_f64be
---enable-demuxer=ogg,matroska,wav,flac,mov,mp3,aac,aiff
---enable-parser=flac,opus,vorbis,mpegaudio,aac,aac_latm
---enable-swresample --enable-avformat --enable-avcodec --enable-avutil
---enable-shared --disable-static --enable-pic --enable-small
---enable-cross-compile --target-os=darwin --arch=arm64
-```
-
-The link adds `-Wl,-dead_strip_dylibs`.
-
-- **Autodetect.** `--disable-autodetect` matters. Without it, configure finds VideoToolbox and, on
-  the macOS slice, Homebrew's X11 and SDL2, and libavutil's hwcontext drags them into the link.
-- **No iconv.** With autodetect off, configure doesn't link `-liconv`. Its only user is subtitle
-  charset conversion, and no subtitle decoder is built.
-- **Dead-stripped dylibs.** Without `-dead_strip_dylibs`, the dylibs load CoreFoundation, CoreVideo
-  and CoreMedia for nothing. Their only dependencies are each other, `libz` and `libSystem`.
+- **Version.** FFmpeg **n7.1** plus one patch, `0001-mp3dec-keep-xing-frames-when-size-unknown.patch`.
+  The xcframework's `VERSION.txt` records the tag, the configure flags and the patches; shuttle-playback's
+  `scripts/build-ffmpeg.sh` builds it, and its `scripts/ffmpeg-patches/` holds the patch. Its formats
+  are a superset of the music formats S2 plays (it adds the `loas` demuxer).
+- **Linking.** `S2Playback` links it through `PlaybackDecode`, and `CS2Tags` depends on the `FFmpeg`
+  product directly, with the system libraries a static FFmpeg needs (`z`, `iconv`, CoreFoundation,
+  CoreMedia, CoreVideo, VideoToolbox). The app links one FFmpeg, into the app binary: nothing goes in
+  `S2.app/Frameworks`.
+- **Bumping it.** Rebuild and tag in shuttle-playback, then change the `exact:` pin in `Package.swift`
+  and the tag in `SettingsContent.ffmpegSourceURL` and the Acknowledgements pane together.
 - **Byte input.** No network protocols are built. Bytes arrive through the AVIO callbacks.
 
 ## Tests
 
 ```sh
-ios/scripts/test.sh --package    # swift test in ios/Playback, on the Mac: 134 XCTest + 10 swift-testing
+ios/scripts/test.sh --package    # swift test in ios/Playback, on the Mac: S2PlaybackTests and S2TagsTests
 ios/scripts/test.sh              # the app's S2 scheme on an available iPhone simulator
 ```
 
@@ -264,13 +215,15 @@ join. `PreopenLeadTests` pins the lead's rule.
 `PrimingAndSeekTests` decodes 2 s chirps (AAC in MP4, MP3, Opus), whose phase names every sample, and
 cross-correlates to find where the decoded audio came from: the priming is trimmed at the start and
 after a seek back to 0:00, the end padding is trimmed (exactly 2 s of frames), and a seek lands on
-the frame asked for (MP3 within one frame; see Known limits).
+the frame asked for, MP3 included (#619).
 
 `FFmpegMusicDecodeTests` covers:
 
 - FLAC decodes all 22,050 frames. Opus decodes about 1 s with pre-skip trimmed.
 - Opus resamples to 44.1 kHz.
 - A FLAC seek is frame-exact.
+- A stream without a length is unseekable, and so is one whose reader refuses a seek behind what it
+  served (the decoder's `.unseekable`), without a crash.
 - Mono is spread to both sides at full level.
 
 `MusicPlaybackFormatsTests` plays each fixture format end to end, as the app does:
@@ -300,28 +253,29 @@ ffmpeg -f lavfi -i "$(chirp 48000)" -c:a libopus -b:a 64k chirp-48k.opus        
 
 ## LGPL notes
 
-The frameworks are plain **LGPL v2.1+**:
+shuttle-playback's FFmpeg is plain **LGPL v2.1+**:
 
 - no `--enable-gpl`, `--enable-version3` or `--enable-nonfree`;
-- no external codec libraries. Opus and Vorbis use FFmpeg's native decoders, not libopus or
-  libvorbis.
+- no external codec libraries beyond the system zlib. Opus and Vorbis use FFmpeg's native decoders,
+  not libopus or libvorbis.
 
-FFmpeg is linked **dynamically**: four frameworks in `S2.app/Frameworks`, not code in the app
-binary. That meets LGPL v2.1 §6(b), a shared library mechanism a user can swap. It also avoids the
-static build's obligation to offer the app's object files for relinking. The app carries:
+FFmpeg is linked **statically** into the app binary (owner decision, 2026-10-07, #957). LGPL v2.1 §6(a)
+then asks that a user can relink the app with a modified FFmpeg. That is met by the sources being
+public: Shuttle2 (`timusus/Shuttle2`, this app with `ios/project.yml` and its build scripts) and
+shuttle-playback (`timusus/shuttle-playback`, the decoder and `scripts/build-ffmpeg.sh`). There is no
+framework to swap. The app carries:
 
-1. **The notice**, in the app's Settings pane (`ios/S2/Settings.bundle`: Settings › S2 ›
-   Acknowledgements). It gives FFmpeg's name, version and licence, the source (the n7.1.5 tag and
-   commit, unmodified), and this build script. The pane links to the full LGPL v2.1 text. The iOS app
-   has no in-app licences screen yet. Android's is generated from Gradle dependencies
-   (AboutLibraries), which can't see FFmpeg, so the Settings bundle is the one place. An in-app
-   acknowledgements screen should show the same text.
-2. **How to relink.** Build the same major versions (libavutil 59, libswresample 5, libavcodec 61,
-   libavformat 61) with the flags above. `build-ffmpeg.sh` builds any commit set as `FFMPEG_COMMIT`
-   in it. Replace the four frameworks in `S2.app/Frameworks` with the result, and re-sign the app
-   (`codesign --force --sign <identity>` on each framework, then on the app with its entitlements).
-   The app looks the libraries up by install name (`@rpath/libavcodec.framework/libavcodec`) and
-   checks only the compatibility version, so a same-major build loads.
+1. **The notice**, in the app's Settings pane (`ios/S2/Settings.bundle`: Settings › Shuttle Music ›
+   Acknowledgements). It gives FFmpeg's name, version and licence, the source (the n7.1 tag, the patch
+   and shuttle-playback's build script) and how to relink. The pane links to the full LGPL v2.1 text,
+   and also acknowledges shuttle-playback, used under licence from its copyright holder. Settings ›
+   About has an "FFmpeg source code" link to the build script at the pinned tag. Android's licences
+   are generated from Gradle dependencies (AboutLibraries), which can't see FFmpeg, so the Settings
+   bundle is the one place.
+2. **How to relink.** Build FFmpeg with shuttle-playback's `scripts/build-ffmpeg.sh` (`FFMPEG_SRC`
+   points it at a modified checkout; the flags are in the script and `VERSION.txt`), point Shuttle2's
+   `ios/Playback/Package.swift` at that shuttle-playback checkout, and build the app with
+   `ios/scripts/build-framework.sh` and Xcode.
 
 Do not add a GPL-only component (for example `--enable-gpl` or libx264-style externals) or a
 `nonfree` one.
@@ -337,9 +291,9 @@ Do not add a GPL-only component (for example `--enable-gpl` or libx264-style ext
   is scheduled, so it is approximate by the scheduling latency.
 - **Time-pitch position.** Off 1×, the time-pitch unit's own buffering makes position lead what is
   heard by up to one block.
-- **MP3 seeks are within one frame.** FFmpeg's MP3 seek (the Xing TOC, or the bitrate for CBR) stamps
-  the frame it syncs to with the time asked for, so a mid-file seek can land up to 1,152 frames
-  (26 ms) off. A seek to 0:00 is exact. Exact seeking needs an index of frame offsets (#619).
+- **Far VBR MP3 seeks.** Seeks are sample-exact, MP3 included (#619), except a VBR MP3 seek further
+  from a frame of known time than one seek's byte budget, which lands on shuttle-playback's Xing TOC
+  or bitrate estimate. `FFmpegTrackSource` reads forward from an early landing to the target.
 - **Pre-open timing without a duration.** A next after a stream with neither a container duration
   nor an expected one is opened once the current track is steady, and its connection then idles
   until the join.

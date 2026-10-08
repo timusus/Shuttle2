@@ -26,7 +26,6 @@ for arg in "$@"; do
 done
 
 if [[ "$package" == 1 ]]; then
-  "$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
   cd "$ios_dir/Playback"
   echo "==> swift test ${args[*]+"${args[*]}"}"
   exec swift test ${args[@]+"${args[@]}"}
