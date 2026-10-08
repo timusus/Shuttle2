@@ -1,8 +1,6 @@
 # S2Playback
 
-S2's iOS player engine, phase 6 of the iOS port (#588, epic #581; design:
-[`docs/architecture/ios-port/phase-6-playback.md`](../../docs/architecture/ios-port/phase-6-playback.md)).
-It is a Swift package for iOS 17. It also has a macOS 14 platform, so `swift test` runs on the Mac
+S2's iOS player engine (#588, epic #581). It is a Swift package for iOS 17. It also has a macOS 14 platform, so `swift test` runs on the Mac
 without a simulator.
 
 Demux, decode, the conversion to the engine's format, sample-accurate seeking, `FileByteReader` and

@@ -2,7 +2,7 @@
 
 Target module layout for the Android app, how today's modules map onto it, and how Gradle enforces
 the direction. The source-level rules that guard the same boundaries today live in
-`:android:architecture-tests` (see [clean-architecture-audit.md](clean-architecture-audit.md)).
+`:android:architecture-tests`.
 
 ## Target layers
 

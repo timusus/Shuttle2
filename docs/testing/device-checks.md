@@ -227,7 +227,7 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 
 ## Redesign parity, device-only (#377, #382)
 
-The JVM-proven parts of these items are mapped in `docs/architecture/parity-audit.md`; these are what's left for a device.
+These are the parity items a JVM test can't prove; what's left for a device.
 
 - [ ] Turn Settings → Appearance → Show Home on launch off, swipe S2 away and reopen it. It opens on Library, and back from Home returns to Library; with the setting on it opens on Home.
 - [ ] Now Playing's Cast button finds a Chromecast on the network and connects; playback moves to the receiver.

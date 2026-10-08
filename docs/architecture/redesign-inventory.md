@@ -289,7 +289,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   queries `Audio.Media`, filters by folder (`FolderFilter`) and reads each content URI with
   KTagLib. Tags match the SAF build on every stored column; imports ran 4–8x faster than the SAF
   walk on API 36/37. Songs are keyed by file path now; spike 3 (#414) moves S2-provider users' songs
-  to their paths on the first import after the upgrade, keeping their history. Evidence in [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
+  to their paths on the first import after the upgrade, keeping their history.
 - Decision (#379): **the MediaStore ("Basic") provider is closed to new users.** First run enables
   the S2 scanner (`MediaSources.scanThisDevice`) and Settings > Sources offers no Basic option.
   Existing Basic users keep it as "This device", with a note that folder choices don't apply,
@@ -448,7 +448,7 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 
 ## Parity checklist (tick before the first post-freeze release)
 
-Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps each item to its code and tests; device-only checks are in [device-checks.md](../testing/device-checks.md).
+Audited against the code on 2026-09-26; device-only checks are in [device-checks.md](../testing/device-checks.md).
 
 - [x] Library tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide tabs; last tab restored
 - [x] Songs sort ×6, Albums sort ×4 incl. Random, Genres sort ×2, Playlists sort ×2
@@ -504,7 +504,7 @@ Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps 
    nudge or an optional SAF include covers them; scoped storage on 29 (`requestLegacyExternalStorage`)
    vs 30+; OEM MediaStore quirks (missing `DISC_NUMBER`, stale rows). Pass: tag parity with today's
    TagLib provider on the emulator fixtures plus one real SD-card device.
-   **Result: go for API 30+** ([`spike-taglib-mediastore.md`](spike-taglib-mediastore.md)).
+   **Result: go for API 30+.**
 
    | | API 36 ATD | API 37 google_apis |
    |---|---|---|
@@ -528,8 +528,7 @@ Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps 
    **Done for TagLib users (#414):** the importer moves each song stored under a SAF document URI to
    its MediaStore file path in place, matched by volume and relative path (size, date and duration
    only when that's ambiguous), so its row id and everything keyed by it survive. MediaStore-mode
-   users already had file paths. See spike 3 in
-   [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
+   users already had file paths.
 4. **Ambient scan progress.** WorkManager foreground import with progress surfaced to the Library
    bar and a notification, cancellable, surviving process death.
 5. **Plex PIN linking.** Confirm the plex.tv PIN flow works with the existing

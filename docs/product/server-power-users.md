@@ -1,7 +1,6 @@
 # What self-hosting power users expect (2026-10-05)
 
-Extends [streaming-client-audit.md](streaming-client-audit.md) and the
-[Subsonic spike](../architecture/spike-subsonic-provider.md) with Navidrome/Subsonic users' expectations.
+What Navidrome/Subsonic users expect from a client.
 Demand signal: GitHub issue votes, the Symfonium support forum, Play and App Store reviews (Reddit wasn't
 reachable).
 

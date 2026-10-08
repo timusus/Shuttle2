@@ -1,6 +1,6 @@
 # iOS port
 
-Epic: #581 (phases #582–#591, label `ios-port`).
+Epic: #581 (label `ios-port`). Phases 0–8 shipped; phase 9 (StoreKit 2, AirPlay, CarPlay, WidgetKit, Cast) is per-feature.
 
 S2 gets an iOS app that shares everything from the ViewModel layer down with Android. Only the
 presentation layer (Compose on Android, SwiftUI on iOS) and genuinely platform-bound services
@@ -33,30 +33,5 @@ The template is Shuttle Podcasts (`~/projects/simplecity-apps/podcasts/main/mobi
   (Documents + Files-app folders as security-scoped bookmarks, metadata read with FFmpeg) followed in phase 8.
 - Existing modules convert in place (no parallel copies); paths keep their `android/` prefix for now.
 
-## Phases
-
-Each phase ends at a checkpoint where builds, emulator/simulator runs and Maestro are batched. Between
-checkpoints, workers compile only the module they touch (`compileKotlinIosSimulatorArm64`,
-`compileDebugKotlinAndroid`) and write commonTest unit tests alongside.
-
-| # | Phase | Checkpoint |
-|---|---|---|
-| 0 | Toolchain spike (SKIE vs Kotlin 2.4.20), KMP convention plugin + catalog, `:android:domain` → KMP | domain iOS compile, domain tests, assembleDebug |
-| 1 | Hilt → Metro across Android | assembleDebug, unit tests, one Maestro smoke |
-| 2 | Data: Room KMP + repositories to commonMain, prefs behind shared interfaces, shared logger; MediaStore/SAF stay androidMain | Room migration tests, assembleDebug |
-| 3 | Networking + `server` + Jellyfin/Emby/Plex → Ktor/kotlinx.serialization | MockEngine tests, Maestro sign-in + sync |
-| 4 | ViewModels → shared `presentation` module (easy 18 → assisted 9 → Player/Folder; Paywall behind `Entitlements`) | **Android parity gate**: full verify + Maestro batch |
-| 5 | iOS skeleton: `Shared.framework`, XcodeGen project, graph + ViewModel cache, adaptive shell, Library + detail screens | first simulator build, ViewInspector |
-| 6 | iOS playback: IosPlayerController + Swift audio player, now-playing, mini player, Now Playing, queue | simulator run, Maestro iOS flow |
-| 7 | Remaining iOS screens: Home, Search, Settings, Sources/sign-in, playlists, Song info, sleep timer | ViewInspector + Maestro batch |
-| 8 | iOS local library (Files folders, metadata) — done, #590 | device check |
-| 9 | iOS platform features: StoreKit 2, AirPlay, CarPlay, WidgetKit, Cast | per feature |
-
-Phase designs: [2 data](ios-port/phase-2-data.md), [3 network](ios-port/phase-3-network.md),
-[4 ViewModels](ios-port/phase-4-viewmodels.md) and its [platform seams](ios-port/phase-4-platform-seams.md),
-[5 iOS app](ios-port/phase-5-ios-app.md), [6 playback](ios-port/phase-6-playback.md).
-
 [Parity checklist](ios-port/parity.md): every user-facing Android feature, weighted by iOS effort,
 with a computed completion percentage.
-
-During phases 0–4, other sessions don't start new work in `android/app`, `android/domain` or DI modules.
