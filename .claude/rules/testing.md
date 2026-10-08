@@ -7,8 +7,10 @@ paths:
 
 # Tests
 
-**Bias toward JVM tests (unit, Robolectric characterisation) over device tests.** Unit (`src/test/`): ViewModels, use
-cases, repositories, mappers. Compose characterisation (`src/test/`, Robolectric): screens and their ViewModels. Device
+**Bias toward JVM tests (unit, Robolectric characterisation) over device tests.** Behaviour-first (global `engineering.md` "Tests"): drive
+a ViewModel through its public events, or a screen under Compose characterisation (`src/test/`, Robolectric), with fakes
+only at the edges (network, database, player engine, clock, file system). Focused unit tests (`src/test/`) are for pure
+logic with many cases: mappers, parsers, decision rules. Device
 (Maestro, `support/maestro/`, `support/scripts/checks/`): platform integration only (`PlaybackService`, Android Auto, SAF,
 Chromecast, real `AudioManager` focus). There is no `src/androidTest` suite. A new device check must explain why it can't
 run on JVM; "it's a UI change" or "I want to see the real app" is not a reason. Layers, the landing baseline and speed
@@ -23,7 +25,7 @@ levers: `docs/testing/strategy.md`.
 (`android/app/src/test/java/com/simplecityapps/testing/MainDispatcherRule.kt`, defaults to `UnconfinedTestDispatcher`;
 pass a `StandardTestDispatcher(testScheduler)` when execution order matters). Inject dispatchers; never hardcode
 `Dispatchers.IO`. There is no Turbine: collect into a list in `backgroundScope` (`flow.toList(results)`) or use
-`first()`/`take(n).toList()`. MockK (`libs.mockk`) is available, but prefer a simple real fake over a mock.
+`first()`/`take(n).toList()`. MockK (`libs.mockk`) is for edge types only (a `Uri`, a `Context`); fake the edges by hand and never mock collaborators inside the module.
 
 **commonTest/iosTest names:** no commas or other Kotlin/Native-illegal characters (`, ; : . / \ < > [ ]`) in backticked test names — `iosSimulatorArm64Test` refuses to compile them. `support/scripts/native-test-names` (run by `worker-finish.sh` and `lint`) catches them in seconds, and `unit-test --changed` runs `NativeTestNameRules` when commonTest/iosTest changed.
 
@@ -173,9 +175,8 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
 
 Full guidance and the layer table live in `docs/testing/strategy.md`. The short version: if the only
 Android type in the test is a `Uri` or a `Context` passed through to a collaborator, stub it —
-`mockk<Uri>(relaxed = true)` (or a `FakeUri` stubbing `Uri.parse`/`fromFile`) for the value, `mockk`
-the collaborator that would otherwise need a real `Context` (`PlaylistDetailViewModelTest` mocks
-`ExportPlaylist` instead of wiring a real `PlaylistExporter`/`ApplicationProvider`) — then drop
+`mockk<Uri>(relaxed = true)` (or a `FakeUri` stubbing `Uri.parse`/`fromFile`) for the value, and fake the
+file-system edge that would otherwise need a real `Context` rather than wiring `ApplicationProvider` — then drop
 `@RunWith(RobolectricTestRunner::class)`. Leave it on Robolectric when the test exercises real
 Android behaviour rather than just an Android *type*: a real `ContentResolver`/SAF file open
 (`ExportPlaylistTest`), a real `ExoPlayer`/`RuntimeEnvironment` Context/AudioManager, a

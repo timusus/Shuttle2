@@ -17,7 +17,7 @@ design docs, not here — this skill says *how to decide*, those docs say *what 
 | Android design language (M3 Expressive spec, tokens, component list, approval gate) | `docs/design/design-language.md` |
 | iOS design language (HIG-first tokens, glass, motion) | `docs/design/ios-design-language.md` |
 | App shell, navigation, player state model, layout tiers | `docs/architecture/app-shell.md` |
-| Parity audit and redesign inventory | `docs/architecture/parity-audit.md`, `redesign-inventory.md` |
+| Redesign inventory and parity checklist | `docs/architecture/redesign-inventory.md` |
 | Android tokens and components | `android/designsystem/.../theme/`, `.../component/`, debug `catalog/` |
 | iOS tokens and components | `ios/S2/Theme/`, `ios/S2/Components/` |
 | Goldens (per component and per screen) | `docs/design/catalog/**`, `docs/design/<screen>/**` |

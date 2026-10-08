@@ -62,8 +62,8 @@ only the screenshot scorecard is incomplete. Findings from every pass get filed.
    `.padding(13)`, `RoundedCornerShape(n.dp)`, `Font.system(size:)`) in screens; components
    duplicated per screen instead of shared; missing a11y/adaptive usage. Judged against the
    ground-truth docs in SKILL.md's table — `docs/design/design-language.md`,
-   `docs/design/ios-design-language.md`, `docs/architecture/parity-audit.md` and
-   `redesign-inventory.md` — reporting every place code and docs disagree, in both directions.
+   `docs/design/ios-design-language.md` and
+   `docs/architecture/redesign-inventory.md` — reporting every place code and docs disagree, in both directions.
 3. **Native surfaces** — everything `design-shots.sh` never tours: media notification, Lock
    Screen / Dynamic Island, widgets, Auto/CarPlay, shortcuts / App Intents. Walk the table in
    [native-surfaces.md](native-surfaces.md) and capture or check each surface by hand (its

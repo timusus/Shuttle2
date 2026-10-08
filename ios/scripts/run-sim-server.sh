@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds the Debug app for the simulator, installs it and launches it, ready to sign in to a Jellyfin or
-# Emby server through Sources > Connect a Server (.claude/rules/ios.md "Running the POC"), or to import
+# Emby server through Sources > Connect a Server (.claude/rules/ios-device.md "Simulator POC"), or to import
 # from the session a previous sign-in saved in the Keychain.
 #
 # usage: ios/scripts/run-sim-server.sh

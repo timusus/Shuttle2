@@ -20,7 +20,7 @@ and notifications posted on a private centre. Background audio is `UIBackgroundM
   when a personal output (headphones, Bluetooth, USB, line out, car, AirPlay) left and the new route has none of its kind
   (`pausesOnRouteChange`, #715): a Bluetooth profile or codec switch plays on. Asks for an engine rebuild on a
   media-services reset. It ignores the route's sample rate: the engine renders at a fixed 48 kHz, the rate the shared EQ
-  is designed at (`phase-6-playback.md`, step 8). Route-change notifications arrive off the main thread: read each into
+  is designed at. Route-change notifications arrive off the main thread: read each into
   a Sendable event before hopping to main. `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call `playRequested()`
   before any play and `playbackPaused()` on every pause; the engine's `activateOutput` calls `activate()` off the main
   thread as a play is made, so the session activates while the track opens (#687), and a failed activation refuses the
