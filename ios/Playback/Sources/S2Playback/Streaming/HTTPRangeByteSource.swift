@@ -259,80 +259,65 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// `task` in every delegate callback; never counted, never teed, never retried.
     private var tailTask: URLSessionDataTask?
     private var tailBuffer = Data()
-    /// ``seekGeneration`` as it stood when the CURRENT transaction was opened. Captured here rather
-    /// than read when the response lands: a second seek can bump the generation while the first
-    /// request is still in flight, and the tee has to be able to see that the anchor it is holding
-    /// belongs to the newer one.
+    /// ``seekGeneration`` when the CURRENT transaction was opened, captured so the tee can see that
+    /// an anchor it holds belongs to a newer seek.
     private var transactionSeekGeneration = 0
-    /// ``windowGeneration`` of the window the CURRENT transaction fills. A seek resets the window
-    /// on the caller's thread and queues its own transaction behind whatever `URLSession` has
-    /// already handed this queue, so a chunk — or a close — of the body that seek superseded can
-    /// run while `task` is still that body's task. Identity cannot tell them apart; this can:
-    /// every delegate callback that would touch the window checks it and drops out on a mismatch,
-    /// leaving the seek's queued `startTransaction` to open the window it reset (#224).
+    /// ``windowGeneration`` of the window the CURRENT transaction fills. A seek resets the window and
+    /// queues its own transaction behind callbacks `URLSession` already handed this queue, so a
+    /// chunk or close of the superseded body can run while `task` is still its task. Every callback
+    /// that would touch the window checks this and drops out on a mismatch (#224).
     private var transactionWindowGeneration: UInt64 = 0
-    /// A remembered URL's `200` whose headers say nothing about what the body is, held with its
-    /// bytes so far — accumulated across chunks, because a chunk boundary is not a media boundary
-    /// and the first one alone can land under ``sniffMinBytes`` — until enough of them do:
-    /// accepted, with every buffered byte handed on, if they look like audio; one fallback to the
-    /// original URL if they look like a page or the transaction closes too short (#226).
+    /// A remembered URL's `200` whose headers say nothing about the body, held with its bytes
+    /// (accumulated across chunks; the first alone can be under ``sniffMinBytes``) until enough look
+    /// like audio, or fall back once to the original URL if they look like a page (#226).
     private var unsniffedResponse: (task: URLSessionDataTask, http: HTTPURLResponse, response: URLResponse, buffer: Data)?
     private var hasOpened = false
     private var wantsResume = false
     private var retryAttempts = 0
-    /// The window a retry reopens, while its backoff is running: nothing is open, and something
-    /// will be. Cleared, and ``retryGeneration`` bumped, by every transaction opened meanwhile, so a
-    /// backoff that a seek, a path change or a newer retry has already acted on does nothing when
-    /// it fires.
+    /// The window a retry reopens while its backoff runs. Cleared, and ``retryGeneration`` bumped,
+    /// by every transaction opened meanwhile, so a backoff already superseded does nothing.
     private var pendingRetryWindow: UInt64?
     private var retryGeneration = 0
-    /// When the CURRENT transaction last showed progress — opened, answered, delivered a chunk — or
-    /// last had no reason to (held by the throttle, nothing open). On ``scheduler``'s clock. A
-    /// range-ignoring host's prefix counts: the connection is alive, and a prefix longer than the
-    /// stall timeout would otherwise be dropped and asked for from 0 again until the budget ran out.
+    /// When the CURRENT transaction last showed progress, or last had no reason to (throttled,
+    /// nothing open), on ``scheduler``'s clock. A range-ignoring host's prefix counts: the connection
+    /// is alive.
     private var lastProgressAt: TimeInterval = 0
-    /// When the CURRENT transaction last answered or brought a byte; never, until it has. What a
-    /// path change asks: is this body still flowing? On ``scheduler``'s clock.
+    /// When the CURRENT transaction last answered or brought a byte: is it still flowing?
     private var lastByteAt: TimeInterval = -.infinity
-    /// The furthest the window has been filled since the last seek. Only a chunk that takes the
-    /// frontier past it is progress that resets ``retryAttempts``: a reopen on a range-ignoring
-    /// host starts again from 0, and its prefix moves the frontier without bringing anything new.
+    /// The furthest the window has been filled since the last seek. Only a chunk past it resets
+    /// ``retryAttempts``: a range-ignoring host's reopen re-sends the prefix from 0.
     private var progressMark: Int64 = 0
-    /// The CURRENT transaction was opened for a seek (or the first read), not to carry a body on.
-    /// ``openIsContinuation`` is the tee's view, which an unvalidated seam also clears.
+    /// Opened for a seek (or the first read), not to carry a body on. ``openIsContinuation`` is the
+    /// tee's view, which an unvalidated seam also clears.
     private var transactionIsSeek = false
     private var watchdogArmed = false
     private var appetiteHolders = 0
-    /// This host answered a `Range` with a whole-body `200`. Latched, so the next transaction is
-    /// opened as what it will actually be — a stream from 0 — instead of being re-declared
-    /// mid-flight, and so the warning is logged once per source rather than once per body.
+    /// This host answered a `Range` with a whole-body `200`. Latched so the next transaction is
+    /// opened as a stream from 0, and the warning is logged once per source.
     private var hostIgnoresRange = false
     private var ensureFetchingCallsValue = 0
-    /// Where the original URL's redirect chain ends, once followed — or, from construction, where
-    /// ``ResolvedURLCache`` says it ended last time. Nil until a redirect has been seen. On `queue`.
+    /// Where the redirect chain ends, once followed or as ``ResolvedURLCache`` last had it. On `queue`.
     private var resolvedURL: URL?
-    /// ``resolvedURL`` came from the cache and has not yet been proven by a `2xx` this play. While
-    /// true, a bad answer from it means "go back to the original URL", not "retry". On `queue`.
+    /// ``resolvedURL`` came from the cache and no `2xx` has proven it this play: a bad answer from
+    /// it means "go back to the original URL", not "retry". On `queue`.
     private var resolutionUnproven = false
-    /// The chain's end has been written to the cache this play. On `queue`.
     private var resolutionRecorded = false
 
-    /// What the CURRENT transaction's bytes do to the run on disk. Decided once at open from where
-    /// the transaction starts relative to the run, and advanced as the body arrives.
+    /// What the CURRENT transaction's bytes do to the run on disk, decided at open and advanced as
+    /// the body arrives.
     private enum RunWrite {
-        /// Nothing is written: the body is somewhere the run is not (a seek past its end).
+        /// The body is somewhere the run is not (a seek past its end).
         case none
-        /// The body starts at the run's end and has been validated (or there was no run): every
-        /// chunk goes on the end of the run.
+        /// The body starts at the run's end and is validated (or there was no run).
         case append
-        /// The first chunk drops the run and begins a new one at `at`. Deferred to arrival so a
+        /// The first chunk drops the run and begins a new one at `at`; deferred to arrival so a
         /// request that dies leaves the old run intact.
         case replaceOnArrival(at: Int64)
-        /// The body was asked for `expected.count` bytes before the seam `at`; they are compared
-        /// with `expected` and discarded, and the run is appended to (match) or replaced (not).
+        /// The body was asked for `expected.count` bytes before the seam `at`; they are compared and
+        /// discarded, then the run is appended to (match) or replaced (not).
         case overlap(expected: Data, matched: Int, mismatched: Bool, at: Int64)
-        /// The body starts before the run: when the window has the run's first bytes, compare them
-        /// and either hand over to the disk or replace the run with the live body.
+        /// The body starts before the run: compare the run's first bytes, then hand over to the disk
+        /// or replace the run with the live body.
         case watchRunStart(runStart: Int64)
     }
     private var runWrite: RunWrite = .none
@@ -343,14 +328,8 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     private var switchToDiskAtClose = false
 
     /// - Parameters:
-    ///   - authHeaders: resolved by `FeedRequestAuthorizing` at the call site — see
-    ///     `AVAudioEnginePlaybackController.play()`. Empty for a public feed.
-    ///   - session: the process-wide session, ``sharedSession``; a test hands in its own from
-    ///     ``makeSession(configuration:)`` so its connections do not outlive it.
-    ///   - tee: where the raw bytes go for ad-skip. Nil when the spine is off.
-    ///   - runStore: where the fetched bytes are kept and read back from. Nil only in tests.
-    ///   - resolvedURLs: where the redirect chain's end is kept between plays. Nil only in tests.
-    ///   - scheduler: the clock and timer of the stall watchdog and the retry backoff; a test's steps.
+    ///   - session: ``sharedSession``; a test hands in its own from ``makeSession(configuration:)``.
+    ///   - scheduler: the clock and timer of the stall watchdog and the retry backoff.
     ///   - pathMonitor: network path changes, which reopen the transaction at once. Nil to ignore them.
     init(
         url: URL,
@@ -428,8 +407,6 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     var resolvedURLForTesting: URL? { queue.sync { resolvedURL } }
     /// The session this source's tasks go through. Tests only.
     var sessionForTesting: URLSession { session }
-    /// Body bytes on the hop right now, the most there have ever been, and how many times the
-    /// budget has suspended the task. Tests only.
     var inFlightBytesForTesting: Int { withLock { inFlightBytes } }
     var peakInFlightBytesForTesting: Int { withLock { peakInFlightBytes } }
     var inboundPauseCountForTesting: Int { withLock { inboundPauseCount } }
@@ -444,15 +421,11 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     func enqueueForTesting(_ work: @escaping () -> Void) { queue.async(execute: work) }
     /// Tail-fetch bytes the delegate has handed over, which the budget leaves out (#261). Tests only.
     var tailBytesEnqueuedForTesting: Int { withLock { tailBytesEnqueued } }
-    /// Run once, on `queue`, at the door of the next body chunk — before the chunk has looked at
-    /// the window. A test that blocks in it holds the chunk while it resets the window from
-    /// another thread: the ordering #224 is about, which loopback closes too fast to reach on
-    /// its own. Consumed by the first chunk that finds it.
+    /// Run once on `queue` before the next body chunk looks at the window, so a test can reset the
+    /// window from another thread: the ordering #224 is about.
     var testBeforeNextChunk: (() -> Void)?
-    /// Run on `queue` at the door of every transaction, with the offset it opens at. A test that
-    /// blocks in it holds the queue after everything queued ahead of the transaction has run and
-    /// before the transaction resets the window: the gap a stale verdict lives in (#315). Set it
-    /// before the first transaction.
+    /// Run on `queue` at the door of every transaction, with the offset it opens at, before it
+    /// resets the window: the gap a stale verdict lives in (#315). Set before the first transaction.
     var testBeforeTransaction: ((Int64) -> Void)?
     #endif
 
@@ -478,14 +451,12 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
     /// with end-of-stream because it had not (`late`), or not at all.
     var tailStatus: StartupTiming.Tail { withLock { tailStatusValue } }
 
-    /// How many times a blocked read has re-armed the fetch. **A test-only counter, and the only
-    /// way to see the difference between a read that waits and a read that spins**: both deliver
-    /// the same bytes, and the old 50 ms poll re-armed this for the whole duration of a stall.
+    /// How many times a blocked read has re-armed the fetch. Test-only: the way to tell a read that
+    /// waits from one that spins, which deliver the same bytes.
     var ensureFetchingCalls: Int { withLock { ensureFetchingCallsValue } }
 
-    /// Bytes fetched but not yet read by the decoder. Half of the engine controller's estimate of
-    /// how much audio is buffered ahead of the listener: the other half is what is already
-    /// scheduled at the player node, and neither alone is the answer.
+    /// Bytes fetched but not yet read by the decoder; half of the engine controller's estimate of
+    /// audio buffered ahead (the other half is what is scheduled at the player node).
     var bufferedAheadBytes: Int64 { withLock { max(frontier - positionValue, 0) } }
 
     /// Called on the reading thread each time ``read(into:maxLength:)`` has waited ``blockedWaitSeconds`` for
@@ -497,13 +468,11 @@ final class HTTPRangeByteSource: NSObject, StreamByteReader {
 
     private var onReadWaitingValue: (() -> Void)?
 
-    /// The first byte the window does not hold yet: where a continuation opens. Distinct from the
-    /// end of the range the origin was asked for, which a throttled body has not reached.
+    /// The first byte the window does not hold yet: where a continuation opens.
     var fetchFrontier: Int64 { withLock { frontier } }
 
-    /// Media duration in seconds when the caller knows it, so the seconds-based read-ahead window
-    /// can be turned into bytes (`totalBytes / duration`). Without it the policy's byte default is
-    /// used, exactly as the loader did before its time base resolved.
+    /// Media duration in seconds, to turn the seconds-based read-ahead window into bytes
+    /// (`totalBytes / duration`). Without it the policy's byte default is used.
     var durationHint: TimeInterval? {
         get { withLock { durationHintValue } }
         set {
