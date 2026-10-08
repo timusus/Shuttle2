@@ -6,8 +6,8 @@ S2 gets an iOS app that shares everything from the ViewModel layer down with And
 presentation layer (Compose on Android, SwiftUI on iOS) and genuinely platform-bound services
 (playback engine, local library scanning, billing, Cast/AirPlay, widgets) are per-platform.
 
-The template is Shuttle Podcasts (`~/projects/simplecity-apps/podcasts/main/mobile`): see its
-`.claude/rules/shared-kmp.md` and `.claude/rules/ios.md` (the former says SQLDelight; it's Room KMP now).
+The template is Shuttle Podcasts (`~/projects/simplecity-apps/podcasts/main/mobile`); this repo's
+`.claude/rules/ios.md` covers the `shared/` KMP module and the iOS app that links it.
 
 ## Decisions
 
