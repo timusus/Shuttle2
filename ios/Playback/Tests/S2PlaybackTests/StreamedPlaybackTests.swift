@@ -159,6 +159,28 @@ final class StreamedPlaybackTests: XCTestCase {
         XCTAssertEqual(log.failures, [])
     }
 
+    /// A range-ignoring host whose `Content-Length` promises more than its body holds: a seek inside the promised
+    /// length but past the real body is a seek it can't make, never a failure. Known issue (shuttle-playback#71): the
+    /// source fails the track as soon as the short body ends, before any seek.
+    func testASeekBeyondAnOverpromisedBodyIsUnsupportedNotAFailure() throws {
+        let (server, body, _) = try served(sine(seconds: 2))
+        server.respondsWholeBodyIgnoringRange = true
+        server.contentLengthLie = body.count - 80_000
+        let (controller, log) = try makeController()
+        controller.load(current: streamed("A", server.url), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 4_800)
+
+        controller.seek(toMs: 1_500)
+        controller.syncForTesting()
+        _ = try renderer.render(frames: 9_600)
+
+        XCTExpectFailure("shuttle-playback#71: an over-promised body fails the track") {
+            XCTAssertEqual(log.failures, [])
+        }
+    }
+
     /// A transcode's estimated length can promise bytes the server never sends: a seek past the length is refused as
     /// unseekable, which the engine reports as a seek it can't make (#950).
     func testASeekPastTheStreamsLengthIsRefusedAsUnseekable() throws {

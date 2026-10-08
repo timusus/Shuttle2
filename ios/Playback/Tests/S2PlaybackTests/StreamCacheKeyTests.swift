@@ -95,6 +95,16 @@ final class StreamCacheKeyTests: XCTestCase {
         )
     }
 
+    func testSubsonicPlaysOfTheSameStreamShareAKey() {
+        func subsonic(id: String, token: String, salt: String) -> URL {
+            URL(string: "https://sub.example.com/rest/stream?id=\(id)&format=raw&u=me&t=\(token)&s=\(salt)&v=1.16.1&c=Shuttle")!
+        }
+        let key = StreamCacheKey.key(for: subsonic(id: "42", token: "aaa", salt: "x1"))
+        XCTAssertEqual(key, StreamCacheKey.key(for: subsonic(id: "42", token: "bbb", salt: "x2")))
+        XCTAssertEqual(key, "https://sub.example.com/rest/stream?id=42&format=raw&u=me&v=1.16.1&c=Shuttle")
+        XCTAssertNotEqual(key, StreamCacheKey.key(for: subsonic(id: "43", token: "aaa", salt: "x1")))
+    }
+
     func testAURLWithNothingToDropIsKeptAsGiven() {
         let url = URL(string: "http://host/a.mp3?b=1&a=%2F")!
         XCTAssertEqual(StreamCacheKey.key(for: url), url.absoluteString)

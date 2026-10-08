@@ -7,10 +7,12 @@ import Foundation
 /// different stream of the same song keeps a key of its own.
 enum StreamCacheKey {
     /// Per-play session ids and auth tokens, matched case-insensitively: Jellyfin's `ApiKey`, Emby's `api_key`, the
-    /// MediaBrowser header tokens either accepts in the query, and Plex's token and transcode session identifier.
+    /// MediaBrowser header tokens either accepts in the query, Plex's token and transcode session identifier, and Subsonic's per-URL token and salt (`t`, `s`;
+    /// no other server's content-identifying parameter is named either).
     static let volatileParameters: Set<String> = [
         "playsessionid", "api_key", "apikey", "x-emby-token", "x-mediabrowser-token",
         "x-plex-token", "x-plex-session-identifier",
+        "t", "s",
     ]
 
     /// Plex's bare `session` (a fresh UUID per transcode start) is too generic a name to drop everywhere, so it goes

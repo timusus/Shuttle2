@@ -16,7 +16,7 @@ final class StreamedTrackReader: StreamByteReader {
 
     let source: GrowingFileByteSource
     private let onWait: () -> Void
-    private let queue = DispatchQueue(label: "com.simplecityapps.shuttle2.stream-read")
+    private let queue = DispatchQueue(label: "com.simplecityapps.shuttle2.stream-read", qos: .userInitiated)
 
     init(_ source: GrowingFileByteSource, onWait: @escaping () -> Void) {
         self.source = source
