@@ -126,7 +126,7 @@ final class StartupTimingTests: XCTestCase {
                 startedAt: 2, finishedAt: 3, probe: StartupTiming.Probe(codec: "mp3", container: "mp3", bytes: 100),
                 requestIssuedAt: 2.1, firstResponseAt: 2.5,
                 firstResponse: StartupTiming.FirstResponse(status: 206, redirects: 0, hosts: []),
-                transactions: 1, tail: StartupTiming.Tail.none
+                transactions: 1
             )
         )
         timing.positionedAt = 10.001

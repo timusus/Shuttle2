@@ -15,6 +15,10 @@ final class KotlinServerConnectionPolicy: ServerConnectionPolicy, @unchecked Sen
         policy.headers(url: url.absoluteString)
     }
 
+    func trustedCertificate(for url: URL) -> String? {
+        policy.trustedCertificate(url: url.absoluteString)
+    }
+
     func redirected(_ request: URLRequest, from origin: URL?) -> URLRequest {
         policy.redirected(request: request, origin: origin) as URLRequest
     }

@@ -97,4 +97,13 @@ class ServerRequestPolicyTest {
         val other = request("https://other.example.com/a")
         policy.redirected(other, NSURL.URLWithString("https://plain.example.com/a")) shouldBe other
     }
+
+    @Test
+    fun theTrustedCertificateIsTheServersOwn() {
+        store.trustCertificate(ServerOrigin.of("music.example.com", 8920), "ab:cd:ef")
+
+        policy.trustedCertificate(server) shouldBe "ABCDEF"
+        policy.trustedCertificate("https://music.example.com/Audio/1/stream").shouldBeNull()
+        policy.trustedCertificate("https://secure.example.com/a").shouldBeNull()
+    }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import PlaybackStreaming
 
 /// How requests to a media server are made beyond its credentials (#894, #921): the custom headers the user set for it
 /// (a reverse proxy's access token, say) and the one self-signed certificate they trusted for it. The app's implementation
@@ -8,6 +9,9 @@ import Foundation
 public protocol ServerConnectionPolicy: AnyObject, Sendable {
     /// The custom headers for a request to `url`: none for a server without any, or for a host that isn't a configured server.
     func headers(for url: URL) -> [String: String]
+
+    /// The SHA-256 fingerprint of the leaf certificate the user trusted for `url`'s server, nil when there is none.
+    func trustedCertificate(for url: URL) -> String?
 
     /// `request`, a redirect from `origin`, without the headers of the server it was made to if it now goes to another host.
     func redirected(_ request: URLRequest, from origin: URL?) -> URLRequest
@@ -47,5 +51,17 @@ public enum ServerConnections {
     ) {
         guard let policy else { return completion(.performDefaultHandling, nil) }
         policy.handleChallenge(challenge, completion: completion)
+    }
+}
+
+extension ServerConnectionPolicy {
+    /// The policy for a stream of `url`, as the growing-file source takes it: the server's custom headers, and its
+    /// trusted certificate as an exception to the system's trust. The source keeps both to the server's own origin, as
+    /// ``redirected(_:from:)`` does. Read once, when the stream opens.
+    func growingFilePolicy(for url: URL) -> GrowingFileConnectionPolicy {
+        GrowingFileConnectionPolicy(
+            headers: headers(for: url),
+            trustedLeafSHA256: trustedCertificate(for: url).map { [$0] } ?? []
+        )
     }
 }

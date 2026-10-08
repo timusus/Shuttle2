@@ -42,18 +42,24 @@ public struct PlaybackTrack {
         self.makeSource = makeSource
     }
 
-    /// A file or HTTP(S) URL decoded by FFmpeg.
+    /// A file or HTTP(S) URL decoded by FFmpeg. A stream's `bitrateKbps` and `sizeBytes` (the library's) size how far
+    /// it downloads ahead on an expensive network path (``StreamReadAhead``).
     public init(
         uid: String,
         url: URL,
         headers: [String: String] = [:],
         gainDb: Float = 0,
-        expectedDurationMs: Int64? = nil
+        expectedDurationMs: Int64? = nil,
+        bitrateKbps: Int? = nil,
+        sizeBytes: Int64? = nil
     ) {
         let identity = ([url.absoluteString] + headers.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" })
             .joined(separator: "\n")
+        let readAhead = url.isFileURL
+            ? nil
+            : StreamReadAhead.readAhead(bitrateKbps: bitrateKbps, sizeBytes: sizeBytes, durationMs: expectedDurationMs)
         self.init(uid: uid, streamIdentity: identity, gainDb: gainDb, expectedDurationMs: expectedDurationMs) {
-            FFmpegTrackSource(url: url, headers: headers)
+            FFmpegTrackSource(url: url, headers: headers, readAhead: readAhead)
         }
     }
 

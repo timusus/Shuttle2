@@ -1,5 +1,6 @@
 import Foundation
 import PlaybackDecode
+import PlaybackStreaming
 
 /// Why a ``TrackPCMSource`` could not deliver audio.
 public enum TrackSourceError: Error, Equatable {
@@ -61,13 +62,15 @@ public extension TrackPCMSource {
 
 /// A track decoded by shuttle-playback's `FFmpegStreamDecoder` from a file or an HTTP(S) URL.
 ///
-/// File URLs are read through `FileByteReader`; anything else through ``HTTPRangeByteSource``
-/// (range requests, read-ahead and the on-disk run cache Podcasts built for streaming). The decoder
-/// owns demux, decode, the conversion to the controller's format and sample-accurate seeking; this
-/// picks the byte source and maps the decoder's errors to ``TrackSourceError``.
+/// File URLs, and streams ``StreamStore`` kept whole, are read through `FileByteReader`; anything
+/// else downloads through shuttle-playback's `GrowingFileByteSource` (``StreamedTrackReader``),
+/// kept under the stream's token-free ``StreamCacheKey``. The decoder owns demux, decode, the
+/// conversion to the controller's format and sample-accurate seeking; this picks the byte source
+/// and maps the decoder's errors to ``TrackSourceError``.
 public final class FFmpegTrackSource: TrackPCMSource {
     private let url: URL
-    private let makeReader: () throws -> StreamByteReader
+    /// The reader, and the kept download it reads when it reads one.
+    private let makeReader: (_ onWait: @escaping () -> Void) throws -> (StreamByteReader, URL?)
     private let lock = NSLock()
     private var reader: StreamByteReader?
     private var decoder: FFmpegStreamDecoder?
@@ -83,36 +86,56 @@ public final class FFmpegTrackSource: TrackPCMSource {
     private var readWaiting: (() -> Void)?
     private var durationSeconds: Double?
 
-    public init(url: URL, headers: [String: String] = [:]) {
+    /// `readAhead` caps how far a stream downloads ahead of the decoder on an expensive network path; nil
+    /// downloads it whole.
+    public convenience init(url: URL, headers: [String: String] = [:], readAhead: GrowingFileReadAhead? = nil) {
+        self.init(url: url, headers: headers, readAhead: readAhead, store: StreamStore.shared)
+    }
+
+    /// Tests: streams into `store` rather than the app's.
+    init(url: URL, headers: [String: String] = [:], readAhead: GrowingFileReadAhead? = nil, store: GrowingFileStore) {
         self.url = url
-        makeReader = {
-            if url.isFileURL { return try FileByteReader(url: url) }
-            return HTTPRangeByteSource(url: url, authHeaders: headers)
+        makeReader = { onWait in
+            if url.isFileURL { return (try FileByteReader(url: url), nil) }
+            let key = StreamCacheKey.stableURL(for: url)
+            if let kept = store.completedFile(for: key) { return (try FileByteReader(url: kept), kept) }
+            let source = GrowingFileByteSource(
+                url: url,
+                authHeaders: headers,
+                cacheKey: key,
+                connectionPolicy: ServerConnections.policy?.growingFilePolicy(for: url),
+                readAhead: readAhead,
+                store: store
+            )
+            return (StreamedTrackReader(source, onWait: onWait), nil)
         }
     }
 
     /// Tests: reads `url`'s bytes through `makeReader`'s reader, not one picked by its scheme.
     init(url: URL, makeReader: @escaping () throws -> StreamByteReader) {
         self.url = url
-        self.makeReader = makeReader
+        self.makeReader = { _ in (try makeReader(), nil) }
     }
 
     public func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
         let reader: StreamByteReader
+        let keptFile: URL?
         do {
-            reader = try makeReader()
+            (reader, keptFile) = try makeReader { [weak self] in self?.lock.withLock { self?.readWaiting }?() }
         } catch {
             throw TrackSourceError.failed("open \(url.lastPathComponent): \(error)")
         }
+        let stream = (reader as? StreamedTrackReader)?.source
         let decoder = FFmpegStreamDecoder(reader: reader)
         lock.lock()
-        if let readWaiting { (reader as? HTTPRangeByteSource)?.onReadWaiting = readWaiting }
         let wasCancelled = cancelled
         self.reader = reader
         self.decoder = decoder
         openStartedAt = StartupTiming.now()
         lock.unlock()
         if wasCancelled { decoder.cancel() }
+        stream?.isProbing = true
+        defer { stream?.isProbing = false }
         do {
             let format = try decoder.open()
             lock.withLock {
@@ -130,6 +153,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
         } catch StreamDecoderError.interrupted {
             throw TrackSourceError.interrupted
         } catch {
+            // Bytes the decoder couldn't open aren't kept for the next play.
+            stream?.cancelDiscardingCache()
+            keptFile.map { try? FileManager.default.removeItem(at: $0) }
             throw TrackSourceError.failed("decode \(url.lastPathComponent): \(error)")
         }
     }
@@ -178,9 +204,11 @@ public final class FFmpegTrackSource: TrackPCMSource {
     /// a stream whose length or duration isn't known. For the buffer health line (#897).
     var networkBufferedSeconds: Double? {
         let (reader, duration) = lock.withLock { (reader, durationSeconds) }
-        guard let http = reader as? HTTPRangeByteSource, let duration, let total = http.totalLength, total > 0
-        else { return nil }
-        return Double(http.bufferedAheadBytes) * duration / Double(total)
+        guard let stream = (reader as? StreamedTrackReader)?.source, let duration else { return nil }
+        let file = stream.snapshot
+        guard let total = file.totalLength, total > 0 else { return nil }
+        let ahead = max(0, file.frontier - max(stream.position, file.base))
+        return Double(ahead) * duration / Double(total)
     }
 
     /// What the open learned and cost, for the start timing (#687); nil until it began. The
@@ -189,12 +217,15 @@ public final class FFmpegTrackSource: TrackPCMSource {
         let (reader, startedAt, finishedAt, probe) = lock.withLock { (reader, openStartedAt, openFinishedAt, probe) }
         guard let startedAt else { return nil }
         var stats = StartupTiming.OpenStats(startedAt: startedAt, finishedAt: finishedAt, probe: probe)
-        if let http = reader as? HTTPRangeByteSource {
-            stats.requestIssuedAt = http.requestIssuedAt
-            stats.firstResponseAt = http.firstResponseAt
-            stats.firstResponse = http.firstResponse
-            stats.transactions = http.transactionCount
-            stats.tail = http.tailStatus
+        if let stream = (reader as? StreamedTrackReader)?.source {
+            let startup = stream.startup
+            stats.requestIssuedAt = startup.requestIssuedAt
+            stats.firstResponseAt = startup.firstResponseAt
+            stats.firstResponse = startup.status.map {
+                StartupTiming.FirstResponse(status: $0, redirects: startup.hosts.count, hosts: startup.hosts,
+                                            remembered: startup.remembered)
+            }
+            stats.transactions = stream.snapshot.transactionGeneration
         }
         return stats
     }

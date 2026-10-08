@@ -7,8 +7,8 @@ import Testing
 
 /// A server's custom headers and pinned self-signed certificate on the sessions Swift makes itself: streaming and artwork
 /// (#921). The rule is Kotlin's `ServerRequestPolicy`, over the same store as the Ktor client's, so these seed a test graph
-/// the way the sign-in does and ask the real thing; the streaming and artwork sessions both answer through
-/// `ServerConnections.handle` and the policy's headers.
+/// the way the sign-in does and ask the real thing. The artwork session answers through `ServerConnections.handle`; the
+/// streaming source is handed the headers and the certificate's fingerprint (`trustedCertificate(for:)`).
 struct ServerConnectionSessionTests {
 
     /// Self-signed certificates made for these tests alone (CN=pinned.test and CN=other.test); neither key was kept.
@@ -110,13 +110,14 @@ struct ServerConnectionSessionTests {
         #expect(try answer(delegate: PlexTokenRedirectGuard(policy: fixture.policy), host: fixture.host, certificate: Self.pinnedCertificate) == .performDefaultHandling)
     }
 
-    /// The streaming source answers its challenges with `ServerConnections.handle`, as this does.
-    @Test func theStreamingSessionAcceptsThePinnedCertificateAndRefusesOthers() throws {
+    /// The streaming source answers its own challenges: it is handed the pinned certificate's fingerprint for the server.
+    @Test func theStreamingSourceIsHandedThePinnedCertificateForItsServerOnly() {
         let fixture = Fixture()
 
-        #expect(try handle(policy: fixture.policy, host: fixture.host, certificate: Self.pinnedCertificate) == .useCredential)
-        #expect(try handle(policy: fixture.policy, host: fixture.host, certificate: Self.otherCertificate) == .performDefaultHandling)
-        #expect(try handle(policy: nil, host: fixture.host, certificate: Self.pinnedCertificate) == .performDefaultHandling)
+        #expect(fixture.policy.trustedCertificate(for: fixture.url) == Fixture.fingerprint(of: Self.pinnedCertificate))
+        #expect(fixture.policy.trustedCertificate(for: URL(string: "https://elsewhere.test:8920/x")!) == nil)
+        let untrusted = Fixture(trusting: nil)
+        #expect(untrusted.policy.trustedCertificate(for: untrusted.url) == nil)
     }
 
     // MARK: - Helpers
@@ -126,12 +127,6 @@ struct ServerConnectionSessionTests {
         delegate.urlSession(URLSession.shared, task: URLSession.shared.dataTask(with: URL(string: "https://\(host):8920/")!), didReceive: try challenge(host: host, certificate: certificate)) { disposition, _ in
             result = disposition
         }
-        return try #require(result)
-    }
-
-    private func handle(policy: ServerConnectionPolicy?, host: String, certificate: String) throws -> URLSession.AuthChallengeDisposition {
-        var result: URLSession.AuthChallengeDisposition?
-        ServerConnections.handle(try challenge(host: host, certificate: certificate), policy: policy) { disposition, _ in result = disposition }
         return try #require(result)
     }
 

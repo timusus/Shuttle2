@@ -373,7 +373,7 @@ struct SettingsContent: View {
 
     /// The FFmpeg build the app links, in the shuttle-playback version Playback/Package.swift pins: the build script
     /// (the n7.1 tag, the configure options) and its patch. Bump the tag with the pin.
-    static let ffmpegSourceURL = URL(string: "https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts")!
+    static let ffmpegSourceURL = URL(string: "https://github.com/timusus/shuttle-playback/tree/0.5.0/scripts")!
 
     /// "2026.09.28 (26092801)": the marketing version and build, as Android's About shows its version name.
     static var appVersion: String {

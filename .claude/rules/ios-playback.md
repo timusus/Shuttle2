@@ -46,9 +46,9 @@ and notifications posted on a private centre. Background audio is `UIBackgroundM
   paused (#715).
 - Logging (#897): everything under subsystem `com.simplecityapps.shuttle2`, the Kotlin `Logger` included (`OsLogLogger`
   in :shared, tag as category, through Swift's `KotlinLogSink`: the format string must be a Swift literal or `log show`
-  renders `<compose failure>`, #899). Playback's four categories persist at info (project.yml `OSLogPreferences`), so
+  renders `<compose failure>`, #899). Playback's categories persist at info (project.yml `OSLogPreferences`), so
   `sudo log collect --device` after a stall has them: `playback` (Kotlin `IosPlayerController` and Swift `PlayIntent`:
   every command with its source, state changes, transitions, failures), `audio-engine` (state, gapless or not
-  transitions, underruns, buffer health, restarts), `network` (byte source opens, closes with bytes/duration/throughput,
-  retries, reopens, failures: host, and path hashed, never a query) and `session` (interruptions, route changes with
-  outputs, where each pause came from). Song ids, never titles; nothing per buffer.
+  transitions, underruns, buffer health, restarts) and `session` (interruptions, route changes with outputs, where each
+  pause came from). Stream downloads log under shuttle-playback's own subsystem, `com.simplecityapps.shuttle-playback`
+  category `download`, persisted the same way. Song ids, never titles; nothing per buffer.

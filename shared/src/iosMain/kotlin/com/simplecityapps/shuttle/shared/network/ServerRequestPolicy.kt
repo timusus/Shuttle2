@@ -24,6 +24,12 @@ class ServerRequestPolicy(
     fun headers(url: String): Map<String, String> = store.requestHeaders(url)
 
     /**
+     * The fingerprint of the certificate the user trusted for [url]'s server (SHA-256 of the leaf, upper-case hex), or
+     * null: for a session that answers its own TLS challenges (the streaming byte source).
+     */
+    fun trustedCertificate(url: String): String? = store.connection(url).trustedCertificate
+
+    /**
      * [request], a redirect from [origin] (the address the task was started with, the server's), with the custom headers
      * of that server only while it goes to the same scheme, host and port: `URLSession` carries a request's headers over a
      * redirect, so a server could otherwise send its proxy token to another host, or in cleartext. Decided on every hop

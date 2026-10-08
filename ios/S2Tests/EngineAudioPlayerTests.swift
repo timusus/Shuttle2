@@ -52,11 +52,17 @@ struct EngineAudioPlayerTests {
     }
 
     private func track(_ id: String, _ url: String = "file:///music/song.flac", gainDb: Float = 0) -> IosAudioTrack {
-        IosAudioTrack(id: id, url: url, headers: ["X-Token": "t"], gainDb: gainDb, expectedDurationMs: 180_000)
+        IosAudioTrack(
+            id: id, url: url, headers: ["X-Token": "t"], gainDb: gainDb, expectedDurationMs: 180_000,
+            bitrateKbps: 320, sizeBytes: -1
+        )
     }
 
     private func engineTrack(_ id: String, _ url: String = "file:///music/song.flac") -> EngineTrack {
-        EngineTrack(id: id, url: URL(string: url)!, headers: ["X-Token": "t"], gainDb: 0, expectedDurationMs: 180_000)
+        EngineTrack(
+            id: id, url: URL(string: url)!, headers: ["X-Token": "t"], gainDb: 0, expectedDurationMs: 180_000,
+            bitrateKbps: 320, sizeBytes: nil
+        )
     }
 
     // MARK: - Forwarding

@@ -11,7 +11,8 @@ FFmpeg (#957). This package holds:
 - `MusicPlaybackController`, the gapless two-track AVAudioEngine player that the Kotlin
   `EnginePlayerController` drives, with its DSP and pre-open;
 - `FFmpegTrackSource`, the `TrackPCMSource` over shuttle-playback's decoder;
-- `HTTPRangeByteSource` and its run cache, the streaming `StreamByteReader` copied from Shuttle Podcasts;
+- the streaming glue over shuttle-playback's `GrowingFileByteSource` (its `PlaybackStreaming` product): the app's
+  store, the read-ahead and the reader the decoder reads (#958);
 - `S2Tags` (product `S2Tags`): the local-file tag reader (`AudioFileTags`, `CS2Tags/tag_read.c`) on the
   package's `FFmpeg` product, so the app links exactly one FFmpeg.
 
@@ -21,7 +22,7 @@ FFmpeg (#957). This package holds:
 PlaybackTrack(uid, gainDb, source) ──► TrackPCMSource ──► PCMProcessor ──► AVAudioPlayerNode ──► mainMixer ──► output
                                         (FFmpegTrackSource:    (ReplayGain → EQ    (one node, one stream,
                                          FileByteReader or      preamp → biquads    fixed stereo float32 at
-                                         HTTPRangeByteSource    → lookahead         outputSampleRate)
+                                         GrowingFileByteSource  → lookahead         outputSampleRate)
                                          → FFmpegStreamDecoder  limiter)
                                          → swresample)
 ```
@@ -60,6 +61,8 @@ and the next resumes the stream from its first frame once open.
   follows what opens have actually been taking, with room for one slower than any seen, and shrinks
   back as slow ones age out. The first open on a slow server can still be late (nothing measured
   yet), but the current track's own load is measured before its next is due, so that is rare.
+  On an expensive or constrained path the lead stays the same: the stream's read-ahead cap
+  (`StreamReadAhead`) already bounds what a pre-opened next downloads, and so what a skip wastes (#958).
 - *With no end known* (neither a container duration nor an expected one), the next opens once
   `steadySeconds` (default 5 s) of the current track have been read since its load or last seek:
   not at once, where it would compete with the current track's own start and be wasted by a quick
@@ -102,9 +105,18 @@ it at 0. Both are reported through `onSeekUnsupported(uid, ms)`, and the owner (
 `IosPlayerController`) re-opens the stream at the position with `StartTimeTicks`. A next track that
 the skipped seek interrupted is sought back to where it was read to, so the join stays gapless.
 A stream whose length was only estimated (a Subsonic transcode) looks seekable until a seek it can't
-serve: the source throws `TrackSourceError.unseekable`, is unseekable from then on, and the decode is
+serve (`StreamedTrackReader` refuses one past the stream's length, #950): the source throws
+`TrackSourceError.unseekable`, is unseekable from then on, and the decode is
 over. The controller reports that seek through `onSeekUnsupported` too, never `onFailed`, and reads
 nothing more from the track (no failure, no move to the next) until the owner re-opens it.
+
+**Streaming (#958).** An HTTP(S) track downloads through shuttle-playback's `GrowingFileByteSource` into
+`StreamStore`, S2's `GrowingFileStore` under Caches (512 MiB, swept of partials at launch). A track downloaded
+whole is kept, keyed on `StreamCacheKey` (the URL less its per-play session id and token), and plays from the file
+next time. On Wi-Fi the whole file downloads; on an expensive or constrained path only `StreamReadAhead` (a minute
+of audio at the library's bitrate, else the file's average, else 320 kbps) runs ahead of the decoder. The server's
+custom headers and trusted certificate come from `ServerConnections.policy` as the source's connection policy.
+`StreamedTrackReader` is what the decoder reads: it reports a read waiting on the network each second.
 
 **Threading.** Public methods return at once. Source seeks and reads and all node operations run on
 one serial engine queue; a next track's open runs on a background queue, and nothing touches its
@@ -132,16 +144,10 @@ The decoder S2 once adapted from Podcasts (its own `stream_decode.c`, `FFmpegStr
 additions (an output rate and channel count, mono spread, sample-accurate seeks) upstream (#957).
 
 - **Copied**:
-  - `Decode/`: `ReadAheadTunables`.
-  - `Streaming/`: `CachedRunStore`, `ResolvedURLCache`, `ReadAheadPolicy`, `AudioByteTee`. The tee
-    and appetite hooks are nil by default.
-  - Test support: `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`, `tone_moov_last.m4a`.
-  - Their tests.
+  - Test support: `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`, `tone_moov_last.m4a`. Streaming tests
+    serve through shuttle-playback's own `LoopbackMediaServer` (`PlaybackStreamingTestSupport`) instead.
 - **Adapted.** S2 additions are marked `S2:`.
-  - `HTTPRangeByteSource` (a shuttle-playback `StreamByteReader`) keys its kept run and remembered redirect end on `StreamCacheKey`, the URL
-    less its per-play session id and token, and fetches the 128-byte tail only for what might be an mp3
-    (#822).
-  - `StartupTiming` keeps Podcasts' nested types and its `ttfa-net` line, but its record is the
+  - `StartupTiming` keeps Podcasts' nested types, but its record is the
     controller's start (#687): the Podcasts-only teardown, swap, tee and chain stages are gone, and
     it adds `open` (pre-opened or not), `play-after-ready` and `play`.
   - `Biquad` adds `adoptState`; its factories were dropped, as the shared Kotlin EQ designs the bands.
@@ -151,7 +157,8 @@ additions (an output rate and channel count, mono spread, sample-accurate seeks)
   - `Engine/TrackPCMSource.swift`: the protocol and `FFmpegTrackSource`, the adapter to
     shuttle-playback's decoder. A seek the reader refuses (`.unseekable`) makes the track unseekable.
   - `Engine/MusicPlaybackController.swift`.
-  - `Streaming/StreamCacheKey.swift`.
+  - `Streaming/`: `StreamCacheKey`, `StreamStore`, `StreamReadAhead`, `StreamedTrackReader`, and
+    `ServerConnections`' mapping to the source's connection policy.
   - `DSP/PCMProcessor.swift`.
   - `S2Tags`: `AudioFileTags` and `CS2Tags/tag_read.c` (#590).
   - The music tests and the FLAC, Opus, Vorbis, ALAC, AIFF and 24-bit WAV fixtures.

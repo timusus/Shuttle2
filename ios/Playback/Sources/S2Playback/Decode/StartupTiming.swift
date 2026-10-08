@@ -47,7 +47,6 @@ struct StartupTiming: Equatable {
         var firstResponseAt: TimeInterval?
         var firstResponse: FirstResponse?
         var transactions: Int?
-        var tail: Tail?
     }
 
     /// The first HTTP response body of the source: what the tap paid before a byte of media arrived.
@@ -57,9 +56,8 @@ struct StartupTiming: Equatable {
         let redirects: Int
         /// Each hop's destination host, in order. Empty when there was no redirect.
         let hosts: [String]
-        /// The transaction opened at a chain end remembered from an earlier play
-        /// (``ResolvedURLCache``), so `redirects` is 0 because none were needed, not because the
-        /// enclosure has none.
+        /// The transaction opened at a redirect chain's end the source remembered from an earlier
+        /// transaction, so `redirects` is 0 because none were needed, not because the URL has none.
         let remembered: Bool
 
         init(status: Int, redirects: Int, hosts: [String], remembered: Bool = false) {
@@ -68,45 +66,6 @@ struct StartupTiming: Equatable {
             self.hosts = hosts
             self.remembered = remembered
         }
-    }
-
-    /// How the mp3 footer look (`ff_id3v1_read`: seek to `size - 128`, read, seek back) was
-    /// answered by the byte source. It is never waited on; `late` says the probe went without it.
-    enum Tail: String, Equatable {
-        /// No side fetch was needed: not an HTTP source, no total, or the first body reached the end.
-        case none = "-"
-        /// Served from the run's sidecar, kept by an earlier play. No network.
-        case sidecar
-        /// The side fetch was still in flight when the first buffer was scheduled and the decoder
-        /// never looked.
-        case pending
-        /// The side fetch landed before the decoder looked.
-        case fetched
-        /// The decoder looked before the side fetch landed and was given end-of-stream instead.
-        case late
-        /// The side fetch failed; a look would take the ordinary route, a transaction at the tail.
-        case dropped
-    }
-
-    /// What `URLSessionTaskMetrics` reported for the transaction that produced ``FirstResponse``:
-    /// how the phone's 3–5 s `first-response` window splits into dns/connect/tls/server, so a slow
-    /// start can be blamed on a stage instead of guessed at (#193).
-    ///
-    /// Metrics land only when the task itself finishes, and the first transaction is a bounded
-    /// read-ahead range that keeps streaming well past the node's first render — so these never
-    /// make it into the `ttfa` line, which has already gone out by then. ``HTTPRangeByteSource``
-    /// logs them on their own `engine: ttfa-net` line instead, joined to the `ttfa` line by
-    /// ``netKey``.
-    struct NetMetrics: Equatable {
-        let dnsMs: Int?
-        let connectMs: Int?
-        let tlsMs: Int?
-        let serverMs: Int?
-        let reusedConnection: Bool
-        let networkProtocol: String
-        /// `fetchStartDate` minus the task's own start: time spent queued inside `URLSession`
-        /// before the transaction began, ahead of anything DNS/connect/server can explain.
-        let queuedMs: Int?
     }
 
     /// What FFmpeg's `open()` learned and what it cost.
@@ -189,10 +148,8 @@ struct StartupTiming: Equatable {
     /// The render watch gave up before the node's clock moved.
     var renderTimedOut = false
     /// Response bodies the byte source had opened when the first buffer was scheduled. A fresh
-    /// stream is 1; a resume is 2 unless the head probe's window already covered the offset.
+    /// stream is 1; a resume is 2 unless the download already held the offset.
     var transactions: Int?
-    /// How the footer look was answered, stamped with ``transactions``. Nil for a file.
-    var tail: Tail?
 
     /// Above this the line is repeated at `.error`, so a slow start is one grep away.
     static let slowThresholdMs = 3000
@@ -212,7 +169,6 @@ struct StartupTiming: Equatable {
     mutating func apply(_ stats: OpenStats) {
         probe = stats.probe
         transactions = stats.transactions
-        tail = stats.tail
         guard open == .opened, stats.startedAt >= playRequestedAt else { return }
         probeStartedAt = stats.startedAt
         probeFinishedAt = stats.finishedAt
@@ -236,10 +192,6 @@ struct StartupTiming: Equatable {
     var preRequestMs: Int? { delta(playRequestedAt, requestIssuedAt) }
     /// Play → first response. Nil for a file, which never opens a transaction.
     var firstResponseMs: Int? { delta(playRequestedAt, firstResponseAt) }
-    /// Joins this line's `first-response` instant to the `engine: ttfa-net` line
-    /// ``HTTPRangeByteSource`` logs once its ``NetMetrics`` land. Nil for a file, or a line with
-    /// no first response at all.
-    var netKey: Int? { firstResponseAt.map { Int(($0 * 1000).rounded()) } }
     /// First response → `open()` returned; with no response (a file, or a stream served from the
     /// run on disk) from the moment `open()` began.
     var probeMs: Int? {
@@ -296,7 +248,6 @@ struct StartupTiming: Equatable {
             fields.append("resolved=\(resolved)")
             fields.append("pre-request=\(ms(preRequestMs))")
             fields.append("first-response=\(ms(firstResponseMs))")
-            fields.append("net-key=\(netKey.map(String.init) ?? "-")")
         }
         fields.append("probe=\(ms(probeMs))")
         fields.append("probe-bytes=\(probe.map { String($0.bytes) } ?? "-")")
@@ -309,7 +260,6 @@ struct StartupTiming: Equatable {
         fields.append("render=\(renderTimedOut ? "timeout" : ms(renderMs))")
         if source == .streamed {
             fields.append("transactions=\(transactions.map(String.init) ?? "-")")
-            fields.append("tail=\(tail?.rawValue ?? "-")")
         }
         return fields.joined(separator: " ")
     }
@@ -321,23 +271,7 @@ struct StartupTiming: Equatable {
         }
     }
 
-    private func ms(_ value: Int?) -> String { Self.formatMs(value) }
-
-    /// `Nms`, or `-` for a stage that did not happen.
-    static func formatMs(_ value: Int?) -> String {
+    private func ms(_ value: Int?) -> String {
         value.map { "\($0)ms" } ?? "-"
-    }
-
-    // MARK: - The net line
-
-    /// The `engine: ttfa-net` line ``HTTPRangeByteSource`` logs once ``NetMetrics`` land for a
-    /// source's first transaction. `key` is the `ttfa` line's ``netKey`` for the same play, so a
-    /// device log can join the two even though the net line always comes second.
-    static func netLogLine(key: Int, host: String, status: Int, metrics: NetMetrics) -> String {
-        """
-        engine: ttfa-net key=\(key) host=\(host) status=\(status) dns=\(formatMs(metrics.dnsMs)) \
-        connect=\(formatMs(metrics.connectMs)) tls=\(formatMs(metrics.tlsMs)) server=\(formatMs(metrics.serverMs)) \
-        reused=\(metrics.reusedConnection) proto=\(metrics.networkProtocol) queued=\(formatMs(metrics.queuedMs))
-        """
     }
 }

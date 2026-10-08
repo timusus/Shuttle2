@@ -9,6 +9,9 @@ struct EngineTrack: Equatable {
     let gainDb: Float
     /// The library's duration of the stream (ms), nil if unknown: when to open the track after it.
     let expectedDurationMs: Int64?
+    /// The library's bitrate and file size, nil if unknown: how far a stream reads ahead on mobile data.
+    let bitrateKbps: Int?
+    let sizeBytes: Int64?
 }
 
 /// `MusicPlaybackController.State`.

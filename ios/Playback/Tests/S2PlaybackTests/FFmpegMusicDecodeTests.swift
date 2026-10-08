@@ -1,5 +1,6 @@
 import XCTest
 import PlaybackDecode
+import PlaybackStreamingTestSupport
 @testable import S2Playback
 import S2PlaybackTestSupport
 
@@ -94,12 +95,13 @@ final class FFmpegMusicDecodeTests: XCTestCase {
     func testAStreamWithoutALengthIsNotSeekable() throws {
         let body = try Data(contentsOf: try fixture("tone", "mp3"))
         for withoutLength in [true, false] {
-            let server = try LoopbackMediaServer(body: body, mimeType: "audio/mpeg")
+            let server = try PlaybackStreamingTestSupport.LoopbackMediaServer(body: body, mimeType: "audio/mpeg")
             defer { server.stop() }
-            server.streamsWithoutLength = withoutLength
+            server.respondsWholeBodyIgnoringRange = withoutLength
+            server.omitsContentLength = withoutLength
             // Still arriving, as a transcode is while it is made: at its end the length is known.
             server.stallsAfterBodyBytes = 64 * 1024
-            let source = FFmpegTrackSource(url: server.url)
+            let source = FFmpegTrackSource(url: server.url, store: .temporary())
             defer { source.cancel() }
             _ = try source.open(sampleRate: 48_000, channelCount: 2)
             XCTAssertEqual(source.isSeekable, !withoutLength, "withoutLength \(withoutLength)")

@@ -114,8 +114,9 @@
 			</array>
 		</dict>
 		<dict>
-			<!-- CachedRunStore.swift (ios/Playback) reads attributesOfItem(atPath:) to check the age
-			     of a cached decode run, shown nowhere to the user; app-internal cache management only. -->
+			<!-- shuttle-playback's GrowingFileStore (StreamStore.swift, ios/Playback) reads each kept
+			     stream's modification date to evict the oldest, shown nowhere to the user; app-internal
+			     cache management only. -->
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>

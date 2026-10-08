@@ -1,8 +1,8 @@
 // swift-tools-version: 5.9
-// S2's iOS player engine (#588): the HTTP byte
-// source copied from Shuttle Podcasts, and `MusicPlaybackController`, the gapless two-item
-// AVAudioEngine controller the Kotlin `EnginePlayerController` drives. Demux, decode, resampling and
-// seeking are shuttle-playback's `PlaybackDecode` (#957).
+// S2's iOS player engine (#588): `MusicPlaybackController`, the gapless two-item AVAudioEngine
+// controller the Kotlin `EnginePlayerController` drives. Demux, decode, resampling and seeking are
+// shuttle-playback's `PlaybackDecode` (#957); streams come through its `PlaybackStreaming`
+// growing-file source (#958).
 //
 // Builds for iOS 17 and macOS 14. The macOS platform is only there so `swift test` runs the
 // offline-rendering and decoder tests on the Mac without a simulator; nothing here touches
@@ -22,12 +22,15 @@ let package = Package(
     dependencies: [
         // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one static xcframework,
         // committed in the package (LGPL notes in README.md).
-        .package(url: "https://github.com/timusus/shuttle-playback.git", exact: "0.4.0"),
+        .package(url: "https://github.com/timusus/shuttle-playback.git", exact: "0.5.0"),
     ],
     targets: [
         .target(
             name: "S2Playback",
-            dependencies: [.product(name: "PlaybackDecode", package: "shuttle-playback")]
+            dependencies: [
+                .product(name: "PlaybackDecode", package: "shuttle-playback"),
+                .product(name: "PlaybackStreaming", package: "shuttle-playback"),
+            ]
         ),
         .target(name: "S2Tags", dependencies: ["CS2Tags"]),
         // The tag reader in C, next to the libavformat API it calls. It links the package's `FFmpeg`
@@ -53,6 +56,8 @@ let package = Package(
             dependencies: [
                 "S2Playback", "S2PlaybackTestSupport",
                 .product(name: "PlaybackDecode", package: "shuttle-playback"),
+                .product(name: "PlaybackStreaming", package: "shuttle-playback"),
+                .product(name: "PlaybackStreamingTestSupport", package: "shuttle-playback"),
             ]
         ),
         .testTarget(

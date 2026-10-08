@@ -46,7 +46,9 @@ private extension PlaybackTrack {
             url: track.url,
             headers: track.headers,
             gainDb: track.gainDb,
-            expectedDurationMs: track.expectedDurationMs
+            expectedDurationMs: track.expectedDurationMs,
+            bitrateKbps: track.bitrateKbps,
+            sizeBytes: track.sizeBytes
         )
     }
 }

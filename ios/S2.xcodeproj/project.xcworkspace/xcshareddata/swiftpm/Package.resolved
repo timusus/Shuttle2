@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/timusus/shuttle-playback.git",
       "state" : {
-        "revision" : "0e54482827f687de3c31913502a7c38572e2d633",
-        "version" : "0.4.0"
+        "revision" : "2fe81d9bafc2ce5551da90ac4c141a35e97ddd24",
+        "version" : "0.5.0"
       }
     },
     {

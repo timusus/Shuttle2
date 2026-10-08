@@ -96,14 +96,15 @@ targets:
           - INAlternativeAppName: Shuttle
             INAlternativeAppNamePronunciationHint: shuttle
         NSSiriUsageDescription: Shuttle Music uses Siri to play the songs, albums, artists and playlists in your library when you ask for them by voice.
-        # Playback diagnostics (#897): the four categories keep their info lines in the unified log, so
+        # Playback diagnostics (#897): these categories keep their info lines in the unified log, so
         # `log collect` after a stall on the device has them; debug stays in memory only.
         OSLogPreferences:
           com.simplecityapps.shuttle2:
             playback: {Level: {Enable: Info, Persist: Info}}
             audio-engine: {Level: {Enable: Info, Persist: Info}}
-            network: {Level: {Enable: Info, Persist: Info}}
             session: {Level: {Enable: Info, Persist: Info}}
+          com.simplecityapps.shuttle-playback:
+            download: {Level: {Enable: Info, Persist: Info}}
         BGTaskSchedulerPermittedIdentifiers: [com.simplecityapps.shuttle.sync, com.simplecityapps.shuttle.scrobble]
         # This device's music (#590): Documents shows in Files ("On My iPhone > Shuttle Music") and Finder's file
         # sharing, so music can be copied in, and files opened there are read in place.

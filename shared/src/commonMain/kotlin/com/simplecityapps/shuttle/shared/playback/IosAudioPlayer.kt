@@ -118,7 +118,7 @@ enum class IosAudioPlayerState {
 }
 
 /**
- * A track as the engine sees it: `PlaybackTrack(uid:url:headers:gainDb:expectedDurationMs:)`. [id] is unique to this
+ * A track as the engine sees it: `PlaybackTrack(uid:url:headers:gainDb:expectedDurationMs:bitrateKbps:sizeBytes:)`. [id] is unique to this
  * handing of the track to the engine (a queue item played twice in a row, on repeat one, gets two), so a report for a
  * track the engine has since dropped can be told apart. The engine tells two hand-overs of the same stream by [url] and
  * [headers] instead: a next it pre-opened is kept when a load hands the same stream back, as the next or the current
@@ -134,7 +134,13 @@ class IosAudioTrack(
      * How long the stream should run (ms), from the library, or -1 if unknown. The engine times opening the next track
      * by the current one's end, and a progressive transcode's container doesn't say where that is.
      */
-    val expectedDurationMs: Long
+    val expectedDurationMs: Long,
+    /**
+     * The library's bitrate (kbps) and file size (bytes), or -1 if unknown: what the engine sizes a stream's read-ahead
+     * on mobile data by. A stream opened partway through has no size, as its bytes aren't the file's.
+     */
+    val bitrateKbps: Int = -1,
+    val sizeBytes: Long = -1
 ) {
     override fun toString(): String = "IosAudioTrack($id, $url)"
 }

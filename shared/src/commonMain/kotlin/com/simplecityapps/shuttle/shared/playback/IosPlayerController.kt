@@ -329,7 +329,9 @@ class IosPlayerController(
         stream.url,
         stream.headers,
         stream.gainDb,
-        (item.song.duration - offsetMs).takeIf { it > 0 }?.toLong() ?: -1
+        (item.song.duration - offsetMs).takeIf { it > 0 }?.toLong() ?: -1,
+        item.song.bitRate?.takeIf { it > 0 } ?: -1,
+        item.song.size.takeIf { it > 0 && offsetMs == 0 } ?: -1
     ).also {
         handedOver = it
         this.stream = stream

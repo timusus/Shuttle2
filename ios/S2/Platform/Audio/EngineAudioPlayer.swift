@@ -190,7 +190,9 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             url: url,
             headers: track.headers,
             gainDb: track.gainDb,
-            expectedDurationMs: track.expectedDurationMs > 0 ? track.expectedDurationMs : nil
+            expectedDurationMs: track.expectedDurationMs > 0 ? track.expectedDurationMs : nil,
+            bitrateKbps: track.bitrateKbps > 0 ? Int(track.bitrateKbps) : nil,
+            sizeBytes: track.sizeBytes > 0 ? track.sizeBytes : nil
         )
     }
 }

@@ -77,7 +77,7 @@ final class RefusingTrackSource: TrackPCMSource {
 }
 
 /// A stream that stalls at `gateFrame`: reads there wait, saying so to the wait hook every 50 ms as a stalled
-/// ``HTTPRangeByteSource`` does, until ``release()``. An interrupt ends the wait, and every read until a seek,
+/// ``StreamedTrackReader`` does each second, until ``release()``. An interrupt ends the wait, and every read until a seek,
 /// with ``TrackSourceError/interrupted``, as the real source's does.
 final class StallingTrackSource: TrackPCMSource {
     private let inner: InMemoryTrackSource

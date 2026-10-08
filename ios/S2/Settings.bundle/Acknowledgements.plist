@@ -8,7 +8,7 @@
 			<key>FooterText</key>
 			<string>Shuttle Music decodes audio with FFmpeg n7.1 (https://ffmpeg.org), licensed under the GNU Lesser General Public License version 2.1 or later. The build enables LGPL components only, with no GPL or non-free parts. FFmpeg is a trademark of Fabrice Bellard.
 
-Source: FFmpeg's n7.1 tag at https://git.ffmpeg.org/ffmpeg.git, with one patch (0001-mp3dec-keep-xing-frames-when-size-unknown.patch), built by scripts/build-ffmpeg.sh in https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts, which lists the configure options and holds the patch. The build's VERSION.txt (Frameworks/FFmpeg.xcframework) records the tag, the options and the patch.
+Source: FFmpeg's n7.1 tag at https://git.ffmpeg.org/ffmpeg.git, with one patch (0001-mp3dec-keep-xing-frames-when-size-unknown.patch), built by scripts/build-ffmpeg.sh in https://github.com/timusus/shuttle-playback/tree/0.5.0/scripts, which lists the configure options and holds the patch. The build's VERSION.txt (Frameworks/FFmpeg.xcframework) records the tag, the options and the patch.
 
 Relinking: FFmpeg is linked statically into the app. Shuttle Music's source (https://github.com/timusus/Shuttle2) and shuttle-playback's (https://github.com/timusus/shuttle-playback) are public, with their build scripts, so the app can be rebuilt and relinked with a modified FFmpeg: build it with that script (FFMPEG_SRC points it at your FFmpeg) and build the app against the result.</string>
 			<key>Title</key>
