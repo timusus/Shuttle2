@@ -523,22 +523,28 @@ Needs a server with an ALAC (`.m4a`) song, signed in on each of Emby and Jellyfi
 - [ ] On the server, turn off the user's content downloading, then download the ALAC song: the 401/403 retry saves the same playable transcode (AAC), not the original.
 - [ ] Upgrade a device holding an ALAC download made before #156 (silent): after the next app start it downloads again, then plays with sound; a second start doesn't download it again.
 
-## Before the paywall release (#940)
-
-Failed restores draw 1-star reviews in every paid music player sampled, and a January 2026 review said the yearly button did nothing (#372, missing offerToken). On a Play device signed in to a licence-test account, take the seven product IDs one at a time, with only the one under test owned when you restore.
-
-- [ ] For each legacy SKU in turn — `s2_iap_full_version`, `s2_iap_full_version_low`, `s2_subscription_full_version_monthly`, `s2_subscription_full_version_yearly`, `s2_subscription_full_version_yearly_low` — acquire it on the licence-test account (this build's paywall never offers a legacy ID, so buy it from the production 1.0.10 build, which still offers the two `-low` IDs; reactivate the other three in Play Console for the test, then deactivate them again), install the release candidate over it or clear data, open the Shuttle Music Pro screen and tap Restore purchases: Pro unlocks, and the status reads "You already own Shuttle Music Pro through your earlier purchase".
-- [ ] With the legacy SKUs active in Play Console, open the paywall as a free user: only Lifetime and Yearly (`s2_pro_lifetime`, `s2_pro`) are offered, never a legacy price.
-- [ ] Same for `s2_pro` and `s2_pro_lifetime`: own exactly one, clear data or reinstall, Restore purchases, Pro unlocks.
-- [ ] Buy the Yearly plan end to end: the button opens Google Play, the purchase completes, and Pro unlocks without a restart.
-- [ ] Cancel and refund the annual subscription in Play Console: the entitlement lapses, and after the licence-test account's cache catches up the paywall offers the plan again.
-- [ ] Buy Lifetime with the licence-test card "Slow test card, approves after a few minutes": once Play's sheet closes, a snackbar says the purchase is pending, the status card reads "Your purchase is waiting for payment…" and the buy button is disabled. Close and reopen the paywall, and tap Restore purchases: it says pending, not "nothing to restore". When the card approves, Pro unlocks without a restart.
-- [ ] Repeat with "Slow test card, declines after a few minutes": after the decline the pending status clears once the app returns to the foreground (Play is queried on resume) or after Restore purchases; reopening the paywall alone does not clear it. Then the plans can be bought again.
-- [ ] The paywall's first lines read "Your server, offline and in the car" and "Free for music on this phone. Pro is a yearly plan or a one-time unlock, with a 14-day free trial."; the trial or buy buttons stay pinned at the bottom above the navigation bar while scrolling, in light and dark theme and with 3-button navigation.
-
 ## Android Auto behind Shuttle Music Pro (#939)
 
 Needs the Desktop Head Unit (`com.google.android.autosimulator` counts as a car) and a debug build resolving from Play (`support/scripts/s2-debug.sh SET_ENTITLEMENT --es state store`) on a licence-tester account whose trial has ended without Pro.
 - [ ] Connect the DHU: the media root shows the single "Upgrade to Shuttle Music Pro" item (not an empty list); tapping it shows the upgrade message as an error, and nothing plays. A voice search ("play <song> on Shuttle Music") is refused the same way.
 - [ ] With the DHU still connected on the upgrade item, `SET_ENTITLEMENT --es state pro`: the DHU's root swaps to Artists, Albums, Playlists and Shuffle All without reconnecting. `--es state store` again: it returns to the upgrade item.
 - [ ] Fresh install (trial unused), connect the DHU: the library shows straight away, the trial starts once, and the phone app shows the trial notice on its next open, including after a force-stop in between.
+
+## Paywall and Pro (#380, #940)
+
+Needs a release build (an internal or release-candidate install: a debug build can force the entitlement with `s2-debug.sh SET_ENTITLEMENT`, which would mask a broken restore) on a Play device signed in to a licence-test account. Failed restores draw 1-star reviews in every paid music player sampled, and a January 2026 review said the yearly button did nothing (#372, missing offerToken), so take the seven product IDs one at a time, with only the one under test owned when you restore.
+
+- [ ] For each legacy SKU in turn — `s2_iap_full_version`, `s2_iap_full_version_low`, `s2_subscription_full_version_monthly`, `s2_subscription_full_version_yearly`, `s2_subscription_full_version_yearly_low` — acquire it on the licence-test account (this build's paywall never offers a legacy ID, so buy it from the production 1.0.10 build, which still offers the two `-low` IDs; reactivate the other three in Play Console for the test, then deactivate them again), install the release candidate over it or clear data, open the Shuttle Music Pro screen and tap Restore purchases: Pro unlocks, and the status reads "You already own Shuttle Music Pro through your earlier purchase".
+- [ ] With the legacy SKUs active in Play Console, open the paywall as a free user: only Lifetime and Yearly (`s2_pro_lifetime`, `s2_pro`) are offered, never a legacy price.
+- [ ] Same for `s2_pro` and `s2_pro_lifetime`: own exactly one, clear data or reinstall, Restore purchases, Pro unlocks.
+- [ ] Buy the Yearly plan (`s2_pro`, base plan `annual`) end to end: the button opens Google Play, the purchase completes, and Pro unlocks without a restart.
+- [ ] Buy Lifetime (`s2_pro_lifetime`) end to end: the same, Pro unlocks without a restart.
+- [ ] Cancel and refund the annual subscription in Play Console: the entitlement lapses, and after the licence-test account's cache catches up the paywall offers the plan again.
+- [ ] A pending purchase grants nothing yet. Buy Lifetime with the licence-test card "Slow test card, approves after a few minutes": once Play's sheet closes, a snackbar says the purchase is pending, the status card reads "Your purchase is waiting for payment…" and the buy button is disabled. Close and reopen the paywall, and tap Restore purchases: it says pending, not "nothing to restore". When the card approves, Pro unlocks without a restart.
+- [ ] Repeat with "Slow test card, declines after a few minutes": after the decline the pending status clears once the app returns to the foreground (Play is queried on resume) or after Restore purchases; reopening the paywall alone does not clear it. Then the plans can be bought again.
+- [ ] The paywall's first lines read "Your server, offline and in the car" and "Free for music on this phone. Pro is a yearly plan or a one-time unlock, with a 14-day free trial."; the trial or buy buttons stay pinned at the bottom above the navigation bar while scrolling, in light and dark theme and with 3-button navigation.
+- [ ] Trial start on the phone: a fresh install with the trial unused, add a server (Settings → Sources → Jellyfin). The trial starts on that first Pro use and says so at that moment, the server connects and streams, and the Pro screen shows the days left.
+- [ ] Trial expiry, no purchase: server libraries stay browsable with a lock and playing a server song opens the paywall, while songs already downloaded keep playing, offline included; local playback, settings and playback speed are untouched, with no nag dialog.
+- [ ] Batch tag editing is gated: with the entitlement Free, selecting several songs and choosing Edit tags opens the paywall; a single song's tag editor stays free.
+- [ ] ReplayGain is gated: with the entitlement Free, choosing Track or Album in Settings opens the paywall and the stored mode stays selected and keeps applying; Off stays free. Android Auto gating is the DHU section above.
+- [ ] With Pro owned, force-stop and cold-start the app with the device offline (Play unreachable): it stays Pro, the cached entitlement failing open.
