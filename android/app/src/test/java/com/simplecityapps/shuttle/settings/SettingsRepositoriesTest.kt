@@ -42,13 +42,23 @@ class SettingsRepositoriesTest {
     }
 
     @Test
-    fun `the notification prompt flag moves out of the default prefs once`() {
+    fun `a restored notification prompt flag is deleted and not honoured`() {
         prefs.edit(commit = true) { putBoolean("pref_download_notification_permission_asked", true) }
 
-        DownloadSettings(store, deviceLocalStore).notificationPermissionAsked.value shouldBe true
+        DownloadSettings(store, deviceLocalStore).notificationPermissionAsked.value shouldBe false
 
         prefs.contains("pref_download_notification_permission_asked") shouldBe false
-        deviceLocalPrefs.getBoolean("pref_download_notification_permission_asked", false) shouldBe true
+        deviceLocalPrefs.contains("pref_download_notification_permission_asked") shouldBe false
+    }
+
+    @Test
+    fun `the notification prompt flag survives when both stores are the same`() {
+        val shared = SharedPreferencesKeyValueStore(prefs)
+        val sameStore = SettingsStore(shared)
+        val sameDeviceLocal = DeviceLocalStore(shared)
+        DownloadSettings(sameStore, sameDeviceLocal).notificationPermissionAsked.value = true
+
+        DownloadSettings(sameStore, sameDeviceLocal).notificationPermissionAsked.value shouldBe true
     }
 
     @Test

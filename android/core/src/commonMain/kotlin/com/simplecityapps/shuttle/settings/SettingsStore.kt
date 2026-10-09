@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.settings
 
+import com.simplecityapps.shuttle.persistence.DeviceLocalStore
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -11,4 +12,6 @@ class SettingsStore @Inject constructor(
     private val store: KeyValueStore
 ) {
     fun <T> preference(setting: Setting<T>): Preference<T> = Preference(store, setting)
+
+    fun isSameStorageAs(deviceLocalStore: DeviceLocalStore): Boolean = store === deviceLocalStore.store
 }

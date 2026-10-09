@@ -14,13 +14,9 @@ class DownloadSettings @Inject constructor(
     val notificationPermissionAsked = deviceLocalStore.preference(NotificationPermissionAsked)
 
     init {
-        // The flag used to live in the default store, which is backed up; carry an existing install's answer over.
-        val legacy = store.preference(NotificationPermissionAsked)
-        if (legacy.isSet()) {
-            val asked = legacy.value
-            legacy.reset()
-            if (!notificationPermissionAsked.isSet()) notificationPermissionAsked.value = asked
-        }
+        // A copy restored from a backup describes the old device, so it is dropped, not honoured. Skipped where both
+        // stores are one (iOS), as the delete would wipe the live flag.
+        if (!store.isSameStorageAs(deviceLocalStore)) store.preference(NotificationPermissionAsked).reset()
     }
 
     companion object {
