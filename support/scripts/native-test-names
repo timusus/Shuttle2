@@ -31,10 +31,10 @@ fi
 
 [ ${#files[@]} -gt 0 ] || exit 0
 
-# Backtick function name containing any of , ; : . / \ < > [ ]
-out="$(grep -nE '\bfun[[:space:]]+`[^`]*[],;:./\\<>[][^`]*`' -- "${files[@]}" 2>/dev/null)"
+# Backtick function name containing any of , ; : . / \ < > [ ] ( ) #
+out="$(grep -nE '\bfun[[:space:]]+`[^`]*[],;:./\\<>[()#][^`]*`' -- "${files[@]}" 2>/dev/null)"
 [ -z "$out" ] && exit 0
 
-echo "Backtick test names in commonTest/iosTest must not contain any of , ; : . / \\ < > [ ] (Kotlin/Native rejects them):" >&2
+echo "Backtick test names in commonTest/iosTest must not contain any of , ; : . / \\ < > [ ] ( ) # (Kotlin/Native rejects them):" >&2
 printf '%s\n' "$out" >&2
 exit 1

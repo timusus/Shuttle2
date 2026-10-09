@@ -34,6 +34,6 @@ class NativeTestNameRules {
 
     private companion object {
         val BACKTICK_FUN = Regex("""\bfun\s+`([^`]*)`""")
-        const val ILLEGAL = ",;:./\\<>[]"
+        const val ILLEGAL = ",;:./\\<>[]()#"
     }
 }
