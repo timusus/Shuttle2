@@ -87,6 +87,21 @@ class JellyfinPlaybackReporterTest {
     }
 
     @Test
+    fun `a play's reports carry the play session its stream was opened under`() {
+        authenticationManager.buildJellyfinPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-7")
+
+        runBlocking {
+            reporter.start(session, positionMs = 0)
+            reporter.progress(session, positionMs = 10_000, paused = false)
+            reporter.stop(session, positionMs = 20_000)
+        }
+
+        for (endpoint in listOf("Sessions/Playing", "Sessions/Playing/Progress", "Sessions/Playing/Stopped")) {
+            S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/$endpoint").single().bodyText).playSessionId shouldBe "play-7"
+        }
+    }
+
+    @Test
     fun `markPlayed backdates the play`() {
         runBlocking { reporter.markPlayed(song, Instant.parse("2026-09-24T10:15:30Z")) } shouldBe true
 

@@ -34,7 +34,8 @@ class JellyfinStreamUrlProvider(
             authenticatedCredentials = authenticatedCredentials,
             maxBitrateKbps = maxBitrateKbps,
             startPositionMs = startPositionMs,
-            format = format
+            format = format,
+            playId = playId
         ) ?: throw IllegalStateException("Failed to build jellyfin path")
         streamingPolicy.streamOpened(song.path, delivered(song, maxBitrateKbps, format))
         return url

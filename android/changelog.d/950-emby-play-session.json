@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Emby and Jellyfin streams now report the same playback session the server is playing from, which may stop tracks pausing on slow or metered connections.", "commits": [] }

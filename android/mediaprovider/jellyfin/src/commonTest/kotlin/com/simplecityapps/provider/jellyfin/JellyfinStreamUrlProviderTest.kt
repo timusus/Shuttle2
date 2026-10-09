@@ -65,6 +65,13 @@ class JellyfinStreamUrlProviderTest {
     }
 
     @Test
+    fun `stream url carries the play id as its play session`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.streamUrl(song(), playId = "play-7") shouldContain "&PlaySessionId=play-7&"
+    }
+
+    @Test
     fun `stream url caps the bitrate in bits per second on an unmetered network`() {
         credentialStore.authenticatedCredentials = downloadableCredentials
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320

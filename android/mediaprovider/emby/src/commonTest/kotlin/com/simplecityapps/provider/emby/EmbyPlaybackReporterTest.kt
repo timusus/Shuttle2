@@ -84,6 +84,32 @@ class EmbyPlaybackReporterTest {
     }
 
     @Test
+    fun `a play's reports carry the play session its stream was opened under`() {
+        authenticationManager.buildEmbyPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-7")
+
+        runBlocking {
+            reporter.start(session, positionMs = 0)
+            reporter.progress(session, positionMs = 10_000, paused = false)
+            reporter.stop(session, positionMs = 20_000)
+        }
+
+        for (endpoint in listOf("Sessions/Playing", "Sessions/Playing/Progress", "Sessions/Playing/Stopped")) {
+            S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/$endpoint").single().bodyText).playSessionId shouldBe "play-7"
+        }
+    }
+
+    @Test
+    fun `a stream opened after a play started does not change that play's session`() {
+        authenticationManager.buildEmbyPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-7")
+        runBlocking { reporter.start(session, positionMs = 0) }
+
+        authenticationManager.buildEmbyPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-8")
+        runBlocking { reporter.progress(session, positionMs = 10_000, paused = false) }
+
+        S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Progress").single().bodyText).playSessionId shouldBe "play-7"
+    }
+
+    @Test
     fun `markPlayed posts to the user's played items with the play date`() {
         runBlocking { reporter.markPlayed(song, Instant.parse("2026-09-04T08:05:03Z")) } shouldBe true
 

@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
@@ -62,6 +63,20 @@ class EmbyStreamUrlProviderTest {
 
         path shouldContain "http://emby.local:8096/emby/Audio/item789/universal?"
         path shouldNotContain "MaxStreamingBitrate"
+    }
+
+    @Test
+    fun `stream url carries the play id as its play session`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.streamUrl(song(), playId = "play-7") shouldContain "&PlaySessionId=play-7&"
+    }
+
+    @Test
+    fun `stream url without a play id gets a play session of its own`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+
+        provider.streamUrl(song()) shouldNotBe provider.streamUrl(song())
     }
 
     @Test

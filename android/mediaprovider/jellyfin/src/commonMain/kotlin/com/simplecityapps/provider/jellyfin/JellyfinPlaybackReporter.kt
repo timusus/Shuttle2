@@ -25,7 +25,10 @@ constructor(
     override suspend fun start(
         session: PlaybackSession,
         positionMs: Int
-    ): Boolean = report("Sessions/Playing", session, positionMs, paused = false)
+    ): Boolean {
+        session.song.externalId?.let { authenticationManager.playSessions.begin(session.id, it) }
+        return report("Sessions/Playing", session, positionMs, paused = false)
+    }
 
     override suspend fun progress(
         session: PlaybackSession,
@@ -36,7 +39,9 @@ constructor(
     override suspend fun stop(
         session: PlaybackSession,
         positionMs: Int
-    ): Boolean = report("Sessions/Playing/Stopped", session, positionMs, paused = false)
+    ): Boolean = report("Sessions/Playing/Stopped", session, positionMs, paused = false).also {
+        authenticationManager.playSessions.end(session.id)
+    }
 
     override suspend fun markPlayed(
         song: Song,
@@ -71,7 +76,7 @@ constructor(
                 authorization = authenticationManager.authorizationHeader(credentials),
                 report = PlaybackReport(
                     itemId = itemId,
-                    playSessionId = session.id,
+                    playSessionId = authenticationManager.playSessions.of(session.id),
                     positionTicks = positionMs * TICKS_PER_MS,
                     isPaused = paused
                 )

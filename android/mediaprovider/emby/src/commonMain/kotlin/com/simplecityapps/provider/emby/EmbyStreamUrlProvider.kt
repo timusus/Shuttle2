@@ -34,7 +34,8 @@ class EmbyStreamUrlProvider(
             authenticatedCredentials = authenticatedCredentials,
             maxBitrateKbps = maxBitrateKbps,
             startPositionMs = startPositionMs,
-            format = format
+            format = format,
+            playId = playId
         ) ?: throw IllegalStateException("Failed to build emby path")
         streamingPolicy.streamOpened(song.path, delivered(song, maxBitrateKbps, format))
         return url
