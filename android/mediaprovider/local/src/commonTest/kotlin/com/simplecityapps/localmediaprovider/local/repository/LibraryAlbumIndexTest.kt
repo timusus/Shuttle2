@@ -1,11 +1,8 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.entity.IDENTITY_GENERATION_TABLE
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
@@ -17,20 +14,15 @@ import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** The library's one album index is built once, and again only when the library's album identities change (#688). */
-@RunWith(AndroidJUnit4::class)
-class LibraryAlbumIndexTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges()
-        .allowMainThreadQueries()
-        .build()
+class LibraryAlbumIndexTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().trackingIdentityChanges().build()
     private val dao = database.songDataDao()
     private var builds = 0
     private val index = LibraryAlbumIndex(database.invalidationTracker.createFlow(IDENTITY_GENERATION_TABLE), dao::identityGeneration) {
@@ -38,7 +30,7 @@ class LibraryAlbumIndexTest {
         dao.identityData()
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -71,7 +63,7 @@ class LibraryAlbumIndexTest {
     }
 
     @Test
-    fun `plays, favourites and exclusion leave the index as it was`() = runTest {
+    fun `plays favourites and exclusion leave the index as it was`() = runTest {
         val (first, second) = importBlue()
         val repository = songs()
 
@@ -84,7 +76,7 @@ class LibraryAlbumIndexTest {
     }
 
     @Test
-    fun `an import, a tag edit and a delete each rebuild it`() = runTest {
+    fun `an import and a tag edit and a delete each rebuild it`() = runTest {
         val (first, second) = importBlue()
         val repository = songs()
         val joni = AlbumArtistGroupKey("artist")
@@ -98,7 +90,7 @@ class LibraryAlbumIndexTest {
     }
 
     @Test
-    fun `its updates follow identity changes, not plays`() = runTest {
+    fun `its updates follow identity changes and not plays`() = runTest {
         val (first) = importBlue()
         val current = index.updates.first()
 
@@ -111,7 +103,7 @@ class LibraryAlbumIndexTest {
 
     @Test
     fun `a database opened without the triggers rebuilds it on every read rather than going stale`() = runTest {
-        val bare = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).allowMainThreadQueries().build()
+        val bare = inMemoryMediaDatabaseBuilder().build()
         val bareIndex = bare.libraryAlbumIndex()
         bare.songDataDao().insert(listOf(createSongData(album = "Blue")))
         bareIndex.albumIndex().identities.size shouldBe 1
