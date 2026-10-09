@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.scrobbling.lastfm
 
 import com.simplecityapps.shuttle.scrobbling.LastFmAccountState
 import com.simplecityapps.shuttle.scrobbling.LastFmSignInResult
+import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -57,7 +58,7 @@ constructor(
             is LastFmResult.Success -> {
                 // A forced sign-out (error 9) keeps the queue; another account must not inherit those scrobbles.
                 val previous = sessionStore.lastUsername
-                if (previous != null && previous != result.value.username) scrobbleQueue.clear()
+                if (previous != null && previous != result.value.username) scrobbleQueue.clear(QueuedScrobbleEntity.SERVICE_LASTFM)
                 sessionStore.signIn(result.value)
                 scrobbleQueue.scheduleFlush()
                 LastFmSignInResult.SignedIn
@@ -80,6 +81,6 @@ constructor(
 
     suspend fun signOut() {
         sessionStore.signOut()
-        scrobbleQueue.clear()
+        scrobbleQueue.clear(QueuedScrobbleEntity.SERVICE_LASTFM)
     }
 }

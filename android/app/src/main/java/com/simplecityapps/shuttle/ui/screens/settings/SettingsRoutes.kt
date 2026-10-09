@@ -41,6 +41,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsView
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ListenBrainzViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingScreen
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.ServerDetailEntry
@@ -293,6 +294,8 @@ private fun DownloadsEntry(onNavigateUp: () -> Unit, onOpenAlbum: (DownloadedAlb
 private fun ScrobblingEntry(onNavigateUp: () -> Unit) {
     val viewModel: ScrobblingViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val listenBrainzViewModel: ListenBrainzViewModel = metroViewModel()
+    val listenBrainzState by listenBrainzViewModel.uiState.collectAsStateWithLifecycle()
     ScrobblingScreen(
         uiState = uiState,
         onNavigateUp = onNavigateUp,
@@ -301,7 +304,11 @@ private fun ScrobblingEntry(onNavigateUp: () -> Unit) {
         onSignOut = viewModel::onSignOut,
         onServerStreamsChange = viewModel::onServerStreamsChange,
         onApprovalUrlOpened = viewModel::onApprovalUrlOpened,
-        onMessageShown = viewModel::onMessageShown
+        onMessageShown = viewModel::onMessageShown,
+        listenBrainz = listenBrainzState,
+        onListenBrainzSignIn = listenBrainzViewModel::onSignIn,
+        onListenBrainzSignOut = listenBrainzViewModel::onSignOut,
+        onListenBrainzMessageShown = listenBrainzViewModel::onMessageShown
     )
 }
 

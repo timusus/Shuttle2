@@ -3,12 +3,18 @@ package com.simplecityapps.shuttle.scrobbling.di
 import com.simplecityapps.shuttle.scrobbling.FinishLastFmSignIn
 import com.simplecityapps.shuttle.scrobbling.IsLastFmConfigured
 import com.simplecityapps.shuttle.scrobbling.ObserveLastFmAccount
+import com.simplecityapps.shuttle.scrobbling.ObserveListenBrainzAccount
+import com.simplecityapps.shuttle.scrobbling.SignInToListenBrainz
 import com.simplecityapps.shuttle.scrobbling.SignOutOfLastFm
+import com.simplecityapps.shuttle.scrobbling.SignOutOfListenBrainz
 import com.simplecityapps.shuttle.scrobbling.StartLastFmSignIn
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmAuthenticator
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSessionStore
 import com.simplecityapps.shuttle.scrobbling.lastfm.SecurePreferenceLastFmSessionStore
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzAuthenticator
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzSessionStore
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.SecurePreferenceListenBrainzSessionStore
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase
 import dev.zacsweers.metro.AppScope
@@ -19,7 +25,8 @@ import dev.zacsweers.metro.Provides
 
 /**
  * Scrobbling's platform-free bindings. Each platform provides the rest: the [ScrobbleDatabase], the
- * [com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi], the [LastFmCredentials] and a
+ * [com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi], the
+ * [com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzApi], the [LastFmCredentials] and a
  * [com.simplecityapps.shuttle.scrobbling.queue.ScrobbleFlushScheduler] (AndroidScrobblingModule and
  * WorkManagerScrobbleFlushScheduler on Android, `:shared`'s IosScrobblingModule on iOS).
  */
@@ -28,6 +35,9 @@ import dev.zacsweers.metro.Provides
 abstract class ScrobblingBindingsModule {
     @Binds
     abstract fun bindLastFmSessionStore(impl: SecurePreferenceLastFmSessionStore): LastFmSessionStore
+
+    @Binds
+    abstract fun bindListenBrainzSessionStore(impl: SecurePreferenceListenBrainzSessionStore): ListenBrainzSessionStore
 }
 
 @BindingContainer
@@ -50,4 +60,13 @@ object ScrobblingModule {
 
     @Provides
     fun provideSignOutOfLastFm(authenticator: LastFmAuthenticator): SignOutOfLastFm = SignOutOfLastFm(authenticator::signOut)
+
+    @Provides
+    fun provideObserveListenBrainzAccount(authenticator: ListenBrainzAuthenticator): ObserveListenBrainzAccount = ObserveListenBrainzAccount { authenticator.state }
+
+    @Provides
+    fun provideSignInToListenBrainz(authenticator: ListenBrainzAuthenticator): SignInToListenBrainz = SignInToListenBrainz(authenticator::signIn)
+
+    @Provides
+    fun provideSignOutOfListenBrainz(authenticator: ListenBrainzAuthenticator): SignOutOfListenBrainz = SignOutOfListenBrainz(authenticator::signOut)
 }

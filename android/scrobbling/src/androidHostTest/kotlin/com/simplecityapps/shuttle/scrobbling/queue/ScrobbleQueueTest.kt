@@ -37,7 +37,7 @@ class ScrobbleQueueTest {
 
     @Test
     fun `enqueue queues the song and schedules the unique flush work`() = runTest {
-        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
 
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
         val work = WorkManager.getInstance(context).getWorkInfosForUniqueWork(WorkManagerScrobbleFlushScheduler.UNIQUE_WORK_NAME).get()
@@ -46,8 +46,8 @@ class ScrobbleQueueTest {
 
     @Test
     fun `enqueuing while a flush is already pending appends a follow-up run rather than dropping it`() = runTest {
-        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
-        scrobbleQueue.enqueue(createSong(id = 2, duration = 200_000), startedAtEpochSec = 2_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 2, duration = 200_000), startedAtEpochSec = 2_000)
 
         val work = WorkManager.getInstance(context).getWorkInfosForUniqueWork(WorkManagerScrobbleFlushScheduler.UNIQUE_WORK_NAME).get()
         work.size shouldBe 2
@@ -57,10 +57,22 @@ class ScrobbleQueueTest {
     fun `enqueuing the same play twice never duplicates the row`() = runTest {
         val song = createSong(id = 1, duration = 200_000)
 
-        scrobbleQueue.enqueue(song, startedAtEpochSec = 1_000)
-        scrobbleQueue.enqueue(song, startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, song, startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, song, startedAtEpochSec = 1_000)
 
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
+
+    @Test
+    fun `the same play queued for two services is one row each and clearing one leaves the other`() = runTest {
+        val song = createSong(id = 1, duration = 200_000)
+
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, song, startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LISTENBRAINZ, song, startedAtEpochSec = 1_000)
+        scrobbleQueue.clear(QueuedScrobbleEntity.SERVICE_LISTENBRAINZ)
+
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+        dao.count(QueuedScrobbleEntity.SERVICE_LISTENBRAINZ) shouldBe 0
     }
 
     @Test
@@ -83,7 +95,7 @@ class ScrobbleQueueTest {
         dao.trimToNewest(QueuedScrobbleEntity.SERVICE_LASTFM, keep = 2)
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 2
 
-        scrobbleQueue.enqueue(createSong(id = 99, duration = 200_000), startedAtEpochSec = 100)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 99, duration = 200_000), startedAtEpochSec = 100)
 
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 3
     }

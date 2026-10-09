@@ -5,6 +5,7 @@ import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.shuttle.scrobbling.flush.InProcessScrobbleFlushScheduler
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzApi
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleFlushScheduler
 import com.simplecityapps.shuttle.scrobbling.queue.inMemoryScrobbleDatabaseBuilder
@@ -43,6 +44,10 @@ abstract class IosScrobblingModule {
         @Provides
         @SingleIn(AppScope::class)
         fun provideLastFmApi(connectivity: NetworkConnectivity): LastFmApi = LastFmApi(createHttpClient(connectivity = connectivity))
+
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideListenBrainzApi(connectivity: NetworkConnectivity): ListenBrainzApi = ListenBrainzApi(createHttpClient(connectivity = connectivity))
 
         @Provides
         fun provideLastFmCredentials(): LastFmCredentials = LastFmCredentials(

@@ -10,6 +10,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.simplecityapps.shuttle.scrobbling.LastFmAccountState
+import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ListenBrainzUiState
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingScreen
 import com.simplecityapps.shuttle.ui.screens.settings.scrobbling.ScrobblingUiState
 import io.kotest.matchers.shouldBe
@@ -48,7 +49,11 @@ class ScrobblingScreenTest {
             onSignOut = {},
             onServerStreamsChange = {},
             onApprovalUrlOpened = {},
-            onMessageShown = {}
+            onMessageShown = {},
+            listenBrainz = ListenBrainzUiState(),
+            onListenBrainzSignIn = {},
+            onListenBrainzSignOut = {},
+            onListenBrainzMessageShown = {}
         )
     }
 

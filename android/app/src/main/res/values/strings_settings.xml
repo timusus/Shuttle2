@@ -42,6 +42,12 @@
     <string name="scrobbling_lastfm_signed_out">Not signed in</string>
     <string name="scrobbling_lastfm_signed_in">Signed in as %1$s</string>
     <string name="scrobbling_lastfm_awaiting">Approve Shuttle Music on last.fm, then come back here</string>
+    <string name="scrobbling_listenbrainz">ListenBrainz</string>
+    <string name="scrobbling_listenbrainz_signed_out">Not signed in</string>
+    <string name="scrobbling_listenbrainz_token">User token</string>
+    <string name="scrobbling_listenbrainz_token_hint">Copy it from listenbrainz.org/settings</string>
+    <string name="scrobbling_listenbrainz_invalid_token">ListenBrainz doesn\'t recognise that token</string>
+    <string name="scrobbling_listenbrainz_failed">Couldn\'t reach ListenBrainz. Check your connection and try again</string>
     <string name="scrobbling_sign_in">Sign in</string>
     <string name="scrobbling_finish_sign_in">I\'ve approved it</string>
     <string name="scrobbling_sign_out">Sign out</string>

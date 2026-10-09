@@ -7,6 +7,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbler
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzScrobbler
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
 import com.simplecityapps.shuttle.settings.ScrobblingSettings
 import dev.zacsweers.metro.Inject
@@ -17,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * Feeds the playback flows to a [ScrobblePlanner] and its decisions to [LastFmScrobbler] (#503), on both platforms:
+ * Feeds the playback flows to a [ScrobblePlanner] and its decisions to [LastFmScrobbler] and [ListenBrainzScrobbler] (#503), on both platforms:
  * Android's ScrobblingInitializer and iOS's AppGraph each call [start] once at launch. Collected on
  * [Dispatchers.Main.immediate] so the planner sees every change in order on one thread; a server song counts as
  * already reported while S2 reports it to its server.
@@ -31,6 +32,7 @@ constructor(
     private val librarySettings: LibrarySettings,
     private val scrobblingSettings: ScrobblingSettings,
     private val lastFmScrobbler: LastFmScrobbler,
+    private val listenBrainzScrobbler: ListenBrainzScrobbler,
     private val scrobbleQueue: ScrobbleQueue,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) {
@@ -82,8 +84,16 @@ constructor(
     private fun handle(decision: ScrobblePlanner.Decision?) {
         when (decision) {
             null -> Unit
-            is ScrobblePlanner.Decision.NowPlaying -> appCoroutineScope.launch { lastFmScrobbler.nowPlaying(decision.song) }
-            is ScrobblePlanner.Decision.Scrobble -> appCoroutineScope.launch { lastFmScrobbler.scrobble(decision.song, decision.startedAtEpochSec) }
+
+            is ScrobblePlanner.Decision.NowPlaying -> {
+                appCoroutineScope.launch { lastFmScrobbler.nowPlaying(decision.song) }
+                appCoroutineScope.launch { listenBrainzScrobbler.nowPlaying(decision.song) }
+            }
+
+            is ScrobblePlanner.Decision.Scrobble -> {
+                appCoroutineScope.launch { lastFmScrobbler.scrobble(decision.song, decision.startedAtEpochSec) }
+                appCoroutineScope.launch { listenBrainzScrobbler.scrobble(decision.song, decision.startedAtEpochSec) }
+            }
         }
     }
 }

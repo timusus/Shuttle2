@@ -24,13 +24,15 @@ import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2TextField
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.scrobbling.LastFmAccountState
+import com.simplecityapps.shuttle.scrobbling.ListenBrainzAccountState
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
 /**
- * Last.fm sign-in and the server-streams switch. Sign-in opens last.fm in the browser; coming back to this screen
+ * Last.fm and ListenBrainz sign-in and the server-streams switch. Sign-in opens last.fm in the browser; coming back to this screen
  * finishes it, and the "I've approved it" button is there for when that didn't happen on its own.
  */
 @Composable
@@ -43,6 +45,10 @@ fun ScrobblingScreen(
     onServerStreamsChange: (Boolean) -> Unit,
     onApprovalUrlOpened: () -> Unit,
     onMessageShown: () -> Unit,
+    listenBrainz: ListenBrainzUiState,
+    onListenBrainzSignIn: (token: String) -> Unit,
+    onListenBrainzSignOut: () -> Unit,
+    onListenBrainzMessageShown: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val uriHandler = LocalUriHandler.current
@@ -69,6 +75,21 @@ fun ScrobblingScreen(
             onMessageShown()
         }
     }
+    val listenBrainzMessage = listenBrainz.message?.let {
+        stringResource(
+            when (it) {
+                ListenBrainzMessage.InvalidToken -> R.string.scrobbling_listenbrainz_invalid_token
+                ListenBrainzMessage.Failed -> R.string.scrobbling_listenbrainz_failed
+            }
+        )
+    }
+    LaunchedEffect(listenBrainzMessage) {
+        if (listenBrainzMessage != null) {
+            snackbarHostState.showSnackbar(listenBrainzMessage)
+            onListenBrainzMessageShown()
+        }
+    }
+    var token by rememberSaveable { mutableStateOf("") }
     // Back from the browser: finish the sign-in if one is waiting, so the user needn't press anything. Only a resume
     // that follows the app being stopped counts (the browser covers the whole activity; a notification shade or dialog
     // only pauses it), and the flag is saved so it survives process death while the user is away. A stop caused by a
@@ -143,6 +164,51 @@ fun ScrobblingScreen(
                     )
                 )
             }
+        }
+        item(key = "listenbrainz") {
+            val signedIn = listenBrainz.account as? ListenBrainzAccountState.SignedIn
+            SettingsGroup(
+                rows = listOf(
+                    { shapes: ListItemShapes ->
+                        LinkSetting(
+                            title = stringResource(R.string.scrobbling_listenbrainz),
+                            onClick = {},
+                            summary = if (signedIn != null) {
+                                stringResource(R.string.scrobbling_lastfm_signed_in, signedIn.username)
+                            } else {
+                                stringResource(R.string.scrobbling_listenbrainz_signed_out)
+                            },
+                            enabled = false,
+                            shapes = shapes
+                        )
+                    },
+                    { shapes: ListItemShapes ->
+                        ActionsSetting(shapes = shapes) {
+                            if (signedIn != null) {
+                                S2Button(
+                                    text = stringResource(R.string.scrobbling_sign_out),
+                                    onClick = onListenBrainzSignOut,
+                                    style = S2ButtonStyle.Outlined,
+                                    enabled = !listenBrainz.busy
+                                )
+                            } else {
+                                S2TextField(
+                                    value = token,
+                                    onValueChange = { token = it },
+                                    label = stringResource(R.string.scrobbling_listenbrainz_token),
+                                    supportingText = stringResource(R.string.scrobbling_listenbrainz_token_hint),
+                                    modifier = Modifier.weight(1f)
+                                )
+                                S2Button(
+                                    text = stringResource(R.string.scrobbling_sign_in),
+                                    onClick = { onListenBrainzSignIn(token) },
+                                    enabled = !listenBrainz.busy && token.isNotBlank()
+                                )
+                            }
+                        }
+                    }
+                )
+            )
         }
         item(key = "server_streams") {
             SettingsGroup(

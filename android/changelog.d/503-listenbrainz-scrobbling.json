@@ -1,0 +1,5 @@
+{
+  "type": "features",
+  "text": "Scrobble to ListenBrainz as well as Last.fm. Paste your user token under Settings, Scrobbling to sign in; plays are sent to every service you are signed in to.",
+  "commits": []
+}

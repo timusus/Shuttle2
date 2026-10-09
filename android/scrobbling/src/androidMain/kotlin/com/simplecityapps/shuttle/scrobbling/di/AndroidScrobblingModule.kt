@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzApi
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -25,4 +26,8 @@ object AndroidScrobblingModule {
     @SingleIn(AppScope::class)
     @Provides
     fun provideLastFmApi(okHttpClient: OkHttpClient): LastFmApi = LastFmApi(createHttpClient(preconfiguredClient = okHttpClient))
+
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideListenBrainzApi(okHttpClient: OkHttpClient): ListenBrainzApi = ListenBrainzApi(createHttpClient(preconfiguredClient = okHttpClient))
 }

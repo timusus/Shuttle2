@@ -14,13 +14,15 @@ constructor(
     private val scrobbleDao: ScrobbleDao,
     private val flushScheduler: ScrobbleFlushScheduler
 ) {
+    /** Queues the play for [service], one of the `QueuedScrobbleEntity.SERVICE_*` ids. */
     suspend fun enqueue(
+        service: String,
         song: Song,
         startedAtEpochSec: Long
     ) {
         scrobbleDao.enqueue(
             QueuedScrobbleEntity(
-                service = QueuedScrobbleEntity.SERVICE_LASTFM,
+                service = service,
                 artist = song.friendlyArtistName.orEmpty(),
                 track = song.name.orEmpty(),
                 album = song.album,
@@ -29,13 +31,13 @@ constructor(
                 startedAtEpochSec = startedAtEpochSec
             )
         )
-        scrobbleDao.trimToNewest(QueuedScrobbleEntity.SERVICE_LASTFM, MAX_QUEUE_SIZE)
+        scrobbleDao.trimToNewest(service, MAX_QUEUE_SIZE)
         scheduleFlush()
     }
 
-    /** Drops every queued Last.fm scrobble: signing out means they're never sent. */
-    suspend fun clear() {
-        scrobbleDao.deleteAll(QueuedScrobbleEntity.SERVICE_LASTFM)
+    /** Drops every scrobble queued for [service]: signing out means they're never sent. */
+    suspend fun clear(service: String) {
+        scrobbleDao.deleteAll(service)
     }
 
     /** (Re-)schedules the flush, at start-up and after a sign-in, for anything queued while it couldn't send. */

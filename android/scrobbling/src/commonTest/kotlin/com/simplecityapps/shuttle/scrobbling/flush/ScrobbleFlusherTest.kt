@@ -10,6 +10,9 @@ import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmError
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbleResponse
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSession
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.FakeListenBrainzServer
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.FakeListenBrainzSessionStore
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.ListenBrainzAccount
 import com.simplecityapps.shuttle.scrobbling.queue.FakeScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
@@ -37,7 +40,10 @@ class ScrobbleFlusherTest {
     private val client = LastFmClient(LastFmApi(createHttpClient(fakeEngine.engine)), credentials)
     private val sessionStore = FakeLastFmSessionStore(LastFmSession(key = "session-key", username = "user"))
 
-    private val flusher = ScrobbleFlusher(dao, client, sessionStore)
+    private val listenBrainzServer = FakeListenBrainzServer()
+    private val listenBrainzStore = FakeListenBrainzSessionStore()
+
+    private val flusher = ScrobbleFlusher(dao, client, sessionStore, ListenBrainzFlusher(dao, listenBrainzServer.client(), listenBrainzStore))
 
     private fun nowEpochSec(): Long = Clock.System.now().epochSeconds
 
@@ -312,6 +318,51 @@ class ScrobbleFlusherTest {
         result shouldBe FlushResult.Done
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
         fakeEngine.requests shouldBe emptyList()
+    }
+
+    @Test
+    fun `a play queued for both services is sent to each`() = runTest {
+        listenBrainzStore.signIn(ListenBrainzAccount(token = "lb-token", username = "tim"))
+        dao.enqueue(entity(1))
+        dao.enqueue(entity(1).copy(service = QueuedScrobbleEntity.SERVICE_LISTENBRAINZ))
+        fakeEngine.enqueueSuccess()
+
+        val result = flusher.flush()
+
+        result shouldBe FlushResult.Done
+        fakeEngine.requests.size shouldBe 1
+        listenBrainzServer.requests.size shouldBe 1
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+        dao.count(QueuedScrobbleEntity.SERVICE_LISTENBRAINZ) shouldBe 0
+    }
+
+    @Test
+    fun `ListenBrainz being unreachable does not stop Last-fm and asks for a retry`() = runTest {
+        listenBrainzStore.signIn(ListenBrainzAccount(token = "lb-token", username = "tim"))
+        dao.enqueue(entity(1))
+        dao.enqueue(entity(1).copy(service = QueuedScrobbleEntity.SERVICE_LISTENBRAINZ))
+        fakeEngine.enqueueSuccess()
+        listenBrainzServer.enqueueOffline()
+
+        val result = flusher.flush()
+
+        result shouldBe FlushResult.Retry
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
+        dao.count(QueuedScrobbleEntity.SERVICE_LISTENBRAINZ) shouldBe 1
+    }
+
+    @Test
+    fun `Last-fm failing does not stop ListenBrainz`() = runTest {
+        listenBrainzStore.signIn(ListenBrainzAccount(token = "lb-token", username = "tim"))
+        dao.enqueue(entity(1))
+        dao.enqueue(entity(1).copy(service = QueuedScrobbleEntity.SERVICE_LISTENBRAINZ))
+        fakeEngine.enqueueHttpError(HttpStatusCode.InternalServerError)
+
+        val result = flusher.flush()
+
+        result shouldBe FlushResult.Retry
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+        dao.count(QueuedScrobbleEntity.SERVICE_LISTENBRAINZ) shouldBe 0
     }
 
     private fun formData(request: HttpRequestData): Parameters = (request.body as FormDataContent).formData

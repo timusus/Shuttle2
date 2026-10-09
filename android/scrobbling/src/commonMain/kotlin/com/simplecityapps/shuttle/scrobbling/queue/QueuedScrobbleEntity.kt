@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 /**
  * A scrobble waiting to be sent (#503 slice 2, docs/architecture/scrobbling.md). Lives in the module's own
  * [ScrobbleDatabase], not the main media database, so scrobbling never migrates it. One row per service (only
- * "lastfm" today; ListenBrainz is a later slice) so an outage on one service never blocks another. The unique
+ * "lastfm" or "listenbrainz") so an outage on one service never blocks another. The unique
  * index on ([service], [startedAtEpochSec], [track]) makes enqueuing idempotent: replaying the same play never
  * duplicates a row.
  */
@@ -27,5 +27,6 @@ data class QueuedScrobbleEntity(
 ) {
     companion object {
         const val SERVICE_LASTFM = "lastfm"
+        const val SERVICE_LISTENBRAINZ = "listenbrainz"
     }
 }

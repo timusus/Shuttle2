@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.scrobbling.lastfm
 
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
 import dev.zacsweers.metro.Inject
 
@@ -29,7 +30,7 @@ constructor(
     ) {
         if (sessionStore.session.value == null) return
         if (!song.isScrobblable()) return
-        scrobbleQueue.enqueue(song, startedAtEpochSec)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, song, startedAtEpochSec)
     }
 
     /** Last.fm rejects a scrobble with no artist or track, so don't send or queue one. */

@@ -21,12 +21,12 @@ enum class FlushResult {
     /** A failure retrying won't fix soon (bad API key, a systemic error, unconfirmed error-6 rows): stop until the next trigger. */
     Held,
 
-    /** Last.fm no longer accepts the session (error 9): the user was signed out. */
+    /** A service no longer accepts the session or token (Last.fm error 9, ListenBrainz 401): the user was signed out of it. */
     SignedOut
 }
 
 /**
- * Drains the Last.fm queue, oldest first, [ScrobbleQueue.BATCH_SIZE] at a time (#503 slice 2). A batch that
+ * Drains the Last.fm queue (and, through [ListenBrainzFlusher], the ListenBrainz one), oldest first, [ScrobbleQueue.BATCH_SIZE] at a time (#503 slice 2). A batch that
  * Last.fm accepts is deleted whether each scrobble was accepted or permanently ignored - both are done with.
  * A transient failure (HTTP failure, or error 8/11/16/29) keeps the whole batch queued and asks for a retry with
  * backoff. An invalid session (error 9) signs the user out and stops without retrying forever, leaving the queue
@@ -47,12 +47,19 @@ class ScrobbleFlusher
 constructor(
     private val scrobbleDao: ScrobbleDao,
     private val lastFmClient: LastFmClient,
-    private val lastFmSessionStore: LastFmSessionStore
+    private val lastFmSessionStore: LastFmSessionStore,
+    private val listenBrainzFlusher: ListenBrainzFlusher
 ) {
+    /** Drains every signed-in service, each regardless of the other's outcome; the result is the one that most needs the platform scheduler to act. */
     suspend fun flush(): FlushResult {
         val cutoffEpochSec = (Clock.System.now() - ScrobbleQueue.MAX_AGE).epochSeconds
         scrobbleDao.deleteOlderThan(cutoffEpochSec)
 
+        val results = listOf(flushLastFm(), listenBrainzFlusher.flush())
+        return listOf(FlushResult.Retry, FlushResult.Held, FlushResult.SignedOut).firstOrNull { it in results } ?: FlushResult.Done
+    }
+
+    private suspend fun flushLastFm(): FlushResult {
         val sessionKey = lastFmSessionStore.session.value?.key ?: return FlushResult.Done
 
         val run = Run()

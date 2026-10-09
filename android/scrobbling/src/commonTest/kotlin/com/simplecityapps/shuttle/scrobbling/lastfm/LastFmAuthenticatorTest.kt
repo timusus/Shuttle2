@@ -108,7 +108,7 @@ class LastFmAuthenticatorTest {
     @Test
     fun `signing out forgets the session and drops the queued scrobbles`() = runTest {
         sessionStore.signIn(LastFmSession(key = "sk", username = "tim"))
-        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
 
         authenticator().signOut()
 
@@ -119,7 +119,7 @@ class LastFmAuthenticatorTest {
     @Test
     fun `the same account signing back in after a forced sign-out keeps its queue`() = runTest {
         sessionStore.signIn(LastFmSession(key = "old", username = "tim"))
-        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
         sessionStore.signOut()
         sessionStore.savePendingToken("tok")
         server.enqueue("""{"session":{"name":"tim","key":"sk"}}""")
@@ -132,7 +132,7 @@ class LastFmAuthenticatorTest {
     @Test
     fun `a different account signing in after a forced sign-out does not inherit the queue`() = runTest {
         sessionStore.signIn(LastFmSession(key = "old", username = "tim"))
-        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(QueuedScrobbleEntity.SERVICE_LASTFM, createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
         sessionStore.signOut()
         sessionStore.savePendingToken("tok")
         server.enqueue("""{"session":{"name":"someone-else","key":"sk"}}""")

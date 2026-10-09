@@ -7,6 +7,8 @@ import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmClient
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSession
 import com.simplecityapps.shuttle.scrobbling.lastfm.testCredentials
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.FakeListenBrainzServer
+import com.simplecityapps.shuttle.scrobbling.listenbrainz.FakeListenBrainzSessionStore
 import com.simplecityapps.shuttle.scrobbling.queue.FakeScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import io.kotest.matchers.shouldBe
@@ -32,7 +34,7 @@ class InProcessScrobbleFlushSchedulerTest {
     private var online = true
 
     private fun TestScope.scheduler(client: LastFmClient = server.client(dispatcher = StandardTestDispatcher(testScheduler))) = InProcessScrobbleFlushScheduler(
-        flusher = ScrobbleFlusher(dao, client, sessionStore),
+        flusher = ScrobbleFlusher(dao, client, sessionStore, ListenBrainzFlusher(dao, FakeListenBrainzServer().client(), FakeListenBrainzSessionStore())),
         connectivity = { online },
         scope = backgroundScope
     )
