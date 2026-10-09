@@ -33,6 +33,18 @@ else
   echo "release-android: HEAD has no vYYMMDDNN tag; tag the release first (/deploy-android)" >&2
   exit 1
 fi
+if ! ((dry_run)); then
+  if [[ -n $(git status --porcelain) ]]; then
+    echo "release-android: working tree is dirty; commit or stash first" >&2
+    exit 1
+  fi
+  git fetch --quiet origin main
+  if ! git merge-base --is-ancestor HEAD origin/main; then
+    echo "release-android: HEAD is not on origin/main; push it first" >&2
+    exit 1
+  fi
+fi
+
 version_code=${tag#v}
 version_name="20${version_code:0:2}.${version_code:2:2}.${version_code:4:2}"
 echo "Building $version_name ($version_code)"
@@ -49,16 +61,24 @@ KEYSTORE_PATH="$tmp/keystore.ks"
 KEYSTORE_PASSWORD=$(get KEYSTORE_PASS)
 KEYSTORE_ALIAS=$(get KEYSTORE_ALIAS)
 SENTRY_DSN=$(get SENTRY_DSN)
-SENTRY_AUTH_TOKEN=$(get SENTRY_AUTH_TOKEN)
 POSTHOG_API_KEY=$(get POSTHOG_API_KEY)
 POSTHOG_HOST=$(get POSTHOG_HOST)
 LASTFM_API_KEY=$(get LASTFM_API_KEY)
 LASTFM_SHARED_SECRET=$(get LASTFM_SHARED_SECRET)
-export KEYSTORE_PATH KEYSTORE_PASSWORD KEYSTORE_ALIAS SENTRY_DSN SENTRY_AUTH_TOKEN \
+export KEYSTORE_PATH KEYSTORE_PASSWORD KEYSTORE_ALIAS SENTRY_DSN \
   POSTHOG_API_KEY POSTHOG_HOST LASTFM_API_KEY LASTFM_SHARED_SECRET
 export CI=true CONFIGURATION=Release
 
-gradle_args=(-PversionCode="$version_code" -PversionName="$version_name")
+# The token turns on the Sentry mapping upload in build.gradle.kts, so a dry run must not have one.
+if ((dry_run)); then
+  unset SENTRY_AUTH_TOKEN
+else
+  SENTRY_AUTH_TOKEN=$(get SENTRY_AUTH_TOKEN)
+  export SENTRY_AUTH_TOKEN
+fi
+
+# --no-daemon: the secrets must not outlive this run in a daemon's environment.
+gradle_args=(--no-daemon -PversionCode="$version_code" -PversionName="$version_name")
 
 if ((dry_run)); then
   ./gradlew :android:app:bundleRelease "${gradle_args[@]}"

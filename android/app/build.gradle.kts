@@ -331,12 +331,19 @@ play {
     resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
 }
 
-/** A key from local.properties or a Gradle property, else the [envName] environment variable; null when none is set. */
-fun secret(name: String, envName: String): String? = (
-    localProperties.getProperty(name)
-        ?: providers.gradleProperty(name).orNull
-        ?: System.getenv(envName)
-    )?.takeIf { it.isNotBlank() }
+/**
+ * A key from local.properties or a Gradle property, else the [envName] environment variable; null when none is set.
+ * Release and CI builds read only the environment, so a release never ships a developer's local values.
+ */
+fun secret(name: String, envName: String): String? {
+    val release = System.getenv("CONFIGURATION") == "Release" || System.getenv("CI").toBoolean()
+    val value = if (release) {
+        System.getenv(envName)
+    } else {
+        localProperties.getProperty(name) ?: providers.gradleProperty(name).orNull ?: System.getenv(envName)
+    }
+    return value?.takeIf { it.isNotBlank() }
+}
 
 /**
  * Retrieves an Environment Variable, or throws [MissingEnvVarException]
