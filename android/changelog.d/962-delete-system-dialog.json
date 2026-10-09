@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Deleting songs on Android 11 and later works reliably, and deleted songs disappear from the library immediately.", "commits": [] }

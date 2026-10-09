@@ -5,6 +5,8 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
  * Deletes a selection's song files, then removes each deleted song from the library and the queue. Only songs that
@@ -20,7 +22,11 @@ class DeleteSongs(
 ) {
     data class Result(val deleted: List<Song>, val failed: List<Song>)
 
-    suspend operator fun invoke(selection: MediaSelection): Result {
+    // Runs to completion even if the caller goes away: the system may already be showing its delete dialog, and files the
+    // user deletes there must leave the library too
+    suspend operator fun invoke(selection: MediaSelection): Result = withContext(NonCancellable) { delete(selection) }
+
+    private suspend fun delete(selection: MediaSelection): Result {
         val songs = resolveSongs(selection)
         val (mediaStoreSongs, otherSongs) = songs.filter { it.canBeDeleted() }.partition { it.mediaProvider == MediaProviderType.MediaStore }
         // MediaStore songs go to the deleter together, so the system can confirm the whole batch at once

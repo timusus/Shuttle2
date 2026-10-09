@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -296,6 +297,11 @@ private fun SystemDeleteRequestLauncher() {
     val lifecycleOwner = LocalLifecycleOwner.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         confirmations.deliver(result.resultCode == Activity.RESULT_OK)
+    }
+    val activity = LocalActivity.current
+    DisposableEffect(confirmations, activity) {
+        // A recreated activity still gets the dialog's answer; a finishing one never will
+        onDispose { if (activity?.isFinishing == true) confirmations.abandon() }
     }
     LaunchedEffect(confirmations, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {

@@ -556,3 +556,7 @@ Needs a release build (an internal or release-candidate install: a debug build c
 - [ ] Batch tag editing is gated: with the entitlement Free, selecting several songs and choosing Edit tags opens the paywall; a single song's tag editor stays free.
 - [ ] ReplayGain is gated: with the entitlement Free, choosing Track or Album in Settings opens the paywall and the stored mode stays selected and keeps applying; Off stays free. Android Auto gating is the DHU section above.
 - [ ] With Pro owned, force-stop and cold-start the app with the device offline (Play unreachable): it stays Pro, the cached entitlement failing open.
+
+## Deleting device songs through the system dialog, Android 11+
+
+- [ ] On API 30+, delete a song from the device library, leave the system delete dialog open for more than 10 seconds, then tap Allow: the file is deleted and the song disappears from the library and the queue without a rescan. Repeat with Deny: the song stays. Repeat with "Don't keep activities" on in Developer options, so the app's activity is destroyed behind the dialog: Allow still removes the song.

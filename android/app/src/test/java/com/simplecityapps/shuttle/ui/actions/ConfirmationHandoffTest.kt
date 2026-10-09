@@ -74,6 +74,19 @@ class ConfirmationHandoffTest {
     }
 
     @Test
+    fun `abandoning a launched request declines it and lets the next caller through`() = runTest {
+        val first = async { handoff.confirm("first") }
+        val second = async { handoff.confirm("second") }
+        handoff.launch(handoff.requests.first())
+
+        handoff.abandon()
+
+        first.await() shouldBe false
+        handoff.requests.first().payload shouldBe "second"
+        second.isCompleted shouldBe false
+    }
+
+    @Test
     fun `a cancelled caller withdraws its request so no later host launches it`() = runTest {
         val confirmed = async { handoff.confirm("delete") }
         val request = handoff.requests.first()

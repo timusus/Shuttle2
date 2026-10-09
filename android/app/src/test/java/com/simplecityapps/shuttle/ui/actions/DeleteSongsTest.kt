@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import android.content.IntentSender
+import android.net.Uri
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
@@ -10,6 +12,13 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -112,6 +121,86 @@ class DeleteSongsTest {
         result.failed.shouldBeEmpty()
         songRepository.removed.toSet() shouldBe setOf(song, mediaStore)
         queueOperations.removedItems.toSet() shouldBe queue.toSet()
+    }
+
+    private val confirmations = ConfirmationHandoff<IntentSender>(pickupTimeout = 5.seconds)
+    private val mediaStore = other.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "11")
+
+    // Android 11+: the whole batch goes through the system's delete dialog
+    private fun deleteThroughSystemDialog() {
+        val edge = object : MediaStoreDeleteEdge {
+            override fun uriFor(externalId: Long): Uri = mockk(relaxed = true)
+
+            override fun createDeleteRequest(uris: List<Uri>): IntentSender = mockk()
+
+            override fun hasWriteAccess() = true
+
+            override suspend fun deleteDirect(uri: Uri): DirectDelete = error("Android 11+ deletes through the dialog")
+        }
+        val flow = MediaStoreDeleteFlow(edge, sdkInt = 30, confirmations = confirmations)
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { flow.delete(it) }
+    }
+
+    @Test
+    fun `accepting the system dialog removes the songs even after the screen that asked has gone`() = runTest {
+        deleteThroughSystemDialog()
+        val caller = launch { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+        confirmations.launch(confirmations.requests.first())
+
+        // The user takes longer than the pickup timeout, and the activity behind the dialog is destroyed meanwhile
+        advanceTimeBy(60.seconds)
+        caller.cancel()
+        runCurrent()
+        confirmations.deliver(true)
+        runCurrent()
+
+        songRepository.removed shouldBe listOf(mediaStore)
+        queueOperations.removedItems shouldBe listOf(queue[1])
+    }
+
+    @Test
+    fun `declining the system dialog after the screen that asked has gone keeps the songs`() = runTest {
+        deleteThroughSystemDialog()
+        val caller = launch { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+        confirmations.launch(confirmations.requests.first())
+
+        advanceTimeBy(60.seconds)
+        caller.cancel()
+        runCurrent()
+        confirmations.deliver(false)
+        runCurrent()
+
+        songRepository.removed.shouldBeEmpty()
+        queueOperations.removedItems.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a system dialog no screen ever shows fails the delete after the pickup timeout`() = runTest {
+        deleteThroughSystemDialog()
+        val result = async { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+
+        advanceTimeBy(5.seconds + 1.seconds)
+
+        result.isCompleted shouldBe true
+        result.await() shouldBe DeleteSongs.Result(deleted = emptyList(), failed = listOf(mediaStore))
+        songRepository.removed.shouldBeEmpty()
+    }
+
+    @Test
+    fun `an abandoned system dialog keeps the songs and lets the next delete through`() = runTest {
+        deleteThroughSystemDialog()
+        val first = launch { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+        confirmations.launch(confirmations.requests.first())
+        first.cancel()
+        runCurrent()
+
+        confirmations.abandon()
+        val second = async { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+        confirmations.launch(confirmations.requests.first())
+        confirmations.deliver(true)
+
+        second.await().deleted shouldBe listOf(mediaStore)
+        songRepository.removed shouldBe listOf(mediaStore)
     }
 
     @Test

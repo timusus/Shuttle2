@@ -58,4 +58,10 @@ class ConfirmationHandoff<T>(private val pickupTimeout: Duration = 5.seconds) {
     fun deliver(accepted: Boolean) {
         current.value?.takeIf { it.pickedUp.isCompleted }?.answer?.complete(accepted)
     }
+
+    /**
+     * Ends the launched request as declined because its host is going away for good, so the dialog's answer can never
+     * come back. A launched request otherwise waits for its answer however long it takes, and later callers with it.
+     */
+    fun abandon() = deliver(false)
 }
