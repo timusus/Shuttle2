@@ -28,19 +28,20 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import java.io.File
 import kotlin.time.Instant
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -412,18 +413,30 @@ class PlaylistImportTest {
         val playlist = serverPlaylist()
         val entriesOfB = database.playlistSongJoinDataDao().getSongsForPlaylist(playlist.id).first().filter { entry -> entry.song.path == B }
         var edited: Job? = null
-        // The edit starts once the import has fetched the server's playlist, just before it writes it
+        val editWaiting = CompletableDeferred<Unit>()
+        val realLock = Mutex()
+        val reportingLock =
+            object : Mutex by realLock {
+                override suspend fun lock(owner: Any?) {
+                    if (realLock.isLocked) editWaiting.complete(Unit)
+                    realLock.lock(owner)
+                }
+            }
+        val racingSync = ServerPlaylistSync(setOf(serverWriter), preferences, scope, reportingLock)
+        val racingRepository =
+            LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(), racingSync)
+        // The edit starts once the import has fetched the server's playlist, just before it writes it, and the write waits until the edit is blocked on the import's lock
         val racingStore =
-            object : ImportedPlaylistStore by syncedPlaylistRepository {
+            object : ImportedPlaylistStore by racingRepository {
                 override suspend fun reconcilePlaylists(
                     type: MediaProviderType,
                     listing: MediaImporter.PlaylistListing,
                     listingComplete: Boolean,
                     lastServerSongs: Map<String, Set<Long>>
                 ) {
-                    edited = scope.launch { syncedPlaylistRepository.removeFromPlaylist(playlist, entriesOfB) }
-                    delay(200)
-                    syncedPlaylistRepository.reconcilePlaylists(type, listing, listingComplete, lastServerSongs)
+                    edited = scope.launch { racingRepository.removeFromPlaylist(playlist, entriesOfB) }
+                    editWaiting.await()
+                    racingRepository.reconcilePlaylists(type, listing, listingComplete, lastServerSongs)
                 }
             }
         val racingImporter =
@@ -433,16 +446,16 @@ class PlaylistImportTest {
                 playlistStore = racingStore,
                 preferenceManager = preferences,
                 afterImport = {},
-                playlistSync = playlistSync
+                playlistSync = racingSync
             ).apply { mediaProviders += server }
 
         racingImporter.import()
         edited!!.join()
 
         importedPlaylistPaths() shouldBe listOf(A, C)
-        playlistSync.send(MediaProviderType.Jellyfin)
+        racingSync.send(MediaProviderType.Jellyfin)
         server.playlists[PLAYLIST_ID] shouldBe listOf(A, C)
-        playlistSync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
+        racingSync.pendingPlaylistIds(MediaProviderType.Jellyfin) shouldBe emptySet()
     }
 
     @Test

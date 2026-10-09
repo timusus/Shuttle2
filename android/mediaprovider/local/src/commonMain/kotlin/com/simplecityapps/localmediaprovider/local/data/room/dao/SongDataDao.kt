@@ -336,18 +336,18 @@ abstract class SongDataDao {
     @Transaction
     open suspend fun setFavourite(
         songs: List<Song>,
-        favourite: Boolean
+        favourite: Boolean,
+        now: Instant = Clock.System.now()
     ): Int {
         val count = if (!favourite) {
             songs.map { it.id }.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> unfavourite(chunk) }
         } else {
             val (toRestore, toStamp) = songs.distinctBy { it.id }.partition { it.favouritedAt != null }
             val restored = toRestore.sumOf { song -> favourite(song.id, song.favouritedAt!!) }
-            val now = Clock.System.now()
             val stamped = toStamp.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> favourite(chunk, now) }
             restored + stamped
         }
-        enqueuePendingFavourites(songs, favourite)
+        enqueuePendingFavourites(songs, favourite, now)
         return count
     }
 
@@ -358,9 +358,9 @@ abstract class SongDataDao {
      */
     private suspend fun enqueuePendingFavourites(
         songs: List<Song>,
-        favourite: Boolean
+        favourite: Boolean,
+        changedAt: Instant
     ) {
-        val changedAt = Clock.System.now()
         songs.distinctBy { it.id }.filter { it.mediaProvider.remote }.forEach { song ->
             enqueuePendingFavourite(PendingFavouriteData(song.id, favourite, changedAt))
         }

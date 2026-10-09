@@ -68,15 +68,14 @@ sealed interface PlaylistEdit {
 class ServerPlaylistSync(
     writers: Set<ServerPlaylistWriter>,
     private val preferenceManager: GeneralPreferenceManager,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    /** Held by an edit in S2 from making it until it's queued, and by an import while it reads the queue and writes playlists. Taken before [queueLock]. Tests pass one that reports waiters. */
+    private val editLock: Mutex = Mutex()
 ) {
     private val writers = writers.associateBy { writer -> writer.type }
 
     /** Guards each read-modify-write of the queue: edits are added while it's being sent. */
     private val queueLock = Mutex()
-
-    /** Held by an edit in S2 from making it until it's queued, and by an import while it reads the queue and writes playlists. Taken before [queueLock]. */
-    private val editLock = Mutex()
 
     /** One sender per server at a time, so edits go in order; an import holds it while it reads that server's playlists. */
     private val sendLocks = this.writers.mapValues { Mutex() }
