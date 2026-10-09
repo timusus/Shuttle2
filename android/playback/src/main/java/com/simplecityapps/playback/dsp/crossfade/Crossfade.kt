@@ -14,6 +14,8 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.TimelineWithUpdatedMediaItem
 import androidx.media3.exoplayer.source.WrappingMediaSource
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+import androidx.media3.exoplayer.util.ReleasableExecutor
+import com.google.common.base.Supplier
 import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.dsp.crossfade.CrossfadePlan.Next
 import com.simplecityapps.playback.queue.QueueEntry
@@ -57,6 +59,8 @@ class CrossfadeClippingMediaSourceFactory(
     override fun setDrmSessionManagerProvider(drmSessionManagerProvider: DrmSessionManagerProvider): MediaSource.Factory = apply { delegate.setDrmSessionManagerProvider(drmSessionManagerProvider) }
 
     override fun setLoadErrorHandlingPolicy(loadErrorHandlingPolicy: LoadErrorHandlingPolicy): MediaSource.Factory = apply { delegate.setLoadErrorHandlingPolicy(loadErrorHandlingPolicy) }
+
+    override fun setDownloadExecutor(downloadExecutor: Supplier<ReleasableExecutor>): MediaSource.Factory = apply { delegate.setDownloadExecutor(downloadExecutor) }
 }
 
 /**

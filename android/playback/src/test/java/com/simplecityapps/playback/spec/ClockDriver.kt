@@ -17,19 +17,22 @@ import org.robolectric.Shadows.shadowOf
  *
  * Neither gives up after an amount of wall time, however slowly a loaded machine runs the player's threads (#555):
  * [idle] waits for the thread handling each message, failing only if one never finishes one, and [runUntil] fails
- * after an amount of the clock's time. What loads media still runs on real threads, so how much of it is ready at a
- * given clock time isn't fixed.
+ * after an amount of the clock's time. Media loads given [loads] run only in [idle], each to rest, so how much of a
+ * song is ready at a given clock time is fixed too.
  *
  * The failure messages say what [player] was doing when it hung or a condition never held.
  */
 class ClockDriver(
     private val clock: FakeClock,
-    private val player: Player
+    private val player: Player,
+    /** Where the player's media loads run, if its media source factory was given them; elsewhere they run on their own. */
+    private val loads: HeldLoads = HeldLoads()
 ) {
     /**
      * Runs the main looper's due tasks and what the clock hands the player's other threads (such as its playback
      * thread taking or giving up audio focus), until each thread has handled them and the main looper has had the
-     * events they raised, and so on until none has anything left to do now, without letting the clock's time pass.
+     * events they raised, then each media load due to run, and so on until none has anything left to do now, without
+     * letting the clock's time pass.
      */
     fun idle() {
         val mainLooper = shadowOf(Looper.getMainLooper())
@@ -37,7 +40,7 @@ class ClockDriver(
             mainLooper.idle()
             val looper = synchronized(clock) { handlingLooper() }
             when {
-                looper == null -> if (mainLooper.isIdle) return
+                looper == null -> if (!loads.runNext(::awaitHandled) && mainLooper.isIdle) return
                 looper != Looper.getMainLooper() -> awaitHandled(looper)
             }
         }
@@ -112,10 +115,10 @@ class ClockDriver(
         const val STEP_MS = 10L
 
         /**
-         * How much of the player's clock [runUntil] runs through by default: far longer than any test plays, so that a
-         * load a loaded machine holds up can't use it up, while one that never holds still fails in seconds.
+         * How much of the player's clock [runUntil] runs through by default: longer than any test plays, and since loads
+         * keep to the clock, a slow machine can't use it up.
          */
-        const val DEFAULT_LIMIT_MS = 3_600_000L
+        const val DEFAULT_LIMIT_MS = 600_000L
 
         /** How far ahead [runUntil] runs a task the main looper has scheduled, moving its time on to it. */
         private const val MAIN_LOOPER_LOOKAHEAD_MS = 1_000L

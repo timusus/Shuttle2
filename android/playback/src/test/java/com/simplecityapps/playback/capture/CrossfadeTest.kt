@@ -196,7 +196,7 @@ class CrossfadeTest {
 
     /**
      * [playToEnd], but queueing the songs first and playing only once the first two songs' tails are decoded. The
-     * decoder works in wall time, on a real loader thread, while the sink here takes a whole song at once, so without
+     * decoder takes the player's clock time to decode, while the sink here takes a whole song at once, so without
      * this the songs would have gone through the mixer before their tails were ready. On a device the decode runs many
      * times faster than playback; it only has to finish before the sink reaches the song's end.
      */

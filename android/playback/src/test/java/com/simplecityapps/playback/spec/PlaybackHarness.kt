@@ -204,6 +204,9 @@ class PlaybackHarness(
      */
     private val clock = FakeClock(false)
 
+    /** Where the player and the crossfade's tail decoders load media: only as [idle] runs it. */
+    private val loads = HeldLoads()
+
     /** Settles and plays on the player on [clock]: [idle] and [runUntil]. */
     private val driver: ClockDriver
 
@@ -228,11 +231,11 @@ class PlaybackHarness(
                     // Production's ExoPlayer.Builder prepares lazily by default: only the items around the current one.
                     .setUseLazyPreparation(lazyPreparation)
                     .setRenderersFactory(renderersFactory)
-                    .setMediaSourceFactory(mediaSourceFactory)
+                    .setMediaSourceFactory(mediaSourceFactory.setDownloadExecutor(loads))
                     .build()
             }
         player = factory.create()
-        driver = ClockDriver(clock, player)
+        driver = ClockDriver(clock, player, loads)
         player.addListener(
             object : Player.Listener {
                 override fun onTimelineChanged(
