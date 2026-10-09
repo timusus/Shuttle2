@@ -159,9 +159,34 @@ final class StreamedPlaybackTests: XCTestCase {
         XCTAssertEqual(log.failures, [])
     }
 
+    /// A transcode that drops mid-play: the source's resume is answered with the whole body from the start, so the
+    /// download is given up and the position is reported as a seek to re-open at, once, never as a failure or as a
+    /// wait while the song downloads again from byte 0 (#950).
+    func testADroppedTranscodeAsksToReopenAtThePosition() throws {
+        let (server, _, _) = try served(XCTUnwrap(S2PlaybackTestSupport.LoopbackMediaServer.fixtureURL("tone", withExtension: "mp3")))
+        server.respondsWholeBodyIgnoringRange = true
+        // About 8 s of the 64 kbit/s fixture, well past the open's probe.
+        server.closesAfterBodyBytes = 64 * 1024
+        let (controller, log) = try makeController()
+        controller.load(current: streamed("A", server.url), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+
+        _ = try renderer.render(frames: 48_000 * 10)
+        waitUntil { !log.seeksUnsupported.isEmpty }
+        _ = try renderer.render(frames: 48_000)
+
+        XCTAssertEqual(log.seeksUnsupported.count, 1, "\(log.seeksUnsupported) \(server.requestedRanges)")
+        let ms = try XCTUnwrap(log.seeksUnsupported.first.flatMap { Int($0.dropFirst(2)) })
+        XCTAssertGreaterThan(ms, 7_000)
+        XCTAssertLessThan(ms, 8_300)
+        XCTAssertEqual(log.failures, [])
+        XCTAssertEqual(server.requestedRanges.filter { $0 == 0 }.count, 1, "\(server.requestedRanges)")
+    }
+
     /// A range-ignoring host whose `Content-Length` promises more than its body holds: a seek inside the promised
-    /// length but past the real body is a seek it can't make, never a failure. Known issue (shuttle-playback#71): the
-    /// source fails the track as soon as the short body ends, before any seek.
+    /// length but past the real body is a seek it can't make, never a failure. The source's resume after the short body
+    /// restarts from byte 0, which is a drop: the engine asks to re-open rather than fail (shuttle-playback#71).
     func testASeekBeyondAnOverpromisedBodyIsUnsupportedNotAFailure() throws {
         let (server, body, _) = try served(sine(seconds: 2))
         server.respondsWholeBodyIgnoringRange = true
@@ -176,16 +201,19 @@ final class StreamedPlaybackTests: XCTestCase {
         controller.syncForTesting()
         _ = try renderer.render(frames: 9_600)
 
-        XCTExpectFailure("shuttle-playback#71: an over-promised body fails the track") {
-            XCTAssertEqual(log.failures, [])
-        }
+        XCTAssertEqual(log.failures, [])
+        // The drop, early on a body this short, then the seek.
+        XCTAssertEqual(log.seeksUnsupported.count, 2, "\(log.seeksUnsupported)")
+        XCTAssertEqual(log.seeksUnsupported.last, "A 1500")
     }
 
     /// A transcode's estimated length can promise bytes the server never sends: a seek past the length is refused as
     /// unseekable, which the engine reports as a seek it can't make (#950).
     func testASeekPastTheStreamsLengthIsRefusedAsUnseekable() throws {
         let (server, body, _) = try served(sine(seconds: 1))
-        let reader = StreamedTrackReader(GrowingFileByteSource(url: server.url, authHeaders: [:], store: .temporary())) {}
+        let reader = StreamedTrackReader(onWait: {}) { onEvent in
+            GrowingFileByteSource(url: server.url, authHeaders: [:], store: .temporary(), onEvent: onEvent)
+        }
         defer { reader.cancel() }
         var byte: UInt8 = 0
         XCTAssertEqual(try reader.read(into: &byte, maxLength: 1), 1)
@@ -203,8 +231,8 @@ final class StreamedPlaybackTests: XCTestCase {
         server.delayForOffsetZero = 1.5
         let waits = NSLock()
         var waited = 0
-        let reader = StreamedTrackReader(GrowingFileByteSource(url: server.url, authHeaders: [:], store: .temporary())) {
-            waits.withLock { waited += 1 }
+        let reader = StreamedTrackReader(onWait: { waits.withLock { waited += 1 } }) { onEvent in
+            GrowingFileByteSource(url: server.url, authHeaders: [:], store: .temporary(), onEvent: onEvent)
         }
         defer { reader.cancel() }
         var byte: UInt8 = 0

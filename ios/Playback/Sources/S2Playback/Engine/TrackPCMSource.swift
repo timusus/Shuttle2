@@ -11,7 +11,8 @@ public enum TrackSourceError: Error, Equatable {
     /// ``TrackPCMSource/interrupt()`` ended the read so a seek could be applied; not terminal.
     case interrupted
     /// ``TrackPCMSource/seek(toFrame:)`` needed bytes the stream couldn't serve (a transcode whose
-    /// length was estimated). Terminal: every read after it throws it too, and the source reports
+    /// length was estimated), or a stream that dropped and whose host would only send it again from
+    /// its start. Terminal: every read after it throws it too, and the source reports
     /// itself unseekable. The controller reports it through `onSeekUnsupported`, as it does a
     /// source that was never seekable, and reads nothing more until the owner re-opens the track.
     case unseekable
@@ -99,15 +100,18 @@ public final class FFmpegTrackSource: TrackPCMSource {
             if url.isFileURL { return (try FileByteReader(url: url), nil) }
             let key = StreamCacheKey.stableURL(for: url)
             if let kept = store.completedFile(for: key) { return (try FileByteReader(url: kept), kept) }
-            let source = GrowingFileByteSource(
-                url: url,
-                authHeaders: headers,
-                cacheKey: key,
-                connectionPolicy: ServerConnections.policy?.growingFilePolicy(for: url),
-                readAhead: readAhead,
-                store: store
-            )
-            return (StreamedTrackReader(source, onWait: onWait), nil)
+            let reader = StreamedTrackReader(onWait: onWait) { onEvent in
+                GrowingFileByteSource(
+                    url: url,
+                    authHeaders: headers,
+                    cacheKey: key,
+                    connectionPolicy: ServerConnections.policy?.growingFilePolicy(for: url),
+                    readAhead: readAhead,
+                    store: store,
+                    onEvent: onEvent
+                )
+            }
+            return (reader, nil)
         }
     }
 
@@ -125,7 +129,8 @@ public final class FFmpegTrackSource: TrackPCMSource {
         } catch {
             throw TrackSourceError.failed("open \(url.lastPathComponent): \(error)")
         }
-        let stream = (reader as? StreamedTrackReader)?.source
+        let streamed = reader as? StreamedTrackReader
+        let stream = streamed?.source
         let decoder = FFmpegStreamDecoder(reader: reader)
         lock.lock()
         let wasCancelled = cancelled
@@ -145,6 +150,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
             try decoder.setOutputFormat(sampleRate: sampleRate, channelCount: channelCount)
             outputRate = sampleRate
             outputChannels = channelCount
+            streamed?.armDropWatch()
             guard let duration = format.duration else { return nil }
             lock.withLock { durationSeconds = duration }
             return Int64((duration * sampleRate).rounded())
@@ -173,6 +179,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
         do {
             landed = try decoder.seek(toSeconds: Double(frame) / outputRate)
         } catch StreamDecoderError.interrupted {
+            if refuseIfDropped() { throw TrackSourceError.unseekable }
             throw TrackSourceError.interrupted
         } catch StreamDecoderError.cancelled {
             throw TrackSourceError.cancelled
@@ -245,10 +252,22 @@ public final class FFmpegTrackSource: TrackPCMSource {
         switch decoder.endReason {
         case .eof, .running: return 0
         case .cancelled: throw TrackSourceError.cancelled
-        case .interrupted: throw TrackSourceError.interrupted
+        case .interrupted:
+            if refuseIfDropped() { throw TrackSourceError.unseekable }
+            throw TrackSourceError.interrupted
         case .failure:
             if lock.withLock({ seekRefused }) { throw TrackSourceError.unseekable }
             throw TrackSourceError.failed("decode \(url.lastPathComponent) failed mid-stream")
+        }
+    }
+
+    /// A stream whose download restarted from byte 0 (``StreamedTrackReader/dropped``) is unseekable from then on,
+    /// as one that refused a seek is: the owner re-opens it at the position rather than wait for the song again.
+    private func refuseIfDropped() -> Bool {
+        lock.withLock {
+            guard (reader as? StreamedTrackReader)?.dropped == true else { return false }
+            seekRefused = true
+            return true
         }
     }
 

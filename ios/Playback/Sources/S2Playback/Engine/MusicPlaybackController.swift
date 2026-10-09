@@ -244,6 +244,8 @@ public final class MusicPlaybackController {
         var primed: [Float] = []
         /// The open's read failed: the first read fails with it, as it would have.
         var primeError: Error?
+        /// Its source turned unseekable and reads nothing more, and the owner was told where to re-open it.
+        var awaitingReopen = false
 
         init(track: PlaybackTrack) {
             Self.lastId += 1
@@ -1109,6 +1111,7 @@ public final class MusicPlaybackController {
                 try seek(current, toFrame: frame)
             } catch TrackSourceError.unseekable {
                 // Refused (an estimated length the stream can't serve): unseekable from now on, below.
+                current.awaitingReopen = true
             } catch {
                 reportFailure(current, error)
                 startFrame = 0
@@ -1245,9 +1248,14 @@ public final class MusicPlaybackController {
                         interrupted = true
                         return
                     } catch TrackSourceError.unseekable where slot === current {
-                        // It refused a seek, reported as unsupported: neither ended nor failed, it
-                        // waits, as an interrupted read does, for the owner to re-open it.
+                        // It refused a seek, or its stream dropped and its host would only start it
+                        // again from the top: neither ended nor failed, it waits, as an interrupted read
+                        // does, for the owner to re-open it where it's heard.
                         interrupted = true
+                        if !slot.awaitingReopen {
+                            slot.awaitingReopen = true
+                            reportSeekUnsupported(slot, ms: ms(frames: currentMediaFrame()))
+                        }
                         return
                     } catch {
                         reportFailure(slot, error)
