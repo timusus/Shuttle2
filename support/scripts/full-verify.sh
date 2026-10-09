@@ -235,7 +235,7 @@ EXISTING=$(gh issue list --state open --label bug --search "\"$TITLE_PREFIX\" in
 if [ -n "$EXISTING" ]; then
   gh issue comment "$EXISTING" --body "$BODY" | tee -a "$LOG" || log "full-verify: could not comment on #$EXISTING"
 else
-  gh issue create --label bug --title "$TITLE_PREFIX at $(git rev-parse --short "$SHA"): $FAILED" --body "$BODY" \
+  gh issue create --label bug,P2,size:M --title "$TITLE_PREFIX at $(git rev-parse --short "$SHA"): $FAILED" --body "$BODY" \
     | tee -a "$LOG" || log "full-verify: could not file the issue"
 fi
 exit 1
