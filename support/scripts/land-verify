@@ -84,15 +84,26 @@ failures() {
         /\.java:[0-9]+: error:/ || /\.swift:[0-9]+(:[0-9]+)?: error:/ || /AAPT: error:/ || /Manifest merger failed/ || /^ERROR: / { add($0); next }
         /_compare\.png/ { s = $0; sub(/_compare\.png.*/, "", s); sub(/.*[\/ ]/, "", s); add("roborazzi " s); next }
         /^[^ ]+\.kts?:[0-9]+(:[0-9]+)?: / { add("lint " $0) }
+        /^xcodebuild: error:/ || /^ld: / || /^Undefined symbols/ || /^Compilation failed:/ || /^error: .*(konan|Kotlin\/Native)/ { add($0); next }
     ' | sort -u
 }
+
+# last_marker LOG: the last tool failure marker in the log, for a failure no parser recognised.
+last_marker() {
+    local m
+    m=$(sed $'s/\x1b\\[[0-9;]*m//g' "$1" | grep -Eo '\*\* (BUILD|TEST) FAILED \*\*|BUILD FAILED|FAILURE: Build failed|Compilation failed|Test Suite .* failed|Executed [0-9]+ tests, with [0-9]+ failures' | tail -1 | sed -E 's/[0-9]+/N/g')
+    echo "${m:-no marker}"
+}
+
+# mark TEXT: a verify: line always starts on its own line, even after unterminated tool output.
+mark() { printf '\nverify: %s\n' "$*"; }
 
 # run_phase PHASE CMD...: every phase runs and reports, even after an earlier one failed, so a
 # failure main already has never hides a later phase.
 run_phase() {
-    local phase=$1 log="$artifacts/$1.log" rc raw
+    local phase=$1 log="$artifacts/$1.log" rc raw parsed tests others
     shift
-    echo "verify: == $phase"
+    mark "== $phase"
     "$@" </dev/null 2>&1 | tee "$log" >&2
     rc=${PIPESTATUS[0]}
     [ "$rc" -eq 0 ] && return 0
@@ -100,18 +111,34 @@ run_phase() {
     # "Incremental compilation failed" line land's retry pattern looks for).
     while IFS= read -r raw; do
         [ -f "$raw" ] || continue
-        { echo "---- raw Gradle log"; cat "$raw"; } | tee -a "$log" >&2
+        { printf '\n---- raw Gradle log\n'; cat "$raw"; } | tee -a "$log" >&2
     done < <(sed -n 's/^Raw log: //p' "$log")
     failed=1
     failed_phases="$failed_phases$phase "
-    failures "$log" | while IFS= read -r line; do echo "verify: !! $line"; done
-    echo "verify: -- $phase failed: exit $rc, see $phase.log in the artifact dir"
+    if [ "$rc" -eq 124 ] && grep -q '^land-verify: device lease timeout' "$log"; then
+        mark "-- $phase failed: device lease timeout"
+        return 0
+    fi
+    parsed=$(failures "$log")
+    if [ -z "$parsed" ]; then
+        mark "!! $phase: $(last_marker "$log") (no parsed error)"
+    else
+        # Capped so a mass failure stays a fixed signature; the cap is flagged without a count.
+        tests=$(printf '%s\n' "$parsed" | grep -E '^(test |ios test |✘ Test )' | sort)
+        others=$(printf '%s\n' "$parsed" | grep -vE '^(test |ios test |✘ Test )')
+        { [ -n "$others" ] && printf '%s\n' "$others"; printf '%s\n' "$tests" | head -20; } | grep -v '^$' |
+            while IFS= read -r line; do mark "!! $line"; done
+        if [ -n "$tests" ] && [ "$(printf '%s\n' "$tests" | wc -l)" -gt 20 ]; then
+            mark "!! $phase: more than 20 test failures"
+        fi
+    fi
+    mark "-- $phase failed: exit $rc, see $phase.log in the artifact dir"
 }
 
 skip_phase() {  # skip_phase PHASE WHY: a phase that cannot run on what an earlier phase left behind
-    echo "verify: == $1"
+    mark "== $1"
     failed=1
-    echo "verify: -- $1 failed: $2"
+    mark "-- $1 failed: $2"
 }
 
 lint_changed() {
@@ -126,7 +153,7 @@ lint_changed() {
 
 # The simulator for iOS tests. Inside the verify lease only one verify runs, so one fixed device
 # suffices; it is cloned from the iOS 18.5 iPhone 16 the ios-sim pool bases its leases on (a beta
-# runtime fails tests a release passes).
+# runtime fails tests a release passes). Highest 18.x by version, since the runtime dict has no order.
 land_sim() {
     local name="S2 Land iPhone" udid runtime
     [ -n "${S2_LAND_SIM_UDID:-}" ] && { echo "$S2_LAND_SIM_UDID"; return 0; }
@@ -134,9 +161,12 @@ land_sim() {
     if [ -z "$udid" ]; then
         runtime=$(xcrun simctl list -j devices available | python3 -I -c '
 import json, sys
+found = []
 for rt, devs in json.load(sys.stdin)["devices"].items():
-    if any(d["name"] == "iPhone 16" for d in devs) and "iOS-18" in rt:
-        print(rt); break')
+    if any(d["name"] == "iPhone 16" for d in devs) and "iOS-18-" in rt:
+        found.append((tuple(int(p) for p in rt.rsplit("iOS-", 1)[1].split("-") if p.isdigit()), rt))
+if found:
+    print(max(found)[1])')
         [ -n "$runtime" ] || { echo "land-verify: no iOS 18 iPhone 16 simulator to base $name on" >&2; return 1; }
         udid=$(xcrun simctl create "$name" "iPhone 16" "$runtime") || return 1
         echo "land-verify: created simulator $name ($udid)" >&2
@@ -145,7 +175,12 @@ for rt, devs in json.load(sys.stdin)["devices"].items():
 }
 
 # Counted against other simulator users: the verify lease's LEASE_HELD would let it skip the queue.
-on_device() { env -u LEASE_HELD lease --class device -- "$@"; }
+on_device() {
+    local rc=0
+    env -u LEASE_HELD lease --class device --timeout 1200 -- "$@" || rc=$?
+    [ "$rc" -eq 124 ] && echo "land-verify: device lease timeout" >&2
+    return "$rc"
+}
 
 ios_framework() {
     (cd ios && xcodegen -q) || return 1
@@ -210,5 +245,5 @@ if [ "${#kmp_tasks[@]}" -gt 0 ] || grep -Eq '^(ios/|shared/|android/domain/|andr
     [ -n "$sim" ] && { xcrun simctl shutdown "$sim" >/dev/null 2>&1 || true; }
 fi
 
-echo "verify: == end"
+mark "== end"
 exit "$failed"
