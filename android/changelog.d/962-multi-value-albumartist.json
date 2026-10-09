@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Albums with several album artists now appear under each of them for files on your device. Your library re-reads its tags once after updating.", "commits": [] }

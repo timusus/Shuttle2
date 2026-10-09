@@ -198,6 +198,16 @@ class FileTagsTest {
     }
 
     @Test
+    fun `a multi-value ALBUMARTIST lists each value as an album artist and a single value does not`() {
+        val multi = mapOf("ALBUMARTIST" to listOf("A", " B ", "")).toFileTags()
+        multi.albumArtists shouldBe listOf("A", "B")
+        multi.albumArtist shouldBe "A"
+
+        mapOf("ALBUMARTIST" to listOf("A & B")).toFileTags().albumArtists shouldBe emptyList()
+        mapOf("ALBUMARTIST" to listOf("A", "B"), "ALBUMARTISTS" to listOf("C", "D")).toFileTags().albumArtists shouldBe listOf("C", "D")
+    }
+
+    @Test
     fun `a full date becomes the first of its year`() {
         "2021-05-14".toYearDate() shouldBe LocalDate(2021, 1, 1)
         "2021".toYearDate() shouldBe LocalDate(2021, 1, 1)

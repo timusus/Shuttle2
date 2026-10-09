@@ -79,7 +79,9 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         replayGainAlbum = getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.parseReplayGain() ?: getCaseInsensitive(R128_ALBUM_GAIN)?.firstOrNull()?.parseR128Gain(),
         lyrics = first(TagLibProperty.Lyrics),
         grouping = first(TagLibProperty.Grouping),
-        albumArtists = values(TagLibProperty.AlbumArtists.key),
+        // A multi-value ALBUMARTIST (repeated Vorbis fields, null-separated ID3v2.4, several MP4 aART) lists its values when
+        // there is no ALBUMARTISTS tag; a single value stays only in albumArtist.
+        albumArtists = values(TagLibProperty.AlbumArtists.key).ifEmpty { values(TagLibProperty.AlbumArtist.key).takeIf { it.size > 1 }.orEmpty() },
         artistsTag = values(TagLibProperty.Artists.key),
         artistDisplay = values(TagLibProperty.Artist.key).joinToString("; ").ifEmpty { null },
         compilation = first(TagLibProperty.Compilation)?.parseCompilation(),
