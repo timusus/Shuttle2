@@ -1,11 +1,9 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.room.useReaderConnection
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
@@ -19,6 +17,8 @@ import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
@@ -28,16 +28,9 @@ import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class LocalPlayHistoryRepositoryTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class LocalPlayHistoryRepositoryTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val songDao = database.songDataDao()
     private val eventDao = database.playEventDao()
 
@@ -52,21 +45,23 @@ class LocalPlayHistoryRepositoryTest {
     private val playlistContext = PlayContext.Playlist(7)
     private val genreContext = PlayContext.Genre("Jazz")
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
 
     @Test
-    fun `a play is recorded with its local hour, ISO weekday and context`() = runTest {
+    fun `a play is recorded with its local hour and ISO weekday and context`() = runTest {
         val song = insertSong("Blue", "Joni Mitchell")
 
         repository.recordPlay(song, Instant.parse("2026-09-27T21:15:00Z"), 45_000, completed = false, albumContext)
 
         eventDao.recentContexts(10).single().contextType shouldBe PlayContext.TYPE_ALBUM
-        val event = database.query("SELECT localHour, weekday, listenedMs, completed, songPath, mediaProvider FROM play_events", null).use { cursor ->
-            cursor.moveToFirst()
-            listOf(cursor.getInt(0), cursor.getInt(1), cursor.getLong(2).toInt(), cursor.getInt(3), cursor.getString(4), cursor.getString(5))
+        val event = database.useReaderConnection { connection ->
+            connection.usePrepared("SELECT localHour, weekday, listenedMs, completed, songPath, mediaProvider FROM play_events") { statement ->
+                statement.step()
+                listOf(statement.getInt(0), statement.getInt(1), statement.getLong(2).toInt(), statement.getInt(3), statement.getText(4), statement.getText(5))
+            }
         }
         // 2026-09-27 is a Sunday
         event shouldBe listOf(21, 7, 45_000, 0, song.path, "Shuttle")
@@ -85,7 +80,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `recent contexts are distinct, most recent first, without none, and limited`() = runTest {
+    fun `recent contexts are distinct and most recent first and without none and limited`() = runTest {
         val song = insertSong("Blue", "Joni Mitchell")
         repository.recordPlay(song, now - 3.hours, 200_000, true, albumContext)
         repository.recordPlay(song, now - 2.hours, 200_000, true, playlistContext)
@@ -99,7 +94,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `contexts around an hour are ranked by distinct days, with weekend days counted`() = runTest {
+    fun `contexts around an hour are ranked by distinct days with weekend days counted`() = runTest {
         val song = insertSong("Blue", "Joni Mitchell")
         // The album at 08:xx on three days, twice on one of them; one of the days a Saturday (2026-09-19).
         repository.recordPlay(song, Instant.parse("2026-09-18T08:10:00Z"), 60_000, true, albumContext)
@@ -131,7 +126,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `album days count the distinct songs played through each local day, with the album's track count`() = runTest {
+    fun `album days count the distinct songs played through each local day with the album's track count`() = runTest {
         val blue1 = insertSong("Blue", "Joni Mitchell", track = 1)
         val blue2 = insertSong("Blue", "Joni Mitchell", track = 2)
         insertSong("Blue", "Joni Mitchell", track = 3)
@@ -181,7 +176,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `album days count a day with a single play through, however much else was played`() = runTest {
+    fun `album days count a day with a single play through however much else was played`() = runTest {
         val blue = insertSong("Blue", "Joni Mitchell")
         val kid = insertSong("Kid A", "Radiohead")
         repeat(50) { repository.recordPlay(blue, now - 1.days + it.minutes, 200_000, true, albumContext) }
@@ -223,7 +218,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `genre plays count every play of each of a song's genres, scored by age`() = runTest {
+    fun `genre plays count every play of each of a song's genres scored by age`() = runTest {
         songDao.insert(
             listOf(
                 createSongData(album = "Blue", track = 1).copy(genres = listOf("Folk", "Pop")),
@@ -273,7 +268,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `a context's resume point is read back, and a later one replaces it`() = runTest {
+    fun `a context's resume point is read back and a later one replaces it`() = runTest {
         repository.saveResumePoint(resumePoint(albumContext, track = 2))
         repository.saveResumePoint(resumePoint(playlistContext, track = 1))
 
@@ -295,7 +290,7 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `resume points are read together, each as it's read alone, and only for the contexts that have one`() = runTest {
+    fun `resume points are read together each as it's read alone and only for the contexts that have one`() = runTest {
         songDao.insert(listOf(createSongData(album = "Blue").copy(name = "River", path = "/music/2.flac", duration = 240_000)))
         repository.saveResumePoint(resumePoint(albumContext, track = 2))
         repository.saveResumePoint(resumePoint(playlistContext, track = 3))
@@ -325,7 +320,7 @@ class LocalPlayHistoryRepositoryTest {
     ) = ResumePoint(context, MediaProviderType.Shuttle, "/music/$track.flac", 61_000, track, 12, shuffled = true, finished, now)
 
     @Test
-    fun `recording prunes plays older than the retention period and beyond the cap, at most daily`() = runTest {
+    fun `recording prunes plays older than the retention period and beyond the cap at most daily`() = runTest {
         insertEvent(now - 400.days)
         insertEvent(now - 10.days)
         val song = insertSong("Blue", "Joni Mitchell")
