@@ -114,6 +114,11 @@ serve (`StreamedTrackReader` refuses one past the stream's length, #950): the so
 `TrackSourceError.unseekable`, is unseekable from then on, and the decode is
 over. The controller reports that seek through `onSeekUnsupported` too, never `onFailed`, and reads
 nothing more from the track (no failure, no move to the next) until the owner re-opens it.
+A stream that drops mid-play and whose host answers the source's resume with the whole body again
+(a transcode ignoring `Range`) goes the same way: `StreamedTrackReader` gives the restarted download
+up rather than wait while the song is fetched again from byte 0, and the controller reports the heard
+position once through `onSeekUnsupported`, so the owner re-opens it there. A host that honours the
+range answers 206 and the source simply resumes.
 
 **Streaming (#958).** An HTTP(S) track downloads through shuttle-playback's `GrowingFileByteSource` into
 `StreamStore`, S2's `GrowingFileStore` under Caches (512 MiB, swept of partials at launch). A track downloaded
@@ -122,6 +127,9 @@ next time. On Wi-Fi the whole file downloads; on an expensive or constrained pat
 of audio at the library's bitrate, else the file's average, else 320 kbps) runs ahead of the decoder. The server's
 custom headers and trusted certificate come from `ServerConnections.policy` as the source's connection policy.
 `StreamedTrackReader` is what the decoder reads: it reports a read waiting on the network each second.
+After an underrun on a playing node, decoded audio is held off it until `UnderrunResumeRule` says go on
+(2 s decoded, 5 s since the underrun began, or the queue's end), so a link just under real time pauses less
+often instead of playing a moment between pauses. A start or a seek goes on with its first audio.
 
 **Threading.** Public methods return at once. Source seeks and reads and all node operations run on
 one serial engine queue; a next track's open runs on a background queue, and nothing touches its

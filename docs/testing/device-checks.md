@@ -360,6 +360,7 @@ previous and new outputs, and where each pause came from.
 ## iOS buffering on a stalled stream (#963)
 
 - [ ] iPhone on a slow stream (throttle with Network Link Conditioner): while the spinner shows mid-song, seek. The spinner stays until playback resumes at the new position.
+- [ ] Emby FLAC with metered cap forced to 320 over wireless CarPlay, no repeated pauses (#950).
 
 ## iOS sleep timer "end of song" (#953)
 
