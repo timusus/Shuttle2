@@ -138,17 +138,17 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 
 ## Android 17 background-audio hardening (#571), needs an API 37 image and targetSdk 37
 
-At targetSdk 37, playback, audio focus requests and volume changes from the background fail unless a foreground service with while-in-use capability (`mediaPlayback`) is running. Run these on an API 37 emulator once targetSdk is bumped (#527 slice 5); until then, force the hardening on with `adb shell cmd audio set-enable-hardening enable|throw|disable` and read its state with `adb shell dumpsys audio | grep AudioHardening` (`partial` = no foreground service, `full` = foreground service without while-in-use).
+At targetSdk 37, playback, audio focus requests and volume changes from the background fail unless a foreground service with while-in-use capability (`mediaPlayback`) is running. Run these on an API 37 emulator or device once targetSdk is bumped (#527 slice 5); until then, force the hardening on with `adb shell cmd audio set-enable-hardening throw` (or `enable`/`disable`) and read its state with `adb shell dumpsys audio | grep -i AudioHardening` (`partial` = no foreground service, `full` = foreground service without while-in-use). Throughout, the expected result is audio playing audibly with no AudioHardening suppression in `dumpsys audio`.
 
 - [ ] Play, press Home, wait for the notification to settle, then play/pause and skip from the notification and the lock screen: playback follows each command.
 - [ ] Widget buttons (play/pause, next, previous, shuffle, repeat) with the app swiped away and no notification showing: each starts playback or does its action, with no crash.
-- [ ] Launcher shortcuts (toggle playback, shuffle all) and a voice search ("play <artist>"), app not running: playback starts and the notification appears.
-- [ ] Headset or Bluetooth play button after a reboot, with no app running: the saved queue resumes.
+- [ ] Launcher shortcuts (toggle playback, shuffle all) and a voice search ("play <artist>"), app not running — both start from a NoDisplay or transparent activity, so whether that counts as visible is the question: audio plays and the notification appears.
+- [ ] Headset or Bluetooth play button, or the system's resumption controls (quick settings), after a reboot with no app running: the saved queue resumes audibly.
 - [ ] Android Auto (or the Desktop Head Unit), app not running: browsing and tapping a song plays it.
 - [ ] Call during playback, hang up, with the app in the background: playback resumes if it was playing, with the notification back.
-- [ ] Press play during a call, send the app to the background, stay on the call for over a minute, hang up: audio starts after hang-up, with the notification showing, on an API 37 image with the hardening enabled. The service stays in the foreground from the press until the held play starts (`ForegroundHold`); `dumpsys activity services com.simplecityapps.shuttle.dev` shows it foreground throughout the call.
+- [ ] Press play during a call, then hang up: audio starts audibly after hang-up, with the notification showing. Both orders: pressed in the app then backgrounded for over a minute — the service stays in the foreground from the press until the held play starts (`ForegroundHold`); `dumpsys activity services com.simplecityapps.shuttle.dev` shows it foreground throughout the call — and pressed from the notification while already backgrounded, where the hold may lack while-in-use capability.
 - [ ] Press play during a call, then pause or change the queue in the app before hanging up: no "Loading" notification is left showing, and nothing plays after hang-up.
-- [ ] Pause for longer than the notification lingers (service leaves the foreground), then play from a Bluetooth device while the app is in the background: it plays or fails with a logged message, never a crash.
+- [ ] Pause for longer than the notification lingers (the service leaves the foreground, 10 minutes by default), then play from a Bluetooth device or Android Auto (DHU) while the app is in the background: audio plays, never a crash.
 - [ ] Sleep timer ending and a Cast handover with the screen off: no crash and no stuck notification.
 
 ## Audio focus (#345 step 3)
