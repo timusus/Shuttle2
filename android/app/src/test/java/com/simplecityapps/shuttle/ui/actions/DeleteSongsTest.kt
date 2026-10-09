@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -145,13 +146,14 @@ class DeleteSongsTest {
     fun `accepting the system dialog removes the songs even after the screen that asked has gone`() = runTest {
         deleteThroughSystemDialog()
         val caller = launch { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
-        confirmations.launch(confirmations.requests.first())
+        val request = confirmations.requests.first()
+        confirmations.launch(request)
 
         // The user takes longer than the pickup timeout, and the activity behind the dialog is destroyed meanwhile
         advanceTimeBy(60.seconds)
         caller.cancel()
         runCurrent()
-        confirmations.deliver(true)
+        confirmations.deliver(request.token, true)
         runCurrent()
 
         songRepository.removed shouldBe listOf(mediaStore)
@@ -162,12 +164,13 @@ class DeleteSongsTest {
     fun `declining the system dialog after the screen that asked has gone keeps the songs`() = runTest {
         deleteThroughSystemDialog()
         val caller = launch { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
-        confirmations.launch(confirmations.requests.first())
+        val request = confirmations.requests.first()
+        confirmations.launch(request)
 
         advanceTimeBy(60.seconds)
         caller.cancel()
         runCurrent()
-        confirmations.deliver(false)
+        confirmations.deliver(request.token, false)
         runCurrent()
 
         songRepository.removed.shouldBeEmpty()
@@ -187,17 +190,39 @@ class DeleteSongsTest {
     }
 
     @Test
-    fun `an abandoned system dialog keeps the songs and lets the next delete through`() = runTest {
+    fun `a system dialog its finishing host abandons keeps the songs and lets the next delete through`() = runTest {
         deleteThroughSystemDialog()
-        val first = launch { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
-        confirmations.launch(confirmations.requests.first())
-        first.cancel()
-        runCurrent()
+        val first = async { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+        val firstRequest = confirmations.requests.first()
+        confirmations.launch(firstRequest)
 
-        confirmations.abandon()
+        confirmations.abandon(firstRequest.token)
+        first.await().deleted.shouldBeEmpty()
         val second = async { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
-        confirmations.launch(confirmations.requests.first())
-        confirmations.deliver(true)
+        val secondRequest = confirmations.requests.first()
+        confirmations.launch(secondRequest)
+        confirmations.deliver(secondRequest.token, true)
+
+        second.await().deleted shouldBe listOf(mediaStore)
+        songRepository.removed shouldBe listOf(mediaStore)
+    }
+
+    @Test
+    fun `a system dialog whose answer never comes back keeps the songs and lets the next delete through after the cap`() = runTest {
+        deleteThroughSystemDialog()
+        val first = async { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+        val firstRequest = confirmations.requests.first()
+        confirmations.launch(firstRequest)
+        val second = async { actions.deleteSongs(MediaSelection.Songs(mediaStore)) }
+
+        advanceTimeBy(5.minutes + 1.seconds)
+        first.await().deleted.shouldBeEmpty()
+
+        // The lost answer turning up late changes nothing
+        confirmations.deliver(firstRequest.token, true)
+        val secondRequest = confirmations.requests.first()
+        confirmations.launch(secondRequest)
+        confirmations.deliver(secondRequest.token, true)
 
         second.await().deleted shouldBe listOf(mediaStore)
         songRepository.removed shouldBe listOf(mediaStore)

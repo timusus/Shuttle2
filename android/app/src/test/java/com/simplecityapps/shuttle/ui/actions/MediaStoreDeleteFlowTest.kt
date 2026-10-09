@@ -42,8 +42,9 @@ class MediaStoreDeleteFlowTest {
 
     private fun CoroutineScope.hostAnswering(vararg answers: Boolean) = launch {
         for (answer in answers) {
-            confirmations.launch(confirmations.requests.first())
-            confirmations.deliver(answer)
+            val request = confirmations.requests.first()
+            confirmations.launch(request)
+            confirmations.deliver(request.token, answer)
         }
     }
 
