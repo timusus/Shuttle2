@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "On Android 10, declining the prompt to delete a song no longer asks again for every other selected song.", "commits": [] }
