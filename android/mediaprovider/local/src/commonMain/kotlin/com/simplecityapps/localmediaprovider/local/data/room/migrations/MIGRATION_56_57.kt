@@ -7,7 +7,8 @@ import androidx.sqlite.execSQL
 /**
  * Keys the stored MediaStore listing by local provider, so each one's diff and moved-file matching compares against the
  * listing its own last import read. The listing so far is copied to each local provider with songs: the closest either
- * has to its own, and a provider without one would read MediaStore whole and miss the files moved since.
+ * has to its own, and a provider without one would read MediaStore whole and miss the files moved since. Its generations
+ * are another provider's, though, so each copy gets one no MediaStore row has: every row is read again on the first import.
  */
 val MIGRATION_56_57 =
     object : Migration(56, 57) {
@@ -19,7 +20,7 @@ val MIGRATION_56_57 =
             )
             connection.execSQL(
                 "INSERT INTO media_store_files_new (provider, id, generation, path, displayName, size, lastModified, mimeType, duration) " +
-                    "SELECT p.mediaProvider, f.id, f.generation, f.path, f.displayName, f.size, f.lastModified, f.mimeType, f.duration FROM media_store_files f, $localProviders p"
+                    "SELECT p.mediaProvider, f.id, -1, f.path, f.displayName, f.size, f.lastModified, f.mimeType, f.duration FROM media_store_files f, $localProviders p"
             )
             connection.execSQL("DROP TABLE media_store_files")
             connection.execSQL("ALTER TABLE media_store_files_new RENAME TO media_store_files")
