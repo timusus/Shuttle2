@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "On iOS, seeking while a stream is stalled keeps showing buffering until playback resumes.", "commits": [] }

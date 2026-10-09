@@ -76,7 +76,8 @@ final class RefusingTrackSource: TrackPCMSource {
     func interrupt() {}
 }
 
-/// A stream that stalls at `gateFrame`: reads there wait, saying so to the wait hook every 50 ms as a stalled
+/// A stream that stalls at `gateFrame`, which needn't be a chunk's start (a read stops short at it, and the next waits):
+/// reads there wait, saying so to the wait hook every 50 ms as a stalled
 /// ``StreamedTrackReader`` does each second, until ``release()``. An interrupt ends the wait, and every read until a seek,
 /// with ``TrackSourceError/interrupted``, as the real source's does.
 final class StallingTrackSource: TrackPCMSource {

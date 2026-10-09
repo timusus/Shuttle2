@@ -283,6 +283,9 @@ public final class MusicPlaybackController {
     private var drained = false
     /// Bumped by every restart; completions from buffers a restart discarded are ignored.
     private var generation = 0
+    /// Frames an interrupted read got before its interrupt, kept off the node until the seek behind it says
+    /// whether they're still the stream's (``resumeReadingNext()``) or the old position's (a restart).
+    private var heldChunk: AVAudioPCMBuffer?
     private var scratch: [Float]
     private var ticker: DispatchSourceTimer?
     private var timePitchInGraph = false
@@ -776,6 +779,11 @@ public final class MusicPlaybackController {
         } catch {
             reportFailure(slot, error)
         }
+        // `inputIndex` already counts the interrupted read's frames: they're the stream's next.
+        if let heldChunk {
+            self.heldChunk = nil
+            schedule(heldChunk)
+        }
         fill()
     }
 
@@ -1014,6 +1022,7 @@ public final class MusicPlaybackController {
         guard let current else { return }
         engineLog.notice("restart at \(frame) frames, playWhenReady \(self.playWhenReady)")
         generation += 1
+        heldChunk = nil
         player.stop()
         // What the time-pitch unit already pulled belongs to the old stream.
         if timePitchInGraph { timePitch.reset() }
@@ -1110,6 +1119,7 @@ public final class MusicPlaybackController {
 
     private func teardown() {
         generation += 1
+        heldChunk = nil
         dropStartTiming()
         player.stop()
         stopTicker()
@@ -1204,15 +1214,26 @@ public final class MusicPlaybackController {
                 }
             }
         }
-        if interrupted, output.isEmpty { return nil }
-        let frameCount = output.count / channels
-        if frameCount == 0 {
+        if interrupted {
+            // What was read before the interrupt waits for the seek behind it: a restart drops it as the old
+            // position's, a next resumed in place schedules it. Scheduled now, it would end an underrun the
+            // seek's own read is still waiting out.
+            heldChunk = output.isEmpty ? nil : buffer(interleaved: output)
+            return nil
+        }
+        if output.isEmpty {
             guard drained else { return nil }
             // Nothing more will reach the node: a dry node is the queue's end, not a stall.
             starved = false
             endUnderrun("drained")
             return AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1)
         }
+        return buffer(interleaved: output)
+    }
+
+    private func buffer(interleaved output: [Float]) -> AVAudioPCMBuffer? {
+        let channels = outputChannelCount
+        let frameCount = output.count / channels
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frameCount)),
               let channelData = buffer.floatChannelData
         else { return nil }

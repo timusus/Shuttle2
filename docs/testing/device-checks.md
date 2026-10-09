@@ -357,6 +357,10 @@ previous and new outputs, and where each pause came from.
 - [ ] iPhone with Bluetooth headphones: turn the headphones off (or walk out of range) while playing. Playback pauses and doesn't come back on the speaker; reconnecting doesn't resume it either.
 - [ ] Connect/disconnect Bluetooth or a USB DAC mid-song: playback continues at the same position (#813)
 
+## iOS buffering on a stalled stream (#963)
+
+- [ ] iPhone on a slow stream (throttle with Network Link Conditioner): while the spinner shows mid-song, seek. The spinner stays until playback resumes at the new position.
+
 ## System shortcuts and session actions (#761)
 - [ ] Notification: shuffle and repeat buttons show with the current state; tapping each changes the mode and the icon follows.
 - [ ] Lock screen: the media controls offer shuffle and repeat, and tapping them works with the screen locked.

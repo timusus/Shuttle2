@@ -446,7 +446,7 @@ final class MusicPlaybackControllerTests: XCTestCase {
     /// the restart says nothing, and playing is said once its first buffer reaches the node.
     func testARestartDuringAnUnderrunStaysLoadingUntilItsFirstBuffer() throws {
         let (controller, log) = try makeController(scheduleAhead: 0.1)
-        // At a chunk's start, so the seek's interrupt finds nothing read: a part chunk would go to the node first.
+        // At a chunk's start, so the seek's interrupt finds nothing read (a part chunk is the next test's).
         let source = StallingTrackSource(samples: TestSignal.noise(frames: 48_000, seed: 1), gateFrame: 24_576)
         controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
         controller.syncForTesting()
@@ -467,6 +467,36 @@ final class MusicPlaybackControllerTests: XCTestCase {
         _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
         controller.syncForTesting()
         XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+    }
+
+    /// A seek made in an underrun whose read stalled partway through a chunk: the frames read before the stall are
+    /// the old position's, so they never reach the node and the listener hears loading until the seek's own data.
+    func testASeekDuringAMidChunkStallDropsThePartChunkAndStaysLoading() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let samples = TestSignal.noise(frames: 48_000, seed: 1)
+        // 24_000 is 3_520 frames into the chunk at 20_480: those are read, then the read waits.
+        let source = StallingTrackSource(samples: samples, gateFrame: 24_000)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
+        let blockedFill = try runDryIntoTheStall(controller, log)
+        let statesBeforeSeek = log.statesSoFar.count
+
+        controller.seek(toMs: 600)
+        wait(for: [blockedFill], timeout: 5)
+        Thread.sleep(forTimeInterval: 0.3)
+        let sinceSeek = Array(log.statesSoFar[statesBeforeSeek...])
+        XCTAssertFalse(sinceSeek.contains(.playing), "playing said for the part chunk: \(log.statesSoFar)")
+        XCTAssertEqual(log.statesSoFar.last, .loading)
+
+        source.release()
+        controller.syncForTesting()
+        let rendered = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+        let firstHeard = try XCTUnwrap(rendered.left.firstIndex { $0 != 0 }, "nothing rendered after the seek")
+        let seekFrame = 28_800
+        XCTAssertEqual(rendered.left[firstHeard], samples[seekFrame * 2], accuracy: 1e-4, "a pre-seek frame was heard")
     }
 
     /// A seek on a track that's playing waits for its stream with the node held, not dry: that isn't buffering.
