@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Restoring a backup on a new phone no longer stops Shuttle asking for permission to show download notifications.", "commits": [] }

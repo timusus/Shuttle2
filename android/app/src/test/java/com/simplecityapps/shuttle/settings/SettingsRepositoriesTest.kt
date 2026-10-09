@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
+import com.simplecityapps.shuttle.persistence.DeviceLocalStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.ui.theme.toS2Accent
 import io.kotest.matchers.shouldBe
@@ -29,11 +30,42 @@ class SettingsRepositoriesTest {
     private val context: Context = RuntimeEnvironment.getApplication()
     private lateinit var prefs: SharedPreferences
     private lateinit var store: SettingsStore
+    private lateinit var deviceLocalPrefs: SharedPreferences
+    private lateinit var deviceLocalStore: DeviceLocalStore
 
     @Before
     fun setUp() {
         prefs = context.defaultSharedPreferences().apply { edit().clear().commit() }
         store = SettingsStore(SharedPreferencesKeyValueStore(prefs))
+        deviceLocalPrefs = context.getSharedPreferences("device_local_preferences", Context.MODE_PRIVATE).apply { edit().clear().commit() }
+        deviceLocalStore = DeviceLocalStore(SharedPreferencesKeyValueStore(deviceLocalPrefs))
+    }
+
+    @Test
+    fun `the notification prompt flag moves out of the default prefs once`() {
+        prefs.edit(commit = true) { putBoolean("pref_download_notification_permission_asked", true) }
+
+        DownloadSettings(store, deviceLocalStore).notificationPermissionAsked.value shouldBe true
+
+        prefs.contains("pref_download_notification_permission_asked") shouldBe false
+        deviceLocalPrefs.getBoolean("pref_download_notification_permission_asked", false) shouldBe true
+    }
+
+    @Test
+    fun `the notification prompt flag is written to the device-local file only`() {
+        DownloadSettings(store, deviceLocalStore).notificationPermissionAsked.value = true
+
+        deviceLocalPrefs.getBoolean("pref_download_notification_permission_asked", false) shouldBe true
+        prefs.contains("pref_download_notification_permission_asked") shouldBe false
+    }
+
+    @Test
+    fun `a flag already in the device-local file wins over a restored one`() {
+        deviceLocalPrefs.edit(commit = true) { putBoolean("pref_download_notification_permission_asked", false) }
+        prefs.edit(commit = true) { putBoolean("pref_download_notification_permission_asked", true) }
+
+        DownloadSettings(store, deviceLocalStore).notificationPermissionAsked.value shouldBe false
+        prefs.contains("pref_download_notification_permission_asked") shouldBe false
     }
 
     @Test
@@ -216,7 +248,7 @@ class SettingsRepositoriesTest {
 
     @Test
     fun `the flow ignores other keys`() = runTest(UnconfinedTestDispatcher()) {
-        val downloads = DownloadSettings(store)
+        val downloads = DownloadSettings(store, deviceLocalStore)
         val emitted = mutableListOf<Boolean>()
         val job = launch { downloads.wifiOnly.flow.toList(emitted) }
 
@@ -245,7 +277,7 @@ class SettingsRepositoriesTest {
         val playback = PlaybackSettings(store)
         val equalizer = EqualizerSettings(store)
         val library = LibrarySettings(store)
-        val downloads = DownloadSettings(store)
+        val downloads = DownloadSettings(store, deviceLocalStore)
         return listOf(
             appearance.theme,
             appearance.accent,

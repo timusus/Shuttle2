@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.persistence.DeviceLocalStore
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.SecureStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
@@ -25,6 +26,13 @@ class PersistenceModule {
     fun provideKeyValueStore(
         @ApplicationContext context: Context
     ): KeyValueStore = SharedPreferencesKeyValueStore(context.defaultSharedPreferences())
+
+    // The file is excluded from backup and device transfer in backup_descriptor.xml and data_extraction_rules.xml
+    @SingleIn(AppScope::class)
+    @Provides
+    fun provideDeviceLocalStore(
+        @ApplicationContext context: Context
+    ): DeviceLocalStore = DeviceLocalStore(SharedPreferencesKeyValueStore(context.getSharedPreferences("device_local_preferences", Context.MODE_PRIVATE)))
 
     @SuppressLint("ApplySharedPref")
     @SingleIn(AppScope::class)

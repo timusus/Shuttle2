@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.DeviceLocalStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.DownloadSettings
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -29,7 +30,8 @@ class DownloadRequirementsManagerTest {
             ApplicationProvider.getApplicationContext<Context>()
                 .getSharedPreferences("download-requirements-test", Context.MODE_PRIVATE)
         sharedPreferences.edit().clear().commit()
-        settings = DownloadSettings(SettingsStore(SharedPreferencesKeyValueStore(sharedPreferences)))
+        val keyValueStore = SharedPreferencesKeyValueStore(sharedPreferences)
+        settings = DownloadSettings(SettingsStore(keyValueStore), DeviceLocalStore(keyValueStore))
         requirementsManager = DownloadRequirementsManager(songDownloadManager, settings)
     }
 
