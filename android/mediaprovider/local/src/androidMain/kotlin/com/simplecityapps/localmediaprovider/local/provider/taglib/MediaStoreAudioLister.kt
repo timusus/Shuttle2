@@ -7,6 +7,7 @@ import android.provider.MediaStore
 import com.simplecityapps.localmediaprovider.local.data.room.dao.MediaStoreFileDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.MediaStoreFileData
 import com.simplecityapps.mediaprovider.SongPathRemap
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
@@ -235,11 +236,15 @@ class MediaStoreAudioLister internal constructor(
         /** Reads MediaStore whole on every import. */
         fun whole(context: Context): MediaStoreAudioLister = MediaStoreAudioLister(ContentResolverMediaStoreAudioSource(context), store = null)
 
-        /** Reads only what changed since the last import that stored its songs, keeping the listing through [dao]. */
+        /**
+         * Reads only what changed since [provider]'s last import that stored its songs, keeping its listing through [dao]
+         * apart from any other provider's.
+         */
         fun incremental(
             context: Context,
-            dao: MediaStoreFileDao
-        ): MediaStoreAudioLister = MediaStoreAudioLister(ContentResolverMediaStoreAudioSource(context), RoomMediaStoreListingStore(dao))
+            dao: MediaStoreFileDao,
+            provider: MediaProviderType
+        ): MediaStoreAudioLister = MediaStoreAudioLister(ContentResolverMediaStoreAudioSource(context), RoomMediaStoreListingStore(dao, provider))
     }
 }
 
@@ -304,19 +309,20 @@ internal class ContentResolverMediaStoreAudioSource(
     }
 }
 
-/** [MediaStoreListingStore] in the media database's `media_store_files`. */
+/** [MediaStoreListingStore] in the media database's `media_store_files`, [provider]'s rows. */
 internal class RoomMediaStoreListingStore(
-    private val dao: MediaStoreFileDao
+    private val dao: MediaStoreFileDao,
+    private val provider: MediaProviderType
 ) : MediaStoreListingStore {
     override suspend fun load(): StoredMediaStoreListing? {
-        val version = dao.version() ?: return null
-        return StoredMediaStoreListing(version, dao.files().associate { data -> data.id to data.toRow() })
+        val version = dao.version(provider) ?: return null
+        return StoredMediaStoreListing(version, dao.files(provider).associate { data -> data.id to data.toRow() })
     }
 
     override suspend fun save(change: MediaStoreListingChange) {
         when (change) {
-            is MediaStoreListingChange.Whole -> dao.replaceAll(change.version, change.rows.map { row -> row.toData() })
-            is MediaStoreListingChange.Partial -> dao.applyChanges(change.version, change.deletes.toList(), change.upserts.map { row -> row.toData() })
+            is MediaStoreListingChange.Whole -> dao.replaceAll(provider, change.version, change.rows.map { row -> row.toData(provider) })
+            is MediaStoreListingChange.Partial -> dao.applyChanges(provider, change.version, change.deletes.toList(), change.upserts.map { row -> row.toData(provider) })
         }
     }
 }
@@ -326,7 +332,8 @@ private fun MediaStoreFileData.toRow(): MediaStoreAudioRow = MediaStoreAudioRow(
     generation = generation
 )
 
-private fun MediaStoreAudioRow.toData(): MediaStoreFileData = MediaStoreFileData(
+private fun MediaStoreAudioRow.toData(provider: MediaProviderType): MediaStoreFileData = MediaStoreFileData(
+    provider = provider,
     id = file.id,
     generation = generation,
     path = file.path,

@@ -55,7 +55,7 @@ class MediaProviderModule {
         fileScanner,
         tagReadGuard,
         backfillFileTags = { preferenceManager.songTagsOutdated(MediaProviderType.Shuttle) },
-        mediaStoreFiles = MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao()),
+        mediaStoreFiles = MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao(), MediaProviderType.Shuttle),
         folders = folderStore::scannerFolders
     )
 
@@ -80,6 +80,6 @@ class MediaProviderModule {
         tagReader,
         preferenceManager,
         tagReadGuard,
-        MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao())
+        MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao(), MediaProviderType.MediaStore)
     )
 }
