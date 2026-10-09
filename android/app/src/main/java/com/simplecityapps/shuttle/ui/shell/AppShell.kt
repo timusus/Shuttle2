@@ -127,7 +127,7 @@ fun AppShell(
     startTab: ShellTab = ShellTab.Home,
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfoV2(),
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey> = ::shellEntryProvider,
-    tabRequests: Flow<ShellTab> = emptyFlow(),
+    shellRequests: Flow<ShellRequest> = emptyFlow(),
     mediaActionsViewModel: MediaActionsViewModel = metroViewModel(),
     systemDeletes: Boolean = true,
 ) {
@@ -149,8 +149,8 @@ fun AppShell(
         }
     }
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
-    // A tab another entry point asks for, such as the Search launcher shortcut.
-    LaunchedEffect(tabRequests) { tabRequests.collect { tab -> onSelectTab(tab) } }
+    // A destination another entry point asks for, such as a launcher shortcut.
+    LaunchedEffect(shellRequests) { shellRequests.collect { request -> navigate { navigator.show(request) } } }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
     val destinations: @Composable () -> Unit = {
         CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState, LocalTabReselects provides navigator.reselects) {

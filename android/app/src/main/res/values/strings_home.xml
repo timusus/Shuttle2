@@ -4,6 +4,8 @@
     <string name="btn_shuffle">Shuffle</string>
     <!-- Home: content description for the top bar button that shuffles every song in the library -->
     <string name="home_shuffle_all">Shuffle all</string>
+    <!-- Launcher shortcut that opens the list of songs played recently -->
+    <string name="shortcut_recently_played">Recently played</string>
     <!-- Home: the kind of item a tile shows, under its title in Jump back in and before its detail on a mixed shelf -->
     <string name="home_type_album">Album</string>
     <!-- Home: the kind of item a tile shows (an artist) -->

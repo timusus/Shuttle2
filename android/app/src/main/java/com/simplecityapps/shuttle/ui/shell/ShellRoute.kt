@@ -39,7 +39,7 @@ fun ShellRoute(
     viewModel: PlayerViewModel = metroViewModel(),
     shellViewModel: ShellViewModel = metroViewModel(),
     downloadStatus: DownloadStatusViewModel = metroViewModel(),
-    tabRequests: Flow<ShellTab> = emptyFlow(),
+    shellRequests: Flow<ShellRequest> = emptyFlow(),
 ) {
     val playerState = viewModel.uiState.collectAsStateWithLifecycle()
     // Read apart from the progress, so a tick recomposes only what reads the progress.
@@ -60,7 +60,7 @@ fun ShellRoute(
             modifier = modifier,
             snackbarHostState = snackbarHostState,
             startTab = shellUi.startTab,
-            tabRequests = tabRequests,
+            shellRequests = shellRequests,
         )
     }
 }

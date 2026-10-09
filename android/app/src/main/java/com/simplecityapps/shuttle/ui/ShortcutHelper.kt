@@ -8,6 +8,7 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.annotation.RequiresApi
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.shell.ShellRequest
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -18,14 +19,20 @@ class ShortcutHelper @Inject constructor() {
     companion object {
         const val SHORTCUT_ID_TOGGLE_PLAYBACK = "toggle_playback"
         const val SHORTCUT_ID_SHUFFLE_ALL = "shuffle_all"
+        const val SHORTCUT_ID_RECENTLY_PLAYED = "recently_played"
         const val SHORTCUT_ID_SEARCH = "search"
     }
 
-    /** Sets the app's shortcuts: play/pause for [isPlaying], shuffle all and search. */
+    /** Sets the app's shortcuts: play/pause for [isPlaying], shuffle all, recently played and search. */
     @RequiresApi(Build.VERSION_CODES.N_MR1)
     fun createPlaybackShortcut(context: Context, isPlaying: Boolean) {
         val shortcutManager = context.getSystemService(ShortcutManager::class.java) ?: return
-        shortcutManager.dynamicShortcuts = listOf(playbackShortcut(context, isPlaying), shuffleAllShortcut(context), searchShortcut(context))
+        shortcutManager.dynamicShortcuts = listOf(
+            playbackShortcut(context, isPlaying),
+            shuffleAllShortcut(context),
+            recentlyPlayedShortcut(context),
+            searchShortcut(context)
+        )
     }
 
     @RequiresApi(Build.VERSION_CODES.N_MR1)
@@ -53,12 +60,21 @@ class ShortcutHelper @Inject constructor() {
     )
 
     @RequiresApi(Build.VERSION_CODES.N_MR1)
+    private fun recentlyPlayedShortcut(context: Context): ShortcutInfo = shortcut(
+        context = context,
+        id = SHORTCUT_ID_RECENTLY_PLAYED,
+        label = context.getString(R.string.shortcut_recently_played),
+        iconRes = R.drawable.ic_shortcut_history_24dp,
+        intent = Intent(context, MainActivity::class.java).setAction(ShellRequest.ACTION_OPEN_RECENTLY_PLAYED)
+    )
+
+    @RequiresApi(Build.VERSION_CODES.N_MR1)
     private fun searchShortcut(context: Context): ShortcutInfo = shortcut(
         context = context,
         id = SHORTCUT_ID_SEARCH,
         label = context.getString(R.string.shell_tab_search),
         iconRes = R.drawable.ic_shortcut_search_24dp,
-        intent = Intent(context, MainActivity::class.java).setAction(MainActivity.ACTION_OPEN_SEARCH)
+        intent = Intent(context, MainActivity::class.java).setAction(ShellRequest.ACTION_OPEN_SEARCH)
     )
 
     @RequiresApi(Build.VERSION_CODES.N_MR1)

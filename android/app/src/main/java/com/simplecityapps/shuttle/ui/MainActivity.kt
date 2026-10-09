@@ -24,8 +24,8 @@ import com.simplecityapps.shuttle.ui.screens.paywall.TrialDisclosureHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
+import com.simplecityapps.shuttle.ui.shell.ShellRequest
 import com.simplecityapps.shuttle.ui.shell.ShellRoute
-import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.EntitlementRepository
@@ -50,8 +50,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Buffered, so a request that opens the app is delivered once the shell is composed.
-    private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
-    private val tabRequestFlow = tabRequests.receiveAsFlow()
+    private val shellRequests = Channel<ShellRequest>(Channel.UNLIMITED)
+    private val shellRequestFlow = shellRequests.receiveAsFlow()
 
     @Inject
     lateinit var viewModelFactory: MetroViewModelFactory
@@ -106,7 +106,7 @@ class MainActivity : AppCompatActivity() {
                 S2AppTheme {
                     // Test tags as resource ids, so UiAutomator (the Baseline Profile journeys) and Maestro find them
                     Box(Modifier.semantics { testTagsAsResourceId = true }) {
-                        ShellRoute(tabRequests = tabRequestFlow)
+                        ShellRoute(shellRequests = shellRequestFlow)
                         PaywallHost(observePaywallRequests)
                         TrialDisclosureHost(trialDisclosures)
                     }
@@ -154,9 +154,8 @@ class MainActivity : AppCompatActivity() {
 
     // Private
 
-    /** Opens the Search tab for the Search launcher shortcut. */
     private fun handleShortcutIntent(intent: Intent?) {
-        if (intent?.action == ACTION_OPEN_SEARCH) tabRequests.trySend(ShellTab.Search)
+        ShellRequest.fromShortcutAction(intent?.action)?.let { shellRequests.trySend(it) }
     }
 
     private fun recordPurchase() {
@@ -187,9 +186,5 @@ class MainActivity : AppCompatActivity() {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
         playRequests.playFromUri(uri, intent.type)
-    }
-
-    companion object {
-        const val ACTION_OPEN_SEARCH = "com.simplecityapps.shuttle.shortcuts.OPEN_SEARCH"
     }
 }

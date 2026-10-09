@@ -85,6 +85,16 @@ class AppNavigator(
         }
     }
 
+    /** Shows [request]'s tab at its root, with the requested route on top; the tab's earlier screens would only sit between. */
+    fun show(request: ShellRequest) {
+        if (request.tab != selectedTab) {
+            selectTab(request.tab)
+        }
+        val stack = stacks.getValue(request.tab)
+        while (stack.size > 1) stack.removeAt(stack.lastIndex)
+        request.route?.let { stack.add(it) }
+    }
+
     /** Pops one entry. Returns false when there is nothing left to pop, so the activity should finish. */
     fun back(): Boolean {
         val stack = stacks.getValue(selectedTab)

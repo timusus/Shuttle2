@@ -364,7 +364,7 @@ class AppShellRobot(
 
     val calls: List<String> get() = actions.calls
 
-    private val tabRequests = Channel<ShellTab>(Channel.UNLIMITED)
+    private val tabRequests = Channel<ShellRequest>(Channel.UNLIMITED)
     private var snackbarHostState: SnackbarHostState? = null
 
     /** Each visibility Home has reported, in order. */
@@ -413,7 +413,7 @@ class AppShellRobot(
                             startTab = startTab,
                             windowAdaptiveInfo = currentWindow,
                             entryProvider = entryProvider,
-                            tabRequests = remember { tabRequests.receiveAsFlow() },
+                            shellRequests = remember { tabRequests.receiveAsFlow() },
                             mediaActionsViewModel = mediaActionsViewModel,
                             systemDeletes = false,
                         )
@@ -779,7 +779,7 @@ class AppShellRobot(
 
     /** Asks for [tab] the way a launcher shortcut does. */
     fun requestTab(tab: ShellTab) {
-        tabRequests.trySend(tab)
+        tabRequests.trySend(ShellRequest(tab))
         rule.waitForIdle()
     }
 
