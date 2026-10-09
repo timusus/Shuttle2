@@ -298,8 +298,7 @@ internal class ContentResolverMediaStoreAudioSource(
     ) { cursor -> cursor.readMediaStoreAudioRows() }
 
     override fun rowsWithIds(ids: Collection<Long>): List<MediaStoreAudioRow>? = ids
-        // SQLite caps the variables one statement can bind
-        .chunked(500)
+        .chunked(MAX_IDS_PER_QUERY)
         .flatMap { chunk ->
             query(
                 projection = MEDIA_STORE_AUDIO_PROJECTION + GENERATION_MODIFIED,
@@ -355,3 +354,6 @@ private fun MediaStoreAudioRow.toData(provider: MediaProviderType): MediaStoreFi
     mimeType = file.mimeType,
     duration = file.duration
 )
+
+/** Ids per MediaStore `IN (...)` query: SQLite caps the variables one statement can bind. */
+internal const val MAX_IDS_PER_QUERY = 500

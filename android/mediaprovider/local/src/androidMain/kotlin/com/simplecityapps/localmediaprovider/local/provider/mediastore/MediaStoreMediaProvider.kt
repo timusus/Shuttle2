@@ -11,6 +11,7 @@ import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.localmediaprovider.local.provider.mountedVolumeRoots
+import com.simplecityapps.localmediaprovider.local.provider.taglib.MAX_IDS_PER_QUERY
 import com.simplecityapps.localmediaprovider.local.provider.taglib.MediaStoreAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.taglib.MediaStoreAudioLister
 import com.simplecityapps.localmediaprovider.local.provider.taglib.movedSongRemaps
@@ -416,9 +417,6 @@ class MediaStoreMediaProvider(
 
 /** A MediaStore listing; [files] null if MediaStore couldn't be queried. */
 private class RemapListing(val files: List<MediaStoreAudioFile>?)
-
-// SQLite caps the variables one statement can bind
-private const val MAX_IDS_PER_QUERY = 500
 
 /**
  * MediaStore.Audio.Media.BITS_PER_SAMPLE, spelled out so [mediaStoreSongProjection] can name it without a version check
