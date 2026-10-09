@@ -7,14 +7,14 @@ source "$(dirname "$0")/_lib.sh"
 
 # session_line <pattern>: the first line matching <pattern> in S2's session's dumpsys entry.
 session_line() {
-    adb_retry shell dumpsys media_session | grep -A20 "package=${APP_ID}" | grep -m1 -E "$1" || true
+    media_session_block | grep -m1 -E "$1" || true
 }
 
 # expect_session <state> <description>: waits up to 5 s for the session to show them.
 expect_session() {
     local deadline=$(($(date +%s) + 5)) state description
     while :; do
-        state="$(session_line 'state=PlaybackState' | sed -n 's/.*state=PlaybackState {state=\([A-Z_]*\).*/\1/p')"
+        state="$(session_state || true)"
         description="$(session_line 'metadata:' | sed -n 's/.*description=//p' | tr -d '\r')"
         [ "$state" = "$1" ] && [ "$description" = "$2" ] && break
         [ "$(date +%s)" -lt "$deadline" ] || fail "the session shows ${state:-no state} / '${description}', not $1 / '$2'"

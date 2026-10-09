@@ -4,14 +4,10 @@
 # the app id through its channels and metadata, so the live session is asserted instead).
 source "$(dirname "$0")/_lib.sh"
 
-# Whether the app's media session reports PLAYING in dumpsys media_session. Media3 keeps the session
-# active=true after the queue empties, so its PlaybackState is what shows playback ended.
-media_session_playing() {
-    adb_retry shell dumpsys media_session 2>/dev/null | grep -A20 "package=${APP_ID}" | grep -q "state=PlaybackState {state=PLAYING"
-}
-
 start_playback
-media_session_playing || fail "media session for ${APP_ID} is not PLAYING while playing (the check below would be vacuous)"
+# Media3 keeps the session active=true after the queue empties, so its PlaybackState is what shows
+# playback ended; asserting PLAYING first keeps the final check from being vacuous.
+wait_for_session playing
 for remaining in 4 3 2 1; do
     s2 REMOVE_QUEUE_ITEM --ei position 0 >/dev/null
     wait_for 10 "s['queueSize'] == ${remaining}"
@@ -26,5 +22,5 @@ else
     echo "  process not running"
 fi
 
-! media_session_playing || fail "media session still reports PLAYING after the queue emptied"
+wait_for_session not-playing
 pass

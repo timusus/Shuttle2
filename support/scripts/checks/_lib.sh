@@ -142,7 +142,7 @@ assert_app_survived() {
     hits="$(
         { adb_retry logcat -d -v epoch -b crash 2>/dev/null | grep -F "$APP_ID" || true
           adb_retry logcat -d -v epoch -b main -b system 2>/dev/null | grep -F "ANR in ${APP_ID}" || true
-        } | awk -v c="$cutoff" '$1 + 0 >= c' | head -1
+        } | awk -v c="$cutoff" '$1 + 0 >= c {print; exit}'
     )"
     [ -z "$hits" ] || fail "the app crashed or ANRed during this check: ${hits}"
 }
@@ -158,6 +158,53 @@ wait_for() {
     while :; do
         s2 DUMP_STATE | python3 -c "import json,sys; s=json.load(sys.stdin); sys.exit(0 if (${expr}) else 1)" && return 0
         [ "$(date +%s)" -lt "$deadline" ] || fail "not within ${timeout}s: ${expr}"
+        sleep 0.5
+    done
+}
+
+# The app's own entry in dumpsys media_session, from its package= line to the next session header.
+# Fails when dumpsys errors or the app has no session.
+media_session_block() {
+    local dump block
+    dump="$(adb_retry shell dumpsys media_session | tr -d '\r')" || return 1
+    block="$(awk -v pkg="package=${APP_ID}" '
+        found && /\(userId=[0-9]+\)/ { exit }
+        !found && index($0, pkg) { rest = substr($0, index($0, pkg) + length(pkg)); if (rest == "" || rest ~ /^[^A-Za-z0-9._]/) found = 1 }
+        found { print }' <<<"$dump")"
+    [ -n "$block" ] || return 1
+    printf '%s\n' "$block"
+}
+
+# The session's PlaybackState as a name (PLAYING, PAUSED, ...): newer APIs print the name, older ones
+# only the number.
+session_state() {
+    local block raw
+    block="$(media_session_block)" || return 1
+    raw="$(awk 'match($0, /PlaybackState \{state=[A-Za-z0-9_]+/) { print substr($0, RSTART + 21, RLENGTH - 21); exit }' <<<"$block")"
+    case "$raw" in
+        0) echo NONE ;;
+        1) echo STOPPED ;;
+        2) echo PAUSED ;;
+        3) echo PLAYING ;;
+        "") return 1 ;;
+        *) echo "$raw" ;;
+    esac
+}
+
+# wait_for_session <playing|not-playing> [seconds]: polls the app's media session until it reports
+# PLAYING (or anything but). A missing session or a dumpsys error never counts as either.
+wait_for_session() {
+    local want="$1" timeout="${2:-8}" deadline state=""
+    deadline=$(($(date +%s) + timeout))
+    case "$want" in playing | not-playing) ;; *) fail "wait_for_session: expected playing|not-playing, got '${want}'" ;; esac
+    while :; do
+        if state="$(session_state)"; then
+            [ "$want" = playing ] && [ "$state" = PLAYING ] && return 0
+            [ "$want" = not-playing ] && [ "$state" != PLAYING ] && return 0
+        else
+            state=""
+        fi
+        [ "$(date +%s)" -lt "$deadline" ] || fail "media session for ${APP_ID} is ${state:-missing} after ${timeout}s, wanted ${want}"
         sleep 0.5
     done
 }
