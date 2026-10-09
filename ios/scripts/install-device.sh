@@ -32,6 +32,7 @@ case "$CONFIGURATION" in
 esac
 
 IOS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+source "$IOS_DIR/scripts/xcode-cache.sh"
 
 # xcode-select can point at CommandLineTools, which has no xcodebuild; fall back to an installed Xcode.
 if [[ -z "${DEVELOPER_DIR:-}" ]]; then
@@ -64,6 +65,7 @@ echo "==> Building S2 ($CONFIGURATION) for device $DEVICE with team $TEAM"
   -derivedDataPath "$OUT/dd" \
   -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" \
   COMPILER_INDEX_STORE_ENABLE=NO \
+  "${XCODE_CACHE_ARGS[@]}" \
   -allowProvisioningUpdates \
   -allowProvisioningDeviceRegistration \
   DEVELOPMENT_TEAM="$TEAM" \

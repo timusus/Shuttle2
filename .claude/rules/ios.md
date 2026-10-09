@@ -44,7 +44,9 @@ median/min/max per milestone; `--help` for `--device`, `--append` and launch arg
 
 `test.sh` builds through `build-app.sh` then runs `test-without-building`. Release is for archive/deploy only
 (`ios/archive-and-upload.sh`). The xcodebuild calls share one SPM clone cache (`~/Library/Caches/s2-spm`) across
-worktrees. Don't set the S2Tests scheme `parallelizable`: Swift Testing already runs in parallel in-process, and
+worktrees, and Xcode compilation caching shares one CAS (`~/Library/Caches/s2-xcode-cas`, `ios/scripts/xcode-cache.sh`;
+`S2_XCODE_CAS=off` disables): a cold DerivedData build with a warm CAS took 79s against 106s uncached (-26%, Xcode 27.2),
+and two concurrent builds on one CAS both succeed. Don't set the S2Tests scheme `parallelizable`: Swift Testing already runs in parallel in-process, and
 cloning made the suite slower and flaky.
 
 `test.sh`, `run-sim-server.sh` and `maestro-sim.sh` lease their simulator from the shared ios-sim pool
