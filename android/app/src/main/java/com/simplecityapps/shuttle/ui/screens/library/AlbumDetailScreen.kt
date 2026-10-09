@@ -32,6 +32,7 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** Album detail (inventory §1): the album's songs by disc, Play / Shuffle, the album's actions in the overflow, and More by the artist's other albums. */
@@ -69,6 +70,7 @@ fun AlbumDetailScreen(
             subtitle = album?.let { albumSubtitle(it) },
             artwork = album,
             placeholder = ArtworkPlaceholder.Album,
+            artworkKey = album?.let { albumArtworkKey(it.route) },
             onNavigateUp = onNavigateUp,
             onPlay = { onPlay(songs, 0) },
             onShuffle = onShuffle,

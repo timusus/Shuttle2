@@ -70,6 +70,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumAr
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.shell.artistArtworkKey
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlin.math.min
 
@@ -139,6 +140,7 @@ fun AlbumArtistDetailScreen(
             artwork = uiState.hero,
             placeholder = ArtworkPlaceholder.Artist,
             bleed = true,
+            artworkKey = artist?.let { artistArtworkKey(it.route) },
             onNavigateUp = onNavigateUp,
             onPlay = { onPlay(uiState.songs, 0) },
             onShuffle = onShuffle,

@@ -42,6 +42,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
+import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 
 // The pieces every library detail screen shares, on DetailScaffold (app-shell.md, section 3): the DetailHero with
 // Play / Shuffle, and the loading and not-found states.
@@ -67,6 +68,7 @@ fun LibraryDetailScaffold(
     onMore: () -> Unit,
     modifier: Modifier = Modifier,
     bleed: Boolean = false,
+    artworkKey: String? = null,
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -97,13 +99,13 @@ fun LibraryDetailScaffold(
                     )
                 }
                 if (bleed) {
-                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork) }, actions = playShuffle, extra = header)
+                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork, Modifier.sharedArtwork(artworkKey)) }, actions = playShuffle, extra = header)
                 } else {
                     DetailHero(
                         title = title,
                         subtitle = subtitle,
                         topInset = topInset,
-                        artwork = { LibraryArtwork(model = artwork, placeholder = placeholder, size = ArtworkSize.Hero) },
+                        artwork = { LibraryArtwork(model = artwork, placeholder = placeholder, modifier = Modifier.sharedArtwork(artworkKey), size = ArtworkSize.Hero) },
                         actions = playShuffle,
                         extra = header,
                     )
@@ -126,11 +128,11 @@ fun LibraryDetailScaffold(
 
 /** [model]'s image filling a [DetailBleedHero]: nothing while it loads or when there's none, so the hero's own fill shows. */
 @Composable
-private fun BleedArtwork(model: Any?) {
+private fun BleedArtwork(model: Any?, modifier: Modifier = Modifier) {
     val preview = previewArtwork(model)
     when {
-        preview != null -> Image(preview, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        model != null -> AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        preview != null -> Image(preview, contentDescription = null, modifier = modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        model != null -> AsyncImage(model = model, contentDescription = null, modifier = modifier.fillMaxSize(), contentScale = ContentScale.Crop)
     }
 }
 

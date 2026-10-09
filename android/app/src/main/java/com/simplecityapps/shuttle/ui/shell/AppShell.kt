@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.shell
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
@@ -228,7 +230,7 @@ private fun rememberSnackbarBottomPadding(player: PlayerSheetState): Dp = if (pl
     rememberContentBottomPadding(player)
 }
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ShellNavDisplay(
     navigator: AppNavigator,
@@ -247,12 +249,17 @@ private fun ShellNavDisplay(
     val entries = remember(navigator, entryProvider) { entryProvider(navigator) }
     // Every tab's entries stay decorated, so a tab's screens keep their state while another is shown.
     val entriesByTab = ShellTab.entries.associateWith { tab -> rememberDecoratedNavEntries(navigator.stack(tab), decorators, entries) }
-    CompositionLocalProvider(LocalListBesideDetail provides (directive.maxHorizontalPartitions > 1)) {
-        NavDisplay(
-            entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
-            sceneStrategies = listOf(sheet, listDetail, SinglePaneSceneStrategy()),
-            onBack = { navigator.back() },
-        )
+    SharedTransitionLayout {
+        CompositionLocalProvider(
+            LocalListBesideDetail provides (directive.maxHorizontalPartitions > 1),
+            LocalSharedTransitionScope provides this,
+        ) {
+            NavDisplay(
+                entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
+                sceneStrategies = listOf(sheet, listDetail, SinglePaneSceneStrategy()),
+                onBack = { navigator.back() },
+            )
+        }
     }
 }
 

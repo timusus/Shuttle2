@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.search
 import androidx.annotation.PluralsRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -29,7 +30,12 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
+import com.simplecityapps.shuttle.ui.screens.library.route
+import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
+import com.simplecityapps.shuttle.ui.shell.artistArtworkKey
+import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 
+// Top results repeat a list row's item, so only the rows share artwork: a key may appear once per screen.
 @Composable
 internal fun ArtistResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallbacks) {
     val artist = hit.item
@@ -40,7 +46,7 @@ internal fun ArtistResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallback
         // A track artist found by their credits (#637) has songs but no albums of their own to count
         summary = if (artist.isAlbumArtist) countString(R.plurals.albumsPlural, artist.albumCount) else countString(R.plurals.songsPlural, artist.songCount),
         onClick = { callbacks.onArtistClick(artist) },
-        artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Small, shape = ArtworkShape.Circle) },
+        artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, Modifier.sharedArtwork(artistArtworkKey(artist.route)), size = ArtworkSize.Small, shape = ArtworkShape.Circle) },
         onLongClick = showActions,
         onMore = showActions,
     )
@@ -59,7 +65,7 @@ internal fun AlbumResult(hit: SearchHit<Album>, callbacks: SearchCallbacks) {
         artist = artistText,
         meta = album.year?.toString(),
         onClick = { callbacks.onAlbumClick(album) },
-        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Small) },
+        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.sharedArtwork(albumArtworkKey(album.route)), size = ArtworkSize.Small) },
         onLongClick = showActions,
         onMore = showActions,
     )
