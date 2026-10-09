@@ -32,7 +32,7 @@ ios_dir="$(cd "$(dirname "$0")/.." && pwd)"
 doc="$ios_dir/../docs/performance/ios-startup.md"
 mode="" udid="" runs=5 bundle="com.simplecityapps.shuttle.dev" append=0 launch_args=()
 
-usage() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -57,7 +57,7 @@ marker="startup-bench-$$" # makes this run's in-simulator `log stream` findable 
 stop_stream() {
   [ -z "$stream_pid" ] || kill "$stream_pid" 2>/dev/null || true
   # simctl spawn doesn't forward the signal to the in-simulator process
-  [ "$mode" != sim ] || pkill -f "$marker" 2>/dev/null || true
+  [ "$mode" != sim ] || pkill -f "$marker\"" 2>/dev/null || true
   [ -z "$stream_pid" ] || wait "$stream_pid" 2>/dev/null || true
   stream_pid=""
 }
@@ -78,6 +78,8 @@ if [ "$mode" = sim ] && [ -z "$udid" ]; then
     lease_pid=$!
     for _ in $(seq 300); do kill -0 "$lease_pid" 2>/dev/null || break; sleep 1; done
     if kill -0 "$lease_pid" 2>/dev/null; then
+      # Kill the queued child too: left alive, it can acquire a lease after cleanup has released.
+      pkill -P "$lease_pid" 2>/dev/null || true
       kill "$lease_pid" 2>/dev/null || true
       echo "startup-bench: no simulator lease within 5 minutes; skipping" >&2
       exit 1
