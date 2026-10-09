@@ -41,6 +41,9 @@ enum AppGraph {
         // Reattaches offline downloads' background session, so a download that finished while the app wasn't running
         // is delivered, and is there for a background relaunch's events (AppDelegate)
         StartupTrace.step("offlineDownloads") { _ = dependencies.graph.offlineDownloads }
+        // Builds the album index on a background dispatcher while the shell comes up; Home and Library need it for
+        // their first content, and would otherwise build it on their own path
+        StartupTrace.step("albumIndex") { _ = dependencies.graph.albumIndexProvider }
         #if DEBUG
         if let override = UserDefaults.standard.string(forKey: DebugEntitlement.defaultsKey) {
             dependencies.graph.storeEntitlements.setDebugOverrideNamed(name: override)

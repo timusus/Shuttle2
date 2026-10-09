@@ -257,3 +257,8 @@ section (5 cold launches per start tab, `syslog live`, launch arguments only). M
   `Album index of 8196 songs built in ~215 ms` (`LibraryAlbumIndex`), which sits on the first-content path; it wasn't
   logged in the earlier run.
 - The audio engine (48 ms) and dependencies (76 ms) still run on main before the first frame.
+- Album index (#963): the build was already launched on `Dispatchers.IO`, but only when Metro first made
+  `LibraryAlbumIndex`, which on iOS was Home's or Library's own first injection, so the ~215 ms ran on the first-content
+  path. `AppGraph.initialize` now reads `albumIndexProvider` (step `albumIndex`), so the build starts at launch and
+  first content awaits the in-flight build. Not yet re-measured: the simulator library is too small to show the build,
+  so the 8,196-song numbers need an iPhone run (compare Library first content against 719 ms).

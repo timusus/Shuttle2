@@ -5,6 +5,7 @@ import com.simplecityapps.localmediaprovider.local.favourites.FavouriteSender
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReporting
@@ -103,6 +104,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Sends the favourites made on Jellyfin, Emby and Plex songs to their servers (#497); Swift starts it once, at launch. */
     val favouriteSender: FavouriteSender
+
+    /** The album index; making it starts its build in the background, so Swift reads it at launch, ahead of the first content that needs it. */
+    val albumIndexProvider: AlbumIndexProvider
 
     /** The search index; Swift warms it once, at launch, so the first search doesn't wait for the build. */
     val librarySearchIndex: LibrarySearchIndex

@@ -16,6 +16,8 @@ import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import kotlin.test.AfterTest
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -87,6 +89,24 @@ class LibraryAlbumIndexTest : InMemoryDatabaseTest() {
             .songIds(AlbumGroupKey("court and spark", joni)) shouldBe listOf(first.id)
         rebuiltBy { repository.remove(second) }
             .songIds(AlbumGroupKey("blue", joni)) shouldBe emptyList()
+    }
+
+    @Test
+    fun `an index warmed in the background is the cold build and is asked for once`() = runTest {
+        importBlue()
+        val cold = index.albumIndex().identities
+        val warmed = LibraryAlbumIndex(database.invalidationTracker.createFlow(IDENTITY_GENERATION_TABLE), dao::identityGeneration) {
+            builds++
+            dao.identityData()
+        }
+        val built = builds
+
+        val warm = backgroundScope.async(Dispatchers.Default) { warmed.albumIndex() }
+        val asked = warmed.albumIndex()
+
+        asked shouldBeSameInstanceAs warm.await()
+        asked.identities shouldBe cold
+        builds shouldBe built + 1
     }
 
     @Test
