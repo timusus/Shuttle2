@@ -1,31 +1,23 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** #497 slice 1: a remote-provider song's favourite/unfavourite enqueues a `pending_favourites` row, in the same transaction, and acking deletes it. */
-@RunWith(AndroidJUnit4::class)
-class SongDataDaoFavouriteOutboxTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class SongDataDaoFavouriteOutboxTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val dao = database.songDataDao()
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -54,7 +46,7 @@ class SongDataDaoFavouriteOutboxTest {
     }
 
     @Test
-    fun `undoing a remove enqueues a pending favourite again (#564)`() = runTest {
+    fun `undoing a remove enqueues a pending favourite again`() = runTest {
         val song = insertSong(MediaProviderType.Emby, externalId = "item-3")
         dao.setFavourite(listOf(song), true)
         val originalFavouritedSong = dao.get().single().toSong()
@@ -66,7 +58,7 @@ class SongDataDaoFavouriteOutboxTest {
     }
 
     @Test
-    fun `a later toggle before a flush overwrites the earlier pending row, not adds a second one`() = runTest {
+    fun `a later toggle before a flush overwrites the earlier pending row instead of adding a second one`() = runTest {
         val song = insertSong(MediaProviderType.Jellyfin, externalId = "item-4")
 
         dao.setFavourite(listOf(song), true)
@@ -110,7 +102,7 @@ class SongDataDaoFavouriteOutboxTest {
     }
 
     @Test
-    fun `observing the outbox emits on enqueue and on ack, oldest change first`() = runTest {
+    fun `observing the outbox emits on enqueue and on ack with the oldest change first`() = runTest {
         val first = insertSong(MediaProviderType.Jellyfin, externalId = "a", path = "/music/a.mp3")
         val second = insertSong(MediaProviderType.Jellyfin, externalId = "b", path = "/music/b.mp3")
 

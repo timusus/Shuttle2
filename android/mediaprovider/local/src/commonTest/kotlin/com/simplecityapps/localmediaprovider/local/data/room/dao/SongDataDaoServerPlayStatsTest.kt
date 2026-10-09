@@ -1,35 +1,27 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * #772: a sync folds each remote song's play stats from its server into the row inside [SongDataDao.insertUpdateAndDelete],
  * through [SongDataDao.applyServerPlayStats]: the larger play count and the later last-played time, never a sum.
  */
-@RunWith(AndroidJUnit4::class)
-class SongDataDaoServerPlayStatsTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class SongDataDaoServerPlayStatsTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val dao = database.songDataDao()
 
     private val earlier = Instant.fromEpochSeconds(1_000)
     private val later = Instant.fromEpochSeconds(2_000)
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }

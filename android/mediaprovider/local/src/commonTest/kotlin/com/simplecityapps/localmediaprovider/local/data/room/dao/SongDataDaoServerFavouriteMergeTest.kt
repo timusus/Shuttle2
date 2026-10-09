@@ -1,35 +1,27 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * #497: a sync merges each remote song's favourite from its server inside [SongDataDao.insertUpdateAndDelete]. A pending
  * local toggle wins; otherwise the server does, keeping a favourite's existing time. Local songs are never touched.
  */
-@RunWith(AndroidJUnit4::class)
-class SongDataDaoServerFavouriteMergeTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class SongDataDaoServerFavouriteMergeTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val dao = database.songDataDao()
 
     private val localTime = Instant.fromEpochSeconds(1_000)
     private val serverTime = Instant.fromEpochSeconds(2_000)
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }

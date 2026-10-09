@@ -1,30 +1,22 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.repository.createSongData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** [SongDataDao.countVisible] and [SongDataDao.countVisibleByProvider] count what the library shows: not excluded, not too short. */
-@RunWith(AndroidJUnit4::class)
-class SongDataDaoCountTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class SongDataDaoCountTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val dao = database.songDataDao()
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }

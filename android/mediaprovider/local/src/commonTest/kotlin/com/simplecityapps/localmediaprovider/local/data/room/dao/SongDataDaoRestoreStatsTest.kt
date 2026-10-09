@@ -1,31 +1,23 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.repository.songs.SongStatsRestore
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** Library-backup restore merges into the row as it is when the transaction runs, never overwriting newer device data. */
-@RunWith(AndroidJUnit4::class)
-class SongDataDaoRestoreStatsTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class SongDataDaoRestoreStatsTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val dao = database.songDataDao()
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -59,7 +51,7 @@ class SongDataDaoRestoreStatsTest {
     }
 
     @Test
-    fun `newer backup values and its position are taken, with the earlier date added`() = runTest {
+    fun `newer backup values and its position are taken together with the earlier date added`() = runTest {
         val song = insert(playCount = 1, lastPlayed = at(2_000), lastCompleted = at(1_000), playbackPosition = 100, dateAdded = at(3_000))
 
         dao.restoreStats(listOf(restore(song, playCount = 8, lastPlayed = at(9_000), lastCompleted = at(8_000), playbackPosition = 700, dateAdded = at(500))))

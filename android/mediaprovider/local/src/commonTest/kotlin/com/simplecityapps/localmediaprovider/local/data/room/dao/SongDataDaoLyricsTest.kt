@@ -1,32 +1,25 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import androidx.room.useReaderConnection
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_COLUMNS_QUALIFIED
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.localmediaprovider.local.repository.createSongData
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** The song lists leave lyrics out (#873); [SongDataDao.lyrics] reads one song's, and an update writes them. */
-@RunWith(AndroidJUnit4::class)
-class SongDataDaoLyricsTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class SongDataDaoLyricsTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val dao = database.songDataDao()
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -55,9 +48,14 @@ class SongDataDaoLyricsTest {
     }
 
     @Test
-    fun `the song columns are every column but lyrics`() {
-        val columns = database.openHelper.readableDatabase.query("PRAGMA table_info(songs)").use { cursor ->
-            generateSequence { if (cursor.moveToNext()) cursor.getString(cursor.getColumnIndexOrThrow("name")) else null }.toList()
+    fun `the song columns are every column but lyrics`() = runTest {
+        val columns = database.useReaderConnection { connection ->
+            connection.usePrepared("PRAGMA table_info(songs)") { statement ->
+                val nameColumn = statement.getColumnNames().indexOf("name")
+                val names = mutableListOf<String>()
+                while (statement.step()) names += statement.getText(nameColumn)
+                names
+            }
         }
 
         SONG_COLUMNS.split(", ") shouldContainExactlyInAnyOrder columns - "lyrics"
