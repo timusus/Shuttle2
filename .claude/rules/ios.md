@@ -39,6 +39,9 @@ ios/scripts/test.sh
 ios/scripts/test.sh --package                  # swift test in ios/Playback on the Mac (extra args: --filter ...)
 ```
 
+Cold-start timing: `ios/scripts/startup-bench.sh --sim -n 5` (leases a sim, streams the `Startup` OSLog category, prints
+median/min/max per milestone; `--help` for `--device`, `--append` and launch args; `docs/performance/ios-startup.md`).
+
 `test.sh` builds through `build-app.sh` then runs `test-without-building`. Release is for archive/deploy only
 (`ios/archive-and-upload.sh`). The xcodebuild calls share one SPM clone cache (`~/Library/Caches/s2-spm`) across
 worktrees. Don't set the S2Tests scheme `parallelizable`: Swift Testing already runs in parallel in-process, and
