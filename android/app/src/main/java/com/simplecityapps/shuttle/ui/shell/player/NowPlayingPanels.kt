@@ -75,6 +75,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2ConnectedButtonGroup
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
@@ -315,6 +316,21 @@ private fun Float.isSpeed(speed: Float): Boolean = abs(this - speed) < 0.005f
 
 /** Rounds to tenths, so the ruler's float steps land on 0.8 rather than 0.80000001. */
 private fun speedAt(index: Int): Float = ((MinSpeed + index * SpeedStep) * 10).roundToInt() / 10f
+
+/** The song's lyrics as plain text under the panel's heading; [modifier] scrolls them. */
+@Composable
+internal fun LyricsPanel(
+    lyrics: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().testTag(PlayerTestTags.LyricsPanel).padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
+    ) {
+        PanelHeading(stringResource(R.string.player_bar_lyrics))
+        S2Text(text = lyrics, style = MaterialTheme.typography.bodyLarge)
+    }
+}
 
 /** The panel's title, where focus lands when it opens. */
 @Composable

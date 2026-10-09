@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
+import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
@@ -110,6 +111,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
     deliveredFormats: DeliveredFormats,
+    private val loadLyrics: LoadLyrics,
     @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     PlayerActions {
@@ -173,6 +175,11 @@ class PlayerViewModel @AssistedInject constructor(
                 }
             }.distinctUntilChanged()
 
+    // Songs don't carry their lyrics (#873); null until loaded, so loading never holds the rest of the player back.
+    private val lyrics: Flow<String?> = currentSong.flatMapLatest { song ->
+        if (song == null) flowOf(null) else flow { emit(loadLyrics(song.id)) }.onStart { emit(null) }
+    }.distinctUntilChanged()
+
     // None until it's resolved, so resolving it never holds the rest of the player back.
     private val queueSource: Flow<HomeItem?> = observeQueueSource(queue).onStart { emit(null) }
 
@@ -209,9 +216,11 @@ class PlayerViewModel @AssistedInject constructor(
             state.copy(nowPlayingImage = image)
         }.combine(deliveredFormats.byPath) { state, delivered ->
             state.copy(delivered = state.current?.song?.path?.let(delivered::get))
+        }.combine(lyrics) { state, lyrics ->
+            state.copy(lyrics = lyrics)
         }.combine(panel) { state, panel ->
-            // An emptied queue takes the player, and its panel, away.
-            state.copy(panel = panel.takeIf { state.hasQueue == true })
+            // An emptied queue takes the player, and its panel, away; so does a song without lyrics the Lyrics panel.
+            state.copy(panel = panel.takeIf { state.hasQueue == true && (it != NowPlayingPanel.Lyrics || state.lyrics != null) })
         }.combine(queueSource) { state, source ->
             state.copy(queueSource = source)
         }.distinctUntilChanged()

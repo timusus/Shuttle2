@@ -927,6 +927,24 @@ class AppShellTest {
     }
 
     @Test
+    fun `a song with lyrics offers a Lyrics button that opens its lyrics`() {
+        robot.setContent(queue = shellQueue("First song").copy(lyrics = "Line one\nLine two"))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Lyrics)
+
+        robot.assertPanel(NowPlayingPanel.Lyrics)
+        robot.assertReachable("Line one\nLine two", reachable = true)
+    }
+
+    @Test
+    fun `a song without lyrics has no Lyrics button`() {
+        robot.setContent(queue = shellQueue("First song"))
+        robot.tapMiniPlayer()
+
+        robot.assertReachable("Show lyrics", reachable = false)
+    }
+
+    @Test
     fun `playback and sound sets the speed and ReplayGain, and a speed other than normal shows in the bar`() {
         robot.setContent()
         robot.tapMiniPlayer()

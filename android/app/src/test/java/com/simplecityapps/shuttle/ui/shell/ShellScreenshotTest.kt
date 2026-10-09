@@ -74,7 +74,8 @@ class ShellScreenshotTest {
         shot("$prefix-mini")
         robot.tapMiniPlayer()
         shot("$prefix-now-playing")
-        NowPlayingPanel.entries.forEach { panel ->
+        // The sample queue's songs have no lyrics, so the Lyrics button isn't there to tap.
+        NowPlayingPanel.entries.filter { it != NowPlayingPanel.Lyrics }.forEach { panel ->
             robot.tapPanelButton(panel)
             shot("$prefix-${panel.shotName}")
             robot.tapPanelButton(panel)
@@ -87,6 +88,7 @@ class ShellScreenshotTest {
             NowPlayingPanel.Queue -> "queue"
             NowPlayingPanel.SleepTimer -> "sleep-timer"
             NowPlayingPanel.PlaybackSound -> "playback-sound"
+            NowPlayingPanel.Lyrics -> "lyrics"
         }
 
     private fun libraryDetail(prefix: String) {

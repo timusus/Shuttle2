@@ -105,6 +105,7 @@ internal object PlayerTestTags {
     const val Pane = "player_pane"
     const val SleepTimerPanel = "player_sleep_timer_panel"
     const val PlaybackSoundPanel = "player_playback_sound_panel"
+    const val LyricsPanel = "player_lyrics_panel"
 }
 
 /** Drops this node and its children from the semantics tree while [hidden]. */

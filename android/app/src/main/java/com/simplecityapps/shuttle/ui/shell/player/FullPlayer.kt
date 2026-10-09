@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -189,6 +190,8 @@ internal fun PlayerPanel(
             NowPlayingPanel.SleepTimer -> SleepTimerPanel(player, actions, scrolling)
 
             NowPlayingPanel.PlaybackSound -> PlaybackSoundPanel(player, actions, onOpenRoute, scrolling)
+
+            NowPlayingPanel.Lyrics -> LyricsPanel(player.lyrics.orEmpty(), scrolling)
         }
     }
 }
@@ -260,6 +263,13 @@ internal fun NowPlayingBar(
             } else {
                 BarLabelled(stringResource(R.string.player_bar_sleep), stringResource(R.string.player_sleep_timer), sleepTimerOpen, openSleepTimer) { button ->
                     BarButton(Icons.Rounded.Bedtime, sleepTimerOpen, openSleepTimer, button)
+                }
+            }
+            if (player.lyrics != null) {
+                val openLyrics = { onPanel(NowPlayingPanel.Lyrics) }
+                val lyricsOpen = selected == NowPlayingPanel.Lyrics
+                BarLabelled(stringResource(R.string.player_bar_lyrics), stringResource(R.string.player_lyrics), lyricsOpen, openLyrics) { button ->
+                    BarButton(Icons.Rounded.Lyrics, lyricsOpen, openLyrics, button)
                 }
             }
             if (player.castAvailable) {

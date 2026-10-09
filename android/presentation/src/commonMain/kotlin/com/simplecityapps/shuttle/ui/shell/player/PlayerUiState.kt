@@ -30,10 +30,10 @@ data class PlayerSong(
 
 /**
  * What Now Playing's bar opens below the transport (app-shell.md, section 1): the queue, the sleep
- * timer, or Playback & sound. With none open the queue still follows the transport, so a drag up
- * reveals it.
+ * timer, Playback & sound, or the song's lyrics. With none open the queue still follows the transport,
+ * so a drag up reveals it.
  */
-enum class NowPlayingPanel { Queue, SleepTimer, PlaybackSound }
+enum class NowPlayingPanel { Queue, SleepTimer, PlaybackSound, Lyrics }
 
 /**
  * Everything the player surfaces show except the playback position, which ticks too often to live
@@ -67,6 +67,8 @@ data class PlayerUiState(
     val showRemainingTime: Boolean = true,
     /** Whether Now Playing and the mini player picture a song by its album art or its artist's image (#952). */
     val nowPlayingImage: NowPlayingImage = NowPlayingImage.AlbumArt,
+    /** The current song's lyrics from its tags, or null when it has none; the bar offers the Lyrics panel only when set. */
+    val lyrics: String? = null,
     /** The panel the bar has open, or null at rest. */
     val panel: NowPlayingPanel? = null,
     /** What the queue is playing from (#909), shown and opened from the queue's header; null for none ([ObserveQueueSource]). */

@@ -40,6 +40,10 @@
     <string name="player_sleep_timer_on">Sleep timer on</string>
     <!-- Content description of the button that opens the sleep timer -->
     <string name="player_sleep_timer">Sleep timer</string>
+    <!-- Small label under the full-screen player's lyrics button, and the lyrics panel's heading; shown only for songs with lyrics -->
+    <string name="player_bar_lyrics">Lyrics</string>
+    <!-- Content description of the button that opens the current song's lyrics -->
+    <string name="player_lyrics">Show lyrics</string>
     <!-- Title of the sleep timer's length slider -->
     <string name="player_sleep_timer_length">Length</string>
     <!-- Button that starts the sleep timer -->

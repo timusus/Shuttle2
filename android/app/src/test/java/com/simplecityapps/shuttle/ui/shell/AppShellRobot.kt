@@ -462,6 +462,7 @@ class AppShellRobot(
             NowPlayingPanel.Queue -> hasText("Queue")
             NowPlayingPanel.SleepTimer -> hasContentDescription("Sleep timer", substring = true)
             NowPlayingPanel.PlaybackSound -> hasContentDescription("Playback & sound", substring = true)
+            NowPlayingPanel.Lyrics -> hasContentDescription("Show lyrics")
         }
         rule.onNode(button and hasAnyAncestor(hasTestTag(PlayerTestTags.Bar))).performClick()
         rule.waitForIdle()
@@ -707,6 +708,7 @@ class AppShellRobot(
             NowPlayingPanel.Queue to PlayerTestTags.QueueRow,
             NowPlayingPanel.SleepTimer to PlayerTestTags.SleepTimerPanel,
             NowPlayingPanel.PlaybackSound to PlayerTestTags.PlaybackSoundPanel,
+            NowPlayingPanel.Lyrics to PlayerTestTags.LyricsPanel,
         )
         tags.forEach { (each, tag) ->
             val nodes = rule.onAllNodesWithTag(tag, useUnmergedTree = true)

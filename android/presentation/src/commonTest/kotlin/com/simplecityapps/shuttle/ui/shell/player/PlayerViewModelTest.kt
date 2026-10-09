@@ -41,6 +41,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.streaming.DeliveredFormat
 import com.simplecityapps.shuttle.streaming.DeliveredFormats
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
+import com.simplecityapps.shuttle.ui.actions.LoadLyrics
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
@@ -144,6 +145,7 @@ class PlayerViewModelTest {
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures()),
             mediaActionHandler = mediaActions.handler,
             deliveredFormats = deliveredFormats,
+            loadLyrics = LoadLyrics(songRepository),
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -183,6 +185,33 @@ class PlayerViewModelTest {
         queueOperations.queueStateFlow.value = queueOf(songs("A")).copy(playContext = PlayContext.Playlist(9))
 
         viewModel.uiState.value.player.queueSource shouldBe null
+    }
+
+    @Test
+    fun `the player has the current song's lyrics - and none for a song without`() = runTest {
+        val viewModel = viewModel()
+        val songs = songs("A", "B")
+        songRepository.lyrics[songs[0].id] = "Line one"
+
+        queueOperations.queueStateFlow.value = queueOf(songs)
+        viewModel.uiState.value.player.lyrics shouldBe "Line one"
+
+        queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
+        viewModel.uiState.value.player.lyrics shouldBe null
+    }
+
+    @Test
+    fun `the Lyrics panel closes when the song has no lyrics`() = runTest {
+        val viewModel = viewModel()
+        val songs = songs("A", "B")
+        songRepository.lyrics[songs[0].id] = "Line one"
+        queueOperations.queueStateFlow.value = queueOf(songs)
+
+        viewModel.showPanel(NowPlayingPanel.Lyrics)
+        viewModel.uiState.value.player.panel shouldBe NowPlayingPanel.Lyrics
+
+        queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
+        viewModel.uiState.value.player.panel shouldBe null
     }
 
     @Test
