@@ -215,6 +215,36 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `the Lyrics panel stays closed on a later song with lyrics after skipping past one without`() = runTest {
+        val viewModel = viewModel()
+        val songs = songs("A", "B", "C")
+        songRepository.lyrics[songs[0].id] = "Line one"
+        songRepository.lyrics[songs[2].id] = "Line three"
+        queueOperations.queueStateFlow.value = queueOf(songs)
+        viewModel.showPanel(NowPlayingPanel.Lyrics)
+
+        queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
+        queueOperations.queueStateFlow.value = queueOf(songs, current = 2)
+
+        viewModel.uiState.value.player.lyrics shouldBe "Line three"
+        viewModel.uiState.value.player.panel shouldBe null
+    }
+
+    @Test
+    fun `a metadata update to the same song keeps its lyrics and the Lyrics panel open`() = runTest {
+        val viewModel = viewModel()
+        val songs = songs("A")
+        songRepository.lyrics[songs[0].id] = "Line one"
+        queueOperations.queueStateFlow.value = queueOf(songs)
+        viewModel.showPanel(NowPlayingPanel.Lyrics)
+
+        queueOperations.queueStateFlow.value = queueOf(listOf(songs[0].copy(playCount = 5)))
+
+        viewModel.uiState.value.player.lyrics shouldBe "Line one"
+        viewModel.uiState.value.player.panel shouldBe NowPlayingPanel.Lyrics
+    }
+
+    @Test
     fun `the current song's transcode is what the player delivers - and the next song's own file has none`() = runTest {
         val transcoded = createSong(id = 1, name = "Transcoded").copy(path = "subsonic://song/1")
         val original = createSong(id = 2, name = "Original").copy(path = "subsonic://song/2")

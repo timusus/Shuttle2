@@ -39,6 +39,7 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -176,8 +177,24 @@ class PlayerViewModel @AssistedInject constructor(
             }.distinctUntilChanged()
 
     // Songs don't carry their lyrics (#873); null until loaded, so loading never holds the rest of the player back.
-    private val lyrics: Flow<String?> = currentSong.flatMapLatest { song ->
-        if (song == null) flowOf(null) else flow { emit(loadLyrics(song.id)) }.onStart { emit(null) }
+    // Keyed on the song id so metadata updates (play count) neither reload nor blank them. A song that settles without
+    // lyrics also clears a stored Lyrics panel, so a later song with lyrics doesn't reopen it unprompted.
+    private val lyrics: Flow<String?> = currentSong.map { it?.id }.distinctUntilChanged().flatMapLatest { id ->
+        if (id == null) {
+            flowOf(null)
+        } else {
+            flow {
+                val text = try {
+                    loadLyrics(id)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    null
+                }
+                if (text == null && savedStateHandle.get<NowPlayingPanel?>(PANEL_KEY) == NowPlayingPanel.Lyrics) savedStateHandle[PANEL_KEY] = null
+                emit(text)
+            }.onStart { emit(null) }
+        }
     }.distinctUntilChanged()
 
     // None until it's resolved, so resolving it never holds the rest of the player back.
