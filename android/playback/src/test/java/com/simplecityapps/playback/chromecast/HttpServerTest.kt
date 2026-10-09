@@ -51,15 +51,22 @@ class HttpServerTest {
 
     @Test
     fun `a remote song redirects to its stream for the session's key`() {
-        val response = get("/${streams.key}/songs/2/audio")
+        val response = get("/${streams.key}/songs/2/audio/42")
 
         response.code shouldBe 307
-        response.location shouldBe FakeMediaInfoProvider.remoteUrl(2)
+        response.location shouldBe "https://media.example/2?ApiKey=secret-token&PlaySessionId=42"
+    }
+
+    @Test
+    fun `two entries for the same remote song redirect to streams under their own play ids`() {
+        get("/${streams.key}/songs/2/audio/41").location shouldBe "https://media.example/2?ApiKey=secret-token&PlaySessionId=41"
+        get("/${streams.key}/songs/2/audio/42").location shouldBe "https://media.example/2?ApiKey=secret-token&PlaySessionId=42"
+        get("/${streams.key}/songs/2/audio/41").location shouldBe "https://media.example/2?ApiKey=secret-token&PlaySessionId=41"
     }
 
     @Test
     fun `RS-37 a remote song's stream is refused without the key`() {
-        val response = get("/songs/2/audio")
+        val response = get("/songs/2/audio/42")
 
         response.code shouldBe 403
         response.location.shouldBeNull()
@@ -67,7 +74,7 @@ class HttpServerTest {
 
     @Test
     fun `a remote song's stream is refused for a wrong key`() {
-        val response = get("/${"0".repeat(streams.key.length)}/songs/2/audio")
+        val response = get("/${"0".repeat(streams.key.length)}/songs/2/audio/42")
 
         response.code shouldBe 403
         response.location.shouldBeNull()
@@ -78,7 +85,7 @@ class HttpServerTest {
         val earlier = streams.key
         streams.newSession()
 
-        val response = get("/$earlier/songs/2/audio")
+        val response = get("/$earlier/songs/2/audio/42")
 
         response.code shouldBe 403
         response.location.shouldBeNull()
@@ -86,7 +93,7 @@ class HttpServerTest {
 
     @Test
     fun `a local song is served for the session's key`() {
-        val response = get("/${streams.key}/songs/1/audio")
+        val response = get("/${streams.key}/songs/1/audio/42")
 
         response.code shouldBe 206
         response.body shouldBe AUDIO.toList()
@@ -94,7 +101,7 @@ class HttpServerTest {
 
     @Test
     fun `a local song is refused without the key`() {
-        val response = get("/songs/1/audio")
+        val response = get("/songs/1/audio/42")
 
         response.code shouldBe 403
         response.body shouldBe "Forbidden".toByteArray().toList()
@@ -109,7 +116,10 @@ class HttpServerTest {
 
     @Test
     fun `a malformed path with the key is a bad request`() {
-        get("/${streams.key}/songs/two/audio").code shouldBe 400
+        get("/${streams.key}/songs/two/audio/42").code shouldBe 400
+        get("/${streams.key}/songs/2/audio/forty-two").code shouldBe 400
+        get("/${streams.key}/songs/2/audio").code shouldBe 400
+        get("/${streams.key}/songs/2/artwork/42").code shouldBe 400
         get("/${streams.key}/songs/2/lyrics").code shouldBe 400
         get("/${streams.key}").code shouldBe 400
     }

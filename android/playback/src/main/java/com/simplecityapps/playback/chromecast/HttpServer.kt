@@ -18,7 +18,8 @@ import kotlinx.coroutines.cancelChildren
 import timber.log.Timber
 
 /**
- * Serves a Cast receiver each song at `/<key>/songs/<id>/audio` and its artwork at `/<key>/songs/<id>/artwork`, and
+ * Serves a Cast receiver each queue entry's song at `/<key>/songs/<id>/audio/<uid>` and its artwork at
+ * `/<key>/songs/<id>/artwork`, and
  * refuses (403) any request without the session's key (see [CastStreams]).
  *
  * A remote-provider song is a redirect to its server's stream rather than a proxy of it: a transcoded Jellyfin or Emby
@@ -48,21 +49,27 @@ class HttpServer(
         if (!streams.isValid(paths.firstOrNull())) {
             return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/html", "Forbidden")
         }
-        val songId = paths.takeIf { it.size == 4 && it[1] == "songs" }?.get(2)?.toLongOrNull()
-            ?: return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
+        val songId = paths.takeIf { it.size >= 4 && it[1] == "songs" }?.get(2)?.toLongOrNull()
+            ?: return badRequest()
 
-        return when (paths[3]) {
-            "audio" -> streams.resolvedUrl(songId)?.let(::redirect) ?: lookUp { audio(session.headers, songId) }
-            "artwork" -> lookUp { artwork(songId) }
-            else -> newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
+        return when {
+            paths.size == 5 && paths[3] == "audio" -> {
+                val uid = paths[4].toLongOrNull() ?: return badRequest()
+                streams.resolvedUrl(uid)?.let(::redirect) ?: lookUp { audio(session.headers, songId, uid) }
+            }
+
+            paths.size == 4 && paths[3] == "artwork" -> lookUp { artwork(songId) }
+
+            else -> badRequest()
         }
     }
 
     private suspend fun audio(
         headers: MutableMap<String, String>,
-        songId: Long
+        songId: Long,
+        uid: Long
     ): Response {
-        castService.getRemoteAudioUrl(songId)?.let { url -> return redirect(url) }
+        castService.getRemoteAudioUrl(songId, uid)?.let { url -> return redirect(url) }
         return castService.getAudio(songId)?.let { audioStream ->
             serveAudio(headers, audioStream.stream, audioStream.length, audioStream.mimeType)
         } ?: notFound()
@@ -98,6 +105,8 @@ class HttpServer(
         Timber.w(e, "Gave up on a Cast request")
         return newFixedLengthResponse(Response.Status.SERVICE_UNAVAILABLE, "text/html", "Unavailable")
     }
+
+    private fun badRequest(): Response = newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
 
     private fun notFound(): Response = newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
 

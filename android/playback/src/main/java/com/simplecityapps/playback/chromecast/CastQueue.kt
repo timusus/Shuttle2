@@ -11,7 +11,6 @@ import androidx.media3.common.Timeline
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.queueEntryOrNull
-import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -71,8 +70,8 @@ class CastQueue(
     /** Resolves the streams of songs about to be sent, then syncs as they're ready. */
     private var resolving: Job? = null
 
-    /** The ids of the songs [resolving] resolves. */
-    private var resolvingIds: Set<Long> = emptySet()
+    /** The uids of the entries [resolving] resolves. */
+    private var resolvingUids: Set<Long> = emptySet()
 
     /** The uid of the entry the receiver was last playing or buffering, to tell what it went idle on. */
     private var playingUid: Long? = null
@@ -300,7 +299,7 @@ class CastQueue(
         transfer = null
         resolving?.cancel()
         resolving = null
-        resolvingIds = emptySet()
+        resolvingUids = emptySet()
         playingUid = null
         takingOver = false
         handler.removeCallbacks(giveUpTakeOver)
@@ -351,6 +350,7 @@ class CastQueue(
 
             is CastWindow.Step.Load -> {
                 val items = localItems(step.uids)
+                streams.retainOnly(step.uids)
                 val ready = resolvedRun(items, step.index) ?: return
                 // The item being cast, or the one playing, keeps its place in the new window; any other starts from
                 // the beginning.
@@ -384,29 +384,29 @@ class CastQueue(
         items: List<MediaItem>,
         index: Int
     ): IntRange? {
-        val songs = items.map { it.queueEntry.song }
-        val resolved = songs.map(streams::isResolved)
+        val entries = items.map { it.queueEntry }
+        val resolved = entries.map(streams::isResolved)
         if (!resolved.all { it }) {
-            resolve(songs.subList(index, songs.size) + songs.subList(0, index).asReversed())
+            resolve(entries.subList(index, entries.size) + entries.subList(0, index).asReversed())
         }
         if (!resolved[index]) return null
         var first = index
         while (first > 0 && resolved[first - 1]) first--
         var last = index
-        while (last < songs.lastIndex && resolved[last + 1]) last++
+        while (last < entries.lastIndex && resolved[last + 1]) last++
         return first..last
     }
 
     /**
-     * Resolves the streams of [songs], the first on its own and the rest a few at a time, syncing as each lot is
+     * Resolves the streams of [entries], the first on its own and the rest a few at a time, syncing as each lot is
      * ready. A resolve already on its way to the first carries on.
      */
-    private fun resolve(songs: List<Song>) {
-        if (resolving?.isActive == true && songs.first().id in resolvingIds) return
+    private fun resolve(entries: List<QueueEntry>) {
+        if (resolving?.isActive == true && entries.first().uid in resolvingUids) return
         resolving?.cancel()
-        resolvingIds = songs.mapTo(HashSet()) { it.id }
+        resolvingUids = entries.mapTo(HashSet()) { it.uid }
         resolving = scope.launch {
-            (listOf(songs.take(1)) + songs.drop(1).chunked(RESOLVE_BATCH)).forEach { batch ->
+            (listOf(entries.take(1)) + entries.drop(1).chunked(RESOLVE_BATCH)).forEach { batch ->
                 streams.resolve(batch)
                 requestSync()
             }

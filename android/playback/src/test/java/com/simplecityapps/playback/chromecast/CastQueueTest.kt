@@ -180,9 +180,23 @@ class CastQueueTest {
     }
 
     @Test
+    fun `each entry cast streams under its own play id, the same song twice included`() {
+        castQueue.attach(remote)
+        val song = remoteSong(5)
+        local.setMediaItems(listOf(QueueEntry(uid = 11, song = song).toMediaItem(), QueueEntry(uid = 12, song = song).toMediaItem()), 0, 0)
+
+        castQueue.transferState(local, remote)
+        idle()
+
+        remote.uids() shouldBe listOf(11L, 12L)
+        streams.resolvedUrl(11) shouldBe "https://media.example/5?ApiKey=secret-token&PlaySessionId=11"
+        streams.resolvedUrl(12) shouldBe "https://media.example/5?ApiKey=secret-token&PlaySessionId=12"
+    }
+
+    @Test
     fun `a window goes out as far as its streams are resolved, and the rest follows`() {
         castQueue.attach(remote)
-        (1L..30L).filter { it != 9L }.forEach { runBlocking { streams.resolve(listOf(remoteSong(it))) } }
+        (1L..30L).filter { it != 9L }.forEach { runBlocking { streams.resolve(listOf(QueueEntry(uid = it, song = remoteSong(it)))) } }
         provider.gate = CompletableDeferred()
         local.setMediaItems(remoteQueue(30), 5, 0)
 

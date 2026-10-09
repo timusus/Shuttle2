@@ -6,6 +6,7 @@ import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.shuttle.query.SongQuery
 import java.io.File
 import java.io.FileNotFoundException
@@ -27,9 +28,15 @@ class CastService(
 ) {
     class AudioStream(val stream: InputStream, val length: Long, val mimeType: String)
 
-    /** Where a remote-provider song streams from (see [CastStreams]); null for a local song, or one that isn't in the library. */
-    suspend fun getRemoteAudioUrl(songId: Long): String? = songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
-        streams.remoteUrl(song)
+    /**
+     * Where the queue entry [uid] of a remote-provider song streams from (see [CastStreams]); null for a local song, or
+     * one that isn't in the library.
+     */
+    suspend fun getRemoteAudioUrl(
+        songId: Long,
+        uid: Long
+    ): String? = songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
+        streams.remoteUrl(QueueEntry(uid, song))
     }
 
     suspend fun getArtwork(songId: Long): ByteArray? = songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->

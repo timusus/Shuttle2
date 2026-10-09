@@ -36,7 +36,7 @@ class CastMediaItemConverterTest {
     fun `an entry streams from the phone's server, with its metadata`() {
         val media = converter.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem()).media!!
 
-        media.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
+        media.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio/42"
         media.streamType shouldBe MediaInfo.STREAM_TYPE_BUFFERED
         media.contentType shouldBe "audio/flac"
         media.streamDuration shouldBe 215_000L
@@ -56,19 +56,20 @@ class CastMediaItemConverterTest {
         val after = converter.toMediaQueueItem(QueueEntry(uid = 1, song = song).toMediaItem()).media!!
 
         after.contentUrl shouldNotBe before
-        after.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
+        after.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio/1"
         after.metadata!!.images.single().url.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/artwork"
     }
 
     @Test
     fun `a remote song goes out as the type its stream was resolved as`() = runTest {
         val remote = remoteSong(8)
-        streams.resolve(listOf(remote))
+        val entry = QueueEntry(uid = 3, song = remote)
+        streams.resolve(listOf(entry))
 
-        val media = converter.toMediaQueueItem(QueueEntry(uid = 3, song = remote).toMediaItem()).media!!
+        val media = converter.toMediaQueueItem(entry.toMediaItem()).media!!
 
         media.contentType shouldBe FakeMediaInfoProvider.TRANSCODED
-        media.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/8/audio"
+        media.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/8/audio/3"
     }
 
     @Test
@@ -88,6 +89,8 @@ class CastMediaItemConverterTest {
         val second = converter.toMediaQueueItem(QueueEntry(uid = 2, song = song).toMediaItem())
 
         (first.media!!.contentId == second.media!!.contentId) shouldBe false
+        first.media!!.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio/1"
+        second.media!!.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio/2"
     }
 
     @Test
@@ -106,7 +109,7 @@ class CastMediaItemConverterTest {
         val reported = converter.toMediaItem(queueItem)
 
         reported.queueEntryOrNull.shouldBeNull()
-        reported.localConfiguration!!.uri.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
+        reported.localConfiguration!!.uri.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio/42"
     }
 
     @Test

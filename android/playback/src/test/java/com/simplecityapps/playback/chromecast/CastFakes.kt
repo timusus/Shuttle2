@@ -101,7 +101,8 @@ class FakeArtworkImageLoader(private val bytes: ByteArray?) : ArtworkImageLoader
 }
 
 /**
- * Streams a remote-provider song from `https://media.example/<id>?ApiKey=secret-token`, as audio/mpeg, or as
+ * Streams a remote-provider song from `https://media.example/<id>?ApiKey=secret-token`, with any play id as its
+ * `PlaySessionId`, as audio/mpeg, or as
  * [transcodedType] when asked for a Cast-compatible stream; a local song plays its own file.
  */
 class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : MediaInfoProvider {
@@ -125,7 +126,7 @@ class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : M
         gate?.await()
         if (song.id in failing) throw IllegalStateException("No credentials")
         return if (song.mediaProvider.remote) {
-            MediaInfo(Uri.parse(remoteUrl(song.id)), if (castCompatibilityMode) transcodedType else "audio/mpeg", isRemote = true)
+            MediaInfo(Uri.parse(remoteUrl(song.id, playId)), if (castCompatibilityMode) transcodedType else "audio/mpeg", isRemote = true)
         } else {
             MediaInfo(Uri.parse(song.path), song.mimeType, isRemote = false)
         }
@@ -141,7 +142,10 @@ class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : M
     companion object {
         const val TRANSCODED = "application/x-mpegURL"
 
-        fun remoteUrl(songId: Long) = "https://media.example/$songId?ApiKey=secret-token"
+        fun remoteUrl(
+            songId: Long,
+            playId: String?
+        ) = "https://media.example/$songId?ApiKey=secret-token" + playId?.let { "&PlaySessionId=$it" }.orEmpty()
     }
 }
 

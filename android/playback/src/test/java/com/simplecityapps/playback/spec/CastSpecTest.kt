@@ -177,7 +177,8 @@ class CastSpecTest {
         harness.idle()
 
         receiver.songIds shouldBe (1L..5L).toList()
-        receiver.sentItems.map { it.media?.contentUrl } shouldBe (1L..5L).map { "http://10.0.0.2:5000/${streams.key}/songs/$it/audio" }
+        receiver.sentItems.map { it.media?.contentUrl } shouldBe
+            queue.getQueue().map { item -> "http://10.0.0.2:5000/${streams.key}/songs/${item.song.id}/audio/${item.uid}" }
         receiver.sentItems.map { it.media?.contentType }.distinct() shouldBe listOf("audio/wav")
         receiver.currentMediaItemIndex shouldBe 2
         receiver.currentPosition shouldBe 1_000L
@@ -360,6 +361,22 @@ class CastSpecTest {
         ended.shouldBeEmpty()
         loaded shouldBe true
         receiver.songIds shouldBe listOf(7L, 8L)
+    }
+
+    @Test
+    fun `casting mid-song and coming back keeps the song's play id, which the receiver's stream carries`() {
+        start(count = 3, index = 1, positionMs = 1_000)
+        val play = playback.playFlow.value!!
+
+        connect()
+
+        playback.playFlow.value shouldBe play
+        receiver.sentItems[receiver.currentMediaItemIndex].media!!.contentUrl!!.substringAfterLast('/') shouldBe play.id
+
+        castPlayer.disconnect()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Paused }
+
+        playback.playFlow.value shouldBe play
     }
 
     @Test

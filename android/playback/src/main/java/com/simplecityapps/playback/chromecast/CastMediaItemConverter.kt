@@ -20,8 +20,9 @@ import org.json.JSONObject
  * stream. A remote-provider song's stream is resolved before it's sent (see [CastStreams]), so it goes out with the
  * content type the receiver plays it as, and converting never waits on a server.
  *
- * Each entry's content id is its stream URL with the entry's uid as the fragment, which HTTP never sends: Media3 keys
- * the items it sent by content id, so two entries for the same song must differ. The uid also rides in the custom
+ * Each entry's stream URL, which is its content id, ends in the entry's uid: Media3 keys the items it sent by content
+ * id, so two entries for the same song must differ, and the server opens each entry's stream under its own play id
+ * (see [CastStreams]). The uid also rides in the custom
  * data, and an item the receiver reports back is the entry's own [MediaItem] (tagged with its queue entry) for as
  * long as it was last sent. The song id rides there too, so a song this phone sent before S2 was last stopped, whose
  * entry is gone, is still known by its song (see [castSongId]).
@@ -50,12 +51,12 @@ class CastMediaItemConverter(
                 putString(MediaMetadata.KEY_TITLE, song.name ?: unknown)
                 addImage(WebImage(Uri.parse(artworkUrl(host, key, song.id))))
             }
-        val url = audioUrl(host, key, song.id)
+        val url = audioUrl(host, key, song.id, entry.uid)
         val mediaInfo =
-            MediaInfo.Builder("$url#${entry.uid}")
+            MediaInfo.Builder(url)
                 .setContentUrl(url)
                 .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-                .setContentType(streams.contentType(song))
+                .setContentType(streams.contentType(entry))
                 .setStreamDuration(song.duration.toLong())
                 .setMetadata(metadata)
                 .setCustomData(JSONObject().put(KEY_UID, entry.uid).put(KEY_SONG_ID, song.id))
@@ -96,8 +97,9 @@ class CastMediaItemConverter(
         fun audioUrl(
             host: String,
             key: String,
-            songId: Long
-        ) = "http://$host:$PORT/$key/songs/$songId/audio"
+            songId: Long,
+            uid: Long
+        ) = "http://$host:$PORT/$key/songs/$songId/audio/$uid"
 
         fun artworkUrl(
             host: String,
