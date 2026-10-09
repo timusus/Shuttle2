@@ -28,9 +28,25 @@ class MovedSongRemapsTest {
         movedSongRemaps(listOf(song(2, "/storage/emulated/0/Music/b.mp3")), listOf(moved())).shouldBeEmpty()
     }
 
-    private fun moved() = MovedFile(
-        oldPath,
-        MediaStoreAudioFile(id = 10, path = newPath, displayName = "a.mp3", size = 5_000, lastModified = 1_700_000_000_000, mimeType = "audio/mpeg", duration = 180_000)
+    @Test
+    fun `a move onto a path whose song moves away in the same scan is kept, after that song's`() {
+        val thirdPath = "/storage/emulated/0/Albums/b.mp3"
+        movedSongRemaps(listOf(song(1, oldPath), song(2, newPath)), listOf(moved(), moved(newPath, thirdPath, id = 11))) shouldBe
+            listOf(SongPathRemap(songId = 2, path = thirdPath), SongPathRemap(songId = 1, path = newPath))
+    }
+
+    @Test
+    fun `two songs swapping paths are left alone`() {
+        movedSongRemaps(listOf(song(1, oldPath), song(2, newPath)), listOf(moved(), moved(newPath, oldPath, id = 11))).shouldBeEmpty()
+    }
+
+    private fun moved(
+        from: String = oldPath,
+        to: String = newPath,
+        id: Long = 10
+    ) = MovedFile(
+        from,
+        MediaStoreAudioFile(id = id, path = to, displayName = "a.mp3", size = 5_000, lastModified = 1_700_000_000_000, mimeType = "audio/mpeg", duration = 180_000)
     )
 
     private fun song(

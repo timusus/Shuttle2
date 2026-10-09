@@ -113,7 +113,8 @@ internal fun movedFiles(
 
 /**
  * Moves the [songs] stored under a [moved] file's old path to its new one, so the song keeps its history (the import then
- * finds it by its new path). Not onto a path another song already holds.
+ * finds it by its new path). Not onto a path another song holds, unless that song moves away first: remaps are ordered to
+ * be applied in turn. Swaps and cycles are left, as each path stays held.
  */
 internal fun movedSongRemaps(
     songs: List<Song>,
@@ -121,9 +122,20 @@ internal fun movedSongRemaps(
 ): List<SongPathRemap> {
     if (moved.isEmpty()) return emptyList()
     val songsByPath = songs.groupBy { song -> song.path }
-    return moved.mapNotNull { (oldPath, file) ->
-        if (file.path in songsByPath) return@mapNotNull null
-        songsByPath[oldPath]?.singleOrNull()?.let { song -> SongPathRemap(songId = song.id, path = file.path) }
+    val heldPaths = songsByPath.keys.toMutableSet()
+    var pending = moved.mapNotNull { (oldPath, file) ->
+        songsByPath[oldPath]?.singleOrNull()?.let { song -> oldPath to SongPathRemap(songId = song.id, path = file.path) }
+    }
+    val remaps = mutableListOf<SongPathRemap>()
+    while (true) {
+        val (free, held) = pending.partition { (_, remap) -> remap.path !in heldPaths }
+        if (free.isEmpty()) return remaps
+        free.forEach { (oldPath, remap) ->
+            heldPaths -= oldPath
+            heldPaths += remap.path
+            remaps += remap
+        }
+        pending = held
     }
 }
 
