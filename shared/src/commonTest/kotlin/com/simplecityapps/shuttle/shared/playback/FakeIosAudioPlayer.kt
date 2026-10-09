@@ -70,6 +70,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         this.next = next
         val starts = playWhenReady && acceptsPlay
         this.playWhenReady = starts
+        pausedAtEnd = false
         commands++
         reportedPlaying = false
         position = startMs
@@ -100,7 +101,12 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         commands++
         if (acceptsPlay) {
             playWhenReady = true
-            if (current != null && state == IosAudioPlayerState.Paused) setState(IosAudioPlayerState.Playing)
+            if (pausedAtEnd) {
+                pausedAtEnd = false
+                if (next != null) transition() else setState(IosAudioPlayerState.Ended)
+            } else if (current != null && state == IosAudioPlayerState.Paused) {
+                setState(IosAudioPlayerState.Playing)
+            }
         }
         answer()
     }
@@ -117,6 +123,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     override fun seek(positionMs: Long) {
         calls += "seek $positionMs"
         val track = current ?: return
+        pausedAtEnd = false
         if (track.isUnseekable()) {
             post { listener?.onSeekUnsupported(track.id, positionMs) }
         } else {
@@ -130,6 +137,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         reportedPlaying = false
         current = null
         next = null
+        pausedAtEnd = false
         state = IosAudioPlayerState.Idle
         position = -1
     }
@@ -139,6 +147,9 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     }
 
     private var pausesAtEnd = false
+
+    /** Paused on the current track's last frame by [pausesAtEnd]: a play carries on into the next, a seek undoes it. */
+    private var pausedAtEnd = false
 
     override fun setPauseAtEnd(enabled: Boolean) {
         calls += "pause at end $enabled"
@@ -179,6 +190,8 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
             pausesAtEnd -> {
                 playWhenReady = false
+                pausedAtEnd = true
+                position = duration
                 current?.id?.let { id -> post { listener?.onPausedAtEnd(id) } }
                 setState(IosAudioPlayerState.Paused)
             }

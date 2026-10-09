@@ -114,6 +114,7 @@ internal class IosEngineEvents(
         val currentFeed = feeder.current ?: return
         if (trackId != currentFeed.id || currentFeed.failed) return
         log.info { "song ${currentFeed.item.song.id} ended: paused at its end" }
+        currentFeed.pausedAtEnd = true
         flows.playWhenReady = false
         flows.endOfItemPause.tryEmit(Unit)
     }
@@ -169,28 +170,16 @@ internal class IosEngineEvents(
      * there.
      */
     private fun onEnded(feed: IosFeed) {
-        val upcoming = feeder.next
-        if (upcoming != null && feeder.pausesAtEnd && !feed.failed) {
+        if (feeder.next != null && feeder.pausesAtEnd && !feed.failed && !feed.pausedAtEnd) {
             log.info { "song ${feed.item.song.id} ended: paused at its end" }
+            feed.pausedAtEnd = true
             flows.playWhenReady = false
             feeder.engineState = IosAudioPlayerState.Ended
             flows.endOfItemPause.tryEmit(Unit)
             feeder.publishState()
             return
         }
-        if (!feed.failed) flows.trackEnded.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
-        if (upcoming != null) {
-            feeder.dropNext()
-            queue.setCurrent(upcoming.item.uid)
-            log.info { "song ${feed.item.song.id} ended; song ${upcoming.item.song.id} next, not gapless" }
-            if (upcoming.failed) {
-                feeder.current = upcoming
-                onCurrentFailed(upcoming)
-            } else {
-                feeder.startLoad(upcoming.item, 0)
-            }
-            return
-        }
+        if (moveOn(feed)) return
         loads.complete(Result.failure(IllegalStateException("Nothing to load")))
         // Nothing follows, so the server stops the ended track's transcode now rather than when it times out idle
         feeder.endPlay(feed.playId)
@@ -199,6 +188,25 @@ internal class IosEngineEvents(
         feeder.engineState = IosAudioPlayerState.Ended
         flows.endOfItemPause.tryEmit(Unit)
         feeder.publishState()
+    }
+
+    /**
+     * Playback goes on from [feed], played out, to the next item the engine doesn't have, loading it; false when there's
+     * none.
+     */
+    fun moveOn(feed: IosFeed): Boolean {
+        if (!feed.failed) flows.trackEnded.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
+        val upcoming = feeder.next ?: return false
+        feeder.dropNext()
+        queue.setCurrent(upcoming.item.uid)
+        log.info { "song ${feed.item.song.id} ended; song ${upcoming.item.song.id} next, not gapless" }
+        if (upcoming.failed) {
+            feeder.current = upcoming
+            onCurrentFailed(upcoming)
+        } else {
+            feeder.startLoad(upcoming.item, 0)
+        }
+        return true
     }
 }
 

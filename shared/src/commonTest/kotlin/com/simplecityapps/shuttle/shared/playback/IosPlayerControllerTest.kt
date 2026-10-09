@@ -179,6 +179,44 @@ class IosPlayerControllerTest {
     }
 
     @Test
+    fun `playing after a pause at the end starts the next song - not the finished one again`() = test { controller ->
+        val ended = collect(controller.trackEndedFlow)
+        engine.duration = a.duration.toLong()
+        controller.start(listOf(a, b, c))
+        pauseAtEnd(controller)
+        engine.finishTrack()
+        engine.clearCalls()
+
+        controller.play()
+        engine.settle()
+
+        engine.calls shouldBe listOf("play", "next song:3")
+        controller.currentSong shouldBe b
+        controller.playbackState() shouldBe PlaybackState.Playing
+        ended.map { it.song } shouldBe listOf(a)
+    }
+
+    @Test
+    fun `playing after a pause at the end before the next song was handed over loads the next song`() = test { controller ->
+        controller.start(listOf(a))
+        val gate = CompletableDeferred<Unit>()
+        resolveGate = gate
+        controller.addToQueue(listOf(b))
+        pauseAtEnd(controller)
+        engine.finishTrack()
+        controller.playbackState() shouldBe PlaybackState.Paused
+        engine.clearCalls()
+
+        controller.play()
+        gate.complete(Unit)
+        engine.settle()
+
+        engine.calls shouldBe listOf("load song:2@0 playing")
+        controller.currentSong shouldBe b
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
     fun `a pause at the end waits out the end of the queue`() = test { controller ->
         controller.start(listOf(a))
 

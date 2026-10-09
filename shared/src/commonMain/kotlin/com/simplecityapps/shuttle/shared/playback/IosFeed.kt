@@ -16,6 +16,9 @@ internal class IosFeed(
 
     var failed = false
 
+    /** Played out and paused at its end ([IosEngineFeeder.pausesAtEnd]): a play moves on to the next item. A seek undoes it. */
+    var pausedAtEnd = false
+
     /** Whether a failure is reported on the failure flow: not when the stream couldn't be resolved. */
     var reportFailure = true
 

@@ -151,7 +151,9 @@ class IosPlayerController(
 
     /**
      * Plays the current item. Nothing loaded (or a failed item) loads it at [resumePosition]; a played-out queue
-     * restarts its current item; a position within the song's last moments restarts it (RS-11).
+     * restarts its current item; a position within the song's last moments restarts it (RS-11). Paused at its end
+     * ([IosFeed.pausedAtEnd]), playback moves on to the next item, as Media3 does after `pauseAtEndOfMediaItems`: the
+     * engine promotes the next it holds (reported as a transition), and one it never got is loaded here.
      */
     private fun playNow() {
         val item = queue.currentItem ?: return
@@ -165,12 +167,14 @@ class IosPlayerController(
                 feeder.startLoad(item, start)
             }
 
-            feeder.engineState == IosAudioPlayerState.Ended -> feeder.startLoad(item, 0)
+            feeder.engineState == IosAudioPlayerState.Ended -> {
+                if (!(currentFeed.pausedAtEnd && events.moveOn(currentFeed))) feeder.startLoad(item, 0)
+            }
 
             !currentFeed.sent -> Unit
 
             else -> {
-                if (isNearEnd(getProgress() ?: 0, item.song)) feeder.seek(0)
+                if (!currentFeed.pausedAtEnd && isNearEnd(getProgress() ?: 0, item.song)) feeder.seek(0)
                 // A play the engine can't start (the session wouldn't activate) is answered with paused at its count, and the
                 // intent goes with it.
                 player.play()

@@ -277,6 +277,7 @@ internal class IosEngineFeeder(
     fun seek(positionMs: Int) {
         val feed = current ?: return
         log.info { "seek song ${feed.item.song.id} to $positionMs ms" }
+        feed.pausedAtEnd = false
         when {
             // Also while the last re-open is still resolving: a scrub supersedes it.
             feed.seeksByReopening && feed.opensAtPosition -> startLoad(feed.item, positionMs, reopen = true)
