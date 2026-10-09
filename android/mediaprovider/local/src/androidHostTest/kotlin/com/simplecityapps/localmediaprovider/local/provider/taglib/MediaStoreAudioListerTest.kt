@@ -206,6 +206,54 @@ class MediaStoreAudioListerTest {
         source.wholeReads shouldBe 1
     }
 
+    @Test
+    fun `a row that kept its id at another path is a moved file`() = runTest {
+        source.put(row(1, generation = 9, path = "/storage/emulated/0/Albums/1.mp3", duration = 180_000))
+        storeListing(row(1, generation = 5, duration = 180_000))
+        val lister = lister()
+
+        lister.list(whole = false)
+
+        lister.moved().map { it.oldPath to it.file.path } shouldBe listOf("/storage/emulated/0/Music/1.mp3" to "/storage/emulated/0/Albums/1.mp3")
+    }
+
+    @Test
+    fun `a moved file is found by a whole read too`() = runTest {
+        source.put(row(1, generation = 9, path = "/storage/emulated/0/Albums/1.mp3"))
+        storeListing(row(1, generation = 5))
+        val lister = lister()
+
+        lister.list(whole = true)
+
+        lister.moved().map { it.file.id } shouldBe listOf(1L)
+    }
+
+    @Test
+    fun `a file that changed size or duration under a kept id is not a moved file`() = runTest {
+        source.put(
+            row(1, generation = 9, path = "/storage/emulated/0/Albums/1.mp3", size = 2_048),
+            row(2, generation = 9, path = "/storage/emulated/0/Albums/2.mp3", duration = 300_000)
+        )
+        storeListing(row(1, generation = 5), row(2, generation = 5, duration = 180_000))
+        val lister = lister()
+
+        lister.list(whole = false)
+
+        lister.moved().shouldBeEmpty()
+    }
+
+    @Test
+    fun `nothing is moved when MediaStore was rebuilt`() = runTest {
+        source.version = "v2"
+        source.put(row(1, generation = 9, path = "/storage/emulated/0/Albums/1.mp3"))
+        storeListing(row(1, generation = 5))
+        val lister = lister()
+
+        lister.list(whole = false)
+
+        lister.moved().shouldBeEmpty()
+    }
+
     private fun lister(incremental: Boolean = true) = MediaStoreAudioLister(source, store, incremental)
 
     private fun storeListing(vararg rows: MediaStoreAudioRow) {
@@ -215,9 +263,11 @@ class MediaStoreAudioListerTest {
     private fun row(
         id: Long,
         generation: Long,
-        size: Long = 1_024
+        size: Long = 1_024,
+        path: String = "/storage/emulated/0/Music/$id.mp3",
+        duration: Long? = null
     ) = MediaStoreAudioRow(
-        MediaStoreAudioFile(id = id, path = "/storage/emulated/0/Music/$id.mp3", displayName = "$id.mp3", size = size, lastModified = 1_700_000_000_000, mimeType = "audio/mpeg"),
+        MediaStoreAudioFile(id = id, path = path, displayName = "$id.mp3", size = size, lastModified = 1_700_000_000_000, mimeType = "audio/mpeg", duration = duration),
         generation
     )
 

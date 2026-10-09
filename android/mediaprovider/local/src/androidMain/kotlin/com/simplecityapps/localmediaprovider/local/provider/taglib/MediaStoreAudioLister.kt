@@ -6,7 +6,10 @@ import android.os.Build
 import android.provider.MediaStore
 import com.simplecityapps.localmediaprovider.local.data.room.dao.MediaStoreFileDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.MediaStoreFileData
+import com.simplecityapps.mediaprovider.SongPathRemap
+import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.abs
 import timber.log.Timber
 
 /**
@@ -87,6 +90,42 @@ internal data class MediaStoreScan(
  */
 internal const val MAX_ROWS_READ_BY_ID = 1000
 
+/** A file whose MediaStore row kept its id but moved from [oldPath] to [file]'s path. */
+internal data class MovedFile(
+    val oldPath: String,
+    val file: MediaStoreAudioFile
+)
+
+/**
+ * The [files] that moved since the [stored] listing: the same MediaStore id (kept across a move) at another path, with
+ * the same size and, where both know it, a duration within a second. Ids are rebuilt with MediaStore's index, so the
+ * size and duration guard against a different file under a reused id.
+ */
+internal fun movedFiles(
+    stored: Map<Long, MediaStoreAudioRow>,
+    files: List<MediaStoreAudioFile>
+): List<MovedFile> = files.mapNotNull { file ->
+    val old = stored[file.id]?.file ?: return@mapNotNull null
+    val sameDuration = old.duration == null || file.duration == null || abs(old.duration - file.duration) <= 1000
+    if (old.path != file.path && old.size == file.size && sameDuration) MovedFile(old.path, file) else null
+}
+
+/**
+ * Moves the [songs] stored under a [moved] file's old path to its new one, so the song keeps its history (the import then
+ * finds it by its new path). Not onto a path another song already holds.
+ */
+internal fun movedSongRemaps(
+    songs: List<Song>,
+    moved: List<MovedFile>
+): List<SongPathRemap> {
+    if (moved.isEmpty()) return emptyList()
+    val songsByPath = songs.groupBy { song -> song.path }
+    return moved.mapNotNull { (oldPath, file) ->
+        if (file.path in songsByPath) return@mapNotNull null
+        songsByPath[oldPath]?.singleOrNull()?.let { song -> SongPathRemap(songId = song.id, path = file.path) }
+    }
+}
+
 /**
  * MediaStore's listing, read in part where it can be (#875): with a stored listing of the same MediaStore [version], the
  * listing is the stored rows less those gone, with those whose generation moved read again. Each row's generation is
@@ -146,12 +185,22 @@ class MediaStoreAudioLister internal constructor(
     @Volatile
     private var pending: MediaStoreListingChange? = null
 
+    @Volatile
+    private var moved: List<MovedFile> = emptyList()
+
+    /** The files the last [list] found moved to another path since the stored listing (same id, size and duration). */
+    internal fun moved(): List<MovedFile> = moved
+
     /** Every audio file MediaStore has, read whole if [whole]; null if MediaStore can't be queried. */
     internal suspend fun list(whole: Boolean): List<MediaStoreAudioFile>? {
         pending = null
-        val stored = if (incremental && !whole) load() else null
-        val scan = scanMediaStore(source, stored, incremental, whole) ?: return null
+        moved = emptyList()
+        // Loaded for a whole read too: the files that moved are told from the last stored listing
+        val stored = if (incremental) load() else null
+        val scan = scanMediaStore(source, stored?.takeIf { !whole }, incremental, whole) ?: return null
         pending = scan.change
+        // A different MediaStore version is a rebuilt index, whose ids aren't the stored ones
+        if (stored != null && scan.change?.version == stored.version) moved = movedFiles(stored.rows, scan.files)
         if (scan.change is MediaStoreListingChange.Partial) {
             Timber.i("Read ${scan.change.upserts.size} changed MediaStore rows, ${scan.change.deletes.size} gone, of ${scan.files.size}")
         }

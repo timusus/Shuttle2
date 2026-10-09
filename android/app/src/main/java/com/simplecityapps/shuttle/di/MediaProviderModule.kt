@@ -73,6 +73,13 @@ class MediaProviderModule {
         @ApplicationContext context: Context,
         tagReader: MediaStoreTagReader,
         preferenceManager: GeneralPreferenceManager,
-        tagReadGuard: TagReadGuard
-    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context, tagReader, preferenceManager, tagReadGuard)
+        tagReadGuard: TagReadGuard,
+        database: MediaDatabase
+    ): MediaStoreMediaProvider = MediaStoreMediaProvider(
+        context,
+        tagReader,
+        preferenceManager,
+        tagReadGuard,
+        MediaStoreAudioLister.incremental(context, database.mediaStoreFileDao())
+    )
 }

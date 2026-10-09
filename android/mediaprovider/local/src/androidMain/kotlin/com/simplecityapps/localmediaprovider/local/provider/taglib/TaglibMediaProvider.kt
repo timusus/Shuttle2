@@ -234,9 +234,12 @@ class TaglibMediaProvider(
         val includeTrees = folders.includeTrees.filter { tree -> treeKey(tree) !in extraKeys }
         val documentSongs = existingSongs.filter { song -> legacyLocation(song.path) != null }
         val fileSongs = if (includeTrees.isEmpty()) emptyList() else existingSongs.filter { song -> song.path.startsWith("/") && folders.filter.accepts(song.path) }
-        if (documentSongs.isEmpty() && fileSongs.isEmpty()) return emptyList()
         // Without MediaStore, none of the files are listed, so each one the trees hold is read through them
         val files = findAudioFiles(folders.filter)
+        val moves = movedSongRemaps(existingSongs, mediaStoreFiles.moved().filter { moved -> folders.filter.accepts(moved.file.path) })
+        if (moves.isNotEmpty()) Timber.i("Matched ${moves.size} songs to files MediaStore lists at another path, by their id")
+        // Only a listing the legacy remaps used is shared: a thorough import otherwise reads its own, whole
+        if (documentSongs.isEmpty() && fileSongs.isEmpty()) return moves
         remapListing = MediaStoreListing(folders.filter, files)
         val toFiles = files?.let { LegacySafSongs(primaryStoragePath).remaps(documentSongs, files) }.orEmpty()
         val listedPaths = files?.mapTo(HashSet()) { file -> file.path.lowercase() }.orEmpty()
@@ -249,7 +252,8 @@ class TaglibMediaProvider(
         if (toFiles.isNotEmpty() || toDocuments.isNotEmpty()) {
             Timber.i("Matched ${toFiles.size} of ${documentSongs.size} songs stored under SAF document URIs to MediaStore files, and ${toDocuments.size} MediaStore no longer lists to their documents")
         }
-        return toFiles + toDocuments
+        val remapped = (toFiles + toDocuments).map { remap -> remap.songId }.toSet()
+        return toFiles + toDocuments + moves.filter { remap -> remap.songId !in remapped }
     }
 
     /** Of the stored [songs] under a file path, those whose document one of the include [trees] still holds, moved to its document URI. */
