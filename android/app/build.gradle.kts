@@ -6,6 +6,7 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin.android")
     id("dev.zacsweers.metro")
     alias(libs.plugins.sentry)
+    alias(libs.plugins.play.publisher)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.kotlin.serialization)
@@ -50,7 +51,7 @@ android {
     signingConfigs {
         create("release") {
             if (isCiBuild() && isReleaseBuild()) {
-                val keystore = file("./keystore.ks")
+                val keystore = file(System.getenv("KEYSTORE_PATH") ?: "./keystore.ks")
                 if (!keystore.exists()) {
                     throw Exception("Missing keystore.jks")
                 }
@@ -293,7 +294,7 @@ configurations.matching { it.name == "benchmarkReleaseCompileOnly" || it.name ==
     dependencies.add(project.dependencies.project(":android:fixtures"))
 }
 
-// The plugin's build types copy release's signing, whose keystore only CI has; they're never shipped, so debug signs them
+// The plugin's build types copy release's signing, whose keystore only release-android has; they're never shipped, so debug signs them
 androidComponents {
     onVariants(selector().withBuildType("benchmarkRelease")) { it.signingConfig.setConfig(android.signingConfigs.getByName("debug")) }
     onVariants(selector().withBuildType("nonMinifiedRelease")) { it.signingConfig.setConfig(android.signingConfigs.getByName("debug")) }
@@ -318,6 +319,16 @@ sentry {
     autoInstallation.enabled = false
     tracingInstrumentation.enabled = false
     telemetry = false
+}
+
+// Used only by support/scripts/release-android, which passes the service-account file as -PplayCredentials
+play {
+    providers.gradleProperty("playCredentials").orNull?.let { serviceAccountCredentials.set(file(it)) }
+    defaultToAppBundles.set(true)
+    track.set("internal")
+    releaseStatus.set(com.github.triplet.gradle.androidpublisher.ReleaseStatus.COMPLETED)
+    // The version code comes from the tag (-PversionCode), so skip fetching available codes from Play
+    resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
 }
 
 /** A key from local.properties or a Gradle property, else the [envName] environment variable; null when none is set. */

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# release-android: build the signed release bundle and upload it to the Play internal track (completed).
+# The version comes from the vYYMMDDNN tag on HEAD (the /deploy-android skill creates it).
+#
+#   support/scripts/release-android [--dry-run]
+#
+#   --dry-run   build the bundle only: no service account, no upload, and HEAD needn't be tagged
+#
+# Secrets are read from the Keychain with `secret get shuttle2 <NAME>`; file-valued ones are written to a
+# temp dir that a trap removes. Run it detached: `detach start release-android -- support/scripts/release-android`.
+set -euo pipefail
+
+dry_run=0
+case "${1:-}" in
+  --dry-run) dry_run=1 ;;
+  "") ;;
+  *) echo "usage: release-android [--dry-run]" >&2; exit 2 ;;
+esac
+
+cd "$(git rev-parse --show-toplevel)"
+
+if ! command -v secret >/dev/null; then
+  echo "release-android: 'secret' not on PATH (devtools/bin)" >&2
+  exit 1
+fi
+
+if tag=$(git describe --tags --exact-match --match 'v[0-9]*' HEAD 2>/dev/null); then
+  :
+elif ((dry_run)); then
+  tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*')
+  echo "release-android: HEAD is untagged; dry run uses $tag"
+else
+  echo "release-android: HEAD has no vYYMMDDNN tag; tag the release first (/deploy-android)" >&2
+  exit 1
+fi
+version_code=${tag#v}
+version_name="20${version_code:0:2}.${version_code:2:2}.${version_code:4:2}"
+echo "Building $version_name ($version_code)"
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+chmod 700 "$tmp"
+
+# Fail on the first missing secret, before any build starts.
+get() { secret get shuttle2 "$1"; }
+
+secret get shuttle2 KEYSTORE_FILE --file "$tmp/keystore.ks"
+KEYSTORE_PATH="$tmp/keystore.ks"
+KEYSTORE_PASSWORD=$(get KEYSTORE_PASS)
+KEYSTORE_ALIAS=$(get KEYSTORE_ALIAS)
+SENTRY_DSN=$(get SENTRY_DSN)
+SENTRY_AUTH_TOKEN=$(get SENTRY_AUTH_TOKEN)
+POSTHOG_API_KEY=$(get POSTHOG_API_KEY)
+POSTHOG_HOST=$(get POSTHOG_HOST)
+LASTFM_API_KEY=$(get LASTFM_API_KEY)
+LASTFM_SHARED_SECRET=$(get LASTFM_SHARED_SECRET)
+export KEYSTORE_PATH KEYSTORE_PASSWORD KEYSTORE_ALIAS SENTRY_DSN SENTRY_AUTH_TOKEN \
+  POSTHOG_API_KEY POSTHOG_HOST LASTFM_API_KEY LASTFM_SHARED_SECRET
+export CI=true CONFIGURATION=Release
+
+gradle_args=(-PversionCode="$version_code" -PversionName="$version_name")
+
+if ((dry_run)); then
+  ./gradlew :android:app:bundleRelease "${gradle_args[@]}"
+  echo "release-android: dry run built the bundle; nothing uploaded"
+else
+  secret get shuttle2 GOOGLE_SERVICE_ACCOUNT --file "$tmp/play-credentials.json"
+  ./gradlew :android:app:publishReleaseBundle "${gradle_args[@]}" -PplayCredentials="$tmp/play-credentials.json"
+  echo "release-android: uploaded $version_name ($version_code) to the Play internal track"
+fi

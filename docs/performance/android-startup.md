@@ -25,7 +25,7 @@ Each metric has a median, a minimum and a maximum.
 - **Module.** `:android:baselineprofile` is a `com.android.test` module with the `androidx.baselineprofile` plugin,
   targeting `:android:app`. The plugin adds two build types to the app. `nonMinifiedRelease` is used to generate the
   profile. `benchmarkRelease` is used to measure: it is R8-minified like release. Both keep release's application id
-  and sign with the debug key, because the release keystore only exists on the deploy workflow.
+  and sign with the debug key, because the release keystore is only fetched by `release-android`.
 - **Device.** A Gradle Managed Device, `pixel6Api34`: a Pixel 6 with API 34 and the `aosp` image. It is not an ATD
   image, because those strip services profile collection needs. Gradle downloads, boots and shuts it down itself, on
   the Mac. Because it is an emulator, the benchmark runs with `androidx.benchmark.suppressErrors=EMULATOR`. Its

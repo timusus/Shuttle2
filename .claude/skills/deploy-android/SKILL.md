@@ -1,14 +1,14 @@
 ---
 name: deploy-android
-description: Deploy the Android app to the Play Store via GitHub Actions. Runs pre-flight checks, creates a version tag, and pushes to trigger the deploy pipeline.
+description: Deploy the Android app to the Play Store from this Mac. Runs pre-flight checks, creates a version tag, then builds and uploads the bundle with support/scripts/release-android.
 user_invocable: true
 ---
 
 # Deploy Android to Play Store
 
-Orchestrate a release of the Android app. This creates a `v*` tag that triggers the GitHub Actions `continuous_deployment.yml` pipeline (build → upload to Play Store Internal track).
-
-**No direct builds or uploads.** The tag push triggers GitHub Actions which handles everything.
+Orchestrate a release of the Android app. This creates a `v*` tag marking the release, then
+`support/scripts/release-android` builds the signed bundle and uploads it to the Play Store Internal
+track. Secrets come from the Keychain (`secret get shuttle2 <NAME>`); nothing on GitHub reacts to the tag.
 
 ## Steps
 
@@ -109,30 +109,26 @@ git add -A android/app/src/main/assets/changelog.json android/changelog.d
 git commit -m "docs(app): update changelog for $VERSION_NAME"
 ```
 
-### 6. Create and push tag
+### 6. Tag, push and release
 
-Confirm with the user before pushing: "Ready to push tag `$TAG` to trigger deployment?"
+Confirm with the user before uploading: "Ready to tag `$TAG` and upload to Play internal?"
 
 ```bash
 git tag "$TAG"
-git push origin main && git push origin "$TAG"
+git push origin main
+git push origin "$TAG"
 ```
 
-### 7. Monitor deployment
+Run each push as its own bare command. Then build and upload, detached, with one wait:
 
 ```bash
-gh run watch
+detach start release-android -- support/scripts/release-android
+detach wait release-android
+detach tail release-android 40
 ```
 
-Or show the user how to monitor:
-```
-gh run list --workflow=continuous_deployment.yml
-gh run view --web
-```
-
-The pipeline will:
-1. Build release bundle
-2. Upload to Play Store Internal track
+`release-android --dry-run` builds the bundle without uploading. A "missing secret" failure names the
+`secret set shuttle2 <NAME>` command to run.
 
 ## Error Recovery
 

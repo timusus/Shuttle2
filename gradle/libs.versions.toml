@@ -200,3 +200,4 @@ skie = { id = "co.touchlab.skie", version.ref = "skie" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 sentry = { id = "io.sentry.android.gradle", version.ref = "sentry-gradle-plugin" }
+play-publisher = { id = "com.github.triplet.play", version = "4.1.1" }

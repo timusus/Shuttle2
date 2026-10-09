@@ -60,4 +60,4 @@ Kotlin 2.x, Java 17 with desugaring; the Gradle daemon runs on JDK 21 (pinned in
 
 - KTLint `android_studio` style (`.editorconfig`); Composables exempt from naming rules. A hook formats Kotlin on edit and `.githooks/pre-commit` runs `ktlint -F` (`SKIP_LINT=1` bypasses).
 - Trunk-based on `main`; never commit on the primary checkout (the pre-commit hook refuses; `ALLOW_MAIN_COMMIT=1` overrides). Work on a worktree branch and land with `git push origin HEAD:main`; a hook then fast-forwards the primary. Don't mix unrelated changes into a feature branch. Use `/commit` (conventional commits, module scopes), `/check` after changes, `/verify-ui` after Compose changes.
-- A `vYYMMDDNN` tag deploys to Google Play internal. External contributors open PRs to `main`; there is no CI, so run `lint` and `unit-test` first.
+- A `vYYMMDDNN` tag marks a release; `/deploy-android` then runs `support/scripts/release-android` to build and upload to Google Play internal. External contributors open PRs to `main`; there is no CI, so run `lint` and `unit-test` first.

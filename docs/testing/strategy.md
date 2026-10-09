@@ -64,7 +64,7 @@ and the Konsist rules run automatically as dependencies of `:android:architectur
 `testDebugUnitTest` (registered as a twin of `test` for exactly this reason), so a separate
 `:android:architecture-tests:test` invocation was redundant and is dropped; `lintDebug` was dropped
 from the landing verify since `abortOnError = false` means it can't fail a landing yet (#537 —
-decision: revisit a lint baseline as a gate later; the nightly workflow that ran it went with CI).
+decision: revisit a lint baseline as a gate later; the nightly lint run went with CI).
 
 The measurements below were taken against the fuller command this baseline replaces
 (`verifyModuleLayers testDebugUnitTest :android:architecture-tests:test :android:app:assembleDebug
@@ -193,7 +193,7 @@ Considered and not worth it now:
 | **Full verify** (on demand, and for build-config or cross-module changes) | One invocation: `testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug` (the Baseline above) | Catches behaviour, compile and golden breaks across every module; `verifyModuleLayers` comes via architecture-tests |
 | Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, the `*BenchmarkTest` classes (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
-| External PRs | No CI: the contributor runs `support/scripts/lint` and `support/scripts/unit-test` locally, and the owner lands the PR through `land.sh` like any branch | All verification is local on the owner's Mac; the only GitHub workflow is the tag → Play deploy |
+| External PRs | No CI: the contributor runs `support/scripts/lint` and `support/scripts/unit-test` locally, and the owner lands the PR through `land.sh` like any branch | All verification is local on the owner's Mac; no GitHub workflow remains |
 
 `remote-build.sh` picks the host itself (#546): the Mac when its 1-min load is under 0.8x its cores
 (`REMOTE_BUILD_LOAD_RATIO`), else the box only if a slot is free, else the Mac anyway; `--box` and
