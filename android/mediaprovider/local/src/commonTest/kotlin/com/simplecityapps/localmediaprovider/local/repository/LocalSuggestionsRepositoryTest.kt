@@ -1,10 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
@@ -16,6 +13,8 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.MinTrackLength
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -23,17 +22,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class LocalSuggestionsRepositoryTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .trackingIdentityChanges()
-        .allowMainThreadQueries()
-        .build()
+class LocalSuggestionsRepositoryTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().trackingIdentityChanges().build()
     private val songDao = database.songDataDao()
     private val minimum = MutableStateFlow(MinTrackLength.Off)
 
@@ -49,7 +40,7 @@ class LocalSuggestionsRepositoryTest {
 
     private val now = Instant.parse("2026-09-23T08:00:00Z")
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -64,7 +55,7 @@ class LocalSuggestionsRepositoryTest {
     ) = AlbumGroupKey(album, AlbumArtistGroupKey(artist))
 
     @Test
-    fun `albums are looked up by group key as the album repository builds them, in the keys' order`() = runTest {
+    fun `albums are looked up by group key as the album repository builds them and in the keys' order`() = runTest {
         insert(
             createSongData(album = "The Bends", albumArtist = "Radiohead", track = 1),
             createSongData(album = "Bends", albumArtist = "The Radiohead", track = 2),
@@ -80,7 +71,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `album artists are looked up by group key, with or without an album artist tag`() = runTest {
+    fun `album artists are looked up by group key with or without an album artist tag`() = runTest {
         insert(
             createSongData(album = "Blue", albumArtist = "Joni Mitchell", track = 1),
             createSongData(album = "Hejira", albumArtist = "Joni Mitchell", track = 1),
@@ -120,7 +111,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `recently added albums are the newest by their newest song, however long ago`() = runTest {
+    fun `recently added albums are the newest by their newest song however long ago`() = runTest {
         insert(
             createSongData(album = "Old", track = 1).copy(dateAdded = now - 900.days),
             createSongData(album = "Mixed", track = 1).copy(dateAdded = now - 800.days),
@@ -145,7 +136,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `a Jellyfin library imported at once has its newest albums (#649)`() = runTest {
+    fun `a Jellyfin library imported at once has its newest albums 649`() = runTest {
         // As the Jellyfin mapper stores a song: DateCreated, the server's own scan time, as both dateAdded and
         // lastModified. The test server scanned every song on the same day, fractions of a second apart.
         val scanned = Instant.parse("2026-09-28T10:29:35.0745155Z")
@@ -169,7 +160,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `albums to rediscover were played enough or hold a favourite, and not lately`() = runTest {
+    fun `albums to rediscover were played enough or hold a favourite and not lately`() = runTest {
         insert(
             createSongData(album = "Loved", track = 1, playCount = 2).copy(lastPlayed = now - 200.days),
             createSongData(album = "Loved", track = 2, playCount = 2).copy(lastPlayed = now - 120.days),
@@ -183,7 +174,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `albums to rediscover tie on plays in the order their songs come, and a null last play counts as not lately`() = runTest {
+    fun `albums to rediscover tie on plays in the order their songs come and a null last play counts as not lately`() = runTest {
         insert(
             createSongData(album = "First", track = 1, playCount = 4).copy(lastPlayed = now - 200.days),
             createSongData(album = "Second", track = 1, playCount = 4).copy(lastPlayed = now - 150.days),
@@ -206,7 +197,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `an album whose songs are all under the minimum track length is left out, and its songs aren't counted`() = runTest {
+    fun `an album whose songs are all under the minimum track length is left out and its songs aren't counted`() = runTest {
         minimum.value = MinTrackLength.ThirtySeconds
         insert(
             createSongData(album = "Ringtones", track = 1).copy(duration = 4_000, dateAdded = now),
@@ -224,7 +215,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `genre counts are the Genres screen's, minimum track length and all`() = runTest {
+    fun `genre counts are the Genres screen's including minimum track length`() = runTest {
         minimum.value = MinTrackLength.TenSeconds
         insert(
             createSongData(album = "A", track = 1).copy(genres = listOf("Jazz", "Soul")),
