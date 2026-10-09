@@ -63,7 +63,7 @@ class FakeMediaInfoProvider : MediaInfoProvider {
 
     override fun handles(scheme: String?): Boolean = true
 
-    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo = MediaInfo(fakeUri(song.path), song.mimeType, isRemote = true)
+    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean, playId: String?): MediaInfo = MediaInfo(fakeUri(song.path), song.mimeType, isRemote = true)
 
     override suspend fun downloadInfo(song: Song): DownloadInfo? = if (song.path in unavailable) null else DownloadInfo(fakeUri("https://example.com/download/${song.id}"), "audio/download-transcode")
 

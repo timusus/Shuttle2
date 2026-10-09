@@ -28,9 +28,11 @@ interface MediaInfoProvider {
     @Throws(IllegalStateException::class)
     fun handles(scheme: String?): Boolean
 
+    /** [playId] is the play the stream is opened for, which a server's playback reports for it then name. */
     suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean = false
+        castCompatibilityMode: Boolean = false,
+        playId: String? = null
     ): MediaInfo
 
     /**
@@ -86,12 +88,13 @@ class AggregateMediaInfoProvider(
 
     override suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean
+        castCompatibilityMode: Boolean,
+        playId: String?
     ): MediaInfo {
         val provider = providers.firstOrNull { it.handles(schemeOf(song.path)) }
             ?: return MediaInfo(path = uriFor(song.path), mimeType = song.mimeType, isRemote = false)
         if (!streamPolicy.allows(song)) throw ServerStreamDeniedException(song)
-        return provider.getMediaInfo(song, castCompatibilityMode)
+        return provider.getMediaInfo(song, castCompatibilityMode, playId)
     }
 
     // Local songs are already on disk, so there's nothing to download; only a remote provider

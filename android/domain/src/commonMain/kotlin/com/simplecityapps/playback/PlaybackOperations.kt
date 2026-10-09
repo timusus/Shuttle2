@@ -12,6 +12,12 @@ class TrackEnd(
     val song: Song
 )
 
+/** One play of the queue item [uid]: its stream URLs and its playback reports to the server all carry [id]. */
+data class Play(
+    val id: String,
+    val uid: Long
+)
+
 /**
  * Callable from any thread. A call that changes playback runs on the main thread, where the player lives: straight away
  * if made there, else posted to it, so its effect isn't visible until the main thread gets to it. A read made off the
@@ -30,6 +36,9 @@ interface PlaybackOperations {
 
     /** The Cast device playback plays on, or null while it plays on this one; republished each time it moves. */
     val castDeviceFlow: StateFlow<CastDevice?>
+
+    /** The current item's play, null with none: a new one for each copy of a song in the queue, and for each replay the player opens afresh. */
+    val playFlow: StateFlow<Play?>
 
     /**
      * Each queue item that plays to its end, emitted before the queue moves on. An event, not state: nothing is

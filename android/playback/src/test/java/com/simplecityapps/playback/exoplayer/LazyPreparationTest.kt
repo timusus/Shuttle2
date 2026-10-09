@@ -34,7 +34,7 @@ class LazyPreparationTest {
                 EqualizerAudioProcessor(false),
                 ReplayGainAudioProcessor(ReplayGainMode.Off),
                 AudioTrackMonitor(),
-                SongUriResolver(MediaResolver { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = true) }),
+                SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = true) }),
                 emptyDownloadCache(context)
             ) { renderersFactory, factory ->
                 mediaSourceFactory = factory

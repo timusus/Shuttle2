@@ -32,7 +32,7 @@ class QueueSkipTest {
         QueueFacade(
             player,
             PlaybackSettings(SettingsStore(InMemoryKeyValueStore())),
-            SongUriResolver(MediaResolver { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }),
+            SongUriResolver(MediaResolver { song, _ -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }),
             buildContext = Dispatchers.Unconfined
         )
 

@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.playback
 
+import com.simplecityapps.playback.Play
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
@@ -38,6 +39,7 @@ internal class IosEngineFeeder(
     var current: IosFeed? = null
         set(value) {
             field = value
+            flows.play.value = value?.let { feed -> Play(feed.playId, feed.item.uid) }
             plays.endAbandoned()
         }
 

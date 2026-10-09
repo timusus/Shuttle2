@@ -171,7 +171,7 @@ class PlaybackHarness(
     // A song's path is the URI it plays from. An unresolvable one fails as a remote song does when its server can't be reached.
     private val songUriResolver =
         SongUriResolver(
-            MediaResolver { song ->
+            MediaResolver { song, _ ->
                 if (song.path.startsWith(UNRESOLVABLE_SCHEME)) throw IOException("Can't resolve ${song.path}")
                 ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false)
             }

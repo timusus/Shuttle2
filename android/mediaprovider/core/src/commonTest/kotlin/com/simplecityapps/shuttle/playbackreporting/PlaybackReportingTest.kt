@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackSession
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.CastDevice
+import com.simplecityapps.playback.Play
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -82,8 +83,13 @@ class PlaybackReportingTest {
         Dispatchers.resetMain()
     }
 
-    private fun playSongAt(positionMs: Int) {
-        queueOperations.queueStateFlow.value = song.toQueueItem(isCurrent = true).let { item -> QueueState(items = listOf(item), currentItem = item, currentPosition = 0) }
+    private fun playSongAt(
+        positionMs: Int,
+        playId: String = "play-1"
+    ) {
+        val item = song.toQueueItem(isCurrent = true)
+        queueOperations.queueStateFlow.value = QueueState(items = listOf(item), currentItem = item, currentPosition = 0)
+        playbackOperations.playFlow.value = Play(playId, item.uid)
         playbackOperations.progressFlow.value = PlaybackProgress(position = positionMs, duration = song.duration)
         playbackOperations.playbackStateFlow.value = PlaybackState.Playing
     }
@@ -95,6 +101,16 @@ class PlaybackReportingTest {
         playbackReporting.start()
 
         reporter.calls shouldBe listOf("start 90000")
+    }
+
+    @Test
+    fun `reports carry the player's play id the one its stream URL carries`() {
+        playSongAt(0, playId = "stream-1")
+        playbackReporting.start()
+
+        playbackOperations.playFlow.value = Play("stream-2", playbackOperations.playFlow.value!!.uid)
+
+        reporter.sessionIds shouldBe listOf("stream-1", "stream-1", "stream-2")
     }
 
     @Test
@@ -131,32 +147,37 @@ class PlaybackReportingTest {
 
     private class FakeReporter : PlaybackReporter {
         val calls = mutableListOf<String>()
+        val sessionIds = mutableListOf<String>()
 
         override fun handles(song: Song): Boolean = song.mediaProvider.remote
 
         override suspend fun start(
             session: PlaybackSession,
             positionMs: Int
-        ): Boolean = record("start $positionMs")
+        ): Boolean = record("start $positionMs", session)
 
         override suspend fun progress(
             session: PlaybackSession,
             positionMs: Int,
             paused: Boolean
-        ): Boolean = record("progress $positionMs $paused")
+        ): Boolean = record("progress $positionMs $paused", session)
 
         override suspend fun stop(
             session: PlaybackSession,
             positionMs: Int
-        ): Boolean = record("stop $positionMs")
+        ): Boolean = record("stop $positionMs", session)
 
         override suspend fun markPlayed(
             song: Song,
             playedAt: Instant
         ): Boolean = record("markPlayed ${song.id}")
 
-        private fun record(call: String): Boolean {
+        private fun record(
+            call: String,
+            session: PlaybackSession? = null
+        ): Boolean {
             calls += call
+            session?.let { sessionIds += it.id }
             return true
         }
     }
@@ -170,6 +191,7 @@ private class FakePlaybackOperations : PlaybackOperations {
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val playbackSpeedFlow = MutableStateFlow(1f)
     override val castDeviceFlow = MutableStateFlow<CastDevice?>(null)
+    override val playFlow = MutableStateFlow<Play?>(null)
     override val trackEndedFlow = MutableSharedFlow<TrackEnd>(extraBufferCapacity = 64)
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)

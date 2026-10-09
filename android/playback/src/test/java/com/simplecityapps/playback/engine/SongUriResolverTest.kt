@@ -15,14 +15,18 @@ import com.simplecityapps.mediaprovider.TimeSeekableStream
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueFacade
+import com.simplecityapps.playback.queue.uri
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CompletableDeferred
@@ -43,15 +47,19 @@ class SongUriResolverTest {
     /** How many of the next resolutions fail. */
     private val failures = AtomicInteger()
 
+    /** The play id each resolution was asked for, in order. */
+    private val playIds = ConcurrentLinkedQueue<String?>()
+
     /** What each resolution waits for before answering. */
     @Volatile
     private var gate = CompletableDeferred(Unit)
 
     private val resolver =
         SongUriResolver(
-            MediaResolver { song ->
+            MediaResolver { song, playId ->
                 gate.await()
                 resolved.incrementAndGet()
+                playIds += playId
                 if (failures.getAndDecrement() > 0) throw IOException("Server unreachable")
                 val timeSeek = if (song.path.startsWith("subsonic:")) {
                     // 8 kbps: a thousand bytes a second, for 10 s
@@ -87,22 +95,22 @@ class SongUriResolverTest {
     @Test
     fun `a song removed from the queue is forgotten`() {
         runBlocking { queue.setQueue(songs) }
+        val removed = uriOf(songs[1])
 
         queue.remove(listOf(queue.getQueue()[1]))
         shadowOf(Looper.getMainLooper()).idle()
 
-        open(songs[1]).exceptionOrNull()?.isResolutionFailure() shouldBe true
+        open(removed).exceptionOrNull()?.isResolutionFailure() shouldBe true
         open(songs[2]) shouldBe Result.success(Uri.parse("https://server/stream/3"))
     }
 
     @Test
     fun `a replaced queue forgets the songs it no longer holds`() {
-        runBlocking {
-            queue.setQueue(songs)
-            queue.setQueue(listOf(songs[2]))
-        }
+        runBlocking { queue.setQueue(songs) }
+        val replaced = uriOf(songs[0])
+        runBlocking { queue.setQueue(listOf(songs[2])) }
 
-        open(songs[0]).exceptionOrNull()?.isResolutionFailure() shouldBe true
+        open(replaced).exceptionOrNull()?.isResolutionFailure() shouldBe true
         open(songs[2]) shouldBe Result.success(Uri.parse("https://server/stream/3"))
     }
 
@@ -114,6 +122,20 @@ class SongUriResolverTest {
         open(songs[0]) shouldBe Result.success(Uri.parse("https://server/stream/1"))
 
         resolved.get() shouldBe 1
+    }
+
+    @Test
+    fun `each queued copy of a song resolves its own stream under its own play id - and keeps it when reopened`() {
+        runBlocking { queue.setQueue(listOf(songs[0], songs[0])) }
+        val (first, second) = queue.getQueue().map { item -> QueueEntry(item.uid, item.song) }
+
+        open(first.uri())
+        open(second.uri())
+        // A seek that reopens the stream
+        dataSource.open(DataSpec.Builder().setUri(first.uri()).setPosition(1_000).build())
+
+        playIds.toList() shouldBe listOf(first.playId, second.playId)
+        (first.playId != second.playId) shouldBe true
     }
 
     @Test
@@ -147,7 +169,7 @@ class SongUriResolverTest {
         val song = testSong(4, path = "subsonic://song/4")
         runBlocking { queue.setQueue(listOf(song)) }
 
-        val length = dataSource.open(DataSpec.Builder().setUri(Uri.parse(song.path)).setPosition(2_500).build())
+        val length = dataSource.open(DataSpec.Builder().setUri(uriOf(song)).setPosition(2_500).build())
 
         upstream.opened shouldBe Uri.parse("https://server/stream/4?offset=2")
         upstream.skipped shouldBe 500
@@ -161,7 +183,7 @@ class SongUriResolverTest {
         val song = testSong(4, path = "subsonic://song/4")
         runBlocking { queue.setQueue(listOf(song)) }
 
-        val length = dataSource.open(DataSpec(Uri.parse(song.path)))
+        val length = dataSource.open(DataSpec(uriOf(song)))
 
         upstream.opened shouldBe Uri.parse("https://server/stream/4")
         upstream.skipped shouldBe 0
@@ -173,7 +195,7 @@ class SongUriResolverTest {
         val song = testSong(4, path = "subsonic://song/4").copy(duration = 0)
         runBlocking { queue.setQueue(listOf(song)) }
 
-        val length = dataSource.open(DataSpec(Uri.parse(song.path)))
+        val length = dataSource.open(DataSpec(uriOf(song)))
 
         length shouldBe C.LENGTH_UNSET.toLong()
     }
@@ -183,20 +205,20 @@ class SongUriResolverTest {
         val timeSeekable = testSong(4, path = "subsonic://song/4")
         runBlocking { queue.setQueue(songs + timeSeekable) }
 
-        resolver.isTimeSeekable(Uri.parse(timeSeekable.path)) shouldBe false
-        dataSource.open(DataSpec(Uri.parse(timeSeekable.path)))
-        dataSource.open(DataSpec(Uri.parse(songs[0].path)))
+        resolver.isTimeSeekable(uriOf(timeSeekable)) shouldBe false
+        dataSource.open(DataSpec(uriOf(timeSeekable)))
+        dataSource.open(DataSpec(uriOf(songs[0])))
 
-        resolver.isTimeSeekable(Uri.parse(timeSeekable.path)) shouldBe true
-        resolver.isTimeSeekable(Uri.parse(songs[0].path)) shouldBe false
-        resolver.isTimeSeekable(Uri.parse(songs[1].path)) shouldBe false
+        resolver.isTimeSeekable(uriOf(timeSeekable)) shouldBe true
+        resolver.isTimeSeekable(uriOf(songs[0])) shouldBe false
+        resolver.isTimeSeekable(uriOf(songs[1])) shouldBe false
     }
 
     @Test
     fun `a stream that seeks by byte range opens at the position`() {
         runBlocking { queue.setQueue(songs) }
 
-        dataSource.open(DataSpec.Builder().setUri(Uri.parse(songs[0].path)).setPosition(2_500).build())
+        dataSource.open(DataSpec.Builder().setUri(uriOf(songs[0])).setPosition(2_500).build())
 
         upstream.openedPosition shouldBe 2_500
         upstream.skipped shouldBe 0
@@ -207,13 +229,13 @@ class SongUriResolverTest {
         val transcode = testSong(5, path = "plex://item/5")
         runBlocking { queue.setQueue(songs + transcode) }
 
-        resolver.isReplaceableTranscode(Uri.parse(transcode.path)) shouldBe false
+        resolver.isReplaceableTranscode(uriOf(transcode)) shouldBe false
         resolver.servesReplaceableTranscode(PLEX_SEGMENT) shouldBe false
-        dataSource.open(DataSpec(Uri.parse(transcode.path)))
-        dataSource.open(DataSpec(Uri.parse(songs[0].path)))
+        dataSource.open(DataSpec(uriOf(transcode)))
+        dataSource.open(DataSpec(uriOf(songs[0])))
 
-        resolver.isReplaceableTranscode(Uri.parse(transcode.path)) shouldBe true
-        resolver.isReplaceableTranscode(Uri.parse(songs[0].path)) shouldBe false
+        resolver.isReplaceableTranscode(uriOf(transcode)) shouldBe true
+        resolver.isReplaceableTranscode(uriOf(songs[0])) shouldBe false
         resolver.servesReplaceableTranscode(PLEX_SEGMENT) shouldBe true
         resolver.servesReplaceableTranscode(Uri.parse("https://server/stream/1")) shouldBe false
     }
@@ -222,8 +244,8 @@ class SongUriResolverTest {
     fun `a 404 from a replaceable transcode's server fails at once - and other load errors are retried`() {
         val transcode = testSong(5, path = "plex://item/5")
         runBlocking { queue.setQueue(songs + transcode) }
-        dataSource.open(DataSpec(Uri.parse(transcode.path)))
-        dataSource.open(DataSpec(Uri.parse(songs[0].path)))
+        dataSource.open(DataSpec(uriOf(transcode)))
+        dataSource.open(DataSpec(uriOf(songs[0])))
         val policy = S2LoadErrorHandlingPolicy(resolver::servesReplaceableTranscode)
 
         policy.retryDelayFor(httpError(404, PLEX_SEGMENT)) shouldBe C.TIME_UNSET
@@ -242,9 +264,14 @@ class SongUriResolverTest {
         uri: Uri
     ) = HttpDataSource.InvalidResponseCodeException(responseCode, null, null, emptyMap(), DataSpec(uri), ByteArray(0))
 
+    /** The URI the player opens for the first queued copy of [song]. */
+    private fun uriOf(song: Song): Uri = queue.getQueue().first { it.song.id == song.id }.let { item -> QueueEntry(item.uid, item.song).uri() }
+
     /** Opens [song]'s URI as the player's loader would, returning the URI the upstream was asked to open. */
-    private fun open(song: com.simplecityapps.shuttle.model.Song): Result<Uri> = runCatching {
-        dataSource.open(DataSpec(Uri.parse(song.path)))
+    private fun open(song: Song): Result<Uri> = open(uriOf(song))
+
+    private fun open(uri: Uri): Result<Uri> = runCatching {
+        dataSource.open(DataSpec(uri))
         dataSource.close()
         checkNotNull(upstream.opened)
     }

@@ -17,14 +17,20 @@ data class ResolvedMedia(
     val isReplaceableTranscode: Boolean = false
 )
 
-/** Resolves a [Song] to the media the player streams for it. */
+/** Resolves a [Song] to the media the player streams for it, for the play [playId]. */
 fun interface MediaResolver {
-    suspend fun resolve(song: Song): ResolvedMedia
+    suspend fun resolve(
+        song: Song,
+        playId: String?
+    ): ResolvedMedia
 }
 
 class MediaInfoMediaResolver(private val mediaInfoProvider: MediaInfoProvider) : MediaResolver {
-    override suspend fun resolve(song: Song): ResolvedMedia {
-        val mediaInfo = mediaInfoProvider.getMediaInfo(song)
+    override suspend fun resolve(
+        song: Song,
+        playId: String?
+    ): ResolvedMedia {
+        val mediaInfo = mediaInfoProvider.getMediaInfo(song, playId = playId)
         return ResolvedMedia(
             uri = mediaInfo.path.toString(),
             mimeType = mediaInfo.mimeType,

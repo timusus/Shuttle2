@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.playback
 
+import com.simplecityapps.playback.Play
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
@@ -31,6 +32,8 @@ internal class IosPlaybackFlows {
     val progress = MutableStateFlow<PlaybackProgress?>(null)
 
     val playbackSpeed = MutableStateFlow(1f)
+
+    val play = MutableStateFlow<Play?>(null)
 
     val trackEnded = eventFlow<TrackEnd>()
 

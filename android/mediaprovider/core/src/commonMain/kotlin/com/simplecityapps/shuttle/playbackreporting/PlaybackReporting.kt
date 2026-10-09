@@ -10,7 +10,6 @@ import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import dev.zacsweers.metro.Inject
 import kotlin.time.TimeSource
-import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,17 +38,16 @@ constructor(
         if (started) return
         started = true
 
-        val planner = PlaybackReportPlanner(
-            isReportable = playbackReporter::handles,
-            newSessionId = { Uuid.random().toString() }
-        )
+        val planner = PlaybackReportPlanner(isReportable = playbackReporter::handles)
 
         val enabledFlow = librarySettings.reportPlaybackToServer.stateIn(appCoroutineScope)
         val enabled = enabledFlow.value
         val queueState = queueOperations.queueStateFlow.value
+        val play = playbackOperations.playFlow.value
         val playbackState = playbackOperations.playbackStateFlow.value
         val progress = playbackOperations.progressFlow.value
         sender.send(planner.onCurrentItemChanged(queueState))
+        sender.send(planner.onPlayChanged(play, now()))
         sender.send(planner.onStateChanged(playbackState.toPlannerState(), now()))
         progress?.let { sender.send(planner.onProgress(it.position, now())) }
         // Enabled last: a song already playing starts only once the planner knows its position.
@@ -60,6 +58,9 @@ constructor(
         }
         appCoroutineScope.launchCollectingChanges(queueOperations.queueStateFlow, queueState, Dispatchers.Main.immediate) { _, current ->
             sender.send(planner.onCurrentItemChanged(current))
+        }
+        appCoroutineScope.launchCollectingChanges(playbackOperations.playFlow, play, Dispatchers.Main.immediate) { _, current ->
+            sender.send(planner.onPlayChanged(current, now()))
         }
         appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
             sender.send(planner.onStateChanged(current.toPlannerState(), now()))

@@ -19,7 +19,8 @@ constructor(
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean
+        castCompatibilityMode: Boolean,
+        playId: String?
     ): MediaInfo {
         val stream = streamUrls.stream(song)
         return MediaInfo(

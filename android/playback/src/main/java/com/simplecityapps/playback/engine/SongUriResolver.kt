@@ -15,7 +15,6 @@ import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.uri
-import com.simplecityapps.shuttle.model.Song
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.util.concurrent.ConcurrentHashMap
@@ -33,8 +32,8 @@ import kotlinx.coroutines.async
  * Resolves a remote song's own URI (`jellyfin://`, `emby://`, `plex://`, `subsonic://`) to the URL it streams from, only when the
  * player opens it, so building a queue never waits on a server.
  *
- * [queued] records which song each URI belongs to, and [retainOnly] forgets the songs the playlist no longer holds.
- * [dataSourceFactory]'s data sources then ask [mediaResolver] for that song's stream when they open its URI. They open
+ * [queued] records which entry each URI belongs to, and [retainOnly] forgets the entries the playlist no longer holds.
+ * [dataSourceFactory]'s data sources then ask [mediaResolver] for that entry's stream, under its play id, when they open its URI. They open
  * it on one of the player's loader threads, which Media3 lets a data source's open block, so that thread
  * waits (see [awaitBlocking]) while the resolution runs on [ioContext]; cancelling the load interrupts the wait. File,
  * content and http(s) URIs open as they are.
@@ -43,7 +42,7 @@ class SongUriResolver(
     private val mediaResolver: MediaResolver,
     ioContext: CoroutineContext = Dispatchers.IO
 ) {
-    private val songs = ConcurrentHashMap<String, Song>()
+    private val entries = ConcurrentHashMap<String, QueueEntry>()
 
     private val scope = CoroutineScope(SupervisorJob() + ioContext)
 
@@ -58,9 +57,9 @@ class SongUriResolver(
         items.forEach { item ->
             val uri = item.localConfiguration?.uri ?: return@forEach
             if (!uri.isDirect()) {
-                songs[uri.toString()] = item.queueEntry.song
+                entries[uri.toString()] = item.queueEntry
                 // A newly queued item resolves afresh, as a stream URL can carry a token that expires. A load already
-                // waiting on the earlier resolution (the same song, queued again) still gets it.
+                // waiting on the earlier resolution (the same entry, queued again) still gets it.
                 resolutions.remove(uri.toString())
             }
         }
@@ -69,9 +68,9 @@ class SongUriResolver(
     /** Forgets every song but those [playlist] holds, so what's recorded stays bounded by the playlist. */
     fun retainOnly(playlist: List<QueueEntry>) {
         // A queue of local files records nothing, and this runs on every change to the queue.
-        if (songs.isEmpty() && resolutions.isEmpty()) return
-        val keep = playlist.mapTo(HashSet()) { entry -> entry.song.uri().toString() }
-        songs.keys.retainAll(keep)
+        if (entries.isEmpty() && resolutions.isEmpty()) return
+        val keep = playlist.mapTo(HashSet()) { entry -> entry.uri().toString() }
+        entries.keys.retainAll(keep)
         (resolutions.keys - keep).forEach { key -> resolutions.remove(key)?.cancel() }
     }
 
@@ -121,11 +120,13 @@ class SongUriResolver(
         key: String,
         uri: Uri
     ): Deferred<Resolution> {
-        val song = songs[key] ?: throw MediaResolutionException("No song queued for ${uri.scheme} URI")
+        val entry = entries[key] ?: throw MediaResolutionException("No song queued for ${uri.scheme} URI")
+        val song = entry.song
         val resolution =
             scope.async(start = CoroutineStart.LAZY) {
                 try {
-                    val media = mediaResolver.resolve(song)
+                    // A seek that reopens a transcode reuses this resolution, so it keeps the play's id.
+                    val media = mediaResolver.resolve(song, entry.playId)
                     Resolution(Uri.parse(media.uri), media.timeSeek, media.isReplaceableTranscode)
                 } catch (e: CancellationException) {
                     throw e

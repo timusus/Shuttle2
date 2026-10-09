@@ -99,6 +99,11 @@ class PlaybackFacade(
 
     override val castDeviceFlow: StateFlow<CastDevice?> = handover.castDevice
 
+    private val _playFlow = MutableStateFlow(currentPlay())
+
+    /** One play per queue entry: a repeat of the current item loops the stream the player opened for it, under its id. */
+    override val playFlow: StateFlow<Play?> = _playFlow.asStateFlow()
+
     /**
      * Buffered, so a collector on the main thread misses no track end even when two arrive before it resumes
      * (e.g. a short track ending right after another).
@@ -181,6 +186,7 @@ class PlaybackFacade(
             mediaItem: MediaItem?,
             reason: Int
         ) {
+            _playFlow.value = currentPlay()
             publishState()
             progressTicker.publish()
         }
@@ -212,6 +218,8 @@ class PlaybackFacade(
 
     private val currentEntry: QueueEntry?
         get() = player.currentMediaItem?.queueEntryOrNull
+
+    private fun currentPlay(): Play? = currentEntry?.let { entry -> Play(entry.playId, entry.uid) }
 
     /**
      * Nothing is left to play: [entry], the last item, played to its end (null when the current last item was

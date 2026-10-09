@@ -4,7 +4,6 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.DownloadSource
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.LoginCredentials
-import com.simplecityapps.mediaprovider.server.PlaySessionIds
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.TranscodeTarget
@@ -26,9 +25,6 @@ class EmbyAuthenticationManager(
     private val streamProfile: StreamProfile
 ) {
     private val logger = Logger.tagged("EmbyAuthenticationManager")
-
-    /** Shared by the stream URLs built here and the playback reporter, which sit on this manager. */
-    val playSessions = PlaySessionIds()
 
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
@@ -134,7 +130,7 @@ class EmbyAuthenticationManager(
      * the profile's own: AAC over HLS on Android, which stays seekable). A null cap streams the original, whatever its
      * bitrate. [startPositionMs] starts a transcode that far in (`StartTimeTicks`): a progressive transcode can't be
      * range-seeked, so a seek restarts it there. The server ignores it for direct play, which seeks by range.
-     * The stream's `PlaySessionId` is [playId], else a new one; either way the play's reports carry it ([playSessions]).
+     * The stream's `PlaySessionId` is [playId], the play whose reports carry it, else a new one.
      */
     fun buildEmbyPath(
         itemId: String,
@@ -150,7 +146,7 @@ class EmbyAuthenticationManager(
         target = streamProfile.streamTarget(format),
         maxBitrateKbps = maxBitrateKbps,
         startPositionMs = startPositionMs,
-        playSessionId = playSessions.open(itemId, playId)
+        playSessionId = playId ?: Uuid.random().toString()
     )
 
     /**

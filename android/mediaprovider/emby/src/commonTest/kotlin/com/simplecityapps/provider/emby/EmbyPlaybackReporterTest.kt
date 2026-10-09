@@ -16,7 +16,9 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import com.simplecityapps.shuttle.settings.TranscodeFormat
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
 import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
@@ -84,29 +86,26 @@ class EmbyPlaybackReporterTest {
     }
 
     @Test
-    fun `a play's reports carry the play session its stream was opened under`() {
-        authenticationManager.buildEmbyPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-7")
+    fun `stop without a start reports the play's session`() {
+        runBlocking { reporter.stop(session, positionMs = 20_000) } shouldBe true
 
-        runBlocking {
-            reporter.start(session, positionMs = 0)
-            reporter.progress(session, positionMs = 10_000, paused = false)
-            reporter.stop(session, positionMs = 20_000)
-        }
-
-        for (endpoint in listOf("Sessions/Playing", "Sessions/Playing/Progress", "Sessions/Playing/Stopped")) {
-            S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/$endpoint").single().bodyText).playSessionId shouldBe "play-7"
-        }
+        S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Stopped").single().bodyText).playSessionId shouldBe "session-1"
     }
 
     @Test
-    fun `a stream opened after a play started does not change that play's session`() {
-        authenticationManager.buildEmbyPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-7")
+    fun `a download opened during a play does not change that play's session`() {
         runBlocking { reporter.start(session, positionMs = 0) }
 
-        authenticationManager.buildEmbyPath("item789", credentialStore.authenticatedCredentials!!, maxBitrateKbps = null, playId = "play-8")
+        val download = authenticationManager.buildTranscodedDownloadPath(
+            "item789",
+            credentialStore.authenticatedCredentials!!,
+            maxBitrateKbps = null,
+            format = TranscodeFormat.Auto
+        )!!
+        download.url shouldNotContain "PlaySessionId=session-1"
         runBlocking { reporter.progress(session, positionMs = 10_000, paused = false) }
 
-        S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Progress").single().bodyText).playSessionId shouldBe "play-7"
+        S2Json.decodeFromString<PlaybackReport>(server.requestsTo("/emby/Sessions/Playing/Progress").single().bodyText).playSessionId shouldBe "session-1"
     }
 
     @Test

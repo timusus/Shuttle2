@@ -18,7 +18,8 @@ class AggregateMediaInfoProviderTest {
 
         override suspend fun getMediaInfo(
             song: Song,
-            castCompatibilityMode: Boolean
+            castCompatibilityMode: Boolean,
+            playId: String?
         ): MediaInfo = MediaInfo(Uri.parse("https://$scheme.example/stream"), song.mimeType, isRemote = true)
 
         override suspend fun downloadInfo(song: Song): DownloadInfo = DownloadInfo(Uri.parse("https://$scheme.example/download"), song.mimeType)

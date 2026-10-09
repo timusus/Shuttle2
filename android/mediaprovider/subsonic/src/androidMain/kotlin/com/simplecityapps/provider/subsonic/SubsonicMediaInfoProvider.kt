@@ -19,7 +19,8 @@ class SubsonicMediaInfoProvider(
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean
+        castCompatibilityMode: Boolean,
+        playId: String?
     ): MediaInfo {
         val stream = if (castCompatibilityMode) streams.castStream(song) else streams.stream(song)
         return MediaInfo(

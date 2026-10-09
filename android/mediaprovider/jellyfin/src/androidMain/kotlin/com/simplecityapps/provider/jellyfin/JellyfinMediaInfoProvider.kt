@@ -24,9 +24,10 @@ constructor(
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean
+        castCompatibilityMode: Boolean,
+        playId: String?
     ): MediaInfo {
-        val jellyfinPath = buildPlaybackPathString(song).toUri()
+        val jellyfinPath = buildPlaybackPathString(song, playId).toUri()
 
         return MediaInfo(
             path = jellyfinPath,
@@ -40,7 +41,10 @@ constructor(
      * assert on it without pulling Robolectric into this module for `Uri.parse`.
      */
     @Throws(IllegalStateException::class)
-    internal fun buildPlaybackPathString(song: Song): String = streamUrls.streamUrl(song)
+    internal fun buildPlaybackPathString(
+        song: Song,
+        playId: String? = null
+    ): String = streamUrls.streamUrl(song, playId = playId)
 
     private suspend fun getMimeType(
         path: Uri,

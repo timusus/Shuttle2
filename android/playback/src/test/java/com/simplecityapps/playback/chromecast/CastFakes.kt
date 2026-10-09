@@ -118,7 +118,8 @@ class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : M
 
     override suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean
+        castCompatibilityMode: Boolean,
+        playId: String?
     ): MediaInfo {
         synchronized(requests) { requests += song.id to castCompatibilityMode }
         gate?.await()

@@ -117,7 +117,8 @@ private class AlacProvider(private val info: DownloadInfo?) : MediaInfoProvider 
 
     override suspend fun getMediaInfo(
         song: Song,
-        castCompatibilityMode: Boolean
+        castCompatibilityMode: Boolean,
+        playId: String?
     ): MediaInfo = error("not called")
 
     override suspend fun downloadInfo(song: Song): DownloadInfo? = info
