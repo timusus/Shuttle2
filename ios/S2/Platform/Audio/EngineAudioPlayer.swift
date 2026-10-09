@@ -48,6 +48,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     private var commandsSent = 0
     /// The equalizer Kotlin last set, handed to a replacement engine too.
     private var equalizer: EngineEqualizer?
+    /// Pause at the end as Kotlin last set it, handed to a replacement engine too.
+    private var pausesAtEnd = false
     /// Which engine is current: each replacement gets the next. A report the old engine had already queued on the main
     /// queue still runs after it's silenced, and is dropped by this.
     private var engineGeneration = 0
@@ -71,6 +73,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         engine = newEngine
         attach(newEngine)
         equalizer?.apply(to: newEngine)
+        if pausesAtEnd { newEngine.setPauseAtEnd(true) }
     }
 
     private func attach(_ engine: AudioEngine) {
@@ -97,6 +100,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             listener?.onPosition(trackId: trackId, positionMs: ms)
         case let .seekUnsupported(trackId, ms):
             listener?.onSeekUnsupported(trackId: trackId, positionMs: ms)
+        case let .pausedAtEnd(trackId):
+            listener?.onPausedAtEnd(trackId: trackId)
         }
     }
 
@@ -149,6 +154,11 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
 
     func setSpeed(speed: Float) {
         engine.setSpeed(speed)
+    }
+
+    func setPauseAtEnd(enabled: Bool) {
+        pausesAtEnd = enabled
+        engine.setPauseAtEnd(enabled)
     }
 
     func positionMs() -> Int64 {

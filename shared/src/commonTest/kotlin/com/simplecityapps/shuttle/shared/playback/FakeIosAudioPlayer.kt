@@ -138,6 +138,13 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         calls += "speed $speed"
     }
 
+    private var pausesAtEnd = false
+
+    override fun setPauseAtEnd(enabled: Boolean) {
+        calls += "pause at end $enabled"
+        pausesAtEnd = enabled
+    }
+
     override fun positionMs(): Long = if (current == null) -1 else position
 
     override fun durationMs(): Long = duration
@@ -164,11 +171,17 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun engineSampleRate(): Int = sampleRate
 
-    /** The current track plays to its end: on into the next track, or it ends. */
+    /** The current track plays to its end: on into the next track, or it ends; pausing at the end, it pauses there. */
     fun finishTrack() {
         val next = next
         when {
             next == null -> setState(IosAudioPlayerState.Ended)
+
+            pausesAtEnd -> {
+                playWhenReady = false
+                current?.id?.let { id -> post { listener?.onPausedAtEnd(id) } }
+                setState(IosAudioPlayerState.Paused)
+            }
 
             next.url in failing -> {
                 post { listener?.onFailed(next.id, "Can't open ${next.url}") }

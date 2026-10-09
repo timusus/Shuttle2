@@ -18,12 +18,15 @@ import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.withContext
 
 /**
  * iOS playback: [PlaybackOperations], and [queueOperations], over a [QueueModel] and the Swift engine [player], with
@@ -81,6 +84,9 @@ class IosPlayerController(
     val playWhenReadyFlow: StateFlow<Boolean> = flows.playWhenReadyFlow.asStateFlow()
 
     private var playWhenReady by flows::playWhenReady
+
+    /** [pauseAtEndOfItem] calls waiting: the engine pauses at the end while any is. */
+    private var pauseAtEndRequests = 0
 
     override val playbackStateFlow: StateFlow<PlaybackState> = flows.playbackState.asStateFlow()
 
@@ -187,12 +193,26 @@ class IosPlayerController(
     }
 
     /**
-     * Pauses at the first track end. The engine has no pause at the end of a track yet, so after a gapless join the
-     * next song has just started by then.
+     * The engine pauses on the current item's last frame, none of the next heard, and the item stays current, as
+     * Media3's `pauseAtEndOfMediaItems` leaves it. Concurrent waits share the mode; the last to finish clears it.
      */
     override suspend fun pauseAtEndOfItem() {
-        trackEndedFlow.first()
-        pause()
+        var requested = false
+        try {
+            flows.endOfItemPause
+                .onSubscription {
+                    main.call {
+                        requested = true
+                        if (pauseAtEndRequests++ == 0) feeder.pausesAtEnd = true
+                    }
+                }.first()
+        } finally {
+            if (requested) {
+                withContext(NonCancellable) {
+                    main.call { if (--pauseAtEndRequests == 0) feeder.pausesAtEnd = false }
+                }
+            }
+        }
     }
 
     override fun togglePlayback() = main.run {

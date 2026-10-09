@@ -20,7 +20,7 @@ final class FakeAudioEngine: AudioEngine {
     private(set) var loads: [Load] = []
     /// Every `setNext`, nil included.
     private(set) var nexts: [EngineTrack?] = []
-    /// The other commands, in order: "play", "pause", "seek 1200", "stop", "speed 1.5".
+    /// The other commands, in order: "play", "pause", "seek 1200", "stop", "speed 1.5", "pause at end true".
     private(set) var commands: [String] = []
     var position: (uid: String, ms: Int64)?
     var durationMs: Int64?
@@ -97,6 +97,8 @@ final class FakeAudioEngine: AudioEngine {
     }
 
     func setSpeed(_ speed: Float) { commands.append("speed \(speed)") }
+
+    func setPauseAtEnd(_ enabled: Bool) { commands.append("pause at end \(enabled)") }
 
     func setEqualizer(enabled: Bool, preampDb: Float, coefficients: [Double]) {
         equalizers.append(Equalizer(enabled: enabled, preampDb: preampDb, coefficients: coefficients))

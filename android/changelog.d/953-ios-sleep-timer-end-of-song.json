@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "On iOS, the sleep timer's \"end of song\" option now stops before the next song starts.", "commits": [] }

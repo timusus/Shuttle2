@@ -31,6 +31,10 @@ struct EngineAudioPlayerTests {
             calls.append("seekUnsupported \(trackId) \(positionMs)")
         }
 
+        func onPausedAtEnd(trackId: String) {
+            calls.append("pausedAtEnd \(trackId)")
+        }
+
         private static func name(_ state: IosAudioPlayerState) -> String {
             switch state {
             case .idle: "idle"
@@ -73,6 +77,7 @@ struct EngineAudioPlayerTests {
         engine.emit(.position(trackId: "a", ms: 1_200))
         engine.emit(.seekUnsupported(trackId: "a", ms: 30_000))
         engine.emit(.transition(trackId: "b"))
+        engine.emit(.pausedAtEnd(trackId: "b"))
         engine.emit(.failed(trackId: "b", message: "bad data"))
         engine.emit(.state(.ended, trackId: "b"))
         engine.emit(.state(.idle, trackId: nil))
@@ -83,6 +88,7 @@ struct EngineAudioPlayerTests {
             "position a 1200",
             "seekUnsupported a 30000",
             "transition b",
+            "pausedAtEnd b",
             "failed b bad data",
             "state b ended",
             "state  idle",
@@ -97,11 +103,12 @@ struct EngineAudioPlayerTests {
         player.pause()
         player.seek(positionMs: 2_000)
         player.setSpeed(speed: 1.5)
+        player.setPauseAtEnd(enabled: true)
         player.stop()
 
         #expect(engine.loads == [FakeAudioEngine.Load(current: engineTrack("a"), next: nil, startMs: 1_500, playWhenReady: false)])
         #expect(engine.nexts == [engineTrack("b", "https://example.com/b.mp3"), nil])
-        #expect(engine.commands == ["play", "pause", "seek 2000", "speed 1.5", "stop"])
+        #expect(engine.commands == ["play", "pause", "seek 2000", "speed 1.5", "pause at end true", "stop"])
     }
 
     @Test func theSessionHooksRunBeforePlayingAndOnPausing() {
@@ -305,6 +312,15 @@ struct EngineAudioPlayerTests {
         player.replaceEngine(rebuilt)
 
         #expect(rebuilt.equalizers == [.init(enabled: true, preampDb: -1, coefficients: [1, 0, 0, 0, 0])])
+    }
+
+    @Test func aReplacedEngineKeepsPausingAtTheEnd() {
+        player.setPauseAtEnd(enabled: true)
+        let rebuilt = FakeAudioEngine()
+
+        player.replaceEngine(rebuilt)
+
+        #expect(rebuilt.commands == ["pause at end true"])
     }
 
     @Test func aReplacedEngineWithNoEqualizerSetGetsNone() {

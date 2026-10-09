@@ -42,6 +42,13 @@ interface IosAudioPlayer {
     /** Playback speed, pitch preserved; 1 is normal. */
     fun setSpeed(speed: Float)
 
+    /**
+     * Pause on the current track's last frame rather than carry on into the next, which stays next and none of which
+     * is heard; reported through [IosAudioPlayerListener.onPausedAtEnd]. Turned off before the end, the join is
+     * gapless. Kept across loads. `setPauseAtEnd(_:)`.
+     */
+    fun setPauseAtEnd(enabled: Boolean)
+
     /** The position (ms) being heard in the current track, or -1 when nothing is loaded. `position`. */
     fun positionMs(): Long
 
@@ -104,6 +111,9 @@ interface IosAudioPlayerListener {
         trackId: String,
         positionMs: Long
     )
+
+    /** With pause at the end on, [trackId]'s last frame was heard and the engine paused there; a paused state follows. */
+    fun onPausedAtEnd(trackId: String)
 }
 
 /** `MusicPlaybackController.State`. */

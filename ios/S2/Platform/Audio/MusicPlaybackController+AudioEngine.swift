@@ -11,6 +11,7 @@ extension MusicPlaybackController: AudioEngine {
             onFailed = nil
             onPosition = nil
             onSeekUnsupported = nil
+            onPausedAtEnd = nil
             return
         }
         onStateChanged = { state, uid, commands in handler(.state(EngineState(state), trackId: uid, commands: commands)) }
@@ -18,6 +19,7 @@ extension MusicPlaybackController: AudioEngine {
         onFailed = { uid, error in handler(.failed(trackId: uid, message: String(describing: error))) }
         onPosition = { uid, ms in handler(.position(trackId: uid, ms: ms)) }
         onSeekUnsupported = { uid, ms in handler(.seekUnsupported(trackId: uid, ms: ms)) }
+        onPausedAtEnd = { uid in handler(.pausedAtEnd(trackId: uid)) }
     }
 
     func load(current: EngineTrack, next: EngineTrack?, startMs: Int64, playWhenReady: Bool) {

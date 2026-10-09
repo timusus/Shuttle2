@@ -109,6 +109,15 @@ internal class IosEngineEvents(
         }
     }
 
+    /** The engine paused on the current item's last frame, as asked ([IosEngineFeeder.pausesAtEnd]): it stays current. */
+    override fun onPausedAtEnd(trackId: String) {
+        val currentFeed = feeder.current ?: return
+        if (trackId != currentFeed.id || currentFeed.failed) return
+        log.info { "song ${currentFeed.item.song.id} ended: paused at its end" }
+        flows.playWhenReady = false
+        flows.endOfItemPause.tryEmit(Unit)
+    }
+
     override fun onFailed(
         trackId: String,
         message: String
@@ -156,11 +165,20 @@ internal class IosEngineEvents(
 
     /**
      * The engine played [feed] to its end and stopped: nothing was after it, or the next item failed or wasn't handed
-     * over in time. Playback goes on to the next item, or, with nothing left, pauses there.
+     * over in time. Playback goes on to the next item, or, with nothing left or [IosEngineFeeder.pausesAtEnd], pauses
+     * there.
      */
     private fun onEnded(feed: IosFeed) {
-        if (!feed.failed) flows.trackEnded.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
         val upcoming = feeder.next
+        if (upcoming != null && feeder.pausesAtEnd && !feed.failed) {
+            log.info { "song ${feed.item.song.id} ended: paused at its end" }
+            flows.playWhenReady = false
+            feeder.engineState = IosAudioPlayerState.Ended
+            flows.endOfItemPause.tryEmit(Unit)
+            feeder.publishState()
+            return
+        }
+        if (!feed.failed) flows.trackEnded.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
         if (upcoming != null) {
             feeder.dropNext()
             queue.setCurrent(upcoming.item.uid)
@@ -179,6 +197,7 @@ internal class IosEngineEvents(
         log.info { "end of queue after song ${feed.item.song.id}: paused" }
         flows.playWhenReady = false
         feeder.engineState = IosAudioPlayerState.Ended
+        flows.endOfItemPause.tryEmit(Unit)
         feeder.publishState()
     }
 }

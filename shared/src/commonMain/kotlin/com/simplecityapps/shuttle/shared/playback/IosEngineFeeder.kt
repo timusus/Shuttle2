@@ -58,6 +58,14 @@ internal class IosEngineFeeder(
     /** The engine's last reported state for [current]. */
     var engineState = IosAudioPlayerState.Idle
 
+    /** Whether the engine pauses at the end of [current] rather than moving on to [next], which stays next. */
+    var pausesAtEnd = false
+        set(value) {
+            if (field == value) return
+            field = value
+            player.setPauseAtEnd(value)
+        }
+
     private var loadJob: Job? = null
 
     private var nextJob: Job? = null

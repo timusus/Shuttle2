@@ -34,6 +34,9 @@ internal class IosPlaybackFlows {
 
     val trackEnded = eventFlow<TrackEnd>()
 
+    /** Playback paused at the end of an item: asked to ([IosEngineFeeder.pausesAtEnd]), or the queue's end. */
+    val endOfItemPause = eventFlow<Unit>()
+
     val pausePosition = eventFlow<SongPosition>()
 
     val playbackFailure = eventFlow<Song>()

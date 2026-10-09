@@ -33,6 +33,8 @@ enum EngineEvent: Equatable {
     /// The track's stream can't be sought to `ms` (a progressive transcode): it plays on, and Kotlin
     /// re-opens the stream at the position.
     case seekUnsupported(trackId: String, ms: Int64)
+    /// With pause at the end on, the track's last frame was heard and the engine paused there, its next still next.
+    case pausedAtEnd(trackId: String)
 }
 
 /// The S2Playback engine as `EngineAudioPlayer` drives it, in app types, so the adapter's tests can
@@ -51,6 +53,8 @@ protocol AudioEngine: AnyObject {
     func seek(toMs ms: Int64)
     func stop()
     func setSpeed(_ speed: Float)
+    /// Pause on the current track's last frame rather than carry on into the next (the sleep timer's "end of song").
+    func setPauseAtEnd(_ enabled: Bool)
     /// The uid and position (ms) of what is being heard.
     var position: (uid: String, ms: Int64)? { get }
     /// The duration (ms) of the track being heard, nil until known.

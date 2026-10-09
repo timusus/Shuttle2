@@ -361,6 +361,10 @@ previous and new outputs, and where each pause came from.
 
 - [ ] iPhone on a slow stream (throttle with Network Link Conditioner): while the spinner shows mid-song, seek. The spinner stays until playback resumes at the new position.
 
+## iOS sleep timer "end of song" (#953)
+
+- [ ] iPhone, an album playing gaplessly: set the sleep timer with "end of song" on. It pauses on the song's last moment, with none of the next song heard, and Now Playing still shows the finished song.
+
 ## System shortcuts and session actions (#761)
 - [ ] Notification: shuffle and repeat buttons show with the current state; tapping each changes the mode and the icon follows.
 - [ ] Lock screen: the media controls offer shuffle and repeat, and tapping them works with the screen locked.

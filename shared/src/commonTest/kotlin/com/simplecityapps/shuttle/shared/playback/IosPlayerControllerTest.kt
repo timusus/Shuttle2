@@ -144,6 +144,51 @@ class IosPlayerControllerTest {
     private val IosPlayerController.currentSong
         get() = queueOperations.getCurrentItem()?.song
 
+    /** Starts [IosPlayerController.pauseAtEndOfItem] waiting, as the sleep timer's "end of song" does. */
+    private fun TestScope.pauseAtEnd(controller: IosPlayerController) = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { controller.pauseAtEndOfItem() }
+
+    // Pausing at the end of a song (the sleep timer's "end of song", #953)
+
+    @Test
+    fun `pausing at the end of a song pauses on it - without moving on to the next`() = test { controller ->
+        val ended = collect(controller.trackEndedFlow)
+        controller.start(listOf(a, b, c))
+
+        val wait = pauseAtEnd(controller)
+        engine.calls shouldBe listOf("pause at end true")
+        engine.finishTrack()
+
+        wait.isCompleted shouldBe true
+        controller.currentSong shouldBe a
+        controller.playbackState() shouldBe PlaybackState.Paused
+        ended shouldBe emptyList()
+        engine.calls shouldBe listOf("pause at end true", "pause at end false")
+    }
+
+    @Test
+    fun `cancelling a pause at the end turns it off - and the song plays on into the next`() = test { controller ->
+        controller.start(listOf(a, b, c))
+
+        val wait = pauseAtEnd(controller)
+        wait.cancel()
+        engine.finishTrack()
+
+        engine.calls.take(2) shouldBe listOf("pause at end true", "pause at end false")
+        controller.currentSong shouldBe b
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a pause at the end waits out the end of the queue`() = test { controller ->
+        controller.start(listOf(a))
+
+        val wait = pauseAtEnd(controller)
+        engine.finishTrack()
+
+        wait.isCompleted shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
     // Playing through the queue
 
     @Test
