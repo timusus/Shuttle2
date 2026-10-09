@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+#
+# Verify command for `land` (see .claude/land.conf): the light landing verify over the batch's
+# changed paths, read from stdin. land runs it under the verify lease, on the batch and on main for
+# the same paths, and compares the `verify: !!` lines phase by phase, so they carry no line numbers,
+# durations, counts or worktree paths.
+#
+#   lint                  ktlint (check only) on the changed .kt/.kts files
+#   unit-tests            unit-test --changed
+#   compile-dependents    test sources of modules depending on a changed domain/shared/core source
+#   architecture          :android:architecture-tests (always: a layer violation fails the batch adding it)
+#   assembleDebug         :android:app:assembleDebug
+#   ios-framework         only when the paths reach iOS: Shared.framework, plus iosSimulatorArm64Test
+#                         for the KMP modules whose commonMain/commonTest/iosMain/iosTest changed
+#   ios-tests             the S2Tests classes support/scripts/ios-tests-for maps (none: app build only)
+#   ios-package           ios/Playback `swift test`, when ios/Playback changed
+#
+# Tool output streams to stderr (land's verify log, where retry and env patterns match) and to
+# $LAND_ARTIFACT_DIR/<phase>.log. The whole suites run in support/scripts/full-verify.sh.
+#
+# Env: LAND_RETRY=1 compiles Kotlin non-incrementally (land's retry after an incremental-cache
+# flake). S2_LAND_SIM_UDID overrides the simulator ("S2 Land iPhone", created on first use).
+# shellcheck disable=SC2329 # phase functions are run by name from run_phase
+set -uo pipefail
+
+cd "$(dirname "$0")/../.." || exit 2
+root=$(pwd -P)
+export PATH="/usr/sbin:/sbin:$PATH"
+
+# Bash cannot export a name with a dot, but passes one it inherited on to every Gradle call below.
+if [ "${LAND_RETRY:-0}" = 1 ] && [ -z "${S2_LAND_IC_OFF:-}" ]; then
+    exec env S2_LAND_IC_OFF=1 'ORG_GRADLE_PROJECT_kotlin.incremental=false' "$0" "$@"
+fi
+
+artifacts="${LAND_ARTIFACT_DIR:-$(mktemp -d)}"
+mkdir -p "$artifacts" || exit 2
+paths_file="$artifacts/changed-paths"
+if [ -t 0 ]; then : >"$paths_file"; else grep -v '^$' >"$paths_file"; fi
+changed=()
+while IFS= read -r p; do changed+=("$p"); done <"$paths_file"
+# unit-test maps these paths instead of diffing against origin/main, so main gets the batch's task set.
+export UNIT_TEST_CHANGED_FILES="$paths_file"
+
+failed=0
+failed_phases=" "
+
+# failures LOG: one stable line per failure. Line/column numbers and the tree's own path are
+# dropped; Gradle's "What went wrong" text has its numbers replaced.
+failures() {
+    sed $'s/\x1b\\[[0-9;]*m//g' "$1" | awk -v root="$root/" '
+        function unroot(d,   i) {
+            gsub(/file:\/\//, "", d)
+            while ((i = index(d, root)) > 0) d = substr(d, 1, i - 1) substr(d, i + length(root))
+            return d
+        }
+        function add(d) {
+            d = unroot(d)
+            gsub(/\.(kts|kt|java|swift|xml):[0-9]+(:[0-9]+)?/, "&\001", d)
+            gsub(/:[0-9]+(:[0-9]+)?\001/, "", d)
+            print d
+        }
+        /^---- raw Gradle log$/ { wwr = 0; inb = 0; ift = 0; next }
+        wwr {
+            if ($0 ~ /^[ \t]*$/ || $0 ~ /^\* /) wwr = 0
+            else { s = unroot($0); gsub(/[0-9]+/, "N", s); sub(/^[ \t]+/, "", s); add("gradle " s); next }
+        }
+        # report-test-failures.sh: `package.Class.method: message` lines, then `+N more`.
+        inb {
+            if ($0 ~ /^[a-z][a-z0-9_]*\.[A-Za-z0-9_.$]*[A-Z]/) { s = $0; sub(/: .*/, "", s); add("test " s); next }
+            inb = 0
+        }
+        ift {
+            if ($0 ~ /^[ \t]+[^ \t]/) { s = $0; sub(/^[ \t]+/, "", s); sub(/ \([0-9.]+ seconds\)/, "", s); add("ios test " s); next }
+            ift = 0
+        }
+        /^Failing tests:/ { ift = 1; next }
+        /✘ Test .* failed/ && !/✘ Test run / { s = $0; sub(/^.*✘ /, "✘ ", s); sub(/ after [0-9.]+ seconds.*/, "", s); sub(/ with [0-9]+ test cases?$/, "", s); add(s); next }
+        /^\* What went wrong:/ { wwr = 1; next }
+        /^Failed tests:/ { inb = 1; next }
+        /Execution failed for task / { s = $0; sub(/.*Execution failed for task /, "", s); add("task " s); next }
+        /^e: / { add($0); next }
+        / > .* FAILED$/ { s = $0; sub(/^[ \t]+/, "", s); add("test " s); next }
+        /^Test Case .* failed/ { s = $0; sub(/ \([0-9.]+ seconds\)/, "", s); add(s); next }
+        /\.java:[0-9]+: error:/ || /\.swift:[0-9]+(:[0-9]+)?: error:/ || /AAPT: error:/ || /Manifest merger failed/ || /^ERROR: / { add($0); next }
+        /_compare\.png/ { s = $0; sub(/_compare\.png.*/, "", s); sub(/.*[\/ ]/, "", s); add("roborazzi " s); next }
+        /^[^ ]+\.kts?:[0-9]+(:[0-9]+)?: / { add("lint " $0) }
+    ' | sort -u
+}
+
+# run_phase PHASE CMD...: every phase runs and reports, even after an earlier one failed, so a
+# failure main already has never hides a later phase.
+run_phase() {
+    local phase=$1 log="$artifacts/$1.log" rc raw
+    shift
+    echo "verify: == $phase"
+    "$@" </dev/null 2>&1 | tee "$log" >&2
+    rc=${PIPESTATUS[0]}
+    [ "$rc" -eq 0 ] && return 0
+    # build-brief condenses Gradle's console; the raw log it names holds the detail (and the
+    # "Incremental compilation failed" line land's retry pattern looks for).
+    while IFS= read -r raw; do
+        [ -f "$raw" ] || continue
+        { echo "---- raw Gradle log"; cat "$raw"; } | tee -a "$log" >&2
+    done < <(sed -n 's/^Raw log: //p' "$log")
+    failed=1
+    failed_phases="$failed_phases$phase "
+    failures "$log" | while IFS= read -r line; do echo "verify: !! $line"; done
+    echo "verify: -- $phase failed: exit $rc, see $phase.log in the artifact dir"
+}
+
+skip_phase() {  # skip_phase PHASE WHY: a phase that cannot run on what an earlier phase left behind
+    echo "verify: == $1"
+    failed=1
+    echo "verify: -- $1 failed: $2"
+}
+
+lint_changed() {
+    local f files=()
+    for f in ${changed[@]+"${changed[@]}"}; do
+        case "$f" in */generated/*|*/build/*|generated/*|build/*) continue ;; esac
+        case "$f" in *.kt|*.kts) [ -f "$f" ] && files+=("$f") ;; esac
+    done
+    if [ "${#files[@]}" -eq 0 ]; then echo "lint: no changed Kotlin files"; return 0; fi
+    support/scripts/lint "${files[@]}"
+}
+
+# The simulator for iOS tests. Inside the verify lease only one verify runs, so one fixed device
+# suffices; it is cloned from the iOS 18.5 iPhone 16 the ios-sim pool bases its leases on (a beta
+# runtime fails tests a release passes).
+land_sim() {
+    local name="S2 Land iPhone" udid runtime
+    [ -n "${S2_LAND_SIM_UDID:-}" ] && { echo "$S2_LAND_SIM_UDID"; return 0; }
+    udid=$(xcrun simctl list devices available | sed -nE "s/^ +$name \(([0-9A-F-]{36})\).*/\1/p" | head -1)
+    if [ -z "$udid" ]; then
+        runtime=$(xcrun simctl list -j devices available | python3 -I -c '
+import json, sys
+for rt, devs in json.load(sys.stdin)["devices"].items():
+    if any(d["name"] == "iPhone 16" for d in devs) and "iOS-18" in rt:
+        print(rt); break')
+        [ -n "$runtime" ] || { echo "land-verify: no iOS 18 iPhone 16 simulator to base $name on" >&2; return 1; }
+        udid=$(xcrun simctl create "$name" "iPhone 16" "$runtime") || return 1
+        echo "land-verify: created simulator $name ($udid)" >&2
+    fi
+    echo "$udid"
+}
+
+# Counted against other simulator users: the verify lease's LEASE_HELD would let it skip the queue.
+on_device() { env -u LEASE_HELD lease --class device -- "$@"; }
+
+ios_framework() {
+    (cd ios && xcodegen -q) || return 1
+    if [ "${#kmp_tasks[@]}" -gt 0 ]; then
+        on_device ios/scripts/build-framework.sh "${kmp_tasks[@]}" -Ps2.iosSimulatorUdid="$sim"
+    else
+        ios/scripts/build-framework.sh
+    fi
+}
+
+ios_tests() {
+    local c only=()
+    if [ "$ios_all" = 1 ]; then
+        on_device env S2_SIMULATOR_UDID="$sim" ios/scripts/test.sh
+    elif [ "${#ios_classes[@]}" -gt 0 ]; then
+        for c in "${ios_classes[@]}"; do only+=("-only-testing:S2Tests/$c"); done
+        on_device env S2_SIMULATOR_UDID="$sim" ios/scripts/test.sh "${only[@]}"
+    else
+        echo "no S2Tests class maps to the changed files; app build only"
+        ios/scripts/build-app.sh
+    fi
+}
+
+run_phase lint lint_changed
+run_phase unit-tests support/scripts/unit-test --changed
+run_phase compile-dependents support/scripts/unit-test --compile-dependents
+run_phase architecture support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest
+run_phase assembleDebug support/scripts/remote-build.sh --local -q :android:app:assembleDebug
+
+kmp_tasks=()
+if [ "${#changed[@]}" -gt 0 ]; then
+    while IFS= read -r t; do [ -n "$t" ] && kmp_tasks+=("$t"); done \
+        < <(support/scripts/unit-test --kmp-native-tasks "${changed[@]}")
+fi
+if [ "${#kmp_tasks[@]}" -gt 0 ] || grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/|android/(networking|playback/core|mediaprovider/[a-z]+)/src/common)' "$paths_file"; then
+    ios_all=0 ios_pkg=0 ios_classes=()
+    while IFS= read -r t; do
+        case "$t" in
+            --all) ios_all=1 ;;
+            --package) ios_pkg=1 ;;
+            ?*) ios_classes+=("$t") ;;
+        esac
+    done < <(support/scripts/ios-tests-for "${changed[@]}")
+    sim=""
+    if [ "${#kmp_tasks[@]}" -gt 0 ] || [ "$ios_all" = 1 ] || [ "${#ios_classes[@]}" -gt 0 ]; then
+        sim=$(land_sim) || sim=""
+    fi
+    if [ -z "$sim" ] && { [ "${#kmp_tasks[@]}" -gt 0 ] || [ "$ios_all" = 1 ] || [ "${#ios_classes[@]}" -gt 0 ]; }; then
+        # Matched by env_failure_patterns: main would skip the same way and the batch would land untested.
+        echo "land-verify: no simulator for the iOS tests" >&2
+        skip_phase ios-framework "no simulator"
+        skip_phase ios-tests "no simulator"
+    else
+        run_phase ios-framework ios_framework
+        # A stale Shared.framework would test another tree's Kotlin.
+        case "$failed_phases" in
+            *" ios-framework "*) skip_phase ios-tests "ios-framework failed" ;;
+            *) run_phase ios-tests ios_tests ;;
+        esac
+    fi
+    [ "$ios_pkg" = 1 ] && run_phase ios-package ios/scripts/test.sh --package
+    [ -n "$sim" ] && { xcrun simctl shutdown "$sim" >/dev/null 2>&1 || true; }
+fi
+
+echo "verify: == end"
+exit "$failed"

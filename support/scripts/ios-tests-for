@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# The S2Tests classes the changed files map to, one per line (sorted, unique), plus `--package` when
+# ios/Playback changed. Prints `--all` instead of the classes when more than IOS_TESTS_MAX map, or a
+# shared source that still exists declares no type to match on. Nothing printed = build only.
+#
+#   support/scripts/ios-tests-for <file>...
+#
+#   ios/S2Tests/*Tests.swift      runs itself
+#   other ios/S2*/ .swift         stem (and stem minus a View/Content/Model suffix): every
+#                                 S2Tests/*Tests.swift named <stem>* or mentioning <stem> as a word
+#   shared/, android/domain|presentation|core .kt   the same word match on the stem (and, for
+#                                 *ViewModel, <name>UiState)
+#   shared/ and ios/S2 sources also match every test mentioning a top-level type the file declares
+# Deleted files are ignored. Paths are relative to the repo root.
+set -uo pipefail
+
+cd "$(dirname "$0")/../.." || exit 2
+
+IOS_TESTS_MAX=15
+
+# The type names a .kt or .swift file declares at top level. Nested ones (All, None, Search) and
+# `extension` lines (View, Size) name types far too common to match on.
+decl_names() {
+  grep -E '^(@[A-Za-z0-9_.:]+(\([^)]*\))?[[:space:]]+)*([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor)[[:space:]]+[A-Z][A-Za-z0-9_]*' "$1" 2>/dev/null \
+    | sed -E -e 's/^(@[A-Za-z0-9_.:]+(\([^)]*\))?[[:space:]]+)*//' \
+             -e 's/^([a-z]+[[:space:]]+)*(class|interface|object|struct|enum|protocol|typealias|actor)[[:space:]]+([A-Z][A-Za-z0-9_]*).*/\3/' | sort -u
+}
+
+ios_tests_raw() {
+  local f stem s t names
+  for f in "$@"; do
+    case "$f" in
+      ios/S2Tests/*Tests.swift) [ -e "$f" ] && basename "${f%.swift}"; continue ;;
+      ios/Playback/*) echo "--package"; continue ;;
+      ios/S2/*.swift|ios/S2Tests/*.swift) stem=$(basename "${f%.swift}") ;;
+      shared/*.kt|android/domain/*.kt|android/presentation/*.kt|android/core/*.kt)
+        stem=$(basename "${f%.kt}") ;;
+      *) continue ;;
+    esac
+    local stems=("$stem")
+    case "$f" in
+      *.swift) s=${stem%View}; s=${s%Content}; s=${s%Model}
+               [ -n "$s" ] && [ "$s" != "$stem" ] && stems+=("$s") ;;
+      *.kt)    case "$stem" in *ViewModel) stems+=("${stem%ViewModel}UiState") ;; esac ;;
+    esac
+    case "$f" in
+      ios/S2Tests/*) ;;
+      *) if [ -e "$f" ]; then
+           names=$(decl_names "$f")
+           if [ -z "$names" ]; then echo "--all"; continue; fi
+           for s in $names; do stems+=("$s"); done
+         fi ;;
+    esac
+    for s in "${stems[@]}"; do
+      case "$f" in
+        *.swift) for t in ios/S2Tests/"$s"*Tests.swift; do [ -e "$t" ] && basename "${t%.swift}"; done ;;
+      esac
+      grep -lw -- "$s" ios/S2Tests/*Tests.swift 2>/dev/null | while IFS= read -r t; do basename "${t%.swift}"; done
+    done
+  done
+}
+
+all=0 pkg=0
+out=$(ios_tests_raw "$@" | sort -u)
+case "$out" in *--package*) pkg=1 ;; esac
+case "$out" in *--all*) all=1 ;; esac
+out=$(printf '%s\n' "$out" | grep -v -e '^--' -e '^$')
+[ -n "$out" ] && [ "$(printf '%s\n' "$out" | wc -l)" -gt "$IOS_TESTS_MAX" ] && all=1
+if [ "$all" = 1 ]; then echo "--all"; elif [ -n "$out" ]; then printf '%s\n' "$out"; fi
+[ "$pkg" = 1 ] && echo "--package"
+exit 0
