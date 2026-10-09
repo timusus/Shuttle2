@@ -33,6 +33,7 @@ import kotlin.math.abs
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
@@ -133,6 +134,8 @@ class MediaStoreMediaProvider(
                 hasBitsPerSample = hasBitsPerSampleColumn()
             )
         for (chunk in changedFiles.chunked(MAX_IDS_PER_QUERY)) {
+            // The row loop below only stops reading on cancellation; this stops the next chunk's query
+            currentCoroutineContext().ensureActive()
             val songCursor =
                 try {
                     context.contentResolver.query(
