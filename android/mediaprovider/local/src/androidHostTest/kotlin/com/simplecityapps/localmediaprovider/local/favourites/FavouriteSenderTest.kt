@@ -162,8 +162,11 @@ class FavouriteSenderTest {
         sender()
 
         eventually { dao.getPendingFavourites().map { it.songId } == listOf(failing.id) }
-        delay(200)
-        writer.calls shouldBe listOf("a true", "b true")
+        // Drains run one at a time, oldest first: once a later toggle is acked, a drain that retried "a" would have shown
+        val later = insertSong("c")
+        dao.setFavourite(listOf(later), true)
+        eventually { writer.calls.contains("c true") && dao.getPendingFavourites().map { it.songId } == listOf(failing.id) }
+        writer.calls shouldBe listOf("a true", "b true", "c true")
     }
 
     private suspend fun eventually(condition: suspend () -> Boolean) {

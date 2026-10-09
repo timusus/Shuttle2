@@ -40,11 +40,11 @@ class TagReadGuardTest {
         processExits: () -> List<ProcessExit>? = { null }
     ) = testTagReadGuard(preferences, markerDir, processExits, pid)
 
-    /** Android's record of [pid] ending now, after any marker it left. */
+    /** Android's record of [pid] ending after any marker it left (a timestamp no file's modified time can pass). */
     private fun exit(
         pid: Int,
         nativeCrash: Boolean = true
-    ) = ProcessExit(pid, System.currentTimeMillis(), nativeCrash)
+    ) = ProcessExit(pid, Long.MAX_VALUE, nativeCrash)
 
     private fun markers() = markerDir.listFiles().orEmpty().map { it.readText() }
 
@@ -300,7 +300,8 @@ class TagReadGuardTest {
         guard.recover(source)
         marker.exists() shouldBe true
 
-        marker.setLastModified(System.currentTimeMillis() - 5 * 60_000)
+        // Modified in 1970, older than any freshness window
+        marker.setLastModified(1_000L)
         guard.recover(source)
         marker.exists() shouldBe false
         preferences.tagReadStrikes().shouldBeEmpty()
