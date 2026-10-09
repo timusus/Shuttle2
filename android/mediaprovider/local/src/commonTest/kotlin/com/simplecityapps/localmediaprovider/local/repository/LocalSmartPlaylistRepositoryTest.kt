@@ -1,10 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SmartPlaylistData
 import com.simplecityapps.shuttle.model.UserSmartPlaylist
 import com.simplecityapps.shuttle.smartplaylist.DateCondition
@@ -16,20 +13,15 @@ import com.simplecityapps.shuttle.smartplaylist.Rule
 import com.simplecityapps.shuttle.smartplaylist.SmartRules
 import com.simplecityapps.shuttle.smartplaylist.SmartSort
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
-class LocalSmartPlaylistRepositoryTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-        .allowMainThreadQueries()
-        .build()
+class LocalSmartPlaylistRepositoryTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().build()
     private val now = Instant.parse("2026-09-26T10:15:30.123456Z")
     private val repository = LocalSmartPlaylistRepository(
         database.smartPlaylistDao(),
@@ -46,7 +38,7 @@ class LocalSmartPlaylistRepositoryTest {
         limit = Limit.Songs(100)
     )
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -61,7 +53,7 @@ class LocalSmartPlaylistRepositoryTest {
     }
 
     @Test
-    fun `smart playlists come by name, ignoring case`() = runTest {
+    fun `smart playlists come by name ignoring case`() = runTest {
         repository.create("b", neverPlayed)
         repository.create("C", neverPlayed)
         repository.create("A", addedThisMonth)

@@ -1,25 +1,19 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** A genre's cover songs, straight from a real (in-memory) database (#633). */
-@RunWith(AndroidJUnit4::class)
-class LocalGenreRepositoryTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges().allowMainThreadQueries().build()
+class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
+    private val database = inMemoryMediaDatabaseBuilder().trackingIdentityChanges().build()
 
-    @After
+    @AfterTest
     fun tearDown() {
         database.close()
     }
@@ -31,7 +25,7 @@ class LocalGenreRepositoryTest {
     }
 
     @Test
-    fun `genre cover songs are one per album of the genre, by artist then album, up to the limit`() = runTest {
+    fun `genre cover songs are one per album of the genre by artist then album up to the limit`() = runTest {
         insert(
             Triple("Kind of Blue", "Miles Davis", listOf("Jazz")),
             Triple("kind of blue", "miles davis", listOf("Jazz")),
@@ -50,7 +44,7 @@ class LocalGenreRepositoryTest {
     }
 
     @Test
-    fun `genre cover songs are one per album identity, not per album tag`() = runTest {
+    fun `genre cover songs are one per album identity instead of per album tag`() = runTest {
         // One release, tagged with two spellings of its album artist: one album by its MusicBrainz release id
         database.songDataDao().insert(
             listOf(
