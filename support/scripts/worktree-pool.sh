@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 # worktree-pool.sh — a pool of reusable, build-warm worker worktrees that workers lease.
 #
-#   support/scripts/worktree-pool.sh lease <name>           # prints the slot dir (stdout only); exit 3 = pool full
+#   support/scripts/worktree-pool.sh lease <name>           # prints the slot dir (stdout only); exit 3 = pool full or lock timeout
 #   support/scripts/worktree-pool.sh release <branch|dir>   # detach the slot's HEAD, drop the lease
 #   support/scripts/worktree-pool.sh list                   # k, leased branch or "free", lease age, HEAD
 #   support/scripts/worktree-pool.sh slot-of <branch>       # the slot dir holding <branch>, exit 1 if none
 #   support/scripts/worktree-pool.sh reap                   # release slots whose branch is gone or landed
+#   support/scripts/worktree-pool.sh --help                 # this header
+#
+# Exit codes: 0 ok; 1 release/slot-of: not a pool slot or branch moved; 2 usage or a git failure (a lease whose
+# post-lease cleanup cannot take the lock stays leased: `release <branch>` reclaims it); 3 lease only: pool full or lock
+# timeout, fall back to a plain worktree; 4 release/reap: lock timeout, nothing changed, retry.
 #
 # Why: a brand-new worktree starts with a cold Gradle configuration cache, build/ dirs, ios/build/DerivedData and
 # Shared.framework. Slots (.claude/worktrees/pool-<k>, k=1..S2_WORKTREE_POOL_SIZE, default 5) keep their ignored
@@ -55,57 +60,12 @@ recover_cmd() {
   printf "git worktree unlock '%s'; git worktree remove --force --force '%s'; rm -rf '%s'; git worktree prune" "$1" "$1" "$1"
 }
 
-# --- the pool lock: mkdir is atomic; the holder's pid lets a crashed holder's lock be broken -----------------
-LOCK="$POOL_DIR/lock"
-LOCKED=0
-# Only remove a lock that still carries our pid: if a waiter wrongly broke ours, never delete the next holder's.
-unlock() {
-  if [ "$LOCKED" = 1 ]; then
-    [ "$(cat "$LOCK/pid" 2>/dev/null || true)" = "$$" ] && rm -rf "$LOCK"
-    LOCKED=0
-  fi
-  return 0
-}
-mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || date +%s; }
-# Is the lock held by a dead process, or by one that crashed between mkdir and writing its pid (older than 30s)?
-lock_stale() {  # $1 = pid seen in the lock, possibly empty
-  if [ -n "$1" ]; then
-    kill -0 "$1" 2>/dev/null && return 1
-    return 0
-  fi
-  [ $(( $(date +%s) - $(mtime "$LOCK") )) -gt 30 ]
-}
-lock() {
-  local i=0 pid moved mpid
-  until mkdir "$LOCK" 2>/dev/null; do
-    pid=$(cat "$LOCK/pid" 2>/dev/null || true)
-    if lock_stale "$pid"; then
-      # mv of one directory succeeds for exactly one waiter. Between our staleness check and the mv the stale lock may
-      # have been replaced by a live one, so re-read the pid of what we actually moved. A live holder's lock goes back
-      # only if $LOCK is still free (nobody can have taken it then, since mkdir needs it absent); if someone already
-      # holds a new lock, we leave the moved dir (a few bytes) and retry rather than clobber the new holder. The
-      # holder we robbed never notices: unlock only removes a lock carrying its own pid.
-      moved="$LOCK.stale.$$.$i"
-      if mv "$LOCK" "$moved" 2>/dev/null; then
-        mpid=$(cat "$moved/pid" 2>/dev/null || true)
-        if [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null; then
-          [ -e "$LOCK" ] || mv "$moved" "$LOCK" 2>/dev/null || true
-        elif [ -z "$mpid" ] && [ $(( $(date +%s) - $(mtime "$moved") )) -le 30 ]; then
-          [ -e "$LOCK" ] || mv "$moved" "$LOCK" 2>/dev/null || true  # a fresh lock whose holder has not written its pid yet
-        else
-          rm -rf "$moved"
-        fi
-        continue
-      fi
-    fi
-    i=$((i + 1))
-    [ $i -le 600 ] || { echo "worktree-pool: could not take the pool lock ($LOCK); fall back to a plain new worktree" >&2; exit 3; }
-    sleep 0.1
-  done
-  echo $$ > "$LOCK/pid"
-  LOCKED=1
-  trap unlock EXIT
-}
+# --- the pool lock (worktree-pool-lock.sh): a pid symlink, broken by one waiter when its holder is dead ----------
+LOCK="$POOL_DIR/lock-pid"
+# shellcheck source=worktree-pool-lock.sh
+. "$(dirname "${BASH_SOURCE[0]}")/worktree-pool-lock.sh"
+# lease falls back to a plain worktree on exit 3; release/reap just failed to run, so they exit 4 (retry).
+lock_or_exit() { lock || exit "$1"; }
 
 lease_file() { printf '%s/%s.lease\n' "$POOL_DIR" "$1"; }
 lease_field() { cut -d' ' -f"$2" "$(lease_file "$1")" 2>/dev/null || true; }
@@ -136,11 +96,19 @@ fetch_origin() {
   local fp wd=0 rc=0
   GIT_TERMINAL_PROMPT=0 git -C "$PRIMARY" fetch -q origin main >&2 &
   fp=$!
+  # An interrupted script must not leave the fetch running.
+  trap 'kill -9 "$fp" 2>/dev/null; exit 130' INT TERM
   while kill -0 "$fp" 2>/dev/null; do
-    if [ $wd -ge 50 ]; then kill "$fp" 2>/dev/null || true; break; fi
+    if [ $wd -ge 50 ]; then
+      kill "$fp" 2>/dev/null || true
+      sleep 2
+      kill -9 "$fp" 2>/dev/null || true  # a fetch stuck in uninterruptible I/O ignores SIGTERM
+      break
+    fi
     wd=$((wd + 1)); sleep 0.5
   done
   wait "$fp" 2>/dev/null || rc=$?
+  trap - INT TERM
   [ $rc = 0 ] || echo "worktree-pool: fetch failed or timed out; using the existing origin/main" >&2
   return 0
 }
@@ -213,7 +181,7 @@ cmd_lease() {
   branch="worktree-$name"
 
   fetch_origin
-  lock
+  lock_or_exit 3
   # Re-brief: the branch is already in a slot; hand it back untouched, restoring a lost lease record.
   if held=$(slot_of "$branch"); then
     k=${held##*/pool-}
@@ -253,8 +221,10 @@ cmd_lease() {
   unlock
 
   if ! git -C "$d" clean -q -fd >&2; then
-    lock; abort_lease "$k" "$d" "$branch" "$base"; unlock
     echo "worktree-pool: could not clean $d; run: $(recover_cmd "$d")" >&2
+    # Without the lock the lease cannot be rolled back; the slot stays leased and `release` reclaims it.
+    if lock; then abort_lease "$k" "$d" "$branch" "$base"; unlock
+    else echo "worktree-pool: $d stays leased to $branch; run: worktree-pool.sh release $branch" >&2; fi
     exit 2
   fi
   # Gitignored machine-local config (local.properties) a fresh slot starts without.
@@ -274,7 +244,7 @@ cmd_release() {
     echo "worktree-pool: $arg is not in a pool slot" >&2; exit 1
   fi
   k=${d##*/pool-}
-  lock
+  lock_or_exit 4
   # A branch argument must still be the slot's branch once we hold the lock.
   if [ $by_branch = 1 ] && [ "$(slot_of "$arg" || true)" != "$d" ]; then
     unlock; echo "worktree-pool: $arg left $d meanwhile; not touching it" >&2; exit 1
@@ -289,7 +259,7 @@ cmd_release() {
 # landed prints "landed <branch>" on stdout; the branch is left for worktree-clean.sh to delete.
 cmd_reap() {
   local k d b
-  lock
+  lock_or_exit 4
   for k in $(seq 1 "$SIZE"); do
     [ -f "$(lease_file "$k")" ] || continue
     slot_reclaimable "$k" || continue
@@ -320,6 +290,7 @@ cmd_list() {
 }
 
 case "${1:-}" in
+  -h|--help|help) sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
   lease) shift; cmd_lease "$@" ;;
   release) shift; cmd_release "$@" ;;
   list) cmd_list ;;
