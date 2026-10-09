@@ -223,10 +223,15 @@ class TaglibMediaProvider(
      * document URI that MediaStore lists, to its file path (the scanner before #370 stored every song so, and a walk stores
      * every file MediaStore skips so), and a song under a file path that MediaStore no longer lists (its folder took a
      * `.nomedia`, say) but an include tree still holds, to its document URI, which is the only way left to read it. Not
-     * while MediaStore lists no file at all, which is it reindexing: the next import would only move them back.
+     * while MediaStore lists no file at all, which is it reindexing: the next import would only move them back. Also a
+     * file MediaStore lists at another path under the same id. The listing read here is the one [findSongs] then takes,
+     * read whole if [thorough] as a thorough import's own would be.
      */
-    override suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> {
-        // Cleared first, so a findSongs after a remap that didn't query reads a listing of its own
+    override suspend fun remapLegacySongs(
+        existingSongs: List<Song>,
+        thorough: Boolean
+    ): List<SongPathRemap> {
+        // Cleared first, so a findSongs after a remap that failed before listing reads a listing of its own
         remapListing = null
         val folders = folders()
         val primaryStoragePath = primaryStoragePath()
@@ -235,12 +240,11 @@ class TaglibMediaProvider(
         val documentSongs = existingSongs.filter { song -> legacyLocation(song.path) != null }
         val fileSongs = if (includeTrees.isEmpty()) emptyList() else existingSongs.filter { song -> song.path.startsWith("/") && folders.filter.accepts(song.path) }
         // Without MediaStore, none of the files are listed, so each one the trees hold is read through them
-        val files = findAudioFiles(folders.filter)
+        val files = findAudioFiles(folders.filter, whole = thorough)
+        remapListing = MediaStoreListing(folders.filter, files)
         val moves = movedSongRemaps(existingSongs, mediaStoreFiles.moved().filter { moved -> folders.filter.accepts(moved.file.path) })
         if (moves.isNotEmpty()) Timber.i("Matched ${moves.size} songs to files MediaStore lists at another path, by their id")
-        // Only a listing the legacy remaps used is shared: a thorough import otherwise reads its own, whole
         if (documentSongs.isEmpty() && fileSongs.isEmpty()) return moves
-        remapListing = MediaStoreListing(folders.filter, files)
         val toFiles = files?.let { LegacySafSongs(primaryStoragePath).remaps(documentSongs, files) }.orEmpty()
         val listedPaths = files?.mapTo(HashSet()) { file -> file.path.lowercase() }.orEmpty()
         val toDocuments =

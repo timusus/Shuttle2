@@ -425,6 +425,26 @@ class TaglibMediaProviderTest {
     }
 
     @Test
+    fun `an import with no legacy songs to move lists MediaStore once, routine or thorough`() {
+        FakeMediaProvider.rows = listOf(mediaRow(1, "m1.mp3", size = 10))
+        FakeMediaProvider.audioQueries.set(0)
+        val existing = listOf(mediaStoreSong("m1.mp3", size = 10, lastModified = MODIFIED))
+        val provider = provider(excludes = emptyList(), trees = emptyList())
+
+        runBlocking {
+            provider.remapLegacySongs(existing, thorough = false)
+            provider.findSongs(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
+        }
+        FakeMediaProvider.audioQueries.get() shouldBe 1
+
+        runBlocking {
+            provider.remapLegacySongs(existing, thorough = true)
+            provider.findSongsThoroughly(existing).filterIsInstance<FlowEvent.Success<List<Song>>>().first()
+        }.result.map { it.name } shouldBe listOf("Stored m1.mp3")
+        FakeMediaProvider.audioQueries.get() shouldBe 2
+    }
+
+    @Test
     fun `a file with no modified date is always read`() {
         val songs = findSongs(listOf(storedSong("zero.mp3", size = 10, lastModified = 0, folder = "Zero")), excludes = emptyList(), trees = listOf(zeroTree))
 

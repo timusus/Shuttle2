@@ -17,8 +17,13 @@ interface MediaProvider {
      * Maps [existingSongs] stored under an identity this provider no longer produces to the path [findSongs] now returns
      * for the same file, so an upgrade keeps their history. Songs it can't match are left out, and the import removes
      * them as missing. Runs before every song import, so it must return nothing once no old identities are left.
+     * [thorough] says the listing that follows is [IndexedMediaProvider.findSongsThoroughly]'s, for a provider that
+     * hands what it reads here on to it.
      */
-    suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> = emptyList()
+    suspend fun remapLegacySongs(
+        existingSongs: List<Song>,
+        thorough: Boolean = false
+    ): List<SongPathRemap> = emptyList()
 
     /**
      * The songs the last [findSongs] found are stored: called once the import has saved them, and not when it fails, so

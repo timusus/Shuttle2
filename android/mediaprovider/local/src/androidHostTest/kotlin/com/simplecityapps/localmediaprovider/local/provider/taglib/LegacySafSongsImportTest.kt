@@ -213,7 +213,10 @@ class LegacySafSongsImportTest {
 
         val remaps = mutableListOf<List<SongPathRemap>>()
 
-        override suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> {
+        override suspend fun remapLegacySongs(
+            existingSongs: List<Song>,
+            thorough: Boolean
+        ): List<SongPathRemap> {
             if (failRemap) error("MediaStore went away")
             return LegacySafSongs(primaryStoragePath = "/storage/emulated/0").remaps(existingSongs, files).also { remaps += it }
         }

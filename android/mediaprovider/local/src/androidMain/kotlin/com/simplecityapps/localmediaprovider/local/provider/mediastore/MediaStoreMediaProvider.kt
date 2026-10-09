@@ -73,11 +73,29 @@ class MediaStoreMediaProvider(
         mediaStoreFiles.listingStored()
     }
 
-    /** Stored songs whose file MediaStore lists at another path now (same id, size and duration), moved there so they keep their history. */
-    override suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> {
-        withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = false) }
+    /**
+     * The MediaStore listing [remapLegacySongs] read, for the [findSongs] that follows it in the same import to take instead
+     * of listing again: a file listed by one read and not the other would be moved by the remap and then not found there.
+     */
+    @Volatile
+    private var remapListing: RemapListing? = null
+
+    /**
+     * Stored songs whose file MediaStore lists at another path now (same id, size and duration), moved there so they keep
+     * their history. The listing read here is the one [findSongs] then takes, read whole as [thorough]'s would be.
+     */
+    override suspend fun remapLegacySongs(
+        existingSongs: List<Song>,
+        thorough: Boolean
+    ): List<SongPathRemap> {
+        remapListing = null
+        val files = withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = readWhole(thorough)) }
+        remapListing = RemapListing(files)
         return movedSongRemaps(existingSongs, mediaStoreFiles.moved())
     }
+
+    // An import that reads every file again doesn't trust the stored listing for the rows it wouldn't read
+    private fun readWhole(thorough: Boolean): Boolean = thorough || preferenceManager.songTagsOutdated(type)
 
     private fun findSongs(
         existingSongs: List<Song>,
@@ -88,7 +106,8 @@ class MediaStoreMediaProvider(
         // The importer records the new version once this import's result is stored, so one cancelled part way through
         // reads every file again next time. Only this source's version: another failing doesn't make it read them again
         val backfillFileTags = preferenceManager.songTagsOutdated(type)
-        val files = withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = thorough || backfillFileTags) }
+        val listing = remapListing.also { remapListing = null } ?: RemapListing(withContext(Dispatchers.IO) { mediaStoreFiles.list(whole = readWhole(thorough)) })
+        val files = listing.files
         // Without a listing, failing keeps the library as it was: an empty one would remove every song
         if (files == null) {
             emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_error)))
@@ -391,6 +410,9 @@ class MediaStoreMediaProvider(
         }
     }
 }
+
+/** A MediaStore listing; [files] null if MediaStore couldn't be queried. */
+private class RemapListing(val files: List<MediaStoreAudioFile>?)
 
 // SQLite caps the variables one statement can bind
 private const val MAX_IDS_PER_QUERY = 500

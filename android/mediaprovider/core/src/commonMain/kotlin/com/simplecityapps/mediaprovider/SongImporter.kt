@@ -55,10 +55,13 @@ internal class SongImporter(
         // Before the request, so whatever changes on the source while it runs is fetched again next time
         val start = clock.now()
         val storedSongs = songRepository.loadProviderSongs(mediaProvider.type)
+        // Nothing stored (a source signed into again, or a sync that never stored), so nothing for a delta to apply to
+        val plan = if (storedSongs.isEmpty()) SyncPlan.Full else requested
+        val listThoroughly = thorough && plan == SyncPlan.Full && mediaProvider is IndexedMediaProvider
 
         val existingSongs =
             try {
-                remapLegacySongs(mediaProvider, storedSongs)
+                remapLegacySongs(mediaProvider, storedSongs, listThoroughly)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -68,11 +71,9 @@ internal class SongImporter(
                 return@flow
             }
 
-        // Nothing stored (a source signed into again, or a sync that never stored), so nothing for a delta to apply to
-        val plan = if (storedSongs.isEmpty()) SyncPlan.Full else requested
         val songs =
             when (plan) {
-                SyncPlan.Full -> if (thorough && mediaProvider is IndexedMediaProvider) mediaProvider.findSongsThoroughly(existingSongs) else mediaProvider.findSongs(existingSongs)
+                SyncPlan.Full -> if (listThoroughly) (mediaProvider as IndexedMediaProvider).findSongsThoroughly(existingSongs) else mediaProvider.findSongs(existingSongs)
                 is SyncPlan.Incremental -> (mediaProvider as IncrementalMediaProvider).findSongsChangedSince(existingSongs, plan.since)
             }
         val findSongsMark = TimeSource.Monotonic.markNow()
@@ -256,9 +257,10 @@ internal class SongImporter(
      */
     private suspend fun remapLegacySongs(
         mediaProvider: MediaProvider,
-        songs: List<Song>
+        songs: List<Song>,
+        thorough: Boolean
     ): List<Song> {
-        val remaps = mediaProvider.remapLegacySongs(songs)
+        val remaps = mediaProvider.remapLegacySongs(songs, thorough)
         if (remaps.isEmpty()) return songs
         val paths = songRepository.remapPaths(remaps, mediaProvider.type).associate { remap -> remap.songId to remap.path }
         logger.info { "Moved ${paths.size} of ${remaps.size} matched ${mediaProvider.type} songs to their new paths" }
