@@ -261,6 +261,98 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states.last, .ended)
     }
 
+    // MARK: - Pause at the end of the track (the sleep timer's "end of song", #953)
+
+    func testPauseAtEndPausesOnTheCurrentTracksLastFrameAndNoneOfTheNextPlays() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 12_000, seed: 40)
+        let b = TestSignal.noise(frames: 6_000, seed: 41)
+        controller.setPauseAtEnd(true)
+        controller.load(current: track("A", a), next: track("B", b), playWhenReady: true)
+        controller.syncForTesting()
+        let out = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000 + 9_600, log: log)
+        controller.syncForTesting()
+
+        assertEqual(out.left[0..<12_000], out.right[0..<12_000], a)
+        XCTAssertTrue(out.left[12_000...].allSatisfy { $0 == 0 }, "B was heard")
+        XCTAssertTrue(out.right[12_000...].allSatisfy { $0 == 0 }, "B was heard")
+        XCTAssertEqual(log.transitions, [])
+        XCTAssertEqual(log.pausesAtEnd, ["A"])
+        XCTAssertEqual(log.states.last, .paused)
+        let position = try XCTUnwrap(controller.position)
+        XCTAssertEqual(position.uid, "A")
+        XCTAssertEqual(position.ms, 250)
+    }
+
+    /// Played again, it carries on into the next track from its first frame.
+    func testAPlayAfterAPauseAtEndStartsTheNextTrack() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 6_000, seed: 42)
+        let b = TestSignal.noise(frames: 6_000, seed: 43)
+        controller.setPauseAtEnd(true)
+        controller.load(current: track("A", a), next: track("B", b), playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 6_000 + 2_048, log: log)
+        controller.setPauseAtEnd(false)
+        controller.play()
+        controller.syncForTesting()
+        let out = try renderer.render(frames: 6_000, log: log)
+        controller.syncForTesting()
+
+        assertEqual(out.left[0..<6_000], out.right[0..<6_000], b)
+        XCTAssertEqual(log.transitions, ["B"])
+    }
+
+    /// Set once the next track is already scheduled behind the current one, it still pauses at the join.
+    func testPauseAtEndSetAfterTheNextWasScheduledStillPausesAtTheEnd() throws {
+        let (controller, log) = try makeController(scheduleAhead: 1.0)
+        let a = TestSignal.noise(frames: 24_000, seed: 44)
+        let b = TestSignal.noise(frames: 24_000, seed: 45)
+        controller.load(current: track("A", a), next: track("B", b), playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        let head = try renderer.render(frames: 4_096)
+        controller.setPauseAtEnd(true)
+        controller.syncForTesting()
+        let rest = try renderer.render(frames: 24_000 + 4_800, log: log)
+        controller.syncForTesting()
+
+        XCTAssertEqual(head.left, Array(a.channel(0)[0..<4_096]))
+        // The rebuild restarts from the playhead the node last reported: a few frames of A may repeat.
+        let resumed = try XCTUnwrap((3_000..<4_200).first { a[$0 * 2] == rest.left[0] })
+        let expected = Array(a[(resumed * 2)...])
+        let count = expected.count / 2
+        assertEqual(rest.left[0..<count], rest.right[0..<count], expected)
+        XCTAssertTrue(rest.left[count...].allSatisfy { $0 == 0 }, "B was heard")
+        XCTAssertEqual(log.transitions, [])
+        XCTAssertEqual(log.pausesAtEnd, ["A"])
+        XCTAssertEqual(log.states.last, .paused)
+    }
+
+    /// Turned off with the current track's end already scheduled, the next joins it gaplessly after all.
+    func testPauseAtEndTurnedOffBeforeTheEndIsGapless() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.5)
+        let a = TestSignal.noise(frames: 12_000, seed: 46)
+        let b = TestSignal.noise(frames: 6_000, seed: 47)
+        controller.setPauseAtEnd(true)
+        controller.load(current: track("A", a), next: track("B", b), playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        let head = try renderer.render(frames: 2_048)
+        controller.setPauseAtEnd(false)
+        controller.syncForTesting()
+        let rest = try renderer.render(frames: 18_000 - 2_048 + 1_024, log: log)
+        controller.syncForTesting()
+
+        let left = head.left + rest.left
+        let right = head.right + rest.right
+        assertEqual(left[0..<18_000], right[0..<18_000], a + b)
+        XCTAssertEqual(log.transitions, ["B"])
+        XCTAssertEqual(log.pausesAtEnd, [])
+        XCTAssertEqual(log.states.last, .ended)
+    }
+
     // MARK: - Failures
 
     private func failing(_ uid: String, atRead: Bool = false) -> PlaybackTrack {

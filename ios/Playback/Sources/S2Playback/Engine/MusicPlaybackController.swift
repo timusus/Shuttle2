@@ -163,6 +163,13 @@ public final class MusicPlaybackController {
         set { callbackLock.withLock { callbacks.seekUnsupported = newValue } }
     }
 
+    /// The current track's last frame was heard with ``setPauseAtEnd(_:)`` on, and the engine paused there
+    /// (reported paused after this). The argument is its uid.
+    public var onPausedAtEnd: ((String) -> Void)? {
+        get { callbackLock.withLock { callbacks.pausedAtEnd } }
+        set { callbackLock.withLock { callbacks.pausedAtEnd = newValue } }
+    }
+
     /// Readies the output for a play: the owner activates its audio session. False refuses the play, which
     /// then stays paused as a play the engine can't start does. Called on a queue of its own as a play or a
     /// load that plays is made, so it runs while the load opens and seeks its track; the engine waits for it
@@ -279,8 +286,15 @@ public final class MusicPlaybackController {
     private var lastHealthLog: (at: TimeInterval, low: Bool)?
     private static let healthLogSeconds: TimeInterval = 10
     private static let lowBufferSeconds: Double = 5
-    /// The queue's last frame is scheduled (current ended with no next).
+    /// The queue's last frame is scheduled (current ended with no next, or `pausingAtEnd`).
     private var drained = false
+    /// ``setPauseAtEnd(_:)``: the stream stops at the current track's end instead of carrying on into the next.
+    private var pauseAtEnd = false
+    /// The drained end is the current track's, held back from the next by `pauseAtEnd`: heard, it pauses
+    /// rather than ends.
+    private var pausingAtEnd = false
+    /// Paused on the current track's last frame by `pausingAtEnd`: a play carries on into the next.
+    private var pausedAtEnd = false
     /// Bumped by every restart; completions from buffers a restart discarded are ignored.
     private var generation = 0
     /// Frames an interrupted read got before its interrupt, kept off the node until the seek behind it says
@@ -355,6 +369,7 @@ public final class MusicPlaybackController {
         var failed: ((String, Error) -> Void)?
         var position: ((String, Int64) -> Void)?
         var seekUnsupported: ((String, Int64) -> Void)?
+        var pausedAtEnd: ((String) -> Void)?
         var activateOutput: (() -> Bool)?
     }
 
@@ -501,10 +516,15 @@ public final class MusicPlaybackController {
                 fill()
                 return
             }
+            // Pausing at the end: still the current track's end, unless there's no next to hold back from.
+            if drained, !pausedAtEnd, state != .ended, pauseAtEnd, !current.failed {
+                pausingAtEnd = next != nil
+                return
+            }
             guard let next else { return }
             if state == .ended {
                 if current.failed { promote(next, restartingAt: 0) }
-            } else if drained, reading == nil {
+            } else if drained, reading == nil, !pausedAtEnd {
                 drained = false
                 // The node may have run dry already: the new next starts where its clock is.
                 if buffersInFlight == 0 { beginUnderrun() }
@@ -512,6 +532,33 @@ public final class MusicPlaybackController {
                 fill()
             } else {
                 prepareNextIfDue()
+            }
+        }
+    }
+
+    /// Pause on the current track's last frame instead of carrying on into the next (Media3's
+    /// `pauseAtEndOfMediaItems`): the next stays next, and none of it is scheduled while this is on. Paused
+    /// there, reported through ``onPausedAtEnd`` then as paused, the position is the track's end; a play
+    /// starts the next. Each track pauses at its end until it's turned off. Turned off before the end is
+    /// heard, the next joins the current track gaplessly after all. Kept across loads.
+    public func setPauseAtEnd(_ enabled: Bool) {
+        engineQueue.async { [self] in
+            guard enabled != pauseAtEnd else { return }
+            pauseAtEnd = enabled
+            guard current != nil else { return }
+            updateTimeline(concludingEnd: false)
+            if enabled {
+                // Some of the next may already be read behind the current track: rebuild without it.
+                if let next, reading === next || (next.opened && !next.atStart) {
+                    restart(atFrame: currentMediaFrame())
+                }
+            } else if pausingAtEnd, !pausedAtEnd {
+                pausingAtEnd = false
+                guard let next else { return }
+                drained = false
+                if buffersInFlight == 0 { beginUnderrun() }
+                beginReading(next)
+                fill()
             }
         }
     }
@@ -546,6 +593,11 @@ public final class MusicPlaybackController {
             playWhenReady = true
             pendingActivation = activation
             guard current != nil, state != .ended else { return }
+            if pausedAtEnd {
+                // The current track is over: on into the next, or it's the queue's end.
+                guard let next else { return setState(.ended) }
+                return promote(next, restartingAt: 0)
+            }
             if state != .playing { timePlay(requestedAt: requestedAt) }
             guard startPlaying() else { return stayPaused() }
         }
@@ -1031,6 +1083,8 @@ public final class MusicPlaybackController {
         // An underrun carries on until the restarted stream's first buffer; one that's no longer played ends.
         if !playWhenReady { endUnderrun("restarted") }
         drained = false
+        pausingAtEnd = false
+        pausedAtEnd = false
         inputIndex = 0
         outputIndex = 0
         if let pendingLimiter {
@@ -1129,6 +1183,8 @@ public final class MusicPlaybackController {
         next = nil
         setReading(nil)
         drained = false
+        pausingAtEnd = false
+        pausedAtEnd = false
         buffersInFlight = 0
         endUnderrun("stopped")
         timelineLock.withLock { timeline = Timeline() }
@@ -1205,12 +1261,13 @@ public final class MusicPlaybackController {
                     continue
                 }
                 // The slot ended (or failed, or never opened): on into the next, or the queue's end.
-                if slot === current, let next {
+                if slot === current, let next, !(pauseAtEnd && !slot.failed) {
                     beginReading(next)
                 } else {
                     setReading(nil)
                     processor.drain(into: &output)
                     drained = true
+                    pausingAtEnd = slot === current && next != nil
                 }
             }
         }
@@ -1341,7 +1398,20 @@ public final class MusicPlaybackController {
             }
             reportTransition(to: next, gapless: true)
         }
-        if concludingEnd, drained, state == .playing, stream >= outputIndex {
+        if concludingEnd, drained, pausingAtEnd, !pausedAtEnd, state == .playing, stream >= outputIndex, let current {
+            playWhenReady = false
+            pendingActivation = nil
+            player.pause()
+            timelineLock.withLock { timeline.held = outputIndex }
+            stopTicker()
+            pausedAtEnd = true
+            let uid = current.track.uid
+            engineLog.notice("paused at the end of uid \(uid, privacy: .public)")
+            let callback = callbackLock.withLock { callbacks.pausedAtEnd }
+            if let callback { callbackQueue.async { callback(uid) } }
+            setState(.paused)
+            emitPosition()
+        } else if concludingEnd, drained, !pausingAtEnd, state == .playing, stream >= outputIndex {
             player.stop()
             timelineLock.withLock { timeline.held = outputIndex }
             stopTicker()

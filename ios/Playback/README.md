@@ -48,6 +48,11 @@ follows. A next set while the queue's end is scheduled but not yet heard (includ
 load whose current track failed) carries on from the last frame. After the end of a track that
 failed, `setNext` starts the new next at once; after one that played out, Kotlin loads what follows.
 
+**Pause at the end (#953).** `setPauseAtEnd(true)` (the sleep timer's "end of song", Media3's
+`pauseAtEndOfMediaItems`) schedules none of the next: the engine pauses on the current track's last
+frame and reports `onPausedAtEnd`, with the next still next. Turned off before the end is heard, the
+join is gapless after all.
+
 **Pre-opening (#605, #620).** The next track is opened, and its first chunk decoded, on a background
 queue ahead of the current track's end, so a slow HTTP open or a transcode that takes seconds to
 start is ready by the join. The end is the container's duration, or `PlaybackTrack.expectedDurationMs`

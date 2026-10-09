@@ -228,6 +228,7 @@ final class CallbackLog {
     private(set) var stateCommands: [Int] = []
     private(set) var failures: [String] = []
     private(set) var seeksUnsupported: [String] = []
+    private(set) var pausesAtEnd: [String] = []
     /// Frames rendered when each transition was seen, filled in by ``OfflineRenderer``.
     var transitionFrames: [Int] = []
 
@@ -239,6 +240,7 @@ final class CallbackLog {
         }
         controller.onFailed = { [weak self] uid, _ in self?.failures.append(uid) }
         controller.onSeekUnsupported = { [weak self] uid, ms in self?.seeksUnsupported.append("\(uid) \(ms)") }
+        controller.onPausedAtEnd = { [weak self] in self?.pausesAtEnd.append($0) }
     }
 }
 
