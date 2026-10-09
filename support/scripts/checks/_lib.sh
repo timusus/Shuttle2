@@ -131,7 +131,26 @@ fail() {
     exit 1
 }
 
-pass() { echo "PASS ${CHECK_NAME} in $(($(date +%s) - CHECK_START))s"; }
+# Fails the check if the app crashed or ANRed while it ran, so a standalone run (not just run-all.sh's
+# closing no-crashes.sh) catches a process that died mid-check. Log timestamps are compared against
+# the device's own clock, minus how long the check has run, so host/lane clock skew doesn't matter.
+assert_app_survived() {
+    local elapsed device_now cutoff hits
+    elapsed=$(($(date +%s) - CHECK_START))
+    device_now="$(adb_retry shell date +%s | tr -d '\r')"
+    cutoff=$((device_now - elapsed - 2))
+    hits="$(
+        { adb_retry logcat -d -v epoch -b crash 2>/dev/null | grep -F "$APP_ID" || true
+          adb_retry logcat -d -v epoch -b main -b system 2>/dev/null | grep -F "ANR in ${APP_ID}" || true
+        } | awk -v c="$cutoff" '$1 + 0 >= c' | head -1
+    )"
+    [ -z "$hits" ] || fail "the app crashed or ANRed during this check: ${hits}"
+}
+
+pass() {
+    assert_app_survived
+    echo "PASS ${CHECK_NAME} in $(($(date +%s) - CHECK_START))s"
+}
 
 # wait_for <seconds> <python expression over the state dict `s`>: polls DUMP_STATE until it holds.
 wait_for() {

@@ -23,6 +23,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -81,6 +83,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     ) {
         context.appGraph<Injector>().inject(this)
         val action = intent.action?.removePrefix(ACTION_PREFIX) ?: return
+        countPlayingEntries()
         val pendingResult = goAsync()
         scope.launch {
             try {
@@ -243,9 +246,26 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("repeat", queueOperations.getRepeatMode().name)
             put("speed", playbackOperations.getPlaybackSpeed())
             put("pendingLoad", pendingLoad())
+            put("playingEntries", playingEntries.get())
             put("libraryImporting", mediaImporter.isImporting)
             put("librarySongCount", songRepository.countSongs().first())
             put("libraryPlaylistCount", playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull()?.size ?: JSONObject.NULL)
+        }
+    }
+
+    /**
+     * Counts transitions into Playing from the first broadcast on, so a check can assert playback never
+     * resumed between two polls of DUMP_STATE. Immediate dispatch keeps a resume-then-pause on the main
+     * thread from being conflated away.
+     */
+    private fun countPlayingEntries() {
+        if (!collecting.compareAndSet(false, true)) return
+        scope.launch(Dispatchers.Main.immediate) {
+            var previous: PlaybackState? = null
+            playbackOperations.playbackStateFlow.collect { state ->
+                if (state is PlaybackState.Playing && previous !is PlaybackState.Playing) playingEntries.incrementAndGet()
+                previous = state
+            }
         }
     }
 
@@ -260,5 +280,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         const val ACTION_PREFIX = "com.simplecityapps.shuttle.debug."
 
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        private val collecting = AtomicBoolean(false)
+        private val playingEntries = AtomicInteger(0)
     }
 }
