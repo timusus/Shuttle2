@@ -1,29 +1,24 @@
 package com.simplecityapps.localmediaprovider.local.favourites
 
-import android.content.Context
-import androidx.room.Room
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.InMemoryDatabaseTest
+import com.simplecityapps.localmediaprovider.local.data.room.database.inMemoryMediaDatabaseBuilder
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
-import org.junit.runner.RunWith
 
 /** #497: the sender's retry backoff and its survival of a failing drain, on virtual time. */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(AndroidJUnit4::class)
-class FavouriteSenderRetryTest {
+class FavouriteSenderRetryTest : InMemoryDatabaseTest() {
     private class FakeWriter : FavouriteWriter {
         val calls = mutableListOf<String>()
         var succeeds = false
@@ -39,12 +34,9 @@ class FavouriteSenderRetryTest {
         }
     }
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
-
     @Test
-    fun `a failed row is retried after the backoff, which then doubles, and the row is acked once it succeeds`() = runTest {
-        val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-            .allowMainThreadQueries()
+    fun `a failed row is retried after the backoff which then doubles and the row is acked once it succeeds`() = runTest {
+        val database = inMemoryMediaDatabaseBuilder()
             .setQueryCoroutineContext(StandardTestDispatcher(testScheduler))
             .build()
         val dao = database.songDataDao()
@@ -81,8 +73,7 @@ class FavouriteSenderRetryTest {
 
     @Test
     fun `an exception outside the send does not stop the sender`() = runTest {
-        val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-            .allowMainThreadQueries()
+        val database = inMemoryMediaDatabaseBuilder()
             .setQueryCoroutineContext(StandardTestDispatcher(testScheduler))
             .build()
         val dao = database.songDataDao()
@@ -121,8 +112,7 @@ class FavouriteSenderRetryTest {
 
     @Test
     fun `a drain that throws is retried after the backoff without waiting for a new toggle`() = runTest {
-        val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
-            .allowMainThreadQueries()
+        val database = inMemoryMediaDatabaseBuilder()
             .setQueryCoroutineContext(StandardTestDispatcher(testScheduler))
             .build()
         val dao = database.songDataDao()
