@@ -284,6 +284,9 @@ public final class MusicPlaybackController {
     /// reaches the node, so the listener sees the buffering (#897). A restart (a seek, a rebuild) keeps
     /// it: the listener hears silence until the restarted stream's first buffer.
     private var underrun: (since: TimeInterval, ms: Int64)?
+    /// Decoded while an underrun lasts on a playing node, kept off it until ``UnderrunResumeRule`` says go on; the
+    /// underrun's end schedules it. A restart drops it with the old position's frames.
+    private var heldForResume: [AVAudioPCMBuffer] = []
     /// The last buffer health line: when, and whether it was under `lowBufferSeconds`.
     private var lastHealthLog: (at: TimeInterval, low: Bool)?
     private static let healthLogSeconds: TimeInterval = 10
@@ -1077,6 +1080,7 @@ public final class MusicPlaybackController {
         engineLog.notice("restart at \(frame) frames, playWhenReady \(self.playWhenReady)")
         generation += 1
         heldChunk = nil
+        heldForResume = []
         player.stop()
         // What the time-pitch unit already pulled belongs to the old stream.
         if timePitchInGraph { timePitch.reset() }
@@ -1177,6 +1181,7 @@ public final class MusicPlaybackController {
     private func teardown() {
         generation += 1
         heldChunk = nil
+        heldForResume = []
         dropStartTiming()
         player.stop()
         stopTicker()
@@ -1313,6 +1318,33 @@ public final class MusicPlaybackController {
     }
 
     private func schedule(_ buffer: AVAudioPCMBuffer) {
+        if underrun != nil, timelineLock.withLock({ timeline.held == nil }) {
+            heldForResume.append(buffer)
+            resumeIfDue()
+            return
+        }
+        if underrun != nil {
+            endUnderrun("recovered")
+            // The one place an underrun's end says playing: a buffer is at the node. A start still to come says it.
+            if current != nil, state == .playing { reportState(.playing) }
+        }
+        enqueue(buffer)
+    }
+
+    /// An underrun on a playing node ends once ``UnderrunResumeRule`` says enough is held, scheduling it.
+    private func resumeIfDue() {
+        guard let underrun else { return }
+        let frames = heldForResume.reduce(0) { $0 + Int($1.frameLength) }
+        guard UnderrunResumeRule.resumes(
+            bufferedSeconds: Double(frames) / outputSampleRate,
+            waitedSeconds: StartupTiming.now() - underrun.since,
+            ended: drained
+        ) else { return }
+        endUnderrun("recovered")
+        if current != nil, state == .playing { reportState(.playing) }
+    }
+
+    private func enqueue(_ buffer: AVAudioPCMBuffer) {
         if starved {
             // The node ran dry and played silence the stream does not contain; this buffer starts
             // wherever the node's clock is now.
@@ -1321,11 +1353,6 @@ public final class MusicPlaybackController {
                 let anchor = Anchor(stream: outputIndex, player: now)
                 timelineLock.withLock { timeline.anchors.append(anchor) }
             }
-        }
-        if underrun != nil {
-            endUnderrun("recovered")
-            // The one place an underrun's end says playing: a buffer is at the node. A start still to come says it.
-            if current != nil, state == .playing { reportState(.playing) }
         }
         noteFirstBuffer()
         let generation = self.generation
@@ -1369,6 +1396,8 @@ public final class MusicPlaybackController {
     /// stream isn't an underrun.
     private func readWaited() {
         guard DispatchQueue.getSpecific(key: Self.engineQueueKey) == true else { return }
+        // Held audio waiting on a read that stalls again goes on at the rule's cap, without that read.
+        if underrun != nil { return resumeIfDue() }
         guard state == .playing, !drained, !starved else { return }
         let (scheduledEnd, held) = timelineLock.withLock { (timeline.scheduledEnd, timeline.held) }
         guard held == nil, playedStreamIndex() >= scheduledEnd else { return }
@@ -1376,11 +1405,14 @@ public final class MusicPlaybackController {
     }
 
     /// The underrun is over: `how` is "recovered" when a buffer reached the node, else what dropped
-    /// it (a pause, a stop, the queue's end). Logs how long the listener heard silence; reports nothing,
-    /// which is the caller's to say.
+    /// it (a pause, a stop, the queue's end). Schedules what was held for the resume. Logs how long the listener
+    /// heard silence; reports nothing, which is the caller's to say.
     private func endUnderrun(_ how: String) {
         guard let underrun else { return }
         self.underrun = nil
+        let held = heldForResume
+        heldForResume = []
+        held.forEach(enqueue)
         let starvedMs = Int(((StartupTiming.now() - underrun.since) * 1000).rounded())
         engineLog.notice("underrun: \(how, privacy: .public) after \(starvedMs) ms, starved at \(underrun.ms) ms")
     }

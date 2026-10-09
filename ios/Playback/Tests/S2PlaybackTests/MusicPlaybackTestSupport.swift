@@ -82,7 +82,7 @@ final class RefusingTrackSource: TrackPCMSource {
 /// with ``TrackSourceError/interrupted``, as the real source's does.
 final class StallingTrackSource: TrackPCMSource {
     private let inner: InMemoryTrackSource
-    private let gateFrame: Int
+    private var gateFrame: Int
     private let gate = DispatchSemaphore(value: 0)
     private let lock = NSLock()
     private var released = false
@@ -95,7 +95,16 @@ final class StallingTrackSource: TrackPCMSource {
         self.gateFrame = gateFrame
     }
 
-    func release() { gate.signal() }
+    func release() {
+        lock.withLock { released = true }
+        gate.signal()
+    }
+
+    /// Lets `frames` more through, then stalls again: a link slower than the audio.
+    func release(frames: Int) {
+        lock.withLock { gateFrame += frames }
+        gate.signal()
+    }
 
     func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
         try inner.open(sampleRate: sampleRate, channelCount: channelCount)
@@ -109,14 +118,14 @@ final class StallingTrackSource: TrackPCMSource {
 
     func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
         if lock.withLock({ interrupted }) { throw TrackSourceError.interrupted }
-        if delivered >= gateFrame, !lock.withLock({ released }) {
-            while gate.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
+        while delivered >= lock.withLock({ gateFrame }), !lock.withLock({ released }) {
+            if gate.wait(timeout: .now() + .milliseconds(50)) == .timedOut {
                 if lock.withLock({ interrupted }) { throw TrackSourceError.interrupted }
                 lock.withLock { waiting }?()
             }
-            lock.withLock { released = true }
         }
-        let frames = try inner.read(into: buffer, maxFrames: delivered < gateFrame ? min(maxFrames, gateFrame - delivered) : maxFrames)
+        let (gateFrame, released) = lock.withLock { (self.gateFrame, self.released) }
+        let frames = try inner.read(into: buffer, maxFrames: !released && delivered < gateFrame ? min(maxFrames, gateFrame - delivered) : maxFrames)
         delivered += frames
         return frames
     }

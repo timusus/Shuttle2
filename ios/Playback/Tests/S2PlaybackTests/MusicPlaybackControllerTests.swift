@@ -611,6 +611,54 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.statesSoFar, [.loading, .playing])
     }
 
+    /// After an underrun a link slower than the audio isn't a moment of audio then a stall, over and over: a first
+    /// small buffer stays off the node until 2 s are decoded, then all of it plays on from where the stall was (#950).
+    func testAfterAnUnderrunTheFirstSmallBufferWaitsForEnoughToPlayOn() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let samples = TestSignal.noise(frames: 240_000, seed: 1)
+        let source = StallingTrackSource(samples: samples, gateFrame: 24_576)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
+        let blockedFill = try runDryIntoTheStall(controller, log)
+
+        source.release(frames: 4_096)
+        Thread.sleep(forTimeInterval: 0.3)
+        XCTAssertEqual(log.statesSoFar.last, .loading, "went on with one buffer")
+
+        source.release(frames: 96_000)
+        wait(for: [blockedFill], timeout: 5)
+        let rendered = try OfflineRenderer(controller: controller, slice: 512).render(frames: 2048)
+        controller.syncForTesting()
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+        // On from what the node last played, a little short of the gate, with nothing skipped.
+        let start = try XCTUnwrap((16_000...24_576).first { k in
+            rendered.left.indices.allSatisfy { abs(samples[(k + $0) * 2] - rendered.left[$0]) < 1e-4 }
+        }, "the audio after the stall isn't the stream's next")
+        XCTAssertGreaterThan(start, 24_576 - 8_192)
+        source.release()
+    }
+
+    /// Held audio waiting on a link that stalls again goes on once the underrun has lasted the cap (#950).
+    func testAfterAnUnderrunHeldAudioGoesOnAtTheCap() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let source = StallingTrackSource(samples: TestSignal.noise(frames: 240_000, seed: 1), gateFrame: 24_576)
+        controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
+        let blockedFill = try runDryIntoTheStall(controller, log)
+        let stalled = Date()
+
+        source.release(frames: 4_096)
+        let deadline = Date().addingTimeInterval(8)
+        while log.statesSoFar.last != .playing, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
+
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
+        XCTAssertGreaterThan(Date().timeIntervalSince(stalled), 4.5, "went on before the cap")
+        source.release()
+        wait(for: [blockedFill], timeout: 5)
+    }
+
     /// Plays out everything scheduled up to a ``StallingTrackSource``'s gate, then waits for the owner to hear loading
     /// while the engine's read is still blocked. Returns the stalled fill, which returns once the source is released.
     private func runDryIntoTheStall(_ controller: MusicPlaybackController, _ log: CallbackLog,
