@@ -96,7 +96,7 @@ echo "==> xcodebuild build-for-testing -scheme S2 (Debug, simulator)"
 # One SPM clone cache for every worktree; no index store, which only Xcode's own UI reads.
 xcodebuild build-for-testing -project S2.xcodeproj -scheme S2 -configuration Debug \
   -destination 'generic/platform=iOS Simulator' -derivedDataPath "$dd" \
-  -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" COMPILER_INDEX_STORE_ENABLE=NO "${XCODE_CACHE_ARGS[@]}" -quiet
+  -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" COMPILER_INDEX_STORE_ENABLE=NO ${XCODE_CACHE_ARGS[@]+"${XCODE_CACHE_ARGS[@]}"} -quiet
 xctestrun="$(ls -t "$products"/*.xctestrun 2>/dev/null | head -n1)"
 [[ -n "$xctestrun" && -d "$app" ]] || { echo "ERROR: the build produced no xctestrun or S2.app" >&2; exit 1; }
 printf 'state=%s\nframework=%s\nxctestrun=%s\n' "$current" "$current_framework" "$xctestrun" > "$stamp"
