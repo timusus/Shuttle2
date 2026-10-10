@@ -415,7 +415,7 @@ class AppShellRobot(
                             entryProvider = entryProvider,
                             shellRequests = remember { tabRequests.receiveAsFlow() },
                             mediaActionsViewModel = mediaActionsViewModel,
-                            systemDeletes = false,
+                            appGraphAvailable = false,
                         )
                     }
                 }

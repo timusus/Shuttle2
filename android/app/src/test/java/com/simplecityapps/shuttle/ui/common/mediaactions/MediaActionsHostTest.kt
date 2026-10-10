@@ -60,7 +60,7 @@ class MediaActionsHostTest {
         val viewModel = MediaActionsViewModel(handler, available, observePlaylists)
         rule.setContent {
             S2Theme {
-                MediaActionsHost(onNavigate = {}, viewModel = viewModel, systemDeletes = false) { actions ->
+                MediaActionsHost(onNavigate = {}, viewModel = viewModel, appGraphAvailable = false) { actions ->
                     state = actions
                 }
             }

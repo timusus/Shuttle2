@@ -131,7 +131,7 @@ fun AppShell(
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey> = ::shellEntryProvider,
     shellRequests: Flow<ShellRequest> = emptyFlow(),
     mediaActionsViewModel: MediaActionsViewModel = metroViewModel(),
-    systemDeletes: Boolean = true,
+    appGraphAvailable: Boolean = true,
 ) {
     val layout = remember(windowAdaptiveInfo) { ShellLayout.from(windowAdaptiveInfo) }
     val navigator = rememberAppNavigator(startTab)
@@ -166,7 +166,7 @@ fun AppShell(
     val selectedTab = navigator.selectedTab.takeIf { navigator.showsNavigation }
     // The player's song menus and its queue's save-to-playlist share the destinations' media action path; the screens a result opens settle the player first.
     CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {
-        MediaActionsHost(onNavigate = { target -> navigate { navigator.openTarget(target) } }, viewModel = mediaActionsViewModel, systemDeletes = systemDeletes) { mediaActions ->
+        MediaActionsHost(onNavigate = { target -> navigate { navigator.openTarget(target) } }, viewModel = mediaActionsViewModel, appGraphAvailable = appGraphAvailable) { mediaActions ->
             CompositionLocalProvider(LocalPlayerMediaActions provides mediaActions) {
                 ShellSurface(modifier, layout, player, playerContent, selectedTab, onSelectTab, destinations, snackbarHostState)
             }

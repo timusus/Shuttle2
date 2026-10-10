@@ -158,9 +158,9 @@ interface DownloadSettingsEntryPoint {
 fun MediaActionsHost(
     onNavigate: (NavigationTarget) -> Unit,
     viewModel: MediaActionsViewModel = metroViewModel(),
-    systemDeletes: Boolean = true,
-    // Null in tests, which have no app graph
-    downloadSettings: DownloadSettings? = if (systemDeletes) LocalContext.current.appGraph<DownloadSettingsEntryPoint>().downloadSettings() else null,
+    // Gates the app-graph lookup for download settings; false in tests, which have no app graph
+    appGraphAvailable: Boolean = true,
+    downloadSettings: DownloadSettings? = if (appGraphAvailable) LocalContext.current.appGraph<DownloadSettingsEntryPoint>().downloadSettings() else null,
     content: @Composable (MediaActionsState) -> Unit,
 ) {
     val context = LocalContext.current
