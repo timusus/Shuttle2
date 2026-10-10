@@ -18,7 +18,8 @@
 # Tool output streams to stderr (land's verify log, where retry and env patterns match) and to
 # $LAND_ARTIFACT_DIR/<phase>.log. The whole suites run in support/scripts/full-verify.sh.
 #
-# Env: LAND_RETRY=1 compiles Kotlin non-incrementally (land's retry after an incremental-cache
+# Env: LAND_PHASES="a b" runs only those phases (plus a prerequisite, silent unless it fails).
+# LAND_RETRY=1 compiles Kotlin non-incrementally (land's retry after an incremental-cache
 # flake). S2_LAND_SIM_UDID overrides the simulator ("S2 Land iPhone", created on first use).
 # shellcheck disable=SC2329 # phase functions are run by name from run_phase
 set -uo pipefail
@@ -98,15 +99,36 @@ last_marker() {
 # mark TEXT: a verify: line always starts on its own line, even after unterminated tool output.
 mark() { printf '\nverify: %s\n' "$*"; }
 
+# LAND_PHASES (space-separated) narrows a rerun to the phases that failed in the batch; empty runs all.
+# wanted PHASE: true when PHASE is listed or no list is set.
+wanted() {
+    [ -z "${LAND_PHASES// /}" ] && return 0
+    case " $LAND_PHASES " in *" $1 "*) return 0 ;; esac
+    return 1
+}
+
+# needed_by_wanted PHASE: PHASE leaves output a listed phase builds on, so it runs (silently unless it fails).
+needed_by_wanted() {
+    case "$1" in
+        ios-framework) wanted ios-tests ;;
+        *) return 1 ;;
+    esac
+}
+
 # run_phase PHASE CMD...: every phase runs and reports, even after an earlier one failed, so a
 # failure main already has never hides a later phase.
 run_phase() {
-    local phase=$1 log="$artifacts/$1.log" rc raw parsed tests others
+    local phase=$1 log="$artifacts/$1.log" rc raw parsed tests others announced=1
     shift
-    mark "== $phase"
+    if ! wanted "$phase"; then
+        needed_by_wanted "$phase" || return 0
+        announced=0
+    fi
+    [ "$announced" = 1 ] && mark "== $phase"
     "$@" </dev/null 2>&1 | tee "$log" >&2
     rc=${PIPESTATUS[0]}
     [ "$rc" -eq 0 ] && return 0
+    [ "$announced" = 1 ] || mark "== $phase"
     # build-brief condenses Gradle's console; the raw log it names holds the detail (and the
     # "Incremental compilation failed" line land's retry pattern looks for).
     while IFS= read -r raw; do
@@ -136,6 +158,7 @@ run_phase() {
 }
 
 skip_phase() {  # skip_phase PHASE WHY: a phase that cannot run on what an earlier phase left behind
+    wanted "$1" || needed_by_wanted "$1" || return 0
     mark "== $1"
     failed=1
     mark "-- $1 failed: $2"
@@ -215,7 +238,8 @@ if [ "${#changed[@]}" -gt 0 ]; then
     while IFS= read -r t; do [ -n "$t" ] && kmp_tasks+=("$t"); done \
         < <(support/scripts/unit-test --kmp-native-tasks "${changed[@]}")
 fi
-if [ "${#kmp_tasks[@]}" -gt 0 ] || grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/|android/(networking|playback/core|mediaprovider/[a-z]+)/src/common)' "$paths_file"; then
+if { wanted ios-framework || wanted ios-tests || wanted ios-package; } &&
+    { [ "${#kmp_tasks[@]}" -gt 0 ] || grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/|android/(networking|playback/core|mediaprovider/[a-z]+)/src/common)' "$paths_file"; }; then
     ios_all=0 ios_pkg=0 ios_classes=()
     while IFS= read -r t; do
         case "$t" in
