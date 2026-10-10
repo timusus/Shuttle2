@@ -75,7 +75,7 @@ enum class MediaBrowserServer(
 }
 
 /** The header Emby reads a session's access token from. */
-const val EMBY_TOKEN = "X-Emby-Token"
+internal const val EMBY_TOKEN = "X-Emby-Token"
 
 /** The header Emby reads the client identity from once signed in. */
-const val EMBY_AUTHORIZATION = "X-Emby-Authorization"
+internal const val EMBY_AUTHORIZATION = "X-Emby-Authorization"
