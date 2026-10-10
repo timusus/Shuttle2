@@ -207,7 +207,8 @@ fi
 STEP_FILE="$WORKTREE/.full-verify-step"
 rm -f "$STEP_FILE"  # a stale one from the last run would mask a setup failure
 rc=0
-lease --class verify -- "$SELF" --steps "$WORKTREE" "$STEP_FILE" >> "$LOG" 2>&1 || rc=$?
+# The outer s2-full-verify hold exports LEASE_HELD, which would let this call skip the verify queue.
+env -u LEASE_HELD lease --class verify -- "$SELF" --steps "$WORKTREE" "$STEP_FILE" >> "$LOG" 2>&1 || rc=$?
 
 if [ "$rc" -eq 0 ]; then
   if [ -z "$PREV" ] || git merge-base --is-ancestor "$PREV" "$SHA"; then
