@@ -19,6 +19,8 @@
 # $LAND_ARTIFACT_DIR/<phase>.log. The whole suites run in support/scripts/full-verify.sh.
 #
 # Env: LAND_PHASES="a b" runs only those phases (plus a prerequisite, silent unless it fails).
+# LAND_MODE=confirm with LAND_ONLY="<names>" (the `!!` test names) reruns just those tests in
+# unit-tests, architecture and ios-tests; a name that maps to no test source runs its phases whole.
 # LAND_RETRY=1 compiles Kotlin non-incrementally (land's retry after an incremental-cache
 # flake). S2_LAND_SIM_UDID overrides the simulator ("S2 Land iPhone", created on first use).
 # shellcheck disable=SC2329 # phase functions are run by name from run_phase
@@ -60,6 +62,8 @@ failures() {
             gsub(/:[0-9]+(:[0-9]+)?\001/, "", d)
             print d
         }
+        # A test name has no whitespace (spaces become %20) so land can pass it back in LAND_ONLY.
+        function addt(prefix, n) { gsub(/ /, "%20", n); print prefix n }
         /^---- raw Gradle log$/ { wwr = 0; inb = 0; ift = 0; next }
         wwr {
             if ($0 ~ /^[ \t]*$/ || $0 ~ /^\* /) wwr = 0
@@ -67,11 +71,11 @@ failures() {
         }
         # report-test-failures.sh: `package.Class.method: message` lines, then `+N more`.
         inb {
-            if ($0 ~ /^[a-z][a-z0-9_]*\.[A-Za-z0-9_.$]*[A-Z]/) { s = $0; sub(/: .*/, "", s); add("test " s); next }
+            if ($0 ~ /^[a-z][a-z0-9_]*\.[A-Za-z0-9_.$]*[A-Z]/) { s = $0; sub(/: .*/, "", s); addt("test:", s); next }
             inb = 0
         }
         ift {
-            if ($0 ~ /^[ \t]+[^ \t]/) { s = $0; sub(/^[ \t]+/, "", s); sub(/ \([0-9.]+ seconds\)/, "", s); add("ios test " s); next }
+            if ($0 ~ /^[ \t]+[^ \t]/) { s = $0; sub(/^[ \t]+/, "", s); sub(/ \([0-9.]+ seconds\)/, "", s); addt("ios-test:", s); next }
             ift = 0
         }
         /^Failing tests:/ { ift = 1; next }
@@ -80,7 +84,7 @@ failures() {
         /^Failed tests:/ { inb = 1; next }
         /Execution failed for task / { s = $0; sub(/.*Execution failed for task /, "", s); add("task " s); next }
         /^e: / { add($0); next }
-        / > .* FAILED$/ { s = $0; sub(/^[ \t]+/, "", s); add("test " s); next }
+        / > .* FAILED$/ { s = $0; sub(/^[ \t]+/, "", s); sub(/ FAILED$/, "", s); sub(/ > /, ".", s); addt("test:", s); next }
         /^Test Case .* failed/ { s = $0; sub(/ \([0-9.]+ seconds\)/, "", s); add(s); next }
         /\.java:[0-9]+: error:/ || /\.swift:[0-9]+(:[0-9]+)?: error:/ || /AAPT: error:/ || /Manifest merger failed/ || /^ERROR: / { add($0); next }
         /_compare\.png/ { s = $0; sub(/_compare\.png.*/, "", s); sub(/.*[\/ ]/, "", s); add("roborazzi " s); next }
@@ -146,8 +150,8 @@ run_phase() {
         mark "!! $phase: $(last_marker "$log") (no parsed error)"
     else
         # Capped so a mass failure stays a fixed signature; the cap is flagged without a count.
-        tests=$(printf '%s\n' "$parsed" | grep -E '^(test |ios test |✘ Test )' | sort)
-        others=$(printf '%s\n' "$parsed" | grep -vE '^(test |ios test |✘ Test )')
+        tests=$(printf '%s\n' "$parsed" | grep -E '^(test:|ios-test:|✘ Test )' | sort)
+        others=$(printf '%s\n' "$parsed" | grep -vE '^(test:|ios-test:|✘ Test )')
         { [ -n "$others" ] && printf '%s\n' "$others"; printf '%s\n' "$tests" | head -20; } | grep -v '^$' |
             while IFS= read -r line; do mark "!! $line"; done
         if [ -n "$tests" ] && [ "$(printf '%s\n' "$tests" | wc -l)" -gt 20 ]; then
@@ -162,6 +166,97 @@ skip_phase() {  # skip_phase PHASE WHY: a phase that cannot run on what an earli
     mark "== $1"
     failed=1
     mark "-- $1 failed: $2"
+}
+
+# Test names in `!!` lines: test:<pkg.Class.method> and ios-test:<Class.method()>, spaces as %20.
+
+# test_class NAME: the class part of pkg.Class.method (a method name may itself hold dots).
+test_class() {
+    printf '%s\n' "$1" | sed -nE 's/^(([a-z][a-z0-9_]*\.)*[A-Z][A-Za-z0-9_$]*)\..+$/\1/p'
+}
+
+# module_for_path FILE: android/playback/src/test/Foo.kt -> :android:playback
+module_for_path() {
+    local dir=${1%%/src/*}
+    printf ':%s\n' "${dir//\//:}"
+}
+
+tracked_files() { git ls-files; }
+
+# test_module CLASS: the Gradle module whose test source declares CLASS (nested classes live in their outer's file).
+test_module() {
+    local outer=${1##*.} pkg="" file
+    outer=${outer%%\$*}
+    case "$1" in *.*) pkg=${1%.*}; pkg=${pkg//.//}/ ;; esac
+    file=$(tracked_files | grep -E "/src/[A-Za-z]*[tT]est[A-Za-z]*/(.*/)?$pkg$outer\.kt\$" | head -1)
+    [ -n "$file" ] && module_for_path "$file"
+}
+
+# ios_class NAME: Class from Class.method()
+ios_class() {
+    printf '%s\n' "$1" | sed -nE 's/^([A-Za-z_][A-Za-z0-9_]*)\..+$/\1/p'
+}
+
+# plan_confirm: from LAND_ONLY fill unit_plan/arch_plan ("module<TAB>Class.method" lines) and ios_plan
+# (classes); unit_ok/ios_ok go 0 when a name cannot be mapped, which makes those phases run whole.
+confirm=0 unit_ok=1 ios_ok=1 unit_plan="" arch_plan="" ios_plan=()
+plan_confirm() {
+    local n name class module c
+    [ "${LAND_MODE:-}" = confirm ] && [ -n "${LAND_ONLY// /}" ] || return 0
+    confirm=1
+    for n in $LAND_ONLY; do
+        case "$n" in
+            test:*)
+                name=${n#test:}
+                name=${name//%20/ }
+                class=$(test_class "$name")
+                module=""
+                [ -n "$class" ] && module=$(test_module "$class")
+                if [ -z "$module" ]; then
+                    unit_ok=0
+                elif [ "$module" = :android:architecture-tests ]; then
+                    arch_plan+="$module	$name"$'\n'
+                else
+                    unit_plan+="$module	$name"$'\n'
+                fi
+                ;;
+            ios-test:*)
+                c=$(ios_class "${n#ios-test:}")
+                if [ -n "$c" ]; then ios_plan+=("$c"); else ios_ok=0; fi
+                ;;
+        esac
+    done
+}
+
+# run_plan RUNNER PLAN: runs RUNNER <module> --tests <name>... once per module in PLAN; keeps the worst exit.
+run_plan() {
+    local runner=$1 plan=$2 module line rc=0 args
+    while IFS= read -r module; do
+        args=()
+        while IFS=$'\t' read -r m line; do
+            [ "$m" = "$module" ] && args+=(--tests "$line")
+        done <<<"$plan"
+        $runner "$module" "${args[@]}" || rc=$?
+    done < <(printf '%s' "$plan" | cut -f1 | sort -u)
+    return "$rc"
+}
+
+arch_test() { support/scripts/remote-build.sh --local -q "$1:testDebugUnitTest" "${@:2}"; }
+
+unit_tests() {
+    if [ "$confirm" = 1 ] && [ "$unit_ok" = 1 ] && [ -n "$unit_plan" ]; then
+        run_plan support/scripts/unit-test "$unit_plan"
+    else
+        support/scripts/unit-test --changed
+    fi
+}
+
+architecture_tests() {
+    if [ "$confirm" = 1 ] && [ "$unit_ok" = 1 ] && [ -n "$arch_plan" ]; then
+        run_plan arch_test "$arch_plan"
+    else
+        arch_test :android:architecture-tests
+    fi
 }
 
 lint_changed() {
@@ -227,10 +322,13 @@ ios_tests() {
     fi
 }
 
+plan_confirm
+mark confirm
+
 run_phase lint lint_changed
-run_phase unit-tests support/scripts/unit-test --changed
+run_phase unit-tests unit_tests
 run_phase compile-dependents support/scripts/unit-test --compile-dependents
-run_phase architecture support/scripts/remote-build.sh --local -q :android:architecture-tests:testDebugUnitTest
+run_phase architecture architecture_tests
 run_phase assembleDebug support/scripts/remote-build.sh --local -q :android:app:assembleDebug
 
 kmp_tasks=()
@@ -248,6 +346,10 @@ if { wanted ios-framework || wanted ios-tests || wanted ios-package; } &&
             ?*) ios_classes+=("$t") ;;
         esac
     done < <(support/scripts/ios-tests-for "${changed[@]}")
+    if [ "$confirm" = 1 ] && [ "$ios_ok" = 1 ] && [ "${#ios_plan[@]}" -gt 0 ]; then
+        ios_all=0
+        ios_classes=($(printf '%s\n' "${ios_plan[@]}" | sort -u))
+    fi
     sim=""
     if [ "${#kmp_tasks[@]}" -gt 0 ] || [ "$ios_all" = 1 ] || [ "${#ios_classes[@]}" -gt 0 ]; then
         sim=$(land_sim) || sim=""
