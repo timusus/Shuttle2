@@ -195,7 +195,7 @@ Considered and not worth it now:
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
 | External PRs | No CI: the contributor runs `support/scripts/lint` and `support/scripts/unit-test` locally, and the owner lands the PR through `land` like any branch | All verification is local on the owner's Mac; no GitHub workflow remains |
 
-`remote-build.sh` picks the host itself (#546): the Mac when its 1-min load is under 0.8x its cores
-(`REMOTE_GRADLE_LOAD_RATIO`), else the box only if a slot is free, else the Mac anyway; `--box` and
-`--local` force one. It prints which host ran and why, and on the box the slot wait and the Gradle
+`remote-build.sh` picks the host itself (#546): long jobs (tests, `check`, `lint*`, `detekt*`, more than 4 tasks) go to the
+box when a slot is free; quick jobs go to the box only when the Mac is busy. Roborazzi, `connected*` and `install*` tasks
+stay on the Mac. `--box` and `--local` force one. It prints which host ran and why, and on the box the slot wait and the Gradle
 wall separately, so the queue cost stays visible in every landing.

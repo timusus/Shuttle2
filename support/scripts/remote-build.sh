@@ -18,9 +18,6 @@ cd "$ROOT"
 
 # Box runs only: two test forks per module is ~35% faster on the 16-core box.
 export REMOTE_GRADLE_BOX_ARGS="${REMOTE_GRADLE_BOX_ARGS:--Ps2.testForks=2}"
-# remote-gradle's default minus verifyRoborazzi*/compareRoborazzi*: the Linux threshold
-# (s2.roborazzi.changeThreshold) lets those run on the box.
-export REMOTE_GRADLE_MAC_ONLY="${REMOTE_GRADLE_MAC_ONLY:-record* *Record* connected* *Ios* *Xcode* linkDebugFramework* install*}"
 
 flags=()
 case "${1:-}" in
