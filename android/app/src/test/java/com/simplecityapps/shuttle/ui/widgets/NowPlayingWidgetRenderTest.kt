@@ -1,12 +1,11 @@
 package com.simplecityapps.shuttle.ui.widgets
 
 import android.content.Context
-import android.content.Intent
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.glance.GlanceTheme
 import androidx.glance.action.ActionModifier
-import androidx.glance.appwidget.action.StartServiceIntentAction
+import androidx.glance.appwidget.action.RunCallbackAction
 import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.testing.GlanceNodeMatcher
@@ -16,7 +15,7 @@ import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasText
 import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.core.R as CoreR
-import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.PlaybackServiceAction
 import com.simplecityapps.shuttle.R
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,27 +60,24 @@ class NowPlayingWidgetRenderTest {
     )
 
     /**
-     * The button labelled [description] starts [PlaybackService] in the foreground with [action]. `Intent` has no
-     * `equals()` (that's what `filterEquals` is for), so the built-in `hasStartServiceAction(Intent, Boolean)`
-     * matcher only matches the exact instance passed to it — useless against a freshly built widget `Intent`.
+     * The button labelled [description] sends [action] to the playback service through [PlaybackActionCallback].
      * `CircleIconButton` (row/split/hero buttons) puts the content description on the icon `Image` and the click
      * action on its parent `Box`, so this matches either the described node itself or an ancestor of it.
      */
     private fun controlButton(
         description: String,
-        action: String
+        action: PlaybackServiceAction
     ): GlanceNodeMatcher<MappedNode> {
         val describesButton = hasContentDescription(description).or(hasAnyDescendant(hasContentDescription(description)))
-        return describesButton.and(startsPlaybackAction(action))
+        return describesButton.and(sendsToPlaybackService(action))
     }
 
-    private fun startsPlaybackAction(action: String): GlanceNodeMatcher<MappedNode> {
-        val expected = Intent(context, PlaybackService::class.java).setAction(action)
-        return GlanceNodeMatcher("starts PlaybackService in the foreground with action $action") { node ->
-            node.value.emittable.modifier.any { element ->
-                val startService = (element as? ActionModifier)?.action as? StartServiceIntentAction
-                startService != null && startService.isForegroundService && startService.intent.filterEquals(expected)
-            }
+    private fun sendsToPlaybackService(action: PlaybackServiceAction): GlanceNodeMatcher<MappedNode> = GlanceNodeMatcher("runs PlaybackActionCallback for $action") { node ->
+        node.value.emittable.modifier.any { element ->
+            val callback = (element as? ActionModifier)?.action as? RunCallbackAction
+            callback != null &&
+                callback.callbackClass == PlaybackActionCallback::class.java &&
+                callback.parameters[playbackActionKey] == action.name
         }
     }
 
@@ -141,7 +137,7 @@ class NowPlayingWidgetRenderTest {
     fun `the play pause button offers pause while playing, and toggles playback`() {
         runGlanceAppWidgetUnitTest {
             render(playingState(isPlaying = true), rowLayout)
-            onNode(controlButton(context.getString(R.string.widget_pause), PlaybackService.ACTION_TOGGLE_PLAYBACK)).assertExists()
+            onNode(controlButton(context.getString(R.string.widget_pause), PlaybackServiceAction.TogglePlayback)).assertExists()
         }
     }
 
@@ -149,7 +145,7 @@ class NowPlayingWidgetRenderTest {
     fun `the play pause button offers play while paused, and toggles playback`() {
         runGlanceAppWidgetUnitTest {
             render(playingState(isPlaying = false), rowLayout)
-            onNode(controlButton(context.getString(R.string.widget_play), PlaybackService.ACTION_TOGGLE_PLAYBACK)).assertExists()
+            onNode(controlButton(context.getString(R.string.widget_play), PlaybackServiceAction.TogglePlayback)).assertExists()
         }
     }
 
@@ -157,7 +153,7 @@ class NowPlayingWidgetRenderTest {
     fun `the compact play button also reflects playing state and toggles playback`() {
         runGlanceAppWidgetUnitTest {
             render(playingState(isPlaying = false), compactCardLayout)
-            onNode(controlButton(context.getString(R.string.widget_play), PlaybackService.ACTION_TOGGLE_PLAYBACK)).assertExists()
+            onNode(controlButton(context.getString(R.string.widget_play), PlaybackServiceAction.TogglePlayback)).assertExists()
         }
     }
 
@@ -169,8 +165,8 @@ class NowPlayingWidgetRenderTest {
     fun `next and previous buttons target the right playback actions`() {
         runGlanceAppWidgetUnitTest {
             render(playingState(), rowLayout)
-            onNode(controlButton(context.getString(R.string.button_skip_next), PlaybackService.ACTION_SKIP_NEXT)).assertExists()
-            onNode(controlButton(context.getString(R.string.button_skip_previous), PlaybackService.ACTION_SKIP_PREV)).assertExists()
+            onNode(controlButton(context.getString(R.string.button_skip_next), PlaybackServiceAction.SkipNext)).assertExists()
+            onNode(controlButton(context.getString(R.string.button_skip_previous), PlaybackServiceAction.SkipPrevious)).assertExists()
         }
     }
 
@@ -182,7 +178,7 @@ class NowPlayingWidgetRenderTest {
     fun `shuffle reflects its state and toggles shuffle, on layouts that show it`() {
         runGlanceAppWidgetUnitTest {
             render(playingState(shuffleOn = true), splitLayout)
-            onNode(controlButton(context.getString(CoreR.string.shuffle_on), PlaybackService.ACTION_TOGGLE_SHUFFLE)).assertExists()
+            onNode(controlButton(context.getString(CoreR.string.shuffle_on), PlaybackServiceAction.ToggleShuffle)).assertExists()
         }
         runGlanceAppWidgetUnitTest {
             render(playingState(shuffleOn = false), splitLayout)
@@ -199,7 +195,7 @@ class NowPlayingWidgetRenderTest {
         ).forEach { (mode, expectedDescription) ->
             runGlanceAppWidgetUnitTest {
                 render(playingState(repeatMode = mode), splitLayout)
-                onNode(controlButton(context.getString(expectedDescription), PlaybackService.ACTION_TOGGLE_REPEAT)).assertExists()
+                onNode(controlButton(context.getString(expectedDescription), PlaybackServiceAction.ToggleRepeat)).assertExists()
             }
         }
     }

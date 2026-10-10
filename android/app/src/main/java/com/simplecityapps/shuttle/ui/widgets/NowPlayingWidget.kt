@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.widgets
 
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.os.Build
@@ -22,11 +21,14 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.Action
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.action.actionStartService
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.components.CircleIconButton
 import androidx.glance.appwidget.cornerRadius
@@ -55,12 +57,13 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.simplecityapps.core.R as CoreR
-import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.PlaybackServiceAction
 import com.simplecityapps.playback.R as PlaybackR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.accentColorScheme
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.ui.MainActivity
 
 /**
@@ -571,7 +574,7 @@ private fun CompactPlayButton(
             GlanceModifier
                 .size(WidgetDimens.buttonSize)
                 .then(round)
-                .clickable(playbackAction(context, PlaybackService.ACTION_TOGGLE_PLAYBACK))
+                .clickable(playbackAction(PlaybackServiceAction.TogglePlayback))
                 .semantics { contentDescription = description },
         contentAlignment = Alignment.Center
     ) {
@@ -602,7 +605,7 @@ private fun ControlButton(
             CircleIconButton(
                 imageProvider = ImageProvider(if (state.isPlaying) PlaybackR.drawable.ic_pause_black_24dp else PlaybackR.drawable.ic_play_arrow_black_24dp),
                 contentDescription = context.getString(if (state.isPlaying) R.string.widget_pause else R.string.widget_play),
-                onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_PLAYBACK),
+                onClick = playbackAction(PlaybackServiceAction.TogglePlayback),
                 backgroundColor = colors.playBackground,
                 contentColor = colors.playContent
             )
@@ -611,7 +614,7 @@ private fun ControlButton(
             CircleIconButton(
                 imageProvider = ImageProvider(PlaybackR.drawable.ic_skip_previous_black_24dp),
                 contentDescription = context.getString(R.string.button_skip_previous),
-                onClick = playbackAction(context, PlaybackService.ACTION_SKIP_PREV),
+                onClick = playbackAction(PlaybackServiceAction.SkipPrevious),
                 backgroundColor = null,
                 contentColor = colors.icon
             )
@@ -620,7 +623,7 @@ private fun ControlButton(
             CircleIconButton(
                 imageProvider = ImageProvider(PlaybackR.drawable.ic_skip_next_black_24dp),
                 contentDescription = context.getString(R.string.button_skip_next),
-                onClick = playbackAction(context, PlaybackService.ACTION_SKIP_NEXT),
+                onClick = playbackAction(PlaybackServiceAction.SkipNext),
                 backgroundColor = null,
                 contentColor = colors.icon
             )
@@ -629,7 +632,7 @@ private fun ControlButton(
             ToggleButton(
                 icon = PlaybackR.drawable.ic_shuffle_black_24dp,
                 contentDescription = context.getString(if (state.shuffleOn) CoreR.string.shuffle_on else CoreR.string.shuffle_off),
-                onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_SHUFFLE),
+                onClick = playbackAction(PlaybackServiceAction.ToggleShuffle),
                 on = state.shuffleOn,
                 colors = colors
             )
@@ -645,7 +648,7 @@ private fun ControlButton(
                             WidgetRepeatMode.One -> R.string.widget_repeat_one
                         }
                     ),
-                onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_REPEAT),
+                onClick = playbackAction(PlaybackServiceAction.ToggleRepeat),
                 on = state.repeatMode != WidgetRepeatMode.Off,
                 colors = colors
             )
@@ -685,7 +688,18 @@ private fun ToggleButton(
     }
 }
 
-private fun playbackAction(
-    context: Context,
-    action: String
-): Action = actionStartService(Intent(context, PlaybackService::class.java).setAction(action), isForegroundService = true)
+internal val playbackActionKey = ActionParameters.Key<String>("playbackServiceAction")
+
+private fun playbackAction(action: PlaybackServiceAction): Action = actionRunCallback<PlaybackActionCallback>(actionParametersOf(playbackActionKey to action.name))
+
+/** Runs on the widget tap, where a foreground start is allowed, and hands the command to the playback service. */
+class PlaybackActionCallback : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        val action = parameters[playbackActionKey]?.let(PlaybackServiceAction::valueOf) ?: return
+        context.appGraph<WidgetEntryPoint>().playbackServiceStarter().start(action)
+    }
+}

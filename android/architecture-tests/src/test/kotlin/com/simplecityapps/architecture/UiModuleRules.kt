@@ -67,13 +67,14 @@ class UiModuleRules {
     /**
      * Files under the `ui` package in `:android:app` that step 8 moves to `:android:ui` — everything
      * except the top-level helpers directly in `ui` (MainActivity, the shortcut/review helpers,
-     * ThemeManager) and the `widgets` and `tile` subpackages (system entry points that start the playback
-     * service), which stay behind in the composition root (layering.md step 8's "Stays" list).
+     * ThemeManager) and the `widgets` subpackage (its artwork store loads bitmaps through the image loader and
+     * the receivers are bound by class name), which stay behind in the composition root (layering.md step 8's
+     * "Stays" list).
      */
     private fun KoFileDeclaration.isMovingUiFile(): Boolean {
         if (module != APP_MODULE) return false
         val subPath = UI_SUBPATH.find(relativePath)?.groupValues?.get(1) ?: return false
-        return "/" in subPath && !subPath.startsWith("widgets/") && !subPath.startsWith("tile/")
+        return "/" in subPath && !subPath.startsWith("widgets/")
     }
 
     private companion object {

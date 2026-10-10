@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackServiceStarter
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -225,4 +226,6 @@ internal fun CoroutineScope.launchWidgetUpdateRequests(
 @ContributesTo(AppScope::class)
 interface WidgetEntryPoint {
     fun widgetManager(): WidgetManager
+
+    fun playbackServiceStarter(): PlaybackServiceStarter
 }
