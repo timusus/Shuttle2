@@ -183,8 +183,8 @@ additions (an output rate and channel count, mono spread, sample-accurate seeks)
 
 ## FFmpeg
 
-FFmpeg comes from AudioPlaybackKit: its `FFmpeg` product, one static `Frameworks/FFmpeg.xcframework`
-committed in that repo (iOS arm64, iOS Simulator arm64 and macOS arm64 slices; the macOS one is for
+FFmpeg comes from AudioPlaybackKit: its `FFmpeg` product, one dynamic `Frameworks/FFmpeg.xcframework`
+(`FFmpeg.framework` per slice) committed in that repo (iOS arm64, iOS Simulator arm64 and macOS arm64 slices; the macOS one is for
 `swift test`). Nothing is built here, and a new worktree needs no step: SwiftPM resolves the pinned tag.
 
 - **Version.** FFmpeg **n7.1** plus one patch, `0001-mp3dec-keep-xing-frames-when-size-unknown.patch`.
@@ -192,9 +192,9 @@ committed in that repo (iOS arm64, iOS Simulator arm64 and macOS arm64 slices; t
   `scripts/build-ffmpeg.sh` builds it, and its `scripts/ffmpeg-patches/` holds the patch. Its formats
   are a superset of the music formats S2 plays (it adds the `loas` demuxer).
 - **Linking.** `S2Playback` links it through `PlaybackDecode`, and `CS2Tags` depends on the `FFmpeg`
-  product directly, with the system libraries a static FFmpeg needs (`z`, `iconv`, CoreFoundation,
-  CoreMedia, CoreVideo, VideoToolbox). The app links one FFmpeg, into the app binary: nothing goes in
-  `S2.app/Frameworks`.
+  product directly, with the system libraries FFmpeg needs (`z`, `iconv`, CoreFoundation,
+  CoreMedia, CoreVideo, VideoToolbox). The app links one FFmpeg, the dynamic `FFmpeg.framework`, and
+  embeds it in `S2.app/Frameworks` so a user can relink against a modified build (LGPL-2.1 section 6).
 - **Bumping it.** Rebuild and tag in AudioPlaybackKit, then change the `exact:` pin in `Package.swift`
   and the tag in `SettingsContent.ffmpegSourceURL` and the Acknowledgements pane together.
 - **Byte input.** No network protocols are built. Bytes arrive through the AVIO callbacks.

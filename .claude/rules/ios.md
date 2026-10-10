@@ -125,7 +125,7 @@ on compact and a form sheet otherwise, presented from `ContentView`.
 ## Gotchas
 
 - **FFmpeg comes from AudioPlaybackKit** (#957). `Playback/Package.swift` pins the package `exact:`; decode is its
-  `PlaybackDecode`, and `S2Tags` links its `FFmpeg` product (one static xcframework, one FFmpeg in the app binary).
+  `PlaybackDecode`, and `S2Tags` links its `FFmpeg` product (one dynamic FFmpeg.framework embedded in S2.app/Frameworks, one FFmpeg in the app).
   Never add a second FFmpeg or shim around a gap in the package's API in the app: fix it upstream. Bumping the pin
   means bumping the tag in `SettingsContent.ffmpegSourceURL` and the Acknowledgements pane too.
 - **Relink before building.** Xcode links whatever `Shared.framework` is on disk; a Kotlin change without

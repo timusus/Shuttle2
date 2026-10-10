@@ -20,7 +20,7 @@ let package = Package(
         .library(name: "S2PlaybackTestSupport", targets: ["S2PlaybackTestSupport"]),
     ],
     dependencies: [
-        // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one static xcframework,
+        // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one dynamic xcframework,
         // committed in the package (LGPL notes in README.md).
         .package(url: "https://github.com/timusus/AudioPlaybackKit.git", exact: "0.7.1"),
     ],
@@ -34,8 +34,8 @@ let package = Package(
         ),
         .target(name: "S2Tags", dependencies: ["CS2Tags"]),
         // The tag reader in C, next to the libavformat API it calls. It links the package's `FFmpeg`
-        // product, the same static FFmpeg `PlaybackDecode` links, so the app carries one copy. A
-        // binary target carries no linker settings, so the system libraries the static FFmpeg calls
+        // product, the same FFmpeg `PlaybackDecode` links, so the app carries one copy. A
+        // binary target carries no linker settings, so the system libraries FFmpeg calls
         // are listed here, as the package's `CStreamDecode` lists them: zlib (ID3v2, MP4 `cmov`),
         // iconv (metadata conversion) and libavutil's VideoToolbox hardware context.
         .target(

@@ -56,8 +56,8 @@ targets:
     resources:
       - path: S2/PrivacyInfo.xcprivacy
     dependencies:
-      # The engine and the local-file tag reader. Both link AudioPlaybackKit's one static FFmpeg (#957):
-      # nothing is embedded in S2.app/Frameworks.
+      # The engine and the local-file tag reader. Both link AudioPlaybackKit's one dynamic FFmpeg.framework,
+      # which Xcode embeds in S2.app/Frameworks (the LGPL relink path).
       - package: S2Playback
         product: S2Playback
       - package: S2Playback

@@ -13,7 +13,7 @@ The skill runs `ios/archive-and-upload.sh` with a build number `YYMMDDNN` (CFBun
 version `20YY.MM.DD` is derived from it):
 
 1. `ios/scripts/build-framework.sh --device --release` links the Release iosArm64 `Shared.framework`
-   (FFmpeg is a static library inside the AudioPlaybackKit package, resolved with the others);
+   (FFmpeg is a dynamic `FFmpeg.framework` from the AudioPlaybackKit package, resolved with the others);
 2. `xcodegen generate`, then the script archives scheme `S2` (Release, bundle id
    `com.simplecityapps.shuttle`), checks the archive carries the build number and exports, which
    uploads to App Store Connect. Without API-key flags the export signs automatically with Xcode's
@@ -90,9 +90,10 @@ the export-compliance answer (the Info.plist already sets `ITSAppUsesNonExemptEn
 
 ## Known caveats
 
-- FFmpeg is linked statically into S2 (AudioPlaybackKit's `FFmpeg.xcframework`, #957); nothing of it is
-  embedded in `S2.app/Frameworks`.
+- FFmpeg is a dynamic `FFmpeg.framework` (AudioPlaybackKit's `FFmpeg.xcframework`, #957), embedded in
+  `S2.app/Frameworks` so a user can relink the app against a modified FFmpeg (LGPL-2.1 section 6). The
+  archive must carry it, signed, with an LGPL notice in Settings.
 - The export warns that Sentry's dSYM is missing. Expected, not a build-setting gap: S2 itself already
-  gets a dSYM (Release default, holding Shared.framework's and FFmpeg's code), but Sentry's SPM binary
+  gets a dSYM (Release default, holding Shared.framework's code; FFmpeg.framework is a separate prebuilt binary), but Sentry's SPM binary
   framework ships none. Only S2's dSYM is uploaded to Sentry by `scripts/upload-dsyms.sh`.
 - Build numbers must increase per upload; never reuse a tag.
