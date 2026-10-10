@@ -27,7 +27,7 @@ import timber.log.Timber
 /**
  * Deletes MediaStore songs through the system: one `MediaStore.createDeleteRequest` confirmation for the whole batch on
  * API 30+, a `RecoverableSecurityException` confirmation per song on API 29, a direct delete (with write access to
- * storage) before that. The UI launches the confirmations it takes from [confirmations].
+ * storage) before that. The activity's [SystemDeleteRequestReceiver] launches the confirmations it takes from [confirmations].
  */
 @SingleIn(AppScope::class)
 class SystemMediaStoreSongDeleter @Inject constructor(
@@ -139,12 +139,6 @@ internal class MediaStoreDeleteFlow(
         }
         return deleted
     }
-}
-
-/** The media actions host launches the deleter's system dialogs, so it reaches it from the graph. */
-@ContributesTo(AppScope::class)
-interface MediaStoreDeleteEntryPoint {
-    fun mediaStoreSongDeleter(): SystemMediaStoreSongDeleter
 }
 
 @BindingContainer

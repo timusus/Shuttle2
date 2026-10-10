@@ -1,14 +1,10 @@
 package com.simplecityapps.shuttle.ui.common.mediaactions
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
-import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
@@ -33,7 +29,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,10 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.Artwork
@@ -64,13 +56,11 @@ import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.settings.DownloadSettings
-import com.simplecityapps.shuttle.ui.actions.ConfirmationHandoff
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.shuttle.ui.actions.MediaStoreDeleteEntryPoint
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.text
 import com.simplecityapps.shuttle.ui.actions.toIntent
@@ -222,9 +212,6 @@ fun MediaActionsHost(
         }
     }
 
-    // Off in tests, which have no app graph to take the deleter from.
-    if (systemDeletes) SystemDeleteRequestLauncher()
-
     content(state)
 
     state.sheet?.let { target ->
@@ -281,47 +268,6 @@ fun MediaActionsHost(
             onDismissRequest = { state.confirmation = null },
         ) {
             Text(resources.getString(confirmation.message.text()))
-        }
-    }
-}
-
-/**
- * Launches the system dialogs that confirm deleting MediaStore songs and hands the user's answer back to the deleter. Only
- * the shell's host is always resumed, so it collects alongside the destination's host; the deleter's atomic claim
- * ([confirmations] `launch`) hands each request to exactly one of them, so a request is never shown twice. The deleter
- * keeps the request in flight, and the activity result registry hands the answer to the recreated activity's launcher (its
- * key is saved state), so an answer that comes back after a rotation or a destroyed-and-recreated activity completes it.
- */
-@Composable
-internal fun SystemDeleteRequestLauncher(
-    confirmations: ConfirmationHandoff<IntentSender> = LocalContext.current.let { context ->
-        remember { context.appGraph<MediaStoreDeleteEntryPoint>().mediaStoreSongDeleter().confirmations }
-    },
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-    // Saved with the launcher's key, so the recreated host answers the request this one launched
-    var launched by rememberSaveable { mutableStateOf<Long?>(null) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        launched?.let { confirmations.deliver(it, result.resultCode == Activity.RESULT_OK) }
-        launched = null
-    }
-    val activity = LocalActivity.current
-    DisposableEffect(confirmations, activity) {
-        // A recreated activity still gets the dialog's answer; a finishing one never will
-        onDispose { if (activity?.isFinishing == true) launched?.let(confirmations::abandon) }
-    }
-    LaunchedEffect(confirmations, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            confirmations.requests.collect { request ->
-                if (!confirmations.launch(request)) return@collect
-                launched = request.token
-                try {
-                    launcher.launch(IntentSenderRequest.Builder(request.payload).build())
-                } catch (e: IntentSender.SendIntentException) {
-                    confirmations.deliver(request.token, false)
-                    launched = null
-                }
-            }
         }
     }
 }

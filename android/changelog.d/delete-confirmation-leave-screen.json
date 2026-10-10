@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Deleting a song no longer leaves it in the library if you leave the screen while the confirmation shows.", "commits": [] }

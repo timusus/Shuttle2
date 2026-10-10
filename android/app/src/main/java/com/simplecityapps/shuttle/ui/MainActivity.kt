@@ -19,6 +19,8 @@ import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.entitlement.TrialDisclosures
+import com.simplecityapps.shuttle.ui.actions.SystemDeleteRequestReceiver
+import com.simplecityapps.shuttle.ui.actions.SystemMediaStoreSongDeleter
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
 import com.simplecityapps.shuttle.ui.screens.paywall.TrialDisclosureHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
@@ -83,6 +85,9 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var reviewPrompt: ReviewPrompt
 
+    @Inject
+    lateinit var mediaStoreSongDeleter: SystemMediaStoreSongDeleter
+
     private val musicPermissionRequest =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
             // Absent when only write access was missing: the music permission was already held
@@ -100,6 +105,9 @@ class MainActivity : AppCompatActivity() {
 
         // The XML theme still styles the dialog fragments shown over the shell.
         themeManager.setTheme(this)
+
+        // Activity-scoped, so a delete confirmation's answer outlives the screen that asked
+        SystemDeleteRequestReceiver(this, mediaStoreSongDeleter.confirmations)
 
         setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
