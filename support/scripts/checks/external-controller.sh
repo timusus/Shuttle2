@@ -11,19 +11,20 @@ extra_id="$(song_id 3)"
 result="$(ctl state)"
 expect_in "$result" "result=ok" "canChangeMediaItems=false" "canPlayPause=true" "canSkip=true"
 
-ctl pause >/dev/null
+expect_in "$(ctl pause)" "result=ok"
 wait_for 5 "s['state'] == 'Paused'"
-ctl play >/dev/null
+expect_in "$(ctl play)" "result=ok"
 wait_for 5 "s['state'] == 'Playing' and s['title'] == 'Playback One'"
-ctl next >/dev/null
+expect_in "$(ctl next)" "result=ok"
 wait_for 5 "s['state'] == 'Playing' and s['title'] == 'Playback Two'"
 echo "  transport: pause, play and next acted"
 
 before="$(state queueTitles)"
-ctl add --es mediaId "$extra_id" >/dev/null
-ctl move --ei from 0 --ei to 3 >/dev/null
-ctl remove --ei index 1 >/dev/null
-ctl clear >/dev/null
+# The controller reports ok once the command is sent; its own item count staying at 5 shows the edit was dropped.
+expect_in "$(ctl add --es mediaId "$extra_id")" "result=ok" "items=5"
+expect_in "$(ctl move --ei from 0 --ei to 3)" "result=ok" "items=5"
+expect_in "$(ctl remove --ei index 1)" "result=ok" "items=5"
+expect_in "$(ctl clear)" "result=ok" "items=5"
 wait_for 5 "s['queueSize'] == 5 and s['title'] == 'Playback Two' and s['state'] == 'Playing'"
 [ "$(state queueTitles)" = "$before" ] || fail "the queue changed: $(state queueTitles), was ${before}"
 echo "  queue edits ignored"

@@ -1,11 +1,11 @@
 # Driving the test MediaController app (android/testing/media-controller) from a check. Sourced after
-# _lib.sh, not run. install_controller builds the APK when it isn't there yet.
+# _lib.sh, not run. install_controller always runs the assemble (a no-op when up to date) so a stale APK is never tested.
 
 CONTROLLER_ID="com.simplecityapps.shuttle.testing.controller"
 CONTROLLER_APK="${CHECKS_ROOT}/android/testing/media-controller/build/outputs/apk/debug/media-controller-debug.apk"
 
 install_controller() {
-    [ -f "$CONTROLLER_APK" ] || "${CHECKS_ROOT}/support/scripts/remote-build.sh" -q :android:testing:media-controller:assembleDebug >&2
+    "${CHECKS_ROOT}/support/scripts/remote-build.sh" -q :android:testing:media-controller:assembleDebug >&2
     [ -f "$CONTROLLER_APK" ] || fail "no controller APK at ${CONTROLLER_APK}"
     adb_retry install -r -t "$CONTROLLER_APK" >/dev/null
 }
