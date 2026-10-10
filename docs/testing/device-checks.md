@@ -565,3 +565,8 @@ Needs a release build (an internal or release-candidate install: a debug build c
 ## Search → album artwork transition (#431)
 
 - [ ] Tapping an album result in Search animates its cover into the detail hero, and predictive back reverses it; artist results open without a shared transition (the circle thumbnail does not morph into the full-bleed hero).
+
+## Quick Settings tile and widget taps through PlaybackServiceStarter (#761)
+
+- [ ] Add the Shuttle Music Quick Settings tile. With the app force-stopped and a restored queue, tapping the tile starts playback with the media notification showing; a second tap pauses. With an empty library and queue, a tap opens the app.
+- [ ] With the app force-stopped, tap play/pause, next and previous on the home-screen widget: each starts the service in the foreground and acts, with no crash and no silent no-op (logcat shows no `ForegroundServiceStartNotAllowedException`).
