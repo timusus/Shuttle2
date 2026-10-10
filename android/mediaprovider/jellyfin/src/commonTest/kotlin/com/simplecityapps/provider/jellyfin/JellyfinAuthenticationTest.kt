@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -14,6 +15,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.HttpHeaders
 import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
@@ -51,13 +53,17 @@ class JellyfinAuthenticationTest {
 
     @Test
     fun `authorization header for credentials uses the access token`() {
-        authenticationManager.authorizationHeader(credentials) shouldContain "Token=\"token123\""
+        sessionAuthorization() shouldContain "Token=\"token123\""
     }
 
     @Test
     fun `authorization header carries the persisted client identity's device id`() {
-        authenticationManager.authorizationHeader(credentials) shouldContain "DeviceId=\"${clientIdentity.id}\""
+        sessionAuthorization() shouldContain "DeviceId=\"${clientIdentity.id}\""
     }
+
+    private fun sessionAuthorization(): String = HttpRequestBuilder()
+        .apply { MediaBrowserServer.Jellyfin.authorize(this, credentials.accessToken, clientIdentity) }
+        .headers.build()[HttpHeaders.Authorization]!!
 
     @Test
     fun `stream url authenticates with ApiKey - not api_key`() {

@@ -25,7 +25,7 @@ class MediaBrowserMediaInfoProvider(
         castCompatibilityMode: Boolean,
         playId: String?
     ): MediaInfo {
-        val path = buildPlaybackPathString(song, playId).toUri()
+        val path = streamUrls.streamUrl(song, playId = playId).toUri()
 
         return MediaInfo(
             path = path,
@@ -33,16 +33,6 @@ class MediaBrowserMediaInfoProvider(
             isRemote = true
         )
     }
-
-    /**
-     * String form of [getMediaInfo]'s path, capped by the current [StreamingPolicy], kept separate so tests can
-     * assert on it without pulling Robolectric into this module for `Uri.parse`.
-     */
-    @Throws(IllegalStateException::class)
-    internal fun buildPlaybackPathString(
-        song: Song,
-        playId: String? = null
-    ): String = streamUrls.streamUrl(song, playId = playId)
 
     private suspend fun getMimeType(
         path: Uri,

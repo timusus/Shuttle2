@@ -6,7 +6,6 @@ import com.simplecityapps.mediaprovider.server.QuickConnectCode
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
-import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserAuthenticationManager
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.mediaprovider.server.mediabrowser.UserService
@@ -30,14 +29,6 @@ class JellyfinAuthenticationManager(
     streamProfile
 ) {
     private val quickConnectService = QuickConnectService(httpClient)
-
-    /** The `Authorization` header value for requests made with [authenticatedCredentials]. */
-    fun authorizationHeader(authenticatedCredentials: AuthenticatedCredentials): String = mediaBrowserAuthorization(
-        deviceId = clientIdentity.id,
-        token = authenticatedCredentials.accessToken,
-        deviceName = clientIdentity.deviceName,
-        version = clientIdentity.version
-    )
 
     /** Whether the server supports the Quick Connect sign-in flow. Servers before it existed return false, never an error. */
     suspend fun isQuickConnectEnabled(address: String): Boolean = when (val result = quickConnectService.isQuickConnectEnabled(address)) {
