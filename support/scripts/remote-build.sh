@@ -19,6 +19,9 @@ cd "$ROOT"
 # Box runs only: two test forks per module is ~35% faster on the 16-core box.
 export REMOTE_GRADLE_BOX_ARGS="${REMOTE_GRADLE_BOX_ARGS:--Ps2.testForks=2}"
 
+# Goldens verify on Linux within the changeThreshold; record stays on the Mac.
+export REMOTE_GRADLE_MAC_ONLY="${REMOTE_GRADLE_MAC_ONLY:-record* *Record* connected* *Ios* *Xcode* linkDebugFramework* install*}"
+
 flags=()
 case "${1:-}" in
     --box|--local) flags+=("$1"); shift ;;

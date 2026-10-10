@@ -75,7 +75,7 @@ The measurements below were taken against the fuller command this baseline repla
 |---|---|---|---|---|
 | Uncached (`--no-build-cache`, fresh box dir), box load 12-28, other slot busy | **~29 min** | 6m16s | ~25 min | 949 tasks, 765 executed; config 1.5 s; artifact transforms 31 s |
 | One-line `:android:app` change, cache on, quiet box, app tests at 2 forks | 0 | 2m11s (2m18s end to end) | 5m07s | 27 tasks executed; startup 6.6 s; config 1.5 s |
-| `verifyRoborazziDebug` app + designsystem on the box | 0 | 1m51s | | 7 `HomeScreenshotTest` failures (#539) |
+| `verifyRoborazziDebug` app + designsystem on the box | 0 | 1m51s | | Passes on 2026-10-11 (150 suites, 1392 tests) |
 
 The slot queue, not the build, dominated wall time: with up to ten workers landing and two slots,
 a 6 min build waited 29 min. (#546 since stopped that queue: `remote-build.sh` builds on the Mac
@@ -131,7 +131,7 @@ run on KSP.
 | 1 | Drop `lintDebug` from the landing; lint nightly, or gate on a baseline with `abortOnError = true` and `ignoreTestSources` | ~2.5 CPU-min and 25-35 s wall incremental; ~10 CPU-min and ~1.5 min wall uncached | Brief text only; a baseline is one task run | #537 — landed |
 | 2 | Drop `:android:architecture-tests:test` (it duplicates `testDebugUnitTest`) | 10-13 CPU-s | None | #537 — landed |
 | 3 | Skip docs/design boards unless Roborazzi records or verifies | 40-90 CPU-s whenever designsystem tests rerun, ~30 s in app | Small test change | #538 — landed (measured `:android:designsystem:testDebugUnitTest`: 22s → 15s) |
-| 4 | Run `verifyRoborazziDebug` in the same invocation as `testDebugUnitTest`, so app's and designsystem's suites run once, in verify mode | A second Gradle run and a rerun of both suites: landing 100-167 s → 58-65 s on the Mac after a one-line app change | Landing command only | #552 — landed (running it on the box still waits on #539) |
+| 4 | Run `verifyRoborazziDebug` in the same invocation as `testDebugUnitTest`, so app's and designsystem's suites run once, in verify mode | A second Gradle run and a rerun of both suites: landing 100-167 s → 58-65 s on the Mac after a one-line app change | Landing command only | #552 — landed (landing still runs it on the Mac) |
 | 5 | Move the 15 Robolectric ViewModel/use-case tests to plain JVM | ~20-25 CPU-s per app run; fewer looper races | Prefs fake in fixtures | #540 |
 | 6 | `maxParallelForks = 2` for app tests, the default on macOS (`-Ps2.testForks=N` overrides; Linux, so the box, stays at 1) | App test wall on the Mac 57-87 s → 50-52 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542, #552 — landed (fork table below) |
 | 7 | Take timing tests out of `testDebugUnitTest` | Fewer reruns after flakes (each costs a full slot) | Small | #541 |
@@ -196,6 +196,6 @@ Considered and not worth it now:
 | External PRs | No CI: the contributor runs `support/scripts/lint` and `support/scripts/unit-test` locally, and the owner lands the PR through `land` like any branch | All verification is local on the owner's Mac; no GitHub workflow remains |
 
 `remote-build.sh` picks the host itself (#546): long jobs (tests, `check`, `lint*`, `detekt*`, more than 4 tasks) go to the
-box when a slot is free; quick jobs go to the box only when the Mac is busy. Roborazzi, `connected*` and `install*` tasks
+box when a slot is free; quick jobs go to the box only when the Mac is busy. Roborazzi verify goes to the box with the other `verify*` tasks; Roborazzi record and compare, `connected*` and `install*` tasks
 stay on the Mac. `--box` and `--local` force one. It prints which host ran and why, and on the box the slot wait and the Gradle
 wall separately, so the queue cost stays visible in every landing.

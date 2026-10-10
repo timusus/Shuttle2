@@ -9,7 +9,7 @@ paths:
 `support/scripts/remote-build.sh [--box|--local] <gradle args...>` is a thin wrapper over devtools' `remote-gradle` (see its
 header and README for routing, slots, sync and env knobs; tune with `REMOTE_GRADLE_*`). With no flag it routes by job type:
 long jobs (tests, `check`, `lint*`, other `verify*`, more than 4 tasks) go to the box whenever a slot is free, Roborazzi
-record/verify/compare, `connected*`, iOS/Xcode and `install*` stay on the Mac, and quick builds stay on the Mac unless it is loaded or busy. A
+record/compare, `connected*`, iOS/Xcode and `install*` stay on the Mac, and quick builds stay on the Mac unless it is loaded or busy. A
 probe comes first, so an unreachable or full box builds on the Mac instead. `--box` forces the box and waits for a slot
 (exit 3 if unreachable); `--local` forces the Mac. One line says where it ran and why.
 
@@ -32,10 +32,10 @@ Opt in with `S2_REMOTE_BUILD=1`, or `--remote-build` as the first argument to `s
 > itself. The landing verify is one Mac invocation: `support/scripts/remote-build.sh --local -q testDebugUnitTest
 > :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug`.
 
-**Roborazzi record, verify and compare stay on the Mac by default** (remote-gradle's `REMOTE_GRADLE_MAC_ONLY`; the wrapper
-doesn't override it). The `docs/design/**` goldens are recorded on macOS; #458 added a Linux anti-aliasing tolerance
-(`s2.roborazzi.changeThreshold`), but all 7 `HomeScreenshotTest` shots were still failing on Linux with a colour diff when
-last measured, so landing pins its verify to the Mac with `--local` (#539). Plain `testDebugUnitTest` is unaffected: the `docs/design` shots are a no-op outside
+**Roborazzi record and compare stay on the Mac; verify runs on the box.** The wrapper sets `REMOTE_GRADLE_MAC_ONLY` to keep
+`record*` and `compare*` local, since the `docs/design/**` goldens are Mac-recorded. Verify passes on the box against them
+(measured 2026-10-11, full suite: 150 suites, 1392 tests, 0 failures). Landing still pins its verify to the Mac with `--local`.
+Plain `testDebugUnitTest` is unaffected: the `docs/design` shots are a no-op outside
 `verify`/`record` (#538). Roborazzi switches a module's test task into verify mode when its `verifyRoborazziDebug` is in
 the graph (#552), so landing runs the verify tasks in the same invocation as `testDebugUnitTest`.
 
