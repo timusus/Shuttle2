@@ -659,6 +659,29 @@ final class MusicPlaybackControllerTests: XCTestCase {
         wait(for: [blockedFill], timeout: 5)
     }
 
+    /// A next whose transcode drops while it's read ahead isn't failed: what was read of it plays on from the current
+    /// track, and once it's current the owner is asked to re-open it where it's heard, about its start.
+    func testANextThatDropsWhileReadAheadIsReopenedOnceCurrent() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 12_000, seed: 1)
+        let b = TestSignal.noise(frames: 48_000, seed: 2)
+        let next = PlaybackTrack(uid: "B", gainDb: 0) { DroppingTrackSource(samples: b, dropFrame: 9_600) }
+        controller.load(current: track("A", a), next: next, playWhenReady: true)
+        controller.syncForTesting()
+
+        let out = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000 + 9_600)
+        controller.syncForTesting()
+
+        XCTAssertEqual(log.failures, [])
+        XCTAssertEqual(log.transitions, ["B"])
+        XCTAssertEqual(log.seeksUnsupported.count, 1, "\(log.seeksUnsupported)")
+        let ms = try XCTUnwrap(log.seeksUnsupported.first.flatMap { $0.hasPrefix("B ") ? Int($0.dropFirst(2)) : nil })
+        XCTAssertLessThan(ms, 50)
+        // What was read of it before the drop is heard after the current track.
+        let heard = Array(out.left[12_000..<21_000])
+        XCTAssertTrue(heard.indices.allSatisfy { abs(b[$0 * 2] - heard[$0]) < 1e-4 }, "the next's audio before the drop")
+    }
+
     /// Plays out everything scheduled up to a ``StallingTrackSource``'s gate, then waits for the owner to hear loading
     /// while the engine's read is still blocked. Returns the stalled fill, which returns once the source is released.
     private func runDryIntoTheStall(_ controller: MusicPlaybackController, _ log: CallbackLog,

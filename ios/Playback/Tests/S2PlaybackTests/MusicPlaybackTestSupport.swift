@@ -76,6 +76,46 @@ final class RefusingTrackSource: TrackPCMSource {
     func interrupt() {}
 }
 
+/// A transcode whose stream drops after `dropFrame` and whose host would only send it again from the top, as
+/// ``FFmpegTrackSource`` reports it: every read from there throws ``TrackSourceError/unseekable``.
+final class DroppingTrackSource: TrackPCMSource {
+    private let inner: InMemoryTrackSource
+    private let dropFrame: Int
+    private let lock = NSLock()
+    private var delivered = 0
+    private var dropped = false
+
+    init(samples: [Float], dropFrame: Int) {
+        inner = InMemoryTrackSource(samples: samples)
+        self.dropFrame = dropFrame
+    }
+
+    var isSeekable: Bool { lock.withLock { !dropped } }
+
+    func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
+        try inner.open(sampleRate: sampleRate, channelCount: channelCount)
+    }
+
+    func seek(toFrame frame: Int64) throws {
+        if lock.withLock({ dropped }) { throw TrackSourceError.unseekable }
+        try inner.seek(toFrame: frame)
+        delivered = Int(frame)
+    }
+
+    func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        if delivered >= dropFrame {
+            lock.withLock { dropped = true }
+            throw TrackSourceError.unseekable
+        }
+        let frames = try inner.read(into: buffer, maxFrames: min(maxFrames, dropFrame - delivered))
+        delivered += frames
+        return frames
+    }
+
+    func cancel() {}
+    func interrupt() {}
+}
+
 /// A stream that stalls at `gateFrame`, which needn't be a chunk's start (a read stops short at it, and the next waits):
 /// reads there wait, saying so to the wait hook every 50 ms as a stalled
 /// ``StreamedTrackReader`` does each second, until ``release()``. An interrupt ends the wait, and every read until a seek,

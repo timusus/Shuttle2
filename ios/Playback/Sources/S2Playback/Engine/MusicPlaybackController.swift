@@ -828,7 +828,7 @@ public final class MusicPlaybackController {
     /// that refuses the seek (``TrackSourceError/unseekable``) can't carry on, and isn't the current
     /// track the owner could re-open at a position: it failed.
     private func resumeReadingNext() {
-        guard let slot = reading, slot !== current, slot.opened, !slot.failed else { return }
+        guard let slot = reading, slot !== current, slot.opened, !slot.failed, !slot.awaitingReopen else { return }
         let streamStart = timelineLock.withLock { timeline.segments.last { $0.slot == slot.id }?.streamStart }
         guard let streamStart else { return }
         do {
@@ -1229,7 +1229,9 @@ public final class MusicPlaybackController {
                 // Still opening: what's read so far goes out, and its open's end resumes the fill.
                 // The current track's last frames, still inside the limiter, go out too: they'd
                 // otherwise be heard after the wait.
-                if slot.preparing != nil {
+                // A next that dropped while read ahead reads nothing more: what was read of it plays, and it's
+                // re-opened once it's current (``updateTimeline(concludingEnd:)``).
+                if slot.preparing != nil || (slot.awaitingReopen && slot !== current) {
                     processor.drain(into: &output)
                     return
                 }
@@ -1262,6 +1264,9 @@ public final class MusicPlaybackController {
                             reportSeekUnsupported(slot, ms: ms(frames: currentMediaFrame()))
                         }
                         return
+                    } catch TrackSourceError.unseekable {
+                        slot.awaitingReopen = true
+                        continue
                     } catch {
                         reportFailure(slot, error)
                     }
@@ -1437,6 +1442,8 @@ public final class MusicPlaybackController {
                 timeline.segments.removeAll { $0.streamStart < segment.streamStart }
             }
             reportTransition(to: next, gapless: true)
+            // It dropped while read ahead: the owner re-opens it where it's heard, about its start.
+            if next.awaitingReopen { reportSeekUnsupported(next, ms: ms(frames: currentMediaFrame())) }
         }
         if concludingEnd, drained, pausingAtEnd, !pausedAtEnd, state == .playing, stream >= outputIndex, let current {
             playWhenReady = false
