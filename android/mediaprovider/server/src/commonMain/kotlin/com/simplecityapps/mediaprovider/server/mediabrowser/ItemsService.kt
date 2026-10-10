@@ -1,19 +1,22 @@
-package com.simplecityapps.provider.jellyfin.http
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.networkResult
 import com.simplecityapps.networking.retrofit.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.parameter
-import io.ktor.http.HttpHeaders
 import kotlin.time.Instant
 
-/** Jellyfin's library queries: songs, playlists and their items, and a single item. */
-class ItemsService(private val client: HttpClient) {
+/** The library queries of a [server]: songs, playlists and their items, and a single item, each made with a session's token. */
+class ItemsService(
+    private val client: HttpClient,
+    private val server: MediaBrowserServer,
+    private val clientIdentity: ClientIdentity
+) {
     suspend fun audioItems(
         url: String,
-        authorization: String,
+        token: String,
         userId: String,
         /** The music library to list the songs of. */
         parentId: String,
@@ -23,9 +26,9 @@ class ItemsService(private val client: HttpClient) {
         minDateLastSaved: Instant? = null
     ): NetworkResult<QueryResult> = items(
         url = "$url/Users/$userId/Items",
-        authorization = authorization,
+        token = token,
         itemTypes = "Audio",
-        fields = "Genres,DateCreated,ProviderIds,MediaStreams",
+        fields = server.songFields,
         parentId = parentId,
         limit = limit,
         startIndex = startIndex,
@@ -43,14 +46,14 @@ class ItemsService(private val client: HttpClient) {
      */
     suspend fun audioIds(
         url: String,
-        authorization: String,
+        token: String,
         userId: String,
         parentId: String?,
         limit: Int = 2500,
         startIndex: Int = 0
     ): NetworkResult<QueryResult> = items(
         url = "$url/Users/$userId/Items",
-        authorization = authorization,
+        token = token,
         itemTypes = "Audio",
         parentId = parentId,
         limit = limit,
@@ -64,13 +67,13 @@ class ItemsService(private val client: HttpClient) {
     /** The user's libraries, each with its [Item.collectionType]: a sync reads the songs of all but those of kinds that hold no music. */
     suspend fun libraries(
         url: String,
-        authorization: String,
+        token: String,
         userId: String
     ): NetworkResult<QueryResult> = client.networkResult {
         get("$url/Users/$userId/Views") {
             // A library hidden from the user's home screen still holds their music; leaving it out would delete its songs
             parameter("IncludeHidden", true)
-            header(HttpHeaders.Authorization, authorization)
+            server.authorize(this, token, clientIdentity)
         }
     }
 
@@ -80,13 +83,13 @@ class ItemsService(private val client: HttpClient) {
      */
     suspend fun favouriteAudioItems(
         url: String,
-        authorization: String,
+        token: String,
         userId: String,
         limit: Int = 2500,
         startIndex: Int = 0
     ): NetworkResult<QueryResult> = items(
         url = "$url/Users/$userId/Items",
-        authorization = authorization,
+        token = token,
         itemTypes = "Audio",
         limit = limit,
         startIndex = startIndex,
@@ -102,15 +105,15 @@ class ItemsService(private val client: HttpClient) {
      */
     suspend fun playedAudioItems(
         url: String,
-        authorization: String,
+        token: String,
         userId: String,
         limit: Int,
         startIndex: Int
     ): NetworkResult<QueryResult> = items(
         url = "$url/Users/$userId/Items",
-        authorization = authorization,
+        token = token,
         itemTypes = "Audio",
-        fields = "Genres,DateCreated,ProviderIds,MediaStreams",
+        fields = server.songFields,
         limit = limit,
         startIndex = startIndex,
         filters = "IsPlayed",
@@ -121,13 +124,13 @@ class ItemsService(private val client: HttpClient) {
 
     suspend fun playlists(
         url: String,
-        authorization: String,
+        token: String,
         userId: String,
         limit: Int = 2500,
         startIndex: Int = 0
     ): NetworkResult<QueryResult> = items(
         url = "$url/Users/$userId/Items",
-        authorization = authorization,
+        token = token,
         itemTypes = "Playlist",
         fields = "DateLastSaved,ChildCount",
         limit = limit,
@@ -136,14 +139,14 @@ class ItemsService(private val client: HttpClient) {
 
     suspend fun playlistItems(
         url: String,
-        authorization: String,
+        token: String,
         playlistId: String,
         userId: String,
         limit: Int = 2500,
         startIndex: Int = 0
     ): NetworkResult<QueryResult> = items(
         url = "$url/Playlists/$playlistId/Items",
-        authorization = authorization,
+        token = token,
         itemTypes = "Audio",
         limit = limit,
         startIndex = startIndex,
@@ -152,18 +155,18 @@ class ItemsService(private val client: HttpClient) {
 
     suspend fun item(
         url: String,
-        authorization: String,
+        token: String,
         userId: String,
         itemId: String
     ): NetworkResult<Item> = client.networkResult {
         get("$url/Users/$userId/Items/$itemId") {
-            header(HttpHeaders.Authorization, authorization)
+            server.authorize(this, token, clientIdentity)
         }
     }
 
     private suspend fun items(
         url: String,
-        authorization: String,
+        token: String,
         itemTypes: String,
         fields: String? = null,
         limit: Int,
@@ -178,20 +181,21 @@ class ItemsService(private val client: HttpClient) {
         sortOrder: String? = null
     ): NetworkResult<QueryResult> = client.networkResult {
         get(url) {
-            header(HttpHeaders.Authorization, authorization)
-            parameter("recursive", true)
-            parameter("includeItemTypes", itemTypes)
-            parameter("fields", fields)
-            parameter("limit", limit)
-            parameter("startIndex", startIndex)
-            parameter("userId", userId)
-            parameter("parentId", parentId)
-            parameter("minDateLastSaved", minDateLastSaved?.toString())
-            parameter("filters", filters)
-            parameter("enableUserData", enableUserData)
-            parameter("enableImages", enableImages)
-            parameter("sortBy", sortBy)
-            parameter("sortOrder", sortOrder)
+            server.authorize(this, token, clientIdentity)
+            fun query(name: String, value: Any?) = parameter(server.itemsParameter(name), value)
+            query("Recursive", true)
+            query("IncludeItemTypes", itemTypes)
+            query("Fields", fields)
+            query("Limit", limit)
+            query("StartIndex", startIndex)
+            query("UserId", userId)
+            query("ParentId", parentId)
+            query("MinDateLastSaved", minDateLastSaved?.toString())
+            query("Filters", filters)
+            query("EnableUserData", enableUserData)
+            query("EnableImages", enableImages)
+            query("SortBy", sortBy)
+            query("SortOrder", sortOrder)
         }
     }
 }

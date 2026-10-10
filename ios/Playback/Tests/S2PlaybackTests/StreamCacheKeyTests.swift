@@ -4,7 +4,7 @@ import XCTest
 /// ``StreamCacheKey``: per-play session ids and tokens out, what names the stream kept (#822).
 final class StreamCacheKeyTests: XCTestCase {
 
-    /// The shape `JellyfinAuthenticationManager.buildJellyfinPath` makes.
+    /// The shape `JellyfinAuthenticationManager.buildUniversalPath` makes.
     private func jellyfin(session: String, token: String, bitrate: Int? = nil) -> URL {
         URL(string: "https://jf.example.com/Audio/abc123/universal?UserId=u1&DeviceId=d1&PlaySessionId=\(session)"
             + "&Container=flac,mp3,opus&TranscodingContainer=ts&TranscodingProtocol=hls&EnableRedirection=true"
@@ -12,7 +12,7 @@ final class StreamCacheKeyTests: XCTestCase {
             + "&ApiKey=\(token)")!
     }
 
-    /// The shape `EmbyAuthenticationManager.buildEmbyPath` makes.
+    /// The shape `EmbyAuthenticationManager.buildUniversalPath` makes.
     private func emby(session: String, token: String, startTicks: Int? = nil) -> URL {
         URL(string: "http://192.168.1.10:8096/emby/Audio/42/universal?UserId=u1&DeviceId=d1&PlaySessionId=\(session)"
             + "&Container=flac,mp3&MaxSampleRate=48000&AudioCodec=aac"

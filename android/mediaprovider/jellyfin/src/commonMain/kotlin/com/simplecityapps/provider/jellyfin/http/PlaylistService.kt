@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.jellyfin.http
 
+import com.simplecityapps.mediaprovider.server.mediabrowser.QueryResult
 import com.simplecityapps.networking.networkResult
 import com.simplecityapps.networking.retrofit.NetworkResult
 import io.ktor.client.HttpClient

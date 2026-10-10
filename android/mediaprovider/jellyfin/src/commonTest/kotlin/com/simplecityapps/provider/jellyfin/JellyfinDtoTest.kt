@@ -1,12 +1,12 @@
 package com.simplecityapps.provider.jellyfin
 
+import com.simplecityapps.mediaprovider.server.mediabrowser.AuthenticationResult
+import com.simplecityapps.mediaprovider.server.mediabrowser.Item
+import com.simplecityapps.mediaprovider.server.mediabrowser.QueryResult
+import com.simplecityapps.mediaprovider.server.mediabrowser.User
 import com.simplecityapps.mediaprovider.server.readFixture
 import com.simplecityapps.networking.S2Json
-import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
-import com.simplecityapps.provider.jellyfin.http.Item
-import com.simplecityapps.provider.jellyfin.http.QueryResult
 import com.simplecityapps.provider.jellyfin.http.QuickConnectResult
-import com.simplecityapps.provider.jellyfin.http.User
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe

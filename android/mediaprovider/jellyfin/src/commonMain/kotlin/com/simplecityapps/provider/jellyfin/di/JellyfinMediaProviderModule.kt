@@ -10,6 +10,8 @@ import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinFavouriteWriter
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
@@ -18,11 +20,9 @@ import com.simplecityapps.provider.jellyfin.JellyfinPlaylistWriter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.provider.jellyfin.http.FavouriteService
-import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.PlaylistService
-import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -43,11 +43,11 @@ import io.ktor.client.HttpClient
 class JellyfinMediaProviderModule {
     @Provides
     @SingleIn(AppScope::class)
-    fun provideUserService(@Named("JellyfinHttpClient") httpClient: HttpClient): UserService = UserService(httpClient)
-
-    @Provides
-    @SingleIn(AppScope::class)
-    fun provideItemsService(@Named("JellyfinHttpClient") httpClient: HttpClient): ItemsService = ItemsService(httpClient)
+    @Named("JellyfinItemsService")
+    fun provideItemsService(
+        @Named("JellyfinHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): ItemsService = ItemsService(httpClient, MediaBrowserServer.Jellyfin, clientIdentity)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -60,18 +60,18 @@ class JellyfinMediaProviderModule {
     @Provides
     @SingleIn(AppScope::class)
     fun provideJellyfinAuthenticationManager(
-        userService: UserService,
+        @Named("JellyfinHttpClient") httpClient: HttpClient,
         @Named("JellyfinCredentialStore") credentialStore: ServerCredentialStore,
         clientIdentity: ClientIdentity,
         streamProfile: StreamProfile
-    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore, clientIdentity, streamProfile)
+    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(httpClient, credentialStore, clientIdentity, streamProfile)
 
     @Provides
     @SingleIn(AppScope::class)
     fun provideJellyfinMediaProvider(
         strings: ServerStrings,
         authenticationManager: JellyfinAuthenticationManager,
-        itemsService: ItemsService
+        @Named("JellyfinItemsService") itemsService: ItemsService
     ): JellyfinMediaProvider = JellyfinMediaProvider(strings, authenticationManager, itemsService)
 
     @Provides

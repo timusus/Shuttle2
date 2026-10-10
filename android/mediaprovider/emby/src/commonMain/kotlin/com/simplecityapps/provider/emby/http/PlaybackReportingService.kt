@@ -1,5 +1,7 @@
 package com.simplecityapps.provider.emby.http
 
+import com.simplecityapps.mediaprovider.server.mediabrowser.EMBY_AUTHORIZATION
+import com.simplecityapps.mediaprovider.server.mediabrowser.EMBY_TOKEN
 import com.simplecityapps.networking.networkResult
 import com.simplecityapps.networking.retrofit.NetworkResult
 import io.ktor.client.HttpClient

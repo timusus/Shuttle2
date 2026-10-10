@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.PlaylistWriteResult
 import com.simplecityapps.mediaprovider.ServerPlaylistEntry
 import com.simplecityapps.mediaprovider.ServerPlaylistWriter
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.mediaprovider.server.toPlaylistWriteResult
 import com.simplecityapps.mediaprovider.then
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -29,14 +30,14 @@ constructor(
     override suspend fun entries(playlistId: String): PlaylistWriteResult<List<ServerPlaylistEntry>> = request { address, credentials, authorization ->
         playlistService.entries(address, credentials.accessToken, authorization, playlistId, credentials.userId)
     }.toPlaylistWriteResult { result ->
-        result.items.mapNotNull { item -> item.playlistItemId?.let { entryId -> ServerPlaylistEntry(entryId, item.songPath) } }
+        result.items.mapNotNull { item -> item.playlistItemId?.let { entryId -> ServerPlaylistEntry(entryId, MediaBrowserServer.Emby.songPath(item)) } }
     }
 
     override suspend fun add(
         playlistId: String,
         songPaths: List<String>
     ): PlaylistWriteResult<Unit> = request { address, credentials, authorization ->
-        playlistService.add(address, credentials.accessToken, authorization, playlistId, credentials.userId, songPaths.map { path -> path.removePrefix(SONG_PATH_PREFIX) })
+        playlistService.add(address, credentials.accessToken, authorization, playlistId, credentials.userId, songPaths.map { path -> path.removePrefix(MediaBrowserServer.Emby.songPathPrefix) })
     }.toPlaylistWriteResult()
 
     override suspend fun remove(

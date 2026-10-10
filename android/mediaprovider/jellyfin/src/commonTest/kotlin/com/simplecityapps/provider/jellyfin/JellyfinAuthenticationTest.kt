@@ -8,7 +8,6 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
@@ -33,7 +32,7 @@ class JellyfinAuthenticationTest {
     private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
 
     private val authenticationManager = JellyfinAuthenticationManager(
-        userService = UserService(createHttpClient(server.engine)),
+        httpClient = createHttpClient(server.engine),
         credentialStore = credentialStore,
         clientIdentity = clientIdentity,
         streamProfile = StreamProfile.Android
@@ -62,7 +61,7 @@ class JellyfinAuthenticationTest {
 
     @Test
     fun `stream url authenticates with ApiKey - not api_key`() {
-        val path = authenticationManager.buildJellyfinPath("item789", credentials, maxBitrateKbps = null)!!
+        val path = authenticationManager.buildUniversalPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&ApiKey=token123"
         path shouldNotContain "api_key"

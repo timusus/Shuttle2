@@ -1,6 +1,7 @@
 package com.simplecityapps.provider.jellyfin.http
 
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
+import com.simplecityapps.mediaprovider.server.mediabrowser.AuthenticationResult
 import com.simplecityapps.networking.networkResult
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
@@ -15,33 +16,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 
-/** Jellyfin's sign-in endpoints: password and Quick Connect sign-in, and the signed-in user. */
-class UserService(private val client: HttpClient) {
-    suspend fun authenticate(
-        url: String,
-        username: String,
-        password: String,
-        deviceId: String,
-        deviceName: String,
-        version: String
-    ): NetworkResult<AuthenticationResult> = client.networkResult {
-        post("$url/Users/AuthenticateByName") {
-            header(HttpHeaders.Authorization, mediaBrowserAuthorization(deviceId, deviceName = deviceName, version = version))
-            contentType(ContentType.Application.Json)
-            setBody(mapOf("username" to username, "pw" to password))
-        }
-    }
-
-    /** The signed-in user, including their current `Policy` — used to refresh permissions that may have changed server-side. */
-    suspend fun me(
-        url: String,
-        authorization: String
-    ): NetworkResult<User> = client.networkResult {
-        get("$url/Users/Me") {
-            header(HttpHeaders.Authorization, authorization)
-        }
-    }
-
+/** Jellyfin's Quick Connect sign-in, which Emby doesn't have. */
+class QuickConnectService(private val client: HttpClient) {
     suspend fun isQuickConnectEnabled(url: String): NetworkResult<Boolean> = client.networkResult {
         get("$url/QuickConnect/Enabled")
     }

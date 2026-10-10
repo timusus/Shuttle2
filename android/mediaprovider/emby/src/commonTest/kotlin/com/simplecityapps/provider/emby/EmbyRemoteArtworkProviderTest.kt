@@ -5,9 +5,9 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.emby.http.ItemsService
-import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -30,17 +30,18 @@ class EmbyRemoteArtworkProviderTest {
             authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")
         }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel")
+
     private val provider =
         EmbyRemoteArtworkProvider(
-            embyAuthenticationManager =
+            authenticationManager =
                 EmbyAuthenticationManager(
-                    userService = UserService(client),
+                    httpClient = client,
                     credentialStore = credentialStore,
-                    clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel"),
+                    clientIdentity = clientIdentity,
                     streamProfile = StreamProfile.Android
                 ),
-            credentialStore = credentialStore,
-            itemsService = ItemsService(client)
+            itemsService = ItemsService(client, MediaBrowserServer.Emby, clientIdentity)
         )
 
     @AfterTest

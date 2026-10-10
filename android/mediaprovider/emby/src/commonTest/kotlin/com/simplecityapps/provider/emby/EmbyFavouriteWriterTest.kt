@@ -7,7 +7,6 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.emby.http.FavouriteService
-import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -27,7 +26,7 @@ class EmbyFavouriteWriterTest {
     }
 
     private val authenticationManager = EmbyAuthenticationManager(
-        userService = UserService(client),
+        httpClient = client,
         credentialStore = credentialStore,
         clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
         streamProfile = StreamProfile.Android

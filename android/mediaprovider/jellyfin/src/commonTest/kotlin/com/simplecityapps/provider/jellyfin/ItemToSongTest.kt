@@ -1,11 +1,15 @@
 package com.simplecityapps.provider.jellyfin
 
+import com.simplecityapps.mediaprovider.server.mediabrowser.Item
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
+import com.simplecityapps.mediaprovider.server.mediabrowser.toSong
 import com.simplecityapps.networking.S2Json
-import com.simplecityapps.provider.jellyfin.http.Item
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.test.Test
 import kotlin.time.Instant
+
+private fun Item.toSong(syncedAt: Instant) = toSong(MediaBrowserServer.Jellyfin, syncedAt)
 
 class ItemToSongTest {
     @Test

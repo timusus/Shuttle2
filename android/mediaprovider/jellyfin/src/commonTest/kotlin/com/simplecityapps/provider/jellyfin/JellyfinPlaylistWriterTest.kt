@@ -10,7 +10,6 @@ import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.bodyText
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.PlaylistService
-import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
@@ -29,7 +28,7 @@ class JellyfinPlaylistWriterTest {
     }
 
     private val authenticationManager = JellyfinAuthenticationManager(
-        userService = UserService(client),
+        httpClient = client,
         credentialStore = credentialStore,
         clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
         streamProfile = StreamProfile.Android

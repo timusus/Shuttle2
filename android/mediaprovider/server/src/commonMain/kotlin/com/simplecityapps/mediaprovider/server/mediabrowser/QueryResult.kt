@@ -1,4 +1,4 @@
-package com.simplecityapps.provider.emby.http
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

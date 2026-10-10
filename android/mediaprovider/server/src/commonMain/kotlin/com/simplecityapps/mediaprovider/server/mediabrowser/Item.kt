@@ -1,9 +1,10 @@
-package com.simplecityapps.provider.jellyfin.http
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// Every field but the id can be missing: Jellyfin leaves out what an item doesn't have.
+// Every field but the id can be missing: the server leaves out what an item doesn't have. Emby's ids are numeric, but
+// sent as strings.
 
 @Serializable
 data class ArtistItem(
@@ -54,9 +55,9 @@ data class Item(
     // A playlist's: when it was last saved (renamed, or its items edited), and how many items it holds
     @SerialName("DateLastSaved") val dateLastSaved: String? = null,
     @SerialName("ChildCount") val childCount: Int? = null,
-    // Only returned when requested in 'fields': the file's MusicBrainz tags, keyed "MusicBrainzRecording" (the recording,
-    // which is what a file's MUSICBRAINZ_TRACKID holds), "MusicBrainzTrack" (the release track), "MusicBrainzAlbum",
-    // "MusicBrainzReleaseGroup", "MusicBrainzArtist" and "MusicBrainzAlbumArtist"
+    // Only returned when requested in 'fields': the file's MusicBrainz tags, keyed "MusicBrainzAlbum",
+    // "MusicBrainzReleaseGroup", "MusicBrainzArtist", "MusicBrainzAlbumArtist" and the recording (a file's
+    // MUSICBRAINZ_TRACKID) under MediaBrowserServer.recordingIdKey
     @SerialName("ProviderIds") val providerIds: Map<String, String> = emptyMap(),
     // Only returned when requested in 'fields': the file's streams, of which the audio one carries its codec and bit depth
     @SerialName("MediaStreams") val mediaStreams: List<MediaStream> = emptyList(),

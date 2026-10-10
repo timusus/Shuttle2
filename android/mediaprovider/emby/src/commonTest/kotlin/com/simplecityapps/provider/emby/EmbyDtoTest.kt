@@ -1,11 +1,11 @@
 package com.simplecityapps.provider.emby
 
+import com.simplecityapps.mediaprovider.server.mediabrowser.AuthenticationResult
+import com.simplecityapps.mediaprovider.server.mediabrowser.Item
+import com.simplecityapps.mediaprovider.server.mediabrowser.QueryResult
+import com.simplecityapps.mediaprovider.server.mediabrowser.User
 import com.simplecityapps.mediaprovider.server.readFixture
 import com.simplecityapps.networking.S2Json
-import com.simplecityapps.provider.emby.http.AuthenticationResult
-import com.simplecityapps.provider.emby.http.Item
-import com.simplecityapps.provider.emby.http.QueryResult
-import com.simplecityapps.provider.emby.http.User
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe

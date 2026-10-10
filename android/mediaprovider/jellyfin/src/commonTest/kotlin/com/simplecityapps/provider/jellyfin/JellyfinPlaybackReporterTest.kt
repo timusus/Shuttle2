@@ -11,7 +11,6 @@ import com.simplecityapps.networking.S2Json
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.PlaybackReport
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
-import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -34,7 +33,7 @@ class JellyfinPlaybackReporterTest {
     }
 
     private val authenticationManager = JellyfinAuthenticationManager(
-        userService = UserService(client),
+        httpClient = client,
         credentialStore = credentialStore,
         clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
         streamProfile = StreamProfile.Android

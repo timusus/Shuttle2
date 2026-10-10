@@ -9,9 +9,9 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.jellyfin.http.ItemsService
-import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -39,15 +39,18 @@ class JellyfinMediaProviderTest {
 
     private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "jellyfin")
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel")
+
     private val authenticationManager =
         JellyfinAuthenticationManager(
-            userService = UserService(client),
+            httpClient = client,
             credentialStore = credentialStore,
-            clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel"),
+            clientIdentity = clientIdentity,
             streamProfile = StreamProfile.Android
         )
 
-    private val provider = JellyfinMediaProvider(TestServerStrings, authenticationManager, ItemsService(client))
+    private val provider =
+        JellyfinMediaProvider(TestServerStrings, authenticationManager, ItemsService(client, MediaBrowserServer.Jellyfin, clientIdentity))
 
     @AfterTest
     fun tearDown() {

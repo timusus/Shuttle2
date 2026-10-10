@@ -7,7 +7,6 @@ import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
@@ -30,7 +29,7 @@ class EmbyAuthenticationTest {
     private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
 
     private val authenticationManager = EmbyAuthenticationManager(
-        userService = UserService(createHttpClient(server.engine)),
+        httpClient = createHttpClient(server.engine),
         credentialStore = credentialStore,
         clientIdentity = clientIdentity,
         streamProfile = StreamProfile.Android
@@ -38,7 +37,7 @@ class EmbyAuthenticationTest {
 
     @Test
     fun `stream url authenticates with api_key`() {
-        val path = authenticationManager.buildEmbyPath("item789", credentials, maxBitrateKbps = null)!!
+        val path = authenticationManager.buildUniversalPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&api_key=token123"
         path shouldContain "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456"
@@ -46,7 +45,7 @@ class EmbyAuthenticationTest {
 
     @Test
     fun `stream url carries the persisted client identity's device id`() {
-        val path = authenticationManager.buildEmbyPath("item789", credentials, maxBitrateKbps = null)!!
+        val path = authenticationManager.buildUniversalPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&DeviceId=${clientIdentity.id}"
     }
