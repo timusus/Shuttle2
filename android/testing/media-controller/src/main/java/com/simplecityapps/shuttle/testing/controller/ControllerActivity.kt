@@ -19,10 +19,10 @@ import com.google.common.util.concurrent.ListenableFuture
 import java.util.concurrent.Executor
 
 /**
- * Runs one command from the intent's extras against Shuttle's session, then logs `S2CTRL cmd=<cmd> result=<...>` and
- * finishes:
+ * Runs one command from the intent's extras against Shuttle's session, then logs
+ * `S2CTRL cmd=<cmd> id=<id extra> result=<...>` and finishes:
  *
- *   am start -n com.simplecityapps.shuttle.testing.controller/.ControllerActivity --es cmd <cmd> [args]
+ *   am start -n com.simplecityapps.shuttle.testing.controller/.ControllerActivity --es cmd <cmd> --es id <id> [args]
  *
  * Media3 commands (`pkg` overrides the target app): `state`, `play`, `pause`, `next`, `add --es mediaId`,
  * `move --ei from --ei to`, `remove --ei index`, `clear`, `browse-root`, `browse-children --es parent`.
@@ -147,7 +147,7 @@ class ControllerActivity : Activity() {
         if (done) return
         done = true
         val details = extras.joinToString("") { (key, value) -> " $key=$value" }
-        Log.i(TAG, "cmd=$cmd result=$result$details")
+        Log.i(TAG, "cmd=$cmd id=${intent.getStringExtra("id")} result=$result$details")
         finish()
     }
 
