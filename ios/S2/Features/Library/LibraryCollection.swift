@@ -96,7 +96,7 @@ struct LibraryTile: View {
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
                     .textRole(.rowSubtitle)
-                    .fontWeight(playback == .none ? nil : .semibold)
+                    .fontWeight(.semibold)
                     .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                     .lineLimit(1)
                 if let subtitle, !subtitle.isEmpty {
