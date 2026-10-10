@@ -80,7 +80,7 @@ struct StartupTiming: Equatable {
     /// Which server a stream came from and whether it was a transcode, read off its URL (#822).
     struct Origin: Equatable {
         enum Provider: String, Equatable {
-            case jellyfin, emby, plex, other
+            case jellyfin, emby, plex, subsonic, other
         }
 
         /// What the server does with the file. Jellyfin and Emby's universal endpoint decides on the server, so
@@ -104,6 +104,10 @@ struct StartupTiming: Equatable {
                 self.init(provider: .plex, transcode: .yes)
             } else if path.contains("/library/parts/") || query.contains("x-plex-") {
                 self.init(provider: .plex, transcode: .no)
+            } else if path.hasSuffix("/rest/stream") || path.hasSuffix("/rest/stream.view") {
+                // `format=raw` is the original file; any other format names a server transcoding.
+                let raw = query.contains("format=raw") || !query.contains("format=")
+                self.init(provider: .subsonic, transcode: raw ? .no : .yes)
             } else if path.hasPrefix("/emby/") || query.contains("api_key=") {
                 self.init(provider: .emby, transcode: path.hasSuffix("/universal") ? .server : .no)
             } else if path.contains("/Audio/") {

@@ -161,6 +161,11 @@ final class StartupTimingOriginTests: XCTestCase {
         )
     }
 
+    func testSubsonicRawStreamAndFormatTranscode() {
+        XCTAssertEqual(origin("https://nd.local/rest/stream.view?id=1&format=raw&u=a"), .init(provider: .subsonic, transcode: .no))
+        XCTAssertEqual(origin("https://nd.local/rest/stream?id=1&format=mp3&maxBitRate=128"), .init(provider: .subsonic, transcode: .yes))
+    }
+
     func testJellyfinAndEmbyUniversalAreServerDecided() {
         XCTAssertEqual(origin("https://jf.example.com/Audio/a/universal?ApiKey=t"), .init(provider: .jellyfin, transcode: .server))
         XCTAssertEqual(origin("http://emby.local/emby/Audio/4/universal?api_key=t"), .init(provider: .emby, transcode: .server))
