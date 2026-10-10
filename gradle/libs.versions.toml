@@ -82,6 +82,7 @@ androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "a
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-core = { module = "androidx.core:core-ktx", version = "1.19.1" }
+androidx-media = { module = "androidx.media:media", version = "1.7.1" }
 androidx-core-ktx = { module = "androidx.test:core-ktx", version.ref = "core-ktx-version" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }

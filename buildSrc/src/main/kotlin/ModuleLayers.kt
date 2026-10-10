@@ -66,6 +66,8 @@ object ModuleLayers {
         ":android:architecture-tests" to ModuleLayer.TOOLING,
         // Drives the release app on a device to generate its Baseline Profile and benchmark startup; nothing depends on it.
         ":android:baselineprofile" to ModuleLayer.TOOLING,
+        // A bare outside MediaController the emulator checks drive over adb; nothing depends on it.
+        ":android:testing:media-controller" to ModuleLayer.TOOLING,
     )
 
     /**

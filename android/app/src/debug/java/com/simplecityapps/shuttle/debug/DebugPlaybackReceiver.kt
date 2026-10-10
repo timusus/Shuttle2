@@ -242,6 +242,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("title", currentSong?.name ?: JSONObject.NULL)
             put("inLibrary", currentSong?.isInLibrary ?: JSONObject.NULL)
             put("queueTitles", JSONArray(queueOperations.getQueue().map { it.song.name }))
+            put("queueSongIds", JSONArray(queueOperations.getQueue().map { it.song.id }))
             put("shuffle", queueOperations.getShuffleMode().name)
             put("repeat", queueOperations.getRepeatMode().name)
             put("speed", playbackOperations.getPlaybackSpeed())
