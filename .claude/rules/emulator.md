@@ -82,6 +82,9 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   seeks, edits the queue and dumps state as JSON. Ready-made checks live in `support/scripts/checks/`;
   `support/maestro/README.md` covers writing more and `support/maestro/CLASSIFICATION.md` lists device-only vs ported to
   Robolectric (#450).
+- **An outside controller** (queue edits, browse, old-session play-by-id/search that adb can't send): the debug-only
+  `:android:testing:media-controller` app, driven by `am start ... --es cmd <cmd>` and answering on logcat tag `S2CTRL`.
+  Checks source `checks/_controller.sh` (`install_controller`, `ctl`); it builds the APK on first use (#423).
 - **Taps, dumps, screenshots:** the `android-device` skill's scripts (`~/.claude/scripts/adb/`) work on a lane with the
   `env` exports; with `ANDROID_ADB_SERVER_PORT` set they require `ANDROID_SERIAL`. **Pause playback before any
   uiautomator step** (`s2-debug.sh PAUSE`): while music plays the UI never goes idle and dumps fail with "could not get
