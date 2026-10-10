@@ -8,6 +8,7 @@ import androidx.glance.appwidget.updateAll
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackServiceStarter
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.WidgetArtwork
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
@@ -47,7 +48,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val playbackOperations: PlaybackOperations,
     private val queueOperations: QueueOperations,
-    private val artworkStore: WidgetArtworkStore,
+    private val artworkStore: WidgetArtwork,
     private val appearanceSettings: AppearanceSettings,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) {

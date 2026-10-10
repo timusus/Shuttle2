@@ -33,7 +33,7 @@ class UiModuleRules {
         }
         Baseline.assertMatches(
             "ui-module-imports",
-            "Files under ui/** (outside MainActivity, the shortcut/review helpers and ui/widgets, which stay " +
+            "Files under ui/** (outside MainActivity and the shortcut/review helpers, which stay " +
                 "in :android:app) must not import data, provider or other app-only declarations; move the " +
                 "dependency behind a domain port or use case",
             violations,
@@ -67,14 +67,12 @@ class UiModuleRules {
     /**
      * Files under the `ui` package in `:android:app` that step 8 moves to `:android:ui` — everything
      * except the top-level helpers directly in `ui` (MainActivity, the shortcut/review helpers,
-     * ThemeManager) and the `widgets` subpackage (its artwork store loads bitmaps through the image loader and
-     * the receivers are bound by class name), which stay behind in the composition root (layering.md step 8's
-     * "Stays" list).
+     * ThemeManager), which stay behind in the composition root (layering.md step 8's "Stays" list).
      */
     private fun KoFileDeclaration.isMovingUiFile(): Boolean {
         if (module != APP_MODULE) return false
         val subPath = UI_SUBPATH.find(relativePath)?.groupValues?.get(1) ?: return false
-        return "/" in subPath && !subPath.startsWith("widgets/")
+        return "/" in subPath
     }
 
     private companion object {

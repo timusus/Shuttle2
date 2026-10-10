@@ -64,7 +64,6 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.accentColorScheme
 import com.simplecityapps.shuttle.di.appGraph
-import com.simplecityapps.shuttle.ui.MainActivity
 
 /**
  * The now playing widget, shared by the small and large widget receivers. It only draws
@@ -125,6 +124,14 @@ internal fun NowPlayingContent(
     }
 }
 
+/** Tapping the widget opens the app's launcher activity, found through the package manager so the widget needn't name it. */
+@Composable
+private fun openAppModifier(): GlanceModifier {
+    val context = LocalContext.current
+    val component = context.packageManager.getLaunchIntentForPackage(context.packageName)?.component ?: return GlanceModifier
+    return GlanceModifier.clickable(actionStartActivity(component))
+}
+
 /**
  * The widget's background, rounded to the launcher's radius, with [padding] on every side of [content] but the
  * bottom, which has [bottomPadding]. The content starts at the top left, so nothing is centred away from the
@@ -151,7 +158,7 @@ private fun WidgetContainer(
                 .fillMaxSize()
                 .appWidgetBackground()
                 .then(background)
-                .clickable(actionStartActivity<MainActivity>())
+                .then(openAppModifier())
     ) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             // Views can't be clipped below API 31, so the rounded background is a drawable. A background

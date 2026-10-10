@@ -1,13 +1,16 @@
-package com.simplecityapps.shuttle.ui.widgets
+package com.simplecityapps.shuttle.widgets
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
 import com.simplecityapps.imageloading.ArtworkImageLoader
+import com.simplecityapps.playback.WidgetArtwork
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.widgets.maxWidgetArtSize
 import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import java.io.File
@@ -24,16 +27,17 @@ import timber.log.Timber
 /**
  * Widget artwork lives on disk, one file per song artwork shared by every widget, so the widget state only
  * carries a path. Files are rendered once at the largest size any widget layout draws, so they're sharp at
- * every layout, capped so a tablet doesn't send the launcher a huge bitmap. [WidgetManager] calls it from one
+ * every layout, capped so a tablet doesn't send the launcher a huge bitmap. The widget manager calls it from one
  * coroutine at a time, but the bookkeeping is a concurrent set so a stray caller can't corrupt it.
  */
 @SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
 class WidgetArtworkStore
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
     private val imageLoader: ArtworkImageLoader
-) {
+) : WidgetArtwork {
     private val directory: File get() = File(context.filesDir, "widget_artwork")
 
     private val sizePx: Int
@@ -47,8 +51,7 @@ constructor(
     /** Songs whose artwork failed to load, so play/pause updates don't retry them. Reset by [prune]. */
     private val missing: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
-    /** The saved artwork for [song], loading and saving it first if needed. Null when the song has no art. */
-    suspend fun artworkPath(song: Song): String? {
+    override suspend fun artworkPath(song: Song): String? {
         val file = file(song)
         if (file.name in missing) return null
         if (withContext(Dispatchers.IO) { file.exists() }) return file.path
@@ -60,8 +63,7 @@ constructor(
         return withContext(Dispatchers.IO) { save(bitmap, file) }?.path
     }
 
-    /** Deletes every saved file except those for [keep]. */
-    suspend fun prune(keep: Collection<Song>) {
+    override suspend fun prune(keep: Collection<Song>) {
         val keepNames = keep.map { file(it).name }.toSet()
         missing.retainAll(keepNames)
         withContext(Dispatchers.IO) {
