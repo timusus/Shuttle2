@@ -12,16 +12,15 @@ import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavouriteWriter
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
-import com.simplecityapps.provider.emby.EmbyPlaylistWriter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyServerAuthentication
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
-import com.simplecityapps.provider.emby.http.PlaylistService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -82,12 +81,12 @@ class EmbyMediaProviderModule {
     ): FavouriteWriter = MediaBrowserFavouriteWriter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
-    @SingleIn(AppScope::class)
-    fun providePlaylistService(@Named("EmbyHttpClient") httpClient: HttpClient): PlaylistService = PlaylistService(httpClient)
-
-    @Provides
     @IntoSet
-    fun providePlaylistWriter(writer: EmbyPlaylistWriter): ServerPlaylistWriter = writer
+    fun providePlaylistWriter(
+        authenticationManager: EmbyAuthenticationManager,
+        @Named("EmbyHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): ServerPlaylistWriter = MediaBrowserPlaylistWriter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
     @IntoSet

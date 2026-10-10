@@ -12,16 +12,15 @@ import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavouriteWriter
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
-import com.simplecityapps.provider.jellyfin.JellyfinPlaylistWriter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
-import com.simplecityapps.provider.jellyfin.http.PlaylistService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -82,12 +81,12 @@ class JellyfinMediaProviderModule {
     ): FavouriteWriter = MediaBrowserFavouriteWriter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
-    @SingleIn(AppScope::class)
-    fun providePlaylistService(@Named("JellyfinHttpClient") httpClient: HttpClient): PlaylistService = PlaylistService(httpClient)
-
-    @Provides
     @IntoSet
-    fun providePlaylistWriter(writer: JellyfinPlaylistWriter): ServerPlaylistWriter = writer
+    fun providePlaylistWriter(
+        authenticationManager: JellyfinAuthenticationManager,
+        @Named("JellyfinHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): ServerPlaylistWriter = MediaBrowserPlaylistWriter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
     @IntoSet

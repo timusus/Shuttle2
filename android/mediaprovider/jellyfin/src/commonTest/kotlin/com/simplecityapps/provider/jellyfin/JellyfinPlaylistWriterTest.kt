@@ -8,8 +8,8 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.bodyText
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.jellyfin.http.PlaylistService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
@@ -27,14 +27,16 @@ class JellyfinPlaylistWriterTest {
         authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = false)
     }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
+
     private val authenticationManager = JellyfinAuthenticationManager(
         httpClient = client,
         credentialStore = credentialStore,
-        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
+        clientIdentity = clientIdentity,
         streamProfile = StreamProfile.Android
     )
 
-    private val writer = JellyfinPlaylistWriter(authenticationManager, PlaylistService(client))
+    private val writer = MediaBrowserPlaylistWriter(authenticationManager, client, clientIdentity)
 
     private val items = "/Playlists/pl1/Items"
 
