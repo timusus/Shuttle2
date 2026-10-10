@@ -30,6 +30,17 @@ class PlaybackTileStateTest {
     }
 
     @Test
+    fun `an empty queue that is not restored yet still toggles`() {
+        PlaybackTileState.tapAction(hasQueue = false, isRestored = false) shouldBe TapAction.TogglePlayback
+        PlaybackTileState.from(PlaybackState.Paused, null, hasQueue = false, isRestored = false).tapAction shouldBe TapAction.TogglePlayback
+    }
+
+    @Test
+    fun `a restored empty queue opens the app`() {
+        PlaybackTileState.tapAction(hasQueue = false, isRestored = true) shouldBe TapAction.OpenApp
+    }
+
+    @Test
     fun `a blank title gives no subtitle`() {
         PlaybackTileState.from(PlaybackState.Paused, " ", hasQueue = true).subtitle shouldBe null
         PlaybackTileState.from(PlaybackState.Paused, null, hasQueue = true).subtitle shouldBe null

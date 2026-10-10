@@ -213,6 +213,23 @@ class PlaybackService : MediaLibraryService() {
         /** Plays a voice search: the intent's [SearchManager.QUERY] and its extras, as `VoiceSearch.from` reads them. */
         const val ACTION_PLAY_FROM_SEARCH: String = "com.simplecityapps.playback.search"
 
+        /** Starts the service in the foreground with [action]; a start the system refuses is logged, not thrown. */
+        fun startAction(
+            context: Context,
+            action: String
+        ) {
+            val intent = Intent(context, PlaybackService::class.java).setAction(action)
+            try {
+                ContextCompat.startForegroundService(context, intent)
+            } catch (e: IllegalStateException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                    Timber.w(e, "Cannot start the playback service for $action - app may be in a restricted state")
+                } else {
+                    throw e
+                }
+            }
+        }
+
         private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT, ACTION_SHUFFLE_ALL, ACTION_PLAY_FROM_SEARCH)
 
         /**
