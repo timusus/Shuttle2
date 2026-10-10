@@ -182,7 +182,7 @@ Considered and not worth it now:
   reuse the box's compile outputs, but it needs a cache node on the box and matching JDKs (box
   Temurin 21). Lever 4 folded the verify into the landing invocation, so there is no second Mac
   build left to feed.
-- **Raising `REMOTE_BUILD_SLOTS`.** It doesn't add CPU; load already peaked at 28 on 16 cores.
+- **Raising `REMOTE_GRADLE_SLOTS`.** It doesn't add CPU; load already peaked at 28 on 16 cores.
 
 ## What runs where
 
@@ -196,6 +196,6 @@ Considered and not worth it now:
 | External PRs | No CI: the contributor runs `support/scripts/lint` and `support/scripts/unit-test` locally, and the owner lands the PR through `land` like any branch | All verification is local on the owner's Mac; no GitHub workflow remains |
 
 `remote-build.sh` picks the host itself (#546): the Mac when its 1-min load is under 0.8x its cores
-(`REMOTE_BUILD_LOAD_RATIO`), else the box only if a slot is free, else the Mac anyway; `--box` and
+(`REMOTE_GRADLE_LOAD_RATIO`), else the box only if a slot is free, else the Mac anyway; `--box` and
 `--local` force one. It prints which host ran and why, and on the box the slot wait and the Gradle
 wall separately, so the queue cost stays visible in every landing.

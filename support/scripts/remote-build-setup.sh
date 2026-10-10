@@ -11,7 +11,7 @@
 # A missing package is reported with the command the owner would run, and the script fails.
 set -euo pipefail
 
-BOX="${REMOTE_BUILD_BOX:-tim@192.168.50.131}"
+BOX="${REMOTE_GRADLE_BOX:-tim@192.168.50.131}"
 JDK_FEATURE=21
 
 # Everything the build resolves from the SDK: compileSdk 37, AGP 9.x's default build-tools.
@@ -60,8 +60,8 @@ android.builder.sdkDownload=false
 org.gradle.daemon.idletimeout=3600000
 org.gradle.java.installations.auto-download=false
 org.gradle.java.home=$jdk_link
-# Remote-build heap and worker cap (#462): shared 23 GB box, up to REMOTE_BUILD_SLOTS concurrent
-# builds plus emulator lanes. Smaller than the Mac's -Xmx6g; remote-build.sh's own --max-workers
+# Remote-build heap and worker cap (#462): shared 23 GB box, up to REMOTE_GRADLE_SLOTS concurrent
+# builds plus emulator lanes. Smaller than the Mac's -Xmx6g; remote-gradle's own --max-workers
 # (default 6, or 4 with a lane up) is the usual ceiling, this is the floor for a bare ssh call.
 org.gradle.jvmargs=-Xmx3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g
 org.gradle.workers.max=6"
