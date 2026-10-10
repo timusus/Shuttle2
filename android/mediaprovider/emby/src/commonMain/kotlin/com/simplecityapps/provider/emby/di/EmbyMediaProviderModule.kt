@@ -11,16 +11,15 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavouriteWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
-import com.simplecityapps.provider.emby.EmbyFavouriteWriter
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
 import com.simplecityapps.provider.emby.EmbyPlaylistWriter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyServerAuthentication
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
-import com.simplecityapps.provider.emby.http.FavouriteService
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.PlaylistService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -75,12 +74,12 @@ class EmbyMediaProviderModule {
     ): EmbyMediaProvider = EmbyMediaProvider(strings, authenticationManager, itemsService)
 
     @Provides
-    @SingleIn(AppScope::class)
-    fun provideFavouriteService(@Named("EmbyHttpClient") httpClient: HttpClient): FavouriteService = FavouriteService(httpClient)
-
-    @Provides
     @IntoSet
-    fun provideFavouriteWriter(writer: EmbyFavouriteWriter): FavouriteWriter = writer
+    fun provideFavouriteWriter(
+        authenticationManager: EmbyAuthenticationManager,
+        @Named("EmbyHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): FavouriteWriter = MediaBrowserFavouriteWriter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
     @SingleIn(AppScope::class)

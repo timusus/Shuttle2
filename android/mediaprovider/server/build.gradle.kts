@@ -31,6 +31,7 @@ kotlin {
         }
 
         commonTest.dependencies {
+            implementation(project(":android:mediaprovider:server-testing"))
             implementation(libs.kotlin.test)
             implementation(libs.kotest)
             implementation(libs.kotlinx.coroutinesTest)

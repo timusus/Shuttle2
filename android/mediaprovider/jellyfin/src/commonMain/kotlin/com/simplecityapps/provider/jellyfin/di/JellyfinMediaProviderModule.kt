@@ -11,15 +11,14 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavouriteWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
-import com.simplecityapps.provider.jellyfin.JellyfinFavouriteWriter
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
 import com.simplecityapps.provider.jellyfin.JellyfinPlaylistWriter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
-import com.simplecityapps.provider.jellyfin.http.FavouriteService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.PlaylistService
@@ -75,12 +74,12 @@ class JellyfinMediaProviderModule {
     ): JellyfinMediaProvider = JellyfinMediaProvider(strings, authenticationManager, itemsService)
 
     @Provides
-    @SingleIn(AppScope::class)
-    fun provideFavouriteService(@Named("JellyfinHttpClient") httpClient: HttpClient): FavouriteService = FavouriteService(httpClient)
-
-    @Provides
     @IntoSet
-    fun provideFavouriteWriter(writer: JellyfinFavouriteWriter): FavouriteWriter = writer
+    fun provideFavouriteWriter(
+        authenticationManager: JellyfinAuthenticationManager,
+        @Named("JellyfinHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): FavouriteWriter = MediaBrowserFavouriteWriter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
     @SingleIn(AppScope::class)

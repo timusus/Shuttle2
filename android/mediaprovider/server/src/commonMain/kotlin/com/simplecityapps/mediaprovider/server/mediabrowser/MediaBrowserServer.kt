@@ -53,6 +53,17 @@ enum class MediaBrowserServer(
         }
     }
 
+    /**
+     * Sends the session's [token] and, on Emby, the client identity beside it in `X-Emby-Authorization`: the headers
+     * of the write and report routes, which [authorize] leaves at the token.
+     */
+    fun authorizeSession(request: HttpRequestBuilder, token: String, clientIdentity: ClientIdentity) {
+        authorize(request, token, clientIdentity)
+        if (this == Emby) {
+            request.header(EMBY_AUTHORIZATION, mediaBrowserAuthorization(clientIdentity.id, deviceName = clientIdentity.deviceName, version = clientIdentity.version))
+        }
+    }
+
     /** The item query's parameter [name] (PascalCase) as this server documents it: camelCase on Jellyfin. */
     internal fun itemsParameter(name: String): String = when (this) {
         Jellyfin -> name.replaceFirstChar(Char::lowercase)
