@@ -67,7 +67,10 @@ class SystemMediaStoreSongDeleter @Inject constructor(
         confirmations = confirmations,
     )
 
-    override suspend fun delete(songs: List<Song>): Set<Song> = flow.delete(songs)
+    override suspend fun delete(
+        songs: List<Song>,
+        callerActive: () -> Boolean,
+    ): Set<Song> = flow.delete(songs, callerActive)
 }
 
 internal sealed interface DirectDelete {
@@ -96,7 +99,10 @@ internal class MediaStoreDeleteFlow(
     private val sdkInt: Int,
     private val confirmations: ConfirmationHandoff<IntentSender>,
 ) {
-    suspend fun delete(songs: List<Song>): Set<Song> {
+    suspend fun delete(
+        songs: List<Song>,
+        callerActive: () -> Boolean,
+    ): Set<Song> {
         // A song without a valid MediaStore row isn't deleted, but doesn't hold up the rest
         val uris = songs.mapNotNull { song -> song.externalId?.toLongOrNull()?.let { song to edge.uriFor(it) } }
         if (uris.isEmpty()) return emptySet()
@@ -118,6 +124,7 @@ internal class MediaStoreDeleteFlow(
         }
         val deleted = mutableSetOf<Song>()
         for ((song, uri) in uris) {
+            if (!callerActive()) break
             // A failed delete moves on to the next song; a declined prompt ends the batch
             when (val result = edge.deleteDirect(uri)) {
                 DirectDelete.Deleted -> deleted += song

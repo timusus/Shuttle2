@@ -11,5 +11,5 @@ import dev.zacsweers.metro.Provides
 @BindingContainer
 object IosSongDeletionModule {
     @Provides
-    fun provideMediaStoreSongDeleter(): MediaStoreSongDeleter = MediaStoreSongDeleter { emptySet() }
+    fun provideMediaStoreSongDeleter(): MediaStoreSongDeleter = MediaStoreSongDeleter { _, _ -> emptySet() }
 }

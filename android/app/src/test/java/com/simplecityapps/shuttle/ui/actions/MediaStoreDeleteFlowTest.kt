@@ -50,6 +50,8 @@ class MediaStoreDeleteFlowTest {
 
     private fun flow(sdkInt: Int) = MediaStoreDeleteFlow(edge, sdkInt, confirmations)
 
+    private suspend fun MediaStoreDeleteFlow.delete(songs: List<Song>) = delete(songs, callerActive = { true })
+
     private fun script(song: Song, vararg results: DirectDelete) {
         edge.directResults[uris.getValue(song.externalId!!.toLong())] = ArrayDeque(results.toList())
     }

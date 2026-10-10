@@ -5,7 +5,9 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 
 /**
@@ -22,15 +24,21 @@ class DeleteSongs(
 ) {
     data class Result(val deleted: List<Song>, val failed: List<Song>)
 
-    // Runs to completion even if the caller goes away: the system may already be showing its delete dialog, and files the
-    // user deletes there must leave the library too
-    suspend operator fun invoke(selection: MediaSelection): Result = withContext(NonCancellable) { delete(selection) }
+    // Finishes the delete in progress even if the caller goes away: the system may already be showing its delete dialog,
+    // and files the user deletes there must leave the library too. It just asks no further per-song confirmations.
+    suspend operator fun invoke(selection: MediaSelection): Result {
+        val caller = currentCoroutineContext()[Job]
+        return withContext(NonCancellable) { delete(selection) { caller?.isActive != false } }
+    }
 
-    private suspend fun delete(selection: MediaSelection): Result {
+    private suspend fun delete(
+        selection: MediaSelection,
+        callerActive: () -> Boolean,
+    ): Result {
         val songs = resolveSongs(selection)
         val (mediaStoreSongs, otherSongs) = songs.filter { it.canBeDeleted() }.partition { it.mediaProvider == MediaProviderType.MediaStore }
         // MediaStore songs go to the deleter together, so the system can confirm the whole batch at once
-        val mediaStoreDeleted = if (mediaStoreSongs.isEmpty()) emptySet() else mediaStoreDeleter.delete(mediaStoreSongs)
+        val mediaStoreDeleted = if (mediaStoreSongs.isEmpty()) emptySet() else mediaStoreDeleter.delete(mediaStoreSongs, callerActive)
         val deleted = mediaStoreSongs.filter { it in mediaStoreDeleted } + otherSongs.filter { fileDeleter.delete(it) }
         val failed = songs.filter { it !in deleted }
         deleted.forEach { songRepository.remove(it) }
@@ -47,8 +55,15 @@ class DeleteSongs(
  * it.
  */
 fun interface MediaStoreSongDeleter {
-    /** @return the songs whose files are gone: none if the user declined, fewer than [songs] if only some deleted. */
-    suspend fun delete(songs: List<Song>): Set<Song>
+    /**
+     * Deletes song by song where the system confirms each one, stopping before the next song once [callerActive] is false.
+     *
+     * @return the songs whose files are gone: none if the user declined, fewer than [songs] if only some deleted.
+     */
+    suspend fun delete(
+        songs: List<Song>,
+        callerActive: () -> Boolean,
+    ): Set<Song>
 }
 
 /** Deletes a song's file; the app implements it with the Storage Access Framework. */

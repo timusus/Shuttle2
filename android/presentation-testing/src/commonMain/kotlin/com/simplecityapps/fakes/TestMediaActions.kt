@@ -63,7 +63,7 @@ class TestMediaActions(
     var fileDeleter: SongFileDeleter = SongFileDeleter { true }
 
     /** Which MediaStore songs' files delete; the user confirms the system's request for all of them by default. */
-    var mediaStoreDeleter: MediaStoreSongDeleter = MediaStoreSongDeleter { it.toSet() }
+    var mediaStoreDeleter: MediaStoreSongDeleter = MediaStoreSongDeleter { songs, _ -> songs.toSet() }
 
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository))
     val playSongs = PlaySongs(queueOperations, playbackOperations)
@@ -73,7 +73,7 @@ class TestMediaActions(
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
     val excludeSongs = ExcludeSongs(songRepository, queueOperations, resolveSongs)
-    val deleteSongs = DeleteSongs(songRepository, queueOperations, resolveSongs, { fileDeleter.delete(it) }, { mediaStoreDeleter.delete(it) })
+    val deleteSongs = DeleteSongs(songRepository, queueOperations, resolveSongs, { fileDeleter.delete(it) }, { songs, callerActive -> mediaStoreDeleter.delete(songs, callerActive) })
     val songDownloader = FakeSongDownloader()
 
     /** Whether the user may download from a server (the entitlement gate); allowed by default. */

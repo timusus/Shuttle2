@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Test
 
 class DeleteSongsTest {
@@ -59,9 +60,9 @@ class DeleteSongsTest {
     @Test
     fun `MediaStore songs are deleted in one confirmed request, then removed from the library and the queue`() = runTest {
         val requests = mutableListOf<List<Song>>()
-        actions.mediaStoreDeleter = MediaStoreSongDeleter {
-            requests += it
-            it.toSet()
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { songs, _ ->
+            requests += songs
+            songs.toSet()
         }
         actions.fileDeleter = SongFileDeleter { error("MediaStore songs don't go through SAF") }
         val first = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
@@ -77,7 +78,7 @@ class DeleteSongsTest {
 
     @Test
     fun `declining the MediaStore request changes nothing`() = runTest {
-        actions.mediaStoreDeleter = MediaStoreSongDeleter { emptySet() }
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { _, _ -> emptySet() }
         val mediaStore = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
 
         val result = actions.deleteSongs(MediaSelection.Songs(mediaStore))
@@ -91,7 +92,7 @@ class DeleteSongsTest {
     fun `when only some MediaStore files delete, only those songs leave the library and the queue`() = runTest {
         val first = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
         val second = other.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "11")
-        actions.mediaStoreDeleter = MediaStoreSongDeleter { setOf(second) }
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { _, _ -> setOf(second) }
 
         val result = actions.deleteSongs(MediaSelection.Songs(listOf(first, second)))
 
@@ -104,9 +105,9 @@ class DeleteSongsTest {
     fun `a mixed selection sends MediaStore songs to the system and the rest through SAF`() = runTest {
         val mediaStoreRequests = mutableListOf<List<Song>>()
         val safDeletes = mutableListOf<Song>()
-        actions.mediaStoreDeleter = MediaStoreSongDeleter {
-            mediaStoreRequests += it
-            it.toSet()
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { songs, _ ->
+            mediaStoreRequests += songs
+            songs.toSet()
         }
         actions.fileDeleter = SongFileDeleter {
             safDeletes += it
@@ -139,7 +140,43 @@ class DeleteSongsTest {
             override suspend fun deleteDirect(uri: Uri): DirectDelete = error("Android 11+ deletes through the dialog")
         }
         val flow = MediaStoreDeleteFlow(edge, sdkInt = 30, confirmations = confirmations)
-        actions.mediaStoreDeleter = MediaStoreSongDeleter { flow.delete(it) }
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { songs, callerActive -> flow.delete(songs, callerActive) }
+    }
+
+    // Android 10: each song's delete asks for its own confirmation, then goes through
+    private fun deleteThroughPerSongPrompts() {
+        val edge = object : MediaStoreDeleteEdge {
+            private val uris = mutableMapOf<Long, Uri>()
+            private val confirmed = mutableSetOf<Uri>()
+
+            override fun uriFor(externalId: Long): Uri = uris.getOrPut(externalId) { mockk(relaxed = true) }
+
+            override fun createDeleteRequest(uris: List<Uri>): IntentSender = error("Android 10 asks song by song")
+
+            override fun hasWriteAccess() = true
+
+            override suspend fun deleteDirect(uri: Uri): DirectDelete = if (confirmed.add(uri)) DirectDelete.NeedsConfirmation(mockk()) else DirectDelete.Deleted
+        }
+        val flow = MediaStoreDeleteFlow(edge, sdkInt = 29, confirmations = confirmations)
+        actions.mediaStoreDeleter = MediaStoreSongDeleter { songs, callerActive -> flow.delete(songs, callerActive) }
+    }
+
+    @Test
+    fun `on Android 10 the screen going away stops the prompts after the song being confirmed`() = runTest {
+        deleteThroughPerSongPrompts()
+        val first = song.copy(mediaProvider = MediaProviderType.MediaStore, externalId = "10")
+        val caller = launch { actions.deleteSongs(MediaSelection.Songs(listOf(first, mediaStore))) }
+        val request = confirmations.requests.first()
+        confirmations.launch(request)
+
+        caller.cancel()
+        runCurrent()
+        confirmations.deliver(request.token, true)
+        runCurrent()
+
+        songRepository.removed shouldBe listOf(first)
+        queueOperations.removedItems shouldBe listOf(queue[0])
+        withTimeoutOrNull(10.seconds) { confirmations.requests.first() } shouldBe null
     }
 
     @Test
