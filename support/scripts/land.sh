@@ -356,8 +356,39 @@ verify_phases() {
   return "$VERIFY_FAILED"
 }
 
+# The detached iPhone install of an earlier landing builds from this tree; a reset, checkout or pick
+# mid-build would corrupt both. .claude/ios-install.pid holds "<pid> <ps lstart>", written by the
+# launcher: the pid only counts as live while its start time still matches, so a stale or reused pid
+# never blocks a landing.
+IOS_PID_FILE="$REPO_ROOT/.claude/ios-install.pid"
+IOS_INSTALL_WAIT=${LAND_IOS_INSTALL_WAIT:-1800}  # long enough for the install to queue on its lock and build
+proc_marker() { ps -o lstart= -p "$1" 2> /dev/null | sed -e 's/^ *//' -e 's/ *$//'; }
+ios_install_running() {
+  local pid marker
+  read -r pid marker 2> /dev/null < "$IOS_PID_FILE" || return 1
+  [ -n "$pid" ] && [ -n "$marker" ] && [ "$(proc_marker "$pid")" = "$marker" ]
+}
+# wait_for_ios_install: block until no install is running; on timeout abort the landing (exit 3)
+# without touching the tree, and disarm the EXIT trap's reset so it can't touch it either.
+wait_for_ios_install() {
+  local waited=0
+  ios_install_running || return 0
+  while ios_install_running; do
+    if [ "$waited" -ge "$IOS_INSTALL_WAIT" ]; then
+      RESTORE_HEAD_ON_EXIT=0
+      echo "land.sh: ABORT: the previous landing's iPhone install is still running after ${IOS_INSTALL_WAIT}s ($(cut -d' ' -f1 "$IOS_PID_FILE" 2> /dev/null)); nothing was changed, land again once it finishes" >&2
+      [ -n "${LOG:-}" ] && echo "land.sh: ABORT: iPhone install still running after ${IOS_INSTALL_WAIT}s" >> "$LOG"
+      exit 3
+    fi
+    [ "$waited" -eq 0 ] && echo "land.sh: waiting for the previous landing's iPhone install to finish (up to ${IOS_INSTALL_WAIT}s)" >&2
+    sleep 5
+    waited=$((waited + 5))
+  done
+}
+
 if [ "${1:-}" = "--verify-only" ]; then
   shift
+  wait_for_ios_install
   run_in_group --timeout "$VERIFY_TIMEOUT" verify_phases "$@"
   exit $?
 fi
@@ -506,6 +537,7 @@ if [ "${#BRANCHES[@]}" -eq 1 ] && [ "${BRANCHES[0]}" = "$CUR_BRANCH" ] \
     git status --porcelain --untracked-files=normal | grep '^??' | head -10 >&2
     exit 1
   fi
+  wait_for_ios_install
   say "land.sh: landing $CUR_BRANCH in place (it is ahead of origin/main)"
 else
   # Data-loss guard: the reset below discards anything on HEAD that origin/main lacks, and a
@@ -522,13 +554,7 @@ else
     fi
   done
 
-  # The detached iPhone install of the previous landing builds from this tree; resetting it mid-build would corrupt both.
-  for _ in $(seq 1 180); do
-    pid=$(cat .claude/ios-install.pid 2>/dev/null) || break
-    kill -0 "$pid" 2>/dev/null || break
-    [ "$_" = 1 ] && say "land.sh: waiting for the previous landing's iPhone install (pid $pid) to finish"
-    sleep 5
-  done
+  wait_for_ios_install
   log "hard-resetting $CUR_BRANCH ($(git rev-parse HEAD)) onto origin/main ($ORIGIN_MAIN_SHA)"
   if ! run_git reset --hard origin/main; then
     say "land.sh: git reset --hard origin/main failed"
@@ -582,6 +608,7 @@ pick_branch() {  # $1 = index into BRANCHES
     log "$b: no merge-base with origin/main"
     return
   fi
+  wait_for_ios_install
   log "$b: cherry-picking ${base}..$b"
   for attempt in 1 2 3 4 5; do
     out=$(git cherry-pick "$base..$b" 2>&1); rc=$?
@@ -861,6 +888,7 @@ ensure_base_sig() {
   sig=$(mktemp "${TMPDIR:-/tmp}/land-sig.XXXXXX") || { rm -f "$files"; return 0; }
   git diff --name-only "$ORIGIN_MAIN_SHA" "$cur" > "$files"
   say "land.sh: verify failed; verifying origin/main for the same tasks to tell pre-existing failures from the batch's"
+  wait_for_ios_install
   if git checkout -q --detach "$ORIGIN_MAIN_SHA" >> "$LOG" 2>&1; then
     run_verify "$sig" "$files" || brc=$?
     [ "$brc" -eq 1 ] && BASE_SIG=$(cat "$sig")
@@ -912,6 +940,7 @@ branch_verifiable() {
 # branch that no longer picks cleanly on its own is treated as passing (it is not what broke verify).
 isolate_verify() {
   local b=${BRANCHES[$1]} mb
+  wait_for_ios_install
   run_git reset -q --hard "$ORIGIN_MAIN_SHA"
   mb=$(git merge-base "$ORIGIN_MAIN_SHA" "$b" 2>/dev/null)
   if [ -z "$mb" ] || ! git cherry-pick "$mb..$b" >> "$LOG" 2>&1; then
@@ -939,6 +968,7 @@ REMAINING=()
 rebuild_batch() {
   local i
   REMAINING=()
+  wait_for_ios_install
   run_git reset -q --hard "$ORIGIN_MAIN_SHA"
   for i in "$@"; do
     pick_branch "$i"
@@ -954,7 +984,10 @@ mark_unblamed_dropped() {
     STATUS[$i]=dropped; REASON[$i]="verify failed with no branch to blame (flaky? see log)"
     log "${BRANCHES[$i]}: not landed, verify fails without a branch to blame"
   done
-  [ "$IN_PLACE" = 1 ] || run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+  if [ "$IN_PLACE" != 1 ]; then
+    wait_for_ios_install
+    run_git reset -q --hard "$ORIGIN_MAIN_SHA"
+  fi
 }
 
 if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
@@ -1215,16 +1248,22 @@ if [ "$DEVICE_INSTALL" = 1 ] \
   elif xcrun devicectl list devices 2>/dev/null | grep -F "$IOS_DEVICE_ID" | grep -Eq 'available|connected'; then
     INSTALL_LOG="$LOG.install.log"
     say "land.sh: installing $SHA on the iPhone in the background (log: $INSTALL_LOG)"
-    (
-      echo "$BASHPID" > .claude/ios-install.pid
-      if LAUNCH=0 machine-lock --name ios-install -- ios/scripts/install-device.sh "$IOS_DEVICE_ID"; then
-        echo "$SHA" > "$IOS_STAMP"
+    # Its own session, so a process-group kill of this job (detach stop, a timeout) can't take it down.
+    if command -v setsid > /dev/null 2>&1; then new_session=(setsid)
+    else new_session=(perl -MPOSIX -e 'POSIX::setsid(); exec @ARGV'); fi
+    "${new_session[@]}" bash -c '
+      if LAUNCH=0 machine-lock --name ios-install -- ios/scripts/install-device.sh "$3"; then
+        echo "$2" > "$4"
         echo "land.sh: iPhone install done"
       else
         echo "land.sh: iPhone install failed (retry with ios/scripts/install-device.sh)"
       fi
-      rm -f .claude/ios-install.pid
-    ) > "$INSTALL_LOG" 2>&1 < /dev/null &
+      read -r owner _ 2> /dev/null < "$1"
+      [ "$owner" = "$$" ] && rm -f "$1"
+    ' install "$IOS_PID_FILE" "$SHA" "$IOS_DEVICE_ID" "$IOS_STAMP" > "$INSTALL_LOG" 2>&1 < /dev/null &
+    install_pid=$!
+    install_marker=$(proc_marker "$install_pid")
+    [ -n "$install_marker" ] && echo "$install_pid $install_marker" > "$IOS_PID_FILE"
     disown
   else
     say "land.sh: iPhone not reachable, skipping device install"
