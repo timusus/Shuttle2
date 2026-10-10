@@ -184,6 +184,31 @@ final class StreamedPlaybackTests: XCTestCase {
         XCTAssertEqual(server.requestedRanges.filter { $0 == 0 }.count, 1, "\(server.requestedRanges)")
     }
 
+    /// A host that honours ranges is never given up: a drop resumes from the frontier, a seek past it restarts at a new
+    /// base, and a seek back to the start reads from byte 0 again, all without asking to re-open.
+    func testARangedStreamThatDropsAndSeeksBackToItsStartIsNeverGivenUp() throws {
+        let (server, _, pcm) = try served(sine(seconds: 4))
+        server.bytesPerSecond = 400_000
+        server.closesAfterBodyBytes = 100_000
+        let (controller, log) = try makeController()
+        controller.load(current: streamed("A", server.url), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 48_000)
+
+        controller.seek(toMs: 3_000)
+        controller.syncForTesting()
+        _ = try renderer.render(frames: 9_600)
+        controller.seek(toMs: 0)
+        controller.syncForTesting()
+        let out = try renderer.render(frames: 9_600)
+
+        assertRendered(out, pcm[0..<(9_600 * 2)])
+        XCTAssertGreaterThanOrEqual(server.requestedRanges.count, 3, "\(server.requestedRanges)")
+        XCTAssertEqual(log.seeksUnsupported, [])
+        XCTAssertEqual(log.failures, [])
+    }
+
     /// A range-ignoring host whose `Content-Length` promises more than its body holds: a seek inside the promised
     /// length but past the real body is a seek it can't make, never a failure. The source's resume after the short body
     /// restarts from byte 0, which is a drop: the engine asks to re-open rather than fail (shuttle-playback#71).
@@ -202,7 +227,8 @@ final class StreamedPlaybackTests: XCTestCase {
         _ = try renderer.render(frames: 9_600)
 
         XCTAssertEqual(log.failures, [])
-        // The drop, early on a body this short, then the seek.
+        // The drop's position, then the seek's: a seek before the owner re-opens moves where it must re-open, and
+        // the last report is the one to honour.
         XCTAssertEqual(log.seeksUnsupported.count, 2, "\(log.seeksUnsupported)")
         XCTAssertEqual(log.seeksUnsupported.last, "A 1500")
     }

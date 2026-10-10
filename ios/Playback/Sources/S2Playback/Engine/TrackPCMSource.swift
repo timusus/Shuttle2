@@ -10,11 +10,8 @@ public enum TrackSourceError: Error, Equatable {
     case cancelled
     /// ``TrackPCMSource/interrupt()`` ended the read so a seek could be applied; not terminal.
     case interrupted
-    /// ``TrackPCMSource/seek(toFrame:)`` needed bytes the stream couldn't serve (a transcode whose
-    /// length was estimated), or a stream that dropped and whose host would only send it again from
-    /// its start. Terminal: every read after it throws it too, and the source reports
-    /// itself unseekable. The controller reports it through `onSeekUnsupported`, as it does a
-    /// source that was never seekable, and reads nothing more until the owner re-opens the track.
+    /// The stream can't serve the position (a refused seek, or a drop its host would only restart from byte 0).
+    /// Terminal, and not a failure: the owner re-opens the track at the position (`onSeekUnsupported`).
     case unseekable
 }
 

@@ -2,20 +2,9 @@ import Foundation
 import PlaybackDecode
 import PlaybackStreaming
 
-/// A stream's ``GrowingFileByteSource`` as the decoder reads it, with the things the engine needs that the source
-/// doesn't give:
-///
-/// - **A read that waits reports it** (#897): `onWait` is called on the reading thread after every ``waitSeconds`` a
-///   read has waited for its bytes, so the engine can tell a stall from inside its own read. The source parks a read
-///   with no hook, so each read runs on a helper queue while the reading thread waits for it.
-/// - **A seek past the stream's length is refused** (#950): a transcode's estimated length can promise bytes the
-///   server never sends. The decoder reports the refusal as unseekable, which the engine reports as a seek it can't
-///   make (`onSeekUnsupported`), never as a failure.
-/// - **A download that restarts from byte 0 is given up** (#950): a transcode host answers the source's resume after
-///   a drop with the whole body again, and the read would wait while the song is fetched afresh up to where it was.
-///   Once ``armDropWatch()`` was called (after the open), such a restart cancels the download and every read ends
-///   interrupted with ``dropped`` set; the track source reports it unseekable, and the owner re-opens the stream at
-///   the position. A host that honours the resume's range never restarts, so a ranged stream keeps its resume.
+/// A ``GrowingFileByteSource`` with what the engine needs and the source lacks: `onWait` every ``waitSeconds`` a read
+/// waits, a seek past the length refused as unseekable, and a transcode's restart from byte 0 given up as ``dropped``
+/// so the owner re-opens it at the position instead of waiting for the song to download again.
 final class StreamedTrackReader: StreamByteReader {
     static let waitSeconds: Double = 1
 
@@ -75,7 +64,9 @@ final class StreamedTrackReader: StreamByteReader {
     func clearInterrupt() { source.clearInterrupt() }
 }
 
-/// Watches a source's transactions for a restart from byte 0 with the read past it.
+/// Watches a source's transactions for a `200` from byte 0 with the read past it: the source only re-declares a file as
+/// starting at byte 0 when a host ignored its range, while a host that honours ranges answers every restart, even
+/// one from byte 0, with a `206`.
 /// Upstream need: GrowingFileByteSource reporting a resume its host refused, so this needn't infer it.
 private final class DropWatch {
     weak var source: GrowingFileByteSource?
@@ -90,10 +81,12 @@ private final class DropWatch {
 
     /// On the session's delegate queue or the decoder's thread, never under the source's lock.
     func observe(_ event: GrowingFileEvent) {
-        guard case .transaction(let base, let generation, _, _) = event, let source else { return }
+        guard case .transaction(let base, let generation, _, let status) = event, let source else { return }
         let restarted: Bool = lock.withLock {
             defer { self.generation = generation }
-            guard armed, !isDropped, let last = self.generation, generation != last, base == 0 else { return false }
+            guard armed, !isDropped, let last = self.generation, generation != last, base == 0, status == 200 else {
+                return false
+            }
             guard source.position > 0 else { return false }
             isDropped = true
             return true
