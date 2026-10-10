@@ -5,8 +5,8 @@ without a simulator.
 
 Demux, decode, the conversion to the engine's format, sample-accurate seeking, `FileByteReader` and
 the `StreamByteReader` protocol come from [AudioPlaybackKit](https://github.com/timusus/AudioPlaybackKit)
-(its `PlaybackDecode` product, pinned `exact:` in `Package.swift`), with its one static, LGPL-only
-FFmpeg (#957). This package holds:
+(its `PlaybackDecode` product, pinned `exact:` in `Package.swift`), with its one dynamic, LGPL-only
+FFmpeg.framework (#957). This package holds:
 
 - `MusicPlaybackController`, the gapless two-track AVAudioEngine player that the Kotlin
   `EnginePlayerController` drives, with its DSP and pre-open;
@@ -281,11 +281,12 @@ AudioPlaybackKit's FFmpeg is plain **LGPL v2.1+**:
 - no external codec libraries beyond the system zlib. Opus and Vorbis use FFmpeg's native decoders,
   not libopus or libvorbis.
 
-FFmpeg is linked **statically** into the app binary (owner decision, 2026-10-07, #957). LGPL v2.1 §6(a)
-then asks that a user can relink the app with a modified FFmpeg. That is met by the sources being
-public: Shuttle2 (`timusus/Shuttle2`, this app with `ios/project.yml` and its build scripts) and
-AudioPlaybackKit (`timusus/AudioPlaybackKit`, the decoder and `scripts/build-ffmpeg.sh`). There is no
-framework to swap. The app carries:
+FFmpeg is a separate dynamic `FFmpeg.framework`, embedded in `S2.app/Frameworks` (AudioPlaybackKit
+ADR-0001, #957). LGPL v2.1 §6 asks that a user can replace FFmpeg with a modified build, and a
+dynamic framework in the bundle is that: the app never contains FFmpeg's code in its own binary. The
+sources are public too: Shuttle2 (`timusus/Shuttle2`, this app with `ios/project.yml` and its build
+scripts) and AudioPlaybackKit (`timusus/AudioPlaybackKit`, the decoder and `scripts/build-ffmpeg.sh`).
+The app carries:
 
 1. **The notice**, in the app's Settings pane (`ios/S2/Settings.bundle`: Settings › Shuttle Music ›
    Acknowledgements). It gives FFmpeg's name, version and licence, the source (the n7.1 tag, the patch
@@ -294,10 +295,11 @@ framework to swap. The app carries:
    About has an "FFmpeg source code" link to the build script at the pinned tag. Android's licences
    are generated from Gradle dependencies (AboutLibraries), which can't see FFmpeg, so the Settings
    bundle is the one place.
-2. **How to relink.** Build FFmpeg with AudioPlaybackKit's `scripts/build-ffmpeg.sh` (`FFMPEG_SRC`
-   points it at a modified checkout; the flags are in the script and `VERSION.txt`), point Shuttle2's
-   `ios/Playback/Package.swift` at that AudioPlaybackKit checkout, and build the app with
-   `ios/scripts/build-framework.sh` and Xcode.
+2. **How to relink.** Build a modified FFmpeg with AudioPlaybackKit's `scripts/build-ffmpeg.sh`
+   (`FFMPEG_SRC` points it at a modified checkout; the flags are in the script and `VERSION.txt`),
+   then either replace `FFmpeg.framework` in the app bundle's `Frameworks` folder with it and re-sign
+   the app, or rebuild AudioPlaybackKit's `FFmpeg.xcframework` and build the app against that
+   checkout (point `ios/Playback/Package.swift` at it; `ios/scripts/build-framework.sh` and Xcode).
 
 Do not add a GPL-only component (for example `--enable-gpl` or libx264-style externals) or a
 `nonfree` one.

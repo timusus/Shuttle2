@@ -9,7 +9,7 @@ import S2PlaybackTestSupport
 /// stereo, rendered offline. The render is what a separate FFmpeg source decodes from the same
 /// file, from its first frame (encoder delay trimmed) to its last, then silence, and the track ends
 /// without a failure. Covers each demuxer and decoder
-/// the build enables that a music library holds (shuttle-playback's scripts/build-ffmpeg.sh).
+/// the build enables that a music library holds (AudioPlaybackKit's scripts/build-ffmpeg.sh).
 final class MusicPlaybackFormatsTests: XCTestCase {
 
     private let rate = 48_000.0

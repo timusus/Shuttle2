@@ -64,10 +64,12 @@ Privacy: the app sends crash reports (Sentry) and anonymous usage analytics (Pos
 the user's identity and not used for tracking; both can be turned off in Settings > Privacy. There is no
 account with us, and server credentials stay in the device Keychain and go only to the user's server.
 
-Open source: playback uses FFmpeg (LGPL-2.1+ build, statically linked) to decode formats such as
-FLAC. The FFmpeg licence notice is in Settings > About. The source is FFmpeg's n7.1 tag plus one
-patch, built by the script at https://github.com/timusus/AudioPlaybackKit/tree/0.7.1/scripts; the
-app's own source is public too, so it can be relinked against a modified FFmpeg.
+Open source: playback uses FFmpeg (LGPL-2.1+ build, a separate dynamic FFmpeg.framework embedded in the app) to decode formats such as
+FLAC. The FFmpeg licence notice is in the iOS Settings app under Shuttle Music > Acknowledgements
+(ios/S2/Settings.bundle), with an "FFmpeg source code" link in the app's Settings > About. The source is
+FFmpeg's n7.1 tag plus one patch, built by the script at
+https://github.com/timusus/AudioPlaybackKit/tree/0.7.1/scripts; the app's own source is public too, and
+the framework can be replaced with a modified build and the app re-signed.
 
 Contact: <owner email / phone as in ASC>.
 ```
