@@ -184,6 +184,8 @@ public final class MusicPlaybackController {
     let engine = AVAudioEngine()
     /// Starts the stopped engine. Tests replace it to fail a start.
     var startEngine: (AVAudioEngine) throws -> Void = { try $0.start() }
+    /// What an underrun's hold is timed by. Tests replace it to reach ``UnderrunResumeRule``'s cap without waiting.
+    var clock: () -> TimeInterval = StartupTiming.now
     /// How long a start that failed after a route change waits before it's tried again, and how many
     /// times it is (#715).
     var startRetryDelay: DispatchTimeInterval = .milliseconds(500)
@@ -287,6 +289,9 @@ public final class MusicPlaybackController {
     /// Decoded while an underrun lasts on a playing node, kept off it until ``UnderrunResumeRule`` says go on; the
     /// underrun's end schedules it. A restart drops it with the old position's frames.
     private var heldForResume: [AVAudioPCMBuffer] = []
+    /// When the first of `heldForResume` was held: the cap runs from there, not from the silence's start, so a long
+    /// stall doesn't let the first small buffer straight through.
+    private var heldSince: TimeInterval = 0
     /// The last buffer health line: when, and whether it was under `lowBufferSeconds`.
     private var lastHealthLog: (at: TimeInterval, low: Bool)?
     private static let healthLogSeconds: TimeInterval = 10
@@ -1203,6 +1208,7 @@ public final class MusicPlaybackController {
     private func fill(aheadFrames: Int64? = nil) {
         let aheadFrames = aheadFrames ?? scheduleAheadFrames
         guard current != nil else { return }
+        resumeIfDue()
         prepareNextIfDue()
         if let pendingEqualizer {
             processor.setEqualizer(pendingEqualizer)
@@ -1324,6 +1330,7 @@ public final class MusicPlaybackController {
 
     private func schedule(_ buffer: AVAudioPCMBuffer) {
         if underrun != nil, timelineLock.withLock({ timeline.held == nil }) {
+            if heldForResume.isEmpty { heldSince = clock() }
             heldForResume.append(buffer)
             resumeIfDue()
             return
@@ -1336,13 +1343,15 @@ public final class MusicPlaybackController {
         enqueue(buffer)
     }
 
-    /// An underrun on a playing node ends once ``UnderrunResumeRule`` says enough is held, scheduling it.
+    /// An underrun on a playing node ends once ``UnderrunResumeRule`` says enough is held, scheduling it. Asked as each
+    /// buffer is held, at every fill (the ticker's too, so held audio waiting on a slow next's open still goes on at the
+    /// cap) and while a read waits.
     private func resumeIfDue() {
-        guard let underrun else { return }
+        guard underrun != nil else { return }
         let frames = heldForResume.reduce(0) { $0 + Int($1.frameLength) }
         guard UnderrunResumeRule.resumes(
             bufferedSeconds: Double(frames) / outputSampleRate,
-            waitedSeconds: StartupTiming.now() - underrun.since,
+            heldSeconds: clock() - heldSince,
             ended: drained
         ) else { return }
         endUnderrun("recovered")

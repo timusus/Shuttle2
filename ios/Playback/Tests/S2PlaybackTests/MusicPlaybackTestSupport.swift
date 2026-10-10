@@ -178,6 +178,16 @@ final class StallingTrackSource: TrackPCMSource {
     }
 }
 
+/// A clock the test moves, for ``MusicPlaybackController/clock``.
+final class TestClock {
+    private let lock = NSLock()
+    private var seconds: TimeInterval = 1_000
+
+    var now: TimeInterval { lock.withLock { seconds } }
+
+    func advance(_ by: TimeInterval) { lock.withLock { seconds += by } }
+}
+
 /// Passes another source through and keeps every frame it handed the controller, so a test can
 /// compare the render with exactly what the decoder produced.
 final class RecordingTrackSource: TrackPCMSource {

@@ -639,24 +639,71 @@ final class MusicPlaybackControllerTests: XCTestCase {
         source.release()
     }
 
-    /// Held audio waiting on a link that stalls again goes on once the underrun has lasted the cap (#950).
-    func testAfterAnUnderrunHeldAudioGoesOnAtTheCap() throws {
+    /// Held audio waiting on a link that stalls again goes on 5 s after it was first held, however long the silence
+    /// before it lasted: a long stall doesn't let the first small buffer straight through.
+    func testAfterALongStallHeldAudioGoesOnFiveSecondsAfterItsFirstBuffer() throws {
         let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let clock = TestClock()
+        controller.clock = { clock.now }
         let source = StallingTrackSource(samples: TestSignal.noise(frames: 240_000, seed: 1), gateFrame: 24_576)
         controller.load(current: PlaybackTrack(uid: "A", gainDb: 0) { source }, next: nil, playWhenReady: true)
         controller.syncForTesting()
         _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000)
         let blockedFill = try runDryIntoTheStall(controller, log)
-        let stalled = Date()
+        clock.advance(30)
 
         source.release(frames: 4_096)
-        let deadline = Date().addingTimeInterval(8)
-        while log.statesSoFar.last != .playing, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
+        Thread.sleep(forTimeInterval: 0.2)
+        XCTAssertEqual(log.statesSoFar.last, .loading, "went on with one buffer after a long stall")
+        clock.advance(4.9)
+        Thread.sleep(forTimeInterval: 0.2)
+        XCTAssertEqual(log.statesSoFar.last, .loading, "went on before the cap")
 
+        clock.advance(0.1)
+        let deadline = Date().addingTimeInterval(5)
+        while log.statesSoFar.last != .playing, Date() < deadline { Thread.sleep(forTimeInterval: 0.02) }
         XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing])
-        XCTAssertGreaterThan(Date().timeIntervalSince(stalled), 4.5, "went on before the cap")
         source.release()
         wait(for: [blockedFill], timeout: 5)
+    }
+
+    /// The current track's tail, held after an underrun, isn't left silent while the next track's open hangs: it goes
+    /// on at the cap.
+    func testAHeldTailGoesOnAtTheCapWhileTheNextIsStillOpening() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.1)
+        let clock = TestClock()
+        controller.clock = { clock.now }
+        let a = StallingTrackSource(samples: TestSignal.noise(frames: 48_000, seed: 1), gateFrame: 24_576)
+        // Its open's first decode waits, on the prepare queue, until the end of the test.
+        let b = StallingTrackSource(samples: TestSignal.noise(frames: 24_000, seed: 2), gateFrame: 0)
+        controller.load(
+            current: PlaybackTrack(uid: "A", gainDb: 0) { a },
+            next: PlaybackTrack(uid: "B", gainDb: 0) { b }, playWhenReady: true
+        )
+        controller.onEngineQueueForTesting {}
+        var renderer = OfflineRenderer(controller: controller, slice: 512)
+        renderer.awaitingOpens = false
+        _ = try renderer.render(frames: 12_000)
+        controller.pumpForTesting(awaitingOpens: false)
+        for _ in 0..<4 { _ = try controller.renderOffline(frameCount: 4096) }
+        let blockedFill = expectation(description: "the stalled fill returns")
+        DispatchQueue.global().async {
+            controller.pumpForTesting(awaitingOpens: false)
+            blockedFill.fulfill()
+        }
+        try awaitLoading(log)
+
+        // A's last half second comes in and is held; the fill crosses into B, still opening, and returns.
+        a.release()
+        wait(for: [blockedFill], timeout: 5)
+        controller.pumpForTesting(awaitingOpens: false)
+        XCTAssertEqual(log.statesSoFar.last, .loading, "under 2 s held went on at once")
+
+        clock.advance(5)
+        controller.pumpForTesting(awaitingOpens: false)
+        XCTAssertEqual(log.statesSoFar.suffix(2), [.loading, .playing], "the held tail stayed silent")
+        b.release()
+        controller.syncForTesting()
     }
 
     /// A next whose transcode drops while it's read ahead isn't failed: what was read of it plays on from the current
