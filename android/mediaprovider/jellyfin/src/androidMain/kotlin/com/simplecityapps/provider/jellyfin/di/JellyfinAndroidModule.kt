@@ -6,11 +6,11 @@ import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserMediaInfoProvider
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserTranscodeService
 import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
-import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
-import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -57,7 +57,7 @@ class JellyfinAndroidModule {
     @MediaProviderTypeKey(MediaProviderType.Jellyfin)
     fun provideJellyfinMediaInfoProvider(
         authenticationManager: JellyfinAuthenticationManager,
-        transcodeService: JellyfinTranscodeService,
+        @Named("JellyfinTranscodeService") transcodeService: MediaBrowserTranscodeService,
         streamingPolicy: StreamingPolicy
-    ): MediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService, streamingPolicy)
+    ): MediaInfoProvider = MediaBrowserMediaInfoProvider(authenticationManager, transcodeService, streamingPolicy)
 }

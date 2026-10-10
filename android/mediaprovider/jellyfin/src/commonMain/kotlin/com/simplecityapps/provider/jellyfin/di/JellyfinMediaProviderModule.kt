@@ -15,11 +15,11 @@ import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavourit
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaybackReporter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServerAuthentication
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserTranscodeService
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
-import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
-import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -48,7 +48,8 @@ class JellyfinMediaProviderModule {
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideTranscodeService(@Named("JellyfinHttpClient") httpClient: HttpClient): JellyfinTranscodeService = JellyfinTranscodeService(httpClient)
+    @Named("JellyfinTranscodeService")
+    fun provideTranscodeService(@Named("JellyfinHttpClient") httpClient: HttpClient): MediaBrowserTranscodeService = MediaBrowserTranscodeService(httpClient)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -98,5 +99,5 @@ class JellyfinMediaProviderModule {
     @Provides
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Jellyfin)
-    fun provideServerAuthentication(authentication: JellyfinServerAuthentication): ServerAuthentication = authentication
+    fun provideServerAuthentication(authenticationManager: JellyfinAuthenticationManager): ServerAuthentication = MediaBrowserServerAuthentication(authenticationManager)
 }

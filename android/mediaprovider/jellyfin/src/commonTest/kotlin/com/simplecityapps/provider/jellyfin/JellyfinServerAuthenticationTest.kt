@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.mediaprovider.server.StreamProfile
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServerAuthentication
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -20,7 +21,7 @@ class JellyfinServerAuthenticationTest {
 
     private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "jellyfin")
 
-    private val authentication = JellyfinServerAuthentication(
+    private val authentication = MediaBrowserServerAuthentication(
         JellyfinAuthenticationManager(
             httpClient = createHttpClient(server.engine),
             credentialStore = credentialStore,

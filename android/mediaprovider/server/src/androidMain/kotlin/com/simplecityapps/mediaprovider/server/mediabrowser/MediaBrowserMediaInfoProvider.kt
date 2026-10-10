@@ -1,4 +1,4 @@
-package com.simplecityapps.provider.jellyfin
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import android.net.Uri
 import androidx.core.net.toUri
@@ -6,20 +6,18 @@ import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
-import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.shuttle.model.Song
-import dev.zacsweers.metro.Inject
 
-class JellyfinMediaInfoProvider
-@Inject
-constructor(
-    private val jellyfinAuthenticationManager: JellyfinAuthenticationManager,
-    private val jellyfinTranscodeService: JellyfinTranscodeService,
-    private val streamingPolicy: StreamingPolicy
+/** Playback and download uris for a [MediaBrowserServer]'s songs, which use the server's name as their scheme. */
+class MediaBrowserMediaInfoProvider(
+    private val authenticationManager: MediaBrowserAuthenticationManager,
+    private val transcodeService: MediaBrowserTranscodeService,
+    streamingPolicy: StreamingPolicy
 ) : MediaInfoProvider {
-    private val streamUrls = JellyfinStreamUrlProvider(jellyfinAuthenticationManager, streamingPolicy)
+    private val scheme = authenticationManager.server.name.lowercase()
+    private val streamUrls = MediaBrowserStreamUrlProvider(authenticationManager, streamingPolicy)
 
-    override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
+    override fun handles(scheme: String?): Boolean = scheme == this.scheme
 
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(
@@ -27,11 +25,11 @@ constructor(
         castCompatibilityMode: Boolean,
         playId: String?
     ): MediaInfo {
-        val jellyfinPath = buildPlaybackPathString(song, playId).toUri()
+        val path = buildPlaybackPathString(song, playId).toUri()
 
         return MediaInfo(
-            path = jellyfinPath,
-            mimeType = if (castCompatibilityMode) getMimeType(jellyfinPath, song.mimeType) else song.mimeType,
+            path = path,
+            mimeType = if (castCompatibilityMode) getMimeType(path, song.mimeType) else song.mimeType,
             isRemote = true
         )
     }
@@ -49,7 +47,7 @@ constructor(
     private suspend fun getMimeType(
         path: Uri,
         defaultMimeType: String
-    ): String = jellyfinTranscodeService.contentType(path.toString()) ?: defaultMimeType
+    ): String = transcodeService.contentType(path.toString()) ?: defaultMimeType
 
     override suspend fun downloadInfo(song: Song): DownloadInfo? = streamUrls.downloadSource(song)?.let { DownloadInfo(it.url.toUri(), it.mimeType) }
 
@@ -58,5 +56,5 @@ constructor(
         responseCode: Int
     ): DownloadInfo? = streamUrls.downloadFallback(song, responseCode)?.let { DownloadInfo(it.url.toUri(), it.mimeType) }
 
-    override fun downloadsAsTranscode(song: Song): Boolean = !jellyfinAuthenticationManager.directPlays(song.audioCodec)
+    override fun downloadsAsTranscode(song: Song): Boolean = !authenticationManager.directPlays(song.audioCodec)
 }

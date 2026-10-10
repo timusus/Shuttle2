@@ -15,11 +15,11 @@ import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavourit
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaybackReporter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServerAuthentication
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserTranscodeService
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
-import com.simplecityapps.provider.emby.EmbyServerAuthentication
-import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -48,7 +48,8 @@ class EmbyMediaProviderModule {
 
     @Provides
     @SingleIn(AppScope::class)
-    fun provideTranscodeService(@Named("EmbyHttpClient") httpClient: HttpClient): EmbyTranscodeService = EmbyTranscodeService(httpClient)
+    @Named("EmbyTranscodeService")
+    fun provideTranscodeService(@Named("EmbyHttpClient") httpClient: HttpClient): MediaBrowserTranscodeService = MediaBrowserTranscodeService(httpClient)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -98,5 +99,5 @@ class EmbyMediaProviderModule {
     @Provides
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Emby)
-    fun provideServerAuthentication(authentication: EmbyServerAuthentication): ServerAuthentication = authentication
+    fun provideServerAuthentication(authenticationManager: EmbyAuthenticationManager): ServerAuthentication = MediaBrowserServerAuthentication(authenticationManager)
 }

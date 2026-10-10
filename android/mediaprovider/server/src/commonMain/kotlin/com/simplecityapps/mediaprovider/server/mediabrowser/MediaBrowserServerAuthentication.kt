@@ -1,15 +1,14 @@
-package com.simplecityapps.provider.jellyfin
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.networking.userDescription
-import dev.zacsweers.metro.Inject
 
-/** Jellyfin's password sign-in, for the shared sign-in form. */
-class JellyfinServerAuthentication @Inject constructor(
-    private val authenticationManager: JellyfinAuthenticationManager,
+/** Jellyfin's and Emby's password sign-in, for the shared sign-in form. */
+class MediaBrowserServerAuthentication(
+    private val authenticationManager: MediaBrowserAuthenticationManager,
 ) : ServerAuthentication {
     override fun savedLogin(): SavedServerLogin {
         val credentials = authenticationManager.getLoginCredentials()

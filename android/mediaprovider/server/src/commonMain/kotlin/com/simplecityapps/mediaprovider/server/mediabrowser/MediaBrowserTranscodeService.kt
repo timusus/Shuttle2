@@ -1,4 +1,4 @@
-package com.simplecityapps.provider.emby.http
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.head
@@ -7,7 +7,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 
 /** Asks the server what it would stream for a playback URL, without fetching the stream. */
-class EmbyTranscodeService(private val client: HttpClient) {
+class MediaBrowserTranscodeService(private val client: HttpClient) {
     /** The `Content-Type` the server answers a HEAD of [url] with; null when it answers with an error. */
     suspend fun contentType(url: String): String? {
         // Retrofit's @HEAD call never asked for JSON; an explicit "*/*" stops ContentNegotiation

@@ -30,6 +30,10 @@ kotlin {
             implementation(project(":android:mediaprovider:core"))
         }
 
+        androidMain.dependencies {
+            implementation(libs.androidx.core)
+        }
+
         commonTest.dependencies {
             implementation(project(":android:mediaprovider:server-testing"))
             implementation(libs.kotlin.test)

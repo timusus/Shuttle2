@@ -1,4 +1,4 @@
-package com.simplecityapps.provider.jellyfin.http
+package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.networking.createHttpClient
@@ -11,12 +11,17 @@ import kotlinx.coroutines.test.runTest
  * Retrofit's `@HEAD` probe never asked for JSON; ContentNegotiation must not add
  * `Accept: application/json` to a request that isn't fetching a JSON body (#585).
  */
-class JellyfinTranscodeServiceTest {
-    private val server = FixtureServer("jellyfin")
-    private val service = JellyfinTranscodeService(createHttpClient(server.engine))
+class MediaBrowserTranscodeServiceTest {
+    private fun eachServer(block: suspend (FixtureServer, MediaBrowserTranscodeService) -> Unit) = runTest {
+        for (mediaBrowser in MediaBrowserServer.entries) {
+            val server = FixtureServer(mediaBrowser.name.lowercase())
+            block(server, MediaBrowserTranscodeService(createHttpClient(server.engine)))
+            server.close()
+        }
+    }
 
     @Test
-    fun `the transcode probe doesn't ask for JSON`() = runTest {
+    fun `the transcode probe doesn't ask for JSON`() = eachServer { server, service ->
         server.respond("/stream", code = 200, method = "HEAD")
 
         service.contentType("http://fixture.server/stream")
@@ -25,7 +30,7 @@ class JellyfinTranscodeServiceTest {
     }
 
     @Test
-    fun `a failed probe returns no content type`() = runTest {
+    fun `a failed probe returns no content type`() = eachServer { server, service ->
         server.respond("/stream", code = 404, method = "HEAD")
 
         service.contentType("http://fixture.server/stream").shouldBeNull()

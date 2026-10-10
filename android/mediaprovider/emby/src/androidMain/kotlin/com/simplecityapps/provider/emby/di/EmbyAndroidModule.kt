@@ -6,11 +6,11 @@ import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserMediaInfoProvider
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserTranscodeService
 import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
-import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
-import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -57,7 +57,7 @@ class EmbyAndroidModule {
     @MediaProviderTypeKey(MediaProviderType.Emby)
     fun provideEmbyMediaInfoProvider(
         authenticationManager: EmbyAuthenticationManager,
-        transcodeService: EmbyTranscodeService,
+        @Named("EmbyTranscodeService") transcodeService: MediaBrowserTranscodeService,
         streamingPolicy: StreamingPolicy
-    ): MediaInfoProvider = EmbyMediaInfoProvider(authenticationManager, transcodeService, streamingPolicy)
+    ): MediaInfoProvider = MediaBrowserMediaInfoProvider(authenticationManager, transcodeService, streamingPolicy)
 }
