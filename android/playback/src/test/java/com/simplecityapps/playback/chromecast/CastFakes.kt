@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
@@ -79,10 +80,21 @@ class FakeSongRepository(private var songs: List<Song>) : SongRepository {
 
     override suspend fun clearExcludeList() = error("not called")
 
+    private val favouriteIds = MutableStateFlow(songs.filter { it.isFavourite }.map { it.id }.toSet())
+
+    /** Every [setFavourite] call as (song ids, favourite), in order. */
+    val favouriteChanges = mutableListOf<Pair<List<Long>, Boolean>>()
+
+    override fun getFavouriteSongIds(): Flow<Set<Long>> = favouriteIds
+
     override suspend fun setFavourite(
         songs: List<Song>,
         favourite: Boolean
-    ) = error("not called")
+    ) {
+        val ids = songs.map { it.id }
+        favouriteChanges += ids to favourite
+        favouriteIds.value = if (favourite) favouriteIds.value + ids else favouriteIds.value - ids.toSet()
+    }
 }
 
 /** Artwork that is [bytes] for every song. */

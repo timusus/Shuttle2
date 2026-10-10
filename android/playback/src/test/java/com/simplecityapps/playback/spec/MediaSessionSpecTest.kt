@@ -211,17 +211,36 @@ class MediaSessionSpecTest {
         val queue = harness.playback.queueOperations
         loadPaused(harness, listOf(song(1), song(2), song(3)))
         val browser = harness.connect()
-        browser.mediaButtonPreferences.map { it.icon } shouldBe listOf(CommandButton.ICON_SHUFFLE_OFF, CommandButton.ICON_REPEAT_OFF)
+        browser.mediaButtonPreferences.map { it.icon } shouldBe listOf(CommandButton.ICON_SHUFFLE_OFF, CommandButton.ICON_REPEAT_OFF, CommandButton.ICON_HEART_UNFILLED)
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_SHUFFLE, Bundle.EMPTY)).resultCode shouldBe SessionResult.RESULT_SUCCESS
         harness.playback.runUntil { queue.getShuffleMode() == ShuffleMode.On }
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_REPEAT, Bundle.EMPTY))
         queue.getRepeatMode() shouldBe RepeatMode.All
-        harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ALL) }
+        harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ALL, CommandButton.ICON_HEART_UNFILLED) }
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_REPEAT, Bundle.EMPTY))
-        harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ONE) }
+        harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ONE, CommandButton.ICON_HEART_UNFILLED) }
+    }
+
+    @Test
+    fun `RS-45a the like button toggles the current song's favourite and shows whether it is one`() {
+        val songs = listOf(song(1), song(2), song(3))
+        val harness = sessionHarness(songs = songs)
+        loadPaused(harness, songs)
+        val browser = harness.connect()
+        fun icons() = browser.mediaButtonPreferences.map { it.icon }
+        harness.playback.runUntil { icons().lastOrNull() == CommandButton.ICON_HEART_UNFILLED }
+
+        harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_FAVOURITE, Bundle.EMPTY)).resultCode shouldBe SessionResult.RESULT_SUCCESS
+        harness.playback.runUntil { harness.songRepository.favouriteChanges.isNotEmpty() }
+        harness.songRepository.favouriteChanges.last() shouldBe (listOf(1L) to true)
+        harness.playback.runUntil { icons().lastOrNull() == CommandButton.ICON_HEART_FILLED }
+
+        harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_FAVOURITE, Bundle.EMPTY))
+        harness.playback.runUntil { icons().lastOrNull() == CommandButton.ICON_HEART_UNFILLED }
+        harness.songRepository.favouriteChanges.last() shouldBe (listOf(1L) to false)
     }
 
     @Test

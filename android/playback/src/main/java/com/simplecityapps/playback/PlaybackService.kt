@@ -36,6 +36,8 @@ import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
+import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
+import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
@@ -99,6 +101,12 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var serverAccessGate: ServerAccessGate
 
+    @Inject
+    lateinit var toggleFavourite: ToggleFavourite
+
+    @Inject
+    lateinit var observeFavouriteSongIds: ObserveFavouriteSongIds
+
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     private lateinit var session: MediaLibrarySession
@@ -128,11 +136,11 @@ class PlaybackService : MediaLibraryService() {
         )
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate), TrustedCallers::isTrusted)
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate), toggleFavourite, observeFavouriteSongIds(), TrustedCallers::isTrusted)
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
             .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, artworkSettings) { player.currentMediaItem?.queueEntryOrNull?.song })
-            .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode()))
+            .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode(), favourite = null))
             .setSessionActivity(PendingIntent.getActivity(this, 1, (applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
             .build()
         foregroundStarts = ForegroundStarts(this, sessionPlayer, coroutineScope, NOTIFICATION_ID) {

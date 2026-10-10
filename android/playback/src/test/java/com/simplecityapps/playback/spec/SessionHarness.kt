@@ -22,6 +22,8 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
+import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.CoroutineScope
@@ -68,10 +70,11 @@ class SessionHarness(
     /** The session's callback, for what only the system asks it directly (the resumption controls). */
     val callback: SessionCallback
 
+    val songRepository = FakeSongRepository(songs)
+
     init {
         playback.queueOperations.hasRestoredQueue = restored
         val context = playback.context
-        val songRepository = FakeSongRepository(songs)
         val albumRepository = FakeAlbumRepository(albums)
         val artistRepository = FakeAlbumArtistRepository()
         val playlistRepository = FakePlaylistRepository(playlists)
@@ -97,7 +100,7 @@ class SessionHarness(
             eligible
         })
         val carAccess = if (car) CarAccess(gate, carPackages = setOf(context.packageName)) else CarAccess(gate)
-        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, carAccess) { trusted }
+        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, carAccess, ToggleFavourite(songRepository), ObserveFavouriteSongIds(songRepository)(), { trusted })
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)

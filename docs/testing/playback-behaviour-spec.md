@@ -271,6 +271,10 @@ device-only: *Media session through Media3*.
 and repeat buttons, when one is pressed, then shuffle toggles and repeat goes off, all, one, and each button's icon
 follows the mode, whichever way it changed. (#345) — JVM (`spec/MediaSessionSpecTest`).
 
+**RS-45a: the like button toggles the current song's favourite and shows whether it is one.** Given a song playing,
+when the like button is pressed, then the song becomes a favourite and the button's heart fills, and pressing it again
+removes the favourite. With nothing playing there is no like button. (#761) — JVM (`spec/MediaSessionSpecTest`).
+
 **RS-46: a voice search plays what it finds, and adding one adds the songs it names.** Given a library, when a
 controller asks to play a search, then what it finds plays (RS-60; a search for nothing in particular is RS-61); and
 adding a search or a file to the queue adds the songs it names. (#345, #424) — JVM (`spec/MediaSessionSpecTest`); an

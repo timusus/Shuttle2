@@ -30,11 +30,15 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -64,6 +68,8 @@ class SessionCallback(
     private val nowPlaying: () -> NowPlayingSnapshot?,
     private val scope: CoroutineScope,
     private val carAccess: CarAccess,
+    private val toggleFavourite: ToggleFavourite,
+    private val favouriteSongIds: Flow<Set<Long>>,
     private val isTrustedCaller: (ControllerInfo) -> Boolean
 ) : MediaLibrarySession.Callback {
     override fun onConnect(session: MediaSession, controller: ControllerInfo): MediaSession.ConnectionResult = MediaSession.ConnectionResult.AcceptedResultBuilder(session)
@@ -72,10 +78,14 @@ class SessionCallback(
             MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                 .add(TOGGLE_SHUFFLE)
                 .add(TOGGLE_REPEAT)
+                .add(TOGGLE_FAVOURITE)
                 .build()
         )
-        .setMediaButtonPreferences(mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode()))
+        .setMediaButtonPreferences(mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode(), currentSongFavourite))
         .build()
+
+    /** What [launchMediaButtonUpdates] last showed, for a controller that connects between updates. */
+    private var currentSongFavourite: Boolean? = null
 
     override fun onCustomCommand(
         session: MediaSession,
@@ -93,40 +103,62 @@ class SessionCallback(
             Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
 
+        TOGGLE_FAVOURITE.customAction -> {
+            scope.launch {
+                val song = queueOperations.getCurrentItem()?.song ?: return@launch
+                toggleFavourite(song, isFavourite = currentSongFavourite == true)
+            }
+            Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+        }
+
         else -> Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
     }
 
-    /** The shuffle and repeat buttons, showing the modes they're in. */
-    fun mediaButtonPreferences(shuffleMode: ShuffleMode, repeatMode: RepeatMode): ImmutableList<CommandButton> = ImmutableList.of(
-        CommandButton.Builder(if (shuffleMode == ShuffleMode.On) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF)
-            .setDisplayName(context.getString(if (shuffleMode == ShuffleMode.On) com.simplecityapps.core.R.string.shuffle_on else com.simplecityapps.core.R.string.shuffle_off))
-            .setSessionCommand(TOGGLE_SHUFFLE)
-            .build(),
-        CommandButton.Builder(
-            when (repeatMode) {
-                RepeatMode.Off -> CommandButton.ICON_REPEAT_OFF
-                RepeatMode.All -> CommandButton.ICON_REPEAT_ALL
-                RepeatMode.One -> CommandButton.ICON_REPEAT_ONE
+    /** The shuffle and repeat buttons, showing the modes they're in, and a like button showing whether the current song is a favourite; [favourite] is null with no current song, which has no like button. */
+    fun mediaButtonPreferences(shuffleMode: ShuffleMode, repeatMode: RepeatMode, favourite: Boolean?): ImmutableList<CommandButton> = ImmutableList.copyOf(
+        listOfNotNull(
+            CommandButton.Builder(if (shuffleMode == ShuffleMode.On) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF)
+                .setDisplayName(context.getString(if (shuffleMode == ShuffleMode.On) com.simplecityapps.core.R.string.shuffle_on else com.simplecityapps.core.R.string.shuffle_off))
+                .setSessionCommand(TOGGLE_SHUFFLE)
+                .build(),
+            CommandButton.Builder(
+                when (repeatMode) {
+                    RepeatMode.Off -> CommandButton.ICON_REPEAT_OFF
+                    RepeatMode.All -> CommandButton.ICON_REPEAT_ALL
+                    RepeatMode.One -> CommandButton.ICON_REPEAT_ONE
+                }
+            )
+                .setDisplayName(
+                    context.getString(
+                        when (repeatMode) {
+                            RepeatMode.Off -> com.simplecityapps.core.R.string.repeat_off
+                            RepeatMode.All -> com.simplecityapps.core.R.string.repeat_all
+                            RepeatMode.One -> com.simplecityapps.core.R.string.repeat_one
+                        }
+                    )
+                )
+                .setSessionCommand(TOGGLE_REPEAT)
+                .build(),
+            favourite?.let {
+                CommandButton.Builder(if (it) CommandButton.ICON_HEART_FILLED else CommandButton.ICON_HEART_UNFILLED)
+                    .setDisplayName(context.getString(if (it) com.simplecityapps.core.R.string.favourite_remove else com.simplecityapps.core.R.string.favourite_add))
+                    .setSessionCommand(TOGGLE_FAVOURITE)
+                    .build()
             }
         )
-            .setDisplayName(
-                context.getString(
-                    when (repeatMode) {
-                        RepeatMode.Off -> com.simplecityapps.core.R.string.repeat_off
-                        RepeatMode.All -> com.simplecityapps.core.R.string.repeat_all
-                        RepeatMode.One -> com.simplecityapps.core.R.string.repeat_one
-                    }
-                )
-            )
-            .setSessionCommand(TOGGLE_REPEAT)
-            .build()
     )
 
-    /** Keeps [session]'s shuffle and repeat buttons showing the modes they're in, until [scope] ends. */
+    /** Keeps [session]'s shuffle, repeat and like buttons showing the modes and favourite state they're in, until [scope] ends. */
     fun launchMediaButtonUpdates(session: MediaSession): Job = scope.launch {
-        combine(queueOperations.shuffleModeFlow, queueOperations.repeatModeFlow, ::Pair)
+        val favourite = combine(queueOperations.queueStateFlow.map { it.currentItem?.song?.id }.distinctUntilChanged(), favouriteSongIds) { id, ids ->
+            id?.let { it in ids }
+        }
+        combine(queueOperations.shuffleModeFlow, queueOperations.repeatModeFlow, favourite, ::Triple)
             .distinctUntilChanged()
-            .collect { (shuffleMode, repeatMode) -> session.setMediaButtonPreferences(mediaButtonPreferences(shuffleMode, repeatMode)) }
+            .collect { (shuffleMode, repeatMode, isFavourite) ->
+                currentSongFavourite = isFavourite
+                session.setMediaButtonPreferences(mediaButtonPreferences(shuffleMode, repeatMode, isFavourite))
+            }
     }
 
     /**
@@ -358,6 +390,7 @@ class SessionCallback(
     companion object {
         val TOGGLE_SHUFFLE = SessionCommand("com.simplecityapps.shuttle.shuffle", Bundle.EMPTY)
         val TOGGLE_REPEAT = SessionCommand("com.simplecityapps.shuttle.repeat", Bundle.EMPTY)
+        val TOGGLE_FAVOURITE = SessionCommand("com.simplecityapps.shuttle.favourite", Bundle.EMPTY)
 
         /** What a controller that isn't trusted may do: everything but change the queue's contents. */
         private val untrustedPlayerCommands: Player.Commands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
