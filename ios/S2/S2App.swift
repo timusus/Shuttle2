@@ -1,4 +1,5 @@
 import Intents
+import S2Playback
 import Shared
 import SwiftUI
 
@@ -33,6 +34,8 @@ struct S2App: App {
                 .onChange(of: scenePhase) { _, phase in
                     switch phase {
                     case .active:
+                        // The next tap's stream finds its server's connection open
+                        StreamWarmUp.shared.warm()
                         SiriAuthorization.askIfDue()
                         LibraryImport.syncIfStale()
                         Task { await LibraryImport.whenLocalFilesChange() }

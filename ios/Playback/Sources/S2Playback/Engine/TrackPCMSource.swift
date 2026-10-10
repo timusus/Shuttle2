@@ -87,6 +87,7 @@ public final class FFmpegTrackSource: TrackPCMSource {
     /// `readAhead` caps how far a stream downloads ahead of the decoder on an expensive network path; nil
     /// downloads it whole.
     public convenience init(url: URL, headers: [String: String] = [:], readAhead: GrowingFileReadAhead? = nil) {
+        StreamWarmUp.shared.noteStreamed(url)
         self.init(url: url, headers: headers, readAhead: readAhead, store: StreamStore.shared)
     }
 
