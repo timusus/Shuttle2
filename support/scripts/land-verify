@@ -204,6 +204,8 @@ plan_confirm() {
     local n name class module c
     [ "${LAND_MODE:-}" = confirm ] && [ -n "${LAND_ONLY// /}" ] || return 0
     confirm=1
+    # Parameterised names like Foo.bar[1] would otherwise glob-expand.
+    set -f
     for n in $LAND_ONLY; do
         case "$n" in
             test:*)
@@ -226,6 +228,7 @@ plan_confirm() {
                 ;;
         esac
     done
+    set +f
 }
 
 # run_plan RUNNER PLAN: runs RUNNER <module> --tests <name>... once per module in PLAN; keeps the worst exit.
@@ -236,7 +239,8 @@ run_plan() {
         while IFS=$'\t' read -r m line; do
             [ "$m" = "$module" ] && args+=(--tests "$line")
         done <<<"$plan"
-        $runner "$module" "${args[@]}" || rc=$?
+        # Gradle forwards stdin; without this it eats the remaining module lines and they never run.
+        $runner "$module" "${args[@]}" </dev/null || rc=$?
     done < <(printf '%s' "$plan" | cut -f1 | sort -u)
     return "$rc"
 }
