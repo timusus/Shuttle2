@@ -41,6 +41,7 @@
     <string name="scrobbling_lastfm">Last.fm</string>
     <string name="scrobbling_lastfm_signed_out">Not signed in</string>
     <string name="scrobbling_lastfm_signed_in">Signed in as %1$s</string>
+    <string name="scrobbling_signed_in_as">Signed in as %1$s</string>
     <string name="scrobbling_lastfm_awaiting">Approve Shuttle Music on last.fm, then come back here</string>
     <string name="scrobbling_listenbrainz">ListenBrainz</string>
     <string name="scrobbling_listenbrainz_signed_out">Not signed in</string>

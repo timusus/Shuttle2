@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.settings.scrobbling
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -16,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.simplecityapps.shuttle.R
@@ -89,7 +92,12 @@ fun ScrobblingScreen(
             onListenBrainzMessageShown()
         }
     }
-    var token by rememberSaveable { mutableStateOf("") }
+    // Not saveable: the token would land in plaintext in saved instance state.
+    var token by remember { mutableStateOf("") }
+    val listenBrainzSignedIn = listenBrainz.account is ListenBrainzAccountState.SignedIn
+    LaunchedEffect(listenBrainzSignedIn) {
+        if (listenBrainzSignedIn) token = ""
+    }
     // Back from the browser: finish the sign-in if one is waiting, so the user needn't press anything. Only a resume
     // that follows the app being stopped counts (the browser covers the whole activity; a notification shade or dialog
     // only pauses it), and the flag is saved so it survives process death while the user is away. A stop caused by a
@@ -174,7 +182,7 @@ fun ScrobblingScreen(
                             title = stringResource(R.string.scrobbling_listenbrainz),
                             onClick = {},
                             summary = if (signedIn != null) {
-                                stringResource(R.string.scrobbling_lastfm_signed_in, signedIn.username)
+                                stringResource(R.string.scrobbling_signed_in_as, signedIn.username)
                             } else {
                                 stringResource(R.string.scrobbling_listenbrainz_signed_out)
                             },
@@ -197,6 +205,8 @@ fun ScrobblingScreen(
                                     onValueChange = { token = it },
                                     label = stringResource(R.string.scrobbling_listenbrainz_token),
                                     supportingText = stringResource(R.string.scrobbling_listenbrainz_token_hint),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                    visualTransformation = PasswordVisualTransformation(),
                                     modifier = Modifier.weight(1f)
                                 )
                                 S2Button(
