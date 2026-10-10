@@ -368,8 +368,8 @@ ios_install_running() {
   read -r pid marker 2> /dev/null < "$IOS_PID_FILE" || return 1
   [ -n "$pid" ] && [ -n "$marker" ] && [ "$(proc_marker "$pid")" = "$marker" ]
 }
-# wait_for_ios_install: block until no install is running; on timeout abort the landing (exit 3)
-# without touching the tree, and disarm the EXIT trap's reset so it can't touch it either.
+# wait_for_ios_install: block until no install is running; runs at entry only (before the tree is
+# reset), so a timeout aborts (exit 3) without touching the tree and disarms the EXIT trap's reset.
 wait_for_ios_install() {
   local waited=0
   ios_install_running || return 0
@@ -388,7 +388,6 @@ wait_for_ios_install() {
 
 if [ "${1:-}" = "--verify-only" ]; then
   shift
-  wait_for_ios_install
   run_in_group --timeout "$VERIFY_TIMEOUT" verify_phases "$@"
   exit $?
 fi
@@ -608,7 +607,6 @@ pick_branch() {  # $1 = index into BRANCHES
     log "$b: no merge-base with origin/main"
     return
   fi
-  wait_for_ios_install
   log "$b: cherry-picking ${base}..$b"
   for attempt in 1 2 3 4 5; do
     out=$(git cherry-pick "$base..$b" 2>&1); rc=$?
@@ -888,7 +886,6 @@ ensure_base_sig() {
   sig=$(mktemp "${TMPDIR:-/tmp}/land-sig.XXXXXX") || { rm -f "$files"; return 0; }
   git diff --name-only "$ORIGIN_MAIN_SHA" "$cur" > "$files"
   say "land.sh: verify failed; verifying origin/main for the same tasks to tell pre-existing failures from the batch's"
-  wait_for_ios_install
   if git checkout -q --detach "$ORIGIN_MAIN_SHA" >> "$LOG" 2>&1; then
     run_verify "$sig" "$files" || brc=$?
     [ "$brc" -eq 1 ] && BASE_SIG=$(cat "$sig")
@@ -940,7 +937,6 @@ branch_verifiable() {
 # branch that no longer picks cleanly on its own is treated as passing (it is not what broke verify).
 isolate_verify() {
   local b=${BRANCHES[$1]} mb
-  wait_for_ios_install
   run_git reset -q --hard "$ORIGIN_MAIN_SHA"
   mb=$(git merge-base "$ORIGIN_MAIN_SHA" "$b" 2>/dev/null)
   if [ -z "$mb" ] || ! git cherry-pick "$mb..$b" >> "$LOG" 2>&1; then
@@ -968,7 +964,6 @@ REMAINING=()
 rebuild_batch() {
   local i
   REMAINING=()
-  wait_for_ios_install
   run_git reset -q --hard "$ORIGIN_MAIN_SHA"
   for i in "$@"; do
     pick_branch "$i"
@@ -985,7 +980,6 @@ mark_unblamed_dropped() {
     log "${BRANCHES[$i]}: not landed, verify fails without a branch to blame"
   done
   if [ "$IN_PLACE" != 1 ]; then
-    wait_for_ios_install
     run_git reset -q --hard "$ORIGIN_MAIN_SHA"
   fi
 }
