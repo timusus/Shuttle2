@@ -20,8 +20,8 @@
 # clear it with the recovery command printed below and the next lease starts it cold.
 #
 # Lease records live in <git-common-dir>/s2-worktree-pool/<k>.lease ("<branch> <epoch> <base-sha> <holder-pid>"), never
-# tracked. The holder is $S2_POOL_HOLDER_PID (worker-brief exports its own pid, which becomes the worker's by exec) or
-# else the caller's parent; a 3-field record has no holder and is "unknown". The base sha is origin/main when the branch
+# tracked. The holder is $S2_POOL_HOLDER_PID (worker-brief exports its own pid, which becomes the worker's by exec);
+# without it, or in a 3-field record, the holder is "unknown" and never judged dead. The base sha is origin/main when the branch
 # was created. A slot is reclaimable when it has no lease, or its leased branch no longer exists, or the branch is
 # landed: it has commits of its own and every one is on origin/main by patch (at least one cherry "-", no "+"), or its
 # holder is dead and the branch has no commits of its own and the worktree is clean. A branch with no commits of its
@@ -77,7 +77,8 @@ lease_epoch() { lease_field "$1" 2; }
 lease_base() { lease_field "$1" 3; }
 lease_holder() { lease_field "$1" 4; }
 write_lease() {  # $1 = k, $2 = branch, $3 = epoch, $4 = base sha
-  printf '%s %s %s %s\n' "$2" "$3" "$4" "${S2_POOL_HOLDER_PID:-$PPID}" > "$(lease_file "$1")"
+  # No explicit holder is recorded as "-" (unknown): $PPID is often a subshell that exits at once.
+  printf '%s %s %s %s\n' "$2" "$3" "$4" "${S2_POOL_HOLDER_PID:--}" > "$(lease_file "$1")"
 }
 # live|dead|unknown. kill -0 fails with EPERM for another user's process, so ask ps before calling it dead.
 holder_state() {
@@ -149,7 +150,7 @@ slot_abandoned() {  # $1 = k, $2 = branch
   [ "$(holder_state "$1")" = dead ] || return 1
   base=$(lease_base "$1")
   [ -n "$base" ] || return 1
-  own=$(git -C "$PRIMARY" rev-list --no-merges "$base..refs/heads/$2" 2>/dev/null) || return 1
+  own=$(git -C "$PRIMARY" rev-list "$base..refs/heads/$2" 2>/dev/null) || return 1
   [ -z "$own" ] || return 1
   usable "$(slot_dir "$1")" || return 1
   [ "$(git -C "$(slot_dir "$1")" symbolic-ref -q --short HEAD || true)" = "$2" ] || return 1
@@ -233,7 +234,8 @@ cmd_lease() {
   fi
 
   for k in $(seq 1 "$SIZE"); do
-    if slot_reclaimable "$k"; then d=$(slot_dir "$k"); break; fi
+    # A dead-holder slot is left to reap, which also deletes its empty branch; lease would strand that name.
+    if slot_reclaimable "$k" && [ "$RECLAIM_WHY" != dead ]; then d=$(slot_dir "$k"); break; fi
   done
   if [ -z "$d" ]; then
     unlock

@@ -21,9 +21,10 @@ git init -q -b main "$TMP/repo"
 cd "$TMP/repo"
 git remote add origin "$TMP/origin.git"
 git commit -q --allow-empty -m init
+git commit -q --allow-empty -m second
 git push -q origin main
 git fetch -q origin main
-export S2_WORKTREE_POOL_SIZE=4
+export S2_WORKTREE_POOL_SIZE=8
 
 lease_file() { echo "$TMP/repo/.git/s2-worktree-pool/$1.lease"; }
 row() { "$POOL" list 2>/dev/null | awk -F'\t' -v k="$1" '$1 == k'; }
@@ -44,16 +45,33 @@ row 1 | grep -q $'\tlive' || fail "live holder not listed live: $(row 1)"
 "$POOL" reap >/dev/null 2>&1
 [ -f "$(lease_file 1)" ] || fail "reap released a live holder"
 
-# Without the override the holder is the caller's parent (this shell).
-"$POOL" lease ppid >/dev/null 2>&1 || fail "lease ppid failed"
-[ "$(cut -d' ' -f4 "$(lease_file 2)")" = "$$" ] || fail "default holder is not \$PPID: $(cat "$(lease_file 2)")"
-
-# Dead holder, no commits, clean tree: reaped, and its empty branch is dropped.
-set_holder 2 "$(dead_pid)"
-row 2 | grep -q $'\tdead' || fail "dead holder not listed dead: $(row 2)"
+# Without the override the holder is unknown (the caller's parent may exit at once): never reaped, even idle and clean.
+"$POOL" lease nohold >/dev/null 2>&1 || fail "lease nohold failed"
+[ "$(cut -d' ' -f4 "$(lease_file 2)")" = "-" ] || fail "default holder is not unknown: $(cat "$(lease_file 2)")"
+row 2 | grep -q $'\tunknown' || fail "default holder not listed unknown: $(row 2)"
 "$POOL" reap >/dev/null 2>&1
-[ ! -f "$(lease_file 2)" ] || fail "reap kept an idle dead holder"
-git show-ref --verify --quiet refs/heads/worktree-ppid && fail "empty branch of a reaped dead holder was kept"
+[ -f "$(lease_file 2)" ] || fail "reap released a lease with no explicit holder"
+
+# Dead holder, no commits, clean tree: lease leaves the slot alone, reap releases it and drops the empty branch.
+lease idle "$sleeper"
+set_holder 3 "$(dead_pid)"
+row 3 | grep -q $'\tdead' || fail "dead holder not listed dead: $(row 3)"
+lease other "$sleeper"
+[ "$("$POOL" slot-of worktree-other)" != "$TMP/repo/.claude/worktrees/pool-3" ] || fail "lease reused a dead-holder slot"
+"$POOL" reap >/dev/null 2>&1
+[ ! -f "$(lease_file 3)" ] || fail "reap kept an idle dead holder"
+git show-ref --verify --quiet refs/heads/worktree-idle && fail "empty branch of a reaped dead holder was kept"
+lease idle "$sleeper"
+
+# A branch whose only commit is a merge has work: kept.
+lease merged "$sleeper"
+k=$(basename "$("$POOL" slot-of worktree-merged)"); k=${k#pool-}
+base=$(cut -d' ' -f3 "$(lease_file "$k")")
+merge=$(git commit-tree -p "$base" -p "$base^" -m merge "$base^{tree}")
+git -C "$TMP/repo/.claude/worktrees/pool-$k" reset -q --hard "$merge"
+set_holder "$k" "$(dead_pid)"
+"$POOL" reap >/dev/null 2>&1
+[ -f "$(lease_file "$k")" ] || fail "reap released a dead holder whose only commit is a merge"
 
 # Dead holder with a commit: kept and flagged.
 lease committed "$sleeper"
