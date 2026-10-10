@@ -17,7 +17,7 @@ Delegation, worker tiers and `worker`/`worker-brief` are in the global `~/.claud
   `--no-test` before the message skips the test run, for docs-only changes.
   No full suite; no emulator/simulator lease unless a screenshot is needed.
 - Never chain briefs in one job: launch the next worker after reviewing and committing the previous tree.
-- Landing (`land.sh`), the full-verify watermark and the worker worktree pool (`worktree-pool.sh lease|release|list|slot-of|reap`):
+- Landing (`land`, run as `detach start land -- land <branch>...` in `.claude/worktrees/landing`), the full-verify watermark and the worker worktree pool (`worktree-pool.sh lease|release|list|slot-of|reap`):
   `.claude/rules/landing.md`. `full-verify.sh --status` shows how far main is past the watermark; `/deploy-android` runs it
   first when the watermark isn't the release commit. `worktree-report.sh [--prune]` reports and removes disposable worktrees.
 

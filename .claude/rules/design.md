@@ -48,8 +48,8 @@ literal `dp`/`Color(0x…)`/`Font.system(size:)`.
 
 - **`support/scripts/design-shots.sh`**, one background call that leases emulator/simulator lanes and
   writes the whole set:
-  `support/scripts/longjob.sh start design-shots -- support/scripts/design-shots.sh --platform both [--screens home,now-playing] [--devices …] [--matrix quick|full] [--contact-sheet]`,
-  then `longjob.sh wait design-shots`.
+  `detach start design-shots -- support/scripts/design-shots.sh --platform both [--screens home,now-playing] [--devices …] [--matrix quick|full] [--contact-sheet]`,
+  then `detach wait design-shots`.
 - `--devices` picks form factors: Android `phone,tablet,foldable`, iOS `iphone,ipad`; default
   `phone,iphone` (tablet/foldable are `wm size` overrides, not AVDs). `--matrix` picks theme × text:
   `quick` = light + dark at default text, `full` adds font scale 2.0 / AX5. **Audits use `--matrix full`

@@ -52,8 +52,8 @@ It passes when the watermark is `HEAD`, or an ancestor of it with only the chang
 step 5 changed since. If it exits non-zero, run the full verify (one wait; takes a while):
 
 ```bash
-support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh "$(git rev-parse HEAD)"
-support/scripts/longjob.sh wait full-verify
+detach start full-verify -- support/scripts/full-verify.sh "$(git rev-parse HEAD)"
+detach wait full-verify
 ```
 
 **STOP if it fails** — it files (or comments on) a `bug` issue naming the step; do not tag. Exit 3 means an

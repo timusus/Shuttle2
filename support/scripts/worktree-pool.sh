@@ -74,7 +74,7 @@ lease_epoch() { lease_field "$1" 2; }
 lease_base() { lease_field "$1" 3; }
 branch_exists() { git -C "$PRIMARY" show-ref --verify --quiet "refs/heads/$1"; }
 
-# Landed: the branch has a commit of its own and every such commit is on origin/main by patch (cherry-pick, as land.sh
+# Landed: the branch has a commit of its own and every such commit is on origin/main by patch (cherry-pick, as `land`
 # does). A branch with no commits of its own that was fast-forwarded, merged or rebased onto a newer origin/main has an
 # empty `git cherry`, so it never counts: a running worker's slot must not be reset.
 branch_landed() {  # $1 = branch, $2 = base sha

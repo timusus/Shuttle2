@@ -97,7 +97,7 @@ It only talks to the Mac's adb server on 5037, so pass `--device "$(support/scri
 
 ## Screenshot tour
 
-For design audits, `support/scripts/design-shots.sh` (via `longjob.sh start design-shots -- ...`) drives a fixed Maestro flow per screen (`support/maestro/design/`) across themes, text sizes and form factors and writes `shots/<run>/` with a `manifest.md`; `--help` has the flags.
+For design audits, `support/scripts/design-shots.sh` (via `detach start design-shots -- ...`) drives a fixed Maestro flow per screen (`support/maestro/design/`) across themes, text sizes and form factors and writes `shots/<run>/` with a `manifest.md`; `--help` has the flags.
 
 ## Reporting
 

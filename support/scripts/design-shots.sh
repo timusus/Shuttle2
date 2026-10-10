@@ -67,8 +67,8 @@
 # One failing flow never aborts the rest. Exits non-zero only if no shot was produced at all.
 #
 # Always stops the Android lane and releases the simulator on exit (trap). Run it in the background
-# through longjob, and read manifest.md first, then the PNGs:
-#   support/scripts/longjob.sh start design-shots -- support/scripts/design-shots.sh --platform both
+# through detach, and read manifest.md first, then the PNGs:
+#   detach start design-shots -- support/scripts/design-shots.sh --platform both
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

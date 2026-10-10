@@ -2,7 +2,7 @@
 # full-verify.sh — the full, end-to-end verify, run less often than a landing. A watermark (the last
 # commit that passed) replaces a queue: the suites are cumulative, so a pass at origin/main covers
 # every commit before it. Meant to run as
-#   support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh
+#   detach start full-verify -- support/scripts/full-verify.sh
 #
 #   support/scripts/full-verify.sh [<sha>]      verify <sha> (default: fresh origin/main)
 #   support/scripts/full-verify.sh --status [--short]
@@ -16,7 +16,7 @@
 #              changelog files the deploy skill commits changed since; else exit 1 and say why
 #
 # Runs in the reusable, locked detached worktree .claude/worktrees/full-verify (moved to the sha with
-# `git checkout --detach`, build outputs kept) under `machine-lock --name verify`: testDebugUnitTest,
+# `git checkout --detach`, build outputs kept) under `lease --class verify`: testDebugUnitTest,
 # assembleDebug and both verifyRoborazziDebug, then the iOS framework build, `iosSimulatorArm64Test` (every KMP module's commonTest on
 # Kotlin/Native, #821) + the whole `test.sh`
 # (simulator leased as S2_SIM_HOLDER=full-verify, released afterwards), then `test.sh --package`.
@@ -26,13 +26,13 @@
 # names the failing step, the commit range watermark..sha and the log (an open "Full verify failed"
 # issue gets a comment instead) and the script exits 1. Infrastructure failures (no lock, no
 # worktree, no local.properties) file nothing and exit 3. The worktree is kept between runs. One run at a
-# time: a second waits on `machine-lock --name s2-full-verify` until the first has recorded its result.
+# time: a second waits on `lease --class s2-full-verify` until the first has recorded its result.
 set -euo pipefail
 
 SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$(dirname "$SELF")/../.." || exit 2
 
-# No /usr/sbin or ssh-agent in sessions that skip ~/.zshrc (#718): see land.sh.
+# No /usr/sbin or ssh-agent in sessions that skip ~/.zshrc (#718).
 export PATH="/usr/sbin:/sbin:$PATH"
 https_fallback() {
   local n=${GIT_CONFIG_COUNT:-0}
@@ -55,7 +55,7 @@ watermark() {  # prints the watermark sha if it is a known commit, else nothing
   return 0
 }
 
-# Internal mode: the verify steps, run by the main flow under one `machine-lock --name verify` hold.
+# Internal mode: the verify steps, run by the main flow under one `lease --class verify` hold.
 #   full-verify.sh --steps <worktree> <step-file>
 if [ "${1:-}" = "--steps" ]; then
   wt=${2:?} step_file=${3:?}
@@ -140,10 +140,10 @@ esac
 
 # One run at a time. The fixed worktree, its step file and the watermark belong to the run holding this lock,
 # from moving the worktree to the sha until the result is recorded; a second run waits here, before it touches
-# any of them. (The `verify` lock below covers only the build steps, and is shared with land.sh.)
+# any of them. (The `verify` lock below covers only the build steps, and is shared with `land`.)
 if [ -z "${S2_FULL_VERIFY_HELD:-}" ]; then
   export S2_FULL_VERIFY_HELD=1
-  exec machine-lock --name s2-full-verify -- "$SELF" "$@"
+  exec lease --class s2-full-verify -- "$SELF" "$@"
 fi
 
 https_fallback
@@ -207,7 +207,7 @@ fi
 STEP_FILE="$WORKTREE/.full-verify-step"
 rm -f "$STEP_FILE"  # a stale one from the last run would mask a setup failure
 rc=0
-machine-lock --name verify -- "$SELF" --steps "$WORKTREE" "$STEP_FILE" >> "$LOG" 2>&1 || rc=$?
+lease --class verify -- "$SELF" --steps "$WORKTREE" "$STEP_FILE" >> "$LOG" 2>&1 || rc=$?
 
 if [ "$rc" -eq 0 ]; then
   if [ -z "$PREV" ] || git merge-base --is-ancestor "$PREV" "$SHA"; then

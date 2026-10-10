@@ -84,7 +84,7 @@ else
   echo "tests: skipped (--no-test)"
 fi
 
-# Checks land.sh's verify would otherwise be the first to run, driven by the diff vs the merge-base
+# Checks the landing verify would otherwise be the first to run, driven by the diff vs the merge-base
 # with origin/main plus the working tree. Skipped with --no-test (docs-only).
 changed_files() {
   local base

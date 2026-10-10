@@ -130,7 +130,7 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
                            task of every KMP module whose commonMain,
                            commonTest, iosMain or iosTest sources the given
                            repo-relative paths fall under, one per line,
-                           sorted. Prints nothing when none do. land.sh uses
+                           sorted. Prints nothing when none do. land-verify uses
                            it to scope the Kotlin/Native test run.
 
 Examples:
@@ -354,7 +354,7 @@ kmp_native_tasks_for_files() {
 changed_files_since() {
   local base="$1" merge_base
   # UNIT_TEST_CHANGED_FILES=<file>: use the paths listed there (one per line) instead of the diff, so
-  # land.sh can run the same task set on origin/main (#829).
+  # land-verify can run the same task set on origin/main (#829).
   if [ -n "${UNIT_TEST_CHANGED_FILES:-}" ]; then
     sort -u "${UNIT_TEST_CHANGED_FILES}"
     return 0
@@ -904,7 +904,7 @@ run_changed_tests_mode() {
 
 if [ "$#" -gt 0 ] && [ "$1" = "--kmp-native-tasks" ]; then
   shift
-  trap - EXIT  # the output is parsed (land.sh): no "Finished" line
+  trap - EXIT  # the output is parsed (land-verify): no "Finished" line
   kmp_native_tasks_for_files "$@"
   exit 0
 fi

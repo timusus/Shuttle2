@@ -55,7 +55,7 @@ and flaky.
 (`~/.claude/scripts/ios-sim/device.sh`); `$S2_SIM_HOLDER` leases as a different holder for parallel workers.
 `S2_SIM_PROFILE=ios26` (via `ios/scripts/lease-sim.sh`) leases from the `S2 iPhone iOS 26` pool (runtime 26.5; needed for
 tab-bar-minimise and bottom-accessory behaviour) under a `-ios26` holder; release with
-`CLAUDE_CODE_SESSION_ID="$(ios/scripts/lease-sim.sh --holder)" ~/.claude/scripts/ios-sim/sim-lease.sh release` (land.sh does).
+`CLAUDE_CODE_SESSION_ID="$(ios/scripts/lease-sim.sh --holder)" ~/.claude/scripts/ios-sim/sim-lease.sh release`.
 Default pool is iPhone 16 on iOS 18.5. On an iPhone with the iOS 27.2 beta `AppShellTests`' two TabView lookups fail, so
 `test.sh`'s no-pool fallback skips beta runtimes unless nothing else has an iPhone (#601). ViewInspector can't see into
 iOS 26's `safeAreaBar`, so a pinned bar is its own property for tests (`LibraryRootContent.categoryRail`,
@@ -63,11 +63,11 @@ iOS 26's `safeAreaBar`, so a pinned bar is its own property for tests (`LibraryR
 `findAllBreadthFirst` (`S2Tests`).
 
 **Verification split:** a worker's brief only needs the Swift package build/tests for the files it touched, and gives up
-on a simulator lease after ~5 minutes. `land.sh` (when the picked commits touch `ios/`, `shared/`, or
+on a simulator lease after ~5 minutes. `land-verify` (when the picked commits touch `ios/`, `shared/`, or
 `android/domain|presentation|core`) rebuilds the framework, builds the app and runs `test.sh -only-testing:` for the
 `S2Tests` classes mapped from the changed files (`ios/S2Tests/Foo*Tests.swift` runs itself; `ios/S2/**/Foo.swift` runs
-`S2Tests/Foo*Tests`; `land.sh --print-ios-tests <files>` dry-checks); no mapped class means build only, no lease. The
-whole scheme runs in `full-verify.sh`. Both lease as their own holder (`S2_SIM_HOLDER=land` / `full-verify`).
+`S2Tests/Foo*Tests`; `support/scripts/ios-tests-for <files>` dry-checks); no mapped class means build only, no lease. The
+whole scheme runs in `full-verify.sh`. `full-verify.sh` leases as its own holder (`S2_SIM_HOLDER=full-verify`).
 
 ## Layout
 

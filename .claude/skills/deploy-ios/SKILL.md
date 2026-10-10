@@ -20,11 +20,11 @@ Same as deploy-android: on `main`, clean tree, `HEAD == origin/main` after `git 
 
 ### 2. Pre-flight: iOS builds
 
-The Mac must be free; take the build through a longjob, never a long foreground call.
+The Mac must be free; take the build through `detach`, never a long foreground call.
 
 ```bash
-support/scripts/longjob.sh start ios-preflight -- sh -c 'ios/scripts/build-framework.sh -q && cd ios && xcodegen generate && cd .. && ios/scripts/build-app.sh --force'
-support/scripts/longjob.sh wait ios-preflight
+detach start ios-preflight -- sh -c 'ios/scripts/build-framework.sh -q && cd ios && xcodegen generate && cd .. && ios/scripts/build-app.sh --force'
+detach wait ios-preflight
 ```
 
 `--force` makes this a real compile and relink at the release commit, never a skipped build. It also builds the test target, so a test-target compile error blocks the preflight; that is intended.
@@ -61,10 +61,10 @@ BUILD_NUMBER="${TODAY}${NN}"
 and offer a dry run (`--no-upload`, IPA lands in `ios/build/export`) before the real thing.
 
 ```bash
-support/scripts/longjob.sh start ios-deploy -- ios/archive-and-upload.sh \
+detach start ios-deploy -- ios/archive-and-upload.sh \
   --build-number "$BUILD_NUMBER"
 # dry run: add --no-upload
-support/scripts/longjob.sh wait ios-deploy
+detach wait ios-deploy
 ```
 
 The script links the Release iosArm64 `Shared.framework` itself (add
@@ -73,7 +73,7 @@ The script links the Release iosArm64 `Shared.framework` itself (add
 
 ### 6. Record the release
 
-Two conditions, both required: `longjob.sh wait ios-deploy` exited 0 **and** the run was a real
+Two conditions, both required: `detach wait ios-deploy` exited 0 **and** the run was a real
 upload — not a `--no-upload` dry run. The tag marks an uploaded build, so a failed attempt or dry
 run records nothing and the next attempt picks `NN+1`:
 

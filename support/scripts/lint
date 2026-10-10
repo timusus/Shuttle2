@@ -3,7 +3,7 @@
 #
 #   lint [-F] [files...]      explicit files, else the .kt/.kts files changed against the merge-base
 #                             with origin/main plus staged, unstaged and untracked ones
-#   lint --base <rev> ...     committed changes <rev>..HEAD only (land.sh passes the batch's base)
+#   lint --base <rev> ...     committed changes <rev>..HEAD only (for linting a batch as picked)
 #   lint --all [-F]           the whole tree
 #
 # -F formats in place. Deleted files and generated/ or build/ paths are skipped.
@@ -37,7 +37,7 @@ if [ ${#files[@]} -eq 0 ]; then
   root="$(git rev-parse --show-toplevel)" || exit 1
   cd "$root" || exit 1
   if [ -n "$base" ]; then
-    # Committed changes only: land.sh lints the batch as picked, not the working tree.
+    # Committed changes only: lint the batch as picked, not the working tree.
     changed() { git -c core.quotePath=false diff --name-only --diff-filter=d "$base" HEAD --; }
   else
     base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
