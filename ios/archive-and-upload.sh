@@ -15,7 +15,7 @@ set -euo pipefail
 #      Distribution: Simplecity Apps Pty Ltd" certificate must be in the login keychain). Without
 #      them, export signs automatically (the plist's manual entries are dropped at runtime).
 #   2. Gradle: scripts/build-framework.sh links the Release iosArm64 Shared.framework. FFmpeg is
-#      static, inside the shuttle-playback package the S2Playback package resolves.
+#      static, inside the AudioPlaybackKit package the S2Playback package resolves.
 #   3. Optional: sentry-cli and SENTRY_AUTH_TOKEN (environment or ~/.config/s2-telemetry/ios.env) to
 #      upload the dSYMs to Sentry (scripts/upload-dsyms.sh); without them that step is skipped.
 #

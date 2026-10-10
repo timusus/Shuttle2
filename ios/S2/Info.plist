@@ -70,7 +70,7 @@
 	<string>Shuttle Music uses Siri to play the songs, albums, artists and playlists in your library when you ask for them by voice.</string>
 	<key>OSLogPreferences</key>
 	<dict>
-		<key>com.simplecityapps.shuttle-playback</key>
+		<key>com.simplecityapps.AudioPlaybackKit</key>
 		<dict>
 			<key>download</key>
 			<dict>

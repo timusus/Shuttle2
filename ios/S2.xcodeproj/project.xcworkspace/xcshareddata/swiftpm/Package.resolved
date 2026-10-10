@@ -1,6 +1,15 @@
 {
   "pins" : [
     {
+      "identity" : "audioplaybackkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/timusus/AudioPlaybackKit.git",
+      "state" : {
+        "revision" : "2e27be5ec31c6a512793d1ea5c91e29432f1c0f2",
+        "version" : "0.7.1"
+      }
+    },
+    {
       "identity" : "posthog-ios",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/PostHog/posthog-ios",
@@ -16,15 +25,6 @@
       "state" : {
         "revision" : "b539e098293067be54fa5cf1f11d9e16cdbba94a",
         "version" : "9.30.0"
-      }
-    },
-    {
-      "identity" : "shuttle-playback",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/timusus/shuttle-playback.git",
-      "state" : {
-        "revision" : "2fe81d9bafc2ce5551da90ac4c141a35e97ddd24",
-        "version" : "0.5.0"
       }
     },
     {

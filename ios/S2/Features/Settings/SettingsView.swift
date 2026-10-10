@@ -260,7 +260,7 @@ struct SettingsContent: View {
                         Label { Text("settings_version", tableName: "Settings") } icon: { IconSquare(systemImage: "info", style: .filled(.gray)) }
                     }
                     .accessibilityIdentifier("settings.version")
-                    // The licences (FFmpeg's LGPL notice, shuttle-playback's) live in the app's Settings bundle, the iOS
+                    // The licences (FFmpeg's LGPL notice, AudioPlaybackKit's) live in the app's Settings bundle, the iOS
                     // place for them.
                     Button {
                         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
@@ -269,7 +269,7 @@ struct SettingsContent: View {
                     }
                     .tint(.primary)
                     .accessibilityIdentifier("settings.acknowledgements")
-                    // FFmpeg is LGPL-2.1+: its source is the n7.1 tag plus the patch and build script in shuttle-playback.
+                    // FFmpeg is LGPL-2.1+: its source is the n7.1 tag plus the patch and build script in AudioPlaybackKit.
                     Link(destination: Self.ffmpegSourceURL) {
                         Label { Text("settings_ffmpeg_source", tableName: "Settings") } icon: { IconSquare(systemImage: "chevron.left.forwardslash.chevron.right", style: .filled(.gray)) }
                     }
@@ -371,9 +371,9 @@ struct SettingsContent: View {
         }
     }
 
-    /// The FFmpeg build the app links, in the shuttle-playback version Playback/Package.swift pins: the build script
+    /// The FFmpeg build the app links, in the AudioPlaybackKit version Playback/Package.swift pins: the build script
     /// (the n7.1 tag, the configure options) and its patch. Bump the tag with the pin.
-    static let ffmpegSourceURL = URL(string: "https://github.com/timusus/shuttle-playback/tree/0.5.0/scripts")!
+    static let ffmpegSourceURL = URL(string: "https://github.com/timusus/AudioPlaybackKit/tree/0.7.1/scripts")!
 
     /// "2026.09.28 (26092801)": the marketing version and build, as Android's About shows its version name.
     static var appVersion: String {

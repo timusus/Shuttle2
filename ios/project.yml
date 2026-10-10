@@ -56,7 +56,7 @@ targets:
     resources:
       - path: S2/PrivacyInfo.xcprivacy
     dependencies:
-      # The engine and the local-file tag reader. Both link shuttle-playback's one static FFmpeg (#957):
+      # The engine and the local-file tag reader. Both link AudioPlaybackKit's one static FFmpeg (#957):
       # nothing is embedded in S2.app/Frameworks.
       - package: S2Playback
         product: S2Playback
@@ -103,7 +103,7 @@ targets:
             playback: {Level: {Enable: Info, Persist: Info}}
             audio-engine: {Level: {Enable: Info, Persist: Info}}
             session: {Level: {Enable: Info, Persist: Info}}
-          com.simplecityapps.shuttle-playback:
+          com.simplecityapps.AudioPlaybackKit:
             download: {Level: {Enable: Info, Persist: Info}}
         BGTaskSchedulerPermittedIdentifiers: [com.simplecityapps.shuttle.sync, com.simplecityapps.shuttle.scrobble]
         # This device's music (#590): Documents shows in Files ("On My iPhone > Shuttle Music") and Finder's file

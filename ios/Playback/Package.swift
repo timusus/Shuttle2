@@ -1,7 +1,7 @@
 // swift-tools-version: 5.9
 // S2's iOS player engine (#588): `MusicPlaybackController`, the gapless two-item AVAudioEngine
 // controller the Kotlin `EnginePlayerController` drives. Demux, decode, resampling and seeking are
-// shuttle-playback's `PlaybackDecode` (#957); streams come through its `PlaybackStreaming`
+// AudioPlaybackKit's `PlaybackDecode` (#957); streams come through its `PlaybackStreaming`
 // growing-file source (#958).
 //
 // Builds for iOS 17 and macOS 14. The macOS platform is only there so `swift test` runs the
@@ -22,14 +22,14 @@ let package = Package(
     dependencies: [
         // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one static xcframework,
         // committed in the package (LGPL notes in README.md).
-        .package(url: "https://github.com/timusus/shuttle-playback.git", exact: "0.5.0"),
+        .package(url: "https://github.com/timusus/AudioPlaybackKit.git", exact: "0.7.1"),
     ],
     targets: [
         .target(
             name: "S2Playback",
             dependencies: [
-                .product(name: "PlaybackDecode", package: "shuttle-playback"),
-                .product(name: "PlaybackStreaming", package: "shuttle-playback"),
+                .product(name: "PlaybackDecode", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackStreaming", package: "AudioPlaybackKit"),
             ]
         ),
         .target(name: "S2Tags", dependencies: ["CS2Tags"]),
@@ -40,7 +40,7 @@ let package = Package(
         // iconv (metadata conversion) and libavutil's VideoToolbox hardware context.
         .target(
             name: "CS2Tags",
-            dependencies: [.product(name: "FFmpeg", package: "shuttle-playback")],
+            dependencies: [.product(name: "FFmpeg", package: "AudioPlaybackKit")],
             linkerSettings: [
                 .linkedLibrary("z"), .linkedLibrary("iconv"),
                 .linkedFramework("CoreFoundation"), .linkedFramework("CoreMedia"),
@@ -55,9 +55,9 @@ let package = Package(
             name: "S2PlaybackTests",
             dependencies: [
                 "S2Playback", "S2PlaybackTestSupport",
-                .product(name: "PlaybackDecode", package: "shuttle-playback"),
-                .product(name: "PlaybackStreaming", package: "shuttle-playback"),
-                .product(name: "PlaybackStreamingTestSupport", package: "shuttle-playback"),
+                .product(name: "PlaybackDecode", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackStreaming", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackStreamingTestSupport", package: "AudioPlaybackKit"),
             ]
         ),
         .testTarget(

@@ -11,7 +11,7 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 2. The demo server is Emby at https://emby.mediaserver.timmalseed.dev, user `appreview`. The owner enters the
    password in the demo account fields in App Store Connect (it is never written in the repo). Keep the server up
    until approval.
-3. Check https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts is still up (the About link points at it, the
+3. Check https://github.com/timusus/AudioPlaybackKit/tree/0.7.1/scripts is still up (the About link points at it, the
    FFmpeg build script and patch, #610, #957).
 4. App Store Connect > App Information: paste `en-AU/*.txt`, set the privacy policy URL, category
    Music, content rights and age rating from `asc-answers.md`.
@@ -66,7 +66,7 @@ account with us, and server credentials stay in the device Keychain and go only 
 
 Open source: playback uses FFmpeg (LGPL-2.1+ build, statically linked) to decode formats such as
 FLAC. The FFmpeg licence notice is in Settings > About. The source is FFmpeg's n7.1 tag plus one
-patch, built by the script at https://github.com/timusus/shuttle-playback/tree/0.4.0/scripts; the
+patch, built by the script at https://github.com/timusus/AudioPlaybackKit/tree/0.7.1/scripts; the
 app's own source is public too, so it can be relinked against a modified FFmpeg.
 
 Contact: <owner email / phone as in ASC>.
@@ -80,7 +80,7 @@ Contact: <owner email / phone as in ASC>.
 |---|---|
 | Public demo server and reviewer credentials (#610) | open: owner to provide; never commit credentials |
 | Local-file playback with no server (#590) | built; the listing and review notes describe it |
-| FFmpeg source available (#610) | done: n7.1 plus the patch and build script in shuttle-playback (#957), pinned by tag |
+| FFmpeg source available (#610) | done: n7.1 plus the patch and build script in AudioPlaybackKit (#957), pinned by tag |
 | FFmpeg LGPL notice in About (#610) | done: Acknowledgements names FFmpeg and LGPL-2.1+; About has an FFmpeg source code link |
 | No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |
 | Background modes: audio, plus fetch for library refresh and scrobbles (#771) | `ios/project.yml` `UIBackgroundModes: [audio, fetch]` |

@@ -4,14 +4,14 @@ S2's iOS player engine (#588, epic #581). It is a Swift package for iOS 17. It a
 without a simulator.
 
 Demux, decode, the conversion to the engine's format, sample-accurate seeking, `FileByteReader` and
-the `StreamByteReader` protocol come from [shuttle-playback](https://github.com/timusus/shuttle-playback)
+the `StreamByteReader` protocol come from [AudioPlaybackKit](https://github.com/timusus/AudioPlaybackKit)
 (its `PlaybackDecode` product, pinned `exact:` in `Package.swift`), with its one static, LGPL-only
 FFmpeg (#957). This package holds:
 
 - `MusicPlaybackController`, the gapless two-track AVAudioEngine player that the Kotlin
   `EnginePlayerController` drives, with its DSP and pre-open;
-- `FFmpegTrackSource`, the `TrackPCMSource` over shuttle-playback's decoder;
-- the streaming glue over shuttle-playback's `GrowingFileByteSource` (its `PlaybackStreaming` product): the app's
+- `FFmpegTrackSource`, the `TrackPCMSource` over AudioPlaybackKit's decoder;
+- the streaming glue over AudioPlaybackKit's `GrowingFileByteSource` (its `PlaybackStreaming` product): the app's
   store, the read-ahead and the reader the decoder reads (#958);
 - `S2Tags` (product `S2Tags`): the local-file tag reader (`AudioFileTags`, `CS2Tags/tag_read.c`) on the
   package's `FFmpeg` product, so the app links exactly one FFmpeg.
@@ -31,7 +31,7 @@ PlaybackTrack(uid, gainDb, source) ──► TrackPCMSource ──► PCMProcess
 ReplayGain resolution. It calls `load(current:next:startMs:playWhenReady:)` and `setNext(_:)`, plus
 the play, pause, seek, stop, speed, volume and EQ calls.
 
-**Gapless.** Each source converts its track to the one output format: swresample in shuttle-playback's
+**Gapless.** Each source converts its track to the one output format: swresample in AudioPlaybackKit's
 decoder, via `setOutputFormat`. When the current source ends, the same buffer continues with the
 next track's first frames. The player node never sees a boundary, only one stream, so the join is
 sample-exact whatever the two tracks' rates are.
@@ -120,7 +120,7 @@ up rather than wait while the song is fetched again from byte 0, and the control
 position once through `onSeekUnsupported`, so the owner re-opens it there. A host that honours the
 range answers 206 and the source simply resumes.
 
-**Streaming (#958).** An HTTP(S) track downloads through shuttle-playback's `GrowingFileByteSource` into
+**Streaming (#958).** An HTTP(S) track downloads through AudioPlaybackKit's `GrowingFileByteSource` into
 `StreamStore`, S2's `GrowingFileStore` under Caches (512 MiB, swept of partials at launch). A track downloaded
 whole is kept, keyed on `StreamCacheKey` (the URL less its per-play session id and token), and plays from the file
 next time. On Wi-Fi the whole file downloads; on an expensive or constrained path only `StreamReadAhead` (a minute
@@ -153,12 +153,12 @@ the `SpineNative` import is dropped, and the test imports change. They are kept 
 shared package can take them back.
 
 The decoder S2 once adapted from Podcasts (its own `stream_decode.c`, `FFmpegStreamDecoder`,
-`StreamingPCMReader` and the byte-reader protocol) now lives in shuttle-playback, with S2's
+`StreamingPCMReader` and the byte-reader protocol) now lives in AudioPlaybackKit, with S2's
 additions (an output rate and channel count, mono spread, sample-accurate seeks) upstream (#957).
 
 - **Copied**:
   - Test support: `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`, `tone_moov_last.m4a`. Streaming tests
-    serve through shuttle-playback's own `LoopbackMediaServer` (`PlaybackStreamingTestSupport`) instead.
+    serve through AudioPlaybackKit's own `LoopbackMediaServer` (`PlaybackStreamingTestSupport`) instead.
 - **Adapted.** S2 additions are marked `S2:`.
   - `StartupTiming` keeps Podcasts' nested types, but its record is the
     controller's start (#687): the Podcasts-only teardown, swap, tee and chain stages are gone, and
@@ -168,7 +168,7 @@ additions (an output rate and channel count, mono spread, sample-accurate seeks)
     emitted frame.
 - **New**:
   - `Engine/TrackPCMSource.swift`: the protocol and `FFmpegTrackSource`, the adapter to
-    shuttle-playback's decoder. A seek the reader refuses (`.unseekable`) makes the track unseekable.
+    AudioPlaybackKit's decoder. A seek the reader refuses (`.unseekable`) makes the track unseekable.
   - `Engine/MusicPlaybackController.swift`.
   - `Streaming/`: `StreamCacheKey`, `StreamStore`, `StreamReadAhead`, `StreamedTrackReader`, and
     `ServerConnections`' mapping to the source's connection policy.
@@ -183,19 +183,19 @@ additions (an output rate and channel count, mono spread, sample-accurate seeks)
 
 ## FFmpeg
 
-FFmpeg comes from shuttle-playback: its `FFmpeg` product, one static `Frameworks/FFmpeg.xcframework`
+FFmpeg comes from AudioPlaybackKit: its `FFmpeg` product, one static `Frameworks/FFmpeg.xcframework`
 committed in that repo (iOS arm64, iOS Simulator arm64 and macOS arm64 slices; the macOS one is for
 `swift test`). Nothing is built here, and a new worktree needs no step: SwiftPM resolves the pinned tag.
 
 - **Version.** FFmpeg **n7.1** plus one patch, `0001-mp3dec-keep-xing-frames-when-size-unknown.patch`.
-  The xcframework's `VERSION.txt` records the tag, the configure flags and the patches; shuttle-playback's
+  The xcframework's `VERSION.txt` records the tag, the configure flags and the patches; AudioPlaybackKit's
   `scripts/build-ffmpeg.sh` builds it, and its `scripts/ffmpeg-patches/` holds the patch. Its formats
   are a superset of the music formats S2 plays (it adds the `loas` demuxer).
 - **Linking.** `S2Playback` links it through `PlaybackDecode`, and `CS2Tags` depends on the `FFmpeg`
   product directly, with the system libraries a static FFmpeg needs (`z`, `iconv`, CoreFoundation,
   CoreMedia, CoreVideo, VideoToolbox). The app links one FFmpeg, into the app binary: nothing goes in
   `S2.app/Frameworks`.
-- **Bumping it.** Rebuild and tag in shuttle-playback, then change the `exact:` pin in `Package.swift`
+- **Bumping it.** Rebuild and tag in AudioPlaybackKit, then change the `exact:` pin in `Package.swift`
   and the tag in `SettingsContent.ffmpegSourceURL` and the Acknowledgements pane together.
 - **Byte input.** No network protocols are built. Bytes arrive through the AVIO callbacks.
 
@@ -275,7 +275,7 @@ ffmpeg -f lavfi -i "$(chirp 48000)" -c:a libopus -b:a 64k chirp-48k.opus        
 
 ## LGPL notes
 
-shuttle-playback's FFmpeg is plain **LGPL v2.1+**:
+AudioPlaybackKit's FFmpeg is plain **LGPL v2.1+**:
 
 - no `--enable-gpl`, `--enable-version3` or `--enable-nonfree`;
 - no external codec libraries beyond the system zlib. Opus and Vorbis use FFmpeg's native decoders,
@@ -284,19 +284,19 @@ shuttle-playback's FFmpeg is plain **LGPL v2.1+**:
 FFmpeg is linked **statically** into the app binary (owner decision, 2026-10-07, #957). LGPL v2.1 §6(a)
 then asks that a user can relink the app with a modified FFmpeg. That is met by the sources being
 public: Shuttle2 (`timusus/Shuttle2`, this app with `ios/project.yml` and its build scripts) and
-shuttle-playback (`timusus/shuttle-playback`, the decoder and `scripts/build-ffmpeg.sh`). There is no
+AudioPlaybackKit (`timusus/AudioPlaybackKit`, the decoder and `scripts/build-ffmpeg.sh`). There is no
 framework to swap. The app carries:
 
 1. **The notice**, in the app's Settings pane (`ios/S2/Settings.bundle`: Settings › Shuttle Music ›
    Acknowledgements). It gives FFmpeg's name, version and licence, the source (the n7.1 tag, the patch
-   and shuttle-playback's build script) and how to relink. The pane links to the full LGPL v2.1 text,
-   and also acknowledges shuttle-playback, used under licence from its copyright holder. Settings ›
+   and AudioPlaybackKit's build script) and how to relink. The pane links to the full LGPL v2.1 text,
+   and also acknowledges AudioPlaybackKit, used under licence from its copyright holder. Settings ›
    About has an "FFmpeg source code" link to the build script at the pinned tag. Android's licences
    are generated from Gradle dependencies (AboutLibraries), which can't see FFmpeg, so the Settings
    bundle is the one place.
-2. **How to relink.** Build FFmpeg with shuttle-playback's `scripts/build-ffmpeg.sh` (`FFMPEG_SRC`
+2. **How to relink.** Build FFmpeg with AudioPlaybackKit's `scripts/build-ffmpeg.sh` (`FFMPEG_SRC`
    points it at a modified checkout; the flags are in the script and `VERSION.txt`), point Shuttle2's
-   `ios/Playback/Package.swift` at that shuttle-playback checkout, and build the app with
+   `ios/Playback/Package.swift` at that AudioPlaybackKit checkout, and build the app with
    `ios/scripts/build-framework.sh` and Xcode.
 
 Do not add a GPL-only component (for example `--enable-gpl` or libx264-style externals) or a
@@ -314,7 +314,7 @@ Do not add a GPL-only component (for example `--enable-gpl` or libx264-style ext
 - **Time-pitch position.** Off 1×, the time-pitch unit's own buffering makes position lead what is
   heard by up to one block.
 - **Far VBR MP3 seeks.** Seeks are sample-exact, MP3 included (#619), except a VBR MP3 seek further
-  from a frame of known time than one seek's byte budget, which lands on shuttle-playback's Xing TOC
+  from a frame of known time than one seek's byte budget, which lands on AudioPlaybackKit's Xing TOC
   or bitrate estimate. `FFmpegTrackSource` reads forward from an early landing to the target.
 - **Pre-open timing without a duration.** A next after a stream with neither a container duration
   nor an expected one is opened once the current track is steady, and its connection then idles

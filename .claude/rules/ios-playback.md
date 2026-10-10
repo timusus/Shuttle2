@@ -50,5 +50,5 @@ and notifications posted on a private centre. Background audio is `UIBackgroundM
   `sudo log collect --device` after a stall has them: `playback` (Kotlin `IosPlayerController` and Swift `PlayIntent`:
   every command with its source, state changes, transitions, failures), `audio-engine` (state, gapless or not
   transitions, underruns, buffer health, restarts) and `session` (interruptions, route changes with outputs, where each
-  pause came from). Stream downloads log under shuttle-playback's own subsystem, `com.simplecityapps.shuttle-playback`
+  pause came from). Stream downloads log under AudioPlaybackKit's own subsystem, `com.simplecityapps.AudioPlaybackKit`
   category `download`, persisted the same way. Song ids, never titles; nothing per buffer.
