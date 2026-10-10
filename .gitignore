@@ -85,6 +85,8 @@ support/reviews/
 __pycache__/
 .claude/longjobs/
 .claude/land-logs/
+.claude/ios-install.pid
+.claude/ios-installed-sha
 
 # iOS screenshot output (ios-simulator / ios-device skills)
 .ios-screenshots/

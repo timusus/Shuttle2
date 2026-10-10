@@ -522,6 +522,13 @@ else
     fi
   done
 
+  # The detached iPhone install of the previous landing builds from this tree; resetting it mid-build would corrupt both.
+  for _ in $(seq 1 180); do
+    pid=$(cat .claude/ios-install.pid 2>/dev/null) || break
+    kill -0 "$pid" 2>/dev/null || break
+    [ "$_" = 1 ] && say "land.sh: waiting for the previous landing's iPhone install (pid $pid) to finish"
+    sleep 5
+  done
   log "hard-resetting $CUR_BRANCH ($(git rev-parse HEAD)) onto origin/main ($ORIGIN_MAIN_SHA)"
   if ! run_git reset --hard origin/main; then
     say "land.sh: git reset --hard origin/main failed"
@@ -1192,18 +1199,33 @@ done
 # --- best-effort install on the owner's iPhone --------------------------------------------------
 # After a push that touches the iOS app or what it links (same paths as the iOS verify), build and
 # install the pushed tree with ios/scripts/install-device.sh, so the phone always runs the latest
-# landed build. Skipped when the phone isn't reachable (USB or Wi-Fi); a failure is reported and
-# never fails the landing. Takes the same machine-lock as verify, since it's an Xcode build.
+# landed build. Skipped when the phone isn't reachable (USB or Wi-Fi). Runs detached under its own
+# `ios-install` lock, so it never holds up the next landing's verify; a failure never fails the landing.
+# .claude/ios-installed-sha records the last installed commit: no install when nothing the phone runs
+# changed since. The next landing waits for the pid in .claude/ios-install.pid before resetting this tree.
 IOS_DEVICE_ID=00008140-000539602E90401C
+IOS_PATHS='^(ios/|shared/|android/domain/|android/presentation/|android/core/)'
+IOS_STAMP=.claude/ios-installed-sha
 if [ "$DEVICE_INSTALL" = 1 ] \
-   && git diff --name-only "$ORIGIN_MAIN_SHA" HEAD | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/)'; then
-  if xcrun devicectl list devices 2>/dev/null | grep -F "$IOS_DEVICE_ID" | grep -Eq 'available|connected'; then
-    say "land.sh: installing $SHA on the iPhone"
-    if LAUNCH=0 machine-lock --name verify -- ios/scripts/install-device.sh "$IOS_DEVICE_ID" >> "$LOG" 2>&1; then
-      say "land.sh: iPhone install done"
-    else
-      say "land.sh: iPhone install failed (see log; retry with ios/scripts/install-device.sh)"
-    fi
+   && git diff --name-only "$ORIGIN_MAIN_SHA" HEAD | grep -Eq "$IOS_PATHS"; then
+  last_installed=$(cat "$IOS_STAMP" 2>/dev/null || true)
+  if [ -n "$last_installed" ] && git cat-file -e "$last_installed^{commit}" 2>/dev/null \
+     && ! git diff --name-only "$last_installed" "$SHA" | grep -Eq "$IOS_PATHS"; then
+    say "land.sh: iPhone already runs ${last_installed:0:9}; nothing it runs changed, skipping device install"
+  elif xcrun devicectl list devices 2>/dev/null | grep -F "$IOS_DEVICE_ID" | grep -Eq 'available|connected'; then
+    INSTALL_LOG="$LOG.install.log"
+    say "land.sh: installing $SHA on the iPhone in the background (log: $INSTALL_LOG)"
+    (
+      echo "$BASHPID" > .claude/ios-install.pid
+      if LAUNCH=0 machine-lock --name ios-install -- ios/scripts/install-device.sh "$IOS_DEVICE_ID"; then
+        echo "$SHA" > "$IOS_STAMP"
+        echo "land.sh: iPhone install done"
+      else
+        echo "land.sh: iPhone install failed (retry with ios/scripts/install-device.sh)"
+      fi
+      rm -f .claude/ios-install.pid
+    ) > "$INSTALL_LOG" 2>&1 < /dev/null &
+    disown
   else
     say "land.sh: iPhone not reachable, skipping device install"
   fi
