@@ -570,3 +570,4 @@ Needs a release build (an internal or release-candidate install: a debug build c
 
 - [ ] Add the Shuttle Music Quick Settings tile. With the app force-stopped and a restored queue, tapping the tile starts playback with the media notification showing; a second tap pauses. With an empty library and queue, a tap opens the app.
 - [ ] With the app force-stopped, tap play/pause, next and previous on the home-screen widget: each starts the service in the foreground and acts, with no crash and no silent no-op (logcat shows no `ForegroundServiceStartNotAllowedException`).
+- [ ] Tap the home-screen widget body (not a button), with the app open and with it force-stopped: the app opens to its main screen (#974 now resolves the launcher activity instead of naming MainActivity).
