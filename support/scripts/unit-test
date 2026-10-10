@@ -253,6 +253,17 @@ module_dir_and_path_for_file() {
   [ -n "${best_path}" ] && printf '%s\t%s\n' "${best_dir}" "${best_path}"
 }
 
+# True (exit 0) if :android:app's unit tests exercise the module's main code at runtime. A deny list,
+# so a new module triggers the app suite until someone checks that no app test imports it.
+app_tests_cover_module() {
+  case "$1" in
+    :android:app | :shared | :android:architecture-tests | :android:baselineprofile | :android:networking | :android:saf \
+      | :android:mediaprovider:emby | :android:mediaprovider:plex | :android:mediaprovider:subsonic \
+      | :android:mediaprovider:server-testing) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
 # A filesystem-safe id for a Gradle path, used as a filename stem under
 # WORK_DIR to track per-module state without bash 4 associative arrays.
 module_id() {
@@ -498,10 +509,10 @@ run_changed_mode() {
   # still exists — a deletion contributes nothing); a main file contributes
   # its corresponding *Test class only if exactly one exists, otherwise (and
   # for any non-.kt change, or an androidTest change) the module falls back
-  # to a whole run. A main-source change in :android:domain (the interfaces and models every other
-  # module, :android:app included, compiles against) marks :android:app as downstream-affected;
-  # other modules' app-facing breaks are compile errors that assembleDebug and full-verify.sh catch. A file under android/** or shared/** that isn't part of any registered
-  # module is skipped with a printed note.
+  # to a whole run. A main-source or build-file change in a module the :android:app tests run
+  # against (app_tests_cover_module; the rest are skipped) marks :android:app as downstream-affected.
+  # A file under android/** or shared/** that isn't part of any registered module is skipped with
+  # a printed note.
   local mdir mpath id rel cls matches match_count
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
@@ -550,7 +561,7 @@ run_changed_mode() {
           touch "${WORK_DIR}/${id}.unmappable"
         fi
         touch "${WORK_DIR}/${id}.main"
-        [ "${mpath}" = ":android:domain" ] && touch "${WORK_DIR}/app_downstream_triggered"
+        app_tests_cover_module "${mpath}" && touch "${WORK_DIR}/app_downstream_triggered"
         ;;
       src/test/*|src/commonTest/*|src/androidHostTest/*|src/androidTest/*)
         # Non-.kt test-source change (e.g. resources): run the module whole.
@@ -561,7 +572,7 @@ run_changed_mode() {
         # run the module whole, and treat it like a main-source change.
         touch "${WORK_DIR}/${id}.unmappable"
         touch "${WORK_DIR}/${id}.main"
-        [ "${mpath}" = ":android:domain" ] && touch "${WORK_DIR}/app_downstream_triggered"
+        app_tests_cover_module "${mpath}" && touch "${WORK_DIR}/app_downstream_triggered"
         ;;
     esac
   done <<< "${changed_files}"
