@@ -140,6 +140,26 @@ class EmbyMediaProviderTest {
     }
 
     @Test
+    fun `a listing short of the server's total is incomplete - and the next sync's full listing complete`() {
+        signedIn()
+        // The server counts 5 items but returns 3
+        server.respond(ITEMS, "songs_short.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        val short = syncEvent()
+
+        short.result.size shouldBe 3
+        short.complete shouldBe false
+        short.missing shouldBe 2
+
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        val complete = syncEvent()
+
+        complete.result.size shouldBe 3
+        complete.complete shouldBe true
+    }
+
+    @Test
     fun `paging reports progress through the library`() {
         signedIn()
         server.respond(ITEMS, "songs_page_1.json", query = mapOf("IncludeItemTypes" to "Audio", "StartIndex" to "0"))
@@ -440,6 +460,45 @@ class EmbyMediaProviderTest {
     }
 
     @Test
+    fun `an incremental sync brings the songs played on the server since it - stopping at the first older play`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        val stored = sync().map { song -> if (song.path == "emby://item/101") song.copy(path = "emby://item/109") else song }
+        server.respond(ITEMS, "empty.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, "played.json", query = mapOf("Filters" to "IsPlayed"))
+
+        val songs = provider.findSongsChangedSince(stored, Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+
+        songs.map { song -> song.path to song.playCount } shouldBe listOf("emby://item/109" to 4)
+        // The second song was played before the last sync, so the next page isn't asked for
+        with(server.requestsTo(ITEMS).single { it.url.parameters["Filters"] == "IsPlayed" }.url.parameters) {
+            get("SortBy") shouldBe "DatePlayed,SortName"
+            get("SortOrder") shouldBe "Descending"
+        }
+    }
+
+    @Test
+    fun `a full sync doesn't ask for the songs played`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+
+        sync()
+
+        server.requestsTo(ITEMS).none { it.url.parameters["Filters"] == "IsPlayed" } shouldBe true
+    }
+
+    @Test
+    fun `an incremental sync short of the server's total says how many it's missing - alongside the favourites`() {
+        signedIn()
+        server.respond(ITEMS, "songs_short.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, "favourites.json", query = mapOf("Filters" to "IsFavorite"))
+
+        val listing = provider.findSongsChangedSince(emptyList(), Instant.parse("2026-10-01T08:00:00Z")).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
+
+        listing.missing shouldBe 2
+    }
+
+    @Test
     fun `an incremental sync whose favourites fail to load leaves them as they are`() {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
@@ -588,7 +647,9 @@ class EmbyMediaProviderTest {
         runBlocking { provider.countSongs() } shouldBe null
     }
 
-    private fun sync(): List<Song> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>().result
+    private fun sync(): List<Song> = syncEvent().result
+
+    private fun syncEvent(): FlowEvent.Success<List<Song>> = provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Success<List<Song>>>()
 
     private fun syncPlaylists(library: List<Song>): List<MediaImporter.PlaylistUpdateData> = syncListing(library).result.playlists
 

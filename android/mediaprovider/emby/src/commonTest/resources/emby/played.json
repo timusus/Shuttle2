@@ -1,0 +1,8 @@
+{
+  "Items": [
+    { "Name": "Played Today", "Id": "109", "UserData": { "PlayCount": 4, "LastPlayedDate": "2026-10-01T09:30:00.0000000Z" } },
+    { "Name": "Played Last Week", "Id": "108", "UserData": { "PlayCount": 2, "LastPlayedDate": "2026-09-24T09:30:00.0000000Z" } }
+  ],
+  "TotalRecordCount": 40,
+  "StartIndex": 0
+}
