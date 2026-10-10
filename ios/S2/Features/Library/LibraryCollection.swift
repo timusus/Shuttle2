@@ -95,12 +95,13 @@ struct LibraryTile: View {
             cover
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
-                    .font(.subheadline.weight(.semibold))
+                    .textRole(.rowSubtitle)
+                    .fontWeight(playback == .none ? nil : .semibold)
                     .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                     .lineLimit(1)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.footnote)
+                        .textRole(.caption)
                         .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }

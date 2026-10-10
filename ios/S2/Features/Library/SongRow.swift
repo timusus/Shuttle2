@@ -103,7 +103,7 @@ struct SongRow: View {
                 SongDurationText(durationMs: Int64(song.duration))
             }
             .imageScale(.small)
-            .font(.s2RowMeta)
+            .textRole(.rowMeta)
             .foregroundStyle(.s2TextSecondary)
         }
     }

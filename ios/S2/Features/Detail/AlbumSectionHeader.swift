@@ -39,7 +39,7 @@ struct AlbumSectionHeader: View {
                             .foregroundStyle(Color.primary)
                             .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                         Text(subtitle)
-                            .font(.subheadline)
+                            .textRole(.rowSubtitle)
                             .foregroundStyle(.s2TextSecondary)
                             .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                     }

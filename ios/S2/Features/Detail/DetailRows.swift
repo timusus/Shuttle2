@@ -30,12 +30,13 @@ struct TrackRow: View {
             .frame(width: numberWidth, alignment: .center)
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
+                    .textRole(.rowTitle)
                     .lineLimit(1)
                     .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                     .fontWeight(playback == .none ? nil : .semibold)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.subheadline)
+                        .textRole(.rowSubtitle)
                         .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }
@@ -55,7 +56,7 @@ struct SongDurationText: View {
 
     var body: some View {
         Text(Duration.milliseconds(durationMs).formatted(.time(pattern: .minuteSecond)))
-            .font(.s2RowMeta)
+            .textRole(.rowMeta)
             .foregroundStyle(.s2TextSecondary)
     }
 }

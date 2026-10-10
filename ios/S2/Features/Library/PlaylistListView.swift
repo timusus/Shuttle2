@@ -140,13 +140,15 @@ private struct PlaylistListReadyView: View {
 
     var body: some View {
         List {
-            Section("Auto Playlists") {
+            Section {
                 ForEach(state.smartPlaylists, id: \.id.id) { smartPlaylist in
                     SmartPlaylistRow(smartPlaylist: smartPlaylist)
                         .rowSeparator(.none)
                 }
+            } header: {
+                SectionHeader("Auto Playlists").textCase(nil)
             }
-            Section("Playlists") {
+            Section {
                 if state.playlists.isEmpty {
                     Text("No playlists yet. Tap + to create one.").foregroundStyle(.secondary)
                         .rowSeparator(.none)
@@ -155,6 +157,8 @@ private struct PlaylistListReadyView: View {
                     playlistRow(playlist)
                         .rowSeparator(.none)
                 }
+            } header: {
+                SectionHeader("Playlists").textCase(nil)
             }
         }
         .listStyle(.plain)

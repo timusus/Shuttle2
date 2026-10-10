@@ -65,14 +65,14 @@ struct MediaRow<Trailing: View>: View {
             artworkView
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
-                    .font(.s2RowTitle)
+                    .textRole(.rowTitle)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                     .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                     .fontWeight(playback == .none ? nil : .semibold)
                     .accessibilityIdentifier(ifPresent: titleIdentifier)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.s2RowSubtitle)
+                        .textRole(.rowSubtitle)
                         .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }

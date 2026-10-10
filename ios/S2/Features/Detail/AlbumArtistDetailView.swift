@@ -203,12 +203,9 @@ struct AlbumArtistDetailContent: View {
                     Section {
                         songRows(section.songs, startIndex: indexed.startIndex, numbered: false)
                     } header: {
-                        Text("Other Songs")
-                            .font(.headline)
-                            .foregroundStyle(Color.primary)
+                        SectionHeader("Other Songs")
                             .textCase(nil)
                             .pinnedHeader()
-                            .accessibilityAddTraits(.isHeader)
                     }
                 }
             }
@@ -309,7 +306,7 @@ struct SongsHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: Spacing.smallMedium) {
             Text(showsAlbums ? "Albums" : "Songs")
-                .font(.s2SectionTitle)
+                .textRole(.sectionHeader)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.small)
             Menu {

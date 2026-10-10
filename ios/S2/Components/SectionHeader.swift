@@ -21,10 +21,25 @@ struct SectionHeader: View {
         case action(() -> Void)
     }
 
+    /// `.disc` is the small uppercase label over a run of rows (an album's "Disc 2"); it takes no subtitle or actions.
+    enum Style {
+        case standard
+        case disc
+    }
+
+    private var style = Style.standard
+
     init(_ title: String, subtitle: String? = nil) {
         self.title = title
         self.subtitle = subtitle
         seeAll = nil
+    }
+
+    init(_ title: String, style: Style) {
+        self.title = title
+        subtitle = nil
+        seeAll = nil
+        self.style = style
     }
 
     /// See All pushes `route` onto the enclosing `NavigationStack`.
@@ -51,6 +66,18 @@ struct SectionHeader: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
+        switch style {
+        case .standard: standardBody
+        case .disc:
+            Text(title)
+                .textRole(.groupHeader)
+                .foregroundStyle(.s2TextSecondary)
+                .textCase(.uppercase)
+                .accessibilityAddTraits(.isHeader)
+        }
+    }
+
+    @ViewBuilder private var standardBody: some View {
         // At the accessibility sizes See All goes under the title, as in Podcasts: side by side, a long title
         // hyphenates into fragments beside it.
         let stacked = dynamicTypeSize.isAccessibilitySize && seeAll != nil
@@ -60,12 +87,12 @@ struct SectionHeader: View {
         layout {
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
-                    .font(.s2SectionTitle)
+                    .textRole(.sectionHeader)
                     .foregroundStyle(.primary)
                     .accessibilityAddTraits(.isHeader)
                 if let subtitle {
                     Text(subtitle)
-                        .font(.subheadline)
+                        .textRole(.rowSubtitle)
                         .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }

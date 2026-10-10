@@ -199,6 +199,7 @@
 		EC5006D792856784ABBAFE0F /* NowPlayingWidgetPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFD81748E26469954F8D070 /* NowPlayingWidgetPublisher.swift */; };
 		ECA5089D7B73ECF4C8B9AD4F /* SongRowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123D81D04E01D0A27CB6D60B /* SongRowTests.swift */; };
 		EF7335EAD995AD62624501F0 /* NowPlayingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79F05BFEE618CE3E387FE94F /* NowPlayingWidget.swift */; };
+		F01D288960936228B0746CF5 /* TextRole.swift in Sources */ = {isa = PBXBuildFile; fileRef = 388864F84EF5D0BD5AEE2642 /* TextRole.swift */; };
 		F0FE842A5CEDE6E8C5437666 /* CarPlayCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAF9B332A3F86BA130C9B9B /* CarPlayCatalog.swift */; };
 		F1039F380A383B28D4B1BC2F /* ArtworkTint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98568006B2C16F9BF1BC3830 /* ArtworkTint.swift */; };
 		F12EE3732E1D78A378DBEEC5 /* PlaylistDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104B0330AE77C6FD6B180FC7 /* PlaylistDetailTests.swift */; };
@@ -302,6 +303,7 @@
 		3628FAC4C3FBCD32BF91F313 /* DetailDownloads.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailDownloads.swift; sourceTree = "<group>"; };
 		36538449409BD13651C085A2 /* SectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionHeader.swift; sourceTree = "<group>"; };
 		3694D8EEF1BF32FD0893E59C /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		388864F84EF5D0BD5AEE2642 /* TextRole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextRole.swift; sourceTree = "<group>"; };
 		3B4774E3E0FD8DEAA08337F7 /* DetailFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailFormatting.swift; sourceTree = "<group>"; };
 		3B8499D635B89CEF72CAC3A9 /* es-ES */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "es-ES"; path = "es-ES.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		3C35C7691E4A7FAE290762B2 /* SourceSetupFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceSetupFlowTests.swift; sourceTree = "<group>"; };
@@ -590,6 +592,7 @@
 				F97E968C1BD5C9BA155566A5 /* Shape.swift */,
 				8477763CCDC4966B330DC086 /* Shimmer.swift */,
 				42D2D56852BA79BF5517563F /* Spacing.swift */,
+				388864F84EF5D0BD5AEE2642 /* TextRole.swift */,
 				87263640816D52C273CCC216 /* Typography.swift */,
 			);
 			path = Theme;
@@ -1260,6 +1263,7 @@
 				EA686D032301971F38800359 /* StartupTrace.swift in Sources */,
 				1D3A0D79A059CD0BED9D6549 /* StoreKitManager.swift in Sources */,
 				01A91325017F4F345F84AB53 /* TelemetryConfig.swift in Sources */,
+				F01D288960936228B0746CF5 /* TextRole.swift in Sources */,
 				BBA3A674A453A7214F3948FA /* Typography.swift in Sources */,
 				D81817D1E15FF9445D39A71D /* ViewModelCache.swift in Sources */,
 				2D1E96D1ECC97DF4A709C917 /* ViewModelGroup.swift in Sources */,

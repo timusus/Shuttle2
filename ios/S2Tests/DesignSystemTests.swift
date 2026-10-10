@@ -65,6 +65,20 @@ struct DesignSystemTests {
         #expect((try? sut.inspect().find(ViewType.NavigationLink.self)) == nil)
     }
 
+    @Test func aDiscHeaderIsASmallUppercaseHeaderWithoutActions() throws {
+        let sut = SectionHeader("Disc 2", style: .disc)
+        let text = try sut.inspect().find(text: "Disc 2")
+        #expect(try text.attributes().font() == .s2GroupHeader)
+        #expect((try? sut.inspect().find(ViewType.Button.self)) == nil)
+    }
+
+    @Test func textRolesMapToTheTypeTokens() {
+        #expect(TextRole.rowTitle.font == .s2RowTitle)
+        #expect(TextRole.rowSubtitle.font == .s2RowSubtitle)
+        #expect(TextRole.sectionHeader.font == .s2SectionTitle)
+        #expect(TextRole.groupHeader.font == .s2GroupHeader)
+    }
+
     @Test func aHeaderPlayButtonIsLabelledWithItsTitleAndRunsItsAction() throws {
         var played = false
         let sut = SectionHeader("Heavy Rotation").play { played = true }

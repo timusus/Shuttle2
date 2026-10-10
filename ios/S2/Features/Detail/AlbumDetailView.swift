@@ -121,10 +121,7 @@ struct AlbumDetailContent: View {
                             }
                         } header: {
                             if discs.count > 1 {
-                                Text("Disc \(group.disc)")
-                                    .font(.s2GroupHeader)
-                                    .foregroundStyle(.s2TextSecondary)
-                                    .textCase(.uppercase)
+                                SectionHeader("Disc \(group.disc)", style: .disc)
                                     .pinnedHeader()
                             }
                         }
