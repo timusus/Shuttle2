@@ -12,15 +12,14 @@ import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediabrowser.ItemsService
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserFavouriteWriter
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaybackReporter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
-import com.simplecityapps.provider.emby.EmbyPlaybackReporter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyServerAuthentication
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
-import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -50,10 +49,6 @@ class EmbyMediaProviderModule {
     @Provides
     @SingleIn(AppScope::class)
     fun provideTranscodeService(@Named("EmbyHttpClient") httpClient: HttpClient): EmbyTranscodeService = EmbyTranscodeService(httpClient)
-
-    @Provides
-    @SingleIn(AppScope::class)
-    fun providePlaybackReportingService(@Named("EmbyHttpClient") httpClient: HttpClient): PlaybackReportingService = PlaybackReportingService(httpClient)
 
     @Provides
     @SingleIn(AppScope::class)
@@ -90,7 +85,11 @@ class EmbyMediaProviderModule {
 
     @Provides
     @IntoSet
-    fun providePlaybackReporter(reporter: EmbyPlaybackReporter): PlaybackReporter = reporter
+    fun providePlaybackReporter(
+        authenticationManager: EmbyAuthenticationManager,
+        @Named("EmbyHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): PlaybackReporter = MediaBrowserPlaybackReporter(authenticationManager, httpClient, clientIdentity)
 
     @Provides
     @IntoSet

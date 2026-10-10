@@ -7,10 +7,10 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.bodyText
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaybackReporter
+import com.simplecityapps.mediaprovider.server.mediabrowser.PlaybackReport
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.emby.http.PlaybackReport
-import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -31,14 +31,16 @@ class EmbyPlaybackReporterTest {
         authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = false)
     }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
+
     private val authenticationManager = EmbyAuthenticationManager(
         httpClient = client,
         credentialStore = credentialStore,
-        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
+        clientIdentity = clientIdentity,
         streamProfile = StreamProfile.Android
     )
 
-    private val reporter = EmbyPlaybackReporter(authenticationManager, PlaybackReportingService(client))
+    private val reporter = MediaBrowserPlaybackReporter(authenticationManager, client, clientIdentity)
 
     init {
         for (path in listOf("/emby/Sessions/Playing", "/emby/Sessions/Playing/Progress", "/emby/Sessions/Playing/Stopped", "/emby/Users/user456/PlayedItems/item789")) {
@@ -124,6 +126,8 @@ class EmbyPlaybackReporterTest {
 
     @Test
     fun `the play date is formatted in UTC`() {
-        embyDatePlayed(Instant.parse("2026-12-31T23:59:59.999Z")) shouldBe "20261231235959"
+        runBlocking { reporter.markPlayed(song, Instant.parse("2026-12-31T23:59:59.999Z")) } shouldBe true
+
+        server.requestsTo("/emby/Users/user456/PlayedItems/item789").single().url.parameters["DatePlayed"] shouldBe "20261231235959"
     }
 }

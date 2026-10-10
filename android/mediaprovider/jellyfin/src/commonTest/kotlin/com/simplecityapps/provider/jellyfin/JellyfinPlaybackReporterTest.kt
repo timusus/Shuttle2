@@ -7,10 +7,10 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.bodyText
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaybackReporter
+import com.simplecityapps.mediaprovider.server.mediabrowser.PlaybackReport
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.networking.createHttpClient
-import com.simplecityapps.provider.jellyfin.http.PlaybackReport
-import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -32,14 +32,16 @@ class JellyfinPlaybackReporterTest {
         authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = false)
     }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
+
     private val authenticationManager = JellyfinAuthenticationManager(
         httpClient = client,
         credentialStore = credentialStore,
-        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
+        clientIdentity = clientIdentity,
         streamProfile = StreamProfile.Android
     )
 
-    private val reporter = JellyfinPlaybackReporter(authenticationManager, PlaybackReportingService(client))
+    private val reporter = MediaBrowserPlaybackReporter(authenticationManager, client, clientIdentity)
 
     private val song = Song(
         id = 1, name = "Song", albumArtist = null, artists = emptyList(), album = null, track = null, disc = null,
