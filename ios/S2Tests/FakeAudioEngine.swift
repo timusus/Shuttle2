@@ -100,6 +100,8 @@ final class FakeAudioEngine: AudioEngine {
 
     func setPauseAtEnd(_ enabled: Bool) { commands.append("pause at end \(enabled)") }
 
+    func notePlayRequest(_ trigger: String) {}
+
     func setEqualizer(enabled: Bool, preampDb: Float, coefficients: [Double]) {
         equalizers.append(Equalizer(enabled: enabled, preampDb: preampDb, coefficients: coefficients))
     }

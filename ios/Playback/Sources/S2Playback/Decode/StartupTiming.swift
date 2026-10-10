@@ -7,7 +7,8 @@ import Foundation
 /// paused track — stamped on the engine queue at each stage and folded into ONE `engine: ttfa` log
 /// line when the player node first renders (#687, after Podcasts' #193). It exists so a slow start
 /// on the phone has a number attached to each suspect: the server's first response, FFmpeg's
-/// blocking probe, the seek a resume needs, the audio session, the engine start.
+/// blocking probe, the seek a resume needs, the audio session, the engine start. `total` starts at
+/// the engine's load or play; `request-total` at the tap or remote command that led to it.
 ///
 /// Every timestamp is `ProcessInfo.systemUptime`: monotonic, so a clock adjustment mid-start
 /// cannot produce a negative stage, and the deltas are what the line reports. Stages that did not
@@ -118,7 +119,17 @@ struct StartupTiming: Equatable {
         }
     }
 
+    /// A play asked for above the engine (a tap, a remote command): what the listener waited from, which includes
+    /// building the queue before the engine is asked for anything.
+    struct PlayRequest: Equatable {
+        let at: TimeInterval
+        /// Who asked, as one token (`user`, `remoteCommand`), so the line stays `key=value`.
+        let trigger: String
+    }
+
     let source: Source
+    /// The play request this start answered; nil for a start the app made on its own (a retry, a queue change).
+    private(set) var request: PlayRequest?
     /// Set for a streamed start whose source knows its URL.
     var origin: Origin?
     let start: Start
@@ -157,6 +168,9 @@ struct StartupTiming: Equatable {
 
     /// Above this the line is repeated at `.error`, so a slow start is one grep away.
     static let slowThresholdMs = 3000
+    /// How long a play request stays the origin of the next start: a big queue can take seconds to build, but a
+    /// request no start followed (a play while playing) mustn't be pinned on an unrelated start much later.
+    static let requestWindow: TimeInterval = 10
 
     /// Monotonic seconds. The only clock the record should ever be stamped with.
     static func now() -> TimeInterval { ProcessInfo.processInfo.systemUptime }
@@ -181,9 +195,20 @@ struct StartupTiming: Equatable {
         firstResponse = stats.firstResponse
     }
 
+    /// Times this start from `request` too, if the request came before the engine was asked and within
+    /// ``requestWindow`` of it; otherwise it isn't this start's.
+    mutating func attach(_ request: PlayRequest) {
+        guard request.at <= playRequestedAt, playRequestedAt - request.at <= Self.requestWindow else { return }
+        self.request = request
+    }
+
     // MARK: - Deltas
 
     var totalMs: Int? { delta(playRequestedAt, firstRenderedAt) }
+    /// The play request → first render: what the listener heard as the start.
+    var requestTotalMs: Int? { delta(request?.at, firstRenderedAt) }
+    /// The play request → the engine asked: reading the songs and building the queue.
+    var preEngineMs: Int? { delta(request?.at, playRequestedAt) }
     /// Play → the audio session active. Concurrent with the open: a big number here costs the
     /// start nothing unless ``sessionWaitMs`` is also nonzero.
     var sessionMs: Int? { delta(playRequestedAt, sessionActivatedAt) }
@@ -211,7 +236,7 @@ struct StartupTiming: Equatable {
     /// The node told to play → its clock first advanced.
     var renderMs: Int? { delta(nodePlayedAt, firstRenderedAt) }
 
-    var isSlow: Bool { (totalMs ?? 0) > Self.slowThresholdMs }
+    var isSlow: Bool { (requestTotalMs ?? totalMs ?? 0) > Self.slowThresholdMs }
 
     private func delta(_ from: TimeInterval?, _ to: TimeInterval?) -> Int? {
         guard let from, let to else { return nil }
@@ -225,6 +250,9 @@ struct StartupTiming: Equatable {
     var logLine: String {
         var fields: [String] = [
             "engine: ttfa total=\(ms(totalMs))",
+            "request=\(request?.trigger ?? "-")",
+            "request-total=\(ms(requestTotalMs))",
+            "pre-engine=\(ms(preEngineMs))",
             "source=\(source.rawValue)",
             "provider=\(origin.map { $0.provider.rawValue } ?? "local")",
             "transcode=\(origin.map { $0.transcode.rawValue } ?? "no")",

@@ -63,18 +63,25 @@ final class PlayIntent {
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
     @ObservationIgnored private var listeners: [Int: () -> Void] = [:]
     @ObservationIgnored private var nextListener = 0
+    /// Told of every play asked for, as it's asked: where the engine's time to first audio starts.
+    @ObservationIgnored private let onPlayRequest: (Source) -> Void
     /// `nonisolated(unsafe)`: only `deinit` touches them off the main actor, once no other access can be concurrent.
     @ObservationIgnored private nonisolated(unsafe) var observers: [Task<Void, Never>] = []
 
-    init(player: any PlayIntentPlayer, timeout: Duration = .seconds(30)) {
+    init(player: any PlayIntentPlayer, timeout: Duration = .seconds(30), onPlayRequest: @escaping (Source) -> Void = { _ in }) {
         self.player = player
         self.timeout = timeout
+        self.onPlayRequest = onPlayRequest
         refresh()
     }
 
     /// An intent over the Kotlin player, following its flows.
-    convenience init(following controller: IosPlayerController, timeout: Duration = .seconds(30)) {
-        self.init(player: controller, timeout: timeout)
+    convenience init(
+        following controller: IosPlayerController,
+        timeout: Duration = .seconds(30),
+        onPlayRequest: @escaping (Source) -> Void = { _ in }
+    ) {
+        self.init(player: controller, timeout: timeout, onPlayRequest: onPlayRequest)
         let state = controller.playbackStateFlow
         let playWhenReady = controller.playWhenReadyFlow
         observers = [
@@ -117,7 +124,7 @@ final class PlayIntent {
     /// Plays (or resumes) the current item, as the listener asked: a pending play they paused no longer stands.
     func play(from source: Source = .user) {
         record(plays: true, source)
-        listenerPlayed()
+        listenerPlayed(from: source)
         player.play()
         refresh()
     }
@@ -129,6 +136,7 @@ final class PlayIntent {
             return
         }
         record(plays: true, source)
+        onPlayRequest(source)
         player.play()
         refresh()
     }
@@ -153,7 +161,8 @@ final class PlayIntent {
 
     /// The listener started a play some other way (a skip, a queue row): a pending play they paused, should it start
     /// later, is no longer paused over this one.
-    func listenerPlayed() {
+    func listenerPlayed(from source: Source = .user) {
+        onPlayRequest(source)
         guard pending?.isPaused == true else { return }
         endPending()
         refresh()
@@ -162,7 +171,8 @@ final class PlayIntent {
     /// A play is about to be dispatched that Swift prepares before the player has it (a `MediaAction`); pass the
     /// returned ticket to `finished` with its result. `key` names what it plays, for `loadingKey`.
     @discardableResult
-    func begin(key: String? = nil) -> Int {
+    func begin(key: String? = nil, from source: Source = .user) -> Int {
+        onPlayRequest(source)
         ticket += 1
         pending = Pending(ticket: ticket)
         self.key = key

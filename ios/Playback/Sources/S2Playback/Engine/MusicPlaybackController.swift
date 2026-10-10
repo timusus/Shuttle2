@@ -5,6 +5,8 @@ import os
 /// `log stream --predicate 'category == "audio-engine"'` shows the node running dry beside the
 /// fetch that let it (#896).
 private let engineLog = Logger(subsystem: "com.simplecityapps.shuttle2", category: "audio-engine")
+/// The app's cold-start signposts' log (`StartupTrace`), so Instruments shows a play's start on the same track.
+private let startSignposter = OSSignposter(subsystem: "com.simplecityapps.shuttle", category: "Startup")
 
 /// One queue item as the engine sees it: an id, its ReplayGain, and where its audio comes from.
 ///
@@ -321,6 +323,10 @@ public final class MusicPlaybackController {
     private var readyPausedAt: TimeInterval?
     /// The last start's record, once its line was logged.
     private var lastStartTiming: StartupTiming?
+    /// The signposted interval of `startTiming`.
+    private var startSignpost: OSSignpostIntervalState?
+    /// A play request no start has answered yet (``notePlayRequest(_:)``).
+    private var pendingPlayRequest: StartupTiming.PlayRequest?
 
     // MARK: Shared state (any thread, under `timelineLock`)
 
@@ -593,6 +599,14 @@ public final class MusicPlaybackController {
         return taken
     }
 
+    /// A play was asked for above the engine (`trigger`: one token naming who asked). The next start, if it follows
+    /// within ``StartupTiming/requestWindow``, is timed from here too. Call before the load or play it leads to.
+    public func notePlayRequest(_ trigger: String) {
+        let request = StartupTiming.PlayRequest(at: StartupTiming.now(), trigger: trigger)
+        startSignposter.emitEvent("play request", "\(trigger, privacy: .public)")
+        engineQueue.async { [self] in pendingPlayRequest = request }
+    }
+
     public func play() {
         let activation = beginActivation()
         let requestedAt = StartupTiming.now()
@@ -620,6 +634,7 @@ public final class MusicPlaybackController {
             defer { answerCommand() }
             playWhenReady = false
             pendingActivation = nil
+            pendingPlayRequest = nil
             dropStartTiming()
             let held = playedStreamIndex()
             player.pause()
@@ -1482,16 +1497,30 @@ public final class MusicPlaybackController {
         (slot.source as? FFmpegTrackSource)?.isStreamed == true ? .streamed : .file
     }
 
+    /// Times a new start, answering the pending play request if it's this start's: one request, one start.
     private func beginStartTiming(_ timing: StartupTiming, of slot: Slot) {
+        endStartSignpost("superseded")
         startTimingSerial += 1
         startTiming = timing
         startTiming?.origin = (slot.source as? FFmpegTrackSource)?.streamOrigin
+        if let request = pendingPlayRequest {
+            startTiming?.attach(request)
+            pendingPlayRequest = nil
+        }
+        startSignpost = startSignposter.beginInterval("ttfa", id: startSignposter.makeSignpostID())
     }
 
     /// A start that won't reach the ear (paused, refused, torn down) has no line.
     private func dropStartTiming() {
+        endStartSignpost("dropped")
         startTimingSerial += 1
         startTiming = nil
+    }
+
+    private func endStartSignpost(_ outcome: StaticString) {
+        guard let state = startSignpost else { return }
+        startSignpost = nil
+        startSignposter.endInterval("ttfa", state, "\(outcome.description, privacy: .public)")
     }
 
     /// A play of a paused track. Close behind its load being ready (a load made paused, then played
@@ -1524,6 +1553,7 @@ public final class MusicPlaybackController {
     private func noteFirstBuffer() {
         guard startTiming != nil, startTiming?.firstBufferScheduledAt == nil else { return }
         startTiming?.firstBufferScheduledAt = StartupTiming.now()
+        startSignposter.emitEvent("first buffer")
         if let stats = (current?.source as? FFmpegTrackSource)?.openStats { startTiming?.apply(stats) }
     }
 
@@ -1532,6 +1562,7 @@ public final class MusicPlaybackController {
         guard startTiming != nil, startTiming?.nodePlayedAt == nil else { return }
         let now = StartupTiming.now()
         startTiming?.nodePlayedAt = now
+        startSignposter.emitEvent("node played")
         watchFirstRender(serial: startTimingSerial, deadline: now + Self.renderWatchSeconds)
     }
 
@@ -1562,6 +1593,7 @@ public final class MusicPlaybackController {
         guard let timing = startTiming else { return }
         startTiming = nil
         lastStartTiming = timing
+        endStartSignpost(timing.renderTimedOut ? "render timeout" : "rendered")
         let line = timing.logLine
         if timing.isSlow {
             engineLog.error("\(line, privacy: .public)")

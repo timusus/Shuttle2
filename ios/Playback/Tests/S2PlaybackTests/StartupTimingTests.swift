@@ -118,6 +118,64 @@ final class StartupTimingTests: XCTestCase {
         XCTAssertNil(controller.lastStartTimingForTesting)
     }
 
+    /// The tap that led to a load is timed through to the render, and answers that start only.
+    func testAPlayRequestTimesTheNextStartFromTheRequest() throws {
+        let (controller, log) = try makeController()
+        let samples = TestSignal.noise(frames: 48_000, seed: 5)
+        controller.notePlayRequest("user")
+        Thread.sleep(forTimeInterval: 0.05)
+        controller.load(
+            current: PlaybackTrack(uid: "A") { InMemoryTrackSource(samples: samples) }, next: nil, playWhenReady: true
+        )
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 1024, log: log)
+
+        let timing = try XCTUnwrap(controller.lastStartTimingForTesting)
+        XCTAssertEqual(timing.request?.trigger, "user")
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(timing.preEngineMs), 50)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(timing.requestTotalMs), try XCTUnwrap(timing.totalMs) + 50)
+        XCTAssertTrue(timing.logLine.contains("request=user "), timing.logLine)
+
+        controller.load(
+            current: PlaybackTrack(uid: "B") { InMemoryTrackSource(samples: samples) }, next: nil, playWhenReady: true
+        )
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 1024, log: log)
+        let next = try XCTUnwrap(controller.lastStartTimingForTesting)
+        XCTAssertNil(next.request, "a request answers one start")
+        XCTAssertTrue(next.logLine.contains("request=- request-total=- pre-engine=- "), next.logLine)
+    }
+
+    /// A paused play no longer leads anywhere: the next start is someone else's.
+    func testAPauseDropsAPendingPlayRequest() throws {
+        let (controller, log) = try makeController()
+        let samples = TestSignal.noise(frames: 48_000, seed: 6)
+        controller.notePlayRequest("remoteCommand")
+        controller.pause()
+        controller.load(
+            current: PlaybackTrack(uid: "A") { InMemoryTrackSource(samples: samples) }, next: nil, playWhenReady: true
+        )
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 1024, log: log)
+        XCTAssertNil(try XCTUnwrap(controller.lastStartTimingForTesting).request)
+    }
+
+    func testARequestOutsideTheWindowOrAfterTheStartIsNotItsOrigin() {
+        var timing = StartupTiming(source: .file, start: .fresh, open: .opened, playRequestedAt: 100)
+        timing.attach(StartupTiming.PlayRequest(at: 100.5, trigger: "user"))
+        XCTAssertNil(timing.request, "came after the engine was asked")
+        timing.attach(StartupTiming.PlayRequest(at: 89, trigger: "user"))
+        XCTAssertNil(timing.request, "older than the window")
+        timing.attach(StartupTiming.PlayRequest(at: 92, trigger: "appIntent"))
+        timing.firstRenderedAt = 100.25
+
+        XCTAssertEqual(timing.request?.trigger, "appIntent")
+        XCTAssertEqual(timing.preEngineMs, 8000)
+        XCTAssertEqual(timing.totalMs, 250)
+        XCTAssertEqual(timing.requestTotalMs, 8250)
+        XCTAssertTrue(timing.isSlow, "slow as the listener heard it, not as the engine did")
+    }
+
     /// A pre-opened track's open was paid before the play: its stamps would read as negative stages.
     func testAPreopenedStartPrintsItsOpenStagesAsDashes() {
         var timing = StartupTiming(source: .streamed, start: .fresh, open: .preopened, playRequestedAt: 10)

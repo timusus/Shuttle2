@@ -162,7 +162,8 @@ additions (an output rate and channel count, mono spread, sample-accurate seeks)
 - **Adapted.** S2 additions are marked `S2:`.
   - `StartupTiming` keeps Podcasts' nested types, but its record is the
     controller's start (#687): the Podcasts-only teardown, swap, tee and chain stages are gone, and
-    it adds `open` (pre-opened or not), `play-after-ready` and `play`.
+    it adds `open` (pre-opened or not), `play-after-ready`, `play`, and the app's play request
+    (`request`, `request-total`, `pre-engine`), with `ttfa` signposts in the app's `Startup` log.
   - `Biquad` adds `adoptState`; its factories were dropped, as the shared Kotlin EQ designs the bands.
   - `LookaheadLimiter` is now stereo-linked and frame-interleaved, and its window includes the
     emitted frame.

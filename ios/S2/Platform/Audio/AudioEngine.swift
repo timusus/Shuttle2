@@ -46,6 +46,9 @@ protocol AudioEngine: AnyObject {
     /// Readies the output for a play (the audio session), called off the main thread as a play or a load that plays
     /// is made, while the track opens; false refuses the play, which stays paused and is reported paused.
     var activateOutput: (() -> Bool)? { get set }
+    /// A play was asked for (`trigger` names who asked, one token), before the queue is built: the engine times its
+    /// next start from here as well as from its own load or play.
+    func notePlayRequest(_ trigger: String)
     func load(current: EngineTrack, next: EngineTrack?, startMs: Int64, playWhenReady: Bool)
     func setNext(_ track: EngineTrack?)
     func play()

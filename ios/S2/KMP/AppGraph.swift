@@ -137,7 +137,10 @@ final class IosAppDependencies {
         DispatchQueue.global(qos: .utility).async { StreamStore.prepareAtLaunch() }
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
-        playIntent = PlayIntent(following: graph.playerController)
+        // The case name, not the raw value: the ttfa line wants one token.
+        playIntent = PlayIntent(following: graph.playerController) { [audioPlayer] source in
+            audioPlayer.notePlayRequest(String(describing: source))
+        }
         playbackSystem = PlaybackSystemCoordinator(
             playback: graph.playerController,
             intent: playIntent,

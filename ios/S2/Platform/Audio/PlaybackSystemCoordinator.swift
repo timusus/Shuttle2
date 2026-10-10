@@ -213,13 +213,13 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
 
     func skipToNext() {
         log.notice("remote skipToNext")
-        intent.listenerPlayed()
+        intent.listenerPlayed(from: .remoteCommand)
         playback.skipToNext(ignoreRepeat: true, completion: nil)
     }
 
     func skipToPrevious() {
         log.notice("remote skipToPrevious")
-        intent.listenerPlayed()
+        intent.listenerPlayed(from: .remoteCommand)
         playback.skipToPrev(force: false, completion: nil)
     }
 

@@ -127,6 +127,10 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         engine.setNext(next.flatMap(engineTrack))
     }
 
+    func notePlayRequest(_ trigger: String) {
+        engine.notePlayRequest(trigger)
+    }
+
     func play() {
         guard !isPlaying else { return }
         onWillPlay()

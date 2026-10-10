@@ -106,7 +106,7 @@ final class AppIntentPerformer: PlaybackIntentPerforming, LibraryIntentPerformin
     }
 
     func skipToNext() async throws {
-        intent.listenerPlayed()
+        intent.listenerPlayed(from: .appIntent)
         skip()
     }
 
@@ -139,7 +139,7 @@ final class AppIntentPerformer: PlaybackIntentPerforming, LibraryIntentPerformin
 
     /// Dispatches a play as a screen does: the intent is the listener's from now until the player takes it up.
     func play(_ action: any MediaAction) async throws {
-        let ticket = intent.begin()
+        let ticket = intent.begin(from: .appIntent)
         let result = await dispatch(action)
         intent.finished(ticket, result: result)
         guard let message = (result as? MediaActionResultMessage)?.message else { return }
