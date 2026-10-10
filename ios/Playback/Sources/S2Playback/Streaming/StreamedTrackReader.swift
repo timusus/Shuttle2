@@ -3,7 +3,7 @@ import PlaybackDecode
 import PlaybackStreaming
 
 /// A ``GrowingFileByteSource`` with what the engine needs and the source lacks: `onWait` every ``waitSeconds`` a read
-/// waits, a seek past the length refused as unseekable, and a transcode's restart from byte 0 given up as ``dropped``
+/// waits, and a transcode's restart from byte 0 given up as ``dropped``
 /// so the owner re-opens it at the position instead of waiting for the song to download again.
 final class StreamedTrackReader: StreamByteReader {
     static let waitSeconds: Double = 1
@@ -52,8 +52,6 @@ final class StreamedTrackReader: StreamByteReader {
 
     func seek(to offset: Int64) throws {
         if dropped { throw StreamByteReaderError.interrupted }
-        // Upstream need: GrowingFileByteSource refusing a seek past its length as `unseekable` itself.
-        if let total = source.totalLength, offset > total { throw StreamByteReaderError.unseekable }
         try source.seek(to: offset)
     }
 
