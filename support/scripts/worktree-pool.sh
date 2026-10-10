@@ -3,9 +3,9 @@
 #
 #   support/scripts/worktree-pool.sh lease <name>           # prints the slot dir (stdout only); exit 3 = pool full or lock timeout
 #   support/scripts/worktree-pool.sh release <branch|dir>   # detach the slot's HEAD, drop the lease
-#   support/scripts/worktree-pool.sh list                   # k, leased branch or "free", lease age, HEAD
+#   support/scripts/worktree-pool.sh list                   # k, leased branch or "free", lease age, HEAD, holder live|dead|unknown
 #   support/scripts/worktree-pool.sh slot-of <branch>       # the slot dir holding <branch>, exit 1 if none
-#   support/scripts/worktree-pool.sh reap                   # release slots whose branch is gone or landed
+#   support/scripts/worktree-pool.sh reap                   # release slots whose branch is gone or landed, or whose holder died idle
 #   support/scripts/worktree-pool.sh --help                 # this header
 #
 # Exit codes: 0 ok; 1 release/slot-of: not a pool slot or branch moved; 2 usage or a git failure (a lease whose
@@ -19,11 +19,14 @@
 # full-verify.sh's worktree): an ignored stale artifact can survive into the next lease. If a slot misbehaves,
 # clear it with the recovery command printed below and the next lease starts it cold.
 #
-# Lease records live in <git-common-dir>/s2-worktree-pool/<k>.lease ("<branch> <epoch> <base-sha>"), never tracked.
-# The base sha is origin/main when the branch was created. A slot is reclaimable when it has no lease, or its
-# leased branch no longer exists, or the branch is landed: it has commits of its own and every one is on origin/main
-# by patch (at least one cherry "-", no "+"). A branch with no commits of its own (still at its base, or merely
-# fast-forwarded/rebased onto a newer origin/main) is a running worker, never landed.
+# Lease records live in <git-common-dir>/s2-worktree-pool/<k>.lease ("<branch> <epoch> <base-sha> <holder-pid>"), never
+# tracked. The holder is $S2_POOL_HOLDER_PID (worker-brief exports its own pid, which becomes the worker's by exec) or
+# else the caller's parent; a 3-field record has no holder and is "unknown". The base sha is origin/main when the branch
+# was created. A slot is reclaimable when it has no lease, or its leased branch no longer exists, or the branch is
+# landed: it has commits of its own and every one is on origin/main by patch (at least one cherry "-", no "+"), or its
+# holder is dead and the branch has no commits of its own and the worktree is clean. A branch with no commits of its
+# own (still at its base, or merely fast-forwarded/rebased onto a newer origin/main) is a running worker, never landed.
+# A dead holder with commits or a dirty tree is never touched; list flags it "dead, unlanded work".
 # Every lease, release and reap decides under the pool lock; reap detaches a landed slot but leaves the branch
 # for worktree-clean.sh to delete (it prints "landed <branch>" on stdout). The slots are `git worktree lock`ed
 # so worktree-clean.sh / worktree-report.sh --prune never remove them.
@@ -72,6 +75,17 @@ lease_field() { cut -d' ' -f"$2" "$(lease_file "$1")" 2>/dev/null || true; }
 lease_branch() { lease_field "$1" 1; }
 lease_epoch() { lease_field "$1" 2; }
 lease_base() { lease_field "$1" 3; }
+lease_holder() { lease_field "$1" 4; }
+write_lease() {  # $1 = k, $2 = branch, $3 = epoch, $4 = base sha
+  printf '%s %s %s %s\n' "$2" "$3" "$4" "${S2_POOL_HOLDER_PID:-$PPID}" > "$(lease_file "$1")"
+}
+# live|dead|unknown. kill -0 fails with EPERM for another user's process, so ask ps before calling it dead.
+holder_state() {
+  local pid
+  pid=$(lease_holder "$1")
+  case "$pid" in ''|*[!0-9]*) echo unknown; return 0 ;; esac
+  if kill -0 "$pid" 2>/dev/null || ps -p "$pid" >/dev/null 2>&1; then echo live; else echo dead; fi
+}
 branch_exists() { git -C "$PRIMARY" show-ref --verify --quiet "refs/heads/$1"; }
 
 # Landed: the branch has a commit of its own and every such commit is on origin/main by patch (cherry-pick, as `land`
@@ -124,7 +138,22 @@ slot_reclaimable() {
   branch_exists "$b" || return 0
   RECLAIM_WHY=landed
   branch_landed "$b" "$(lease_base "$1")" && return 0
+  RECLAIM_WHY=dead
+  slot_abandoned "$1" "$b" && return 0
   return 1
+}
+
+# The holder is dead and nothing would be lost: no commits of its own, clean worktree. Unknown base: assume work.
+slot_abandoned() {  # $1 = k, $2 = branch
+  local base own
+  [ "$(holder_state "$1")" = dead ] || return 1
+  base=$(lease_base "$1")
+  [ -n "$base" ] || return 1
+  own=$(git -C "$PRIMARY" rev-list --no-merges "$base..refs/heads/$2" 2>/dev/null) || return 1
+  [ -z "$own" ] || return 1
+  usable "$(slot_dir "$1")" || return 1
+  [ "$(git -C "$(slot_dir "$1")" symbolic-ref -q --short HEAD || true)" = "$2" ] || return 1
+  [ -z "$(git -C "$(slot_dir "$1")" status --porcelain 2>/dev/null || echo x)" ]
 }
 
 # The pool slot (dir) that has branch $1 checked out, if any.
@@ -187,7 +216,10 @@ cmd_lease() {
     k=${held##*/pool-}
     if [ -z "$(lease_branch "$k")" ]; then
       base=$(git -C "$PRIMARY" merge-base origin/main "$branch" 2>/dev/null || git -C "$PRIMARY" rev-parse "refs/heads/$branch")
-      printf '%s %s %s\n' "$branch" "$(date +%s)" "$base" > "$(lease_file "$k")"
+      write_lease "$k" "$branch" "$(date +%s)" "$base"
+    else
+      # A re-briefed worker is a new holder.
+      write_lease "$k" "$branch" "$(lease_epoch "$k")" "$(lease_base "$k")"
     fi
     unlock
     echo "worktree-pool: $branch already in $held" >&2
@@ -210,7 +242,7 @@ cmd_lease() {
   fi
   base=$(git -C "$PRIMARY" rev-parse origin/main)
   # The lease, the slot and the branch all exist before the lock is released.
-  printf '%s %s %s\n' "$branch" "$(date +%s)" "$base" > "$(lease_file "$k")"
+  write_lease "$k" "$branch" "$(date +%s)" "$base"
   if ! ensure_slot "$d"; then abort_lease "$k" "$d" "$branch" "$base"; unlock; exit 2; fi
   detach_slot "$d"
   if ! git -C "$d" checkout -q -f -b "$branch" "$base" >&2; then
@@ -266,6 +298,8 @@ cmd_reap() {
     d=$(slot_dir "$k"); b=$(lease_branch "$k")
     detach_slot "$d" || true
     rm -f "$(lease_file "$k")"
+    # No commits of its own, so the branch holds nothing; dropping it lets a re-brief lease the name again.
+    [ "$RECLAIM_WHY" != dead ] || git -C "$PRIMARY" branch -D "$b" >/dev/null 2>&1 || true
     echo "worktree-pool: reaped $RECLAIM_WHY lease on $d" >&2
     [ "$RECLAIM_WHY" = landed ] && printf 'landed %s\n' "$b"
   done
@@ -274,18 +308,22 @@ cmd_reap() {
 }
 
 cmd_list() {
-  local k d b e head age now note
+  local k d b e head age now note holder
   now=$(date +%s)
   for k in $(seq 1 "$SIZE"); do
     d=$(slot_dir "$k")
-    b=$(lease_branch "$k"); e=$(lease_epoch "$k"); note=""
+    b=$(lease_branch "$k"); e=$(lease_epoch "$k"); note=""; holder="-"
+    [ -z "$b" ] || holder=$(holder_state "$k")
     if slot_reclaimable "$k"; then
       [ "$RECLAIM_WHY" = landed ] && note=" (landed $b: reap releases the slot, the branch is left for worktree-clean.sh)"
+      [ "$RECLAIM_WHY" = dead ] && note=" (dead holder, nothing to lose: reap releases $b)"
       b=""
+    elif [ "$holder" = dead ]; then
+      note=" (dead, unlanded work on $b)"
     fi
     if [ -n "$b" ]; then age="$(( (now - ${e:-$now}) / 60 ))m"; else age="-"; fi
     head=$(git -C "$d" rev-parse --short HEAD 2>/dev/null || echo "-")
-    printf '%s\t%s\t%s\t%s%s\n' "$k" "${b:-free}" "$age" "$head" "$note"
+    printf '%s\t%s\t%s\t%s\t%s%s\n' "$k" "${b:-free}" "$age" "$head" "$holder" "$note"
   done
 }
 
