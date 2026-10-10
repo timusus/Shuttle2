@@ -32,7 +32,6 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
-import com.simplecityapps.shuttle.ui.shell.artistArtworkKey
 import com.simplecityapps.shuttle.ui.shell.sharedArtwork
 
 // Top results repeat a list row's item, so only the rows share artwork: a key may appear once per screen.
@@ -46,7 +45,7 @@ internal fun ArtistResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallback
         // A track artist found by their credits (#637) has songs but no albums of their own to count
         summary = if (artist.isAlbumArtist) countString(R.plurals.albumsPlural, artist.albumCount) else countString(R.plurals.songsPlural, artist.songCount),
         onClick = { callbacks.onArtistClick(artist) },
-        artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, Modifier.sharedArtwork(artistArtworkKey(artist.route)), size = ArtworkSize.Small, shape = ArtworkShape.Circle) },
+        artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Small, shape = ArtworkShape.Circle) },
         onLongClick = showActions,
         onMore = showActions,
     )

@@ -99,7 +99,7 @@ fun LibraryDetailScaffold(
                     )
                 }
                 if (bleed) {
-                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork, Modifier.sharedArtwork(artworkKey)) }, actions = playShuffle, extra = header)
+                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork) }, actions = playShuffle, extra = header)
                 } else {
                     DetailHero(
                         title = title,
@@ -128,11 +128,11 @@ fun LibraryDetailScaffold(
 
 /** [model]'s image filling a [DetailBleedHero]: nothing while it loads or when there's none, so the hero's own fill shows. */
 @Composable
-private fun BleedArtwork(model: Any?, modifier: Modifier = Modifier) {
+private fun BleedArtwork(model: Any?) {
     val preview = previewArtwork(model)
     when {
-        preview != null -> Image(preview, contentDescription = null, modifier = modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        model != null -> AsyncImage(model = model, contentDescription = null, modifier = modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        preview != null -> Image(preview, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        model != null -> AsyncImage(model = model, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
     }
 }
 

@@ -560,3 +560,7 @@ Needs a release build (an internal or release-candidate install: a debug build c
 ## Deleting device songs through the system dialog, Android 11+
 
 - [ ] On API 30+, delete a song from the device library, leave the system delete dialog open for more than 10 seconds, then tap Allow: the file is deleted and the song disappears from the library and the queue without a rescan. Repeat with Deny: the song stays. Repeat with "Don't keep activities" on in Developer options, so the app's activity is destroyed behind the dialog: Allow still removes the song.
+
+## Search → album artwork transition (#431)
+
+- [ ] Tapping an album result in Search animates its cover into the detail hero, and predictive back reverses it; artist results open without a shared transition (the circle thumbnail does not morph into the full-bleed hero).
