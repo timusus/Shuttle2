@@ -202,6 +202,45 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun `popping the route the player opened asks for the player again`() {
+        val navigator = navigator()
+        navigator.openFromPlayer(EqualizerRoute)
+        navigator.playerReturnPending shouldBe false
+
+        navigator.back()
+
+        navigator.stack(ShellTab.Home) shouldBe listOf(HomeRoute)
+        navigator.playerReturnPending shouldBe true
+        navigator.consumePlayerReturn()
+        navigator.playerReturnPending shouldBe false
+    }
+
+    @Test
+    fun `popping a screen opened above the player's route does not ask for the player yet`() {
+        val navigator = navigator()
+        navigator.openFromPlayer(EqualizerRoute)
+        navigator.open(album)
+
+        navigator.back()
+        navigator.playerReturnPending shouldBe false
+
+        navigator.back()
+        navigator.playerReturnPending shouldBe true
+    }
+
+    @Test
+    fun `leaving for another tab forgets the player's route`() {
+        val navigator = navigator()
+        navigator.openFromPlayer(EqualizerRoute)
+        navigator.selectTab(ShellTab.Library)
+        navigator.selectTab(ShellTab.Home)
+
+        navigator.back()
+
+        navigator.playerReturnPending shouldBe false
+    }
+
+    @Test
     fun `re-selecting a tab already at its root announces it, and one deeper only pops`() = runTest {
         val navigator = navigator()
         val reselects = mutableListOf<ShellTab>()

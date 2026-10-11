@@ -38,6 +38,18 @@ class AppNavigator(
         require(ShellTab.entries.all { stacks[it]?.firstOrNull() == it.root }) { "Every tab's stack must start at its root" }
     }
 
+    private class PlayerOrigin(val tab: ShellTab, val index: Int)
+
+    private var playerOrigin: PlayerOrigin? = null
+
+    /** Set when back pops the route the player opened; the shell raises the player to Full and calls [consumePlayerReturn]. */
+    var playerReturnPending: Boolean by mutableStateOf(false)
+        private set
+
+    fun consumePlayerReturn() {
+        playerReturnPending = false
+    }
+
     private val _reselects = MutableSharedFlow<ShellTab>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /** The tab re-selected while at its root; nothing replays, so a tab with no screen listening drops it. */
@@ -72,6 +84,7 @@ class AppNavigator(
     }
 
     fun selectTab(tab: ShellTab) {
+        playerOrigin = null
         if (tab == selectedTab) {
             val stack = stacks.getValue(tab)
             if (stack.size > 1) {
@@ -95,12 +108,25 @@ class AppNavigator(
         request.route?.let { stack.add(it) }
     }
 
+    /** Pushes [route] for the player, so popping it back off raises [playerReturnPending] for the shell to raise the player again. */
+    fun openFromPlayer(route: NavKey) {
+        open(route)
+        playerOrigin = PlayerOrigin(selectedTab, stacks.getValue(selectedTab).lastIndex)
+        playerReturnPending = false
+    }
+
     /** Pops one entry. Returns false when there is nothing left to pop, so the activity should finish. */
     fun back(): Boolean {
         val stack = stacks.getValue(selectedTab)
         return when {
             stack.size > 1 -> {
                 stack.removeAt(stack.lastIndex)
+                playerOrigin?.let { origin ->
+                    if (origin.tab == selectedTab && stack.size <= origin.index) {
+                        playerOrigin = null
+                        playerReturnPending = true
+                    }
+                }
                 true
             }
 

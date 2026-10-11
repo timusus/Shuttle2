@@ -173,7 +173,14 @@ fun AppShell(
     }
 
     // The player's links into Settings (Equalizer, Playback & sound) settle it to Mini like any other navigation.
-    val playerContent = PlayerContent(playerUi, progress, actions, openRoute = { route -> navigate { navigator.open(route) } })
+    val playerContent = PlayerContent(playerUi, progress, actions, openRoute = { route -> navigate { navigator.openFromPlayer(route) } })
+    // Back from a route the player opened returns to the player, not the tab beneath it.
+    LaunchedEffect(player, navigator.playerReturnPending) {
+        if (navigator.playerReturnPending) {
+            navigator.consumePlayerReturn()
+            player.moveTo(PlayerLevel.Full)
+        }
+    }
     // No tab is lit, and the nav bar or rail slides away, while a utility destination shows.
     val selectedTab = navigator.selectedTab.takeIf { navigator.showsNavigation }
     // The player's song menus and its queue's save-to-playlist share the destinations' media action path; the screens a result opens settle the player first.
