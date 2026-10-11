@@ -9,7 +9,8 @@ One Compose `MainActivity` with a Navigation 3 `NavDisplay` inside a shell layou
 The app moves to Compose in a single cutover: every screen is rebuilt as a Compose destination,
 and every Fragment, presenter, XML layout and nav graph is deleted. The shell never hosts a
 Fragment; there are no bridges between old and new. The shell owns navigation chrome and the player
-surface; destinations own everything else, including their top bars.
+surface; destinations own everything else, including their top bars. The shell also owns system-bar
+appearance: screens publish a request (`RequestStatusBarOverImage`) and never touch the window controller.
 
 ## Release freeze
 

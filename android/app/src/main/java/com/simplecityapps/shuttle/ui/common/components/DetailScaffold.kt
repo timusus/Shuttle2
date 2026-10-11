@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.common.components
 
-import android.app.Activity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,7 +15,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -26,11 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
-import androidx.core.view.WindowCompat
 import com.simplecityapps.shuttle.designsystem.component.S2DetailTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
+import com.simplecityapps.shuttle.ui.shell.RequestStatusBarOverImage
 
 /**
  * A detail screen: a single LazyColumn under a pinned [S2DetailTopBar] with back navigation and the overflow [actions].
@@ -65,16 +62,7 @@ fun DetailScaffold(
         }
     }
 
-    // The image runs under the status bar, so its icons go light for as long as it does.
-    val view = LocalView.current
-    val overImage = heroBleeds && !collapsed
-    DisposableEffect(view, overImage) {
-        val window = (view.context as? Activity)?.window
-        val controller = window?.let { WindowCompat.getInsetsController(it, view) }
-        val wasLight = controller?.isAppearanceLightStatusBars
-        if (overImage) controller?.isAppearanceLightStatusBars = false
-        onDispose { if (overImage && wasLight != null) controller?.isAppearanceLightStatusBars = wasLight }
-    }
+    RequestStatusBarOverImage(heroBleeds && !collapsed)
 
     S2Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

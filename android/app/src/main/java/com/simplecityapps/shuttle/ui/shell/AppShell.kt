@@ -89,6 +89,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.library.openTarget
@@ -168,8 +169,18 @@ fun AppShell(
         }
     }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
+    val statusBarRequests = remember { StatusBarRequests() }
+    ApplyStatusBarAppearance(
+        statusBarRequests,
+        playerLevel = if (player.mode == PlayerMode.Pane) PlayerLevel.Mini else player.level,
+        darkTheme = LocalS2ThemeSettings.current.isDark,
+    )
     val destinations: @Composable () -> Unit = {
-        CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState, LocalTabReselects provides navigator.reselects) {
+        CompositionLocalProvider(
+            LocalShellSnackbarHostState provides snackbarHostState,
+            LocalTabReselects provides navigator.reselects,
+            LocalStatusBarRequests provides statusBarRequests,
+        ) {
             ShellNavDisplay(navigator, layout, windowAdaptiveInfo, entryProvider)
         }
     }
