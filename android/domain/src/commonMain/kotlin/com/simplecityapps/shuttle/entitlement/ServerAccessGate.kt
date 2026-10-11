@@ -29,24 +29,25 @@ enum class ServerAccess {
  * Local playback, Chromecast, AirPlay, the graphic equalizer, single-song tag edits and songs that are already
  * downloaded are never gated, so they must not call this.
  *
- * There's one trial, shared by every feature. Where the user starts it on their own (the paywall's and onboarding's
- * [StartTrial], and iOS, where the trial is a free App Store purchase), a use without Pro or a running trial is refused
- * and the paywall offers the trial. Only a gate built with [startTrial] starts it on a feature's first use, and then
- * [pending] holds the feature until the app has disclosed it.
+ * There's one trial, shared by every feature, and the user starts it on their own (the paywall's and onboarding's
+ * [StartTrial], and iOS, where the trial is a free App Store purchase): a use without Pro or a running trial is refused
+ * and the paywall offers the trial. Refusing to add a server doesn't resume the add once the trial starts; the user
+ * taps Add again. No production gate is built with [startTrial], which would start the trial on a feature's first use
+ * and hold the feature in [pending] until the app has disclosed it.
  *
  * A refusal also asks for the paywall through [paywallRequests], so each entry point makes one call. While the store
  * hasn't answered, a use waits up to [storeAnswerWait] for it; if it still hasn't, the use is
  * [ServerAccess.Undecided], without the paywall, which a purchaser mustn't be shown. A stream or download from a server
  * is refused then; every other feature goes ahead ([tryUse]), so a purchaser is never locked out of one.
  *
- * @param startTrial starts the trial if the user hasn't had one (Android's `EntitlementRepository.startTrialIfEligible`),
- *   or null where only the paywall can start it (iOS).
+ * @param startTrial starts the trial on a feature's first use if the user hasn't had one, or null where only the paywall
+ *   can start it (Android and iOS in production).
  * @param storeAnswerWait how long a use waits for the store's first answer: none on Android, whose cached Pro answers
  *   at once; a few seconds on iOS, where StoreKit answers soon after launch.
  * @param offersTrialOnAddServer refuses adding a server to a user with neither Pro nor a used trial, so the paywall offers
  *   the trial first (Android; iOS lets a server be added until the trial is used).
  * @param disclosureStore keeps [pending] across process death, so a trial a car started is still disclosed after the
- *   app was killed; in memory where the gate never starts the trial (iOS).
+ *   app was killed; only used by a gate that starts the trial itself.
  */
 class ServerAccessGate(
     private val entitlement: StateFlow<Entitlement>,
