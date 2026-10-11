@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +53,7 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
 import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
 import com.simplecityapps.shuttle.ui.shell.ShellTab
-import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
 
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
 class SearchCallbacks(
@@ -88,7 +87,7 @@ fun SearchScreen(
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     // The keyboard fills a landscape phone, so compact height never raises it unasked.
-    val compactHeight = ShellLayout.from(currentWindowAdaptiveInfoV2()).compactHeight
+    val compactHeight = LocalShellLayout.current.compactHeight
     var autoFocused by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(compactHeight) {
         if (!autoFocused && !compactHeight && queryState.text.isEmpty()) focusRequester.requestFocus()

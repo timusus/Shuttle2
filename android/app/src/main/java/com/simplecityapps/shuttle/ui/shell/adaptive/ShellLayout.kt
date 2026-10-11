@@ -6,6 +6,7 @@ import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.separatingHorizontalHingeBounds
 import androidx.compose.material3.adaptive.separatingVerticalHingeBounds
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.geometry.Rect
 import androidx.window.core.layout.WindowSizeClass
 import com.simplecityapps.shuttle.ui.shell.player.PlayerMode
@@ -67,6 +68,9 @@ data class ShellLayout(
         }
     }
 }
+
+/** Published by the shell; the default is a portrait phone so previews and tests work without it. */
+val LocalShellLayout = staticCompositionLocalOf { ShellLayout(width = ShellWidth.Compact, compactHeight = false) }
 
 /**
  * The list-detail directive: the platform's, with the fold excluded, capped to

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +37,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.window.core.layout.WindowSizeClass
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
@@ -65,6 +63,8 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
 import com.simplecityapps.shuttle.ui.shell.ShellTab
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.text.resId
 
 class HomeCallbacks(
@@ -180,7 +180,7 @@ private fun HomeContent(
     callbacks: HomeCallbacks,
     modifier: Modifier,
 ) {
-    val wide = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    val wide = LocalShellLayout.current.width >= ShellWidth.Medium
     val largeText = isLargeText()
     val columns = jumpBackInColumns(widthAtLeastMedium = wide, largeText = largeText)
     val shelfTileWidth = if (wide) S2ShelfTileWidth.wide else S2ShelfTileWidth.compact

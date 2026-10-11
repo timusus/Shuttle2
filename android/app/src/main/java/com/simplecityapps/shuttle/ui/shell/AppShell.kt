@@ -93,6 +93,7 @@ import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.library.openTarget
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.shell.adaptive.listDetailDirective
@@ -180,6 +181,7 @@ fun AppShell(
             LocalShellSnackbarHostState provides snackbarHostState,
             LocalTabReselects provides navigator.reselects,
             LocalStatusBarRequests provides statusBarRequests,
+            LocalShellLayout provides layout,
         ) {
             ShellNavDisplay(navigator, layout, windowAdaptiveInfo, entryProvider)
         }

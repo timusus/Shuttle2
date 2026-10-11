@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,6 +23,8 @@ import androidx.compose.ui.test.swipeUp
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import io.kotest.matchers.shouldBe
@@ -49,11 +53,14 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     ) {
         rule.setContent {
             S2AppTheme(AppThemeState(theme = theme)) {
-                HomeScreen(
-                    uiState = uiState,
-                    callbacks = callbacks(),
-                    emptyContent = emptyContent,
-                )
+                // Stands in for the shell, which derives the layout from the window.
+                CompositionLocalProvider(LocalShellLayout provides ShellLayout.from(currentWindowAdaptiveInfoV2())) {
+                    HomeScreen(
+                        uiState = uiState,
+                        callbacks = callbacks(),
+                        emptyContent = emptyContent,
+                    )
+                }
             }
         }
         rule.waitForIdle()
