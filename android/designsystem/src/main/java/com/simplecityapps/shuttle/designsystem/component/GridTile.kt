@@ -71,6 +71,7 @@ fun GridTile(
     titleLines: Int = 2,
     subtitleLines: Int = 1,
     onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
     interactionSource: MutableInteractionSource? = null,
 ) {
     val artworkScale by animateFloatAsState(
@@ -84,6 +85,7 @@ fun GridTile(
             .combinedClickable(
                 interactionSource = interactionSource,
                 indication = ripple(),
+                onLongClickLabel = onLongClickLabel,
                 onLongClick = onLongClick,
                 onClick = onClick,
             )

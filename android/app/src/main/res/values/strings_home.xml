@@ -40,6 +40,10 @@
     <string name="home_go_to_playlist">Go to playlist</string>
     <!-- Home: long-press menu and TalkBack action that opens the genre a tile shows -->
     <string name="home_go_to_genre">Go to genre</string>
+    <!-- Home: TalkBack hint for double-tap and hold on a card or tile, which opens its menu of actions -->
+    <string name="home_show_actions">Show actions</string>
+    <!-- How long ago something happened, when it was under a minute ago -->
+    <string name="relative_time_just_now">Just now</string>
     <!-- Home: button at the end of a section header that opens the whole list the section samples -->
     <string name="home_see_all">See all</string>
     <!-- Home: hint under Shuffle all before anything has been played, saying the sections fill in with listening -->

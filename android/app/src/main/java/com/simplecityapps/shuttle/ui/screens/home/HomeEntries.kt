@@ -105,7 +105,6 @@ private fun HomeDestination(
                 onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,
                 onShowActions = actions::showActions,
-                onPlaySection = viewModel::playSection,
                 onSeeAll = { section ->
                     // Only Recently added has a See all (HomeSectionId.hasSeeAll): the smart playlist of the same name.
                     if (section == HomeSectionId.RecentlyAdded) onOpen(SmartPlaylistRoute(SmartPlaylistId.RecentlyAdded.id))

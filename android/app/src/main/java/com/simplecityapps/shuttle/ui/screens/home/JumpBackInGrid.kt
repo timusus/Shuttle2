@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
-import android.text.format.DateUtils
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -28,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -43,9 +43,11 @@ import com.simplecityapps.shuttle.designsystem.component.S2Surface
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.designsystem.theme.tileSubtitle
 import com.simplecityapps.shuttle.designsystem.theme.tileTitle
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.text.relativeTimeSpan
 import kotlin.math.roundToInt
 
 /**
@@ -97,12 +99,6 @@ fun jumpBackInColumns(
     else -> 2
 }
 
-/** When a queue was left, as "2 hours ago" or "Yesterday". */
-internal fun jumpBackInRelativeTime(
-    updatedAtMillis: Long,
-    nowMillis: Long,
-): String = DateUtils.getRelativeTimeSpanString(minOf(updatedAtMillis, nowMillis), nowMillis, DateUtils.MINUTE_IN_MILLIS).toString()
-
 /** Whether the progress bar shows: the queue is under way, in order. A shuffled queue shows its glyph instead. */
 internal fun HomeItemProgress?.showsBar(): Boolean = this != null && !finished && !shuffled && fraction > 0f
 
@@ -150,7 +146,9 @@ private fun JumpBackInResumeCard(
     val kind = stringResource(item.kind.label)
     val shuffles = item is HomeItem.GenreItem && (progress == null || progress.finished)
     val now = remember(progress) { System.currentTimeMillis() }
-    val relativeTime = progress?.let { jumpBackInRelativeTime(it.updatedAt.toEpochMilliseconds(), now) }
+    val resources = LocalContext.current.resources
+    val relativeTime = progress?.let { resources.relativeTimeSpan(it.updatedAt.toEpochMilliseconds(), now) }
+    val largeText = isLargeText()
     val overline = relativeTime?.let { stringResource(R.string.home_tile_subtitle, kind, it) } ?: kind
     val description = jumpBackInDescription(title, kind, progress, relativeTime)
     val playLabel = stringResource(
@@ -161,13 +159,17 @@ private fun JumpBackInResumeCard(
         },
         title,
     )
-    JumpBackInSurface(MaterialTheme.shapes.large, modifier) {
+    // Feature artwork rounds at `large` and sits S2Spacing.small in, so the card rounds at that plus the inset: `extraLarge`.
+    JumpBackInSurface(MaterialTheme.shapes.extraLarge, modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
-                    .semantics {
+                    .combinedClickable(
+                        onLongClickLabel = stringResource(R.string.home_show_actions),
+                        onLongClick = actions.showMenu,
+                        onClick = { callbacks.onOpenItem(item) },
+                    ).semantics {
                         contentDescription = description
                         customActions = actions.accessibilityActions
                     }
@@ -178,7 +180,13 @@ private fun JumpBackInResumeCard(
             ) {
                 JumpBackInArtwork(item, covers, ArtworkSize.Feature, progress)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny, Alignment.CenterVertically)) {
-                    S2Text(overline, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (largeText && relativeTime != null) {
+                        // At large scales the kind and the time each get a line, so the time is never cut off.
+                        S2Text(kind, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        S2Text(relativeTime, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        S2Text(overline, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
                     S2Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     JumpBackInSongLine(progress)
                 }
@@ -242,22 +250,26 @@ private fun JumpBackInTile(
     }
     val detail = state?.let { stringResource(R.string.home_tile_subtitle, kind, it) } ?: kind
     val description = jumpBackInDescription(title, kind, progress, relativeTime = null)
+    // Medium artwork rounds at `small` and sits S2Spacing.xsmall in, so the tile rounds at that plus the inset: `medium`.
     JumpBackInSurface(MaterialTheme.shapes.medium, modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = ArtworkSize.Medium.dp)
-                .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
-                .semantics {
+                .combinedClickable(
+                    onLongClickLabel = stringResource(R.string.home_show_actions),
+                    onLongClick = actions.showMenu,
+                    onClick = { callbacks.onOpenItem(item) },
+                ).semantics {
                     contentDescription = description
                     customActions = actions.accessibilityActions
-                }
-                .testTag(JUMP_BACK_IN_CELL_TAG),
+                }.testTag(JUMP_BACK_IN_CELL_TAG)
+                .padding(S2Spacing.xsmall),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             JumpBackInArtwork(item, covers, ArtworkSize.Medium, progress)
             Column(
-                modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.small, vertical = S2Spacing.xsmall),
+                modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.small),
                 verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny, Alignment.CenterVertically),
             ) {
                 S2Text(title, style = MaterialTheme.typography.tileTitle, maxLines = 2, overflow = TextOverflow.Ellipsis)

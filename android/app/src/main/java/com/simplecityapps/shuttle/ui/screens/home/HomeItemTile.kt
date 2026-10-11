@@ -233,6 +233,7 @@ fun HomeShelfTile(
         subtitle = item.subtitle(mixed),
         onClick = { if (item is HomeItem.GenreItem) callbacks.onAction(item.playAction()) else callbacks.onOpenItem(item) },
         onLongClick = actions.showMenu,
+        onLongClickLabel = stringResource(R.string.home_show_actions),
         titleLines = if (largeText) LARGE_TEXT_TILE_LINES else 2,
         subtitleLines = if (largeText) LARGE_TEXT_TILE_LINES else 1,
         artwork = { HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize()) },
