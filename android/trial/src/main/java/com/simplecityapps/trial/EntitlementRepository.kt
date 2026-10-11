@@ -4,9 +4,12 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.CachedPro
 import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
 import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.TrialStart
 import com.simplecityapps.shuttle.entitlement.resolvesAsDebug
 import com.simplecityapps.shuttle.entitlement.toEntitlement
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -23,6 +26,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 /**
@@ -42,7 +46,8 @@ class EntitlementRepository(
     private val analytics: MonetisationAnalytics,
     private val clock: Clock,
     private val coroutineScope: CoroutineScope,
-    private val isDebug: Boolean
+    private val isDebug: Boolean,
+    private val ownedWait: Duration = 10.seconds
 ) {
     private val trialStartedAt = MutableStateFlow(store.serverTrialStartedAt)
     private val trialMutex = Mutex()
@@ -86,21 +91,20 @@ class EntitlementRepository(
     }
 
     /**
-     * Starts the trial, unless it has already started or the user has Pro. Suspends until Play answers, so a
-     * purchaser whose purchases haven't loaded yet (offline, or a fresh install) doesn't use up the trial.
-     *
-     * @return true if the trial started.
+     * Starts the trial, unless it has already started or the user has Pro. Waits up to [ownedWait] for Play to answer,
+     * so a purchaser whose purchases haven't loaded yet (offline, or a fresh install) doesn't use up the trial; if Play
+     * stays silent the trial isn't started and the result is [TrialStart.Unavailable], for the caller to offer a retry.
      */
-    suspend fun startTrialIfEligible(): Boolean = trialMutex.withLock {
-        if (trialStartedAt.value != null) return false
-        val owned = owned.filterNotNull().first()
+    suspend fun startTrialIfEligible(): TrialStart = trialMutex.withLock {
+        if (trialStartedAt.value != null) return TrialStart.NotEligible
+        val owned = withTimeoutOrNull(ownedWait) { owned.filterNotNull().first() } ?: return TrialStart.Unavailable
         val now = clock.now()
-        if (resolveEntitlement(owned, store.cachedPro, null, now, debugOverride.value.resolvesAsDebug(isDebug)) is Entitlement.Pro) return false
+        if (resolveEntitlement(owned, store.cachedPro, null, now, debugOverride.value.resolvesAsDebug(isDebug)) is Entitlement.Pro) return TrialStart.NotEligible
 
         store.serverTrialStartedAt = now
         trialStartedAt.value = now
         analytics.trialStarted()
-        return true
+        return TrialStart.Started
     }
 
     /** Debug builds only: overrides the resolved entitlement for testing paywall UI. */

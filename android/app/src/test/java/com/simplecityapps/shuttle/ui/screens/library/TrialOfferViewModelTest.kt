@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.StartTrial
 import com.simplecityapps.shuttle.entitlement.TrialOfferDismissal
+import com.simplecityapps.shuttle.entitlement.TrialStart
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,9 +21,10 @@ class TrialOfferViewModelTest {
     private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
 
     private var trialStarts = 0
+    private var trialResult = TrialStart.Started
     private val startTrial = StartTrial {
         trialStarts++
-        true
+        trialResult
     }
 
     private class FakeDismissal(override var dismissed: Boolean = false) : TrialOfferDismissal {
@@ -39,21 +41,21 @@ class TrialOfferViewModelTest {
 
     @Test
     fun `the offer shows with no Pro and no trial used`() = runTest {
-        collectedViewModel().uiState.value shouldBe true
+        collectedViewModel().uiState.value.offered shouldBe true
     }
 
     @Test
     fun `the offer is hidden once the trial has been used`() = runTest {
         entitlement.value = Entitlement.Free(trialUsed = true)
 
-        collectedViewModel().uiState.value shouldBe false
+        collectedViewModel().uiState.value.offered shouldBe false
     }
 
     @Test
     fun `the offer is hidden for a Pro user`() = runTest {
         entitlement.value = Entitlement.Pro(ProSource.Debug)
 
-        collectedViewModel().uiState.value shouldBe false
+        collectedViewModel().uiState.value.offered shouldBe false
     }
 
     @Test
@@ -62,7 +64,7 @@ class TrialOfferViewModelTest {
 
         entitlement.value = Entitlement.Pro(ProSource.Debug)
 
-        viewModel.uiState.value shouldBe false
+        viewModel.uiState.value.offered shouldBe false
     }
 
     @Test
@@ -71,16 +73,16 @@ class TrialOfferViewModelTest {
 
         viewModel.onDismiss()
 
-        viewModel.uiState.value shouldBe false
+        viewModel.uiState.value.offered shouldBe false
         trialStarts shouldBe 0
-        collectedViewModel().uiState.value shouldBe false
+        collectedViewModel().uiState.value.offered shouldBe false
     }
 
     @Test
     fun `an offer dismissed earlier stays hidden`() = runTest {
         dismissal.dismissed = true
 
-        collectedViewModel().uiState.value shouldBe false
+        collectedViewModel().uiState.value.offered shouldBe false
     }
 
     @Test
@@ -91,5 +93,21 @@ class TrialOfferViewModelTest {
         viewModel.onStartTrial()
 
         trialStarts shouldBe 1
+        viewModel.uiState.value.startFailed shouldBe false
+    }
+
+    @Test
+    fun `a trial Play never answered for shows a failure, and the next tap clears it`() = runTest {
+        val viewModel = collectedViewModel()
+        trialResult = TrialStart.Unavailable
+
+        viewModel.onStartTrial()
+        viewModel.uiState.value.startFailed shouldBe true
+
+        trialResult = TrialStart.Started
+        viewModel.onStartTrial()
+
+        viewModel.uiState.value.startFailed shouldBe false
+        trialStarts shouldBe 2
     }
 }

@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.StartTrial
+import com.simplecityapps.shuttle.entitlement.TrialStart
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.trial.Billing
@@ -92,7 +93,8 @@ enum class PaywallMessage {
     PurchasePending,
     NothingToRestore,
     RestoreFailed,
-    ThankYou
+    ThankYou,
+    TrialStartFailed
 }
 
 sealed interface PaywallUiEvent {
@@ -178,12 +180,23 @@ class PaywallViewModel @AssistedInject constructor(
         events.post(PaywallUiEvent.LaunchPurchase(offer))
     }
 
-    /** The trial button is the paywall's conversion, as on iOS: closing it after that is not a dismissal. */
+    /**
+     * The trial button is the paywall's conversion, as on iOS: closing it after the trial has started is not a
+     * dismissal. If Play doesn't answer in time the paywall stays open with a message, and the user can tap again.
+     */
     fun onStartTrial() {
-        converted = true
         viewModelScope.launch {
-            startTrial()
-            events.post(PaywallUiEvent.TrialStarted)
+            when (startTrial()) {
+                TrialStart.Started -> {
+                    converted = true
+                    events.post(PaywallUiEvent.TrialStarted)
+                }
+
+                // The entitlement already says why (Pro, or the trial used elsewhere); the paywall only closes
+                TrialStart.NotEligible -> events.post(PaywallUiEvent.TrialStarted)
+
+                TrialStart.Unavailable -> events.post(PaywallUiEvent.ShowMessage(PaywallMessage.TrialStartFailed))
+            }
         }
     }
 

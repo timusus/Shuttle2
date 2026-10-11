@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
+import com.simplecityapps.shuttle.entitlement.TrialStart
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -17,6 +18,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -163,7 +165,7 @@ class EntitlementRepositoryTest {
     fun `the trial lasts 14 days from when it starts, then expires`() = runTest {
         val repository = repository()
 
-        assertTrue(repository.startTrialIfEligible())
+        assertEquals(TrialStart.Started, repository.startTrialIfEligible())
         runCurrent()
 
         assertEquals(Entitlement.Trial(start + 14.days), repository.entitlement.value)
@@ -182,11 +184,11 @@ class EntitlementRepositoryTest {
     @Test
     fun `the trial is given only once`() = runTest {
         val repository = repository()
-        assertTrue(repository.startTrialIfEligible())
+        assertEquals(TrialStart.Started, repository.startTrialIfEligible())
         advanceTimeBy(20.days)
         runCurrent()
 
-        assertFalse(repository.startTrialIfEligible())
+        assertEquals(TrialStart.NotEligible, repository.startTrialIfEligible())
         assertEquals(Entitlement.Free(trialUsed = true), repository.entitlement.value)
         verify(exactly = 1) { analytics.trialStarted() }
     }
@@ -200,7 +202,7 @@ class EntitlementRepositoryTest {
     @Test
     fun `first uses of several Pro features at once start the trial once and disclose one of them`() = runTest {
         val repository = repository()
-        val gate = ServerAccessGate(repository.entitlement, repository::startTrialIfEligible, disclosureStore = store)
+        val gate = ServerAccessGate(repository.entitlement, { repository.startTrialIfEligible() == TrialStart.Started }, disclosureStore = store)
         val go = CompletableDeferred<Unit>()
         val uses = ProFeature.entries.map { feature ->
             async(Dispatchers.Default) {
@@ -222,7 +224,7 @@ class EntitlementRepositoryTest {
         owned.value = setOf(ProductIds.LEGACY_LIFETIME)
         val repository = repository()
 
-        assertFalse(repository.startTrialIfEligible())
+        assertEquals(TrialStart.NotEligible, repository.startTrialIfEligible())
         assertNull(store.serverTrialStartedAt)
     }
 
@@ -231,7 +233,7 @@ class EntitlementRepositoryTest {
         owned.value = null
         val repository = repository()
 
-        var started: Boolean? = null
+        var started: TrialStart? = null
         backgroundScope.launch { started = repository.startTrialIfEligible() }
         runCurrent()
         assertNull(started)
@@ -239,7 +241,7 @@ class EntitlementRepositoryTest {
         owned.value = setOf(ProductIds.PRO_SUBSCRIPTION)
         runCurrent()
 
-        assertEquals(false, started)
+        assertEquals(TrialStart.NotEligible, started)
         assertEquals(Entitlement.Pro(ProSource.Subscription), repository.entitlement.value)
     }
 
@@ -265,20 +267,45 @@ class EntitlementRepositoryTest {
     }
 
     @Test
-    fun `a trial asked for before Play answers starts once Play says the user has no Pro`() = runTest {
+    fun `a trial asked for while Play stays silent gives up as unavailable, and a retry after Play answers starts it`() = runTest {
         owned.value = null
         val repository = repository()
 
-        backgroundScope.launch { repository.startTrialIfEligible() }
-        advanceTimeBy(1.hours)
+        var result: TrialStart? = null
+        backgroundScope.launch { result = repository.startTrialIfEligible() }
+        advanceTimeBy(9.seconds)
         runCurrent()
+        assertNull(result)
+
+        advanceTimeBy(2.seconds)
+        runCurrent()
+        assertEquals(TrialStart.Unavailable, result)
         assertNull(store.serverTrialStartedAt)
 
         owned.value = emptySet()
         runCurrent()
 
-        assertEquals(start + 1.hours, store.serverTrialStartedAt)
-        assertEquals(Entitlement.Trial(start + 1.hours + 14.days), repository.entitlement.value)
+        assertEquals(TrialStart.Started, repository.startTrialIfEligible())
+        runCurrent()
+        assertEquals(Entitlement.Trial(start + 11.seconds + 14.days), repository.entitlement.value)
+    }
+
+    @Test
+    fun `a trial asked for before Play answers starts once Play says the user has no Pro`() = runTest {
+        owned.value = null
+        val repository = repository()
+
+        var result: TrialStart? = null
+        backgroundScope.launch { result = repository.startTrialIfEligible() }
+        advanceTimeBy(5.seconds)
+        runCurrent()
+        assertNull(result)
+
+        owned.value = emptySet()
+        runCurrent()
+
+        assertEquals(TrialStart.Started, result)
+        assertEquals(start + 5.seconds, store.serverTrialStartedAt)
     }
 
     @Test

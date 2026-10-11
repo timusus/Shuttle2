@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.StartTrial
+import com.simplecityapps.shuttle.entitlement.TrialStart
 import com.simplecityapps.testing.MainDispatcherRule
 import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.RestoreResult
@@ -36,9 +37,10 @@ class PaywallViewModelTest {
     private val analytics = mockk<MonetisationAnalytics>(relaxed = true)
 
     private var trialStarts = 0
+    private var trialResult = TrialStart.Started
     private val startTrial = StartTrial {
         trialStarts++
-        true
+        trialResult
     }
 
     private fun viewModel(source: PaywallSource = PaywallSource.Settings) = PaywallViewModel(source, entitlement, billing, analytics, startTrial)
@@ -184,6 +186,34 @@ class PaywallViewModelTest {
 
         trialStarts shouldBe 1
         viewModel.takeEvent() shouldBe PaywallUiEvent.TrialStarted
+    }
+
+    @Test
+    fun `a trial Play never answered for shows a message and keeps the paywall open`() = runTest {
+        val viewModel = collectedViewModel()
+        trialResult = TrialStart.Unavailable
+
+        viewModel.onStartTrial()
+
+        viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(PaywallMessage.TrialStartFailed)
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `closing the paywall after a trial that never started is a dismissal`() {
+        val store = ViewModelStore()
+        val viewModel = ViewModelProvider.create(
+            store,
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel(PaywallSource.Settings) as T
+            }
+        )[PaywallViewModel::class]
+        trialResult = TrialStart.Unavailable
+        viewModel.onStartTrial()
+        store.clear()
+
+        verify(exactly = 1) { analytics.paywallDismissed(PaywallSource.Settings) }
     }
 
     @Test

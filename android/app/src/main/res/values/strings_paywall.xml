@@ -74,6 +74,7 @@
     <!-- Shuttle Music Pro screen: snackbar when a purchase, or a restore, is waiting on payment (e.g. cash at a shop) -->
     <string name="paywall_purchase_pending">Purchase pending. Shuttle Music Pro unlocks once Google Play confirms your payment.</string>
     <string name="paywall_nothing_to_restore">No Shuttle Music Pro purchase found for this Google account</string>
+    <string name="paywall_trial_start_failed">Couldn\'t reach Google Play to start the trial. Please try again.</string>
     <string name="paywall_restore_failed">Couldn\'t reach Google Play. Please try again.</string>
     <!-- Add-server sign-in dialog: shown to Free users before they connect to a Jellyfin, Emby, Plex or Subsonic server -->
     <string name="paywall_server_disclosure">Streaming from Jellyfin, Emby, Plex and Navidrome is part of Shuttle Music Pro. Free for 14 days.</string>

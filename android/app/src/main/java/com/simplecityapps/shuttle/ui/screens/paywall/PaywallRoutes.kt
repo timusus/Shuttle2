@@ -149,4 +149,5 @@ private val PaywallMessage.text: Int
         PaywallMessage.NothingToRestore -> R.string.paywall_nothing_to_restore
         PaywallMessage.RestoreFailed -> R.string.paywall_restore_failed
         PaywallMessage.ThankYou -> R.string.paywall_thank_you
+        PaywallMessage.TrialStartFailed -> R.string.paywall_trial_start_failed
     }

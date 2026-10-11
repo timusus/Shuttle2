@@ -66,7 +66,8 @@ fun LibraryEmptyScreen(
 /** What the trial offer's two buttons do. */
 class TrialOfferActions(
     val onStart: () -> Unit,
-    val onDismiss: () -> Unit
+    val onDismiss: () -> Unit,
+    val startFailed: Boolean = false
 )
 
 /** What the trial offers and what it leaves alone, in the terms the Play listing and the paywall use. */
@@ -86,6 +87,14 @@ private fun TrialOffer(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+        if (actions.startFailed) {
+            S2Text(
+                text = stringResource(R.string.paywall_trial_start_failed),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                textAlign = TextAlign.Center
+            )
+        }
         S2Button(
             text = stringResource(R.string.paywall_start_trial),
             onClick = actions.onStart,
@@ -164,8 +173,8 @@ private fun LibraryEmptyContent(
 @Composable
 fun rememberTrialOffer(): TrialOfferActions? {
     val viewModel: TrialOfferViewModel = metroViewModel()
-    val available by viewModel.uiState.collectAsStateWithLifecycle()
-    return if (available) TrialOfferActions(viewModel::onStartTrial, viewModel::onDismiss) else null
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    return if (state.offered) TrialOfferActions(viewModel::onStartTrial, viewModel::onDismiss, state.startFailed) else null
 }
 
 /** Asks for the music permission and opens the app's system settings page, on behalf of [LibraryEmptyScreen]. */
