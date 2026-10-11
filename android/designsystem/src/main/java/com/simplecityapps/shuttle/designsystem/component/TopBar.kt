@@ -4,8 +4,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreVert
@@ -100,6 +103,16 @@ fun S2DetailTopBar(
     val onImage = overImage && !collapsed
     val navigationColor by animateColorAsState(if (onImage) Color.White else defaults.navigationIconContentColor, label = "detailTopBarNavigation")
     val actionColor by animateColorAsState(if (onImage) Color.White else defaults.actionIconContentColor, label = "detailTopBarActions")
+    // Circular containers behind the icons while the bar is transparent, so they hold 3:1 whatever the art or wash
+    // under them: black over an image (white icons on it), the surface colour over the wash.
+    val scrimColor by animateColorAsState(
+        when {
+            collapsed -> Color.Transparent
+            overImage -> Color.Black.copy(alpha = 0.5f)
+            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+        },
+        label = "detailTopBarScrim",
+    )
     TopAppBar(
         title = {
             AnimatedVisibility(visible = collapsed, enter = fadeIn(), exit = fadeOut()) {
@@ -118,8 +131,8 @@ fun S2DetailTopBar(
             }
         },
         modifier = modifier,
-        navigationIcon = { onBack?.let { BackButton(it) } },
-        actions = actions,
+        navigationIcon = { onBack?.let { BackButton(it, Modifier.background(scrimColor, CircleShape)) } },
+        actions = { Row(Modifier.background(scrimColor, CircleShape), content = actions) },
         // The pinned scroll behaviour would otherwise swap in its own colour as soon as the list moves.
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = containerColor,
@@ -132,8 +145,8 @@ fun S2DetailTopBar(
 }
 
 @Composable
-internal fun BackButton(onClick: () -> Unit) {
-    S2IconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.ds_back), onClick)
+internal fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    S2IconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.ds_back), onClick, modifier)
 }
 
 @Preview
