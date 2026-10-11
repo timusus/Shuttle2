@@ -19,6 +19,8 @@ import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -99,6 +101,11 @@ fun S2IconToggleButton(
 ) {
     val sizedModifier = modifier.size(size.containerSize)
     val shapes = IconButtonDefaults.toggleableShapes()
+    val haptics = LocalHapticFeedback.current
+    val onCheckedChange: (Boolean) -> Unit = { checked ->
+        haptics.performHapticFeedback(if (checked) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
+        onCheckedChange(checked)
+    }
     val content: @Composable () -> Unit = {
         Icon(if (checked) checkedIcon else icon, contentDescription, Modifier.size(size.iconSize))
     }

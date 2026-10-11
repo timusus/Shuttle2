@@ -20,6 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -50,6 +52,7 @@ fun S2ButtonGroup(
     val actions = listOf(primary) + secondary
     val ownSources = remember(actions.size) { List(actions.size) { MutableInteractionSource() } }
     val interactionSources = actions.mapIndexed { index, action -> action.interactionSource ?: ownSources[index] }
+    val haptics = LocalHapticFeedback.current
     ButtonGroup(
         overflowIndicator = {},
         modifier = modifier,
@@ -59,7 +62,10 @@ fun S2ButtonGroup(
                 buttonGroupContent = {
                     S2Button(
                         text = action.label,
-                        onClick = action.onClick,
+                        onClick = {
+                            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                            action.onClick()
+                        },
                         modifier = Modifier.weight(1f).animateWidth(interactionSources[index]),
                         style = if (index == 0) S2ButtonStyle.Filled else S2ButtonStyle.Tonal,
                         size = size,
@@ -97,6 +103,7 @@ fun <T> S2ConnectedButtonGroup(
     enabled: Boolean = true,
     interactionSources: List<MutableInteractionSource>? = null,
 ) {
+    val haptics = LocalHapticFeedback.current
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
@@ -104,7 +111,10 @@ fun <T> S2ConnectedButtonGroup(
         options.forEachIndexed { index, option ->
             ToggleButton(
                 checked = option == selected,
-                onCheckedChange = { onSelect(option) },
+                onCheckedChange = {
+                    if (option != selected) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    onSelect(option)
+                },
                 modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
                 enabled = enabled,
                 shapes = when (index) {

@@ -111,6 +111,25 @@ screens never see it.
 - **Reduced motion**: with animator duration scale 0 everything snaps; the catalogue screen has a
   slow-motion toggle to review springs.
 
+### Haptics
+
+Haptics confirm a discrete state change or a gesture's threshold; they never accompany scrolling,
+plain navigation taps or anything that already buzzes. Use `LocalHapticFeedback` with a
+`HapticFeedbackType` constant, inside the design-system component so screens get it for free.
+
+| Interaction | Feedback |
+|---|---|
+| Toggle on / off (`S2IconToggleButton`: favourite, shuffle, bar buttons) | `ToggleOn` / `ToggleOff` |
+| Primary action group press (`S2ButtonGroup`: Play, Shuffle) | `Confirm` |
+| Connected group changes selection (`S2ConnectedButtonGroup`) | `SegmentTick` |
+| Seek bar scrub starts / ends | `GestureThresholdActivate` / `GestureEnd` |
+| Swipe that crosses its threshold (skip, swipe up for the queue) | `GestureThresholdActivate` |
+| Long press into selection or a menu (`combinedClickable`) | `LongPress`, performed by `combinedClickable` itself; don't add another |
+| Queue reorder: drag start and drop | `LongPress` / `GestureEnd` |
+| Plain taps (navigation, rows, plain icon buttons), scrolling, hold-to-repeat ticks | none |
+
+The seek bar is continuous, so it has no per-tick detents.
+
 ### Typography
 
 - **Typeface: Google Sans Flex** (#660), from Google Fonts under the SIL Open Font License 1.1 (no Reserved Font

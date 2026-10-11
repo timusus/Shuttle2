@@ -19,7 +19,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -32,6 +34,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayer
 import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayerHeight
+import kotlin.math.abs
 
 /** How far the mini player must be swiped sideways to skip. */
 private val SkipSwipeThreshold = 72.dp
@@ -104,11 +107,13 @@ internal fun Modifier.skipSwipe(
     val ltr = LocalLayoutDirection.current == LayoutDirection.Ltr
     val spec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val threshold = with(LocalDensity.current) { SkipSwipeThreshold.toPx() }
+    val haptics = LocalHapticFeedback.current
     return draggable(
         state = state,
         orientation = Orientation.Horizontal,
         onDragStopped = {
             val towardsStart = if (ltr) -dragX else dragX
+            if (abs(towardsStart) >= threshold) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
             when {
                 towardsStart >= threshold -> onNext()
                 towardsStart <= -threshold -> onPrevious()

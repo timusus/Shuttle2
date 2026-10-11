@@ -30,7 +30,9 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -75,16 +77,21 @@ fun S2SeekBar(
     val fraction = dragFraction ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
     val state = remember { SliderState(fraction) }
     state.value = fraction
+    val haptics = LocalHapticFeedback.current
     val seekDescription = stringResource(R.string.ds_seek)
     val trackHeight by animateDpAsState(if (dragging) SeekTrackDraggingHeight else SeekTrackHeight, label = "seekTrack")
     Column(modifier) {
         Slider(
             state = state,
-            onValueChange = { dragFraction = it },
+            onValueChange = {
+                if (dragFraction == null) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                dragFraction = it
+            },
             modifier = Modifier.semantics { contentDescription = seekDescription },
             enabled = enabled,
             onValueChangeFinished = {
                 dragFraction?.let { onSeek((it * durationMs).toLong()) }
+                if (dragFraction != null) haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
                 dragFraction = null
             },
             interactionSource = interactionSource,

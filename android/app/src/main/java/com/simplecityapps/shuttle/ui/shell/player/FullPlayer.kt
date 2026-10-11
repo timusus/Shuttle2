@@ -49,9 +49,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -223,11 +225,18 @@ internal fun NowPlayingBar(
     val clearQueue = S2Action(label = stringResource(R.string.menu_title_sort_clear_queue), onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true)
     val currentSelected by rememberUpdatedState(selected)
     val currentOnPanel by rememberUpdatedState(onPanel)
+    val haptics = LocalHapticFeedback.current
     CompositionLocalProvider(LocalContentColor provides PlayerControlsColor) {
         Row(
             modifier = modifier
                 .fillMaxWidth()
-                .swipeUpToOpen(enabled = { currentSelected == null }, onOpen = { currentOnPanel(NowPlayingPanel.Queue) })
+                .swipeUpToOpen(
+                    enabled = { currentSelected == null },
+                    onOpen = {
+                        haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                        currentOnPanel(NowPlayingPanel.Queue)
+                    },
+                )
                 .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
                 .testTag(PlayerTestTags.Bar),
             horizontalArrangement = Arrangement.SpaceBetween,
