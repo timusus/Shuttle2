@@ -1,8 +1,9 @@
 import Observation
+import os
 import UIKit
 
-/// The quick actions on the app icon's long-press menu (#761). Dynamic shortcut items, so their titles come from the
-/// string tables at launch.
+/// The quick actions on the app icon's long-press menu (#761). Dynamic shortcut items, so their titles are looked up
+/// in Localizable.strings at launch and fall back to the English literal until the generated tables carry them.
 enum HomeScreenQuickAction: String, CaseIterable {
     case shuffleAll = "com.simplecityapps.shuttle.quickaction.shuffle-all"
     case search = "com.simplecityapps.shuttle.quickaction.search"
@@ -21,11 +22,13 @@ enum HomeScreenQuickAction: String, CaseIterable {
         )
     }
 
+    private static let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "quick-actions")
+
     private var title: String {
         switch self {
-        case .shuffleAll: "Shuffle All"
-        case .search: "Search"
-        case .history: "Recently Played"
+        case .shuffleAll: String(localized: "Shuffle All")
+        case .search: String(localized: "Search")
+        case .history: String(localized: "Recently Played")
         }
     }
 
@@ -54,9 +57,16 @@ enum HomeScreenQuickAction: String, CaseIterable {
         shuffleLibrary: () async throws -> Void = { try await IntentPerformers.requireLibrary().shuffleLibrary() }
     ) async {
         guard let destination else {
-            try? await shuffleLibrary()
+            do {
+                try await shuffleLibrary()
+            } catch {
+                Self.log.error("Shuffle All quick action failed: \(error.localizedDescription, privacy: .public)")
+            }
             return
         }
+        // `open` pushes onto Settings' own path while its sheet is up, so close it (and the inspector) first.
+        navigator.showsSettings = false
+        navigator.showsPlayerInspector = false
         navigator.selectTab(destination.tab)
         if let route = destination.route {
             navigator.open(route)

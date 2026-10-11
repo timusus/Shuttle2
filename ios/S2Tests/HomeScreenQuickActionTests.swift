@@ -30,6 +30,17 @@ struct HomeScreenQuickActionTests {
         #expect(navigator.homePath == [.smartPlaylist(id: "history")])
     }
 
+    @Test func aNavigatingActionClosesSettingsAndTheInspectorBeforeRouting() async {
+        let navigator = Navigator()
+        navigator.showsSettings = true
+        navigator.showsPlayerInspector = true
+        await HomeScreenQuickAction.history.perform(on: navigator, shuffleLibrary: { Issue.record("shuffled") })
+        #expect(!navigator.showsSettings)
+        #expect(!navigator.showsPlayerInspector)
+        #expect(navigator.settingsPath.isEmpty)
+        #expect(navigator.homePath == [.smartPlaylist(id: "history")])
+    }
+
     @Test func shuffleAllShufflesTheLibraryWithoutNavigating() async {
         let navigator = Navigator(startTab: .library)
         var shuffled = 0
