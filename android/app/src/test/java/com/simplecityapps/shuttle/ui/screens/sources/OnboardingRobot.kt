@@ -26,6 +26,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var openAppSettingsClicks = 0
     var scanClicks = 0
     var connectServerClicks = 0
+    var startTrialClicks = 0
     var rescanClicks = 0
     var retrySkippedClicks = 0
     var thisDeviceClicks = 0
@@ -39,7 +40,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var lastServer: ServerSource? = null
     var lastDialog: ThisDeviceDialog? = null
 
-    fun setEmptyState(state: LibraryAvailability.Empty) {
+    fun setEmptyState(state: LibraryAvailability.Empty, trialOffered: Boolean = false) {
         composeTestRule.setContent {
             S2Theme {
                 LibraryEmptyScreen(
@@ -48,6 +49,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
                     onOpenAppSettings = { openAppSettingsClicks++ },
                     onScan = { scanClicks++ },
                     onConnectServer = { connectServerClicks++ },
+                    onStartTrial = if (trialOffered) ({ startTrialClicks++ }) else null,
                 )
             }
         }

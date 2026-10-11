@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.paywall
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudDownload
@@ -22,13 +20,10 @@ import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.WorkspacePremium
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -43,7 +38,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.iconResId
 import com.simplecityapps.shuttle.R
@@ -60,22 +54,20 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypes
 import com.simplecityapps.trial.PaywallOffers
-import com.simplecityapps.trial.PaywallPlan
 
 /**
- * The S2 Pro paywall: the pitch and what's free, where the user stands, what Pro unlocks, and the plans with Play's
- * prices. The buy (or trial) button stays pinned at the bottom, so it's in reach wherever the user has scrolled.
- * While Play's prices load or can't be loaded the plans show placeholders, and nothing can be bought; nor can it
+ * The S2 Pro paywall: the pitch and what's free, where the user stands, what Pro unlocks, and the lifetime price from
+ * Play. The buy (or trial) button stays pinned at the bottom, so it's in reach wherever the user has scrolled.
+ * While Play's price loads or can't be loaded the card shows a placeholder, and nothing can be bought; nor can it
  * while a purchase waits on payment. A user who hasn't had the trial is offered it first, with buying second.
  * Everyone without Pro can restore purchases and redeem a Play promo code. A Pro user sees their status instead of
- * the plans, and a subscriber can manage their subscription.
+ * the offer, and a subscriber can manage their subscription.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PaywallScreen(
     uiState: PaywallUiState,
     onClose: () -> Unit,
-    onSelectPlan: (PaywallPlan) -> Unit,
     onPurchase: () -> Unit,
     onRestore: () -> Unit,
     onRedeemCode: () -> Unit,
@@ -117,7 +109,7 @@ fun PaywallScreen(
                     }
                 }
             } else {
-                item(key = "plans") { Plans(uiState, onSelectPlan) }
+                item(key = "offer") { LifetimeOffer(uiState) }
                 if (uiState.offers == PaywallOffers.Unavailable) {
                     item(key = "error") {
                         ErrorState(
@@ -171,7 +163,7 @@ private fun Pitch() {
     }
 }
 
-/** The main action, pinned below the list: start the trial with buying second, or buy the selected plan. */
+/** The main action, pinned below the list: start the trial with buying second, or buy lifetime Pro. */
 @Composable
 private fun PurchaseBar(
     uiState: PaywallUiState,
@@ -289,108 +281,30 @@ private val BenefitLeadingWidth = ServerMarkSize * ServerTypes.size + ServerMark
 /** The premium glyph beside the heading. */
 private val HeroIconSize = 32.dp
 
-/** The outline that marks the selected plan. */
-private val SelectedBorderWidth = 2.dp
-
 @Composable
 private fun SectionTitle(text: String) {
     S2Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 }
 
-/** One card per plan: Play's offers once they've loaded, otherwise every plan with a placeholder price. */
+/** The one-time unlock with Play's price, or a placeholder while prices load or can't be loaded. */
 @Composable
-private fun Plans(
-    uiState: PaywallUiState,
-    onSelectPlan: (PaywallPlan) -> Unit
-) {
-    val offers = uiState.offers
-    val plans = if (offers is PaywallOffers.Available) offers.offers.map { it.plan } else PaywallPlan.entries
-    val selected = uiState.selectedOffer?.plan
+private fun LifetimeOffer(uiState: PaywallUiState) {
+    val price = uiState.offer?.formattedPrice
     Column(verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
-        SectionTitle(stringResource(R.string.paywall_plans_heading))
-        plans.forEach { plan ->
-            val price = uiState.available.firstOrNull { it.plan == plan }?.formattedPrice
-            PlanCard(
-                plan = plan,
-                price = when {
-                    price != null -> plan.priceText(price)
-                    offers == PaywallOffers.Loading -> stringResource(R.string.paywall_price_loading)
-                    else -> stringResource(R.string.paywall_price_unavailable)
-                },
-                selected = plan == selected,
-                enabled = price != null,
-                onClick = { onSelectPlan(plan) }
-            )
-            if (plan == PaywallPlan.Annual) {
+        SectionTitle(stringResource(R.string.paywall_offer_heading))
+        OutlinedCard(modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(S2Spacing.medium)) {
+                S2Text(stringResource(R.string.paywall_plan_lifetime), style = MaterialTheme.typography.titleMedium)
                 S2Text(
-                    stringResource(R.string.paywall_annual_terms),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = S2Spacing.medium)
+                    when {
+                        price != null -> stringResource(R.string.paywall_price_once, price)
+                        uiState.offers == PaywallOffers.Loading -> stringResource(R.string.paywall_price_loading)
+                        else -> stringResource(R.string.paywall_price_unavailable)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
-}
-
-@Composable
-private fun PlanCard(
-    plan: PaywallPlan,
-    price: String,
-    selected: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    val content: @Composable () -> Unit = {
-        Row(
-            modifier = Modifier
-                .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
-                .padding(horizontal = S2Spacing.small, vertical = S2Spacing.smallMedium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            RadioButton(selected = selected, onClick = null, enabled = enabled, modifier = Modifier.padding(horizontal = S2Spacing.small))
-            Column(Modifier.weight(1f)) {
-                S2Text(stringResource(plan.title), style = MaterialTheme.typography.titleMedium)
-                S2Text(price, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (plan == PaywallPlan.Lifetime) {
-                Surface(
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    shape = MaterialTheme.shapes.small,
-                    modifier = Modifier.padding(end = S2Spacing.small)
-                ) {
-                    S2Text(
-                        stringResource(R.string.paywall_plan_best_value),
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(horizontal = S2Spacing.small, vertical = S2Spacing.xsmall)
-                    )
-                }
-            }
-        }
-    }
-    if (selected) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-            border = BorderStroke(SelectedBorderWidth, MaterialTheme.colorScheme.primary),
-            modifier = Modifier.fillMaxWidth()
-        ) { content() }
-    } else {
-        OutlinedCard(modifier = Modifier.fillMaxWidth()) { content() }
-    }
-}
-
-private val PaywallPlan.title: Int
-    get() = when (this) {
-        PaywallPlan.Lifetime -> R.string.paywall_plan_lifetime
-        PaywallPlan.Annual -> R.string.paywall_plan_annual
-    }
-
-@Composable
-private fun PaywallPlan.priceText(price: String): String {
-    val pattern = when (this) {
-        PaywallPlan.Lifetime -> R.string.paywall_price_once
-        PaywallPlan.Annual -> R.string.purchase_price_annual
-    }
-    return stringResource(pattern, price)
 }

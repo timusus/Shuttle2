@@ -159,6 +159,28 @@ class ServerAccessGateTest {
         assertEquals(emptyList<PaywallSource>(), requests(consentGate) { assertTrue(consentGate.tryAddServer()) })
     }
 
+    /** Android: the trial is the user's choice, so the first server is offered it at the paywall. */
+    private val offeringGate = ServerAccessGate(entitlement, startTrial = null, offersTrialOnAddServer = true)
+
+    @Test
+    fun `where the first server offers the trial - a user with neither Pro nor a used trial is sent to the paywall`() {
+        assertEquals(listOf(PaywallSource.AddServer), requests(offeringGate) { assertFalse(offeringGate.tryAddServer()) })
+    }
+
+    @Test
+    fun `where the first server offers the trial - a user whose trial ended is sent to the paywall too`() {
+        entitlement.value = Entitlement.Free(trialUsed = true)
+        assertEquals(listOf(PaywallSource.AddServer), requests(offeringGate) { assertFalse(offeringGate.tryAddServer()) })
+    }
+
+    @Test
+    fun `where the first server offers the trial - trial and Pro users add servers freely`() {
+        listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.Lifetime)).forEach {
+            entitlement.value = it
+            assertEquals(emptyList<PaywallSource>(), requests(offeringGate) { assertTrue(offeringGate.tryAddServer()) })
+        }
+    }
+
     @Test
     fun `where only the paywall can start the trial - trial and Pro users stream and a user whose trial ended doesn't`() {
         listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.Lifetime)).forEach {

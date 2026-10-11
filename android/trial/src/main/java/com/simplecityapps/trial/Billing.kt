@@ -43,7 +43,7 @@ sealed interface PaywallOffers {
     /** Play is unreachable, or returned no products. */
     data object Unavailable : PaywallOffers
 
-    data class Available(val offers: List<PaywallOffer>) : PaywallOffers
+    data class Available(val offer: PaywallOffer) : PaywallOffers
 }
 
 enum class RestoreResult {

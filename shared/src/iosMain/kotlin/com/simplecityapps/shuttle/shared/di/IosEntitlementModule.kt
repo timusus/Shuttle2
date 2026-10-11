@@ -32,8 +32,7 @@ import kotlinx.coroutines.flow.stateIn
 /**
  * Shuttle Music Pro on iOS: the entitlement StoreKit answers ([StoreEntitlements], fed by Swift's `StoreKitManager`)
  * behind the same [ServerAccessGate] Android uses. The trial is a free App Store purchase the user starts from the
- * paywall, so the gate never starts it itself: a stream, a download or turning ReplayGain on before the trial refuses
- * and opens the paywall, and CarPlay ([CarPlayAccess]) shows only an upgrade message.
+ * paywall, so the gate never starts it itself: a stream or a download before the trial refuses and opens the paywall, and CarPlay ([CarPlayAccess]) shows only an upgrade message.
  * StoreKit answers from its on-device cache soon after launch; until it has, a stream waits up to
  * [STORE_ANSWER_WAIT] for it rather than refusing a purchaser.
  */
@@ -68,9 +67,9 @@ class IosEntitlementModule {
     fun provideObservePaywallRequests(gate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { gate.paywallRequests }
 
     /**
-     * Pro features beyond servers, as on Android (#939, #946): turning ReplayGain on asks the gate, whose refusal opens
-     * the paywall offering the trial; a store that hasn't answered within [STORE_ANSWER_WAIT] lets it through. iOS
-     * has no tag editor, so batch tag edits never ask.
+     * Pro features beyond servers, as on Android (#939): a refusal opens the paywall offering the trial; a store that
+     * hasn't answered within [STORE_ANSWER_WAIT] lets it through. ReplayGain is free on iOS and iOS has no tag editor,
+     * so neither asks.
      */
     @Provides
     fun provideTryUseProFeature(gate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> gate.tryUse(feature) }

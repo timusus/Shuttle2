@@ -8,7 +8,9 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,18 +29,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
+import com.simplecityapps.shuttle.designsystem.component.S2Button
+import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2PlaybackProgress
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * What the Library shows while it has no songs (#379): the way to let S2 read this device's music, the scan's
  * progress once it can, or "No music found" when the scan came back empty. "Connect a server" is on offer throughout.
+ * A non-null [onStartTrial] adds the skippable offer of the 14-day Pro trial; the user starts it only by tapping it.
  */
 @Composable
 fun LibraryEmptyScreen(
@@ -47,6 +55,47 @@ fun LibraryEmptyScreen(
     onScan: () -> Unit,
     onConnectServer: () -> Unit,
     modifier: Modifier = Modifier,
+    onStartTrial: (() -> Unit)? = null,
+) {
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        LibraryEmptyContent(state, onAllowAccess, onOpenAppSettings, onScan, onConnectServer, Modifier)
+        if (onStartTrial != null) TrialOffer(onStartTrial, Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+/** What the trial offers and what it leaves alone, in the terms the Play listing and the paywall use. */
+@Composable
+private fun TrialOffer(
+    onStartTrial: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(horizontal = S2Spacing.large, vertical = S2Spacing.medium),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.small)
+    ) {
+        S2Text(
+            text = stringResource(R.string.onboarding_trial_message),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        S2Button(
+            text = stringResource(R.string.paywall_start_trial),
+            onClick = onStartTrial,
+            style = S2ButtonStyle.Tonal
+        )
+    }
+}
+
+@Composable
+private fun LibraryEmptyContent(
+    state: LibraryAvailability.Empty,
+    onAllowAccess: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+    onScan: () -> Unit,
+    onConnectServer: () -> Unit,
+    modifier: Modifier,
 ) {
     val connectServer = StateAction(stringResource(R.string.sources_connect_server), onConnectServer)
     val scan = state.scan
@@ -98,6 +147,14 @@ fun LibraryEmptyScreen(
             modifier = modifier.testTag("library-access"),
         )
     }
+}
+
+/** The trial offer for [LibraryEmptyScreen]'s `onStartTrial`: null once the user has Pro or has used the trial. */
+@Composable
+fun rememberOnStartTrial(): (() -> Unit)? {
+    val viewModel: TrialOfferViewModel = metroViewModel()
+    val available by viewModel.uiState.collectAsStateWithLifecycle()
+    return if (available) viewModel::onStartTrial else null
 }
 
 /** Asks for the music permission and opens the app's system settings page, on behalf of [LibraryEmptyScreen]. */

@@ -4,13 +4,12 @@ import android.app.Activity
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.PaywallOffer
 import com.simplecityapps.trial.PaywallOffers
-import com.simplecityapps.trial.PaywallPlan
 import com.simplecityapps.trial.RestoreResult
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Play Billing without Play: settable offers and restore result, and a record of what was asked of it. */
 class FakeBilling(
-    offers: PaywallOffers = PaywallOffers.Available(SAMPLE_OFFERS)
+    offers: PaywallOffers = PaywallOffers.Available(LIFETIME)
 ) : Billing {
     override val ownedProductIds = MutableStateFlow<Set<String>?>(emptySet())
     override val pendingProductIds = MutableStateFlow<Set<String>>(emptySet())
@@ -41,8 +40,6 @@ class FakeBilling(
     }
 
     companion object {
-        val LIFETIME = PaywallOffer("s2_pro_lifetime", PaywallPlan.Lifetime, "$9.99", offerToken = null)
-        val ANNUAL = PaywallOffer("s2_pro", PaywallPlan.Annual, "$3.99", offerToken = "annual")
-        val SAMPLE_OFFERS = listOf(LIFETIME, ANNUAL)
+        val LIFETIME = PaywallOffer("s2_pro_lifetime", "$9.99")
     }
 }

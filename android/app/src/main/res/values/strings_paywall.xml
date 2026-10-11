@@ -11,9 +11,9 @@
     <!-- Shuttle Music Pro screen: headline at the top, the pitch -->
     <string name="paywall_headline">Your server, offline and in the car</string>
     <!-- Shuttle Music Pro screen: the first line under the headline; says plainly what is free and what Pro costs -->
-    <string name="paywall_disclosure">Free for music on this phone. Pro is a yearly plan or a one-time unlock, with a 14-day free trial.</string>
+    <string name="paywall_disclosure">Free for music on this phone. Pro is a one-time unlock, with a 14-day free trial.</string>
     <!-- Shuttle Music Pro screen: status when the user has never had the free trial -->
-    <string name="paywall_status_trial_available">Your 14-day free trial starts the first time you use a Pro feature. Nothing is charged.</string>
+    <string name="paywall_status_trial_available">Try Shuttle Music Pro free for 14 days. Nothing is charged, and local playback stays free.</string>
     <!-- Shuttle Music Pro screen: before and during the trial, what stops once it ends -->
     <string name="paywall_trial_terms">After the trial, server songs, Android Auto, batch tag editing and turning on ReplayGain ask you to upgrade. Downloaded songs, music on this phone and your saved settings keep working.</string>
     <!-- Shuttle Music Pro screen: status when the free trial has ended -->
@@ -37,30 +37,13 @@
     <string name="paywall_benefit_batch_tag_edit">Edit the tags of many songs at once</string>
     <string name="paywall_benefit_replay_gain">ReplayGain volume levelling by track or album</string>
     <string name="paywall_benefit_free">Local playback, Chromecast, the equalizer, editing one song\'s tags and downloaded songs stay free</string>
-    <!-- Title of the dialog shown once, when the first use of a Shuttle Music Pro feature starts the free trial -->
-    <string name="trial_disclosure_title">Your free trial has started</string>
-    <!-- Trial started dialog: what started it, when it was streaming from a server -->
-    <string name="trial_disclosure_lead_servers">Playing from your server started your 14 day free trial of Shuttle Music Pro.</string>
-    <!-- Trial started dialog: what started it, when it was connecting to Android Auto -->
-    <string name="trial_disclosure_lead_android_auto">Connecting to Android Auto started your 14 day free trial of Shuttle Music Pro.</string>
-    <!-- Trial started dialog: what started it, when it was editing several songs' tags at once -->
-    <string name="trial_disclosure_lead_batch_tag_edit">Editing several songs\' tags at once started your 14 day free trial of Shuttle Music Pro.</string>
-    <!-- Trial started dialog: what started it, when it was turning on ReplayGain -->
-    <string name="trial_disclosure_lead_advanced_audio">Turning on ReplayGain started your 14 day free trial of Shuttle Music Pro.</string>
-    <!-- Trial started dialog: the terms, the same whichever feature started it -->
-    <string name="trial_disclosure_body">Servers, Android Auto, batch tag editing and ReplayGain are all unlocked until it ends. Nothing is charged. After that, these features ask you to upgrade; everything else keeps working, and your settings are kept.</string>
-    <!-- Trial started dialog: the button that closes it -->
-    <string name="trial_disclosure_ok">Got it</string>
-    <!-- Shuttle Music Pro screen: heading of the plans -->
-    <string name="paywall_plans_heading">Choose a plan</string>
+    <!-- Empty Library: offer of the Pro trial, which the user may skip -->
+    <string name="onboarding_trial_message">Try Shuttle Music Pro free for 14 days. Local playback stays free.</string>
+    <!-- Shuttle Music Pro screen: heading above the one-time price -->
+    <string name="paywall_offer_heading">One-time unlock</string>
     <string name="paywall_plan_lifetime">Lifetime</string>
-    <string name="paywall_plan_annual">Yearly</string>
-    <!-- Shuttle Music Pro screen: the renewal terms under the yearly plan -->
-    <string name="paywall_annual_terms">Renews yearly · cancel anytime in Google Play</string>
-    <!-- Shuttle Music Pro screen: the lifetime plan's price, e.g. '$14.99 once' -->
+    <!-- Shuttle Music Pro screen: the lifetime price, e.g. '$14.99 once' -->
     <string name="paywall_price_once"><xliff:g example="$14.99" id="price">%1$s</xliff:g> once</string>
-    <!-- Shuttle Music Pro screen: badge on the lifetime plan -->
-    <string name="paywall_plan_best_value">Best value</string>
     <!-- Shuttle Music Pro screen: shown instead of a price while prices load -->
     <string name="paywall_price_loading">Loading price…</string>
     <!-- Shuttle Music Pro screen: shown instead of a price when prices can't be loaded -->
@@ -72,8 +55,8 @@
     <string name="paywall_retry">Retry</string>
     <!-- Shuttle Music Pro screen: the purchase button -->
     <string name="paywall_purchase">Get Shuttle Music Pro</string>
-    <!-- Shuttle Music Pro screen: the main button before the trial has started; opens Sources to add a server -->
-    <string name="paywall_start_trial">Start free trial</string>
+    <!-- Shuttle Music Pro screen: the main button before the trial has started -->
+    <string name="paywall_start_trial">Start 14-day free trial</string>
     <!-- Shuttle Music Pro screen: the purchase button before the trial has started, below Start free trial -->
     <string name="paywall_buy_now">Buy now</string>
     <!-- Shuttle Music Pro screen: footer link to the privacy policy -->

@@ -4,6 +4,7 @@ import com.android.billingclient.api.ProductDetails
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PaywallOffersTest {
@@ -16,62 +17,39 @@ class PaywallOffersTest {
         every { subscriptionOfferDetails } returns null
     }
 
-    private fun basePlan(
-        period: String,
-        price: String,
-        offerId: String? = null
-    ): ProductDetails.SubscriptionOfferDetails = mockk {
-        every { this@mockk.offerId } returns offerId
-        every { offerToken } returns "token-$period-$offerId"
-        every { pricingPhases.pricingPhaseList } returns listOf(
-            mockk {
-                every { billingPeriod } returns period
-                every { formattedPrice } returns price
-            }
-        )
-    }
-
-    private fun subscription(
-        productId: String,
-        vararg plans: ProductDetails.SubscriptionOfferDetails
-    ): ProductDetails = mockk {
+    private fun subscription(productId: String): ProductDetails = mockk {
         every { this@mockk.productId } returns productId
         every { oneTimePurchaseOfferDetails } returns null
-        every { subscriptionOfferDetails } returns plans.toList()
+        every { subscriptionOfferDetails } returns emptyList()
     }
 
     @Test
-    fun `offers the S2 Pro products lifetime first, ignoring any base plan but the annual one`() {
-        val offers = listOf(
-            subscription(ProductIds.PRO_SUBSCRIPTION, basePlan("P1Y", "$3.99"), basePlan("P1M", "$1.49"), basePlan("P1Y", "$2.99", offerId = "intro")),
+    fun `offers only the lifetime unlock`() {
+        val offer = listOf(
+            subscription(ProductIds.PRO_SUBSCRIPTION),
             oneTime(ProductIds.PRO_LIFETIME, "$9.99"),
             oneTime(ProductIds.LEGACY_LIFETIME_LOW, "$4.99")
-        ).toPaywallOffers()
+        ).toPaywallOffer()
 
-        assertEquals(
-            listOf(
-                PaywallOffer(ProductIds.PRO_LIFETIME, PaywallPlan.Lifetime, "$9.99", offerToken = null),
-                PaywallOffer(ProductIds.PRO_SUBSCRIPTION, PaywallPlan.Annual, "$3.99", "token-P1Y-null")
-            ),
-            offers
-        )
+        assertEquals(PaywallOffer(ProductIds.PRO_LIFETIME, "$9.99"), offer)
     }
 
     @Test
-    fun `never offers a legacy product, even when Play returns only those`() {
-        val offers = listOf(
+    fun `never offers the annual subscription or a legacy product, even when Play returns only those`() {
+        val offer = listOf(
+            subscription(ProductIds.PRO_SUBSCRIPTION),
             oneTime(ProductIds.LEGACY_LIFETIME, "$3.49"),
             oneTime(ProductIds.LEGACY_LIFETIME_LOW, "$7.99"),
-            subscription(ProductIds.LEGACY_SUBSCRIPTION_MONTHLY, basePlan("P1M", "$0.99")),
-            subscription(ProductIds.LEGACY_SUBSCRIPTION_YEARLY, basePlan("P1Y", "$4.99")),
-            subscription(ProductIds.LEGACY_SUBSCRIPTION_YEARLY_LOW, basePlan("P1Y", "$2.99"))
-        ).toPaywallOffers()
+            subscription(ProductIds.LEGACY_SUBSCRIPTION_MONTHLY),
+            subscription(ProductIds.LEGACY_SUBSCRIPTION_YEARLY),
+            subscription(ProductIds.LEGACY_SUBSCRIPTION_YEARLY_LOW)
+        ).toPaywallOffer()
 
-        assertEquals(emptyList<PaywallOffer>(), offers)
+        assertNull(offer)
     }
 
     @Test
     fun `offers nothing when Play returns no products`() {
-        assertEquals(emptyList<PaywallOffer>(), emptyList<ProductDetails>().toPaywallOffers())
+        assertNull(emptyList<ProductDetails>().toPaywallOffer())
     }
 }

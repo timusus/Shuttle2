@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
+import com.simplecityapps.trial.EntitlementRepository
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -49,5 +50,5 @@ object EntitlementBindsModule {
     fun provideTryUseProFeature(serverAccessGate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> serverAccessGate.tryUse(feature) }
 
     @Provides
-    fun provideTrialDisclosures(serverAccessGate: ServerAccessGate): TrialDisclosures = serverAccessGate
+    fun provideStartTrial(entitlementRepository: EntitlementRepository): StartTrial = StartTrial(entitlementRepository::startTrialIfEligible)
 }

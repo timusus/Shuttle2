@@ -1,13 +1,11 @@
-# Files under ui/** (outside MainActivity, the shortcut/review helpers and ui/widgets, which stay in :android:app) must not import data, provider or other app-only declarations; move the dependency behind a domain port or use case
+# Files under ui/** (outside MainActivity and the shortcut/review helpers, which stay in :android:app) must not import data, provider or other app-only declarations; move the dependency behind a domain port or use case
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoutes -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.mediaprovider.iconResId (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.trial.PaywallOffers (:android:trial)
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.trial.PaywallPlan (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallOffer (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallOffers (:android:trial)
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.PaywallPlan (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel -> com.simplecityapps.trial.RestoreResult (:android:trial)
 com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.simplecityapps.imageloading.ArtworkDownloadService (:android:imageloader)
 com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.simplecityapps.imageloading.ArtworkImageLoader (:android:imageloader)

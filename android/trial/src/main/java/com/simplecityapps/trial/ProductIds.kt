@@ -12,9 +12,8 @@ object ProductIds {
     /** One-time purchase of S2 Pro. */
     const val PRO_LIFETIME = "s2_pro_lifetime"
 
-    /** The S2 Pro subscription. Its only base plan is [PRO_BASE_PLAN_ANNUAL]; there is no monthly plan. */
+    /** The annual S2 Pro subscription, no longer sold; existing subscribers keep Pro. */
     const val PRO_SUBSCRIPTION = "s2_pro"
-    const val PRO_BASE_PLAN_ANNUAL = "annual"
 
     const val LEGACY_LIFETIME = "s2_iap_full_version"
     const val LEGACY_LIFETIME_LOW = "s2_iap_full_version_low"
@@ -26,8 +25,8 @@ object ProductIds {
 
     val subscriptions = listOf(PRO_SUBSCRIPTION, LEGACY_SUBSCRIPTION_MONTHLY, LEGACY_SUBSCRIPTION_YEARLY, LEGACY_SUBSCRIPTION_YEARLY_LOW)
 
-    /** The products the paywall sells. The legacy ones are never offered again. */
-    val offered = listOf(PRO_SUBSCRIPTION, PRO_LIFETIME)
+    /** The products the paywall sells. The annual subscription and the legacy ones are never offered, but still grant Pro. */
+    val offered = listOf(PRO_LIFETIME)
 
     /** Where Pro comes from when [productId] is owned, or null if it doesn't grant Pro. */
     fun proSource(productId: String): ProSource? = when (productId) {

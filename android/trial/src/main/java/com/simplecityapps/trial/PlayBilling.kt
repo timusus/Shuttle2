@@ -140,7 +140,6 @@ class PlayBilling(
 
         val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
             .setProductDetails(details)
-            .apply { offer.offerToken?.let { setOfferToken(it) } }
             .build()
 
         val result = billingClient.launchBillingFlow(
@@ -160,26 +159,21 @@ class PlayBilling(
     }
 
     private suspend fun queryProductDetails() {
-        val details = listOf(BillingClient.ProductType.SUBS, BillingClient.ProductType.INAPP).flatMap { productType ->
-            val productList = ProductIds.offered
-                .filter { productId -> (productId in ProductIds.subscriptions) == (productType == BillingClient.ProductType.SUBS) }
-                .map { productId ->
-                    QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(productId)
-                        .setProductType(productType)
-                        .build()
-                }
-            val result = billingClient.queryProductDetails(QueryProductDetailsParams.newBuilder().setProductList(productList).build())
-            if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                result.productDetailsList.orEmpty()
-            } else {
-                Timber.e("queryProductDetails: ${result.billingResult.responseCode} ${result.billingResult.debugMessage}")
-                emptyList()
-            }
+        val productList = ProductIds.offered.map { productId ->
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(productId)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        }
+        val result = billingClient.queryProductDetails(QueryProductDetailsParams.newBuilder().setProductList(productList).build())
+        val details = if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+            result.productDetailsList.orEmpty()
+        } else {
+            Timber.e("queryProductDetails: ${result.billingResult.responseCode} ${result.billingResult.debugMessage}")
+            emptyList()
         }
         productDetails = details.associateBy { it.productId }
-        val offers = details.toPaywallOffers()
-        _offers.value = if (offers.isEmpty()) PaywallOffers.Unavailable else PaywallOffers.Available(offers)
+        _offers.value = details.toPaywallOffer()?.let(PaywallOffers::Available) ?: PaywallOffers.Unavailable
     }
 
     override fun queryPurchases() {

@@ -386,6 +386,7 @@ fun LibraryDestination(
     val offlineMode by offlineViewModel.uiState.collectAsStateWithLifecycle()
     val trialViewModel: LibraryTrialChipViewModel = metroViewModel()
     val trialDaysLeft by trialViewModel.uiState.collectAsStateWithLifecycle()
+    val onStartTrial = rememberOnStartTrial()
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
@@ -435,6 +436,7 @@ fun LibraryDestination(
                         onScan = emptyViewModel::onScan,
                         onConnectServer = { connectingServer = true },
                         modifier = modifier,
+                        onStartTrial = onStartTrial,
                     )
                 }
             },

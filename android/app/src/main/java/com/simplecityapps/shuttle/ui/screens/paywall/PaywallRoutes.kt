@@ -30,8 +30,6 @@ import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
-import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.UtilityRoute
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
@@ -52,15 +50,7 @@ data class PaywallRoute(
 /** The paywall's entry, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
     entry<PaywallRoute> { route ->
-        PaywallEntry(
-            route.source,
-            onClose = { navigator.back() },
-            // Sources in place of the paywall: the user adds a server there, and their first song from it starts the trial
-            onStartTrial = {
-                navigator.back()
-                navigator.open(SettingsDestinationRoute(SettingsDestination.Sources))
-            }
-        )
+        PaywallEntry(route.source, onClose = { navigator.back() })
     }
 }
 
@@ -88,9 +78,7 @@ fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
             // Each visit gets its own view model store, so the paywall's view model lives and dies with the dialog
             CompositionLocalProvider(LocalViewModelStoreOwner provides rememberViewModelStoreOwner()) {
                 S2AppTheme {
-                    // The gate opens this only for a user already using a server, so the trial offer just closes it: their
-                    // next song from the server starts the trial.
-                    PaywallEntry(source, onClose = close, onStartTrial = close)
+                    PaywallEntry(source, onClose = close)
                 }
             }
         }
@@ -108,7 +96,6 @@ interface PaywallEntryPoint {
 fun PaywallEntry(
     source: PaywallSource,
     onClose: () -> Unit,
-    onStartTrial: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel = assistedMetroViewModel<PaywallViewModel, PaywallViewModel.Factory> { create(source) }
@@ -125,12 +112,13 @@ fun PaywallEntry(
 
             // Shown without holding back the events after it, such as a purchase launched while it's up
             is PaywallUiEvent.ShowMessage -> scope.launch { snackbarHostState.showSnackbar(context.getString(event.message.text)) }
+
+            PaywallUiEvent.TrialStarted -> onClose()
         }
     }
     PaywallScreen(
         uiState = uiState,
         onClose = onClose,
-        onSelectPlan = viewModel::onSelectPlan,
         onPurchase = viewModel::onPurchase,
         onRestore = viewModel::onRestore,
         onRetry = viewModel::onRetry,
@@ -139,10 +127,7 @@ fun PaywallEntry(
             runCatching { uriHandler.openUri(url) }.onFailure { Timber.w(it, "No app to open $url") }
         },
         onRedeemCode = { runCatching { uriHandler.openUri(PLAY_REDEEM_URL) }.onFailure { Timber.w(it, "No app to open $PLAY_REDEEM_URL") } },
-        onStartTrial = {
-            viewModel.onTrialStarted()
-            onStartTrial()
-        },
+        onStartTrial = viewModel::onStartTrial,
         onOpenPrivacyPolicy = { runCatching { uriHandler.openUri(PRIVACY_POLICY_URL) }.onFailure { Timber.w(it, "No app to open $PRIVACY_POLICY_URL") } },
         modifier = modifier,
         snackbarHostState = snackbarHostState

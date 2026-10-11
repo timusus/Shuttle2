@@ -29,11 +29,10 @@ enum class ServerAccess {
  * Local playback, Chromecast, AirPlay, the graphic equalizer, single-song tag edits and songs that are already
  * downloaded are never gated, so they must not call this.
  *
- * There's one trial, shared by every feature, and it starts on the first use of any of them: the first stream or
- * download from a server (not signing in, so a cancelled sign-in doesn't use it up), the first car connection, the
- * first batch tag edit, the first replay-gain change. Where the trial starts without asking (Android), that first use
- * starts it and [pending] holds the feature until the app has disclosed it; where starting it needs the user's consent
- * (iOS, where the trial is a free App Store purchase), the use is refused and the paywall offers the trial instead.
+ * There's one trial, shared by every feature. Where the user starts it on their own (the paywall's and onboarding's
+ * [StartTrial], and iOS, where the trial is a free App Store purchase), a use without Pro or a running trial is refused
+ * and the paywall offers the trial. Only a gate built with [startTrial] starts it on a feature's first use, and then
+ * [pending] holds the feature until the app has disclosed it.
  *
  * A refusal also asks for the paywall through [paywallRequests], so each entry point makes one call. While the store
  * hasn't answered, a use waits up to [storeAnswerWait] for it; if it still hasn't, the use is
@@ -44,6 +43,8 @@ enum class ServerAccess {
  *   or null where only the paywall can start it (iOS).
  * @param storeAnswerWait how long a use waits for the store's first answer: none on Android, whose cached Pro answers
  *   at once; a few seconds on iOS, where StoreKit answers soon after launch.
+ * @param offersTrialOnAddServer refuses adding a server to a user with neither Pro nor a used trial, so the paywall offers
+ *   the trial first (Android; iOS lets a server be added until the trial is used).
  * @param disclosureStore keeps [pending] across process death, so a trial a car started is still disclosed after the
  *   app was killed; in memory where the gate never starts the trial (iOS).
  */
@@ -51,7 +52,8 @@ class ServerAccessGate(
     private val entitlement: StateFlow<Entitlement>,
     private val startTrial: (suspend () -> Boolean)?,
     private val storeAnswerWait: Duration = Duration.ZERO,
-    private val disclosureStore: TrialDisclosureStore = InMemoryTrialDisclosureStore()
+    private val disclosureStore: TrialDisclosureStore = InMemoryTrialDisclosureStore(),
+    private val offersTrialOnAddServer: Boolean = false
 ) : TrialDisclosures {
     private val _paywallRequests = MutableSharedFlow<PaywallSource>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -81,9 +83,13 @@ class ServerAccessGate(
 
     private fun locks(entitlement: Entitlement): Boolean = entitlement is Entitlement.Free && (entitlement.trialUsed || startTrial == null)
 
-    /** True if the user may add a remote server: anyone but a user whose trial has ended without Pro. */
+    /**
+     * True if the user may add a remote server: anyone but a user whose trial has ended without Pro, and, where
+     * [offersTrialOnAddServer], a user who hasn't had the trial either, so the paywall can offer it before the first server.
+     */
     fun tryAddServer(): Boolean {
-        val allowed = (entitlement.value as? Entitlement.Free)?.trialUsed != true
+        val free = entitlement.value as? Entitlement.Free
+        val allowed = free == null || (!free.trialUsed && !offersTrialOnAddServer)
         if (!allowed) _paywallRequests.tryEmit(PaywallSource.AddServer)
         return allowed
     }

@@ -43,7 +43,6 @@ class PaywallScreenshotTest {
                 PaywallScreen(
                     uiState = uiState,
                     onClose = {},
-                    onSelectPlan = {},
                     onPurchase = {},
                     onRestore = {},
                     onRedeemCode = {},

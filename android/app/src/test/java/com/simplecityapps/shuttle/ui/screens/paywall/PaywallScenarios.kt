@@ -6,7 +6,7 @@ import com.simplecityapps.trial.PaywallOffers
 
 /** Paywall UI states the characterisation and screenshot tests render. */
 object PaywallScenarios {
-    val free = PaywallUiState(status = PaywallStatus.TrialAvailable, offers = PaywallOffers.Available(FakeBilling.SAMPLE_OFFERS))
+    val free = PaywallUiState(status = PaywallStatus.TrialAvailable, offers = PaywallOffers.Available(FakeBilling.LIFETIME))
 
     val checking = free.copy(status = PaywallStatus.Checking, offers = PaywallOffers.Loading)
 
@@ -14,7 +14,7 @@ object PaywallScenarios {
 
     val trial = free.copy(status = PaywallStatus.Trial(daysLeft = 9))
 
-    val pro = PaywallUiState(status = PaywallStatus.Pro(ProSource.Lifetime), offers = PaywallOffers.Available(FakeBilling.SAMPLE_OFFERS))
+    val pro = PaywallUiState(status = PaywallStatus.Pro(ProSource.Lifetime), offers = PaywallOffers.Available(FakeBilling.LIFETIME))
 
     val subscriber = pro.copy(status = PaywallStatus.Pro(ProSource.Subscription))
 

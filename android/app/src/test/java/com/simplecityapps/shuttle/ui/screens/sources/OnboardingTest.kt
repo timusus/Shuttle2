@@ -34,6 +34,25 @@ class OnboardingTest {
     }
 
     @Test
+    fun `the trial is offered, and started only by tapping it`() {
+        robot.setEmptyState(LibraryAvailability.Empty(MusicAccess.NotRequested), trialOffered = true)
+
+        robot.assertTextDisplayed("Start 14-day free trial")
+        robot.startTrialClicks shouldBe 0
+        robot.clickText("Start 14-day free trial")
+
+        robot.startTrialClicks shouldBe 1
+    }
+
+    @Test
+    fun `without an offer the empty state shows no trial`() {
+        robot.setEmptyState(LibraryAvailability.Empty(MusicAccess.NotRequested))
+
+        robot.assertTextNotDisplayed("Start 14-day free trial")
+        robot.assertTextDisplayed("Allow access to music")
+    }
+
+    @Test
     fun `a permanent refusal links to the app's settings`() {
         robot.setEmptyState(LibraryAvailability.Empty(MusicAccess.PermanentlyDenied))
 

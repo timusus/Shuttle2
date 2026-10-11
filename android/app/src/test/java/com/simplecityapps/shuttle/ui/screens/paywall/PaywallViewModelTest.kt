@@ -9,9 +9,9 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.StartTrial
 import com.simplecityapps.testing.MainDispatcherRule
 import com.simplecityapps.trial.PaywallOffers
-import com.simplecityapps.trial.PaywallPlan
 import com.simplecityapps.trial.RestoreResult
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -35,7 +35,13 @@ class PaywallViewModelTest {
     private val billing = FakeBilling()
     private val analytics = mockk<MonetisationAnalytics>(relaxed = true)
 
-    private fun viewModel(source: PaywallSource = PaywallSource.Settings) = PaywallViewModel(source, entitlement, billing, analytics)
+    private var trialStarts = 0
+    private val startTrial = StartTrial {
+        trialStarts++
+        true
+    }
+
+    private fun viewModel(source: PaywallSource = PaywallSource.Settings) = PaywallViewModel(source, entitlement, billing, analytics, startTrial)
 
     /** A view model whose state is being collected, as the screen would. */
     private fun TestScope.collectedViewModel() = viewModel().also { viewModel -> backgroundScope.launch(mainDispatcherRule.testDispatcher) { viewModel.uiState.collect {} } }
@@ -98,7 +104,7 @@ class PaywallViewModelTest {
                 override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T = viewModel(PaywallSource.Settings) as T
             }
         )[PaywallViewModel::class]
-        viewModel.onTrialStarted()
+        viewModel.onStartTrial()
         store.clear()
 
         verify(exactly = 0) { analytics.paywallDismissed(any()) }
@@ -140,48 +146,44 @@ class PaywallViewModelTest {
     }
 
     @Test
-    fun `lifetime is selected by default and a plan can be picked`() = runTest {
-        val viewModel = collectedViewModel()
-        viewModel.uiState.value.selectedOffer shouldBe FakeBilling.LIFETIME
-
-        viewModel.onSelectPlan(PaywallPlan.Annual)
-
-        viewModel.uiState.value.selectedOffer shouldBe FakeBilling.ANNUAL
-    }
-
-    @Test
-    fun `without a lifetime offer the first plan on sale is selected`() = runTest {
-        billing.offers.value = PaywallOffers.Available(listOf(FakeBilling.ANNUAL))
-
-        collectedViewModel().uiState.value.selectedOffer shouldBe FakeBilling.ANNUAL
+    fun `the only offer is lifetime`() = runTest {
+        collectedViewModel().uiState.value.offer shouldBe FakeBilling.LIFETIME
     }
 
     @Test
     fun `nothing can be bought while prices load or are unavailable`() = runTest {
         billing.offers.value = PaywallOffers.Loading
         val viewModel = collectedViewModel()
-        viewModel.uiState.value.selectedOffer shouldBe null
+        viewModel.uiState.value.offer shouldBe null
         viewModel.onPurchase()
 
         billing.offers.value = PaywallOffers.Unavailable
-        viewModel.uiState.value.selectedOffer shouldBe null
+        viewModel.uiState.value.offer shouldBe null
         viewModel.onPurchase()
 
-        // Only the purchase made once prices arrived reaches the screen.
-        billing.offers.value = PaywallOffers.Available(FakeBilling.SAMPLE_OFFERS)
-        viewModel.onSelectPlan(PaywallPlan.Annual)
+        // Only the purchase made once the price arrived reaches the screen.
+        billing.offers.value = PaywallOffers.Available(FakeBilling.LIFETIME)
         viewModel.onPurchase()
-        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL))
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PaywallUiEvent.LaunchPurchase(FakeBilling.LIFETIME))
     }
 
     @Test
-    fun `purchasing asks the screen to open Play's sheet for the selected offer`() = runTest {
+    fun `purchasing asks the screen to open Play's sheet for the lifetime offer`() = runTest {
         val viewModel = collectedViewModel()
-        viewModel.onSelectPlan(PaywallPlan.Annual)
 
         viewModel.onPurchase()
 
-        viewModel.takeEvent() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL)
+        viewModel.takeEvent() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.LIFETIME)
+    }
+
+    @Test
+    fun `starting the trial asks for it, then tells the screen it can close`() = runTest {
+        val viewModel = collectedViewModel()
+
+        viewModel.onStartTrial()
+
+        trialStarts shouldBe 1
+        viewModel.takeEvent() shouldBe PaywallUiEvent.TrialStarted
     }
 
     @Test

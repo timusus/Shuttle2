@@ -18,11 +18,9 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
-import com.simplecityapps.shuttle.entitlement.TrialDisclosures
 import com.simplecityapps.shuttle.ui.actions.SystemDeleteRequestReceiver
 import com.simplecityapps.shuttle.ui.actions.SystemMediaStoreSongDeleter
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
-import com.simplecityapps.shuttle.ui.screens.paywall.TrialDisclosureHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
@@ -66,9 +64,6 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var observePaywallRequests: ObservePaywallRequests
-
-    @Inject
-    lateinit var trialDisclosures: TrialDisclosures
 
     @Inject
     lateinit var playRequests: PlayRequests
@@ -116,7 +111,6 @@ class MainActivity : AppCompatActivity() {
                     Box(Modifier.semantics { testTagsAsResourceId = true }) {
                         ShellRoute(shellRequests = shellRequestFlow)
                         PaywallHost(observePaywallRequests)
-                        TrialDisclosureHost(trialDisclosures)
                     }
                 }
             }

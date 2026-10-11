@@ -6,12 +6,12 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.entitlement.ProSource
+import com.simplecityapps.shuttle.entitlement.StartTrial
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.PaywallOffer
 import com.simplecityapps.trial.PaywallOffers
-import com.simplecityapps.trial.PaywallPlan
 import com.simplecityapps.trial.RestoreResult
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
@@ -32,7 +32,7 @@ sealed interface PaywallStatus {
     /** Play hasn't answered yet, so it isn't known whether the user already owns Pro. */
     data object Checking : PaywallStatus
 
-    /** Free, and the server trial hasn't started: the first song played from a server starts it. */
+    /** Free, and the trial hasn't been used: the user can start it from here. */
     data object TrialAvailable : PaywallStatus
 
     /** Free, after the trial. */
@@ -56,18 +56,14 @@ sealed interface PaywallStatus {
 data class PaywallUiState(
     val status: PaywallStatus = PaywallStatus.TrialAvailable,
     val offers: PaywallOffers = PaywallOffers.Loading,
-    val selectedPlan: PaywallPlan = PaywallPlan.Lifetime,
     val restoring: Boolean = false,
     val events: List<PendingEvent<PaywallUiEvent>> = emptyList()
 ) {
-    /** The offer for each plan Play sells, in plan order; empty while loading or unavailable. */
-    val available: List<PaywallOffer> get() = (offers as? PaywallOffers.Available)?.offers.orEmpty()
+    /** The lifetime offer, or null while loading or when Play can't sell it. */
+    val offer: PaywallOffer? get() = (offers as? PaywallOffers.Available)?.offer
 
-    /** The offer the purchase button buys, or null if there's nothing to buy yet. */
-    val selectedOffer: PaywallOffer? get() = available.firstOrNull { it.plan == selectedPlan } ?: available.firstOrNull()
-
-    /** Whether the purchase button can buy: an offer is selected, and no purchase is already waiting on payment. */
-    val canPurchase: Boolean get() = selectedOffer != null && status !is PaywallStatus.PurchasePending
+    /** Whether the purchase button can buy: there is an offer, and no purchase is already waiting on payment. */
+    val canPurchase: Boolean get() = offer != null && status !is PaywallStatus.PurchasePending
 
     /** The trial comes first for a user who hasn't had it, even with a purchase pending; everyone else is offered Pro. */
     val primaryAction: PaywallPrimaryAction
@@ -83,10 +79,10 @@ data class PaywallUiState(
 
 /** What the paywall's main button does. */
 enum class PaywallPrimaryAction {
-    /** Opens Sources to add a server, whose first song played starts the trial. Buying moves to a second button. */
+    /** Starts the 14-day trial. Buying moves to a second button. */
     StartTrial,
 
-    /** Buys the selected plan. */
+    /** Buys lifetime Pro. */
     Purchase
 }
 
@@ -104,14 +100,18 @@ sealed interface PaywallUiEvent {
     data class LaunchPurchase(val offer: PaywallOffer) : PaywallUiEvent
 
     data class ShowMessage(val message: PaywallMessage) : PaywallUiEvent
+
+    /** The trial has started, so the paywall can close; it can't before, as leaving would cancel the start. */
+    data object TrialStarted : PaywallUiEvent
 }
 
-/** The S2 Pro paywall: the user's entitlement, the plans Play sells and their prices, purchase and restore. */
+/** The S2 Pro paywall: the user's entitlement, the lifetime price, trial start, purchase and restore. */
 class PaywallViewModel @AssistedInject constructor(
     @Assisted private val source: PaywallSource,
     private val entitlement: @JvmSuppressWildcards StateFlow<Entitlement>,
     private val billing: Billing,
-    private val analytics: MonetisationAnalytics
+    private val analytics: MonetisationAnalytics,
+    private val startTrial: StartTrial
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -120,7 +120,6 @@ class PaywallViewModel @AssistedInject constructor(
         fun create(source: PaywallSource): PaywallViewModel
     }
 
-    private val selectedPlan = MutableStateFlow(PaywallPlan.Lifetime)
     private val restoring = MutableStateFlow(false)
 
     // A restore that found Pro: the entitlement may turn Pro after it says so, and that's the restore, not a purchase
@@ -130,12 +129,12 @@ class PaywallViewModel @AssistedInject constructor(
 
     private val status = combine(entitlement, billing.pendingProductIds) { entitlement, pending -> entitlement.toStatus(pending) }
 
-    val uiState: StateFlow<PaywallUiState> = combine(status, billing.offers, selectedPlan, restoring, events.flow) { status, offers, plan, restoring, events ->
-        PaywallUiState(status, offers, plan, restoring, events)
+    val uiState: StateFlow<PaywallUiState> = combine(status, billing.offers, restoring, events.flow) { status, offers, restoring, events ->
+        PaywallUiState(status, offers, restoring, events)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = PaywallUiState(entitlement.value.toStatus(billing.pendingProductIds.value), billing.offers.value, selectedPlan.value)
+        initialValue = PaywallUiState(entitlement.value.toStatus(billing.pendingProductIds.value), billing.offers.value)
     )
 
     // Unlike iOS, which logs a dismissal for a user who opened it as Pro, a paywall opened as Pro is never a dismissal
@@ -174,18 +173,18 @@ class PaywallViewModel @AssistedInject constructor(
         }
     }
 
-    fun onSelectPlan(plan: PaywallPlan) {
-        selectedPlan.value = plan
-    }
-
     fun onPurchase() {
-        val offer = uiState.value.selectedOffer ?: return
+        val offer = uiState.value.offer ?: return
         events.post(PaywallUiEvent.LaunchPurchase(offer))
     }
 
     /** The trial button is the paywall's conversion, as on iOS: closing it after that is not a dismissal. */
-    fun onTrialStarted() {
+    fun onStartTrial() {
         converted = true
+        viewModelScope.launch {
+            startTrial()
+            events.post(PaywallUiEvent.TrialStarted)
+        }
     }
 
     /** Whether Play's purchase sheet opened. The entitlement updates by itself once the purchase completes. */
