@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.StartTrial
+import com.simplecityapps.shuttle.entitlement.TrialOfferDismissal
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,15 @@ class TrialOfferViewModelTest {
         true
     }
 
-    private fun TestScope.collectedViewModel() = TrialOfferViewModel(entitlement, startTrial).also { viewModel ->
+    private class FakeDismissal(override var dismissed: Boolean = false) : TrialOfferDismissal {
+        override fun dismiss() {
+            dismissed = true
+        }
+    }
+
+    private val dismissal = FakeDismissal()
+
+    private fun TestScope.collectedViewModel() = TrialOfferViewModel(entitlement, startTrial, dismissal).also { viewModel ->
         backgroundScope.launch(mainDispatcherRule.testDispatcher) { viewModel.uiState.collect {} }
     }
 
@@ -54,6 +63,24 @@ class TrialOfferViewModelTest {
         entitlement.value = Entitlement.Pro(ProSource.Debug)
 
         viewModel.uiState.value shouldBe false
+    }
+
+    @Test
+    fun `Not now hides the offer and keeps it hidden on the next visit`() = runTest {
+        val viewModel = collectedViewModel()
+
+        viewModel.onDismiss()
+
+        viewModel.uiState.value shouldBe false
+        trialStarts shouldBe 0
+        collectedViewModel().uiState.value shouldBe false
+    }
+
+    @Test
+    fun `an offer dismissed earlier stays hidden`() = runTest {
+        dismissal.dismissed = true
+
+        collectedViewModel().uiState.value shouldBe false
     }
 
     @Test

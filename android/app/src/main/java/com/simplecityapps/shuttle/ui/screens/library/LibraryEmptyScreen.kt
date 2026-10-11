@@ -45,7 +45,7 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 /**
  * What the Library shows while it has no songs (#379): the way to let S2 read this device's music, the scan's
  * progress once it can, or "No music found" when the scan came back empty. "Connect a server" is on offer throughout.
- * A non-null [onStartTrial] adds the skippable offer of the 14-day Pro trial; the user starts it only by tapping it.
+ * A non-null [trialOffer] adds the skippable offer of the 14-day Pro trial; the user starts it only by tapping it.
  */
 @Composable
 fun LibraryEmptyScreen(
@@ -55,18 +55,24 @@ fun LibraryEmptyScreen(
     onScan: () -> Unit,
     onConnectServer: () -> Unit,
     modifier: Modifier = Modifier,
-    onStartTrial: (() -> Unit)? = null,
+    trialOffer: TrialOfferActions? = null,
 ) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         LibraryEmptyContent(state, onAllowAccess, onOpenAppSettings, onScan, onConnectServer, Modifier)
-        if (onStartTrial != null) TrialOffer(onStartTrial, Modifier.align(Alignment.BottomCenter))
+        if (trialOffer != null) TrialOffer(trialOffer, Modifier.align(Alignment.BottomCenter))
     }
 }
+
+/** What the trial offer's two buttons do. */
+class TrialOfferActions(
+    val onStart: () -> Unit,
+    val onDismiss: () -> Unit
+)
 
 /** What the trial offers and what it leaves alone, in the terms the Play listing and the paywall use. */
 @Composable
 private fun TrialOffer(
-    onStartTrial: () -> Unit,
+    actions: TrialOfferActions,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -82,8 +88,13 @@ private fun TrialOffer(
         )
         S2Button(
             text = stringResource(R.string.paywall_start_trial),
-            onClick = onStartTrial,
+            onClick = actions.onStart,
             style = S2ButtonStyle.Tonal
+        )
+        S2Button(
+            text = stringResource(R.string.onboarding_trial_not_now),
+            onClick = actions.onDismiss,
+            style = S2ButtonStyle.Text
         )
     }
 }
@@ -149,12 +160,12 @@ private fun LibraryEmptyContent(
     }
 }
 
-/** The trial offer for [LibraryEmptyScreen]'s `onStartTrial`: null once the user has Pro or has used the trial. */
+/** The trial offer for [LibraryEmptyScreen]'s `trialOffer`: null once the user has Pro, has used the trial or said "Not now". */
 @Composable
-fun rememberOnStartTrial(): (() -> Unit)? {
+fun rememberTrialOffer(): TrialOfferActions? {
     val viewModel: TrialOfferViewModel = metroViewModel()
     val available by viewModel.uiState.collectAsStateWithLifecycle()
-    return if (available) viewModel::onStartTrial else null
+    return if (available) TrialOfferActions(viewModel::onStartTrial, viewModel::onDismiss) else null
 }
 
 /** Asks for the music permission and opens the app's system settings page, on behalf of [LibraryEmptyScreen]. */

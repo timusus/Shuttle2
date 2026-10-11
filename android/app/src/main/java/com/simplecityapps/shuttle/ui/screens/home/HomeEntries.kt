@@ -29,7 +29,7 @@ import com.simplecityapps.shuttle.ui.screens.library.PlaylistRoute
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistRoute
 import com.simplecityapps.shuttle.ui.screens.library.openTarget
 import com.simplecityapps.shuttle.ui.screens.library.rememberMusicAccessRequests
-import com.simplecityapps.shuttle.ui.screens.library.rememberOnStartTrial
+import com.simplecityapps.shuttle.ui.screens.library.rememberTrialOffer
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.WhatsNewRoute
@@ -60,7 +60,7 @@ private fun HomeDestination(
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
-    val onStartTrial = rememberOnStartTrial()
+    val trialOffer = rememberTrialOffer()
     val snackbarHostState = LocalShellSnackbarHostState.current
     val analyticsNoticeMessage = stringResource(R.string.home_analytics_notice_message)
     val analyticsNoticeAction = stringResource(R.string.home_analytics_notice_action)
@@ -120,7 +120,7 @@ private fun HomeDestination(
                         onScan = emptyViewModel::onScan,
                         onConnectServer = { connectingServer = true },
                         modifier = modifier,
-                        onStartTrial = onStartTrial,
+                        trialOffer = trialOffer,
                     )
                 }
             },

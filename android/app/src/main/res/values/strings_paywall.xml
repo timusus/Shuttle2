@@ -39,6 +39,8 @@
     <string name="paywall_benefit_free">Local playback, Chromecast, the equalizer, editing one song\'s tags and downloaded songs stay free</string>
     <!-- Empty Library: offer of the Pro trial, which the user may skip -->
     <string name="onboarding_trial_message">Try Shuttle Music Pro free for 14 days. Local playback stays free.</string>
+    <!-- Empty Library: button that hides the trial offer for good -->
+    <string name="onboarding_trial_not_now">Not now</string>
     <!-- Shuttle Music Pro screen: heading above the one-time price -->
     <string name="paywall_offer_heading">One-time unlock</string>
     <string name="paywall_plan_lifetime">Lifetime</string>

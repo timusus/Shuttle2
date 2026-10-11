@@ -42,7 +42,8 @@ class EntitlementRepositoryTest {
         override var serverTrialStartedAt: Instant? = null,
         override var cachedPro: CachedPro? = null,
         override var entitlementResolvedLogged: Boolean = false,
-        override var pendingDisclosure: ProFeature? = null
+        override var pendingDisclosure: ProFeature? = null,
+        override var trialOfferDismissed: Boolean = false
     ) : EntitlementStore
 
     private val start = Instant.fromEpochMilliseconds(1_800_000_000_000)

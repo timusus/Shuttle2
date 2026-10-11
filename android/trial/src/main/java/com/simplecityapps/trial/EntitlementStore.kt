@@ -19,6 +19,9 @@ interface EntitlementStore : TrialDisclosureStore {
 
     /** Whether `entitlement_resolved` has been logged, so it's logged once per install. */
     var entitlementResolvedLogged: Boolean
+
+    /** Whether the user chose "Not now" on the empty Library's trial offer, which then never returns. */
+    var trialOfferDismissed: Boolean
 }
 
 /**
@@ -47,6 +50,10 @@ class KeyValueEntitlementStore(
         get() = store.getBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, false)
         set(value) = store.edit { putBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, value) }
 
+    override var trialOfferDismissed: Boolean
+        get() = store.getBoolean(KEY_TRIAL_OFFER_DISMISSED, false)
+        set(value) = store.edit { putBoolean(KEY_TRIAL_OFFER_DISMISSED, value) }
+
     override var pendingDisclosure: ProFeature?
         get() = store.getString(KEY_PENDING_TRIAL_DISCLOSURE, null)?.let { name -> ProFeature.entries.firstOrNull { it.name == name } }
         set(value) = store.edit { putString(KEY_PENDING_TRIAL_DISCLOSURE, value?.name) }
@@ -66,6 +73,7 @@ class KeyValueEntitlementStore(
         private const val KEY_CACHED_PRO_SOURCE = "cached_pro_source"
         private const val KEY_CACHED_PRO_SEEN_AT = "cached_pro_seen_at"
         private const val KEY_ENTITLEMENT_RESOLVED_LOGGED = "entitlement_resolved_logged"
+        private const val KEY_TRIAL_OFFER_DISMISSED = "trial_offer_dismissed"
         private const val KEY_PENDING_TRIAL_DISCLOSURE = "pending_trial_disclosure"
     }
 }

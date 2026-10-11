@@ -45,6 +45,16 @@ class OnboardingTest {
     }
 
     @Test
+    fun `the trial offer can be skipped with Not now`() {
+        robot.setEmptyState(LibraryAvailability.Empty(MusicAccess.NotRequested), trialOffered = true)
+
+        robot.clickText("Not now")
+
+        robot.dismissTrialClicks shouldBe 1
+        robot.startTrialClicks shouldBe 0
+    }
+
+    @Test
     fun `without an offer the empty state shows no trial`() {
         robot.setEmptyState(LibraryAvailability.Empty(MusicAccess.NotRequested))
 

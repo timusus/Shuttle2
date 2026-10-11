@@ -18,6 +18,7 @@ import androidx.compose.ui.test.performScrollToNode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
+import com.simplecityapps.shuttle.ui.screens.library.TrialOfferActions
 import io.kotest.matchers.shouldBe
 
 /** Test robot for first run (#379): the Library's empty state, Settings > Sources' cards, This device and a server's page (#492). */
@@ -27,6 +28,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     var scanClicks = 0
     var connectServerClicks = 0
     var startTrialClicks = 0
+    var dismissTrialClicks = 0
     var rescanClicks = 0
     var retrySkippedClicks = 0
     var thisDeviceClicks = 0
@@ -49,7 +51,7 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
                     onOpenAppSettings = { openAppSettingsClicks++ },
                     onScan = { scanClicks++ },
                     onConnectServer = { connectServerClicks++ },
-                    onStartTrial = if (trialOffered) ({ startTrialClicks++ }) else null,
+                    trialOffer = if (trialOffered) TrialOfferActions({ startTrialClicks++ }, { dismissTrialClicks++ }) else null,
                 )
             }
         }

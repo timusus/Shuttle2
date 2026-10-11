@@ -40,6 +40,15 @@ class KeyValueEntitlementStoreTest {
     }
 
     @Test
+    fun `the dismissed trial offer defaults to false and is saved under its key`() {
+        assertEquals(false, entitlementStore.trialOfferDismissed)
+
+        entitlementStore.trialOfferDismissed = true
+
+        assertEquals(mapOf("trial_offer_dismissed" to true), store.values)
+    }
+
+    @Test
     fun `values saved by an older build read back`() {
         val saved = InMemoryKeyValueStore(
             mapOf(
