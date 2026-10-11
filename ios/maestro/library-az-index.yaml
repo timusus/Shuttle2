@@ -29,3 +29,14 @@ appId: com.simplecityapps.shuttle.dev
 - assertVisible:
     id: "songRow.title"
 - takeScreenshot: 2-songs-scrubbed
+# A fling still settling: the first touch on the strip stops it and jumps to the first letter, back to the top song.
+- swipe:
+    start: 50%,80%
+    end: 50%,15%
+    duration: 80
+- tapOn:
+    id: "library.sectionIndex"
+    point: 50%,2%
+- assertVisible:
+    text: ${maestro.copiedText}
+- takeScreenshot: 3-songs-flung-then-scrubbed

@@ -170,6 +170,7 @@ private struct LetterIndexModifier: ViewModifier {
     @Environment(\.isMiniPlayerVisible) private var isMiniPlayerVisible
     @State private var clearance = LetterIndexClearance()
     @State private var size: CGSize = .zero
+    @State private var halt = ScrollViewHalt.Target()
 
     /// Long enough for the mini player to slide in or out, or the accessory to appear, before the clearance holds.
     private static let settleDelay: Duration = .milliseconds(600)
@@ -196,6 +197,7 @@ private struct LetterIndexModifier: ViewModifier {
 
     private func indexed(_ content: Content) -> some View {
         reserving(content)
+            .background(ScrollViewHalt(halt: halt))
             .onGeometryChange(for: Measure.self) { Measure(size: $0.size, bottomInset: $0.safeAreaInsets.bottom) } action: {
                 size = $0.size
                 clearance.measure($0.bottomInset)
@@ -208,7 +210,10 @@ private struct LetterIndexModifier: ViewModifier {
                 clearance.hold()
             }
             .overlay(alignment: .trailing) {
-                LetterIndexStrip(sections: sections, onSelect: scrollTo)
+                LetterIndexStrip(sections: sections) { section in
+                    halt.stop()
+                    scrollTo(section)
+                }
                     .padding(.bottom, clearance.value)
                     .ignoresSafeArea(.container, edges: .bottom)
             }
@@ -222,6 +227,54 @@ private struct LetterIndexModifier: ViewModifier {
     private struct SettleKey: Equatable {
         let size: CGSize
         let isMiniPlayerVisible: Bool
+    }
+}
+
+/// Stops the content's scroll view mid-deceleration. The strip is a sibling overlay, so touching it never reaches the
+/// scroll view, and `scrollTo` loses to a fling still settling; SwiftUI has no API to cancel a deceleration, hence UIKit.
+private struct ScrollViewHalt: UIViewRepresentable {
+    final class Target {
+        fileprivate weak var scrollView: UIScrollView?
+
+        func stop() {
+            guard let scrollView, scrollView.isDecelerating else { return }
+            scrollView.setContentOffset(scrollView.contentOffset, animated: false)
+        }
+    }
+
+    let halt: Target
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        // The background is a sibling of the scroll view, not an ancestor: search up to the first ancestor holding one.
+        DispatchQueue.main.async { [halt] in
+            var ancestor = view.superview
+            while let current = ancestor {
+                if let found = Self.largestScrollView(in: current) {
+                    halt.scrollView = found
+                    return
+                }
+                ancestor = current.superview
+            }
+        }
+    }
+
+    private static func largestScrollView(in root: UIView) -> UIScrollView? {
+        var best: UIScrollView?
+        var queue = [root]
+        while !queue.isEmpty {
+            let view = queue.removeFirst()
+            if let scroll = view as? UIScrollView, scroll.bounds.width * scroll.bounds.height > (best.map { $0.bounds.width * $0.bounds.height } ?? 0) {
+                best = scroll
+            }
+            queue.append(contentsOf: view.subviews)
+        }
+        return best
     }
 }
 
