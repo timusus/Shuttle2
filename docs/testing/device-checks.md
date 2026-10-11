@@ -573,6 +573,16 @@ Needs a release build (an internal or release-candidate install: a debug build c
 - [ ] With the app force-stopped, tap play/pause, next and previous on the home-screen widget: each starts the service in the foreground and acts, with no crash and no silent no-op (logcat shows no `ForegroundServiceStartNotAllowedException`).
 - [ ] Tap the home-screen widget body (not a button), with the app open and with it force-stopped: the app opens to its main screen (#974 now resolves the launcher activity instead of naming MainActivity).
 
+## Design-audit batch (#984, #988, #991, #1002, #986, #1008, #996)
+
+- [ ] With playback running and the app backgrounded, tap the media notification, the home-screen widget body and the Cast notification (or the Cast controller's expanded view): each opens the full player, not the mini player.
+- [ ] Open a route from the player (an artist or album from the overflow menu, or the queue), then press Back: the player rises again. Back from a route opened elsewhere (Library, Search) does not raise it.
+- [ ] Navigation motion: pushing a detail screen slides on the shared axis, switching tabs fades through, and predictive back previews the previous screen. Nothing flashes, jumps or stutters at 1x and at 0.5x animator scale.
+- [ ] Over a detail screen's hero artwork (album, artist, playlist), the status-bar icons are legible with both light and dark hero artwork, in light and dark theme, and return to the theme's normal appearance on leaving the screen.
+- [ ] Open the keyboard in Search, Settings (a text field) and the tag editor: the field sits directly above the keyboard with no gap, and nothing is hidden behind it.
+- [ ] The artwork hairline (loaded artwork only, not placeholders) and the detail top-bar icon scrims look right by eye in light and dark theme, over both pale and dark covers.
+- [ ] Play a remote stream (Jellyfin, Emby, Plex or Subsonic): the seek bar shows a buffered range ahead of the position, mirrored in RTL. Play a local file: no buffered range shows.
+
 ## iOS play-start latency (#822), needs an iPhone and a Jellyfin server
 
 Stream the logs while testing: `log stream --predicate 'subsystem == "com.simplecityapps.shuttle2"' --level info`
