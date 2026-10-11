@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -118,6 +119,8 @@ fun Artwork(
             loading -> Unit
             else -> ArtworkPlaceholderGlyph(placeholder, size)
         }
+        // Over the image, so a dark cover doesn't dissolve into the surface
+        Box(Modifier.fillMaxSize().border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), clip))
     }
 }
 

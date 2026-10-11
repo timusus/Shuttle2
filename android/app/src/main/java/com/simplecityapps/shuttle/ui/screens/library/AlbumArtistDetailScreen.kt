@@ -52,6 +52,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 import com.simplecityapps.shuttle.format.formatDuration
@@ -259,7 +260,8 @@ private fun AlbumSectionHeader(
         title = album.name ?: unknown,
         artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, songCount)).joinToString(" · "),
         onClick = onToggle,
-        modifier = modifier.semantics { stateDescription = foldState },
+        // Inset so the unfolded album's selection container sits on the content inset, like the rows below it
+        modifier = modifier.padding(horizontal = S2Spacing.small).semantics { stateDescription = foldState },
         artwork = {
             val openAlbumLabel = stringResource(R.string.artist_detail_open_album, album.name ?: unknown)
             // The thumbnail opens the album; the rest of the row folds it (#631). The description alone names

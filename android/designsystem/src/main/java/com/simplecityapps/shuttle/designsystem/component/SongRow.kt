@@ -83,12 +83,15 @@ fun SongRow(
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
 ) {
+    // On a track list the playing mark takes the track number's place, keeping the secondary line for the offline mark
+    val playingInLeading = playing && artwork == null && trackNumber != null
+    val playingOnLine = playing && !playingInLeading
     MediaRow(
         title = title,
         onClick = onClick,
         modifier = modifier,
         // The playing and offline marks sit on the secondary line, so it stays for them even without a subtitle
-        supporting = subtitle ?: AnnotatedString("").takeIf { playing || offlineState != SongOfflineState.None },
+        supporting = subtitle ?: AnnotatedString("").takeIf { playingOnLine || offlineState != SongOfflineState.None },
         meta = duration,
         leading = when {
             artwork != null -> artwork
@@ -99,9 +102,9 @@ fun SongRow(
 
             else -> null
         },
-        supportingLeading = if (playing || offlineState != SongOfflineState.None) {
+        supportingLeading = if (playingOnLine || offlineState != SongOfflineState.None) {
             {
-                if (playing) SupportingIcon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), MaterialTheme.colorScheme.primary)
+                if (playingOnLine) SupportingIcon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), MaterialTheme.colorScheme.primary)
                 when (offlineState) {
                     SongOfflineState.None -> Unit
                     SongOfflineState.Downloading -> SupportingIcon(Icons.Rounded.Downloading, stringResource(R.string.ds_downloading))
@@ -122,11 +125,15 @@ fun SongRow(
 @Composable
 private fun TrackNumber(trackNumber: Int, playing: Boolean) {
     Box(Modifier.size(ArtworkSize.Small.dp), contentAlignment = Alignment.Center) {
-        Text(
-            text = trackNumber.toString(),
-            style = MaterialTheme.typography.labelLarge,
-            color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (playing) {
+            Icon(Icons.Rounded.GraphicEq, stringResource(R.string.ds_now_playing), Modifier.size(S2IconSize.small), tint = MaterialTheme.colorScheme.primary)
+        } else {
+            Text(
+                text = trackNumber.toString(),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
