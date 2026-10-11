@@ -1,0 +1,39 @@
+# gradle-profiler scenarios for the Gradle heap / GC / workers / test-fork benchmark (devtools #15).
+# Run through support/bench/gradle-bench.sh, which takes one build lease per invocation:
+#   support/bench/gradle-bench.sh <scenario>...
+# Names are <edit>-<config>. Configs vary one knob from "base" (the machine-wide ~/.gradle settings:
+# Gradle 5g ParallelGC, Kotlin daemon 3g ParallelGC, 5 workers, 2 test forks). Command-line -D/-P/--max-workers
+# beat ~/.gradle/gradle.properties, so no file is touched.
+
+_abi {
+  tasks = [":android:app:assembleDebug"]
+  apply-abi-change-to = "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/Progress.kt"
+}
+_nonabi {
+  tasks = [":android:app:assembleDebug"]
+  apply-non-abi-change-to = "android/domain/src/commonMain/kotlin/com/simplecityapps/mediaprovider/Progress.kt"
+}
+_test {
+  tasks = [":android:app:testDebugUnitTest"]
+  apply-non-abi-change-to = "android/app/src/main/java/com/simplecityapps/shuttle/InstallDefaults.kt"
+}
+_noop {
+  tasks = [":android:app:testDebugUnitTest"]
+}
+
+abi-base = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+abi-heap4 = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx4g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+abi-heap6 = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx6g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx4g -XX:+UseParallelGC"] }
+abi-g1 = ${_abi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseG1GC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseG1GC"] }
+abi-w4 = ${_abi} { gradle-args = ["--max-workers=4", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+abi-w6 = ${_abi} { gradle-args = ["--max-workers=6", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+abi-w8 = ${_abi} { gradle-args = ["--max-workers=8", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+
+nonabi-base = ${_nonabi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+nonabi-g1 = ${_nonabi} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseG1GC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseG1GC"] }
+
+test-f1 = ${_test} { gradle-args = ["--max-workers=5", "-Ps2.testForks=1", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+test-f2 = ${_test} { gradle-args = ["--max-workers=5", "-Ps2.testForks=2", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+test-f3 = ${_test} { gradle-args = ["--max-workers=5", "-Ps2.testForks=3", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
+
+noop-base = ${_noop} { gradle-args = ["--max-workers=5", "-Dorg.gradle.jvmargs=-Xmx5g -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8", "-Pkotlin.daemon.jvmargs=-Xmx3g -XX:+UseParallelGC"] }
