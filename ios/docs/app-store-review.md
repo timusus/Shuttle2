@@ -21,7 +21,9 @@ The listing text, categories, age rating and App Privacy answers are in `ios/sto
 7. Version > App Review Information: paste the notes below with the placeholders filled;
    leave the demo-account toggle off (the credentials go in the notes); contact phone and email filled.
 8. Confirm the Info.plist background modes are `audio` and `fetch` only.
-9. Push the archive tag, wait for TestFlight to process, install on a device, play from the demo server
+9. App Information > License Agreement: paste the custom EULA from `app-store-eula.md` (Apple's standard text plus the
+   LGPL clause, #610).
+10. Push the archive tag, wait for TestFlight to process, install on a device, play from the demo server
    and run through the purchase with a sandbox account, then submit.
 
 ## Review notes (paste into "Notes" under App Review Information)
@@ -84,7 +86,7 @@ Contact: <owner email / phone as in ASC>.
 | Local-file playback with no server (#590) | built; the listing and review notes describe it |
 | FFmpeg source available (#610) | done: n7.1 plus the patch and build script in AudioPlaybackKit (#957), pinned by tag |
 | FFmpeg LGPL notice in About (#610) | done: Acknowledgements names FFmpeg and LGPL-2.1+; About has an FFmpeg source code link |
-| No reverse-engineering ban in the EULA (#610) | open: keep Apple's standard EULA |
+| No reverse-engineering ban in the EULA (#610) | custom EULA drafted in `app-store-eula.md`: owner pastes it into ASC |
 | Background modes: audio, plus fetch for library refresh and scrobbles (#771) | `ios/project.yml` `UIBackgroundModes: [audio, fetch]` |
 | App Privacy answers match Sentry/PostHog (#776) | see `asc-answers.md` |
 | Built with release (GM) Xcode, not beta | App Review rejects beta-Xcode builds |
