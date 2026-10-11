@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import io.kotest.matchers.shouldBe
@@ -38,9 +39,21 @@ class PickRandomShuffleTest {
             ),
         )
 
-        val seen = (0 until 20).map { seed -> pick(ShuffleBy.Artist, seed)(ShuffleBy.Artist)!! }.associate { it.label to songsOf(it) }
+        val seen = (0 until 20).map { seed -> pick(ShuffleBy.Artist, seed)(ShuffleBy.Artist)!! }.associate { it.label to it.action }
 
-        seen shouldBe mapOf("Band" to listOf(1L, 2L), "Other" to listOf(3L))
+        seen shouldBe mapOf(
+            "Band" to MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.ArtistGroupKey(createSong(id = 1, albumArtist = "Band").albumArtistGroupKey))),
+            "Other" to MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.ArtistGroupKey(createSong(id = 3, albumArtist = "Other").albumArtistGroupKey))),
+        )
+    }
+
+    @Test
+    fun `an artist pick holds no songs until it resolves`() = runTest {
+        songRepository.setSongs(listOf(createSong(id = 1, albumArtist = "Band"), createSong(id = 2, albumArtist = "Band"), createSong(id = 3, albumArtist = "Other")))
+
+        val selection = pick(ShuffleBy.Artist)(ShuffleBy.Artist)!!.action.shouldBeInstanceOf<MediaAction.Shuffle>().selection.shouldBeInstanceOf<MediaSelection.SongsMatching>()
+
+        songRepository.loadSongs(selection.query).map { it.albumArtist }.distinct().size shouldBe 1
     }
 
     @Test

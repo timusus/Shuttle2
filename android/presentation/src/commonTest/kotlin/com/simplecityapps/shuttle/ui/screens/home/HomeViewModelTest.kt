@@ -438,17 +438,35 @@ class HomeViewModelTest {
 
         val event = (viewModel.uiState.value as HomeUiState.Content).events.map { it.value }.filterIsInstance<HomeEvent.ShuffleRandom>().single()
         event.label shouldBe "Only Band"
-        event.action shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(createSong(id = 7, albumArtist = "Only Band"))))
+        event.action shouldBe MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.ArtistGroupKey(createSong(id = 7, albumArtist = "Only Band").albumArtistGroupKey)))
     }
 
     @Test
-    fun `shuffling a random pick does nothing when the library has no songs to group`() = runTest(testDispatcher) {
+    fun `shuffling a random pick says so when no song has a genre to group by`() = runTest(testDispatcher) {
+        suggestions.songCount.value = 1
+        songRepository.setSongs(listOf(createSong(id = 7)))
         val viewModel = viewModel()
 
         viewModel.shuffleRandom(ShuffleBy.Genre)
         runCurrent()
 
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Empty>()
+        viewModel.postedEvents() shouldBe listOf(HomeEvent.NothingToShuffle)
+    }
+
+    @Test
+    fun `a second random shuffle tap while the first is resolving is ignored`() = runTest(testDispatcher) {
+        suggestions.songCount.value = 1
+        songRepository.setSongs(listOf(createSong(id = 7, albumArtist = "Only Band")))
+        val viewModel = viewModel()
+
+        viewModel.shuffleRandom(ShuffleBy.Artist)
+        viewModel.shuffleRandom(ShuffleBy.Artist)
+        runCurrent()
+        viewModel.postedEvents().size shouldBe 1
+
+        viewModel.shuffleRandom(ShuffleBy.Artist)
+        runCurrent()
+        viewModel.postedEvents().size shouldBe 2
     }
 
     @Test
@@ -505,6 +523,8 @@ class HomeViewModelTest {
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
         content.events.shouldBeEmpty()
     }
+
+    private fun HomeViewModel.postedEvents() = (uiState.value as HomeUiState.Content).events.map { it.value }.filter { it is HomeEvent.ShuffleRandom || it == HomeEvent.NothingToShuffle }
 
     private fun HomeViewModel.pendingEvents() = (uiState.value as HomeUiState.Content).events.map { it.value }.filterIsInstance<HomeEvent.PlayShelf>()
 

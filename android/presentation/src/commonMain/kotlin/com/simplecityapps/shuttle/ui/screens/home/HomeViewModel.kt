@@ -56,6 +56,9 @@ sealed interface HomeEvent {
 
     /** A random artist, genre or year was picked: the UI hands [action] to the media actions and names [label] to the user. */
     data class ShuffleRandom(val label: String, val action: MediaAction) : HomeEvent
+
+    /** A random shuffle found no artist, genre or year to pick: the UI tells the user. */
+    data object NothingToShuffle : HomeEvent
 }
 
 @ViewModelKey(HomeViewModel::class)
@@ -76,6 +79,7 @@ class HomeViewModel @Inject constructor(
     private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val refreshing = MutableStateFlow(false)
     private val resolvingSections = mutableSetOf<HomeSectionId>()
+    private var pickingRandom = false
 
     init {
         if (!readSetting(AnalyticsConsentSettings.NoticeShown)) {
@@ -147,11 +151,20 @@ class HomeViewModel @Inject constructor(
     /** Shuffles the whole library, resolved as it plays; null before the library has loaded or while it's empty. */
     fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All())) }
 
-    /** Shuffles a random artist, genre or year, posting [HomeEvent.ShuffleRandom] once picked; does nothing if the library has none. */
+    /**
+     * Shuffles a random artist, genre or year, posting [HomeEvent.ShuffleRandom] once picked, or
+     * [HomeEvent.NothingToShuffle] if the library has none. Ignored while an earlier pick is still resolving.
+     */
     fun shuffleRandom(by: ShuffleBy) {
-        if (uiState.value !is HomeUiState.Content) return
+        if (uiState.value !is HomeUiState.Content || pickingRandom) return
+        pickingRandom = true
         viewModelScope.launch {
-            pickRandomShuffle(by)?.let { events.post(HomeEvent.ShuffleRandom(it.label, it.action)) }
+            try {
+                val pick = pickRandomShuffle(by)
+                events.post(if (pick == null) HomeEvent.NothingToShuffle else HomeEvent.ShuffleRandom(pick.label, pick.action))
+            } finally {
+                pickingRandom = false
+            }
         }
     }
 

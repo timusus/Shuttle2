@@ -5,6 +5,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -38,6 +39,7 @@ import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.launch
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
     entry<HomeRoute> {
@@ -61,6 +63,7 @@ private fun HomeDestination(
     val analyticsNoticeMessage = stringResource(R.string.home_analytics_notice_message)
     val analyticsNoticeAction = stringResource(R.string.home_analytics_notice_action)
     val resources = LocalResources.current
+    val scope = rememberCoroutineScope()
     var connectingServer by rememberSaveable { mutableStateOf(false) }
     if (connectingServer) {
         ServerTypePickerRoute(onDismissRequest = { connectingServer = false })
@@ -73,8 +76,10 @@ private fun HomeDestination(
 
                     is HomeEvent.ShuffleRandom -> {
                         actions.dispatch(event.action)
-                        snackbarHostState.showSnackbar(resources.getString(R.string.home_shuffle_random_picked, event.label))
+                        scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.home_shuffle_random_picked, event.label)) }
                     }
+
+                    HomeEvent.NothingToShuffle -> scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.home_shuffle_random_empty)) }
 
                     HomeEvent.AnalyticsNowOn -> {
                         val result = snackbarHostState.showSnackbar(analyticsNoticeMessage, actionLabel = analyticsNoticeAction, duration = SnackbarDuration.Long)

@@ -73,7 +73,6 @@ import com.simplecityapps.shuttle.ui.text.resId
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
-    /** Shuffles a random artist, genre or year. */
     val onShuffleRandom: (ShuffleBy) -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},

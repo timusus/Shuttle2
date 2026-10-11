@@ -14,6 +14,8 @@
     <string name="home_shuffle_random_year">Random year</string>
     <!-- Home: snackbar naming the artist, genre or year a random shuffle picked -->
     <string name="home_shuffle_random_picked">Shuffling %1$s</string>
+    <!-- Home: snackbar shown when a random shuffle finds no artist, genre or year to pick -->
+    <string name="home_shuffle_random_empty">Nothing to shuffle</string>
     <!-- Launcher shortcut that opens the list of songs played recently -->
     <string name="shortcut_recently_played">Recently played</string>
     <!-- Home: the kind of item a tile shows, under its title in Jump back in and before its detail on a mixed shelf -->
