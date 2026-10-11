@@ -432,7 +432,7 @@ private fun RailSheetShell(
 
     Layout(
         contents = listOf(
-            { AnimatedShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab) },
+            { AnimatedShellRail(selectedTab, expanded = false, showToggle = !layout.compactHeight, onSelectTab = onSelectTab) },
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding).consumeWindowInsets(PaddingValues(bottom = bottomPadding)).windowInsetsPadding(besideRail).testTag(ShellTestTags.Destinations)) { destinations() } },
             { PlayerScrim(player) },
             {
@@ -521,7 +521,7 @@ private fun PaneShell(
     val safeSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
     val sideInsets = safeSides.exclude(remember(railWidth, paneWidth) { ChromeInsets(start = { railWidth.intValue }, end = { paneWidth.intValue }) })
     Row(Modifier.fillMaxSize()) {
-        Box(Modifier.recordWidth(railWidth)) { AnimatedShellRail(selectedTab, expanded = layout.railExpanded, onSelectTab = onSelectTab) }
+        Box(Modifier.recordWidth(railWidth)) { AnimatedShellRail(selectedTab, expanded = layout.railExpanded, showToggle = !layout.compactHeight, onSelectTab = onSelectTab) }
         Column(Modifier.weight(1f)) {
             Box(
                 Modifier
@@ -632,6 +632,7 @@ internal object ShellTestTags {
 private fun AnimatedShellRail(
     selectedTab: ShellTab?,
     expanded: Boolean,
+    showToggle: Boolean,
     onSelectTab: (ShellTab) -> Unit,
 ) {
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
@@ -641,7 +642,7 @@ private fun AnimatedShellRail(
         enter = expandHorizontally(spec),
         exit = shrinkHorizontally(spec),
     ) {
-        ShellRail(selectedTab, expanded, onSelectTab)
+        ShellRail(selectedTab, expanded, showToggle, onSelectTab)
     }
 }
 
@@ -649,6 +650,7 @@ private fun AnimatedShellRail(
 private fun ShellRail(
     selectedTab: ShellTab?,
     expanded: Boolean,
+    showToggle: Boolean,
     onSelectTab: (ShellTab) -> Unit,
 ) {
     val state = rememberWideNavigationRailState(if (expanded) WideNavigationRailValue.Expanded else WideNavigationRailValue.Collapsed)
@@ -658,5 +660,6 @@ private fun ShellRail(
         selectedIndex = selectedTab?.ordinal ?: -1,
         onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         state = state,
+        showToggle = showToggle,
     )
 }

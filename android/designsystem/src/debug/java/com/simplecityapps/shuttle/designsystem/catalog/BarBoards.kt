@@ -225,8 +225,9 @@ fun NavBarBoard(width: BoardWidth) {
 }
 
 @Composable
-private fun Rail(expanded: Boolean, selectedIndex: Int, playlistBadge: String? = null) {
+private fun Rail(expanded: Boolean, selectedIndex: Int, playlistBadge: String? = null, showToggle: Boolean = true) {
     S2NavigationRail(
+        showToggle = showToggle,
         items = navItems(playlistBadge = playlistBadge),
         selectedIndex = selectedIndex,
         onSelect = {},
@@ -248,6 +249,7 @@ fun NavRailBoard(width: BoardWidth) {
                     Rail(expanded = false, selectedIndex = 3)
                 }
             },
+            BoardSection("No expand button (compact height)") { Rail(expanded = false, selectedIndex = 1, showToggle = false) },
             BoardSection("Expanded: Home selected, badged") { Rail(expanded = true, selectedIndex = 0, playlistBadge = "") },
         ),
     )

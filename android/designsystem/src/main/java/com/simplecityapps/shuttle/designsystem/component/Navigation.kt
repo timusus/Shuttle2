@@ -72,7 +72,7 @@ fun S2NavigationBar(
 /**
  * The navigation for Medium width and up: a `WideNavigationRail` of [items]. The header button
  * toggles [state] between the collapsed rail (icons over labels) and the expanded one (icons beside
- * labels).
+ * labels). With [showToggle] false the button is omitted, for windows too short to expand into.
  */
 @Composable
 fun S2NavigationRail(
@@ -82,6 +82,7 @@ fun S2NavigationRail(
     modifier: Modifier = Modifier,
     state: WideNavigationRailState = rememberWideNavigationRailState(),
     windowInsets: WindowInsets = railWindowInsets(),
+    showToggle: Boolean = true,
 ) {
     val scope = rememberCoroutineScope()
     val expanded = state.targetValue == WideNavigationRailValue.Expanded
@@ -89,13 +90,17 @@ fun S2NavigationRail(
         modifier = modifier,
         state = state,
         windowInsets = windowInsets,
-        header = {
-            S2IconButton(
-                icon = if (expanded) Icons.AutoMirrored.Rounded.MenuOpen else Icons.Rounded.Menu,
-                contentDescription = stringResource(if (expanded) R.string.ds_collapse_navigation else R.string.ds_expand_navigation),
-                onClick = { scope.launch { state.toggle() } },
-                modifier = Modifier.padding(start = 28.dp),
-            )
+        header = if (showToggle) {
+            {
+                S2IconButton(
+                    icon = if (expanded) Icons.AutoMirrored.Rounded.MenuOpen else Icons.Rounded.Menu,
+                    contentDescription = stringResource(if (expanded) R.string.ds_collapse_navigation else R.string.ds_expand_navigation),
+                    onClick = { scope.launch { state.toggle() } },
+                    modifier = Modifier.padding(start = 28.dp),
+                )
+            }
+        } else {
+            null
         },
     ) {
         items.forEachIndexed { index, item ->

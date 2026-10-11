@@ -27,8 +27,8 @@ data class ShellLayout(
     /** A bottom bar below 600 dp, a rail from 600 dp. */
     val usesRail: Boolean get() = width != ShellWidth.Compact
 
-    /** The rail is expanded only at Extra-large. */
-    val railExpanded: Boolean get() = width == ShellWidth.ExtraLarge
+    /** The rail is expanded only at Extra-large, and never at compact height, where it can't fit. */
+    val railExpanded: Boolean get() = width == ShellWidth.ExtraLarge && !compactHeight
 
     val playerMode: PlayerMode
         get() = when (width) {
