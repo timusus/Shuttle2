@@ -55,6 +55,8 @@
     </plurals>
     <!-- Snackbar shown when 'Go to album' or 'Go to artist' can't find it in the library -->
     <string name="media_action_not_found">Not in your library</string>
+    <!-- Actions sheet item: replace the queue with a radio of songs like the song, album or artist -->
+    <string name="media_action_start_radio">Start radio</string>
     <!-- Actions sheet item: open the song's album artist -->
     <string name="media_action_go_to_artist">Go to artist</string>
     <!-- Actions sheet item: share the songs' files -->

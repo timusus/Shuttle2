@@ -23,6 +23,7 @@ class MediaActionHandler @Inject constructor(
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
     private val resumeContext: ResumeContext,
+    private val startRadio: StartRadio,
     private val enqueueSongs: EnqueueSongs,
     private val addToPlaylist: AddToPlaylist,
     private val createPlaylist: CreatePlaylist,
@@ -42,6 +43,12 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.Shuffle -> shuffle(action, resolveSongs(action.selection))
 
         is MediaAction.Resume -> resume(action)
+
+        is MediaAction.StartRadio -> when (val result = startRadio(action.selection)) {
+            is StartRadio.Result.Success -> MediaActionResult.None
+            is StartRadio.Result.NoSongs -> Message(MediaActionMessage.NoSongs)
+            is StartRadio.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
+        }
 
         is MediaAction.PlayNext -> enqueue(action.selection, EnqueueSongs.Position.Next)
 

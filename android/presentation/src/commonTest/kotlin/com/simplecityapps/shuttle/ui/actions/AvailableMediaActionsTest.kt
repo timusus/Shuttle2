@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType.RemoveDownload
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Share
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Shuffle
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.SongInfo
+import com.simplecityapps.shuttle.ui.actions.MediaActionType.StartRadio
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldNotContain
@@ -41,7 +42,15 @@ class AvailableMediaActionsTest {
     @Test
     fun `a single local song offers everything but downloads`() = runTest {
         actionsFor(MediaSelection.Songs(createSong())) shouldBe
-            listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, GoToAlbum, GoToArtist, EditTags, SongInfo, Share, Exclude, Delete)
+            listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, StartRadio, GoToAlbum, GoToArtist, EditTags, SongInfo, Share, Exclude, Delete)
+    }
+
+    @Test
+    fun `radio starts from one song or album but not from several or a genre`() = runTest {
+        actionsFor(MediaSelection.Songs(createSong())) shouldContain StartRadio
+        actionsFor(MediaSelection.Albums(createAlbum())) shouldContain StartRadio
+        actionsFor(MediaSelection.Songs(listOf(createSong(id = 1), createSong(id = 2)))) shouldNotContain StartRadio
+        actionsFor(MediaSelection.Genres(createGenre())) shouldNotContain StartRadio
     }
 
     @Test
@@ -52,7 +61,7 @@ class AvailableMediaActionsTest {
     @Test
     fun `a single album goes to its artist but not an album`() = runTest {
         actionsFor(MediaSelection.Albums(createAlbum())) shouldBe
-            listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, GoToArtist, EditTags, Share, Exclude)
+            listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, StartRadio, GoToArtist, EditTags, Share, Exclude)
     }
 
     @Test

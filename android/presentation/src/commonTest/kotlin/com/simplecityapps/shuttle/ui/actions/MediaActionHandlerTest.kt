@@ -86,6 +86,18 @@ class MediaActionHandlerTest {
     }
 
     @Test
+    fun `start radio queues the seed first then similar songs and a lone song says there are no songs`() = runTest {
+        val sameArtist = createSong(id = 3, albumArtist = "album-artist")
+        songRepository.setSongs(listOf(song, sameArtist))
+
+        handler.handle(MediaAction.StartRadio(MediaSelection.Songs(song))) shouldBe MediaActionResult.None
+        queueOperations.lastSetQueue shouldBe listOf(song, sameArtist)
+
+        songRepository.setSongs(listOf(song))
+        handler.handle(MediaAction.StartRadio(MediaSelection.Songs(song))) shouldBe Message(MediaActionMessage.NoSongs)
+    }
+
+    @Test
     fun `play next and add to queue report the count`() = runTest {
         handler.handle(MediaAction.PlayNext(songs)) shouldBe Message(MediaActionMessage.AddedToQueue(2))
         handler.handle(MediaAction.AddToQueue(MediaSelection.Songs(song))) shouldBe Message(MediaActionMessage.AddedToQueue(1))

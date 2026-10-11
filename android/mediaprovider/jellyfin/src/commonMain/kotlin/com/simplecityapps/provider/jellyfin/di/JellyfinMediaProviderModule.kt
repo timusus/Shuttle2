@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.ServerPlaylistWriter
+import com.simplecityapps.mediaprovider.SimilarSongsProvider
 import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
@@ -16,6 +17,7 @@ import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlayback
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserPlaylistWriter
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServer
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserServerAuthentication
+import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserSimilarSongsProvider
 import com.simplecityapps.mediaprovider.server.mediabrowser.MediaBrowserTranscodeService
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
@@ -75,6 +77,14 @@ class JellyfinMediaProviderModule {
         @Named("JellyfinHttpClient") httpClient: HttpClient,
         clientIdentity: ClientIdentity
     ): FavouriteWriter = MediaBrowserFavouriteWriter(authenticationManager, httpClient, clientIdentity)
+
+    @Provides
+    @IntoSet
+    fun provideSimilarSongsProvider(
+        authenticationManager: JellyfinAuthenticationManager,
+        @Named("JellyfinHttpClient") httpClient: HttpClient,
+        clientIdentity: ClientIdentity
+    ): SimilarSongsProvider = MediaBrowserSimilarSongsProvider(authenticationManager, httpClient, clientIdentity)
 
     @Provides
     @IntoSet

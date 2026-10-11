@@ -14,6 +14,9 @@ enum class MediaActionType {
 
     /** Opens the playlist picker, which then sends [MediaAction.AddToPlaylist] or [MediaAction.CreatePlaylist]. */
     AddToPlaylist,
+
+    /** A radio of songs like a single song, album or artist; see [StartRadio]. */
+    StartRadio,
     GoToAlbum,
     GoToArtist,
     EditTags,
@@ -32,6 +35,7 @@ enum class MediaActionType {
         PlayNext -> MediaAction.PlayNext(selection)
         AddToQueue -> MediaAction.AddToQueue(selection)
         AddToPlaylist -> null
+        StartRadio -> MediaAction.StartRadio(selection)
         GoToAlbum -> MediaAction.GoToAlbum(selection)
         GoToArtist -> MediaAction.GoToArtist(selection)
         EditTags -> MediaAction.EditTags(selection)
@@ -97,6 +101,9 @@ sealed interface MediaAction {
 
     /** The picker's "Favorites" makes the selection's songs favourites; [favourite] false stops them being ones, with Undo. */
     data class Favourite(override val selection: MediaSelection, val favourite: Boolean = true) : MediaAction
+
+    /** Replaces the queue with a radio seeded from the selection, a single song, album or artist. */
+    data class StartRadio(override val selection: MediaSelection) : MediaAction
 
     data class GoToAlbum(override val selection: MediaSelection) : MediaAction
 

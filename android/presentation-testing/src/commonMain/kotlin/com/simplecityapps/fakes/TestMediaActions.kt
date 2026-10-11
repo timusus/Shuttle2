@@ -1,5 +1,7 @@
 package com.simplecityapps.fakes
 
+import com.simplecityapps.mediaprovider.AggregateSimilarSongsProvider
+import com.simplecityapps.mediaprovider.SimilarSongsProvider
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
@@ -44,6 +46,7 @@ import com.simplecityapps.shuttle.ui.actions.ResumeContext
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
+import com.simplecityapps.shuttle.ui.actions.StartRadio
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +71,10 @@ class TestMediaActions(
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository))
     val playSongs = PlaySongs(queueOperations, playbackOperations)
     val shuffleSongs = ShuffleSongs(playbackOperations)
+
+    /** The providers radio asks for similar songs; none by default, so a radio is built from the library. */
+    val similarSongsProviders = mutableSetOf<SimilarSongsProvider>()
+    val startRadio = StartRadio(songRepository, resolveSongs, AggregateSimilarSongsProvider(similarSongsProviders), playSongs)
     val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs)
     val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs)
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
@@ -114,6 +121,7 @@ class TestMediaActions(
         playSongs = playSongs,
         shuffleSongs = shuffleSongs,
         resumeContext = resumeContext,
+        startRadio = startRadio,
         enqueueSongs = enqueueSongs,
         addToPlaylist = addToPlaylist,
         favouriteSongs = favouriteSongs,

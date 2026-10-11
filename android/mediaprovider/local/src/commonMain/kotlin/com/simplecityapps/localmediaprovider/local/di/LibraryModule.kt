@@ -15,12 +15,14 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalSuggestionsRe
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
 import com.simplecityapps.localmediaprovider.local.repository.libraryAlbumIndex
 import com.simplecityapps.mediaprovider.AggregateFavouriteWriter
+import com.simplecityapps.mediaprovider.AggregateSimilarSongsProvider
 import com.simplecityapps.mediaprovider.FavouriteWriter
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.ServerPlaylistSync
 import com.simplecityapps.mediaprovider.ServerPlaylistWriter
+import com.simplecityapps.mediaprovider.SimilarSongsProvider
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
@@ -107,6 +109,11 @@ abstract class LibraryModule {
         @Provides
         @SingleIn(AppScope::class)
         fun provideAggregateFavouriteWriter(writers: Set<FavouriteWriter>): AggregateFavouriteWriter = AggregateFavouriteWriter(writers)
+
+        /** Each provider module contributes its source of similar songs to the set. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideAggregateSimilarSongsProvider(providers: Set<SimilarSongsProvider>): AggregateSimilarSongsProvider = AggregateSimilarSongsProvider(providers)
 
         /** Sends the favourites made on remote songs to their servers (#497); each platform starts it once, at launch. */
         @Provides

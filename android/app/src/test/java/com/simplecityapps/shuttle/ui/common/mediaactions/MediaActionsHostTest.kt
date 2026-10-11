@@ -85,7 +85,7 @@ class MediaActionsHostTest {
     fun `the sheet lists every available action`() {
         setContent(target())
         rule.onNodeWithText("Shuffle").assertIsDisplayed()
-        rule.onNodeWithText("Go to album").assertIsDisplayed()
+        rule.onNodeWithText("Start radio").assertIsDisplayed()
     }
 
     @Test

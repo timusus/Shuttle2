@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.map
  *
  * - Play, Shuffle, Play next, Add to queue, Add to playlist: everything but the queue, which only offers Add to
  *   playlist (save the queue).
+ * - Start radio: a single song, album or artist.
  * - Go to album: a single song. Go to artist: a single song or album.
  * - Edit tags: when every provider in the selection supports tag editing (local files only).
  * - Song info: a single song.
@@ -45,6 +46,9 @@ class AvailableMediaActions @Inject constructor(
         addAll(listOf(MediaActionType.Play, MediaActionType.Shuffle, MediaActionType.PlayNext, MediaActionType.AddToQueue, MediaActionType.AddToPlaylist))
 
         val singleSong = (selection as? MediaSelection.Songs)?.songs?.singleOrNull()
+        val singleAlbum = (selection as? MediaSelection.Albums)?.albums?.singleOrNull()
+        val singleArtist = (selection as? MediaSelection.AlbumArtists)?.albumArtists?.singleOrNull()
+        if (singleSong != null || singleAlbum != null || singleArtist != null) add(MediaActionType.StartRadio)
         if (singleSong != null) add(MediaActionType.GoToAlbum)
         if (singleSong != null || (selection as? MediaSelection.Albums)?.albums?.size == 1) add(MediaActionType.GoToArtist)
 
