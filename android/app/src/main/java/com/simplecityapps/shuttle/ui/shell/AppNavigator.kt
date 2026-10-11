@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import kotlinx.coroutines.channels.BufferOverflow
@@ -57,6 +58,15 @@ class AppNavigator(
 
     fun stack(tab: ShellTab): List<NavKey> = stacks.getValue(tab)
 
+    /**
+     * The tab whose stack holds the route a [androidx.navigation3.runtime.NavEntry] with this content key shows, or null
+     * once it has been popped. An entry's content key is derived from its route, not the route itself, so the stacks'
+     * routes are keyed the same way to compare.
+     */
+    fun tabHolding(contentKey: Any?): ShellTab? = contentKey?.let { key ->
+        ShellTab.entries.firstOrNull { tab -> stacks.getValue(tab).any { NavEntry(it) {}.contentKey == key } }
+    }
+
     /** The tabs whose stacks the display shows, in order: the start tab, then the selected tab. */
     val visibleTabs: List<ShellTab>
         get() = if (selectedTab == startTab) listOf(startTab) else listOf(startTab, selectedTab)
@@ -79,7 +89,7 @@ class AppNavigator(
         val stack = stacks.getValue(selectedTab)
         val index = stack.lastIndexOf(anchor)
         if (index >= 0 && stack.size == index + 2 && stack.last() == route) return
-        if (index >= 0) while (stack.size > index + 1) stack.removeAt(stack.lastIndex)
+        if (index >= 0) truncate(selectedTab, index + 1)
         stack.add(route)
     }
 
@@ -88,7 +98,7 @@ class AppNavigator(
         if (tab == selectedTab) {
             val stack = stacks.getValue(tab)
             if (stack.size > 1) {
-                while (stack.size > 1) stack.removeAt(stack.lastIndex)
+                truncate(tab, 1)
             } else {
                 _reselects.tryEmit(tab)
             }
@@ -103,9 +113,8 @@ class AppNavigator(
         if (request.tab != selectedTab) {
             selectTab(request.tab)
         }
-        val stack = stacks.getValue(request.tab)
-        while (stack.size > 1) stack.removeAt(stack.lastIndex)
-        request.route?.let { stack.add(it) }
+        truncate(request.tab, 1)
+        request.route?.let { stacks.getValue(request.tab).add(it) }
     }
 
     /** Pushes [route] for the player, so popping it back off raises [playerReturnPending] for the shell to raise the player again. */
@@ -144,7 +153,17 @@ class AppNavigator(
     private fun leave(tab: ShellTab) {
         val stack = stacks.getValue(tab)
         val first = stack.indexOfFirst { it is UtilityRoute }
-        if (first > 0) while (stack.size > first) stack.removeAt(stack.lastIndex)
+        if (first > 0) truncate(tab, first)
+    }
+
+    // Drops [tab]'s entries above [size]; a route the player opened going with them forgets the origin, so a later pop cannot raise it.
+    private fun truncate(
+        tab: ShellTab,
+        size: Int,
+    ) {
+        val stack = stacks.getValue(tab)
+        while (stack.size > size) stack.removeAt(stack.lastIndex)
+        playerOrigin?.let { if (it.tab == tab && size <= it.index) playerOrigin = null }
     }
 }
 

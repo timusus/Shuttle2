@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
@@ -24,6 +25,66 @@ class AppNavigatorTest {
     private val album = AlbumRoute(albumKey = "a", albumArtistKey = "b")
     private val sources = SettingsDestinationRoute(SettingsDestination.Sources)
     private val privacy = SettingsDestinationRoute(SettingsDestination.Privacy)
+
+    @Test
+    fun `back after show replaced the stack the player opened from does not raise the player`() {
+        val navigator = navigator()
+        navigator.openFromPlayer(sources)
+        navigator.open(privacy)
+
+        navigator.show(ShellRequest(ShellTab.Home, album))
+        navigator.back()
+
+        navigator.playerReturnPending shouldBe false
+    }
+
+    @Test
+    fun `back after replaceAbove dropped the route the player opened does not raise the player`() {
+        val navigator = navigator()
+        navigator.open(album)
+        navigator.openFromPlayer(sources)
+
+        navigator.replaceAbove(HomeRoute, privacy)
+        navigator.back()
+
+        navigator.playerReturnPending shouldBe false
+    }
+
+    @Test
+    fun `back after reselecting the tab to its root does not raise the player`() {
+        val navigator = navigator()
+        navigator.openFromPlayer(sources)
+        navigator.open(privacy)
+
+        navigator.selectTab(ShellTab.Home)
+        navigator.open(album)
+        navigator.back()
+
+        navigator.playerReturnPending shouldBe false
+    }
+
+    @Test
+    fun `back from a route the player opened still raises the player`() {
+        val navigator = navigator()
+        navigator.openFromPlayer(sources)
+
+        navigator.back()
+
+        navigator.playerReturnPending shouldBe true
+    }
+
+    @Test
+    fun `tabHolding finds the tab holding the route of a nav entry from its content key`() {
+        val navigator = navigator()
+        navigator.selectTab(ShellTab.Library)
+        navigator.open(album)
+
+        fun keyOf(route: NavKey) = NavEntry(route) {}.contentKey
+        navigator.tabHolding(keyOf(album)) shouldBe ShellTab.Library
+        navigator.tabHolding(keyOf(HomeRoute)) shouldBe ShellTab.Home
+        navigator.tabHolding(keyOf(privacy)) shouldBe null
+        navigator.tabHolding(null) shouldBe null
+    }
 
     @Test
     fun `open pushes onto the selected tab only`() {

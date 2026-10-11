@@ -64,11 +64,7 @@ internal fun rememberShellTransitions(navigator: AppNavigator): ShellTransitions
     }
 }
 
-// The tab whose stack holds the scene's top screen; null once that screen has been popped.
-private fun tabOf(navigator: AppNavigator, scene: Scene<NavKey>): ShellTab? {
-    val key = scene.entries.lastOrNull()?.contentKey ?: return null
-    return ShellTab.entries.firstOrNull { tab -> key in navigator.stack(tab) }
-}
+private fun tabOf(navigator: AppNavigator, scene: Scene<NavKey>): ShellTab? = navigator.tabHolding(scene.entries.lastOrNull()?.contentKey)
 
 private const val FadeThroughScale = 0.92f
 private const val PredictivePopScale = 0.9f
