@@ -108,7 +108,7 @@ fun HomeScreen(
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            // Untitled, so the first screen opens on the resume hero rather than the word "Home".
+            // Untitled: the content leads, not the word "Home".
             S2TopBar(
                 title = "",
                 actions = {
