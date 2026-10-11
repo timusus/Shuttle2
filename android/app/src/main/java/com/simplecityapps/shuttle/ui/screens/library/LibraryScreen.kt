@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyListLayoutInfo
@@ -72,6 +73,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Switch
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
@@ -343,6 +345,7 @@ private fun EditTabsSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .heightIn(min = S2TouchTarget.minimum)
                     .testTag("library-tab-switch-${tab.name}")
                     .toggleable(value = enabled, role = Role.Switch, onValueChange = setEnabled)
                     .padding(horizontal = S2Spacing.large, vertical = S2Spacing.xsmall),
