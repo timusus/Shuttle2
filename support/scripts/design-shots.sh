@@ -15,7 +15,8 @@
 #                          home  library-songs  library-albums  library-artists  album-detail
 #                          artist-detail  now-playing  queue  mini-player  search  settings
 #                          empty-state (a search with no results)
-#     --devices a,b      form factors. Android: phone tablet foldable; iOS: iphone ipad.
+#                          empty-library (Android only: the no-music state, shot before seeding)
+#     --devices a,b      form factors. Android: phone tablet foldable landscape desktop; iOS: iphone ipad.
 #                        Default: phone,iphone. A device named twice is shot once.
 #     --matrix quick     light + dark; default text size. (default)
 #     --matrix full      light + dark; default + large text. Recommended for audits (with the
@@ -38,7 +39,9 @@
 #   text    Android font_scale 1.0 | 2.0;          iOS content size large | accessibility-extra-extra-extra-large (AX5)
 #   device  Android has no tablet or foldable AVD, so those are `wm size` + `wm density` overrides on
 #           the lane's phone AVD (tablet 1600x2560 @ 320 dpi = 800x1280 dp; foldable, unfolded
-#           1840x2208 @ 420 dpi = ~877x1052 dp; no hinge or posture); the manifest says so.
+#           1840x2208 @ 420 dpi = ~877x1052 dp; no hinge or posture; landscape phone 2400x1080
+#           @ 420 dpi = ~914x411 dp, compact height; desktop 1920x1200 @ 240 dpi = 1280x800 dp);
+#           the manifest says so.
 #           iOS: the leased iPhone, and the existing "S2 iPad" simulator (booted, then shut down).
 #
 # Library: both apps get the `library` fixture (seed-test-media.sh: 16 invented albums, 97 x 32 s
@@ -84,7 +87,7 @@ source "${SCRIPT_DIR}/emu-lane.sh"
 
 usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
-ALL_SCREENS=(home library-songs library-albums library-artists album-detail artist-detail now-playing queue mini-player search settings empty-state)
+ALL_SCREENS=(empty-library home library-songs library-albums library-artists album-detail artist-detail now-playing queue mini-player search settings empty-state)
 PLATFORM=""
 SCREENS_ARG=""
 MATRIX=quick
@@ -146,13 +149,13 @@ ANDROID_DEVICES=(); IOS_DEVICES=()
 for d in "${DEVICES[@]}"; do
     case " ${ANDROID_DEVICES[*]-} ${IOS_DEVICES[*]-} " in *" $d "*) continue ;; esac
     case "$d" in
-        phone | tablet | foldable) ANDROID_DEVICES+=("$d") ;;
+        phone | tablet | foldable | landscape | desktop) ANDROID_DEVICES+=("$d") ;;
         iphone | ipad) IOS_DEVICES+=("$d") ;;
-        *) echo "design-shots: unknown device '$d' (want: phone tablet foldable iphone ipad)" >&2; exit 2 ;;
+        *) echo "design-shots: unknown device '$d' (want: phone tablet foldable landscape desktop iphone ipad)" >&2; exit 2 ;;
     esac
 done
 case "$PLATFORM" in
-    android) [ ${#ANDROID_DEVICES[@]} -gt 0 ] || { echo "design-shots: --platform android needs one of phone, tablet, foldable in --devices" >&2; exit 2; } ;;
+    android) [ ${#ANDROID_DEVICES[@]} -gt 0 ] || { echo "design-shots: --platform android needs one of phone, tablet, foldable, landscape, desktop in --devices" >&2; exit 2; } ;;
     ios) [ ${#IOS_DEVICES[@]} -gt 0 ] || { echo "design-shots: --platform ios needs iphone or ipad in --devices" >&2; exit 2; } ;;
     both) { [ ${#ANDROID_DEVICES[@]} -gt 0 ] && [ ${#IOS_DEVICES[@]} -gt 0 ]; } || { echo "design-shots: --platform both needs an Android and an iOS device in --devices" >&2; exit 2; } ;;
 esac
@@ -212,7 +215,7 @@ record_fail() { # platform, screen/stage, cell, step, error
 }
 
 write_manifest() {
-    local m="${OUT}/manifest.md"
+    local m="${OUT}/manifest.md" dups
     {
         echo "# Design shots ${RUN}"
         echo
@@ -232,6 +235,14 @@ write_manifest() {
         echo "| Platform | Screen | Device | Theme | Text | File |"
         echo "|---|---|---|---|---|---|"
         cat "$SHOT_ROWS"
+        echo
+        echo "## Duplicates"
+        echo
+        # Byte-identical shots in one cell mean a flow never reached the state it names.
+        dups="$(cd "$OUT" && find android ios -name '*.png' 2>/dev/null | sort | while read -r f; do
+            printf '%s %s\n' "$(shasum "$f" | cut -d' ' -f1)" "$f"
+        done | awk '{ files[$1] = files[$1] " " $2; n[$1]++ } END { for (h in n) if (n[h] > 1) print "- identical:" files[h] }')"
+        if [ -n "$dups" ]; then echo "$dups"; else echo "None."; fi
         echo
         echo "## Failures"
         echo
@@ -345,11 +356,13 @@ adb_set() {
     adb "$@" >>"$LOG" 2>&1 || { record_fail android setup - "$desc" "adb $* failed, see $LOG"; return 1; }
 }
 
-android_device() { # phone | tablet | foldable
+android_device() { # phone | tablet | foldable | landscape | desktop
     case "$1" in
         phone) adb_set "wm size reset" shell wm size reset && adb_set "wm density reset" shell wm density reset ;;
         tablet) adb_set "wm size (tablet)" shell wm size 1600x2560 && adb_set "wm density (tablet)" shell wm density 320 ;;
         foldable) adb_set "wm size (foldable)" shell wm size 1840x2208 && adb_set "wm density (foldable)" shell wm density 420 ;;
+        landscape) adb_set "wm size (landscape)" shell wm size 2400x1080 && adb_set "wm density (landscape)" shell wm density 420 ;;
+        desktop) adb_set "wm size (desktop)" shell wm size 1920x1200 && adb_set "wm density (desktop)" shell wm density 240 ;;
     esac
 }
 
@@ -360,11 +373,50 @@ android_reset_display() {
     adb shell cmd uimode night no >/dev/null 2>&1
 }
 
-android_phase() {
+# android_matrix <screen...>: every Android device x theme x text cell, running each screen's flow.
+android_matrix() {
     local dev theme text screen scale
+    for dev in "${ANDROID_DEVICES[@]}"; do
+        android_device "$dev" || continue
+        for theme in "${THEMES[@]}"; do
+            adb_set "theme $theme" shell cmd uimode night "$([ "$theme" = dark ] && echo yes || echo no)" || continue
+            for text in "${TEXTS[@]}"; do
+                scale=1.0; [ "$text" = large ] && scale=2.0
+                adb_set "font_scale $scale" shell settings put system font_scale "$scale" || continue
+                for screen in "$@"; do
+                    # The mini player only shows with a queue, and the app can come back from a cell without one.
+                    [ "$screen" = mini-player ] && android_requeue
+                    run_screen android "$screen" "$dev" "$theme" "$text" "support/maestro/design/${screen}.yaml"
+                done
+            done
+        done
+    done
+}
+
+# android_requeue: Blue Hours queued and paused, so the mini player is on screen.
+android_requeue() {
+    step "android: queue Blue Hours and pause" bash -c "support/scripts/s2-debug.sh PLAY_ALL --es album \"'Blue Hours'\" && support/scripts/s2-debug.sh PAUSE" \
+        || record_fail android mini-player - "queue Blue Hours" "the mini-player shot may show no player"
+}
+
+android_phase() {
+    local screen main_screens=() empty_library=0
     echo "design-shots: == Android =="
+    for screen in "${SCREENS[@]}"; do
+        if [ "$screen" = empty-library ]; then empty_library=1; else main_screens+=("$screen"); fi
+    done
     if ! emu_resolve_apk; then record_fail android setup - "build" "could not build or find the debug APK"; return; fi
-    if ! emu_lane_up; then record_fail android setup - "lane start / install / seed" "see $LOG"; return; fi
+    # The empty library is shot before the fixture is seeded, so the lane comes up unseeded first.
+    if [ "$empty_library" = 1 ]; then
+        NO_SEED=1 emu_lane_up || { record_fail android setup - "lane start / install" "see $LOG"; return; }
+        MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
+        android_matrix empty-library
+        step "seed-test-media: ${SEED_FIXTURE} fixture" support/scripts/seed-test-media.sh "$SEED_FIXTURE" --skip-onboarding --if-needed \
+            || { record_fail android setup - "seed" "see $LOG"; return; }
+    elif ! emu_lane_up; then
+        record_fail android setup - "lane start / install / seed" "see $LOG"; return
+    fi
+    [ "${#main_screens[@]}" -gt 0 ] || return 0
     MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
     # The history ends on Blue Hours paused part-way, the player screens' queue. Without it, Blue Hours
     # is queued and paused directly: playing music keeps the UI from ever going idle.
@@ -374,23 +426,11 @@ android_phase() {
     fi
     {
         echo "- Android: Pixel-class AVD on the remote-emu.sh lane; \`library\` fixture (16 albums with embedded covers); $(history_note)."
-        case " ${ANDROID_DEVICES[*]} " in *" tablet "* | *" foldable "*)
-            echo "- Android tablet / foldable: no such AVD, so \`wm size\`/\`wm density\` overrides on the phone AVD: tablet 1600x2560 @ 320 dpi (800x1280 dp), foldable unfolded 1840x2208 @ 420 dpi (~877x1052 dp), no hinge or posture." ;;
+        case " ${ANDROID_DEVICES[*]} " in *" tablet "* | *" foldable "* | *" landscape "* | *" desktop "*)
+            echo "- Android tablet / foldable / landscape / desktop: no such AVD, so \`wm size\`/\`wm density\` overrides on the phone AVD: tablet 1600x2560 @ 320 dpi (800x1280 dp), foldable unfolded 1840x2208 @ 420 dpi (~877x1052 dp, no hinge or posture), landscape phone 2400x1080 @ 420 dpi (~914x411 dp, compact height), desktop 1920x1200 @ 240 dpi (1280x800 dp). The system rotation is unchanged, so the window is just that size." ;;
         esac
     } >>"$NOTES"
-    for dev in "${ANDROID_DEVICES[@]}"; do
-        android_device "$dev" || continue
-        for theme in "${THEMES[@]}"; do
-            adb_set "theme $theme" shell cmd uimode night "$([ "$theme" = dark ] && echo yes || echo no)" || continue
-            for text in "${TEXTS[@]}"; do
-                scale=1.0; [ "$text" = large ] && scale=2.0
-                adb_set "font_scale $scale" shell settings put system font_scale "$scale" || continue
-                for screen in "${SCREENS[@]}"; do
-                    run_screen android "$screen" "$dev" "$theme" "$text" "support/maestro/design/${screen}.yaml"
-                done
-            done
-        done
-    done
+    android_matrix "${main_screens[@]}"
 }
 
 # ---- iOS ----
@@ -491,6 +531,7 @@ ios_run_device() { # label udid
             ctext=large; [ "$text" = large ] && ctext=accessibility-extra-extra-extra-large
             xcrun simctl ui "$udid" content_size "$ctext" >>"$LOG" 2>&1
             for screen in "${SCREENS[@]}"; do
+                [ "$screen" = empty-library ] && continue # Android only
                 run_screen ios "$screen" "$dev" "$theme" "$text" "ios/maestro/design/${screen}.yaml"
             done
         done

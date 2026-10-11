@@ -7,4 +7,6 @@ appId: com.simplecityapps.shuttle.dev
       QUERY: "Juniper"
 - waitForAnimationToEnd:
     timeout: 5000
+# Gboard's suggestion strip would cover the lower part of the screen.
+- hideKeyboard
 - takeScreenshot: search

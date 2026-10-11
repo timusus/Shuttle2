@@ -7,4 +7,5 @@ appId: com.simplecityapps.shuttle.dev
       QUERY: "Zzqxj Vrrk"
 - waitForAnimationToEnd:
     timeout: 5000
+- hideKeyboard
 - takeScreenshot: empty-state
