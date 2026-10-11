@@ -112,6 +112,10 @@ android {
         compose = true
     }
 
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     namespace = "com.simplecityapps.shuttle"
 
     dependencies {
