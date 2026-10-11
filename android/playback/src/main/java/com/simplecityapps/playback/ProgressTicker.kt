@@ -2,6 +2,7 @@ package com.simplecityapps.playback
 
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import com.simplecityapps.playback.engine.SongUriResolver.Companion.isDirect
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -40,8 +41,14 @@ class ProgressTicker(
         if (player.mediaItemCount == 0) return
         val position = player.currentPosition.toInt()
         val duration = player.duration.takeIf { it != C.TIME_UNSET }?.toInt() ?: player.currentMediaItem?.queueEntryOrNull?.song?.duration ?: return
-        val buffered = player.bufferedPosition.toInt().takeIf { it < duration } ?: 0
+        // ExoPlayer reads ahead for local files too, so only a stream's buffer says anything about seeking.
+        val buffered = if (isStream()) player.bufferedPosition.toInt().takeIf { it < duration } ?: 0 else 0
         _progressFlow.value = PlaybackProgress(position, duration, buffered)
+    }
+
+    private fun isStream(): Boolean {
+        val uri = player.currentMediaItem?.localConfiguration?.uri ?: return false
+        return uri.scheme?.lowercase() in NETWORK_SCHEMES || !uri.isDirect()
     }
 
     /** Starts or stops publishing every [INTERVAL_MS]. */
@@ -62,5 +69,7 @@ class ProgressTicker(
 
     companion object {
         const val INTERVAL_MS = 100L
+
+        private val NETWORK_SCHEMES = setOf("http", "https")
     }
 }

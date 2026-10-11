@@ -19,10 +19,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -123,6 +126,11 @@ fun SeekBarBoard(width: BoardWidth) {
             BoardSection("Disabled") { S2SeekBar(positionMs = 0, durationMs = 0, onSeek = {}, enabled = false) },
             BoardSection("Buffering") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, buffering = true) },
             BoardSection("Stream, loaded ahead") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, bufferedMs = 230_000, onSeek = {}) },
+            BoardSection("Stream, right to left") {
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                    S2SeekBar(positionMs = 83_000, durationMs = 383_000, bufferedMs = 230_000, onSeek = {})
+                }
+            },
             BoardSection("Dragging") {
                 S2SeekBar(
                     positionMs = 250_000,

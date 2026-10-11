@@ -43,6 +43,7 @@ class ProgressTickerTest {
 
     @Test
     fun `how far a stream has loaded is published, and nothing once it is loaded to the end`() {
+        player.items = withFakeUriStatics { listOf(testSong(1, duration = 180_000, path = "https://example.com/song1.mp3").toQueueEntry().toMediaItem()) }
         player.positionMs = 5_000
         player.bufferedMs = 65_000
 
@@ -52,6 +53,25 @@ class ProgressTickerTest {
         player.bufferedMs = 180_000
         ticker.publish()
         ticker.progressFlow.value shouldBe PlaybackProgress(5_000, 180_000)
+    }
+
+    @Test
+    fun `a provider's stream shows how far it has loaded`() {
+        player.items = withFakeUriStatics { listOf(testSong(1, duration = 180_000, path = "jellyfin://server/song1").toQueueEntry().toMediaItem()) }
+        player.bufferedMs = 65_000
+
+        ticker.publish()
+
+        ticker.progressFlow.value shouldBe PlaybackProgress(0, 180_000, buffered = 65_000)
+    }
+
+    @Test
+    fun `a local file shows no loaded stretch though the player reads ahead`() {
+        player.bufferedMs = 50_000
+
+        ticker.publish()
+
+        ticker.progressFlow.value shouldBe PlaybackProgress(0, 180_000)
     }
 
     @Test

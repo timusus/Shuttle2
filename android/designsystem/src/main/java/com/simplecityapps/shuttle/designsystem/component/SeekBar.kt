@@ -32,7 +32,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -40,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
@@ -104,18 +107,21 @@ fun S2SeekBar(
             },
             track = { sliderState ->
                 val bufferedColor = MaterialTheme.colorScheme.primary.copy(alpha = SeekBufferedAlpha)
+                val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+                val bufferedInset = with(LocalDensity.current) { S2Spacing.small.toPx() }
                 SliderDefaults.Track(
                     sliderState = sliderState,
                     modifier = Modifier
                         .height(trackHeight)
                         .drawWithContent {
                             drawContent()
-                            val bufferedFraction = if (durationMs > 0) (bufferedMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
-                            val start = fraction * size.width + SeekBufferedInset.toPx()
+                            val bufferedFraction = if (durationMs > 0) (bufferedMs.toFloat() / durationMs).coerceIn(fraction, 1f) else 0f
+                            val start = fraction * size.width + bufferedInset
                             val end = bufferedFraction * size.width
                             // Nothing is drawn for a local file, or once the thumb has caught up with what has loaded.
                             if (enabled && bufferedMs in 1 until durationMs && end > start) {
-                                drawRoundRect(bufferedColor, Offset(start, 0f), Size(end - start, size.height), CornerRadius(size.height / 2))
+                                val left = if (rtl) size.width - end else start
+                                drawRoundRect(bufferedColor, Offset(left, 0f), Size(end - start, size.height), CornerRadius(size.height / 2))
                             }
                         },
                     enabled = enabled,
@@ -189,7 +195,6 @@ private val SeekThumbOverhang = 20.dp
 
 /** The loaded stretch is the primary colour at this opacity, starting this far past the thumb's gap. */
 private const val SeekBufferedAlpha = 0.24f
-private val SeekBufferedInset = 8.dp
 
 /** The buffering indicator's stroke, in proportion to its small icon size. */
 private val SeekBufferingStroke = 2.dp
