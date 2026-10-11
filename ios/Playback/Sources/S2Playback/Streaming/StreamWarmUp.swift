@@ -20,6 +20,14 @@ public final class StreamWarmUp: @unchecked Sendable {
     private let now: () -> Date
     private let lock = NSLock()
     private var lastWarmed: (origin: URL, at: Date)?
+    private var configuredCheck: @Sendable (URL) -> Bool = { _ in true }
+
+    /// Whether an origin still belongs to a configured server. The app sets it at launch; ``warm()`` forgets and skips an
+    /// origin it refuses, so a removed server is never contacted and its host leaves the disk.
+    public var isConfiguredServer: @Sendable (URL) -> Bool {
+        get { lock.withLock { configuredCheck } }
+        set { lock.withLock { configuredCheck = newValue } }
+    }
 
     init(session: URLSession = GrowingFileByteSource.sharedSession, defaults: UserDefaults = .standard, now: @escaping () -> Date = Date.init) {
         self.session = session
@@ -29,9 +37,27 @@ public final class StreamWarmUp: @unchecked Sendable {
 
     /// Remembers `url`'s server as the one ``warm()`` connects to. A file URL is ignored.
     func noteStreamed(_ url: URL) {
-        guard let origin = Self.origin(of: url)?.absoluteString,
-              defaults.string(forKey: Self.originKey) != origin else { return }
-        defaults.set(origin, forKey: Self.originKey)
+        guard let origin = Self.origin(of: url)?.absoluteString else { return }
+        lock.withLock {
+            if defaults.string(forKey: Self.originKey) != origin { defaults.set(origin, forKey: Self.originKey) }
+        }
+    }
+
+    /// Drops the remembered server, as removing it from Sources does.
+    public func forget() {
+        lock.withLock {
+            defaults.removeObject(forKey: Self.originKey)
+            lastWarmed = nil
+        }
+    }
+
+    /// Whether `address` (a server's saved address, with or without a scheme or path) is the server at `origin`.
+    public static func address(_ address: String?, isAt origin: URL) -> Bool {
+        guard let address, !address.isEmpty else { return false }
+        let withScheme = address.contains("://") ? address : "http://\(address)"
+        guard let url = URL(string: withScheme), let host = url.host?.lowercased(), host == origin.host?.lowercased() else { return false }
+        func port(_ url: URL) -> Int { url.port ?? (url.scheme?.lowercased() == "https" ? 443 : 80) }
+        return port(url) == port(origin)
     }
 
     /// Sends a HEAD to the remembered server with its custom headers, answering its TLS challenge as a stream would.
@@ -39,6 +65,10 @@ public final class StreamWarmUp: @unchecked Sendable {
     @discardableResult
     public func warm() -> URLSessionTask? {
         guard let origin = defaults.string(forKey: Self.originKey).flatMap(URL.init(string:)) else { return nil }
+        guard isConfiguredServer(origin) else {
+            forget()
+            return nil
+        }
         let at = now()
         let due = lock.withLock {
             if let lastWarmed, lastWarmed.origin == origin, at.timeIntervalSince(lastWarmed.at) < Self.minimumInterval { return false }
@@ -48,6 +78,9 @@ public final class StreamWarmUp: @unchecked Sendable {
         guard due else { return nil }
         var request = URLRequest(url: origin, timeoutInterval: Self.timeoutSeconds)
         request.httpMethod = "HEAD"
+        // A warm-up is a guess, not worth cellular data or Low Data Mode
+        request.allowsExpensiveNetworkAccess = false
+        request.allowsConstrainedNetworkAccess = false
         for (name, value) in ServerConnections.policy?.headers(for: origin) ?? [:] {
             request.setValue(value, forHTTPHeaderField: name)
         }

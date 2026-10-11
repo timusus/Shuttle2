@@ -1,3 +1,4 @@
+import S2Playback
 import Shared
 import SwiftUI
 
@@ -30,6 +31,7 @@ struct ServerDetailView: View {
                     onSignIn: { setup = .signIn(type) },
                     onRemove: {
                         models.sources.onRemoveServer(type: type)
+                        StreamWarmUp.shared.forget()
                         dismiss()
                     }
                 )

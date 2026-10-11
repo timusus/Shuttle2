@@ -110,14 +110,59 @@ final class StreamWarmUpTests: XCTestCase {
 
     func testAnotherServerIsWarmedAtOnce() throws {
         let server = try started()
+        let other = try PlaybackStreamingTestSupport.LoopbackMediaServer(body: Data(repeating: 7, count: 1024), mimeType: "audio/flac")
+        defer { other.stop() }
         let warmUp = makeWarmUp()
         warmUp.noteStreamed(streamURL(server))
         XCTAssertNotNil(warmUp.warm())
 
-        warmUp.noteStreamed(URL(string: "https://music.example:8920/Audio/1/universal")!)
+        warmUp.noteStreamed(streamURL(other))
 
-        let task = warmUp.warm()
-        task?.cancel()
-        XCTAssertEqual(task?.originalRequest?.url, URL(string: "https://music.example:8920/"))
+        XCTAssertNotNil(warmUp.warm())
+        waitForRequests(other, count: 1)
+        XCTAssertEqual(other.requestHeads.count, 1)
+    }
+
+    func testTheRequestAvoidsExpensiveAndConstrainedNetworks() throws {
+        let server = try started()
+        let warmUp = makeWarmUp()
+        warmUp.noteStreamed(streamURL(server))
+
+        let request = try XCTUnwrap(warmUp.warm()?.originalRequest)
+
+        XCTAssertFalse(request.allowsExpensiveNetworkAccess)
+        XCTAssertFalse(request.allowsConstrainedNetworkAccess)
+    }
+
+    func testForgettingTheServerSendsNothingAndClearsTheDisk() throws {
+        let server = try started()
+        let warmUp = makeWarmUp()
+        warmUp.noteStreamed(streamURL(server))
+
+        warmUp.forget()
+
+        XCTAssertNil(warmUp.warm())
+        XCTAssertNil(defaults.string(forKey: StreamWarmUp.originKey))
+    }
+
+    func testAServerThatIsNoLongerConfiguredIsNotContactedAndIsForgotten() throws {
+        let server = try started()
+        let warmUp = makeWarmUp()
+        warmUp.noteStreamed(streamURL(server))
+        warmUp.isConfiguredServer = { _ in false }
+
+        XCTAssertNil(warmUp.warm())
+        XCTAssertNil(defaults.string(forKey: StreamWarmUp.originKey))
+        XCTAssertEqual(server.requestHeads.count, 0)
+    }
+
+    func testASavedAddressMatchesItsOriginWithOrWithoutSchemePathAndDefaultPort() {
+        let origin = URL(string: "https://Music.Example:443/")!
+
+        XCTAssertTrue(StreamWarmUp.address("https://music.example/jellyfin", isAt: origin))
+        XCTAssertTrue(StreamWarmUp.address("music.example:443", isAt: origin))
+        XCTAssertFalse(StreamWarmUp.address("https://music.example:8096", isAt: origin))
+        XCTAssertFalse(StreamWarmUp.address("https://other.example", isAt: origin))
+        XCTAssertFalse(StreamWarmUp.address(nil, isAt: origin))
     }
 }

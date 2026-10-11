@@ -1,3 +1,4 @@
+import S2Playback
 import Shared
 import SwiftUI
 import UniformTypeIdentifiers
@@ -34,7 +35,10 @@ struct SourcesView: View {
                     )
                 },
                 onAddServer: { setup = .chooseSource },
-                onRemove: { models.sources.onRemoveServer(type: $0) },
+                onRemove: {
+                    models.sources.onRemoveServer(type: $0)
+                    StreamWarmUp.shared.forget()
+                },
                 onRescan: { models.sources.onRescan() }
             )
         }

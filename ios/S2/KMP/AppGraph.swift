@@ -134,6 +134,9 @@ final class IosAppDependencies {
         self.graph = graph
         // Before anything opens a stream or fetches artwork: their sessions ask it for the server's headers and certificate (#921)
         ServerConnections.policy = KotlinServerConnectionPolicy(graph.serverRequestPolicy)
+        StreamWarmUp.shared.isConfiguredServer = { origin in
+            MediaProviderType.signInTypes.contains { StreamWarmUp.address(graph.readServerLogin.invoke(type: $0).address, isAt: origin) }
+        }
         DispatchQueue.global(qos: .utility).async { StreamStore.prepareAtLaunch() }
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
