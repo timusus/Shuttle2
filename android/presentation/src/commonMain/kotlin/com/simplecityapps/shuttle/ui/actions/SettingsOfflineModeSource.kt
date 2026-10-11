@@ -1,7 +1,6 @@
-package com.simplecityapps.shuttle.downloads
+package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.shuttle.settings.DownloadSettings
-import com.simplecityapps.shuttle.ui.actions.OfflineModeSource
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
