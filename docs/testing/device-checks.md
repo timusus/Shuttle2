@@ -602,3 +602,7 @@ before the engine was asked. Stages that did not happen print as `-`.
 - [ ] Landscape phone, album, artist and playlist detail: art with Play and Shuffle on the left, tracks scrolling on the right, all visible without scrolling the left column; status-bar icons legible in light and dark. Rotate back to portrait mid-list: no crash, scroll position roughly kept.
 - [ ] Landscape phone, Library: the small top bar hides on scroll down and returns on scroll up; Search's field and chips do the same, and come back when a new search returns only a few results or the field is focused.
 - [ ] Landscape phone, navigation rail: no expand/collapse button.
+
+## iOS letter index while scrolling (#1019)
+
+- [ ] iOS, Library Songs, Albums (list and grid) and Artists sorted by name: fling hard, then touch a letter on the A–Z strip while the list is still moving. The list stops and jumps to that letter on the first touch; dragging along the strip keeps jumping. Repeat in a playlist or other screen with the index to check it stops the right list.
