@@ -33,12 +33,16 @@ val robolectricModules = setOf(
     ":android:mediaprovider:local",
     ":android:scrobbling",
     ":android:downloads",
+    ":android:playback",
+    ":android:imageloader",
 )
 
 subprojects {
     // Collect declared production project dependencies as plain strings while each module configures, so the
     // task never touches another project's model (configuration-cache safe, no afterEvaluate ordering).
     val from = path
+    // Inside a Test task's lambda `path` is the task path (:android:app:testDebugUnitTest).
+    val projectPath = path
     configurations.configureEach {
         if (ModuleLayers.isProductionBucket(name)) {
             val configuration = name
@@ -55,7 +59,7 @@ subprojects {
     tasks.withType<Test>().configureEach {
         // Robolectric's NATIVE graphics/sqlite modes need more than the 512m default heap; pure-JVM
         // modules fit in 512m. :android:app keeps 2g for the Roborazzi boards.
-        maxHeapSize = when (path) {
+        maxHeapSize = when (projectPath) {
             ":android:app" -> "2g"
             in robolectricModules -> "1536m"
             else -> "512m"
@@ -76,7 +80,7 @@ subprojects {
         // app 57-87s at 1 fork, 50-52s at 2, 48-56s at 3, so both default to 2. On the idle 16-thread, 24 GB
         // WSL box: 114s at 1 fork, 74s at 2. designsystem (one 350-board class dominates) and playback
         // didn't get faster. -Ps2.testForks=N overrides the default.
-        if (path == ":android:app") {
+        if (projectPath == ":android:app") {
             maxParallelForks = providers.gradleProperty("s2.testForks").map(String::toInt).getOrElse(2)
         }
 
