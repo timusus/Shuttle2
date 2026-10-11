@@ -34,6 +34,9 @@ internal class IosFeed(
     /** Its stream can be resolved again to start at a position ([IosStream.opensAtPosition]). */
     var opensAtPosition = false
 
+    /** Its stream is a transcode ([IosStream.transcoded]). */
+    var transcoded = false
+
     /** The engine can't seek its stream (it said so once), so a seek re-opens the stream at the position. */
     var seeksByReopening = false
 

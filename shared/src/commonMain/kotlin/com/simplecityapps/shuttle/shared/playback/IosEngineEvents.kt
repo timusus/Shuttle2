@@ -97,7 +97,8 @@ internal class IosEngineEvents(
     /**
      * [feed] ended at [positionMs], more than [SHORT_END_MS] short of its song's duration, on a server stream of no
      * known length: a transcode whose connection closed in a way that reads as a clean end. It's re-opened there as a
-     * seek would, and the queue stays; false (playback moves on) for anything else, or once
+     * seek would, and the queue stays; false (playback moves on) for anything else (a direct-play stream re-opened would
+     * start again from 0), or once
      * [MAX_SHORT_END_REOPENS] re-opens in a row have played nothing further.
      */
     private fun reopenShortEnd(
@@ -105,7 +106,7 @@ internal class IosEngineEvents(
         positionMs: Int?
     ): Boolean {
         val durationMs = feed.item.song.duration
-        if (positionMs == null || feed.failed || !feed.ready || feed.pausedAtEnd || !feed.opensAtPosition) return false
+        if (positionMs == null || feed.failed || !feed.ready || feed.pausedAtEnd || !feed.opensAtPosition || !feed.transcoded) return false
         if (feed.durationKnown && !feed.seeksByReopening) return false
         if (durationMs <= 0 || durationMs - positionMs <= SHORT_END_MS) return false
         val stalled = feed.shortEndReopens > 0 && positionMs - feed.offsetMs < MIN_PROGRESS_MS

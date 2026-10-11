@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.server.mediabrowser
 
 import com.simplecityapps.mediaprovider.DownloadSource
+import com.simplecityapps.mediaprovider.OpenedStream
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
@@ -24,7 +25,14 @@ open class MediaBrowserStreamUrlProvider(
         song: Song,
         startPositionMs: Long,
         playId: String?
-    ): String {
+    ): String = openStream(song, startPositionMs, playId).url
+
+    /** The universal stream is a transcode, which starts at `StartTimeTicks`, wherever the song isn't direct-played. */
+    override fun openStream(
+        song: Song,
+        startPositionMs: Long,
+        playId: String?
+    ): OpenedStream {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
         val maxBitrateKbps = streamingPolicy.maxBitrateKbps()
@@ -37,8 +45,9 @@ open class MediaBrowserStreamUrlProvider(
             format = format,
             playId = playId
         ) ?: throw IllegalStateException("Failed to build $scheme path")
-        streamingPolicy.streamOpened(song.path, delivered(song, maxBitrateKbps, format))
-        return url
+        val delivered = delivered(song, maxBitrateKbps, format)
+        streamingPolicy.streamOpened(song.path, delivered)
+        return OpenedStream(url, transcoded = delivered != null)
     }
 
     /**

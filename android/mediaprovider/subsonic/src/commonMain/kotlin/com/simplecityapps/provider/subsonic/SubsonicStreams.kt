@@ -1,6 +1,7 @@
 package com.simplecityapps.provider.subsonic
 
 import com.simplecityapps.mediaprovider.DownloadSource
+import com.simplecityapps.mediaprovider.OpenedStream
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.TimeSeekableStream
@@ -300,6 +301,13 @@ class SubsonicStreamUrlProvider(private val streams: SubsonicStreams) : StreamUr
         startPositionMs: Long,
         playId: String?
     ): String = streams.immediateStream(song, startPositionMs).url
+
+    /** Only a transcode the server can start part way in ([SubsonicStream.timeSeek]) starts at the position. */
+    override fun openStream(
+        song: Song,
+        startPositionMs: Long,
+        playId: String?
+    ): OpenedStream = streams.immediateStream(song, startPositionMs).let { OpenedStream(it.url, transcoded = it.timeSeek != null) }
 
     override fun downloadSource(song: Song): DownloadSource? = streams.downloadSource(song)
 }

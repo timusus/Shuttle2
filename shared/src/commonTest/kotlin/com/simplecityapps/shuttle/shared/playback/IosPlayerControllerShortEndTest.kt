@@ -56,6 +56,18 @@ class IosPlayerControllerShortEndTest : IosPlayerControllerTestBase() {
     }
 
     @Test
+    fun `a direct-play server stream of no known length ending short moves on - re-opened it would start from 0`() = test { controller ->
+        server += a.id
+        directPlay += a.id
+        controller.start(listOf(a, b))
+
+        engine.finishTrack(atMs = 60_000)
+
+        controller.currentSong shouldBe b
+        engine.calls shouldBe emptyList()
+    }
+
+    @Test
     fun `a local file ending short moves on`() = test { controller ->
         controller.start(listOf(a, b))
 

@@ -29,6 +29,16 @@ interface StreamUrlProvider {
     ): String
 
     /**
+     * [streamUrl]'s stream, and whether it's a transcode that starts at [startPositionMs]. A provider that can't tell
+     * says it isn't, so nothing relies on a start the stream may ignore.
+     */
+    fun openStream(
+        song: Song,
+        startPositionMs: Long = 0,
+        playId: String? = null
+    ): OpenedStream = OpenedStream(streamUrl(song, startPositionMs, playId), transcoded = false)
+
+    /**
      * [playId]'s streams won't be opened again: the track was replaced, skipped, played out or stopped. A provider ends
      * whatever the server holds for it (a transcode session), best effort: a failure is logged, never thrown.
      */
@@ -55,6 +65,12 @@ interface StreamUrlProvider {
         null
     }
 }
+
+/** A stream's URL; [transcoded] when it's a transcode started at the position it was asked for. */
+data class OpenedStream(
+    val url: String,
+    val transcoded: Boolean
+)
 
 /**
  * A download's URL, and the MIME type of what's actually there: a transcoded download's, not the song's original one,

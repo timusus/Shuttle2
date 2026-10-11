@@ -164,7 +164,9 @@ data class IosStream(
      * Whether resolving the song again with a start position gives a stream that starts there: a server stream, whose
      * transcode takes `StartTimeTicks`. That is how a seek the engine can't make (a progressive transcode) is made.
      */
-    val opensAtPosition: Boolean = false
+    val opensAtPosition: Boolean = false,
+    /** A transcode started at the position it was resolved at; a direct-play server stream starts at 0 whatever it's asked. */
+    val transcoded: Boolean = false
 )
 
 /**

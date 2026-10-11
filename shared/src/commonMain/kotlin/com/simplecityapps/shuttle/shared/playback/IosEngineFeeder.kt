@@ -144,6 +144,7 @@ internal class IosEngineFeeder(
     ) {
         feed.sent = true
         feed.opensAtPosition = stream.opensAtPosition
+        feed.transcoded = stream.transcoded
         val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
         player.load(feed.track(stream), handedBack, (feed.startMs - feed.offsetMs).toLong(), flows.playWhenReady)
         feedNext()
@@ -187,6 +188,7 @@ internal class IosEngineFeeder(
             }
             feed.sent = true
             feed.opensAtPosition = stream.opensAtPosition
+            feed.transcoded = stream.transcoded
             engineNext = feed
             player.setNext(feed.track(stream))
         }

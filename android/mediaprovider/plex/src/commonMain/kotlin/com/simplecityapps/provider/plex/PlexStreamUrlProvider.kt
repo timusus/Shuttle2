@@ -1,6 +1,7 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.DownloadSource
+import com.simplecityapps.mediaprovider.OpenedStream
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.StreamingPolicy
 import com.simplecityapps.mediaprovider.server.StreamProfile
@@ -108,6 +109,12 @@ class PlexStreamUrlProvider(
         startPositionMs: Long,
         playId: String?
     ): String = stream(song, startPositionMs, playId).path
+
+    override fun openStream(
+        song: Song,
+        startPositionMs: Long,
+        playId: String?
+    ): OpenedStream = stream(song, startPositionMs, playId).let { OpenedStream(it.path, transcoded = it.isTranscode) }
 
     /**
      * Stops [playId]'s transcode session, if a progressive transcode was opened for it and no other play holds it.

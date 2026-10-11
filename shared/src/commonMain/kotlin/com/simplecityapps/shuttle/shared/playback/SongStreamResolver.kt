@@ -58,9 +58,15 @@ class SongStreamResolver(
         }
         return when {
             localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs), gainDb = gainDb)
+
             downloaded != null -> IosStream(url = downloaded, gainDb = gainDb)
-            provider != null -> IosStream(url = provider.streamUrl(song, startPositionMs, playId), gainDb = gainDb, opensAtPosition = true)
+
+            provider != null -> provider.openStream(song, startPositionMs, playId).let {
+                IosStream(url = it.url, gainDb = gainDb, opensAtPosition = true, transcoded = it.transcoded)
+            }
+
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
+
             else -> IosStream(url = song.path, gainDb = gainDb)
         }
     }

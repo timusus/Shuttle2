@@ -152,6 +152,16 @@ class JellyfinStreamUrlProviderTest {
     }
 
     @Test
+    fun `a stream is opened as a transcode only when the song isn't direct-played`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
+
+        provider.openStream(song(bitRate = 256, audioCodec = "aac")).transcoded shouldBe false
+        provider.openStream(song(bitRate = 900)).transcoded shouldBe true
+        provider.openStream(song(bitRate = 256, audioCodec = "alac")).transcoded shouldBe true
+    }
+
+    @Test
     fun `a download keeps the original at Original download quality`() {
         credentialStore.authenticatedCredentials = downloadableCredentials
         streamingSettings.meteredQuality.value = StreamingQuality.Kbps128

@@ -45,6 +45,9 @@ abstract class IosPlayerControllerTestBase {
     /** Songs on a server, whose streams open at a position (`StartTimeTicks`). */
     protected val server = mutableSetOf<Long>()
 
+    /** [server] songs streamed direct: the server ignores the start, so they start at 0 wherever they're opened. */
+    protected val directPlay = mutableSetOf<Long>()
+
     /** Whether a [server] song may stream, given whether the user asked to play it; the real gate in the gate tests. */
     protected var serverAccess: suspend (Song, Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed }
 
@@ -83,8 +86,9 @@ abstract class IosPlayerControllerTestBase {
                     }
                     return when {
                         song.id in unresolvable -> error("No stream for ${song.name}")
-                        song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true)
-                        else -> IosStream(url(song), opensAtPosition = song.id in server)
+                        song.id in directPlay -> IosStream(url(song), opensAtPosition = true)
+                        song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true, transcoded = true)
+                        else -> IosStream(url(song), opensAtPosition = song.id in server, transcoded = song.id in server)
                     }
                 }
 
