@@ -63,7 +63,7 @@ extension MusicPlaybackController {
             }
             reportTransition(to: next, gapless: true)
             // It dropped while read ahead: the owner re-opens it where it's heard, about its start.
-            if next.awaitingReopen { reportSeekUnsupported(next, ms: ms(frames: currentMediaFrame())) }
+            if next.awaitingReopen { awaitReopen(next, ms: ms(frames: currentMediaFrame())) }
         }
         if concludingEnd, drained, pausingAtEnd, !pausedAtEnd, state == .playing, stream >= outputIndex, let current {
             playWhenReady = false

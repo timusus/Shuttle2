@@ -28,6 +28,8 @@ extension MusicPlaybackController {
         var primeError: Error?
         /// Its source turned unseekable and reads nothing more, and the owner was told where to re-open it.
         var awaitingReopen = false
+        /// What it awaits is a re-open after its download gave up (#614), not after a drop or a refused seek.
+        var gaveUp = false
 
         init(track: PlaybackTrack) {
             Self.lastId += 1

@@ -122,8 +122,11 @@ range answers 206 and the source simply resumes.
 A rebuild (a speed or output-device change, a replaced next) can't seek a transcode past its start
 either: it reads nothing more and is silent until the owner's re-open at the heard position arrives
 (#614). A transcode whose download gives up after its retries (a read failing mid-stream) is
-re-opened once the same way; if no track has read audio since the last such re-open, it fails
-instead, so a dead link fails the song rather than looping. Direct-play streams and files fail as before.
+re-opened the same way. The load that arrives while it awaits is taken as that re-open; if the
+re-open gives up again before it has been heard for 30 s, the song fails instead, so a flaky link
+can't loop. Any other load, a stop or a move to another track starts afresh. A track left silent
+awaiting a re-open (a give-up, a drop, a rebuild) fails if no load arrives within 30 s: the owner
+may have no way to open it at a position. Direct-play streams and files fail as before.
 
 **Streaming (#958).** An HTTP(S) track downloads through AudioPlaybackKit's `GrowingFileByteSource` into
 `StreamStore`, S2's `GrowingFileStore` under Caches (512 MiB, swept of partials at launch). A track downloaded

@@ -92,7 +92,11 @@ extension MusicPlaybackController {
             // rebuild) it was read a schedule-ahead past the frame, and played on it would jump that
             // far (#614): it reads nothing more (``readChunk()``) until the owner re-opens it.
             if current.atStart { startFrame = 0 } else { current.awaitingReopen = true }
-            reportSeekUnsupported(current, ms: ms(frames: frame))
+            if current.awaitingReopen {
+                awaitReopen(current, ms: ms(frames: frame))
+            } else {
+                reportSeekUnsupported(current, ms: ms(frames: frame))
+            }
         }
         appendSegment(for: current, mediaStart: startFrame)
         if startTiming?.positionedAt == nil { startTiming?.positionedAt = StartupTiming.now() }
@@ -126,6 +130,24 @@ extension MusicPlaybackController {
         reportTransition(to: slot, gapless: false)
         openIfNeeded(slot)
         restart(atFrame: frame)
+    }
+
+    /// `slot`, the current track, reads nothing more until the owner re-opens it at `ms` (``onSeekUnsupported``).
+    /// No re-open (a load) within ``reopenTimeout`` fails it, so it can't stay silent for good.
+    func awaitReopen(_ slot: Slot, ms: Int64) {
+        slot.awaitingReopen = true
+        reportSeekUnsupported(slot, ms: ms)
+        engineQueue.asyncAfter(deadline: .now() + reopenTimeout) { [weak self, weak slot] in
+            guard let self, let slot, slot === current, slot.awaitingReopen, !slot.failed else { return }
+            reportFailure(slot, TrackSourceError.failed("no re-open within \(Self.reopenTimeoutSeconds) s"))
+            fill()
+        }
+    }
+
+    /// A transcode whose download gave up may be re-opened, unless it is itself the re-open of one that gave up and
+    /// hasn't been heard for ``giveUpRetryWindowSeconds``: a flaky link fails rather than looping.
+    private func mayReopenAfterGiveUp(_ slot: Slot) -> Bool {
+        slot.id != reopenedAfterGiveUp || currentMediaFrame() >= frames(ms: Self.giveUpRetryWindowSeconds * 1000)
     }
 
     func appendSegment(for slot: Slot, mediaStart: Int64) {
@@ -194,12 +216,14 @@ extension MusicPlaybackController {
                     processor.drain(into: &output)
                     return
                 }
-                if slot.awaitingReopen {
+                if slot.awaitingReopen, !slot.failed {
                     interrupted = true
                     return
                 }
                 var got = 0
-                if !slot.primed.isEmpty {
+                if slot.awaitingReopen {
+                    // Its re-open never came (``awaitReopen(_:ms:)``): it ends here.
+                } else if !slot.primed.isEmpty {
                     slot.atStart = false
                     got = min(slot.primed.count / channels, Self.chunkFrames - filled)
                     slot.primed.withUnsafeBufferPointer {
@@ -222,30 +246,26 @@ extension MusicPlaybackController {
                         // again from the top: neither ended nor failed, it waits, as an interrupted read
                         // does, for the owner to re-open it where it's heard.
                         interrupted = true
-                        if !slot.awaitingReopen {
-                            slot.awaitingReopen = true
-                            reportSeekUnsupported(slot, ms: ms(frames: currentMediaFrame()))
-                        }
+                        if !slot.awaitingReopen { awaitReopen(slot, ms: ms(frames: currentMediaFrame())) }
                         return
                     } catch TrackSourceError.unseekable {
                         slot.awaitingReopen = true
                         continue
-                    } catch TrackSourceError.failed where !slot.source.isSeekable && !reopeningAfterGiveUp {
-                        // A transcode whose download gave up after its retries: re-opened once where it's heard,
-                        // as a drop is. A re-open that gives up before it plays fails, so a dead link can't loop.
+                    } catch TrackSourceError.failed where !slot.source.isSeekable && mayReopenAfterGiveUp(slot) {
+                        // A transcode whose download gave up after its retries: re-opened where it's heard, as a
+                        // drop is. A next is re-opened once it's current (``updateTimeline(concludingEnd:)``).
                         engineLog.notice("track \(slot.track.uid, privacy: .public) gave up mid-stream; asking for a re-open")
-                        reopeningAfterGiveUp = true
+                        slot.gaveUp = true
                         slot.awaitingReopen = true
                         guard slot === current else { continue }
                         interrupted = true
-                        reportSeekUnsupported(slot, ms: ms(frames: currentMediaFrame()))
+                        awaitReopen(slot, ms: ms(frames: currentMediaFrame()))
                         return
                     } catch {
                         reportFailure(slot, error)
                     }
                 }
                 if got > 0 {
-                    reopeningAfterGiveUp = false
                     processor.process(base + filled * channels, frameCount: got,
                                       gain: PCMProcessor.linear(db: slot.track.gainDb), into: &output)
                     filled += got

@@ -98,8 +98,9 @@ public final class MusicPlaybackController {
     /// The current track can't be sought to the position (uid, ms into the track): its source
     /// isn't seekable (``TrackPCMSource/isSeekable``, a progressive transcode). A seek leaves it
     /// playing where it was; a load at a position starts it at its beginning. The owner re-opens
-    /// the stream at the position. Also sent, once, when such a stream's download gives up: a
-    /// re-open that gives up before playing fails instead.
+    /// the stream at the position. Also sent when such a stream's download gives up: a re-open that
+    /// gives up again within its first 30 s heard fails instead. A track left silent awaiting a
+    /// re-open (one that gave up, dropped or was rebuilt) fails if no load arrives within 30 s.
     public var onSeekUnsupported: ((String, Int64) -> Void)? {
         get { callbackLock.withLock { callbacks.seekUnsupported } }
         set { callbackLock.withLock { callbacks.seekUnsupported = newValue } }
@@ -211,9 +212,14 @@ public final class MusicPlaybackController {
     var pausingAtEnd = false
     /// Paused on the current track's last frame by `pausingAtEnd`: a play carries on into the next.
     var pausedAtEnd = false
-    /// A transcode's download gave up and the owner was asked to re-open it; until a track reads audio again, the
-    /// next give-up fails its track (#614).
-    var reopeningAfterGiveUp = false
+    /// The slot (id) that is the owner's re-open of a transcode whose download gave up (#614): until it's been heard
+    /// for ``giveUpRetryWindowSeconds``, another give-up fails it rather than re-opening it again. Set by the load that
+    /// answers the re-open and kept by one that answers its own; ids are never reused, so no other track inherits it.
+    var reopenedAfterGiveUp: Int?
+    static let giveUpRetryWindowSeconds: Int64 = 30
+    /// How long the current track waits, silent, for the owner's re-open before it fails. Tests shorten it.
+    var reopenTimeout: DispatchTimeInterval = .seconds(reopenTimeoutSeconds)
+    static let reopenTimeoutSeconds = 30
     /// Bumped by every restart; completions from buffers a restart discarded are ignored.
     var generation = 0
     /// Frames an interrupted read got before its interrupt, kept off the node until the seek behind it says
@@ -321,9 +327,13 @@ public final class MusicPlaybackController {
             defer { answerCommand() }
             var reusable = next.flatMap { old in old.atStart && !old.failed && reading !== old ? old : nil }
             if reusable != nil { next = nil }
+            // The load that comes while the current track awaits a re-open is that re-open: it inherits the give-up's
+            // budget. Any other load (a skip, a seek re-opened) starts afresh.
+            let answersGiveUp = current.map { $0.awaitingReopen && ($0.gaveUp || $0.id == reopenedAfterGiveUp) } ?? false
             teardown()
             let slot = take(&reusable, for: track) ?? makeSlot(track)
             current = slot
+            reopenedAfterGiveUp = answersGiveUp ? slot.id : nil
             next = nextTrack.map { take(&reusable, for: $0) ?? makeSlot($0) }
             reusable.map(release)
             self.playWhenReady = playWhenReady

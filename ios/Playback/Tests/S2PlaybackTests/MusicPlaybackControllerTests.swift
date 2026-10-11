@@ -994,42 +994,101 @@ final class MusicPlaybackControllerTests: XCTestCase {
         PlaybackTrack(uid: uid, gainDb: 0) { GivingUpTrackSource(samples: samples, failFrame: frame, seekable: seekable) }
     }
 
-    /// #614: a transcode whose download gives up is re-opened once where it's heard, not failed. A re-open that plays
-    /// earns a later give-up its own re-open.
-    func testATranscodeWhoseDownloadGivesUpIsReopenedOnceAndAgainAfterTheReopenPlays() throws {
+    /// Loads `track` and plays `frames` of the stream.
+    private func play(_ controller: MusicPlaybackController, _ track: PlaybackTrack, frames: Int) throws {
+        controller.load(current: track, next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: frames)
+        controller.syncForTesting()
+    }
+
+    /// #614: a transcode whose download gives up is re-opened where it's heard, not failed. Its last 1 s read is still
+    /// a schedule-ahead (0.5 s) ahead of the playhead.
+    func testATranscodeWhoseDownloadGivesUpIsReopenedWhereItIsHeard() throws {
         let (controller, log) = try makeController()
-        let a = TestSignal.noise(frames: 96_000, seed: 40)
-        controller.load(current: givingUp("A", a, at: 9_600), next: nil, playWhenReady: true)
-        controller.syncForTesting()
-        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 24_000)
-        controller.syncForTesting()
+        try play(controller, givingUp("A", TestSignal.noise(frames: 96_000, seed: 40), at: 48_000), frames: 72_000)
+        XCTAssertEqual(log.failures, [])
+        XCTAssertEqual(log.seeksUnsupported.count, 1)
+        let report = try XCTUnwrap(log.seeksUnsupported.first).split(separator: " ")
+        XCTAssertEqual(report[0], "A")
+        XCTAssertEqual(Double(try XCTUnwrap(Int(report[1]))), 500, accuracy: 100)
+    }
+
+    /// The re-open gives up again within its first 30 s heard: the song fails, as it did before #614, rather than
+    /// re-opening a flaky transcode over and over.
+    func testAReopenThatGivesUpWithinItsFirst30SecondsFails() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 96_000, seed: 41)
+        try play(controller, givingUp("A", a, at: 9_600), frames: 24_000)
+        try play(controller, givingUp("A2", a, at: 48_000), frames: 96_000)
         XCTAssertEqual(log.seeksUnsupported.map { $0.prefix(2) }, ["A "])
+        XCTAssertEqual(log.failures, ["A2"])
+    }
+
+    /// A re-open heard for 30 s earns a later give-up its own re-open, whose budget starts again.
+    func testAReopenHeardFor30SecondsIsReopenedAgain() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 33 * 48_000, seed: 42)
+        try play(controller, givingUp("A", a, at: 9_600), frames: 24_000)
+        try play(controller, givingUp("A2", a, at: 31 * 48_000), frames: 32 * 48_000)
+        XCTAssertEqual(log.seeksUnsupported.map { $0.prefix(2) }, ["A ", "A2"])
         XCTAssertEqual(log.failures, [])
 
-        // The owner's re-open, which plays, then gives up in its turn.
-        controller.load(current: givingUp("A2", a, at: 9_600), next: nil, playWhenReady: true)
-        controller.syncForTesting()
-        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 24_000)
-        controller.syncForTesting()
-        XCTAssertEqual(log.seeksUnsupported.map { $0.prefix(2) }, ["A ", "A2"])
+        try play(controller, givingUp("A3", a, at: 9_600), frames: 24_000)
+        XCTAssertEqual(log.failures, ["A3"])
+    }
+
+    /// A skip away from a re-open leaves its budget behind: the next track's give-up is re-opened.
+    func testASkipAwayFromAReopenGivesTheNextTrackItsOwnReopen() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 96_000, seed: 43)
+        try play(controller, givingUp("A", a, at: 9_600), frames: 24_000)
+        try play(controller, givingUp("A2", a, at: 96_000), frames: 24_000)
+        try play(controller, givingUp("B", TestSignal.noise(frames: 96_000, seed: 44), at: 9_600), frames: 24_000)
+        XCTAssertEqual(log.seeksUnsupported.map { $0.prefix(2) }, ["A ", "B "])
         XCTAssertEqual(log.failures, [])
     }
 
-    /// The one re-open gives up before it plays anything: the song fails, as it did before #614, and isn't re-opened again.
-    func testATranscodeWhoseReopenGivesUpTooFails() throws {
+    /// A next that gives up while read ahead is reported once it's heard, and its re-open carries the give-up's budget.
+    func testANextThatGivesUpWhileReadAheadIsReopenedOnceCurrent() throws {
         let (controller, log) = try makeController()
-        let a = TestSignal.noise(frames: 96_000, seed: 41)
-        controller.load(current: givingUp("A", a, at: 9_600), next: nil, playWhenReady: true)
+        let b = TestSignal.noise(frames: 96_000, seed: 46)
+        controller.load(
+            current: track("A", TestSignal.noise(frames: 24_000, seed: 45)), next: givingUp("B", b, at: 4_800),
+            playWhenReady: true
+        )
         controller.syncForTesting()
-        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 24_000)
+        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 48_000)
         controller.syncForTesting()
+        XCTAssertEqual(log.transitions, ["B"])
+        XCTAssertEqual(log.seeksUnsupported.map { $0.prefix(2) }, ["B "])
+        XCTAssertEqual(log.failures, [])
 
-        controller.load(current: givingUp("A2", a, at: 0), next: nil, playWhenReady: true)
-        controller.syncForTesting()
-        _ = try OfflineRenderer(controller: controller, slice: 512).render(frames: 24_000)
+        try play(controller, givingUp("B2", b, at: 9_600), frames: 24_000)
+        XCTAssertEqual(log.failures, ["B2"])
+    }
+
+    /// A give-up whose re-open never comes (the owner can't open the stream at a position) fails the song rather than
+    /// leaving it silent.
+    func testATrackGivenUpWhoseReopenNeverComesFails() throws {
+        let (controller, log) = try makeController()
+        controller.reopenTimeout = .milliseconds(50)
+        try play(controller, givingUp("A", TestSignal.noise(frames: 96_000, seed: 47), at: 9_600), frames: 24_000)
+        XCTAssertEqual(log.failures, [])
+        waitUntil(controller) { log.failures == ["A"] }
+        XCTAssertEqual(log.failures, ["A"])
+    }
+
+    /// So does a transcode a rebuild left awaiting its re-open.
+    func testARebuiltTranscodeWhoseReopenNeverComesFails() throws {
+        let (controller, log) = try makeController()
+        controller.reopenTimeout = .milliseconds(50)
+        try play(controller, transcode("A", TestSignal.noise(frames: 96_000, seed: 48)), frames: 24_000)
+        controller.setSpeed(1.5)
         controller.syncForTesting()
         XCTAssertEqual(log.seeksUnsupported.map { $0.prefix(2) }, ["A "])
-        XCTAssertEqual(log.failures, ["A2"])
+        waitUntil(controller) { log.failures == ["A"] }
+        XCTAssertEqual(log.failures, ["A"])
     }
 
     /// A direct-play stream (seekable) whose download gives up fails as before: only transcodes are re-opened.
