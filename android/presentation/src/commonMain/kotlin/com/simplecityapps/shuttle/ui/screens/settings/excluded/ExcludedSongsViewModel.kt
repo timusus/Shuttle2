@@ -30,7 +30,7 @@ class ExcludedSongsViewModel @Inject constructor(
     observeSongs: ObserveSongs,
     private val mediaActionHandler: MediaActionHandler
 ) : ViewModel() {
-    val uiState: StateFlow<ExcludedSongsUiState> = observeSongs(SongQuery.All(includeExcluded = true))
+    val uiState: StateFlow<ExcludedSongsUiState> = observeSongs(SongQuery.All(includeExcluded = true), includeUnavailable = true)
         .map { songs ->
             ExcludedSongsUiState(
                 songs = songs.filter { it.blacklisted }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name.orEmpty() }),

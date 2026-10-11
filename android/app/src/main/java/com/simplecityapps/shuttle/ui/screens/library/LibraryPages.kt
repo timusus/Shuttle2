@@ -120,6 +120,7 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
         SmartPlaylistId.RecentlyAdded -> ArtworkPlaceholder.RecentlyAdded
         SmartPlaylistId.MostPlayed -> ArtworkPlaceholder.MostPlayed
         SmartPlaylistId.History -> ArtworkPlaceholder.History
+        SmartPlaylistId.Downloaded -> ArtworkPlaceholder.Downloaded
     }
 
 /** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */

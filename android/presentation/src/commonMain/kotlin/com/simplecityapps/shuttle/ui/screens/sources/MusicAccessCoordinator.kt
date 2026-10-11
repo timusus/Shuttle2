@@ -40,7 +40,7 @@ class MusicAccessCoordinator @Inject constructor(
 
     val availability: StateFlow<LibraryAvailability> =
         combine(
-            observeSongs().map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
+            observeSongs(includeUnavailable = true).map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             access,
             importState.songImportState,
         ) { hasSongs, access, import ->

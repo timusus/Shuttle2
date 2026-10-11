@@ -18,5 +18,6 @@ class LibraryRoutesTest {
         SmartPlaylistId.RecentlyAdded.nameKey shouldBe StringKey.PLAYLIST_TITLE_RECENTLY_ADDED
         SmartPlaylistId.MostPlayed.nameKey shouldBe StringKey.PLAYLIST_TITLE_MOST_PLAYED
         SmartPlaylistId.Favourites.nameKey shouldBe StringKey.PLAYLIST_TITLE_FAVORITES
+        SmartPlaylistId.Downloaded.nameKey shouldBe StringKey.PLAYLIST_TITLE_DOWNLOADED
     }
 }

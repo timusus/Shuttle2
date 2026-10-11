@@ -68,6 +68,7 @@ val StringKey.resId: Int
         StringKey.PLAYLIST_TITLE_RECENTLY_ADDED -> MediaProviderR.string.playlist_title_recently_added
         StringKey.PLAYLIST_TITLE_MOST_PLAYED -> MediaProviderR.string.playlist_title_most_played
         StringKey.PLAYLIST_TITLE_HISTORY -> MediaProviderR.string.playlist_title_history
+        StringKey.PLAYLIST_TITLE_DOWNLOADED -> MediaProviderR.string.playlist_title_downloaded
         StringKey.DIALOG_DELETE_MESSAGE -> R.string.dialog_delete_message
         StringKey.ERROR_UNKNOWN -> R.string.error_unknown
         StringKey.PREF_CATEGORY_TITLE_DISPLAY -> R.string.pref_category_title_display
@@ -128,6 +129,8 @@ val StringKey.resId: Int
         StringKey.PREF_REPORT_PLAYBACK_TITLE -> R.string.pref_report_playback_title
         StringKey.SETTINGS_SCROBBLING_TITLE -> R.string.settings_scrobbling_title
         StringKey.PREF_REPORT_PLAYBACK_SUMMARY -> R.string.pref_report_playback_summary
+        StringKey.PREF_OFFLINE_MODE_TITLE -> R.string.pref_offline_mode_title
+        StringKey.PREF_OFFLINE_MODE_SUMMARY -> R.string.pref_offline_mode_summary
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE -> R.string.pref_download_wifi_only_title
         StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY -> R.string.pref_download_wifi_only_summary
         StringKey.PREF_STREAMING_QUALITY_UNMETERED_TITLE -> R.string.pref_streaming_quality_unmetered_title

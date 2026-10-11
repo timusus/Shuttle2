@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.rounded.DownloadDone
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
@@ -152,6 +153,7 @@ private val SmartPlaylistId.icon: ImageVector
         SmartPlaylistId.RecentlyAdded -> Icons.Rounded.LibraryAdd
         SmartPlaylistId.MostPlayed -> Icons.AutoMirrored.Rounded.TrendingUp
         SmartPlaylistId.History -> Icons.Rounded.History
+        SmartPlaylistId.Downloaded -> Icons.Rounded.DownloadDone
     }
 
 /**

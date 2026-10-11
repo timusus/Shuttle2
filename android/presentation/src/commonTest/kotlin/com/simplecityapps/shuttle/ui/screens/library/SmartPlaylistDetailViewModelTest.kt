@@ -1,11 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.SmartPlaylistId
+import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.actions.ObserveDownloadedSongs
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -39,8 +44,15 @@ class SmartPlaylistDetailViewModelTest {
 
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
 
+    private val offline = FakeOfflineSongs()
+
     private fun TestScope.viewModel(id: String): SmartPlaylistDetailViewModel {
-        val viewModel = SmartPlaylistDetailViewModel(id, ObserveSongs(songRepository), ObserveCurrentSong(FakeQueueOperations()))
+        val viewModel = SmartPlaylistDetailViewModel(
+            id,
+            ObserveSongs(songRepository, offline.filter),
+            ObserveDownloadedSongs(songRepository, offline.statusSource),
+            ObserveCurrentSong(FakeQueueOperations()),
+        )
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
         return viewModel
@@ -92,6 +104,22 @@ class SmartPlaylistDetailViewModelTest {
         val state = viewModel.uiState.value
         state.smartPlaylist?.id shouldBe SmartPlaylistId.RecentlyAdded
         state.songs.map { it.name } shouldBe listOf("Today", "Last week")
+    }
+
+    @Test
+    fun `downloaded lists only the fully downloaded songs whether or not Offline mode is on`() = runTest {
+        songRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Saved", path = "remote://1", mediaProvider = MediaProviderType.Jellyfin),
+                createSong(id = 2, name = "Streaming", path = "remote://2", mediaProvider = MediaProviderType.Jellyfin),
+                createSong(id = 3, name = "Local", path = "/local/3"),
+            )
+        )
+        offline.statuses.value = DownloadStatuses(mapOf("remote://1" to SongDownloadStatus.Downloaded, "remote://2" to SongDownloadStatus.Downloading))
+
+        val viewModel = viewModel(SmartPlaylistId.Downloaded.id)
+
+        viewModel.uiState.value.songs.map { it.name } shouldBe listOf("Saved")
     }
 
     @Test

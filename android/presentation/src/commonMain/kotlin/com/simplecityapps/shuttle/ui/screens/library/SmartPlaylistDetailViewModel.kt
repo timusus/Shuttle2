@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.actions.ObserveDownloadedSongs
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
@@ -38,6 +39,7 @@ data class SmartPlaylistDetailUiState(
 class SmartPlaylistDetailViewModel @AssistedInject constructor(
     @Assisted smartPlaylistId: String,
     observeSongs: ObserveSongs,
+    observeDownloadedSongs: ObserveDownloadedSongs,
     observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
@@ -50,7 +52,10 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
     private val smartPlaylist = SmartPlaylistId.fromId(smartPlaylistId)?.smartPlaylist
 
     private val songs = smartPlaylist
-        ?.let { playlist -> observeSongs(playlist.songQuery).map { songs -> songs.sortedWith(playlist.songQuery.sortOrder.comparator) } }
+        ?.let { playlist ->
+            val songs = if (playlist.id == SmartPlaylistId.Downloaded) observeDownloadedSongs() else observeSongs(playlist.songQuery)
+            songs.map { it.sortedWith(playlist.songQuery.sortOrder.comparator) }
+        }
         ?: flowOf(emptyList())
 
     val uiState: StateFlow<SmartPlaylistDetailUiState> = combine(

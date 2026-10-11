@@ -25,6 +25,8 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -130,6 +132,9 @@ fun LibraryScreen(
     /** Days left in the server trial, in its last days only: shown as a chip in the top bar that runs [onOpenTrial]. */
     trialDaysLeft: Int? = null,
     onOpenTrial: () -> Unit = {},
+    /** Whether Offline mode is on; the top bar's cloud icon shows it and runs [onToggleOffline]. */
+    offlineMode: Boolean = false,
+    onToggleOffline: () -> Unit = {},
     /** Shown in place of the tabs while the library has no songs (#379). */
     emptyLibrary: (@Composable (Modifier) -> Unit)? = null,
     page: @Composable (LibraryTab) -> Unit,
@@ -180,6 +185,12 @@ fun LibraryScreen(
                                     modifier = Modifier.testTag("library-trial-chip"),
                                 )
                             }
+                            S2IconButton(
+                                icon = if (offlineMode) Icons.Rounded.CloudOff else Icons.Rounded.Cloud,
+                                contentDescription = stringResource(if (offlineMode) R.string.library_offline_mode_on else R.string.library_offline_mode_off),
+                                onClick = onToggleOffline,
+                                modifier = Modifier.testTag("library-offline-mode"),
+                            )
                             S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                             S2IconButton(
                                 icon = Icons.Rounded.MoreVert,
@@ -371,6 +382,8 @@ fun LibraryDestination(
 ) {
     val viewModel: LibraryViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val offlineViewModel: OfflineModeViewModel = metroViewModel()
+    val offlineMode by offlineViewModel.uiState.collectAsStateWithLifecycle()
     val trialViewModel: LibraryTrialChipViewModel = metroViewModel()
     val trialDaysLeft by trialViewModel.uiState.collectAsStateWithLifecycle()
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
@@ -409,6 +422,8 @@ fun LibraryDestination(
                 chrome.onClearSelection()
             },
             onOpenSettings = { onOpen(SettingsRoute) },
+            offlineMode = offlineMode,
+            onToggleOffline = offlineViewModel::toggle,
             trialDaysLeft = trialDaysLeft,
             onOpenTrial = { onOpen(PaywallRoute(PaywallSource.LibraryTrialChip)) },
             emptyLibrary = (content as? LibraryAvailability.Empty)?.let { empty ->

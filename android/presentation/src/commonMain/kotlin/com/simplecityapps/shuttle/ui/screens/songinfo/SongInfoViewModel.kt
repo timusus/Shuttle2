@@ -44,7 +44,7 @@ class SongInfoViewModel @AssistedInject constructor(
         fun create(songId: Long): SongInfoViewModel
     }
 
-    val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)))
+    val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)), includeUnavailable = true)
         .map { songs ->
             val song = songs.firstOrNull()
             SongInfoUiState(song = song, lyrics = song?.let { loadLyrics(it) }, loading = false)

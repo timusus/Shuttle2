@@ -69,6 +69,9 @@
     </plurals>
     <!-- Content description of the Library top bar's overflow button -->
     <string name="library_more_options">More options</string>
+    <!-- Library top bar: switch for Offline mode, which shows only local and downloaded songs; the label names the state it is in -->
+    <string name="library_offline_mode_on">Offline mode on</string>
+    <string name="library_offline_mode_off">Offline mode off</string>
     <!-- Content description of the up button on detail screens and folders -->
     <string name="library_navigate_up">Navigate up</string>
     <!-- Library tab label for folders -->

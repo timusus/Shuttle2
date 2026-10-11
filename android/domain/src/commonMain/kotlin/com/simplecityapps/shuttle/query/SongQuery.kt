@@ -117,6 +117,12 @@ sealed class SongQuery(
         predicate = rules.predicate(context)
     )
 
+    /** The songs stored under [paths], the `Song.path`s of the completed downloads; the paths come from the download state, not the library. */
+    data class Downloaded(val paths: Set<String> = emptySet()) :
+        SongQuery(
+            predicate = { song -> song.path in paths }
+        )
+
     /** The songs added in the last [days] days, most recent first. A tag edit doesn't count: it moves lastModified, not dateAdded. */
     @OptIn(ExperimentalTime::class)
     data class RecentlyAdded(val days: Int = 14) :

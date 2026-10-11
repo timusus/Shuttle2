@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import com.simplecityapps.createAudioFile
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import io.kotest.matchers.shouldBe
@@ -36,7 +37,7 @@ class TagEditorViewModelTest {
 
     private fun TestScope.viewModel(vararg songIds: Long) = TagEditorViewModel(
         songIds.toList(),
-        ObserveSongs(songRepository),
+        ObserveSongs(songRepository, FakeOfflineSongs().filter),
         ReadSongTags(tagFileAccess),
         WriteSongTags(tagFileAccess, songRepository),
         tagFileAccess,

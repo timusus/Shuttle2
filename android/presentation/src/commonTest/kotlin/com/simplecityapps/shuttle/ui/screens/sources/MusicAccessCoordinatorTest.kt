@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeMediaSources
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.Progress
@@ -45,7 +46,7 @@ class MusicAccessCoordinatorTest {
     private val mediaSources = FakeMediaSources()
     private val settings = SourcesSettings(SettingsStore(InMemoryKeyValueStore()))
 
-    private fun TestScope.coordinator() = MusicAccessCoordinator(ObserveSongs(songRepository), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler))).also { coordinator ->
+    private fun TestScope.coordinator() = MusicAccessCoordinator(ObserveSongs(songRepository, FakeOfflineSongs().filter), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler))).also { coordinator ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { coordinator.availability.collect {} }
     }
 

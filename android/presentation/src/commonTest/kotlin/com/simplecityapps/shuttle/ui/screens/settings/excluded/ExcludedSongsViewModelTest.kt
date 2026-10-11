@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings.excluded
 
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
@@ -31,7 +32,7 @@ class ExcludedSongsViewModelTest {
     private val songRepository = FakeSongRepository()
     private val mediaActionHandler = TestMediaActions(songRepository = songRepository).handler
 
-    private fun viewModel() = ExcludedSongsViewModel(ObserveSongs(songRepository), mediaActionHandler)
+    private fun viewModel() = ExcludedSongsViewModel(ObserveSongs(songRepository, FakeOfflineSongs().filter), mediaActionHandler)
 
     @Test
     fun `loads until the library arrives`() {

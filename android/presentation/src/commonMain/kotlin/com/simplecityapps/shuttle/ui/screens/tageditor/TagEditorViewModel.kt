@@ -53,7 +53,7 @@ class TagEditorViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val songs = observeSongs(SongQuery.SongIds(songIds)).first()
+            val songs = observeSongs(SongQuery.SongIds(songIds), includeUnavailable = true).first()
                 .sortedBy { songIds.indexOf(it.id) }
             val tags = readSongTags(songs) { read, total -> _uiState.value = TagEditorUiState.Reading(TagProgress(read, total)) }
             editable = tags.editable

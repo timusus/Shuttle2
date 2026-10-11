@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings.downloads
 
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -42,7 +43,7 @@ class DownloadsViewModelTest {
         override fun observe(): Flow<DownloadStatuses> = statuses
     }
 
-    private fun viewModel() = DownloadsViewModel(ObserveSongs(songRepository), ObserveDownloadStatuses(statusSource), songDownloader)
+    private fun viewModel() = DownloadsViewModel(ObserveSongs(songRepository, FakeOfflineSongs().filter), ObserveDownloadStatuses(statusSource), songDownloader)
 
     private fun remoteSong(id: Long, album: String, name: String = "song $id") = createSong(id = id, name = name, album = album, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://$id")
 

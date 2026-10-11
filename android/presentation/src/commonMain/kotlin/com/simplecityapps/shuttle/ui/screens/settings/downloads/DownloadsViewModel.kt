@@ -43,7 +43,7 @@ class DownloadsViewModel @Inject constructor(
     observeDownloadStatuses: ObserveDownloadStatuses,
     private val songDownloader: SongDownloader
 ) : ViewModel() {
-    val uiState: StateFlow<DownloadsUiState> = combine(observeSongs(), observeDownloadStatuses()) { songs, statuses ->
+    val uiState: StateFlow<DownloadsUiState> = combine(observeSongs(includeUnavailable = true), observeDownloadStatuses()) { songs, statuses ->
         val albums = songs
             .filter { statuses.states[it.path] == SongDownloadStatus.Downloaded }
             .groupBy { it.albumGroupKey }

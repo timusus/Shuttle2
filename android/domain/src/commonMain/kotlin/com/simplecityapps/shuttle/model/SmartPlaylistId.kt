@@ -21,6 +21,9 @@ enum class SmartPlaylistId(
 
     /** Every song that has played to the end, most recent first. */
     History("history", SongQuery.LastCompleted(Instant.fromEpochMilliseconds(0))),
+
+    /** Every fully downloaded song (#498). Its paths are the download state's, so `ObserveDownloadedSongs` fills the query in. */
+    Downloaded("downloaded", SongQuery.Downloaded()),
     ;
 
     val smartPlaylist: SmartPlaylist get() = SmartPlaylist(this)

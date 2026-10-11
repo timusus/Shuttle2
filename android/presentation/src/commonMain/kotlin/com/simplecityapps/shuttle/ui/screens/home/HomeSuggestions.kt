@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsReposi
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -71,10 +72,16 @@ class ResolveHomeItems @Inject constructor(
         return contexts.distinct().mapNotNull { context ->
             when (context) {
                 is PlayContext.Album -> albums[context.groupKey]?.let { HomeItem.AlbumItem(it) }
+
                 is PlayContext.AlbumArtist -> artists[context.groupKey]?.let { HomeItem.ArtistItem(it) }
+
                 is PlayContext.Genre -> genres[context.name]?.let { HomeItem.GenreItem(it) }
+
                 is PlayContext.Playlist -> playlists[context.playlistId]?.let { HomeItem.PlaylistItem(it) }
-                is PlayContext.SmartPlaylist -> HomeItem.SmartPlaylistItem(context.smartPlaylistId)
+
+                // The Downloaded playlist's songs come from the download state, which a tile's play action doesn't read
+                is PlayContext.SmartPlaylist -> HomeItem.SmartPlaylistItem(context.smartPlaylistId).takeUnless { context.smartPlaylistId == SmartPlaylistId.Downloaded }
+
                 is PlayContext.UserSmartPlaylist, PlayContext.None -> null
             }?.let { context to it }
         }.toMap()

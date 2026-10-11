@@ -12,6 +12,7 @@ class DownloadSettings @Inject constructor(
 ) {
     val wifiOnly = store.preference(WifiOnly)
     val notificationPermissionAsked = deviceLocalStore.preference(NotificationPermissionAsked)
+    val offlineMode = store.preference(OfflineMode)
 
     init {
         // A copy restored from a backup describes the old device, so it is dropped, not honoured. Skipped where both
@@ -22,6 +23,9 @@ class DownloadSettings @Inject constructor(
     companion object {
         /** Downloads wait for an unmetered network. On by default, so nothing eats mobile data unasked. */
         val WifiOnly = Setting.boolean("pref_download_wifi_only", true)
+
+        /** Library lists leave out server songs that aren't downloaded, so nothing tapped fails to play (#498). */
+        val OfflineMode = Setting.boolean("pref_offline_mode", false)
 
         /** The notification permission was asked for once, on a download that went ahead; it isn't asked again. */
         val NotificationPermissionAsked = Setting.boolean("pref_download_notification_permission_asked", false)

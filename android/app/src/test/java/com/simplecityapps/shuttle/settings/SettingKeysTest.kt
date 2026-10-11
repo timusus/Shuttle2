@@ -79,6 +79,7 @@ class SettingKeysTest {
             "EqualizerSettings.Enabled: equalizer_enabled = false",
             "EqualizerSettings.PreampGain: equalizer_preamp_gain = 0.0",
             "DownloadSettings.WifiOnly: pref_download_wifi_only = true",
+            "DownloadSettings.OfflineMode: pref_offline_mode = false",
             "DownloadSettings.NotificationPermissionAsked: pref_download_notification_permission_asked = false"
         )
     }

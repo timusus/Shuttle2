@@ -106,7 +106,7 @@ class TestMediaActions(
     val clearPlaylist = ClearPlaylist(playlistRepository)
     val deletePlaylist = DeletePlaylist(playlistRepository)
     val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
-    val observeSongs = ObserveSongs(songRepository)
+    val observeSongs = ObserveSongs(songRepository, FakeOfflineSongs().filter)
     val observeAlbums = ObserveAlbums(albumRepository)
     val observeArtists = ObserveArtists(albumArtistRepository)
     val observeArtistAlbums = ObserveArtistAlbums(albumRepository, songRepository)

@@ -222,6 +222,11 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         summary = StringKey.PREF_DOWNLOADS_SUMMARY
                     ),
                     SettingItem.Switch(
+                        setting = DownloadSettings.OfflineMode,
+                        title = StringKey.PREF_OFFLINE_MODE_TITLE,
+                        summary = StringKey.PREF_OFFLINE_MODE_SUMMARY
+                    ),
+                    SettingItem.Switch(
                         setting = DownloadSettings.WifiOnly,
                         title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
                         summary = StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
