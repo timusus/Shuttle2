@@ -691,8 +691,8 @@ class AppShellTest {
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.Queue)
 
-        robot.queueRowActions("First song") shouldBe listOf("Play Next", "Remove from Queue", "Move down")
-        robot.queueRowActions("Third song") shouldBe listOf("Play Next", "Remove from Queue", "Move up", "Move to top")
+        robot.queueRowActions("First song") shouldBe listOf("Play next", "Remove from queue", "Move down")
+        robot.queueRowActions("Third song") shouldBe listOf("Play next", "Remove from queue", "Move up", "Move to top")
     }
 
     @Test
