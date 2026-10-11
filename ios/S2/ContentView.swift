@@ -65,11 +65,21 @@ struct ContentView: View {
             .onAppear {
                 navigator.restore(home: homeStorage, library: libraryStorage, search: searchStorage, categories: categoryStorage)
                 openFirstRunIfNeeded(tier: tier)
+                performQuickAction()
             }
+            .onChange(of: QuickActionRouter.shared.pending) { performQuickAction() }
             .onChange(of: navigator.homePath) { _, new in homeStorage = Navigator.StoredPath(new) }
             .onChange(of: navigator.libraryPath) { _, new in libraryStorage = Navigator.StoredPath(new) }
             .onChange(of: navigator.searchPath) { _, new in searchStorage = Navigator.StoredPath(new) }
             .onChange(of: navigator.categoryPathsSnapshot) { _, new in categoryStorage = new }
+    }
+
+    /// Carries out a home-screen quick action (#761) once the shell is up, after the paths are restored.
+    private func performQuickAction() {
+        guard let action = QuickActionRouter.shared.pending else { return }
+        QuickActionRouter.shared.pending = nil
+        showNowPlaying = false
+        Task { await action.perform(on: navigator) }
     }
 
     /// Opens the source setup's welcome, already in place rather than sliding up over the shell, when there's no

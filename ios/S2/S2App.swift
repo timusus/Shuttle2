@@ -25,6 +25,7 @@ struct S2App: App {
                 .task {
                     StartupTrace.step("libraryImportAtLaunch") { LibraryImport.atLaunch() }
                     LibraryImport.syncIfStale()
+                    QuickActionRouter.shared.install()
                     // Siri and Spotlight learn the playlists' names for "Play <playlist> in Shuttle Music"
                     ShuttleShortcuts.updateAppShortcutParameters()
                     // ... and "Play <artist> on Shuttle Music" learns the library (#951)
@@ -71,6 +72,24 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         if !AppGraph.shared.urlSessionDownloads.handleBackgroundEvents(identifier: identifier, completionHandler: completionHandler) {
             completionHandler()
         }
+    }
+
+    /// A cold launch from a home-screen quick action carries it in the connection options (the scene delegate only
+    /// hears of one while the app runs). CarPlay keeps its manifest configuration.
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        if connectingSceneSession.role == .carTemplateApplication {
+            return UISceneConfiguration(name: "CarPlay", sessionRole: connectingSceneSession.role)
+        }
+        if let item = options.shortcutItem, let action = HomeScreenQuickAction(item) {
+            Task { @MainActor in QuickActionRouter.shared.pending = action }
+        }
+        let configuration = UISceneConfiguration(name: nil, sessionRole: connectingSceneSession.role)
+        configuration.delegateClass = QuickActionSceneDelegate.self
+        return configuration
     }
 
     /// Siri's "play <something>" (#951): the media intent is handled here, in the app's process.
