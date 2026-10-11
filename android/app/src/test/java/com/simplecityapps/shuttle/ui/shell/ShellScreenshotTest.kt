@@ -212,6 +212,16 @@ class ShellScreenshotTest {
         shot("flip-tabletop-now-playing")
     }
 
+    /** An unfolded foldable half-open on a table: the song above the hinge, the transport below it. */
+    @Test
+    @Config(qualifiers = "w700dp-h840dp-xhdpi")
+    fun foldableUnfoldedTabletop() {
+        val hinge = HingeInfo(bounds = Rect(0f, 838f, 700f, 842f), isFlat = false, isVertical = false, isSeparating = true, isOccluding = false)
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(700, 840, Posture(isTabletop = true, hingeList = listOf(hinge))))
+        robot.tapMiniPlayer()
+        shot("foldable-unfolded-tabletop-now-playing")
+    }
+
     @Test
     @Config(qualifiers = "w700dp-h840dp-xhdpi")
     fun foldableUnfoldedMedium() {

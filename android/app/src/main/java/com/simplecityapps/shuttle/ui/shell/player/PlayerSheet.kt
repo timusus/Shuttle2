@@ -113,6 +113,7 @@ internal fun PlayerSheet(
                         progress = progress,
                         actions = actions,
                         verticalFold = layout.verticalFold,
+                        horizontalFold = layout.horizontalFold,
                         compactHeight = layout.compactHeight,
                         onCollapse = { collapse() },
                         onOpenRoute = onOpenRoute,

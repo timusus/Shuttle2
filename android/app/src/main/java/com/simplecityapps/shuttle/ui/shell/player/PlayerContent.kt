@@ -124,11 +124,28 @@ internal fun SideBySidePlayer(
     progress: () -> PlayerProgress,
     actions: PlayerActions,
     verticalFold: Rect?,
+    horizontalFold: Rect?,
     compactHeight: Boolean,
     onCollapse: () -> Unit,
     onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (horizontalFold != null) {
+        Column(modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying).windowInsetsPadding(WindowInsets.statusBars)) {
+            TabletopPlayer(
+                player = player,
+                progress = progress,
+                actions = actions,
+                fold = horizontalFold,
+                onCollapse = onCollapse,
+                onOpenRoute = onOpenRoute,
+                bar = {
+                    NowPlayingBar(player, actions, selected = player.panel, onPanel = actions::togglePanel, modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars))
+                },
+            )
+        }
+        return
+    }
     val panel = player.panel
     // One FoldSplit whatever the panel, so the player keeps its place in the composition, and its
     // menu, seek and artwork, as a panel opens or closes; with none open it takes the whole width.

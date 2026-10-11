@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -112,26 +113,7 @@ internal fun FullPlayer(
     }
     Column(modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying).windowInsetsPadding(WindowInsets.statusBars)) {
         if (tabletopFold != null) {
-            FoldSplit(
-                fold = tabletopFold,
-                orientation = Orientation.Vertical,
-                modifier = Modifier.weight(1f),
-                first = {
-                    Column(Modifier.fillMaxSize()) {
-                        CollapseHandle(onCollapse)
-                        NowPlayingSong(player, actions, gap = S2Spacing.medium, modifier = Modifier.weight(1f))
-                    }
-                },
-                second = {
-                    val panel = player.panel
-                    if (panel == null) {
-                        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) { Transport(player, progress, actions, gap = S2Spacing.medium) }
-                    } else {
-                        PlayerPanel(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.fillMaxSize())
-                    }
-                },
-            )
-            bar()
+            TabletopPlayer(player, progress, actions, tabletopFold, onCollapse, onOpenRoute, bar)
         } else {
             // The closing panel keeps its content while it slides away.
             val lastPanel = remember { LastPanel() }
@@ -152,6 +134,42 @@ internal fun FullPlayer(
             }
         }
     }
+}
+
+/**
+ * The player split at a horizontal [fold] (a half-opened device on a table): the song above it, the
+ * transport, or the open panel, below it, and the [bar] under both. Fills the column it is in.
+ */
+@Composable
+internal fun ColumnScope.TabletopPlayer(
+    player: PlayerUiState,
+    progress: () -> PlayerProgress,
+    actions: PlayerActions,
+    fold: Rect,
+    onCollapse: () -> Unit,
+    onOpenRoute: (NavKey) -> Unit,
+    bar: @Composable () -> Unit,
+) {
+    FoldSplit(
+        fold = fold,
+        orientation = Orientation.Vertical,
+        modifier = Modifier.weight(1f),
+        first = {
+            Column(Modifier.fillMaxSize()) {
+                CollapseHandle(onCollapse)
+                NowPlayingSong(player, actions, gap = S2Spacing.medium, modifier = Modifier.weight(1f))
+            }
+        },
+        second = {
+            val panel = player.panel
+            if (panel == null) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) { Transport(player, progress, actions, gap = S2Spacing.medium) }
+            } else {
+                PlayerPanel(panel, player, actions, onOpenRoute, onClose = { actions.showPanel(null) }, modifier = Modifier.fillMaxSize())
+            }
+        },
+    )
+    bar()
 }
 
 /** The panel [FullPlayer] last showed, read only while it slides away. */
