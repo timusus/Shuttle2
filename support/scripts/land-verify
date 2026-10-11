@@ -19,7 +19,8 @@
 # $LAND_ARTIFACT_DIR/<phase>.log. The whole suites run in support/scripts/full-verify.sh.
 #
 # Env: LAND_PHASES="a b" runs only those phases (plus a prerequisite, silent unless it fails).
-# LAND_MODE=confirm with LAND_ONLY="<names>" (the `!!` test names) reruns just those tests in
+# LAND_MODE=confirm|base|bisect with LAND_ONLY="<names>" (the `!!` test names; land sets it for
+# the last two only through verify_failed_cmd) reruns just those tests in
 # unit-tests, architecture and ios-tests; a name that maps to no test source runs its phases whole.
 # LAND_RETRY=1 compiles Kotlin non-incrementally (land's retry after an incremental-cache
 # flake). S2_LAND_SIM_UDID overrides the simulator ("S2 Land iPhone", created on first use).
@@ -202,7 +203,8 @@ ios_class() {
 confirm=0 unit_ok=1 ios_ok=1 unit_plan="" arch_plan="" ios_plan=()
 plan_confirm() {
     local n name class module c
-    [ "${LAND_MODE:-}" = confirm ] && [ -n "${LAND_ONLY// /}" ] || return 0
+    case "${LAND_MODE:-}" in confirm | base | bisect) ;; *) return 0 ;; esac
+    [ -n "${LAND_ONLY// /}" ] || return 0
     confirm=1
     # Parameterised names like Foo.bar[1] would otherwise glob-expand.
     set -f

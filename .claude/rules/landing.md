@@ -20,8 +20,8 @@ paths:
   domain/shared/core/commonMain sources changed, and assembleDebug; iOS only when the picked commits touch `ios/`, `shared/`,
   `android/domain|presentation|core` or a KMP module's commonMain/commonTest/iosMain/iosTest: framework build,
   `:<module>:iosSimulatorArm64Test` for the KMP modules that changed, app build and the `S2Tests` classes
-  `ios-tests-for` maps from the changed files. `land-verify` honours `LAND_PHASES` and `LAND_MODE=confirm` + `LAND_ONLY`
-  (reruns just the named failing tests; its `!!` test names are `test:<Class.method>` with `%20` for spaces) and retries an
+  `ios-tests-for` maps from the changed files. `land-verify` (also land's `verify_failed_cmd`) honours `LAND_PHASES` and `LAND_ONLY` under
+  `LAND_MODE=confirm|base|bisect` (reruns just the named failing tests; its `!!` test names are `test:<Class.method>` with `%20` for spaces) and retries an
   `Incremental compilation failed` flake with `-Pkotlin.incremental=false`. After the push, a best-effort iPhone install
   (`post_land_hook`) runs detached when the landing touched what the phone runs and the phone is reachable.
 - **Full verify.** `support/scripts/full-verify.sh` (via `detach start full-verify -- ...`) runs the whole suites
