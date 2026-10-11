@@ -11,15 +11,15 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn:
     text: "More options"
     rightOf: "Playback Five"
-- tapOn: "Favorite"
+- tapOn: "Favourite"
 - tapOn:
     text: "More options"
     rightOf: "Playback Four"
-- tapOn: "Favorite"
+- tapOn: "Favourite"
 - tapOn:
     text: "More options"
     rightOf: "Playback Three"
-- tapOn: "Favorite"
+- tapOn: "Favourite"
 # Play Playback Two and favorite it from Now Playing
 - tapOn: "Playback Two"
 - tapOn:
@@ -27,7 +27,7 @@ appId: com.simplecityapps.shuttle.dev
 - extendedWaitUntil:
     visible: "Queue"
     timeout: 10000
-- tapOn: "Favorite"
+- tapOn: "Favourite"
 - back
 - runFlow:
     file: _library-tab.yaml

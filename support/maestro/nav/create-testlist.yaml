@@ -28,7 +28,7 @@ appId: com.simplecityapps.shuttle.dev
       - tapOn: "Artist A Album 1 Track 2"
       - assertVisible: "2 selected"
       - tapOn: "More options"
-      - tapOn: "Add to Playlist"
+      - tapOn: "Add to playlist"
       - tapOn: "New Playlist"
       - tapOn: "Playlist Name"
       - inputText: "TestList"

@@ -13,7 +13,7 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn:
     text: "More options"
     rightOf: "Playback One"
-- assertVisible: "Play Next"
+- assertVisible: "Play next"
 - takeScreenshot: dc-467-songs-row-menu
 - back
 - runFlow:

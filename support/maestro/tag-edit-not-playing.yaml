@@ -7,7 +7,7 @@ appId: com.simplecityapps.shuttle.dev
     text: "Taglib Three"
     waitToSettleTimeoutMs: 500
 - tapOn:
-    text: "Edit Tags"
+    text: "Edit tags"
     waitToSettleTimeoutMs: 500
 - tapOn:
     text: "Title"
