@@ -26,6 +26,15 @@ class SearchScreenTest {
     }
 
     @Test
+    fun `the field offers Settings`() {
+        robot.setContent(SearchScenarios.start)
+
+        robot.tapSettings()
+
+        robot.settingsOpened shouldBe 1
+    }
+
+    @Test
     fun `a recent search fills the field and can be removed`() {
         robot.setContent(SearchScenarios.recent)
         robot.assertTextDisplayed("Recent searches")

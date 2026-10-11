@@ -17,6 +17,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,6 +37,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
+import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2SearchField
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
@@ -46,8 +50,10 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
 import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
 import com.simplecityapps.shuttle.ui.shell.ShellTab
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
 class SearchCallbacks(
@@ -62,6 +68,7 @@ class SearchCallbacks(
     val onPlaylistClick: (Playlist) -> Unit,
     val onShowActions: (MediaActionsTarget) -> Unit,
     val onPlay: (MediaSelection) -> Unit,
+    val onOpenSettings: () -> Unit,
 )
 
 /**
@@ -69,6 +76,7 @@ class SearchCallbacks(
  * while the field is empty, or the results grouped by type. [queryState] holds the field's text; the destination
  * feeds it to the ViewModel.
  */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun SearchScreen(
     uiState: SearchUiState,
@@ -78,8 +86,17 @@ fun SearchScreen(
 ) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-    // Arriving with nothing typed means the user wants to type.
-    LaunchedEffect(Unit) { if (queryState.text.isEmpty()) focusRequester.requestFocus() }
+    // The keyboard fills a landscape phone, so compact height never raises it unasked.
+    val compactHeight = ShellLayout.from(currentWindowAdaptiveInfoV2()).compactHeight
+    var autoFocused by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(compactHeight) {
+        if (!autoFocused && !compactHeight && queryState.text.isEmpty()) focusRequester.requestFocus()
+        autoFocused = true
+    }
+    val reselects = LocalTabReselects.current
+    LaunchedEffect(reselects, compactHeight) {
+        reselects.collect { if (it == ShellTab.Search && !compactHeight) focusRequester.requestFocus() }
+    }
 
     Column(modifier.fillMaxSize()) {
         S2SearchField(
@@ -90,6 +107,9 @@ fun SearchScreen(
             },
             placeholder = stringResource(R.string.search_placeholder),
             focusRequester = focusRequester,
+            trailingAction = {
+                S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
+            },
             modifier = Modifier
                 .statusBarsPadding()
                 .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)

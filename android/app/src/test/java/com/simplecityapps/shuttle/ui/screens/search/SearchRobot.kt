@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
@@ -31,6 +32,7 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
     var searches = 0
         private set
     var allSelected = 0
+    var settingsOpened = 0
         private set
     val toggledCategories = mutableListOf<SearchCategory>()
     val removedRecentSearches = mutableListOf<String>()
@@ -63,6 +65,7 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
         onPlaylistClick = { openedPlaylists += it },
         onShowActions = { shownActions += it },
         onPlay = { playedSelections += it },
+        onOpenSettings = { settingsOpened++ },
     )
 
     fun tapText(text: String) {
@@ -80,6 +83,10 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
 
     fun tapRemoveRecentSearch(index: Int) {
         rule.onAllNodesWithContentDescription("Remove from recent searches")[index].performClick()
+    }
+
+    fun tapSettings() {
+        rule.onNodeWithContentDescription("Settings").performClick()
     }
 
     fun assertTextDisplayed(text: String) {
