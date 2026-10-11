@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.library.genres
 import com.simplecityapps.createGenre
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakeOfflineSongs
+import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.ui.actions.ObserveGenreCovers
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import io.kotest.matchers.shouldBe
@@ -33,7 +35,7 @@ class GenreCoversViewModelTest {
 
     private val genreRepository = FakeGenreRepository()
 
-    private fun viewModel() = GenreCoversViewModel(ObserveGenres(genreRepository), ObserveGenreCovers(genreRepository))
+    private fun viewModel() = GenreCoversViewModel(ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())), ObserveGenreCovers(genreRepository))
 
     // #643
     @Test

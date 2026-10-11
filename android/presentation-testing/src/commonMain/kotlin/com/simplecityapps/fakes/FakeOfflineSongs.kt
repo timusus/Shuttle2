@@ -1,7 +1,9 @@
 package com.simplecityapps.fakes
 
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
 import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
+import com.simplecityapps.shuttle.ui.actions.FilterOfflineGroups
 import com.simplecityapps.shuttle.ui.actions.FilterOfflineSongs
 import com.simplecityapps.shuttle.ui.actions.OfflineModeSource
 import kotlinx.coroutines.flow.Flow
@@ -25,4 +27,6 @@ class FakeOfflineSongs {
     }
 
     val filter = FilterOfflineSongs(modeSource, statusSource)
+
+    fun groups(songRepository: SongRepository) = FilterOfflineGroups(modeSource, statusSource, songRepository)
 }

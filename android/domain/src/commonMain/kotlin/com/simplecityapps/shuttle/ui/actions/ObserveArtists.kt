@@ -8,11 +8,12 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * The artists matching [AlbumArtistQuery], by default the Artists list (every album artist, [AlbumArtistQuery.All]);
- * re-emits as they change.
+ * re-emits as they change. With Offline mode on, artists with no song that can play are left out.
  */
 @Inject
 class ObserveArtists(
     private val albumArtistRepository: AlbumArtistRepository,
+    private val filterOfflineGroups: FilterOfflineGroups,
 ) {
-    operator fun invoke(query: AlbumArtistQuery = AlbumArtistQuery.All()): Flow<List<AlbumArtist>> = albumArtistRepository.getAlbumArtists(query)
+    operator fun invoke(query: AlbumArtistQuery = AlbumArtistQuery.All()): Flow<List<AlbumArtist>> = filterOfflineGroups.albumArtists(albumArtistRepository.getAlbumArtists(query))
 }

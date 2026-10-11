@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.library.genres
 
 import com.simplecityapps.createGenre
 import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.mediaprovider.Progress
@@ -43,7 +45,7 @@ class GenreListViewModelTest {
     private val importState = FakeSongImportStateProvider()
 
     private fun viewModel() = GenreListViewModel(
-        observeGenres = ObserveGenres(genreRepository),
+        observeGenres = ObserveGenres(genreRepository, FakeOfflineSongs().groups(FakeSongRepository())),
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,

@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.mediaprovider.Progress
@@ -50,7 +52,7 @@ class AlbumArtistListViewModelTest {
     private val importState = FakeSongImportStateProvider()
 
     private fun viewModel() = AlbumArtistListViewModel(
-        observeArtists = ObserveArtists(repository),
+        observeArtists = ObserveArtists(repository, FakeOfflineSongs().groups(FakeSongRepository())),
         observeSetting = ObserveSetting(settingsStore),
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
