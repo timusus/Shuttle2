@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
+import com.simplecityapps.shuttle.designsystem.theme.isLargeText
 
 /** The name of the Cast device playback plays on, or null while it plays on this one. */
 @Composable
@@ -129,9 +130,11 @@ internal fun NowPlayingTitle(
     modifier: Modifier = Modifier,
 ) {
     val current = player.current
+    // At large text the title wraps and the quality line gives way, so what's playing stays readable.
+    val largeText = isLargeText()
     Row(modifier.fillMaxWidth().padding(start = S2Spacing.medium + S2Spacing.xsmall, end = S2Spacing.small, bottom = S2Spacing.small), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
             Text(
                 text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
                 style = MaterialTheme.typography.titleLarge,
@@ -142,7 +145,7 @@ internal fun NowPlayingTitle(
             val castingTo = player.castingTo()
             if (castingTo != null) {
                 S2PlayingOn(castingTo, style = MaterialTheme.typography.bodyMedium)
-            } else {
+            } else if (!largeText) {
                 current?.song?.qualityLine(player.delivered)?.let { quality ->
                     Text(text = quality, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
