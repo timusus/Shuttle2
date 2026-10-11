@@ -26,11 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
@@ -90,7 +92,10 @@ fun S2SeekBar(
                 SliderDefaults.Track(sliderState = sliderState, modifier = Modifier.height(trackHeight), enabled = enabled)
             },
         )
-        Row(Modifier.padding(horizontal = S2Spacing.xsmall), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(horizontal = S2Spacing.xsmall).pullUp(SeekTimesPullUp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 formatDuration(if (dragging) (fraction * durationMs).toLong() else positionMs),
                 style = MaterialTheme.typography.time,
@@ -127,6 +132,18 @@ fun S2SeekBar(
             )
         }
     }
+}
+
+/**
+ * The slider and the tappable end label each pad their content out to a 48dp touch target, which leaves the
+ * times about 32dp under the track. Pulling the row up by this much leaves one [S2Spacing.small] step.
+ */
+private val SeekTimesPullUp = S2Spacing.medium + S2Spacing.small
+
+private fun Modifier.pullUp(by: Dp): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val shift = by.roundToPx().coerceAtMost(placeable.height)
+    layout(placeable.width, placeable.height - shift) { placeable.place(0, -shift) }
 }
 
 /** The end label while the duration is unknown or the stream is live. */

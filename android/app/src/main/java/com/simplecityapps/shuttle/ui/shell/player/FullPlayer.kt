@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -73,6 +75,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PanelSheet
 import com.simplecityapps.shuttle.designsystem.component.S2SheetHandle
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.home.route
@@ -349,7 +352,10 @@ private fun BarLabelled(
             },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        content(Modifier.clearAndSetSemantics { })
+        // Buttons differ in height (the Cast route button is a touch target, the others smaller); one slot height keeps the labels on a baseline.
+        Box(Modifier.height(S2TouchTarget.minimum), contentAlignment = Alignment.Center) {
+            content(Modifier.clearAndSetSemantics { })
+        }
         Text(text = label, style = MaterialTheme.typography.labelSmall, maxLines = 1)
     }
 }

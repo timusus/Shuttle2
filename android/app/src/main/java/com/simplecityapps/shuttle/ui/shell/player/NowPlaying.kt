@@ -28,7 +28,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -132,9 +134,11 @@ internal fun NowPlayingTitle(
     val current = player.current
     // At large text the title wraps and the quality line gives way, so what's playing stays readable.
     val largeText = isLargeText()
-    Row(modifier.fillMaxWidth().padding(start = S2Spacing.medium + S2Spacing.xsmall, end = S2Spacing.small, bottom = S2Spacing.small), verticalAlignment = Alignment.CenterVertically) {
+    val titleStyle = MaterialTheme.typography.headlineMediumEmphasized
+    val titleLineHeight = with(LocalDensity.current) { titleStyle.lineHeight.roundToPx() }
+    Row(modifier.fillMaxWidth().padding(start = S2Spacing.medium + S2Spacing.xsmall, end = S2Spacing.small, bottom = S2Spacing.small), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
+            Text(text = current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
             Text(
                 text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
                 style = MaterialTheme.typography.titleLarge,
@@ -158,6 +162,11 @@ internal fun NowPlayingTitle(
             checked = player.favourite,
             onCheckedChange = { actions.toggleFavourite() },
             enabled = current != null,
+            // Centred on the title's line, not on the whole block: the button takes only that line's height from the row.
+            modifier = Modifier.layout { measurable, constraints ->
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, titleLineHeight) { placeable.place(0, (titleLineHeight - placeable.height) / 2) }
+            },
         )
     }
 }
