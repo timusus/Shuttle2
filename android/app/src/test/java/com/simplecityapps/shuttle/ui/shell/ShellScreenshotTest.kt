@@ -152,6 +152,16 @@ class ShellScreenshotTest {
         shot("phone-landscape-now-playing")
     }
 
+    /** The queue opens beside the controls, half the width, rather than over a full-height sheet. */
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-xhdpi")
+    fun phoneLandscapeQueue() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(891, 411), systemBars = PhoneSystemBars.copy(leftCutoutDp = 32))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        shot("phone-landscape-queue")
+    }
+
     @Test
     @Config(qualifiers = "w891dp-h411dp-night-xhdpi")
     fun phoneLandscapeNowPlayingDark() {

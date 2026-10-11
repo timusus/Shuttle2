@@ -200,6 +200,7 @@ internal fun SideBySidePlayer(
 /**
  * A landscape phone's player: the artwork square on the left at the full height, and on the right
  * the handle, the title, the transport and the bar, centred. Stacked, the artwork would be squeezed out.
+ * With a panel open, the controls alone fill their half and the panel takes the other.
  */
 @Composable
 private fun CompactHeightPlayer(
@@ -215,8 +216,11 @@ private fun CompactHeightPlayer(
             .windowInsetsPadding(WindowInsets.navigationBars),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.fillMaxHeight().aspectRatio(1f)) {
-            NowPlayingArtwork(player, actions, gap = S2Spacing.small, modifier = Modifier.fillMaxSize())
+        // An open panel takes half the width, which leaves the artwork no room beside the controls.
+        if (player.panel == null) {
+            Box(Modifier.fillMaxHeight().aspectRatio(1f)) {
+                NowPlayingArtwork(player, actions, gap = S2Spacing.small, modifier = Modifier.fillMaxSize())
+            }
         }
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
             CollapseHandle(onCollapse)
