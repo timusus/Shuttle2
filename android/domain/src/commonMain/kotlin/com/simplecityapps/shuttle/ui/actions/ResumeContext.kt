@@ -24,6 +24,7 @@ class ResumeContext(
     private val playbackOperations: PlaybackOperations,
     private val playHistoryRepository: PlayHistoryRepository,
     private val resolveSongs: ResolveSongs,
+    private val filterPlayableSongs: FilterPlayableSongs,
 ) {
     sealed interface Result {
         data object Resumed : Result
@@ -42,7 +43,7 @@ class ResumeContext(
             return Result.Resumed
         }
         if (point == null) return Result.StartOver()
-        val songs = resolveSongs(selection)
+        val songs = filterPlayableSongs(resolveSongs(selection))
         val song = songs.find { it.mediaProvider == point.mediaProvider && it.path == point.songPath } ?: return Result.StartOver(songs)
 
         // The shuffle mode goes first, as the queue's position is into the order it picks; a queue that fails puts it back.

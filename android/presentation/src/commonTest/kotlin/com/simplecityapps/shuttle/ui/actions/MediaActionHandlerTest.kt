@@ -48,6 +48,50 @@ class MediaActionHandlerTest {
         queueOperations.lastSetQueuePosition shouldBe 1
     }
 
+    private val saved = createSong(id = 3, name = "Saved", path = "remote://3", mediaProvider = MediaProviderType.Jellyfin)
+    private val streamed = createSong(id = 4, name = "Streamed", path = "remote://4", mediaProvider = MediaProviderType.Jellyfin)
+    private val mixed = MediaSelection.Songs(listOf(song, saved, streamed))
+
+    private fun goOffline() {
+        actions.offline.offlineMode.value = true
+        actions.offline.statuses.value = DownloadStatuses(mapOf("remote://3" to SongDownloadStatus.Downloaded))
+    }
+
+    @Test
+    fun `offline play queues only the songs that can play`() = runTest {
+        goOffline()
+
+        handler.handle(MediaAction.Play(mixed)) shouldBe MediaActionResult.None
+
+        queueOperations.lastSetQueue shouldBe listOf(song, saved)
+    }
+
+    @Test
+    fun `play queues every song when Offline mode is off`() = runTest {
+        actions.offline.statuses.value = DownloadStatuses(mapOf("remote://3" to SongDownloadStatus.Downloaded))
+
+        handler.handle(MediaAction.Play(mixed))
+
+        queueOperations.lastSetQueue shouldBe listOf(song, saved, streamed)
+    }
+
+    @Test
+    fun `offline shuffle and add to queue skip songs that cannot play`() = runTest {
+        goOffline()
+
+        handler.handle(MediaAction.AddToQueue(mixed)) shouldBe Message(MediaActionMessage.AddedToQueue(2))
+        playbackOperations.addedToQueue shouldBe listOf(song, saved)
+
+        handler.handle(MediaAction.Shuffle(MediaSelection.Songs(streamed))) shouldBe Message(MediaActionMessage.NoSongs)
+    }
+
+    @Test
+    fun `offline mode leaves other actions the whole selection`() = runTest {
+        goOffline()
+
+        handler.handle(MediaAction.Favourite(mixed)) shouldBe Message(MediaActionMessage.AddedToFavourites(3))
+    }
+
     @Test
     fun `play and shuffle start the queue from the action's context`() = runTest {
         val genre = PlayContext.Genre("Ambient")

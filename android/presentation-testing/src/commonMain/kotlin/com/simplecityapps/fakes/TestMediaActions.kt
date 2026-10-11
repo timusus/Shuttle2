@@ -25,6 +25,7 @@ import com.simplecityapps.shuttle.ui.actions.DownloadSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.FavouriteSongs
+import com.simplecityapps.shuttle.ui.actions.FilterPlayableSongs
 import com.simplecityapps.shuttle.ui.actions.FindGoToTarget
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaStoreSongDeleter
@@ -61,7 +62,10 @@ class TestMediaActions(
     albumRepository: AlbumRepository = FakeAlbumRepository(),
     albumArtistRepository: AlbumArtistRepository = FakeAlbumArtistRepository(),
     playHistoryRepository: PlayHistoryRepository = FakePlayHistoryRepository(),
+    val offline: FakeOfflineSongs = FakeOfflineSongs(),
 ) {
+    val filterPlayableSongs = FilterPlayableSongs(offline.modeSource, offline.statusSource)
+
     /** Whether a song's file deletes; every delete succeeds by default. */
     var fileDeleter: SongFileDeleter = SongFileDeleter { true }
 
@@ -75,8 +79,8 @@ class TestMediaActions(
     /** The providers radio asks for similar songs; none by default, so a radio is built from the library. */
     val similarSongsProviders = mutableSetOf<SimilarSongsProvider>()
     val startRadio = StartRadio(songRepository, resolveSongs, AggregateSimilarSongsProvider(similarSongsProviders), playSongs)
-    val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs)
-    val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs)
+    val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs, filterPlayableSongs)
+    val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs, filterPlayableSongs)
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
     val excludeSongs = ExcludeSongs(songRepository, queueOperations, resolveSongs)
@@ -106,7 +110,7 @@ class TestMediaActions(
     val clearPlaylist = ClearPlaylist(playlistRepository)
     val deletePlaylist = DeletePlaylist(playlistRepository)
     val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
-    val observeSongs = ObserveSongs(songRepository, FakeOfflineSongs().filter)
+    val observeSongs = ObserveSongs(songRepository, offline.filter)
     val observeAlbums = ObserveAlbums(albumRepository)
     val observeArtists = ObserveArtists(albumArtistRepository)
     val observeArtistAlbums = ObserveArtistAlbums(albumRepository, songRepository)
@@ -118,6 +122,7 @@ class TestMediaActions(
     val reorderPlaylistSongs = ReorderPlaylistSongs(playlistRepository)
     val handler = MediaActionHandler(
         resolveSongs = resolveSongs,
+        filterPlayableSongs = filterPlayableSongs,
         playSongs = playSongs,
         shuffleSongs = shuffleSongs,
         resumeContext = resumeContext,

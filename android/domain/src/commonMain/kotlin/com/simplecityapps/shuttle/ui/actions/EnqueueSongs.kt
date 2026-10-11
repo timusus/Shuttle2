@@ -9,12 +9,13 @@ import dev.zacsweers.metro.Inject
 class EnqueueSongs(
     private val playbackOperations: PlaybackOperations,
     private val resolveSongs: ResolveSongs,
+    private val filterPlayableSongs: FilterPlayableSongs,
 ) {
     enum class Position { Next, End }
 
     /** @return the songs added; empty if the selection had none. */
     suspend operator fun invoke(selection: MediaSelection, position: Position): List<Song> {
-        val songs = resolveSongs(selection)
+        val songs = filterPlayableSongs(resolveSongs(selection))
         if (songs.isEmpty()) return songs
         when (position) {
             Position.Next -> playbackOperations.playNext(songs)

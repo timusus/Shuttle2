@@ -20,6 +20,7 @@ import dev.zacsweers.metro.Inject
  */
 class MediaActionHandler @Inject constructor(
     private val resolveSongs: ResolveSongs,
+    private val filterPlayableSongs: FilterPlayableSongs,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
     private val resumeContext: ResumeContext,
@@ -38,9 +39,9 @@ class MediaActionHandler @Inject constructor(
     private val tryUseProFeature: TryUseProFeature,
 ) {
     suspend fun handle(action: MediaAction): MediaActionResult = when (action) {
-        is MediaAction.Play -> play(action, resolveSongs(action.selection))
+        is MediaAction.Play -> play(action, filterPlayableSongs(resolveSongs(action.selection)))
 
-        is MediaAction.Shuffle -> shuffle(action, resolveSongs(action.selection))
+        is MediaAction.Shuffle -> shuffle(action, filterPlayableSongs(resolveSongs(action.selection)))
 
         is MediaAction.Resume -> resume(action)
 
