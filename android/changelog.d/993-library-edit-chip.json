@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Library has an Edit chip at the end of its section chips for showing, hiding and reordering tabs, so turning on Folders no longer hides behind a menu. The selected section chip now shows a tick.", "commits": [] }

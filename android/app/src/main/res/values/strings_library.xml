@@ -48,8 +48,10 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> playlist</item>
         <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> playlists</item>
     </plurals>
-    <!-- Library overflow item: opens the sheet that shows, hides and reorders the library tabs -->
+    <!-- Library tab sheet title and empty-state action: shows, hides and reorders the library tabs -->
     <string name="library_edit_tabs">Edit tabs</string>
+    <!-- Chip at the end of the Library tab chips: opens the sheet that shows, hides and reorders the tabs -->
+    <string name="library_edit_tabs_chip">Edit</string>
     <!-- Edit tabs sheet: move a tab one place earlier -->
     <string name="library_tab_move_up">Move up</string>
     <!-- Edit tabs sheet: move a tab one place later -->

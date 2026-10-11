@@ -286,12 +286,12 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         return a.top == b.top && a.left != b.left
     }
 
-    /** The section chip labels, in order: the row is lazy, so this scrolls it end to end and reads each window. */
+    /** The section chip labels, in order, without the trailing Edit chip: the row is lazy, so this scrolls it end to end and reads each window. */
     fun tabLabels(): List<String> {
         val labels = mutableListOf<String>()
         var index = 0
         while (runCatching { sections().performScrollToIndex(index) }.isSuccess) {
-            rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
+            rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")) and !hasTestTag("library-edit-tabs"))
                 .fetchSemanticsNodes()
                 .sortedBy { node -> node.boundsInRoot.left }
                 .map { node -> node.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().joinToString { it.text } }
@@ -418,8 +418,10 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    fun openOverflow() {
-        rule.onNodeWithTag("library-more").performClick()
+    /** Taps the "Edit" chip at the end of the section row, scrolling the row to it first. */
+    fun openTabEditor() {
+        sections().performScrollToNode(hasTestTag("library-edit-tabs"))
+        rule.onNodeWithTag("library-edit-tabs").performClick()
         rule.waitForIdle()
     }
 

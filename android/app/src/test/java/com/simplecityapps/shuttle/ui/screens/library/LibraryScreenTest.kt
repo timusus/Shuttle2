@@ -165,10 +165,10 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the overflow holds only Edit tabs`() {
+    fun `the Edit chip ends the section row and opens the tab editor`() {
         robot.setContent(libraryState(), libraryControls(sortOptions = sorts("Song Name", "Year")))
 
-        robot.openOverflow()
+        robot.openTabEditor()
 
         robot.assertTextDisplayed("Edit tabs")
         robot.countOfText("Year") shouldBe 0
@@ -294,8 +294,7 @@ class LibraryScreenTest {
     fun `the tab editor hides a tab and moves one up`() {
         robot.setContent(libraryState())
 
-        robot.openOverflow()
-        robot.clickText("Edit tabs")
+        robot.openTabEditor()
         robot.toggleTabSwitch(LibraryTab.Genres)
         robot.lastTabsChanged shouldBe (LibraryTab.entries to LibraryTab.defaultEnabled.toSet() - LibraryTab.Genres)
 

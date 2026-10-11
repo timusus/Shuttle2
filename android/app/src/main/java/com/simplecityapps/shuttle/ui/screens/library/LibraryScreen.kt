@@ -28,7 +28,6 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Cloud
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
@@ -63,10 +62,9 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionChip
-import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
+import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
-import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2ModalSheet
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
@@ -184,7 +182,6 @@ fun LibraryScreen(
                         title = stringResource(R.string.title_library),
                         scrollBehavior = scrollBehavior,
                         actions = {
-                            var menuOpen by remember { mutableStateOf(false) }
                             trialDaysLeft?.let { days ->
                                 S2ActionChip(
                                     label = pluralStringResource(R.plurals.library_trial_chip, days, days),
@@ -199,17 +196,6 @@ fun LibraryScreen(
                                 modifier = Modifier.testTag("library-offline-mode"),
                             )
                             S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
-                            S2IconButton(
-                                icon = Icons.Rounded.MoreVert,
-                                contentDescription = stringResource(R.string.library_more_options),
-                                onClick = { menuOpen = true },
-                                modifier = Modifier.testTag("library-more"),
-                            )
-                            S2Menu(
-                                expanded = menuOpen,
-                                onDismissRequest = { menuOpen = false },
-                                groups = listOf(listOf(S2Action(stringResource(R.string.library_edit_tabs), { editingTabs = true }))),
-                            )
                         },
                     )
                 }
@@ -226,7 +212,7 @@ fun LibraryScreen(
                 modifier = Modifier.padding(padding).fillMaxSize(),
             )
         } else {
-            LibraryPager(tabs, uiState.currentTab, chrome, onTabSelected, Modifier.padding(padding), page)
+            LibraryPager(tabs, uiState.currentTab, chrome, onTabSelected, { editingTabs = true }, Modifier.padding(padding), page)
         }
     }
 
@@ -244,6 +230,7 @@ private fun LibraryPager(
     currentTab: LibraryTab?,
     chrome: LibraryTabChrome,
     onTabSelected: (LibraryTab) -> Unit,
+    onEditTabs: () -> Unit,
     modifier: Modifier,
     page: @Composable (LibraryTab) -> Unit,
 ) {
@@ -258,6 +245,7 @@ private fun LibraryPager(
             tabs = tabs,
             selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
+            onEdit = onEditTabs,
         )
         HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index ->
             // Only the visible section scrolls to the top on a re-select.
@@ -277,12 +265,13 @@ private fun LibrarySectionChips(
     tabs: List<LibraryTab>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
+    onEdit: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     var placed by remember { mutableStateOf(false) }
     LaunchedEffect(tabs, selectedIndex) {
         // Once the row holds these tabs, so the screen can open on a section past the row's edge.
-        snapshotFlow { listState.layoutInfo }.first { it.viewportSize.width > 0 && it.totalItemsCount == tabs.size }
+        snapshotFlow { listState.layoutInfo }.first { it.viewportSize.width > 0 && it.totalItemsCount == tabs.size + 1 }
         // The layout that published it may still be running; scrolling now would remeasure inside it.
         withFrameNanos { }
         // A second pass when the chip was out of the window, whose width the first could only estimate.
@@ -299,7 +288,10 @@ private fun LibrarySectionChips(
         modifier = Modifier.fillMaxWidth().testTag("library-sections"),
     ) {
         itemsIndexed(tabs, key = { _, tab -> tab }) { index, tab ->
-            S2ChoiceChip(label = tab.label(), selected = index == selectedIndex, onClick = { onSelect(index) })
+            S2FilterChip(label = tab.label(), selected = index == selectedIndex, onClick = { onSelect(index) })
+        }
+        item(key = "edit") {
+            S2ActionChip(label = stringResource(R.string.library_edit_tabs_chip), onClick = onEdit, modifier = Modifier.testTag("library-edit-tabs"))
         }
     }
 }
