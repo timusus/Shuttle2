@@ -572,3 +572,14 @@ Needs a release build (an internal or release-candidate install: a debug build c
 - [ ] Add the Shuttle Music Quick Settings tile. With the app force-stopped and a restored queue, tapping the tile starts playback with the media notification showing; a second tap pauses. With an empty library and queue, a tap opens the app.
 - [ ] With the app force-stopped, tap play/pause, next and previous on the home-screen widget: each starts the service in the foreground and acts, with no crash and no silent no-op (logcat shows no `ForegroundServiceStartNotAllowedException`).
 - [ ] Tap the home-screen widget body (not a button), with the app open and with it force-stopped: the app opens to its main screen (#974 now resolves the launcher activity instead of naming MainActivity).
+
+## iOS play-start latency (#822), needs an iPhone and a Jellyfin server
+
+Stream the logs while testing: `log stream --predicate 'subsystem == "com.simplecityapps.shuttle2"' --level info`
+(category MusicPlayback). Each start prints one `engine: ttfa` line when the player node first renders. `total` runs from the
+engine's load or play, `request-total` from the tap or remote command that led to it; the gap between them is the time spent
+before the engine was asked. Stages that did not happen print as `-`.
+
+- [ ] Tap-to-engine-load gap: on a Jellyfin or Emby library of at least a few thousand songs, tap a song in Songs, then one inside an album, then one in a large playlist, five starts each from a cold queue. Compare `request-total` with `total` on each line. If the gap is regularly over about 300 ms and grows with library or playlist size, opening the tapped song before the queue is built is worth doing; if it stays near zero, close the idea.
+- [ ] Jellyfin `/universal` against `static=true`: on a Jellyfin server (not Emby), start ten different songs on Wi-Fi with the current build and note the median `total` and the `-` or slow server stage. Then change `MediaBrowserAuthenticationManager.universalPath` (`:android:mediaprovider:server`) to request `static=true` for direct-play formats, rebuild and repeat on the same songs. Keep the change only if the median `total` drops clearly with no format that stops playing; it also changes Android's stream URL, so play a FLAC and an MP3 on Android before landing it.
+- [ ] Two-chunk start on slow streams (`MusicPlaybackController`): throttle the phone to a slow link (Network Link Conditioner "Very Bad Network" or a distant server over cellular) and start a streamed FLAC. Listen to the first 10 seconds for stutter or a gap, and check the `ttfa` line for a long `total`. If it stutters, starting on two chunks is too aggressive for slow links and needs a larger first buffer; if it plays cleanly while `total` stays low, keep it.
