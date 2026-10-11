@@ -138,8 +138,15 @@ private fun QueueSourceLine(
 /** How much of the cover's tint the queue header starts from. */
 private const val HeaderWashAlpha = 0.6f
 
-/** The lazy key of the "Up Next" divider, which the reorder looks for when a drag begins. */
+/** The lazy keys of the section labels, which the reorder looks for when a drag begins. */
 private const val UpNextKey = "queue_up_next"
+private const val NowPlayingKey = "queue_now_playing"
+
+/** "Now playing" over the current song, so it reads apart from "Up Next" below it. */
+@Composable
+private fun NowPlayingLabel(modifier: Modifier = Modifier) {
+    SectionHeader(title = stringResource(R.string.queue_now_playing), containerColor = PanelColor, modifier = modifier)
+}
 
 /** "Up Next" over the songs after the current one, with how many there are and how long they play for. */
 @Composable
@@ -209,7 +216,8 @@ internal fun LazyListScope.queueItems(
     val rows = reorder.rows(items)
     val upcoming = rows.filter { it.position == QueuePosition.Upcoming }
     val split = rows.indexOfFirst { it.position == QueuePosition.Current } + 1
-    val showUpNext = reorder.draggingUid == null && split > 0 && upcoming.isNotEmpty()
+    val showLabels = reorder.draggingUid == null && split > 0
+    val showUpNext = showLabels && upcoming.isNotEmpty()
     val queueRow: @Composable LazyItemScope.(PlayerSong) -> Unit = { row ->
         val playNext = stringResource(R.string.menu_title_play_next)
         val remove = stringResource(R.string.menu_title_remove_from_queue)
@@ -263,9 +271,11 @@ internal fun LazyListScope.queueItems(
                 ),
         )
     }
-    if (showUpNext) {
-        items(rows.subList(0, split), key = { it.uid }, itemContent = queueRow)
-        item(key = UpNextKey) { UpNextDivider(upcoming, Modifier.animateItem()) }
+    if (showLabels) {
+        items(rows.subList(0, split - 1), key = { it.uid }, itemContent = queueRow)
+        item(key = NowPlayingKey) { NowPlayingLabel(Modifier.animateItem()) }
+        items(rows.subList(split - 1, split), key = { it.uid }, itemContent = queueRow)
+        if (showUpNext) item(key = UpNextKey) { UpNextDivider(upcoming, Modifier.animateItem()) }
         items(rows.subList(split, rows.size), key = { it.uid }, itemContent = queueRow)
     } else {
         items(rows, key = { it.uid }, itemContent = queueRow)
@@ -382,12 +392,12 @@ internal class QueueReorderState(
     ) {
         val visible = listState.layoutInfo.visibleItemsInfo
         val row = visible.firstOrNull { it.key == uid } ?: return
-        // The Up Next divider leaves the list while the row is dragged, so a row below it has its slot that much higher.
-        val upNext = visible.firstOrNull { it.key == UpNextKey }?.takeIf { it.offset < row.offset }
+        // The section labels leave the list while the row is dragged, so a row below one has its slot that much higher.
+        val labels = visible.filter { (it.key == UpNextKey || it.key == NowPlayingKey) && it.offset < row.offset }.sumOf { it.size }
         baseItems = items
         order = items
         startTop = row.offset.toFloat()
-        slotTop = startTop - (upNext?.size ?: 0)
+        slotTop = startTop - labels
         height = row.size
         dragDistance = 0f
         draggingUid = uid

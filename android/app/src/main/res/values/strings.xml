@@ -10,6 +10,8 @@
     <string name="shell_tab_search">Search</string>
     <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
     <string name="playback_up_next">Up Next</string>
+    <!-- Label over the current song in the queue, apart from the songs after it -->
+    <string name="queue_now_playing">Now playing</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="pref_navigation_title">Navigation</string>
     <string name="pref_show_home_on_launch_title">Show Home on launch</string>
