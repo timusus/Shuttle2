@@ -1,6 +1,7 @@
 package com.simplecityapps.networking
 
 import io.kotest.matchers.shouldBe
+import io.ktor.client.plugins.UserAgent
 import io.ktor.client.request.get
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
@@ -30,5 +31,17 @@ class HttpClientFactoryUserAgentTest {
         client.get(server.url("/").toString())
 
         server.takeRequest().headers["User-Agent"] shouldBe "okhttp/${okhttp3.OkHttp.VERSION}"
+    }
+
+    @Test
+    fun `a client that sets its own agent sends exactly that one`() = runTest {
+        server.enqueue(MockResponse())
+        val client = createHttpClient {
+            install(UserAgent) { agent = "ShuttleMusic (test)" }
+        }
+
+        client.get(server.url("/").toString())
+
+        server.takeRequest().headers.values("User-Agent") shouldBe listOf("ShuttleMusic (test)")
     }
 }

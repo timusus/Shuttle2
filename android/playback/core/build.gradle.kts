@@ -28,6 +28,11 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
         }
 
+        androidMain.dependencies {
+            // The app's shared OkHttpClient backs the LRCLIB client
+            implementation(libs.okhttp3.okhttp)
+        }
+
         commonTest.dependencies {
             // Song's dates are kotlinx.datetime types, which :android:domain keeps to itself.
             implementation(libs.kotlinx.datetime)

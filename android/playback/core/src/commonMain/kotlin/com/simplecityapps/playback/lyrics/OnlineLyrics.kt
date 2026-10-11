@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.lyrics
 
-import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.ui.actions.OnlineLyricsSource
@@ -12,6 +12,7 @@ import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineDispatcher
 
 /**
  * Lyrics from LRCLIB for a song with none of its own. Looks only while [enabled] (it sends the song's artist, title,
@@ -52,12 +53,14 @@ class OnlineLyrics(
 class AppOnlineLyrics(
     settings: PlaybackSettings,
     store: KeyValueStore,
+    http: LrclibHttp,
+    @IoDispatcher io: CoroutineDispatcher,
 ) : OnlineLyricsSource {
     private val delegate by lazy {
         OnlineLyrics(
             enabled = { settings.fetchLyricsOnline.value },
-            cache = LyricsCache(store) { Clock.System.now().toEpochMilliseconds() },
-            client = LrclibClient(createHttpClient()),
+            cache = LyricsCache(store, io) { Clock.System.now().toEpochMilliseconds() },
+            client = LrclibClient(http.client),
         )
     }
 

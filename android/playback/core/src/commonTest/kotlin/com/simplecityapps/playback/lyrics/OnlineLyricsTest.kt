@@ -14,6 +14,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import kotlin.test.Test
 import kotlin.time.Instant
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runTest
 
 class OnlineLyricsTest {
@@ -36,7 +39,7 @@ class OnlineLyricsTest {
 
     private fun onlineLyrics() = OnlineLyrics(
         enabled = { enabled },
-        cache = LyricsCache(store) { now },
+        cache = LyricsCache(store, Dispatchers.Unconfined) { now },
         client = LrclibClient(createHttpClient(engine))
     )
 
@@ -119,13 +122,26 @@ class OnlineLyricsTest {
     }
 
     @Test
-    fun `sends a user agent naming the app`() = runTest {
-        onlineLyrics().lookup(song())
+    fun `search is tried when get rejects the request`() = runTest {
+        responder = { request ->
+            if (request.url.encodedPath.endsWith("/get")) HttpStatusCode.BadRequest to "{}" else HttpStatusCode.OK to "[$FOUND]"
+        }
 
-        requests.single().headers[HttpHeaders.UserAgent] shouldBe LrclibClient.USER_AGENT
+        onlineLyrics().lookup(song()) shouldBe "la la\nlo lo"
+
+        requests.map { it.url.encodedPath } shouldBe listOf("/api/get", "/api/search")
     }
 
-    private fun song() = Song(
+    @Test
+    fun `an unknown duration goes straight to search and matches any length`() = runTest {
+        responder = { HttpStatusCode.OK to """[{"id":1,"duration":999.0,"instrumental":false,"plainLyrics":"la la","syncedLyrics":null}]""" }
+
+        onlineLyrics().lookup(song(duration = 0)) shouldBe "la la"
+
+        requests.map { it.url.encodedPath } shouldBe listOf("/api/search")
+    }
+
+    private fun song(duration: Int = 215_400) = Song(
         id = 7,
         name = "The Song",
         albumArtist = "The Album Artist",
@@ -133,7 +149,7 @@ class OnlineLyricsTest {
         album = "The Album",
         track = 1,
         disc = 1,
-        duration = 215_400,
+        duration = duration,
         date = null,
         genres = emptyList(),
         path = "/path/to/song",

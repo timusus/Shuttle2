@@ -1,6 +1,10 @@
 package com.simplecityapps.playback.lyrics
 
 import com.simplecityapps.shuttle.persistence.KeyValueStore
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * Online lookups kept per song so a song isn't fetched on every view, "not found" included. An entry expires:
@@ -8,8 +12,11 @@ import com.simplecityapps.shuttle.persistence.KeyValueStore
  */
 class LyricsCache(
     private val store: KeyValueStore,
+    private val io: CoroutineDispatcher,
     private val now: () -> Long,
 ) {
+    private val lock = Mutex()
+
     sealed interface Entry {
         data class Found(val text: String) : Entry
 
@@ -17,8 +24,8 @@ class LyricsCache(
     }
 
     /** The unexpired entry for [songId], or null when it must be fetched. */
-    fun get(songId: Long): Entry? {
-        val raw = store.getString(key(songId), null) ?: return null
+    suspend fun get(songId: Long): Entry? {
+        val raw = lock.withLock { withContext(io) { store.getString(key(songId), null) } } ?: return null
         val (fetchedAt, text) = raw.substringBefore('\n').toLongOrNull()?.let { it to raw.substringAfter('\n') } ?: return null
         val age = now() - fetchedAt
         return if (text.isEmpty()) {
@@ -28,13 +35,18 @@ class LyricsCache(
         }
     }
 
-    fun put(songId: Long, text: String?) {
-        val ids = (store.getString(INDEX_KEY, null).orEmpty().split(',').mapNotNull { it.toLongOrNull() } - songId) + songId
-        val evicted = ids.take((ids.size - MAX_ENTRIES).coerceAtLeast(0))
-        store.edit {
-            evicted.forEach { remove(key(it)) }
-            putString(key(songId), "${now()}\n${text.orEmpty()}")
-            putString(INDEX_KEY, ids.drop(evicted.size).joinToString(","))
+    suspend fun put(songId: Long, text: String?) {
+        // The index is read, changed and rewritten; two callers interleaving would drop entries and break the bound
+        lock.withLock {
+            withContext(io) {
+                val ids = (store.getString(INDEX_KEY, null).orEmpty().split(',').mapNotNull { it.toLongOrNull() } - songId) + songId
+                val evicted = ids.take((ids.size - MAX_ENTRIES).coerceAtLeast(0))
+                store.edit {
+                    evicted.forEach { remove(key(it)) }
+                    putString(key(songId), "${now()}\n${text.orEmpty()}")
+                    putString(INDEX_KEY, ids.drop(evicted.size).joinToString(","))
+                }
+            }
         }
     }
 
