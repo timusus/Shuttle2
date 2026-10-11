@@ -228,6 +228,32 @@ add-to-playlist picker, Edit tabs and the dialogs stay local: their inputs (sele
 confirmations) aren't route keys, and their results go back to the host's ViewModel (a snackbar
 with Undo). Song info is the only route sheet today.
 
+### Compact height
+
+Width picks the number of panes; height picks the chrome. A landscape phone is Medium or Expanded
+width × Compact height (< 480 dp), so it never gets two navigation panes. The shell publishes
+`ShellLayout` (`LocalShellLayout`); screens read `compactHeight` from it, never from the window,
+and designsystem components get the decision as a parameter. No orientation locks.
+
+| Screen | Compact width, any height | Medium/Expanded width, Compact height | Medium+ height |
+|---|---|---|---|
+| Library, Search, Playlists | large flexible bar, one pane | small `enterAlways` bar, chips kept, one pane | large flexible bar; list-detail from Expanded |
+| Home | pinned small bar, shelves | same, content capped to the window | same |
+| Album, artist, playlist, genre detail | `DetailScaffold`, one column | two columns in the screen: hero and actions (~40%) beside tracks, scrolling independently | one column; list-detail panes from Expanded |
+| Settings | one pane | one pane, pages pushed | list-detail from Expanded |
+| Full player | sheet column | artwork left, controls right | column, or side by side with a panel |
+
+- **Rail kept.** Google's navigation suite swaps to a short bottom bar at compact height. We keep
+  the `WideNavigationRail` because vertical space is the scarce axis in landscape, and a bottom bar
+  spends it. The rail drops its expand/collapse button at compact height: an expanded rail has no
+  room to be useful.
+- **Top bars.** Small, with `enterAlways` scroll behaviour (hides on scroll down, returns on scroll
+  up). The large flexible bar applies from Medium height.
+- **Mini player.** Same place (bottom of the content area, beside the rail), trimmed to the minimum
+  touch target in height.
+- **Detail screens** lay out two columns inside the one destination, not as two nav panes, so the
+  back stack and `ListDetailSceneStrategy` are unaffected.
+
 ### Folds and postures
 
 A separating fold (`isSeparating`, from `Posture.hingeList`) is the pane boundary at any width;
