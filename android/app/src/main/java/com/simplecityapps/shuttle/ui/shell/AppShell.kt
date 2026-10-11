@@ -268,6 +268,7 @@ private fun ShellNavDisplay(
     val entries = remember(navigator, entryProvider) { entryProvider(navigator) }
     // Every tab's entries stay decorated, so a tab's screens keep their state while another is shown.
     val entriesByTab = ShellTab.entries.associateWith { tab -> rememberDecoratedNavEntries(navigator.stack(tab), decorators, entries) }
+    val transitions = rememberShellTransitions(navigator)
     SharedTransitionLayout {
         CompositionLocalProvider(
             LocalListBesideDetail provides (directive.maxHorizontalPartitions > 1),
@@ -277,6 +278,9 @@ private fun ShellNavDisplay(
                 entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
                 sceneStrategies = listOf(sheet, listDetail, SinglePaneSceneStrategy()),
                 onBack = { navigator.back() },
+                transitionSpec = transitions.transition,
+                popTransitionSpec = transitions.popTransition,
+                predictivePopTransitionSpec = transitions.predictivePopTransition,
             )
         }
     }
