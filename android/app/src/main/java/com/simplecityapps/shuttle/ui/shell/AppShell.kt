@@ -9,10 +9,12 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
@@ -327,10 +329,22 @@ private fun CompactShell(
     // Composed from the frame it is asked for, so its height is known before it starts sliding in.
     val navBarComposed by remember(navigationTarget) { derivedStateOf { navigationTarget || navigationShown.value > 0f } }
     val sideInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+    // The chrome below the page is padding the page never sees, so a screen's imePadding pads only for the keyboard above it.
+    val chromeBottom = remember(dockedHeight) {
+        object : WindowInsets {
+            override fun getLeft(density: Density, layoutDirection: LayoutDirection) = 0
+
+            override fun getTop(density: Density) = 0
+
+            override fun getRight(density: Density, layoutDirection: LayoutDirection) = 0
+
+            override fun getBottom(density: Density) = dockedHeight.intValue
+        }
+    }
 
     Layout(
         contents = listOf(
-            { Box(Modifier.fillMaxSize().windowInsetsPadding(sideInsets).testTag(ShellTestTags.Destinations)) { destinations() } },
+            { Box(Modifier.fillMaxSize().consumeWindowInsets(chromeBottom).windowInsetsPadding(sideInsets).testTag(ShellTestTags.Destinations)) { destinations() } },
             { PlayerScrim(player) },
             { if (sheetVisible) PlayerSheet(player, content.state, content.progress, content.actions, layout, onOpenRoute = content.openRoute, sideInsets = sideInsets) },
             {
@@ -406,7 +420,7 @@ private fun RailSheetShell(
     Layout(
         contents = listOf(
             { AnimatedShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab) },
-            { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding).windowInsetsPadding(besideRail).testTag(ShellTestTags.Destinations)) { destinations() } },
+            { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding).consumeWindowInsets(PaddingValues(bottom = bottomPadding)).windowInsetsPadding(besideRail).testTag(ShellTestTags.Destinations)) { destinations() } },
             { PlayerScrim(player) },
             {
                 if (sheetVisible) {
