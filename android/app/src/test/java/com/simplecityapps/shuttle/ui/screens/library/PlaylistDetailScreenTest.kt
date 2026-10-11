@@ -81,7 +81,7 @@ class PlaylistDetailScreenTest {
         robot.clickContentDescription("Remove from playlist")
         robot.removedSelected shouldBe true
 
-        robot.clickContentDescription("Add to Queue")
+        robot.clickContentDescription("Add to queue")
         robot.lastSelectionAction shouldBe MediaActionType.AddToQueue
     }
 

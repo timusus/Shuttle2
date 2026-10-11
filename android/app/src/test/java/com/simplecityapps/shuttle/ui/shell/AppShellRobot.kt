@@ -930,7 +930,7 @@ class AppShellRobot(
         actions.mediaActionResult = { action -> MediaActionResult.Navigate(NavigationTarget.SongInfo((action.selection as MediaSelection.Songs).songs.single())) }
         tapMiniPlayer()
         tapDescription("More options")
-        tapText("Song Info")
+        tapText("Song info")
     }
 
     /** Song info shows in the phone's bottom sheet, with no back arrow, or else as a pane of the display. */

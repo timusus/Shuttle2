@@ -100,7 +100,7 @@ class MediaSessionSpecTest {
 
         val root = harness.await(browser.getLibraryRoot(null)).value!!
         root.mediaId shouldBe MediaIdHelper.ROOT_ID
-        children(harness, browser, root.mediaId).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle All")
+        children(harness, browser, root.mediaId).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle all")
 
         val albums = children(harness, browser, "media:/album_root/")
         albums.map { it.mediaMetadata.title.toString() } shouldBe listOf("Blue")
@@ -125,7 +125,7 @@ class MediaSessionSpecTest {
         val browser = harness.connect()
 
         val playlists = children(harness, browser, "media:/playlist_root/")
-        playlists.first().mediaMetadata.title.toString() shouldBe "Favorites"
+        playlists.first().mediaMetadata.title.toString() shouldBe "Favourites"
         val songs = children(harness, browser, playlists.first().mediaId)
         songs.map { it.mediaMetadata.title.toString() } shouldBe favourites.map { it.name }
         songs.forEach { it.mediaMetadata.isPlayable shouldBe true }
@@ -432,7 +432,7 @@ class MediaSessionSpecTest {
 
         harness.await(browser.getLibraryRoot(null)).value!!.mediaId shouldBe MediaIdHelper.ROOT_ID
         harness.await(browser.getLibraryRoot(null)).value!!.mediaId shouldBe MediaIdHelper.ROOT_ID
-        children(harness, browser, MediaIdHelper.ROOT_ID).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle All")
+        children(harness, browser, MediaIdHelper.ROOT_ID).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle all")
 
         harness.trialStarts shouldBe 1
         (harness.entitlement.value is Entitlement.Trial) shouldBe true
@@ -513,7 +513,7 @@ class MediaSessionSpecTest {
 
         harness.entitlement.value = Entitlement.Pro(ProSource.Lifetime)
         harness.playback.runUntil { root in changed }
-        children(harness, browser, root).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle All")
+        children(harness, browser, root).map { it.mediaMetadata.title.toString() } shouldBe listOf("Artists", "Albums", "Playlists", "Shuffle all")
 
         // A car that connected during the trial, on the real root, gets the upgrade item once it ends.
         val trial = sessionHarness(songs = listOf(song(1)), car = true, entitlement = Entitlement.Trial(Clock.System.now() + 1.days))

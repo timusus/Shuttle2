@@ -15,9 +15,9 @@
     <!-- Text shown on shuffle button, Shuffle mode off-->
     <string name="shuffle_off">Shuffle off</string>
     <!-- Text shown on the playback notification's like button, when the current song is not a favourite-->
-    <string name="favourite_add">Add to favorites</string>
+    <string name="favourite_add">Add to favourites</string>
     <!-- Text shown on the playback notification's like button, when the current song is a favourite-->
-    <string name="favourite_remove">Remove from favorites</string>
+    <string name="favourite_remove">Remove from favourites</string>
     <!-- Text shown on the playback notification's repeat button, repeat mode off-->
     <string name="repeat_off">Repeat off</string>
     <!-- Text shown on the playback notification's repeat button, repeating the whole queue-->

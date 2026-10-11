@@ -316,7 +316,7 @@ class AppShellTest {
         robot.tapDescription("More options")
 
         robot.showPanel(NowPlayingPanel.Queue)
-        robot.tapText("Clear Queue")
+        robot.tapText("Clear queue")
         robot.calls shouldBe listOf("clearQueue")
     }
 
@@ -575,7 +575,7 @@ class AppShellTest {
 
         robot.tapPlayerControl("Shuffle")
         robot.tapPlayerControl("Repeat off")
-        robot.tapPlayerControl("Favorite")
+        robot.tapPlayerControl("Favourite")
 
         robot.calls shouldBe listOf("toggleShuffle", "cycleRepeatMode", "toggleFavourite")
     }
@@ -598,11 +598,11 @@ class AppShellTest {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.assertToggle("Shuffle", on = false)
-        robot.assertToggle("Favorite", on = false)
+        robot.assertToggle("Favourite", on = false)
 
         robot.setQueue(shellQueue("First song").copy(shuffle = true, favourite = true))
         robot.assertToggle("Shuffle", on = true)
-        robot.assertToggle("Favorite", on = true)
+        robot.assertToggle("Favourite", on = true)
     }
 
     @Test
@@ -722,7 +722,7 @@ class AppShellTest {
         robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.longPressQueueRow("Third song")
-        robot.tapText("Play Next")
+        robot.tapText("Play next")
         robot.calls shouldBe listOf("playNext(2)")
     }
 
@@ -733,7 +733,7 @@ class AppShellTest {
         robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.tapDescription("More options")
-        robot.tapText("Clear Queue")
+        robot.tapText("Clear queue")
         robot.tapText("Undo")
         robot.calls shouldContain "clearQueue"
         robot.calls.last() shouldBe "undoClearQueue"
@@ -746,7 +746,7 @@ class AppShellTest {
         robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.longPressQueueRow("Second song")
-        robot.tapText("Remove from Queue")
+        robot.tapText("Remove from queue")
         robot.tapText("Undo")
         robot.calls shouldBe listOf("removeQueueItem(1)", "undoRemoveQueueItem")
     }
@@ -758,7 +758,7 @@ class AppShellTest {
         robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.longPressQueueRow("Third song")
-        robot.tapText("Song Info")
+        robot.tapText("Song info")
         robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.SongInfo>("Third song")
     }
 
@@ -796,7 +796,7 @@ class AppShellTest {
         robot.tapMiniPlayer()
 
         robot.tapDescription("More options")
-        robot.tapText("Clear Queue")
+        robot.tapText("Clear queue")
         robot.calls shouldBe listOf("clearQueue")
         robot.actions.mediaActions shouldBe emptyList()
     }
@@ -809,7 +809,7 @@ class AppShellTest {
         robot.tapMiniPlayer()
 
         robot.tapDescription("More options")
-        robot.tapText("Add to Playlist")
+        robot.tapText("Add to playlist")
         robot.assertTextDisplayed("New Playlist")
         robot.tapText("Road trip")
 

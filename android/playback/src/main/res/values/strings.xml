@@ -7,9 +7,9 @@
     <!-- Android Auto browse folder: the playlists in the library -->
     <string name="auto_folder_playlists">Playlists</string>
     <!-- Android Auto browse item: plays the whole library shuffled -->
-    <string name="auto_shuffle_all">Shuffle All</string>
+    <string name="auto_shuffle_all">Shuffle all</string>
     <!-- Android Auto browse folder: the songs marked as favourites -->
-    <string name="auto_folder_favorites">Favorites</string>
+    <string name="auto_folder_favorites">Favourites</string>
     <!-- Android Auto's only browse item once the free trial has ended without an upgrade -->
     <string name="auto_pro_upgrade_title">Upgrade to Shuttle Music Pro</string>
     <!-- Subtitle of the Android Auto upgrade item: the upgrade happens on the phone, never in the car -->

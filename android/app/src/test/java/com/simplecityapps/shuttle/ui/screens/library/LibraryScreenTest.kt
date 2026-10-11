@@ -309,7 +309,7 @@ class LibraryScreenTest {
     fun `selection toolbar actions report their type`() {
         robot.setContent(libraryState(), chrome = selectingChrome())
 
-        robot.clickSelectionAction("Add to Queue")
+        robot.clickSelectionAction("Add to queue")
 
         robot.lastSelectionAction shouldBe MediaActionType.AddToQueue
     }

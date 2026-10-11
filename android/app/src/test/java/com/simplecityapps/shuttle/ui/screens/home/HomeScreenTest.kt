@@ -219,7 +219,7 @@ class HomeScreenTest {
         robot.setContent(HomeScenarios.content)
         val phaseGarden = HomeItem.AlbumItem(HomeScenarios.phaseGarden)
 
-        robot.customActionLabels("Phase Garden") shouldContainExactly listOf("Play", "Play from start", "Shuffle", "Play Next", "Add to Queue", "Go to album")
+        robot.customActionLabels("Phase Garden") shouldContainExactly listOf("Play", "Play from start", "Shuffle", "Play next", "Add to queue", "Go to album")
         robot.performCustomAction("Phase Garden", "Play")
         robot.performCustomAction("Phase Garden", "Play from start")
 
@@ -304,7 +304,7 @@ class HomeScreenTest {
     fun `talkback offers each tile's actions`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.customActionLabels("Soft Focus") shouldContainExactly listOf("Play", "Shuffle", "Play Next", "Add to Queue", "Go to album")
+        robot.customActionLabels("Soft Focus") shouldContainExactly listOf("Play", "Shuffle", "Play next", "Add to queue", "Go to album")
         robot.performCustomAction("Soft Focus", "Shuffle")
 
         robot.actions.single() shouldBe MediaAction.Shuffle(MediaSelection.Albums(HomeScenarios.softFocus), HomeItem.AlbumItem(HomeScenarios.softFocus).playContext)

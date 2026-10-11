@@ -51,11 +51,11 @@
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">No playlists</string>
     <!-- Button to skip to the next track -->
-    <string name="button_skip_next">Skip Next</string>
+    <string name="button_skip_next">Skip next</string>
     <!-- Button to play/pause the current song-->
-    <string name="button_toggle_playback">Toggle Playback</string>
+    <string name="button_toggle_playback">Toggle playback</string>
     <!-- Button to skip to the previous track-->
-    <string name="button_skip_previous">Skip Previous</string>
+    <string name="button_skip_previous">Skip previous</string>
     <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">Queue empty</string>
 </resources>

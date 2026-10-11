@@ -98,15 +98,15 @@ class MediaActionsHostTest {
     @Test
     fun `a leading action runs the screen's own callback`() {
         var removed = 0
-        setContent(target(onlyTypes = emptySet(), leadingActions = listOf(S2Action("Remove from Queue", { removed++ }, Icons.Rounded.Close))))
-        rule.onNodeWithText("Remove from Queue").performClick()
+        setContent(target(onlyTypes = emptySet(), leadingActions = listOf(S2Action("Remove from queue", { removed++ }, Icons.Rounded.Close))))
+        rule.onNodeWithText("Remove from queue").performClick()
         removed shouldBe 1
     }
 
     @Test
     fun `Add to Playlist opens the picker with New Playlist first, then the playlists`() {
         setContent(target(onlyTypes = setOf(MediaActionType.AddToPlaylist)))
-        rule.onNodeWithText("Add to Playlist").performClick()
+        rule.onNodeWithText("Add to playlist").performClick()
         rule.waitForIdle()
 
         rule.onNodeWithText("New Playlist").assertIsDisplayed()
