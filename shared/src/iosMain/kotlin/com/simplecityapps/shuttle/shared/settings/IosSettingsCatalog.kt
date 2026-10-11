@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.shared.settings
 import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
-import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtistSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
@@ -79,9 +78,9 @@ object IosSettingsCatalog : SettingsCatalog {
                         setting = PlaybackSettings.ReplayGain,
                         title = StringKey.DSP_REPLAY_GAIN_TITLE,
                         options = listOf(
-                            // Turning ReplayGain on is Shuttle Music Pro, as on Android (#946); turning it off stays free
-                            ChoiceOption(ReplayGainMode.Track, StringKey.DSP_REPLAY_GAIN_TRACK, ProFeature.AdvancedAudio),
-                            ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM, ProFeature.AdvancedAudio),
+                            // Free on iOS: free rivals include it. iOS has no advanced ReplayGain modes to keep Pro.
+                            ChoiceOption(ReplayGainMode.Track, StringKey.DSP_REPLAY_GAIN_TRACK),
+                            ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM),
                             ChoiceOption(ReplayGainMode.Off, StringKey.DSP_REPLAY_GAIN_OFF)
                         )
                     ),

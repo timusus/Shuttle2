@@ -40,9 +40,8 @@ struct SettingsViewTests {
         #expect(replayGain.footer?.contains("separate from the Equalizer's Preamp") == true)
     }
 
-    /// #946, as Android's #939: choosing Track or Album asks the shared Pro gate. Without Pro the stored mode stays,
-    /// and keeps applying, and the paywall is asked for; with Pro the choice is stored. Off is never gated.
-    @Test func turningReplayGainOnWithoutProKeepsTheStoredModeAndAsksForThePaywall() async throws {
+    /// ReplayGain is free on iOS: without Pro, choosing Track, Album or Off is stored and never asks for the paywall.
+    @Test func replayGainModesAreStoredWithoutProAndNeverAskForThePaywall() async throws {
         let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
         let item = try #require(catalog.item(key: key(catalog.playbackAndSound, 2)) as? SettingItemChoice<AnyObject>)
         let viewModel = graph.settingsViewModel
@@ -61,23 +60,12 @@ struct SettingsViewTests {
         graph.storeEntitlements.setDebugOverrideNamed(name: "Store")
         _ = graph.storeEntitlements.storeAnswered(purchases: [])
         #expect(await waitUntil { status() == .trialAvailable })
-        viewModel.onChoiceSelect(item: item, optionIndex: 2)
-        #expect(await waitUntil { observed.selected == 2 })
-        // Album, again until the requests' collector has started: each one is refused
-        #expect(await waitUntil {
-            if observed.requests.isEmpty { viewModel.onChoiceSelect(item: item, optionIndex: 1) }
-            return !observed.requests.isEmpty
-        })
+        for index: Int32 in [1, 0, 2] {
+            viewModel.onChoiceSelect(item: item, optionIndex: index)
+            #expect(await waitUntil { observed.selected == index })
+        }
         await drainMainQueue()
-        #expect(observed.selected == 2)
-        #expect(Set(observed.requests) == [PaywallSource.advancedAudio])
-
-        graph.storeEntitlements.setDebugOverrideNamed(name: "Pro")
-        #expect(await waitUntil { status() == .pro })
-        let refusals = observed.requests.count
-        viewModel.onChoiceSelect(item: item, optionIndex: 0)
-        #expect(await waitUntil { observed.selected == 0 })
-        #expect(observed.requests.count == refusals)
+        #expect(observed.requests.isEmpty)
     }
 
     @MainActor private final class Observed {

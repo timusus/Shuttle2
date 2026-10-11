@@ -16,9 +16,9 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
 - In-app purchases: both are in all countries, with en-US name and description and review notes. Each
   carries the 14-day paywall (`iap-review/paywall.png`) as its review screenshot.
   - Trial (6818776748): $0, "14-day Free Trial". Family Sharing off.
-  - Lifetime (6818777051): $14.99 for the launch month, then $19.99 (#762). Owner steps in App Store
-    Connect: rename the trial product to "14-day Free Trial" (description "free for 14 days"), set the
-    Lifetime base price to $14.99, then schedule a price change to $19.99 about a month after launch.
+  - Lifetime (6818777051): $14.99 at launch and staying there (#762); $19.99 is only a possible later test, so
+    schedule no price change. Owner steps in App Store Connect: rename the trial product to "14-day Free Trial"
+    (description "free for 14 days") and set the Lifetime base price to $14.99.
     Family Sharing is on, which can't be turned off.
 - Version 1.0 has these saved:
   - Promotional text, description and keywords.

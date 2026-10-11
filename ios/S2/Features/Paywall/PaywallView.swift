@@ -14,19 +14,18 @@ enum ProFeatures {
     /// The paywall's headline feature: "Stream from Jellyfin, Emby, Plex and Navidrome".
     static var headline: String { "Stream from \(serverList)" }
 
-    /// The paywall's other features (#946), worded as Android's.
+    /// The paywall's other feature (#946), worded as Android's. ReplayGain is free on iOS, so it isn't listed.
     static let carPlay = "Browse and play your library in CarPlay"
-    static let replayGain = "ReplayGain volume levelling by track or album"
 
-    /// Settings' row, as Android's Pro summary: "Servers, CarPlay and ReplayGain".
-    static let summary = "Servers, CarPlay and ReplayGain"
+    /// Settings' row.
+    static let summary = "Servers and CarPlay"
 
     /// The trial's length in days, from :shared's `AppStoreProducts`: the one place it is defined.
     static var trialDays: Int { Int(AppStoreProducts.shared.TRIAL_DAYS) }
 
-    /// Everything Pro unlocks, mid-sentence: "streaming from Jellyfin, Emby, Plex or Navidrome, CarPlay and turning on
-    /// ReplayGain" (the servers joined by "or", so the list's own "and" stays unambiguous).
-    static var unlocks: String { "streaming from \(list(servers, joinedBy: "or")), CarPlay and turning on ReplayGain" }
+    /// Everything Pro unlocks, mid-sentence: "streaming from Jellyfin, Emby, Plex or Navidrome and CarPlay" (the
+    /// servers joined by "or", so the list's own "and" stays unambiguous).
+    static var unlocks: String { "streaming from \(list(servers, joinedBy: "or")) and CarPlay" }
 
     private static func list(_ items: [String], joinedBy conjunction: String) -> String {
         items.count < 2 ? items.joined() : items.dropLast().joined(separator: ", ") + " \(conjunction) " + items.last!
@@ -222,8 +221,7 @@ struct PaywallContent: View {
                     Text("What you get").font(.headline)
                     Label(ProFeatures.headline, systemImage: "server.rack")
                     Label(ProFeatures.carPlay, systemImage: "car")
-                    Label(ProFeatures.replayGain, systemImage: "speaker.wave.2")
-                    Label("AirPlay, the equalizer and the rest of the app stay free", systemImage: "checkmark.circle")
+                    Label("AirPlay, the equalizer, ReplayGain and the rest of the app stay free", systemImage: "checkmark.circle")
                 }
 
                 if status == .trialAvailable {

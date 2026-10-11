@@ -56,21 +56,22 @@ struct PaywallViewTests {
         let disclosure = try sut.inspect().find(viewWithAccessibilityIdentifier: "paywall.disclosure").text().string()
 
         #expect(disclosure.contains("\(ProFeatures.trialDays) days"))
-        #expect(disclosure.contains("streaming from Jellyfin, Emby, Plex or Navidrome, CarPlay and turning on ReplayGain need Shuttle Music Pro"))
+        #expect(disclosure.contains("streaming from Jellyfin, Emby, Plex or Navidrome and CarPlay need Shuttle Music Pro"))
         #expect(disclosure.contains("$14.99"))
         #expect((try? sut.inspect().find(text: "Start \(ProFeatures.trialDays)-day free trial")) != nil)
         #expect((try? sut.inspect().find(text: "$14.99 once")) != nil)
     }
 
-    /// #946: servers, CarPlay and ReplayGain, as Android's Pro lists servers, Android Auto and ReplayGain.
+    /// Servers and CarPlay are Pro; ReplayGain is free on iOS, so the paywall lists it among what stays free.
     @Test func listsWhatProUnlocks() throws {
         let sut = PaywallContent(status: .trialAvailable, lifetimePrice: "$14.99")
 
-        for benefit in ["Stream from Jellyfin, Emby, Plex and Navidrome", "Browse and play your library in CarPlay",
-                        "ReplayGain volume levelling by track or album"] {
+        for benefit in ["Stream from Jellyfin, Emby, Plex and Navidrome", "Browse and play your library in CarPlay"] {
             #expect((try? sut.inspect().find(text: benefit)) != nil)
         }
-        #expect(ProFeatures.summary == "Servers, CarPlay and ReplayGain")
+        #expect((try? sut.inspect().find(text: "ReplayGain volume levelling by track or album")) == nil)
+        #expect((try? sut.inspect().find(text: "AirPlay, the equalizer, ReplayGain and the rest of the app stay free")) != nil)
+        #expect(ProFeatures.summary == "Servers and CarPlay")
         #expect(ProStatus.trialAvailable.message == "Try Shuttle Music Pro free for \(ProFeatures.trialDays) days.")
     }
 
