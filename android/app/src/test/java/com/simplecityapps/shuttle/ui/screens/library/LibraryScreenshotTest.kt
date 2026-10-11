@@ -122,6 +122,19 @@ class LibraryScreenshotTest {
         shot("phone-albums")
     }
 
+    /** A landscape phone: a small top bar over the chips, and the albums fill the rest. */
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-xhdpi")
+    fun landscapeAlbums() {
+        library.setContent(
+            libraryState(currentTab = LibraryTab.Albums),
+            libraryControls("${albums.size} albums", sorts("Album Name", "Artist Name", "Year"), ViewMode.Grid, onPlay = {}, onShuffle = {}),
+            LibraryPageStates(albums = readyAlbumList(albums = albums, viewMode = ViewMode.Grid)),
+            compactHeight = true,
+        )
+        shot("landscape-albums")
+    }
+
     /** The Albums grid at 200% text drops to one column, so titles aren't cut to a word. */
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")

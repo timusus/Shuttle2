@@ -19,6 +19,9 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarState
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,8 +31,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import com.simplecityapps.mediaprovider.search.SearchHit
@@ -54,6 +60,7 @@ import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
 import com.simplecityapps.shuttle.ui.shell.ScrollToTopOnReselect
 import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
+import kotlin.math.roundToInt
 
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
 class SearchCallbacks(
@@ -76,7 +83,7 @@ class SearchCallbacks(
  * while the field is empty, or the results grouped by type. [queryState] holds the field's text; the destination
  * feeds it to the ViewModel.
  */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     uiState: SearchUiState,
@@ -98,41 +105,49 @@ fun SearchScreen(
         reselects.collect { if (it == ShellTab.Search && !compactHeight) focusRequester.requestFocus() }
     }
 
-    Column(modifier.fillMaxSize().imePadding()) {
-        S2SearchField(
-            textFieldState = queryState,
-            onSearch = {
-                callbacks.onSearch()
-                focusManager.clearFocus()
-            },
-            placeholder = stringResource(R.string.search_placeholder),
-            focusRequester = focusRequester,
-            trailingAction = {
-                S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
-            },
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
-                .fillMaxWidth(),
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = S2Spacing.medium),
-        ) {
-            S2FilterChip(
-                label = stringResource(R.string.search_category_all),
-                selected = uiState.categories.isEmpty(),
-                onClick = callbacks.onSelectAll,
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    Column(
+        modifier
+            .fillMaxSize()
+            .imePadding()
+            .statusBarsPadding()
+            .then(if (compactHeight) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else Modifier),
+    ) {
+        Column(if (compactHeight) Modifier.hidesWithScroll(scrollBehavior.state) else Modifier) {
+            S2SearchField(
+                textFieldState = queryState,
+                onSearch = {
+                    callbacks.onSearch()
+                    focusManager.clearFocus()
+                },
+                placeholder = stringResource(R.string.search_placeholder),
+                focusRequester = focusRequester,
+                trailingAction = {
+                    S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
+                },
+                modifier = Modifier
+                    .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
+                    .fillMaxWidth(),
             )
-            SearchCategory.entries.forEach { category ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = S2Spacing.medium),
+            ) {
                 S2FilterChip(
-                    label = category.label(),
-                    selected = category in uiState.categories,
-                    onClick = { callbacks.onToggleCategory(category) },
+                    label = stringResource(R.string.search_category_all),
+                    selected = uiState.categories.isEmpty(),
+                    onClick = callbacks.onSelectAll,
                 )
+                SearchCategory.entries.forEach { category ->
+                    S2FilterChip(
+                        label = category.label(),
+                        selected = category in uiState.categories,
+                        onClick = { callbacks.onToggleCategory(category) },
+                    )
+                }
             }
         }
         when (val content = uiState.content) {
@@ -143,6 +158,15 @@ fun SearchScreen(
         }
     }
 }
+
+/** Slides the content out of its own space as [state]'s offset grows: an `enterAlways` bar for a header that isn't a TopAppBar. */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun Modifier.hidesWithScroll(state: TopAppBarState): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    state.heightOffsetLimit = -placeable.height.toFloat()
+    val offset = state.heightOffset.roundToInt()
+    layout(placeable.width, (placeable.height + offset).coerceAtLeast(0)) { placeable.place(0, offset) }
+}.clipToBounds()
 
 @Composable
 private fun RecentSearches(

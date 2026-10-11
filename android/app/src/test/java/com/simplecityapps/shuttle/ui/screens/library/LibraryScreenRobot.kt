@@ -56,6 +56,9 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 
 /** The page states [LibraryScreenRobot] renders under each tab; a tab without one shows a stand-in label. */
 data class LibraryPageStates(
@@ -129,12 +132,17 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         layoutDirection: LayoutDirection = LayoutDirection.Ltr,
         fontScale: Float = 1f,
         trialDaysLeft: Int? = null,
+        compactHeight: Boolean = false,
     ) {
         this.layoutDirection = layoutDirection
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             val density = LocalDensity.current
-            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection, LocalDensity provides Density(density.density, fontScale)) {
+            CompositionLocalProvider(
+                LocalLayoutDirection provides layoutDirection,
+                LocalDensity provides Density(density.density, fontScale),
+                LocalShellLayout provides ShellLayout(if (compactHeight) ShellWidth.Expanded else ShellWidth.Compact, compactHeight),
+            ) {
                 S2Theme { Screen(uiState, chrome, controls, pages, trialDaysLeft) }
             }
         }

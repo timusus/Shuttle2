@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -71,6 +72,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Switch
 import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
@@ -106,6 +108,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -147,7 +150,9 @@ fun LibraryScreen(
     var editingTabs by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = chrome.selectedCount > 0, onBack = chrome.onClearSelection)
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // A landscape phone has no height for the large bar: a small one that hides on scroll down and returns on scroll up.
+    val compactHeight = LocalShellLayout.current.compactHeight
+    val scrollBehavior = if (compactHeight) TopAppBarDefaults.enterAlwaysScrollBehavior() else TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     S2Scaffold(
         // Each page's list scrolls inside the pager; its scroll reaches the bar through this ancestor.
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -180,26 +185,27 @@ fun LibraryScreen(
                         )
                     }
                 } else {
-                    S2LargeTopBar(
-                        title = stringResource(R.string.title_library),
-                        scrollBehavior = scrollBehavior,
-                        actions = {
-                            trialDaysLeft?.let { days ->
-                                S2ActionChip(
-                                    label = pluralStringResource(R.plurals.library_trial_chip, days, days),
-                                    onClick = onOpenTrial,
-                                    modifier = Modifier.testTag("library-trial-chip"),
-                                )
-                            }
-                            S2IconButton(
-                                icon = if (offlineMode) Icons.Rounded.CloudOff else Icons.Rounded.Cloud,
-                                contentDescription = stringResource(if (offlineMode) R.string.library_offline_mode_on else R.string.library_offline_mode_off),
-                                onClick = onToggleOffline,
-                                modifier = Modifier.testTag("library-offline-mode"),
+                    val barActions: @Composable RowScope.() -> Unit = {
+                        trialDaysLeft?.let { days ->
+                            S2ActionChip(
+                                label = pluralStringResource(R.plurals.library_trial_chip, days, days),
+                                onClick = onOpenTrial,
+                                modifier = Modifier.testTag("library-trial-chip"),
                             )
-                            S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
-                        },
-                    )
+                        }
+                        S2IconButton(
+                            icon = if (offlineMode) Icons.Rounded.CloudOff else Icons.Rounded.Cloud,
+                            contentDescription = stringResource(if (offlineMode) R.string.library_offline_mode_on else R.string.library_offline_mode_off),
+                            onClick = onToggleOffline,
+                            modifier = Modifier.testTag("library-offline-mode"),
+                        )
+                        S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
+                    }
+                    if (compactHeight) {
+                        S2TopBar(title = stringResource(R.string.title_library), actions = barActions, scrollBehavior = scrollBehavior)
+                    } else {
+                        S2LargeTopBar(title = stringResource(R.string.title_library), scrollBehavior = scrollBehavior, actions = barActions)
+                    }
                 }
             }
         },
