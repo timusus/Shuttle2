@@ -4,6 +4,7 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createGenre
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
@@ -120,7 +121,7 @@ class HomeViewModelTest {
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
             LoadHomeCovers(FakePlaylistRepository(), genres),
-            PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository))),
+            PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource)),
             PickRandomShuffle(songRepository),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }

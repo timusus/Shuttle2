@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
@@ -13,7 +14,7 @@ import org.junit.Test
 
 class FavouriteSongsTest {
     private val songRepository = FakeSongRepository()
-    private val resolveSongs = ResolveSongs(songRepository, FakeGenreRepository(), FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository))
+    private val resolveSongs = ResolveSongs(songRepository, FakeGenreRepository(), FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource)
     private val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
     private val toggleFavourite = ToggleFavourite(songRepository)
 

@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 
@@ -27,6 +28,7 @@ class ResolveSongs(
     private val playlistRepository: PlaylistRepository,
     private val queueOperations: QueueOperations,
     private val resolveFolderSongs: ResolveFolderSongs,
+    private val downloadStatuses: DownloadStatusSource,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     suspend operator fun invoke(selection: MediaSelection): List<Song> = when (selection) {
@@ -71,7 +73,11 @@ class ResolveSongs(
                 playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
             }
 
-        is MediaSelection.SongsMatching -> songRepository.loadSongs(selection.query).sortedWith(selection.query.sortOrder.comparator)
+        is MediaSelection.SongsMatching -> {
+            // The Downloaded query is built with no paths: they are the download state's, read here.
+            val query = if (selection.query is SongQuery.Downloaded) SongQuery.Downloaded(downloadStatuses.observeDownloadedPaths().first()) else selection.query
+            songRepository.loadSongs(query).sortedWith(query.sortOrder.comparator)
+        }
 
         is MediaSelection.Folders -> resolveFolderSongs(selection.paths)
 

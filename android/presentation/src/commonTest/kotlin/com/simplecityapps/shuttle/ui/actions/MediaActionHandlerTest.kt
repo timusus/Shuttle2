@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.entitlement.ProFeature
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.PlaylistSong
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -83,6 +84,17 @@ class MediaActionHandlerTest {
         playbackOperations.addedToQueue shouldBe listOf(song, saved)
 
         handler.handle(MediaAction.Shuffle(MediaSelection.Songs(streamed))) shouldBe Message(MediaActionMessage.NoSongs)
+    }
+
+    @Test
+    fun `playing the Downloaded smart playlist queues the completed downloads`() = runTest {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(listOf(song, saved, streamed))
+        actions.offline.statuses.value = DownloadStatuses(mapOf("remote://3" to SongDownloadStatus.Downloaded, "remote://4" to SongDownloadStatus.Downloading))
+
+        handler.handle(MediaAction.Play(MediaSelection.SongsMatching(SmartPlaylistId.Downloaded.songQuery))) shouldBe MediaActionResult.None
+
+        queueOperations.lastSetQueue shouldBe listOf(saved)
     }
 
     @Test

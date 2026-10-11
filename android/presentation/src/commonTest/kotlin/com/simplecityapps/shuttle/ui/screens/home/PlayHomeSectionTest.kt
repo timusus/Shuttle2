@@ -5,6 +5,7 @@ import com.simplecityapps.createGenre
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakeOfflineSongs
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
@@ -21,7 +22,7 @@ class PlayHomeSectionTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val playlistRepository = FakePlaylistRepository()
     private val playHomeSection = PlayHomeSection(
-        ResolveSongs(songRepository, FakeGenreRepository(), playlistRepository, FakeQueueOperations(), ResolveFolderSongs(songRepository)),
+        ResolveSongs(songRepository, FakeGenreRepository(), playlistRepository, FakeQueueOperations(), ResolveFolderSongs(songRepository), FakeOfflineSongs().statusSource),
     )
 
     private fun section(vararg items: HomeItem) = HomeSection(HomeSectionId.HeavyRotation, HomeSectionTitle.HeavyRotation, subtitle = null, items.toList())
