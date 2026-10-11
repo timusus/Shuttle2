@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -161,7 +163,7 @@ fun TagEditorScreen(
             )
         },
     ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
+        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             when (uiState) {
                 is TagEditorUiState.Reading -> LoadingState(
                     modifier = Modifier.align(Alignment.Center),
@@ -222,7 +224,7 @@ private fun TagEditorForm(
 ) {
     val fields = remember(state.fields) { state.fields.associateBy { it.field } }
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
         verticalArrangement = Arrangement.spacedBy(S2Spacing.medium),
     ) {
         if (state.songCount > 1) {
