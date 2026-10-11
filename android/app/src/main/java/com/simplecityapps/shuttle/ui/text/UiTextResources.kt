@@ -114,6 +114,8 @@ val StringKey.resId: Int
         StringKey.PREF_DISABLE_SHUFFLE_ON_QUEUE_SUBTITLE -> R.string.pref_disable_shuffle_on_queue_subtitle
         StringKey.PREF_BIT_PERFECT_USB_TITLE -> R.string.pref_bit_perfect_usb_title
         StringKey.PREF_BIT_PERFECT_USB_SUBTITLE -> R.string.pref_bit_perfect_usb_subtitle
+        StringKey.PREF_FETCH_LYRICS_ONLINE_TITLE -> R.string.pref_fetch_lyrics_online_title
+        StringKey.PREF_FETCH_LYRICS_ONLINE_SUBTITLE -> R.string.pref_fetch_lyrics_online_subtitle
         StringKey.DSP_EQUALIZER_TITLE -> R.string.dsp_equalizer_title
         StringKey.DSP_REPLAY_GAIN_TITLE -> R.string.dsp_replay_gain_title
         StringKey.DSP_REPLAY_GAIN_TRACK -> R.string.dsp_replay_gain_track

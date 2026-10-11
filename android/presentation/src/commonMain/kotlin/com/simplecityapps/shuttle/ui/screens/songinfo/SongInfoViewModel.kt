@@ -47,7 +47,7 @@ class SongInfoViewModel @AssistedInject constructor(
     val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)))
         .map { songs ->
             val song = songs.firstOrNull()
-            SongInfoUiState(song = song, lyrics = song?.let { loadLyrics(it.id) }, loading = false)
+            SongInfoUiState(song = song, lyrics = song?.let { loadLyrics(it) }, loading = false)
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
 }

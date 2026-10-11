@@ -45,6 +45,7 @@ internal object BackedUpSettings {
         ArtworkSettings.NowPlayingArtworkSource,
         PlaybackSettings.RetainShuffleOnNewQueue,
         PlaybackSettings.UsbDacDirectOutput,
+        PlaybackSettings.FetchLyricsOnline,
         PlaybackSettings.ReplayGain,
         PlaybackSettings.PreAmpGain,
         PlaybackSettings.CrossfadeDuration,

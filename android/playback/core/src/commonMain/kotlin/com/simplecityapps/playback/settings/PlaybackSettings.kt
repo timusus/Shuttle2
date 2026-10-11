@@ -14,6 +14,7 @@ class PlaybackSettings @Inject constructor(
 ) {
     val retainShuffleOnNewQueue = store.preference(RetainShuffleOnNewQueue)
     val usbDacDirectOutput = store.preference(UsbDacDirectOutput)
+    val fetchLyricsOnline = store.preference(FetchLyricsOnline)
     val replayGainMode = store.preference(ReplayGain)
     val preAmpGain = store.preference(PreAmpGain)
     val playbackSpeed = store.preference(PlaybackSpeed)
@@ -25,6 +26,9 @@ class PlaybackSettings @Inject constructor(
 
         /** Direct output to USB DACs through a bit-perfect mixer (Android 14+). */
         val UsbDacDirectOutput = Setting.boolean("pref_bit_perfect_usb", false)
+
+        /** Look up lyrics on LRCLIB for songs without any. Off: it sends the song's artist, title, album and length to a third party. */
+        val FetchLyricsOnline = Setting.boolean("pref_fetch_lyrics_online", false)
 
         val ReplayGain = Setting.enumOrdinalInt("replaygain_mode", ReplayGainMode.Off, ReplayGainMode.entries)
 

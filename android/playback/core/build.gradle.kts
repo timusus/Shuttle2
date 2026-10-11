@@ -21,6 +21,8 @@ kotlin {
             api(project(":android:domain"))
             // PlaybackSettings: Setting and SettingsStore
             implementation(project(":android:core"))
+            // OnlineLyrics: the LRCLIB lookup
+            implementation(project(":android:networking"))
             api(libs.kotlinx.coroutinesCore)
             // KeyValueEqualizerPresetStore: the Custom preset's bands as JSON
             implementation(libs.kotlinx.serialization.json)
@@ -33,6 +35,7 @@ kotlin {
             implementation(libs.kotest)
             // SavedQueueTest: the saved queue's reading suspends
             implementation(libs.kotlinx.coroutinesTest)
+            implementation(libs.ktor.client.mock)
         }
     }
 }

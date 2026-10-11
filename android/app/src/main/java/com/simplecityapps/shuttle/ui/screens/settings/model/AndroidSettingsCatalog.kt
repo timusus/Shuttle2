@@ -122,6 +122,11 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         title = StringKey.PREF_BIT_PERFECT_USB_TITLE,
                         summary = StringKey.PREF_BIT_PERFECT_USB_SUBTITLE,
                         minSdk = Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                    ),
+                    SettingItem.Switch(
+                        setting = PlaybackSettings.FetchLyricsOnline,
+                        title = StringKey.PREF_FETCH_LYRICS_ONLINE_TITLE,
+                        summary = StringKey.PREF_FETCH_LYRICS_ONLINE_SUBTITLE
                     )
                 )
             ),

@@ -179,13 +179,13 @@ class PlayerViewModel @AssistedInject constructor(
     // Songs don't carry their lyrics (#873); null until loaded, so loading never holds the rest of the player back.
     // Keyed on the song id so metadata updates (play count) neither reload nor blank them. A song that settles without
     // lyrics also clears a stored Lyrics panel, so a later song with lyrics doesn't reopen it unprompted.
-    private val lyrics: Flow<String?> = currentSong.map { it?.id }.distinctUntilChanged().flatMapLatest { id ->
-        if (id == null) {
+    private val lyrics: Flow<String?> = currentSong.distinctUntilChanged { old, new -> old?.id == new?.id }.flatMapLatest { song ->
+        if (song == null) {
             flowOf(null)
         } else {
             flow {
                 val text = try {
-                    loadLyrics(id)
+                    loadLyrics(song)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

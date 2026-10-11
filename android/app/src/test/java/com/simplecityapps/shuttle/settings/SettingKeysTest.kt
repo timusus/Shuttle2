@@ -71,6 +71,7 @@ class SettingKeysTest {
             "LibrarySettings.ReportPlaybackToServer: pref_report_playback = true",
             "PlaybackSettings.RetainShuffleOnNewQueue: pref_retain_shuffle_on_new_queue = false",
             "PlaybackSettings.UsbDacDirectOutput: pref_bit_perfect_usb = false",
+            "PlaybackSettings.FetchLyricsOnline: pref_fetch_lyrics_online = false",
             "PlaybackSettings.ReplayGain: replaygain_mode = Off",
             "PlaybackSettings.PreAmpGain: preamp_gain = 0.0",
             "PlaybackSettings.PlaybackSpeed: playback_speed = 1.0",

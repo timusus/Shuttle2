@@ -1,0 +1,1 @@
+{ "type": "features", "text": "Songs without lyrics can now look them up online (from LRCLIB). It is off by default; turn on Fetch lyrics online in Settings > Playback and sound. This sends the song's artist, title, album and length to lrclib.net.", "commits": [] }

@@ -4,6 +4,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.LoadLyrics
+import com.simplecityapps.shuttle.ui.actions.NoOnlineLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.collections.shouldContain
@@ -39,7 +40,7 @@ class SongInfoViewModelTest {
         val song = createSong(id = 2, name = "Two")
         songRepository.setSongs(listOf(createSong(id = 1), song))
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository, NoOnlineLyrics))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -51,7 +52,7 @@ class SongInfoViewModelTest {
         songRepository.setSongs(listOf(createSong(id = 2)))
         songRepository.lyrics[2] = "la la la"
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository, NoOnlineLyrics))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -69,7 +70,7 @@ class SongInfoViewModelTest {
     fun `a song no longer in the library is not found`() = runTest {
         songRepository.setSongs(emptyList())
 
-        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository))
+        val viewModel = SongInfoViewModel(2, ObserveSongs(songRepository), LoadLyrics(songRepository, NoOnlineLyrics))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 

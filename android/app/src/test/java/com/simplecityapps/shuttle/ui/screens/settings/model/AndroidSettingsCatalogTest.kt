@@ -98,6 +98,7 @@ class AndroidSettingsCatalogTest {
             "pref_excluded",
             "pref_retain_shuffle_on_new_queue",
             "pref_bit_perfect_usb",
+            "pref_fetch_lyrics_online",
             "pref_crash_reporting",
             "pref_firebase_analytics",
             "widget_background_opacity"
