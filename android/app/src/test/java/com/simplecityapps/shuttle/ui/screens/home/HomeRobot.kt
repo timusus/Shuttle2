@@ -91,8 +91,8 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    /** Where the bar's title sits, from the top of the screen: it moves once the bar collapses. */
-    fun titleTop(): Float = rule.onNodeWithText("Home").fetchSemanticsNode().boundsInRoot.top
+    /** Where the Settings action sits, from the top of the screen: it moves if the bar collapses. */
+    fun settingsTop(): Float = rule.onNodeWithContentDescription("Settings").fetchSemanticsNode().boundsInRoot.top
 
     fun tapText(text: String) {
         scrollTo(text)

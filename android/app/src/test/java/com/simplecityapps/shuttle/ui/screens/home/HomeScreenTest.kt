@@ -75,23 +75,13 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `rows that fit the screen don't scroll, and the bar stays expanded`() {
-        robot.setContent(HomeScenarios.fewRows)
-        val titleTop = robot.titleTop()
-
-        robot.dragListUp()
-
-        robot.titleTop() shouldBe titleTop
-    }
-
-    @Test
-    fun `a long Home collapses the bar as it scrolls`() {
+    fun `the bar stays pinned as a long Home scrolls`() {
         robot.setContent(HomeScenarios.content)
-        val titleTop = robot.titleTop()
+        val settingsTop = robot.settingsTop()
 
         robot.dragListUp()
 
-        (robot.titleTop() < titleTop) shouldBe true
+        robot.settingsTop() shouldBe settingsTop
     }
 
     @Test
@@ -355,10 +345,10 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `home has its title and no search button, which the Search tab covers`() {
+    fun `home has no title and no search button, which the Search tab covers`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertTextDisplayed("Home")
+        robot.assertTextNotShown("Home")
         robot.assertDescriptionNotShown("Search")
     }
 

@@ -35,6 +35,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -358,11 +359,13 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    /** The title shares its row with the settings action, rather than sitting under it. */
-    fun titleSharesRowWithSettings(): Boolean {
-        val title = rule.onNodeWithText("Library").fetchSemanticsNode().boundsInRoot
-        val settings = rule.onNodeWithContentDescription("Settings").fetchSemanticsNode().boundsInRoot
-        return title.top < settings.bottom && settings.top < title.bottom
+    /** Where the bar's title sits, from the top of the screen: it moves as the large bar collapses. */
+    fun titleTop(): Float = rule.onNodeWithText("Library").fetchSemanticsNode().boundsInRoot.top
+
+    /** Drags the current page's list up, as a finger scrolling it would. */
+    fun dragPageUp() {
+        rule.onNodeWithTag("library-pager").performTouchInput { swipeUp() }
+        rule.waitForIdle()
     }
 
     /** The section chip is fully inside the chip row, neither clipped at its start nor at its end. */

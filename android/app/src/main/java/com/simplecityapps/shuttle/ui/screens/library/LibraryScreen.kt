@@ -33,6 +33,8 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +49,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -62,13 +65,13 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionChip
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2ModalSheet
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Switch
 import com.simplecityapps.shuttle.designsystem.component.S2Text
-import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.entitlement.PaywallSource
@@ -116,10 +119,11 @@ class LibraryTabChrome(
 )
 
 /**
- * The Library container (inventory §1, #661, #669): a one-row top bar, then a pinned row of section chips over a pager.
+ * The Library container (inventory §1, #661, #669): a collapsing large top bar, then a pinned row of section chips over a pager.
  * Each page leads with its tab's controls row (count, sort, grid/list, Shuffle, Play) as its list's first item, so it
  * scrolls away with the page. The selection toolbar replaces the top bar while the current tab has a selection.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
@@ -143,8 +147,10 @@ fun LibraryScreen(
     var editingTabs by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = chrome.selectedCount > 0, onBack = chrome.onClearSelection)
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     S2Scaffold(
-        modifier = modifier,
+        // Each page's list scrolls inside the pager; its scroll reaches the bar through this ancestor.
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
@@ -174,8 +180,9 @@ fun LibraryScreen(
                         )
                     }
                 } else {
-                    S2TopBar(
+                    S2LargeTopBar(
                         title = stringResource(R.string.title_library),
+                        scrollBehavior = scrollBehavior,
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
                             trialDaysLeft?.let { days ->

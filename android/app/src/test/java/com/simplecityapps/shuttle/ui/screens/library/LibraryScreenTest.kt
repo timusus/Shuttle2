@@ -48,10 +48,18 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the title shares a row with the settings action`() {
-        robot.setContent(libraryState(), libraryControls(count = "12 songs"))
+    fun `the large top bar collapses as the page scrolls`() {
+        val songs = (1..60L).map { createSong(id = it, name = "Track $it") }
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Songs),
+            libraryControls(count = "60 songs"),
+            LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.SongName)),
+        )
+        val titleTop = robot.titleTop()
 
-        robot.titleSharesRowWithSettings() shouldBe true
+        robot.dragPageUp()
+
+        (robot.titleTop() < titleTop) shouldBe true
     }
 
     @Test

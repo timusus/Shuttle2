@@ -26,10 +26,8 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,11 +51,11 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Card
 import com.simplecityapps.shuttle.designsystem.component.S2Icon
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2PullToRefreshBox
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2Text
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
@@ -92,7 +90,7 @@ class HomeCallbacks(
 /**
  * Home (#633): Jump back in as a grid, then the library's shelves; at cold start, Shuffle all and a line on how Home
  * fills in; or the empty state when there's no music yet. There's no resume hero: the mini player is that (#646).
- * The bar is Library's and Settings' large title bar, with Shuffle all and the Settings gear (#660). The first section
+ * The bar is a pinned, untitled small bar holding Shuffle all and the Settings gear. The first section
  * leads with a headline; every shelf after it takes the one title header. Search is its own tab.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -107,14 +105,15 @@ fun HomeScreen(
     // Fully drawn, for the startup metrics and the Baseline Profile (docs/performance/android-startup.md), once the
     // library has loaded: the sections, or the empty state.
     ReportDrawnWhen { uiState !is HomeUiState.Loading }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     S2Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            S2LargeTopBar(
-                title = stringResource(R.string.shell_tab_home),
+            // Untitled, so the first screen opens on the resume hero rather than the word "Home".
+            S2TopBar(
+                title = "",
                 actions = {
                     // Cold start has its own, larger Shuffle all.
                     if (uiState is HomeUiState.Content && !uiState.coldStart) {
@@ -144,7 +143,7 @@ fun HomeScreen(
             )
         },
     ) { padding ->
-        val contentModifier = Modifier.fillMaxSize().padding(padding).nestedScroll(scrollBehavior.nestedScrollConnection)
+        val contentModifier = Modifier.fillMaxSize().padding(padding)
         when (uiState) {
             HomeUiState.Loading -> LoadingState(contentModifier)
 
@@ -164,7 +163,7 @@ fun HomeScreen(
                 onRefresh = callbacks.onRefresh,
                 modifier = Modifier.fillMaxSize().padding(padding),
             ) {
-                HomeContent(uiState, callbacks, scrollBehavior, Modifier.fillMaxSize())
+                HomeContent(uiState, callbacks, Modifier.fillMaxSize())
             }
         }
     }
@@ -178,12 +177,10 @@ val HomeUiState.Content.coldStart: Boolean
 val HomeSectionId.hasSeeAll: Boolean
     get() = this == HomeSectionId.RecentlyAdded
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeContent(
     content: HomeUiState.Content,
     callbacks: HomeCallbacks,
-    scrollBehavior: TopAppBarScrollBehavior,
     modifier: Modifier,
 ) {
     val wide = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
@@ -194,14 +191,9 @@ private fun HomeContent(
     val leadSection = content.sections.firstOrNull { it.id != HomeSectionId.ShuffleAll && it.items.isNotEmpty() }?.id
     val listState = rememberLazyListState()
     ScrollToTopOnReselect(ShellTab.Home, listState)
-    // Rows that fit the viewport leave nothing to scroll, so the large bar must not collapse (and shift them) on a drag;
-    // a bar that's already collapsed stays connected so a drag down can still expand it.
-    val barFollowsList by remember(listState, scrollBehavior) {
-        derivedStateOf { listState.canScrollForward || listState.canScrollBackward || scrollBehavior.state.collapsedFraction > 0f }
-    }
     LazyColumn(
         state = listState,
-        modifier = if (barFollowsList) modifier.nestedScroll(scrollBehavior.nestedScrollConnection) else modifier,
+        modifier = modifier,
         contentPadding = PaddingValues(bottom = S2Spacing.large)
     ) {
         if (content.showWhatsNew) {
