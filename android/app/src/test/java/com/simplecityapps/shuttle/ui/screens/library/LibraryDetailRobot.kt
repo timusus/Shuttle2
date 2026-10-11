@@ -94,7 +94,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         AlbumDetailScreen(uiState, onNavigateUp = ::up, onPlay = ::play, onShuffle = ::shuffle, onAlbumMore = ::more, onSongMore = ::more, onOpenAlbum = { lastAlbumClicked = it }, onMoreByAlbumMore = ::more)
     }
 
-    fun setAlbumArtist(uiState: AlbumArtistDetailUiState) = render {
+    fun setAlbumArtist(uiState: AlbumArtistDetailUiState, compactHeight: Boolean = false) = render(compactHeight) {
         AlbumArtistDetailScreen(
             uiState,
             onNavigateUp = ::up,

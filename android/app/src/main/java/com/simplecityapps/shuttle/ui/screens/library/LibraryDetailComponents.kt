@@ -91,7 +91,7 @@ fun LibraryDetailScaffold(
             modifier = modifier,
             listState = listState,
             heroBleeds = bleed,
-            hero = { topInset ->
+            hero = { topInset, columnHeight ->
                 val playShuffle: @Composable () -> Unit = {
                     S2ButtonGroup(
                         primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
@@ -99,7 +99,7 @@ fun LibraryDetailScaffold(
                     )
                 }
                 if (bleed) {
-                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork) }, actions = playShuffle, extra = header)
+                    DetailBleedHero(title = title, subtitle = subtitle, image = { BleedArtwork(artwork) }, actions = playShuffle, extra = header, columnHeight = columnHeight)
                 } else {
                     DetailHero(
                         title = title,
@@ -108,6 +108,7 @@ fun LibraryDetailScaffold(
                         artwork = { LibraryArtwork(model = artwork, placeholder = placeholder, modifier = Modifier.sharedArtwork(artworkKey), size = ArtworkSize.Hero) },
                         actions = playShuffle,
                         extra = header,
+                        columnHeight = columnHeight,
                     )
                 }
             },

@@ -239,6 +239,25 @@ class LibraryScreenshotTest {
         shot(name)
     }
 
+    /** A landscape phone's artist page: the bleed image and actions beside the albums. */
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-xhdpi")
+    fun landscapeArtistDetail() {
+        val artist = SampleLibrary.artist("Juniper Static")
+        val artistSongs = artist.albums.flatMap { album -> album.songs.map { it.toSong() } }
+        val artistAlbums = artist.albums.map { album -> albumOf(album.songs.map { it.toSong() }, year = album.year) }
+        detail.setAlbumArtist(
+            readyAlbumArtistDetail(
+                artist = artist.toAlbumArtist(),
+                songs = artistSongs,
+                albums = artistAlbums,
+                expandedAlbums = setOfNotNull(artistAlbums.first().groupKey),
+            ),
+            compactHeight = true,
+        )
+        shot("landscape-artist-detail")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneArtistDetail() {

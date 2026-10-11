@@ -60,7 +60,7 @@ fun S2LargeTopBar(
 }
 
 /**
- * The one-row bar, pinned unless the screen passes an `enterAlwaysScrollBehavior` (a landscape phone's Library and Search): on sub-screens (Settings' sub-pages among them), and over the Library container's section chips, where only the chips stay pinned under it and each tab's
+ * The one-row bar, pinned unless the caller passes a scroll behavior: on sub-screens (Settings' sub-pages among them), and over the Library container's section chips, where only the chips stay pinned under it and each tab's
  * controls row scrolls away with its page.
  */
 @OptIn(ExperimentalMaterial3Api::class)

@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalFocusManager
@@ -106,6 +107,8 @@ fun SearchScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    // A result set too short to scroll can't bring a hidden header back, so new content always starts with it shown.
+    LaunchedEffect(uiState.content) { scrollBehavior.state.heightOffset = 0f }
     Column(
         modifier
             .fillMaxSize()
@@ -127,7 +130,8 @@ fun SearchScreen(
                 },
                 modifier = Modifier
                     .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .onFocusChanged { if (it.isFocused) scrollBehavior.state.heightOffset = 0f },
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),

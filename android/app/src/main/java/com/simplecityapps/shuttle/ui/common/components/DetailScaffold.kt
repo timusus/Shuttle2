@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.common.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -47,8 +48,9 @@ import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
  * [heroBleeds]: the hero is a `DetailBleedHero`, whose image runs up behind the bar, so the bar's icons are white over it.
  * [overlay] draws over the list, under the bar, given the bar's height (an artist page's pinned album header, #631).
  *
- * At compact height (a landscape phone) a [hero] takes the leading 40% and scrolls on its own beside the list, below an
- * opaque bar; [overlay] then sits over the list column and is given no inset.
+ * At compact height (a landscape phone) a [hero] takes the leading 40% beside the list, below an opaque bar that keeps
+ * the title; [overlay] then sits over the list column and is given no inset. The hero is given the column's height
+ * (otherwise [Dp.Unspecified]) to fit its artwork and actions into without scrolling.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +60,7 @@ fun DetailScaffold(
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
-    hero: (@Composable (topInset: Dp) -> Unit)? = null,
+    hero: (@Composable (topInset: Dp, columnHeight: Dp) -> Unit)? = null,
     heroBleeds: Boolean = false,
     actions: @Composable RowScope.() -> Unit = {},
     overlay: (@Composable BoxScope.(topInset: Dp) -> Unit)? = null,
@@ -95,7 +97,10 @@ fun DetailScaffold(
         val layoutDirection = LocalLayoutDirection.current
         if (hero != null && twoColumns) {
             Row(Modifier.fillMaxSize().padding(innerPadding)) {
-                Column(Modifier.weight(HeroColumnWeight).fillMaxHeight().verticalScroll(rememberScrollState())) { hero(0.dp) }
+                BoxWithConstraints(Modifier.weight(HeroColumnWeight).fillMaxHeight()) {
+                    val columnHeight = maxHeight
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) { hero(0.dp, columnHeight) }
+                }
                 Box(Modifier.weight(1f - HeroColumnWeight).fillMaxHeight()) {
                     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) { content() }
                     overlay?.invoke(this, 0.dp)
@@ -118,7 +123,7 @@ fun DetailScaffold(
                 },
             ) {
                 if (hero != null) {
-                    item(key = "detail-hero", contentType = "hero") { hero(innerPadding.calculateTopPadding()) }
+                    item(key = "detail-hero", contentType = "hero") { hero(innerPadding.calculateTopPadding(), Dp.Unspecified) }
                 }
                 content()
             }

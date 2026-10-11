@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -47,8 +48,32 @@ fun DetailHero(
     modifier: Modifier = Modifier,
     topInset: Dp = 0.dp,
     extra: @Composable () -> Unit = {},
+    columnHeight: Dp = Dp.Unspecified,
 ) {
     val colors = MaterialTheme.colorScheme
+    if (columnHeight != Dp.Unspecified) {
+        // Beside the list the bar already carries the title, so the artwork takes whatever height the actions leave.
+        Column(modifier.fillMaxWidth().height(columnHeight).testTag("detail-hero")) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .background(Brush.verticalGradient(listOf(colors.primaryContainer, colors.surface)))
+                    .padding(vertical = S2Spacing.small),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(Modifier.fillMaxHeight().aspectRatio(1f), contentAlignment = Alignment.Center) { artwork() }
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+                verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
+            ) {
+                actions()
+                extra()
+            }
+        }
+        return
+    }
     Column(modifier.fillMaxWidth().testTag("detail-hero")) {
         Box(
             modifier = Modifier
@@ -87,7 +112,29 @@ fun DetailBleedHero(
     actions: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     extra: @Composable () -> Unit = {},
+    columnHeight: Dp = Dp.Unspecified,
 ) {
+    if (columnHeight != Dp.Unspecified) {
+        // Beside the list the bar already carries the title; the image takes the height the actions leave.
+        Column(modifier.fillMaxWidth().height(columnHeight).testTag("detail-hero")) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clipToBounds()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .testTag("detail-hero-image"),
+            ) { image() }
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.smallMedium),
+                verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
+            ) {
+                actions()
+                extra()
+            }
+        }
+        return
+    }
     Column(modifier.fillMaxWidth().testTag("detail-hero")) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             Box(
