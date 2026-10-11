@@ -91,11 +91,12 @@ data class PlayerScreenState(
     val events: List<PendingEvent<PlayerUiEvent>> = emptyList(),
 )
 
-/** The current song's position and duration, in milliseconds. */
+/** The current song's position and duration, in milliseconds, and how far a stream has loaded ([bufferedMs], 0 for nothing to show). */
 @Immutable
 data class PlayerProgress(
     val positionMs: Long,
     val durationMs: Long,
+    val bufferedMs: Long = 0,
 ) {
     val fraction: Float get() = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
 

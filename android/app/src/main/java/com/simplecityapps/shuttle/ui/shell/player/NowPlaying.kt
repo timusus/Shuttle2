@@ -263,6 +263,7 @@ private fun SeekBar(
         onSeek = actions::seekTo,
         enabled = player.current != null,
         buffering = player.buffering,
+        bufferedMs = current.bufferedMs,
         showRemaining = player.showRemainingTime,
         onToggleRemaining = { actions.setShowRemainingTime(!player.showRemainingTime) },
         modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium),

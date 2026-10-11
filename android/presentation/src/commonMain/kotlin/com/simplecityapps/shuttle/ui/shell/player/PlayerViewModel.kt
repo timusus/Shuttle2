@@ -247,7 +247,7 @@ class PlayerViewModel @AssistedInject constructor(
         combine(observeProgress(), currentSong) { progress, song ->
             val songDuration = song?.duration?.toLong()?.takeIf { it > 0 }
             when {
-                progress != null -> PlayerProgress(progress.position.toLong(), songDuration ?: progress.duration.toLong())
+                progress != null -> PlayerProgress(progress.position.toLong(), songDuration ?: progress.duration.toLong(), progress.buffered.toLong())
                 song != null -> PlayerProgress(song.playbackPosition.toLong(), song.duration.toLong())
                 else -> savedProgress() ?: PlayerProgress.Zero
             }

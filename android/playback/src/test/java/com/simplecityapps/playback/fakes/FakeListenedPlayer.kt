@@ -20,6 +20,8 @@ class FakeListenedPlayer(var items: List<MediaItem> = emptyList()) : StubPlayer(
 
     var durationMs = C.TIME_UNSET
 
+    var bufferedMs = 0L
+
     var device: DeviceInfo = DeviceInfo.UNKNOWN
 
     var parameters: PlaybackParameters = PlaybackParameters.DEFAULT
@@ -33,6 +35,8 @@ class FakeListenedPlayer(var items: List<MediaItem> = emptyList()) : StubPlayer(
     override fun getCurrentPosition(): Long = positionMs
 
     override fun getDuration(): Long = durationMs
+
+    override fun getBufferedPosition(): Long = bufferedMs
 
     override fun getDeviceInfo(): DeviceInfo = device
 

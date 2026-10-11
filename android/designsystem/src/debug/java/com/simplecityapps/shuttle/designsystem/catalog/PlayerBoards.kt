@@ -122,6 +122,7 @@ fun SeekBarBoard(width: BoardWidth) {
             BoardSection("Resting") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}) },
             BoardSection("Disabled") { S2SeekBar(positionMs = 0, durationMs = 0, onSeek = {}, enabled = false) },
             BoardSection("Buffering") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, buffering = true) },
+            BoardSection("Stream, loaded ahead") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, bufferedMs = 230_000, onSeek = {}) },
             BoardSection("Dragging") {
                 S2SeekBar(
                     positionMs = 250_000,

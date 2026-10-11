@@ -401,6 +401,14 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `how far a stream has loaded reaches the progress`() = runTest {
+        val viewModel = viewModel()
+        queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 200_000)))
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 50_000, duration = 200_000, buffered = 120_000)
+        viewModel.uiState.value.progress.bufferedMs shouldBe 120_000L
+    }
+
+    @Test
     fun `the total is the song's duration - as the queue rows show it - not the player's`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 60_000)))

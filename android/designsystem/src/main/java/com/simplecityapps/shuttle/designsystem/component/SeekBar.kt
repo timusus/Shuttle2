@@ -26,6 +26,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -47,6 +51,8 @@ import com.simplecityapps.shuttle.format.formatDuration
  * thumb with it, while it's dragged. The elapsed and total times sit underneath; while dragging, the
  * elapsed time follows the thumb in `primary`. [onSeek] runs once, when the drag ends. While
  * [buffering], a small loading indicator and "Buffering" sit between the times; the bar stays usable.
+ * A stream's [bufferedMs] shows as a faint tonal stretch of the track ahead of the thumb, how far it can be
+ * sought without stalling; 0, or the whole duration, draws nothing.
  * With [showRemaining] the end label counts down the time left ("-3:12"); [onToggleRemaining], when
  * given, makes it tappable to switch between that and the total.
  */
@@ -59,6 +65,7 @@ fun S2SeekBar(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     buffering: Boolean = false,
+    bufferedMs: Long = 0,
     showRemaining: Boolean = false,
     onToggleRemaining: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -89,7 +96,23 @@ fun S2SeekBar(
                 )
             },
             track = { sliderState ->
-                SliderDefaults.Track(sliderState = sliderState, modifier = Modifier.height(trackHeight), enabled = enabled)
+                val bufferedColor = MaterialTheme.colorScheme.primary.copy(alpha = SeekBufferedAlpha)
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    modifier = Modifier
+                        .height(trackHeight)
+                        .drawWithContent {
+                            drawContent()
+                            val bufferedFraction = if (durationMs > 0) (bufferedMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+                            val start = fraction * size.width + SeekBufferedInset.toPx()
+                            val end = bufferedFraction * size.width
+                            // Nothing is drawn for a local file, or once the thumb has caught up with what has loaded.
+                            if (enabled && bufferedMs in 1 until durationMs && end > start) {
+                                drawRoundRect(bufferedColor, Offset(start, 0f), Size(end - start, size.height), CornerRadius(size.height / 2))
+                            }
+                        },
+                    enabled = enabled,
+                )
             },
         )
         Row(
@@ -156,6 +179,10 @@ private val SeekTrackDraggingHeight = 24.dp
 /** The thumb is a bar this wide, standing this much taller than the track. */
 private val SeekThumbWidth = 4.dp
 private val SeekThumbOverhang = 20.dp
+
+/** The loaded stretch is the primary colour at this opacity, starting this far past the thumb's gap. */
+private const val SeekBufferedAlpha = 0.24f
+private val SeekBufferedInset = 8.dp
 
 /** The buffering indicator's stroke, in proportion to its small icon size. */
 private val SeekBufferingStroke = 2.dp

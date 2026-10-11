@@ -42,6 +42,19 @@ class ProgressTickerTest {
     }
 
     @Test
+    fun `how far a stream has loaded is published, and nothing once it is loaded to the end`() {
+        player.positionMs = 5_000
+        player.bufferedMs = 65_000
+
+        ticker.publish()
+        ticker.progressFlow.value shouldBe PlaybackProgress(5_000, 180_000, buffered = 65_000)
+
+        player.bufferedMs = 180_000
+        ticker.publish()
+        ticker.progressFlow.value shouldBe PlaybackProgress(5_000, 180_000)
+    }
+
+    @Test
     fun `while ticking, progress is published every interval, and stops when it stops`() {
         ticker.setTicking(true)
         scope.runCurrent()

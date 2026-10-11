@@ -33,14 +33,15 @@ class ProgressTicker(
         get() = job?.isActive == true
 
     /**
-     * Publishes the current position and duration. Until the item is ready, its duration is the one its song is
+     * Publishes the current position, buffered position and duration. Until the item is ready, its duration is the one its song is
      * tagged with; with no current item, nothing is published.
      */
     fun publish() {
         if (player.mediaItemCount == 0) return
         val position = player.currentPosition.toInt()
         val duration = player.duration.takeIf { it != C.TIME_UNSET }?.toInt() ?: player.currentMediaItem?.queueEntryOrNull?.song?.duration ?: return
-        _progressFlow.value = PlaybackProgress(position, duration)
+        val buffered = player.bufferedPosition.toInt().takeIf { it < duration } ?: 0
+        _progressFlow.value = PlaybackProgress(position, duration, buffered)
     }
 
     /** Starts or stops publishing every [INTERVAL_MS]. */
