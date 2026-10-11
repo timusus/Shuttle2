@@ -215,6 +215,40 @@ final class RecordingTrackSource: TrackPCMSource {
     func interrupt() { inner.interrupt() }
 }
 
+/// A stream whose download gives up at `failFrame` (its retries ran out), as ``FFmpegTrackSource`` reports it: every
+/// read from there fails. `seekable: false` is a transcode, `true` a direct-play stream.
+final class GivingUpTrackSource: TrackPCMSource {
+    private let inner: InMemoryTrackSource
+    private let failFrame: Int
+    private var delivered = 0
+
+    init(samples: [Float], failFrame: Int, seekable: Bool) {
+        inner = InMemoryTrackSource(samples: samples, seekable: seekable)
+        self.failFrame = failFrame
+    }
+
+    var isSeekable: Bool { inner.isSeekable }
+
+    func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
+        try inner.open(sampleRate: sampleRate, channelCount: channelCount)
+    }
+
+    func seek(toFrame frame: Int64) throws {
+        try inner.seek(toFrame: frame)
+        delivered = Int(frame)
+    }
+
+    func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        if delivered >= failFrame { throw TrackSourceError.failed("decode failed mid-stream") }
+        let frames = try inner.read(into: buffer, maxFrames: min(maxFrames, failFrame - delivered))
+        delivered += frames
+        return frames
+    }
+
+    func cancel() {}
+    func interrupt() {}
+}
+
 /// A track that can't be opened, as a missing file or a dead URL; or, `atRead`, one that opens and
 /// fails on its first read, as a corrupt file.
 final class FailingTrackSource: TrackPCMSource {

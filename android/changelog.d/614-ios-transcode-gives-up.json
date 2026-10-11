@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "iOS converted server streams that lose the network for a while pick up where they were instead of skipping the song.", "commits": [] }

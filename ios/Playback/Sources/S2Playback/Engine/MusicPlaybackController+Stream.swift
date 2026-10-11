@@ -230,11 +230,22 @@ extension MusicPlaybackController {
                     } catch TrackSourceError.unseekable {
                         slot.awaitingReopen = true
                         continue
+                    } catch TrackSourceError.failed where !slot.source.isSeekable && !reopeningAfterGiveUp {
+                        // A transcode whose download gave up after its retries: re-opened once where it's heard,
+                        // as a drop is. A re-open that gives up before it plays fails, so a dead link can't loop.
+                        engineLog.notice("track \(slot.track.uid, privacy: .public) gave up mid-stream; asking for a re-open")
+                        reopeningAfterGiveUp = true
+                        slot.awaitingReopen = true
+                        guard slot === current else { continue }
+                        interrupted = true
+                        reportSeekUnsupported(slot, ms: ms(frames: currentMediaFrame()))
+                        return
                     } catch {
                         reportFailure(slot, error)
                     }
                 }
                 if got > 0 {
+                    reopeningAfterGiveUp = false
                     processor.process(base + filled * channels, frameCount: got,
                                       gain: PCMProcessor.linear(db: slot.track.gainDb), into: &output)
                     filled += got

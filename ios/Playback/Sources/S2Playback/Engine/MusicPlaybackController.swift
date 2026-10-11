@@ -98,7 +98,8 @@ public final class MusicPlaybackController {
     /// The current track can't be sought to the position (uid, ms into the track): its source
     /// isn't seekable (``TrackPCMSource/isSeekable``, a progressive transcode). A seek leaves it
     /// playing where it was; a load at a position starts it at its beginning. The owner re-opens
-    /// the stream at the position.
+    /// the stream at the position. Also sent, once, when such a stream's download gives up: a
+    /// re-open that gives up before playing fails instead.
     public var onSeekUnsupported: ((String, Int64) -> Void)? {
         get { callbackLock.withLock { callbacks.seekUnsupported } }
         set { callbackLock.withLock { callbacks.seekUnsupported = newValue } }
@@ -210,6 +211,9 @@ public final class MusicPlaybackController {
     var pausingAtEnd = false
     /// Paused on the current track's last frame by `pausingAtEnd`: a play carries on into the next.
     var pausedAtEnd = false
+    /// A transcode's download gave up and the owner was asked to re-open it; until a track reads audio again, the
+    /// next give-up fails its track (#614).
+    var reopeningAfterGiveUp = false
     /// Bumped by every restart; completions from buffers a restart discarded are ignored.
     var generation = 0
     /// Frames an interrupted read got before its interrupt, kept off the node until the seek behind it says
@@ -485,7 +489,9 @@ public final class MusicPlaybackController {
     }
 
     /// Seek within the current track. Exact: the first frame heard is the frame at `ms`. A track
-    /// whose source can't seek plays on untouched, reported through ``onSeekUnsupported``.
+    /// whose source can't seek plays on untouched, reported through ``onSeekUnsupported``. One that a
+    /// rebuild (a speed or output change) restarted past its start is silent until the owner's re-open
+    /// arrives.
     public func seek(toMs ms: Int64) {
         // An interrupt is only undone by a seek, so a source that can't seek is never interrupted:
         // it would never read again.

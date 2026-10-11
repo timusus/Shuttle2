@@ -119,6 +119,11 @@ A stream that drops mid-play and whose host answers the source's resume with the
 up rather than wait while the song is fetched again from byte 0, and the controller reports the heard
 position once through `onSeekUnsupported`, so the owner re-opens it there. A host that honours the
 range answers 206 and the source simply resumes.
+A rebuild (a speed or output-device change, a replaced next) can't seek a transcode past its start
+either: it reads nothing more and is silent until the owner's re-open at the heard position arrives
+(#614). A transcode whose download gives up after its retries (a read failing mid-stream) is
+re-opened once the same way; if no track has read audio since the last such re-open, it fails
+instead, so a dead link fails the song rather than looping. Direct-play streams and files fail as before.
 
 **Streaming (#958).** An HTTP(S) track downloads through AudioPlaybackKit's `GrowingFileByteSource` into
 `StreamStore`, S2's `GrowingFileStore` under Caches (512 MiB, swept of partials at launch). A track downloaded
