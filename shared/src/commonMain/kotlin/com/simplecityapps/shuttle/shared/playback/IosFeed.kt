@@ -37,6 +37,12 @@ internal class IosFeed(
     /** The engine can't seek its stream (it said so once), so a seek re-opens the stream at the position. */
     var seeksByReopening = false
 
+    /** The engine reported a duration for it: its container gives its length, as a direct-play file's does. */
+    var durationKnown = false
+
+    /** Re-opened after ending short of the song's duration: how many times in a row without playing on further. */
+    var shortEndReopens = 0
+
     /** What the engine was last handed for it. */
     var handedOver: IosAudioTrack? = null
 

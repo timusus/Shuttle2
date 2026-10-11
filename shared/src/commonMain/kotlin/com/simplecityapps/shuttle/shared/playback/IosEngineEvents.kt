@@ -59,6 +59,8 @@ internal class IosEngineEvents(
     /** The engine moved on to its next track: the queue's current item follows. */
     override fun onTransition(trackId: String) {
         val arrived = feeder.engineNext?.takeIf { it.id == trackId } ?: return
+        // The engine's position is the arrived track's now: the last tick is where the one before ended.
+        feeder.current?.let { if (reopenShortEnd(it, flows.progress.value?.position)) return }
         log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.item.song.id}, gapless" }
         feeder.current?.takeIf { !it.failed }?.let { flows.trackEnded.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
         feeder.arrive(arrived)
@@ -87,7 +89,35 @@ internal class IosEngineEvents(
         positionMs: Long
     ) {
         val currentFeed = feeder.current ?: return
-        if (trackId == currentFeed.id) feeder.publishProgress(currentFeed.offsetMs + positionMs.toInt())
+        if (trackId != currentFeed.id) return
+        if (feeder.currentDuration() != null) currentFeed.durationKnown = true
+        feeder.publishProgress(currentFeed.offsetMs + positionMs.toInt())
+    }
+
+    /**
+     * [feed] ended at [positionMs], more than [SHORT_END_MS] short of its song's duration, on a server stream of no
+     * known length: a transcode whose connection closed in a way that reads as a clean end. It's re-opened there as a
+     * seek would, and the queue stays; false (playback moves on) for anything else, or once
+     * [MAX_SHORT_END_REOPENS] re-opens in a row have played nothing further.
+     */
+    private fun reopenShortEnd(
+        feed: IosFeed,
+        positionMs: Int?
+    ): Boolean {
+        val durationMs = feed.item.song.duration
+        if (positionMs == null || feed.failed || !feed.ready || feed.pausedAtEnd || !feed.opensAtPosition) return false
+        if (feed.durationKnown && !feed.seeksByReopening) return false
+        if (durationMs <= 0 || durationMs - positionMs <= SHORT_END_MS) return false
+        val stalled = feed.shortEndReopens > 0 && positionMs - feed.offsetMs < MIN_PROGRESS_MS
+        val reopens = if (stalled) feed.shortEndReopens + 1 else 1
+        if (reopens > MAX_SHORT_END_REOPENS) {
+            log.warn { "song ${feed.item.song.id} ended short again at $positionMs of $durationMs ms; moving on" }
+            return false
+        }
+        log.warn { "song ${feed.item.song.id} ended short at $positionMs of $durationMs ms; re-opening there" }
+        feeder.startLoad(feed.item, positionMs, reopen = true)
+        feeder.current?.shortEndReopens = reopens
+        return true
     }
 
     /**
@@ -170,6 +200,7 @@ internal class IosEngineEvents(
      * there.
      */
     private fun onEnded(feed: IosFeed) {
+        if (reopenShortEnd(feed, feeder.progress())) return
         if (feeder.next != null && feeder.pausesAtEnd && !feed.failed && !feed.pausedAtEnd) {
             log.info { "song ${feed.item.song.id} ended: paused at its end" }
             feed.pausedAtEnd = true
@@ -209,6 +240,14 @@ internal class IosEngineEvents(
         return true
     }
 }
+
+/** How far short of its duration a stream may end and still count as played out: tags and transcodes disagree a little. */
+private const val SHORT_END_MS = 5_000
+
+/** Re-opens after short ends, none playing on [MIN_PROGRESS_MS] further, before a server that always truncates is moved on from. */
+private const val MAX_SHORT_END_REOPENS = 3
+
+private const val MIN_PROGRESS_MS = 1_000
 
 /** A query string in an engine's failure message: a stream URL's carries the server's token. */
 private val QUERY = Regex("""\?\S*""")

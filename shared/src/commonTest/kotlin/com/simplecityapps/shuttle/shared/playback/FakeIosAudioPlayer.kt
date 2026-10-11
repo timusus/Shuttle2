@@ -182,8 +182,17 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun engineSampleRate(): Int = sampleRate
 
-    /** The current track plays to its end: on into the next track, or it ends; pausing at the end, it pauses there. */
-    fun finishTrack() {
+    /**
+     * The current track plays to its end, or to [atMs] where its stream stops short: on into the next track, or it ends;
+     * pausing at the end, it pauses there. The last position tick is heard at that end.
+     */
+    fun finishTrack(atMs: Long? = null) {
+        val track = current
+        val end = atMs ?: track?.expectedDurationMs?.takeIf { it > 0 }
+        if (track != null && end != null) {
+            position = end
+            post { listener?.onPosition(track.id, end) }
+        }
         val next = next
         when {
             next == null -> setState(IosAudioPlayerState.Ended)
