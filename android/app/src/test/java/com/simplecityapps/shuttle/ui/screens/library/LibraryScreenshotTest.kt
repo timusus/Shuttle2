@@ -206,6 +206,26 @@ class LibraryScreenshotTest {
         shot("phone-album-detail")
     }
 
+    /** A landscape phone: the art and actions sit beside the tracks, which scroll on their own. */
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-xhdpi")
+    fun landscapeAlbumDetail() {
+        landscapeAlbumDetail("landscape-album-detail")
+    }
+
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-night-xhdpi")
+    fun landscapeAlbumDetailDark() {
+        landscapeAlbumDetail("landscape-album-detail-dark")
+    }
+
+    private fun landscapeAlbumDetail(name: String) {
+        val album = SampleLibrary.album("phase-garden")
+        val tracks = album.songs.map { it.toSong() }
+        detail.setAlbum(readyAlbumDetail(album = album.toAlbum(), songs = tracks, currentSong = tracks[1]), compactHeight = true)
+        shot(name)
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneArtistDetail() {

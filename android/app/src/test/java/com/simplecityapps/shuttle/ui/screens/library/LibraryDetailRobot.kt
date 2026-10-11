@@ -33,6 +33,9 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.common.downloads.LocalDownloadOfflineStates
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
+import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 
 /**
  * Test robot for the library detail screens (album, album artist, genre, playlist, smart playlist). They share
@@ -87,7 +90,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
 
     // -- Content setup --
 
-    fun setAlbum(uiState: AlbumDetailUiState) = render {
+    fun setAlbum(uiState: AlbumDetailUiState, compactHeight: Boolean = false) = render(compactHeight) {
         AlbumDetailScreen(uiState, onNavigateUp = ::up, onPlay = ::play, onShuffle = ::shuffle, onAlbumMore = ::more, onSongMore = ::more, onOpenAlbum = { lastAlbumClicked = it }, onMoreByAlbumMore = ::more)
     }
 
@@ -148,10 +151,12 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         SmartPlaylistDetailScreen(uiState, onNavigateUp = ::up, onPlay = ::play, onShuffle = ::shuffle, onPlaylistMore = { lastMore = uiState.smartPlaylist }, onSongMore = ::more)
     }
 
-    private fun render(content: @Composable () -> Unit) {
+    private fun render(compactHeight: Boolean = false, content: @Composable () -> Unit) {
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-            S2Theme { content() }
+            CompositionLocalProvider(LocalShellLayout provides ShellLayout(if (compactHeight) ShellWidth.Expanded else ShellWidth.Compact, compactHeight)) {
+                S2Theme { content() }
+            }
         }
         rule.waitForIdle()
     }

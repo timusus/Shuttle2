@@ -2,15 +2,21 @@ package com.simplecityapps.shuttle.ui.common.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
@@ -25,9 +31,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.component.S2DetailTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.ui.shell.RequestStatusBarOverImage
+import com.simplecityapps.shuttle.ui.shell.adaptive.LocalShellLayout
 
 /**
  * A detail screen: a single LazyColumn under a pinned [S2DetailTopBar] with back navigation and the overflow [actions].
@@ -38,6 +46,9 @@ import com.simplecityapps.shuttle.ui.shell.RequestStatusBarOverImage
  * under it. Without one (loading, not found), the list sits below the bar and the bar shows the title throughout.
  * [heroBleeds]: the hero is a `DetailBleedHero`, whose image runs up behind the bar, so the bar's icons are white over it.
  * [overlay] draws over the list, under the bar, given the bar's height (an artist page's pinned album header, #631).
+ *
+ * At compact height (a landscape phone) a [hero] takes the leading 40% and scrolls on its own beside the list, below an
+ * opaque bar; [overlay] then sits over the list column and is given no inset.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,10 +66,12 @@ fun DetailScaffold(
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     var topBarHeightPx by remember { mutableIntStateOf(0) }
-    val collapsed by remember(listState, hero != null) {
+    // At compact height the hero sits beside the list, so the bar is opaque above both and nothing is behind the status bar.
+    val twoColumns = hero != null && LocalShellLayout.current.compactHeight
+    val collapsed by remember(listState, hero != null, twoColumns) {
         derivedStateOf {
             // The bar covers the top of the list itself rather than sitting above it.
-            hero == null || listState.isScrolledPast(0, obscuredPx = topBarHeightPx)
+            hero == null || twoColumns || listState.isScrolledPast(0, obscuredPx = topBarHeightPx)
         }
     }
 
@@ -80,6 +93,16 @@ fun DetailScaffold(
         },
     ) { innerPadding ->
         val layoutDirection = LocalLayoutDirection.current
+        if (hero != null && twoColumns) {
+            Row(Modifier.fillMaxSize().padding(innerPadding)) {
+                Column(Modifier.weight(HeroColumnWeight).fillMaxHeight().verticalScroll(rememberScrollState())) { hero(0.dp) }
+                Box(Modifier.weight(1f - HeroColumnWeight).fillMaxHeight()) {
+                    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) { content() }
+                    overlay?.invoke(this, 0.dp)
+                }
+            }
+            return@S2Scaffold
+        }
         Box(Modifier.fillMaxSize()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -103,6 +126,8 @@ fun DetailScaffold(
         }
     }
 }
+
+private const val HeroColumnWeight = 0.4f
 
 /**
  * True once the item at [index] has scrolled entirely above [obscuredPx] from the top of the list's content area: the
