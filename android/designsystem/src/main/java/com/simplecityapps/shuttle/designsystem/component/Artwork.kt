@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -24,19 +23,29 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2Borders
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** The artwork sizes S2 lays out: list rows, the grid tile, and the detail/player hero. */
@@ -106,23 +115,40 @@ fun Artwork(
 ) {
     val clip = artworkShape(shape, size)
     val preview = previewArtwork(model)
+    var imageLoaded by remember { mutableStateOf(false) }
+    val hairlineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = S2Borders.hairlineAlpha)
+    val hairlineWidth = with(LocalDensity.current) { S2Borders.hairline.toPx() }
     Box(
         modifier = modifier
             .size(size.dp)
             .clip(clip)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            // Over the image, so a dark cover doesn't dissolve into the surface; none around a placeholder.
+            // Stroked at twice the width: the clip hides the half outside the edge.
+            .drawWithContent {
+                drawContent()
+                if (preview != null || imageLoaded) {
+                    drawOutline(clip.createOutline(this.size, layoutDirection, this), hairlineColor, style = Stroke(hairlineWidth * 2))
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
         when {
             preview != null -> Image(preview, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            image != null -> Box(Modifier.fillMaxSize()) { image() }
+
+            image != null -> CompositionLocalProvider(LocalArtworkImageLoaded provides { imageLoaded = it }) {
+                Box(Modifier.fillMaxSize()) { image() }
+            }
+
             loading -> Unit
+
             else -> ArtworkPlaceholderGlyph(placeholder, size)
         }
-        // Over the image, so a dark cover doesn't dissolve into the surface
-        Box(Modifier.fillMaxSize().border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), clip))
     }
 }
+
+/** An [Artwork] `image` slot reports here when its image has loaded (true) or is loading or failed (false); the hairline follows. */
+val LocalArtworkImageLoaded: ProvidableCompositionLocal<(Boolean) -> Unit> = staticCompositionLocalOf { {} }
 
 /**
  * The [placeholder]'s glyph as [Artwork] draws it: the media type's icon, in a neutral grey (#646), centred on the

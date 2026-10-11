@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.BarLoadingIndicator
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
+import com.simplecityapps.shuttle.designsystem.component.LocalArtworkImageLoaded
 import com.simplecityapps.shuttle.model.Song
 
 // Pieces the Compose library screens share: artwork loaded through Coil into the catalogue's Artwork slot, the
@@ -51,9 +52,18 @@ fun LibraryArtwork(
         image = model?.let {
             {
                 // The glyph under the image, so art that's still loading or never loads isn't a blank tile (#398).
+                val reportLoaded = LocalArtworkImageLoaded.current
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     ArtworkPlaceholderGlyph(placeholder, size)
-                    AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                    AsyncImage(
+                        model = it,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                        onLoading = { reportLoaded(false) },
+                        onSuccess = { reportLoaded(true) },
+                        onError = { reportLoaded(false) },
+                    )
                 }
             }
         },

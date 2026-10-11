@@ -24,7 +24,7 @@ class PlaylistDetailScreenTest {
         robot.setPlaylist(readyPlaylistDetail())
 
         robot.assertTextDisplayed("Road trip")
-        robot.assertTextDisplayed("3 songs", substring = true)
+        robot.assertTextDisplayed("3 songs", substring = true)
         robot.assertTextDisplayed("Chlorophyll Loop")
     }
 

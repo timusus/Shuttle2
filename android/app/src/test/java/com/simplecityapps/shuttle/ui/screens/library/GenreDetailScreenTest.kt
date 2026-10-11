@@ -20,7 +20,7 @@ class GenreDetailScreenTest {
         robot.setGenre(readyGenreDetail())
 
         robot.assertTextDisplayed("Electronic")
-        robot.assertTextDisplayed("3 songs", substring = true)
+        robot.assertTextDisplayed("3 songs", substring = true)
         robot.assertTextDisplayed("Phase Garden")
         robot.scrollTo("Chlorophyll Loop")
         robot.assertTextDisplayed("Chlorophyll Loop")

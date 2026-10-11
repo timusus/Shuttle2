@@ -8,7 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.MoreVert
@@ -30,6 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.S2IconScrim
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 
 /**
  * The bar on top-level and list screens (Home, Library, Playlists, Settings): the Expressive
@@ -108,8 +110,8 @@ fun S2DetailTopBar(
     val scrimColor by animateColorAsState(
         when {
             collapsed -> Color.Transparent
-            overImage -> Color.Black.copy(alpha = 0.5f)
-            else -> MaterialTheme.colorScheme.surface.copy(alpha = 0.72f)
+            overImage -> S2IconScrim.overImage
+            else -> MaterialTheme.colorScheme.surface.copy(alpha = S2IconScrim.overWashAlpha)
         },
         label = "detailTopBarScrim",
     )
@@ -131,8 +133,11 @@ fun S2DetailTopBar(
             }
         },
         modifier = modifier,
-        navigationIcon = { onBack?.let { BackButton(it, Modifier.background(scrimColor, CircleShape)) } },
-        actions = { Row(Modifier.background(scrimColor, CircleShape), content = actions) },
+        // Padded to the 48 dp touch target around the 40 dp button, so the scrim doesn't hug the icon.
+        navigationIcon = {
+            onBack?.let { BackButton(it, Modifier.background(scrimColor, S2IconScrim.shape).padding(S2Spacing.xsmall)) }
+        },
+        actions = { Row(Modifier.background(scrimColor, S2IconScrim.shape).padding(S2Spacing.xsmall), content = actions) },
         // The pinned scroll behaviour would otherwise swap in its own colour as soon as the list moves.
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = containerColor,

@@ -103,7 +103,7 @@ class SearchScreenTest {
             SearchUiState(content = SearchContent.Results("chris", SearchResults(artists = listOf(SearchHit(featured, SearchQuery.parse("chris"))), top = SearchCategory.Artists))),
         )
 
-        robot.assertTextDisplayed("2 songs")
+        robot.assertTextDisplayed("2 songs")
         robot.tapText("Chris Martin")
 
         robot.openedArtists shouldBe listOf(featured)

@@ -141,7 +141,7 @@ class HomeScreenTest {
 
         robot.scrollTo("Rediscover")
         robot.scrollTo(HomeScenarios.lateNight.name)
-        robot.assertTextDisplayed("Playlist · ${HomeScenarios.lateNight.songCount} songs")
+        robot.assertTextDisplayed("Playlist · ${HomeScenarios.lateNight.songCount} songs")
     }
 
     @Test

@@ -129,8 +129,7 @@ internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () ->
 private fun albumSubtitle(album: Album): String = listOfNotNull(
     album.friendlyArtistName,
     album.year?.toString(),
-    // A count never parts from its unit
-    pluralString(R.plurals.songsPlural, album.songCount).replace(' ', ' '),
+    pluralString(R.plurals.songsPlural, album.songCount),
     formatDuration(album.duration.toLong()),
 ).filter { it.isNotBlank() }.joinToString(" · ")
 

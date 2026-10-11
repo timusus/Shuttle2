@@ -1,5 +1,8 @@
 package com.simplecityapps.shuttle.designsystem.theme
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
 /**
@@ -18,6 +21,26 @@ object S2IconSize {
 
     /** The tonal rounded-square a settings row sets its leading icon in. */
     val container = 40.dp
+}
+
+/** Outlines that separate a surface from what it sits on. */
+object S2Borders {
+    /** Artwork's edge, so a dark cover doesn't dissolve into the surface. */
+    val hairline = 1.dp
+
+    /** Share of `outlineVariant` the hairline draws at. */
+    const val hairlineAlpha = 0.5f
+}
+
+/** The circular containers behind a transparent top bar's icons, so they hold contrast over whatever is under them. */
+object S2IconScrim {
+    val shape: Shape = CircleShape
+
+    /** Over a full-bleed image, behind white icons. */
+    val overImage = Color.Black.copy(alpha = 0.5f)
+
+    /** Share of the surface colour behind icons over a hero's wash. */
+    const val overWashAlpha = 0.72f
 }
 
 /** Hit areas, after the iOS app's `TouchTarget`. Every tappable thing is at least [minimum] in both directions. */

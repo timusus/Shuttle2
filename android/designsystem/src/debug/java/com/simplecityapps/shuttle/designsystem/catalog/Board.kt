@@ -15,12 +15,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.shuttle.designsystem.component.LocalArtworkImageLoaded
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** The two widths every board records at; a board is as tall as its content. */
@@ -102,5 +104,7 @@ fun SampleArt(variant: Int = 0) {
 /** The generated cover of sample album [albumId] (see `SampleLibrary`), for a row that names that album. */
 @Composable
 fun SampleArt(albumId: String) {
+    val reportLoaded = LocalArtworkImageLoaded.current
+    SideEffect { reportLoaded(true) }
     Image(SampleLibrary.cover(albumId), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
 }

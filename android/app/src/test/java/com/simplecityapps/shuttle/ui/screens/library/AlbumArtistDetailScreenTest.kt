@@ -25,7 +25,7 @@ class AlbumArtistDetailScreenTest {
         robot.setAlbumArtist(readyAlbumArtistDetail())
 
         robot.assertTextDisplayed("Juniper Static")
-        robot.assertTextDisplayed("1 album · 3 songs")
+        robot.assertTextDisplayed("1 album · 3 songs")
         robot.assertTextShownTimes("Albums", 1)
         robot.assertTextNotDisplayed("Songs")
         robot.assertTextShownTimes("Phase Garden", 1)
@@ -208,7 +208,7 @@ class AlbumArtistDetailScreenTest {
         val feature = createAlbum(name = "Graduation", albumArtist = "Kanye West")
         robot.setAlbumArtist(readyAlbumArtistDetail(artist = createAlbumArtist(name = "Chris Martin"), albums = emptyList(), appearsOn = listOf(feature)))
 
-        robot.assertTextDisplayed("3 songs")
+        robot.assertTextDisplayed("3 songs")
         robot.assertTextNotDisplayed("Albums")
         robot.assertTextNotDisplayed("Albums & Songs")
         robot.assertTextNotDisplayed("Other Songs")

@@ -20,7 +20,7 @@ class SmartPlaylistDetailScreenTest {
         robot.setSmartPlaylist(readySmartPlaylistDetail())
 
         robot.assertTextDisplayed("Recently Added")
-        robot.assertTextDisplayed("3 songs", substring = true)
+        robot.assertTextDisplayed("3 songs", substring = true)
         robot.assertTextDisplayed("Chlorophyll Loop")
     }
 

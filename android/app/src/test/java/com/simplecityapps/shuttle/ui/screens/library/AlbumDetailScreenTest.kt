@@ -22,7 +22,7 @@ class AlbumDetailScreenTest {
         robot.setAlbum(readyAlbumDetail())
 
         robot.assertTextDisplayed("Phase Garden")
-        robot.assertTextDisplayed("Juniper Static · 2021 · 3 songs", substring = true)
+        robot.assertTextDisplayed("Juniper Static\u00A0· 2021\u00A0· 3\u00A0songs", substring = true)
         robot.assertTextDisplayed("Chlorophyll Loop")
         robot.assertTextDisplayed("Soft Machines at Dawn")
     }
