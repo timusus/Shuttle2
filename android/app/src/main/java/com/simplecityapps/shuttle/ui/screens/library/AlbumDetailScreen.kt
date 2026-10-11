@@ -124,14 +124,15 @@ internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () ->
     extraActions = listOf(S2Action(goToAlbumLabel, onOpen, Icons.Rounded.Album)),
 )
 
-/** "Artist · year · N songs · duration". */
+/** "Artist · year · N songs · duration". The separator's dot stays with the item before it, so a wrapped line never starts on one. */
 @Composable
 private fun albumSubtitle(album: Album): String = listOfNotNull(
     album.friendlyArtistName,
     album.year?.toString(),
-    pluralString(R.plurals.songsPlural, album.songCount),
+    // A count never parts from its unit
+    pluralString(R.plurals.songsPlural, album.songCount).replace(' ', ' '),
     formatDuration(album.duration.toLong()),
-).filter { it.isNotBlank() }.joinToString(" · ")
+).filter { it.isNotBlank() }.joinToString(" · ")
 
 @Composable
 fun AlbumDetailDestination(

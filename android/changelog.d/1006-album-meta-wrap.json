@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "The album details line no longer splits a count from its unit, such as \"5\" and \"songs\", when text is large.", "commits": [] }
