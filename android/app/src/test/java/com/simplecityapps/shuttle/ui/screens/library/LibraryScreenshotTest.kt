@@ -122,6 +122,19 @@ class LibraryScreenshotTest {
         shot("phone-albums")
     }
 
+    /** The Albums grid at 200% text drops to one column, so titles aren't cut to a word. */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumsLargeText() {
+        library.setContent(
+            libraryState(currentTab = LibraryTab.Albums),
+            libraryControls("${albums.size} albums", sorts("Album Name", "Artist Name", "Year"), ViewMode.Grid, onPlay = {}, onShuffle = {}),
+            LibraryPageStates(albums = readyAlbumList(albums = albums, viewMode = ViewMode.Grid)),
+            fontScale = 2f,
+        )
+        shot("phone-albums-large-text")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneAlbumsList() {

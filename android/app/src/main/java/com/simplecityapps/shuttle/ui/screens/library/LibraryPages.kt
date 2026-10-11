@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -125,8 +126,12 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
         SmartPlaylistId.Downloaded -> ArtworkPlaceholder.Downloaded
     }
 
-/** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
-private val LibraryGridColumns = GridCells.Adaptive(minSize = S2GridTile.minimumWidth)
+/**
+ * The catalogue's compact grid: as many columns as fit tiles of [S2GridTile.minimumWidth] scaled with the font, so a
+ * phone shows two at the default size and one at 2.0, where two would cut every title to a word.
+ */
+@Composable
+private fun libraryGridColumns(): GridCells = GridCells.Adaptive(minSize = S2GridTile.minimumWidth * LocalDensity.current.fontScale)
 
 private val GridHorizontalPadding = S2Spacing.medium
 
@@ -297,7 +302,7 @@ fun AlbumsPage(
                 val gridState = rememberLazyGridState()
                 ScrollToTopOnReselect(ShellTab.Library, gridState)
                 LazyVerticalGrid(
-                    columns = LibraryGridColumns,
+                    columns = libraryGridColumns(),
                     state = gridState,
                     contentPadding = gridPadding(controls, top = S2Spacing.small),
                     horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
@@ -367,7 +372,7 @@ fun ArtistsPage(
                 val gridState = rememberLazyGridState()
                 ScrollToTopOnReselect(ShellTab.Library, gridState)
                 LazyVerticalGrid(
-                    columns = LibraryGridColumns,
+                    columns = libraryGridColumns(),
                     state = gridState,
                     contentPadding = gridPadding(controls, top = S2Spacing.medium),
                     horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
