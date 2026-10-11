@@ -50,8 +50,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -221,7 +223,11 @@ internal fun LazyListScope.queueItems(
     val queueRow: @Composable LazyItemScope.(PlayerSong) -> Unit = { row ->
         val playNext = stringResource(R.string.menu_title_play_next)
         val remove = stringResource(R.string.menu_title_remove_from_queue)
+        val moveUp = stringResource(R.string.queue_move_up)
+        val moveDown = stringResource(R.string.queue_move_down)
+        val moveToTop = stringResource(R.string.queue_move_to_top)
         val mediaActions = LocalPlayerMediaActions.current
+        val haptics = LocalHapticFeedback.current
         val dragging = reorder.draggingUid == row.uid
         QueueItem(
             row = row,
@@ -238,12 +244,16 @@ internal fun LazyListScope.queueItems(
             onRemove = { actions.removeQueueItem(row.uid) },
             dragHandleModifier = Modifier.pointerInput(row.uid) {
                 detectDragGestures(
-                    onDragStart = { reorder.start(queue.items, row.uid) },
+                    onDragStart = {
+                        reorder.start(queue.items, row.uid)
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    },
                     onDrag = { change, amount ->
                         change.consume()
                         reorder.drag(amount.y)
                     },
                     onDragEnd = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         reorder.end()?.let { (uid, afterUid) -> actions.moveQueueItem(uid, afterUid) }
                         scope.launch { reorder.settle() }
                     },
@@ -261,7 +271,7 @@ internal fun LazyListScope.queueItems(
                             actions.removeQueueItem(row.uid)
                             true
                         },
-                    )
+                    ) + moveActions(items, row.uid, actions, moveUp, moveDown, moveToTop)
                 }.then(
                     if (dragging) {
                         Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offsetOf(row.uid) }
@@ -279,6 +289,45 @@ internal fun LazyListScope.queueItems(
         items(rows.subList(split, rows.size), key = { it.uid }, itemContent = queueRow)
     } else {
         items(rows, key = { it.uid }, itemContent = queueRow)
+    }
+}
+
+/** Move up, down and to the top for the row [uid], as alternatives to dragging it; each is offered only where the row can go that way. */
+private fun moveActions(
+    items: List<PlayerSong>,
+    uid: Long,
+    actions: PlayerActions,
+    moveUp: String,
+    moveDown: String,
+    moveToTop: String,
+): List<CustomAccessibilityAction> {
+    val index = items.indexOfFirst { it.uid == uid }
+    if (index < 0) return emptyList()
+    return buildList {
+        if (index > 0) {
+            add(
+                CustomAccessibilityAction(moveUp) {
+                    actions.moveQueueItem(uid, items.getOrNull(index - 2)?.uid)
+                    true
+                },
+            )
+        }
+        if (index < items.lastIndex) {
+            add(
+                CustomAccessibilityAction(moveDown) {
+                    actions.moveQueueItem(uid, items[index + 1].uid)
+                    true
+                },
+            )
+        }
+        if (index > 0) {
+            add(
+                CustomAccessibilityAction(moveToTop) {
+                    actions.moveQueueItem(uid, null)
+                    true
+                },
+            )
+        }
     }
 }
 

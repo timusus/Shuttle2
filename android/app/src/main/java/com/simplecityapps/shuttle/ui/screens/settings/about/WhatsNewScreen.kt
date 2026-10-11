@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
@@ -58,6 +60,6 @@ private fun ChangeList(
     changes: List<String>
 ) {
     if (changes.isEmpty()) return
-    Text(title, Modifier.padding(top = S2Spacing.medium, bottom = S2Spacing.xsmall), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+    Text(title, Modifier.padding(top = S2Spacing.medium, bottom = S2Spacing.xsmall).semantics { heading() }, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
     changes.forEach { change -> Text("• $change", Modifier.padding(vertical = S2Spacing.tiny), style = MaterialTheme.typography.bodyMedium) }
 }

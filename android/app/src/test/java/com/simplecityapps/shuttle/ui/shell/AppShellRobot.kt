@@ -618,6 +618,20 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** The labels of the accessibility actions on the queue row showing [title]. */
+    fun queueRowActions(title: String): List<String> = queueRowNode(title).fetchSemanticsNode().config[SemanticsActions.CustomActions].map { it.label }
+
+    fun performQueueRowAction(
+        title: String,
+        label: String,
+    ) {
+        val action = queueRowNode(title).fetchSemanticsNode().config[SemanticsActions.CustomActions].first { it.label == label }
+        rule.runOnUiThread { action.action() }
+        rule.waitForIdle()
+    }
+
+    private fun queueRowNode(title: String) = rule.onNode(hasTestTag(PlayerTestTags.QueueRow) and hasAnyDescendant(hasText(title)))
+
     fun longPressQueueRow(title: String) {
         queueRow(title).performTouchInput { longClick() }
         rule.waitForIdle()

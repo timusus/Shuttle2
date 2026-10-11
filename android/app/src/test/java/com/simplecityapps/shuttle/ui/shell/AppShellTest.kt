@@ -674,6 +674,28 @@ class AppShellTest {
     }
 
     @Test
+    fun `a queue row can be moved up, down or to the top without dragging`() {
+        robot.setContent(queue = shellQueue("First song", "Second song", "Third song", "Fourth song"))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.performQueueRowAction("Third song", "Move up")
+        robot.performQueueRowAction("Second song", "Move down")
+        robot.performQueueRowAction("Fourth song", "Move to top")
+        robot.calls shouldBe listOf("moveQueueItem(2, after 0)", "moveQueueItem(1, after 2)", "moveQueueItem(3, after null)")
+    }
+
+    @Test
+    fun `a queue row offers only the moves it can make`() {
+        robot.setContent(queue = shellQueue("First song", "Second song", "Third song"))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.queueRowActions("First song") shouldBe listOf("Play Next", "Remove from Queue", "Move down")
+        robot.queueRowActions("Third song") shouldBe listOf("Play Next", "Remove from Queue", "Move up", "Move to top")
+    }
+
+    @Test
     fun `dragging a row's handle moves it down the queue`() {
         robot.setContent()
         robot.tapMiniPlayer()

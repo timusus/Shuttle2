@@ -30,10 +30,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.util.lerp
 import androidx.navigation3.runtime.NavKey
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2SheetDefaults
 import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
@@ -230,6 +232,7 @@ internal fun PlayerScrim(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
+    val collapse = stringResource(R.string.player_collapse)
     val active by remember(state) { derivedStateOf { state.geometry.expand(state.offset) > 0f } }
     Box(
         modifier = modifier
@@ -240,7 +243,7 @@ internal fun PlayerScrim(
                 if (active) {
                     Modifier
                         .testTag(PlayerTestTags.Scrim)
-                        .clickable(interactionSource = null, indication = null, onClickLabel = "Collapse player") {
+                        .clickable(interactionSource = null, indication = null, onClickLabel = collapse) {
                             scope.launch { state.moveTo(PlayerLevel.Mini) }
                         }
                 } else {
