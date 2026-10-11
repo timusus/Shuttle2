@@ -4,9 +4,12 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -121,6 +124,7 @@ internal fun SideBySidePlayer(
     progress: () -> PlayerProgress,
     actions: PlayerActions,
     verticalFold: Rect?,
+    compactHeight: Boolean,
     onCollapse: () -> Unit,
     onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
@@ -135,6 +139,10 @@ internal fun SideBySidePlayer(
         modifier = modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying),
         first = {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                if (compactHeight) {
+                    CompactHeightPlayer(player, progress, actions, onCollapse)
+                    return@Box
+                }
                 Column(
                     Modifier
                         .widthIn(max = SideBySideMaxWidth)
@@ -170,6 +178,36 @@ internal fun SideBySidePlayer(
             }
         },
     )
+}
+
+/**
+ * A landscape phone's player: the artwork square on the left at the full height, and on the right
+ * the handle, the title, the transport and the bar, centred. Stacked, the artwork would be squeezed out.
+ */
+@Composable
+private fun CompactHeightPlayer(
+    player: PlayerUiState,
+    progress: () -> PlayerProgress,
+    actions: PlayerActions,
+    onCollapse: () -> Unit,
+) {
+    Row(
+        Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+            .windowInsetsPadding(WindowInsets.navigationBars),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.fillMaxHeight().aspectRatio(1f)) {
+            NowPlayingArtwork(player, actions, gap = S2Spacing.small, modifier = Modifier.fillMaxSize())
+        }
+        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
+            CollapseHandle(onCollapse)
+            NowPlayingTitle(player, actions)
+            Transport(player, progress, actions, gap = S2Spacing.small)
+            NowPlayingBar(player, actions, selected = player.panel, onPanel = actions::togglePanel)
+        }
+    }
 }
 
 /** The widest the side-by-side player grows on its own, before a panel shares the width. */

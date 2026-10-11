@@ -143,6 +143,23 @@ class ShellScreenshotTest {
         settings("phone-landscape")
     }
 
+    /** The full player on its side: the artwork beside the title and controls, not squeezed out. */
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-xhdpi")
+    fun phoneLandscapeNowPlaying() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(891, 411), systemBars = PhoneSystemBars.copy(leftCutoutDp = 32))
+        robot.tapMiniPlayer()
+        shot("phone-landscape-now-playing")
+    }
+
+    @Test
+    @Config(qualifiers = "w891dp-h411dp-night-xhdpi")
+    fun phoneLandscapeNowPlayingDark() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(891, 411), systemBars = PhoneSystemBars.copy(leftCutoutDp = 32))
+        robot.tapMiniPlayer()
+        shot("phone-landscape-dark-now-playing")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneSongInfoSheet() {
