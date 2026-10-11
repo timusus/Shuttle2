@@ -33,6 +33,17 @@ class ShellRequestTest {
     }
 
     @Test
+    fun `the open player extra asks for the full player without changing tab`() {
+        ShellRequest.fromOpenPlayerExtra(true) shouldBe ShellRequest.OpenPlayer
+        ShellRequest.OpenPlayer.openPlayer shouldBe true
+    }
+
+    @Test
+    fun `a missing or false open player extra makes no request`() {
+        ShellRequest.fromOpenPlayerExtra(false) shouldBe null
+    }
+
+    @Test
     fun `showing a request with a route replaces the tab's stack above its root`() {
         val navigator = navigator()
         val history = SmartPlaylistRoute(SmartPlaylistId.History.id)

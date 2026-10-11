@@ -158,6 +158,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleShortcutIntent(intent: Intent?) {
         ShellRequest.fromShortcutAction(intent?.action)?.let { shellRequests.trySend(it) }
+        ShellRequest.fromOpenPlayerExtra(intent?.getBooleanExtra(ShellRequest.EXTRA_OPEN_PLAYER, false) == true)?.let { shellRequests.trySend(it) }
     }
 
     private fun recordPurchase() {

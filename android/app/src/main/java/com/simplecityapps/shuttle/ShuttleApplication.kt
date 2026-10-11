@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.di.AppGraphOwner
 import com.simplecityapps.shuttle.di.MetroWorkerFactory
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
+import com.simplecityapps.shuttle.ui.shell.ShellRequest
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
@@ -76,7 +77,7 @@ class ShuttleApplication :
 
     // ActivityIntentProvider Implementation
 
-    override fun provideMainActivityIntent(): Intent = Intent(this, MainActivity::class.java)
+    override fun provideMainActivityIntent(): Intent = Intent(this, MainActivity::class.java).putExtra(ShellRequest.EXTRA_OPEN_PLAYER, true)
 
     // WorkManager
 

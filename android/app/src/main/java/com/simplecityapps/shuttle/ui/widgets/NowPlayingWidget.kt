@@ -64,6 +64,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.designsystem.theme.accentColorScheme
 import com.simplecityapps.shuttle.di.appGraph
+import com.simplecityapps.shuttle.ui.shell.ShellRequest
 
 /**
  * The now playing widget, shared by the small and large widget receivers. It only draws
@@ -124,12 +125,14 @@ internal fun NowPlayingContent(
     }
 }
 
-/** Tapping the widget opens the app's launcher activity, found through the package manager so the widget needn't name it. */
+/** Tapping the widget opens the full player in the app's launcher activity, found through the package manager so the widget needn't name it. */
 @Composable
 private fun openAppModifier(): GlanceModifier {
     val context = LocalContext.current
     val component = context.packageManager.getLaunchIntentForPackage(context.packageName)?.component ?: return GlanceModifier
-    return GlanceModifier.clickable(actionStartActivity(component))
+    // Glance passes each action parameter as an intent extra under the key's name.
+    val openPlayer = actionParametersOf(ActionParameters.Key<Boolean>(ShellRequest.EXTRA_OPEN_PLAYER) to true)
+    return GlanceModifier.clickable(actionStartActivity(component, openPlayer))
 }
 
 /**

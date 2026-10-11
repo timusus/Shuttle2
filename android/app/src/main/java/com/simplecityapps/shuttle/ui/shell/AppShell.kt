@@ -51,6 +51,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -110,6 +111,7 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -152,7 +154,17 @@ fun AppShell(
     }
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
     // A destination another entry point asks for, such as a launcher shortcut.
-    LaunchedEffect(shellRequests) { shellRequests.collect { request -> navigate { navigator.show(request) } } }
+    LaunchedEffect(shellRequests) {
+        shellRequests.collect { request ->
+            if (request.openPlayer) {
+                // On a cold start Full is not allowed until the queue has reported.
+                snapshotFlow { player.hasQueue }.first { it != null }
+                player.moveTo(PlayerLevel.Full)
+            } else {
+                navigate { navigator.show(request) }
+            }
+        }
+    }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
     val destinations: @Composable () -> Unit = {
         CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState, LocalTabReselects provides navigator.reselects) {
