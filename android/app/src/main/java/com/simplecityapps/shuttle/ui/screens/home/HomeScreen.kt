@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -30,7 +31,9 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -43,6 +46,7 @@ import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
+import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
@@ -50,6 +54,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Card
 import com.simplecityapps.shuttle.designsystem.component.S2Icon
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
+import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2PullToRefreshBox
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2Text
@@ -68,6 +73,8 @@ import com.simplecityapps.shuttle.ui.text.resId
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
+    /** Shuffles a random artist, genre or year. */
+    val onShuffleRandom: (ShuffleBy) -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
     /** Pull to refresh: reloads the sections. */
@@ -113,6 +120,24 @@ fun HomeScreen(
                     // Cold start has its own, larger Shuffle all.
                     if (uiState is HomeUiState.Content && !uiState.coldStart) {
                         S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
+                        var menuOpen by remember { mutableStateOf(false) }
+                        S2IconButton(
+                            icon = Icons.Rounded.Casino,
+                            contentDescription = stringResource(R.string.home_shuffle_random),
+                            onClick = { menuOpen = true },
+                            modifier = Modifier.testTag(HOME_SHUFFLE_RANDOM_TAG),
+                        )
+                        S2Menu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                            groups = listOf(
+                                listOf(
+                                    S2Action(stringResource(R.string.home_shuffle_random_artist), { callbacks.onShuffleRandom(ShuffleBy.Artist) }),
+                                    S2Action(stringResource(R.string.home_shuffle_random_genre), { callbacks.onShuffleRandom(ShuffleBy.Genre) }),
+                                    S2Action(stringResource(R.string.home_shuffle_random_year), { callbacks.onShuffleRandom(ShuffleBy.Year) }),
+                                ),
+                            ),
+                        )
                     }
                     S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
                 },
@@ -318,6 +343,7 @@ private fun ColdStartCard(
 }
 
 const val HOME_SHUFFLE_ALL_TAG = "home.shuffleAll"
+const val HOME_SHUFFLE_RANDOM_TAG = "home.shuffleRandom"
 const val HOME_COLD_START_HINT_TAG = "home.coldStartHint"
 
 @Composable

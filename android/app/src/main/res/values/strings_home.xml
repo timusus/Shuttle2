@@ -4,6 +4,16 @@
     <string name="btn_shuffle">Shuffle</string>
     <!-- Home: content description for the top bar button that shuffles every song in the library -->
     <string name="home_shuffle_all">Shuffle all</string>
+    <!-- Home: content description for the top bar button that opens the menu of random shuffles -->
+    <string name="home_shuffle_random">Shuffle a random pick</string>
+    <!-- Home: menu item that shuffles the songs of a randomly chosen artist -->
+    <string name="home_shuffle_random_artist">Random artist</string>
+    <!-- Home: menu item that shuffles the songs of a randomly chosen genre -->
+    <string name="home_shuffle_random_genre">Random genre</string>
+    <!-- Home: menu item that shuffles the songs of a randomly chosen year -->
+    <string name="home_shuffle_random_year">Random year</string>
+    <!-- Home: snackbar naming the artist, genre or year a random shuffle picked -->
+    <string name="home_shuffle_random_picked">Shuffling %1$s</string>
     <!-- Launcher shortcut that opens the list of songs played recently -->
     <string name="shortcut_recently_played">Recently played</string>
     <!-- Home: the kind of item a tile shows, under its title in Jump back in and before its detail on a mixed shelf -->

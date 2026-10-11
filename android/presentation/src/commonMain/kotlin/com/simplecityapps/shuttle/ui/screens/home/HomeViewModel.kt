@@ -53,6 +53,9 @@ sealed interface HomeEvent {
 
     /** A shelf's songs are resolved: the UI hands [action] to the media actions to play them. */
     data class PlayShelf(val action: MediaAction) : HomeEvent
+
+    /** A random artist, genre or year was picked: the UI hands [action] to the media actions and names [label] to the user. */
+    data class ShuffleRandom(val label: String, val action: MediaAction) : HomeEvent
 }
 
 @ViewModelKey(HomeViewModel::class)
@@ -65,6 +68,7 @@ class HomeViewModel @Inject constructor(
     private val saveSetting: SaveSetting,
     loadHomeCovers: LoadHomeCovers,
     private val playHomeSection: PlayHomeSection,
+    private val pickRandomShuffle: PickRandomShuffle,
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
     private val events = PendingEvents<HomeEvent>()
@@ -142,6 +146,14 @@ class HomeViewModel @Inject constructor(
 
     /** Shuffles the whole library, resolved as it plays; null before the library has loaded or while it's empty. */
     fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All())) }
+
+    /** Shuffles a random artist, genre or year, posting [HomeEvent.ShuffleRandom] once picked; does nothing if the library has none. */
+    fun shuffleRandom(by: ShuffleBy) {
+        if (uiState.value !is HomeUiState.Content) return
+        viewModelScope.launch {
+            pickRandomShuffle(by)?.let { events.post(HomeEvent.ShuffleRandom(it.label, it.action)) }
+        }
+    }
 
     /**
      * Plays the whole shelf of [id] in order, posting [HomeEvent.PlayShelf] once its songs are resolved. Does nothing

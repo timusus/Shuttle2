@@ -121,6 +121,7 @@ class HomeViewModelTest {
             SaveSetting(settingsStore),
             LoadHomeCovers(FakePlaylistRepository(), genres),
             PlayHomeSection(ResolveSongs(songRepository, genres, FakePlaylistRepository(), FakeQueueOperations(), ResolveFolderSongs(songRepository))),
+            PickRandomShuffle(songRepository),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.onVisibilityChanged(visible)
@@ -424,6 +425,30 @@ class HomeViewModelTest {
     @Test
     fun `shuffle all does nothing on an empty library`() = runTest(testDispatcher) {
         viewModel().shuffleAll().shouldBeNull()
+    }
+
+    @Test
+    fun `shuffling a random artist posts an event naming it`() = runTest(testDispatcher) {
+        suggestions.songCount.value = 1
+        songRepository.setSongs(listOf(createSong(id = 7, albumArtist = "Only Band")))
+        val viewModel = viewModel()
+
+        viewModel.shuffleRandom(ShuffleBy.Artist)
+        runCurrent()
+
+        val event = (viewModel.uiState.value as HomeUiState.Content).events.map { it.value }.filterIsInstance<HomeEvent.ShuffleRandom>().single()
+        event.label shouldBe "Only Band"
+        event.action shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(createSong(id = 7, albumArtist = "Only Band"))))
+    }
+
+    @Test
+    fun `shuffling a random pick does nothing when the library has no songs to group`() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+
+        viewModel.shuffleRandom(ShuffleBy.Genre)
+        runCurrent()
+
+        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Empty>()
     }
 
     @Test

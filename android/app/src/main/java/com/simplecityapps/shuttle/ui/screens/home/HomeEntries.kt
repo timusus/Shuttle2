@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -59,6 +60,7 @@ private fun HomeDestination(
     val snackbarHostState = LocalShellSnackbarHostState.current
     val analyticsNoticeMessage = stringResource(R.string.home_analytics_notice_message)
     val analyticsNoticeAction = stringResource(R.string.home_analytics_notice_action)
+    val resources = LocalResources.current
     var connectingServer by rememberSaveable { mutableStateOf(false) }
     if (connectingServer) {
         ServerTypePickerRoute(onDismissRequest = { connectingServer = false })
@@ -68,6 +70,11 @@ private fun HomeDestination(
             ConsumeEvents(content.events, onConsumed = viewModel::onEventHandled) { event ->
                 when (event) {
                     is HomeEvent.PlayShelf -> actions.dispatch(event.action)
+
+                    is HomeEvent.ShuffleRandom -> {
+                        actions.dispatch(event.action)
+                        snackbarHostState.showSnackbar(resources.getString(R.string.home_shuffle_random_picked, event.label))
+                    }
 
                     HomeEvent.AnalyticsNowOn -> {
                         val result = snackbarHostState.showSnackbar(analyticsNoticeMessage, actionLabel = analyticsNoticeAction, duration = SnackbarDuration.Long)
@@ -81,6 +88,7 @@ private fun HomeDestination(
             callbacks = HomeCallbacks(
                 onOpenSettings = { onOpen(SettingsRoute) },
                 onShuffleAll = { viewModel.shuffleAll()?.let(actions::dispatch) },
+                onShuffleRandom = viewModel::shuffleRandom,
                 onOpenWhatsNew = {
                     viewModel.onWhatsNewHandled()
                     onOpen(WhatsNewRoute)
