@@ -87,11 +87,11 @@ extension MusicPlaybackController {
             }
         }
         if current.opened, !current.failed, !current.source.isSeekable, !(frame == 0 && current.atStart) {
-            // A progressive transcode: it plays on from where it was read to, and the owner is told
-            // so it can re-open the stream at the frame. After a load that is its start; after a
-            // speed or output change it is about where it was heard. One that refused the seek
-            // reads nothing more (``readChunk()``) until the owner re-opens it.
-            if current.atStart { startFrame = 0 }
+            // A progressive transcode: the owner is told so it can re-open the stream at the frame.
+            // After a load it plays from its start meanwhile. Otherwise (a speed or output change, a
+            // rebuild) it was read a schedule-ahead past the frame, and played on it would jump that
+            // far (#614): it reads nothing more (``readChunk()``) until the owner re-opens it.
+            if current.atStart { startFrame = 0 } else { current.awaitingReopen = true }
             reportSeekUnsupported(current, ms: ms(frames: frame))
         }
         appendSegment(for: current, mediaStart: startFrame)
@@ -192,6 +192,10 @@ extension MusicPlaybackController {
                 // re-opened once it's current (``updateTimeline(concludingEnd:)``).
                 if slot.preparing != nil || (slot.awaitingReopen && slot !== current) {
                     processor.drain(into: &output)
+                    return
+                }
+                if slot.awaitingReopen {
+                    interrupted = true
                     return
                 }
                 var got = 0

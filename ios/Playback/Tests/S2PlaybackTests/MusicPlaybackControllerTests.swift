@@ -973,6 +973,39 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(Double(reported), 500, accuracy: 15)
     }
 
+    /// #614: the stream was decoded a schedule-ahead past what was heard. A rebuild plays none of that
+    /// ahead of the position reported; the owner's re-open there is what's heard next.
+    func testARouteChangeOnAnUnseekableTrackPlaysNothingAheadOfTheReopen() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: transcode("A", TestSignal.noise(frames: 96_000, seed: 23)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 24_000)
+
+        changeRoute(controller)
+        let out = try renderer.render(frames: 9_600)
+
+        XCTAssertEqual(log.seeksUnsupported.count, 1, "\(log.seeksUnsupported)")
+        XCTAssertEqual(out.left.first { $0 != 0 }, nil, "played on from where it was decoded to")
+        XCTAssertEqual(log.failures, [])
+    }
+
+    func testASpeedChangeOnAnUnseekableTrackPlaysNothingAheadOfTheReopen() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: transcode("A", TestSignal.noise(frames: 96_000, seed: 24)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 24_000)
+
+        controller.setSpeed(1.5)
+        controller.syncForTesting()
+        let out = try renderer.render(frames: 9_600)
+
+        let reported = try XCTUnwrap(log.seeksUnsupported.last?.split(separator: " ").last.flatMap { Int64($0) })
+        XCTAssertEqual(Double(reported), 500, accuracy: 15)
+        XCTAssertEqual(out.left.first { $0 != 0 }, nil, "played on from where it was decoded to")
+    }
+
     /// #813: a route change can post several changes in a row. Those queued together are one
     /// rebuild, so a transcode's owner re-opens the stream once.
     func testRouteChangesPostedTogetherRebuildOnce() throws {
