@@ -238,10 +238,15 @@ write_manifest() {
         echo
         echo "## Duplicates"
         echo
-        # Byte-identical shots in one cell mean a flow never reached the state it names.
+        # Byte-identical shots on one device at one text size mean a flow never reached the state it names.
+        # The key is the hash plus platform, device and text from <screen>__<device>__<theme>__<text>.png.
         dups="$(cd "$OUT" && find android ios -name '*.png' 2>/dev/null | sort | while read -r f; do
             printf '%s %s\n' "$(shasum "$f" | cut -d' ' -f1)" "$f"
-        done | awk '{ files[$1] = files[$1] " " $2; n[$1]++ } END { for (h in n) if (n[h] > 1) print "- identical:" files[h] }')"
+        done | awk '{
+            split($2, p, "/"); split(p[2], parts, "__"); sub(/\.png$/, "", parts[4])
+            k = $1 " " p[1] " " parts[2] " " parts[4]
+            files[k] = files[k] " " $2; n[k]++
+        } END { for (k in n) if (n[k] > 1) print "- identical:" files[k] }')"
         if [ -n "$dups" ]; then echo "$dups"; else echo "None."; fi
         echo
         echo "## Failures"
@@ -384,7 +389,7 @@ android_matrix() {
                 scale=1.0; [ "$text" = large ] && scale=2.0
                 adb_set "font_scale $scale" shell settings put system font_scale "$scale" || continue
                 for screen in "$@"; do
-                    # The mini player only shows with a queue, and the app can come back from a cell without one.
+                    # The mini player only shows with a queue; an earlier cell's flow can leave the app without one.
                     [ "$screen" = mini-player ] && android_requeue
                     run_screen android "$screen" "$dev" "$theme" "$text" "support/maestro/design/${screen}.yaml"
                 done

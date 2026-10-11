@@ -181,7 +181,6 @@ fun AppShell(
             LocalShellSnackbarHostState provides snackbarHostState,
             LocalTabReselects provides navigator.reselects,
             LocalStatusBarRequests provides statusBarRequests,
-            LocalShellLayout provides layout,
         ) {
             ShellNavDisplay(navigator, layout, windowAdaptiveInfo, entryProvider)
         }
@@ -199,7 +198,8 @@ fun AppShell(
     // No tab is lit, and the nav bar or rail slides away, while a utility destination shows.
     val selectedTab = navigator.selectedTab.takeIf { navigator.showsNavigation }
     // The player's song menus and its queue's save-to-playlist share the destinations' media action path; the screens a result opens settle the player first.
-    CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {
+    // The layout is provided above the whole surface so the player sheet, rail and overlays read the same value as the destinations.
+    CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState, LocalShellLayout provides layout) {
         MediaActionsHost(onNavigate = { target -> navigate { navigator.openTarget(target) } }, viewModel = mediaActionsViewModel, appGraphAvailable = appGraphAvailable) { mediaActions ->
             CompositionLocalProvider(LocalPlayerMediaActions provides mediaActions) {
                 ShellSurface(modifier, layout, player, playerContent, selectedTab, onSelectTab, destinations, snackbarHostState)

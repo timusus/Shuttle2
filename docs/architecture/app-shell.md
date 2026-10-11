@@ -230,6 +230,10 @@ with Undo). Song info is the only route sheet today.
 
 ### Compact height
 
+This is the target design; the phases of the compact-height plan (#1011) implement it. Implemented
+today: the rail without its expand toggle, `LocalShellLayout` and Search's reading of it for focus.
+The rest of the table and the bullets below are planned.
+
 Width picks the number of panes; height picks the chrome. A landscape phone is Medium or Expanded
 width × Compact height (< 480 dp), so it never gets two navigation panes. The shell publishes
 `ShellLayout` (`LocalShellLayout`); screens read `compactHeight` from it, never from the window,

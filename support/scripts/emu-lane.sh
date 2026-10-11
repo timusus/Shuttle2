@@ -62,11 +62,11 @@ emu_lane_up() {
         step "remote-emu: reset" support/scripts/remote-emu.sh reset || return 1
     fi
     step "remote-emu: install" support/scripts/remote-emu.sh install "$APK" || return 1
-    if [ -n "${REMOTE:-}" ]; then
+    if [ "${NO_SEED:-0}" = "1" ]; then
+        echo "emu-lane: --no-seed set, skipping seeding"
+    elif [ -n "${REMOTE:-}" ]; then
         step "seed-remote-provider: $REMOTE" support/scripts/seed-remote-provider.sh "$REMOTE" || return 1
         export S2_REMOTE="$REMOTE"
-    elif [ "${NO_SEED:-0}" = "1" ]; then
-        echo "emu-lane: --no-seed set, skipping seed-test-media.sh"
     else
         step "seed-test-media: ${SEED_FIXTURE:-playback} fixture" support/scripts/seed-test-media.sh "${SEED_FIXTURE:-playback}" --skip-onboarding --if-needed || return 1
     fi
