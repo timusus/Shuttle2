@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.shared
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.localmediaprovider.local.favourites.FavouriteSender
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
@@ -165,6 +166,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** The playlists and plays Siri, Shortcuts and Spotlight's App Intents offer (#758). */
     val appIntentLibrary: AppIntentLibrary
+
+    /** The library, for tests to seed songs into the graph's in-memory database. */
+    val songRepository: SongRepository
 
     /** What Siri's media domain searches and plays (`INPlayMediaIntent`, #951). */
     val voiceLibrary: VoiceLibrary

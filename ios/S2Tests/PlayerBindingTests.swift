@@ -72,6 +72,26 @@ struct PlayerBindingTests {
         #expect(await waitUntil { engine.commands.contains("play") })
     }
 
+    /// The favourite flag lives in the library, so the song is seeded there: a demo song the library doesn't hold has
+    /// nothing to flip.
+    @Test func theFavouriteActionFlipsTheLibrarySongsFavourite() async throws {
+        try await graph.songRepository.insert(songs: [TestSongs.demo[0]], mediaProviderType: .shuttle)
+        let stored = try await graph.songRepository.loadSongs(
+            query: SongQuery.All(includeExcluded: false, sortOrder: .default, providerType: nil)
+        )
+        let song = try #require(stored.first)
+        _ = try await graph.playerController.queueOperations.setQueue(songs: [song], shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        graph.playerController.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        #expect(await waitUntil { binding.nowPlaying.title == "Paranoid Android" })
+        #expect(!binding.nowPlaying.isFavourite)
+
+        binding.actions.toggleFavourite()
+        #expect(await waitUntil { binding.nowPlaying.isFavourite })
+
+        binding.actions.toggleFavourite()
+        #expect(await waitUntil { !binding.nowPlaying.isFavourite })
+    }
+
     /// The transport draws the listener's intent: pause and the spinner from the tap, before the engine has played,
     /// and a second tap during the load pauses at once.
     @Test func playPauseShowsTheIntentFromTheTap() async throws {
