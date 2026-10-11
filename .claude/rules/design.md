@@ -41,7 +41,7 @@ literal `dp`/`Color(0x…)`/`Font.system(size:)`.
   only whole-app audits.
 - Native-surface state: `PlaybackService` (Android) and `NowPlayingController` (iOS) own the media
   session; Android Auto, Cast and the AirPlay picker are present; predictive back is on (targetSdk 36 —
-  verify the animations); CarPlay, Wear/watchOS and a QS tile are absent; widgets are Glance
+  verify the animations); CarPlay and Wear/watchOS are absent; the Android QS tile (`PlaybackTileService`) only toggles play/pause; widgets are Glance
   `NowPlayingWidget` (Android) / `S2Widgets` (iOS); shortcuts are `IntentPerformers`.
 
 ## Screenshot evidence

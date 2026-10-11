@@ -26,7 +26,7 @@ approved; **missing** = specified in design-language.md §3 with no catalogue en
 |---|---|---|
 | `theme-colour` | approved | `S2Theme`, `ColorSchemes` |
 | `theme-type` | approved | `S2Typography` |
-| `theme-shape` | needs work | `ContinuousRoundedCornerShape` |
+| `theme-shape` | needs work | `S2Shapes` (`Shapes(...)` in `S2Theme.kt`) |
 | `button` | approved | `S2Button` |
 | `button-group` | approved | `S2ButtonGroup` |
 | `icon-button` | approved | `S2IconButton`, `S2IconToggleButton` |
@@ -60,8 +60,6 @@ approved; **missing** = specified in design-language.md §3 with no catalogue en
 | `state-loading` | approved | `LoadingState` |
 | `state-error` | approved | `ErrorState` |
 | `theme-motion` | missing | — |
-| `fab` | missing | — |
-| `top-bar-contextual` | missing | — |
 | `fast-scroller` | missing | — |
 | `eq-curve` | missing | — |
 | `player-sheet` | missing | — |
@@ -109,12 +107,14 @@ One row per file. Components are the raw imports the rule flags; tick when the r
 | [ ] | `ui.screens.settings.excluded.ExcludedSongsScreen` | Text |
 | [x] | `ui.screens.songinfo.SongInfoScreen` | Scaffold, Text |
 | [ ] | `ui.screens.sources.FolderRulesScreen` | Text |
+| [ ] | `ui.screens.sources.ServerDetailScreen` | Text |
 | [ ] | `ui.screens.sources.SourcesScreen` | Text |
+| [ ] | `ui.screens.sources.ThisDeviceScreen` | Text |
 | [ ] | `ui.screens.sources.servers.ServerSignInScreen` | BasicAlertDialog, CircularProgressIndicator, Icon, IconButton, ListItem, OutlinedTextField, Switch, Text |
 | [x] | `ui.screens.tageditor.TagEditorScreen` | OutlinedTextField, Scaffold, Surface, Text |
 | [ ] | `ui.shell.AppShell` | Surface |
 | [ ] | `ui.shell.ShellSheetSceneStrategy` | ModalBottomSheet |
-| [x] | `ui.shell.player.FullPlayer` | Surface, Text |
+| [ ] | `ui.shell.player.FullPlayer` | Text |
 | [ ] | `ui.shell.player.NowPlaying` | Text |
 | [ ] | `ui.shell.player.NowPlayingPanels` | Icon, Text |
 | [x] | `ui.shell.player.PlayerContent` | Text |

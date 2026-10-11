@@ -1,6 +1,6 @@
 # S2 Design Language
 
-Status: design, 2026-09-25. Nothing here is built yet. Companion to
+Status: design, 2026-09-25; the tokens and most components below are built in `:android:designsystem`, and `component-migration.md` tracks what is still open. Companion to
 [`app-shell.md`](../architecture/app-shell.md), which owns layout, navigation and the player state
 model; this doc owns how things look, move and are approved.
 
@@ -77,8 +77,8 @@ screens never see it.
 
 ### Shape
 
-- **Continuous corners.** Every token in `S2Shapes` is a `ContinuousRoundedCornerShape`
-  (`designsystem/theme`): Figma's corner smoothing at 0.6, so each corner eases out of its edge
+- **Continuous corners.** The intent is for every token in `S2Shapes` (a `Shapes(...)` value in
+  `designsystem/theme/S2Theme.kt`) to be a `ContinuousRoundedCornerShape`: Figma's corner smoothing at 0.6, so each corner eases out of its edge
   (G2-style) instead of meeting a circular arc, the way Photos, Files and Android 16's Settings
   draw them. The scale is extraSmall 6, small 10, medium 14, large 20, largeIncreased 24,
   extraLarge 28, extraLargeIncreased 32, extraExtraLarge 48 dp. Components take their default
@@ -98,7 +98,7 @@ screens never see it.
 ### Motion
 
 - **`MaterialExpressiveTheme` supplies the expressive `MotionScheme`**; components read
-  `MaterialTheme.motionScheme`. No component hard-codes a `tween` or `spring`.
+  `MaterialTheme.motionScheme`. Components should not hard-code a `tween` or `spring`; `FastScroller` and `NowPlayingPanels` still do and are to be moved onto the scheme.
 - **Spatial vs effects.** `MotionScheme` has six specs: default, fast and slow for each kind.
   *Spatial* springs move things (position, size, shape morph, sheet settle, pane resize) and may
   overshoot in the expressive scheme. *Effects* springs change colour and opacity and must not
@@ -203,12 +203,12 @@ allowed only where M3 has nothing, and each one is listed here with its reason:
 | Custom component | Why M3 has nothing |
 |---|---|
 | `PlayerSheet` | M3 bottom sheets have two states and no nav bar tracking; S2 needs Hidden/Mini/NowPlaying/Queue on one drag with the nav bar and mini player following (app-shell §1) |
-| `AppShellLayout` | `NavigationSuiteScaffold` has no slot for a sheet between content and nav bar, nor a trailing player pane (app-shell §2) |
+| `AppShell` (`app/ui/shell`) | `NavigationSuiteScaffold` has no slot for a sheet between content and nav bar, nor a trailing player pane (app-shell §2) |
 | `Artwork` | M3 has no image component; S2 needs a shaped, placeholder-aware, crossfading image with a type-icon placeholder |
 | `SeekBar` | M3 `Slider` supplies the thumb, semantics and drag; S2 only replaces its `track` slot with the wavy line that `LinearWavyProgressIndicator` draws, because a wavy *draggable* track does not exist |
-| `ReorderableQueue` modifier | `LazyColumn` has no drag-to-reorder; rows stay `ListItem`s with a drag-handle trailing slot |
+| Drag-to-reorder (`sh.calvin.reorderable`, in `QueueList` and `PlaylistDetailScreen`) | `LazyColumn` has no drag-to-reorder; rows stay `ListItem`s with a drag-handle trailing slot |
 | `EqualizerCurve` | M3 has no charts; a frequency-response line over the band sliders |
-| `FastScroller` | Compose M3 has no scrollbar or fast scroll; long library lists and the queue have one today |
+| `FastScroller` (`app/ui/common/components`) | Compose M3 has no scrollbar or fast scroll; long library lists have one today |
 
 Nothing else is custom. A new custom component needs a row here and the owner's approval before
 it is built.
@@ -237,7 +237,6 @@ catalogue — #553).
 | `button` | `Button`, `FilledTonalButton`, `OutlinedButton`, `TextButton` | XS–XL sizes S2 uses, with and without icon | enabled, pressed, focused, disabled |
 | `button-group` | `ButtonGroup` | standard, connected | each button pressed (the morph), checked (connected) |
 | `icon-button` | `IconButton`, `FilledIconButton`, `FilledTonalIconButton`, `IconToggleButton` | sizes S2 uses | enabled, pressed, checked, disabled |
-| `fab` | `FloatingActionButton`, `ExtendedFloatingActionButton` | Shuffle all on Library and Home only | collapsed, extended, pressed |
 | `toolbar-selection` | `HorizontalFloatingToolbar` (compact), docked `FlexibleBottomAppBar` alternative | selection actions, overflow | 1 and many selected, overflow open; floating vs docked side by side; decided: floating (2026-09-25, #382) |
 
 ### Navigation and app bars
@@ -245,7 +244,6 @@ catalogue — #553).
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
 | `top-bar` | `LargeFlexibleTopAppBar`, `TopAppBar` (detail), `MediumFlexibleTopAppBar` | title, title + subtitle, actions, back | expanded, collapsed, with overflow menu. No collapsing hero |
-| `top-bar-contextual` | `TopAppBar` swapped in by `AnimatedContent` | count title, close, actions | 1 selected, many, all |
 | `nav-bar` | `ShortNavigationBar` | 3 and 4 items | selected per item, badge, pressed |
 | `nav-rail` | `WideNavigationRail` | collapsed, expanded | selected, expanding |
 | `search` | `SearchBar` with `SearchBarState`, `ExpandedFullScreenSearchBar` (compact), `ExpandedDockedSearchBar` (expanded+) | — | collapsed, focused empty, typing, results, no results |
@@ -287,8 +285,8 @@ catalogue — #553).
 | `seek-bar` | custom `SeekBar` on `Slider` (§2) | wavy while playing, flat when paused | idle, dragging with time label, buffering |
 | `progress` | `LinearWavyProgressIndicator` | mini player, row downloading | playing (wave), paused (flat), indeterminate |
 | `player-sheet` | custom `PlayerSheet` (§2) | levels Mini, NowPlaying, Queue | each level; mid-drag frames at e = 0.5 and q = 0.5 |
-| `player-pane` | `AppShellLayout` trailing pane | Large+ | now playing, queue, collapsed |
-| `queue-row` | `ListItem` + drag handle trailing + `ReorderableQueue` | — | current, upcoming, played, dragging, swipe to remove |
+| `player-pane` | `AppShell` trailing pane | Large+ | now playing, queue, collapsed |
+| `queue-row` | `ListItem` + drag handle trailing + reorderable drag | — | current, upcoming, played, dragging, swipe to remove |
 
 ### Settings and equalizer
 
