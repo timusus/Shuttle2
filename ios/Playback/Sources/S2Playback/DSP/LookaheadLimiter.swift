@@ -8,7 +8,7 @@ import Foundation
 /// Ported from Android's `LookaheadLimiter`. Output is delayed by the lookahead window, so a peak
 /// is seen before it is emitted and the gain is already down when it arrives — which is what makes
 /// this a limiter rather than a clipper. ``latencyFrames`` is that delay; the caller compensates
-/// for it (``PCMProcessor`` drops the first `latencyFrames` outputs and flushes as many at the end)
+/// for it (``LimiterProcessor`` drops the first `latencyFrames` outputs and flushes as many at the end)
 /// so the stream it schedules stays frame-aligned with the decoded one.
 ///
 /// The sliding-window maximum is a monotonic deque over a fixed ring, amortised O(1) per frame

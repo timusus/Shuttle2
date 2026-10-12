@@ -23,11 +23,11 @@ stream's server (#822). On Wi-Fi the whole file downloads; on an expensive or co
 source follows the path as it changes. A transcode whose host ignores `Range` restarts from byte 0 and the read waits
 for its position again: re-opening it at the position waits on stage 2b of #1020.
 
-**DSP.** `PCMProcessor` applies, in order: the track's ReplayGain, the EQ preamp, one biquad per band per channel,
-then a stereo-linked lookahead limiter (ceiling −0.1 dBFS, attack 5 ms, release 100 ms). Coefficients come from
-Kotlin, 5 per band (b0, b1, b2, a1, a2), computed for a fixed 48 kHz that Kotlin reads through
-`IosAudioPlayer.engineSampleRate()`; Swift never designs a filter. The limiter's lookahead delay is compensated, so
-output frame n is input frame n, and below the ceiling the chain is bit-exact.
+**DSP.** Two of the Player's `AudioProcessor`s, in order: `EqualizerProcessor` (one biquad per band per channel,
+then the preamp) and `LimiterProcessor` (stereo-linked lookahead, ceiling −0.1 dBFS, attack 5 ms, release 100 ms).
+Coefficients come from Kotlin's `EqualizerCascade`, 5 per band (b0, b1, b2, a1, a2), designed for each rate the
+pipeline configures; Swift never designs a filter. Off or flat, the EQ passes audio through bit for bit. The limiter's
+lookahead delay is hidden, so output frame n is input frame n, and below the ceiling it is bit-exact.
 
 ## Provenance: copied, adapted, new
 
@@ -42,7 +42,7 @@ shared package can take them back.
   - `Biquad` adds `adoptState`; its factories were dropped, as the shared Kotlin EQ designs the bands.
   - `LookaheadLimiter` is now stereo-linked and frame-interleaved, and its window includes the
     emitted frame.
-- **New**: `Streaming/`, `DSP/PCMProcessor.swift`, `S2Tags` (#590) and the music fixtures.
+- **New**: `Streaming/`, `DSP/EqualizerProcessor.swift`, `DSP/LimiterProcessor.swift`, `S2Tags` (#590) and the music fixtures.
 
 ## FFmpeg
 
@@ -70,8 +70,8 @@ ios/scripts/test.sh              # the app's S2 scheme on an available iPhone si
 ```
 
 Nothing skips: every test decodes through the real FFmpeg. Playback itself is tested in S2Tests
-(`KitAudioPlayerTests` and the controller-level suites) over `PlayerTestRig`. Here: `PCMProcessorTests` pins the
-DSP chain and the limiter's latency compensation; `ServerConnectionPolicyTests`, `StreamCacheKeyTests`,
+(`KitAudioPlayerTests` and the controller-level suites) over `PlayerTestRig`. Here: `EqualizerProcessorTests` and
+`LimiterProcessorTests` pin the DSP: response per rate, bypass, live changes, the ceiling and latency compensation; `ServerConnectionPolicyTests`, `StreamCacheKeyTests`,
 `StreamInfoProbeTests`, `StreamReadAheadTests` and `StreamWarmUpTests` cover the streaming glue;
 `AudioFileTagsTests` covers the tag reader. The music fixtures were made with:
 
