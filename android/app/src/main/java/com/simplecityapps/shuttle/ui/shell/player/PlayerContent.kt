@@ -43,6 +43,7 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
+import com.simplecityapps.shuttle.designsystem.theme.legibleGroundTop
 import kotlin.math.roundToInt
 
 /**
@@ -57,15 +58,16 @@ internal val PlayerSheetColor: Color
     }
 
 /**
- * Now Playing's ground over [PlayerSheetColor]. Under artwork it is the cover's primaryContainer, the same vivid tonal
- * container album detail's hero paints, fading into the sheet colour by [GroundFadeEnd] of the height, just below the
- * artwork, so the title, seek bar and controls sit on the sheet colour and keep onSurface's contrast. Without artwork
- * it draws nothing.
+ * Now Playing's ground over [PlayerSheetColor]. Under artwork it is the cover's primaryContainer (a dark tone in a dark
+ * theme), fading into the sheet colour by [GroundFadeEnd] of the height. Its top colour is one that onSurface text, the
+ * seek bar and the status bar's icons clear over every shade of the fade ([legibleGroundTop]), so no layout needs the
+ * content to sit below it. Without artwork it draws nothing.
  */
 @Composable
 internal fun PlayerGround(modifier: Modifier = Modifier) {
     val base = PlayerSheetColor
-    val top = artworkRole(base, MaterialTheme.colorScheme.primaryContainer)
+    val scheme = MaterialTheme.colorScheme
+    val top = artworkRole(base, remember(scheme, base) { scheme.legibleGroundTop(base) })
     if (top != base) {
         Spacer(
             modifier.fillMaxSize().drawBehind {

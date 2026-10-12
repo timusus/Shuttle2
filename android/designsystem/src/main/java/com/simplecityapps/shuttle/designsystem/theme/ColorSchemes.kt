@@ -2,9 +2,12 @@ package com.simplecityapps.shuttle.designsystem.theme
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.toColor
 import com.materialkolor.ktx.toHct
 
@@ -59,3 +62,25 @@ fun artworkColorScheme(
     isDark: Boolean,
     contrast: S2Contrast = S2Contrast.Default,
 ): ColorScheme? = if (isUsableSeed(seed)) seedColorScheme(seed, isDark, PaletteStyle.Vibrant, contrast) else null
+
+/**
+ * The top of a gradient from the scheme's [ColorScheme.primaryContainer] down to [sheet]: the container's hue and
+ * chroma, at [DarkGroundTone] in a dark scheme (Vibrant keeps the container at a mid tone in both themes, which reads
+ * neon on a dark sheet), eased toward [sheet] just far enough that onSurface and onSurfaceVariant (4.5:1) and primary
+ * (3:1) hold over it. Text, the seek bar and the controls then stay legible wherever the fade has reached, and the
+ * status bar's icons, drawn in onSurface's direction, match the colour behind them. A light scheme's mid-tone
+ * container does not clear onSurfaceVariant alone.
+ */
+fun ColorScheme.legibleGroundTop(sheet: Color): Color {
+    val container = if (surface.luminance() < 0.5f) primaryContainer.toHct().withTone(DarkGroundTone).toColor() else primaryContainer
+    fun legible(ground: Color) = onSurface.contrastRatio(ground) >= 4.5 &&
+        onSurfaceVariant.contrastRatio(ground) >= 4.5 &&
+        primary.contrastRatio(ground) >= 3.0
+    return (0..GroundEaseSteps).firstNotNullOfOrNull { step ->
+        lerp(container, sheet, step / GroundEaseSteps.toFloat()).takeIf(::legible)
+    } ?: sheet
+}
+
+/** M3's dark-scheme container tone. */
+private const val DarkGroundTone = 30.0
+private const val GroundEaseSteps = 20

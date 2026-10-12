@@ -140,15 +140,21 @@ class ColorSchemesTest {
     fun `the player's artwork ground and mini player keep AA text contrast at default contrast`() {
         // Default only: artworkRole keeps the root roles at Medium and High contrast, whose containers leave the surface tones.
         // Covers across hue and tone: Blue Hours, Night Bus Frequencies, Phase Garden, and brights
-        val seeds = listOf(0xFF1F3FA8, 0xFF0B3D40, 0xFF1F1530, 0xFFD9542B, 0xFFE6B800, 0xFF3FA34D, 0xFFF2A0C8).map(::Color)
+        val seeds = listOf(0xFF1F3FA8, 0xFF0B3D40, 0xFF00B8D4, 0xFF1F1530, 0xFFD9542B, 0xFFE6B800, 0xFF3FA34D, 0xFFF2A0C8, 0xFFFF2D95).map(::Color)
         for (seed in seeds) {
             for (isDark in listOf(false, true)) {
                 val scheme = artworkColorScheme(seed, isDark)!!
-                // Now Playing's ground fades from primaryContainer into the sheet colour before the title, so text sits on the sheet (PlayerGround)
+                // Now Playing's ground fades from primaryContainer into the sheet colour, behind whatever the layout puts there (PlayerGround)
                 val sheet = if (isDark) scheme.surfaceContainerHigh else scheme.surfaceContainer
                 withClue("seed ${seed.toHct().hue.toInt()}/${seed.toHct().tone.toInt()} dark=$isDark") {
-                    scheme.onSurface.contrastRatio(sheet) shouldBeGreaterThan 4.5
-                    scheme.onSurfaceVariant.contrastRatio(sheet) shouldBeGreaterThan 4.5
+                    val top = scheme.legibleGroundTop(sheet)
+                    for (step in 0..20) {
+                        val ground = lerp(top, sheet, step / 20f)
+                        scheme.onSurface.contrastRatio(ground) shouldBeGreaterThan 4.5
+                        scheme.onSurfaceVariant.contrastRatio(ground) shouldBeGreaterThan 4.5
+                        // The seek bar and controls are icons and a track: 3:1
+                        scheme.primary.contrastRatio(ground) shouldBeGreaterThan 3.0
+                    }
                 }
                 // The mini player's fill: a light wash of secondaryContainer over the root scheme's surfaceContainerHigh (docked, surfaceContainer)
                 for (accent in S2Accent.entries) {
@@ -162,6 +168,16 @@ class ColorSchemesTest {
                     }
                 }
             }
+        }
+    }
+
+    @Test
+    fun `a dark theme's player ground starts at a dark tone whatever the cover`() {
+        val seeds = listOf(0xFF1F3FA8, 0xFF00B8D4, 0xFFE6B800, 0xFFF2A0C8, 0xFFFF2D95).map(::Color)
+        for (seed in seeds) {
+            val scheme = artworkColorScheme(seed, isDark = true)!!
+            val tone = scheme.legibleGroundTop(scheme.surfaceContainerHigh).toHct().tone
+            withClue("seed ${seed.toHct().hue.toInt()} tone $tone") { tone shouldBeLessThan 40.0 }
         }
     }
 
