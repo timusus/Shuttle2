@@ -8,8 +8,12 @@
 # tests, iOS test compile, dependents' test compile, the other modules' screenshots) is the landing
 # verify's job (support/scripts/land-verify).
 # Roborazzi runs for a module that applies the plugin when its main source (src/main, src/androidMain,
-# src/commonMain) changed, for :android:app when docs/design changed, and for :android:app when a
-# @Composable file changed in a module with no screenshots of its own.
+# src/commonMain) or tests/snapshots (src/test) changed, for :android:designsystem when
+# docs/design/catalog changed, for :android:app when other docs/design changed, and for :android:app
+# when a @Composable file changed in a module with no screenshots of its own. :android:app is always
+# verified alongside, as its goldens render the other modules' components.
+# --record-screenshots lists the PNGs it changed (designsystem via support/scripts/catalog, which also
+# rewrites the index pages); with --dry-run it restores them afterwards.
 # The message must carry the `Changelog:` trailer when the commit-msg hook asks for one
 # (`Changelog: none` for tooling). --no-test skips the test run, for docs-only changes.
 # --dry-run runs every check but stages and commits nothing. --record-screenshots re-records those
@@ -83,7 +87,8 @@ changed_files() {
   local base
   base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
   {
-    git -c core.quotePath=false diff --name-only "$base" --
+    # --no-renames lists both sides of a move, so a file moved out of a module still triggers it.
+    git -c core.quotePath=false diff --no-renames --name-only "$base" --
     git -c core.quotePath=false ls-files --others --exclude-standard
   } | sort -u
 }
@@ -109,39 +114,88 @@ if [ "$run_tests" = 1 ]; then
     for e in ${shot_tasks[@]+"${shot_tasks[@]}"}; do [ "$e" = "$1" ] && return 0; done
     shot_tasks+=("$1")
   }
+  has_roborazzi() {
+    grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$1"/build.gradle* 2>/dev/null
+  }
+  # Where a module's goldens live (the app's tests write to docs/design, designsystem's to its catalogue).
+  snap_dir() {
+    if [ "$1" = :android:designsystem ]; then
+      echo docs/design/catalog
+    elif [ "$1" = :android:app ]; then
+      echo docs/design
+    else
+      local p="${1#:}"
+      echo "${p//://}/src/test/snapshots/images"
+    fi
+  }
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     case "$f" in
+      docs/design/catalog/*) add_shot_module :android:designsystem ;;
       docs/design/*) add_shot_module :android:app ;;
-      android/*/src/main/*|android/*/src/androidMain/*|android/*/src/commonMain/*|shared/*/src/main/*|shared/*/src/androidMain/*|shared/*/src/commonMain/*)
+      android/*/src/main/*|android/*/src/androidMain/*|android/*/src/commonMain/*|shared/src/main/*|shared/src/androidMain/*|shared/src/commonMain/*)
         mdir="${f%%/src/*}"
-        if grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$mdir"/build.gradle* 2>/dev/null; then
+        if has_roborazzi "$mdir"; then
           add_shot_module ":${mdir//\//:}"
         elif [ "${f%.kt}" != "$f" ] && grep -q '@Composable' "$f" 2>/dev/null; then
           add_shot_module :android:app
         fi ;;
+      android/*/src/test/*|shared/src/test/*)
+        mdir="${f%%/src/*}"
+        has_roborazzi "$mdir" && add_shot_module ":${mdir//\//:}" ;;
     esac
   done <<EOF2
 $changed
 EOF2
 
   if [ "${#shot_tasks[@]}" -gt 0 ]; then
+    # The app's goldens render the other modules' components, so any UI change verifies it too.
+    add_shot_module :android:app
     if [ "$record" = 1 ]; then
       verb=recordRoborazziDebug
     else
       verb=verifyRoborazziDebug
     fi
+    snap_dirs=()
+    for m in "${shot_tasks[@]}"; do snap_dirs+=("$(snap_dir "$m")"); done
+    before_pngs="$(git -c core.quotePath=false status --porcelain -uall -- "${snap_dirs[@]}")"
     gradle_args=()
-    for m in "${shot_tasks[@]}"; do gradle_args+=("$m:$verb"); done
+    catalog=0
+    for m in "${shot_tasks[@]}"; do
+      # The catalogue script records designsystem and regenerates its index pages.
+      if [ "$record" = 1 ] && [ "$m" = :android:designsystem ]; then
+        catalog=1
+      else
+        gradle_args+=("$m:$verb")
+      fi
+    done
     start=$SECONDS
     # Record stays on the Mac (goldens are Mac-recorded), and --local keeps verify beside them.
-    if support/scripts/remote-build.sh --local -q "${gradle_args[@]}" >"$log" 2>&1; then
+    ok=1
+    if [ "${#gradle_args[@]}" -gt 0 ]; then
+      support/scripts/remote-build.sh --local -q "${gradle_args[@]}" >"$log" 2>&1 || ok=0
+    fi
+    if [ "$ok" = 1 ] && [ "$catalog" = 1 ]; then
+      support/scripts/catalog >>"$log" 2>&1 || ok=0
+    fi
+    if [ "$ok" = 1 ]; then
       echo "screenshots ($verb ${shot_tasks[*]}): ok ($((SECONDS - start))s)"
     else
       echo "screenshots ($verb ${shot_tasks[*]}): FAILED (not committed)"
       fail_summary
       [ "$record" = 0 ] && echo "intended UI change? rerun with --record-screenshots, inspect the compare images"
       exit 1
+    fi
+    if [ "$record" = 1 ]; then
+      after_pngs="$(git -c core.quotePath=false status --porcelain -uall -- "${snap_dirs[@]}")"
+      # Only what this run changed, so a dry run restores nothing the worker had already touched.
+      recorded="$(comm -13 <(printf '%s\n' "$before_pngs" | sort) <(printf '%s\n' "$after_pngs" | sort) | grep -v '^$' || true)"
+      if [ -n "$recorded" ]; then
+        echo "re-recorded PNGs:"
+        printf '%s\n' "$recorded"
+      else
+        echo "re-recorded PNGs: none changed"
+      fi
     fi
   elif [ "$record" = 1 ]; then
     echo "screenshots: no Roborazzi module changed, nothing to record"
@@ -154,6 +208,19 @@ else
 fi
 
 if [ "$dry_run" = 1 ]; then
+  if [ -n "${recorded:-}" ]; then
+    # Tracked ones revert; new PNGs are removed. Exactly the paths this run changed.
+    while IFS= read -r line; do
+      p="${line:3}"
+      case "$line" in
+        '??'*) rm -f -- "$p" ;;
+        *) git checkout -- "$p" ;;
+      esac
+    done <<EOF3
+$recorded
+EOF3
+    echo "dry run: re-recorded PNGs restored"
+  fi
   echo "dry run: nothing staged or committed"
   exit 0
 fi
