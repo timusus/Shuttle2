@@ -159,9 +159,9 @@ final class StreamedPlaybackTests: XCTestCase {
         XCTAssertEqual(log.failures, [])
     }
 
-    /// A transcode that drops mid-play: the source's resume is answered with the whole body from the start, so the
-    /// download is given up and the position is reported as a seek to re-open at, once, never as a failure or as a
-    /// wait while the song downloads again from byte 0 (#950).
+    /// A transcode that drops mid-play: the resume starts 64 KiB before the frontier, which can reach byte 0, so the
+    /// range-ignoring body is refused and the download re-opens at the decoder's position. What matters is that it
+    /// restarts there, not from byte 0, and that the position is reported once as a seek, never as a failure (#950).
     func testADroppedTranscodeAsksToReopenAtThePosition() throws {
         let (server, _, _) = try served(XCTUnwrap(S2PlaybackTestSupport.LoopbackMediaServer.fixtureURL("tone", withExtension: "mp3")))
         server.respondsWholeBodyIgnoringRange = true
@@ -181,7 +181,8 @@ final class StreamedPlaybackTests: XCTestCase {
         XCTAssertGreaterThan(ms, 7_000)
         XCTAssertLessThan(ms, 8_300)
         XCTAssertEqual(log.failures, [])
-        XCTAssertEqual(server.requestedRanges.filter { $0 == 0 }.count, 1, "\(server.requestedRanges)")
+        XCTAssertEqual(server.requestedRanges.count, 3, "\(server.requestedRanges)")
+        XCTAssertGreaterThanOrEqual(server.requestedRanges.last ?? 0, 64 * 1024)
     }
 
     /// A host that honours ranges is never given up: a drop resumes from the frontier, a seek past it restarts at a new

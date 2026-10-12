@@ -22,7 +22,7 @@ let package = Package(
     dependencies: [
         // Pre-1.0: pinned exactly and bumped deliberately. Its FFmpeg is one dynamic xcframework,
         // committed in the package (LGPL notes in README.md).
-        .package(url: "https://github.com/timusus/AudioPlaybackKit.git", exact: "0.7.1"),
+        .package(url: "https://github.com/timusus/AudioPlaybackKit.git", exact: "0.10.0"),
     ],
     targets: [
         .target(
@@ -30,6 +30,9 @@ let package = Package(
             dependencies: [
                 .product(name: "PlaybackDecode", package: "AudioPlaybackKit"),
                 .product(name: "PlaybackStreaming", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackPlayer", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackNowPlaying", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackRender", package: "AudioPlaybackKit"),
             ]
         ),
         .target(name: "S2Tags", dependencies: ["CS2Tags"]),
@@ -58,6 +61,7 @@ let package = Package(
                 .product(name: "PlaybackDecode", package: "AudioPlaybackKit"),
                 .product(name: "PlaybackStreaming", package: "AudioPlaybackKit"),
                 .product(name: "PlaybackStreamingTestSupport", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackPlayerTestSupport", package: "AudioPlaybackKit"),
             ]
         ),
         .testTarget(
