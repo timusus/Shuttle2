@@ -36,7 +36,7 @@ path. The only edits are these renames: the log subsystem becomes `com.simplecit
 the `SpineNative` import is dropped, and the test imports change. They are kept diffable so a later
 shared package can take them back.
 
-- **Copied**: test support `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`, `tone_moov_last.m4a`. Streaming
+- **Copied**: test support `LoopbackMediaServer`, `PlaybackTestMedia`, `tone.mp3`. Streaming
   tests serve through AudioPlaybackKit's own `LoopbackMediaServer` (`PlaybackStreamingTestSupport`) instead.
 - **Adapted.** S2 additions are marked `S2:`.
   - `Biquad` adds `adoptState`; its factories were dropped, as the shared Kotlin EQ designs the bands.
@@ -79,14 +79,11 @@ DSP chain and the limiter's latency compensation; `ServerConnectionPolicyTests`,
 S="sine=frequency=440:sample_rate=44100"; A="volume=4,pan=stereo|c0=c0|c1=c0"
 ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -sample_fmt s16 -c:a flac tone-44k.flac          # 14 KB
 ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=1" -af "$A" -c:a libopus -b:a 48k tone-48k.opus  # 9 KB
-ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -c:a vorbis -strict -2 -q:a 3 tone-44k.ogg         # 5 KB
 ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -sample_fmt s16p -c:a alac tone-44k-alac.m4a      # 15 KB
 ffmpeg -f lavfi -i "$S:duration=0.25" -af "$A" -c:a pcm_s16be tone-44k.aiff                      # 43 KB
 ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=0.25" -af "$A" -c:a pcm_s24le tone-48k-s24.wav  # 70 KB
 # chirp: a linear sweep whose phase names every sample, as an aevalsrc at the rate given
 ffmpeg -f lavfi -i "$(chirp 44100)" -c:a aac -b:a 128k chirp-44k-aac.m4a                      # 33 KB
-ffmpeg -f lavfi -i "$(chirp 44100)" -c:a libmp3lame -b:a 128k chirp-44k.mp3                   # 32 KB
-ffmpeg -f lavfi -i "$(chirp 48000)" -c:a libopus -b:a 64k chirp-48k.opus                      # 18 KB
 ```
 
 ## LGPL notes
