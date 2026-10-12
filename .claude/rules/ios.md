@@ -132,6 +132,8 @@ on compact and a form sheet otherwise, presented from `ContentView`.
   `build-framework.sh` gives a stale binary or "has no member" errors.
 - **Framework slices are chosen by SDK**, not configuration (`FRAMEWORK_SEARCH_PATHS[sdk=...]`); a device build needs
   `--device` first. There is no x86_64 simulator slice.
+- **Generic-simulator builds pass `ARCHS=arm64`** (`build-app.sh`, which full-verify and land-verify go through): FFmpeg's
+  xcframework has no x86_64 simulator slice, and package targets ignore the project's `EXCLUDED_ARCHS`.
 - **The test bundle does not link Shared.** It only has the search path for `import Shared`; Kotlin resolves from the
   host app through `BUNDLE_LOADER`. Linking the static framework into the tests too would load a second Kotlin runtime.
 - **Kotlin/Native wants a framework bundle id**; `shared/build.gradle.kts` sets `binaryOption("bundleId", ...)`.
