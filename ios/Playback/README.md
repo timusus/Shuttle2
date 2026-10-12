@@ -18,8 +18,10 @@ also has a macOS 14 platform, so `swift test` runs on the Mac without a simulato
 partials at launch). A track downloaded whole is kept, keyed on `StreamCacheKey` (the URL less its per-play session
 id and token), and plays from the file next time. The server's custom headers and trusted certificate come from
 `ServerConnections.policy` as the source's connection policy. `StreamWarmUp` keeps a connection open to the last
-stream's server (#822). `StreamReadAhead` (a minute of audio at the library's bitrate on an expensive path) is not passed to the
-source yet.
+stream's server (#822). On Wi-Fi the whole file downloads; on an expensive or constrained path only `StreamReadAhead`
+(a minute of audio at the library's bitrate, else the file's average, else 320 kbps) runs ahead of the decoder, and the
+source follows the path as it changes. A transcode whose host ignores `Range` restarts from byte 0 and the read waits
+for its position again: re-opening it at the position waits on stage 2b of #1020.
 
 **DSP.** `PCMProcessor` applies, in order: the track's ReplayGain, the EQ preamp, one biquad per band per channel,
 then a stereo-linked lookahead limiter (ceiling −0.1 dBFS, attack 5 ms, release 100 ms). Coefficients come from

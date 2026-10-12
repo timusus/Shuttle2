@@ -2,6 +2,7 @@ import Foundation
 import PlaybackDecode
 import PlaybackPlayer
 import PlaybackRender
+import PlaybackStreaming
 @testable import S2
 import S2PlaybackTestSupport
 import Shared
@@ -292,6 +293,19 @@ struct ResolvingByteReaderTests {
         #expect(await waitUntil { box.done })
         #expect(box.error as? StreamByteReaderError == .transport("refused"))
         #expect(box.asked == 1)
+    }
+
+    @Test func aStreamOnAnExpensiveNetworkDownloadsAMinuteAtTheLibrarysBitrateAhead() {
+        #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: 128, sizeBytes: 8_000_000, durationMs: 200_000)) == GrowingFileReadAhead(bytes: 960_000))
+        #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: -1, sizeBytes: 6_000_000, durationMs: 240_000)) == GrowingFileReadAhead(bytes: 1_500_000))
+        #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: -1, sizeBytes: -1, durationMs: -1)) == GrowingFileReadAhead(bytes: 2_400_000))
+    }
+
+    private func stream(bitrateKbps: Int32, sizeBytes: Int64, durationMs: Int64) -> IosStream {
+        IosStream(
+            url: "https://example.com/a.flac", headers: [:], gainDb: 0, opensAtPosition: true, transcoded: false,
+            bitrateKbps: bitrateKbps, sizeBytes: sizeBytes, durationMs: durationMs
+        )
     }
 }
 

@@ -2,6 +2,7 @@ import Foundation
 import PlaybackDecode
 import PlaybackPlayer
 import PlaybackRender
+import PlaybackStreaming
 import S2Playback
 import Shared
 
@@ -309,6 +310,11 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
         guard let stream, let url = URL(string: stream.url) else {
             throw StreamByteReaderError.transport(error ?? "no stream")
         }
-        return try StreamStore.reader(url: url, headers: stream.headers)
+        return try StreamStore.reader(url: url, headers: stream.headers, readAhead: readAhead(stream))
+    }
+
+    /// How far `stream` downloads ahead on an expensive network: a minute at the library's rate (-1 is unknown).
+    static func readAhead(_ stream: IosStream) -> GrowingFileReadAhead {
+        StreamReadAhead.readAhead(bitrateKbps: Int(stream.bitrateKbps), sizeBytes: stream.sizeBytes, durationMs: stream.durationMs)
     }
 }

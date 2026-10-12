@@ -62,7 +62,15 @@ class SongStreamResolver(
             downloaded != null -> IosStream(url = downloaded, gainDb = gainDb)
 
             provider != null -> provider.openStream(song, startPositionMs, playId).let {
-                IosStream(url = it.url, gainDb = gainDb, opensAtPosition = true, transcoded = it.transcoded)
+                IosStream(
+                    url = it.url,
+                    gainDb = gainDb,
+                    opensAtPosition = true,
+                    transcoded = it.transcoded,
+                    bitrateKbps = song.bitRate?.takeIf { rate -> rate > 0 } ?: -1,
+                    sizeBytes = song.size.takeIf { size -> size > 0 && startPositionMs == 0L } ?: -1,
+                    durationMs = (song.duration - startPositionMs).takeIf { duration -> duration > 0 } ?: -1
+                )
             }
 
             song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)

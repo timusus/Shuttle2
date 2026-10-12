@@ -96,11 +96,29 @@ class SongStreamResolverTest {
     @Test
     fun serverSongsStreamFromTheProviderThatHandlesTheirPath() = runTest {
         resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true, playId = "play-1") shouldBe
-            IosStream(url = "https://jellyfin.example/Audio/abc/universal", opensAtPosition = true)
+            IosStream(url = "https://jellyfin.example/Audio/abc/universal", opensAtPosition = true, durationMs = 200_000)
         resolver.resolve(songAt(path = "emby://item/def"), 0, playRequested = true, playId = "play-1") shouldBe
-            IosStream(url = "https://emby.example/Audio/def/universal", opensAtPosition = true)
+            IosStream(url = "https://emby.example/Audio/def/universal", opensAtPosition = true, durationMs = 200_000)
         resolver.resolve(songAt(path = "plex:///library/metadata/1"), 0, playRequested = true, playId = "play-1") shouldBe
-            IosStream(url = "https://plex.example/Audio/1/universal", opensAtPosition = true)
+            IosStream(url = "https://plex.example/Audio/1/universal", opensAtPosition = true, durationMs = 200_000)
+    }
+
+    @Test
+    fun aServerStreamCarriesTheLibrarysBitrateSizeAndDurationForItsReadAhead() = runTest {
+        val song = songAt(path = "jellyfin://item/abc").copy(bitRate = 320, size = 8_000_000)
+
+        val stream = resolver.resolve(song, 0, playRequested = true, playId = "play-1")
+
+        Triple(stream.bitrateKbps, stream.sizeBytes, stream.durationMs) shouldBe Triple(320, 8_000_000L, 200_000L)
+    }
+
+    @Test
+    fun aServerStreamOpenedPartwayHasNoSizeAndTheRestOfTheDuration() = runTest {
+        val song = songAt(path = "jellyfin://item/abc").copy(bitRate = 320, size = 8_000_000)
+
+        val stream = resolver.resolve(song, 30_000, playRequested = true, playId = "play-1")
+
+        Triple(stream.bitrateKbps, stream.sizeBytes, stream.durationMs) shouldBe Triple(320, -1L, 170_000L)
     }
 
     @Test

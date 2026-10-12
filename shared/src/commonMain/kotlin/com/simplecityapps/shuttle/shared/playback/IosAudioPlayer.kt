@@ -138,7 +138,15 @@ data class IosStream(
      */
     val opensAtPosition: Boolean = false,
     /** A transcode started at the position it was resolved at; a direct-play server stream starts at 0 whatever it's asked. */
-    val transcoded: Boolean = false
+    val transcoded: Boolean = false,
+    /**
+     * The library's bitrate (kbps), file size (bytes) and duration (ms) for a server stream, or -1 if unknown: what its
+     * read-ahead on an expensive network is sized by. A stream opened partway through has no size, as its bytes aren't
+     * the file's.
+     */
+    val bitrateKbps: Int = -1,
+    val sizeBytes: Long = -1,
+    val durationMs: Long = -1
 )
 
 /**
