@@ -223,27 +223,12 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun durationMs(): Long = duration
 
-    /** What [setEqualizer] was last given. */
-    class Equalizer(
-        val enabled: Boolean,
-        val preampDb: Float,
-        val coefficients: DoubleArray
-    )
-
     /** Every [setEqualizer], in order; kept apart from [calls], which is the queue's traffic. */
-    val equalizers = mutableListOf<Equalizer>()
+    val equalizers = mutableListOf<IosEqualizerDesign>()
 
-    var sampleRate = 48_000
-
-    override fun setEqualizer(
-        enabled: Boolean,
-        preampDb: Float,
-        coefficients: DoubleArray
-    ) {
-        equalizers += Equalizer(enabled, preampDb, coefficients)
+    override fun setEqualizer(design: IosEqualizerDesign) {
+        equalizers += design
     }
-
-    override fun engineSampleRate(): Int = sampleRate
 
     /**
      * The current item plays to its end: on into the next item, gaplessly, or, with nothing after it, it ends. Pausing at

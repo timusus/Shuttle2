@@ -69,18 +69,8 @@ interface IosAudioPlayer {
     /** The current item's duration (ms), or -1 until it's known. */
     fun durationMs(): Long
 
-    /**
-     * The equalizer: off, or [preampDb] (dB, the headroom attenuation and the user's preamp together) and one peaking
-     * biquad per band, five [coefficients] each (b0, b1, b2, a1, a2, normalised to a0 = 1) designed at [engineSampleRate].
-     */
-    fun setEqualizer(
-        enabled: Boolean,
-        preampDb: Float,
-        coefficients: DoubleArray
-    )
-
-    /** The rate (Hz) the player renders and filters at, whatever the output route's rate. */
-    fun engineSampleRate(): Int
+    /** The equalizer, applied from the next buffer and designed for each rate the audio plays at. */
+    fun setEqualizer(design: IosEqualizerDesign)
 }
 
 /** What the player reports. Swift calls these on the main thread. */

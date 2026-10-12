@@ -3,7 +3,7 @@ package com.simplecityapps.playback.dsp.equalizer
 import kotlin.math.log10
 
 /**
- * The equalizer as an engine outside Media3 runs it (iOS's `PCMProcessor`): [bands] as [BandProcessor]s designed at
+ * The equalizer as an engine outside Media3 runs it (iOS's `EqualizerProcessor`): [bands] as [BandProcessor]s designed at
  * [sampleRateHz], the rate the audio is filtered at, handed over as raw biquad [coefficients], and the headroom
  * attenuation Android's `EqualizerAudioProcessor` applies before its clamp, from the same [cascadeAttenuation].
  */

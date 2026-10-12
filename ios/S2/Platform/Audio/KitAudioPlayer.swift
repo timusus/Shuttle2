@@ -22,6 +22,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     let player: Player<QueueKey>
+    private let equalizer = EqualizerProcessor()
     /// Held strongly: Kotlin's listener is an object only the player refers to.
     private var listener: IosAudioPlayerListener?
     private var lastReport: (uid: Int64, state: IosAudioPlayerState)?
@@ -37,6 +38,8 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     init(player: Player<QueueKey>) {
         self.player = player
         super.init()
+        // Always active, so EQ changes never need another `setProcessors`; the limiter catches the EQ's overshoot.
+        player.setProcessors([equalizer, LimiterProcessor()])
         observeState()
         Task { @MainActor [weak self, events = player.events] in
             for await event in events {
@@ -243,11 +246,13 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         MainActor.assumeIsolated { player.duration.map { Int64($0 * 1000) } ?? -1 }
     }
 
-    /// The equalizer joins the player's processors in a later stage.
-    func setEqualizer(enabled _: Bool, preampDb _: Float, coefficients _: KotlinDoubleArray) {}
-
-    func engineSampleRate() -> Int32 {
-        48000
+    func setEqualizer(design: IosEqualizerDesign) {
+        equalizer.setEqualizer(enabled: design.enabled) { sampleRate in
+            let filters = design.filtersAt(sampleRateHz: Int32(sampleRate))
+            let coefficients = filters.coefficients
+            return EqualizerDesign(preampDb: filters.preampDb,
+                                   coefficients: (0..<coefficients.size).map { coefficients.get(index: $0) })
+        }
     }
 
     private static func key(_ entry: IosQueueEntry) -> QueueKey {

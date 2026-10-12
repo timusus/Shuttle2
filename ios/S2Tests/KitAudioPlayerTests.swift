@@ -155,6 +155,41 @@ struct KitAudioPlayerTests {
         #expect(await pumpUntil { sut.durationMs() == 10000 })
     }
 
+    /// An item of samples 0, 1, 2, 3 at a real rate (the limiter's lookahead is milliseconds): off, the limiter holds
+    /// it under its ceiling; on, flat at −12 dB, it plays at a quarter, under the ceiling and so untouched.
+    @Test func theEqualizerSettingsReachTheProcessorsThePlayerRuns() async {
+        let rig = PlayerTestRig<KitAudioPlayer.QueueKey> { _ in
+            FakeItemSource(format: PCMFormat(sampleRate: 8000, channelCount: 1), frames: 4, chunkFrames: 4)
+        }
+        let sut = KitAudioPlayer(player: rig.player)
+        let equalizer = makeTestGraph(audioPlayer: sut).equalizerViewModel
+        let listener = RecordingListener()
+        sut.setListener(listener: listener)
+        let ceiling: Float = 0.988554 // −0.1 dBFS
+        func playToTheEnd() async -> [Float] {
+            let before = rig.output.enqueues.count
+            sut.setItems(order: entries([11]), currentIndex: 0, startMs: 0, playWhenReady: true)
+            rig.settle()
+            rig.run(for: 1)
+            #expect(await pumpUntil(rig) { listener.lastState == "11 ended" })
+            return rig.output.enqueues.dropFirst(before).flatMap(\.samples)
+        }
+
+        equalizer.onEnabledChange(enabled: false)
+        let off = await playToTheEnd()
+        #expect(off.count == 4)
+        #expect(off.allSatisfy { $0 <= ceiling })
+        #expect(off.contains { $0 > 0.9 })
+
+        equalizer.onPreampGainChange(gainDb: -12)
+        equalizer.onEnabledChange(enabled: true)
+        let on = await playToTheEnd()
+        #expect(on.count == 4)
+        for (index, sample) in on.enumerated() {
+            #expect(abs(sample - 0.251189 * Float(index)) < 1e-4)
+        }
+    }
+
     // MARK: - With the Kotlin controller
 
     /// A graph whose controller drives `sut`; its listener replaces the test's.
@@ -190,6 +225,8 @@ struct KitAudioPlayerTests {
     @Test func failedSongsAreSkippedForTheNextThatPlays() async throws {
         let controller = try await queue([failing(1), failing(2), TestSongs.demo[2]])
 
+        // A wait per skip, as in the test below.
+        #expect(await pumpUntil { [-2, 3].contains(currentSongId(controller)) })
         #expect(await pumpUntil { currentSongId(controller) == 3 && rig.player.isPlaying })
         #expect(rig.player.currentItem?.songId == 3)
     }
@@ -207,7 +244,11 @@ struct KitAudioPlayerTests {
         let cap = 15 // PlaybackPolicy.MAX_LOAD_ATTEMPTS
         let controller = try await queue((1 ... cap).map { failing(Int64($0)) } + [TestSongs.demo[0]])
 
-        #expect(await pumpUntil(20) { currentSongId(controller) == -Int64(cap) && controller.playbackStateFlow.value is Shared.PlaybackState.Paused })
+        // A wait per failure, so a slow host stretches each step rather than failing one budget for all of them.
+        for id in 1 ... cap {
+            #expect(await pumpUntil { (currentSongId(controller) ?? 0) <= -Int64(id) })
+        }
+        #expect(await pumpUntil { controller.playbackStateFlow.value is Shared.PlaybackState.Paused })
         rig.run(for: 2)
         #expect(currentSongId(controller) == -Int64(cap))
         #expect(!rig.player.isPlaying)
@@ -219,6 +260,14 @@ struct KitAudioPlayerTests {
 
     /// Pumps the rig (decodes and transport events) until `condition` holds, letting Kotlin's main-queue work run.
     private func pumpUntil(_ timeout: TimeInterval = 10, _ condition: () -> Bool) async -> Bool {
+        await pumpUntil(rig, timeout, condition)
+    }
+
+    private func pumpUntil(
+        _ rig: PlayerTestRig<KitAudioPlayer.QueueKey>,
+        _ timeout: TimeInterval = 10,
+        _ condition: () -> Bool
+    ) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             rig.pump()

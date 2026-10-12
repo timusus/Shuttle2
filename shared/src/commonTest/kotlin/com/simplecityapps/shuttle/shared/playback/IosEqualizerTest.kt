@@ -7,7 +7,7 @@ import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
 class IosEqualizerTest {
-    private val player = FakeIosAudioPlayer().apply { sampleRate = 44_100 }
+    private val player = FakeIosAudioPlayer()
 
     private fun equalizer(
         enabled: Boolean = true,
@@ -20,28 +20,35 @@ class IosEqualizerTest {
         equalizer(enabled = true, preset = Equalizer.Presets.bassBoost, preampGainDb = 3f)
 
         val applied = player.equalizers.single()
+        val filters = applied.filtersAt(44_100)
         val expected = EqualizerCascade(Equalizer.Presets.bassBoost.bands, 44_100)
         applied.enabled shouldBe true
-        applied.coefficients.toList() shouldBe expected.coefficients.toList()
-        applied.preampDb shouldBe (expected.headroomDb + 3f plusOrMinus 1e-6f)
+        filters.coefficients.toList() shouldBe expected.coefficients.toList()
+        filters.preampDb shouldBe (expected.headroomDb + 3f plusOrMinus 1e-6f)
     }
 
     @Test
-    fun theFiltersAreDesignedAtTheEnginesRate() {
-        val equalizer = equalizer()
+    fun theFiltersAreDesignedAtWhicheverRateTheEngineAsksFor() {
+        equalizer()
 
-        equalizer.outputSampleRateHz.value shouldBe 44_100
-        player.equalizers.last().coefficients.toList() shouldBe
-            EqualizerCascade(Equalizer.Presets.bassBoost.bands, 44_100).coefficients.toList()
+        for (rate in listOf(44_100, 48_000, 96_000)) {
+            player.equalizers.last().filtersAt(rate).coefficients.toList() shouldBe
+                EqualizerCascade(Equalizer.Presets.bassBoost.bands, rate).coefficients.toList()
+        }
+    }
+
+    @Test
+    fun theChartFallsBackToItsDefaultRate() {
+        equalizer().outputSampleRateHz.value shouldBe null
     }
 
     @Test
     fun aBoostedPresetLeavesHeadroomAndAFlatOneDoesNot() {
         equalizer(preset = Equalizer.Presets.flat)
-        player.equalizers.last().preampDb shouldBe 0f
+        player.equalizers.last().filtersAt(48_000).preampDb shouldBe 0f
 
         equalizer(preset = Equalizer.Presets.bassBoost)
-        (player.equalizers.last().preampDb < 0f) shouldBe true
+        (player.equalizers.last().filtersAt(48_000).preampDb < 0f) shouldBe true
     }
 
     @Test
@@ -52,11 +59,11 @@ class IosEqualizerTest {
         player.equalizers.last().enabled shouldBe true
 
         equalizer.preampGainDb = -4f
-        player.equalizers.last().preampDb shouldBe -4f
+        player.equalizers.last().filtersAt(48_000).preampDb shouldBe -4f
 
         equalizer.preset = Equalizer.Presets.vocalBoost
-        player.equalizers.last().coefficients.toList() shouldBe
-            EqualizerCascade(Equalizer.Presets.vocalBoost.bands, 44_100).coefficients.toList()
+        player.equalizers.last().filtersAt(48_000).coefficients.toList() shouldBe
+            EqualizerCascade(Equalizer.Presets.vocalBoost.bands, 48_000).coefficients.toList()
     }
 
     @Test
@@ -66,14 +73,16 @@ class IosEqualizerTest {
         try {
             custom.bands.forEach { it.gain = 0.0 }
             val equalizer = equalizer(preset = custom)
-            val flat = player.equalizers.last().coefficients.toList()
+            val handedOver = player.equalizers.last()
+            val flat = handedOver.filtersAt(48_000).coefficients.toList()
 
             custom.bands.first().gain = 6.0
+            handedOver.filtersAt(48_000).coefficients.toList() shouldBe flat
             equalizer.enabled = true
-            player.equalizers.last().coefficients.toList() shouldBe flat
+            player.equalizers.last().filtersAt(48_000).coefficients.toList() shouldBe flat
 
             equalizer.preset = custom
-            (player.equalizers.last().coefficients.toList() == flat) shouldBe false
+            (player.equalizers.last().filtersAt(48_000).coefficients.toList() == flat) shouldBe false
         } finally {
             custom.bands.forEachIndexed { index, band -> band.gain = saved[index] }
         }

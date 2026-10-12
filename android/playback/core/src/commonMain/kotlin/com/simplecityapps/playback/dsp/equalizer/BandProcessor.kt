@@ -30,7 +30,7 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
 
     /**
      * The biquad [processSample] runs, normalised (a0 = 1) in the order b0, b1, b2, a1, a2: what another engine (iOS's
-     * `PCMProcessor`) needs to run this band identically. A bypassed band's coefficients are undefined, so it's the
+     * `EqualizerProcessor`) needs to run this band identically. A bypassed band's coefficients are undefined, so it's the
      * identity filter.
      */
     val coefficients: DoubleArray

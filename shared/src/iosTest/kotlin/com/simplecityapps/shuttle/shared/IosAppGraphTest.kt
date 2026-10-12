@@ -147,7 +147,7 @@ class IosAppGraphTest {
         graph.playerController
 
         player.equalizers.size shouldBe 1
-        player.equalizers.last().coefficients.size shouldBe 5 * Equalizer.Presets.flat.bands.size
+        player.equalizers.last().filtersAt(48_000).coefficients.size shouldBe 5 * Equalizer.Presets.flat.bands.size
     }
 
     @Test
