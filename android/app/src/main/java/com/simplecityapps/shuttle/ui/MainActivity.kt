@@ -18,6 +18,7 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
+import com.simplecityapps.shuttle.entitlement.OnPaywallClosed
 import com.simplecityapps.shuttle.ui.actions.SystemDeleteRequestReceiver
 import com.simplecityapps.shuttle.ui.actions.SystemMediaStoreSongDeleter
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
@@ -66,6 +67,9 @@ class MainActivity : AppCompatActivity() {
     lateinit var observePaywallRequests: ObservePaywallRequests
 
     @Inject
+    lateinit var onPaywallClosed: OnPaywallClosed
+
+    @Inject
     lateinit var playRequests: PlayRequests
 
     @Inject
@@ -110,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                     // Test tags as resource ids, so UiAutomator (the Baseline Profile journeys) and Maestro find them
                     Box(Modifier.semantics { testTagsAsResourceId = true }) {
                         ShellRoute(shellRequests = shellRequestFlow)
-                        PaywallHost(observePaywallRequests)
+                        PaywallHost(observePaywallRequests, onPaywallClosed)
                     }
                 }
             }

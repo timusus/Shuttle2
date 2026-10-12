@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SourceReachability
@@ -74,6 +75,7 @@ class SourcesViewModel @Inject constructor(
     private val refreshScannerFolders: RefreshScannerFolders,
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
+    observeAddServerResumes: ObserveAddServerResumes,
     private val connectServer: ConnectServer,
     observeLastScanDate: ObserveLastScanDate,
     private val forgetServer: ForgetServer,
@@ -127,6 +129,9 @@ class SourcesViewModel @Inject constructor(
         clearSkippedFiles()
         mediaSources.scan()
     }
+
+    /** The paywall a refused [onAddServer] opened closed with the add allowed: carry on with the type chosen. */
+    val addResumes: Flow<Unit> = observeAddServerResumes()
 
     /** Whether a server's sign-in may open: once the trial is over without Pro, the gate opens the paywall instead. */
     fun onAddServer(): Boolean = tryAddServer()

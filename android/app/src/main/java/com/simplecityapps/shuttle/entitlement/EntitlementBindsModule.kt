@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.entitlement
 
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
+import com.simplecityapps.shuttle.entitlement.OnPaywallClosed
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
 import com.simplecityapps.trial.EntitlementRepository
@@ -46,6 +48,12 @@ object EntitlementBindsModule {
 
     @Provides
     fun provideObservePaywallRequests(serverAccessGate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { serverAccessGate.paywallRequests }
+
+    @Provides
+    fun provideObserveAddServerResumes(serverAccessGate: ServerAccessGate): ObserveAddServerResumes = ObserveAddServerResumes { serverAccessGate.addResumes }
+
+    @Provides
+    fun provideOnPaywallClosed(serverAccessGate: ServerAccessGate): OnPaywallClosed = OnPaywallClosed(serverAccessGate::onPaywallClosed)
 
     @Provides
     fun provideTryUseProFeature(serverAccessGate: ServerAccessGate): TryUseProFeature = TryUseProFeature { feature -> serverAccessGate.tryUse(feature) }

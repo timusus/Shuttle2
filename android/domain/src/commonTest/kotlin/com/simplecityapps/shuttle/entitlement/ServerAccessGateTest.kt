@@ -173,6 +173,65 @@ class ServerAccessGateTest {
         assertEquals(listOf(PaywallSource.AddServer), requests(offeringGate) { assertFalse(offeringGate.tryAddServer()) })
     }
 
+    private fun resumes(block: suspend TestScope.() -> Unit): Int {
+        var resumes = 0
+        runTest(UnconfinedTestDispatcher()) {
+            backgroundScope.launch { offeringGate.addResumes.collect { resumes++ } }
+            block()
+        }
+        return resumes
+    }
+
+    @Test
+    fun `a refused add resumes when the paywall closes with the trial started`() {
+        val resumes = resumes {
+            assertFalse(offeringGate.tryAddServer())
+            entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
+            offeringGate.onPaywallClosed(PaywallSource.AddServer)
+        }
+        assertEquals(1, resumes)
+    }
+
+    @Test
+    fun `a refused add resumes when the paywall closes with Pro bought`() {
+        val resumes = resumes {
+            assertFalse(offeringGate.tryAddServer())
+            entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+            offeringGate.onPaywallClosed(PaywallSource.AddServer)
+        }
+        assertEquals(1, resumes)
+    }
+
+    @Test
+    fun `a refused add is forgotten when the paywall closes unchanged - so a later purchase resumes nothing`() {
+        val resumes = resumes {
+            assertFalse(offeringGate.tryAddServer())
+            offeringGate.onPaywallClosed(PaywallSource.AddServer)
+            entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+            offeringGate.onPaywallClosed(PaywallSource.AddServer)
+        }
+        assertEquals(0, resumes)
+    }
+
+    @Test
+    fun `a paywall opened from elsewhere resumes no add`() {
+        val resumes = resumes {
+            entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
+            offeringGate.onPaywallClosed(PaywallSource.ServerPlayback)
+        }
+        assertEquals(0, resumes)
+    }
+
+    @Test
+    fun `an add that is allowed straight away resumes nothing`() {
+        entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
+        val resumes = resumes {
+            assertTrue(offeringGate.tryAddServer())
+            offeringGate.onPaywallClosed(PaywallSource.AddServer)
+        }
+        assertEquals(0, resumes)
+    }
+
     @Test
     fun `where the first server offers the trial - trial and Pro users add servers freely`() {
         listOf(Entitlement.Trial(Instant.DISTANT_FUTURE), Entitlement.Pro(ProSource.Lifetime)).forEach {

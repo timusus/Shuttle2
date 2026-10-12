@@ -606,3 +606,8 @@ before the engine was asked. Stages that did not happen print as `-`.
 ## iOS letter index while scrolling (#1019)
 
 - [ ] iOS, Library Songs, Albums (list and grid) and Artists sorted by name: fling hard, then touch a letter on the A–Z strip while the list is still moving. The list stops and jumps to that letter on the first touch; dragging along the strip keeps jumping. Repeat in a playlist or other screen with the index to check it stops the right list.
+
+## Add server resumes after the paywall (#982)
+
+- [ ] Android, no Pro and no trial used: Settings > Sources > Add server, pick Jellyfin. The paywall opens; start the 14-day trial. The paywall closes and the Jellyfin sign-in opens without another tap. Repeat from the Home or Library connect-server sheet, and by buying Pro instead (close the paywall after the thank-you).
+- [ ] Same start, but close the paywall without starting the trial or buying. No sign-in opens. Buy Pro later from Settings: still no sign-in opens by itself.

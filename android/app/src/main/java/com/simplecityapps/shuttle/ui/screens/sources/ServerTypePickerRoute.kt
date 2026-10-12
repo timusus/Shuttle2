@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,10 +22,21 @@ fun ServerTypePickerRoute(onDismissRequest: () -> Unit) {
     val viewModel: ServerTypePickerViewModel = metroViewModel()
     var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
 
+    // The type behind an add the paywall interrupted, signed in to once the paywall closes with the add allowed
+    var pendingType by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
+    LaunchedEffect(viewModel) {
+        viewModel.addResumes.collect {
+            pendingType?.let { signingIn = it }
+            pendingType = null
+        }
+    }
+
     val signingInType = signingIn
     if (signingInType == null) {
         ServerTypePickerSheet(
-            onTypeSelected = { type -> if (viewModel.onAddServer()) signingIn = type },
+            onTypeSelected = { type ->
+                if (viewModel.onAddServer()) signingIn = type else pendingType = type
+            },
             onDismissRequest = onDismissRequest,
         )
     } else {

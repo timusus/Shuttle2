@@ -26,8 +26,8 @@ is offline and car, set against Plex Pass and Emby Premiere.
 - **Trial:** the existing 14-day trial (no card, app-side, not a Play trial offer), now always opt-in: it used to start
   silently on first Pro use. It is offered, never started silently, in three places: onboarding ("Start 14-day free trial", says local playback stays free; "Not now" dismisses it for good, and the
   paywall and gates still offer the trial), the
-  first server added (start / buy lifetime / cancel; starting the trial closes the paywall and the user taps Add again,
-  as the add is not resumed), and any Pro gate (servers, Android Auto, batch tag editing,
+  first server added (start / buy lifetime / cancel; starting the trial or buying closes the paywall and the add resumes at the sign-in for the
+  type the user chose; closing it unchanged forgets the add), and any Pro gate (servers, Android Auto, batch tag editing,
   advanced EQ and replay-gain modes) reached with no Pro and no trial used. With the trial used, a gate offers purchase
   only. Current non-payers get one fresh trial, announced in the changelog.
 - **Disclosure:** the first lines of the listing and the paywall say "free for local files; Pro is a one-time unlock,

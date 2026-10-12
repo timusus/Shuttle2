@@ -1,10 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
 import com.simplecityapps.fakes.FakeMediaSources
+import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class ServerTypePickerViewModelTest {
     /** The paywall gate's answer: whether another server may be added before Pro. */
@@ -12,6 +14,7 @@ class ServerTypePickerViewModelTest {
 
     private fun viewModel(mediaSources: FakeMediaSources): ServerTypePickerViewModel = ServerTypePickerViewModel(
         TryAddServer { serverAllowed },
+        ObserveAddServerResumes { MutableSharedFlow() },
         ConnectServer(mediaSources),
     )
 

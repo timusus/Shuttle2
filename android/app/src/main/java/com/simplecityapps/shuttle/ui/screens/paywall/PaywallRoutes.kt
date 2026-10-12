@@ -28,6 +28,7 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
+import com.simplecityapps.shuttle.entitlement.OnPaywallClosed
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
@@ -59,10 +60,16 @@ fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
  * action, while the lifecycle is at least STARTED.
  */
 @Composable
-fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
+fun PaywallHost(
+    observePaywallRequests: ObservePaywallRequests,
+    onPaywallClosed: OnPaywallClosed
+) {
     var activeSource by rememberSaveable { mutableStateOf<PaywallSource?>(null) }
     // Closing removes the dialog, which clears its view model store and so reports the dismissal; a recreation keeps it
-    val close = { activeSource = null }
+    val close = {
+        activeSource?.let(onPaywallClosed::invoke)
+        activeSource = null
+    }
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(observePaywallRequests, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

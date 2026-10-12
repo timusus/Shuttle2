@@ -31,8 +31,8 @@ enum class ServerAccess {
  *
  * There's one trial, shared by every feature, and the user starts it on their own (the paywall's and onboarding's
  * [StartTrial], and iOS, where the trial is a free App Store purchase): a use without Pro or a running trial is refused
- * and the paywall offers the trial. Refusing to add a server doesn't resume the add once the trial starts; the user
- * taps Add again. No production gate is built with [startTrial], which would start the trial on a feature's first use
+ * and the paywall offers the trial. A refused add-server resumes when that paywall closes with the add allowed
+ * ([addResumes]). No production gate is built with [startTrial], which would start the trial on a feature's first use
  * and hold the feature in [pending] until the app has disclosed it.
  *
  * A refusal also asks for the paywall through [paywallRequests], so each entry point makes one call. While the store
@@ -89,10 +89,32 @@ class ServerAccessGate(
      * [offersTrialOnAddServer], a user who hasn't had the trial either, so the paywall can offer it before the first server.
      */
     fun tryAddServer(): Boolean {
-        val free = entitlement.value as? Entitlement.Free
-        val allowed = free == null || (!free.trialUsed && !offersTrialOnAddServer)
+        val allowed = addAllowed()
+        addRefused = !allowed
         if (!allowed) _paywallRequests.tryEmit(PaywallSource.AddServer)
         return allowed
+    }
+
+    private fun addAllowed(): Boolean {
+        val free = entitlement.value as? Entitlement.Free
+        return free == null || (!free.trialUsed && !offersTrialOnAddServer)
+    }
+
+    private var addRefused = false
+
+    private val _addResumes = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /** See [ObserveAddServerResumes]. */
+    val addResumes: SharedFlow<Unit> = _addResumes.asSharedFlow()
+
+    /**
+     * Ends the paywall that [source] opened. An add-server refused for it resumes if the entitlement now allows it (the
+     * trial started or Pro was bought), and is forgotten otherwise, so a later purchase doesn't open an add from nowhere.
+     */
+    fun onPaywallClosed(source: PaywallSource) {
+        if (source != PaywallSource.AddServer || !addRefused) return
+        addRefused = false
+        if (addAllowed()) _addResumes.tryEmit(Unit)
     }
 
     /**

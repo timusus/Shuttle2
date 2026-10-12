@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +38,15 @@ fun sourcesRows(onOpenThisDevice: () -> Unit, onOpenServer: (MediaProviderType) 
     var pickingServer by rememberSaveable { mutableStateOf(false) }
     var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
 
+    // The type behind an add the paywall interrupted, signed in to once the paywall closes with the add allowed
+    var pendingType by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
+    LaunchedEffect(viewModel) {
+        viewModel.addResumes.collect {
+            pendingType?.let { signingIn = it }
+            pendingType = null
+        }
+    }
+
     // Refreshes the folders' access, which the This device row flags
     LifecycleResumeEffect(viewModel) {
         viewModel.onResume()
@@ -47,7 +57,7 @@ fun sourcesRows(onOpenThisDevice: () -> Unit, onOpenServer: (MediaProviderType) 
         ServerTypePickerSheet(
             onTypeSelected = { type ->
                 pickingServer = false
-                if (viewModel.onAddServer()) signingIn = type
+                if (viewModel.onAddServer()) signingIn = type else pendingType = type
             },
             onDismissRequest = { pickingServer = false },
         )

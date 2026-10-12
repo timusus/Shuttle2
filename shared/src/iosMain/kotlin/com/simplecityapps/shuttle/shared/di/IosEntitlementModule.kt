@@ -4,6 +4,7 @@ package com.simplecityapps.shuttle.shared.di
 
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
@@ -65,6 +66,9 @@ class IosEntitlementModule {
 
     @Provides
     fun provideObservePaywallRequests(gate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { gate.paywallRequests }
+
+    @Provides
+    fun provideObserveAddServerResumes(gate: ServerAccessGate): ObserveAddServerResumes = ObserveAddServerResumes { gate.addResumes }
 
     /**
      * Pro features beyond servers, as on Android (#939): a refusal opens the paywall offering the trial; a store that

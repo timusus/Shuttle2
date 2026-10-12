@@ -9,6 +9,7 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -26,6 +27,7 @@ import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -61,6 +63,7 @@ class SourcesViewModelTest {
         RefreshScannerFolders(folderStore),
         importState,
         TryAddServer { serverAllowed },
+        ObserveAddServerResumes { MutableSharedFlow() },
         ConnectServer(mediaSources),
         ObserveLastScanDate(preferences),
         ForgetServer(mapOf(MediaProviderType.Emby to emby), preferences, ServerConnectionStore(SecurePreferenceManager(InMemoryKeyValueStore()))),
