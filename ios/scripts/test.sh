@@ -11,7 +11,7 @@
 # an unknown profile aborts with exit 2 before anything builds); else an iPhone on a released iOS
 # runtime, a booted one first, else the newest (a beta only when there's no other). Other arguments go to
 # xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingControllerTests`,
-# `--filter MusicPlaybackFormatsTests`).
+# `--filter StreamWarmUpTests`).
 set -euo pipefail
 
 ios_dir="$(cd "$(dirname "$0")/.." && pwd)"

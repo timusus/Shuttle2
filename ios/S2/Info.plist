@@ -85,16 +85,6 @@
 		</dict>
 		<key>com.simplecityapps.shuttle2</key>
 		<dict>
-			<key>audio-engine</key>
-			<dict>
-				<key>Level</key>
-				<dict>
-					<key>Enable</key>
-					<string>Info</string>
-					<key>Persist</key>
-					<string>Info</string>
-				</dict>
-			</dict>
 			<key>playback</key>
 			<dict>
 				<key>Level</key>

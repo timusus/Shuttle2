@@ -1,30 +1,29 @@
 import Foundation
+import PlaybackPlayer
+import S2PlaybackTestSupport
 import Shared
 import Testing
 @testable import S2
 
-/// `PlayerBinding`'s mapping of the shared `PlayerViewModel` (built by the real graph over a fake engine, as
-/// `PlaybackSystemCoordinatorTests` drives it) and its commands forwarding back through the ViewModel.
+/// `PlayerBinding`'s mapping of the shared `PlayerViewModel` (built by the real graph over the player on its test rig)
+/// and its commands forwarding back through the ViewModel.
 @MainActor
 struct PlayerBindingTests {
-    private let engine = FakeAudioEngine()
+    private let rig = makeTestRig()
     private let graph: IosAppGraph
     private let binding: PlayerBinding
 
     init() {
-        graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        graph = makeTestGraph(rig: rig)
         binding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: PlayIntent(following: graph.playerController))
     }
 
-    /// Queues the demo songs and loads the first, as far as the engine reporting it ready.
-    private func loadQueue() async throws -> String {
+    /// Queues the demo songs and loads the first, as far as the player having it ready, paused.
+    private func loadQueue() async throws {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
-        #expect(await waitUntil { !engine.loads.isEmpty })
-        let id = try #require(engine.loads.first?.current.id)
-        engine.emit(.state(.paused, trackId: id))
-        return id
+        #expect(await rig.pump { rig.player.state == .ready })
     }
 
     @Test func startsIdleWithNothingQueued() {
@@ -35,16 +34,15 @@ struct PlayerBindingTests {
     }
 
     @Test func theMiniPlayerShowsWhileASongIsCurrentEvenPaused() async throws {
-        let id = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.isMiniPlayerVisible })
 
-        engine.emit(.state(.paused, trackId: id))
         #expect(await waitUntil { !binding.miniPlayer.isPlaying })
         #expect(binding.isMiniPlayerVisible)
     }
 
     @Test func queueChangeUpdatesTheCurrentSongAndQueue() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.title == "Paranoid Android" })
         #expect(binding.nowPlaying.artist == "Radiohead")
         #expect(binding.nowPlaying.album == "OK Computer")
@@ -55,21 +53,22 @@ struct PlayerBindingTests {
         #expect(binding.miniPlayer.artist == "Radiohead")
     }
 
-    @Test func playingStateFollowsTheEngine() async throws {
-        let id = try await loadQueue()
+    /// The player's own plays and pauses, as an interruption's, reach the transport.
+    @Test func playingStateFollowsThePlayer() async throws {
+        try await loadQueue()
 
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { binding.miniPlayer.isPlaying && binding.nowPlaying.isPlaying })
+        rig.player.play()
+        #expect(await rig.pump { binding.miniPlayer.isPlaying && binding.nowPlaying.isPlaying })
 
-        engine.emit(.state(.paused, trackId: id))
-        #expect(await waitUntil { !binding.miniPlayer.isPlaying })
+        rig.player.pause()
+        #expect(await rig.pump { !binding.miniPlayer.isPlaying })
     }
 
-    @Test func playPauseForwardsToTheEngine() async throws {
-        _ = try await loadQueue()
+    @Test func playPauseForwardsToThePlayer() async throws {
+        try await loadQueue()
 
         binding.actions.playPause()
-        #expect(await waitUntil { engine.commands.contains("play") })
+        #expect(await rig.pump { rig.player.isPlaying })
     }
 
     /// The favourite flag lives in the library, so the song is seeded there: a demo song the library doesn't hold has
@@ -92,19 +91,22 @@ struct PlayerBindingTests {
         #expect(await waitUntil { !binding.nowPlaying.isFavourite })
     }
 
-    /// The transport draws the listener's intent: pause and the spinner from the tap, before the engine has played,
+    /// The transport draws the listener's intent: pause and the spinner from the tap, before the player has played,
     /// and a second tap during the load pauses at once.
     @Test func playPauseShowsTheIntentFromTheTap() async throws {
-        let id = try await loadQueue()
-        #expect(await waitUntil { binding.isMiniPlayerVisible })
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
+        // Loaded with nothing decoded (the rig decodes only when pumped), so the play waits on its first audio.
+        #expect(await waitUntil { binding.isMiniPlayerVisible && rig.player.state == .ready })
         #expect(!binding.miniPlayer.isPlaying)
 
         binding.actions.playPause()
-        #expect(binding.miniPlayer.isPlaying && binding.miniPlayer.isLoading)
+        #expect(binding.miniPlayer.isPlaying && binding.nowPlaying.isPlaying)
+        #expect(await waitUntil { binding.miniPlayer.isPlaying && binding.miniPlayer.isLoading })
         #expect(binding.nowPlaying.isPlaying && binding.nowPlaying.isLoading)
 
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { !binding.miniPlayer.isLoading })
+        #expect(await rig.pump { !binding.miniPlayer.isLoading })
         #expect(binding.miniPlayer.isPlaying)
 
         binding.actions.playPause()
@@ -113,7 +115,7 @@ struct PlayerBindingTests {
     }
 
     @Test func nextAndPreviousForwardToTheEngineAndUpdateTheQueue() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.title == "Paranoid Android" })
 
         binding.actions.next()
@@ -124,7 +126,7 @@ struct PlayerBindingTests {
     }
 
     @Test func selectingAQueueRowSkipsToThatItem() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
 
         binding.actions.selectQueueItem(binding.nowPlaying.queue[2].id)
@@ -133,7 +135,7 @@ struct PlayerBindingTests {
     }
 
     @Test func movingARowPutsItAfterTheGivenOne() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
         let ids = binding.nowPlaying.queue.map(\.id)
 
@@ -145,7 +147,7 @@ struct PlayerBindingTests {
     }
 
     @Test func playNextMovesARowAfterTheCurrentSong() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
         let ids = binding.nowPlaying.queue.map(\.id)
 
@@ -154,7 +156,7 @@ struct PlayerBindingTests {
     }
 
     @Test func removingARowOffersUndo() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
         let removed = binding.nowPlaying.queue[3].id
 
@@ -175,7 +177,7 @@ struct PlayerBindingTests {
     }
 
     @Test func clearingTheQueueOffersUndo() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
 
         binding.actions.clearQueue()
@@ -193,14 +195,14 @@ struct PlayerBindingTests {
     }
 
     @Test func theCurrentSongOffersTheActionsIOSCanRun() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.songActions.contains(.goToAlbum) })
         #expect(binding.nowPlaying.songActions.contains(.addToPlaylist))
         #expect(binding.nowPlaying.songActions.contains(.goToArtist))
     }
 
     @Test func goToAlbumAsksNowPlayingToOpenIt() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.title != nil })
 
         binding.actions.songAction(.goToAlbum)
@@ -216,7 +218,7 @@ struct PlayerBindingTests {
     }
 
     @Test func shuffleAndRepeatFollowTheQueueModes() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.title != nil })
         #expect(!binding.nowPlaying.shuffleOn)
         #expect(binding.nowPlaying.repeatMode == .off)
@@ -231,14 +233,14 @@ struct PlayerBindingTests {
     }
 
     @Test func speedFollowsTheController() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
 
         binding.actions.setSpeed(1.5)
         #expect(await waitUntil { binding.nowPlaying.playbackSpeed == 1.5 })
     }
 
     @Test func theSleepTimerRunsUntilStopped() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
 
         binding.actions.startSleepTimer(15, false)
         #expect(await waitUntil { binding.nowPlaying.sleepTimerActive })
@@ -248,20 +250,20 @@ struct PlayerBindingTests {
     }
 
     @Test func seekShowsTheTargetStraightAway() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         binding.seek(toMs: 42_000)
         #expect(binding.nowPlaying.positionMs == 42_000)
     }
 
     @Test func aProgressTickMovesNowPlayingButNotTheMiniPlayer() async throws {
-        let id = try await loadQueue()
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { binding.miniPlayer.isPlaying && binding.miniPlayer.title != nil })
+        try await loadQueue()
+        rig.player.play()
+        #expect(await rig.pump { binding.miniPlayer.isPlaying && binding.miniPlayer.title != nil })
 
         let miniPlayerChanged = ChangeFlag()
         withObservationTracking { _ = binding.miniPlayer } onChange: { miniPlayerChanged.set() }
-        engine.emit(.position(trackId: id, ms: 30_000))
-        #expect(await waitUntil { binding.nowPlaying.positionMs == 30_000 })
+        rig.run(for: 3)
+        #expect(await waitUntil { binding.nowPlaying.positionMs == 3_000 })
         #expect(!miniPlayerChanged.value)
     }
 }

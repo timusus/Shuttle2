@@ -3,7 +3,7 @@ import Foundation
 /// The equaliser the Kotlin side computes: `enabled`, a preamp, and one biquad per band.
 ///
 /// The coefficients are normalised (a0 = 1) and computed by the shared Kotlin EQ for the
-/// controller's output rate (`MusicPlaybackController.outputSampleRate`), five per band in the
+/// output rate (`IosAudioPlayer.engineSampleRate()`, a fixed 48 kHz), five per band in the
 /// order b0, b1, b2, a1, a2 — the same numbers Android's `EqualizerAudioProcessor` runs. Swift
 /// never designs a filter; it only runs them.
 public struct EqualizerSettings: Equatable {
@@ -39,7 +39,7 @@ public struct LimiterSettings: Equatable {
 
 /// **ReplayGain gain → EQ preamp → EQ bands → limiter, on interleaved float32.**
 ///
-/// Runs on the controller's engine queue as each buffer is scheduled, so the chain sees one
+/// Runs on the render path as each buffer is produced, so the chain sees one
 /// continuous stream across track boundaries: filter memory and the limiter's envelope carry from
 /// the end of one track into the start of the next, as they would on a real signal, and are reset
 /// only on a seek or a new load (a discontinuity, where old memory would be a click).
@@ -47,9 +47,9 @@ public struct LimiterSettings: Equatable {
 /// **Frame alignment.** The limiter delays its output by its lookahead. The processor hides that:
 /// ``process(_:frameCount:gain:into:)`` drops the first `latency` output frames after a reset and
 /// ``drain(into:)`` hands back the `latency` frames still inside at the end of the queue, so output
-/// frame n is always input frame n and the controller's timeline needs no correction.
+/// frame n is always input frame n and the caller's timeline needs no correction.
 ///
-/// Not thread-safe; settings changes are handed over through ``MusicPlaybackController``.
+/// Not thread-safe; the caller hands settings changes over on the thread it processes on.
 final class PCMProcessor {
     let channelCount: Int
     private let sampleRate: Double

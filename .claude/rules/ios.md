@@ -10,7 +10,7 @@ The iOS port (epic #581, plan `docs/architecture/ios-port.md`). `ios/` is a Swif
 XcodeGen from `ios/project.yml`; it links the static `Shared.framework` that the `:shared` KMP module
 (`shared/`, repo root) builds. Structure follows Shuttle Podcasts (`~/projects/simplecity-apps/podcasts/main/mobile`,
 its `.claude/rules/ios.md`). Use `support/scripts/asc`, not Chrome, for App Store Connect (`ios/DEPLOY.md`).
-Audio session, Now Playing and engine notes: `ios-playback.md`; device runs, the POC and Maestro: `ios-device.md`.
+Player, Now Playing and system-surface notes: `ios-playback.md`; device runs, the POC and Maestro: `ios-device.md`.
 
 ## Commands
 
@@ -87,13 +87,13 @@ ios/
     Theme/LayoutTier.swift  # compact / regular / wide, same vocabulary as Android
     Features/               # Home, Library, Search, Playback (mini player, Now Playing presentation)
     KMP/                    # AppGraph (initialize() at launch), ViewModelCache, CombineFlowBridge, ViewModelGroup, ConsumeEvents
-    Platform/Audio/         # AudioSessionController, NowPlayingController, EngineAudioPlayer, PlaybackSystemCoordinator
+    Platform/Audio/         # NowPlayingController, KitAudioPlayer, PlaybackSystemCoordinator
     Platform/SystemIntents/ # App Intents for Siri/Shortcuts/Spotlight (#758): AppIntentPerformer, IntentPerformers,
                             # NowPlayingWidgetPublisher (writes the widgets' state)
   SystemSurfaces/           # compiled into the app AND S2Widgets: playback App Intents, NowPlayingStore (App Group
                             # snapshot). No `import Shared` here: the extension doesn't link the framework
   S2Widgets/                # WidgetKit extension: Now Playing widgets, the iOS 18 play/pause control
-  Playback/                 # the S2Playback package: gapless engine (see its README); no AVAudioSession.
+  Playback/                 # the S2Playback package: glue over AudioPlaybackKit's Player (see its README).
                             # A local package dependency of the S2 target only (project.yml `packages:`)
   S2Tests/                  # ViewInspector + swift-testing
 ```
@@ -142,7 +142,7 @@ on compact and a form sheet otherwise, presented from `ContentView`.
   `info: properties:`, not in the plist.
 - SourceKit shows "No such module 'Testing'" and "AVAudioSession is unavailable in macOS" for these files; xcodebuild is
   the truth.
-- **S2Tests never builds a real engine.** Tests make their own `IosAppGraphKt.createIosAppGraph(audioPlayer:
-  EngineAudioPlayer(engine: FakeAudioEngine()))` and queue `TestSongs.demo`; `AppGraph.shared` is the host app's, with a
-  real `MusicPlaybackController`. Kotlin work arrives on the main queue after the call returns, so await it with
-  `waitUntil { ... }` (`FakeAudioEngine.swift`).
+- **S2Tests play on AudioPlaybackKit's `PlayerTestRig`.** `makeTestGraph()` / `makeTestGraph(rig:)` (`TestGraph.swift`)
+  build `KitAudioPlayer` over a rig and queue `TestSongs.demo`; `AppGraph.shared` is the host app's, with a real
+  `Player`. Decodes run only when the rig is pumped (`rig.pump { ... }`, `rig.run(for:)`), and Kotlin work arrives on
+  the main queue after the call returns, so await it with `waitUntil { ... }`.

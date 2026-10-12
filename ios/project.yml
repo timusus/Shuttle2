@@ -101,7 +101,6 @@ targets:
         OSLogPreferences:
           com.simplecityapps.shuttle2:
             playback: {Level: {Enable: Info, Persist: Info}}
-            audio-engine: {Level: {Enable: Info, Persist: Info}}
             session: {Level: {Enable: Info, Persist: Info}}
           com.simplecityapps.AudioPlaybackKit:
             download: {Level: {Enable: Info, Persist: Info}}

@@ -93,12 +93,11 @@ extension View {
 /// The app's composition point: each object built once, with plain constructors.
 @MainActor
 final class IosAppDependencies {
-    /// The Kotlin `IosAudioPlayer` over the S2Playback engine.
-    let audioPlayer: EngineAudioPlayer
+    /// The Kotlin `IosAudioPlayer` over AudioPlaybackKit's `Player`.
+    let audioPlayer: KitAudioPlayer
     /// This device's music files: Documents and the folders picked in Files (#590).
     let localLibrary: LocalLibrary
     let graph: IosAppGraph
-    let audioSession: AudioSessionController
     let nowPlaying: NowPlayingController
     let playbackSystem: PlaybackSystemCoordinator
     /// Whether the listener wants playback running, which every play/pause control draws (`PlayIntent`).
@@ -119,7 +118,11 @@ final class IosAppDependencies {
     let siriContext: SiriLibraryContext
 
     init() {
-        let audioPlayer = StartupTrace.step("audioEngine") { EngineAudioPlayer(engine: Self.makeEngine()) }
+        // The player opens items through the graph, which is built over the player: the closure reads it once it's there.
+        var builtGraph: IosAppGraph!
+        let audioPlayer = StartupTrace.step("audioPlayer") {
+            KitAudioPlayer.live { uid, done in builtGraph.playerController.itemResolver.resolve(uid: uid, onResult: done) }
+        }
         let localLibrary = LocalLibrary()
         self.audioPlayer = audioPlayer
         self.localLibrary = localLibrary
@@ -132,26 +135,20 @@ final class IosAppDependencies {
             IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, localFiles: localLibrary, telemetry: telemetry)
         }
         self.graph = graph
+        builtGraph = graph
         // Before anything opens a stream or fetches artwork: their sessions ask it for the server's headers and certificate (#921)
         ServerConnections.policy = KotlinServerConnectionPolicy(graph.serverRequestPolicy)
         StreamWarmUp.shared.isConfiguredServer = { origin in
             MediaProviderType.signInTypes.contains { StreamWarmUp.address(graph.readServerLogin.invoke(type: $0).address, isAt: origin) }
         }
         DispatchQueue.global(qos: .utility).async { StreamStore.prepareAtLaunch() }
-        audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
-        // The case name, not the raw value: the ttfa line wants one token.
-        playIntent = PlayIntent(following: graph.playerController) { [audioPlayer] source in
-            audioPlayer.notePlayRequest(String(describing: source))
-        }
+        playIntent = PlayIntent(following: graph.playerController)
         playbackSystem = PlaybackSystemCoordinator(
             playback: graph.playerController,
             intent: playIntent,
-            player: audioPlayer,
-            session: audioSession,
             nowPlaying: nowPlaying,
-            widgets: NowPlayingWidgetPublisher(),
-            makeEngine: { try? MusicPlaybackController() }
+            widgets: NowPlayingWidgetPublisher()
         )
         let intent = playIntent
         playerBinding = StartupTrace.step("playerBinding") {
@@ -162,14 +159,5 @@ final class IosAppDependencies {
         intentPerformer = AppIntentPerformer(graph: graph, intent: playIntent)
         siriPlayer = SiriMediaPlayer(graph: graph, performer: intentPerformer)
         siriContext = SiriLibraryContext(graph: graph)
-    }
-
-    /// The engine only fails to build without a stereo float format, which every device has.
-    private static func makeEngine() -> AudioEngine {
-        do {
-            return try MusicPlaybackController()
-        } catch {
-            fatalError("S2: the playback engine could not be built: \(error)")
-        }
     }
 }

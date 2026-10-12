@@ -7,13 +7,12 @@ import ViewInspector
 /// The shell draws the container its tier asks for.
 @MainActor
 struct AppShellTests {
-    /// A player of its own, over a fake engine, so a test decides whether a song is current.
-    private let engine = FakeAudioEngine()
+    /// A player of its own, on the test rig, so a test decides whether a song is current.
     private let graph: IosAppGraph
     private let playerBinding: PlayerBinding
 
     init() {
-        graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        graph = makeTestGraph()
         playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: PlayIntent(following: graph.playerController))
     }
 

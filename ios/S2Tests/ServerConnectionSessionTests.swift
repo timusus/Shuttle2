@@ -9,6 +9,7 @@ import Testing
 /// (#921). The rule is Kotlin's `ServerRequestPolicy`, over the same store as the Ktor client's, so these seed a test graph
 /// the way the sign-in does and ask the real thing. The artwork session answers through `ServerConnections.handle`; the
 /// streaming source is handed the headers and the certificate's fingerprint (`trustedCertificate(for:)`).
+@MainActor
 struct ServerConnectionSessionTests {
 
     /// Self-signed certificates made for these tests alone (CN=pinned.test and CN=other.test); neither key was kept.
@@ -22,8 +23,9 @@ struct ServerConnectionSessionTests {
         let host = "server-\(UUID().uuidString.prefix(8).lowercased()).test"
         let policy: KotlinServerConnectionPolicy
 
+        @MainActor
         init(headers: [CoreCustomHeader] = ServerConnectionSessionTests.headers, trusting certificate: String? = ServerConnectionSessionTests.pinnedCertificate) {
-            let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
+            let graph = makeTestGraph()
             let origin = CoreServerOrigin.companion.of(host: host, port: 8920)
             graph.prepareServerConnection.invoke(origin: origin, headers: headers)
             if let certificate {
@@ -77,7 +79,7 @@ struct ServerConnectionSessionTests {
         #expect(ArtworkCandidate(url: fixture.url).keyedCacheRequest == nil)
     }
 
-    @MainActor @Test func anImageFromAServerWithHeadersIsKeptOnDiskWithoutThem() async throws {
+    @Test func anImageFromAServerWithHeadersIsKeptOnDiskWithoutThem() async throws {
         let fixture = Fixture()
         let diskCache = URLCache(memoryCapacity: 1_000_000, diskCapacity: 10_000_000, directory: FileManager.default.temporaryDirectory.appendingPathComponent("artwork-\(UUID())"))
         let png = ArtworkLoaderTests.pngData(width: 40, height: 40)

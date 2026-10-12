@@ -1,4 +1,6 @@
 import Foundation
+import PlaybackPlayer
+import S2PlaybackTestSupport
 import Shared
 import Testing
 @testable import S2
@@ -316,26 +318,25 @@ struct PlayIntentTests {
 
     // MARK: Through the real player
 
-    /// The Kotlin controller's `play` takes on the main thread, so the intent is set as the call returns, while the
-    /// engine has only been asked to play.
-    @Test func playOnTheRealPlayerIsIntendedBeforeTheEnginePlays() async throws {
-        let engine = FakeAudioEngine()
-        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+    /// The Kotlin controller's `play` takes on the main thread, so the intent is set as the call returns; it holds
+    /// while the player waits on its first audio.
+    @Test func playOnTheRealPlayerIsIntendedBeforeThePlayerPlays() async throws {
+        let rig = makeTestRig()
+        let graph = makeTestGraph(rig: rig)
         let controller = graph.playerController
         let sut = PlayIntent(following: controller)
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
-        #expect(await waitUntil { !engine.loads.isEmpty })
-        let id = try #require(engine.loads.first?.current.id)
-        engine.emit(.state(.paused, trackId: id))
+        // Nothing decoded: the rig's decodes run only when pumped.
+        #expect(await waitUntil { controller.playbackStateFlow.value is Shared.PlaybackState.Paused })
         #expect(!sut.isPlayIntended)
 
         sut.play()
-        #expect(sut.isPlayIntended && sut.isLoading)
-        #expect(engine.commands.last == "play")
+        #expect(sut.isPlayIntended)
+        #expect(rig.player.playWhenReady)
+        #expect(await waitUntil { sut.isPlayIntended && sut.isLoading })
 
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { !sut.isLoading })
+        #expect(await rig.pump { !sut.isLoading })
         sut.pause()
         #expect(!sut.isPlayIntended)
     }
@@ -343,28 +344,21 @@ struct PlayIntentTests {
     /// Playing the context that's already playing keeps the queue's entries (its content version doesn't move), so
     /// only the action's own result says the player has it: through the real graph's `MediaActionsViewModel`.
     @Test func aPlayDispatchedThroughSendIsIntendedUntilItPlays() async throws {
-        let engine = FakeAudioEngine()
-        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        let rig = makeTestRig()
+        let graph = makeTestGraph(rig: rig)
         let controller = graph.playerController
         let sut = PlayIntent(following: controller)
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
-        #expect(await waitUntil { !engine.loads.isEmpty })
-        let id = try #require(engine.loads.first?.current.id)
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { sut.isPlayIntended && !sut.isLoading })
+        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: true) { _ in }
+        #expect(await rig.pump { sut.isPlayIntended && !sut.isLoading })
 
         let play = MediaActionPlay(selection: MediaSelectionSongs(songs: TestSongs.demo), position: 0, context: PlayContextNone.shared)
         graph.mediaActionsViewModel.send(play, key: "demo", intent: sut)
         #expect(sut.isPlayIntended && sut.isLoading)
         #expect(sut.loadingKey == "demo")
 
-        // The play reloads the engine and returns once it reports the load.
-        #expect(await waitUntil { engine.loads.count > 1 })
-        #expect(sut.isPlayIntended)
-        let reload = try #require(engine.loads.last?.current.id)
-        engine.emit(.state(.playing, trackId: reload))
-        #expect(await waitUntil { !sut.isLoading })
+        // The play reloads the player and returns once it reports the load.
+        #expect(await rig.pump { !sut.isLoading })
         #expect(sut.isPlayIntended)
         #expect(sut.loadingKey == nil)
     }
@@ -373,29 +367,25 @@ struct PlayIntentTests {
     /// and a pause in between stands.
     @Test func aShuffleThroughSendIsIntendedUntilThePlayerPlaysIt() async throws {
         for pauses in [false, true] {
-            let engine = FakeAudioEngine()
-            let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+            let rig = makeTestRig()
+            let graph = makeTestGraph(rig: rig)
             let controller = graph.playerController
             let sut = PlayIntent(following: controller)
             let shuffle = MediaActionShuffle(selection: MediaSelectionSongs(songs: TestSongs.demo), context: PlayContextNone.shared)
             graph.mediaActionsViewModel.send(shuffle, key: "demo", intent: sut)
-            #expect(await waitUntil { !engine.loads.isEmpty })
+            #expect(await waitUntil { rig.player.currentItem != nil })
             await drainMainQueue()
-            #expect(sut.isPlayIntended, "the result is in, the load isn't ready")
-            #expect(!controller.playWhenReadyFlow.value.boolValue)
+            #expect(sut.isPlayIntended, "the result is in, nothing plays yet")
             if pauses { sut.toggle() }
 
-            let id = try #require(engine.loads.last?.current.id)
-            engine.emit(.state(.paused, trackId: id))
-            #expect(await waitUntil { engine.commands.contains("play") })
             if pauses {
-                #expect(await waitUntil { engine.commands.last == "pause" && !controller.playWhenReadyFlow.value.boolValue })
+                #expect(await rig.pump { rig.player.state == .ready })
                 await drainMainQueue()
+                #expect(!rig.player.isPlaying && !controller.playWhenReadyFlow.value.boolValue)
                 #expect(!sut.isPlayIntended)
             } else {
-                #expect(sut.isPlayIntended && sut.isLoading)
-                engine.emit(.state(.playing, trackId: id))
-                #expect(await waitUntil { !sut.isLoading })
+                #expect(await rig.pump { !sut.isLoading })
+                #expect(rig.player.isPlaying)
                 #expect(sut.isPlayIntended)
             }
         }

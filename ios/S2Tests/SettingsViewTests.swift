@@ -42,7 +42,7 @@ struct SettingsViewTests {
 
     /// ReplayGain is free on iOS: without Pro, choosing Track, Album or Off is stored and never asks for the paywall.
     @Test func replayGainModesAreStoredWithoutProAndNeverAskForThePaywall() async throws {
-        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
+        let graph = makeTestGraph()
         let item = try #require(catalog.item(key: key(catalog.playbackAndSound, 2)) as? SettingItemChoice<AnyObject>)
         let viewModel = graph.settingsViewModel
         // uiState is shared while collected, and the paywall requests aren't replayed: both need a collector

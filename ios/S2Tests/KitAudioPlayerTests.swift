@@ -211,7 +211,7 @@ private final class RecordingListener: NSObject, IosAudioPlayerListener {
     var failures: [String] = []
     var pausedAtEnd: [String] = []
 
-    func onStateChanged(trackId: String, state: IosAudioPlayerState, superseded _: Bool) {
+    func onStateChanged(trackId: String, state: IosAudioPlayerState) {
         lastState = "\(trackId) \(state.name.lowercased())"
     }
 

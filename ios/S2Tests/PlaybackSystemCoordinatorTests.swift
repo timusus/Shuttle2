@@ -1,38 +1,14 @@
-import AVFoundation
 import MediaPlayer
+import PlaybackPlayer
+import S2PlaybackTestSupport
 import Shared
 import Testing
 @testable import S2
 
-/// The system surfaces wired to the real Kotlin controller over a fake engine: Now Playing follows the
-/// queue, remote commands and session events become controller calls, and the session is activated
-/// before anything plays.
+/// The system surfaces wired to the real Kotlin controller over the player on its test rig: Now Playing follows the
+/// queue and the player, and remote commands become controller calls. The rig's items are 10 s long.
 @MainActor
 struct PlaybackSystemCoordinatorTests {
-    private final class FakeSession: AudioSession {
-        private(set) var configured = 0
-        private(set) var activations: [Bool] = []
-        var failActivation = false
-        private(set) var failedActivations = 0
-
-        func setCategory(
-            _ category: AVAudioSession.Category,
-            mode: AVAudioSession.Mode,
-            policy: AVAudioSession.RouteSharingPolicy,
-            options: AVAudioSession.CategoryOptions
-        ) throws {
-            configured += 1
-        }
-
-        func setActive(_ active: Bool, options: AVAudioSession.SetActiveOptions) throws {
-            if active && failActivation {
-                failedActivations += 1
-                throw NSError(domain: "FakeSession", code: 1)
-            }
-            activations.append(active)
-        }
-    }
-
     private final class FakeInfoCenter: NowPlayingInfoCenter {
         var nowPlayingInfo: [String: Any]? {
             didSet { history.append(nowPlayingInfo) }
@@ -46,11 +22,6 @@ struct PlaybackSystemCoordinatorTests {
         private(set) var playbackStates: [MPNowPlayingPlaybackState] = []
 
         func value<T>(_ key: String) -> T? { nowPlayingInfo?[key] as? T }
-    }
-
-    private final class EngineSource {
-        var make: () -> AudioEngine?
-        init(_ engine: AudioEngine?) { make = { engine } }
     }
 
     private final class FakeCommandCenter: RemoteCommandCenter {
@@ -67,32 +38,20 @@ struct PlaybackSystemCoordinatorTests {
         }
     }
 
-    private let engine = FakeAudioEngine()
-    private let session = FakeSession()
-    private let center = NotificationCenter()
+    private let rig = makeTestRig()
     private let info = FakeInfoCenter()
     private let commands = FakeCommandCenter()
     private let graph: IosAppGraph
     private let coordinator: PlaybackSystemCoordinator
     private let intent: PlayIntent
-    private let engineSource: EngineSource
-    private var rebuiltEngines: [FakeAudioEngine] = []
 
     init() {
-        let player = EngineAudioPlayer(engine: engine)
-        graph = makeTestGraph(audioPlayer: player)
-        let rebuilt = FakeAudioEngine()
-        rebuiltEngines = [rebuilt]
-        let source = EngineSource(rebuilt)
-        engineSource = source
+        graph = makeTestGraph(rig: rig)
         intent = PlayIntent(following: graph.playerController)
         coordinator = PlaybackSystemCoordinator(
             playback: graph.playerController,
             intent: intent,
-            player: player,
-            session: AudioSessionController(session: session, notificationCenter: center),
-            nowPlaying: NowPlayingController(infoCenter: info, commandCenter: commands),
-            makeEngine: { source.make() }
+            nowPlaying: NowPlayingController(infoCenter: info, commandCenter: commands)
         )
         coordinator.start()
     }
@@ -117,77 +76,77 @@ struct PlaybackSystemCoordinatorTests {
         graph.playerController.playWhenReadyFlow.value.boolValue
     }
 
-    /// Queues `songs` and loads the first, as far as the engine reporting it ready.
-    private func loadQueue(_ songs: [Song] = TestSongs.demo) async throws -> String {
+    /// Queues `songs` and loads the first, as far as the player having it ready, paused.
+    private func loadQueue(_ songs: [Song] = TestSongs.demo) async throws {
+        try await beginLoad(songs)
+        #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Paused })
+    }
+
+    /// Queues `songs` and loads the first, paused, leaving the rig unpumped so nothing is decoded: a play then waits on
+    /// its first audio.
+    private func beginLoad(_ songs: [Song] = TestSongs.demo) async throws {
         let controller = graph.playerController
         _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
-        #expect(await waitUntil { !engine.loads.isEmpty })
-        let id = try #require(engine.loads.first?.current.id)
-        engine.emit(.state(.paused, trackId: id))
-        return id
+        #expect(await waitUntil { title == songs.first?.name && controller.playbackStateFlow.value is Shared.PlaybackState.Paused })
     }
 
-    @Test func startConfiguresTheSessionAndRegistersTheCommands() {
-        #expect(session.configured == 1)
+    /// Loads the queue and plays it from the lock screen, as far as the player playing.
+    private func playQueue() async throws {
+        try await loadQueue()
+        commands.fire(.play)
+        #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Playing })
+    }
+
+    @Test func startRegistersTheCommands() {
         #expect(commands.handlers[.play] != nil)
         #expect(commands.handlers[.nextTrack] != nil)
     }
 
     @Test func nowPlayingFollowsTheQueue() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { title == "Paranoid Android" })
         #expect(info.nowPlayingInfo?[MPMediaItemPropertyArtist] as? String == "Radiohead")
         #expect(info.nowPlayingInfo?[MPMediaItemPropertyPlaybackDuration] as? TimeInterval == 386)
 
         commands.fire(.nextTrack)
         #expect(await waitUntil { title == "Hyperballad" })
-        #expect(engine.loads.last?.current.url.absoluteString == "demo://2")
-    }
-
-    /// Loads the queue and plays it, as far as the engine reporting it playing.
-    private func playQueue() async throws -> String {
-        let id = try await loadQueue()
-        commands.fire(.play)
-        #expect(await waitUntil { engine.commands.contains("play") })
-        engine.emit(.state(.playing, trackId: id))
-        return id
+        #expect(rig.player.currentItem?.songId == 2)
     }
 
     @Test func playAndPauseFromTheLockScreenReflectBack() async throws {
-        let id = try await playQueue()
+        try await playQueue()
         #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
 
-        engine.emit(.position(trackId: id, ms: 42_000))
+        rig.run(for: 4)
+        #expect(await waitUntil { elapsed == 4 })
         commands.fire(.pause)
-        #expect(await waitUntil { engine.commands.last == "pause" })
+        #expect(!rig.player.playWhenReady)
         #expect(intent.lastCommand == PlayIntent.Command(plays: false, source: .remoteCommand))
-        engine.emit(.state(.paused, trackId: id))
 
-        #expect(await waitUntil { rate == 0 && info.playbackState == .paused })
-        #expect(elapsed == 42)
+        #expect(await rig.pump { rate == 0 && info.playbackState == .paused })
+        #expect(elapsed == 4)
         #expect(title == "Paranoid Android")
     }
 
-    /// A stream that stalls while playing stops the lock screen's clock and keeps its pause button; it runs again
-    /// once the stream flows (#897).
-    @Test func bufferingStopsTheLockScreenClockUntilItPlaysAgain() async throws {
-        let id = try await playQueue()
-        #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
+    /// A play waiting on its stream stops the lock screen's clock and keeps its pause button; the clock runs once the
+    /// stream flows (#897).
+    @Test func bufferingStopsTheLockScreenClockUntilItPlays() async throws {
+        try await beginLoad()
 
-        engine.emit(.state(.loading, trackId: id))
-        #expect(await waitUntil { rate == 0 })
-        #expect(info.playbackState == .playing)
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
+        commands.fire(.play)
 
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
+        #expect(await waitUntil { graph.playerController.bufferingFlow.value.boolValue })
+        #expect(await waitUntil { rate == 0 && info.playbackState == .playing })
+        #expect(graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Loading)
+
+        #expect(await rig.pump { rate == 1 && info.playbackState == .playing })
     }
 
     /// A play still being prepared (a `MediaAction` reading its songs) shows on the lock screen as playing from the tap,
     /// and its failure as paused again.
     @Test func aPendingPlayShowsAsPlayingOnTheLockScreen() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { title == "Paranoid Android" && rate == 0 })
 
         let ticket = intent.begin()
@@ -198,26 +157,23 @@ struct PlaybackSystemCoordinatorTests {
     }
 
     @Test func aRemoteSeekMovesThePlayerAndReflectsBack() async throws {
-        _ = try await loadQueue()
-        #expect(await waitUntil { title != nil })
+        try await loadQueue()
 
-        commands.fire(.changePlaybackPosition, .position(90))
+        commands.fire(.changePlaybackPosition, .position(6))
 
-        #expect(await waitUntil { engine.commands.contains("seek 90000") })
-        #expect(await waitUntil { elapsed == 90 })
+        #expect(await rig.pump { rig.player.position == 6 })
+        #expect(await waitUntil { elapsed == 6 })
         #expect(rate == 0)
     }
 
     /// The new song's metadata is never published with the last one's position, whichever of the queue
     /// and progress flows Swift hears about first.
     @Test func aTrackChangePublishesTheNewSongFromItsStart() async throws {
-        let id = try await playQueue()
-        engine.emit(.position(trackId: id, ms: 200_000))
-        #expect(await waitUntil { elapsed == 200 })
-        #expect(await waitUntil { engine.nexts.last??.id != nil })
-        let nextId = try #require(engine.nexts.last??.id)
+        try await playQueue()
+        rig.run(for: 4)
+        #expect(await waitUntil { elapsed == 4 })
 
-        engine.emit(.transition(trackId: nextId))
+        rig.run(for: 6)
 
         #expect(await waitUntil { title == "Hyperballad" })
         let published = info.history.compactMap { $0 }.filter { $0[MPMediaItemPropertyTitle] as? String == "Hyperballad" }
@@ -228,88 +184,26 @@ struct PlaybackSystemCoordinatorTests {
 
     @Test func aSongWithoutADurationShowsThePlayers() async throws {
         let song = TestSongs.song(9, "Untagged", artist: "Nobody", album: "Nothing", durationMs: 0)
-        let id = try await loadQueue([song])
+        try await loadQueue([song])
         #expect(await waitUntil { title == "Untagged" })
-        #expect(info.nowPlayingInfo?[MPMediaItemPropertyPlaybackDuration] == nil)
-
-        engine.position = (uid: id, ms: 1_000)
-        engine.durationMs = 200_000
-        engine.emit(.position(trackId: id, ms: 1_000))
-
-        #expect(await waitUntil { info.value(MPMediaItemPropertyPlaybackDuration) == 200.0 })
-    }
-
-    @Test func playActivatesTheSessionAsTheEngineTakesThePlay() async throws {
-        _ = try await loadQueue()
 
         commands.fire(.play)
-        #expect(await waitUntil { engine.commands.contains("play") })
-        #expect(session.activations == [true])
+        rig.run(for: 1)
+
+        #expect(await waitUntil { info.value(MPMediaItemPropertyPlaybackDuration) == 10.0 })
     }
 
-    @Test func aPlayTheSessionWontActivateForStaysPaused() async throws {
-        _ = try await loadQueue()
-        #expect(await waitUntil { title == "Paranoid Android" && info.playbackState == .paused })
-        session.failActivation = true
-
-        commands.fire(.play)
-        // The lock screen's play reaches the engine, which asks for the session as it takes it and stays paused.
-        #expect(await waitUntil { session.failedActivations == 1 })
-        #expect(engine.activations == [false])
-        #expect(await waitUntil { !graph.playerController.playWhenReadyFlow.value.boolValue })
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Paused)
-        #expect(info.playbackState == .paused)
-        #expect(rate == 0)
-    }
-
+    /// The player's own pause for a call reaches the lock screen through the controller.
     @Test func anInterruptionPausesThePlayer() async throws {
-        let id = try await loadQueue()
-        commands.fire(.play)
-        engine.emit(.state(.playing, trackId: id))
-        #expect(await waitUntil { graph.playerController.playbackStateFlow.value is PlaybackState.Playing })
+        try await playQueue()
 
-        center.post(name: AVAudioSession.interruptionNotification, object: session, userInfo: [
-            AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.began.rawValue,
-        ])
+        rig.session.interruptionBegan()
 
-        #expect(await waitUntil { engine.commands.contains("pause") })
-        #expect(intent.lastCommand == PlayIntent.Command(plays: false, source: .interruption))
-    }
-
-    @Test func aMediaServicesResetReloadsIntoANewEngine() async throws {
-        _ = try await loadQueue()
-
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-
-        let rebuilt = try #require(rebuiltEngines.first)
-        #expect(await waitUntil { !rebuilt.loads.isEmpty })
-        #expect(rebuilt.loads.first?.current.url.absoluteString == "demo://1")
-        #expect(engine.commands.last == "stop")
-    }
-
-    @Test func aLoadInFlightAcrossAResetCompletesOnceTheNewEngineHasItsSong() async throws {
-        let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(
-            songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared
-        )
-        var completed = false
-        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in completed = true }
-        #expect(await waitUntil { !engine.loads.isEmpty })
-
-        // The old engine's reports never come; the load carries over to the new one (#707).
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-        let rebuilt = try #require(rebuiltEngines.first)
-        #expect(await waitUntil { !rebuilt.loads.isEmpty })
-        await drainMainQueue()
-        #expect(!completed)
-
-        let id = try #require(rebuilt.loads.first?.current.id)
-        rebuilt.emit(.state(.paused, trackId: id))
-        #expect(await waitUntil { completed })
+        #expect(await rig.pump { !intendsToPlay && info.playbackState == .paused })
     }
 
     @Test func stopClearsNowPlaying() async throws {
-        _ = try await loadQueue()
+        try await loadQueue()
         #expect(await waitUntil { title != nil })
 
         coordinator.stop()
@@ -318,16 +212,8 @@ struct PlaybackSystemCoordinatorTests {
         #expect(title == nil)
     }
 
-    /// Queues `songs` and asks for the first, leaving the engine unreported so playback stays loading.
-    private func beginLoad(_ songs: [Song] = TestSongs.demo) async throws {
-        let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
-        #expect(await waitUntil { !engine.loads.isEmpty && title == "Paranoid Android" })
-    }
-
     @Test func aSkipHoldsThePauseButtonThroughLoading() async throws {
-        _ = try await playQueue()
+        try await playQueue()
         graph.playerController.setPlaybackSpeed(multiplier: 1.5)
         #expect(await waitUntil { rate == 1.5 && info.playbackState == .playing })
         let statesBefore = info.playbackStates.count
@@ -338,23 +224,21 @@ struct PlaybackSystemCoordinatorTests {
         let hyperballad = info.history.compactMap { $0 }.filter { $0[MPMediaItemPropertyTitle] as? String == "Hyperballad" }
         #expect(!hyperballad.isEmpty)
         #expect(hyperballad.allSatisfy { ($0[MPNowPlayingInfoPropertyElapsedPlaybackTime] as? TimeInterval) == 0 })
-        #expect(hyperballad.allSatisfy { ($0[MPNowPlayingInfoPropertyPlaybackRate] as? Double) == 1.5 })
+        // The player stays ready until its transport answers the skip, so the restart reads as a stall and may stop the
+        // clock (rate 0) for a moment; the pause button holds.
+        #expect(hyperballad.allSatisfy { [0, 1.5].contains($0[MPNowPlayingInfoPropertyPlaybackRate] as? Double) })
         #expect(hyperballad.allSatisfy { ($0[MPNowPlayingInfoPropertyDefaultPlaybackRate] as? Double) == 1.5 })
         #expect(!info.playbackStates.dropFirst(statesBefore).contains(.paused))
         #expect(info.playbackState == .playing)
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
-        #expect(engine.loads.last?.playWhenReady == true)
+        #expect(rig.player.playWhenReady)
 
-        let nextId = try #require(engine.loads.last?.current.id)
-        engine.emit(.state(.playing, trackId: nextId))
-        #expect(await waitUntil { graph.playerController.playbackStateFlow.value is PlaybackState.Playing })
+        #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Playing })
         #expect(rate == 1.5)
         #expect(info.playbackState == .playing)
     }
 
-    @Test func loadingShowsPlayUntilAskedAndTheButtonFollowsIntentImmediately() async throws {
+    @Test func theButtonFollowsIntentImmediatelyThroughLoading() async throws {
         try await beginLoad()
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
         #expect(!intendsToPlay)
         #expect(info.playbackState == .paused)
         #expect(rate == 0)
@@ -362,137 +246,22 @@ struct PlaybackSystemCoordinatorTests {
         graph.playerController.setPlaybackSpeed(multiplier: 1.5)
         #expect(await waitUntil { defaultRate == 1.5 })
         #expect(rate == 0)
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
 
         commands.fire(.play)
-        #expect(await waitUntil { info.playbackState == .playing && rate == 1.5 })
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
+        #expect(info.playbackState == .playing)
         #expect(intendsToPlay)
+        #expect(await waitUntil { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Loading })
+        #expect(info.playbackState == .playing)
 
         commands.fire(.pause)
         #expect(await waitUntil { info.playbackState == .paused && rate == 0 })
         #expect(defaultRate == 1.5)
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
         #expect(!intendsToPlay)
 
         commands.fire(.togglePlayPause)
-        #expect(await waitUntil { info.playbackState == .playing && rate == 1.5 })
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
-        #expect(intendsToPlay)
-    }
-
-    @Test func anInterruptionWhileLoadingWithIntentPausesAndResumes() async throws {
-        try await beginLoad()
-        commands.fire(.play)
-        #expect(await waitUntil { info.playbackState == .playing })
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
-
-        center.post(name: AVAudioSession.interruptionNotification, object: session, userInfo: [
-            AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.began.rawValue,
-        ])
-        #expect(await waitUntil { !intendsToPlay })
-
-        center.post(name: AVAudioSession.interruptionNotification, object: session, userInfo: [
-            AVAudioSessionInterruptionTypeKey: AVAudioSession.InterruptionType.ended.rawValue,
-            AVAudioSessionInterruptionOptionKey: AVAudioSession.InterruptionOptions.shouldResume.rawValue,
-        ])
-        #expect(await waitUntil { intendsToPlay && engine.commands.contains("play") })
-    }
-
-    @Test func aResetRepublishesUnchangedPausedPlaybackInsideTheThrottle() async throws {
-        let id = try await loadQueue()
-        graph.playerController.setPlaybackSpeed(multiplier: 1.25)
-        #expect(await waitUntil { title == "Paranoid Android" && defaultRate == 1.25 })
-        engine.emit(.position(trackId: id, ms: 12_000))
-        #expect(await waitUntil { elapsed == 12 })
-
-        info.nowPlayingInfo = nil
-        info.playbackState = .unknown
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-
-        #expect(await waitUntil { title == "Paranoid Android" && elapsed == 12 && defaultRate == 1.25 })
-        #expect(rate == 0)
-        #expect(info.playbackState == .paused)
-        #expect(!intendsToPlay)
-        let rebuilt = try #require(rebuiltEngines.first)
-        #expect(rebuilt.loads.first?.playWhenReady == false)
-        #expect(!rebuilt.commands.contains("play"))
-    }
-
-    @Test func aResetWhileLoadingRepublishesAndRestoresPlayIntent() async throws {
-        try await beginLoad()
-        commands.fire(.nextTrack)
-        #expect(await waitUntil { title == "Hyperballad" && info.playbackState == .playing })
-        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Loading)
-        graph.playerController.setPlaybackSpeed(multiplier: 1.5)
-        #expect(await waitUntil { rate == 1.5 })
-
-        info.nowPlayingInfo = nil
-        info.playbackState = .unknown
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-
-        let rebuilt = try #require(rebuiltEngines.first)
-        #expect(await waitUntil {
-            title == "Hyperballad" && (rebuilt.commands.contains("play") || rebuilt.loads.contains { $0.playWhenReady })
-        })
-        #expect(intendsToPlay)
         #expect(info.playbackState == .playing)
-        #expect(rate == 1.5)
-        #expect(defaultRate == 1.5)
-    }
-
-    @Test func aResetWhilePlayingRestoresIntentInTheReplacementEngine() async throws {
-        _ = try await playQueue()
-        #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
-        info.nowPlayingInfo = nil
-        info.playbackState = .unknown
-
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-
-        let rebuilt = try #require(rebuiltEngines.first)
-        #expect(await waitUntil {
-            title == "Paranoid Android" && (rebuilt.commands.contains("play") || rebuilt.loads.contains { $0.playWhenReady })
-        })
         #expect(intendsToPlay)
-        #expect(info.playbackState == .playing)
-        #expect(rate == 1)
-    }
-
-    @Test func aResetOfAnEmptyQueueDoesNotRestartOrPublishStaleMetadata() async throws {
-        _ = try await loadQueue()
-        #expect(await waitUntil { title != nil })
-        graph.playerController.clearQueue()
-        #expect(await waitUntil { title == nil })
-
-        info.nowPlayingInfo = ["planted": "stale"]
-        let writes = info.history.count
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-        await drainMainQueue()
-
-        #expect(info.history.count == writes)
-        #expect(info.nowPlayingInfo?["planted"] as? String == "stale")
-        let rebuilt = try #require(rebuiltEngines.first)
-        #expect(rebuilt.loads.isEmpty)
-        #expect(!rebuilt.commands.contains("play"))
-        #expect(!intendsToPlay)
-    }
-
-    @Test func aResetWhoseEngineCannotBeBuiltDoesNotRestartOrPublish() async throws {
-        _ = try await playQueue()
-        // The lock screen shows playing from the tap; wait for the audio too, so nothing republishes later.
-        #expect(await waitUntil { info.playbackState == .playing && !intent.isLoading })
-        let plays = engine.commands.filter { $0 == "play" }.count
-        engineSource.make = { nil }
-        info.nowPlayingInfo = nil
-        info.playbackState = .unknown
-        let writes = info.history.count
-
-        center.post(name: AVAudioSession.mediaServicesWereResetNotification, object: session)
-        await drainMainQueue()
-
-        #expect(info.history.count == writes)
-        #expect(title == nil)
-        #expect(engine.commands.filter { $0 == "play" }.count == plays)
-        #expect(intendsToPlay)
+        #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Playing })
+        #expect(await waitUntil { rate == 1.5 && info.playbackState == .playing })
     }
 }

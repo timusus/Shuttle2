@@ -80,7 +80,7 @@ struct CarPlayCatalogTests {
     /// What `CarPlaySceneDelegate` follows for its root (#946): the library while the App Store hasn't answered (fails
     /// open) and with Pro; the upgrade message without it, and back to the library once Pro arrives.
     @MainActor @Test func carPlayIsLockedOnlyWithoutProOnceTheStoreHasAnswered() async {
-        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
+        let graph = makeTestGraph()
         let locked = graph.carPlayAccess.locked
         graph.storeEntitlements.setDebugOverrideNamed(name: "Store")
         #expect(await waitUntil { ProStatus(graph.storeEntitlements.entitlement.value) == .checking })

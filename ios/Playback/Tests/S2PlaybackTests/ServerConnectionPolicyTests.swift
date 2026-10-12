@@ -107,15 +107,16 @@ final class ServerConnectionPolicyTests: XCTestCase {
         XCTAssertFalse(landing.contains("CF-Access-Client-Id"), "the server's header must not reach the CDN: \(landing)")
     }
 
-    /// The app sets its policy after the graph is created, so a track made before then reads it when it opens (#933).
-    func testAPolicySetAfterTheTrackIsMadeStillApplies() throws {
+    /// A stream opened by the player reads the server's policy as it is when it opens (#933).
+    func testAStreamOpensThroughTheCurrentPolicy() throws {
         let tone = try XCTUnwrap(S2PlaybackTestSupport.LoopbackMediaServer.fixtureURL("tone", withExtension: "mp3"))
         let server = try started(Data(contentsOf: tone))
-        let track = FFmpegTrackSource(url: server.url, store: .temporary())
-        defer { track.cancel() }
         ServerConnections.policy = FakePolicy(host: server.url.host ?? "", headers: ["CF-Access-Client-Id": "id-1"])
+        let reader = try StreamStore.reader(url: server.url, headers: [:], store: .temporary())
+        defer { reader.cancel() }
 
-        _ = try track.open(sampleRate: 48_000, channelCount: 2)
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        _ = try buffer.withUnsafeMutableBytes { try reader.read(into: $0.baseAddress!, maxLength: 4096) }
 
         XCTAssertTrue(try XCTUnwrap(server.requestHeads.first).contains("CF-Access-Client-Id: id-1"))
     }

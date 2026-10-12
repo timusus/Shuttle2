@@ -1,12 +1,10 @@
 // swift-tools-version: 5.9
-// S2's iOS player engine (#588): `MusicPlaybackController`, the gapless two-item AVAudioEngine
-// controller the Kotlin `EnginePlayerController` drives. Demux, decode, resampling and seeking are
-// AudioPlaybackKit's `PlaybackDecode` (#957); streams come through its `PlaybackStreaming`
-// growing-file source (#958).
+// S2's playback glue over AudioPlaybackKit, whose `Player` the app plays through (#1020): the stream
+// store and the server connection policy for its `PlaybackStreaming` source (#958), the EQ's DSP and
+// the local library's tag reader. Decode is AudioPlaybackKit's `PlaybackDecode` (#957).
 //
-// Builds for iOS 17 and macOS 14. The macOS platform is only there so `swift test` runs the
-// offline-rendering and decoder tests on the Mac without a simulator; nothing here touches
-// AVAudioSession (the app owns the session, phase 6 step 7).
+// Builds for iOS 17 and macOS 14. The macOS platform is only there so `swift test` runs on the Mac
+// without a simulator.
 import PackageDescription
 
 let package = Package(
@@ -14,7 +12,7 @@ let package = Package(
     platforms: [.iOS(.v17), .macOS(.v14)],
     products: [
         .library(name: "S2Playback", targets: ["S2Playback"]),
-        // The local library's tag reader, on the same FFmpeg the engine decodes with.
+        // The local library's tag reader, on the same FFmpeg the player decodes with.
         .library(name: "S2Tags", targets: ["S2Tags"]),
         // The loopback HTTP origin, the fixtures and AudioPlaybackKit's player rig, for the app's own tests.
         .library(name: "S2PlaybackTestSupport", targets: ["S2PlaybackTestSupport"]),

@@ -2,7 +2,7 @@ import Foundation
 import PlaybackDecode
 import PlaybackPlayer
 import PlaybackRender
-import PlaybackStreaming
+import S2Playback
 import Shared
 
 /// The Kotlin `IosAudioPlayer` over AudioPlaybackKit's `Player`, which owns the play order, the gapless join, repeat,
@@ -78,7 +78,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         }
         if let lastReport, lastReport.uid == uid, lastReport.state == state { return }
         lastReport = (uid, state)
-        listener?.onStateChanged(trackId: "\(uid)", state: state, superseded: false)
+        listener?.onStateChanged(trackId: "\(uid)", state: state)
     }
 
     @MainActor
@@ -111,8 +111,6 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
 
     // MARK: - IosAudioPlayer
 
-    var ownsPlayOrder: Bool { true }
-
     func setListener(listener: IosAudioPlayerListener?) {
         self.listener = listener
     }
@@ -138,6 +136,14 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         }
     }
 
+    func skipToNext(playWhenReady: Bool) {
+        MainActor.assumeIsolated {
+            lastReport = nil
+            player.skipToNext()
+            player.playWhenReady = playWhenReady
+        }
+    }
+
     func setRepeatMode(mode: Shared.RepeatMode) {
         MainActor.assumeIsolated {
             player.repeatMode = switch mode {
@@ -148,16 +154,21 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         }
     }
 
-    func load(current _: IosAudioTrack, next _: IosAudioTrack?, startMs _: Int64, playWhenReady _: Bool) {}
-
-    func setNext(next _: IosAudioTrack?) {}
-
+    // Always answered with a report: the controller takes the intent from it, so a refused play must still say paused.
     func play() {
-        MainActor.assumeIsolated { player.play() }
+        MainActor.assumeIsolated {
+            lastReport = nil
+            player.play()
+            reportState()
+        }
     }
 
     func pause() {
-        MainActor.assumeIsolated { player.pause() }
+        MainActor.assumeIsolated {
+            lastReport = nil
+            player.pause()
+            reportState()
+        }
     }
 
     func seek(positionMs: Int64) {
@@ -271,7 +282,6 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
         guard let stream, let url = URL(string: stream.url) else {
             throw StreamByteReaderError.transport(error ?? "no stream")
         }
-        if url.isFileURL { return try FileByteReader(url: url) }
-        return GrowingFileByteSource(url: url, authHeaders: stream.headers)
+        return try StreamStore.reader(url: url, headers: stream.headers)
     }
 }

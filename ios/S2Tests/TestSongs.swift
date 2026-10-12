@@ -1,6 +1,6 @@
 import Shared
 
-/// A few Kotlin songs for the tests, on `demo://N` paths: the fake engine takes any URL, and the stream
+/// A few Kotlin songs for the tests, on `demo://N` paths: the test rig's items never open them, and the stream
 /// resolver passes these through as they are.
 enum TestSongs {
     static let demo: [Song] = [

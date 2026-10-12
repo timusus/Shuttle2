@@ -40,3 +40,20 @@ final class PCMProcessorTests: XCTestCase {
         XCTAssertEqual(output, expected)
     }
 }
+
+private enum TestSignal {
+    /// Deterministic stereo noise in ±`amplitude`, never exactly zero, so a sample out of place or a frame inserted is
+    /// visible.
+    static func noise(frames: Int, seed: UInt64, amplitude: Float = 0.5) -> [Float] {
+        var state = seed &* 6364136223846793005 &+ 1442695040888963407
+        var out = [Float](repeating: 0, count: frames * 2)
+        for i in 0..<out.count {
+            state = state &* 6364136223846793005 &+ 1442695040888963407
+            let unit = Float(Double(state >> 11) / Double(1 << 53))
+            var value = (unit * 2 - 1) * amplitude
+            if value == 0 { value = amplitude / 3 }
+            out[i] = value
+        }
+        return out
+    }
+}
