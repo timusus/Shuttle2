@@ -102,7 +102,7 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
         engine.finishTrack()
 
         controller.currentSong shouldBe b
-        engine.calls shouldContain "load song:2@0 playing"
+        engine.current?.url shouldBe url(b)
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
@@ -123,7 +123,7 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
         controller.play()
         engine.settle()
 
-        engine.calls shouldContain "load song:1@0 playing"
+        engine.calls shouldContain "skip to 0@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
@@ -139,15 +139,14 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
         controller.currentSong shouldBe c
         failures shouldBe listOf(b)
         ended.map { it.song } shouldBe listOf(a)
-        engine.calls shouldContain "load song:3@0 playing"
+        engine.calls shouldContain "skip to next playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
     @Test
-    fun `a load gives up when nothing after the failed song loads - and doesn't wrap`() = test { controller ->
+    fun `a load gives up when nothing after the failed song loads`() = test { controller ->
         engine.failing += listOf(url(b), url(c))
         controller.start(listOf(a, b, c))
-        controller.queueOperations.setRepeatMode(RepeatMode.All)
         var result: Result<Any?>? = null
 
         controller.skipToNext { result = it }
@@ -155,9 +154,22 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
 
         result?.isFailure shouldBe true
         controller.currentSong shouldBe c
-        engine.calls shouldNotContain "load song:1@0 playing"
         engine.calls.last() shouldBe "stop"
         controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `under repeat all a failed last song is skipped for the first`() = test { controller ->
+        engine.failing += listOf(url(b), url(c))
+        controller.start(listOf(a, b, c))
+        controller.queueOperations.setRepeatMode(RepeatMode.All)
+
+        controller.skipToNext()
+        engine.settle()
+
+        controller.currentSong shouldBe a
+        engine.calls.filter { it == "skip to next playing" }.size shouldBe 2
+        controller.playbackState() shouldBe PlaybackState.Playing
     }
 
     @Test
@@ -177,39 +189,21 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
         engine.clearCalls()
         controller.play()
         engine.settle()
-        engine.calls.first() shouldBe "load song:1@0 playing"
+        engine.calls.first() shouldBe "skip to 0@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
     // Plays: the session a server's transcode runs under (#722)
 
     @Test
-    fun `re-opening a transcode for a seek carries on its play`() = test { controller ->
-        server += a.id
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-
-        controller.seekTo(30_000)
-        engine.settle()
-        controller.seekTo(10_000)
-        engine.settle()
-
-        val playsOfA = plays.filter { it.first == a.id }.map { it.second }
-        playsOfA.size shouldBe 3
-        playsOfA.toSet().size shouldBe 1
-        endedPlays shouldBe emptyList()
-    }
-
-    @Test
-    fun `under repeat one the next play of the same song is a play of its own`() = test { controller ->
+    fun `under repeat one the song's play carries on into its repeat`() = test { controller ->
         controller.start(listOf(a, b))
 
         controller.queueOperations.setRepeatMode(RepeatMode.One)
+        engine.finishTrack()
 
-        val playsOfA = plays.filter { it.first == a.id }.map { it.second }
-        playsOfA.size shouldBe 2
-        playsOfA.toSet().size shouldBe 2
-        endedPlays shouldBe listOf(plays.single { it.first == b.id }.second)
+        plays.count { it.first == a.id } shouldBe 1
+        endedPlays shouldBe emptyList()
     }
 
     @Test
@@ -261,34 +255,6 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
     }
 
     @Test
-    fun `playing a track out under repeat one ends the play it leaves but not the repeat's`() = test { controller ->
-        controller.start(listOf(a))
-        controller.queueOperations.setRepeatMode(RepeatMode.One)
-        val repeat = plays.last { it.first == a.id }.second
-
-        engine.finishTrack()
-
-        endedPlays.size shouldBe 1
-        endedPlays shouldNotContain repeat
-    }
-
-    @Test
-    fun `a re-open cancelled while it shares the current play does not end that play`() = test { controller ->
-        server += a.id
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-        val playOfA = plays.single { it.first == a.id }.second
-        resolveGate = CompletableDeferred()
-
-        controller.seekTo(30_000)
-        controller.seekTo(10_000)
-        resolveGate?.complete(Unit)
-        engine.settle()
-
-        endedPlays shouldNotContain playOfA
-    }
-
-    @Test
     fun `a resolve cancelled after the provider opened its play ends it`() = test { controller ->
         resolveGate = CompletableDeferred()
         controller.queueOperations.setQueue(listOf(a, b), null, 0)
@@ -299,7 +265,9 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
 
         controller.queueOperations.clear()
 
-        endedPlays shouldBe listOf(playOfA)
+        // b's pre-warm opened a play too, still resolving behind the same gate.
+        endedPlays shouldContain playOfA
+        endedPlays.size shouldBe plays.size
     }
 
     @Test
@@ -324,43 +292,13 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
     }
 
     @Test
-    fun `loading a transcode at a position opens it there`() = test { controller ->
-        val podcast = song(9, path = "jellyfin://podcasts/9", playbackPosition = 60_000)
-        server += podcast.id
-        engine.unseekable += url(podcast)
-        controller.queueOperations.setQueue(listOf(podcast), null, 0)
-        var result: Result<Boolean>? = null
-
-        controller.load { result = it }
-        engine.settle()
-
-        engine.calls shouldBe listOf("load song:9@55000", "load song:9?from=55000@0")
-        result shouldBe Result.success(true)
-        controller.getProgress() shouldBe 55_000
-        controller.playbackState() shouldBe PlaybackState.Paused
-    }
-
-    @Test
-    fun `a stream that can't be sought or re-opened plays on where it was`() = test { controller ->
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-        engine.tick(4_000)
-
-        controller.seekTo(30_000)
-        engine.settle()
-
-        engine.calls shouldBe listOf("seek 30000")
-        controller.progressFlow.value?.position shouldBe 4_000
-    }
-
-    @Test
     fun `a report about a track the engine has since replaced is ignored`() = test { controller ->
         controller.start(listOf(a, b, c))
         controller.skipToNext()
         engine.settle()
 
-        // A late report for the first song's track, from before the skip.
-        engine.load(IosAudioTrack("stale", url(a), emptyMap(), 0f, -1), null, 0, playWhenReady = false)
+        // A late report for the first song, from before the skip.
+        engine.emitState(IosAudioPlayerState.Paused, "${controller.queueOperations.getQueue()[0].uid}")
         engine.settle()
 
         controller.currentSong shouldBe b

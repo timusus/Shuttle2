@@ -13,7 +13,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 /**
- * The streams of the play order an [IosAudioPlayer.ownsPlayOrder] player plays, resolved when it opens an item, as
+ * The streams of the play order the [IosAudioPlayer] plays, resolved when it opens an item, as
  * Android's `SongUriResolver` resolves a song's URI when Media3 opens it. Each queue entry has one resolution, shared by
  * the pre-warm and every open, under one play id; the current item and the two after it are pre-warmed, so the player's
  * open at the gapless join rarely waits on a server. Entries that leave the order are cancelled and their plays ended.
@@ -84,7 +84,8 @@ class IosItemResolver internal constructor(
         onResult: (IosStream?, String?) -> Unit
     ) {
         val item = order[uid] ?: return onResult(null, "song $uid is no longer queued")
-        playId(item)
+        // A refusal made before StoreKit answered isn't the answer: ask again now the player wants the stream.
+        playId(item, retryFailed = (failure(uid) as? ServerStreamNotAllowedException)?.undecided == true)
         val entry = entries.getValue(uid)
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             val result = try {
@@ -98,6 +99,11 @@ class IosItemResolver internal constructor(
 
     /** Why entry [uid]'s stream couldn't be resolved, or null if it was (or is still resolving). */
     internal fun failure(uid: Long): Throwable? = entries[uid]?.failure()
+
+    /** Ends entry [uid]'s play; opening it again resolves it under a new one. */
+    internal fun end(uid: Long) {
+        entries.remove(uid)?.let(::drop)
+    }
 
     /** Cancels [entry]'s resolution and ends its play, so a server stops what it started for it (#722). */
     private fun drop(entry: Entry) {

@@ -3,11 +3,12 @@ package com.simplecityapps.shuttle.shared.playback
 import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.TrackEnd
 import com.simplecityapps.playback.queue.QueueModel
+import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.shuttle.logging.Logger
 
 /**
- * The engine's reports, applied to [feeder]'s feeds and the [queue]: a track ready, played out, moved on from
- * gaplessly, failed, or unseekable. Failures skip on as `ItemLoader` does. The engine adapter calls on the main thread.
+ * The player's reports, applied to [feeder]'s feeds and the [queue]: an item ready, played out, moved on to or failed.
+ * Failures skip on as `ItemLoader` does. The player adapter calls on the main thread.
  */
 internal class IosEngineEvents(
     private val feeder: IosEngineFeeder,
@@ -19,24 +20,25 @@ internal class IosEngineEvents(
 
     override fun onStateChanged(
         trackId: String,
-        state: IosAudioPlayerState,
-        superseded: Boolean
+        state: IosAudioPlayerState
     ) {
         val currentFeed = feeder.current ?: return
-        // A failed track has been dealt with: skipped, or stopped at. So has a report for a track already replaced.
+        // A failed item has been dealt with: skipped, or stopped at. So has a report for an item already replaced.
         if (trackId != currentFeed.id || currentFeed.failed) return
-        // Playing from before a pause (or a load) isn't playing now: the pause's report follows, and it stays paused.
-        if (!(superseded && state == IosAudioPlayerState.Playing)) feeder.engineState = state
+        feeder.engineState = state
         when (state) {
             IosAudioPlayerState.Paused -> {
-                // A paused from before a play is a pause's or a load's (#708); any other while playing is intended is a
-                // play refused, or the engine pausing itself (a start that failed, #716), and the intent goes too.
-                // Before the load completion, which may ask to play: that newer intent has to survive.
-                if (flows.playWhenReady && !superseded) flows.playWhenReady = false
+                // The player reports its state as it stands, so paused is its intent too: a refused play, an
+                // interruption or a lost route.
+                flows.playWhenReady = false
                 markReady(currentFeed)
             }
 
-            IosAudioPlayerState.Playing -> markReady(currentFeed)
+            IosAudioPlayerState.Playing -> {
+                // Also the player resuming by itself, as after an interruption that ended with resume.
+                flows.playWhenReady = true
+                markReady(currentFeed)
+            }
 
             IosAudioPlayerState.Ended -> {
                 onEnded(currentFeed)
@@ -48,7 +50,7 @@ internal class IosEngineEvents(
         feeder.publishState()
     }
 
-    /** The engine can play [feed]: the first playing or paused report after it was handed over, not a refusal before that. */
+    /** The player can play [feed]: the first playing or paused report since it became current. */
     private fun markReady(feed: IosFeed) {
         if (feed.failed || feed.ready) return
         feed.ready = true
@@ -56,99 +58,32 @@ internal class IosEngineEvents(
         loads.complete(Result.success(loads.pending?.attempt == 1))
     }
 
-    /** The engine moved on to its next track: the queue's current item follows. */
+    /** The player moved on to its next item: the queue's current item follows. */
     override fun onTransition(trackId: String) {
-        val arrived = feeder.engineNext?.takeIf { it.id == trackId } ?: return
-        // The engine's position is the arrived track's now: the last tick is where the one before ended.
-        feeder.current?.let { if (reopenShortEnd(it, flows.progress.value?.position)) return }
-        log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.item.song.id}, gapless" }
+        val arrived = feeder.next?.takeIf { it.id == trackId } ?: return
+        log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.item.song.id}" }
         feeder.current?.takeIf { !it.failed }?.let { flows.trackEnded.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
+        // Not ready yet: the player reports a failed next after moving onto it.
         feeder.arrive(arrived)
-        // A player that owns the order reports a failed next after moving onto it, so it's ready once it says it plays.
-        if (!feeder.ownsOrder) {
-            arrived.ready = true
-            loads.failures = 0
-        }
-        if (queue.lists.base.any { it.uid == arrived.item.uid }) {
-            queue.setCurrent(arrived.item.uid)
-            feeder.publishProgress(0)
-            feeder.feedNext()
-            feeder.publishState()
-        } else {
-            // It was removed from the queue after being handed over: play what's after the queue's current item.
-            val target = queue.next()
-            if (target != null) {
-                queue.setCurrent(target.uid)
-                feeder.startLoad(target, 0)
-            } else {
-                feeder.stop()
-                feeder.publishState()
-            }
-        }
+        queue.setCurrent(arrived.item.uid)
+        feeder.publishProgress(0)
+        feeder.feedNext()
+        feeder.publishState()
     }
 
     override fun onPosition(
         trackId: String,
         positionMs: Long
     ) {
-        val currentFeed = feeder.current ?: return
-        if (trackId != currentFeed.id) return
-        if (feeder.currentDuration() != null) currentFeed.durationKnown = true
-        feeder.publishProgress(currentFeed.offsetMs + positionMs.toInt())
+        if (trackId != feeder.current?.id) return
+        feeder.publishProgress(positionMs.toInt())
     }
 
-    /**
-     * [feed] ended at [positionMs], more than [SHORT_END_MS] short of its song's duration, on a server stream of no
-     * known length: a transcode whose connection closed in a way that reads as a clean end. It's re-opened there as a
-     * seek would, and the queue stays; false (playback moves on) for anything else (a direct-play stream re-opened would
-     * start again from 0), or once
-     * [MAX_SHORT_END_REOPENS] re-opens in a row have played nothing further.
-     */
-    private fun reopenShortEnd(
-        feed: IosFeed,
-        positionMs: Int?
-    ): Boolean {
-        val durationMs = feed.item.song.duration
-        if (positionMs == null || feed.failed || !feed.ready || feed.pausedAtEnd || !feed.opensAtPosition || !feed.transcoded) return false
-        if (feed.durationKnown && !feed.seeksByReopening) return false
-        if (durationMs <= 0 || durationMs - positionMs <= SHORT_END_MS) return false
-        val stalled = feed.shortEndReopens > 0 && positionMs - feed.offsetMs < MIN_PROGRESS_MS
-        val reopens = if (stalled) feed.shortEndReopens + 1 else 1
-        if (reopens > MAX_SHORT_END_REOPENS) {
-            log.warn { "song ${feed.item.song.id} ended short again at $positionMs of $durationMs ms; moving on" }
-            return false
-        }
-        log.warn { "song ${feed.item.song.id} ended short at $positionMs of $durationMs ms; re-opening there" }
-        feeder.startLoad(feed.item, positionMs, reopen = true)
-        feeder.current?.shortEndReopens = reopens
-        return true
-    }
-
-    /**
-     * The engine couldn't seek the current track to [positionMs] (into its stream) because the stream has no length: a
-     * progressive transcode. One that [IosFeed.opensAtPosition] is re-opened there, and every later seek of it does the
-     * same; any other plays on where it was.
-     */
-    override fun onSeekUnsupported(
-        trackId: String,
-        positionMs: Long
-    ) {
-        val currentFeed = feeder.current ?: return
-        if (trackId != currentFeed.id || currentFeed.failed) return
-        currentFeed.seeksByReopening = true
-        if (currentFeed.opensAtPosition) {
-            feeder.startLoad(currentFeed.item, currentFeed.offsetMs + positionMs.toInt(), reopen = true)
-        } else {
-            feeder.progress()?.let(feeder::publishProgress)
-        }
-    }
-
-    /** The engine paused on the current item's last frame, as asked ([IosEngineFeeder.pausesAtEnd]): it stays current. */
+    /** The player paused at the current item's end, as asked ([IosEngineFeeder.pausesAtEnd]); its transition follows. */
     override fun onPausedAtEnd(trackId: String) {
         val currentFeed = feeder.current ?: return
         if (trackId != currentFeed.id || currentFeed.failed) return
         log.info { "song ${currentFeed.item.song.id} ended: paused at its end" }
-        currentFeed.pausedAtEnd = true
         flows.playWhenReady = false
         flows.endOfItemPause.tryEmit(Unit)
     }
@@ -158,26 +93,23 @@ internal class IosEngineEvents(
         message: String
     ) {
         log.warn { "track $trackId failed: ${message.replace(QUERY, "?…")}" }
-        val currentFeed = feeder.current
-        if (currentFeed != null && trackId == currentFeed.id) {
-            // A stream that couldn't be resolved isn't reported, and a refusal stops there, as for the fed engine.
-            val unresolved = if (feeder.ownsOrder) feeder.unresolved(currentFeed) else null
-            if (unresolved != null) currentFeed.reportFailure = false
-            onCurrentFailed(currentFeed, skip = unresolved !is ServerStreamNotAllowedException)
-        } else {
-            // Handled when playback reaches it (onEnded), as Android reports a failure when the player does.
-            feeder.markEngineNextFailed(trackId)
-        }
+        val currentFeed = feeder.current ?: return
+        if (trackId != currentFeed.id || currentFeed.failed) return
+        // A stream that couldn't be resolved isn't reported, and a refusal stops there.
+        val unresolved = feeder.unresolved(currentFeed)
+        if (unresolved != null) currentFeed.reportFailure = false
+        onCurrentFailed(currentFeed, skip = unresolved !is ServerStreamNotAllowedException)
     }
 
     /**
-     * [feed], the current item, failed to load: skipped for the one after it (not wrapping), as `ItemLoader` does,
-     * unless the load that loaded it doesn't skip, it had already been playing, or [PlaybackPolicy.MAX_LOAD_ATTEMPTS] items failed in a
-     * row; then playback stops there. Not [skip], it stops there regardless.
+     * [feed], the current item, failed to load: skipped for the one after it, wrapping only under repeat all, as
+     * `Player.skipToNext` moves, unless the load that loaded it doesn't skip, it had already been playing, or
+     * [PlaybackPolicy.MAX_LOAD_ATTEMPTS] items failed in a row; then playback stops there. Not [skip], it stops there
+     * regardless.
      */
-    fun onCurrentFailed(
+    private fun onCurrentFailed(
         feed: IosFeed,
-        skip: Boolean = true
+        skip: Boolean
     ) {
         feed.failed = true
         if (feed.reportFailure) flows.playbackFailure.tryEmit(feed.item.song)
@@ -185,12 +117,12 @@ internal class IosEngineEvents(
         val skips = skip && (flows.playWhenReady || pending?.skipUnloadable != false)
         if (!feed.ready && skips) {
             loads.failures++
-            val following = queue.following(feed.item.uid)
+            val following = queue.next(if (queue.repeatMode == RepeatMode.All) RepeatMode.All else RepeatMode.Off)
             if (following != null && loads.failures < PlaybackPolicy.MAX_LOAD_ATTEMPTS) {
                 log.warn { "song ${feed.item.song.id} failed to load; skipping to song ${following.song.id}" }
                 loads.pending = pending?.let { PendingLoad(it.completion, it.skipUnloadable, attempt = loads.failures + 1) }
                 queue.setCurrent(following.uid)
-                feeder.startLoad(following, 0)
+                feeder.skipToNext(following)
                 return
             }
         }
@@ -201,60 +133,17 @@ internal class IosEngineEvents(
         feeder.publishState()
     }
 
-    /**
-     * The engine played [feed] to its end and stopped: nothing was after it, or the next item failed or wasn't handed
-     * over in time. Playback goes on to the next item, or, with nothing left or [IosEngineFeeder.pausesAtEnd], pauses
-     * there.
-     */
+    /** The player played [feed], the last item, to its end with nothing after it: playback pauses there. */
     private fun onEnded(feed: IosFeed) {
-        if (reopenShortEnd(feed, feeder.progress())) return
-        if (feeder.next != null && feeder.pausesAtEnd && !feed.failed && !feed.pausedAtEnd) {
-            log.info { "song ${feed.item.song.id} ended: paused at its end" }
-            feed.pausedAtEnd = true
-            flows.playWhenReady = false
-            feeder.engineState = IosAudioPlayerState.Ended
-            flows.endOfItemPause.tryEmit(Unit)
-            feeder.publishState()
-            return
-        }
-        if (moveOn(feed)) return
+        if (!feed.failed) flows.trackEnded.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
         loads.complete(Result.failure(IllegalStateException("Nothing to load")))
-        // Nothing follows, so the server stops the ended track's transcode now rather than when it times out idle
-        feeder.endPlay(feed.playId)
+        feeder.endPlay(feed)
         log.info { "end of queue after song ${feed.item.song.id}: paused" }
         flows.playWhenReady = false
-        feeder.engineState = IosAudioPlayerState.Ended
         flows.endOfItemPause.tryEmit(Unit)
         feeder.publishState()
     }
-
-    /**
-     * Playback goes on from [feed], played out, to the next item the engine doesn't have, loading it; false when there's
-     * none.
-     */
-    fun moveOn(feed: IosFeed): Boolean {
-        if (!feed.failed) flows.trackEnded.tryEmit(TrackEnd(feed.item.uid, feed.item.song))
-        val upcoming = feeder.next ?: return false
-        feeder.dropNext()
-        queue.setCurrent(upcoming.item.uid)
-        log.info { "song ${feed.item.song.id} ended; song ${upcoming.item.song.id} next, not gapless" }
-        if (upcoming.failed) {
-            feeder.current = upcoming
-            onCurrentFailed(upcoming)
-        } else {
-            feeder.startLoad(upcoming.item, 0)
-        }
-        return true
-    }
 }
 
-/** How far short of its duration a stream may end and still count as played out: tags and transcodes disagree a little. */
-private const val SHORT_END_MS = 5_000
-
-/** Re-opens after short ends, none playing on [MIN_PROGRESS_MS] further, before a server that always truncates is moved on from. */
-private const val MAX_SHORT_END_REOPENS = 3
-
-private const val MIN_PROGRESS_MS = 1_000
-
-/** A query string in an engine's failure message: a stream URL's carries the server's token. */
+/** A query string in a player's failure message: a stream URL's carries the server's token. */
 private val QUERY = Regex("""\?\S*""")

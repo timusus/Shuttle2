@@ -32,7 +32,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
     // Pausing at the end of a song (the sleep timer's "end of song", #953)
 
     @Test
-    fun `pausing at the end of a song pauses on it - without moving on to the next`() = test { controller ->
+    fun `pausing at the end of a song pauses there - with the next song current at its start`() = test { controller ->
         val ended = collect(controller.trackEndedFlow)
         controller.start(listOf(a, b, c))
 
@@ -41,9 +41,10 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         engine.finishTrack()
 
         wait.isCompleted shouldBe true
-        controller.currentSong shouldBe a
+        controller.currentSong shouldBe b
         controller.playbackState() shouldBe PlaybackState.Paused
-        ended shouldBe emptyList()
+        controller.progressFlow.value?.position shouldBe 0
+        ended.map { it.song } shouldBe listOf(a)
         engine.calls shouldBe listOf("pause at end true", "pause at end false")
     }
 
@@ -72,28 +73,29 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         controller.play()
         engine.settle()
 
-        engine.calls shouldBe listOf("play", "next song:3")
+        engine.calls shouldBe listOf("play")
         controller.currentSong shouldBe b
         controller.playbackState() shouldBe PlaybackState.Playing
         ended.map { it.song } shouldBe listOf(a)
     }
 
     @Test
-    fun `playing after a pause at the end before the next song was handed over loads the next song`() = test { controller ->
+    fun `playing after a pause at the end before the next song resolved plays it once it has`() = test { controller ->
         controller.start(listOf(a))
         val gate = CompletableDeferred<Unit>()
         resolveGate = gate
         controller.addToQueue(listOf(b))
         pauseAtEnd(controller)
         engine.finishTrack()
-        controller.playbackState() shouldBe PlaybackState.Paused
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe false
         engine.clearCalls()
 
         controller.play()
         gate.complete(Unit)
         engine.settle()
 
-        engine.calls shouldBe listOf("load song:2@0 playing")
+        engine.calls shouldBe listOf("play")
         controller.currentSong shouldBe b
         controller.playbackState() shouldBe PlaybackState.Playing
     }
@@ -112,7 +114,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
     // Playing through the queue
 
     @Test
-    fun `loading the queue loads its first song paused - with the second handed over as next`() = test { controller ->
+    fun `loading the queue hands the player its order - its first song paused`() = test { controller ->
         var result: Result<Boolean>? = null
         controller.queueOperations.setQueue(listOf(a, b, c), null, 0)
 
@@ -121,7 +123,8 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         engine.settle()
 
         result shouldBe Result.success(true)
-        engine.calls shouldBe listOf("load song:1@0", "next song:2")
+        engine.calls shouldBe listOf("items [1, 2, 3] at 0@0")
+        engine.next?.url shouldBe url(b)
         controller.playbackState() shouldBe PlaybackState.Paused
 
         controller.play()
@@ -161,7 +164,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
 
         controller.currentSong shouldBe b
         ended.map { it.song } shouldBe listOf(a)
-        engine.calls shouldBe listOf("next song:3")
+        engine.calls shouldBe emptyList()
         controller.progressFlow.value shouldBe PlaybackProgress(0, b.duration)
         controller.playbackState() shouldBe PlaybackState.Playing
     }
@@ -176,7 +179,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
 
         controller.currentSong shouldBe b
         result?.isSuccess shouldBe true
-        engine.calls.first() shouldBe "load song:2@0 playing"
+        engine.calls.first() shouldBe "skip to 1@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
 
         controller.skipToPrev()
@@ -185,7 +188,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
     }
 
     @Test
-    fun `skipping onto the next hands the engine its stream back as current - without resolving it again`() = test { controller ->
+    fun `skipping onto the next moves the player there - without resolving it again`() = test { controller ->
         controller.start(listOf(a, b, c))
         val next = checkNotNull(engine.next)
         resolved.clear()
@@ -194,16 +197,14 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         engine.settle()
 
         controller.currentSong shouldBe b
-        engine.calls shouldBe listOf("load song:2@0 playing", "next song:3")
-        // The engine keeps what it pre-opened for the same stream, under the new hand-over's id.
-        engine.current?.url shouldBe next.url
-        engine.current?.id shouldNotBe next.id
-        resolved shouldBe listOf(c.id)
+        engine.calls shouldBe listOf("skip to 1@0 playing")
+        engine.current shouldBe next
+        resolved shouldBe emptyList()
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
     @Test
-    fun `skipping past the next resolves the song skipped to`() = test { controller ->
+    fun `skipping past the next pre-warms the songs after the one skipped to`() = test { controller ->
         controller.start(listOf(a, b, c, d))
         resolved.clear()
 
@@ -211,7 +212,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         engine.settle()
 
         controller.currentSong shouldBe c
-        resolved shouldBe listOf(c.id, d.id)
+        resolved shouldBe listOf(d.id)
     }
 
     @Test
@@ -256,7 +257,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
 
         controller.play()
         engine.settle()
-        engine.calls.first() shouldBe "load song:2@0 playing"
+        engine.calls.first() shouldBe "skip to 1@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
@@ -273,21 +274,19 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
     }
 
     @Test
-    fun `with repeat one - the same song is handed over again under a new id`() = test { controller ->
+    fun `with repeat one - the same song plays again`() = test { controller ->
         val ended = collect(controller.trackEndedFlow)
         controller.start(listOf(a, b))
         val uid = controller.queueOperations.getCurrentItem()?.uid
 
         controller.queueOperations.setRepeatMode(RepeatMode.One)
-        val repeat = engine.next
-        repeat?.url shouldBe url(a)
-        repeat?.id shouldNotBe engine.current?.id
+        engine.next shouldBe engine.current
 
         engine.finishTrack()
         controller.queueOperations.getCurrentItem()?.uid shouldBe uid
         ended.map { it.song } shouldBe listOf(a)
+        controller.playbackState() shouldBe PlaybackState.Playing
         engine.next?.url shouldBe url(a)
-        engine.next?.id shouldNotBe repeat?.id
 
         controller.queueOperations.setRepeatMode(RepeatMode.Off)
         engine.next?.url shouldBe url(b)
@@ -388,7 +387,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         engine.settle()
 
         controller.currentSong shouldBe b
-        engine.calls.first { it.startsWith("load") } shouldBe "load song:2@0 playing"
+        engine.calls.first { it.startsWith("items") } shouldBe "items [2, 3] at 0@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
@@ -414,7 +413,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         engine.settle()
 
         controller.currentSong shouldBe a
-        engine.calls.first { it.startsWith("load") } shouldBe "load song:1@0"
+        engine.calls.first { it.startsWith("items") } shouldBe "items [1] at 0@0"
         controller.playbackState() shouldBe PlaybackState.Paused
     }
 
@@ -433,7 +432,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         controller.addToQueue(listOf(a, b))
         engine.settle()
 
-        engine.calls.take(2) shouldBe listOf("load song:1@0 playing", "next song:2")
+        engine.calls.first { it.startsWith("items") } shouldBe "items [1, 2] at 0@0 playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 
@@ -459,12 +458,13 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
     }
 
     @Test
-    fun `new song data for the next song is handed over again`() = test { controller ->
+    fun `new song data for the next song keeps the player's order`() = test { controller ->
         controller.start(listOf(a, b))
 
         controller.queueOperations.updateSongs(listOf(b.copy(name = "Renamed")))
 
-        engine.calls shouldBe listOf("next null", "next song:2")
+        engine.calls shouldBe listOf("replace [1, 2] at 0")
+        controller.currentSong shouldBe a
     }
 
     // Songs that fail to load
@@ -482,7 +482,7 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
         controller.currentSong shouldBe c
         failures shouldBe listOf(b)
         result shouldBe Result.success(false)
-        engine.calls shouldContain "load song:3@0 playing"
+        engine.calls shouldContain "skip to next playing"
         controller.playbackState() shouldBe PlaybackState.Playing
     }
 

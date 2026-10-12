@@ -7,11 +7,9 @@ import kotlin.test.Test
 
 class IosPlaybackStateMappingTest {
     private fun feed(
-        sent: Boolean = true,
         ready: Boolean = true,
         failed: Boolean = false
-    ) = IosFeed("1-1", QueueItem(1, song(1), isCurrent = true), "play").also {
-        it.sent = sent
+    ) = IosFeed("1", QueueItem(1, song(1), isCurrent = true), "play").also {
         it.ready = ready
         it.failed = failed
     }
@@ -32,11 +30,6 @@ class IosPlaybackStateMappingTest {
     @Test
     fun aPendingLoadIsLoadingWhateverTheEngineSays() {
         state(feed(), IosAudioPlayerState.Playing, loadPending = true) shouldBe PlaybackState.Loading
-    }
-
-    @Test
-    fun aTrackNotYetHandedOverIsLoading() {
-        state(feed(sent = false, ready = false), IosAudioPlayerState.Paused) shouldBe PlaybackState.Loading
     }
 
     @Test

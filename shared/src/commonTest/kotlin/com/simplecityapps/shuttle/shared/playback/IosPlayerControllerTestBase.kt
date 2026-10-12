@@ -102,6 +102,7 @@ abstract class IosPlayerControllerTestBase {
             scope = CoroutineScope(dispatcher),
             random = Random(1)
         )
+        engine.open = controller.itemResolver::resolve
         block(controller)
     }
 

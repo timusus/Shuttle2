@@ -76,7 +76,7 @@ class IosPlayerControllerPositionTest : IosPlayerControllerTestBase() {
 
         controller.load { }
 
-        engine.calls.first() shouldBe "load song:9@55000"
+        engine.calls.first() shouldBe "items [9] at 0@55000"
     }
 
     @Test
@@ -88,80 +88,6 @@ class IosPlayerControllerPositionTest : IosPlayerControllerTestBase() {
         controller.play()
 
         engine.calls shouldBe listOf("seek 0", "play")
-    }
-
-    // Seeking a stream the engine can't seek (a progressive transcode)
-
-    @Test
-    fun `seeking a transcode re-opens its stream at the position - and positions count from there`() = test { controller ->
-        server += a.id
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-
-        controller.seekTo(30_000)
-        engine.settle()
-
-        engine.calls shouldBe listOf("seek 30000", "load song:1?from=30000@0 playing next song:2")
-        controller.progressFlow.value?.position shouldBe 30_000
-        controller.playbackState() shouldBe PlaybackState.Playing
-
-        engine.tick(5_000)
-        controller.progressFlow.value?.position shouldBe 35_000
-        controller.getProgress() shouldBe 35_000
-        engine.duration = 20_000
-        controller.getDuration() shouldBe 50_000
-    }
-
-    @Test
-    fun `a re-opened transcode seeks by re-opening again - back or forward`() = test { controller ->
-        server += a.id
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-        controller.seekTo(30_000)
-        engine.settle()
-        engine.clearCalls()
-
-        controller.seekTo(10_000)
-        engine.settle()
-        controller.seekTo(0)
-        engine.settle()
-
-        engine.calls shouldBe listOf("load song:1?from=10000@0 playing next song:2", "load song:1@0 playing next song:2")
-        controller.progressFlow.value?.position shouldBe 0
-        controller.currentSong shouldBe a
-    }
-
-    @Test
-    fun `re-opening a transcode hands the engine back the next it already has`() = test { controller ->
-        server += a.id
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-        val next = engine.next
-
-        controller.seekTo(30_000)
-        engine.settle()
-
-        // The same track, id and all, so the engine keeps the stream it opened for it.
-        engine.next shouldBe next
-        engine.finishTrack()
-        controller.currentSong shouldBe b
-    }
-
-    @Test
-    fun `re-opening a transcode resolves a transcoded next again - the re-open takes over the server's transcode`() = test { controller ->
-        server += a.id
-        server += b.id
-        engine.unseekable += url(a)
-        controller.start(listOf(a, b))
-        engine.clearCalls()
-
-        controller.seekTo(30_000)
-        engine.settle()
-
-        engine.calls shouldBe listOf("seek 30000", "load song:1?from=30000@0 playing", "next song:2")
-        val playsOfB = plays.filter { it.first == b.id }.map { it.second }
-        playsOfB.toSet().size shouldBe 2
-        endedPlays shouldBe listOf(playsOfB.first())
     }
 
     // Seeking while loading
@@ -182,7 +108,8 @@ class IosPlayerControllerPositionTest : IosPlayerControllerTestBase() {
         gate.complete(Unit)
         engine.settle()
 
-        engine.calls.first { it.startsWith("load") } shouldBe "load song:1@30000 playing"
+        engine.currentId shouldBe "${controller.queueOperations.getQueue()[0].uid}"
+        engine.positionMs() shouldBe 30_000
         controller.playbackState() shouldBe PlaybackState.Playing
         controller.progressFlow.value?.position shouldBe 30_000
     }

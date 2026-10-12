@@ -1,162 +1,226 @@
 package com.simplecityapps.shuttle.shared.playback
 
+import com.simplecityapps.playback.queue.RepeatMode
+
 /**
- * An engine that behaves as `MusicPlaybackController` does, as far as the controller can tell: it reports each state
- * change, and fails a track whose url is in [failing]. Reports are posted, as the Swift engine delivers them
- * asynchronously, and delivered by [settle]. [calls] records what it was asked to do.
+ * A player that behaves as AudioPlaybackKit's `Player` under `KitAudioPlayer` does, as far as the controller can tell:
+ * it holds the play order, opens each item it plays through [open] (the controller's `IosItemResolver.resolve`), and
+ * fails one whose stream couldn't be resolved or whose url is in [failing]. State reports are the state as it stands
+ * when delivered, deduplicated, as `KitAudioPlayer` reports; every report is posted and delivered by [settle].
+ * [calls] records what it was asked to do.
  */
 class FakeIosAudioPlayer : IosAudioPlayer {
+    private enum class Phase { Idle, Loading, Ready, Ended }
+
     private var listener: IosAudioPlayerListener? = null
 
     private val events = ArrayDeque<() -> Unit>()
 
     val calls = mutableListOf<String>()
 
+    /** How the player opens an item's stream, by uid; the test base wires in the controller's item resolver. */
+    var open: (Long, (IosStream?, String?) -> Unit) -> Unit = { uid, done -> done(IosStream("song:$uid"), null) }
+
     /** Urls that fail to open. */
     val failing = mutableSetOf<String>()
 
-    /** Urls (before any `?`) of streams with no length, which can't be sought: a progressive transcode. */
-    val unseekable = mutableSetOf<String>()
-
-    private fun IosAudioTrack.isUnseekable() = url.substringBefore('?') in unseekable
-
-    var current: IosAudioTrack? = null
+    var order = emptyList<IosQueueEntry>()
         private set
 
-    var next: IosAudioTrack? = null
+    var index: Int? = null
         private set
 
-    var state = IosAudioPlayerState.Idle
+    var repeatMode = RepeatMode.Off
+        private set
+
+    var playWhenReady = false
+        private set
+
+    var pausesAtEnd = false
+        private set
+
+    /** The stream the current item opened, once it has. */
+    var stream: IosStream? = null
         private set
 
     var position = -1L
 
     var duration = -1L
 
-    private var playWhenReady = false
+    private var phase = Phase.Idle
 
-    /** Loads, plays, pauses and stops taken, as the engine stamps them on its state reports. */
-    private var commands = 0
+    private var failed = false
 
-    /** [commands] when the last state report was made: a command with no report of its own is answered. */
-    private var commandsReported = 0
+    /** An interruption is holding playback back, as `Player.suppression` does; [playWhenReady] is kept. */
+    private var suppressed = false
 
-    /**
-     * The last report delivered was playing, for the current track, and not superseded; nothing asked to pause, load or
-     * stop since. As `EngineAudioPlayer` does, a play then isn't sent: the engine's playing report is what it knows, and
-     * one still in flight doesn't count.
-     */
-    private var reportedPlaying = false
+    /** Bumped on every open, so a stream resolved for an item since moved away from is dropped. */
+    private var opens = 0
 
-    /**
-     * When false, [play] (unless already playing, which changes nothing) and a load that asked to play are refused, as
-     * an engine whose output won't start (the session wouldn't activate) does: the track is still prepared, ending
-     * paused, and the refusal is that paused report at the command's count, delivered by [settle].
-     */
-    var acceptsPlay = true
+    private var lastReport: Pair<Long, IosAudioPlayerState>? = null
+
+    val currentUid: Long? get() = index?.let { order[it].uid }
+
+    /** An item of the order: its uid as the reports carry it, and the url it opens (or would). */
+    data class Track(
+        val id: String,
+        val url: String
+    )
+
+    val current: Track? get() = index?.let { Track("${order[it].uid}", stream?.url ?: "song:${order[it].songId}") }
+
+    /** The item the player moves on to when the current one ends. */
+    val next: Track? get() = index?.let { following(it, repeatMode) }?.let { Track("${order[it].uid}", "song:${order[it].songId}") }
 
     override fun setListener(listener: IosAudioPlayerListener?) {
         this.listener = listener
     }
 
-    override fun load(
-        current: IosAudioTrack,
-        next: IosAudioTrack?,
+    override fun setItems(
+        order: List<IosQueueEntry>,
+        currentIndex: Int,
         startMs: Long,
         playWhenReady: Boolean
     ) {
-        calls += "load ${current.url}@$startMs${if (playWhenReady) " playing" else ""}${next?.let { " next ${it.url}" } ?: ""}"
-        this.current = current
-        this.next = next
-        val starts = playWhenReady && acceptsPlay
-        this.playWhenReady = starts
-        pausedAtEnd = false
-        commands++
-        reportedPlaying = false
+        calls += "items ${order.map { it.songId }} at $currentIndex@$startMs${if (playWhenReady) " playing" else ""}"
+        this.order = order
+        index = currentIndex
+        lastReport = null
+        openCurrent(startMs)
+        setPlayWhenReady(playWhenReady)
+    }
+
+    override fun replaceItems(
+        order: List<IosQueueEntry>,
+        currentIndex: Int
+    ) {
+        calls += "replace ${order.map { it.songId }} at $currentIndex"
+        this.order = order
+        index = currentIndex
+    }
+
+    override fun skipTo(
+        index: Int,
+        startMs: Long,
+        playWhenReady: Boolean
+    ) {
+        calls += "skip to $index@$startMs${if (playWhenReady) " playing" else ""}"
+        moveTo(index, startMs)
+        setPlayWhenReady(playWhenReady)
+    }
+
+    override fun skipToNext(playWhenReady: Boolean) {
+        calls += "skip to next${if (playWhenReady) " playing" else ""}"
+        val next = index?.let { following(it, if (repeatMode == RepeatMode.All) RepeatMode.All else RepeatMode.Off) } ?: return
+        moveTo(next, 0)
+        setPlayWhenReady(playWhenReady)
+    }
+
+    /** `seek(to:itemAt:)`: a failed or stopped player only moves its index; a play opens the item there. */
+    private fun moveTo(
+        target: Int,
+        startMs: Long
+    ) {
+        lastReport = null
+        if (target == index) {
+            seekTo(startMs)
+            return
+        }
+        val idle = failed || phase == Phase.Idle
+        index = target
         position = startMs
-        setState(IosAudioPlayerState.Loading)
-        if (startMs > 0 && current.isUnseekable()) {
-            // The engine starts it at its beginning instead, and says so before its state.
-            position = 0
-            post { listener?.onSeekUnsupported(current.id, startMs) }
-        }
-        if (current.url in failing) {
-            val id = current.id
-            post { listener?.onFailed(id, "Can't open ${current.url}") }
-            // A failed current track counts as ended, and the engine carries on into its next.
-            if (next != null) transition() else setState(IosAudioPlayerState.Ended)
-        } else {
-            setState(if (starts) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused)
-        }
+        if (!idle) openCurrent(startMs)
     }
 
-    override fun setNext(next: IosAudioTrack?) {
-        calls += "next ${next?.url}"
-        this.next = next
+    override fun setRepeatMode(mode: RepeatMode) {
+        if (mode != repeatMode) calls += "repeat $mode"
+        repeatMode = mode
     }
 
+    /** A play or pause is always answered with a report, even one that changes nothing, as `KitAudioPlayer` does. */
     override fun play() {
         calls += "play"
-        if (reportedPlaying) return
-        commands++
-        if (acceptsPlay) {
-            playWhenReady = true
-            if (pausedAtEnd) {
-                pausedAtEnd = false
-                if (next != null) transition() else setState(IosAudioPlayerState.Ended)
-            } else if (current != null && state == IosAudioPlayerState.Paused) {
-                setState(IosAudioPlayerState.Playing)
-            }
-        }
-        answer()
+        lastReport = null
+        setPlayWhenReady(true)
     }
 
     override fun pause() {
         calls += "pause"
-        commands++
-        reportedPlaying = false
+        lastReport = null
+        setPlayWhenReady(false)
+    }
+
+    /** Whether a play is let through; not, and the player drops the intent, as on a session that won't activate. */
+    var acceptsPlay = true
+
+    /** The state last reported. */
+    val state: IosAudioPlayerState? get() = lastReport?.second
+
+    /** The id the current item's reports carry. */
+    val currentId: String? get() = currentUid?.let { "$it" }
+
+    /** A report the player makes as it stands now, for [trackId], whatever its state. */
+    fun emitState(
+        state: IosAudioPlayerState,
+        trackId: String
+    ) = post { listener?.onStateChanged(trackId, state) }
+
+    /** The player pauses by itself, as after a route change it couldn't start again on. */
+    fun pauseItself() {
         playWhenReady = false
-        if (state == IosAudioPlayerState.Playing) setState(IosAudioPlayerState.Paused)
-        answer()
+        report()
+        settle()
+    }
+
+    private fun setPlayWhenReady(requested: Boolean) {
+        // A play while playing changes nothing, so nothing refuses it.
+        val value = requested && (acceptsPlay || playWhenReady)
+        playWhenReady = value
+        if (!value) suppressed = false
+        if (value && index != null) {
+            when {
+                failed || phase == Phase.Idle -> openCurrent(position.coerceAtLeast(0))
+
+                phase == Phase.Ended -> {
+                    position = 0
+                    phase = Phase.Ready
+                }
+            }
+        }
+        report()
     }
 
     override fun seek(positionMs: Long) {
         calls += "seek $positionMs"
-        val track = current ?: return
-        pausedAtEnd = false
-        if (track.isUnseekable()) {
-            post { listener?.onSeekUnsupported(track.id, positionMs) }
-        } else {
-            position = positionMs
-        }
+        seekTo(positionMs)
+    }
+
+    private fun seekTo(positionMs: Long) {
+        val uid = currentUid ?: return
+        position = positionMs
+        if (phase == Phase.Ended) openCurrent(positionMs)
+        post { listener?.onPosition("$uid", positionMs) }
     }
 
     override fun stop() {
         calls += "stop"
-        commands++
-        reportedPlaying = false
-        current = null
-        next = null
-        pausedAtEnd = false
-        state = IosAudioPlayerState.Idle
-        position = -1
+        opens++
+        phase = Phase.Idle
+        failed = false
+        stream = null
+        lastReport = null
     }
 
     override fun setSpeed(speed: Float) {
         calls += "speed $speed"
     }
 
-    private var pausesAtEnd = false
-
-    /** Paused on the current track's last frame by [pausesAtEnd]: a play carries on into the next, a seek undoes it. */
-    private var pausedAtEnd = false
-
     override fun setPauseAtEnd(enabled: Boolean) {
         calls += "pause at end $enabled"
         pausesAtEnd = enabled
     }
 
-    override fun positionMs(): Long = if (current == null) -1 else position
+    override fun positionMs(): Long = if (index == null) -1 else position
 
     override fun durationMs(): Long = duration
 
@@ -183,55 +247,52 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     override fun engineSampleRate(): Int = sampleRate
 
     /**
-     * The current track plays to its end, or to [atMs] where its stream stops short: on into the next track, or it ends;
-     * pausing at the end, it pauses there. The last position tick is heard at that end.
+     * The current item plays to its end: on into the next item, gaplessly, or, with nothing after it, it ends. Pausing at
+     * the end, the player pauses and makes the next item current, paused at its start.
      */
-    fun finishTrack(atMs: Long? = null) {
-        val track = current
-        val end = atMs ?: track?.expectedDurationMs?.takeIf { it > 0 }
-        if (track != null && end != null) {
-            position = end
-            post { listener?.onPosition(track.id, end) }
+    fun finishTrack() {
+        val current = index ?: return
+        val uid = order[current].uid
+        if (duration > 0) position = duration
+        if (pausesAtEnd) {
+            playWhenReady = false
+            post { listener?.onPausedAtEnd("$uid") }
         }
-        val next = next
-        when {
-            next == null -> setState(IosAudioPlayerState.Ended)
-
-            pausesAtEnd -> {
-                playWhenReady = false
-                pausedAtEnd = true
-                position = duration
-                current?.id?.let { id -> post { listener?.onPausedAtEnd(id) } }
-                setState(IosAudioPlayerState.Paused)
-            }
-
-            next.url in failing -> {
-                post { listener?.onFailed(next.id, "Can't open ${next.url}") }
-                this.next = null
-                setState(IosAudioPlayerState.Ended)
-            }
-
-            else -> transition()
+        val next = following(current, repeatMode)
+        if (next == null) {
+            phase = Phase.Ended
+            report()
+        } else {
+            index = next
+            position = 0
+            duration = -1
+            lastReport = null
+            post { listener?.onTransition("${order[next].uid}") }
+            openCurrent(0)
+            report()
         }
         settle()
     }
 
-    /**
-     * The engine pauses on its own, as `MusicPlaybackController` does when it can't start again after a route change:
-     * loading while it retries, then paused, with its own intent dropped.
-     */
-    fun pauseItself() {
-        playWhenReady = false
-        setState(IosAudioPlayerState.Loading)
-        setState(IosAudioPlayerState.Paused)
+    /** An interruption begins: the player stops being heard, its intent kept. */
+    fun interrupt() {
+        suppressed = true
+        report()
+        settle()
+    }
+
+    /** The interruption ends with resume: the player plays on by itself. */
+    fun resumeAfterInterruption() {
+        suppressed = false
+        report()
         settle()
     }
 
     /** A position tick while playing. */
     fun tick(positionMs: Long) {
         position = positionMs
-        val id = current?.id ?: return
-        post { listener?.onPosition(id, positionMs) }
+        val uid = currentUid ?: return
+        post { listener?.onPosition("$uid", positionMs) }
         settle()
     }
 
@@ -240,52 +301,62 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         while (events.isNotEmpty()) events.removeFirst().invoke()
     }
 
-    /** Clears [calls], so a test sees only what's asked of the engine after this. */
+    /** Clears [calls], so a test sees only what's asked of the player after this. */
     fun clearCalls() = calls.clear()
 
-    /** Queues a state report for [trackId], delivered by [settle]. An id the controller has replaced is ignored by it. */
-    fun emitState(
-        state: IosAudioPlayerState,
-        trackId: String
-    ) = report(trackId, state)
+    private fun following(
+        current: Int,
+        mode: RepeatMode
+    ): Int? = when (mode) {
+        RepeatMode.One -> current
+        RepeatMode.All -> (current + 1) % order.size
+        RepeatMode.Off -> (current + 1).takeIf { it < order.size }
+    }
 
-    private fun transition() {
-        val arrived = checkNotNull(next)
-        current = arrived
-        next = null
-        position = 0
-        post { listener?.onTransition(arrived.id) }
-        if (arrived.url in failing) {
-            post { listener?.onFailed(arrived.id, "Can't open ${arrived.url}") }
-            setState(IosAudioPlayerState.Ended)
-        } else {
-            setState(if (playWhenReady) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused)
+    private fun openCurrent(startMs: Long) {
+        val current = index ?: return
+        val uid = order[current].uid
+        val serial = ++opens
+        phase = Phase.Loading
+        failed = false
+        stream = null
+        position = startMs
+        report()
+        // The player asks from its decode thread, after the call that opened the item has returned.
+        post { open(uid, opened(serial, uid)) }
+    }
+
+    private fun opened(
+        serial: Int,
+        uid: Long
+    ): (IosStream?, String?) -> Unit = { opened, error ->
+        if (serial == opens) {
+            if (opened == null || opened.url in failing) {
+                failed = true
+                phase = Phase.Idle
+                post { listener?.onFailed("$uid", error ?: "Can't open ${opened?.url}") }
+            } else {
+                stream = opened
+                phase = Phase.Ready
+                report()
+            }
         }
     }
 
-    private fun setState(state: IosAudioPlayerState) {
-        this.state = state
-        val id = current?.id ?: return
-        report(id, state)
-    }
-
-    /** A command that changed no state is answered with the state it left, but for an end, which is said once. */
-    private fun answer() {
-        if (commandsReported == commands || state == IosAudioPlayerState.Ended) return
-        current?.id?.let { report(it, state) }
-    }
-
-    /** Posts [state] for [trackId], stamped with the commands taken so far, as the engine does. */
-    private fun report(
-        trackId: String,
-        state: IosAudioPlayerState
-    ) {
-        val stamp = commands
-        commandsReported = stamp
+    /** Posts a report of the state as it stands when delivered, as `KitAudioPlayer` reads it, unless it repeats the last. */
+    private fun report() {
         post {
-            val superseded = stamp < commands
-            reportedPlaying = state == IosAudioPlayerState.Playing && trackId == current?.id && !superseded
-            listener?.onStateChanged(trackId, state, superseded)
+            val uid = currentUid ?: return@post
+            if (failed) return@post
+            val state = when (phase) {
+                Phase.Idle -> IosAudioPlayerState.Idle
+                Phase.Loading -> IosAudioPlayerState.Loading
+                Phase.Ready -> if (playWhenReady && !suppressed) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused
+                Phase.Ended -> IosAudioPlayerState.Ended
+            }
+            if (lastReport == uid to state) return@post
+            lastReport = uid to state
+            listener?.onStateChanged("$uid", state)
         }
     }
 

@@ -7,61 +7,37 @@ import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueModel
 import com.simplecityapps.shuttle.logging.Logger
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /**
- * Hands the engine [player] the queue's current item and the one after it, as [IosFeed]s, and publishes what follows
- * from that on [flows]. Owns the feeds, the engine's last reported state and the jobs resolving their streams. Main
- * thread only. A current item whose stream can't be resolved is handed to [onUnresolved], with whether to skip it.
+ * Hands the [player] the queue's play order and moves it to the queue's current item, as [IosFeed]s, and publishes
+ * what follows from that on [flows]. Owns the current and next feeds and the player's last reported state. Main thread
+ * only.
  */
 internal class IosEngineFeeder(
     private val player: IosAudioPlayer,
-    resolver: IosStreamResolver,
     private val items: IosItemResolver,
-    private val scope: CoroutineScope,
     private val queue: QueueModel,
     private val flows: IosPlaybackFlows,
-    private val loads: IosPendingLoads,
-    private val onUnresolved: (feed: IosFeed, skip: Boolean) -> Unit
+    private val loads: IosPendingLoads
 ) {
     /** The unified log's `playback` category (#897): commands, state changes, transitions and failures, by song id. */
     private val log = Logger.tagged("playback")
 
-    private val plays = IosPlays(resolver, scope) { setOfNotNull(current?.playId, next?.playId, engineNext?.playId) }
-
-    private var feedSerial = 0L
-
-    /** The engine's current track, or the one being resolved to replace it; null when nothing is loaded. */
+    /** The player's current item; null when nothing is loaded. */
     var current: IosFeed? = null
         set(value) {
             field = value
             flows.play.value = value?.let { feed -> Play(feed.playId, feed.item.uid) }
-            plays.endAbandoned()
         }
 
-    /** The queue's next item, as last fed (handed over, being resolved, or failed to resolve). */
+    /** The queue's next item, as the player has it next. */
     var next: IosFeed? = null
-        private set(value) {
-            field = value
-            plays.endAbandoned()
-        }
+        private set
 
-    /** The next track the engine was last handed; it may trail [next] while that resolves. */
-    var engineNext: IosFeed? = null
-        private set(value) {
-            field = value
-            plays.endAbandoned()
-        }
-
-    /** The engine's last reported state for [current]. */
+    /** The player's last reported state for [current]. */
     var engineState = IosAudioPlayerState.Idle
 
-    /** Whether the engine pauses at the end of [current] rather than moving on to [next], which stays next. */
+    /** Whether the player pauses at the end of [current] rather than playing on into [next]. */
     var pausesAtEnd = false
         set(value) {
             if (field == value) return
@@ -69,44 +45,25 @@ internal class IosEngineFeeder(
             player.setPauseAtEnd(value)
         }
 
-    private var loadJob: Job? = null
-
-    private var nextJob: Job? = null
-
-    /** The player takes the whole play order and reports each item under its uid ([IosAudioPlayer.ownsPlayOrder]). */
-    val ownsOrder = player.ownsPlayOrder
-
-    /** The order last handed to an [ownsOrder] player. */
+    /** The order last handed to the player. */
     private var sentOrder: List<IosQueueEntry>? = null
 
-    @OptIn(ExperimentalUuidApi::class)
-    private fun newFeed(
-        item: QueueItem,
-        playId: String = Uuid.random().toString()
-    ) = IosFeed("${item.uid}-${++feedSerial}", item, playId)
-
-    /** An [ownsOrder] player's item: its id is the uid it reports under, its play the one [items] resolves it for. */
-    private fun orderFeed(
+    /** [item] as the player reports it: its id is its uid, its play the one [items] resolves it for. */
+    fun feed(
         item: QueueItem,
         current: Boolean
-    ) = IosFeed("${item.uid}", item, items.playId(item, current && flows.playWhenReady, retryFailed = current)).also { it.sent = true }
+    ) = IosFeed("${item.uid}", item, items.playId(item, current && flows.playWhenReady, retryFailed = current))
 
     /**
-     * [startLoad] for an [ownsOrder] player: the order goes to it whole and it opens [item] itself. Within the order it
-     * has, the player moves to [item], keeping what it pre-opened; a changed order replaces its own.
+     * Makes [item] the player's current item at [startMs], then updates the next. Within the order the player has, it
+     * moves to [item], keeping what it pre-opened; a changed order replaces its own.
      */
-    private fun startOrderLoad(
+    fun startLoad(
         item: QueueItem,
         startMs: Int
     ) {
-        val feed = orderFeed(item, current = true)
-        feed.startMs = startMs
-        current = feed
-        next = null
-        engineNext = null
-        engineState = IosAudioPlayerState.Loading
-        publishProgress(startMs)
-        publishState()
+        log.info { "load song ${item.song.id} at $startMs ms, playWhenReady ${flows.playWhenReady}" }
+        becomeCurrent(item, startMs)
         val (order, index) = playOrder() ?: return
         player.setRepeatMode(queue.repeatMode)
         if (order == sentOrder) {
@@ -118,144 +75,45 @@ internal class IosEngineFeeder(
         feedNext()
     }
 
+    /** Moves the player on from a failed item to [item], the queue's current item now, as `Player.skipToNext` does. */
+    fun skipToNext(item: QueueItem) {
+        log.info { "skip on to song ${item.song.id}, playWhenReady ${flows.playWhenReady}" }
+        becomeCurrent(item, 0)
+        player.skipToNext(flows.playWhenReady)
+        feedNext()
+    }
+
+    private fun becomeCurrent(
+        item: QueueItem,
+        startMs: Int
+    ) {
+        leave(item)
+        current = feed(item, current = true)
+        next = null
+        engineState = IosAudioPlayerState.Loading
+        publishProgress(startMs)
+        publishState()
+    }
+
     private fun playOrder(): Pair<List<IosQueueEntry>, Int>? {
         val state = queue.queueStateFlow.value
         val index = state.currentPosition ?: return null
         return state.items.map { IosQueueEntry(it.uid, it.song.id) } to index
     }
 
-    /** The queue's next item as an [ownsOrder] player has it next, with the order's streams pre-warmed from the current. */
-    private fun feedOrderNext() {
+    /** The queue's next item as the player has it next, with the order's streams pre-warmed from the current. */
+    fun feedNext() {
+        if (current == null) return
         val state = queue.queueStateFlow.value
         state.currentPosition?.let { items.update(state.items, it) }
         val want = queue.next()
         val have = next
         if (have != null && want != null && have.item.uid == want.uid && have.item.song == want.song) return
-        next = want?.let { orderFeed(it, current = false) }
-        engineNext = next
+        next = want?.let { feed(it, current = false) }
     }
 
     /**
-     * Replaces the engine's current track with [item] at [startMs], then feeds the next. [reopen] is for a stream the
-     * engine can't seek (a progressive transcode): it's resolved again to start at [startMs], and played from its start.
-     * A reopen leaves the next item as it was, so it's kept and handed back to the engine as its next, which keeps the
-     * stream it already opened for it; unless that's a transcode too, which is resolved again: a server that runs one
-     * transcode for the user (Plex) replaces the one the engine may have opened for it with the re-open (#888).
-     *
-     * An [item] the engine already has as its next (a skip onto it) isn't resolved again: its stream is handed back as
-     * the current track, and the engine starts on what it pre-opened for it rather than opening the song afresh (#620).
-     */
-    fun startLoad(
-        item: QueueItem,
-        startMs: Int,
-        reopen: Boolean = false
-    ) {
-        log.info { "load song ${item.song.id} at $startMs ms${if (reopen) ", re-opening its stream" else ""}, playWhenReady ${flows.playWhenReady}" }
-        if (ownsOrder) return startOrderLoad(item, startMs)
-        loadJob?.cancel()
-        val preopenedFeed = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }
-        val preopened = preopenedFeed?.stream
-        val keepNext = reopen && next?.let { !it.failed && !it.opensAtPosition } == true
-        if (!keepNext) nextJob?.cancel()
-        // A re-open carries on the play it re-opens, and a pre-opened stream the play it was opened for.
-        val playId = if (reopen) current?.playId else preopenedFeed?.playId
-        val feed = if (playId != null) newFeed(item, playId) else newFeed(item)
-        feed.startMs = startMs
-        if (reopen) {
-            feed.offsetMs = startMs
-            feed.opensAtPosition = true
-            feed.seeksByReopening = true
-        }
-        current = feed
-        if (!keepNext) {
-            next = null
-            engineNext = null
-        }
-        engineState = IosAudioPlayerState.Loading
-        publishProgress(startMs)
-        publishState()
-        if (preopened != null) {
-            handOver(feed, preopened)
-            return
-        }
-        val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val resolved = plays.resolve(feed, feed.offsetMs, playRequested = flows.playWhenReady)
-            if (current !== feed) return@launch
-            val stream = resolved.getOrNull()
-            if (stream == null) {
-                // Nothing of it can play, and whatever the engine had is no longer current. Not allowed, it stays
-                // current, and playing it asks again.
-                player.stop()
-                feed.reportFailure = false
-                onUnresolved(feed, !resolved.notAllowed)
-                return@launch
-            }
-            handOver(feed, stream)
-        }
-        if (current === feed && job.isActive) loadJob = job
-    }
-
-    /** Loads [feed], the current item, into the engine as [stream] at its [IosFeed.startMs], then feeds the next. */
-    private fun handOver(
-        feed: IosFeed,
-        stream: IosStream
-    ) {
-        feed.sent = true
-        feed.opensAtPosition = stream.opensAtPosition
-        feed.transcoded = stream.transcoded
-        val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
-        player.load(feed.track(stream), handedBack, (feed.startMs - feed.offsetMs).toLong(), flows.playWhenReady)
-        feedNext()
-    }
-
-    /** Hands the engine the queue's next item, if it isn't the one it has. */
-    fun feedNext() {
-        val currentFeed = current ?: return
-        if (ownsOrder) return feedOrderNext()
-        if (!currentFeed.sent) return
-        val want = queue.next()
-        val have = next
-        if (have != null && want != null && have.item.uid == want.uid && have.item.song == want.song) return
-        nextJob?.cancel()
-        // The engine mustn't play on into what's no longer next while the new next resolves.
-        if (engineNext != null) {
-            engineNext = null
-            player.setNext(null)
-        }
-        if (want == null) {
-            next = null
-            return
-        }
-        val feed = newFeed(want)
-        next = feed
-        val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            // Resolved mid-song, so a refusal mustn't open the paywall: it's asked again, and opens it, once the song is current.
-            val resolved = plays.resolve(feed, 0, playRequested = false)
-            if (next !== feed) return@launch
-            val stream = resolved.getOrNull()
-            if (stream == null) {
-                if (engineNext != null) {
-                    engineNext = null
-                    player.setNext(null)
-                }
-                // Not allowed, it's left unsent, and loaded afresh when playback reaches it (see onEnded), asking again.
-                if (resolved.notAllowed) return@launch
-                // Reached, it's skipped as a failed item (see onEnded).
-                feed.failed = true
-                feed.reportFailure = false
-                return@launch
-            }
-            feed.sent = true
-            feed.opensAtPosition = stream.opensAtPosition
-            feed.transcoded = stream.transcoded
-            engineNext = feed
-            player.setNext(feed.track(stream))
-        }
-        if (next === feed && job.isActive) nextJob = job
-    }
-
-    /**
-     * Brings the engine in line with the queue after a queue change: a new current item is loaded from its start,
+     * Brings the player in line with the queue after a queue change: a new current item is loaded from its start,
      * playing on if playback was (as the Media3 player moves to a new current item); an emptied queue stops it.
      */
     fun sync() {
@@ -270,12 +128,10 @@ internal class IosEngineFeeder(
 
             else -> {
                 currentFeed.item = want
-                if (ownsOrder) {
-                    playOrder()?.let { (order, index) ->
-                        player.setRepeatMode(queue.repeatMode)
-                        player.replaceItems(order, index)
-                        sentOrder = order
-                    }
+                playOrder()?.let { (order, index) ->
+                    player.setRepeatMode(queue.repeatMode)
+                    player.replaceItems(order, index)
+                    sentOrder = order
                 }
                 feedNext()
             }
@@ -284,81 +140,56 @@ internal class IosEngineFeeder(
     }
 
     fun stop() {
-        loadJob?.cancel()
-        nextJob?.cancel()
         player.stop()
+        items.update(emptyList(), 0)
+        sentOrder = null
         current = null
         next = null
-        engineNext = null
         engineState = IosAudioPlayerState.Idle
         flows.playWhenReady = false
         loads.complete(Result.failure(IllegalStateException("Queue empty")))
     }
 
-    /** Drops the next item, and the engine's, before the queue moves on to [current]'s successor by other means. */
-    fun dropNext() {
-        nextJob?.cancel()
-        next = null
-        engineNext = null
-    }
-
-    /** The engine moved on to [arrived], its next track: it's the current one now. */
+    /** The player moved on to [arrived], its next item: it's the current one now. */
     fun arrive(arrived: IosFeed) {
-        nextJob?.cancel()
-        current = arrived
+        leave(arrived.item)
+        // Its pre-warm's failure was kept for now: asked again as the current item, a refusal opens the paywall.
+        current = feed(arrived.item, current = true)
         next = null
-        engineNext = null
     }
 
-    /** The engine's next track failed: it's skipped when playback reaches it. */
-    fun markEngineNextFailed(trackId: String) {
-        if (trackId == engineNext?.id) engineNext?.failed = true
+    /** Ends the play of the item the player leaves for [item]; repeating the same item carries its play on. */
+    private fun leave(item: QueueItem) {
+        current?.takeIf { it.item.uid != item.uid }?.let(::endPlay)
     }
 
-    /**
-     * Stops the engine on a failed current item, which stays current: playing it loads it again. Stopped rather than
-     * paused, as the engine carries on into its next track after a failed one.
-     */
+    /** Stops the player on a failed current item, which stays current: playing it loads it again. */
     fun giveUp() {
-        loadJob?.cancel()
-        nextJob?.cancel()
         next = null
-        engineNext = null
         flows.playWhenReady = false
         player.stop()
         engineState = IosAudioPlayerState.Idle
     }
 
-    fun endPlay(playId: String) = plays.end(playId)
+    /** Ends [feed]'s play: nothing follows it, so the server stops its transcode now rather than when it times out idle. */
+    fun endPlay(feed: IosFeed) = items.end(feed.item.uid)
 
-    /** Why [feed]'s stream couldn't be resolved for an [ownsOrder] player, or null if that isn't why it failed. */
+    /** Why [feed]'s stream couldn't be resolved, or null if that isn't why it failed. */
     fun unresolved(feed: IosFeed): Throwable? = items.failure(feed.item.uid)
 
     fun pause() {
         log.info { "pause song ${current?.item?.song?.id}, ${flows.playbackState.value.name}" }
         flows.playWhenReady = false
         if (current == null) return
-        // Still told to the engine while the state stays [PlaybackState.Loading], so a load that was going to play stops.
+        // Still told to the player while the state stays [PlaybackState.Loading], so a load that was going to play stops.
         player.pause()
         if (engineState == IosAudioPlayerState.Playing) engineState = IosAudioPlayerState.Paused
     }
 
-    /**
-     * Seeks the engine, or, for a stream it can't seek that opens at a position, re-opens the stream there. A track still
-     * being resolved starts at the position instead, once it's handed over (#763).
-     */
     fun seek(positionMs: Int) {
         val feed = current ?: return
         log.info { "seek song ${feed.item.song.id} to $positionMs ms" }
-        feed.pausedAtEnd = false
-        when {
-            // Also while the last re-open is still resolving: a scrub supersedes it.
-            feed.seeksByReopening && feed.opensAtPosition -> startLoad(feed.item, positionMs, reopen = true)
-
-            feed.sent -> player.seek((positionMs - feed.offsetMs).toLong())
-
-            else -> feed.startMs = positionMs
-        }
+        player.seek(positionMs.toLong())
         publishProgress(positionMs)
     }
 
@@ -380,22 +211,18 @@ internal class IosEngineFeeder(
         }
     }
 
-    /** Publishes [positionMs] into the current item; its duration is the song's tagged one until the engine knows it. */
+    /** Publishes [positionMs] into the current item; its duration is the song's tagged one until the player knows it. */
     fun publishProgress(positionMs: Int) {
         val currentFeed = current ?: return
         val duration = currentDuration() ?: currentFeed.item.song.duration
         flows.progress.value = PlaybackProgress(positionMs, duration)
     }
 
-    fun currentDuration(): Int? = current?.takeIf { it.sent }?.let { feed ->
-        player.durationMs().takeIf { it > 0 }?.let { feed.offsetMs + it.toInt() }
-    }
+    fun currentDuration(): Int? = current?.let { player.durationMs().takeIf { it > 0 }?.toInt() }
 
     fun progress(): Int? {
         if (queue.size == 0) return null
-        val live = current?.takeIf { it.sent }?.let { feed ->
-            player.positionMs().takeIf { it >= 0 }?.let { feed.offsetMs + it.toInt() }
-        }
+        val live = current?.let { player.positionMs().takeIf { it >= 0 }?.toInt() }
         return live ?: flows.progress.value?.position ?: 0
     }
 }

@@ -110,7 +110,7 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
         engine.settle()
 
         // One load that plays, so the engine readies its output while the track opens (#687); no separate play.
-        engine.calls.first { it.startsWith("load") } shouldBe "load ${url(a)}@5000 playing"
+        engine.calls.first { it.startsWith("items") } shouldBe "items [1, 2] at 0@5000 playing"
         engine.calls.none { it == "play" } shouldBe true
         result?.isSuccess shouldBe true
         controller.playbackState() shouldBe PlaybackState.Playing
@@ -146,7 +146,7 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
         controller.currentSong shouldBe b
         controller.playWhenReadyFlow.value shouldBe false
         controller.playbackState() shouldBe PlaybackState.Paused
-        engine.calls.none { it.startsWith("load song:3") } shouldBe true
+        engine.calls.none { it.startsWith("skip") } shouldBe true
     }
 
     @Test
@@ -178,7 +178,7 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
 
         controller.queueOperations.setCurrentItem(controller.queueOperations.getQueue()[1])
         engine.settle()
-        engine.calls.first { it.startsWith("load") } shouldBe "load song:2@0"
+        engine.calls.first { it.startsWith("skip") } shouldBe "skip to 1@0"
         controller.playWhenReadyFlow.value shouldBe false
         controller.playbackState() shouldBe PlaybackState.Paused
 
@@ -186,7 +186,7 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
         engine.clearCalls()
         controller.skipToNext()
         engine.settle()
-        engine.calls.first() shouldBe "load song:3@0 playing"
+        engine.calls.first() shouldBe "skip to 2@0 playing"
         controller.playWhenReadyFlow.value shouldBe true
         controller.playbackState() shouldBe PlaybackState.Playing
     }
@@ -303,7 +303,7 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
     @Test
     fun `a playing track whose stream runs dry is loading - with the intent kept - until it plays again`() = test { controller ->
         controller.start(listOf(a, b))
-        val id = checkNotNull(engine.current).id
+        val id = checkNotNull(engine.currentId)
 
         engine.emitState(IosAudioPlayerState.Loading, id)
         engine.settle()
@@ -322,7 +322,7 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
     @Test
     fun `a pause while buffering is paused - not loading`() = test { controller ->
         controller.start(listOf(a, b))
-        engine.emitState(IosAudioPlayerState.Loading, checkNotNull(engine.current).id)
+        engine.emitState(IosAudioPlayerState.Loading, checkNotNull(engine.currentId))
         engine.settle()
 
         controller.pause()
@@ -425,53 +425,5 @@ class IosPlayerControllerEngineTest : IosPlayerControllerTestBase() {
         engine.settle()
         controller.playWhenReadyFlow.value shouldBe false
         controller.playbackState() shouldBe PlaybackState.Paused
-    }
-
-    // A replaced engine
-
-    @Test
-    fun `a skip in flight when the engine is replaced completes once the new engine has its song`() = test { controller ->
-        controller.start(listOf(a, b, c), play = false)
-        var result: Result<Any?>? = null
-        controller.skipToNext { result = it }
-
-        // A media-services reset: the old engine's reports never come, and the song is handed to the new one (#707).
-        engine.clearCalls()
-        controller.reloadEngine(0)
-        result shouldBe null
-        engine.calls.first() shouldBe "load song:2@0 playing"
-
-        engine.settle()
-        result?.isSuccess shouldBe true
-        controller.currentSong shouldBe b
-        controller.playWhenReadyFlow.value shouldBe true
-        controller.playbackState() shouldBe PlaybackState.Playing
-    }
-
-    @Test
-    fun `a load whose completion plays still plays when the engine is replaced mid-load`() = test { controller ->
-        controller.queueOperations.setQueue(listOf(a, b), null, 0)
-        controller.load { result -> result.onSuccess { controller.play() } }
-
-        controller.reloadEngine(0)
-        engine.settle()
-
-        controller.playWhenReadyFlow.value shouldBe true
-        controller.playbackState() shouldBe PlaybackState.Playing
-    }
-
-    @Test
-    fun `a replaced engine gets a paused song where it was - and nothing when nothing is loaded`() = test { controller ->
-        controller.reloadEngine(0)
-        engine.calls shouldBe emptyList()
-
-        controller.start(listOf(a, b), play = false)
-        controller.reloadEngine(42_000)
-        engine.settle()
-
-        engine.calls.first() shouldBe "load song:1@42000"
-        controller.playWhenReadyFlow.value shouldBe false
-        controller.playbackState() shouldBe PlaybackState.Paused
-        controller.progressFlow.value?.position shouldBe 42_000
     }
 }

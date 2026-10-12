@@ -15,7 +15,7 @@ internal fun derivePlaybackState(
     if (current == null) return PlaybackState.Paused
     return when {
         loadPending -> PlaybackState.Loading
-        !current.ready && !current.failed && (!current.sent || engineState == IosAudioPlayerState.Loading) -> PlaybackState.Loading
+        !current.ready && !current.failed && engineState == IosAudioPlayerState.Loading -> PlaybackState.Loading
         isBuffering(current, loadPending, engineState, playWhenReady) -> PlaybackState.Loading
         engineState == IosAudioPlayerState.Playing -> PlaybackState.Playing
         else -> PlaybackState.Paused

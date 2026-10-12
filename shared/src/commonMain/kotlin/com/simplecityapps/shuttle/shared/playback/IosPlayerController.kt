@@ -30,28 +30,22 @@ import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.withContext
 
 /**
- * iOS playback: [PlaybackOperations], and [queueOperations], over a [QueueModel] and the Swift engine [player], with
- * Android's semantics (`PlaybackFacade`, `QueueFacade`, `ItemLoader` in android/playback). The engine only knows the
- * current track and the next; after every change to the queue or the modes this hands it the queue's current item
- * (reloading it if it changed) and the item after it, so it can join the two gaplessly ([IosEngineFeeder]). When the
- * engine moves on to the next track, the queue's current item follows ([IosEngineEvents]).
+ * iOS playback: [PlaybackOperations], and [queueOperations], over a [QueueModel] and the Swift [player], with
+ * Android's semantics (`PlaybackFacade`, `QueueFacade`, `ItemLoader` in android/playback). After every change to the
+ * queue or the modes this hands the player the whole play order and the queue's current item ([IosEngineFeeder]); the
+ * player owns the next item, repeat and the gapless join, and when it moves on the queue's current item follows
+ * ([IosEngineEvents]).
  *
  * Songs that fail to load are skipped for the next one, as `ItemLoader` skips them: up to [PlaybackPolicy.MAX_LOAD_ATTEMPTS] in a row,
- * never past the end of the queue, each reported on [playbackFailureFlow] (bar one [resolver] couldn't resolve). A
+ * wrapping only under repeat all, each reported on [playbackFailureFlow] (bar one [resolver] couldn't resolve). A
  * load that doesn't skip (a restore) leaves a failed song current, paused, until it's played.
  *
- * A progressive transcode has no length, so the engine can't seek it ([IosAudioPlayerListener.onSeekUnsupported]).
- * Such a stream is resolved again to start at the position (`StartTimeTicks`) and loaded from its beginning; positions
- * are then the stream's start plus what the engine has played of it. A direct-play stream seeks in the engine.
- *
- * Each handing of a queue item to the engine is a play, under an id its stream is resolved with: kept when a seek
- * re-opens the stream or a skip starts what the engine pre-opened, and new otherwise, even for the same song (repeat
- * one's next). A play no longer current or next is ended ([IosStreamResolver.endPlay]), so a server stops its transcode
- * (#722).
+ * Each queue entry the player opens is a play, under the id [itemResolver] resolves its stream with. A play that leaves
+ * the order, or ends the queue, is ended ([IosStreamResolver.endPlay]), so a server stops its transcode (#722).
  *
  * Main thread only inside; callable from any thread by the domain interfaces' rule. [scope] runs on the main thread
  * (`Dispatchers.Main.immediate` on iOS): a call that changes playback made on it runs straight away, else it's posted
- * to it. The Swift engine adapter calls back on the main thread.
+ * to it. The Swift player adapter calls back on the main thread.
  *
  * The queue, the modes, the position and the speed are saved and restored by [IosPlaybackStore], which watches this
  * controller's flows and restores through [restoreQueue]; a play of an item that isn't loaded starts it at
@@ -77,10 +71,10 @@ class IosPlayerController(
 
     private val loads = IosPendingLoads()
 
-    /** Opens the play order's streams for a [player] that [IosAudioPlayer.ownsPlayOrder]. */
+    /** Opens the play order's streams for the [player]. */
     val itemResolver = IosItemResolver(resolver, scope)
 
-    private val feeder: IosEngineFeeder = IosEngineFeeder(player, resolver, itemResolver, scope, queue, flows, loads) { feed, skip -> events.onCurrentFailed(feed, skip) }
+    private val feeder = IosEngineFeeder(player, itemResolver, queue, flows, loads)
 
     private val events: IosEngineEvents = IosEngineEvents(feeder, queue, flows, loads)
 
@@ -143,24 +137,13 @@ class IosPlayerController(
         }
     }
 
-    /**
-     * Hands the current track to a replaced engine (a media-services reset rebuilt it) at [positionMs], as it was: the
-     * intent and a load in flight (a skip, or a load whose completion plays) carry over, and that load completes once the
-     * new engine has the track ready (#707). A track still resolving reaches the new engine anyway; nothing loaded, or a
-     * failed track, has nothing to hand over, and the next play loads it.
-     */
-    fun reloadEngine(positionMs: Int) = main.run {
-        val feed = feeder.current?.takeIf { it.sent && !it.failed } ?: return@run
-        feeder.startLoad(feed.item, positionMs, reopen = feed.seeksByReopening && feed.opensAtPosition)
-    }
-
     override fun play() = main.run { playNow() }
 
     /**
      * Plays the current item. Nothing loaded (or a failed item) loads it at [resumePosition]; a played-out queue
-     * restarts its current item; a position within the song's last moments restarts it (RS-11). Paused at its end
-     * ([IosFeed.pausedAtEnd]), playback moves on to the next item, as Media3 does after `pauseAtEndOfMediaItems`: the
-     * engine promotes the next it holds (reported as a transition), and one it never got is loaded here.
+     * restarts its current item; a position within the song's last moments restarts it (RS-11). Paused at its end, the
+     * player has already made the next item current, so this plays that from its start, as Media3 does after
+     * `pauseAtEndOfMediaItems`.
      */
     private fun playNow() {
         val item = queue.currentItem ?: return
@@ -169,21 +152,15 @@ class IosPlayerController(
         playWhenReady = true
         when {
             currentFeed == null || currentFeed.item.uid != item.uid || currentFeed.failed ||
-                (currentFeed.sent && feeder.engineState == IosAudioPlayerState.Idle) -> {
+                feeder.engineState == IosAudioPlayerState.Idle -> {
                 val start = resumePosition(item.song).takeUnless { isNearEnd(it, item.song) } ?: 0
                 feeder.startLoad(item, start)
             }
 
-            feeder.engineState == IosAudioPlayerState.Ended -> {
-                if (!(currentFeed.pausedAtEnd && events.moveOn(currentFeed))) feeder.startLoad(item, 0)
-            }
-
-            !currentFeed.sent -> Unit
+            feeder.engineState == IosAudioPlayerState.Ended -> feeder.startLoad(item, 0)
 
             else -> {
-                if (!currentFeed.pausedAtEnd && isNearEnd(getProgress() ?: 0, item.song)) feeder.seek(0)
-                // A play the engine can't start (the session wouldn't activate) is answered with paused at its count, and the
-                // intent goes with it.
+                if (isNearEnd(getProgress() ?: 0, item.song)) feeder.seek(0)
                 player.play()
             }
         }

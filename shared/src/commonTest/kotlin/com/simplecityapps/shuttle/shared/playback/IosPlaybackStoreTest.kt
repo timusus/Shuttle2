@@ -114,7 +114,7 @@ class IosPlaybackStoreTest {
         second.controller.playbackState() shouldBe PlaybackState.Paused
         second.controller.getProgress() shouldBe 5_000
         // Loaded paused, not played.
-        second.engine.calls.first() shouldBe "load song:2@5000"
+        second.engine.calls.first() shouldBe "items [1, 2, 3] at 1@5000"
     }
 
     @Test
