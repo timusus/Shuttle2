@@ -31,7 +31,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
@@ -58,30 +57,33 @@ internal val PlayerSheetColor: Color
     }
 
 /**
- * Now Playing's ground over [PlayerSheetColor]. Under artwork it starts from the cover's
- * secondaryContainer, the tone the mini player fills with, at [GroundWashAlpha], and fades down into
- * [PlayerSheetColor] by the bar, so the selected bar buttons' tonal containers still part from it.
- * secondaryContainer is the role made to carry text: the player scheme's primaryContainer is the
- * seed's own tone, and washed in past a faint tint it takes onSurfaceVariant below AA (#734). Every
- * mix of the two keeps AA (ColorSchemesTest). Without artwork it draws nothing.
+ * Now Playing's ground over [PlayerSheetColor]. Under artwork it is the cover's primaryContainer, the same vivid tonal
+ * container album detail's hero paints, fading into the sheet colour by [GroundFadeEnd] of the height, just below the
+ * artwork, so the title, seek bar and controls sit on the sheet colour and keep onSurface's contrast. Without artwork
+ * it draws nothing.
  */
 @Composable
 internal fun PlayerGround(modifier: Modifier = Modifier) {
     val base = PlayerSheetColor
-    val top = artworkRole(base, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = GroundWashAlpha).compositeOver(base))
-    if (top != base) Spacer(modifier.fillMaxSize().drawBehind { drawRect(Brush.verticalGradient(listOf(top, base))) })
+    val top = artworkRole(base, MaterialTheme.colorScheme.primaryContainer)
+    if (top != base) {
+        Spacer(
+            modifier.fillMaxSize().drawBehind {
+                drawRect(Brush.verticalGradient(listOf(top, base), endY = size.height * GroundFadeEnd))
+            },
+        )
+    }
 }
 
-/** Short of the full container, so the seek bar's secondaryContainer track still parts from the ground. */
-private const val GroundWashAlpha = 0.6f
+private const val GroundFadeEnd = 0.55f
 
-/** The skips, toggles and bar buttons' colour: onSecondaryContainer under artwork, onSurface without. */
+/** The skips, toggles and bar buttons' colour: onSurface, on the sheet colour below the ground's fade. */
 internal val PlayerControlsColor: Color
-    @Composable get() = artworkRole(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSecondaryContainer)
+    @Composable get() = MaterialTheme.colorScheme.onSurface
 
 /** The bar's text buttons' colour: [PlayerControlsColor] under artwork, the buttons' own primary without. */
 internal val PlayerTextButtonColor: Color
-    @Composable get() = artworkRole(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onSecondaryContainer)
+    @Composable get() = artworkRole(MaterialTheme.colorScheme.primary, PlayerControlsColor)
 
 /** The panel sheet's colour, and its rows': a step apart from [PlayerSheetColor], lighter in light mode and in dark. */
 internal val PanelColor: Color

@@ -7,6 +7,7 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.toHct
 import com.simplecityapps.shuttle.designsystem.component.MiniPlayerArtworkTint
+import io.kotest.assertions.withClue
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThan
@@ -104,7 +105,7 @@ class ColorSchemesTest {
         // A deep cobalt cover, whose tonal spot Play read as dusty slate (#736)
         val cobalt = Color(0xFF1F3FA8)
         for (isDark in listOf(true, false)) {
-            val detail = artworkColorScheme(cobalt, isDark, style = ArtworkSchemeStyle.Detail)!!
+            val detail = artworkColorScheme(cobalt, isDark)!!
             val tonalSpot = seedColorScheme(cobalt, isDark, PaletteStyle.TonalSpot)
             detail.primary.toHct().hue shouldBe (cobalt.toHct().hue plusOrMinus 15.0)
             detail.primary.toHct().chroma shouldBeGreaterThan tonalSpot.primary.toHct().chroma
@@ -114,15 +115,24 @@ class ColorSchemesTest {
     }
 
     @Test
-    fun `a dark seed gives the player tinted containers, not near-black ones`() {
+    fun `a dark seed gives tinted containers, not near-black ones`() {
         // Phase Garden's cover: a dark violet
         val dark = Color(0xFF1F1530)
         for (isDark in listOf(true, false)) {
-            val player = artworkColorScheme(dark, isDark, style = ArtworkSchemeStyle.Player)!!
-            player.primaryContainer.toHct().tone shouldBe (30.0 plusOrMinus 1.0)
-            player.primaryContainer.toHct().hue shouldBe (dark.toHct().hue plusOrMinus 10.0)
-            player.primary.toHct().tone shouldBeGreaterThan 15.0
-            player.onPrimaryContainer.contrastRatio(player.primaryContainer) shouldBeGreaterThan 4.5
+            val scheme = artworkColorScheme(dark, isDark)!!
+            scheme.primaryContainer.toHct().tone shouldBeGreaterThan 15.0
+            scheme.primaryContainer.toHct().chroma shouldBeGreaterThan 15.0
+            scheme.primaryContainer.toHct().hue shouldBe (dark.toHct().hue plusOrMinus 15.0)
+            scheme.primary.toHct().tone shouldBeGreaterThan 15.0
+            scheme.onPrimaryContainer.contrastRatio(scheme.primaryContainer) shouldBeGreaterThan 4.5
+        }
+    }
+
+    @Test
+    fun `a saturated cover's container keeps its chroma in both themes`() {
+        val cobalt = Color(0xFF1F3FA8)
+        for (isDark in listOf(true, false)) {
+            artworkColorScheme(cobalt, isDark)!!.primaryContainer.toHct().chroma shouldBeGreaterThan 40.0
         }
     }
 
@@ -133,15 +143,12 @@ class ColorSchemesTest {
         val seeds = listOf(0xFF1F3FA8, 0xFF0B3D40, 0xFF1F1530, 0xFFD9542B, 0xFFE6B800, 0xFF3FA34D, 0xFFF2A0C8).map(::Color)
         for (seed in seeds) {
             for (isDark in listOf(false, true)) {
-                val scheme = artworkColorScheme(seed, isDark, ArtworkSchemeStyle.Player)!!
-                // Now Playing's ground: secondaryContainer at the top fading into the sheet colour (PlayerGround)
+                val scheme = artworkColorScheme(seed, isDark)!!
+                // Now Playing's ground fades from primaryContainer into the sheet colour before the title, so text sits on the sheet (PlayerGround)
                 val sheet = if (isDark) scheme.surfaceContainerHigh else scheme.surfaceContainer
-                for (step in 0..10) {
-                    val ground = lerp(scheme.secondaryContainer, sheet, step / 10f)
-                    scheme.onSurface.contrastRatio(ground) shouldBeGreaterThan 4.5
-                    scheme.onSurfaceVariant.contrastRatio(ground) shouldBeGreaterThan 4.5
-                    // The controls colour, which the bar's Queue label is in
-                    scheme.onSecondaryContainer.contrastRatio(ground) shouldBeGreaterThan 4.5
+                withClue("seed ${seed.toHct().hue.toInt()}/${seed.toHct().tone.toInt()} dark=$isDark") {
+                    scheme.onSurface.contrastRatio(sheet) shouldBeGreaterThan 4.5
+                    scheme.onSurfaceVariant.contrastRatio(sheet) shouldBeGreaterThan 4.5
                 }
                 // The mini player's fill: a light wash of secondaryContainer over the root scheme's surfaceContainerHigh (docked, surfaceContainer)
                 for (accent in S2Accent.entries) {

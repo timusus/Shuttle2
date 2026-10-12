@@ -87,7 +87,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
@@ -533,7 +532,7 @@ private fun PaneShell(
                 destinations()
             }
             if (docked) {
-                ArtworkTheme(content.state.seed, ArtworkSchemeStyle.Player) {
+                ArtworkTheme(content.state.seed) {
                     // Under artwork, the mini player's own fill runs down under the navigation bar.
                     Surface(color = miniPlayerFill(MaterialTheme.colorScheme.surfaceContainer) { it.surfaceContainerHigh }) {
                         MiniPlayer(

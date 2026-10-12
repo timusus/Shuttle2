@@ -38,7 +38,6 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2SheetDefaults
 import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.ui.shell.ChromeInsets
@@ -78,7 +77,7 @@ internal fun PlayerSheet(
 
     PanelResetEffect(state, player, actions)
 
-    ArtworkTheme(player.seed, ArtworkSchemeStyle.Player) {
+    ArtworkTheme(player.seed) {
         Surface(
             modifier = modifier
                 .fillMaxSize()

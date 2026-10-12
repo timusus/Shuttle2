@@ -9,22 +9,6 @@ import com.materialkolor.ktx.toColor
 import com.materialkolor.ktx.toHct
 
 /**
- * How an artwork seed is turned into a scheme. Detail screens use Vibrant, which holds the seed's hue in the accent
- * roles at full chroma, so Play reads as the cover's colour rather than TonalSpot's muted version of it (#736), while
- * the surfaces stay near neutral under the list; the player lets the seed's own chroma carry into the containers.
- *
- * [minSeedTone] lifts a darker seed to that tone first. The player's Content palette builds its
- * containers at the seed's own tone, so an all-dark cover's seed (tone 5 to 15) would give
- * near-black containers, and a black primary on a light scheme; lifted, it keeps its hue and chroma.
- */
-enum class ArtworkSchemeStyle(internal val paletteStyle: PaletteStyle, internal val minSeedTone: Double) {
-    Detail(PaletteStyle.Vibrant, minSeedTone = 0.0),
-
-    /** Lifted to 30, M3's dark-scheme container tone. */
-    Player(PaletteStyle.Content, minSeedTone = 30.0),
-}
-
-/**
  * Seeds below this HCT chroma are too grey to carry a hue, so they fall back to the root accent
  * scheme rather than produce a grey one.
  *
@@ -65,14 +49,13 @@ fun accentColorScheme(
 ): ColorScheme = seedColorScheme(accent.seed, isDark, accent.style, contrast)
 
 /**
- * The scheme for an artwork [seed], or null when the seed is too grey to use and the caller
- * should fall back to the root accent scheme.
+ * The scheme for an artwork [seed], shared by the detail screens and the player, or null when the seed is too grey to
+ * use and the caller should fall back to the root accent scheme. Vibrant holds the seed's hue in the accent and
+ * container roles at full chroma whatever the seed's tone, so a cover reads as its own colour rather than TonalSpot's
+ * muted version of it (#736), and an all-dark cover still gets tinted containers (#409).
  */
 fun artworkColorScheme(
     seed: Color,
     isDark: Boolean,
-    style: ArtworkSchemeStyle = ArtworkSchemeStyle.Detail,
     contrast: S2Contrast = S2Contrast.Default,
-): ColorScheme? = if (isUsableSeed(seed)) seedColorScheme(seed.withMinTone(style.minSeedTone), isDark, style.paletteStyle, contrast) else null
-
-private fun Color.withMinTone(minTone: Double): Color = toHct().let { hct -> if (hct.tone < minTone) hct.withTone(minTone).toColor() else this }
+): ColorScheme? = if (isUsableSeed(seed)) seedColorScheme(seed, isDark, PaletteStyle.Vibrant, contrast) else null

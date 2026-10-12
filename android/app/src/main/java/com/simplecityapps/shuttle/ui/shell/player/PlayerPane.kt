@@ -13,7 +13,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import kotlinx.coroutines.launch
 
@@ -38,7 +37,7 @@ internal fun PlayerPane(
 ) {
     val scope = rememberCoroutineScope()
     PanelResetEffect(state, player, actions)
-    ArtworkTheme(player.seed, ArtworkSchemeStyle.Player) {
+    ArtworkTheme(player.seed) {
         Surface(
             modifier = modifier.width(width).fillMaxHeight().testTag(PlayerTestTags.Pane),
             color = PlayerSheetColor,

@@ -23,7 +23,6 @@ import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 @Composable
 fun ArtworkTheme(
     seed: ArtworkSeed,
-    style: ArtworkSchemeStyle = ArtworkSchemeStyle.Detail,
     content: @Composable () -> Unit,
 ) {
     // Plain memory, not state: it only feeds the seed chosen in this same composition.
@@ -35,8 +34,8 @@ fun ArtworkTheme(
     }
     val settings = LocalS2ThemeSettings.current
     val rootScheme = LocalRootColorScheme.current ?: MaterialTheme.colorScheme
-    val seededScheme = remember(effectiveSeed, style, settings.isDark, settings.contrast) {
-        effectiveSeed?.let { artworkColorScheme(it, settings.isDark, style, settings.contrast) }
+    val seededScheme = remember(effectiveSeed, settings.isDark, settings.contrast) {
+        effectiveSeed?.let { artworkColorScheme(it, settings.isDark, settings.contrast) }
     }
     // Medium and High contrast push the containers away from the surface tones, so a container
     // ground would no longer carry surface text at AA; there [artworkRole] keeps the root roles.
