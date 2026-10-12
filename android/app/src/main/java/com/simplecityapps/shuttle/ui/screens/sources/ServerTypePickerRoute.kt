@@ -24,7 +24,11 @@ fun ServerTypePickerRoute(onDismissRequest: () -> Unit) {
 
     // An add the paywall interrupted carries on once the paywall closes with the add allowed
     LaunchedEffect(viewModel) {
-        viewModel.addResumes.collect { type -> signingIn = type }
+        viewModel.events.collect { event ->
+            when (event) {
+                is ServerTypePickerEvent.OpenSignIn -> signingIn = event.type
+            }
+        }
     }
 
     val signingInType = signingIn

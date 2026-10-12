@@ -288,12 +288,12 @@ class SourcesViewModelTest {
     @Test
     fun `a resumed add opens the sign-in for the type it carries`() = runTest {
         val viewModel = viewModel(FakeMediaSources())
-        val resumed = mutableListOf<MediaProviderType>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.addResumes.collect { resumed += it } }
+        val events = mutableListOf<SourcesEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect { events += it } }
 
         addResumes.emit(MediaProviderType.Emby)
 
-        resumed shouldBe listOf(MediaProviderType.Emby)
+        events shouldBe listOf(SourcesEvent.OpenSignIn(MediaProviderType.Emby))
     }
 
     @Test

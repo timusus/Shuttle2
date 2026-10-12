@@ -9,6 +9,12 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+
+sealed interface ServerTypePickerEvent {
+    /** Open [type]'s sign-in: the add the paywall interrupted carries on. */
+    data class OpenSignIn(val type: MediaProviderType) : ServerTypePickerEvent
+}
 
 /** Backs the server-type picker sheet (#487): the paywall gate and the connect side effect [SourcesViewModel] also uses. */
 @ViewModelKey(ServerTypePickerViewModel::class)
@@ -19,7 +25,7 @@ class ServerTypePickerViewModel @Inject constructor(
     private val connectServer: ConnectServer,
 ) : ViewModel() {
     /** The paywall a refused [onAddServer] opened closed with the add allowed: carry on with the type it was for. */
-    val addResumes: Flow<MediaProviderType> = observeAddServerResumes()
+    val events: Flow<ServerTypePickerEvent> = observeAddServerResumes().map(ServerTypePickerEvent::OpenSignIn)
 
     /** Whether [type]'s sign-in dialog may open; false opens the paywall instead. */
     fun onAddServer(type: MediaProviderType): Boolean = tryAddServer(type)

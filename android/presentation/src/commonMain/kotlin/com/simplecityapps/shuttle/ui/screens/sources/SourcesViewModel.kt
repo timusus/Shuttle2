@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /** A media server in Sources, [connected] when the library imports from it, with its import's [status] and its [songs] once the library has loaded. */
@@ -59,6 +60,11 @@ data class SourcesUiState(
     /** When any import last finished, if one ever has: iOS's scan row shows it. */
     val lastImport: Instant? = null,
 )
+
+sealed interface SourcesEvent {
+    /** Open [type]'s sign-in: the add the paywall interrupted carries on. */
+    data class OpenSignIn(val type: MediaProviderType) : SourcesEvent
+}
 
 val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex, MediaProviderType.Subsonic)
 
@@ -131,7 +137,7 @@ class SourcesViewModel @Inject constructor(
     }
 
     /** The paywall a refused [onAddServer] opened closed with the add allowed: carry on with the type it was for. */
-    val addResumes: Flow<MediaProviderType> = observeAddServerResumes()
+    val events: Flow<SourcesEvent> = observeAddServerResumes().map(SourcesEvent::OpenSignIn)
 
     /** Whether [type]'s sign-in may open: once the trial is over without Pro, the gate opens the paywall instead. */
     fun onAddServer(type: MediaProviderType): Boolean = tryAddServer(type)

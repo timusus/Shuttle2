@@ -40,7 +40,11 @@ fun sourcesRows(onOpenThisDevice: () -> Unit, onOpenServer: (MediaProviderType) 
 
     // An add the paywall interrupted carries on once the paywall closes with the add allowed
     LaunchedEffect(viewModel) {
-        viewModel.addResumes.collect { type -> signingIn = type }
+        viewModel.events.collect { event ->
+            when (event) {
+                is SourcesEvent.OpenSignIn -> signingIn = event.type
+            }
+        }
     }
 
     // Refreshes the folders' access, which the This device row flags

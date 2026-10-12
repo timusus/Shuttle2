@@ -40,12 +40,12 @@ class ServerTypePickerViewModelTest {
     @Test
     fun `a resumed add opens the sign-in for the type it carries`() = runTest(UnconfinedTestDispatcher()) {
         val viewModel = viewModel(FakeMediaSources())
-        val resumed = mutableListOf<MediaProviderType>()
-        backgroundScope.launch { viewModel.addResumes.collect { resumed += it } }
+        val events = mutableListOf<ServerTypePickerEvent>()
+        backgroundScope.launch { viewModel.events.collect { events += it } }
 
         addResumes.emit(MediaProviderType.Emby)
 
-        resumed shouldBe listOf(MediaProviderType.Emby)
+        events shouldBe listOf(ServerTypePickerEvent.OpenSignIn(MediaProviderType.Emby))
     }
 
     @Test
