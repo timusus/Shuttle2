@@ -1,4 +1,5 @@
 import Foundation
+import os
 import PlaybackDecode
 import PlaybackPlayer
 import PlaybackRender
@@ -25,6 +26,12 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private var listener: IosAudioPlayerListener?
     private var lastReport: (uid: Int64, state: IosAudioPlayerState)?
     private var ticker: Timer?
+    private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
+    /// When the last start that plays was asked for, until it is heard: the `time to first audio` line (#822).
+    private var startRequested: UInt64?
+    /// Whether the player has reported anything but playing since then. A start it never had to wait for (a resume,
+    /// an item already decoded ahead) isn't timed: it would read as the time its report took.
+    private var startWaited = false
 
     @MainActor
     init(player: Player<QueueKey>) {
@@ -77,9 +84,29 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         case .ready: player.isPlaying ? .playing : .paused
         case .ended: .ended
         }
+        timeFirstAudio(state)
         if let lastReport, lastReport.uid == uid, lastReport.state == state { return }
         lastReport = (uid, state)
         listener?.onStateChanged(trackId: "\(uid)", state: state)
+    }
+
+    @MainActor
+    private func requestStart(_ playWhenReady: Bool) {
+        startRequested = playWhenReady ? DispatchTime.now().uptimeNanoseconds : nil
+        startWaited = false
+    }
+
+    @MainActor
+    private func timeFirstAudio(_ state: IosAudioPlayerState) {
+        guard let start = startRequested else { return }
+        guard state == .playing else {
+            startWaited = true
+            return
+        }
+        guard startWaited, let songId = player.currentItem?.songId else { return }
+        startRequested = nil
+        let ms = (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
+        log.notice("time to first audio: song \(songId, privacy: .public), \(ms, privacy: .public) ms")
     }
 
     @MainActor
@@ -119,6 +146,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func setItems(order: [IosQueueEntry], currentIndex: Int32, startMs: Int64, playWhenReady: Bool) {
         MainActor.assumeIsolated {
             lastReport = nil
+            requestStart(playWhenReady)
             player.setItems(order.map(Self.key), startIndex: Int(currentIndex), startPosition: Double(startMs) / 1000)
             player.playWhenReady = playWhenReady
         }
@@ -131,6 +159,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func skipTo(index: Int32, startMs: Int64, playWhenReady: Bool) {
         MainActor.assumeIsolated {
             lastReport = nil
+            requestStart(playWhenReady)
             let failed = player.error != nil
             player.seek(to: Double(startMs) / 1000, itemAt: Int(index))
             prepareAfterFailure(failed, playWhenReady: playWhenReady, position: Double(startMs) / 1000)
@@ -140,6 +169,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func skipToNext(playWhenReady: Bool) {
         MainActor.assumeIsolated {
             lastReport = nil
+            requestStart(playWhenReady)
             let failed = player.error != nil
             player.skipToNext()
             prepareAfterFailure(failed, playWhenReady: playWhenReady, position: 0)
@@ -170,6 +200,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func play() {
         MainActor.assumeIsolated {
             lastReport = nil
+            if !player.isPlaying { requestStart(true) }
             player.play()
             reportState()
         }
@@ -178,6 +209,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func pause() {
         MainActor.assumeIsolated {
             lastReport = nil
+            requestStart(false)
             player.pause()
             reportState()
         }
@@ -190,6 +222,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func stop() {
         MainActor.assumeIsolated {
             lastReport = nil
+            requestStart(false)
             player.stop()
         }
     }
