@@ -77,7 +77,10 @@ class IosPlayerController(
 
     private val loads = IosPendingLoads()
 
-    private val feeder: IosEngineFeeder = IosEngineFeeder(player, resolver, scope, queue, flows, loads) { feed, skip -> events.onCurrentFailed(feed, skip) }
+    /** Opens the play order's streams for a [player] that [IosAudioPlayer.ownsPlayOrder]. */
+    val itemResolver = IosItemResolver(resolver, scope)
+
+    private val feeder: IosEngineFeeder = IosEngineFeeder(player, resolver, itemResolver, scope, queue, flows, loads) { feed, skip -> events.onCurrentFailed(feed, skip) }
 
     private val events: IosEngineEvents = IosEngineEvents(feeder, queue, flows, loads)
 

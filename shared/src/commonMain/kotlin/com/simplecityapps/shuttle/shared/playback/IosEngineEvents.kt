@@ -64,8 +64,11 @@ internal class IosEngineEvents(
         log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.item.song.id}, gapless" }
         feeder.current?.takeIf { !it.failed }?.let { flows.trackEnded.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
         feeder.arrive(arrived)
-        arrived.ready = true
-        loads.failures = 0
+        // A player that owns the order reports a failed next after moving onto it, so it's ready once it says it plays.
+        if (!feeder.ownsOrder) {
+            arrived.ready = true
+            loads.failures = 0
+        }
         if (queue.lists.base.any { it.uid == arrived.item.uid }) {
             queue.setCurrent(arrived.item.uid)
             feeder.publishProgress(0)
@@ -157,7 +160,10 @@ internal class IosEngineEvents(
         log.warn { "track $trackId failed: ${message.replace(QUERY, "?…")}" }
         val currentFeed = feeder.current
         if (currentFeed != null && trackId == currentFeed.id) {
-            onCurrentFailed(currentFeed)
+            // A stream that couldn't be resolved isn't reported, and a refusal stops there, as for the fed engine.
+            val unresolved = if (feeder.ownsOrder) feeder.unresolved(currentFeed) else null
+            if (unresolved != null) currentFeed.reportFailure = false
+            onCurrentFailed(currentFeed, skip = unresolved !is ServerStreamNotAllowedException)
         } else {
             // Handled when playback reaches it (onEnded), as Android reports a failure when the player does.
             feeder.markEngineNextFailed(trackId)

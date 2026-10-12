@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.mediaprovider.StreamUrlProvider
+import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.shuttle.model.Song
 
 /**
@@ -25,6 +26,37 @@ interface IosAudioPlayer {
 
     /** Sets, replaces or (null) clears the track after the current one, for a gapless handover. `setNext`. */
     fun setNext(next: IosAudioTrack?)
+
+    /**
+     * True for a player that takes the whole play order ([setItems]) and owns the next item, repeat and the gapless join,
+     * opening each item's stream through [IosItemResolver] itself, as Media3 does; it ignores [load] and [setNext], and
+     * reports each item under its queue uid. False for one fed the current and next tracks, which ignores the order calls.
+     */
+    val ownsPlayOrder: Boolean
+        get() = false
+
+    /** Replaces the order with [order], [currentIndex] current from [startMs]. `Player.setItems`. */
+    fun setItems(
+        order: List<IosQueueEntry>,
+        currentIndex: Int,
+        startMs: Long,
+        playWhenReady: Boolean
+    ) = Unit
+
+    /** A queue edit that keeps [order]`[currentIndex]` current: it plays on undisturbed. `Player.replaceItems`. */
+    fun replaceItems(
+        order: List<IosQueueEntry>,
+        currentIndex: Int
+    ) = Unit
+
+    /** Moves to [index] of the order last set, at [startMs]: `Player.skipToNext`, `skipToPrevious` or `seek(to:itemAt:)`. */
+    fun skipTo(
+        index: Int,
+        startMs: Long,
+        playWhenReady: Boolean
+    ) = Unit
+
+    fun setRepeatMode(mode: RepeatMode) = Unit
 
     fun play()
 
@@ -154,6 +186,12 @@ class IosAudioTrack(
 ) {
     override fun toString(): String = "IosAudioTrack($id, $url)"
 }
+
+/** One item of the play order handed to an [IosAudioPlayer.ownsPlayOrder] player: the same pair is the same item. */
+data class IosQueueEntry(
+    val uid: Long,
+    val songId: Long
+)
 
 /** Where a song's audio comes from, and its gain. */
 data class IosStream(

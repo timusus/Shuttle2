@@ -1,0 +1,277 @@
+import Foundation
+import PlaybackDecode
+import PlaybackPlayer
+import PlaybackRender
+import PlaybackStreaming
+import Shared
+
+/// The Kotlin `IosAudioPlayer` over AudioPlaybackKit's `Player`, which owns the play order, the gapless join, repeat,
+/// pause at the end of an item and the audio session, as Media3 does on Android. Kotlin keeps the queue and its policy
+/// (skipping failed items, restart-vs-previous) and hands the whole order over on every edit; each item opens its stream
+/// through Kotlin's `IosItemResolver` when the player decodes it.
+///
+/// **Threading.** Kotlin calls on the main thread and every call runs on the main actor there; the player's events and
+/// state changes reach the listener on the main actor. Positions are seconds here and ms in Kotlin. Items are reported
+/// under their queue uid.
+final class KitAudioPlayer: NSObject, IosAudioPlayer {
+    struct QueueKey: Hashable, Sendable {
+        let uid: Int64
+        let songId: Int64
+    }
+
+    let player: Player<QueueKey>
+    /// Held strongly: Kotlin's listener is an object only the player refers to.
+    private var listener: IosAudioPlayerListener?
+    private var lastReport: (uid: Int64, state: IosAudioPlayerState)?
+    private var ticker: Timer?
+
+    @MainActor
+    init(player: Player<QueueKey>) {
+        self.player = player
+        super.init()
+        observeState()
+        Task { @MainActor [weak self, events = player.events] in
+            for await event in events {
+                self?.handle(event)
+            }
+        }
+        // Ticks for the progress bar; Kotlin's elapsed time between them is its own.
+        ticker = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.tick() }
+        }
+    }
+
+    deinit {
+        ticker?.invalidate()
+    }
+
+    /// The app's player: each item's source reads the stream `resolve` hands it, opened on the decode thread.
+    @MainActor
+    static func live(resolve: @escaping ResolvingByteReader.Resolve) -> KitAudioPlayer {
+        KitAudioPlayer(player: Player(makeSource: { key in
+            FFmpegItemSource(reader: ResolvingByteReader(uid: key.uid, resolve: resolve))
+        }))
+    }
+
+    // MARK: - Player to Kotlin
+
+    @MainActor
+    private func observeState() {
+        withObservationTracking {
+            _ = (player.state, player.isPlaying, player.currentIndex, player.error != nil)
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                self?.reportState()
+                self?.observeState()
+            }
+        }
+    }
+
+    @MainActor
+    private func reportState() {
+        guard let uid = player.currentItem?.uid, player.error == nil else { return }
+        let state: IosAudioPlayerState = switch player.state {
+        case .idle: .idle
+        case .buffering: .loading
+        case .ready: player.isPlaying ? .playing : .paused
+        case .ended: .ended
+        }
+        if let lastReport, lastReport.uid == uid, lastReport.state == state { return }
+        lastReport = (uid, state)
+        listener?.onStateChanged(trackId: "\(uid)", state: state, superseded: false)
+    }
+
+    @MainActor
+    private func handle(_ event: PlayerEvent<QueueKey>) {
+        switch event {
+        case let .itemTransition(_, to, reason):
+            // A seek's transition is Kotlin's own move; only the player's moves are news to it.
+            guard reason != .seek, let to else { return }
+            lastReport = nil
+            listener?.onTransition(trackId: "\(player.items[to].uid)")
+        case let .itemFailed(index, error):
+            lastReport = nil
+            listener?.onFailed(trackId: "\(player.items[index].uid)", message: "\(error.underlying)")
+        case let .seekLanded(index, position):
+            listener?.onPosition(trackId: "\(player.items[index].uid)", positionMs: Int64(position * 1000))
+        case .recoveredPaused:
+            reportState()
+        case let .playWhenReadyChanged(playing, reason):
+            if !playing, reason == .endOfItem, let uid = player.currentItem?.uid {
+                listener?.onPausedAtEnd(trackId: "\(uid)")
+            }
+        }
+    }
+
+    @MainActor
+    private func tick() {
+        guard player.isPlaying, let uid = player.currentItem?.uid else { return }
+        listener?.onPosition(trackId: "\(uid)", positionMs: Int64(player.position * 1000))
+    }
+
+    // MARK: - IosAudioPlayer
+
+    var ownsPlayOrder: Bool { true }
+
+    func setListener(listener: IosAudioPlayerListener?) {
+        self.listener = listener
+    }
+
+    func setItems(order: [IosQueueEntry], currentIndex: Int32, startMs: Int64, playWhenReady: Bool) {
+        MainActor.assumeIsolated {
+            lastReport = nil
+            player.setItems(order.map(Self.key), startIndex: Int(currentIndex), startPosition: Double(startMs) / 1000)
+            player.playWhenReady = playWhenReady
+        }
+    }
+
+    func replaceItems(order: [IosQueueEntry], currentIndex: Int32) {
+        MainActor.assumeIsolated { player.replaceItems(order.map(Self.key), currentIndex: Int(currentIndex)) }
+    }
+
+    func skipTo(index: Int32, startMs: Int64, playWhenReady: Bool) {
+        MainActor.assumeIsolated {
+            lastReport = nil
+            player.seek(to: Double(startMs) / 1000, itemAt: Int(index))
+            // A failed or stopped player only moves its index on a seek; a play prepares the item there.
+            player.playWhenReady = playWhenReady
+        }
+    }
+
+    func setRepeatMode(mode: Shared.RepeatMode) {
+        MainActor.assumeIsolated {
+            player.repeatMode = switch mode {
+            case .off: .off
+            case .all: .all
+            case .one: .one
+            }
+        }
+    }
+
+    func load(current _: IosAudioTrack, next _: IosAudioTrack?, startMs _: Int64, playWhenReady _: Bool) {}
+
+    func setNext(next _: IosAudioTrack?) {}
+
+    func play() {
+        MainActor.assumeIsolated { player.play() }
+    }
+
+    func pause() {
+        MainActor.assumeIsolated { player.pause() }
+    }
+
+    func seek(positionMs: Int64) {
+        MainActor.assumeIsolated { player.seek(to: Double(positionMs) / 1000) }
+    }
+
+    func stop() {
+        MainActor.assumeIsolated {
+            lastReport = nil
+            player.stop()
+        }
+    }
+
+    func setSpeed(speed: Float) {
+        MainActor.assumeIsolated { player.rate = Double(speed) }
+    }
+
+    func setPauseAtEnd(enabled: Bool) {
+        MainActor.assumeIsolated { player.pauseAtEndOfItem = enabled }
+    }
+
+    func positionMs() -> Int64 {
+        MainActor.assumeIsolated { player.currentIndex == nil ? -1 : Int64(player.position * 1000) }
+    }
+
+    func durationMs() -> Int64 {
+        MainActor.assumeIsolated { player.duration.map { Int64($0 * 1000) } ?? -1 }
+    }
+
+    /// The equalizer joins the player's processors in a later stage.
+    func setEqualizer(enabled _: Bool, preampDb _: Float, coefficients _: KotlinDoubleArray) {}
+
+    func engineSampleRate() -> Int32 {
+        48000
+    }
+
+    private static func key(_ entry: IosQueueEntry) -> QueueKey {
+        QueueKey(uid: entry.uid, songId: entry.songId)
+    }
+}
+
+/// A queue item's bytes, found on first use: it blocks the decode thread on Kotlin's resolver (on the main thread),
+/// then reads the file or download it named. A stream that can't be resolved (a paywall refusal, a server error)
+/// throws, so the player reports the item failed.
+final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
+    /// Hands `completion` the item's stream, or why it has none; called on the main thread.
+    typealias Resolve = @MainActor (_ uid: Int64, _ completion: @escaping (IosStream?, String?) -> Void) -> Void
+
+    private let uid: Int64
+    private let resolve: Resolve
+    private let lock = NSLock()
+    private let resolved = DispatchSemaphore(value: 0)
+    private var inner: Result<StreamByteReader, Error>?
+    private var cancelled = false
+    private var answer: (stream: IosStream?, error: String?) = (nil, nil)
+
+    init(uid: Int64, resolve: @escaping Resolve) {
+        self.uid = uid
+        self.resolve = resolve
+    }
+
+    var totalLength: Int64? { try? opened().totalLength }
+
+    var position: Int64 { (try? opened().position) ?? 0 }
+
+    func read(into buffer: UnsafeMutableRawPointer, maxLength: Int) throws -> Int {
+        try opened().read(into: buffer, maxLength: maxLength)
+    }
+
+    func seek(to offset: Int64) throws {
+        try opened().seek(to: offset)
+    }
+
+    func cancel() {
+        let reader = lock.withLock {
+            cancelled = true
+            return try? inner?.get()
+        }
+        reader?.cancel()
+        resolved.signal()
+    }
+
+    func interrupt() {
+        lock.withLock { try? inner?.get() }?.interrupt()
+    }
+
+    func clearInterrupt() {
+        lock.withLock { try? inner?.get() }?.clearInterrupt()
+    }
+
+    private func opened() throws -> StreamByteReader {
+        if let inner = lock.withLock({ inner }) { return try inner.get() }
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                self.resolve(self.uid) { stream, error in
+                    self.lock.withLock { self.answer = (stream, error) }
+                    self.resolved.signal()
+                }
+            }
+        }
+        resolved.wait()
+        return try lock.withLock {
+            if cancelled { throw StreamByteReaderError.cancelled }
+            let result = Result { try Self.reader(answer.stream, error: answer.error) }
+            inner = result
+            return try result.get()
+        }
+    }
+
+    private static func reader(_ stream: IosStream?, error: String?) throws -> StreamByteReader {
+        guard let stream, let url = URL(string: stream.url) else {
+            throw StreamByteReaderError.transport(error ?? "no stream")
+        }
+        if url.isFileURL { return try FileByteReader(url: url) }
+        return GrowingFileByteSource(url: url, authHeaders: stream.headers)
+    }
+}

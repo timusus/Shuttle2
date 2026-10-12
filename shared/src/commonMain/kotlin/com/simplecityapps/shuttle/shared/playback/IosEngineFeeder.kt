@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 internal class IosEngineFeeder(
     private val player: IosAudioPlayer,
     resolver: IosStreamResolver,
+    private val items: IosItemResolver,
     private val scope: CoroutineScope,
     private val queue: QueueModel,
     private val flows: IosPlaybackFlows,
@@ -72,11 +73,67 @@ internal class IosEngineFeeder(
 
     private var nextJob: Job? = null
 
+    /** The player takes the whole play order and reports each item under its uid ([IosAudioPlayer.ownsPlayOrder]). */
+    val ownsOrder = player.ownsPlayOrder
+
+    /** The order last handed to an [ownsOrder] player. */
+    private var sentOrder: List<IosQueueEntry>? = null
+
     @OptIn(ExperimentalUuidApi::class)
     private fun newFeed(
         item: QueueItem,
         playId: String = Uuid.random().toString()
     ) = IosFeed("${item.uid}-${++feedSerial}", item, playId)
+
+    /** An [ownsOrder] player's item: its id is the uid it reports under, its play the one [items] resolves it for. */
+    private fun orderFeed(
+        item: QueueItem,
+        current: Boolean
+    ) = IosFeed("${item.uid}", item, items.playId(item, current && flows.playWhenReady, retryFailed = current)).also { it.sent = true }
+
+    /**
+     * [startLoad] for an [ownsOrder] player: the order goes to it whole and it opens [item] itself. Within the order it
+     * has, the player moves to [item], keeping what it pre-opened; a changed order replaces its own.
+     */
+    private fun startOrderLoad(
+        item: QueueItem,
+        startMs: Int
+    ) {
+        val feed = orderFeed(item, current = true)
+        feed.startMs = startMs
+        current = feed
+        next = null
+        engineNext = null
+        engineState = IosAudioPlayerState.Loading
+        publishProgress(startMs)
+        publishState()
+        val (order, index) = playOrder() ?: return
+        player.setRepeatMode(queue.repeatMode)
+        if (order == sentOrder) {
+            player.skipTo(index, startMs.toLong(), flows.playWhenReady)
+        } else {
+            player.setItems(order, index, startMs.toLong(), flows.playWhenReady)
+        }
+        sentOrder = order
+        feedNext()
+    }
+
+    private fun playOrder(): Pair<List<IosQueueEntry>, Int>? {
+        val state = queue.queueStateFlow.value
+        val index = state.currentPosition ?: return null
+        return state.items.map { IosQueueEntry(it.uid, it.song.id) } to index
+    }
+
+    /** The queue's next item as an [ownsOrder] player has it next, with the order's streams pre-warmed from the current. */
+    private fun feedOrderNext() {
+        val state = queue.queueStateFlow.value
+        state.currentPosition?.let { items.update(state.items, it) }
+        val want = queue.next()
+        val have = next
+        if (have != null && want != null && have.item.uid == want.uid && have.item.song == want.song) return
+        next = want?.let { orderFeed(it, current = false) }
+        engineNext = next
+    }
 
     /**
      * Replaces the engine's current track with [item] at [startMs], then feeds the next. [reopen] is for a stream the
@@ -94,6 +151,7 @@ internal class IosEngineFeeder(
         reopen: Boolean = false
     ) {
         log.info { "load song ${item.song.id} at $startMs ms${if (reopen) ", re-opening its stream" else ""}, playWhenReady ${flows.playWhenReady}" }
+        if (ownsOrder) return startOrderLoad(item, startMs)
         loadJob?.cancel()
         val preopenedFeed = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }
         val preopened = preopenedFeed?.stream
@@ -153,6 +211,7 @@ internal class IosEngineFeeder(
     /** Hands the engine the queue's next item, if it isn't the one it has. */
     fun feedNext() {
         val currentFeed = current ?: return
+        if (ownsOrder) return feedOrderNext()
         if (!currentFeed.sent) return
         val want = queue.next()
         val have = next
@@ -211,6 +270,13 @@ internal class IosEngineFeeder(
 
             else -> {
                 currentFeed.item = want
+                if (ownsOrder) {
+                    playOrder()?.let { (order, index) ->
+                        player.setRepeatMode(queue.repeatMode)
+                        player.replaceItems(order, index)
+                        sentOrder = order
+                    }
+                }
                 feedNext()
             }
         }
@@ -264,6 +330,9 @@ internal class IosEngineFeeder(
     }
 
     fun endPlay(playId: String) = plays.end(playId)
+
+    /** Why [feed]'s stream couldn't be resolved for an [ownsOrder] player, or null if that isn't why it failed. */
+    fun unresolved(feed: IosFeed): Throwable? = items.failure(feed.item.uid)
 
     fun pause() {
         log.info { "pause song ${current?.item?.song?.id}, ${flows.playbackState.value.name}" }

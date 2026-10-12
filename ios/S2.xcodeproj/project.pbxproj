@@ -155,6 +155,7 @@
 		B9BD09F696DCDF0CCAA8045D /* AppShellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8283086D7B89F655CDC63931 /* AppShellTests.swift */; };
 		BBA3A674A453A7214F3948FA /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87263640816D52C273CCC216 /* Typography.swift */; };
 		BC96C3A8656E42ADB2A47476 /* PlayerPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4EABE937DFDA953B4A4F31C /* PlayerPalette.swift */; };
+		BD9F9A57046F5AF82F885333 /* KitAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ED28830F54EABEDFD3C9156 /* KitAudioPlayer.swift */; };
 		BF51CC3EE780B523F4F14FA6 /* AppIntentPerformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126D030095908900A149B031 /* AppIntentPerformer.swift */; };
 		C0540805B66A09FDE6557DB9 /* AlbumDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D8F50EA0F4508C11C2A23D /* AlbumDetailTests.swift */; };
 		C06F838DD291958251D1AA51 /* Shape.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97E968C1BD5C9BA155566A5 /* Shape.swift */; };
@@ -378,6 +379,7 @@
 		7D100B2699FDBBA93E472ED3 /* ConsumeEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsumeEvents.swift; sourceTree = "<group>"; };
 		7E0FCFB26612213EC156D44E /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7E5961F296B2738309AF66BC /* AppGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGraph.swift; sourceTree = "<group>"; };
+		7ED28830F54EABEDFD3C9156 /* KitAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KitAudioPlayer.swift; sourceTree = "<group>"; };
 		7F87245A9FB0C0CD8A257CA4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		802E9F83EAD3F63E086B199B /* S2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = S2.entitlements; sourceTree = "<group>"; };
 		810F43EC6F7206E3D0B7FF52 /* CarPlayCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarPlayCatalogTests.swift; sourceTree = "<group>"; };
@@ -880,6 +882,7 @@
 				F95725D349E6F5EBD720DD23 /* AudioEngine.swift */,
 				B12E0CB3FCC7571A44BAD037 /* AudioSessionController.swift */,
 				EFFBC031880E93536DB77D51 /* EngineAudioPlayer.swift */,
+				7ED28830F54EABEDFD3C9156 /* KitAudioPlayer.swift */,
 				402DCA8A76A00BEDF61347DF /* MusicPlaybackController+AudioEngine.swift */,
 				6D4EC07E38D0A5C76D2B59F0 /* NowPlayingController.swift */,
 				91C9049F0CB5EDB935D8D6B8 /* PlaybackSystemCoordinator.swift */,
@@ -1198,6 +1201,7 @@
 				F3ABB063A6171C619BAB09B8 /* HomeView.swift in Sources */,
 				210B036A0CC1AF2D9E0E1286 /* ImportActivity.swift in Sources */,
 				4B7D96BE34E44984943545EE /* JumpBackInGrid.swift in Sources */,
+				BD9F9A57046F5AF82F885333 /* KitAudioPlayer.swift in Sources */,
 				140C0EE1B9DAE1FF6D153099 /* KotlinCrashEvent.swift in Sources */,
 				83383C1E9DCF9FF60907D62A /* KotlinLogSink.swift in Sources */,
 				9F1FD3B78D286A40F4A9857C /* KotlinServerConnectionPolicy.swift in Sources */,

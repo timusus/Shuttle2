@@ -127,6 +127,17 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         engine.setNext(next.flatMap(engineTrack))
     }
 
+    // Fed the current and next tracks, it takes no play order.
+    var ownsPlayOrder: Bool { false }
+
+    func setItems(order _: [IosQueueEntry], currentIndex _: Int32, startMs _: Int64, playWhenReady _: Bool) {}
+
+    func replaceItems(order _: [IosQueueEntry], currentIndex _: Int32) {}
+
+    func skipTo(index _: Int32, startMs _: Int64, playWhenReady _: Bool) {}
+
+    func setRepeatMode(mode _: Shared.RepeatMode) {}
+
     func notePlayRequest(_ trigger: String) {
         engine.notePlayRequest(trigger)
     }
