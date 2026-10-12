@@ -86,7 +86,7 @@ class SourceSetupViewModel @Inject constructor(
         )
 
     /** Whether a chosen type's sign-in may open; false opens the paywall instead. */
-    fun onChooseType(): Boolean = tryAddServer()
+    fun onChooseType(): Boolean = tryAddServer(null)
 
     /** A server's sign-in succeeded: enable it and import, following that import from here. */
     fun onServerConnected(type: MediaProviderType) {

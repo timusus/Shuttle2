@@ -54,6 +54,8 @@ class SourcesViewModelTest {
 
     /** The paywall gate's answer: whether another server may be added before Pro. */
     private var serverAllowed = true
+    private val addAttempts = mutableListOf<MediaProviderType?>()
+    private val addResumes = MutableSharedFlow<MediaProviderType>()
 
     private val emby = FakeServerAuthentication(SavedServerLogin("http://emby:8096", "tim", "secret"))
 
@@ -62,8 +64,11 @@ class SourcesViewModelTest {
         ObserveScannerFolders(folderStore),
         RefreshScannerFolders(folderStore),
         importState,
-        TryAddServer { serverAllowed },
-        ObserveAddServerResumes { MutableSharedFlow() },
+        TryAddServer { type ->
+            addAttempts += type
+            serverAllowed
+        },
+        ObserveAddServerResumes { addResumes },
         ConnectServer(mediaSources),
         ObserveLastScanDate(preferences),
         ForgetServer(mapOf(MediaProviderType.Emby to emby), preferences, ServerConnectionStore(SecurePreferenceManager(InMemoryKeyValueStore()))),
@@ -273,10 +278,22 @@ class SourcesViewModelTest {
     fun `a new server needs Pro once the trial is used up`() = runTest {
         val viewModel = viewModel(FakeMediaSources())
 
-        viewModel.onAddServer() shouldBe true
+        viewModel.onAddServer(MediaProviderType.Plex) shouldBe true
 
         serverAllowed = false
-        viewModel.onAddServer() shouldBe false
+        viewModel.onAddServer(MediaProviderType.Plex) shouldBe false
+        addAttempts shouldBe listOf(MediaProviderType.Plex, MediaProviderType.Plex)
+    }
+
+    @Test
+    fun `a resumed add opens the sign-in for the type it carries`() = runTest {
+        val viewModel = viewModel(FakeMediaSources())
+        val resumed = mutableListOf<MediaProviderType>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.addResumes.collect { resumed += it } }
+
+        addResumes.emit(MediaProviderType.Emby)
+
+        resumed shouldBe listOf(MediaProviderType.Emby)
     }
 
     @Test

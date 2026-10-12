@@ -38,13 +38,9 @@ fun sourcesRows(onOpenThisDevice: () -> Unit, onOpenServer: (MediaProviderType) 
     var pickingServer by rememberSaveable { mutableStateOf(false) }
     var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
 
-    // The type behind an add the paywall interrupted, signed in to once the paywall closes with the add allowed
-    var pendingType by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
+    // An add the paywall interrupted carries on once the paywall closes with the add allowed
     LaunchedEffect(viewModel) {
-        viewModel.addResumes.collect {
-            pendingType?.let { signingIn = it }
-            pendingType = null
-        }
+        viewModel.addResumes.collect { type -> signingIn = type }
     }
 
     // Refreshes the folders' access, which the This device row flags
@@ -57,7 +53,7 @@ fun sourcesRows(onOpenThisDevice: () -> Unit, onOpenServer: (MediaProviderType) 
         ServerTypePickerSheet(
             onTypeSelected = { type ->
                 pickingServer = false
-                if (viewModel.onAddServer()) signingIn = type else pendingType = type
+                if (viewModel.onAddServer(type)) signingIn = type
             },
             onDismissRequest = { pickingServer = false },
         )

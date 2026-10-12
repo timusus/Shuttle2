@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.entitlement
 
+import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -46,6 +48,7 @@ enum class ServerAccess {
  *   at once; a few seconds on iOS, where StoreKit answers soon after launch.
  * @param offersTrialOnAddServer refuses adding a server to a user with neither Pro nor a used trial, so the paywall offers
  *   the trial first (Android; iOS lets a server be added until the trial is used).
+ * @param purchaseSettleWait how long a closed add-server paywall waits for a purchase's entitlement to arrive.
  * @param disclosureStore keeps [pending] across process death, so a trial a car started is still disclosed after the
  *   app was killed; only used by a gate that starts the trial itself.
  */
@@ -54,7 +57,8 @@ class ServerAccessGate(
     private val startTrial: (suspend () -> Boolean)?,
     private val storeAnswerWait: Duration = Duration.ZERO,
     private val disclosureStore: TrialDisclosureStore = InMemoryTrialDisclosureStore(),
-    private val offersTrialOnAddServer: Boolean = false
+    private val offersTrialOnAddServer: Boolean = false,
+    private val purchaseSettleWait: Duration = 5.seconds
 ) : TrialDisclosures {
     private val _paywallRequests = MutableSharedFlow<PaywallSource>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -88,33 +92,43 @@ class ServerAccessGate(
      * True if the user may add a remote server: anyone but a user whose trial has ended without Pro, and, where
      * [offersTrialOnAddServer], a user who hasn't had the trial either, so the paywall can offer it before the first server.
      */
-    fun tryAddServer(): Boolean {
-        val allowed = addAllowed()
-        addRefused = !allowed
+    fun tryAddServer(type: MediaProviderType? = null): Boolean {
+        val allowed = addAllowed(entitlement.value)
+        addRefused = if (allowed) null else AddRefusal(type)
         if (!allowed) _paywallRequests.tryEmit(PaywallSource.AddServer)
         return allowed
     }
 
-    private fun addAllowed(): Boolean {
-        val free = entitlement.value as? Entitlement.Free
+    private fun addAllowed(entitlement: Entitlement): Boolean {
+        val free = entitlement as? Entitlement.Free
         return free == null || (!free.trialUsed && !offersTrialOnAddServer)
     }
 
-    private var addRefused = false
+    /** The add the paywall interrupted; compared by identity so a newer refusal isn't mistaken for it. */
+    private class AddRefusal(val type: MediaProviderType?)
 
-    private val _addResumes = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private var addRefused: AddRefusal? = null
+
+    private val _addResumes = MutableSharedFlow<MediaProviderType>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /** See [ObserveAddServerResumes]. */
-    val addResumes: SharedFlow<Unit> = _addResumes.asSharedFlow()
+    val addResumes: SharedFlow<MediaProviderType> = _addResumes.asSharedFlow()
 
     /**
-     * Ends the paywall that [source] opened. An add-server refused for it resumes if the entitlement now allows it (the
+     * Ends the paywall that [source] opened. An add-server refused for it resumes if the entitlement allows it (the
      * trial started or Pro was bought), and is forgotten otherwise, so a later purchase doesn't open an add from nowhere.
+     * A purchase may not be acknowledged yet when the user closes the paywall, so this waits up to [purchaseSettleWait]
+     * for the entitlement to allow the add.
      */
-    fun onPaywallClosed(source: PaywallSource) {
-        if (source != PaywallSource.AddServer || !addRefused) return
-        addRefused = false
-        if (addAllowed()) _addResumes.tryEmit(Unit)
+    suspend fun onPaywallClosed(source: PaywallSource) {
+        if (source != PaywallSource.AddServer) return
+        val refusal = addRefused ?: return
+        val allowed = withTimeoutOrNull(purchaseSettleWait) { entitlement.first(::addAllowed) } != null
+        // A newer add-server attempt owns the pending add now
+        if (addRefused !== refusal) return
+        addRefused = null
+        val type = refusal.type
+        if (allowed && type != null) _addResumes.tryEmit(type)
     }
 
     /**

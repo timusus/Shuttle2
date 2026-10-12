@@ -130,11 +130,11 @@ class SourcesViewModel @Inject constructor(
         mediaSources.scan()
     }
 
-    /** The paywall a refused [onAddServer] opened closed with the add allowed: carry on with the type chosen. */
-    val addResumes: Flow<Unit> = observeAddServerResumes()
+    /** The paywall a refused [onAddServer] opened closed with the add allowed: carry on with the type it was for. */
+    val addResumes: Flow<MediaProviderType> = observeAddServerResumes()
 
-    /** Whether a server's sign-in may open: once the trial is over without Pro, the gate opens the paywall instead. */
-    fun onAddServer(): Boolean = tryAddServer()
+    /** Whether [type]'s sign-in may open: once the trial is over without Pro, the gate opens the paywall instead. */
+    fun onAddServer(type: MediaProviderType): Boolean = tryAddServer(type)
 
     /** A server's sign-in dialog succeeded. */
     fun onServerConnected(type: MediaProviderType) = connectServer(type)

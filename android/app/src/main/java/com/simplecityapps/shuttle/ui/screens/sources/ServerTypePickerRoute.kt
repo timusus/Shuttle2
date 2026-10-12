@@ -22,20 +22,16 @@ fun ServerTypePickerRoute(onDismissRequest: () -> Unit) {
     val viewModel: ServerTypePickerViewModel = metroViewModel()
     var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
 
-    // The type behind an add the paywall interrupted, signed in to once the paywall closes with the add allowed
-    var pendingType by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
+    // An add the paywall interrupted carries on once the paywall closes with the add allowed
     LaunchedEffect(viewModel) {
-        viewModel.addResumes.collect {
-            pendingType?.let { signingIn = it }
-            pendingType = null
-        }
+        viewModel.addResumes.collect { type -> signingIn = type }
     }
 
     val signingInType = signingIn
     if (signingInType == null) {
         ServerTypePickerSheet(
             onTypeSelected = { type ->
-                if (viewModel.onAddServer()) signingIn = type else pendingType = type
+                if (viewModel.onAddServer(type)) signingIn = type
             },
             onDismissRequest = onDismissRequest,
         )

@@ -105,6 +105,9 @@ sealed interface PaywallUiEvent {
 
     /** The trial has started, so the paywall can close; it can't before, as leaving would cancel the start. */
     data object TrialStarted : PaywallUiEvent
+
+    /** A purchase made from the add-server paywall went through, so it closes and the add can carry on. */
+    data object PurchaseCompleted : PaywallUiEvent
 }
 
 /** The S2 Pro paywall: the user's entitlement, the lifetime price, trial start, purchase and restore. */
@@ -170,6 +173,7 @@ class PaywallViewModel @AssistedInject constructor(
         entitlement.collect { current ->
             if (current is Entitlement.Pro && (previous is Entitlement.Free || previous is Entitlement.Trial) && !restoring.value && !restored) {
                 events.post(PaywallUiEvent.ShowMessage(PaywallMessage.ThankYou))
+                if (source == PaywallSource.AddServer) events.post(PaywallUiEvent.PurchaseCompleted)
             }
             previous = current
         }

@@ -38,6 +38,7 @@ import com.simplecityapps.trial.Billing
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import timber.log.Timber
@@ -51,7 +52,17 @@ data class PaywallRoute(
 /** The paywall's entry, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
     entry<PaywallRoute> { route ->
-        PaywallEntry(route.source, onClose = { navigator.back() })
+        val context = LocalContext.current
+        val onPaywallClosed = remember { context.appGraph<PaywallEntryPoint>().onPaywallClosed() }
+        val scope = rememberCoroutineScope()
+        PaywallEntry(
+            route.source,
+            onClose = {
+                // Undispatched so the report is made before leaving cancels the scope
+                scope.launch(start = CoroutineStart.UNDISPATCHED) { onPaywallClosed(route.source) }
+                navigator.back()
+            }
+        )
     }
 }
 
@@ -66,8 +77,9 @@ fun PaywallHost(
 ) {
     var activeSource by rememberSaveable { mutableStateOf<PaywallSource?>(null) }
     // Closing removes the dialog, which clears its view model store and so reports the dismissal; a recreation keeps it
+    val scope = rememberCoroutineScope()
     val close = {
-        activeSource?.let(onPaywallClosed::invoke)
+        activeSource?.let { source -> scope.launch { onPaywallClosed(source) } }
         activeSource = null
     }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -96,6 +108,8 @@ fun PaywallHost(
 @ContributesTo(AppScope::class)
 interface PaywallEntryPoint {
     fun billing(): Billing
+
+    fun onPaywallClosed(): OnPaywallClosed
 }
 
 /** The paywall wired to its ViewModel, for the shell's entry and the legacy dialog alike. */
@@ -120,7 +134,7 @@ fun PaywallEntry(
             // Shown without holding back the events after it, such as a purchase launched while it's up
             is PaywallUiEvent.ShowMessage -> scope.launch { snackbarHostState.showSnackbar(context.getString(event.message.text)) }
 
-            PaywallUiEvent.TrialStarted -> onClose()
+            PaywallUiEvent.TrialStarted, PaywallUiEvent.PurchaseCompleted -> onClose()
         }
     }
     PaywallScreen(

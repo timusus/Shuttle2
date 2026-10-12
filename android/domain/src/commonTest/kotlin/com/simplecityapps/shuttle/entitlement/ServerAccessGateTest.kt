@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.entitlement
 
+import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,6 +9,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -173,44 +175,57 @@ class ServerAccessGateTest {
         assertEquals(listOf(PaywallSource.AddServer), requests(offeringGate) { assertFalse(offeringGate.tryAddServer()) })
     }
 
-    private fun resumes(block: suspend TestScope.() -> Unit): Int {
-        var resumes = 0
+    private fun resumes(block: suspend TestScope.() -> Unit): List<MediaProviderType> {
+        val resumes = mutableListOf<MediaProviderType>()
         runTest(UnconfinedTestDispatcher()) {
-            backgroundScope.launch { offeringGate.addResumes.collect { resumes++ } }
+            backgroundScope.launch { offeringGate.addResumes.collect { resumes += it } }
             block()
         }
         return resumes
     }
 
     @Test
-    fun `a refused add resumes when the paywall closes with the trial started`() {
+    fun `a refused add resumes with its type when the paywall closes with the trial started`() {
         val resumes = resumes {
-            assertFalse(offeringGate.tryAddServer())
+            assertFalse(offeringGate.tryAddServer(MediaProviderType.Plex))
             entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
             offeringGate.onPaywallClosed(PaywallSource.AddServer)
         }
-        assertEquals(1, resumes)
+        assertEquals(listOf(MediaProviderType.Plex), resumes)
     }
 
     @Test
     fun `a refused add resumes when the paywall closes with Pro bought`() {
         val resumes = resumes {
-            assertFalse(offeringGate.tryAddServer())
+            assertFalse(offeringGate.tryAddServer(MediaProviderType.Emby))
             entitlement.value = Entitlement.Pro(ProSource.Lifetime)
             offeringGate.onPaywallClosed(PaywallSource.AddServer)
         }
-        assertEquals(1, resumes)
+        assertEquals(listOf(MediaProviderType.Emby), resumes)
+    }
+
+    @Test
+    fun `a refused add resumes when the purchase settles shortly after the paywall closes`() {
+        val resumes = resumes {
+            assertFalse(offeringGate.tryAddServer(MediaProviderType.Jellyfin))
+            launch {
+                delay(2.seconds)
+                entitlement.value = Entitlement.Pro(ProSource.Lifetime)
+            }
+            offeringGate.onPaywallClosed(PaywallSource.AddServer)
+        }
+        assertEquals(listOf(MediaProviderType.Jellyfin), resumes)
     }
 
     @Test
     fun `a refused add is forgotten when the paywall closes unchanged - so a later purchase resumes nothing`() {
         val resumes = resumes {
-            assertFalse(offeringGate.tryAddServer())
+            assertFalse(offeringGate.tryAddServer(MediaProviderType.Plex))
             offeringGate.onPaywallClosed(PaywallSource.AddServer)
             entitlement.value = Entitlement.Pro(ProSource.Lifetime)
             offeringGate.onPaywallClosed(PaywallSource.AddServer)
         }
-        assertEquals(0, resumes)
+        assertEquals(emptyList(), resumes)
     }
 
     @Test
@@ -219,17 +234,17 @@ class ServerAccessGateTest {
             entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
             offeringGate.onPaywallClosed(PaywallSource.ServerPlayback)
         }
-        assertEquals(0, resumes)
+        assertEquals(emptyList(), resumes)
     }
 
     @Test
     fun `an add that is allowed straight away resumes nothing`() {
         entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
         val resumes = resumes {
-            assertTrue(offeringGate.tryAddServer())
+            assertTrue(offeringGate.tryAddServer(MediaProviderType.Plex))
             offeringGate.onPaywallClosed(PaywallSource.AddServer)
         }
-        assertEquals(0, resumes)
+        assertEquals(emptyList(), resumes)
     }
 
     @Test
