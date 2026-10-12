@@ -12,9 +12,11 @@ Delegation, worker tiers and `worker`/`worker-brief` are in the global `~/.claud
   there with no commit and no report; a last line reading "waiting on the build" means failure: check `git status` before
   re-briefing.
 - **Workers finish with `support/scripts/worker-finish.sh "<message>"`**: lint -F, native test names, `unit-test
-  --changed-tests`, architecture tests, iOS test compile of changed KMP modules, `verifyRoborazziDebug` when UI source
-  changed, commit. The message carries a `Changelog:` trailer or the diff adds a fragment (`.claude/rules/changelog.md`).
-  `--no-test` before the message skips the test run, for docs-only changes.
+  --changed-tests`, `verifyRoborazziDebug` for the changed screenshot modules only, commit (architecture tests and the iOS
+  test compile are the landing verify's). The message carries a `Changelog:` trailer or the diff adds a fragment
+  (`.claude/rules/changelog.md`). Flags before the message: `--no-test` skips the test run (docs-only), `--dry-run` checks
+  without committing, `--record-screenshots` re-records the baselines and commits the PNGs (a deliberate UI change). On
+  failure it exits 1, names the failing tests and keeps the log at `build/worker-finish/last.log`.
   No full suite; no emulator/simulator lease unless a screenshot is needed.
 - Never chain briefs in one job: launch the next worker after reviewing and committing the previous tree.
 - Landing (`land`, run as `detach start land --cwd .claude/worktrees/landing -- land <branch>...`), the full-verify watermark and the worker worktree pool (`worktree-pool.sh lease|release|list|slot-of|reap`):

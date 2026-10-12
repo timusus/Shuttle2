@@ -8,8 +8,9 @@ paths:
 # Landing and full verify
 
 - **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
-  A worker verifies via `worker-finish.sh`: `unit-test --changed-tests`, plus the architecture tests, the iOS
-  test compile of changed KMP modules and `verifyRoborazziDebug` when the diff warrants — no full suite,
+  A worker verifies via `worker-finish.sh`: `unit-test --changed-tests`, plus `verifyRoborazziDebug` for the
+  changed screenshot modules (`--record-screenshots` re-records them); architecture tests and the iOS test compile
+  wait for the landing verify — no full suite,
   no emulator/simulator lease unless the brief needs a screenshot.
 - **Landing is the shared `land` tool** (`land --help`; config `.claude/land.conf`, verify `support/scripts/land-verify`).
   Run it from the landing worktree (`git worktree add --detach .claude/worktrees/landing origin/main`, once), as a detached job,
