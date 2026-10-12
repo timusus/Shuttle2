@@ -110,8 +110,6 @@ final class PlayIntent {
     enum Source: String {
         case user
         case remoteCommand = "remote command"
-        case interruption
-        case routeChange = "route change"
         /// Siri, Shortcuts, a widget's button or a Control Center control (#758).
         case appIntent = "app intent"
     }
@@ -125,18 +123,6 @@ final class PlayIntent {
     func play(from source: Source = .user) {
         record(plays: true, source)
         listenerPlayed(from: source)
-        player.play()
-        refresh()
-    }
-
-    /// Resumes for the system (an interruption ending), not the listener: a pending play they paused stays paused.
-    func resume(from source: Source) {
-        guard pending?.isPaused != true else {
-            log.notice("resume from \(source.rawValue, privacy: .public) skipped: the listener paused")
-            return
-        }
-        record(plays: true, source)
-        onPlayRequest(source)
         player.play()
         refresh()
     }

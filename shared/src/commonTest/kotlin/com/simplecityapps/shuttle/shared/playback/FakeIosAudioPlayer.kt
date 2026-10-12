@@ -51,9 +51,6 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     private var failed = false
 
-    /** An interruption is holding playback back, as `Player.suppression` does; [playWhenReady] is kept. */
-    private var suppressed = false
-
     /** Bumped on every open, so a stream resolved for an item since moved away from is dropped. */
     private var opens = 0
 
@@ -116,7 +113,10 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         setPlayWhenReady(playWhenReady)
     }
 
-    /** `seek(to:itemAt:)`: a failed or stopped player only moves its index; a play opens the item there. */
+    /**
+     * `seek(to:itemAt:)`: a stopped player only moves its index, and a play opens the item there. A move off a failed
+     * item opens its target, as `KitAudioPlayer` hands the order over again when it doesn't play.
+     */
     private fun moveTo(
         target: Int,
         startMs: Long
@@ -126,10 +126,10 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             seekTo(startMs)
             return
         }
-        val idle = failed || phase == Phase.Idle
+        val stopped = !failed && phase == Phase.Idle
         index = target
         position = startMs
-        if (!idle) openCurrent(startMs)
+        if (!stopped) openCurrent(startMs)
     }
 
     override fun setRepeatMode(mode: RepeatMode) {
@@ -176,7 +176,6 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         // A play while playing changes nothing, so nothing refuses it.
         val value = requested && (acceptsPlay || playWhenReady)
         playWhenReady = value
-        if (!value) suppressed = false
         if (value && index != null) {
             when {
                 failed || phase == Phase.Idle -> openCurrent(position.coerceAtLeast(0))
@@ -316,20 +315,6 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         settle()
     }
 
-    /** An interruption begins: the player stops being heard, its intent kept. */
-    fun interrupt() {
-        suppressed = true
-        report()
-        settle()
-    }
-
-    /** The interruption ends with resume: the player plays on by itself. */
-    fun resumeAfterInterruption() {
-        suppressed = false
-        report()
-        settle()
-    }
-
     /** A position tick while playing. */
     fun tick(positionMs: Long) {
         position = positionMs
@@ -393,7 +378,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             val state = when (phase) {
                 Phase.Idle -> IosAudioPlayerState.Idle
                 Phase.Loading -> IosAudioPlayerState.Loading
-                Phase.Ready -> if (playWhenReady && !suppressed) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused
+                Phase.Ready -> if (playWhenReady) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused
                 Phase.Ended -> IosAudioPlayerState.Ended
             }
             if (lastReport == uid to state) return@post

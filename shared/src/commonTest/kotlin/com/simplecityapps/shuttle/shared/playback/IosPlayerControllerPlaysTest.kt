@@ -210,6 +210,21 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
     }
 
     @Test
+    fun `a paused load skips a failed song to the next - loaded and paused`() = test { controller ->
+        engine.failing += url(a)
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        var result: Result<Boolean>? = null
+
+        controller.load { result = it }
+        engine.settle()
+
+        controller.currentSong shouldBe b
+        engine.stream?.url shouldBe url(b)
+        result?.isSuccess shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
     fun `a restored song that fails stays current - paused - and loads again when played`() = test { controller ->
         engine.failing += url(a)
         controller.queueOperations.setQueue(listOf(a, b), null, 0)

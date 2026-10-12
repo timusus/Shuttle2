@@ -30,14 +30,14 @@ internal class IosEngineFeeder(
             flows.play.value = value?.let { feed -> Play(feed.playId, feed.item.uid) }
         }
 
-    /** The queue's next item, as the player has it next. */
-    var next: IosFeed? = null
+    /** The queue's next item: a transition to anything else is a stale one from an order since replaced. */
+    var upcoming: QueueItem? = null
         private set
 
     /** The player's last reported state for [current]. */
     var engineState = IosAudioPlayerState.Idle
 
-    /** Whether the player pauses at the end of [current] rather than playing on into [next]. */
+    /** Whether the player pauses at the end of [current] rather than playing on into [upcoming]. */
     var pausesAtEnd = false
         set(value) {
             if (field == value) return
@@ -72,7 +72,7 @@ internal class IosEngineFeeder(
             player.setItems(order, index, startMs.toLong(), flows.playWhenReady)
         }
         sentOrder = order
-        feedNext()
+        prewarm()
     }
 
     /** Moves the player on from a failed item to [item], the queue's current item now, as `Player.skipToNext` does. */
@@ -80,7 +80,7 @@ internal class IosEngineFeeder(
         log.info { "skip on to song ${item.song.id}, playWhenReady ${flows.playWhenReady}" }
         becomeCurrent(item, 0)
         player.skipToNext(flows.playWhenReady)
-        feedNext()
+        prewarm()
     }
 
     private fun becomeCurrent(
@@ -89,7 +89,7 @@ internal class IosEngineFeeder(
     ) {
         leave(item)
         current = feed(item, current = true)
-        next = null
+        upcoming = null
         engineState = IosAudioPlayerState.Loading
         publishProgress(startMs)
         publishState()
@@ -101,15 +101,13 @@ internal class IosEngineFeeder(
         return state.items.map { IosQueueEntry(it.uid, it.song.id) } to index
     }
 
-    /** The queue's next item as the player has it next, with the order's streams pre-warmed from the current. */
-    fun feedNext() {
+    /** Pre-warms the order's streams from the current item and notes the queue's [upcoming] one. */
+    fun prewarm() {
         if (current == null) return
         val state = queue.queueStateFlow.value
         state.currentPosition?.let { items.update(state.items, it) }
-        val want = queue.next()
-        val have = next
-        if (have != null && want != null && have.item.uid == want.uid && have.item.song == want.song) return
-        next = want?.let { feed(it, current = false) }
+        // Pre-warmed itself too: a repeat wrapping to the start is outside the order's run from the current item.
+        upcoming = queue.next()?.also { items.playId(it) }
     }
 
     /**
@@ -133,7 +131,7 @@ internal class IosEngineFeeder(
                     player.replaceItems(order, index)
                     sentOrder = order
                 }
-                feedNext()
+                prewarm()
             }
         }
         publishState()
@@ -144,19 +142,19 @@ internal class IosEngineFeeder(
         items.update(emptyList(), 0)
         sentOrder = null
         current = null
-        next = null
+        upcoming = null
         engineState = IosAudioPlayerState.Idle
         flows.playWhenReady = false
         loads.complete(Result.failure(IllegalStateException("Queue empty")))
     }
 
     /** The player moved on to [arrived], its next item: it's the current one now. */
-    fun arrive(arrived: IosFeed) {
-        leave(arrived.item)
-        val failedAhead = items.failure(arrived.item.uid)
+    fun arrive(arrived: QueueItem) {
+        leave(arrived)
+        val failedAhead = items.failure(arrived.uid)
         // Its pre-warm's failure was kept for now: asked again as the current item, a refusal opens the paywall.
-        current = feed(arrived.item, current = true).also { it.failedAhead = failedAhead }
-        next = null
+        current = feed(arrived, current = true).also { it.failedAhead = failedAhead }
+        upcoming = null
     }
 
     /** Ends the play of the item the player leaves for [item]; repeating the same item carries its play on. */
@@ -166,7 +164,7 @@ internal class IosEngineFeeder(
 
     /** Stops the player on a failed current item, which stays current: playing it loads it again. */
     fun giveUp() {
-        next = null
+        upcoming = null
         flows.playWhenReady = false
         player.stop()
         engineState = IosAudioPlayerState.Idle

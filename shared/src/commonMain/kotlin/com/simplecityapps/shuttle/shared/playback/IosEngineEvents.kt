@@ -60,16 +60,16 @@ internal class IosEngineEvents(
 
     /** The player moved on to its next item: the queue's current item follows. */
     override fun onTransition(trackId: String) {
-        val arrived = feeder.next?.takeIf { it.id == trackId } ?: return
-        log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.item.song.id}" }
+        val arrived = feeder.upcoming?.takeIf { "${it.uid}" == trackId } ?: return
+        log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.song.id}" }
         feeder.current?.takeIf { !it.failed }?.let { flows.trackEnded.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
-        val repeated = feeder.current?.takeIf { !it.failed && it.ready }?.item?.uid == arrived.item.uid
+        val repeated = feeder.current?.takeIf { !it.failed && it.ready }?.item?.uid == arrived.uid
         // Not ready yet: the player reports a failed next after moving onto it. A repeat sends no new state report.
         feeder.arrive(arrived)
         if (repeated) feeder.current?.let(::markReady)
-        queue.setCurrent(arrived.item.uid)
+        queue.setCurrent(arrived.uid)
         feeder.publishProgress(0)
-        feeder.feedNext()
+        feeder.prewarm()
         feeder.publishState()
     }
 

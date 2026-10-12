@@ -253,10 +253,9 @@ struct PlayIntentTests {
         sut.play()
         sut.pause(from: .remoteCommand)
         sut.toggle(from: .remoteCommand)
-        sut.resume(from: .interruption)
         sut.begin(from: .appIntent)
         sut.listenerPlayed()
-        #expect(requests == [.user, .remoteCommand, .interruption, .appIntent, .user])
+        #expect(requests == [.user, .remoteCommand, .appIntent, .user])
     }
 
     /// A skip or a queue row after pausing a pending play: that play's late start doesn't pause the new one.
@@ -271,28 +270,6 @@ struct PlayIntentTests {
 
         sut.finished(ticket, result: MediaActionResultNone.shared)
         #expect(player.commands == ["pause", "play"])
-        #expect(sut.isPlayIntended)
-    }
-
-    /// An interruption ending or a rebuilt engine resumes for the system: a pending play the listener paused stays so.
-    @Test func aSystemResumeKeepsTheListenersPause() {
-        let sut = makeSut()
-        let ticket = sut.begin()
-        sut.pause()
-        sut.resume(from: .interruption)
-        #expect(player.commands == ["pause"])
-        #expect(!sut.isPlayIntended)
-
-        player.playsWhenReady = true
-        sut.finished(ticket, result: MediaActionResultNone.shared)
-        #expect(player.commands == ["pause", "pause"])
-        #expect(!sut.isPlayIntended)
-    }
-
-    @Test func aSystemResumePlays() {
-        let sut = makeSut()
-        sut.resume(from: .interruption)
-        #expect(player.commands == ["play"])
         #expect(sut.isPlayIntended)
     }
 
