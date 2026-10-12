@@ -130,18 +130,29 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func skipTo(index: Int32, startMs: Int64, playWhenReady: Bool) {
         MainActor.assumeIsolated {
             lastReport = nil
+            let failed = player.error != nil
             player.seek(to: Double(startMs) / 1000, itemAt: Int(index))
-            // A failed or stopped player only moves its index on a seek; a play prepares the item there.
-            player.playWhenReady = playWhenReady
+            prepareAfterFailure(failed, playWhenReady: playWhenReady, position: Double(startMs) / 1000)
         }
     }
 
     func skipToNext(playWhenReady: Bool) {
         MainActor.assumeIsolated {
             lastReport = nil
+            let failed = player.error != nil
             player.skipToNext()
-            player.playWhenReady = playWhenReady
+            prepareAfterFailure(failed, playWhenReady: playWhenReady, position: 0)
         }
+    }
+
+    /// A failed or stopped player only moves its index on a seek or skip, and a play prepares the item there; a
+    /// paused move off a failure is prepared by handing the order over again, as the Player has no `prepare()`.
+    @MainActor
+    private func prepareAfterFailure(_ failed: Bool, playWhenReady: Bool, position: TimeInterval) {
+        if failed, !playWhenReady, let index = player.currentIndex {
+            player.setItems(player.items, startIndex: index, startPosition: position)
+        }
+        player.playWhenReady = playWhenReady
     }
 
     func setRepeatMode(mode: Shared.RepeatMode) {
@@ -219,11 +230,13 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
 
     private let uid: Int64
     private let resolve: Resolve
-    private let lock = NSLock()
-    private let resolved = DispatchSemaphore(value: 0)
+    /// Guards the state below; signalled when the resolve answers, or on a cancel or interrupt.
+    private let condition = NSCondition()
     private var inner: Result<StreamByteReader, Error>?
+    private var requested = false
     private var cancelled = false
-    private var answer: (stream: IosStream?, error: String?) = (nil, nil)
+    private var interrupted = false
+    private var answer: (stream: IosStream?, error: String?)?
 
     init(uid: Int64, resolve: @escaping Resolve) {
         self.uid = uid
@@ -243,35 +256,49 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
     }
 
     func cancel() {
-        let reader = lock.withLock {
-            cancelled = true
-            return try? inner?.get()
-        }
-        reader?.cancel()
-        resolved.signal()
+        settle { cancelled = true }?.cancel()
     }
 
+    // Also ends a wait on the resolve, which the player's seek or skip would otherwise sit behind.
     func interrupt() {
-        lock.withLock { try? inner?.get() }?.interrupt()
+        settle { interrupted = true }?.interrupt()
     }
 
     func clearInterrupt() {
-        lock.withLock { try? inner?.get() }?.clearInterrupt()
+        settle { interrupted = false }?.clearInterrupt()
+    }
+
+    /// Applies `change` and wakes a waiting open; returns the opened reader to forward to, if there is one.
+    private func settle(_ change: () -> Void) -> StreamByteReader? {
+        condition.withLock {
+            change()
+            condition.broadcast()
+            return try? inner?.get()
+        }
     }
 
     private func opened() throws -> StreamByteReader {
-        if let inner = lock.withLock({ inner }) { return try inner.get() }
-        DispatchQueue.main.async {
-            MainActor.assumeIsolated {
-                self.resolve(self.uid) { stream, error in
-                    self.lock.withLock { self.answer = (stream, error) }
-                    self.resolved.signal()
+        try condition.withLock {
+            if let inner { return try inner.get() }
+            if !requested {
+                requested = true
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        self.resolve(self.uid) { stream, error in
+                            self.condition.withLock {
+                                self.answer = (stream, error)
+                                self.condition.broadcast()
+                            }
+                        }
+                    }
                 }
             }
-        }
-        resolved.wait()
-        return try lock.withLock {
+            while answer == nil, !cancelled, !interrupted {
+                condition.wait()
+            }
             if cancelled { throw StreamByteReaderError.cancelled }
+            if interrupted { throw StreamByteReaderError.interrupted }
+            let answer = answer!
             let result = Result { try Self.reader(answer.stream, error: answer.error) }
             inner = result
             return try result.get()

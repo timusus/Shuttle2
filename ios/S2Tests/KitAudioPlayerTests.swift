@@ -1,4 +1,5 @@
 import Foundation
+import PlaybackDecode
 import PlaybackPlayer
 import PlaybackRender
 @testable import S2
@@ -66,6 +67,26 @@ struct KitAudioPlayerTests {
         rig.settle()
 
         #expect(await pumpUntil { listener.failures == ["11"] })
+    }
+
+    @Test func skippingOnPausedFromAFailedItemPreparesTheNext() async {
+        sut.setItems(order: entries([11, 12], failing: [11]), currentIndex: 0, startMs: 0, playWhenReady: false)
+        rig.settle()
+        #expect(await pumpUntil { listener.failures == ["11"] })
+
+        sut.skipToNext(playWhenReady: false)
+
+        #expect(await pumpUntil { listener.lastState == "12 paused" })
+    }
+
+    @Test func movingOnPausedFromAFailedItemPreparesTheOneMovedTo() async {
+        sut.setItems(order: entries([11, 12, 13], failing: [11]), currentIndex: 0, startMs: 0, playWhenReady: false)
+        rig.settle()
+        #expect(await pumpUntil { listener.failures == ["11"] })
+
+        sut.skipTo(index: 2, startMs: 0, playWhenReady: false)
+
+        #expect(await pumpUntil { listener.lastState == "13 paused" })
     }
 
     @Test func repeatModeIsThePlayers() {
@@ -136,10 +157,14 @@ struct KitAudioPlayerTests {
     // MARK: - With the Kotlin controller
 
     /// A graph whose controller drives `sut`; its listener replaces the test's.
-    private func queue(_ songs: [Song]) async throws -> IosPlayerController {
+    private func queue(
+        _ songs: [Song],
+        playWhenReady: Bool = true,
+        loaded: @escaping (Any?) -> Void = { _ in }
+    ) async throws -> IosPlayerController {
         let controller = makeTestGraph(audioPlayer: sut).playerController
         _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
-        controller.load(seekPosition: nil, skipUnloadable: true, playWhenReady: true) { _ in }
+        controller.load(seekPosition: nil, skipUnloadable: true, playWhenReady: playWhenReady) { loaded($0) }
         return controller
     }
 
@@ -168,6 +193,15 @@ struct KitAudioPlayerTests {
         #expect(rig.player.currentItem?.songId == 3)
     }
 
+    @Test func aPausedLoadSkipsAFailedSongAndCompletesPausedOnTheNext() async throws {
+        var completed = false
+        let controller = try await queue([failing(1), TestSongs.demo[1]], playWhenReady: false) { _ in completed = true }
+
+        #expect(await pumpUntil { completed })
+        #expect(currentSongId(controller) == 2)
+        #expect(controller.playbackStateFlow.value is Shared.PlaybackState.Paused)
+    }
+
     @Test func skippingStopsAfterTheCapOfFailuresInARow() async throws {
         let cap = 15 // PlaybackPolicy.MAX_LOAD_ATTEMPTS
         let controller = try await queue((1 ... cap).map { failing(Int64($0)) } + [TestSongs.demo[0]])
@@ -191,6 +225,73 @@ struct KitAudioPlayerTests {
             try? await Task.sleep(nanoseconds: 20_000_000)
         }
         return condition()
+    }
+}
+
+/// The decode thread's open while Kotlin is still resolving the stream: a seek or skip interrupts it there.
+@MainActor
+struct ResolvingByteReaderTests {
+    private final class Box: @unchecked Sendable {
+        var error: Error?
+        var done = false
+        var asked = 0
+        var answer: ((IosStream?, String?) -> Void)?
+    }
+
+    private let box = Box()
+
+    private func reader() -> ResolvingByteReader {
+        ResolvingByteReader(uid: 7) { [box] _, completion in
+            box.asked += 1
+            box.answer = completion
+        }
+    }
+
+    private func readOnDecodeThread(_ reader: ResolvingByteReader) {
+        box.done = false
+        DispatchQueue.global().async { [box] in
+            var byte: UInt8 = 0
+            do { _ = try reader.read(into: &byte, maxLength: 1) } catch { box.error = error }
+            box.done = true
+        }
+    }
+
+    private func waitUntil(_ condition: () -> Bool) async -> Bool {
+        let deadline = Date().addingTimeInterval(5)
+        while Date() < deadline, !condition() {
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        return condition()
+    }
+
+    @Test func anInterruptEndsAnOpenWaitingOnTheResolve() async {
+        let sut = reader()
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+
+        sut.interrupt()
+
+        #expect(await waitUntil { box.done })
+        #expect(box.error as? StreamByteReaderError == .interrupted)
+        sut.cancel()
+    }
+
+    @Test func anOpenAfterTheInterruptIsClearedWaitsOnTheSameResolve() async {
+        let sut = reader()
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+        sut.interrupt()
+        #expect(await waitUntil { box.done })
+
+        sut.clearInterrupt()
+        readOnDecodeThread(sut)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        #expect(!box.done)
+        box.answer?(nil, "refused")
+
+        #expect(await waitUntil { box.done })
+        #expect(box.error as? StreamByteReaderError == .transport("refused"))
+        #expect(box.asked == 1)
     }
 }
 
