@@ -29,6 +29,8 @@ Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`.
   `AppGraph.initialize()` (from `S2App.init`) builds `KitAudioPlayer`, the graph and the coordinator once.
 - The Player stays `.ready` after a skip or seek until its transport answers, so the restart can read as a stall for a
   moment; a paused load reports ready before anything is decoded.
+- Known gap until stage 2b of #1020: a progressive transcode can't seek, and one that ends short reads as a normal end
+  and advances to the next item.
 - Logging (#897): everything under subsystem `com.simplecityapps.shuttle2`, the Kotlin `Logger` included (`OsLogLogger`
   in :shared, tag as category, through Swift's `KotlinLogSink`: the format string must be a Swift literal or `log show`
   renders `<compose failure>`, #899). Playback's categories persist at info (project.yml `OSLogPreferences`), so

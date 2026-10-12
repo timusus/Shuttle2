@@ -621,4 +621,5 @@ The app now plays through AudioPlaybackKit's `Player`. Stream the logs while tes
 - [ ] iPhone: while playing, take a phone call, then hang up; ask Siri something, then dismiss it. Playback pauses for each and resumes after. Unplug wired headphones (or turn off Bluetooth ones): playback pauses and stays paused.
 - [ ] iPhone, locked: play, pause, next, previous and scrub from the lock screen and Control Center. Each takes effect, and the title, artwork, elapsed time and play/pause button follow.
 - [ ] iPhone: play a song from Jellyfin and one from Subsonic (Navidrome), on Wi-Fi and on cellular. Each starts, seeks and moves on to the next song.
+  Known gap until stage 2b: a progressive transcode (Opus/MP3 under the quality cap) can't seek, and one that ends short reads as a normal end and moves on to the next song.
 - [ ] iPhone, after the trial ends: play a paywalled track. It doesn't play and the paywall shows, with no crash and no stuck loading state; a free track still plays.
