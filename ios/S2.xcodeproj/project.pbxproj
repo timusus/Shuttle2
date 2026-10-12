@@ -86,6 +86,7 @@
 		5CB5C5912DA7AF5DF32CE0B4 /* RemoteArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 442479EA4A659CDC3E88462B /* RemoteArtwork.swift */; };
 		5DF9EB33C38E447BC8F2378C /* DebugArtworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A4064C4CA7EA59DB04DB03 /* DebugArtworkTests.swift */; };
 		5E3B09AB807AB94FC257FAC9 /* AirPlayButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7AADEAF2F8D24AC514AD547 /* AirPlayButton.swift */; };
+		5F5E263A3B26D9187CA6604B /* KitAudioPlayerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D108834FC70B0181B8EA20F /* KitAudioPlayerTests.swift */; };
 		6069991FA7A8C780BC291A2E /* SiriLibraryContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42A88714D4CEF508D39A626 /* SiriLibraryContext.swift */; };
 		60BBF73144A8BF93DF2A2D70 /* ScrobblingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76FFB737346ADAB913A47F6F /* ScrobblingViewTests.swift */; };
 		624E2C6798581CD66B607606 /* ArtworkBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC86FB5219FFA411079E834 /* ArtworkBackground.swift */; };
@@ -287,6 +288,7 @@
 		1C0AE66B5E1BD8BA73E3BDBF /* ScreenshotHooks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotHooks.swift; sourceTree = "<group>"; };
 		1C4156A63D9F30E876660749 /* LayoutTierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTierTests.swift; sourceTree = "<group>"; };
 		1CFF3AA03943A0FF17FE8063 /* SiriMediaResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriMediaResolverTests.swift; sourceTree = "<group>"; };
+		1D108834FC70B0181B8EA20F /* KitAudioPlayerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KitAudioPlayerTests.swift; sourceTree = "<group>"; };
 		205F2D98E447A246625BE4A5 /* LibraryCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCollection.swift; sourceTree = "<group>"; };
 		20E688A48CB9963C2F8837D2 /* S2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = S2App.swift; sourceTree = "<group>"; };
 		2105451B4A503DA93D9DAC70 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
@@ -915,6 +917,7 @@
 				40DB4BD291074658C1281380 /* GenreListTests.swift */,
 				CA0D1CA0197FD8A89D626552 /* HomeScreenQuickActionTests.swift */,
 				17CAC2177C448E5AAF2FC3D4 /* HomeViewTests.swift */,
+				1D108834FC70B0181B8EA20F /* KitAudioPlayerTests.swift */,
 				8FAE1605FEA8DC6066A59B46 /* KotlinCrashEventTests.swift */,
 				1C4156A63D9F30E876660749 /* LayoutTierTests.swift */,
 				796A3B12BBE0B079F29CF480 /* LibraryGridTests.swift */,
@@ -1307,6 +1310,7 @@
 				406F210DE2687C5AFC4765C1 /* GenreListTests.swift in Sources */,
 				D5208B2B6A3A18796F85B0A9 /* HomeScreenQuickActionTests.swift in Sources */,
 				1A38A709B25F4854ACB8A784 /* HomeViewTests.swift in Sources */,
+				5F5E263A3B26D9187CA6604B /* KitAudioPlayerTests.swift in Sources */,
 				B085B4392432468B9A77DB85 /* KotlinCrashEventTests.swift in Sources */,
 				F96A02B9E3B2536F18277736 /* LayoutTierTests.swift in Sources */,
 				8DB654A84EBD8D0D7A13656B /* LibraryGridTests.swift in Sources */,

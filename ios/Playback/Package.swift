@@ -16,7 +16,7 @@ let package = Package(
         .library(name: "S2Playback", targets: ["S2Playback"]),
         // The local library's tag reader, on the same FFmpeg the engine decodes with.
         .library(name: "S2Tags", targets: ["S2Tags"]),
-        // The loopback HTTP origin and the fixtures, for the app's own tests.
+        // The loopback HTTP origin, the fixtures and AudioPlaybackKit's player rig, for the app's own tests.
         .library(name: "S2PlaybackTestSupport", targets: ["S2PlaybackTestSupport"]),
     ],
     dependencies: [
@@ -52,6 +52,10 @@ let package = Package(
         ),
         .target(
             name: "S2PlaybackTestSupport",
+            dependencies: [
+                .product(name: "PlaybackPlayerTestSupport", package: "AudioPlaybackKit"),
+                .product(name: "PlaybackRenderTestSupport", package: "AudioPlaybackKit"),
+            ],
             resources: [.copy("Fixtures")]
         ),
         .testTarget(
