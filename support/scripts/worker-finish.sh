@@ -37,7 +37,7 @@ while [ $# -gt 1 ]; do
   shift
 done
 msg="${1:-}"
-if [ -z "$msg" ] || [ $# -ne 1 ]; then
+if [ -z "$msg" ] || [ $# -ne 1 ] || [ "${msg#--}" != "$msg" ]; then
   echo 'usage: worker-finish.sh [--no-test] [--dry-run] [--record-screenshots] "<commit message>"' >&2
   exit 2
 fi
@@ -93,6 +93,72 @@ changed_files() {
   } | sort -u
 }
 
+# Roborazzi baselines, only for the module whose UI changed (see header).
+changed="$(changed_files)"
+shot_tasks=()
+add_shot_module() {
+  local e
+  for e in ${shot_tasks[@]+"${shot_tasks[@]}"}; do [ "$e" = "$1" ] && return 0; done
+  shot_tasks+=("$1")
+}
+has_roborazzi() {
+  grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$1"/build.gradle* 2>/dev/null
+}
+# Where a module's goldens live (the app's tests write to docs/design, designsystem's to its catalogue).
+snap_dir() {
+  if [ "$1" = :android:designsystem ]; then
+    echo docs/design/catalog
+  elif [ "$1" = :android:app ]; then
+    echo docs/design
+  else
+    local p="${1#:}"
+    echo "${p//://}/src/test/snapshots/images"
+  fi
+}
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    docs/design/catalog/*) add_shot_module :android:designsystem ;;
+    docs/design/*) add_shot_module :android:app ;;
+    android/*/src/main/*|android/*/src/androidMain/*|android/*/src/commonMain/*|shared/src/main/*|shared/src/androidMain/*|shared/src/commonMain/*)
+      mdir="${f%%/src/*}"
+      if has_roborazzi "$mdir"; then
+        add_shot_module ":${mdir//\//:}"
+      elif [ "${f%.kt}" != "$f" ] && { [ ! -e "$f" ] || grep -q '@Composable' "$f" 2>/dev/null; }; then
+        # A deleted or moved .kt can't be grepped, so it counts as a UI change.
+        add_shot_module :android:app
+      fi ;;
+    android/*/src/test/*|shared/src/test/*)
+      mdir="${f%%/src/*}"
+      has_roborazzi "$mdir" && add_shot_module ":${mdir//\//:}" ;;
+  esac
+done <<EOF2
+$changed
+EOF2
+
+# Only what this run changed, so a dry run restores nothing the worker had already touched.
+list_recorded() {
+  local after
+  after="$(git -c core.quotePath=false status --porcelain -uall -- "${snap_dirs[@]}")"
+  recorded="$(comm -13 <(printf '%s\n' "$before_pngs" | sort) <(printf '%s\n' "$after" | sort) | grep -v '^$' || true)"
+}
+
+# Tracked PNGs revert, new ones are removed; called on success and failure so a dry run never leaves the tree dirty.
+restore_recorded() {
+  local line p
+  list_recorded
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    p="${line:3}"
+    case "$line" in
+      '??'*) rm -f -- "$p" ;;
+      *) git checkout -- "$p" ;;
+    esac
+  done <<EOF3
+$recorded
+EOF3
+}
+
 if [ "$run_tests" = 1 ]; then
   start=$SECONDS
   if ! support/scripts/unit-test --changed-tests >"$log" 2>&1; then
@@ -105,48 +171,6 @@ if [ "$run_tests" = 1 ]; then
     whole="$(grep -c 'running whole' "$log")"
     echo "tests: ok ($classes mapped classes, $whole whole-module runs, $((SECONDS - start))s)"
   fi
-
-  # Roborazzi baselines, only for the module whose UI changed (see header).
-  changed="$(changed_files)"
-  shot_tasks=()
-  add_shot_module() {
-    local e
-    for e in ${shot_tasks[@]+"${shot_tasks[@]}"}; do [ "$e" = "$1" ] && return 0; done
-    shot_tasks+=("$1")
-  }
-  has_roborazzi() {
-    grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$1"/build.gradle* 2>/dev/null
-  }
-  # Where a module's goldens live (the app's tests write to docs/design, designsystem's to its catalogue).
-  snap_dir() {
-    if [ "$1" = :android:designsystem ]; then
-      echo docs/design/catalog
-    elif [ "$1" = :android:app ]; then
-      echo docs/design
-    else
-      local p="${1#:}"
-      echo "${p//://}/src/test/snapshots/images"
-    fi
-  }
-  while IFS= read -r f; do
-    [ -z "$f" ] && continue
-    case "$f" in
-      docs/design/catalog/*) add_shot_module :android:designsystem ;;
-      docs/design/*) add_shot_module :android:app ;;
-      android/*/src/main/*|android/*/src/androidMain/*|android/*/src/commonMain/*|shared/src/main/*|shared/src/androidMain/*|shared/src/commonMain/*)
-        mdir="${f%%/src/*}"
-        if has_roborazzi "$mdir"; then
-          add_shot_module ":${mdir//\//:}"
-        elif [ "${f%.kt}" != "$f" ] && grep -q '@Composable' "$f" 2>/dev/null; then
-          add_shot_module :android:app
-        fi ;;
-      android/*/src/test/*|shared/src/test/*)
-        mdir="${f%%/src/*}"
-        has_roborazzi "$mdir" && add_shot_module ":${mdir//\//:}" ;;
-    esac
-  done <<EOF2
-$changed
-EOF2
 
   if [ "${#shot_tasks[@]}" -gt 0 ]; then
     # The app's goldens render the other modules' components, so any UI change verifies it too.
@@ -183,13 +207,12 @@ EOF2
     else
       echo "screenshots ($verb ${shot_tasks[*]}): FAILED (not committed)"
       fail_summary
+      [ "$record" = 1 ] && [ "$dry_run" = 1 ] && restore_recorded
       [ "$record" = 0 ] && echo "intended UI change? rerun with --record-screenshots, inspect the compare images"
       exit 1
     fi
     if [ "$record" = 1 ]; then
-      after_pngs="$(git -c core.quotePath=false status --porcelain -uall -- "${snap_dirs[@]}")"
-      # Only what this run changed, so a dry run restores nothing the worker had already touched.
-      recorded="$(comm -13 <(printf '%s\n' "$before_pngs" | sort) <(printf '%s\n' "$after_pngs" | sort) | grep -v '^$' || true)"
+      list_recorded
       if [ -n "$recorded" ]; then
         echo "re-recorded PNGs:"
         printf '%s\n' "$recorded"
@@ -203,22 +226,16 @@ EOF2
 elif [ "$record" = 1 ]; then
   echo "--record-screenshots needs the test step; drop --no-test" >&2
   exit 2
+elif [ "${#shot_tasks[@]}" -gt 0 ]; then
+  echo "--no-test would skip the screenshot verify for ${shot_tasks[*]}; drop --no-test" >&2
+  exit 2
 else
   echo "tests: skipped (--no-test)"
 fi
 
 if [ "$dry_run" = 1 ]; then
-  if [ -n "${recorded:-}" ]; then
-    # Tracked ones revert; new PNGs are removed. Exactly the paths this run changed.
-    while IFS= read -r line; do
-      p="${line:3}"
-      case "$line" in
-        '??'*) rm -f -- "$p" ;;
-        *) git checkout -- "$p" ;;
-      esac
-    done <<EOF3
-$recorded
-EOF3
+  if [ "$record" = 1 ] && [ -n "${recorded:-}" ]; then
+    restore_recorded
     echo "dry run: re-recorded PNGs restored"
   fi
   echo "dry run: nothing staged or committed"
