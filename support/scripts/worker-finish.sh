@@ -1,45 +1,65 @@
 #!/usr/bin/env bash
 # A worker's wrap-up in one call: format + lint the changed Kotlin, run the changed tests, commit.
 #
-#   support/scripts/worker-finish.sh [--no-test] "<commit message>"
+#   support/scripts/worker-finish.sh [--no-test] [--dry-run] [--record-screenshots] "<commit message>"
 #
-# Steps: lint -F, native test names, `unit-test --changed-tests`, then (driven by the diff vs the
-# merge-base with origin/main) :android:architecture-tests when Kotlin changed, a module's
-# compileTestKotlinIosSimulatorArm64 when a KMP module's commonMain/commonTest/iosMain/iosTest changed
-# (deletions count), and verifyRoborazziDebug (plus :android:app's) when main source (src/main,
-# src/androidMain, src/commonMain) changed in a Roborazzi module, a docs/design file changed, or a
-# @Composable file elsewhere changed, then commit.
+# Steps: lint -F, native test names, `unit-test --changed-tests`, then Roborazzi for the modules whose
+# UI changed (verify, or re-record with --record-screenshots), then commit. Anything wider (architecture
+# tests, iOS test compile, dependents' test compile, the other modules' screenshots) is the landing
+# verify's job (support/scripts/land-verify).
+# Roborazzi runs for a module that applies the plugin when its main source (src/main, src/androidMain,
+# src/commonMain) changed, for :android:app when docs/design changed, and for :android:app when a
+# @Composable file changed in a module with no screenshots of its own.
 # The message must carry the `Changelog:` trailer when the commit-msg hook asks for one
 # (`Changelog: none` for tooling). --no-test skips the test run, for docs-only changes.
-# Exits non-zero WITHOUT committing if lint or the tests fail, naming the first error.
-# Run it in the foreground: the tests can take minutes.
+# --dry-run runs every check but stages and commits nothing. --record-screenshots re-records those
+# modules' baselines instead of verifying them and commits the PNGs with the change.
+# Exits non-zero WITHOUT committing on failure, naming the failing task/tests and keeping the log
+# (build/worker-finish/last.log). Run it in the foreground: the tests can take minutes.
 set -uo pipefail
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
 run_tests=1
-if [ "${1:-}" = "--no-test" ]; then
-  run_tests=0
+dry_run=0
+record=0
+while [ $# -gt 1 ]; do
+  case "$1" in
+    --no-test) run_tests=0 ;;
+    --dry-run) dry_run=1 ;;
+    --record-screenshots) record=1 ;;
+    *) break ;;
+  esac
   shift
-fi
+done
 msg="${1:-}"
 if [ -z "$msg" ] || [ $# -ne 1 ]; then
-  echo 'usage: worker-finish.sh [--no-test] "<commit message>"' >&2
+  echo 'usage: worker-finish.sh [--no-test] [--dry-run] [--record-screenshots] "<commit message>"' >&2
   exit 2
 fi
 
-log="$(mktemp -t worker-finish.XXXXXX)"
-trap 'rm -f "$log"' EXIT
+mkdir -p build/worker-finish
+log="$PWD/build/worker-finish/last.log"
 
-# First error line, with file:line when the tool gave one.
-first_error() {
-  local line
-  line="$(grep -m1 -E '(\.kts?:[0-9]+|^e: |FAILED|error:)' "$log" | sed "s|$PWD/||; s|file://||" | cut -c1-240)"
-  if [ -n "$line" ]; then
-    printf '%s\n' "$line"
+# Prints the failing Gradle task(s), the failing tests and the first error, then the log path.
+fail_summary() {
+  grep -E "Execution failed for task" "$log" | sed 's/^ *//' | sort -u | head -n 5
+  local failed line
+  failed="$(awk '/^Failed tests:/ {p=1; next} p && /^$/ {p=0} p' "$log" | cut -c1-240 | sort -u | head -n 20)"
+  if [ -n "$failed" ]; then
+    echo "failed tests:"
+    printf '%s\n' "$failed"
   else
-    tail -n 5 "$log" | cut -c1-240
+    line="$(grep -m1 -E '(\.kts?:[0-9]+|^e: |FAILED|error:)' "$log" | sed "s|$PWD/||; s|file://||" | cut -c1-240)"
+    if [ -n "$line" ]; then printf '%s\n' "$line"; else tail -n 5 "$log" | cut -c1-240; fi
   fi
+  echo "log: $log"
+}
+
+fail() {
+  echo "$1: FAILED (not committed)"
+  fail_summary
+  exit 1
 }
 
 if support/scripts/lint -F >"$log" 2>&1; then
@@ -49,43 +69,16 @@ if support/scripts/lint -F >"$log" 2>&1; then
     echo "lint: ok"
   fi
 else
-  echo "lint: FAILED (not committed)"
-  first_error
-  exit 1
+  fail lint
 fi
 
 if ! support/scripts/native-test-names >"$log" 2>&1; then
   echo "native test names: FAILED (not committed)"
   cat "$log"
+  echo "log: $log"
   exit 1
 fi
 
-if [ "$run_tests" = 1 ]; then
-  if ! support/scripts/unit-test --changed-tests >"$log" 2>&1; then
-    echo "tests: FAILED (not committed)"
-    first_error
-    exit 1
-  fi
-  if grep -qE 'No modules affected|nothing to run' "$log"; then
-    if ! support/scripts/unit-test --changed >"$log" 2>&1; then
-      echo "tests: FAILED (not committed)"
-      first_error
-      exit 1
-    fi
-  fi
-  if grep -qE 'No modules affected|No changes against|nothing to run' "$log"; then
-    echo "tests: nothing to run for these changes"
-  else
-    classes="$(grep -Eo '[0-9]+ class\(es\)' "$log" | awk '{n+=$1} END {print n+0}')"
-    whole="$(grep -c 'running whole' "$log")"
-    echo "tests: ok ($classes mapped classes, $whole whole-module runs)"
-  fi
-else
-  echo "tests: skipped (--no-test)"
-fi
-
-# Checks the landing verify would otherwise be the first to run, driven by the diff vs the merge-base
-# with origin/main plus the working tree. Skipped with --no-test (docs-only).
 changed_files() {
   local base
   base="$(git merge-base HEAD origin/main 2>/dev/null || echo HEAD)"
@@ -95,84 +88,74 @@ changed_files() {
   } | sort -u
 }
 
-# gradle_check <label> <hint> <gradle args...>: foreground Gradle on this Mac; on failure print the
-# first error plus the failing tests and fail worker-finish.
-gradle_check() {
-  local label=$1 hint=$2 start=$SECONDS
-  shift 2
-  if support/scripts/remote-build.sh --local -q "$@" >"$log" 2>&1; then
-    echo "$label: ok ($((SECONDS - start))s)"
-    return 0
-  fi
-  echo "$label: FAILED (not committed)"
-  first_error
-  grep -E '^\s*[A-Za-z0-9_.$]+ > .*FAILED' "$log" | sed 's/^ *//' | head -n 10
-  [ -n "$hint" ] && echo "$hint"
-  exit 1
-}
-
 if [ "$run_tests" = 1 ]; then
+  start=$SECONDS
+  if ! support/scripts/unit-test --changed-tests >"$log" 2>&1; then
+    fail tests
+  fi
+  if grep -qE 'No modules affected|No changes against|nothing to run' "$log"; then
+    echo "tests: nothing to run for these changes"
+  else
+    classes="$(grep -Eo '[0-9]+ class\(es\)' "$log" | awk '{n+=$1} END {print n+0}')"
+    whole="$(grep -c 'running whole' "$log")"
+    echo "tests: ok ($classes mapped classes, $whole whole-module runs, $((SECONDS - start))s)"
+  fi
+
+  # Roborazzi baselines, only for the module whose UI changed (see header).
   changed="$(changed_files)"
-  kt="$(printf '%s\n' "$changed" | grep -E '\.kt$' || true)"
-
-  if [ -n "$kt" ]; then
-    gradle_check "architecture tests" "" :android:architecture-tests:testDebugUnitTest
-  fi
-
-  # Kotlin/Native compiles commonMain/commonTest (and iosMain/iosTest) that the JVM run never sees.
-  ios_tasks=()
-  if [ -n "$kt" ]; then
-    kt_args=()
-    while IFS= read -r f; do kt_args+=("$f"); done <<EOF3
-$kt
-EOF3
-    if ! native_tasks="$(support/scripts/unit-test --kmp-native-tasks "${kt_args[@]}" 2>"$log")"; then
-      echo "ios test compile: FAILED (not committed): unit-test --kmp-native-tasks exited non-zero"
-      first_error
-      exit 1
-    fi
-    while IFS= read -r t; do
-      [ -n "$t" ] && ios_tasks+=("${t%:iosSimulatorArm64Test}:compileTestKotlinIosSimulatorArm64")
-    done <<EOF4
-$native_tasks
-EOF4
-  fi
-  if [ "${#ios_tasks[@]}" -gt 0 ]; then
-    gradle_check "ios test compile (${#ios_tasks[@]} modules)" "" "${ios_tasks[@]}"
-  fi
-
-  # Roborazzi baselines: a changed main source in a module that applies the plugin, or a changed
-  # @Composable file anywhere (:android:app's screenshots render other modules' components).
   shot_tasks=()
-  add_shot_task() {
-    local t="$1:verifyRoborazziDebug" e
-    for e in ${shot_tasks[@]+"${shot_tasks[@]}"}; do [ "$e" = "$t" ] && return 0; done
-    shot_tasks+=("$t")
+  add_shot_module() {
+    local e
+    for e in ${shot_tasks[@]+"${shot_tasks[@]}"}; do [ "$e" = "$1" ] && return 0; done
+    shot_tasks+=("$1")
   }
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     case "$f" in
-      docs/design/*) add_shot_task :android:app ;;
+      docs/design/*) add_shot_module :android:app ;;
       android/*/src/main/*|android/*/src/androidMain/*|android/*/src/commonMain/*|shared/*/src/main/*|shared/*/src/androidMain/*|shared/*/src/commonMain/*)
         mdir="${f%%/src/*}"
         if grep -Eq 'libs\.plugins\.roborazzi|io\.github\.takahirom\.roborazzi' "$mdir"/build.gradle* 2>/dev/null; then
-          add_shot_task ":${mdir//\//:}"
+          add_shot_module ":${mdir//\//:}"
         elif [ "${f%.kt}" != "$f" ] && grep -q '@Composable' "$f" 2>/dev/null; then
-          add_shot_task :android:app
+          add_shot_module :android:app
         fi ;;
-      *.kt)
-        if grep -q '@Composable' "$f" 2>/dev/null; then add_shot_task :android:app; fi ;;
     esac
   done <<EOF2
 $changed
 EOF2
-  # :android:app's screenshots render other modules' components (designsystem), so any trigger runs it too.
-  if [ "${#shot_tasks[@]}" -gt 0 ]; then add_shot_task :android:app; fi
+
   if [ "${#shot_tasks[@]}" -gt 0 ]; then
-    gradle_check "screenshots (${shot_tasks[*]})" \
-      "intended UI change? re-record with record mode (recordRoborazziDebug), inspect the compare image, commit the PNGs" \
-      "${shot_tasks[@]}"
+    if [ "$record" = 1 ]; then
+      verb=recordRoborazziDebug
+    else
+      verb=verifyRoborazziDebug
+    fi
+    gradle_args=()
+    for m in "${shot_tasks[@]}"; do gradle_args+=("$m:$verb"); done
+    start=$SECONDS
+    # Record stays on the Mac (goldens are Mac-recorded), and --local keeps verify beside them.
+    if support/scripts/remote-build.sh --local -q "${gradle_args[@]}" >"$log" 2>&1; then
+      echo "screenshots ($verb ${shot_tasks[*]}): ok ($((SECONDS - start))s)"
+    else
+      echo "screenshots ($verb ${shot_tasks[*]}): FAILED (not committed)"
+      fail_summary
+      [ "$record" = 0 ] && echo "intended UI change? rerun with --record-screenshots, inspect the compare images"
+      exit 1
+    fi
+  elif [ "$record" = 1 ]; then
+    echo "screenshots: no Roborazzi module changed, nothing to record"
   fi
+elif [ "$record" = 1 ]; then
+  echo "--record-screenshots needs the test step; drop --no-test" >&2
+  exit 2
+else
+  echo "tests: skipped (--no-test)"
+fi
+
+if [ "$dry_run" = 1 ]; then
+  echo "dry run: nothing staged or committed"
+  exit 0
 fi
 
 # Stage tracked changes, plus untracked files under source paths only; report the rest.
