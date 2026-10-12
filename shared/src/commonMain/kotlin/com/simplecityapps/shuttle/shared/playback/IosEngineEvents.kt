@@ -63,8 +63,10 @@ internal class IosEngineEvents(
         val arrived = feeder.next?.takeIf { it.id == trackId } ?: return
         log.info { "transition song ${feeder.current?.item?.song?.id} -> ${arrived.item.song.id}" }
         feeder.current?.takeIf { !it.failed }?.let { flows.trackEnded.tryEmit(TrackEnd(it.item.uid, it.item.song)) }
-        // Not ready yet: the player reports a failed next after moving onto it.
+        val repeated = feeder.current?.takeIf { !it.failed && it.ready }?.item?.uid == arrived.item.uid
+        // Not ready yet: the player reports a failed next after moving onto it. A repeat sends no new state report.
         feeder.arrive(arrived)
+        if (repeated) feeder.current?.let(::markReady)
         queue.setCurrent(arrived.item.uid)
         feeder.publishProgress(0)
         feeder.feedNext()
@@ -95,8 +97,18 @@ internal class IosEngineEvents(
         log.warn { "track $trackId failed: ${message.replace(QUERY, "?…")}" }
         val currentFeed = feeder.current ?: return
         if (trackId != currentFeed.id || currentFeed.failed) return
+        // A failure the player opened ahead is the earlier resolution's, while the one asked at the transition is out:
+        // a decided refusal stops there, anything else loads it again on that resolution.
+        val ahead = currentFeed.failedAhead
+        currentFeed.failedAhead = null
+        val refused = ahead is ServerStreamNotAllowedException && !ahead.undecided
+        if (ahead != null && !refused) {
+            log.info { "song ${currentFeed.item.song.id} failed ahead of its turn; loading it again" }
+            feeder.startLoad(currentFeed.item, 0)
+            return
+        }
+        val unresolved = feeder.unresolved(currentFeed) ?: ahead
         // A stream that couldn't be resolved isn't reported, and a refusal stops there.
-        val unresolved = feeder.unresolved(currentFeed)
         if (unresolved != null) currentFeed.reportFailure = false
         onCurrentFailed(currentFeed, skip = unresolved !is ServerStreamNotAllowedException)
     }

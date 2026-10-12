@@ -262,7 +262,12 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         if (next == null) {
             phase = Phase.Ended
             report()
-        } else {
+        } else if (next == current && !pausesAtEnd) {
+            // A repeat joins gaplessly into the item already open: its state doesn't change, so nothing is reported.
+            position = 0
+            post { listener?.onTransition("$uid") }
+        } else if (pausesAtEnd || !openedAhead(next)) {
+            // Pausing at the end, nothing was opened ahead: the player opens the next item once it's current.
             index = next
             position = 0
             duration = -1
@@ -271,6 +276,43 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             openCurrent(0)
             report()
         }
+        settle()
+    }
+
+    /**
+     * The player opened [next] ahead of the join, as `Player` decodes its armed next: if that answered, the player moves
+     * on to it, and one that failed is reported after its transition. Returns false if the open is still waiting.
+     */
+    private fun openedAhead(next: Int): Boolean {
+        val uid = order[next].uid
+        var answer: Pair<IosStream?, String?>? = null
+        open(uid) { opened, error -> answer = opened to error }
+        val (opened, error) = answer ?: return false
+        opens++
+        index = next
+        position = 0
+        duration = -1
+        lastReport = null
+        post { listener?.onTransition("$uid") }
+        if (opened == null || opened.url in failing) {
+            failed = true
+            phase = Phase.Idle
+            stream = null
+            post { listener?.onFailed("$uid", error ?: "Can't open ${opened?.url}") }
+        } else {
+            stream = opened
+            phase = Phase.Ready
+            report()
+        }
+        return true
+    }
+
+    /** The current item fails while it plays, as a stream whose connection dropped. */
+    fun failCurrent() {
+        val uid = currentUid ?: return
+        failed = true
+        phase = Phase.Idle
+        post { listener?.onFailed("$uid", "Connection lost") }
         settle()
     }
 

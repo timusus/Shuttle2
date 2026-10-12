@@ -153,8 +153,9 @@ internal class IosEngineFeeder(
     /** The player moved on to [arrived], its next item: it's the current one now. */
     fun arrive(arrived: IosFeed) {
         leave(arrived.item)
+        val failedAhead = items.failure(arrived.item.uid)
         // Its pre-warm's failure was kept for now: asked again as the current item, a refusal opens the paywall.
-        current = feed(arrived.item, current = true)
+        current = feed(arrived.item, current = true).also { it.failedAhead = failedAhead }
         next = null
     }
 

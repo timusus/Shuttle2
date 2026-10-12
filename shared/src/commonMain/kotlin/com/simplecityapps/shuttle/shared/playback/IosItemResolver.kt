@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -53,7 +54,10 @@ class IosItemResolver internal constructor(
         val playId = Uuid.random().toString()
         val stream = scope.async(start = CoroutineStart.UNDISPATCHED) {
             try {
-                Result.success(resolver.resolve(item.song, 0, playRequested = playRequested, playId = playId))
+                val stream = resolver.resolve(item.song, 0, playRequested = playRequested, playId = playId)
+                // Dropped while the server set it up: the end sent at the drop may have come before the play existed.
+                if (!isActive) endPlay(item, playId)
+                Result.success(stream)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -108,10 +112,17 @@ class IosItemResolver internal constructor(
     /** Cancels [entry]'s resolution and ends its play, so a server stops what it started for it (#722). */
     private fun drop(entry: Entry) {
         entry.stream.cancel()
+        endPlay(entry.item, entry.playId)
+    }
+
+    private fun endPlay(
+        item: QueueItem,
+        playId: String
+    ) {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             // Best effort: a provider that fails to end a play must not take playback down with it
             try {
-                resolver.endPlay(entry.item.song, entry.playId)
+                resolver.endPlay(item.song, playId)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

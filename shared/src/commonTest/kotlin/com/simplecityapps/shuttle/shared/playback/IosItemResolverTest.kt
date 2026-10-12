@@ -6,10 +6,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 
 /** The play order's streams for a player that owns the order: shared per entry, pre-warmed ahead, dropped with the entry. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -20,7 +24,11 @@ class IosItemResolverTest {
 
     private val order = (1L..5L).map { QueueItem(100 + it, song(it), isCurrent = it == 1L) }
 
-    private fun TestScope.resolver() = IosItemResolver(
+    /** [ignoringCancel]: a provider whose resolve runs on once its server session is open, cancelled or not. */
+    private fun TestScope.resolver(
+        scope: CoroutineScope = TestScope(UnconfinedTestDispatcher(testScheduler)),
+        ignoringCancel: Boolean = false
+    ) = IosItemResolver(
         object : IosStreamResolver {
             override suspend fun resolve(
                 song: Song,
@@ -29,7 +37,7 @@ class IosItemResolverTest {
                 playId: String
             ): IosStream {
                 resolved += song.id
-                gate?.await()
+                if (ignoringCancel) withContext(NonCancellable) { gate?.await() } else gate?.await()
                 return IosStream("song:${song.id}")
             }
 
@@ -40,7 +48,7 @@ class IosItemResolverTest {
                 ended += song.id to playId
             }
         },
-        TestScope(UnconfinedTestDispatcher(testScheduler))
+        scope
     )
 
     @Test
@@ -96,6 +104,37 @@ class IosItemResolverTest {
 
         assertEquals("song:5", url)
         assertEquals(listOf(1L, 2L, 3L, 5L), resolved)
+    }
+
+    @Test
+    fun anOpenIsAnsweredWhenTheScopeIsCancelled() = runTest {
+        val scope = TestScope(UnconfinedTestDispatcher(testScheduler))
+        val resolver = resolver(scope)
+        gate = CompletableDeferred()
+        resolver.update(order, currentIndex = 0)
+        val errors = mutableListOf<String?>()
+        resolver.resolve(101) { _, error -> errors += error }
+
+        scope.cancel()
+        resolver.resolve(102) { _, error -> errors += error }
+
+        assertEquals(2, errors.size)
+    }
+
+    @Test
+    fun aResolveThatFinishesAfterItsEntryWasDroppedHasItsPlayEnded() = runTest {
+        val resolver = resolver(ignoringCancel = true)
+        gate = CompletableDeferred()
+        resolver.update(order, currentIndex = 0)
+        val playId = resolver.playId(order[0])
+
+        resolver.update(order - order[0], currentIndex = 0)
+        val endedAtDrop = ended.toList()
+        gate!!.complete(Unit)
+
+        assertEquals(listOf(1L to playId), endedAtDrop)
+        assertEquals(1L to playId, ended.last())
+        assertEquals(2, ended.size)
     }
 
     @Test

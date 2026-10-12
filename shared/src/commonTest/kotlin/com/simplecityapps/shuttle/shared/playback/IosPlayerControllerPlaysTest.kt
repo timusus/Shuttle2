@@ -107,6 +107,43 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
     }
 
     @Test
+    fun `a refused next song stops there with the paywall while its retry is still out`() = test { controller ->
+        val gate = ServerAccessGate(MutableStateFlow(Entitlement.Free(trialUsed = true)), startTrial = null)
+        val streams = GatedServerStreams(gate)
+        serverAccess = streams::access
+        server += b.id
+        val paywalls = collect(gate.paywallRequests)
+        controller.start(listOf(a, b, c))
+
+        resolveGate = CompletableDeferred()
+        engine.finishTrack()
+        resolveGate?.complete(Unit)
+        engine.settle()
+
+        paywalls shouldBe listOf(PaywallSource.ServerPlayback)
+        controller.currentSong shouldBe b
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `a next song whose pre-warm failed is asked again when playback reaches it - not skipped`() = test { controller ->
+        val failures = collect(controller.playbackFailureFlow)
+        unresolvable += b.id
+        controller.start(listOf(a, b, c))
+        unresolvable -= b.id
+
+        resolveGate = CompletableDeferred()
+        engine.finishTrack()
+        resolveGate?.complete(Unit)
+        engine.settle()
+
+        controller.currentSong shouldBe b
+        engine.current?.url shouldBe url(b)
+        failures shouldBe emptyList()
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
     fun `a song refused before StoreKit answers stays current - and plays when asked again`() = test { controller ->
         server += a.id
         serverAccess = { _, _ -> ServerAccess.Undecided }
@@ -204,6 +241,18 @@ class IosPlayerControllerPlaysTest : IosPlayerControllerTestBase() {
 
         plays.count { it.first == a.id } shouldBe 1
         endedPlays shouldBe emptyList()
+    }
+
+    @Test
+    fun `under repeat one a song that fails on a later loop stops there - it doesn't skip`() = test { controller ->
+        controller.start(listOf(a, b))
+        controller.queueOperations.setRepeatMode(RepeatMode.One)
+        engine.finishTrack()
+
+        engine.failCurrent()
+
+        controller.currentSong shouldBe a
+        controller.playbackState() shouldBe PlaybackState.Paused
     }
 
     @Test

@@ -13,6 +13,12 @@ internal class IosFeed(
 
     var failed = false
 
+    /**
+     * Why the resolution the player opened it ahead with failed, before it became current and was asked again: the
+     * failure the player reports for it after the transition.
+     */
+    var failedAhead: Throwable? = null
+
     /** Whether a failure is reported on the failure flow: not when the stream couldn't be resolved. */
     var reportFailure = true
 }
