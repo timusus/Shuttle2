@@ -349,8 +349,7 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 ## iOS Bluetooth route changes (#714, #715)
 
 Stream the logs while testing: `log stream --predicate 'subsystem == "com.simplecityapps.shuttle2"' --level info`
-(categories MusicPlayback and AudioSession) shows each engine configuration change, route change with its
-previous and new outputs, and where each pause came from.
+(category `playback`) shows each command with its source, state change and pause.
 
 - [ ] iPhone with Bluetooth headphones: a minute into a song (without pausing first), switch output mid-track: turn the headphones off and on, or pick the speaker then the headphones again in Control Center. Playback carries on (or, once disconnected, pauses) at the position it was heard, never back at 0:00; play resumes from there.
 - [ ] iPhone with Bluetooth headphones: press the headphones' volume keys up and down several times while playing. Playback never pauses.
@@ -504,7 +503,7 @@ Needs a real head unit (or a wired CarPlay dongle) and a signed device build, so
 - [ ] Rows show artwork (a playlist shows its first song's cover); a list long enough to hit the car's item limit doesn't fail to open.
 - [ ] Now Playing: play, pause, skip and seek work; the shuffle and repeat buttons toggle and their icons follow the phone; Up Next lists the queue from the current song and tapping one plays it.
 - [ ] Unplug mid-song: playback carries on (or pauses, per the route rule) and reconnecting refills the tabs.
-- [ ] Phone locked, play an album for 15+ minutes over CarPlay: the car's progress and the phone's position keep moving. Podcasts saw the engine's render-clock reads fail for most of an episode in exactly this setup while the audio played on (its `ClockStallDetector`, 2026-09-18); S2's Playback package has no such detector, so if the position freezes, `sudo log collect --device` (the `audio-engine` and `playback` categories) and file it.
+- [ ] Phone locked, play an album for 15+ minutes over CarPlay: the car's progress and the phone's position keep moving. Podcasts saw the engine's render-clock reads fail for most of an episode in exactly this setup while the audio played on (its `ClockStallDetector`, 2026-09-18); S2's Playback package has no such detector, so if the position freezes, `sudo log collect --device` (the `playback` category) and file it.
 
 ## Android 17 local-network permission (#527)
 
@@ -592,7 +591,6 @@ before the engine was asked. Stages that did not happen print as `-`.
 
 - [ ] Tap-to-engine-load gap: on a Jellyfin or Emby library of at least a few thousand songs, tap a song in Songs, then one inside an album, then one in a large playlist, five starts each from a cold queue. Compare `request-total` with `total` on each line. If the gap is regularly over about 300 ms and grows with library or playlist size, opening the tapped song before the queue is built is worth doing; if it stays near zero, close the idea.
 - [ ] Jellyfin `/universal` against `static=true`: on a Jellyfin server (not Emby), start ten different songs on Wi-Fi with the current build and note the median `total` and the `-` or slow server stage. Then change `MediaBrowserAuthenticationManager.universalPath` (`:android:mediaprovider:server`) to request `static=true` for direct-play formats, rebuild and repeat on the same songs. Keep the change only if the median `total` drops clearly with no format that stops playing; it also changes Android's stream URL, so play a FLAC and an MP3 on Android before landing it.
-- [ ] Two-chunk start on slow streams (`MusicPlaybackController`): throttle the phone to a slow link (Network Link Conditioner "Very Bad Network" or a distant server over cellular) and start a streamed FLAC. Listen to the first 10 seconds for stutter or a gap, and check the `ttfa` line for a long `total`. If it stutters, starting on two chunks is too aggressive for slow links and needs a larger first buffer; if it plays cleanly while `total` stays low, keep it.
 
 ## Landscape phone and tabletop layouts (#1011)
 
@@ -611,3 +609,16 @@ before the engine was asked. Stages that did not happen print as `-`.
 
 - [ ] Android, no Pro and no trial used: Settings > Sources > Add server, pick Jellyfin. The paywall opens; start the 14-day trial. The paywall closes and the Jellyfin sign-in opens without another tap. Repeat from the Home or Library connect-server sheet, and by buying Pro instead (close the paywall after the thank-you).
 - [ ] Same start, but close the paywall without starting the trial or buying. No sign-in opens. Buy Pro later from Settings: still no sign-in opens by itself.
+
+## iOS #1020
+
+The app now plays through AudioPlaybackKit's `Player`. Stream the logs while testing:
+`log stream --predicate 'subsystem BEGINSWITH "com.simplecityapps"' --level info`.
+
+- [ ] iPhone: play a gapless album (a live album or a DJ mix) across at least three track changes. No gap or click at the joins; the title, lock screen and elapsed time change together at each.
+- [ ] iPhone, during playback: reorder, remove and add ("Play next") songs in the queue, then turn shuffle on and off. The current song plays on uninterrupted and the next song played is the one the queue shows next.
+- [ ] iPhone: set the sleep timer to "end of track" mid-song. Playback pauses at the end of that song, with the next song shown and ready; play continues from its start.
+- [ ] iPhone: while playing, take a phone call, then hang up; ask Siri something, then dismiss it. Playback pauses for each and resumes after. Unplug wired headphones (or turn off Bluetooth ones): playback pauses and stays paused.
+- [ ] iPhone, locked: play, pause, next, previous and scrub from the lock screen and Control Center. Each takes effect, and the title, artwork, elapsed time and play/pause button follow.
+- [ ] iPhone: play a song from Jellyfin and one from Subsonic (Navidrome), on Wi-Fi and on cellular. Each starts, seeks and moves on to the next song.
+- [ ] iPhone, after the trial ends: play a paywalled track. It doesn't play and the paywall shows, with no crash and no stuck loading state; a free track still plays.
