@@ -38,8 +38,22 @@ class IosEqualizerTest {
     }
 
     @Test
-    fun theChartFallsBackToItsDefaultRate() {
+    fun theChartFallsBackToItsDefaultRateUntilAudioIsHeard() {
         equalizer().outputSampleRateHz.value shouldBe null
+    }
+
+    @Test
+    fun theChartFollowsTheRateThePlayerReports() {
+        val equalizer = equalizer()
+
+        player.reportOutputSampleRate(96_000)
+        equalizer.outputSampleRateHz.value shouldBe 96_000
+
+        player.reportOutputSampleRate(44_100)
+        equalizer.outputSampleRateHz.value shouldBe 44_100
+
+        player.reportOutputSampleRate(null)
+        equalizer.outputSampleRateHz.value shouldBe null
     }
 
     @Test

@@ -26,8 +26,10 @@ class IosEqualizer(
 
     override val maxPreampGain = 12
 
-    /** Null: the engine designs for each item's rate and doesn't report it, so the chart uses its fallback. */
-    override val outputSampleRateHz: StateFlow<Int?> = MutableStateFlow<Int?>(null).asStateFlow()
+    private val _outputSampleRateHz = MutableStateFlow<Int?>(null)
+
+    /** The rate the item playing is filtered at, as the player reports it; null (the chart's fallback) until heard. */
+    override val outputSampleRateHz: StateFlow<Int?> = _outputSampleRateHz.asStateFlow()
 
     override var enabled: Boolean = enabled
         set(value) {
@@ -53,6 +55,7 @@ class IosEqualizer(
 
     init {
         apply()
+        player.setOutputSampleRateListener { _outputSampleRateHz.value = it }
     }
 
     private fun apply() {

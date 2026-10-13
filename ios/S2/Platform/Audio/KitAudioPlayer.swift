@@ -26,6 +26,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private let equalizer = EqualizerProcessor()
     /// Held strongly: Kotlin's listener is an object only the player refers to.
     private var listener: IosAudioPlayerListener?
+    private var sampleRateListener: ((KotlinInt?) -> Void)?
     private var lastReport: (uid: Int64, state: IosAudioPlayerState)?
     private var ticker: Timer?
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
@@ -43,6 +44,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         // preamp and filters, as on Android; the limiter catches the overshoot of both.
         player.setProcessors([replayGain, equalizer, LimiterProcessor()])
         observeState()
+        observeSampleRate()
         Task { @MainActor [weak self, events = player.events] in
             for await event in events {
                 self?.handle(event)
@@ -91,6 +93,16 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
                 self?.observeState()
             }
         }
+    }
+
+    @MainActor
+    private func observeSampleRate() {
+        let rate = withObservationTracking {
+            player.audioFormat.map { Int32($0.sampleRate) }
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.observeSampleRate() }
+        }
+        sampleRateListener?(rate.map { KotlinInt(int: $0) })
     }
 
     @MainActor
@@ -270,6 +282,13 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             let coefficients = filters.coefficients
             return EqualizerDesign(preampDb: filters.preampDb,
                                    coefficients: (0..<coefficients.size).map { coefficients.get(index: $0) })
+        }
+    }
+
+    func setOutputSampleRateListener(listener: ((KotlinInt?) -> Void)?) {
+        MainActor.assumeIsolated {
+            sampleRateListener = listener
+            listener?(player.audioFormat.map { KotlinInt(int: Int32($0.sampleRate)) })
         }
     }
 

@@ -231,6 +231,17 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         equalizers += design
     }
 
+    private var outputSampleRateListener: ((Int?) -> Unit)? = null
+
+    override fun setOutputSampleRateListener(listener: ((Int?) -> Unit)?) {
+        outputSampleRateListener = listener
+    }
+
+    /** The current item's audio is heard at [rateHz], or none is (null). */
+    fun reportOutputSampleRate(rateHz: Int?) {
+        outputSampleRateListener?.invoke(rateHz)
+    }
+
     /** Every [setReplayGain] as mode and preamp, in order; kept apart from [calls] too. */
     val replayGains = mutableListOf<Pair<ReplayGainMode, Float>>()
 

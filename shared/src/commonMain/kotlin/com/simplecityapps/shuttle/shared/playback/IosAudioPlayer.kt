@@ -74,6 +74,12 @@ interface IosAudioPlayer {
     fun setEqualizer(design: IosEqualizerDesign)
 
     /**
+     * Where the player reports the rate (Hz) the current item's audio runs through the processors at, on each change
+     * (`Player.audioFormat`): null until its audio is heard. Null stops reporting.
+     */
+    fun setOutputSampleRateListener(listener: ((Int?) -> Unit)?)
+
+    /**
      * ReplayGain's [mode] and [preampDb], applied from the next buffer to the item playing too, as on Android: each item
      * at the tags it resolved with ([IosStream.replayGainTrackDb]), by the rule of `replayGainDb`.
      */
