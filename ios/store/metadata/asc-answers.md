@@ -52,10 +52,10 @@ The primary language is English (U.S.), and the `en-AU/` copy went into that loc
 
 ## App Privacy
 
-Privacy policy URL: https://simplecityapps.com/privacy (carries a Shuttle Music (iOS) section; it must
-describe the crash reports and usage analytics below before submission).
+Privacy policy URL: https://shuttlemusicplayer.com/privacy (the app's own policy, `website/privacy.html`; the
+paywalls link it too).
 
-Not yet entered in the portal (#776). Tracking: **No**. Every type is **Not Linked to You** and not used
+Published in the portal. Tracking: **No**. Every type is **Not Linked to You** and not used
 for tracking:
 
 | Data type | Purpose | Source |

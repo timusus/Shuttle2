@@ -287,7 +287,7 @@ struct PaywallContent: View {
 
 /// The Privacy Policy and Apple's standard Terms of Use (EULA), which App Review wants on every paywall.
 struct LegalLinks: View {
-    static let privacy = URL(string: "https://simplecityapps.com/privacy")!
+    static let privacy = URL(string: "https://shuttlemusicplayer.com/privacy")!
     static let terms = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     var body: some View {
