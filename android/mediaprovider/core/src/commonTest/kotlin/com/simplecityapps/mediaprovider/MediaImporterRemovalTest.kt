@@ -335,6 +335,27 @@ class MediaImporterRemovalTest : MediaImporterTestBase() {
     }
 
     @Test
+    fun `a folder change requested while an import runs applies its removal in the follow-up pass`() = runBlocking<Unit> {
+        val device = ServerProvider(MediaProviderType.Shuttle)
+        val deviceSongs = (1L..30L).map { id -> song(id = id, path = "/storage/emulated/0/Music/$id.mp3") }
+        songRepository.stored = deviceSongs
+        device.found = deviceSongs.take(5)
+        device.held = device.found.map { it.path }
+        server.found = emptyList()
+        val importer = serverImporter().apply { mediaProviders += device }
+        device.duringListing = {
+            // Only the first pass, which a mass removal alone would be held back in
+            device.duringListing = null
+            importer.requestImport(foldersChanged = true)
+        }
+
+        importer.import()
+
+        device.requests.size shouldBe 2
+        songRepository.deleted[device.type].orEmpty().map { song -> song.id } shouldBe (6L..30L).toList()
+    }
+
+    @Test
     fun `a full sync that holds back a mass removal makes the next sync full - to apply it`() = runBlocking<Unit> {
         val songs = (1L..30L).map { id -> song(id = id, path = "jellyfin://item/$id") }
         songRepository.stored = songs

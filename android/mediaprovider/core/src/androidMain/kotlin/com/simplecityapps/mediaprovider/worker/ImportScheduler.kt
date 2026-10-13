@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.worker
 
 import android.content.Context
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.shuttle.di.ApplicationContext
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
@@ -13,7 +14,8 @@ interface ImportScheduler {
 
 @ContributesBinding(AppScope::class)
 class WorkManagerImportScheduler @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val mediaImporter: MediaImporter
 ) : ImportScheduler {
-    override fun requestFullImport(foldersChanged: Boolean) = MediaImportWorker.enqueueFullImport(context, foldersChanged)
+    override fun requestFullImport(foldersChanged: Boolean) = MediaImportWorker.enqueueFullImport(context, mediaImporter, foldersChanged)
 }

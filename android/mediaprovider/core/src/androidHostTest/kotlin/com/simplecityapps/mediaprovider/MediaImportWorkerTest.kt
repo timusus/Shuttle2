@@ -13,7 +13,9 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -67,7 +70,7 @@ class MediaImportWorkerTest {
         fullImport: Boolean = false
     ) = TestListenableWorkerBuilder<MediaImportWorker>(RuntimeEnvironment.getApplication())
         .setRunAttemptCount(attempt)
-        .setInputData(workDataOf("full_import" to fullImport))
+        .setInputData(workDataOf(MediaImportWorker.KEY_FULL_IMPORT to fullImport))
         .setForegroundUpdater { _, _, _ ->
             foregrounds++
             com.google.common.util.concurrent.Futures.immediateVoidFuture()
@@ -188,11 +191,36 @@ class MediaImportWorkerTest {
     }
 
     @Test
-    fun `a requested import is queued as unique work`() {
+    fun `a requested import with nothing to import shows no notification`() = runBlocking<Unit> {
+        importer.mediaProviders.clear()
+
+        worker(fullImport = true).doWork() shouldBe Result.success()
+
+        foregrounds shouldBe 0
+    }
+
+    @Test
+    fun `a requested import waits for the import already running`() = runBlocking<Unit> {
+        provider.hold = CompletableDeferred()
+        val running = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        val requested = async(Dispatchers.Default) { worker(fullImport = true).doWork() }
+
+        withTimeoutOrNull(200) { requested.await() } shouldBe null
+
+        provider.hold!!.complete(Unit)
+        requested.await() shouldBe Result.success()
+        running.join()
+        importer.isImporting shouldBe false
+    }
+
+    @Test
+    fun `a second request while one is enqueued leaves one unique work chain`() {
         val context = RuntimeEnvironment.getApplication()
         WorkManagerTestInitHelper.initializeTestWorkManager(context)
 
-        MediaImportWorker.enqueueFullImport(context, foldersChanged = true)
+        MediaImportWorker.enqueueFullImport(context, importer, foldersChanged = false)
+        MediaImportWorker.enqueueFullImport(context, importer, foldersChanged = true)
 
         val infos = WorkManager.getInstance(context).getWorkInfosForUniqueWork("MEDIA_FULL_IMPORT").get()
         infos.size shouldBe 1
@@ -207,12 +235,16 @@ class MediaImportWorkerTest {
 
         /** Holds the scan open until cancelled, signalling [started] as it begins. */
         var hang = false
+
+        /** Holds the scan open until completed. */
+        var hold: CompletableDeferred<Unit>? = null
         val started = Channel<Unit>(Channel.UNLIMITED)
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             scans++
             started.send(Unit)
             if (hang) awaitCancellation()
+            hold?.await()
             emit(failure?.let { FlowEvent.Failure(it) } ?: FlowEvent.Success(emptyList()))
         }
 

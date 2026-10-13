@@ -117,6 +117,9 @@ class ServerProvider(
     val knownVersionRequests = mutableListOf<Map<String, String>>()
     var playlistListing: MediaImporter.PlaylistListing? = null
 
+    /** Runs as each song listing begins, for a test to act while an import is running. */
+    var duringListing: (suspend () -> Unit)? = null
+
     /** What it finds, or the failure it reports instead. */
     var found: List<Song> = emptyList()
     var failure: String? = null
@@ -154,6 +157,7 @@ class ServerProvider(
 
     private fun songs(since: Instant?): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         requests += since
+        duringListing?.invoke()
         emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, progress = null)))
         failure?.let { emit(FlowEvent.Failure(it)) } ?: emit(FlowEvent.Success(found, missing))
     }

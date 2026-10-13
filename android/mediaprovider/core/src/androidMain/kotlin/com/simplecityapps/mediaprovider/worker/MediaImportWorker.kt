@@ -72,9 +72,9 @@ constructor(
 
     /** The user's own scan or Sync now: its progress and failure show in the app, so a failure isn't retried behind their back. */
     private suspend fun runFullImport(): Result {
-        promoteToForeground()
+        if (mediaImporter.mediaProviders.isNotEmpty()) promoteToForeground()
         return try {
-            mediaImporter.import(foldersChanged = inputData.getBoolean(KEY_FOLDERS_CHANGED, false))
+            mediaImporter.importAndWait(foldersChanged = inputData.getBoolean(KEY_FOLDERS_CHANGED, false))
             Result.success()
         } catch (e: CancellationException) {
             throw e
@@ -135,19 +135,22 @@ constructor(
 
         /**
          * Runs a full import as expedited work with a progress notification, so it carries on when the user leaves the app.
-         * Requests queue behind a running one, which then starts another pass rather than being dropped.
+         * A request while one is enqueued or running adds no work: it goes to the importer's rescan flags, which that work's
+         * importer runs as a follow-up pass.
          */
         fun enqueueFullImport(
             context: Context,
+            mediaImporter: MediaImporter,
             foldersChanged: Boolean
         ) {
+            mediaImporter.requestImport(foldersChanged)
             val request =
                 OneTimeWorkRequestBuilder<MediaImportWorker>()
                     .setInputData(workDataOf(KEY_FULL_IMPORT to true, KEY_FOLDERS_CHANGED to foldersChanged))
                     .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                     .addTag(TAG_FULL_IMPORT)
                     .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(TAG_FULL_IMPORT, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+            WorkManager.getInstance(context).enqueueUniqueWork(TAG_FULL_IMPORT, ExistingWorkPolicy.KEEP, request)
         }
 
         /** The runs (the first and its retries) a failing sync gets before it waits for the next period. */

@@ -110,14 +110,32 @@ class MediaImporter(
      * once rather than waiting on the next import.
      */
     suspend fun import(foldersChanged: Boolean = false) {
+        if (!requestImport(foldersChanged)) return
+        runRequestedImports()?.let { throw it }
+    }
+
+    /**
+     * Like [import], but does not return while another import holds the lock: it waits for that import, and for the pass its
+     * request asks for, so a caller that shows the import running (a foreground notification) stays up until it's done.
+     */
+    suspend fun importAndWait(foldersChanged: Boolean = false) {
+        if (!requestImport(foldersChanged)) return
+        runRequestedImports(awaitRunning = true)?.let { throw it }
+    }
+
+    /**
+     * Asks for a full import without running it: whichever import is running or next starts runs a pass with it, so a
+     * request that unique work coalesced away isn't dropped. Returns false when there is no source to read.
+     */
+    fun requestImport(foldersChanged: Boolean): Boolean {
         if (providers.snapshot.isEmpty()) {
             logger.debug { "Import failed, media providers empty" }
-            return
+            return false
         }
 
         if (foldersChanged) foldersChangedRequested.store(true)
         rescanRequested.store(true)
-        runRequestedImports()?.let { throw it }
+        return true
     }
 
     /**
@@ -172,14 +190,22 @@ class MediaImporter(
 
     /**
      * Runs a full import for as long as one is requested and no other import holds [importLock]; the last pass's failure.
-     * [onStart] is called before each pass.
+     * [onStart] is called before each pass. With [awaitRunning] the first turn waits for the lock rather than leaving the
+     * request to its holder, so this returns only once no import is running.
      */
-    private suspend fun runRequestedImports(onStart: suspend () -> Unit = {}): Exception? {
+    private suspend fun runRequestedImports(
+        onStart: suspend () -> Unit = {},
+        awaitRunning: Boolean = false
+    ): Exception? {
         var failure: Exception? = null
+        var waitForLock = awaitRunning
         // Checked again after each unlock: a request made between the last check and the unlock found the lock still held,
         // so whichever import sees it next runs it
-        while (rescanRequested.load()) {
-            if (!importLock.tryLock()) {
+        while (waitForLock || rescanRequested.load()) {
+            if (waitForLock) {
+                importLock.lock()
+                waitForLock = false
+            } else if (!importLock.tryLock()) {
                 logger.debug { "Import already in progress, requesting a follow-up pass" }
                 break
             }

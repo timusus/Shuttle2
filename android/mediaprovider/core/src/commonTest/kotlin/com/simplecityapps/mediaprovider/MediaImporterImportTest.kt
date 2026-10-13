@@ -14,6 +14,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
 
 class MediaImporterImportTest : MediaImporterTestBase() {
@@ -33,6 +34,25 @@ class MediaImporterImportTest : MediaImporterTestBase() {
         provider.gate.trySend(Unit)
         returned.receive()
 
+        provider.scans.load() shouldBe 2
+        importer.isImporting shouldBe false
+    }
+
+    @Test
+    fun `an import that waits for the running one returns only once its follow-up pass is done`() = runBlocking<Unit> {
+        launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        val waited = CompletableDeferred<Unit>()
+        launch(Dispatchers.Default) { importer.importAndWait().also { waited.complete(Unit) } }
+
+        withTimeoutOrNull(200) { waited.await() } shouldBe null
+
+        provider.gate.trySend(Unit) // the first pass finishes, the waiter's request asks for another
+        provider.started.receive()
+        withTimeoutOrNull(200) { waited.await() } shouldBe null
+
+        provider.gate.trySend(Unit)
+        waited.await()
         provider.scans.load() shouldBe 2
         importer.isImporting shouldBe false
     }
