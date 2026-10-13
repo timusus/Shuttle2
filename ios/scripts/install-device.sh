@@ -59,6 +59,8 @@ CONFIG_FLAG=(--device)
 [[ "$CONFIGURATION" == "Release" ]] && CONFIG_FLAG+=(--release)
 "$IOS_DIR/scripts/build-framework.sh" "${CONFIG_FLAG[@]}" -q
 
+# Keyed by the package pins, as in build-app.sh.
+spm_cache="$HOME/Library/Caches/s2-spm/$(shasum "$IOS_DIR/S2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved" | cut -c1-12)"
 echo "==> Building S2 ($CONFIGURATION) for device $DEVICE with team $TEAM"
 (cd "$IOS_DIR" && xcodebuild build \
   -project S2.xcodeproj \
@@ -66,7 +68,7 @@ echo "==> Building S2 ($CONFIGURATION) for device $DEVICE with team $TEAM"
   -configuration "$CONFIGURATION" \
   -destination "id=$DEVICE" \
   -derivedDataPath "$OUT/dd" \
-  -clonedSourcePackagesDirPath "$HOME/Library/Caches/s2-spm" \
+  -clonedSourcePackagesDirPath "$spm_cache" \
   COMPILER_INDEX_STORE_ENABLE=NO \
   ${CACHE_ARGS[@]+"${CACHE_ARGS[@]}"} \
   -allowProvisioningUpdates \

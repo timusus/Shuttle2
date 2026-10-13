@@ -43,7 +43,7 @@ Cold-start timing: `ios/scripts/startup-bench.sh --sim -n 5` (leases a sim, stre
 median/min/max per milestone; `--help` for `--device`, `--append` and launch args; `docs/performance/ios-startup.md`).
 
 `test.sh` builds through `build-app.sh` then runs `test-without-building`. Release is for archive/deploy only
-(`ios/archive-and-upload.sh`). The xcodebuild calls share one SPM clone cache (`~/Library/Caches/s2-spm`) across
+(`ios/archive-and-upload.sh`). The xcodebuild calls share an SPM clone cache per `Package.resolved` hash (`~/Library/Caches/s2-spm/<hash>`) across
 worktrees, and Xcode compilation caching shares one CAS (`~/Library/Caches/s2-xcode-cas`, `ios/scripts/xcode-cache.sh`;
 `S2_XCODE_CAS=off` disables; Debug builds only, capped at 10 GB, prefix-mapped so entries carry no worktree paths): a
 cold DerivedData build with a warm CAS took 79s against 106s uncached (-26%, Xcode 27.2), and two concurrent builds on
