@@ -44,6 +44,8 @@ public final class TimeOffsetItemSource: ItemSource, @unchecked Sendable {
     private var reopensLeft = reopenBudget
     private var ended = false
 
+    public var currentFormat: PCMFormat? { lock.withLock { inner?.currentFormat } }
+
     public init(open: @escaping Open) {
         openReader = open
     }

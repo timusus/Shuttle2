@@ -40,8 +40,6 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     private let times = OSAllocatedUnfairLock(initialState: Times())
-    /// The item of each event sent and not yet handled, in order: `player.events` delivers them one for one.
-    private var sentItems: [QueueKey?] = []
 
     @MainActor
     init(player: Player<QueueKey>, replayGain: ReplayGainProcessor = ReplayGainProcessor()) {
@@ -51,13 +49,6 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         // Always active, so EQ changes never need another `setProcessors`. ReplayGain levels each item before the EQ's
         // preamp and filters, as on Android; the limiter catches the overshoot of both.
         player.setProcessors([replayGain, equalizer, LimiterProcessor()])
-        // An event names its item by index, and Kotlin may hand over another order before the event is delivered, so
-        // the item is taken as the event is sent. `onEvent` is the player's only synchronous hook (a testing SPI).
-        let forward = player.onEvent
-        player.onEvent = { [weak self, unowned player] event in
-            forward?(event)
-            MainActor.assumeIsolated { self?.sentItems.append(Self.item(of: event, in: player.items)) }
-        }
         observeState()
         observeSampleRate()
         observeTimes()
@@ -151,43 +142,30 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         log.notice("time to first audio: song \(item.songId, privacy: .public), \(ms, privacy: .public) ms")
     }
 
-    private static func item(of event: PlayerEvent<QueueKey>, in items: [QueueKey]) -> QueueKey? {
-        let index: Int? = switch event {
-        case let .itemTransition(_, to, _): to
-        case let .itemFailed(index, _), let .seekLanded(index, _), let .seekAdjusted(index, _, _),
-             let .firstAudioRendered(index, _): index
-        case .recoveredPaused, .playWhenReadyChanged, .bufferingStarted, .bufferingEnded: nil
-        }
-        return index.flatMap { items.indices.contains($0) ? items[$0] : nil }
-    }
-
     @MainActor
     private func handle(_ event: PlayerEvent<QueueKey>) {
-        let item = sentItems.isEmpty ? nil : sentItems.removeFirst()
         switch event {
-        case let .itemTransition(_, _, reason):
+        case let .itemTransition(_, to, reason):
             // A seek's transition is Kotlin's own move; only the player's moves are news to it.
-            guard reason != .seek, let item else { return }
+            guard reason != .seek, let item = to?.item else { return }
             lastReport = nil
             listener?.onTransition(trackId: "\(item.uid)")
             // Kotlin drops a report for an item before it has moved onto it, so the arrived item's state follows here.
             reportState()
-        case let .itemFailed(_, error):
-            guard let item else { return }
+        case let .itemFailed(ref, error):
             lastReport = nil
-            listener?.onFailed(trackId: "\(item.uid)", message: "\(error.underlying)")
-        case let .seekLanded(_, position), let .seekAdjusted(_, _, position):
+            listener?.onFailed(trackId: "\(ref.item.uid)", message: "\(error.underlying)")
+        case let .seekLanded(ref, position), let .seekAdjusted(ref, _, position):
             // An adjusted or refused seek moves Kotlin's optimistic progress back to where the player is.
-            guard let item else { return }
-            listener?.onPosition(trackId: "\(item.uid)", positionMs: Int64(position * 1000))
+            listener?.onPosition(trackId: "\(ref.item.uid)", positionMs: Int64(position * 1000))
         case .recoveredPaused:
             reportState()
         case let .playWhenReadyChanged(playing, reason):
             if !playing, reason == .endOfItem, let uid = player.currentItem?.uid {
                 listener?.onPausedAtEnd(trackId: "\(uid)")
             }
-        case .firstAudioRendered:
-            firstAudioRendered(item)
+        case let .firstAudioRendered(ref, _):
+            firstAudioRendered(ref.item)
         case .bufferingStarted, .bufferingEnded:
             break
         }
