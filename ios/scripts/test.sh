@@ -10,7 +10,7 @@
 # worker, or $S2_SIM_PROFILE=ios26 to lease from the iOS 26 pool — see ios/scripts/lease-sim.sh;
 # an unknown profile aborts with exit 2 before anything builds); else an iPhone on a released iOS
 # runtime, a booted one first, else the newest (a beta only when there's no other). Other arguments go to
-# xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingControllerTests`,
+# xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingPlayerTests`,
 # `--filter StreamWarmUpTests`).
 set -euo pipefail
 

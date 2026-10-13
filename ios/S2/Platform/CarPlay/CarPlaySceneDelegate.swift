@@ -8,7 +8,7 @@ import UIKit
 /// can play. Playlists lists the auto playlists and the user's own; Library pushes Artists, Albums, Songs and Genres.
 /// Albums, artists, genres and playlists push their songs; a song plays its list from it, Shuffle shuffles the list.
 /// Playback goes through `MediaActionsViewModel`, as the phone's does, and Now Playing's transport is the remote
-/// commands `NowPlayingController` already registers. CarPlay is Shuttle Music Pro (#946): without it the root is one
+/// commands `PlaybackSystemCoordinator` already registers. CarPlay is Shuttle Music Pro (#946): without it the root is one
 /// upgrade message, with nothing to browse or play, until the entitlement changes.
 @MainActor
 final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPInterfaceControllerDelegate {

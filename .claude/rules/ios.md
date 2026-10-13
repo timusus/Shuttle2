@@ -87,7 +87,7 @@ ios/
     Theme/LayoutTier.swift  # compact / regular / wide, same vocabulary as Android
     Features/               # Home, Library, Search, Playback (mini player, Now Playing presentation)
     KMP/                    # AppGraph (initialize() at launch), ViewModelCache, CombineFlowBridge, ViewModelGroup, ConsumeEvents
-    Platform/Audio/         # NowPlayingController, KitAudioPlayer, PlaybackSystemCoordinator
+    Platform/Audio/         # KitAudioPlayer, PlaybackSystemCoordinator, NowPlayingPlayer
     Platform/SystemIntents/ # App Intents for Siri/Shortcuts/Spotlight (#758): AppIntentPerformer, IntentPerformers,
                             # NowPlayingWidgetPublisher (writes the widgets' state)
   SystemSurfaces/           # compiled into the app AND S2Widgets: playback App Intents, NowPlayingStore (App Group

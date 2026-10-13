@@ -3,8 +3,8 @@ import Foundation
 import Observation
 
 /// The buttons under CarPlay's Now Playing transport, as values: what they show follows the player's shuffle and
-/// repeat modes. Play, pause, skip and seek are the template's own, driven by `NowPlayingController`'s remote
-/// commands, so they aren't here.
+/// repeat modes. Play, pause, skip and seek are the template's own, driven by the remote commands of
+/// `PlaybackSystemCoordinator`'s `NowPlayingSession`, so they aren't here.
 enum CarPlayNowPlayingButton: Equatable {
     case shuffle(on: Bool)
     case repeatMode(NowPlayingRepeat)

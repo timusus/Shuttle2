@@ -620,6 +620,12 @@ The app now plays through AudioPlaybackKit's `Player`. Stream the logs while tes
 - [ ] iPhone: set the sleep timer to "end of track" mid-song. Playback pauses at the end of that song, with the next song shown and ready; play continues from its start.
 - [ ] iPhone: while playing, take a phone call, then hang up; ask Siri something, then dismiss it. Playback pauses for each and resumes after. Unplug wired headphones (or turn off Bluetooth ones): playback pauses and stays paused.
 - [ ] iPhone, locked: play, pause, next, previous and scrub from the lock screen and Control Center. Each takes effect, and the title, artwork, elapsed time and play/pause button follow.
+- [ ] iPhone, locked, a music song: the lock screen shows next and previous. Previous more than 2 s in restarts the song; within 2 s it goes back a song. Next on the queue's last song goes to its first.
+- [ ] iPhone, locked, an audiobook (an `.m4b` or a file under an "audiobook" folder) and a podcast episode: the lock screen shows skip back 10 and skip forward 30 in place of previous and next; each moves that far in the song. Back to a music song: next and previous return.
+- [ ] iPhone: set the speed to 1.5× in the Audio sheet; the lock screen's elapsed time runs at 1.5×. Long-press the lock screen's play button (or use the rate control where shown) to pick a speed: the in-app speed follows.
+- [ ] CarPlay (Pro): play, pause, next, previous and scrub from the Now Playing template, for a music song and an audiobook (skip ±N there). Each takes effect; title, artwork and elapsed time follow.
+- [ ] iPhone, playing: take a phone call and hang up. Playback pauses, the lock screen shows play during the call, and playback resumes after with the lock screen back to pause.
+- [ ] iPhone, playing: switch the output to an AirPlay speaker from Control Center. Playback continues on the speaker, and the lock screen's controls and elapsed time still work.
 - [ ] iPhone: play a song from Jellyfin and one from Subsonic (Navidrome), on Wi-Fi and on cellular. Each starts, seeks and moves on to the next song.
   Known gap until stage 2b: a progressive transcode (Opus/MP3 under the quality cap) can't seek, and one that ends short reads as a normal end and moves on to the next song.
 - [ ] iPhone, after the trial ends: play a paywalled track. It doesn't play and the paywall shows, with no crash and no stuck loading state; a free track still plays.

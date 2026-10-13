@@ -39,7 +39,7 @@ literal `dp`/`Color(0x…)`/`Font.system(size:)`.
 - Whole-app audits load `docs/design/competitors.md` for the feature-expectations pass; shape and
   critique cite it too (shape's Reference step as prior art, critiques for its anti-patterns), not
   only whole-app audits.
-- Native-surface state: `PlaybackService` (Android) and `NowPlayingController` (iOS) own the media
+- Native-surface state: `PlaybackService` (Android) and `PlaybackSystemCoordinator` (iOS) own the media
   session; Android Auto, Cast and the AirPlay picker are present; predictive back is on (targetSdk 36 —
   verify the animations); CarPlay and Wear/watchOS are absent; the Android QS tile (`PlaybackTileService`) only toggles play/pause; widgets are Glance
   `NowPlayingWidget` (Android) / `S2Widgets` (iOS); shortcuts are `IntentPerformers`.

@@ -45,7 +45,7 @@ platform subsystem: playback engine, billing, background services). Status:
 | AirPlay | n/a (Android has no AirPlay) | L | 9 | none | New surface for iOS, not a port. |
 | Android Auto | `android/playback/.../mediasession/` (MediaLibraryService browse tree) | L | 9 | none | CarPlay is the iOS analogue, phase 9. |
 | CarPlay | n/a (Android has no CarPlay) | L | 9 | none | New surface for iOS, not a port. |
-| Notification / media session controls | `android/playback/.../mediasession/` | M | 6 | partial | iOS equivalent is `MPNowPlayingInfoCenter`/remote commands per `ios-port.md` decisions; `PlaybackSystemCoordinator` drives `NowPlayingController` off `IosPlayerController`. |
+| Notification / media session controls | `android/playback/.../mediasession/` | M | 6 | partial | iOS equivalent is `MPNowPlayingInfoCenter`/remote commands per `ios-port.md` decisions; `PlaybackSystemCoordinator` runs AudioPlaybackKit's `NowPlayingSession` over the `Player`, its remote commands through `IosPlayerController`. |
 | Home screen widget | `android/app/.../ui/widgets/` (`NowPlayingWidget.kt`) | L | 9 | none | WidgetKit port, phase 9. |
 | Downloads (offline songs for remote providers) | `android/downloads/src/main/.../shuttle/downloads/` (`SongDownloadManager`, `SongDownloadService`) | L | 8/9 | none | |
 | Tag editing (batch) | `android/app/.../ui/screens/tageditor/TagEditorViewModel.kt` | M | 8 | none | Deferred: iOS reads tags with FFmpeg (`AudioFileTags`), which doesn't write them; `TagFileAccess` has no iOS binding. |

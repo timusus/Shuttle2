@@ -11,9 +11,9 @@ paths:
 # iOS player, Now Playing and the system surfaces (#1020)
 
 The app plays through AudioPlaybackKit's `Player`, which owns decode, gapless joins and the audio session: interruptions,
-the route-change pause (headphones out) and media-services resets are its job, tested upstream. `NowPlayingController`
-takes its system objects behind protocols (`NowPlayingInfoCenter`, `RemoteCommandCenter`) and is tested with fakes.
-Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`.
+the route-change pause (headphones out) and media-services resets are its job, tested upstream. So is Now Playing: the
+package's `NowPlayingSession`, tested here on its `FakeNowPlayingInfoCenter`/`FakeRemoteCommandCenter`
+(`makeTestCoordinator`, `TestGraph.swift`). Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`.
 
 - `KitAudioPlayer` is the Kotlin `IosAudioPlayer` over the `Player`: Kotlin keeps the policy (queue, skipping failed
   items, restart-vs-previous) and hands the whole order over; each item resolves its stream through
@@ -22,14 +22,14 @@ Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`.
   `EqualizerProcessor` then `LimiterProcessor` (S2Playback `DSP/`), all always active. Each item's ReplayGain is the
   `IosStream.gainDb` it resolved with (mode and preamp applied in Kotlin), taken at the item's flush; `IosEqualizer`
   hands the EQ a design that each item's rate is filtered at.
-- `NowPlayingController`: metadata on `setItem`, elapsed/rate through `updatePlayback`, which only writes on a
-  state/speed change, a >1 s jump or every 10 s (safe per tick). Artwork via the `loadArtwork` closure, dropped if the
-  item changed. `SkipMode.interval` swaps next/previous for skip ±N s.
-- `PlaybackSystemCoordinator` wires Now Playing, the remote commands, the widgets' snapshot and `PlayIntent` to the
-  Kotlin `IosPlayerController` (`AppGraph.shared.playerController`): remote commands call `PlaybackOperations`; Now
-  Playing follows the controller's flows, republished from all of their current values whenever any changes (never
-  per-flow copies: observer tasks resume in no particular order, #691). A stalled stream sets the rate to 0.
-  `AppGraph.initialize()` (from `S2App.init`) builds `KitAudioPlayer`, the graph and the coordinator once.
+- `PlaybackSystemCoordinator` runs a `NowPlayingSession` over `NowPlayingPlayer` (a `ForwardingNowPlayingControllable`
+  over the `Player`) and keeps the widgets' snapshot. The session reads the Player (elapsed, rate, seekability) and
+  `NowPlayingPlayer`'s overrides: play/pause shown is `PlayIntent.isPlayIntended`, duration is the song's, next stays
+  enabled (Kotlin wraps the queue), and audiobook/podcast songs (`Song.type != .audio`) skip 30 s / back 10 s. Every
+  remote command goes through `IosPlayerController`/`PlayIntent`, never the Player, so Kotlin's policy decides
+  (restart-vs-previous). Metadata is read once per item; the clock shows rate 0 until audio flows; scrub and skip are
+  enabled once the item is seekable. `AppGraph.initialize()` (from `S2App.init`) builds `KitAudioPlayer`, the graph and
+  the coordinator once.
 - The Player stays `.ready` after a skip or seek until its transport answers, so the restart can read as a stall for a
   moment. A paused load or seek is `.buffering` until its first audio; `KitAudioPlayer` reports it as paused.
 - Known gap until stage 2b of #1020: a progressive transcode can't seek, and one that ends short reads as a normal end
