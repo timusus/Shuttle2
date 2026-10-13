@@ -114,6 +114,25 @@ final class TimeOffsetItemSourceTests: XCTestCase {
         XCTAssertFalse(offsetsAskedFor.contains("offset=19"))
     }
 
+    /// No duration to clamp a seek to or tell a short end by: the seek is refused, and answered with where it stayed.
+    func testATranscodeOfUnknownDurationRefusesASeekCleanly() {
+        let rig = makeRig(transcodeDurationMs: -1)
+        var adjusted: [TimeInterval] = []
+        rig.onEvent = { if case let .seekAdjusted(_, _, position) = $0 { adjusted.append(position) } }
+        rig.player.setItems([1])
+        rig.player.play()
+        rig.run(for: 1)
+
+        rig.player.seek(to: 12.5)
+        rig.run(for: 1)
+
+        XCTAssertFalse(rig.player.isSeekable)
+        XCTAssertEqual(adjusted.count, 1)
+        XCTAssertEqual(adjusted.first ?? 0, 1, accuracy: 0.3)
+        XCTAssertEqual(Set(offsetsAskedFor), ["offset=0"])
+        XCTAssertEqual(rig.player.position, 2, accuracy: 0.3)
+    }
+
     func testAStreamServedAsStoredSeeksWithoutAskingAtAnOffset() {
         server.streamsWithoutLength = false
         let rig = makeRig(transcodeDurationMs: nil)

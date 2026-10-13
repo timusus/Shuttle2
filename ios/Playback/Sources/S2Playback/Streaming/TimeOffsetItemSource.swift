@@ -5,15 +5,15 @@ import PlaybackRender
 /// A stream's bytes that may be a progressive transcode, which a server starts at a time offset rather than a byte range.
 public protocol TimeOffsetByteReader: StreamByteReader {
     /// Once the stream has been read from: the whole item's duration in ms if it is a transcode the server starts at a
-    /// time offset; nil for a file or a stream served as stored.
+    /// time offset, or 0 or less if its duration is unknown; nil for a file or a stream served as stored.
     var transcodeDurationMs: Int64? { get }
 }
 
 /// An item played through `FFmpegItemSource` that, when its stream turns out to be a progressive transcode, seeks by
 /// re-opening the stream at a time offset: a transcode has no byte length to seek in. It declares the song's duration
 /// and is seekable, and a transcode that fails or ends more than 5 s short of that duration (a dropped connection reads
-/// as a clean end) is re-opened at its position the same way. Files and streams served as stored seek as the inner
-/// source does.
+/// as a clean end) is re-opened at its position the same way. A transcode of unknown duration refuses seeks and is
+/// re-opened only after a failure. Files and streams served as stored seek as the inner source does.
 ///
 /// Re-opens ask for whole seconds, the one precision every server honours (Subsonic's offsets are whole seconds), and
 /// drop the frames up to the target, so a seek lands where it was asked. Three re-opens in a row that play less than a
@@ -60,10 +60,11 @@ public final class TimeOffsetItemSource: ItemSource, @unchecked Sendable {
         let source = attach(reader)
         let format = try source.open()
         self.format = format
-        if let durationMs = reader.transcodeDurationMs, durationMs > 0 {
+        if let durationMs = reader.transcodeDurationMs {
             isTranscode = true
-            frameCount = frames(seconds: Double(durationMs) / 1000)
-            isSeekable = true
+            // Unknown, there is nothing to clamp a seek to or tell a short end by, and its bytes can't be seeked in.
+            frameCount = durationMs > 0 ? frames(seconds: Double(durationMs) / 1000) : nil
+            isSeekable = durationMs > 0
         } else {
             frameCount = source.frameCount
             isSeekable = source.isSeekable

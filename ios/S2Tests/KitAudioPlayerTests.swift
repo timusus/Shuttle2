@@ -434,6 +434,18 @@ struct ResolvingByteReaderTests {
         sut.cancel()
     }
 
+    @Test func aTranscodeOfUnknownDurationIsStillATranscode() async {
+        let sut = reader()
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+
+        box.answer?(stream(bitrateKbps: 128, sizeBytes: -1, durationMs: -1, transcoded: true), nil)
+
+        #expect(await waitUntil { box.done })
+        #expect(sut.transcodeDurationMs == -1)
+        sut.cancel()
+    }
+
     @Test func aStreamServedAsStoredIsNoTranscode() async {
         let sut = reader()
         readOnDecodeThread(sut)

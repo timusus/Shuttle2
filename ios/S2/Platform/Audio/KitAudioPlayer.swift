@@ -389,8 +389,8 @@ final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
 
     var transcodeDurationMs: Int64? {
         condition.withLock {
-            guard let stream = answer?.stream, stream.transcoded, stream.durationMs > 0 else { return nil }
-            return startMs + stream.durationMs
+            guard let stream = answer?.stream, stream.transcoded else { return nil }
+            return stream.durationMs > 0 ? startMs + stream.durationMs : -1
         }
     }
 
