@@ -120,7 +120,14 @@ final class IosAppDependencies {
         // The player opens items through the graph, which is built over the player: the closure reads it once it's there.
         var builtGraph: IosAppGraph!
         let audioPlayer = StartupTrace.step("audioPlayer") {
-            KitAudioPlayer.live { uid, done in builtGraph.playerController.itemResolver.resolve(uid: uid, onResult: done) }
+            KitAudioPlayer.live { uid, startMs, done in
+                let resolver = builtGraph.playerController.itemResolver
+                if startMs > 0 {
+                    resolver.resolveAt(uid: uid, startPositionMs: startMs, onResult: done)
+                } else {
+                    resolver.resolve(uid: uid, onResult: done)
+                }
+            }
         }
         let localLibrary = LocalLibrary()
         self.audioPlayer = audioPlayer

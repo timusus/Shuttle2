@@ -285,14 +285,16 @@ struct ResolvingByteReaderTests {
         var error: Error?
         var done = false
         var asked = 0
+        var askedAtMs: Int64?
         var answer: ((IosStream?, String?) -> Void)?
     }
 
     private let box = Box()
 
-    private func reader() -> ResolvingByteReader {
-        ResolvingByteReader(uid: 7) { [box] _, completion in
+    private func reader(startMs: Int64 = 0) -> ResolvingByteReader {
+        ResolvingByteReader(uid: 7, startMs: startMs) { [box] _, startMs, completion in
             box.asked += 1
+            box.askedAtMs = startMs
             box.answer = completion
         }
     }
@@ -344,15 +346,40 @@ struct ResolvingByteReaderTests {
         #expect(box.asked == 1)
     }
 
+    @Test func aTranscodeReOpenedPartwayAsksThereAndNamesTheWholeSongsDuration() async {
+        let sut = reader(startMs: 90_000)
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+
+        box.answer?(stream(bitrateKbps: 128, sizeBytes: -1, durationMs: 110_000, transcoded: true), nil)
+
+        #expect(await waitUntil { box.done })
+        #expect(box.askedAtMs == 90_000)
+        #expect(sut.transcodeDurationMs == 200_000)
+        sut.cancel()
+    }
+
+    @Test func aStreamServedAsStoredIsNoTranscode() async {
+        let sut = reader()
+        readOnDecodeThread(sut)
+        #expect(await waitUntil { box.asked == 1 })
+
+        box.answer?(stream(bitrateKbps: 128, sizeBytes: 8_000_000, durationMs: 200_000), nil)
+
+        #expect(await waitUntil { box.done })
+        #expect(sut.transcodeDurationMs == nil)
+        sut.cancel()
+    }
+
     @Test func aStreamOnAnExpensiveNetworkDownloadsAMinuteAtTheLibrarysBitrateAhead() {
         #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: 128, sizeBytes: 8_000_000, durationMs: 200_000)) == GrowingFileReadAhead(bytes: 960_000))
         #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: -1, sizeBytes: 6_000_000, durationMs: 240_000)) == GrowingFileReadAhead(bytes: 1_500_000))
         #expect(ResolvingByteReader.readAhead(stream(bitrateKbps: -1, sizeBytes: -1, durationMs: -1)) == GrowingFileReadAhead(bytes: 2_400_000))
     }
 
-    private func stream(bitrateKbps: Int32, sizeBytes: Int64, durationMs: Int64) -> IosStream {
+    private func stream(bitrateKbps: Int32, sizeBytes: Int64, durationMs: Int64, transcoded: Bool = false) -> IosStream {
         IosStream(
-            url: "https://example.com/a.flac", headers: [:], gainDb: 0, opensAtPosition: true, transcoded: false,
+            url: "https://example.com/a.flac", headers: [:], gainDb: 0, opensAtPosition: true, transcoded: transcoded,
             bitrateKbps: bitrateKbps, sizeBytes: sizeBytes, durationMs: durationMs
         )
     }
@@ -384,6 +411,5 @@ private final class RecordingListener: NSObject, IosAudioPlayerListener {
     func onTransition(trackId: String) { transitions.append(trackId) }
     func onFailed(trackId: String, message _: String) { failures.append(trackId) }
     func onPosition(trackId _: String, positionMs _: Int64) {}
-    func onSeekUnsupported(trackId _: String, positionMs _: Int64) {}
     func onPausedAtEnd(trackId: String) { pausedAtEnd.append(trackId) }
 }

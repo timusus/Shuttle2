@@ -59,17 +59,19 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     /// The app's player: each item's source reads the stream `resolve` hands it, opened on the decode thread, and plays
-    /// at the stream's gain.
+    /// at the stream's gain. A transcode seeks and recovers by resolving the stream again at the position.
     @MainActor
     static func live(resolve: @escaping ResolvingByteReader.Resolve) -> KitAudioPlayer {
         let replayGain = ReplayGainProcessor()
         let player = Player<QueueKey>(makeSource: { key in
-            FFmpegItemSource(reader: ResolvingByteReader(uid: key.uid) { uid, completion in
-                resolve(uid) { stream, error in
-                    if let stream { replayGain.setGain(stream.gainDb, for: key) }
-                    completion(stream, error)
+            TimeOffsetItemSource { startMs in
+                ResolvingByteReader(uid: key.uid, startMs: startMs) { uid, startMs, completion in
+                    resolve(uid, startMs) { stream, error in
+                        if let stream { replayGain.setGain(stream.gainDb, for: key) }
+                        completion(stream, error)
+                    }
                 }
-            })
+            }
         })
         return KitAudioPlayer(player: player, replayGain: replayGain)
     }
@@ -276,11 +278,12 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
 /// A queue item's bytes, found on first use: it blocks the decode thread on Kotlin's resolver (on the main thread),
 /// then reads the file or download it named. A stream that can't be resolved (a paywall refusal, a server error)
 /// throws, so the player reports the item failed.
-final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
-    /// Hands `completion` the item's stream, or why it has none; called on the main thread.
-    typealias Resolve = @MainActor (_ uid: Int64, _ completion: @escaping (IosStream?, String?) -> Void) -> Void
+final class ResolvingByteReader: TimeOffsetByteReader, @unchecked Sendable {
+    /// Hands `completion` the item's stream started `startMs` in, or why it has none; called on the main thread.
+    typealias Resolve = @MainActor (_ uid: Int64, _ startMs: Int64, _ completion: @escaping (IosStream?, String?) -> Void) -> Void
 
     private let uid: Int64
+    private let startMs: Int64
     private let resolve: Resolve
     /// Guards the state below; signalled when the resolve answers, or on a cancel or interrupt.
     private let condition = NSCondition()
@@ -290,9 +293,17 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
     private var interrupted = false
     private var answer: (stream: IosStream?, error: String?)?
 
-    init(uid: Int64, resolve: @escaping Resolve) {
+    init(uid: Int64, startMs: Int64, resolve: @escaping Resolve) {
         self.uid = uid
+        self.startMs = startMs
         self.resolve = resolve
+    }
+
+    var transcodeDurationMs: Int64? {
+        condition.withLock {
+            guard let stream = answer?.stream, stream.transcoded, stream.durationMs > 0 else { return nil }
+            return startMs + stream.durationMs
+        }
     }
 
     var totalLength: Int64? { try? opened().totalLength }
@@ -336,7 +347,7 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
                 requested = true
                 DispatchQueue.main.async {
                     MainActor.assumeIsolated {
-                        self.resolve(self.uid) { stream, error in
+                        self.resolve(self.uid, self.startMs) { stream, error in
                             self.condition.withLock {
                                 self.answer = (stream, error)
                                 self.condition.broadcast()
