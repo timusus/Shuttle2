@@ -101,6 +101,32 @@ class IosItemResolver internal constructor(
         }
     }
 
+    /**
+     * Hands [onResult] entry [uid]'s stream started [startPositionMs] into the song, for a transcode the player re-opens
+     * on a seek or a drop. Asked fresh under the entry's play, so a server replaces the transcode it was running for it.
+     */
+    fun resolveAt(
+        uid: Long,
+        startPositionMs: Long,
+        onResult: (IosStream?, String?) -> Unit
+    ) {
+        val item = order[uid] ?: return onResult(null, "song $uid is no longer queued")
+        val playId = playId(item)
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            val result = try {
+                Result.success(resolver.resolve(item.song, startPositionMs, playRequested = true, playId = playId))
+            } catch (e: CancellationException) {
+                Result.failure(e)
+            } catch (e: Exception) {
+                logger.warn(e) { "Failed to resolve the stream for ${item.song.path} at $startPositionMs ms" }
+                Result.failure(e)
+            }
+            // Dropped while the server set it up: end the play this resolve may have restarted.
+            if (entries[uid]?.playId != playId) endPlay(item, playId)
+            onResult(result.getOrNull(), result.exceptionOrNull()?.let { it.message ?: it::class.simpleName })
+        }
+    }
+
     /** Why entry [uid]'s stream couldn't be resolved, or null if it was (or is still resolving). */
     internal fun failure(uid: Long): Throwable? = entries[uid]?.failure()
 

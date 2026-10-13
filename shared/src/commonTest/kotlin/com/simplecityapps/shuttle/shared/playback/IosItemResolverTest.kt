@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 class IosItemResolverTest {
     private val resolved = mutableListOf<Long>()
     private val ended = mutableListOf<Pair<Long, String>>()
+    private val playIds = mutableListOf<Pair<Long, String>>()
     private var gate: CompletableDeferred<Unit>? = null
 
     private val order = (1L..5L).map { QueueItem(100 + it, song(it), isCurrent = it == 1L) }
@@ -37,8 +38,9 @@ class IosItemResolverTest {
                 playId: String
             ): IosStream {
                 resolved += song.id
+                playIds += song.id to playId
                 if (ignoringCancel) withContext(NonCancellable) { gate?.await() } else gate?.await()
-                return IosStream("song:${song.id}")
+                return IosStream(if (startPositionMs > 0) "song:${song.id}@$startPositionMs" else "song:${song.id}")
             }
 
             override suspend fun endPlay(
@@ -75,6 +77,31 @@ class IosItemResolverTest {
         assertEquals(listOf<String?>("song:1", "song:1"), urls)
         assertEquals(listOf(1L, 2L, 3L), resolved)
         assertEquals(playId, resolver.playId(order[0]))
+    }
+
+    @Test
+    fun anOpenAtAPositionAsksForTheStreamThereUnderTheEntrysPlay() = runTest {
+        val resolver = resolver()
+        resolver.update(order, currentIndex = 0)
+        val playId = resolver.playId(order[0])
+        var url: String? = null
+
+        resolver.resolveAt(101, startPositionMs = 90_000) { stream, _ -> url = stream?.url }
+
+        assertEquals("song:1@90000", url)
+        assertEquals(listOf(playId, playId), playIds.filter { it.first == 1L }.map { it.second })
+        assertEquals(playId, resolver.playId(order[0]))
+    }
+
+    @Test
+    fun anOpenAtAPositionOfAnItemNoLongerQueuedFails() = runTest {
+        val resolver = resolver()
+        resolver.update(order, currentIndex = 0)
+        var error: String? = null
+
+        resolver.resolveAt(109, startPositionMs = 1_000) { _, e -> error = e }
+
+        assertEquals("song 109 is no longer queued", error)
     }
 
     @Test
