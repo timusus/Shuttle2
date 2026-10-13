@@ -31,6 +31,15 @@ class KeyValueEntitlementStoreTest {
     }
 
     @Test
+    fun `the legacy seed flag defaults to false and is saved under its key`() {
+        assertEquals(false, entitlementStore.legacySeedSettled)
+
+        entitlementStore.legacySeedSettled = true
+
+        assertEquals(mapOf("legacy_seed_settled" to true), store.values)
+    }
+
+    @Test
     fun `the entitlement_resolved flag defaults to false and is saved under its key`() {
         assertEquals(false, entitlementStore.entitlementResolvedLogged)
 

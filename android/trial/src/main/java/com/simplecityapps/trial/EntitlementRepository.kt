@@ -4,12 +4,14 @@ import com.simplecityapps.shuttle.analytics.MonetisationAnalytics
 import com.simplecityapps.shuttle.entitlement.CachedPro
 import com.simplecityapps.shuttle.entitlement.DebugEntitlementOverride
 import com.simplecityapps.shuttle.entitlement.Entitlement
+import com.simplecityapps.shuttle.entitlement.ProSource
 import com.simplecityapps.shuttle.entitlement.TrialStart
 import com.simplecityapps.shuttle.entitlement.resolvesAsDebug
 import com.simplecityapps.shuttle.entitlement.toEntitlement
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -37,7 +39,11 @@ import timber.log.Timber
  * Pro feature (a stream or download from a remote server, Android Auto, a batch tag edit, advanced audio); the old
  * first-launch trial doesn't count against it.
  *
+ * A 1.0.10 purchaser who launches before Play has ever answered is seeded as Pro from [legacyPurchasedAt], so their
+ * server streams aren't refused while offline; Play's first answer then replaces the seed.
+ *
  * @param owned completed purchases from Play, or null until Play has answered.
+ * @param legacyPurchasedAt when 1.0.10 recorded the purchase, or null if it didn't.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class EntitlementRepository(
@@ -47,8 +53,21 @@ class EntitlementRepository(
     private val clock: Clock,
     private val coroutineScope: CoroutineScope,
     private val isDebug: Boolean,
+    private val legacyPurchasedAt: () -> Instant?,
     private val ownedWait: Duration = 10.seconds
 ) {
+    init {
+        // Before `entitlement` reads the cache.
+        if (!store.legacySeedSettled) {
+            if (owned.value != null) {
+                store.legacySeedSettled = true
+            } else if (store.cachedPro == null && legacyPurchasedAt() != null) {
+                store.cachedPro = CachedPro(ProSource.LegacyLifetime, clock.now())
+                store.legacySeedSettled = true
+            }
+        }
+    }
+
     private val trialStartedAt = MutableStateFlow(store.serverTrialStartedAt)
     private val trialMutex = Mutex()
     private val debugOverride = MutableStateFlow(DebugEntitlementOverride.None)
@@ -74,7 +93,10 @@ class EntitlementRepository(
     init {
         // Remember Pro from Play, so a Pro user stays Pro for a while if Play is unreachable on a later launch.
         owned.filterNotNull()
-            .onEach { owned -> store.cachedPro = owned.proSource()?.let { CachedPro(it, clock.now()) } }
+            .onEach { owned ->
+                store.legacySeedSettled = true
+                store.cachedPro = owned.proSource()?.let { CachedPro(it, clock.now()) }
+            }
             .launchIn(coroutineScope)
 
         // The first answer, once per install: how many existing buyers there are is what this measures

@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.BuildConfig
@@ -47,6 +48,7 @@ class TrialModule {
         billing: Billing,
         store: EntitlementStore,
         analytics: MonetisationAnalytics,
+        generalPreferenceManager: GeneralPreferenceManager,
         @AppCoroutineScope coroutineScope: CoroutineScope
     ): EntitlementRepository = EntitlementRepository(
         owned = billing.ownedProductIds,
@@ -54,7 +56,8 @@ class TrialModule {
         analytics = analytics,
         clock = Clock.System,
         coroutineScope = coroutineScope,
-        isDebug = BuildConfig.DEBUG
+        isDebug = BuildConfig.DEBUG,
+        legacyPurchasedAt = { generalPreferenceManager.appPurchasedDate }
     )
 
     /** The user's entitlement. Inject it as `@JvmSuppressWildcards StateFlow<Entitlement>`. */

@@ -17,6 +17,9 @@ interface EntitlementStore : TrialDisclosureStore {
 
     var cachedPro: CachedPro?
 
+    /** Whether Play has answered, or 1.0.10's purchase record has been used to seed [cachedPro]; either way the record is never consulted again. */
+    var legacySeedSettled: Boolean
+
     /** Whether `entitlement_resolved` has been logged, so it's logged once per install. */
     var entitlementResolvedLogged: Boolean
 
@@ -46,6 +49,10 @@ class KeyValueEntitlementStore(
             putInstant(KEY_CACHED_PRO_SEEN_AT, value?.seenAt)
         }
 
+    override var legacySeedSettled: Boolean
+        get() = store.getBoolean(KEY_LEGACY_SEED_SETTLED, false)
+        set(value) = store.edit { putBoolean(KEY_LEGACY_SEED_SETTLED, value) }
+
     override var entitlementResolvedLogged: Boolean
         get() = store.getBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, false)
         set(value) = store.edit { putBoolean(KEY_ENTITLEMENT_RESOLVED_LOGGED, value) }
@@ -72,6 +79,7 @@ class KeyValueEntitlementStore(
         private const val KEY_SERVER_TRIAL_STARTED_AT = "server_trial_started_at"
         private const val KEY_CACHED_PRO_SOURCE = "cached_pro_source"
         private const val KEY_CACHED_PRO_SEEN_AT = "cached_pro_seen_at"
+        private const val KEY_LEGACY_SEED_SETTLED = "legacy_seed_settled"
         private const val KEY_ENTITLEMENT_RESOLVED_LOGGED = "entitlement_resolved_logged"
         private const val KEY_TRIAL_OFFER_DISMISSED = "trial_offer_dismissed"
         private const val KEY_PENDING_TRIAL_DISCLOSURE = "pending_trial_disclosure"

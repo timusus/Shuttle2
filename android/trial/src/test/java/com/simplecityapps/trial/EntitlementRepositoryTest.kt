@@ -43,6 +43,7 @@ class EntitlementRepositoryTest {
     private class FakeStore(
         override var serverTrialStartedAt: Instant? = null,
         override var cachedPro: CachedPro? = null,
+        override var legacySeedSettled: Boolean = false,
         override var entitlementResolvedLogged: Boolean = false,
         override var pendingDisclosure: ProFeature? = null,
         override var trialOfferDismissed: Boolean = false
@@ -51,6 +52,7 @@ class EntitlementRepositoryTest {
     private val start = Instant.fromEpochMilliseconds(1_800_000_000_000)
     private val owned = MutableStateFlow<Set<String>?>(emptySet())
     private val store = FakeStore()
+    private var legacyPurchasedAt: Instant? = null
     private val analytics = mockk<MonetisationAnalytics>(relaxed = true).also {
         every { it.entitlementResolved(any()) } returns true
     }
@@ -59,7 +61,7 @@ class EntitlementRepositoryTest {
         val clock = object : Clock {
             override fun now(): Instant = start + testScheduler.currentTime.milliseconds
         }
-        return EntitlementRepository(owned, store, analytics, clock, backgroundScope, isDebug).also { runCurrent() }
+        return EntitlementRepository(owned, store, analytics, clock, backgroundScope, isDebug, { legacyPurchasedAt }).also { runCurrent() }
     }
 
     private fun purchase(
@@ -121,7 +123,7 @@ class EntitlementRepositoryTest {
         val clock = object : Clock {
             override fun now(): Instant = start + testScheduler.currentTime.milliseconds
         }
-        EntitlementRepository(owned, store, setUpAnalytics, clock, backgroundScope, isDebug = false)
+        EntitlementRepository(owned, store, setUpAnalytics, clock, backgroundScope, isDebug = false, legacyPurchasedAt = { null })
         runCurrent()
         assertTrue(events.isEmpty())
         assertFalse(store.entitlementResolvedLogged)
@@ -317,6 +319,49 @@ class EntitlementRepositoryTest {
         owned.value = emptySet()
         runCurrent()
         assertNull(store.cachedPro)
+    }
+
+    @Test
+    fun `a legacy purchaser Play hasn't answered for is Pro and may stream`() = runTest {
+        owned.value = null
+        legacyPurchasedAt = start - 400.days
+        val repository = repository()
+
+        assertEquals(Entitlement.Pro(ProSource.LegacyLifetime), repository.entitlement.value)
+        val gate = ServerAccessGate(repository.entitlement, startTrial = null)
+        assertEquals(ServerAccess.Allowed, gate.use(ProFeature.entries.first(), askForPaywall = false))
+    }
+
+    @Test
+    fun `Play answering not purchased revokes the legacy seed`() = runTest {
+        owned.value = null
+        legacyPurchasedAt = start - 400.days
+        val repository = repository()
+
+        owned.value = emptySet()
+        runCurrent()
+
+        assertEquals(Entitlement.Free(trialUsed = false), repository.entitlement.value)
+        assertNull(store.cachedPro)
+    }
+
+    @Test
+    fun `the legacy record is ignored once Play has answered`() = runTest {
+        repository()
+        legacyPurchasedAt = start - 400.days
+        owned.value = null
+        val relaunched = repository()
+
+        assertEquals(Entitlement.Unknown, relaunched.entitlement.value)
+        assertNull(store.cachedPro)
+    }
+
+    @Test
+    fun `without a legacy record an unanswered Play stays Unknown`() = runTest {
+        owned.value = null
+        val repository = repository()
+
+        assertEquals(Entitlement.Unknown, repository.entitlement.value)
     }
 
     @Test

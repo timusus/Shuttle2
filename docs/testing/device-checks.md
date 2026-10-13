@@ -634,3 +634,7 @@ The app now plays through AudioPlaybackKit's `Player`. Stream the logs while tes
 - [ ] iPhone, on cellular with a quality cap that forces a transcode: play a song from Jellyfin, one from Plex and one from Subsonic. Each shows the song's full duration; scrub forward and back several times: playback resumes within a couple of seconds at the scrubbed point, and the elapsed time stays right through to the end, which moves on to the next song.
 - [ ] iPhone, the same transcode mid-song: turn on Airplane Mode for ~10 s, then off. Playback resumes at the point it stopped, not from the start and not on the next song.
 - [ ] iPhone, after the trial ends: play a paywalled track. It doesn't play and the paywall shows, with no crash and no stuck loading state; a free track still plays.
+
+## Upgrade from 1.0.10 as a purchaser (#1024)
+
+- [ ] On a device with a 1.0.10 Pro purchase, upgrade to the rewrite with Airplane Mode on before the first launch. Add or open a LAN Jellyfin, Emby, Plex or Subsonic server and play a song: it streams with no paywall. Turn Airplane Mode off and relaunch: Pro is still on and streaming still works.
