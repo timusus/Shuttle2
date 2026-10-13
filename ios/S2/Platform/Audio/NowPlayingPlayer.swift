@@ -66,13 +66,13 @@ final class NowPlayingPlayer: ForwardingNowPlayingControllable {
 
     func seekToNext() {
         log.notice("remote skipToNext")
-        intent.listenerPlayed(from: .remoteCommand)
+        intent.listenerPlayed()
         playback.skipToNext(ignoreRepeat: true, completion: nil)
     }
 
     func seekToPrevious() {
         log.notice("remote skipToPrevious")
-        intent.listenerPlayed(from: .remoteCommand)
+        intent.listenerPlayed()
         playback.skipToPrev(force: false, completion: nil)
     }
 

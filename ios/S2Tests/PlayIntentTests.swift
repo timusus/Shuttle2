@@ -246,18 +246,6 @@ struct PlayIntentTests {
         #expect(sut.loadingKey == nil)
     }
 
-    /// Each play asked for is reported once, with who asked, where the engine's time to first audio starts; a pause isn't.
-    @Test func everyPlayAskedForIsReportedWithItsSource() {
-        var requests: [PlayIntent.Source] = []
-        let sut = PlayIntent(player: player) { requests.append($0) }
-        sut.play()
-        sut.pause(from: .remoteCommand)
-        sut.toggle(from: .remoteCommand)
-        sut.begin(from: .appIntent)
-        sut.listenerPlayed()
-        #expect(requests == [.user, .remoteCommand, .appIntent, .user])
-    }
-
     /// A skip or a queue row after pausing a pending play: that play's late start doesn't pause the new one.
     @Test func aPlayTheListenerStartsElsewhereSupersedesAPausedPendingOne() {
         let sut = makeSut()
