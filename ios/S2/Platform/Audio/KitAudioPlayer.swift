@@ -1,7 +1,7 @@
 import Foundation
 import os
 import PlaybackDecode
-import PlaybackPlayer
+@_spi(Testing) import PlaybackPlayer
 import PlaybackRender
 import PlaybackStreaming
 import S2Playback
@@ -34,6 +34,14 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private var startRequested: UInt64?
     /// Whether the last load, skip or seek is still to be heard; a resume of audio already heard isn't timed.
     private var awaitingFirstAudio = false
+    private struct Times {
+        var positionMs: Int64 = -1
+        var durationMs: Int64 = -1
+    }
+
+    private let times = OSAllocatedUnfairLock(initialState: Times())
+    /// The item of each event sent and not yet handled, in order: `player.events` delivers them one for one.
+    private var sentItems: [QueueKey?] = []
 
     @MainActor
     init(player: Player<QueueKey>, replayGain: ReplayGainProcessor = ReplayGainProcessor()) {
@@ -43,8 +51,16 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         // Always active, so EQ changes never need another `setProcessors`. ReplayGain levels each item before the EQ's
         // preamp and filters, as on Android; the limiter catches the overshoot of both.
         player.setProcessors([replayGain, equalizer, LimiterProcessor()])
+        // An event names its item by index, and Kotlin may hand over another order before the event is delivered, so
+        // the item is taken as the event is sent. `onEvent` is the player's only synchronous hook (a testing SPI).
+        let forward = player.onEvent
+        player.onEvent = { [weak self, unowned player] event in
+            forward?(event)
+            MainActor.assumeIsolated { self?.sentItems.append(Self.item(of: event, in: player.items)) }
+        }
         observeState()
         observeSampleRate()
+        observeTimes()
         Task { @MainActor [weak self, events = player.events] in
             for await event in events {
                 self?.handle(event)
@@ -127,36 +143,52 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     @MainActor
-    private func firstAudioRendered(index: Int) {
+    private func firstAudioRendered(_ item: QueueKey?) {
         awaitingFirstAudio = false
-        guard let start = startRequested else { return }
+        guard let start = startRequested, let item else { return }
         startRequested = nil
         let ms = (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
-        log.notice("time to first audio: song \(self.player.items[index].songId, privacy: .public), \(ms, privacy: .public) ms")
+        log.notice("time to first audio: song \(item.songId, privacy: .public), \(ms, privacy: .public) ms")
+    }
+
+    private static func item(of event: PlayerEvent<QueueKey>, in items: [QueueKey]) -> QueueKey? {
+        let index: Int? = switch event {
+        case let .itemTransition(_, to, _): to
+        case let .itemFailed(index, _), let .seekLanded(index, _), let .seekAdjusted(index, _, _),
+             let .firstAudioRendered(index, _): index
+        case .recoveredPaused, .playWhenReadyChanged, .bufferingStarted, .bufferingEnded: nil
+        }
+        return index.flatMap { items.indices.contains($0) ? items[$0] : nil }
     }
 
     @MainActor
     private func handle(_ event: PlayerEvent<QueueKey>) {
+        let item = sentItems.isEmpty ? nil : sentItems.removeFirst()
         switch event {
-        case let .itemTransition(_, to, reason):
+        case let .itemTransition(_, _, reason):
             // A seek's transition is Kotlin's own move; only the player's moves are news to it.
-            guard reason != .seek, let to else { return }
+            guard reason != .seek, let item else { return }
             lastReport = nil
-            listener?.onTransition(trackId: "\(player.items[to].uid)")
-        case let .itemFailed(index, error):
+            listener?.onTransition(trackId: "\(item.uid)")
+            // Kotlin drops a report for an item before it has moved onto it, so the arrived item's state follows here.
+            reportState()
+        case let .itemFailed(_, error):
+            guard let item else { return }
             lastReport = nil
-            listener?.onFailed(trackId: "\(player.items[index].uid)", message: "\(error.underlying)")
-        case let .seekLanded(index, position):
-            listener?.onPosition(trackId: "\(player.items[index].uid)", positionMs: Int64(position * 1000))
+            listener?.onFailed(trackId: "\(item.uid)", message: "\(error.underlying)")
+        case let .seekLanded(_, position), let .seekAdjusted(_, _, position):
+            // An adjusted or refused seek moves Kotlin's optimistic progress back to where the player is.
+            guard let item else { return }
+            listener?.onPosition(trackId: "\(item.uid)", positionMs: Int64(position * 1000))
         case .recoveredPaused:
             reportState()
         case let .playWhenReadyChanged(playing, reason):
             if !playing, reason == .endOfItem, let uid = player.currentItem?.uid {
                 listener?.onPausedAtEnd(trackId: "\(uid)")
             }
-        case let .firstAudioRendered(index, _):
-            firstAudioRendered(index: index)
-        case .seekAdjusted, .bufferingStarted, .bufferingEnded:
+        case .firstAudioRendered:
+            firstAudioRendered(item)
+        case .bufferingStarted, .bufferingEnded:
             break
         }
     }
@@ -191,7 +223,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             lastReport = nil
             requestStart(playWhenReady)
             let failed = player.error != nil
+            let moves = player.discontinuityCount
+            // A move to the current item is a seek in it, which it may refuse.
             player.seek(to: Double(startMs) / 1000, itemAt: Int(index))
+            if player.discontinuityCount == moves { awaitingFirstAudio = false }
             prepareAfterFailure(failed, playWhenReady: playWhenReady, position: Double(startMs) / 1000)
         }
     }
@@ -226,7 +261,8 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         }
     }
 
-    // Always answered with a report: the controller takes the intent from it, so a refused play must still say paused.
+    // Answered with a report: the controller takes the intent from it, so a refused play must still say paused. A
+    // failed player reports nothing; Kotlin has already dealt with its item.
     func play() {
         MainActor.assumeIsolated {
             lastReport = nil
@@ -247,8 +283,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
 
     func seek(positionMs: Int64) {
         MainActor.assumeIsolated {
-            awaitingFirstAudio = true
+            let moves = player.discontinuityCount
             player.seek(to: Double(positionMs) / 1000)
+            // A refused seek leaves the audio already heard playing.
+            if player.discontinuityCount != moves { awaitingFirstAudio = true }
         }
     }
 
@@ -268,12 +306,31 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         MainActor.assumeIsolated { player.pauseAtEndOfItem = enabled }
     }
 
+    // Off the main thread these read the last position and duration the player published there.
     func positionMs() -> Int64 {
-        MainActor.assumeIsolated { player.currentIndex == nil ? -1 : Int64(player.position * 1000) }
+        guard Thread.isMainThread else { return times.withLock(\.positionMs) }
+        return MainActor.assumeIsolated { currentTimes().positionMs }
     }
 
     func durationMs() -> Int64 {
-        MainActor.assumeIsolated { player.duration.map { Int64($0 * 1000) } ?? -1 }
+        guard Thread.isMainThread else { return times.withLock(\.durationMs) }
+        return MainActor.assumeIsolated { currentTimes().durationMs }
+    }
+
+    @MainActor
+    private func currentTimes() -> Times {
+        Times(positionMs: player.currentIndex == nil ? -1 : Int64(player.position * 1000),
+              durationMs: player.duration.map { Int64($0 * 1000) } ?? -1)
+    }
+
+    @MainActor
+    private func observeTimes() {
+        let current = withObservationTracking {
+            currentTimes()
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.observeTimes() }
+        }
+        times.withLock { $0 = current }
     }
 
     func setEqualizer(design: IosEqualizerDesign) {

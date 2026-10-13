@@ -63,6 +63,33 @@ struct KitAudioPlayerTests {
         #expect(await pumpUntil { listener.transitions == ["12"] })
     }
 
+    /// Kotlin drops a state report for an item that isn't its current one yet, so the arrived item's comes after.
+    @Test func theArrivedItemsStateIsReportedAfterItsTransition() async {
+        sut.setItems(order: entries([11, 12]), currentIndex: 0, startMs: 0, playWhenReady: true)
+        rig.settle()
+
+        rig.run(for: 12)
+
+        #expect(await pumpUntil { listener.log.drop { $0 != "transition 12" }.contains("12 playing") })
+    }
+
+    /// The order can change between the player sending an event and its delivery on the main actor.
+    @Test func aFailureDeliveredAfterANewOrderNamesTheItemThatFailed() async {
+        var failureSent = false
+        rig.onEvent = { if case .itemFailed = $0 { failureSent = true } }
+        sut.setItems(order: entries([11, 12], failing: [12]), currentIndex: 1, startMs: 0, playWhenReady: true)
+        rig.settle()
+        for _ in 0 ..< 100 where !failureSent {
+            rig.pump()
+        }
+        #expect(failureSent)
+
+        sut.setItems(order: entries([21, 22]), currentIndex: 1, startMs: 0, playWhenReady: true)
+
+        #expect(await pumpUntil { !listener.failures.isEmpty })
+        #expect(listener.failures == ["12"])
+    }
+
     @Test func aFailedItemIsReportedUnderItsUid() async {
         sut.setItems(order: entries([11, 12], failing: [11]), currentIndex: 0, startMs: 0, playWhenReady: true)
         rig.settle()
@@ -155,6 +182,43 @@ struct KitAudioPlayerTests {
         #expect(await pumpUntil { sut.durationMs() == 10000 })
     }
 
+    @Test func positionAndDurationCanBeReadOffTheMainThread() async {
+        sut.setItems(order: entries([11]), currentIndex: 0, startMs: 2000, playWhenReady: false)
+        rig.settle()
+
+        // What the player last published on the main thread, so read once that has run.
+        nonisolated(unsafe) let sut = sut
+        let offMain = {
+            nonisolated(unsafe) var read = ""
+            let done = DispatchSemaphore(value: 0)
+            Thread {
+                read = "\(sut.positionMs()) \(sut.durationMs())"
+                done.signal()
+            }.start()
+            done.wait()
+            return read
+        }
+
+        #expect(await pumpUntil { offMain() == "2000 10000" })
+    }
+
+    /// A seek the item can't take is answered with where it stayed, so Kotlin's optimistic progress snaps back.
+    @Test func aRefusedSeekReportsThePositionItStayedAt() async {
+        let rig = PlayerTestRig<KitAudioPlayer.QueueKey> { _ in UnseekableItemSource() }
+        let sut = KitAudioPlayer(player: rig.player)
+        let listener = RecordingListener()
+        sut.setListener(listener: listener)
+        // Paused, so no progress tick reports the position instead.
+        sut.setItems(order: entries([11]), currentIndex: 0, startMs: 0, playWhenReady: false)
+        rig.settle()
+        #expect(await pumpUntil(rig) { rig.player.isLive })
+        let before = listener.positions.count
+
+        sut.seek(positionMs: 5000)
+
+        #expect(await pumpUntil(rig) { listener.positions.dropFirst(before) == ["11 0"] })
+    }
+
     /// An item of samples 0, 1, 2, 3 at a real rate (the limiter's lookahead is milliseconds): off, the limiter holds
     /// it under its ceiling; on, flat at −12 dB, it plays at a quarter, under the ceiling and so untouched.
     @Test func theEqualizerSettingsReachTheProcessorsThePlayerRuns() async {
@@ -238,6 +302,17 @@ struct KitAudioPlayerTests {
         #expect(await pumpUntil { completed })
         #expect(currentSongId(controller) == 2)
         #expect(controller.playbackStateFlow.value is Shared.PlaybackState.Paused)
+    }
+
+    /// A paused load buffers until its item opens: it isn't ready before then, so a failure to open fails the load.
+    @Test func aPausedLoadOfASongThatCantOpenFails() async throws {
+        var result: Any?
+        var completed = false
+        _ = try await queue([failing(1)], playWhenReady: false) { result = $0; completed = true }
+
+        #expect(await pumpUntil { completed })
+        let outcome = "\(result ?? "nil")"
+        #expect(outcome.contains("Failure"), "completed with \(outcome)")
     }
 
     @Test func skippingStopsAfterTheCapOfFailuresInARow() async throws {
@@ -398,18 +473,39 @@ private final class FailingItemSource: ItemSource, @unchecked Sendable {
     func release() {}
 }
 
+/// An item with no known length, as a live stream: the player refuses a seek in it.
+private final class UnseekableItemSource: ItemSource, @unchecked Sendable {
+    private let inner = FakeItemSource(format: PCMFormat(sampleRate: 8, channelCount: 1), frames: 80, chunkFrames: 2)
+
+    func begin(epoch: UInt64) { inner.begin(epoch: epoch) }
+    func open() throws -> PCMFormat { try inner.open() }
+    var frameCount: Int64? { nil }
+    func seek(toFrame frame: Int64) throws -> Int64 { try inner.seek(toFrame: frame) }
+    func nextChunk() throws -> [Float]? { try inner.nextChunk() }
+    func interrupt(through epoch: UInt64) { inner.interrupt(through: epoch) }
+    func release() { inner.release() }
+}
+
 private final class RecordingListener: NSObject, IosAudioPlayerListener {
     var lastState: String?
     var transitions: [String] = []
     var failures: [String] = []
     var pausedAtEnd: [String] = []
+    var positions: [String] = []
+    /// States and transitions in the order they were reported.
+    var log: [String] = []
 
     func onStateChanged(trackId: String, state: IosAudioPlayerState) {
         lastState = "\(trackId) \(state.name.lowercased())"
+        log.append(lastState!)
     }
 
-    func onTransition(trackId: String) { transitions.append(trackId) }
+    func onTransition(trackId: String) {
+        transitions.append(trackId)
+        log.append("transition \(trackId)")
+    }
+
     func onFailed(trackId: String, message _: String) { failures.append(trackId) }
-    func onPosition(trackId _: String, positionMs _: Int64) {}
+    func onPosition(trackId: String, positionMs: Int64) { positions.append("\(trackId) \(positionMs)") }
     func onPausedAtEnd(trackId: String) { pausedAtEnd.append(trackId) }
 }
