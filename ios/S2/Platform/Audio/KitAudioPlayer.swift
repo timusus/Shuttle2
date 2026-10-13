@@ -22,6 +22,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     let player: Player<QueueKey>
+    private let replayGain: ReplayGainProcessor
     private let equalizer = EqualizerProcessor()
     /// Held strongly: Kotlin's listener is an object only the player refers to.
     private var listener: IosAudioPlayerListener?
@@ -34,11 +35,13 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private var awaitingFirstAudio = false
 
     @MainActor
-    init(player: Player<QueueKey>) {
+    init(player: Player<QueueKey>, replayGain: ReplayGainProcessor = ReplayGainProcessor()) {
         self.player = player
+        self.replayGain = replayGain
         super.init()
-        // Always active, so EQ changes never need another `setProcessors`; the limiter catches the EQ's overshoot.
-        player.setProcessors([equalizer, LimiterProcessor()])
+        // Always active, so EQ changes never need another `setProcessors`. ReplayGain levels each item before the EQ's
+        // preamp and filters, as on Android; the limiter catches the overshoot of both.
+        player.setProcessors([replayGain, equalizer, LimiterProcessor()])
         observeState()
         Task { @MainActor [weak self, events = player.events] in
             for await event in events {
@@ -55,12 +58,20 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         ticker?.invalidate()
     }
 
-    /// The app's player: each item's source reads the stream `resolve` hands it, opened on the decode thread.
+    /// The app's player: each item's source reads the stream `resolve` hands it, opened on the decode thread, and plays
+    /// at the stream's gain.
     @MainActor
     static func live(resolve: @escaping ResolvingByteReader.Resolve) -> KitAudioPlayer {
-        KitAudioPlayer(player: Player(makeSource: { key in
-            FFmpegItemSource(reader: ResolvingByteReader(uid: key.uid, resolve: resolve))
-        }))
+        let replayGain = ReplayGainProcessor()
+        let player = Player<QueueKey>(makeSource: { key in
+            FFmpegItemSource(reader: ResolvingByteReader(uid: key.uid) { uid, completion in
+                resolve(uid) { stream, error in
+                    if let stream { replayGain.setGain(stream.gainDb, for: key) }
+                    completion(stream, error)
+                }
+            })
+        })
+        return KitAudioPlayer(player: player, replayGain: replayGain)
     }
 
     // MARK: - Player to Kotlin

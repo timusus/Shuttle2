@@ -18,9 +18,10 @@ Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`.
 - `KitAudioPlayer` is the Kotlin `IosAudioPlayer` over the `Player`: Kotlin keeps the policy (queue, skipping failed
   items, restart-vs-previous) and hands the whole order over; each item resolves its stream through
   `playerController.itemResolver` when the Player decodes it. **Threading:** Kotlin calls it on main; the Player's
-  events reach the Kotlin listener on the main actor. It sets the Player's processors once, `EqualizerProcessor` then
-  `LimiterProcessor` (S2Playback `DSP/`), both always active; `IosEqualizer` hands it a design that each item's rate
-  is filtered at.
+  events reach the Kotlin listener on the main actor. It sets the Player's processors once, `ReplayGainProcessor`,
+  `EqualizerProcessor` then `LimiterProcessor` (S2Playback `DSP/`), all always active. Each item's ReplayGain is the
+  `IosStream.gainDb` it resolved with (mode and preamp applied in Kotlin), taken at the item's flush; `IosEqualizer`
+  hands the EQ a design that each item's rate is filtered at.
 - `NowPlayingController`: metadata on `setItem`, elapsed/rate through `updatePlayback`, which only writes on a
   state/speed change, a >1 s jump or every 10 s (safe per tick). Artwork via the `loadArtwork` closure, dropped if the
   item changed. `SkipMode.interval` swaps next/previous for skip ±N s.
