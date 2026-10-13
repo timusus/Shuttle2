@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Play history and resume points from before the upgrade are now kept for songs added through folder access, instead of disappearing after the first scan.", "commits": [] }

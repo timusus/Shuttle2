@@ -42,7 +42,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -148,7 +147,6 @@ class LegacySafSongsImportTest {
         database.songDataDao().get().single { song -> song.id == 6L }.playCount shouldBe 4
     }
 
-    @Ignore("Shuttle2#1023")
     @Test
     fun `a remapped song keeps the play history 1_0_10 seeded`() = runBlocking<Unit> {
         import()

@@ -92,6 +92,20 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
         mediaProvider: MediaProviderType
     ): Long? = throw NotImplementedError()
 
+    override suspend fun pathOf(id: Long): String? = throw NotImplementedError()
+
+    override suspend fun movePlayEvents(
+        from: String,
+        to: String,
+        mediaProvider: MediaProviderType
+    ): Unit = throw NotImplementedError()
+
+    override suspend fun moveResumePoints(
+        from: String,
+        to: String,
+        mediaProvider: MediaProviderType
+    ): Unit = throw NotImplementedError()
+
     override suspend fun updatePath(
         id: Long,
         path: String

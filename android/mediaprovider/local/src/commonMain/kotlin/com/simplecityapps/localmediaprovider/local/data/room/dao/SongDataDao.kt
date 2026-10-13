@@ -180,6 +180,23 @@ abstract class SongDataDao {
         mediaProvider: MediaProviderType
     ): Long?
 
+    @Query("SELECT path FROM songs WHERE id = :id")
+    abstract suspend fun pathOf(id: Long): String?
+
+    @Query("UPDATE play_events SET songPath = :to WHERE songPath = :from AND mediaProvider = :mediaProvider")
+    abstract suspend fun movePlayEvents(
+        from: String,
+        to: String,
+        mediaProvider: MediaProviderType
+    )
+
+    @Query("UPDATE resume_points SET songPath = :to WHERE songPath = :from AND mediaProvider = :mediaProvider")
+    abstract suspend fun moveResumePoints(
+        from: String,
+        to: String,
+        mediaProvider: MediaProviderType
+    )
+
     @Query("UPDATE songs SET path = :path WHERE id = :id")
     abstract suspend fun updatePath(
         id: Long,
@@ -224,9 +241,14 @@ abstract class SongDataDao {
                 false
             }
 
-            updatePath(remap.songId, remap.path) == 0 -> false
-
             else -> {
+                val oldPath = pathOf(remap.songId)
+                if (oldPath == null || updatePath(remap.songId, remap.path) == 0) return@filter false
+                // Play history and resume points are keyed by path, not song id; neither key is unique per path, so no collision
+                if (oldPath != remap.path) {
+                    movePlayEvents(oldPath, remap.path, mediaProviderType)
+                    moveResumePoints(oldPath, remap.path, mediaProviderType)
+                }
                 if (remap.duplicateIds.isNotEmpty()) {
                     movePlaylistEntries(remap.duplicateIds, remap.songId)
                     keepFavourite(remap.duplicateIds, remap.songId)
