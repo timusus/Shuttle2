@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.SyncTrigger
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.mediaprovider.worker.ImportScheduler
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
@@ -34,6 +35,7 @@ class DefaultMediaSources @Inject constructor(
     private val preferences: PlaybackPreferenceManager,
     private val generalPreferences: GeneralPreferenceManager,
     private val mediaImporter: MediaImporter,
+    private val importScheduler: ImportScheduler,
     private val taglibMediaProvider: TaglibMediaProvider,
     private val mediaStoreMediaProvider: MediaStoreMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
@@ -81,7 +83,7 @@ class DefaultMediaSources @Inject constructor(
     override val songTagsOutdated: Boolean get() = mediaImporter.songTagsOutdated
 
     override fun scan(foldersChanged: Boolean) {
-        appCoroutineScope.launch { mediaImporter.import(foldersChanged) }
+        importScheduler.requestFullImport(foldersChanged)
     }
 
     override fun syncIfStale() {

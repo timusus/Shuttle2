@@ -640,3 +640,8 @@ The app now plays through AudioPlaybackKit's `Player`. Stream the logs while tes
 Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seeds the legacy purchase pref with Play disabled and asserts a Jellyfin stream plays, and is refused without the pref. Still manual:
 
 - [ ] On a device with a real 1.0.10 Pro purchase, upgrade to the rewrite with Airplane Mode on before the first launch. Add or open a LAN Jellyfin, Emby, Plex or Subsonic server and play a song: it streams with no paywall. Turn Airplane Mode off and relaunch: Pro is still on and streaming still works.
+
+## Library sync notification (#1027)
+
+- [ ] Android, a server with a large library (8k+ songs): Settings > Sources > the server > Sync now. A "syncing" progress notification appears; leave the app (home, then another app) and the import still completes, with the notification gone at the end and the library updated.
+- [ ] Android, the periodic sync (Settings > Library > rescan frequency set, then `adb shell cmd jobscheduler run -f <package> <job id>` for its job on a signed-in server whose library has been imported): a progress notification shows while it syncs and goes at the end. If none shows, `adb logcat -s Timber` for "Couldn't run the media import in the foreground" (Android 12+ refuses a foreground start from a plain background job).

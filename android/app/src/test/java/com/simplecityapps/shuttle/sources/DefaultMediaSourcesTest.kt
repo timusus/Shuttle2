@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.mediaprovider.worker.ImportScheduler
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueItem
@@ -34,6 +35,13 @@ class DefaultMediaSourcesTest {
         every { mediaProviders } returns importerProviders
         coEvery { removeProvider(any()) } answers { importerProviders -= firstArg<MediaProvider>() }
     }
+    private val importRequests = mutableListOf<Boolean>()
+    private val importScheduler =
+        object : ImportScheduler {
+            override fun requestFullImport(foldersChanged: Boolean) {
+                importRequests += foldersChanged
+            }
+        }
     private val songRepository = mockk<SongRepository>(relaxed = true)
     private val playlistRepository = mockk<PlaylistRepository>(relaxed = true)
     private val queueOperations = mockk<QueueOperations>(relaxed = true)
@@ -45,6 +53,7 @@ class DefaultMediaSourcesTest {
         preferences = preferences,
         generalPreferences = GeneralPreferenceManager(InMemoryKeyValueStore()),
         mediaImporter = mediaImporter,
+        importScheduler = importScheduler,
         taglibMediaProvider = mockk(relaxed = true),
         mediaStoreMediaProvider = mockk(relaxed = true),
         embyMediaProvider = mockk(relaxed = true),
@@ -83,6 +92,15 @@ class DefaultMediaSourcesTest {
         }
         coVerify { playlistRepository.deleteAll(MediaProviderType.Jellyfin) }
         songDownloader.removedAll shouldBe listOf(MediaProviderType.Jellyfin)
+    }
+
+    @Test
+    fun `a scan is handed to the background import rather than run in the app`() {
+        mediaSources.scan()
+        mediaSources.scan(foldersChanged = true)
+
+        importRequests shouldBe listOf(false, true)
+        coVerify(exactly = 0) { mediaImporter.import(any()) }
     }
 
     @Test

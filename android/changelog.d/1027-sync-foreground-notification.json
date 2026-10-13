@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Library sync now shows a progress notification and keeps running when you leave the app.", "commits": [] }

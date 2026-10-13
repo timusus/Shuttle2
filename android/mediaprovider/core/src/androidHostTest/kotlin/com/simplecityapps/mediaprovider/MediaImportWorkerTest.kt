@@ -1,7 +1,10 @@
 package com.simplecityapps.mediaprovider
 
 import androidx.work.ListenableWorker.Result
+import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.testing.WorkManagerTestInitHelper
+import androidx.work.workDataOf
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.worker.MediaImportWorker
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -59,8 +62,12 @@ class MediaImportWorkerTest {
 
     private var foregrounds = 0
 
-    private fun worker(attempt: Int = 0) = TestListenableWorkerBuilder<MediaImportWorker>(RuntimeEnvironment.getApplication())
+    private fun worker(
+        attempt: Int = 0,
+        fullImport: Boolean = false
+    ) = TestListenableWorkerBuilder<MediaImportWorker>(RuntimeEnvironment.getApplication())
         .setRunAttemptCount(attempt)
+        .setInputData(workDataOf("full_import" to fullImport))
         .setForegroundUpdater { _, _, _ ->
             foregrounds++
             com.google.common.util.concurrent.Futures.immediateVoidFuture()
@@ -161,6 +168,35 @@ class MediaImportWorkerTest {
         provider.failure = "Server unreachable"
 
         worker(attempt = 2).doWork() shouldBe Result.success()
+    }
+
+    @Test
+    fun `a requested import runs in the foreground even before the first import`() = runBlocking<Unit> {
+        preferences.lastMediaImportDate = null
+
+        worker(fullImport = true).doWork() shouldBe Result.success()
+
+        provider.scans shouldBe 1
+        foregrounds shouldBe 1
+    }
+
+    @Test
+    fun `a requested import that fails is not retried`() = runBlocking<Unit> {
+        afterImportFailure = IllegalStateException("afterImport failed")
+
+        worker(fullImport = true).doWork() shouldBe Result.failure()
+    }
+
+    @Test
+    fun `a requested import is queued as unique work`() {
+        val context = RuntimeEnvironment.getApplication()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context)
+
+        MediaImportWorker.enqueueFullImport(context, foldersChanged = true)
+
+        val infos = WorkManager.getInstance(context).getWorkInfosForUniqueWork("MEDIA_FULL_IMPORT").get()
+        infos.size shouldBe 1
+        infos.single().tags.contains("MEDIA_FULL_IMPORT") shouldBe true
     }
 
     private class ScanProvider(

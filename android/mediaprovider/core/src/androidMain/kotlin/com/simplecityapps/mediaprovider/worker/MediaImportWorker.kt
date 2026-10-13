@@ -10,11 +10,15 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.SyncTrigger
@@ -47,7 +51,11 @@ constructor(
     @AssistedFactory
     interface Factory : WorkerInstanceFactory<MediaImportWorker>
 
+    /** What expedited work shows on Android 11 and below, where it runs as a foreground service. */
+    override suspend fun getForegroundInfo(): ForegroundInfo = foregroundInfo()
+
     override suspend fun doWork(): Result {
+        if (inputData.getBoolean(KEY_FULL_IMPORT, false)) return runFullImport()
         // Foregrounded as the sync starts work, so a sync that skips returns at once and shows nothing
         val result = mediaImporter.sync(SyncTrigger.Periodic, onStart = ::promoteToForeground)
         return when {
@@ -59,6 +67,20 @@ constructor(
             }
 
             else -> Result.retry()
+        }
+    }
+
+    /** The user's own scan or Sync now: its progress and failure show in the app, so a failure isn't retried behind their back. */
+    private suspend fun runFullImport(): Result {
+        promoteToForeground()
+        return try {
+            mediaImporter.import(foldersChanged = inputData.getBoolean(KEY_FOLDERS_CHANGED, false))
+            Result.success()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "The media import failed")
+            Result.failure()
         }
     }
 
@@ -106,6 +128,27 @@ constructor(
         private const val TAG_MEDIA_IMPORT = "MEDIA_IMPORT"
         private const val NOTIFICATION_CHANNEL_ID = "media_import"
         private const val NOTIFICATION_ID = 4
+
+        internal const val TAG_FULL_IMPORT = "MEDIA_FULL_IMPORT"
+        internal const val KEY_FULL_IMPORT = "full_import"
+        internal const val KEY_FOLDERS_CHANGED = "folders_changed"
+
+        /**
+         * Runs a full import as expedited work with a progress notification, so it carries on when the user leaves the app.
+         * Requests queue behind a running one, which then starts another pass rather than being dropped.
+         */
+        fun enqueueFullImport(
+            context: Context,
+            foldersChanged: Boolean
+        ) {
+            val request =
+                OneTimeWorkRequestBuilder<MediaImportWorker>()
+                    .setInputData(workDataOf(KEY_FULL_IMPORT to true, KEY_FOLDERS_CHANGED to foldersChanged))
+                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                    .addTag(TAG_FULL_IMPORT)
+                    .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(TAG_FULL_IMPORT, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+        }
 
         /** The runs (the first and its retries) a failing sync gets before it waits for the next period. */
         private const val MAX_ATTEMPTS = 3
