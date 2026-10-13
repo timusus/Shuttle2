@@ -1,11 +1,10 @@
 import Shared
 import SwiftUI
 
-/// The queue, from Now Playing's queue button, in the player's tint: one plain list in three sections under the same
-/// headers, as Apple Music lays out its queue: Now Playing (the playing song, its cover carrying the playing
-/// indicator), Up Next (the songs after it), and Played (those before it). Every song is the same `MediaRow`. Tap a row
-/// to skip to it. Edit mode (the Edit/Done button) reorders Up Next by dragging; a swipe, or Remove from Queue in a
-/// row's context menu, takes an item out (with Undo); Play Next moves it after the current song; Clear empties the
+/// The queue, from Now Playing's queue button, in the player's tint: one plain list in queue order, opening at the
+/// playing song. Played (dimmed, above), Now Playing (its cover carrying the playing indicator), then Up Next. Every
+/// song is the same `MediaRow`. Tap a row to skip to it. Edit mode (the Edit/Done button) reorders Up Next by
+/// dragging; a swipe, or Remove from Queue in a row's context menu, takes an item out (with Undo); Play Next moves it after the current song; Clear empties the
 /// queue (with Undo). Moves and removals show at once and the player's queue replaces them when it catches up. Rows
 /// are keyed by the queue item's uid, never its position.
 struct NowPlayingQueueList: View {
@@ -18,6 +17,10 @@ struct NowPlayingQueueList: View {
 
     @State private var rows: [NowPlayingQueueRow]
     @State private var editMode: EditMode = .inactive
+    @State private var didScrollToCurrent = false
+
+    /// Played rows are dimmed to this, as on Android's `QueueRow`.
+    static let playedOpacity = 0.6
 
     init(
         queue: [NowPlayingQueueRow],
@@ -78,14 +81,42 @@ struct NowPlayingQueueList: View {
     private var played: ArraySlice<NowPlayingQueueRow> { rows[..<(currentIndex ?? 0)] }
 
     private var list: some View {
+        ScrollViewReader { proxy in
+            queueList
+                .onAppear {
+                    guard !didScrollToCurrent else { return }
+                    didScrollToCurrent = true
+                    // Centred rather than at the top, where the pinned section header would cover it.
+                    if let currentIndex {
+                        proxy.scrollTo(rows[currentIndex].id, anchor: .center)
+                    }
+                }
+        }
+    }
+
+    private var queueList: some View {
         List {
             if let source {
                 sourceLine(source)
             }
 
+            if !played.isEmpty {
+                Section {
+                    ForEach(played) { item in
+                        row(item, opacity: Self.playedOpacity)
+                    }
+                    .onDelete { offsets in
+                        offsets.map { played[$0].id }.forEach(remove)
+                    }
+                } header: {
+                    sectionHeader("Played")
+                }
+            }
+
             if let currentIndex {
                 Section {
                     row(rows[currentIndex])
+                        .id(rows[currentIndex].id)
                         .deleteDisabled(true)
                 } header: {
                     sectionHeader("Now Playing")
@@ -109,19 +140,6 @@ struct NowPlayingQueueList: View {
                 }
             } header: {
                 sectionHeader("Up Next", subtitle: Self.upNextSummary(Array(upNext)))
-            }
-
-            if !played.isEmpty {
-                Section {
-                    ForEach(played) { item in
-                        row(item)
-                    }
-                    .onDelete { offsets in
-                        offsets.map { played[$0].id }.forEach(remove)
-                    }
-                } header: {
-                    sectionHeader("Played")
-                }
             }
         }
         .listStyle(.plain)
@@ -154,7 +172,7 @@ struct NowPlayingQueueList: View {
     }
 
     /// A queue row; the playing song's cover carries the playing indicator and VoiceOver says it's playing.
-    private func row(_ item: NowPlayingQueueRow) -> some View {
+    private func row(_ item: NowPlayingQueueRow, opacity: Double = 1) -> some View {
         Button { actions.selectQueueItem(item.id) } label: {
             MediaRow(
                 item.title,
@@ -174,6 +192,7 @@ struct NowPlayingQueueList: View {
         .contextMenu {
             NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove, exclude: actions.excludeQueueItem)
         }
+        .opacity(opacity)
     }
 
     /// What VoiceOver reads for a row, which replaces its content: title, artist, whether it's playing, and its

@@ -276,10 +276,21 @@ struct NowPlayingViewTests {
         let withHistory = [NowPlayingQueueRow(id: 0, title: "Airbag", artist: "Radiohead", isCurrent: false)] + queue
         let sut = NowPlayingQueueList(queue: withHistory, isPlaying: true)
         let headers = try sut.inspect().findAll(SectionHeader.self).map { try $0.find(ViewType.Text.self).string() }
-        #expect(headers == ["Now Playing", "Up Next", "Played"])
+        #expect(headers == ["Played", "Now Playing", "Up Next"])
         // The playing song is a row like the rest, carrying the playing indicator.
         let current = try sut.inspect().find(viewWithAccessibilityIdentifier: "queue.nowPlaying")
         #expect((try? current.find(MediaRow<EmptyView>.self)) != nil)
+    }
+
+    @Test func thePlayedRowsAreDimmedAndTheRestAreNot() throws {
+        let withHistory = [NowPlayingQueueRow(id: 0, title: "Airbag", artist: "Radiohead", isCurrent: false)] + queue
+        let sut = NowPlayingQueueList(queue: withHistory, isPlaying: true)
+        func opacity(of label: String) throws -> Double {
+            try sut.inspect().find(viewWithAccessibilityLabel: label).opacity()
+        }
+        #expect(try opacity(of: "Airbag, Radiohead") == 0.6)
+        #expect(try opacity(of: "Paranoid Android, Radiohead, now playing") == 1)
+        #expect(try opacity(of: "Hyperballad, Björk") == 1)
     }
 
     @Test func theQueueRowsShowTheirDurationsAndUpNextItsSummary() throws {
