@@ -17,6 +17,7 @@
 #   support/scripts/s2-debug.sh IMPORT                     reimport the library (as a rescan does)
 #   support/scripts/s2-debug.sh SYNC                       run the scheduled background sync (local sources trust MediaStore)
 #   support/scripts/s2-debug.sh SET_ENTITLEMENT --es state free|trial|pro|store|real  override the resolved entitlement
+#   support/scripts/s2-debug.sh SEED_LEGACY_PURCHASER [--ez purchased true|false]  leave the stores as an upgrade from 1.0.10 would; force-stop after
 #
 # Honours ANDROID_SERIAL / ANDROID_ADB_SERVER_PORT: on a WSL lane, eval
 # "$(support/scripts/remote-emu.sh env)" first. Extras are passed to `am broadcast` verbatim.

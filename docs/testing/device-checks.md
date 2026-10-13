@@ -637,4 +637,6 @@ The app now plays through AudioPlaybackKit's `Player`. Stream the logs while tes
 
 ## Upgrade from 1.0.10 as a purchaser (#1024)
 
-- [ ] On a device with a 1.0.10 Pro purchase, upgrade to the rewrite with Airplane Mode on before the first launch. Add or open a LAN Jellyfin, Emby, Plex or Subsonic server and play a song: it streams with no paywall. Turn Airplane Mode off and relaunch: Pro is still on and streaming still works.
+Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seeds the legacy purchase pref with Play disabled and asserts a Jellyfin stream plays, and is refused without the pref. Still manual:
+
+- [ ] On a device with a real 1.0.10 Pro purchase, upgrade to the rewrite with Airplane Mode on before the first launch. Add or open a LAN Jellyfin, Emby, Plex or Subsonic server and play a song: it streams with no paywall. Turn Airplane Mode off and relaunch: Pro is still on and streaming still works.
