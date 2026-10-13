@@ -220,7 +220,8 @@ run_flow() {
 
 start_app() {
     adb shell am force-stop "$PKG" >/dev/null 2>&1
-    adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >>"$LOG" 2>&1
+    # explicit component: debug builds also have LeakCanary's launcher, which monkey may pick
+    adb shell am start -n "${PKG}/com.simplecityapps.shuttle.ui.MainActivity" >>"$LOG" 2>&1
     sleep 3
 }
 

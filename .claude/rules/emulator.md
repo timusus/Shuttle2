@@ -102,10 +102,19 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
 
 ## Release comparison
 
-`support/scripts/release-compare.sh --old <apk|git-ref> --new <apk|git-ref> [--screens a,b]` captures matched old/new
-screenshots of the real UI against the Emby test library (`~/.config/s2-test/emby-appreview.env`) on one lane, into
-`build/release-compare/<old>-vs-<new>/` with a `manifest.json` (and side-by-side montages with ImageMagick). Maestro only
-navigates by visible text (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides); the script
-owns the capture (demo-mode status bar, wait for 3 identical frames). Targets (artist, album, track, query) are one config
-block at the top of the script. A git ref builds a debug APK: a release build can't add a server on a lane, since without
-Play billing it never becomes Pro. `--help` has the options.
+`support/scripts/release-compare.sh --old <apk|git-ref> --new <apk|git-ref>` captures matched old/new screenshots of
+the real UI against the Emby test library (`~/.config/s2-test/emby-appreview.env`) on one lane, into
+`build/release-compare/<old>-vs-<new>/` with a `manifest.json` and side-by-side montages (ImageMagick). Run it in
+phases, each a few minutes in the foreground: `--version old --phase setup` (install, onboarding captures, sign in, wait
+until the library list is stable over 3 polls, 5 min cap), then `--version old --phase screens --keep`, then the same for
+`new`; each run merges its rows and warnings into the manifest, and `--screens a,b` redoes single screens. `setup` and
+`--keep` leave the lane up; stop it when done.
+
+- Maestro only navigates (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides); the script
+  owns the capture: demo-mode status bar, 3 identical frames, then an artwork placeholder check (each version's
+  placeholder icon colour as ImageMagick connected components on its tile colour). A placeholder gets 15 s to load, then
+  the frame is kept with a manifest warning; on the Emby library these are albums with no art on the server.
+- Targets (Alice In Chains / Facelift / Man in the Box / "Alice") are one config block at the top of the script; the
+  artist and album have server art.
+- A git ref builds a debug APK once per commit (`tmp/release-compare/apk/`): a release build can't add a server on a
+  lane, since without Play billing it never becomes Pro. `--help` has the options.
