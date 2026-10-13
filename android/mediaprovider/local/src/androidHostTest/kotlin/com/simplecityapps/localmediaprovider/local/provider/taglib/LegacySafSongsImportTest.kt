@@ -42,6 +42,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,7 +86,7 @@ class LegacySafSongsImportTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         helper.createDatabase(TEST_DB, SCHEMA_1_0_10).apply {
-            insertSong(id = 1, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3", playCount = 5, lastPlayed = 1_750_000_000_000)
+            insertSong(id = 1, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3", playCount = 5, lastPlayed = 1_750_000_000_000, lastCompleted = 1_750_000_000_000)
             insertSong(id = 2, path = "$SD_CARD_TREE/document/04B9-1208%3AMusic%2FSD%20Card.flac", playCount = 1, excluded = true)
             insertSong(id = 3, path = "$OLD_SD_CARD_TREE/document/1111-2222%3AMusic%2FReformatted.mp3", size = 7_000, playCount = 3)
             insertSong(id = 4, path = "$MUSIC_TREE/document/primary%3AMusic%2FDeleted.mp3", playCount = 9)
@@ -145,6 +146,14 @@ class LegacySafSongsImportTest {
 
         // The MediaStore provider's own copy is untouched
         database.songDataDao().get().single { song -> song.id == 6L }.playCount shouldBe 4
+    }
+
+    @Ignore("Shuttle2#1023")
+    @Test
+    fun `a remapped song keeps the play history 1_0_10 seeded`() = runBlocking<Unit> {
+        import()
+
+        database.playEventDao().completedSongDays(since = Instant.fromEpochMilliseconds(0), utcOffsetMs = 0).map { row -> row.songId } shouldBe listOf(1L)
     }
 
     @Test
@@ -268,13 +277,14 @@ private fun SupportSQLiteDatabase.insertSong(
     size: Long = 5_000,
     playCount: Int = 0,
     lastPlayed: Long? = null,
+    lastCompleted: Long? = null,
     excluded: Boolean = false,
     provider: MediaProviderType = MediaProviderType.Shuttle
 ) {
     execSQL(
         "INSERT INTO songs (id, name, track, disc, duration, year, genres, path, albumArtist, artists, album, size, mimeType, lastModified, " +
             "playbackPosition, playCount, lastPlayed, lastCompleted, blacklisted, externalId, mediaProvider) " +
-            "VALUES (?, ?, 1, 1, 180000, NULL, '', ?, 'Artist', 'Artist', 'Album', ?, 'audio/mpeg', 1700000000000, 0, ?, ?, NULL, ?, NULL, ?)",
-        arrayOf<Any?>(id, "Song $id", path, size, playCount, lastPlayed, if (excluded) 1 else 0, provider.name)
+            "VALUES (?, ?, 1, 1, 180000, NULL, '', ?, 'Artist', 'Artist', 'Album', ?, 'audio/mpeg', 1700000000000, 0, ?, ?, ?, ?, NULL, ?)",
+        arrayOf<Any?>(id, "Song $id", path, size, playCount, lastPlayed, lastCompleted, if (excluded) 1 else 0, provider.name)
     )
 }
