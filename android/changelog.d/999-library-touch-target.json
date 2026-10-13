@@ -1,1 +1,0 @@
-{ "type": "fixes", "text": "The rows in Library's Edit tabs sheet are always at least 48dp tall, so they are easier to tap.", "commits": [] }

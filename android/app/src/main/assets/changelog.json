@@ -1,15 +1,295 @@
 [
   {
+    "versionName": "2026.10.13",
+    "releaseDate": "13/10/2026",
+    "features": [
+      "Genres in the library now show a collage of album covers instead of a plain icon.",
+      "Home has a new button next to Shuffle all that shuffles a random artist, genre or year from your library, and tells you which one it picked.",
+      "You can now redeem a Google Play promo code from the Shuttle Music Pro screen.",
+      "The Shuttle Music Pro screen now says thank you after you buy or redeem Pro.",
+      "In the last 3 days of your free server trial, the Library shows how many days are left, and tapping it opens the Shuttle Music Pro screen.",
+      "Songs with lyrics in their tags now show a Lyrics button in Now Playing, which opens the lyrics.",
+      "Offline mode: a switch in Settings and in the Library top bar hides streaming songs, albums, artists and genres that are not fully downloaded, and play, shuffle and queue skip them. A new Downloaded playlist lists everything you have saved to the device.",
+      "Stream from Navidrome and other Subsonic servers: sign in with your username and password or an API key, and your songs, playlists and favourites sync like the other servers, with a lower quality stream when you set a streaming bitrate limit.",
+      "Scrobble what you play to Last.fm. Sign in under Settings, Playback & sound, Scrobbling. Plays are saved while you're offline and sent when you reconnect.",
+      "Scrobble to ListenBrainz as well as Last.fm. Paste your user token under Settings, Scrobbling to sign in; plays are sent to every service you are signed in to.",
+      "Signing in to Jellyfin or Emby on Android now suggests the servers found on your Wi-Fi network, so you can fill in the address with one tap.",
+      "Sign in to Plex with your Plex account in the browser, or with a short code at plex.tv/link from another device, then pick your server. No server address or password to type, and Shuttle Music finds the fastest way to reach your server.",
+      "Songs without lyrics can now look them up online (from LRCLIB). It is off by default; turn on Fetch lyrics online in Settings > Playback and sound. This sends the song's artist, title, album and length to lrclib.net.",
+      "Start a radio from any song, album or artist: Shuttle queues similar songs from your library, using your Jellyfin or Emby server's suggestions when it has them.",
+      "A new Library setting, Show featured artists, also lists artists who only appear on other artists' albums or compilations in Artists. It's off by default.",
+      "Long-press the app icon for new shortcuts: Shuffle all, Recently played and Search.",
+      "On iOS, pressing and holding the app icon now offers Shuffle All, Search and Recently Played.",
+      "The playback notification, lock screen and Android Auto now have a heart button to add the current song to your favorites or remove it.",
+      "Add a Quick Settings tile that shows the current song and plays or pauses it. With nothing queued, tapping it opens the app.",
+      "Settings has one Streaming and downloads section for Jellyfin, Emby, Plex and Subsonic: choose the format songs are converted to (Opus, AAC or MP3) and a separate quality for downloads. Streaming on mobile data now uses 320 kbps unless you have picked a quality.",
+      "Songs from your server now show whether they are downloaded or downloading, and album and playlist pages show how much of them is on your device.",
+      "A new Downloads screen in Settings lists your downloaded albums, shows how much storage they use, and can remove them all at once.",
+      "You can now delete songs from your device library. Android asks you to confirm before the files are removed.",
+      "Servers behind a reverse proxy (Cloudflare Access, Authelia) can be given custom headers when signing in, and a server with a self-signed certificate can be trusted by its fingerprint.",
+      "The queue now shows what it is playing from, such as an album, artist, playlist or genre, and tapping it takes you there.",
+      "Changes you make to a Jellyfin, Emby or Plex playlist (adding, removing or reordering songs, renaming, clearing or deleting it) are now saved to the server too, and are sent later if the server can't be reached.",
+      "Shuttle Music Pro now also covers Android Auto, editing several songs' tags at once and ReplayGain. Your first use of any Pro feature starts one 14 day free trial, and the app tells you when it does. Anyone who bought Shuttle Music before keeps everything unlocked, and editing one song's tags, the equalizer and turning ReplayGain off stay free.",
+      "New setting, Now playing artwork: show the artist's image instead of the album art on Now Playing, the mini player, the notification and Android Auto.",
+      "You can now choose Shuttle's language from Android's per-app language settings.",
+      "New Crossfade setting in Playback settings fades one song into the next, from off up to 12 seconds. Songs from the same album still play gaplessly",
+      "Favourites you set on Jellyfin, Emby or Plex songs now sync to the server",
+      "Favourites set on your Jellyfin, Emby or Plex server now show in the app",
+      "Jellyfin, Emby and Plex libraries now keep up to date by themselves: songs added or changed on your server show up when you come back to the app, and your library refreshes once a day in the background. Anyone who had background rescans turned off is moved to daily, which you can change in Settings, Library",
+      "The app icon's long-press menu now has Shuffle all and Search next to Play/Pause",
+      "You can now back up your play counts, favourites and playlists from Settings, Library, and restore them later without losing anything newer on your device",
+      "Album pages now end with a More by shelf of the artist's other albums, so you can keep browsing",
+      "Artist pages now show the albums an artist appears on, like features and compilations, after their own albums, and search finds artists who only appear on other artists' songs",
+      "S2 has been redesigned: a new Home that opens quickly, showing each shelf as soon as it is ready, with a grid of what you played lately, where Play picks up where you left off and each tile names the song you were on, with Play from start in its menu, and shelves of the albums, artists, playlists and genres you play most or might rediscover, each with a line saying what it holds, and pull down to refresh it, plus a new Library, where sections are chips and sort and grid or list are always in view, a new Search, and a new Settings that opens full screen, with the player always a tap away. The layout now adapts to tablets and foldables, and the app turns to landscape",
+      "A new full screen Now Playing with a bigger seek bar and a round play button. Your queue sits behind its own Queue button, and the sleep timer and playback speed and sound settings open from the bar along the bottom, sliding up under the controls so you can still see the song and skip while they are open. The seek bar shows when a song is buffering. Now Playing and the mini player take their colours from the album art, changing smoothly from song to song",
+      "Select multiple songs in a playlist at once, to add them to the queue, a playlist or edit their tags together",
+      "Browse your music by folder in a new Folders library tab, which you can turn on in Appearance settings",
+      "Sort your playlists list by name",
+      "Sort your albums list randomly, to help you pick something to listen to",
+      "Reverse a playlist's sort order from the sort menu",
+      "Open audio files from your file manager, downloads or messages in S2 to play them (as the song in your library, when it is there), and pick S2 as your default music app",
+      "On Android 14 and later, a new USB DAC direct output option in Playback settings sends songs to a USB DAC at their own sample rate as 16-bit audio, without resampling, mixing in other sounds, or applying the equaliser and ReplayGain",
+      "Songs you play from Jellyfin, Emby or Plex now show in your server's now playing and count towards its play history, so scrobbling plugins can pick them up. You can turn this off in Media settings",
+      "Added a fast scrollbar to the Playlists tab, matching the other library tabs",
+      "Sort your genres list by song count",
+      "Export a playlist to an m3u file from the playlist menu",
+      "Playlists imported from an .m3u file now stay in sync with that file when you add, remove or reorder songs",
+      "S2 now shares anonymous usage stats to help improve the app, alongside crash reports, unless you've turned either off. You can turn either off any time in Settings, Privacy, where changes take effect straight away without restarting the app. If you already had S2 and never chose, usage stats turn on with this update, and Home shows a one-time message about it",
+      "Album and artist pages take vivid colours from the artwork at the top of the page, with a soft wash of its colour behind it, when Colour from artwork is on in Appearance settings",
+      "Choose a streaming quality for Jellyfin, Emby and Plex in Sources settings, separately for Wi-Fi and mobile data, to save data on the go",
+      "A new preamp slider on the Equalizer screen turns the equalizer's overall level up or down, and the screen now says when boosted bands are turned down to avoid distortion",
+      "Sign in to Jellyfin with Quick Connect: tap Use Quick Connect, enter the code shown in another Jellyfin app, and S2 signs in once you approve it there",
+      "Now Playing shows the track's audio quality, like MP3 · 320 kbps or FLAC · 96 kHz, and counts down the time left; tap the time to see the track's length instead",
+      "Now Playing has an output button, which opens Android's output switcher (the Cast button, where Cast is available), so you can pick Bluetooth, wired and Cast outputs from one place",
+      "Your Plex playlists now appear in the app, like your Jellyfin and Emby playlists",
+      "Home shelves have a play button next to their title that plays the whole shelf, in order."
+    ],
+    "fixes": [
+      "The back and menu buttons on artist and album pages now sit on a soft backing so they stay visible over any cover, and the status bar icons stay readable over an artist's photo.",
+      "With large text sizes, the song title now stays visible above the queue and can wrap onto two lines.",
+      "The album details line no longer splits a count from its unit, such as \"5\" and \"songs\", when text is large.",
+      "The A-Z index on iOS now works while a list is still scrolling.",
+      "Play history and resume points from before the upgrade are now kept for songs added through folder access, instead of disappearing after the first scan.",
+      "If you bought Shuttle Pro in the old app, you can now stream from your servers right after updating, even before Google Play can be reached.",
+      "Emby and Jellyfin songs in ALAC (m4a) no longer play silently or fail to cast, and no longer download as silent files; the server now converts them.",
+      "The sleep timer now pauses right at the end of the song when it waits for the song to finish, instead of a moment into the next one.",
+      "Matroska audio files (.mka) now show the title stored in the file instead of the file name.",
+      "Music you press play on during a phone call now starts again when the call ends, even if the app is in the background on Android 17.",
+      "Hi-res FLAC from Emby now plays in its original quality instead of being transcoded.",
+      "iOS converted server streams that lose the network for a while pick up where they were instead of skipping the song.",
+      "Artists from Jellyfin, Emby, Plex and Subsonic servers no longer show another artist's photo, such as a duet partner's or a compilation performer's.",
+      "Removing a music source while your library is updating no longer leaves its songs behind, and one source failing no longer stops the others updating or leaves the library stuck scanning.",
+      "A music file that crashes the app while its tags are read no longer crashes every scan after it. The app sets that file aside, keeps your other music importing, and Sources shows how many files couldn't be read, with a button to try them again.",
+      "Genres like R&B/Soul are no longer split in two (genres separate on semicolons and commas), and Opus files tagged with R128 loudness now get volume levelling.",
+      "Songs scanned from your phone now keep their genres, lyrics and audio details, and choosing only special folders no longer imports your whole library.",
+      "Playlist files (M3U) now pick the right song when several albums have tracks with the same file name.",
+      "Playlists deleted or emptied on your server no longer linger as empty playlists.",
+      "Songs deleted from a Jellyfin, Emby or Plex server now disappear from your library on the next sync, without a full rescan. Jellyfin and Emby no longer pull in audiobook, movie or TV libraries as music, and a server with no music library now says so instead of emptying your library.",
+      "Removing a Jellyfin, Emby or Plex server, or signing in to a different one, now removes the previous server's offline downloads instead of playing them for the new server's songs.",
+      "A Jellyfin server holding a few songs it can't describe no longer stops songs removed from it leaving your library, or makes every sync a full one.",
+      "Songs in your chosen music folders keep their play history when Android is still indexing your music during a rescan.",
+      "A damaged music file that crashed the tag reader no longer crashes the app again when its artwork loads or when you open it in the tag editor.",
+      "Sources now says how many files could not be read when you use the Android media library, and lets you retry them.",
+      "An album tagged with a combined album artist such as \"A; B\" now appears under the first artist instead of a separate combined artist.",
+      "Replaying or repeating a Plex song that has to be converted on the server no longer fails to start, and nor does downloading one you just played.",
+      "Emby and Jellyfin songs show their format and bitrate on Now Playing.",
+      "iOS: scrobbles queued while offline are sent soon after the connection returns",
+      "A song re-encoded on your server no longer keeps showing the old bit rate and sample rate.",
+      "WAV files from Jellyfin and Emby now show as PCM with their bit depth and sample rate in Now Playing.",
+      "Plex songs that the server converts on the fly no longer stop partway through when the next song starts loading; playback picks up where it was.",
+      "Fixed a playlist change made while a Jellyfin, Emby or Plex library sync was running sometimes being undone.",
+      "Settings now says which servers ignore the transcode format: Plex only streams as AAC or MP3, and Subsonic streams Opus as MP3. A song played from its download no longer shows a stale streaming-format badge.",
+      "Fixed songs occasionally disappearing from a Jellyfin, Emby, Plex or Navidrome library while the server was changing during a sync.",
+      "Lossless (ALAC) songs downloaded from Emby or Jellyfin that played silent are downloaded again and now play.",
+      "Home no longer scrolls or collapses its title when everything already fits on screen.",
+      "Emby and Jellyfin streams now report the same playback session the server is playing from, which may stop tracks pausing on slow or metered connections.",
+      "iOS server streams recover from network drops without restarting the song, and pause less on slow connections.",
+      "On iOS, the sleep timer's \"end of song\" option now stops before the next song starts.",
+      "Restoring a backup on a new phone no longer stops Shuttle asking for permission to show download notifications.",
+      "Subsonic streams replay from the cache instead of downloading again.",
+      "On Android 10, declining the prompt to delete a song no longer asks again for every other selected song.",
+      "Deleting songs on Android 11 and later works reliably, and deleted songs disappear from the library immediately.",
+      "Albums with several album artists now appear under each of them for files on your device. Your library re-reads its tags once after updating.",
+      "On iOS, seeking while a stream is stalled keeps showing buffering until playback resumes.",
+      "On iOS, songs streamed from a server no longer end early and skip ahead when the server's stream cuts out mid-song.",
+      "Tapping the playback notification or the Now Playing widget now opens the full player instead of whichever screen you last had open.",
+      "The keyboard no longer covers Search results, the tag editor or fields on settings pages.",
+      "The full player on a phone held sideways now shows the artwork beside the title and controls, instead of squeezing the artwork away.",
+      "Going back from the Equalizer or More sound settings, opened from the player, now returns to the player instead of the screen beneath it.",
+      "The rows in Library's Edit tabs sheet are always at least 48dp tall, so they are easier to tap.",
+      "Deleting a song no longer leaves it in the library if you leave the screen while the confirmation shows.",
+      "Syncing a Jellyfin, Emby or Plex library now retries brief server errors, signs in again with your saved login when the server ends your session partway through, and no longer skips songs, or removes them from your library, when the server changes during a sync.",
+      "A library scan no longer removes your songs, with their play counts and playlist places, when a storage card is out, folder access is lost or the scan fails part way.",
+      "Albums that were remastered or reissued now show the year they were first released, and a year tag that isn't a number no longer hides a valid one",
+      "Songs you've downloaded from Jellyfin, Emby or Plex now play from your device, so they work offline instead of trying to stream",
+      "Albums whose songs are by several artists, but have no album artist tag, now show as one Various Artists album instead of one album per artist, and albums that share a name are no longer merged when their tags tell them apart. Your play history and downloaded albums carry over",
+      "Plex songs by a guest artist, such as on a compilation, now show that artist rather than the album's",
+      "You can now sign in to a Jellyfin, Emby or Plex server by its IPv6 address",
+      "When a Jellyfin, Emby or Plex sign-in expires or is revoked, S2 now signs in again with your saved details instead of failing to sync",
+      "When Android closes S2 while you're casting, reopening it carries on from where the Cast device was, instead of skipping songs that no longer play",
+      "Favorites is now a smart playlist of the songs you've hearted, so changing the app's language no longer creates a second Favorites list. Your existing favorites carry over",
+      "Plex songs in formats your phone can't play as they are, such as WMA, AIFF and ALAC, now play instead of being skipped, and downloading one of these songs for offline saves a version you can actually play",
+      "Gapless albums no longer click or thump between songs when the equaliser is on",
+      "The app's name is now S2 in every language",
+      "Asking Google Assistant to play an artist, album, song, genre or playlist in S2 now plays the closest match, even when S2 isn't running, and asking it just to play music resumes where you left off",
+      "When the song you left off on can't be played as S2 starts, for example because your server is out of reach, S2 now stays on it instead of moving on through your queue",
+      "A folder or server connected while your library was already scanning is no longer skipped until the next scan",
+      "Undoing a cleared queue that was paused on a song that can't be played now stays on that song too, instead of skipping ahead",
+      "A purchase that is still waiting for payment no longer unlocks the full version early",
+      "The home screen's \"Albums released this year\" now shows up to 100 albums instead of stopping at 20",
+      "ReplayGain now works for songs found by the media scanner, after a rescan",
+      "Fixed audio glitches and possible crashes when playing 24-bit files with the equaliser or ReplayGain on",
+      "Fixed your phone's own sound effects staying attached to the app after switching to Chromecast",
+      "Songs added to the queue while shuffle is on now play in the order you picked them, and Play Next keeps its place when you turn shuffle off",
+      "Swiping over the lyrics view no longer accidentally skips to the next or previous song, and lyrics now scroll back to the top when the song changes",
+      "ReplayGain now sets each song's volume before it starts playing, so the level no longer jumps a moment into the song, including when a FLAC song follows an MP3 or the other way round",
+      "Tracks on multi-disc albums now play in the right order when using the Android media scanner",
+      "Fixed the progress bar on the lock screen, in the car and on other media controls jumping back after turning shuffle on or off",
+      "Seeking while a song is still loading now starts it from the spot you picked, instead of the seek being lost",
+      "Skipping quickly through several songs no longer briefly plays one you already skipped past",
+      "Removing the playing song from the queue now moves playback on to the next song, and a song removed from the queue no longer plays anyway when the current one ends",
+      "The resume position after the app is closed is now correct after seeking back or restarting a track",
+      "Fixed signing in to and playing music from Jellyfin 12 servers",
+      "Fixed songs from Jellyfin, Emby and Plex failing to play",
+      "Fixed Jellyfin and Emby songs that the server converts for your phone, such as WMA or AIFF files, failing to play",
+      "Pausing now releases audio focus, so other apps can play sound again without you closing S2 first",
+      "The notification and progress bar now show the new song right away when one track ends and the next starts, instead of briefly showing the old one",
+      "Song, album and artist artwork now updates after you change it, whether it's embedded in the file, a cover image in the folder or on your Jellyfin or Emby server, once the library rescans or syncs. Newly added local artwork now also replaces artwork that was previously shown from S2's online artwork lookup",
+      "Album art from a cover image in the song's folder, such as cover.jpg or folder.jpg, now shows on Android 13 and later when using the Android media scanner",
+      "S2 now appears as a single device on your Jellyfin, Emby and Plex servers, instead of a new device each time the app starts",
+      "Recently Added no longer fills up with every Jellyfin, Emby and Plex song after each sync",
+      "Editing a song's tags now updates its title, artist and album everywhere it's already showing, including the queue, now playing, mini player and notification, without interrupting playback",
+      "The seekbar now follows a seek made from another Chromecast sender even while playback is paused",
+      "When none of the next songs will load, playback now stops on the last one tried instead of jumping back to where it started and looking like it is still playing. Previous on Chromecast restarts the song when its position is unknown",
+      "Offline downloads from Jellyfin/Emby no longer fail when the server admin disables downloading",
+      "A song no longer loses its selection mark in the Songs list when it starts or stops playing",
+      "Fixed a crash when fast-scrolling to the bottom of the Songs list",
+      "The back button now exits multi-select mode on the Songs, Albums and Artists tabs instead of leaving the library, and switching tabs or leaving the Library screen now clears your selection too",
+      "Fixed songs disappearing, or losing their play count, playlists and excluded status, when both the S2 and Android media scanners were turned on and found the same file",
+      "Fixed accented and non-Latin characters being corrupted when editing tags",
+      "Home's empty state now offers to allow access to your music or connect a server, like the Library tab does, and a permission granted from system settings while S2 is in the background now starts the scan as soon as you return",
+      "Shuffle on the Albums tab now plays whole albums in a random order, with each album's songs in their normal track order, instead of shuffling every song individually",
+      "Turning off Colour from artwork in Appearance settings now actually stops the player using colours from the song's artwork",
+      "Show Home on launch in Appearance settings now actually opens S2 on Home; it previously had no effect",
+      "Favorites is now pinned at the top of the Playlists tab's smart playlists, matching Now Playing's heart button",
+      "A failed library scan now shows its error in Sources, with a tap to retry",
+      "A folder whose access was revoked now stays listed in Sources, flagged, instead of disappearing, with a way to grant access again or remove it",
+      "Favorites can no longer be duplicated",
+      "Shuffle albums now says when it couldn't start playing, instead of doing nothing",
+      "Swiping the Now Playing artwork sideways now skips to the next or previous song, matching the mini player",
+      "Save your current queue as a new or existing playlist from the Now Playing menu",
+      "Playlists in your music folders now appear after the first scan, including on large libraries, instead of only after a rescan",
+      "Rescanning your music folders now updates a playlist to match its .m3u file, instead of keeping songs removed from the file, and leaves the file itself untouched",
+      "Album and artist artwork now loads from your Plex server too, matching Jellyfin and Emby",
+      "Song titles, artists and albums with accents or other alphabets no longer appear garbled, and with the Android media store source, .mka files now show their album, artist and track number",
+      "Jellyfin and Emby playlists with more than 500 songs now sync the right songs after the first 500, instead of songs from elsewhere in your library",
+      "Editing a song's tags or rescanning your library now updates its title, artist and album in the queue, the notification and Now Playing straight away, without interrupting playback",
+      "Album artist art now shows on Android 13 and later when using the Android media scanner, matching album art",
+      "Home's Most Played now counts every play of an album's songs, so an album no longer stays off it because one of its songs was never played",
+      "Home's Something Different now suggests only artists you have never played, instead of any artist with one unplayed song",
+      "On an artist page, tapping an album's cover opens the album, while tapping the rest of its row unfolds its songs",
+      "On a tablet, Settings now shows its list beside the page you open, instead of stretching the phone layout",
+      "With the phone held sideways, the mini player and Now Playing no longer sit under the camera cutout, and pages no longer jump as the bottom bar or side bar slides in or out",
+      "Library backups now include your settings, such as theme, playback, equalizer and library options, and restoring one asks before it replaces the settings on your device. Server sign-ins are never backed up",
+      "A new Minimum song length setting, in Settings, Library, hides short songs like ringtones and voice notes from your songs, albums, artists, genres and search. Playlists still show them",
+      "Plex libraries now sync whatever they are named, and every music library on your server is included, not only one called Music"
+    ],
+    "improvements": [
+      "Now Playing picks up the album art's colour as strongly as album pages do.",
+      "The player's bottom buttons, the favourite heart and the seek bar times line up more neatly.",
+      "Album and playlist grids in Library now follow your text size: at the largest sizes they show one column so titles are readable, and wide windows fit more columns.",
+      "Home: the Jump back in card says \"Just now\" for anything under a minute ago, at large text sizes the time sits on its own line instead of being cut off, section headers carry only See all (the small play button is gone), and the cards and tiles have corners that match their artwork. Long-pressing a card or tile now announces \"Show actions\" to screen readers.",
+      "Album tracks show the now-playing mark in place of the track number, an artist page's open album sits inset like the rows below, and cover art has a faint outline so dark covers stand out in dark mode.",
+      "The queue now labels the song that is playing, so it reads apart from the songs up next.",
+      "Album, artist and playlist pages on a phone held sideways now show the artwork beside the track list, so you can see your tracks without scrolling past a full-screen cover.",
+      "On a phone held sideways, Library and Search use a slimmer header that slides away as you scroll down and comes back as you scroll up, leaving room for more of your music.",
+      "On a foldable half-opened like a laptop, the full player now puts the artwork and title above the fold and the controls below it, on larger screens too.",
+      "The iOS queue keeps played songs above the current one, dimmed, and opens at the playing song.",
+      "The Shuttle Music Pro screen now says up front what is free and what Pro costs, keeps the buy button in reach while you scroll, tells you when a purchase is waiting for payment, and thanks earlier supporters for the Pro they already own.",
+      "Playing the music on this phone is now free for everyone: your library, playlists, the basic equalizer, Chromecast and the sleep timer. Shuttle Music Pro is one bundle: your Jellyfin, Emby, Plex and Subsonic servers with their downloads, Android Auto, batch tag editing, the advanced equalizer and replay gain, as a one-time unlock. You can try it free for 14 days, and the trial only starts when you ask for it. Earlier purchases carry over as Pro at no extra cost, with our thanks. If you have not bought Pro yet, you can start a fresh 14-day trial.",
+      "Playlist files (.m3u and .m3u8) on your device are now imported even if you never added their folder in Settings.",
+      "Voice requests like \"play Radiohead on Shuttle Music\" now play the right artist, album, genre or playlist, and a genre request plays its songs with shuffle turned on. \"Play music on Shuttle Music\" resumes your queue or shuffles your library.",
+      "Opening an album from Search now animates its artwork into the detail screen.",
+      "Sources now lists your servers first, with the account, song count and last sync for each. Your server and this device each have their own page, and the folder options are renamed to Scan only these folders, Exclude folders and Extra folders.",
+      "The buttons along the bottom of the player now have small labels under their icons.",
+      "The queue now has an Up Next divider showing how many songs are left and for how long, buttons to save it as a playlist or clear it, a clearly highlighted current song, and a softer artwork tint that fades out under the header.",
+      "Playback speed in the player is now a simple row of speed choices instead of a ruler.",
+      "Your library lists stay on screen while a rescan runs, with a thin progress bar at the top, instead of being replaced by a loading screen.",
+      "An album credited to several album artists now appears under each of them, and an artist featured on an album's artist (\"A feat. B\") finds it in their Appears On.",
+      "Artist pages show their albums sooner, without waiting for the Appears On list",
+      "Jump back in on Home now leads with a larger card for what you played last, showing the song you were on, how far through you got and a single Play button that carries on where you left off. The rest are compact tiles that show the song, or Shuffled or Finished.",
+      "The Equalizer row in Settings now shows whether it is on and which preset you are using, and the Playback and sound row on the main Settings page shows the same.",
+      "Debug logs are now shared as a file from Settings, so even very large logs can be sent, instead of being copied to the clipboard.",
+      "Songs from Jellyfin, Emby and Plex now bring in their play counts and last played dates, so Most played and Recently played fill up for server libraries.",
+      "Plex songs in lossless formats now show their bit depth.",
+      "Updating a large library is faster on every source, because songs that haven't changed are no longer rewritten.",
+      "Rescanning a music folder is much faster when little has changed.",
+      "Playlists from Jellyfin, Emby and Plex now follow the server: songs removed or reordered there are removed or reordered here too, songs you added in the app stay, and only the playlists that changed are downloaded again.",
+      "Syncing a large Jellyfin, Emby or Plex library is faster.",
+      "Song Info now shows where a song comes from: this device, Jellyfin, Emby or Plex.",
+      "Album and artist grids and the Home shelves now fit more items on screen.",
+      "Sources now tells you when a server counts songs it does not return, and removing a server no longer leaves an old Can't reach message behind.",
+      "Local songs whose Artist tag names several artists, separated by a semicolon, a pipe or a slash with spaces around it, now show under each artist instead of one combined artist.",
+      "Tapping the tab you are already on in the navigation bar or rail scrolls its list back to the top.",
+      "While a server converts a song to a lower quality, Now Playing shows the format and bitrate you are actually hearing. Song info still shows the original file.",
+      "Rescans of your device music library are faster, and moving files to another folder on the device now keeps their play history, favourites and playlists.",
+      "Adding a server carries on by itself once you start the free trial or buy Pro from the paywall, instead of making you tap Add again.",
+      "Toggles, the play and shuffle buttons, the seek bar and swipe gestures in the player now give a small vibration.",
+      "The Library title now shrinks out of the way as you scroll, which gives lists more room in landscape. Home keeps a slim bar with no title, so it opens straight on what you were listening to.",
+      "Moving between screens now slides, switching tabs fades, and swiping back shows a preview of the screen you are returning to.",
+      "Search only opens the keyboard when you first arrive or tap the Search tab again, never in landscape, and it now has a Settings button.",
+      "Library has an Edit chip at the end of its section chips for showing, hiding and reordering tabs, so turning on Folders no longer hides behind a menu. The selected section chip now shows a tick.",
+      "When you stream a song, the seek bar now shows how much of it has loaded ahead of where you are.",
+      "Menus, notifications and Android Auto now use the same wording and capitalisation, such as Shuffle all, Play next, Add to queue and Favourites.",
+      "With TalkBack, queue songs can now be moved up, down or to the top without dragging, and dragging a song gives a small vibration. Section titles are announced as headings.",
+      "The app starts faster after an install or update.",
+      "When Jellyfin, Emby or Plex signs you out mid-session, the app now says so and offers a Sign in button, instead of syncs quietly failing",
+      "Artist pages now open with a large, square picture of the artist, or the cover of their most played album when there is no confident match for one or the picture is too small to look sharp, and the page takes its colours from that picture. Artists in lists and search show the same picture",
+      "Lossless songs from Jellyfin, Emby and music files on your device, including ALAC in .m4a files, now report their bit depth, so Now Playing can show it, like FLAC · 24-bit / 96 kHz",
+      "Settings, Edit Tags and the player's sound panel now use the same section heading style as the rest of the app",
+      "Settings tidied: Sources has one Streaming & downloads group for streaming quality and the Wi-Fi only rules, mobile data now streams at 192 kbps unless you choose otherwise, Library settings are split into scanning, backup and artwork, Rescan lives only in Sources, and the Settings list shows the current value of Sources and Library",
+      "Search shows the best match as a larger card with its artwork and a Play button, and section headings are bolder",
+      "The default library tab order now starts with Songs, and the tabs share one row of count, Sort, Shuffle and Play, including Artists, and it stays readable at large text sizes",
+      "Search is faster the first time you use it, because your library is prepared for searching as the app starts",
+      "Search stays quick while music plays, instead of re-reading your whole library each time a song finishes",
+      "Artist pages list the songs under their albums, which unfold in place, with a sort menu, Expand all and Collapse all, and the album you're scrolling through pinned at the top. Sorted by song, the albums show as a row of covers above the songs",
+      "A tidier Library header: the title shares a row with settings, sort is a plain button, Play is a plain icon like Shuffle, and only the section chips stay pinned while the list scrolls",
+      "A new typeface and calmer default colours; album art now sets the colour",
+      "Clearer Home layout",
+      "Smoother, more consistent shapes across the app: softer corners on artwork, buttons and cards, and a simpler play button",
+      "Sources now shows song counts, scan progress and server status at a glance, and folder settings have moved to their own Folder rules page",
+      "On Android 12 and later, S2 now takes its colours from your wallpaper, unless you have already picked an accent colour. To pick an accent colour instead, turn off Dynamic colour in Appearance settings",
+      "The accent colours are brighter, with the default blue a more vivid azure",
+      "The tag editor groups its fields into Song, Album, Numbering and Lyrics sections, and Song Info now opens as a sheet on phones, showing the artwork with the format, bit rate and sample rate at a glance, with the details grouped below",
+      "Playback no longer speeds up after the trial ends, and the trial reminder no longer pops up. Streaming from Jellyfin, Emby and Plex now comes with a 14-day free trial that starts the first time you play or download a song from a server, and everyone who has already bought S2 keeps full access. Shuttle Music Pro is a one-time purchase or an annual subscription, and the Shuttle Music Pro screen says what keeps playing after the trial",
+      "More local album art filenames are now recognised, including albumart.jpg, front.jpg and artwork.jpg",
+      "Rebuilt the home screen widgets. They resize freely, show bigger artwork on larger sizes, follow your system theme and wallpaper colours, and add previous, shuffle and repeat buttons. The background opacity is adjustable in Settings, Widgets",
+      "The playback notification now uses Android's standard media controls, with shuffle and repeat buttons, and Android Auto, headsets and the lock screen follow what's playing more closely",
+      "S2 opens to your last queue faster on large libraries and long queues, showing the song you were listening to straight away",
+      "Recently Added now has a clearer icon in the Playlists tab",
+      "The Equalizer screen now shows a chart of your equalizer's frequency response, live as you adjust it",
+      "The server sign-in screen now says that streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro, free for 14 days, before you connect",
+      "Skipping a song from Jellyfin, Emby or Plex in your queue because streaming needs Shuttle Music Pro now shows a message explaining why",
+      "Hold the previous or next button in the mini player or Now Playing to seek instead of skipping, and audiobooks and podcasts show seek back and forward buttons there instead of skip",
+      "Connect a server from Home or the Library tab now asks which type straight away and signs you in, instead of sending you to Settings first",
+      "Syncing your Plex library now shows progress and translated error messages, matching Jellyfin and Emby",
+      "Library syncs now say what they're doing in plain words, such as \"Connecting to Jellyfin\" and \"Fetching 1,500 of 5,000 songs\", instead of \"Querying API\"",
+      "The app icon now matches your other icons when themed icons are turned on in Android 13 and later",
+      "At large text sizes the mini player shows the song title alone, so nothing is cut off, and the queue header no longer clips",
+      "While you're casting, the mini player and Now Playing show the name of the device the music is playing on",
+      "Songs played in other Jellyfin, Emby or Plex apps now update their play counts and last played dates here at the next sync, not just at the daily full one.",
+      "Rescanning always finds every song in your chosen folders, even ones Android's media index has missed or hides, while everyday updates stay quick."
+    ],
+    "notes": []
+  },
+  {
     "versionName": "1.0.10",
     "releaseDate": "21/01/2026",
-    "features": [
-
-    ],
+    "features": [],
     "fixes": [
       "Fix an Android Auto issue where library wasn't displayed correctly"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "What's up? I want to make Shuttle great again. I just need more hours in the day, and more days in the week!"
     ]
@@ -17,16 +297,13 @@
   {
     "versionName": "1.0.9",
     "releaseDate": "15/01/2026",
-    "features": [
-
-    ],
+    "features": [],
     "fixes": [
       "Fixed Chromecast reliability issues",
       "Fixed a long-standing issue where the app could crash when playing from the background",
       "Various stability improvements"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "What's up? I want to make Shuttle great again. I just need more hours in the day, and more days in the week!"
     ]
@@ -76,13 +353,11 @@
   {
     "versionName": "1.0.6",
     "releaseDate": "29/12/2022",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed a crash when resuming playback after losing audio focus (like during a phone call), on API 31+ (Android 12+)"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
     ]
@@ -90,8 +365,7 @@
   {
     "versionName": "1.0.5",
     "releaseDate": "18/12/2022",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where play/pause command was ignored when app is in background",
       "Fixed a bunch of crashes on Android 12 (thanks a lot, Google)",
@@ -99,8 +373,7 @@
       "Fixed an issue where the 'extra dark' mode wasn't any darker at all!",
       "Enable Plex login with 2FA"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
     ]
@@ -108,10 +381,8 @@
   {
     "versionName": "1.0.4",
     "releaseDate": "17/06/2022",
-    "features": [
-    ],
-    "fixes": [
-    ],
+    "features": [],
+    "fixes": [],
     "improvements": [
       "Fixed various issues causing Plex media import to fail. Please let me know if you still have trouble finding you music with Plex!"
     ],
@@ -122,13 +393,11 @@
   {
     "versionName": "1.0.3",
     "releaseDate": "02/10/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Crash fixes"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "S2 needs your help! If you like the app, please leave a review:\n<a href=\"https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle\">Play Store</a>"
     ]
@@ -197,8 +466,7 @@
   {
     "versionName": "1.0.0",
     "releaseDate": "14/07/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Possible fix for issue where upgrade dialog was shown for users who have already upgraded",
       "Possible crash fix when attempting to display notifications"
@@ -213,8 +481,7 @@
   {
     "versionName": "1.0.0-RC4",
     "releaseDate": "14/07/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where queue would reload/scroll after moving a queue item"
     ],
@@ -228,8 +495,7 @@
   {
     "versionName": "1.0.0-RC3",
     "releaseDate": "12/07/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where queue total wasn't updated after clearing queue"
     ],
@@ -244,8 +510,7 @@
   {
     "versionName": "1.0.0-RC2",
     "releaseDate": "09/07/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed changelog display issue"
     ],
@@ -281,8 +546,7 @@
   {
     "versionName": "0.4.12",
     "releaseDate": "06/07/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where songs couldn't be selected/re-selected from song list and queue list",
       "Fixed an issue where now playing screen showed incorrect artwork, particularly when loading a large queue",
@@ -317,8 +581,7 @@
     "fixes": [
       "Fixed an issue introduced in 0.4.9 where Jellyfin/Emby scan failed to discover entire library"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
     ]
@@ -326,13 +589,11 @@
   {
     "versionName": "0.4.10",
     "releaseDate": "01/07/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where trial stuff would show for users who have already upgraded"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
     ]
@@ -340,8 +601,7 @@
   {
     "versionName": "0.4.9",
     "releaseDate": "29/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where Jellyfin/Emby scans didn't correctly report when they fail to complete"
     ],
@@ -357,8 +617,7 @@
   {
     "versionName": "0.4.8",
     "releaseDate": "29/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed a bug where a track could incorrectly repeat, while the app showed the metadata for the next track",
       "Fixed an issue where widget would display incorrect artwork when the queue is empty",
@@ -378,8 +637,7 @@
   {
     "versionName": "0.4.7",
     "releaseDate": "24/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue preventing playlist name from being entered"
     ],
@@ -393,13 +651,11 @@
   {
     "versionName": "0.4.6",
     "releaseDate": "24/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Possible fix for a major crash related to encrypted shared preferences. Note: Emby/Jellyfin credentials may need to be re-entered after this update"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
     ]
@@ -407,8 +663,7 @@
   {
     "versionName": "0.4.5",
     "releaseDate": "23/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed a rare crash when skipping to next song",
       "Fixed a crash when attempting to automatically close the 'thanks for purchasing' dialog",
@@ -424,8 +679,7 @@
   {
     "versionName": "0.4.4",
     "releaseDate": "23/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where upgrade was not recognised, under certain conditions"
     ],
@@ -439,8 +693,7 @@
   {
     "versionName": "0.4.3",
     "releaseDate": "22/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Don't split artists by '/' character (AC/DC no longer splits into AC, DC)",
       "Fixed an issue where album didn't remain expanded in the artist detail view, after playing a song",
@@ -457,8 +710,7 @@
   {
     "versionName": "0.4.2",
     "releaseDate": "16/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed a translation related crash for some users"
     ],
@@ -472,8 +724,7 @@
   {
     "versionName": "0.4.1",
     "releaseDate": "15/06/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where Sleep Timer '5 minutes' option actually timed out after 1 minute",
       "Fixed an issue where artists didn't show up in Android Auto",
@@ -569,8 +820,7 @@
     "fixes": [
       "Crash fix"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
     ]
@@ -621,8 +871,7 @@
       "Fixed crash when editing tags",
       "Fixed display issue for theme options"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
     ]
@@ -687,15 +936,13 @@
   {
     "versionName": "0.2.18",
     "releaseDate": "26/04/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Another attempted database migration fix 🙏",
       "Fixed lyrics layout issue",
       "Possible fix for notification displaying when it shouldn't"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "If you notice that your library is showing 'null' instead of the artist name, go to settings -> media provider -> scan"
     ]
@@ -703,15 +950,13 @@
   {
     "versionName": "0.2.17",
     "releaseDate": "24/04/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Another attempted database migration fix",
       "Fixed layout issue on now playing screen",
       "Fixed widget artist name display issue"
     ],
-    "improvements": [
-    ],
+    "improvements": [],
     "notes": [
       "If you notice that your library is showing 'null' instead of the artist name, go to settings -> media provider -> scan"
     ]
@@ -719,17 +964,14 @@
   {
     "versionName": "0.2.16",
     "releaseDate": "23/04/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed a database migration issue, causing app to load songs, albums, artists, etc. indefinitely & scanner to fail",
       "Fixed a crash when attempting to highlight matched characters in search results",
       "Fixed a crash when returning to app after a while in background"
     ],
-    "improvements": [
-    ],
-    "notes": [
-    ]
+    "improvements": [],
+    "notes": []
   },
   {
     "versionName": "0.2.15",
@@ -763,8 +1005,7 @@
   {
     "versionName": "0.2.14",
     "releaseDate": "07/03/2021",
-    "features": [
-    ],
+    "features": [],
     "fixes": [
       "Fixed an issue where current time was occasionally blank on now playing screen",
       "Fixed a crash when launching 'frequency response' screen"
@@ -785,8 +1026,7 @@
       "Playlists can now be renamed",
       "Duplicates are detected when adding songs to playlist"
     ],
-    "fixes": [
-    ],
+    "fixes": [],
     "improvements": [
       "Added more menu items for playlist list & detail screens (add to queue, rename, clear, delete)",
       "Artist & album name are now displayed on separate lines on the Now Playing screen",

@@ -1,1 +1,0 @@
-{ "type": "improvements", "text": "Local songs whose Artist tag names several artists, separated by a semicolon, a pipe or a slash with spaces around it, now show under each artist instead of one combined artist.", "commits": [] }
