@@ -19,8 +19,9 @@ package's `NowPlayingSession`, tested here on its `FakeNowPlayingInfoCenter`/`Fa
   items, restart-vs-previous) and hands the whole order over; each item resolves its stream through
   `playerController.itemResolver` when the Player decodes it. **Threading:** Kotlin calls it on main; the Player's
   events reach the Kotlin listener on the main actor. It sets the Player's processors once, `ReplayGainProcessor`,
-  `EqualizerProcessor` then `LimiterProcessor` (S2Playback `DSP/`), all always active. Each item's ReplayGain is the
-  `IosStream.gainDb` it resolved with (mode and preamp applied in Kotlin), taken at the item's flush; `IosEqualizer`
+  `EqualizerProcessor` then `LimiterProcessor` (S2Playback `DSP/`), all always active. Each item's ReplayGain tags
+  come with the `IosStream` it resolved with, taken at the item's flush; the mode and preamp are pushed from Kotlin
+  (`setReplayGain`, at launch and from `IosSettingsEffects`) and apply per buffer, ramped, to the item playing; `IosEqualizer`
   hands the EQ a design that each item's rate is filtered at.
 - `PlaybackSystemCoordinator` runs a `NowPlayingSession` over `NowPlayingPlayer` (a `ForwardingNowPlayingControllable`
   over the `Player`) and keeps the widgets' snapshot. The session reads the Player (elapsed, rate, seekability) and

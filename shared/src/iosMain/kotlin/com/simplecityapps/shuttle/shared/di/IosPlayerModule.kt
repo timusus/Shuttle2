@@ -19,7 +19,7 @@ import kotlinx.coroutines.CoroutineScope
  * What the shared `PlayerViewModel` needs beyond playback, bound for what iOS has today: no Cast (the iOS app has no
  * Cast sender), the saved song to show until the saved queue is restored (as on Android). No server song is
  * ever skipped for want of Pro (it stays current and the paywall opens), so there is no skip notice. The sleep timer is the shared one, on the player
- * controller. ReplayGain is stored as on Android; each stream's gain reaches the player through `IosStream.gainDb`.
+ * controller. ReplayGain is stored as on Android; the player applies it to each stream's tags (`IosAudioPlayer.setReplayGain`).
  */
 @ContributesTo(AppScope::class)
 @BindingContainer

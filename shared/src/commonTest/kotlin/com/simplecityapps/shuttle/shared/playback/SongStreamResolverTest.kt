@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.mediaprovider.StreamUrlProvider
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.assertions.throwables.shouldThrow
@@ -41,16 +40,12 @@ class SongStreamResolverTest {
     private val jellyfin = FakeStreamUrls("jellyfin")
     private val plex = FakeStreamUrls("plex")
 
-    private var replayGainMode = ReplayGainMode.Off
-    private var preAmpGainDb = 0f
     private var serverAccess = ServerAccess.Allowed
     private val askedToStream = mutableListOf<String>()
     private val downloaded = mutableMapOf<String, String>()
 
     private val resolver = SongStreamResolver(
         listOf(jellyfin, FakeStreamUrls("emby"), plex),
-        replayGainMode = { replayGainMode },
-        preAmpGainDb = { preAmpGainDb },
         serverStreamAccess = { song, _ ->
             askedToStream += song.path
             serverAccess
@@ -206,23 +201,18 @@ class SongStreamResolverTest {
     }
 
     @Test
-    fun theStreamCarriesTheReplayGainTheModeChooses() = runTest {
-        val tagged = songAt(path = "/Music/a.flac").copy(replayGainTrack = -6.5, replayGainAlbum = -3.0)
-        preAmpGainDb = 2f
+    fun theStreamCarriesTheSongsReplayGainTags() = runTest {
+        val tagged = resolver.resolve(songAt(path = "/Music/a.flac").copy(replayGainTrack = -6.5, replayGainAlbum = -3.0), 0, playRequested = true, playId = "play-1")
+        tagged.replayGainTrackDb shouldBe -6.5f
+        tagged.replayGainAlbumDb shouldBe -3f
 
-        replayGainMode = ReplayGainMode.Track
-        resolver.resolve(tagged, 0, playRequested = true, playId = "play-1").gainDb shouldBe -4.5f
-        replayGainMode = ReplayGainMode.Album
-        resolver.resolve(tagged, 0, playRequested = true, playId = "play-1").gainDb shouldBe -1f
-        replayGainMode = ReplayGainMode.Off
-        resolver.resolve(tagged, 0, playRequested = true, playId = "play-1").gainDb shouldBe 2f
-    }
+        val server = resolver.resolve(songAt(path = "jellyfin://item/abc").copy(replayGainTrack = -7.0), 0, playRequested = true, playId = "play-1")
+        server.replayGainTrackDb shouldBe -7f
+        server.replayGainAlbumDb shouldBe null
 
-    @Test
-    fun aMissingTagFallsBackToTheOtherOne() = runTest {
-        replayGainMode = ReplayGainMode.Album
-        resolver.resolve(songAt(path = "jellyfin://item/abc").copy(replayGainTrack = -7.0), 0, playRequested = true, playId = "play-1").gainDb shouldBe -7f
-        resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true, playId = "play-1").gainDb shouldBe 0f
+        val untagged = resolver.resolve(songAt(path = "jellyfin://item/abc"), 0, playRequested = true, playId = "play-1")
+        untagged.replayGainTrackDb shouldBe null
+        untagged.replayGainAlbumDb shouldBe null
     }
 
     private fun songAt(

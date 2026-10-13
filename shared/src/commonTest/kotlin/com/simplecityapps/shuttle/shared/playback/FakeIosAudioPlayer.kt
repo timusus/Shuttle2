@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.playback
 
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.RepeatMode
 
 /**
@@ -228,6 +229,16 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun setEqualizer(design: IosEqualizerDesign) {
         equalizers += design
+    }
+
+    /** Every [setReplayGain] as mode and preamp, in order; kept apart from [calls] too. */
+    val replayGains = mutableListOf<Pair<ReplayGainMode, Float>>()
+
+    override fun setReplayGain(
+        mode: ReplayGainMode,
+        preampDb: Float
+    ) {
+        replayGains += mode to preampDb
     }
 
     /**

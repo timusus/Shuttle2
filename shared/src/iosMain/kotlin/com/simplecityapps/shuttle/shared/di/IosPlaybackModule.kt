@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
  * [PlaybackOperations] and [QueueOperations], so the shared use cases resolve unchanged, and the [StreamProfile] its
  * FFmpeg build plays, for the Jellyfin, Emby, Plex and Subsonic stream URLs, which need Pro or the trial ([GatedServerStreams]); this
  * device's songs play from their files, ungated. The equalizer ([IosEqualizer]) designs the engine's
- * filters with the shared maths, and each resolved stream carries its ReplayGain. The queue, position, modes and speed
+ * filters with the shared maths, and each resolved stream carries its ReplayGain tags. The queue, position, modes and speed
  * are kept across launches in Android's prefs ([PlaybackPreferenceManager]) by an [IosPlaybackStore] started with the
  * controller.
  */
@@ -64,21 +64,14 @@ class IosPlaybackModule {
         localFiles: IosLocalStreamUrls,
         plex: PlexStreamUrlProvider,
         subsonic: SubsonicStreamUrlProvider,
-        playbackSettings: PlaybackSettings,
         gatedServerStreams: GatedServerStreams,
         downloads: OfflineDownloads
-    ): IosStreamResolver {
-        val replayGainMode = playbackSettings.replayGainMode
-        val preAmpGain = playbackSettings.preAmpGain
-        return SongStreamResolver(
-            listOf(jellyfin, emby, plex, subsonic),
-            { replayGainMode.value },
-            { preAmpGain.value },
-            serverStreamAccess = gatedServerStreams::access,
-            localFiles = localFiles,
-            downloadedFile = downloads::fileUrl
-        )
-    }
+    ): IosStreamResolver = SongStreamResolver(
+        listOf(jellyfin, emby, plex, subsonic),
+        serverStreamAccess = gatedServerStreams::access,
+        localFiles = localFiles,
+        downloadedFile = downloads::fileUrl
+    )
 
     @Provides
     @SingleIn(AppScope::class)
@@ -127,6 +120,8 @@ class IosPlaybackModule {
         random: Random,
         plex: PlexStreamUrlProvider
     ): IosPlayerController {
+        // The saved ReplayGain reaches the engine before anything plays; IosSettingsEffects sends each change
+        player.setReplayGain(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value)
         val retainShuffle = playbackSettings.retainShuffleOnNewQueue
         val scope = CoroutineScope(job + Dispatchers.Main.immediate + exceptionHandler)
         val controller = IosPlayerController(

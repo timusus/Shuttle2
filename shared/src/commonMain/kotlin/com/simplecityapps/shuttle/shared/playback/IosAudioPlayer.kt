@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.mediaprovider.StreamUrlProvider
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.shuttle.model.Song
 
@@ -71,6 +72,15 @@ interface IosAudioPlayer {
 
     /** The equalizer, applied from the next buffer and designed for each rate the audio plays at. */
     fun setEqualizer(design: IosEqualizerDesign)
+
+    /**
+     * ReplayGain's [mode] and [preampDb], applied from the next buffer to the item playing too, as on Android: each item
+     * at the tags it resolved with ([IosStream.replayGainTrackDb]), by the rule of `replayGainDb`.
+     */
+    fun setReplayGain(
+        mode: ReplayGainMode,
+        preampDb: Float
+    )
 }
 
 /** What the player reports. Swift calls these on the main thread. */
@@ -117,11 +127,12 @@ data class IosQueueEntry(
     val songId: Long
 )
 
-/** Where a song's audio comes from, and its gain. */
+/** Where a song's audio comes from, and its ReplayGain tags (dB, null when untagged). */
 data class IosStream(
     val url: String,
     val headers: Map<String, String> = emptyMap(),
-    val gainDb: Float = 0f,
+    val replayGainTrackDb: Float? = null,
+    val replayGainAlbumDb: Float? = null,
     /**
      * Whether resolving the song again with a start position gives a stream that starts there: a server stream, whose
      * transcode takes `StartTimeTicks`.

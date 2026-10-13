@@ -59,7 +59,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     /// The app's player: each item's source reads the stream `resolve` hands it, opened on the decode thread, and plays
-    /// at the stream's gain. A transcode seeks and recovers by resolving the stream again at the position.
+    /// at the ReplayGain of the stream's tags. A transcode seeks and recovers by resolving the stream again at the position.
     @MainActor
     static func live(resolve: @escaping ResolvingByteReader.Resolve) -> KitAudioPlayer {
         let replayGain = ReplayGainProcessor()
@@ -67,7 +67,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             TimeOffsetItemSource { startMs in
                 ResolvingByteReader(uid: key.uid, startMs: startMs) { uid, startMs, completion in
                     resolve(uid, startMs) { stream, error in
-                        if let stream { replayGain.setGain(stream.gainDb, for: key) }
+                        if let stream {
+                            replayGain.setTags(track: stream.replayGainTrackDb?.floatValue,
+                                               album: stream.replayGainAlbumDb?.floatValue, for: key)
+                        }
                         completion(stream, error)
                     }
                 }
@@ -268,6 +271,15 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             return EqualizerDesign(preampDb: filters.preampDb,
                                    coefficients: (0..<coefficients.size).map { coefficients.get(index: $0) })
         }
+    }
+
+    func setReplayGain(mode: ReplayGainMode, preampDb: Float) {
+        let kitMode: ReplayGainProcessor.Mode = switch mode {
+        case .track: .track
+        case .album: .album
+        default: .off
+        }
+        replayGain.setMode(kitMode, preampDb: preampDb)
     }
 
     private static func key(_ entry: IosQueueEntry) -> QueueKey {

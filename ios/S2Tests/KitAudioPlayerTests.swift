@@ -379,7 +379,7 @@ struct ResolvingByteReaderTests {
 
     private func stream(bitrateKbps: Int32, sizeBytes: Int64, durationMs: Int64, transcoded: Bool = false) -> IosStream {
         IosStream(
-            url: "https://example.com/a.flac", headers: [:], gainDb: 0, opensAtPosition: true, transcoded: transcoded,
+            url: "https://example.com/a.flac", headers: [:], replayGainTrackDb: nil, replayGainAlbumDb: nil, opensAtPosition: true, transcoded: transcoded,
             bitrateKbps: bitrateKbps, sizeBytes: sizeBytes, durationMs: durationMs
         )
     }

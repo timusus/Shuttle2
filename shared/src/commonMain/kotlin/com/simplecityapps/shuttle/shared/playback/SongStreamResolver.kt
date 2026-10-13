@@ -2,9 +2,6 @@ package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.mediaprovider.StreamUrlProvider
 import com.simplecityapps.mediaprovider.forPath
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
-import com.simplecityapps.playback.dsp.replaygain.replayGain
-import com.simplecityapps.playback.dsp.replaygain.replayGainDb
 import com.simplecityapps.shuttle.entitlement.ServerAccess
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.shared.percentEncodedPath
@@ -14,9 +11,8 @@ import com.simplecityapps.shuttle.shared.percentEncodedPath
  * (`jellyfin://item/...`), a file path as a `file://` URL, and anything else as it is. A server stream opens at a
  * position: its URL carries the start as `StartTimeTicks`, which a transcode starts from and direct play ignores.
  *
- * Each stream carries the song's ReplayGain under the user's [replayGainMode] and [preAmpGainDb], by the rule Android's
- * `ReplayGainAudioProcessor` applies ([replayGainDb]); the engine's limiter keeps a boost from clipping. Both are read
- * as each song is resolved, so a change applies from the next song. A provider that can't build a URL (signed out, no
+ * Each stream carries the song's ReplayGain tags; the player applies the mode and preamp to them as it plays
+ * ([IosAudioPlayer.setReplayGain]), so a change reaches the playing song. A provider that can't build a URL (signed out, no
  * address) throws, which fails the song as the controller expects, and so does a server song that
  * [serverStreamAccess] refuses (streaming needs Shuttle Music Pro or the trial), so the controller skips it. One it
  * can't decide yet (StoreKit hasn't answered) throws [ServerStreamNotAllowedException] marked
@@ -33,8 +29,6 @@ import com.simplecityapps.shuttle.shared.percentEncodedPath
  */
 class SongStreamResolver(
     private val streamUrls: Collection<StreamUrlProvider>,
-    private val replayGainMode: () -> ReplayGainMode,
-    private val preAmpGainDb: () -> Float,
     private val serverStreamAccess: suspend (song: Song, playRequested: Boolean) -> ServerAccess = { _, _ -> ServerAccess.Allowed },
     private val localFiles: StreamUrlProvider? = null,
     private val downloadedFile: (path: String) -> String? = { null }
@@ -46,7 +40,6 @@ class SongStreamResolver(
         playId: String
     ): IosStream {
         val provider = streamUrls.forPath(song.path)
-        val gainDb = replayGainDb(replayGainMode(), preAmpGainDb().toDouble(), song.replayGain).toFloat()
         val localFile = listOfNotNull(localFiles).forPath(song.path)
         val downloaded = if (localFile == null && provider != null) downloadedFile(song.path) else null
         if (localFile == null && downloaded == null && provider != null) {
@@ -56,15 +49,14 @@ class SongStreamResolver(
                 ServerAccess.Undecided -> throw ServerStreamNotAllowedException(song, undecided = true)
             }
         }
-        return when {
-            localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs), gainDb = gainDb)
+        val stream = when {
+            localFile != null -> IosStream(url = localFile.streamUrl(song, startPositionMs))
 
-            downloaded != null -> IosStream(url = downloaded, gainDb = gainDb)
+            downloaded != null -> IosStream(url = downloaded)
 
             provider != null -> provider.openStream(song, startPositionMs, playId).let {
                 IosStream(
                     url = it.url,
-                    gainDb = gainDb,
                     opensAtPosition = true,
                     transcoded = it.transcoded,
                     bitrateKbps = song.bitRate?.takeIf { rate -> rate > 0 } ?: -1,
@@ -73,10 +65,11 @@ class SongStreamResolver(
                 )
             }
 
-            song.path.startsWith("/") -> IosStream(url = fileUrl(song.path), gainDb = gainDb)
+            song.path.startsWith("/") -> IosStream(url = fileUrl(song.path))
 
-            else -> IosStream(url = song.path, gainDb = gainDb)
+            else -> IosStream(url = song.path)
         }
+        return stream.copy(replayGainTrackDb = song.replayGainTrack?.toFloat(), replayGainAlbumDb = song.replayGainAlbum?.toFloat())
     }
 
     override suspend fun endPlay(
