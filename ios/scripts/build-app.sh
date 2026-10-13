@@ -95,7 +95,14 @@ fi
 echo "==> xcodebuild build-for-testing -scheme S2 (Debug, simulator)"
 # One SPM clone cache per set of package pins, shared by every worktree on those pins: worktrees on different pins
 # sharing one checkout swap it under each other's builds. No index store, which only Xcode's own UI reads.
-spm_cache="$HOME/Library/Caches/s2-spm/$(shasum S2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved | cut -c1-12)"
+pins="$(shasum S2.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved | cut -c1-12)"
+spm_cache="$HOME/Library/Caches/s2-spm/$pins"
+# xcodebuild keeps the old package modules in DerivedData across a pin change and fails to compile against them.
+if [[ -d "$dd" && "$(cat "$dd/.s2-spm-pins" 2>/dev/null)" != "$pins" ]]; then
+  echo "==> Package pins changed: deleting DerivedData"
+  rm -rf "$dd"
+fi
+mkdir -p "$dd" && echo "$pins" >"$dd/.s2-spm-pins"
 # ARCHS=arm64 here, not in project.yml: the tests share AudioPlaybackKit's targets with the app, so Xcode links them
 # as dynamic package frameworks, which ignore the project's EXCLUDED_ARCHS, and FFmpeg has no x86_64 simulator slice.
 xcodebuild build-for-testing -project S2.xcodeproj -scheme S2 -configuration Debug \
