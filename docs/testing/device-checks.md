@@ -601,6 +601,10 @@ a short time. Time before the load (the tap, building the queue) isn't in it.
 - [ ] Landscape phone, Library: the small top bar hides on scroll down and returns on scroll up; Search's field and chips do the same, and come back when a new search returns only a few results or the field is focused.
 - [ ] Landscape phone, navigation rail: no expand/collapse button.
 
+## iOS queue keeps played songs (#1021)
+
+- [ ] iOS, play an album, skip ahead a few songs, open the queue from Now Playing. It opens at the playing song with the Played songs dimmed above it (scroll up to see them) and Up Next below; the pinned header doesn't cover the playing row. Tap a played song: it plays and becomes Now Playing.
+
 ## iOS letter index while scrolling (#1019)
 
 - [ ] iOS, Library Songs, Albums (list and grid) and Artists sorted by name: fling hard, then touch a letter on the A–Z strip while the list is still moving. The list stops and jumps to that letter on the first touch; dragging along the strip keeps jumping. Repeat in a playlist or other screen with the index to check it stops the right list.
