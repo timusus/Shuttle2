@@ -1,0 +1,8 @@
+# 1.0.10's fourth bottom-nav item is an unlabelled menu sheet holding Settings.
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn:
+    id: "bottomSheetFragment"
+- tapOn: "Settings"
+- assertVisible: "Appearance"

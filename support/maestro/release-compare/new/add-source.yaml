@@ -1,0 +1,8 @@
+# Settings > Sources rather than the empty state's "Connect a server", whose picker closes without opening the sign-in form on this commit.
+appId: ${APP_ID}
+---
+- tapOn:
+    text: "Settings"
+- tapOn: "Sources"
+- tapOn: "Add a server"
+- assertVisible: "Emby"

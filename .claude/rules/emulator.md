@@ -99,3 +99,13 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   full player then `"Queue"` (again or back to close); `"Collapse player" --desc` closes the player; overflow menu =
   `"More options" --desc` (sleep timer, speed, song info, edit tags); queue item actions = long-press the row
   (`adb shell input swipe <cx> <cy> <cx> <cy> 800`, bounds from `dump-texts`), then e.g. `"Remove from Queue"`.
+
+## Release comparison
+
+`support/scripts/release-compare.sh --old <apk|git-ref> --new <apk|git-ref> [--screens a,b]` captures matched old/new
+screenshots of the real UI against the Emby test library (`~/.config/s2-test/emby-appreview.env`) on one lane, into
+`build/release-compare/<old>-vs-<new>/` with a `manifest.json` (and side-by-side montages with ImageMagick). Maestro only
+navigates by visible text (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides); the script
+owns the capture (demo-mode status bar, wait for 3 identical frames). Targets (artist, album, track, query) are one config
+block at the top of the script. A git ref builds a debug APK: a release build can't add a server on a lane, since without
+Play billing it never becomes Pro. `--help` has the options.

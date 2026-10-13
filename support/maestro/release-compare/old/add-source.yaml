@@ -1,0 +1,4 @@
+appId: ${APP_ID}
+---
+- tapOn: "ADD MEDIA PROVIDER"
+- assertVisible: "Emby"

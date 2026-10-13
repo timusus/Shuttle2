@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+---
+- tapOn: "Emby"
+- extendedWaitUntil:
+    visible: "Username"
+    timeout: 10000

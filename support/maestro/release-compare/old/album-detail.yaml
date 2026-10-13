@@ -1,0 +1,16 @@
+# 1.0.10's artist page expands an album's songs in place, so the album page is reached from search instead.
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn:
+    id: "searchFragment"
+- tapOn: "Search Music"
+- inputText: "${ALBUM}"
+- hideKeyboard
+# below the chips: the search field holds the same text
+- tapOn:
+    text: "${ALBUM}"
+    below: "Albums"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: "${TRACK}"

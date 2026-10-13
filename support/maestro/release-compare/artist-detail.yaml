@@ -1,0 +1,5 @@
+appId: ${APP_ID}
+---
+- runFlow: artist-list.yaml
+- tapOn: "${ARTIST}"
+- assertVisible: "${ALBUM}"

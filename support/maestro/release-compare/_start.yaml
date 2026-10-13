@@ -1,0 +1,13 @@
+# Run first by every library-screen flow: the script has just cold-started the app; clear what it opens over the library.
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      visible: "Changelog"
+    commands:
+      - pressKey: back
+- runFlow:
+    when:
+      visible: "Thank You"
+    commands:
+      - tapOn: "CLOSE"

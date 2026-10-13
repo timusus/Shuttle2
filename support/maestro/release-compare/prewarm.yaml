@@ -1,0 +1,26 @@
+# Opens the target artist and the first screens of the artist and album lists once, so their covers are cached
+# before the captures (the script still waits out placeholders per capture).
+appId: ${APP_ID}
+---
+- runFlow: _start.yaml
+- tapOn: "Library"
+- tapOn: "Artists"
+- tapOn: "${ARTIST}"
+- waitForAnimationToEnd:
+    timeout: 5000
+- back
+- tapOn: "Albums"
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%,75%
+          end: 50%,20%
+          duration: 300
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%,20%
+          end: 50%,75%
+          duration: 300

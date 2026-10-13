@@ -1,0 +1,4 @@
+appId: ${APP_ID}
+---
+- tapOn: "NEXT"
+- assertVisible: "Discover your music"

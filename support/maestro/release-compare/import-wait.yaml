@@ -1,0 +1,6 @@
+# The artist list, polled by the script until its texts stop changing (the import has finished).
+appId: ${APP_ID}
+---
+- runFlow: _start.yaml
+- tapOn: "Library"
+- tapOn: "Artists"

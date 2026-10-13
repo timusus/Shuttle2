@@ -15,6 +15,10 @@
 #                        <fail-dir>, <out-dir> (failure screenshots, maestro.log, command JSON) is
 #                        moved to <fail-dir> instead, replacing the previous failure there
 #
+#   emu_apk_info <apk> <package|versionCode|versionName>
+#                        one manifest field of an APK (release-compare.sh)
+#   emu_demo_mode on|off SystemUI demo mode: clock 10:00, full battery and Wi-Fi, no notifications
+#
 # The caller defines step(), LOG, REPO_ROOT and LANE_STARTED, and sets APK, NO_RESET, NO_SEED,
 # REMOTE, REMOTE_BUILD, SEED_FIXTURE (a seed-test-media.sh fixture, default playback) and
 # MAESTRO_DEVICE_ARGS (e.g. --device <serial>) as needed.
@@ -119,4 +123,35 @@ maestro_collect_shots() {
     else
         rm -rf -- "$out"
     fi
+}
+
+# emu_apk_info <apk> <package|versionCode|versionName>: one field of the APK's manifest, via the newest
+# aapt2 in the Android SDK.
+emu_apk_info() {
+    local apk="$1" field="$2" aapt2 line
+    aapt2="$(ls -d "${ANDROID_HOME:-$HOME/Library/Android/sdk}"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1)"
+    [ -x "$aapt2" ] || { echo "emu-lane: no aapt2 under the Android SDK build-tools" >&2; return 1; }
+    # grep -m1 would SIGPIPE aapt2 and fail under a caller's pipefail
+    line="$("$aapt2" dump badging "$apk" 2>/dev/null | grep '^package:')" || return 1
+    case "$field" in
+        package) field=name ;;
+    esac
+    sed -n "s/.* ${field}='\([^']*\)'.*/\1/p;s/^package: ${field}='\([^']*\)'.*/\1/p" <<<"$line" | head -1
+}
+
+# emu_demo_mode on|off: SystemUI demo mode on the lane, so every capture has the same status bar
+# (10:00, full battery and Wi-Fi, no notification icons).
+emu_demo_mode() {
+    local demo=(adb shell am broadcast -a com.android.systemui.demo)
+    if [ "$1" = off ]; then
+        "${demo[@]}" -e command exit >/dev/null 2>&1
+        return 0
+    fi
+    adb shell settings put global sysui_demo_allowed 1 >/dev/null 2>&1
+    "${demo[@]}" -e command enter >/dev/null 2>&1
+    "${demo[@]}" -e command clock -e hhmm 1000 >/dev/null 2>&1
+    "${demo[@]}" -e command battery -e level 100 -e plugged false >/dev/null 2>&1
+    "${demo[@]}" -e command network -e wifi show -e level 4 -e fully true >/dev/null 2>&1
+    "${demo[@]}" -e command network -e mobile hide >/dev/null 2>&1
+    "${demo[@]}" -e command notifications -e visible false >/dev/null 2>&1
 }

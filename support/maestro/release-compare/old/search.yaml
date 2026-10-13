@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn:
+    id: "searchFragment"
+- tapOn: "Search Music"
+- inputText: "${QUERY}"
+- hideKeyboard
+- assertVisible: "${ARTIST}"

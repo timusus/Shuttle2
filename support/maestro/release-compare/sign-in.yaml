@@ -1,0 +1,15 @@
+# Env: URL, USER_NAME, PASSWORD. The address field starts with "http://" in both builds.
+appId: ${APP_ID}
+---
+- tapOn: "http://"
+- eraseText: 80
+- inputText: ${URL}
+- tapOn: "Username"
+- inputText: ${USER_NAME}
+- tapOn: "Password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn: "(?i)authenticate"
+- extendedWaitUntil:
+    notVisible: "Username"
+    timeout: 60000

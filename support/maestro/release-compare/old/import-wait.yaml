@@ -1,0 +1,9 @@
+# Sign-in leaves 1.0.10 on the onboarding source page; NEXT finishes onboarding and the import runs behind the library.
+appId: ${APP_ID}
+---
+- runFlow:
+    when:
+      visible: "NEXT"
+    commands:
+      - tapOn: "NEXT"
+- runFlow: ../import-wait.yaml

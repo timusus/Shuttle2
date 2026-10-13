@@ -1,0 +1,4 @@
+appId: ${APP_ID}
+---
+- tapOn: "Allow"
+- assertVisible: "Firebase Analytics"

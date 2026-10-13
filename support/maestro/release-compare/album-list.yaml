@@ -1,0 +1,7 @@
+appId: ${APP_ID}
+---
+- runFlow: _start.yaml
+- tapOn: "Library"
+- tapOn: "Albums"
+- waitForAnimationToEnd:
+    timeout: 5000

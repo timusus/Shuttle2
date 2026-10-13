@@ -1,0 +1,13 @@
+# Starts the target track streaming, then opens the full player from the mini player; the script pauses it before capture.
+appId: ${APP_ID}
+---
+- runFlow: album-detail.yaml
+- tapOn: "${TRACK}"
+- extendedWaitUntil:
+    visible:
+      id: "titleTextView"
+    timeout: 20000
+- tapOn:
+    id: "titleTextView"
+- waitForAnimationToEnd:
+    timeout: 5000

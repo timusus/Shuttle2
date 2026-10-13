@@ -1,0 +1,4 @@
+appId: ${APP_ID}
+---
+- tapOn: "Grant Permission"
+- assertVisible: ".*access music and audio.*"
