@@ -50,7 +50,7 @@ class LegacyReleaseUpgradeTest {
         helper.createDatabase(TEST_DB, LEGACY_RELEASE_VERSION).apply {
             insertSong(id = 1, path = SAF_SONG, provider = "Shuttle", playCount = 12, lastPlayed = LAST_PLAYED, lastCompleted = LAST_COMPLETED, position = 42_000)
             insertSong(id = 2, path = "/storage/emulated/0/Music/Low.mp3", provider = "MediaStore", playCount = 3, lastCompleted = LAST_COMPLETED + 1)
-            insertSong(id = 3, path = "https://jellyfin.example/Audio/abc/stream", provider = "Jellyfin", externalId = "abc")
+            insertSong(id = 3, path = "jellyfin://item/abc", provider = "Jellyfin", externalId = "abc")
             insertSong(id = 4, path = "/storage/emulated/0/Music/Hidden.mp3", provider = "MediaStore", blacklisted = true)
             insertSong(id = 5, path = "/storage/emulated/0/Music/Blue.mp3", provider = "MediaStore", playCount = 7)
             insertPlaylist(id = 1, name = "Road trip", sortOrder = "SongName")
@@ -74,7 +74,7 @@ class LegacyReleaseUpgradeTest {
             listOf(
                 listOf(1L, SAF_SONG, "Shuttle", 12L, LAST_PLAYED, LAST_COMPLETED, 42_000L, 0L, -6.5, LAST_MODIFIED),
                 listOf(2L, "/storage/emulated/0/Music/Low.mp3", "MediaStore", 3L, null, LAST_COMPLETED + 1, 0L, 0L, -6.5, LAST_MODIFIED),
-                listOf(3L, "https://jellyfin.example/Audio/abc/stream", "Jellyfin", 0L, null, null, 0L, 0L, -6.5, LAST_MODIFIED),
+                listOf(3L, "jellyfin://item/abc", "Jellyfin", 0L, null, null, 0L, 0L, -6.5, LAST_MODIFIED),
                 listOf(4L, "/storage/emulated/0/Music/Hidden.mp3", "MediaStore", 0L, null, null, 0L, 1L, -6.5, LAST_MODIFIED),
                 listOf(5L, "/storage/emulated/0/Music/Blue.mp3", "MediaStore", 7L, null, null, 0L, 0L, -6.5, LAST_MODIFIED)
             )
