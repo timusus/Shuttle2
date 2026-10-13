@@ -627,5 +627,6 @@ The app now plays through AudioPlaybackKit's `Player`. Stream the logs while tes
 - [ ] iPhone, playing: take a phone call and hang up. Playback pauses, the lock screen shows play during the call, and playback resumes after with the lock screen back to pause.
 - [ ] iPhone, playing: switch the output to an AirPlay speaker from Control Center. Playback continues on the speaker, and the lock screen's controls and elapsed time still work.
 - [ ] iPhone: play a song from Jellyfin and one from Subsonic (Navidrome), on Wi-Fi and on cellular. Each starts, seeks and moves on to the next song.
-  Known gap until stage 2b: a progressive transcode (Opus/MP3 under the quality cap) can't seek, and one that ends short reads as a normal end and moves on to the next song.
+- [ ] iPhone, on cellular with a quality cap that forces a transcode: play a song from Jellyfin, one from Plex and one from Subsonic. Each shows the song's full duration; scrub forward and back several times: playback resumes within a couple of seconds at the scrubbed point, and the elapsed time stays right through to the end, which moves on to the next song.
+- [ ] iPhone, the same transcode mid-song: turn on Airplane Mode for ~10 s, then off. Playback resumes at the point it stopped, not from the start and not on the next song.
 - [ ] iPhone, after the trial ends: play a paywalled track. It doesn't play and the paywall shows, with no crash and no stuck loading state; a free track still plays.

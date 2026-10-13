@@ -32,8 +32,11 @@ package's `NowPlayingSession`, tested here on its `FakeNowPlayingInfoCenter`/`Fa
   the coordinator once.
 - The Player stays `.ready` after a skip or seek until its transport answers, so the restart can read as a stall for a
   moment. A paused load or seek is `.buffering` until its first audio; `KitAudioPlayer` reports it as paused.
-- Known gap until stage 2b of #1020: a progressive transcode can't seek, and one that ends short reads as a normal end
-  and advances to the next item.
+- Each item plays through S2Playback's `TimeOffsetItemSource`. A stream Kotlin resolved as a transcode
+  (`IosStream.transcoded`) declares the song's duration and is seekable. A seek re-resolves it at the position
+  (`IosItemResolver.resolveAt`, under the entry's play, so Plex replaces its transcode) at whole seconds, and drops
+  frames up to the target. A failure or an end more than 5 s short re-opens at the position the same way; three
+  re-opens that play under a second end the item. Files and raw streams seek through the decoder as before.
 - Logging (#897): everything under subsystem `com.simplecityapps.shuttle2`, the Kotlin `Logger` included (`OsLogLogger`
   in :shared, tag as category, through Swift's `KotlinLogSink`: the format string must be a Swift literal or `log show`
   renders `<compose failure>`, #899). Playback's categories persist at info (project.yml `OSLogPreferences`), so

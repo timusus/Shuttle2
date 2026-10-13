@@ -21,7 +21,8 @@ id and token), and plays from the file next time. The server's custom headers an
 stream's server (#822). On Wi-Fi the whole file downloads; on an expensive or constrained path only `StreamReadAhead`
 (a minute of audio at the library's bitrate, else the file's average, else 320 kbps) runs ahead of the decoder, and the
 source follows the path as it changes. A transcode whose host ignores `Range` restarts from byte 0 and the read waits
-for its position again: re-opening it at the position waits on stage 2b of #1020.
+for its position again. A progressive transcode plays through `TimeOffsetItemSource`, which declares the song's
+duration and re-opens the stream at a time offset on a seek, a drop or an end more than 5 s short.
 
 **DSP.** Two of the Player's `AudioProcessor`s, in order: `EqualizerProcessor` (one biquad per band per channel,
 then the preamp) and `LimiterProcessor` (stereo-linked lookahead, ceiling −0.1 dBFS, attack 5 ms, release 100 ms).
