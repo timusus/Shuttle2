@@ -1,4 +1,5 @@
 import Foundation
+import PlaybackNowPlaying
 import PlaybackRender
 @testable import S2
 import S2PlaybackTestSupport
@@ -49,6 +50,24 @@ func makeTestGraph() -> IosAppGraph {
 func makeTestGraph(audioPlayer: IosAudioPlayer) -> IosAppGraph {
     let suite = TestSuites.shared.make()
     return IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, isolatedStorage: suite, localFiles: IosLocalFilesNone.shared)
+}
+
+/// The system surfaces over `rig`'s player and `graph`'s controller, publishing to `info` and `commands` in place of the
+/// system's centres. Not started.
+@MainActor
+func makeTestCoordinator(
+    rig: PlayerTestRig<KitAudioPlayer.QueueKey>,
+    graph: IosAppGraph,
+    intent: PlayIntent,
+    info: FakeNowPlayingInfoCenter,
+    commands: FakeRemoteCommandCenter
+) -> PlaybackSystemCoordinator {
+    PlaybackSystemCoordinator(playback: graph.playerController, intent: intent, player: rig.player) { player, metadata, artwork in
+        NowPlayingSession(
+            player: player, supportedRates: PlaybackSystemCoordinator.supportedRates, metadata: metadata, artwork: artwork,
+            infoCenter: info, commandCenter: commands, now: { 0 }
+        )
+    }
 }
 
 extension PlayerTestRig {

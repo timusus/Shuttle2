@@ -98,7 +98,6 @@ final class IosAppDependencies {
     /// This device's music files: Documents and the folders picked in Files (#590).
     let localLibrary: LocalLibrary
     let graph: IosAppGraph
-    let nowPlaying: NowPlayingController
     let playbackSystem: PlaybackSystemCoordinator
     /// Whether the listener wants playback running, which every play/pause control draws (`PlayIntent`).
     let playIntent: PlayIntent
@@ -142,12 +141,11 @@ final class IosAppDependencies {
             MediaProviderType.signInTypes.contains { StreamWarmUp.address(graph.readServerLogin.invoke(type: $0).address, isAt: origin) }
         }
         DispatchQueue.global(qos: .utility).async { StreamStore.prepareAtLaunch() }
-        nowPlaying = NowPlayingController()
         playIntent = PlayIntent(following: graph.playerController)
         playbackSystem = PlaybackSystemCoordinator(
             playback: graph.playerController,
             intent: playIntent,
-            nowPlaying: nowPlaying,
+            player: audioPlayer.player,
             widgets: NowPlayingWidgetPublisher()
         )
         let intent = playIntent

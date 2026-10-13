@@ -22,7 +22,7 @@ struct NowPlayingWidgetPublisherTests {
     private let loads = Loads()
 
     private func item(_ id: String, title: String = "Song") -> NowPlayingItem {
-        NowPlayingItem(id: id, title: title, artist: "Artist", album: "Album", duration: 180, artwork: nil)
+        NowPlayingItem(id: id, title: title, artist: "Artist", album: "Album", artwork: nil)
     }
 
     private static let image = UIGraphicsImageRenderer(size: CGSize(width: 4, height: 4)).image { context in

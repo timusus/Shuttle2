@@ -2,9 +2,20 @@ import OSLog
 import UIKit
 import WidgetKit
 
+/// The song the widgets show.
+struct NowPlayingItem: Equatable {
+    /// Identifies the queue item, so a late artwork load can't land on the next song.
+    var id: String
+    var title: String
+    var artist: String?
+    var album: String?
+    /// Where the song's cover may be, as the in-app artwork views have it; nil for none.
+    var artwork: ArtworkSource?
+}
+
 /// Keeps the widgets' copy of Now Playing (#758): the current song, whether it plays and its cover, written to the App
 /// Group (`NowPlayingStore`) for the widget extension, which can't reach the player. `PlaybackSystemCoordinator` calls
-/// `update` whenever it publishes to the system's Now Playing; only a change of song or play state writes, and each
+/// `update` whenever the queue or the play intent changes; only a change of song or play state writes, and each
 /// write asks WidgetKit to reload the widgets and the Control Center control.
 @MainActor
 final class NowPlayingWidgetPublisher {

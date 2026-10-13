@@ -14,12 +14,12 @@ enum TestSongs {
     static func song(
         _ id: Int64, _ name: String, artist: String, album: String, durationMs: Int32,
         artists: [String]? = nil, playCount: Int32 = 0, lastPlayed: KotlinInstant? = nil, dateAdded: KotlinInstant? = nil,
-        favourite: Bool = false, provider: MediaProviderType = .shuttle,
+        favourite: Bool = false, provider: MediaProviderType = .shuttle, path: String? = nil,
         mimeType: String = "audio/flac", bitRate: Int32? = nil, bitDepth: Int32? = nil, sampleRate: Int32? = nil
     ) -> Song {
         Song(
             id: id, name: name, albumArtist: artist, artists: artists ?? [artist], album: album, track: nil, disc: nil,
-            duration: durationMs, date: nil, genres: [], path: "demo://\(id)", size: 0, mimeType: mimeType,
+            duration: durationMs, date: nil, genres: [], path: path ?? "demo://\(id)", size: 0, mimeType: mimeType,
             lastModified: nil, lastPlayed: lastPlayed, lastCompleted: nil, playCount: playCount, playbackPosition: 0,
             blacklisted: false, externalId: nil, mediaProvider: provider, replayGainTrack: nil,
             replayGainAlbum: nil, lyrics: nil, grouping: nil, bitRate: bitRate.map { KotlinInt(int: $0) }, bitDepth: bitDepth.map { KotlinInt(int: $0) }, sampleRate: sampleRate.map { KotlinInt(int: $0) },

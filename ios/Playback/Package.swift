@@ -44,6 +44,7 @@ let package = Package(
         .target(
             name: "S2PlaybackTestSupport",
             dependencies: [
+                .product(name: "PlaybackNowPlayingTestSupport", package: "AudioPlaybackKit"),
                 .product(name: "PlaybackPlayerTestSupport", package: "AudioPlaybackKit"),
                 .product(name: "PlaybackRenderTestSupport", package: "AudioPlaybackKit"),
             ],

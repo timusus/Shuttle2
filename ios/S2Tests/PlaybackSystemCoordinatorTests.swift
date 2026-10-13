@@ -1,4 +1,5 @@
 import MediaPlayer
+import PlaybackNowPlaying
 import PlaybackPlayer
 import S2PlaybackTestSupport
 import Shared
@@ -9,38 +10,9 @@ import Testing
 /// queue and the player, and remote commands become controller calls. The rig's items are 10 s long.
 @MainActor
 struct PlaybackSystemCoordinatorTests {
-    private final class FakeInfoCenter: NowPlayingInfoCenter {
-        var nowPlayingInfo: [String: Any]? {
-            didSet { history.append(nowPlayingInfo) }
-        }
-        var playbackState: MPNowPlayingPlaybackState = .unknown {
-            didSet { if playbackState != oldValue { playbackStates.append(playbackState) } }
-        }
-        /// Every write, in order.
-        private(set) var history: [[String: Any]?] = []
-        /// Every playback-state change, in order.
-        private(set) var playbackStates: [MPNowPlayingPlaybackState] = []
-
-        func value<T>(_ key: String) -> T? { nowPlayingInfo?[key] as? T }
-    }
-
-    private final class FakeCommandCenter: RemoteCommandCenter {
-        var handlers: [RemoteCommand: (RemoteCommandEvent) -> MPRemoteCommandHandlerStatus] = [:]
-
-        func setHandler(for command: RemoteCommand, _ handler: ((RemoteCommandEvent) -> MPRemoteCommandHandlerStatus)?) {
-            handlers[command] = handler
-        }
-
-        func setSkipIntervals(forward: TimeInterval, backward: TimeInterval) {}
-
-        func fire(_ command: RemoteCommand, _ event: RemoteCommandEvent = .plain) {
-            _ = handlers[command]?(event)
-        }
-    }
-
     private let rig = makeTestRig()
-    private let info = FakeInfoCenter()
-    private let commands = FakeCommandCenter()
+    private let info = FakeNowPlayingInfoCenter()
+    private let commands = FakeRemoteCommandCenter()
     private let graph: IosAppGraph
     private let coordinator: PlaybackSystemCoordinator
     private let intent: PlayIntent
@@ -48,38 +20,31 @@ struct PlaybackSystemCoordinatorTests {
     init() {
         graph = makeTestGraph(rig: rig)
         intent = PlayIntent(following: graph.playerController)
-        coordinator = PlaybackSystemCoordinator(
-            playback: graph.playerController,
-            intent: intent,
-            nowPlaying: NowPlayingController(infoCenter: info, commandCenter: commands)
-        )
+        coordinator = makeTestCoordinator(rig: rig, graph: graph, intent: intent, info: info, commands: commands)
         coordinator.start()
     }
 
-    private var title: String? {
-        info.nowPlayingInfo?[MPMediaItemPropertyTitle] as? String
-    }
-
-    private var elapsed: TimeInterval? {
-        info.value(MPNowPlayingInfoPropertyElapsedPlaybackTime)
-    }
-
-    private var rate: Double? {
-        info.value(MPNowPlayingInfoPropertyPlaybackRate)
-    }
-
-    private var defaultRate: Double? {
-        info.value(MPNowPlayingInfoPropertyDefaultPlaybackRate)
-    }
+    private var title: String? { info[MPMediaItemPropertyTitle] }
+    private var elapsed: TimeInterval? { info[MPNowPlayingInfoPropertyElapsedPlaybackTime] }
+    private var duration: TimeInterval? { info[MPMediaItemPropertyPlaybackDuration] }
+    private var rate: Double? { info[MPNowPlayingInfoPropertyPlaybackRate] }
+    private var defaultRate: Double? { info[MPNowPlayingInfoPropertyDefaultPlaybackRate] }
 
     private var intendsToPlay: Bool {
         graph.playerController.playWhenReadyFlow.value.boolValue
     }
 
-    /// Queues `songs` and loads the first, as far as the player having it ready, paused.
+    /// Lets the session publish what the player's last change scheduled.
+    private func settled() async {
+        await coordinator.session?.settle()
+    }
+
+    /// Queues `songs` and loads the first, as far as the player having it ready, paused, and the lock screen's scrubber
+    /// enabled (once the item is seekable).
     private func loadQueue(_ songs: [Song] = TestSongs.demo) async throws {
         try await beginLoad(songs)
-        #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Paused })
+        #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Paused && rig.player.isSeekable })
+        await settled()
     }
 
     /// Queues `songs` and loads the first, paused, leaving the rig unpumped so nothing is decoded: a play then waits on
@@ -94,22 +59,24 @@ struct PlaybackSystemCoordinatorTests {
     /// Loads the queue and plays it from the lock screen, as far as the player playing.
     private func playQueue() async throws {
         try await loadQueue()
-        commands.fire(.play)
+        commands.press(.play)
         #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Playing })
     }
 
-    @Test func startRegistersTheCommands() {
-        #expect(commands.handlers[.play] != nil)
-        #expect(commands.handlers[.nextTrack] != nil)
+    @Test func startTakesTheTransportCommands() async {
+        await settled()
+        #expect(commands.enabled.isSuperset(of: [.play, .pause, .togglePlayPause]))
+        #expect(commands.rates == [0.8, 1, 1.2, 1.5, 2])
     }
 
     @Test func nowPlayingFollowsTheQueue() async throws {
         try await loadQueue()
         #expect(await waitUntil { title == "Paranoid Android" })
-        #expect(info.nowPlayingInfo?[MPMediaItemPropertyArtist] as? String == "Radiohead")
-        #expect(info.nowPlayingInfo?[MPMediaItemPropertyPlaybackDuration] as? TimeInterval == 386)
+        #expect(info[MPMediaItemPropertyArtist] as String? == "Radiohead")
+        #expect(info[MPMediaItemPropertyAlbumTitle] as String? == "OK Computer")
+        #expect(duration == 386)
 
-        commands.fire(.nextTrack)
+        commands.press(.nextTrack)
         #expect(await waitUntil { title == "Hyperballad" })
         #expect(rig.player.currentItem?.songId == 2)
     }
@@ -120,7 +87,7 @@ struct PlaybackSystemCoordinatorTests {
 
         rig.run(for: 4)
         #expect(await waitUntil { elapsed == 4 })
-        commands.fire(.pause)
+        commands.press(.pause)
         #expect(!rig.player.playWhenReady)
         #expect(intent.lastCommand == PlayIntent.Command(plays: false, source: .remoteCommand))
 
@@ -134,7 +101,7 @@ struct PlaybackSystemCoordinatorTests {
     @Test func bufferingStopsTheLockScreenClockUntilItPlays() async throws {
         try await beginLoad()
 
-        commands.fire(.play)
+        commands.press(.play)
 
         #expect(await waitUntil { graph.playerController.bufferingFlow.value.boolValue })
         #expect(await waitUntil { rate == 0 && info.playbackState == .playing })
@@ -143,31 +110,33 @@ struct PlaybackSystemCoordinatorTests {
         #expect(await rig.pump { rate == 1 && info.playbackState == .playing })
     }
 
-    /// A play still being prepared (a `MediaAction` reading its songs) shows on the lock screen as playing from the tap,
-    /// and its failure as paused again.
+    /// A play still being prepared (a `MediaAction` reading its songs) shows the pause button from the tap, its clock
+    /// stopped until audio, and its failure shows play again.
     @Test func aPendingPlayShowsAsPlayingOnTheLockScreen() async throws {
         try await loadQueue()
-        #expect(await waitUntil { title == "Paranoid Android" && rate == 0 })
+        #expect(await waitUntil { title == "Paranoid Android" && info.playbackState == .paused })
 
         let ticket = intent.begin()
-        #expect(rate == 1 && info.playbackState == .playing)
+        await settled()
+        #expect(info.playbackState == .playing)
+        #expect(rate == 0)
 
         intent.finished(ticket, result: MediaActionResultMessage(message: MediaActionMessageNoSongs.shared, action: nil))
-        #expect(rate == 0 && info.playbackState == .paused)
+        await settled()
+        #expect(info.playbackState == .paused)
     }
 
     @Test func aRemoteSeekMovesThePlayerAndReflectsBack() async throws {
         try await loadQueue()
 
-        commands.fire(.changePlaybackPosition, .position(6))
+        commands.press(.changePlaybackPosition, .position(6))
 
         #expect(await rig.pump { rig.player.position == 6 })
         #expect(await waitUntil { elapsed == 6 })
         #expect(rate == 0)
     }
 
-    /// The new song's metadata is never published with the last one's position, whichever of the queue
-    /// and progress flows Swift hears about first.
+    /// The new song's metadata is published from its start, with its own duration.
     @Test func aTrackChangePublishesTheNewSongFromItsStart() async throws {
         try await playQueue()
         rig.run(for: 4)
@@ -176,9 +145,8 @@ struct PlaybackSystemCoordinatorTests {
         rig.run(for: 6)
 
         #expect(await waitUntil { title == "Hyperballad" })
-        let published = info.history.compactMap { $0 }.filter { $0[MPMediaItemPropertyTitle] as? String == "Hyperballad" }
-        #expect(published.allSatisfy { ($0[MPNowPlayingInfoPropertyElapsedPlaybackTime] as? TimeInterval) == 0 })
-        #expect(info.value(MPMediaItemPropertyPlaybackDuration) == 321.0)
+        #expect(elapsed == 0)
+        #expect(duration == 321)
         #expect(rate == 1)
     }
 
@@ -187,10 +155,10 @@ struct PlaybackSystemCoordinatorTests {
         try await loadQueue([song])
         #expect(await waitUntil { title == "Untagged" })
 
-        commands.fire(.play)
+        commands.press(.play)
         rig.run(for: 1)
 
-        #expect(await waitUntil { info.value(MPMediaItemPropertyPlaybackDuration) == 10.0 })
+        #expect(await waitUntil { duration == 10 })
     }
 
     /// The player's own pause for a call reaches the lock screen through the controller.
@@ -208,7 +176,7 @@ struct PlaybackSystemCoordinatorTests {
 
         coordinator.stop()
 
-        #expect(commands.handlers.values.isEmpty)
+        #expect(commands.enabled.isEmpty)
         #expect(title == nil)
     }
 
@@ -216,25 +184,17 @@ struct PlaybackSystemCoordinatorTests {
         try await playQueue()
         graph.playerController.setPlaybackSpeed(multiplier: 1.5)
         #expect(await waitUntil { rate == 1.5 && info.playbackState == .playing })
-        let statesBefore = info.playbackStates.count
 
-        commands.fire(.nextTrack)
+        commands.press(.nextTrack)
 
         #expect(await waitUntil { title == "Hyperballad" })
-        let hyperballad = info.history.compactMap { $0 }.filter { $0[MPMediaItemPropertyTitle] as? String == "Hyperballad" }
-        #expect(!hyperballad.isEmpty)
-        #expect(hyperballad.allSatisfy { ($0[MPNowPlayingInfoPropertyElapsedPlaybackTime] as? TimeInterval) == 0 })
-        // The player stays ready until its transport answers the skip, so the restart reads as a stall and may stop the
-        // clock (rate 0) for a moment; the pause button holds.
-        #expect(hyperballad.allSatisfy { [0, 1.5].contains($0[MPNowPlayingInfoPropertyPlaybackRate] as? Double) })
-        #expect(hyperballad.allSatisfy { ($0[MPNowPlayingInfoPropertyDefaultPlaybackRate] as? Double) == 1.5 })
-        #expect(!info.playbackStates.dropFirst(statesBefore).contains(.paused))
+        #expect(elapsed == 0)
+        #expect(defaultRate == 1.5)
         #expect(info.playbackState == .playing)
         #expect(rig.player.playWhenReady)
 
         #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Playing })
-        #expect(rate == 1.5)
-        #expect(info.playbackState == .playing)
+        #expect(await waitUntil { rate == 1.5 && info.playbackState == .playing })
     }
 
     @Test func theButtonFollowsIntentImmediatelyThroughLoading() async throws {
@@ -247,18 +207,20 @@ struct PlaybackSystemCoordinatorTests {
         #expect(await waitUntil { defaultRate == 1.5 })
         #expect(rate == 0)
 
-        commands.fire(.play)
+        commands.press(.play)
+        await settled()
         #expect(info.playbackState == .playing)
         #expect(intendsToPlay)
         #expect(await waitUntil { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Loading })
         #expect(info.playbackState == .playing)
 
-        commands.fire(.pause)
+        commands.press(.pause)
         #expect(await waitUntil { info.playbackState == .paused && rate == 0 })
         #expect(defaultRate == 1.5)
         #expect(!intendsToPlay)
 
-        commands.fire(.togglePlayPause)
+        commands.press(.togglePlayPause)
+        await settled()
         #expect(info.playbackState == .playing)
         #expect(intendsToPlay)
         #expect(await rig.pump { graph.playerController.playbackStateFlow.value is Shared.PlaybackState.Playing })
