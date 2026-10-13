@@ -98,7 +98,7 @@ struct PlayerBindingTests {
         _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: false, playWhenReady: false) { _ in }
         // Loaded with nothing decoded (the rig decodes only when pumped), so the play waits on its first audio.
-        #expect(await waitUntil { binding.isMiniPlayerVisible && rig.player.state == .ready })
+        #expect(await waitUntil { binding.isMiniPlayerVisible && rig.player.state == .buffering })
         #expect(!binding.miniPlayer.isPlaying)
 
         binding.actions.playPause()

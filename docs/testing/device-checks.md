@@ -585,9 +585,9 @@ Needs a release build (an internal or release-candidate install: a debug build c
 ## iOS play-start latency (#822), needs an iPhone and a Jellyfin server
 
 Stream the logs while testing: `log stream --predicate 'subsystem == "com.simplecityapps.shuttle2" AND category == "playback"' --level info`.
-Each start that had to load prints one `time to first audio: song <id>, <n> ms` line, timed from the player's load or play
-to its first playing report. A resume, or a skip onto a song already decoded ahead, prints none. Time before the
-load (the tap, building the queue) isn't in it.
+Each load, skip or seek that plays prints one `time to first audio: song <id>, <n> ms` line, timed from the player's load
+or play to the player's first audio at the speaker. A resume prints none; a skip onto a song already decoded ahead prints
+a short time. Time before the load (the tap, building the queue) isn't in it.
 
 - [ ] Tap-to-load gap: on a Jellyfin or Emby library of at least a few thousand songs, tap a song in Songs, then one inside an album, then one in a large playlist, five starts each from a cold queue, timing each from the tap to the sound by ear or screen recording. Compare that with the `time to first audio` line. If the gap is regularly over about 300 ms and grows with library or playlist size, opening the tapped song before the queue is built is worth doing; if it stays near zero, close the idea.
 - [ ] Jellyfin `/universal` against `static=true`: on a Jellyfin server (not Emby), start ten different songs on Wi-Fi with the current build and note the median `time to first audio`. Then change `MediaBrowserAuthenticationManager.universalPath` (`:android:mediaprovider:server`) to request `static=true` for direct-play formats, rebuild and repeat on the same songs. Keep the change only if that median drops clearly with no format that stops playing; it also changes Android's stream URL, so play a FLAC and an MP3 on Android before landing it.

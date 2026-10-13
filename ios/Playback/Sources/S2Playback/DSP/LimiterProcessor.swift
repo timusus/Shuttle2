@@ -7,7 +7,7 @@ import PlaybackRender
 /// Its lookahead delays the audio, which the stage hides: the first `latencyFrames` outputs after a
 /// flush are the delay line's silence and are held back, and an end of stream pushes the last real
 /// frames out, so output frame n is input frame n and no frame is added.
-public final class LimiterProcessor: AudioProcessor, @unchecked Sendable {
+public final class LimiterProcessor: BufferingAudioProcessor, @unchecked Sendable {
     // Transport queue only.
     private var staged: PCMFormat?
     private var format: PCMFormat?
@@ -71,7 +71,16 @@ public final class LimiterProcessor: AudioProcessor, @unchecked Sendable {
 
     public var isEnded: Bool { endQueued && output.isEmpty }
 
-    public func flush() {
+    public func flush(_: StreamMetadata) {
+        apply()
+    }
+
+    public func reset() {
+        staged = nil
+        apply()
+    }
+
+    private func apply() {
         if staged != format || limiter == nil {
             format = staged
             limiter = format.map {
@@ -84,11 +93,6 @@ public final class LimiterProcessor: AudioProcessor, @unchecked Sendable {
         prime = limiter?.latencyFrames ?? 0
         output = []
         endQueued = false
-    }
-
-    public func reset() {
-        staged = nil
-        flush()
     }
 
     private func append(_ samples: [Float]) {

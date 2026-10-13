@@ -26,7 +26,7 @@ public struct EqualizerDesign: Sendable {
 /// chunk boundary with a try-lock, so the transport's queue never waits, allocates filters or designs
 /// per chunk. The new filters carry the old ones' state and the gain ramps across the first chunk, so
 /// a change doesn't click.
-public final class EqualizerProcessor: AudioProcessor, @unchecked Sendable {
+public final class EqualizerProcessor: BufferingAudioProcessor, @unchecked Sendable {
     public typealias Design = @Sendable (_ sampleRate: Double) -> EqualizerDesign
 
     /// One settings change at one format. A class, so the transport queue mutates the filters in place
@@ -172,7 +172,18 @@ public final class EqualizerProcessor: AudioProcessor, @unchecked Sendable {
 
     /// As on Android, the filters keep their history only when the audio carries straight on in the
     /// same format (a drained join); after a seek that history would be a click.
-    public func flush() {
+    public func flush(_: StreamMetadata) {
+        apply()
+    }
+
+    public func reset() {
+        staged = nil
+        apply()
+        lastGain = 1
+        shared.withLock { $0.format = nil }
+    }
+
+    private func apply() {
         output = []
         endQueued = false
         let carriesOn = endedSinceFlush && staged == format
@@ -196,13 +207,6 @@ public final class EqualizerProcessor: AudioProcessor, @unchecked Sendable {
         if carriesOn, let current { prepared.adoptState(of: current) }
         lastGain = prepared.isBypassed ? 1 : prepared.gain
         current = prepared
-    }
-
-    public func reset() {
-        staged = nil
-        flush()
-        lastGain = 1
-        shared.withLock { $0.format = nil }
     }
 
     /// Swaps in a change the caller designed, leaving the old one for the caller to free. Never waits:

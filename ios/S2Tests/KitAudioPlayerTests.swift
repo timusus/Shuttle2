@@ -340,7 +340,7 @@ struct ResolvingByteReaderTests {
         box.answer?(nil, "refused")
 
         #expect(await waitUntil { box.done })
-        #expect(box.error as? StreamByteReaderError == .transport("refused"))
+        #expect(box.error as? StreamByteReaderError == .failed(StreamFailure(.internal, detail: "refused")))
         #expect(box.asked == 1)
     }
 
@@ -364,9 +364,11 @@ private final class FailingItemSource: ItemSource, @unchecked Sendable {
 
     func begin(epoch _: UInt64) {}
     func open() throws -> PCMFormat { throw Refused() }
+    var frameCount: Int64? { nil }
     func seek(toFrame _: Int64) throws -> Int64 { throw Refused() }
     func nextChunk() throws -> [Float]? { throw Refused() }
     func interrupt(through _: UInt64) {}
+    func release() {}
 }
 
 private final class RecordingListener: NSObject, IosAudioPlayerListener {

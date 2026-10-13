@@ -34,7 +34,7 @@ final class EqualizerProcessorTests: XCTestCase {
             return EqualizerDesign(preampDb: 0, coefficients: peaking(frequency: 1_000, gainDb: 6, q: 8, sampleRate: rate))
         }
         _ = try processor.configure(PCMFormat(sampleRate: 96_000, channelCount: 2))
-        processor.flush()
+        processor.flush(item)
 
         XCTAssertEqual(designedAt.values, [44_100, 96_000])
     }
@@ -110,14 +110,16 @@ final class LimiterProcessorTests: XCTestCase {
     }
 }
 
-private func configured<P: AudioProcessor>(_ processor: P, rate: Double, channelCount: Int) throws -> P {
+private let item = StreamMetadata(item: 1, mediaStartFrame: 0)
+
+private func configured<P: BufferingAudioProcessor>(_ processor: P, rate: Double, channelCount: Int) throws -> P {
     _ = try processor.configure(PCMFormat(sampleRate: rate, channelCount: channelCount))
-    processor.flush()
+    processor.flush(item)
     return processor
 }
 
 /// Feeds `input` in 1000-sample chunks, then ends the stream.
-private func stream(_ input: [Float], through processor: AudioProcessor) -> [Float] {
+private func stream(_ input: [Float], through processor: BufferingAudioProcessor) -> [Float] {
     var output: [Float] = []
     for start in stride(from: 0, to: input.count, by: 1_000) {
         processor.queueInput(Array(input[start..<min(start + 1_000, input.count)]))

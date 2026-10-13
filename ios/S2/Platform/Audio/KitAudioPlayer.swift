@@ -30,9 +30,8 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     private let log = Logger(subsystem: "com.simplecityapps.shuttle2", category: "playback")
     /// When the last start that plays was asked for, until it is heard: the `time to first audio` line (#822).
     private var startRequested: UInt64?
-    /// Whether the player has reported anything but playing since then. A start it never had to wait for (a resume,
-    /// an item already decoded ahead) isn't timed: it would read as the time its report took.
-    private var startWaited = false
+    /// Whether the last load, skip or seek is still to be heard; a resume of audio already heard isn't timed.
+    private var awaitingFirstAudio = false
 
     @MainActor
     init(player: Player<QueueKey>) {
@@ -69,7 +68,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     @MainActor
     private func observeState() {
         withObservationTracking {
-            _ = (player.state, player.isPlaying, player.currentIndex, player.error != nil)
+            _ = (player.state, player.isPlaying, player.playWhenReady, player.currentIndex, player.error != nil)
         } onChange: { [weak self] in
             Task { @MainActor in
                 self?.reportState()
@@ -83,11 +82,11 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
         guard let uid = player.currentItem?.uid, player.error == nil else { return }
         let state: IosAudioPlayerState = switch player.state {
         case .idle: .idle
-        case .buffering: .loading
+        // A paused load or seek buffers until its first audio; as on Android it reads as paused, not loading.
+        case .buffering: player.playWhenReady ? .loading : .paused
         case .ready: player.isPlaying ? .playing : .paused
         case .ended: .ended
         }
-        timeFirstAudio(state)
         if let lastReport, lastReport.uid == uid, lastReport.state == state { return }
         lastReport = (uid, state)
         listener?.onStateChanged(trackId: "\(uid)", state: state)
@@ -95,21 +94,17 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
 
     @MainActor
     private func requestStart(_ playWhenReady: Bool) {
+        awaitingFirstAudio = true
         startRequested = playWhenReady ? DispatchTime.now().uptimeNanoseconds : nil
-        startWaited = false
     }
 
     @MainActor
-    private func timeFirstAudio(_ state: IosAudioPlayerState) {
+    private func firstAudioRendered(index: Int) {
+        awaitingFirstAudio = false
         guard let start = startRequested else { return }
-        guard state == .playing else {
-            startWaited = true
-            return
-        }
-        guard startWaited, let songId = player.currentItem?.songId else { return }
         startRequested = nil
         let ms = (DispatchTime.now().uptimeNanoseconds - start) / 1_000_000
-        log.notice("time to first audio: song \(songId, privacy: .public), \(ms, privacy: .public) ms")
+        log.notice("time to first audio: song \(self.player.items[index].songId, privacy: .public), \(ms, privacy: .public) ms")
     }
 
     @MainActor
@@ -131,6 +126,10 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
             if !playing, reason == .endOfItem, let uid = player.currentItem?.uid {
                 listener?.onPausedAtEnd(trackId: "\(uid)")
             }
+        case let .firstAudioRendered(index, _):
+            firstAudioRendered(index: index)
+        case .seekAdjusted, .bufferingStarted, .bufferingEnded:
+            break
         }
     }
 
@@ -203,7 +202,7 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func play() {
         MainActor.assumeIsolated {
             lastReport = nil
-            if !player.isPlaying { requestStart(true) }
+            if awaitingFirstAudio, !player.isPlaying { startRequested = DispatchTime.now().uptimeNanoseconds }
             player.play()
             reportState()
         }
@@ -212,14 +211,17 @@ final class KitAudioPlayer: NSObject, IosAudioPlayer {
     func pause() {
         MainActor.assumeIsolated {
             lastReport = nil
-            requestStart(false)
+            startRequested = nil
             player.pause()
             reportState()
         }
     }
 
     func seek(positionMs: Int64) {
-        MainActor.assumeIsolated { player.seek(to: Double(positionMs) / 1000) }
+        MainActor.assumeIsolated {
+            awaitingFirstAudio = true
+            player.seek(to: Double(positionMs) / 1000)
+        }
     }
 
     func stop() {
@@ -346,7 +348,7 @@ final class ResolvingByteReader: StreamByteReader, @unchecked Sendable {
 
     private static func reader(_ stream: IosStream?, error: String?) throws -> StreamByteReader {
         guard let stream, let url = URL(string: stream.url) else {
-            throw StreamByteReaderError.transport(error ?? "no stream")
+            throw StreamByteReaderError.failed(StreamFailure(.internal, detail: error ?? "no stream"))
         }
         return try StreamStore.reader(url: url, headers: stream.headers, readAhead: readAhead(stream))
     }
