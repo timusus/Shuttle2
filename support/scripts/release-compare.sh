@@ -454,7 +454,7 @@ screens() {
         case "$PLAYBACK_IDS" in *" $id "*) adb shell input keyevent KEYCODE_MEDIA_PAUSE; sleep 1 ;; esac
         [ "$id" = notification ] && { adb shell cmd statusbar expand-notifications; sleep 2; }
         capture "$ver" "$id"
-        [ "$id" = notification ] && adb shell cmd statusbar collapse
+        if [ "$id" = notification ]; then adb shell cmd statusbar collapse; fi
     done
 }
 
