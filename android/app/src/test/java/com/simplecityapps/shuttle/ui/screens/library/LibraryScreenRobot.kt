@@ -102,6 +102,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     var lastSmartPlaylistClicked: SmartPlaylist? = null
         private set
     var lastFolderClicked: Folder? = null
+    var rootClicked = false
         private set
     var lastMore: Any? = null
         private set
@@ -278,7 +279,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             }
 
             LibraryTab.Folders -> pages.folders?.let {
-                FoldersPage(it, onFolderClick = { f -> lastFolderClicked = f }, onFolderMore = { f -> lastMore = f }, onSongClick = { s -> lastSongClicked = s }, onSongMore = { s -> lastMore = s }, onNavigateUp = {}, onAddFolder = { addFolderClicked = true })
+                FoldersPage(it, onFolderClick = { f -> lastFolderClicked = f }, onFolderMore = { f -> lastMore = f }, onSongClick = { s -> lastSongClicked = s }, onSongMore = { s -> lastMore = s }, onRootClick = { rootClicked = true }, onAddFolder = { addFolderClicked = true })
             }
         } ?: Column {
             // A stand-in page still leads with the controls, as a real one does.
@@ -425,6 +426,12 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
 
     fun clickText(text: String) {
         rule.onNodeWithText(text).performClick()
+        rule.waitForIdle()
+    }
+
+    /** A segment of the Folders path; the tab strip has its own "Folders". */
+    fun clickBreadcrumb(text: String) {
+        rule.onNode(hasText(text) and hasClickAction() and hasAnyAncestor(hasTestTag("library-folders"))).performClick()
         rule.waitForIdle()
     }
 

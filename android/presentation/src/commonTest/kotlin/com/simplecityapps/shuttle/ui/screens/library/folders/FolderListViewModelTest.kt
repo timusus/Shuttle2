@@ -98,6 +98,42 @@ class FolderListViewModelTest {
     }
 
     @Test
+    fun `breadcrumbs list each folder from the top level down`() = runTest(testDispatcher) {
+        val viewModel = subscribe(createViewModel())
+        viewModel.uiState.value.breadcrumbs shouldBe emptyList()
+
+        viewModel.onFolderClick(juniperStatic)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.breadcrumbs shouldBe listOf(music, juniperStatic)
+    }
+
+    @Test
+    fun `tapping an ancestor crumb jumps two levels up`() = runTest(testDispatcher) {
+        val viewModel = subscribe(createViewModel())
+        viewModel.onFolderClick(juniperStatic)
+        advanceUntilIdle()
+
+        viewModel.onRootClick()
+        advanceUntilIdle()
+
+        viewModel.uiState.value.currentFolder shouldBe null
+        viewModel.uiState.value.breadcrumbs shouldBe emptyList()
+    }
+
+    @Test
+    fun `tapping a middle crumb jumps to that folder`() = runTest(testDispatcher) {
+        val viewModel = subscribe(createViewModel())
+        viewModel.onFolderClick(juniperStatic)
+        advanceUntilIdle()
+
+        viewModel.onFolderClick(viewModel.uiState.value.breadcrumbs.first())
+        advanceUntilIdle()
+
+        viewModel.uiState.value.currentFolder shouldBe music
+    }
+
+    @Test
     fun `browsed folder survives process death`() = runTest(testDispatcher) {
         val savedStateHandle = SavedStateHandle()
         subscribe(createViewModel(savedStateHandle)).onFolderClick(juniperStatic)

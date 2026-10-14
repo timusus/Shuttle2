@@ -572,7 +572,7 @@ private fun LibraryPage(
                 onFolderMore = { folder -> actions.showActions(MediaActionsTarget(folder.name, null, MediaSelection.Folders(listOf(folder.path)), ArtworkPlaceholder.Folder)) },
                 onSongClick = { song -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(state.songs), state.songs.indexOf(song))) },
                 onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
-                onNavigateUp = viewModel::onNavigateUp,
+                onRootClick = viewModel::onRootClick,
                 onAddFolder = { onOpen(ThisDeviceRoute) },
             )
         }

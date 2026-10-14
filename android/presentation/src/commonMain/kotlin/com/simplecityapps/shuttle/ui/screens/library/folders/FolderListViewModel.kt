@@ -42,6 +42,8 @@ data class Folder(
 data class FolderListUiState(
     /** The folder being browsed, or null at the top level. */
     val currentFolder: Folder? = null,
+    /** Each folder from just below the top level down to [currentFolder]; empty at the top level. */
+    val breadcrumbs: List<Folder> = emptyList(),
     val folders: List<Folder> = emptyList(),
     val songs: List<Song> = emptyList(),
     val loadingState: LoadingState = LoadingState.Loading,
@@ -101,6 +103,9 @@ class FolderListViewModel @AssistedInject constructor(
                     ?: tree.displayRoot
                 FolderListUiState(
                     currentFolder = node.takeIf { it !== tree.displayRoot }?.toFolder(),
+                    breadcrumbs = (tree.displayRoot.path.size + 1..node.path.size).map { depth ->
+                        tree.root.nearest(node.path.take(depth)).toFolder()
+                    },
                     folders = node.subfolders.map { it.toFolder() },
                     songs = node.songs,
                     loadingState = FolderListUiState.LoadingState.Ready,
@@ -117,6 +122,10 @@ class FolderListViewModel @AssistedInject constructor(
 
     fun onFolderClick(folder: Folder) {
         savedStateHandle[KEY_PATH] = ArrayList(folder.path)
+    }
+
+    fun onRootClick() {
+        savedStateHandle[KEY_PATH] = null
     }
 
     fun onNavigateUp() {

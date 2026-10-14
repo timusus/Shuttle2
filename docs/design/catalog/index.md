@@ -42,6 +42,7 @@ existing lines as they are.
 - [ ] `eq-band`: [boards](eq-band.md) · approved: — · boards hash: —
 - [ ] `row-genre`: [boards](row-genre.md) · approved: — · boards hash: —
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
+- [ ] `breadcrumb`: [boards](breadcrumb.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —
 - [ ] `section-header`: [boards](section-header.md) · approved: — · boards hash: —
 - [ ] `download-status`: [boards](download-status.md) · approved: — · boards hash: —

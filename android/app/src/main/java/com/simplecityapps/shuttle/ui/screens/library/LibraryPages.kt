@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -39,6 +40,7 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
+import com.simplecityapps.shuttle.designsystem.component.S2Breadcrumb
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
@@ -70,7 +72,6 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.albumThumbLabel
 import com.simplecityapps.shuttle.ui.screens.library.folders.Folder
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
 import com.simplecityapps.shuttle.ui.screens.library.folders.displayName
-import com.simplecityapps.shuttle.ui.screens.library.folders.displayPath
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
@@ -526,7 +527,7 @@ fun PlaylistsPage(
     }
 }
 
-/** Folders: the current folder's subfolders, then its songs; a header shows the path with an Up action. */
+/** Folders: the current folder's subfolders, then its songs; a breadcrumb path jumps back to any ancestor. */
 @Composable
 fun FoldersPage(
     state: FolderListUiState,
@@ -534,7 +535,7 @@ fun FoldersPage(
     onFolderMore: (Folder) -> Unit,
     onSongClick: (Song) -> Unit,
     onSongMore: (Song) -> Unit,
-    onNavigateUp: () -> Unit,
+    onRootClick: () -> Unit,
     onAddFolder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -555,12 +556,13 @@ fun FoldersPage(
         val listState = rememberLazyListState()
         ScrollToTopOnReselect(ShellTab.Library, listState)
         LazyColumn(state = listState, modifier = modifier.fillMaxSize().testTag("library-folders")) {
-            state.currentFolder?.let { folder ->
+            if (state.breadcrumbs.isNotEmpty()) {
                 item(key = "path") {
-                    SectionHeader(
-                        title = folder.displayPath(),
-                        action = stringResource(R.string.library_navigate_up),
-                        onAction = onNavigateUp,
+                    val rootLabel = stringResource(R.string.library_tab_folders)
+                    val resources = LocalContext.current.resources
+                    S2Breadcrumb(
+                        segments = listOf(rootLabel) + state.breadcrumbs.map { it.displayName(resources) },
+                        onSegmentClick = { index -> if (index == 0) onRootClick() else onFolderClick(state.breadcrumbs[index - 1]) },
                     )
                 }
             }

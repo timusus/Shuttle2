@@ -20,6 +20,8 @@ import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.readyAlbumArtistList
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
+import com.simplecityapps.shuttle.ui.screens.library.folders.Folder
+import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
 import com.simplecityapps.shuttle.ui.screens.library.genres.readyGenreList
 import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
@@ -187,6 +189,29 @@ class LibraryScreenshotTest {
             ),
         )
         shot("phone-playlists")
+    }
+
+    /** Two folders down, the breadcrumb path leads the list and the current folder is its last, bold segment. */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneFoldersBreadcrumb() {
+        val music = Folder(listOf("primary", "Music"), songCount = 12)
+        val album = Folder(listOf("primary", "Music", "Juniper Static"), songCount = 8)
+        val disc = Folder(listOf("primary", "Music", "Juniper Static", "Disc 1"), songCount = 4)
+        library.setContent(
+            libraryState(enabledTabs = LibraryTab.defaultEnabled.toSet() + LibraryTab.Folders, currentTab = LibraryTab.Folders),
+            libraryControls(),
+            LibraryPageStates(
+                folders = FolderListUiState(
+                    currentFolder = album,
+                    breadcrumbs = listOf(music, album),
+                    folders = listOf(disc),
+                    songs = songs.take(3),
+                    loadingState = FolderListUiState.LoadingState.Ready,
+                ),
+            ),
+        )
+        shot("phone-folders-breadcrumb")
     }
 
     /** Each genre's tile is a 2x2 patchwork of its albums' covers (#135). */

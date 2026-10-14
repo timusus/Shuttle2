@@ -12,8 +12,11 @@ fun readyFolderList(
     currentFolder: Folder? = null,
     folders: List<Folder> = listOf(createFolder()),
     songs: List<Song> = emptyList(),
+    // One storage volume, so its level is skipped: crumbs start below the first path segment
+    breadcrumbs: List<Folder> = currentFolder?.let { current -> (2..current.path.size).map { createFolder(*current.path.take(it).toTypedArray()) } }.orEmpty(),
 ) = FolderListUiState(
     currentFolder = currentFolder,
+    breadcrumbs = breadcrumbs,
     folders = folders,
     songs = songs,
     loadingState = FolderListUiState.LoadingState.Ready,

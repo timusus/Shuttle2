@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
+import com.simplecityapps.shuttle.designsystem.component.S2Breadcrumb
 import com.simplecityapps.shuttle.designsystem.component.S2DownloadStatus
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
@@ -260,6 +261,20 @@ fun FolderRowBoard(width: BoardWidth) {
             },
             BoardSection("File, no artwork") { FolderRow("demo take 3.mp3", FolderEntryKind.File, {}, meta = "2:10", onMore = {}) },
             BoardSection("Selected") { FolderRow("Marlow Vane", FolderEntryKind.Folder, {}, summary = "2 folders", selected = true, onMore = {}) },
+        ),
+    )
+}
+
+@Composable
+fun BreadcrumbBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Top level folder") { S2Breadcrumb(listOf("Folders", "Music"), {}) },
+            BoardSection("Two levels deep") { S2Breadcrumb(listOf("Folders", "Music", "Juniper Static"), {}) },
+            BoardSection("Overflowing, scrolled to the end") {
+                S2Breadcrumb(listOf("Folders", "Music", "Juniper Static", "Chlorophyll Loop (Deluxe Edition)", "Disc 1"), {})
+            },
         ),
     )
 }

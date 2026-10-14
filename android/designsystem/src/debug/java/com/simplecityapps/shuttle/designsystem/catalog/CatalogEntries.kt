@@ -103,6 +103,7 @@ val CatalogEntries = listOf(
     CatalogEntry("eq-band", "Equalizer band", listOf("0 dB, boosted, cut", "disabled")) { EqBandBoard(it) },
     CatalogEntry("row-genre", "Genre row", listOf("default", "selected", "one song")) { GenreRowBoard(it) },
     CatalogEntry("row-folder", "Folder row", listOf("folder", "file", "file without artwork", "selected")) { FolderRowBoard(it) },
+    CatalogEntry("breadcrumb", "Breadcrumb", listOf("top level folder", "two levels deep", "overflowing, scrolled to the end")) { BreadcrumbBoard(it) },
     CatalogEntry(
         "grid-tile",
         "Grid tile",

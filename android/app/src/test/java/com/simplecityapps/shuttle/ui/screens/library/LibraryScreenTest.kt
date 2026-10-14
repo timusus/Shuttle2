@@ -613,7 +613,7 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `folders page header drops the volume segment from the path`() {
+    fun `folders page breadcrumb leaves out the volume and jumps to a tapped ancestor`() {
         robot.setContent(
             libraryState(enabledTabs = setOf(LibraryTab.Folders), currentTab = LibraryTab.Folders),
             pages = LibraryPageStates(
@@ -624,7 +624,27 @@ class LibraryScreenTest {
             ),
         )
 
-        robot.assertTextDisplayed("Music / Juniper Static")
+        robot.assertTextDisplayed("Juniper Static")
+        robot.clickBreadcrumb("Music")
+
+        robot.lastFolderClicked shouldBe createFolder("primary", "Music")
+    }
+
+    @Test
+    fun `folders page breadcrumb root jumps to the top level`() {
+        robot.setContent(
+            libraryState(enabledTabs = setOf(LibraryTab.Folders), currentTab = LibraryTab.Folders),
+            pages = LibraryPageStates(
+                folders = readyFolderList(
+                    currentFolder = createFolder("primary", "Music", "Juniper Static"),
+                    folders = emptyList(),
+                ),
+            ),
+        )
+
+        robot.clickBreadcrumb("Folders")
+
+        robot.rootClicked shouldBe true
     }
 
     @Test
