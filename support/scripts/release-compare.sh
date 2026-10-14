@@ -75,10 +75,17 @@ source "${SCRIPT_DIR}/checks/_timeout_fallback.sh"
 source "${SCRIPT_DIR}/emu-lane.sh"
 
 # ---- Targets: in the Emby test library with server artwork, shared by both versions so the pairs match ----
-ARTIST="Alice In Chains"
-ALBUM="Facelift"
-TRACK="Man in the Box"
-QUERY="Alice"
+ARTIST="Radiohead"
+ALBUM="Hail to the Thief"
+# a track on ALBUM, matched as a Maestro regex (the real titles carry punctuation and subtitles)
+ALBUM_TRACK="There There.*"
+# the now-playing song comes from another album, so the mini player, now-playing and queue differ from the artist screens
+PLAYING_ARTIST=".*Flume.*"
+PLAYING_ALBUM="Skin"
+PLAYING_TRACK="Never Be Like You.*"
+QUERY="Radiohead"
+# an artist near the top of the A-Z artist list, which is all the import-wait poll sees
+IMPORT_MARKER="Alice In Chains"
 GENRE="Hard Rock"
 PLAYLIST="Recently Added"
 # ---------------------------------------------------------------------------------------------
@@ -287,7 +294,7 @@ run_flow() {
     if [ -f "${FLOWS}/${ver}/${id}.yaml" ]; then flow="${FLOWS}/${ver}/${id}.yaml"
     elif [ -f "${FLOWS}/${id}.yaml" ]; then flow="${FLOWS}/${id}.yaml"
     else return 2; fi
-    args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}"
+    args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "ALBUM_TRACK=${ALBUM_TRACK}" -e "PLAYING_ARTIST=${PLAYING_ARTIST}" -e "PLAYING_ALBUM=${PLAYING_ALBUM}" -e "PLAYING_TRACK=${PLAYING_TRACK}" -e "QUERY=${QUERY}"
         -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
     # MAESTRO_-prefixed env vars reach flows as ${MAESTRO_*}; set only for this one invocation, never on argv
     if [ -n "$creds" ]; then
@@ -447,7 +454,7 @@ wait_import() {
         start_app
         run_flow "$ver" import-wait >/dev/null 2>&1
         sig="$(dump_texts 2>/dev/null)"
-        if [ -n "$sig" ] && [ "$sig" = "$prev" ] && grep -qF "$ARTIST" <<<"$sig"; then stable=$((stable + 1)); else stable=0; fi
+        if [ -n "$sig" ] && [ "$sig" = "$prev" ] && grep -qF "$IMPORT_MARKER" <<<"$sig"; then stable=$((stable + 1)); else stable=0; fi
         if [ "$stable" -ge 2 ]; then echo "release-compare: ${ver}: library settled after $(($(date +%s) - start))s"; return 0; fi
         prev="$sig"
         sleep 10
@@ -508,7 +515,7 @@ host_tag() {
 }
 
 flows_hash() {
-    { printf '%s\n' "$ARTIST" "$ALBUM" "$TRACK" "$QUERY" "$GENRE" "$PLAYLIST"; cat "${FLOWS}"/*.yaml "${FLOWS}/${1}"/*.yaml; } |
+    { printf '%s\n' "$ARTIST" "$ALBUM" "$ALBUM_TRACK" "$PLAYING_ARTIST" "$PLAYING_ALBUM" "$PLAYING_TRACK" "$QUERY" "$GENRE" "$PLAYLIST"; cat "${FLOWS}"/*.yaml "${FLOWS}/${1}"/*.yaml; } |
         shasum -a 256 | cut -c1-12
 }
 
@@ -755,7 +762,7 @@ flow_path() {
 # (judge_frames picks from them afterwards, so the session never waits on the script).
 run_session() {
     local ver="$1" k="$2" id session="${WORK}/session-${ver}.yaml" rc=0 split; shift 2
-    local args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}"
+    local args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "ALBUM_TRACK=${ALBUM_TRACK}" -e "PLAYING_ARTIST=${PLAYING_ARTIST}" -e "PLAYING_ALBUM=${PLAYING_ALBUM}" -e "PLAYING_TRACK=${PLAYING_TRACK}" -e "QUERY=${QUERY}"
         -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
     # a playing screen is never still (progress bars, visualisers), and Maestro has no pause-only key (Play Pause
     # toggles), so a playback screen's flow and its frames are separate runs with an idempotent adb pause between

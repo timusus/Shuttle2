@@ -1,7 +1,7 @@
 appId: ${APP_ID}
 ---
 - runFlow: mini-player.yaml
-- tapOn: "${ARTIST}"
+- tapOn: "${PLAYING_ARTIST}"
 - extendedWaitUntil:
     visible: "Queue"
     timeout: 10000

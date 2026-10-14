@@ -5,10 +5,20 @@ appId: ${APP_ID}
 - runFlow: _start.yaml
 - tapOn: "Library"
 - tapOn: "Artists"
-- tapOn: "${ARTIST}"
-- waitForAnimationToEnd:
-    timeout: 5000
-- back
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%,75%
+          end: 50%,20%
+          duration: 300
+- repeat:
+    times: 6
+    commands:
+      - swipe:
+          start: 50%,20%
+          end: 50%,75%
+          duration: 300
 - tapOn: "Albums"
 - repeat:
     times: 6

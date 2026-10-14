@@ -11,5 +11,5 @@ appId: ${APP_ID}
     text: "${ALBUM}"
     below: "Top result"
 - extendedWaitUntil:
-    visible: "${TRACK}"
+    visible: "${ALBUM_TRACK}"
     timeout: 10000

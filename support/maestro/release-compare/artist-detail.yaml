@@ -1,7 +1,15 @@
+# Reached from search: the A-Z artist list is too long to scroll to a name reliably.
 appId: ${APP_ID}
 ---
-- runFlow: artist-list.yaml
-- tapOn: "${ARTIST}"
+- runFlow: _start.yaml
+- tapOn: "Search"
+- tapOn: "Search your library"
+- inputText: "${QUERY}"
+- hideKeyboard
+# below the heading: the search field holds the same text
+- tapOn:
+    text: "${ARTIST}"
+    below: "Top result"
 # The album list loads after the header, and each row reads as one merged label ("Facelift, 1990 · 12 songs").
 - extendedWaitUntil:
     visible: ".*${ALBUM}.*"

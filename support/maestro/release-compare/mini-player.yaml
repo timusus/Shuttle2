@@ -1,9 +1,13 @@
-# Starts the target track streaming from the album page; the script pauses it before capture.
+# Starts the now-playing track (another album from the artist screens) streaming from the album page; the script pauses it before capture.
 appId: ${APP_ID}
 ---
-- runFlow: album-detail.yaml
-- tapOn: "${TRACK}"
+- runFlow:
+    file: album-detail.yaml
+    env:
+      ALBUM: "${PLAYING_ALBUM}"
+      ALBUM_TRACK: "${PLAYING_TRACK}"
+- tapOn: "${PLAYING_TRACK}"
 # the artist's own line appears only in the mini player (the album header joins it with the year)
 - extendedWaitUntil:
-    visible: "${ARTIST}"
+    visible: "${PLAYING_ARTIST}"
     timeout: 20000

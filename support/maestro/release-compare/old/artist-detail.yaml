@@ -1,0 +1,16 @@
+# The artist page is reached from search; the A-Z artist list is too long to scroll to a name.
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn:
+    id: "searchFragment"
+- tapOn: "Search Music"
+- inputText: "${QUERY}"
+- hideKeyboard
+# below the chips: the search field holds the same text
+- tapOn:
+    text: "${ARTIST}"
+    below: "Artists"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible: ".*${ALBUM}.*"

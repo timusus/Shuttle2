@@ -13,4 +13,4 @@ appId: ${APP_ID}
     below: "Albums"
 - waitForAnimationToEnd:
     timeout: 5000
-- assertVisible: "${TRACK}"
+- assertVisible: "${ALBUM_TRACK}"
