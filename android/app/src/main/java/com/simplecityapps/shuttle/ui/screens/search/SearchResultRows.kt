@@ -4,7 +4,6 @@ import androidx.annotation.PluralsRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -30,6 +29,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
+import com.simplecityapps.shuttle.ui.screens.library.pluralString
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
 import com.simplecityapps.shuttle.ui.shell.sharedArtwork
@@ -248,4 +248,4 @@ private fun highlighted(hit: SearchHit<*>, vararg lines: List<String>): List<Ann
 }
 
 @Composable
-private fun countString(@PluralsRes plural: Int, count: Int): String = pluralStringResource(plural, count, count).replace("{count}", count.toString())
+private fun countString(@PluralsRes plural: Int, count: Int): String = pluralString(plural, count)

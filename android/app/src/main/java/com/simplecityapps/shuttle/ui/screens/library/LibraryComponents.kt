@@ -14,7 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -31,6 +31,7 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.LocalArtworkImageLoaded
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.screens.sources.formatted
 
 // Pieces the Compose library screens share: artwork loaded through Coil into the catalogue's Artwork slot, the
 // loading / scanning / empty states, and count text.
@@ -134,9 +135,16 @@ private fun Progress.indicatorProgress(): (() -> Float)? = if (total > 0) {
     null
 }
 
-/** A count plural, formatted. */
+/**
+ * A count plural with [count] in the locale's digit grouping ("8,208 songs"). The plural strings keep their `%1$d`
+ * placeholder so translations stay untouched; it is swapped for `%1$s` here to take the grouped text.
+ */
 @Composable
-fun pluralString(@PluralsRes id: Int, count: Int): String = pluralStringResource(id, count, count)
+fun pluralString(@PluralsRes id: Int, count: Int): String {
+    val resources = LocalResources.current
+    val pattern = resources.getQuantityText(id, count).toString().replace("%1\$d", "%1\$s")
+    return String.format(pattern, count.formatted())
+}
 
 /** "Artist · Album", the second line of a song row outside its album. */
 val Song.rowSubtitle: String

@@ -491,6 +491,13 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `genres page groups thousands in song counts`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Genres), pages = LibraryPageStates(genres = readyGenreList(listOf(createGenre(name = "Dance", songCount = 1727)))))
+
+        robot.assertTextDisplayed("1,727 songs")
+    }
+
+    @Test
     fun `genres page opens a tapped genre`() {
         val genre = createGenre(name = "Shoegaze")
         robot.setContent(libraryState(currentTab = LibraryTab.Genres), pages = LibraryPageStates(genres = readyGenreList(listOf(genre))))
