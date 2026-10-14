@@ -1,0 +1,15 @@
+# Flips "Fetch lyrics online", then plays the target track. The player looked up the restored song's lyrics before the
+# flip and looks again only on a song change, so relaunch first.
+appId: ${APP_ID}
+---
+- tapOn: "Library"
+- tapOn: "Settings"
+- tapOn: "Playback & sound"
+- scrollUntilVisible:
+    element: "Fetch lyrics online"
+- tapOn: "Fetch lyrics online"
+- stopApp
+- launchApp:
+    stopApp: false
+- runFlow: ../_start.yaml
+- runFlow: ../now-playing.yaml
