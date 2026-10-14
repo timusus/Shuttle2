@@ -53,7 +53,8 @@ enum class DetailContentState { Loading, NotFound, Ready }
 /**
  * A library detail screen: [DetailScaffold] with a [DetailHero] (the artwork, title and Play / Shuffle, then [header]),
  * or with [bleed] a [DetailBleedHero] showing [artwork] full-bleed (an artist page's, #781), and an overflow that opens the item's actions sheet, after any screen-specific [actions]. [content] follows the hero;
- * [overlay] draws over it, under the bar, given the bar's height.
+ * [overlay] draws over it, under the bar, given the bar's height. [heroArtwork] replaces the single [artwork] image
+ * (a playlist's cover mosaic).
  */
 @Composable
 fun LibraryDetailScaffold(
@@ -69,6 +70,7 @@ fun LibraryDetailScaffold(
     modifier: Modifier = Modifier,
     bleed: Boolean = false,
     artworkKey: String? = null,
+    heroArtwork: (@Composable (Modifier) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -105,7 +107,10 @@ fun LibraryDetailScaffold(
                         title = title,
                         subtitle = subtitle,
                         topInset = topInset,
-                        artwork = { LibraryArtwork(model = artwork, placeholder = placeholder, modifier = Modifier.sharedArtwork(artworkKey), size = ArtworkSize.Hero) },
+                        artwork = {
+                            val sharedModifier = Modifier.sharedArtwork(artworkKey)
+                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = ArtworkSize.Hero)
+                        },
                         actions = playShuffle,
                         extra = header,
                         columnHeight = columnHeight,

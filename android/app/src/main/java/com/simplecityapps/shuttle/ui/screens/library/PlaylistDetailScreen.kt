@@ -96,6 +96,7 @@ fun PlaylistDetailScreen(
     onMove: (fromId: Long, toId: Long) -> Unit,
     onMoveFinished: () -> Unit,
     modifier: Modifier = Modifier,
+    covers: List<Song> = emptyList(),
 ) {
     val playlist = uiState.playlist
     val state = when {
@@ -122,6 +123,7 @@ fun PlaylistDetailScreen(
             subtitle = playlist?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), formatDuration(songs.sumOf { it.duration }.toLong())).joinToString(" · ") },
             artwork = null,
             placeholder = ArtworkPlaceholder.Playlist,
+            heroArtwork = { heroModifier -> CoverMosaic(covers, ArtworkPlaceholder.Playlist, heroModifier, size = ArtworkSize.Hero) },
             onNavigateUp = onNavigateUp,
             onPlay = { onPlay(songs, 0) },
             onShuffle = onShuffle,
@@ -236,6 +238,8 @@ fun PlaylistDetailDestination(
 ) {
     val viewModel = assistedMetroViewModel<PlaylistDetailViewModel, PlaylistDetailViewModel.Factory> { create(route.playlistId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val coversViewModel = assistedMetroViewModel<PlaylistDetailCoversViewModel, PlaylistDetailCoversViewModel.Factory> { create(route.playlistId) }
+    val covers by coversViewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val snackbarHostState = LocalShellSnackbarHostState.current
     var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
@@ -307,6 +311,7 @@ fun PlaylistDetailDestination(
             onExport = viewModel::onExport,
             onMove = viewModel::onMove,
             onMoveFinished = viewModel::onMoveFinished,
+            covers = covers,
         )
         PlaylistDialogHost(
             dialog = dialog,
