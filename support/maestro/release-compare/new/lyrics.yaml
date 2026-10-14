@@ -4,11 +4,7 @@ appId: ${APP_ID}
 ---
 - runFlow: ../_start.yaml
 - runFlow: lyrics-toggle.yaml
-- tapOn: "More options"
-- extendedWaitUntil:
-    visible: "Lyrics"
-    timeout: 20000
-    optional: true
+- runFlow: lyrics-open-more.yaml
 - runFlow:
     when:
       notVisible: "Lyrics"
@@ -18,10 +14,7 @@ appId: ${APP_ID}
           stopApp: true
       - runFlow: ../_start.yaml
       - runFlow: lyrics-toggle.yaml
-      - tapOn: "More options"
-      - extendedWaitUntil:
-          visible: "Lyrics"
-          timeout: 20000
+      - runFlow: lyrics-open-more.yaml
 - tapOn: "Lyrics"
 - waitForAnimationToEnd:
     timeout: 5000

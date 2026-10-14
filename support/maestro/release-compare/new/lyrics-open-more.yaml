@@ -1,0 +1,16 @@
+# The More sheet builds its actions when opened, so a lookup finishing later never adds Lyrics: re-open it until it does.
+appId: ${APP_ID}
+---
+- tapOn: "More options"
+- repeat:
+    while:
+      notVisible: "Lyrics"
+    times: 8
+    commands:
+      - pressKey: back
+      # Pause ~2.5s for the LRCLIB lookup; Maestro has no sleep, so wait on text that never appears.
+      - extendedWaitUntil:
+          visible: "__lyrics_never__"
+          timeout: 2500
+          optional: true
+      - tapOn: "More options"
