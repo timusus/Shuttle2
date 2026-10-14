@@ -106,14 +106,19 @@ fun ActionsSheetContent(
                 .padding(vertical = S2Spacing.small),
         ) {
             actions.forEach { action ->
-                val tint = if (action.destructive) MaterialTheme.colorScheme.error else Color.Unspecified
+                val enabled = action.enabled()
+
+                // Explicit tints bypass ListItem's disabled colours, so dim them to the M3 disabled alpha here.
+                fun Color.forState() = if (enabled) this else copy(alpha = 0.38f)
+                val tint = if (action.destructive) MaterialTheme.colorScheme.error.forState() else Color.Unspecified
+                val iconTint = if (action.destructive) tint else MaterialTheme.colorScheme.onSurfaceVariant.forState()
                 ListItem(
                     onClick = {
                         action.onClick()
                         onDismissRequest()
                     },
-                    enabled = action.enabled(),
-                    leadingContent = action.leading ?: action.icon?.let { icon -> { Icon(icon, contentDescription = null, tint = if (action.destructive) tint else MaterialTheme.colorScheme.onSurfaceVariant) } },
+                    enabled = enabled,
+                    leadingContent = action.leading ?: action.icon?.let { icon -> { Icon(icon, contentDescription = null, tint = iconTint) } },
                     supportingContent = action.supporting?.let { { Text(it) } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 ) {
