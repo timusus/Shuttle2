@@ -91,7 +91,7 @@ fun EqBand(
     }
 }
 
-/** A vertical track filled from the 0 dB midpoint to the thumb: up for a boost, down for a cut, empty at 0 dB. */
+/** A vertical track filled from 0 dB to the thumb: up for a boost, down for a cut, empty at 0 dB. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EqTrack(state: SliderState, enabled: Boolean) {
@@ -102,9 +102,9 @@ private fun EqTrack(state: SliderState, enabled: Boolean) {
     Canvas(Modifier.width(EqTrackThickness).fillMaxHeight()) {
         val radius = CornerRadius(size.width / 2f)
         drawRoundRect(inactiveColor, cornerRadius = radius)
-        val fraction = ((state.value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
-        val thumbY = size.height * (1f - fraction)
-        val centreY = size.height / 2f
+        fun yOf(db: Float) = size.height * (1f - ((db - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f))
+        val thumbY = yOf(state.value)
+        val centreY = yOf(0f)
         val top = minOf(thumbY, centreY)
         val bottom = maxOf(thumbY, centreY)
         if (bottom > top) {
