@@ -118,7 +118,8 @@ stop it when done.
 - **Screens** (ids in `--help`): onboarding, import progress, home, artist/album/song/playlist/genre/folder lists and
   details, search, mini player, now playing, queue, sleep timer, sound, lyrics, media notification, settings. Pairs are
   fair: albums in grid on both, album detail reached via search on both. `pairing` is `both`, `old_only` or `new_only`
-  (1.0.10 has no folders or lyrics; new has no permission or analytics step). `not_captured` lists the widget and
+  (1.0.10 has no folders or lyrics; new has no permission, analytics or source step: its Welcome is both launch and
+  source choice). `not_captured` lists the widget and
   paywall (never captured) and notes such as 1.0.10's import progress, which finishes before a scanning message shows.
 - Maestro only navigates (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides; select by
   visible text, content description or resource id); the script owns the capture: demo-mode status bar, playback paused
@@ -129,5 +130,6 @@ stop it when done.
   passthrough works on Maestro 2.10.0), never argv, and Maestro logs are scrubbed of them.
 - Targets (Alice In Chains / Facelift / Man in the Box / "Alice") are one config block at the top of the script; the
   artist and album have server art, and LRCLIB has the track's lyrics (new's lyrics flow turns the lookup on).
-- A git ref builds a debug APK once per commit (`tmp/release-compare/apk/`): a release build can't add a server on a
+- A git ref builds a debug APK once per commit (`tmp/release-compare/apk/`); a bare branch name resolves to
+  `origin/<name>` after a fetch, and screens reinstalls setup's APK if another build replaced it: a release build can't add a server on a
   lane, since without Play billing it never becomes Pro. `--help` has the options.
