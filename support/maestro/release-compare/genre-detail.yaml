@@ -1,0 +1,9 @@
+appId: ${APP_ID}
+---
+- runFlow: genre-list.yaml
+- scrollUntilVisible:
+    element: "${GENRE}"
+    centerElement: true
+- tapOn: "${GENRE}"
+- waitForAnimationToEnd:
+    timeout: 5000

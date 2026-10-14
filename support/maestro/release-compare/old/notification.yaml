@@ -1,0 +1,4 @@
+# Same as the shared flow, but runFlow resolves next to this file, so it picks up the old mini player.
+appId: ${APP_ID}
+---
+- runFlow: mini-player.yaml

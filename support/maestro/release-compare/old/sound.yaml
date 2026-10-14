@@ -1,0 +1,8 @@
+# 1.0.10's equaliser is the DSP screen in the bottom-nav menu sheet; it has none in the player.
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn:
+    id: "bottomSheetFragment"
+- tapOn: "DSP"
+- assertVisible: "Equalizer"

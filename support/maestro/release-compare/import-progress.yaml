@@ -1,0 +1,6 @@
+# New syncs within seconds of signing in, on the Sources page sign-in leaves open: wait for its progress row.
+appId: ${APP_ID}
+---
+- extendedWaitUntil:
+    visible: "(Syncing|Importing).*"
+    timeout: 15000

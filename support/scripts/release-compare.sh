@@ -59,13 +59,23 @@ ARTIST="Alice In Chains"
 ALBUM="Facelift"
 TRACK="Man in the Box"
 QUERY="Alice"
+GENRE="Hard Rock"
+PLAYLIST="Recently Added"
 # ---------------------------------------------------------------------------------------------
 
 ENV_FILE="$HOME/.config/s2-test/emby-appreview.env"
 FLOWS="support/maestro/release-compare"
-STEPS=(launch permission analytics source add-source emby-form sign-in import-progress home artist-list artist-detail album-list album-detail search now-playing settings)
+STEPS=(launch permission analytics source add-source emby-form sign-in import-progress home artist-list artist-detail
+    album-list album-detail song-list playlist-list playlist-detail genre-list genre-detail folder-list search mini-player
+    now-playing queue sleep-timer sound lyrics notification settings)
 SETUP_IDS=(launch permission analytics source add-source emby-form sign-in)
-SCREEN_IDS=(home artist-list artist-detail album-list album-detail search now-playing settings)
+SCREEN_IDS=(home artist-list artist-detail album-list album-detail song-list playlist-list playlist-detail genre-list
+    genre-detail folder-list search mini-player now-playing queue sleep-timer sound lyrics notification settings)
+# screens that start playback: paused before capture, since a playing screen never goes still
+PLAYBACK_IDS=" mini-player now-playing queue sleep-timer lyrics notification "
+# never captured, with why (manifest not_captured)
+SKIPPED=("widget	a home-screen widget needs a launcher setup the lane doesn't have"
+    "paywall	the debug build is always Pro, and a release build can't add a server without Play billing")
 
 usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
@@ -113,6 +123,8 @@ mkdir -p "$WORK"
 LOG="${WORK}/run.log"
 : >"$LOG"
 LANE_STARTED=0
+DEVICE=""
+LOCAL_AVD="${S2_LOCAL_AVD:-s2test}"
 EXTRA_WORKTREES=()
 
 # label <spec>: the output-path name of a build: an APK's versionName (first word), else the ref.
@@ -125,7 +137,8 @@ STATE="${OUT}/.state"
 mkdir -p "$STATE"
 ROWS="${STATE}/rows.tsv"     # version<TAB>id<TAB>path
 WARNS="${STATE}/warnings.tsv" # version<TAB>id<TAB>message
-touch "$ROWS" "$WARNS"
+NOTES="${STATE}/not-captured.tsv" # version<TAB>id<TAB>why: expected gaps, not failures
+touch "$ROWS" "$WARNS" "$NOTES"
 
 step() {
     local desc="$1" start rc; shift
@@ -145,7 +158,7 @@ warn() { # version id message
 # forget <version> <id...>: drops earlier rows and warnings for these screens, so a re-run replaces them.
 forget() {
     local ver="$1" f; shift
-    for f in "$ROWS" "$WARNS"; do
+    for f in "$ROWS" "$WARNS" "$NOTES"; do
         awk -F'\t' -v v="$ver" -v ids=" $* " '!($1 == v && index(ids, " " $2 " "))' "$f" >"${f}.tmp" && mv -f "${f}.tmp" "$f"
     done
 }
@@ -155,7 +168,10 @@ cleanup() {
     if [ "$LANE_STARTED" = 1 ]; then
         emu_demo_mode off
         if [ "$PHASE" = setup ] || [ "$KEEP" = 1 ]; then
-            echo "release-compare: lane left up for the next phase; support/scripts/remote-emu.sh stop when done"
+            if [ "$DEVICE" = local ]; then echo "release-compare: local AVD left up for the next phase; adb -s ${ANDROID_SERIAL:-emulator-5554} emu kill when done"
+            else echo "release-compare: lane left up for the next phase; support/scripts/remote-emu.sh stop when done"; fi
+        elif [ "$DEVICE" = local ]; then
+            [ -n "${ANDROID_SERIAL:-}" ] && adb emu kill >>"$LOG" 2>&1
         else
             support/scripts/remote-emu.sh stop >>"$LOG" 2>&1 || echo "release-compare: WARNING: remote-emu.sh stop failed, check the lane" >&2
         fi
@@ -212,13 +228,16 @@ scrub() {
         { for (i = 1; i <= n; i++) { v = s[i]; if (v == "") continue; while ((j = index($0, v)) > 0) $0 = substr($0, 1, j - 1) "***" substr($0, j + length(v)) } print }'
 }
 
-# run_flow <version> <id> [with-credentials]: runs <id>'s flow (old/new override, else shared); 2 if the version has none.
+# run_flow <version> <id> [creds|optional]: runs <id>'s flow (old/new override, else shared); 2 if the version has
+# none. creds hands it the server credentials; optional means a failure is expected sometimes, so no warning.
 run_flow() {
-    local ver="$1" id="$2" creds="${3:-}" flow rc args
+    local ver="$1" id="$2" mode="${3:-}" creds="" flow rc args
+    [ "$mode" = creds ] && creds=1
     if [ -f "${FLOWS}/${ver}/${id}.yaml" ]; then flow="${FLOWS}/${ver}/${id}.yaml"
     elif [ -f "${FLOWS}/${id}.yaml" ]; then flow="${FLOWS}/${id}.yaml"
     else return 2; fi
-    args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}")
+    args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}"
+        -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
     # MAESTRO_-prefixed env vars reach flows as ${MAESTRO_*}; set only for this one invocation, never on argv
     if [ -n "$creds" ]; then
         MAESTRO_URL="$URL" MAESTRO_USER_NAME="$USER_NAME" MAESTRO_PASSWORD="$PASSWORD" \
@@ -230,7 +249,7 @@ run_flow() {
     fi
     rm -rf -- "${WORK}/scratch"
     if [ "$rc" -ne 0 ]; then
-        warn "$ver" "$id" "flow failed (rc ${rc}), see ${WORK}/maestro-${ver}-${id}.log"
+        [ "$mode" = optional ] || warn "$ver" "$id" "flow failed (rc ${rc}), see ${WORK}/maestro-${ver}-${id}.log"
         return 1
     fi
 }
@@ -240,6 +259,34 @@ start_app() {
     # explicit component: debug builds also have LeakCanary's launcher, which monkey may pick
     adb shell am start -n "${PKG}/com.simplecityapps.shuttle.ui.MainActivity" >>"$LOG" 2>&1
     sleep 3
+}
+
+# local_avd_up: the running local emulator, else a headless boot of $LOCAL_AVD; exports ANDROID_SERIAL. Explicit
+# serials throughout, since a phone may be plugged in too. The AVD's data persists, so installed apps survive a restart.
+local_emulator() { adb devices | awk '$1 ~ /^emulator-/ && $2 == "device" {print $1; exit}'; }
+local_avd_up() {
+    local serial deadline
+    serial="$(local_emulator)"
+    if [ -z "$serial" ]; then
+        nohup "$HOME/Library/Android/sdk/emulator/emulator" -avd "$LOCAL_AVD" -no-window -no-audio -no-boot-anim \
+            -no-snapshot-save </dev/null >"${WORK}/emulator.log" 2>&1 &
+        disown
+    fi
+    deadline=$(($(date +%s) + 420))
+    until [ -n "$serial" ] && [ "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+        [ "$(date +%s)" -lt "$deadline" ] || { echo "local AVD didn't boot in 420 s"; return 1; }
+        sleep 5
+        serial="$(local_emulator)"
+    done
+    export ANDROID_SERIAL="$serial"
+    local s
+    for s in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global "$s" 0; done
+}
+
+# dump_texts: every visible text and content-desc, one per line (the import poll compares these).
+dump_texts() {
+    adb shell uiautomator dump /sdcard/rc-dump.xml >/dev/null 2>&1 || return 1
+    adb exec-out cat /sdcard/rc-dump.xml | grep -oE '(text|content-desc)="[^"]+"'
 }
 
 # ---- Capture ----
@@ -273,8 +320,8 @@ placeholders() {
 }
 
 # settle_capture <version> <id> <dest> [live]: the lane's frame once it stops changing and no artwork placeholder
-# shows. live screens (a running import) never go still, so they get one frame after the dwell. Placeholders that
-# outlast the timeout are kept with a warning: the server has no art for some albums.
+# shows. live screens (a running import) never go still and may end any second, so they get the first frame.
+# Placeholders that outlast the grace are kept without a warning: some albums have no art on the server.
 settle_capture() {
     local ver="$1" id="$2" dest="$3" live="${4:-}" start now cur="${WORK}/frame.cur" prev="${WORK}/frame.prev" same=0 ph=0 ph_since=""
     start=$(date +%s)
@@ -283,7 +330,7 @@ settle_capture() {
         adb exec-out screencap -p >"$cur" 2>/dev/null
         now=$(date +%s)
         if [ -n "$live" ]; then
-            if [ $((now - start)) -ge 3 ]; then mv -f "$cur" "$dest"; return 0; fi
+            mv -f "$cur" "$dest"; return 0
         else
             if [ -f "$prev" ] && cmp -s "$cur" "$prev"; then same=$((same + 1)); else same=0; fi
             mv -f "$cur" "$prev"
@@ -294,7 +341,7 @@ settle_capture() {
                 [ -n "$ph_since" ] || ph_since=$now
                 if [ $((now - ph_since)) -ge "$PH_GRACE" ]; then
                     mv -f "$prev" "$dest"
-                    warn "$ver" "$id" "${ph} artwork placeholder(s) still on screen after ${PH_GRACE} s settled (none on the server?)"
+                    echo "release-compare: ${ver}/${id}: ${ph} artwork placeholder(s) kept after ${PH_GRACE} s" >>"$LOG"
                     return 0
                 fi
             fi
@@ -332,7 +379,7 @@ wait_import() {
     while [ "$(date +%s)" -lt "$deadline" ]; do
         start_app
         run_flow "$ver" import-wait >/dev/null 2>&1
-        sig="$(support/scripts/remote-emu.sh dump-texts 2>/dev/null | sed 's/ *\[[0-9,]*\]\[[0-9,]*\]//g')"
+        sig="$(dump_texts 2>/dev/null)"
         if [ -n "$sig" ] && [ "$sig" = "$prev" ] && grep -qF "$ARTIST" <<<"$sig"; then stable=$((stable + 1)); else stable=0; fi
         if [ "$stable" -ge 2 ]; then echo "release-compare: ${ver}: library settled after $(($(date +%s) - start))s"; return 0; fi
         prev="$sig"
@@ -367,10 +414,23 @@ setup() {
         run_flow "$ver" "$id" "$([ "$id" = sign-in ] && echo creds)"; rc=$?
         [ "$rc" = 2 ] && continue
         [ "$rc" = 1 ] && { echo "release-compare: ${ver}: setup stopped at ${id}" >&2; return 1; }
+        # new syncs within seconds of signing in, on the Sources page sign-in leaves open, so catch that first;
+        # 1.0.10 starts importing only once onboarding is finished
+        [ "$id" = sign-in ] && [ "$ver" = new ] && import_progress "$ver"
         capture "$ver" "$id"
     done
-    capture "$ver" import-progress live
+    [ "$ver" = new ] || import_progress "$ver"
     wait_import "$ver"
+}
+
+# import_progress <version>: the flow waits for the version's import progress text, then the first frame is kept.
+# An import that finishes before it shows is a manifest note, not a failure.
+import_progress() {
+    local ver="$1"
+    if run_flow "$ver" import-progress optional; then capture "$ver" import-progress live; return 0; fi
+    selected import-progress || return 0
+    printf '%s\t%s\t%s\n' "$ver" import-progress "the import finished before its progress showed" >>"$NOTES"
+    echo "release-compare: ${ver}: import progress not caught (manifest note)"
 }
 
 # screens <version>: the library screens on the app setup installed.
@@ -390,28 +450,33 @@ screens() {
         start_app
         run_flow "$ver" "$id"; rc=$?
         [ "$rc" = 0 ] || continue
-        # the full player is only still while paused
-        [ "$id" = now-playing ] && { adb shell input keyevent KEYCODE_MEDIA_PAUSE; sleep 1; }
+        # a playing screen is never still (progress bars, visualisers)
+        case "$PLAYBACK_IDS" in *" $id "*) adb shell input keyevent KEYCODE_MEDIA_PAUSE; sleep 1 ;; esac
+        [ "$id" = notification ] && { adb shell cmd statusbar expand-notifications; sleep 2; }
         capture "$ver" "$id"
+        [ "$id" = notification ] && adb shell cmd statusbar collapse
     done
 }
 
 write_manifest() {
-    local nn=0 id warns
+    local nn=0 id warns not_captured
     warns="$(jq -R -s -c 'split("\n") | map(select(length > 0) | split("\t") | {version: .[0], screen: .[1], message: .[2]})' "$WARNS")"
+    not_captured="$({ printf 'both\t%s\n' "${SKIPPED[@]}"; cat "$NOTES"; } |
+        jq -R -s -c 'split("\n") | map(select(length > 0) | split("\t") | {version: .[0], screen: .[1], why: .[2]})')"
     {
         for id in "${STEPS[@]}"; do
             nn=$((nn + 1))
             jq -n -c --arg n "$(printf '%02d' "$nn")" --arg id "$id" \
                 --arg old "$(awk -F'\t' -v i="$id" '$1 == "old" && $2 == i {p = $3} END {print p}' "$ROWS")" \
                 --arg new "$(awk -F'\t' -v i="$id" '$1 == "new" && $2 == i {p = $3} END {print p}' "$ROWS")" \
-                '{n: ($n | tonumber), id: $id, caption: "", old: (if $old == "" then null else $old end), new: (if $new == "" then null else $new end)}'
+                '{n: ($n | tonumber), id: $id, caption: "", old: (if $old == "" then null else $old end), new: (if $new == "" then null else $new end)}
+                 | .pairing = (if .old != null and .new != null then "both" elif .old != null then "old_only" else "new_only" end)'
         done
-    } | jq -s --argjson warnings "$warns" \
+    } | jq -s --argjson warnings "$warns" --argjson not_captured "$not_captured" \
         --arg os "$(state_get old spec)" --arg ov "$(state_get old versionName)" --arg oc "$(state_get old versionCode)" --arg osha "$(state_get old sha)" \
         --arg ns "$(state_get new spec)" --arg nv "$(state_get new versionName)" --arg nc "$(state_get new versionCode)" --arg nsha "$(state_get new sha)" \
         --arg run "$RUN" \
-        '{run: $run, old: {spec: $os, sha: (if $osha == "" then null else $osha end), versionName: $ov, versionCode: ($oc | tonumber? // $oc)}, new: {spec: $ns, sha: (if $nsha == "" then null else $nsha end), versionName: $nv, versionCode: ($nc | tonumber? // $nc)}, screens: map(select(.old != null or .new != null)), warnings: $warnings}' >"${OUT}/manifest.json"
+        '{run: $run, old: {spec: $os, sha: (if $osha == "" then null else $osha end), versionName: $ov, versionCode: ($oc | tonumber? // $oc)}, new: {spec: $ns, sha: (if $nsha == "" then null else $nsha end), versionName: $nv, versionCode: ($nc | tonumber? // $nc)}, screens: map(select(.old != null or .new != null)), not_captured: $not_captured, warnings: $warnings}' >"${OUT}/manifest.json"
 }
 
 write_montages() {
@@ -441,11 +506,22 @@ echo "release-compare: ${VERSIONS[*]} / ${PHASE}, output ${OUT}, logs ${WORK}"
 
 # armed first so the EXIT trap stops a partially started lane
 LANE_STARTED=1
-step "remote-emu: start" support/scripts/remote-emu.sh start || exit 1
-eval "$(support/scripts/remote-emu.sh env)"
-MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
-# The lane's tether (Gnirehtet) asks to set up a VPN on a fresh boot; the dialog would sit over the first frames.
-support/scripts/remote-emu.sh tap-text OK >>"$LOG" 2>&1 || true
+support/scripts/remote-emu.sh status >>"$LOG" 2>&1
+case $? in
+    0) DEVICE=lane ;;
+    3) DEVICE=local; echo "release-compare: the box can't run a lane (see $LOG), using the local AVD ${LOCAL_AVD}" ;;
+    *) echo "release-compare: remote-emu.sh status failed (see $LOG)" >&2; exit 1 ;;
+esac
+if [ "$DEVICE" = lane ]; then
+    step "remote-emu: start" support/scripts/remote-emu.sh start || exit 1
+    eval "$(support/scripts/remote-emu.sh env)"
+    MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
+    # The lane's tether (Gnirehtet) asks to set up a VPN on a fresh boot; the dialog would sit over the first frames.
+    support/scripts/remote-emu.sh tap-text OK >>"$LOG" 2>&1 || true
+else
+    step "local AVD: start" local_avd_up || exit 1
+    MAESTRO_DEVICE_ARGS=(--device "$ANDROID_SERIAL")
+fi
 
 failed=0
 for ver in "${VERSIONS[@]}"; do

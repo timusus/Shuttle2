@@ -1,0 +1,7 @@
+# The smart playlists (Recently Added, Most Played, Favorites and, new only, History) lead the list in both.
+appId: ${APP_ID}
+---
+- runFlow: _start.yaml
+- tapOn: "Library"
+- tapOn: "Playlists"
+- assertVisible: "${PLAYLIST}"

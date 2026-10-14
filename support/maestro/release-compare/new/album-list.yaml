@@ -1,0 +1,11 @@
+# Grid in both versions; new starts in grid.
+appId: ${APP_ID}
+---
+- runFlow: ../album-list.yaml
+- runFlow:
+    when:
+      visible: "Show as grid"
+    commands:
+      - tapOn: "Show as grid"
+- waitForAnimationToEnd:
+    timeout: 5000

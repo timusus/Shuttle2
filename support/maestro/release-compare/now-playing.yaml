@@ -1,13 +1,7 @@
-# Starts the target track streaming from the server, then opens the full player; the script pauses it before capture.
 appId: ${APP_ID}
 ---
-- runFlow: album-detail.yaml
-- tapOn: "${TRACK}"
+- runFlow: mini-player.yaml
+- tapOn: "${ARTIST}"
 - extendedWaitUntil:
-    visible: "${TRACK}"
-    timeout: 20000
-- tapOn:
-    text: "${TRACK}"
-    index: 0
-- waitForAnimationToEnd:
-    timeout: 5000
+    visible: "Queue"
+    timeout: 10000

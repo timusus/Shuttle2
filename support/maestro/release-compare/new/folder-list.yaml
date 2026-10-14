@@ -1,0 +1,23 @@
+# Folders is off by default (Edit tabs turns it on) and only lists local folders, so it is empty on a server library.
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn: "Library"
+- swipe:
+    start: 90%,21%
+    end: 10%,21%
+    duration: 400
+- runFlow:
+    when:
+      notVisible: "Folders"
+    commands:
+      - tapOn: "Edit"
+      - tapOn: "Folders"
+      - back
+      - swipe:
+          start: 90%,21%
+          end: 10%,21%
+          duration: 400
+- tapOn: "Folders"
+- waitForAnimationToEnd:
+    timeout: 5000

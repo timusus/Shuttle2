@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+---
+- runFlow: now-playing.yaml
+- tapOn: "Playback & sound"
+- waitForAnimationToEnd:
+    timeout: 5000

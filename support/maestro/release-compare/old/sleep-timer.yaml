@@ -1,0 +1,9 @@
+# The full player's overflow menu (top right; the mini player has a More options button too).
+appId: ${APP_ID}
+---
+- runFlow: now-playing.yaml
+- tapOn:
+    point: "95%,8%"
+- tapOn: "Sleep Timer"
+- waitForAnimationToEnd:
+    timeout: 5000

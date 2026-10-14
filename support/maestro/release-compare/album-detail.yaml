@@ -1,5 +1,15 @@
+# The standalone album page, from search (the artist page shows the album unfolded in place).
 appId: ${APP_ID}
 ---
-- runFlow: artist-detail.yaml
-- tapOn: "${ALBUM}"
-- assertVisible: "${TRACK}"
+- runFlow: _start.yaml
+- tapOn: "Search"
+- tapOn: "Search your library"
+- inputText: "${ALBUM}"
+- hideKeyboard
+# below the heading: the search field holds the same text
+- tapOn:
+    text: "${ALBUM}"
+    below: "Top result"
+- extendedWaitUntil:
+    visible: "${TRACK}"
+    timeout: 10000

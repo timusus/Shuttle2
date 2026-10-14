@@ -1,0 +1,11 @@
+# The tab chips overflow the screen: scroll them so Genres is fully on screen.
+appId: ${APP_ID}
+---
+- runFlow: ../_start.yaml
+- tapOn: "Library"
+- swipe:
+    start: 90%,21%
+    end: 10%,21%
+    duration: 400
+- tapOn: "Genres"
+- assertVisible: "Classical"

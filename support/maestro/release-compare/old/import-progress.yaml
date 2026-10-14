@@ -1,0 +1,13 @@
+# 1.0.10 imports once onboarding finishes; the library shows a scanning message until it's done.
+appId: ${APP_ID}
+---
+- tapOn: "NEXT"
+- runFlow:
+    when:
+      notVisible: "Scanning your library.*"
+    commands:
+      - tapOn:
+          id: "libraryFragment"
+- extendedWaitUntil:
+    visible: "Scanning your library.*"
+    timeout: 15000

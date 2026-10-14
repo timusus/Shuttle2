@@ -1,0 +1,4 @@
+# Playback for the media notification; the script pauses it and pulls down the shade.
+appId: ${APP_ID}
+---
+- runFlow: mini-player.yaml

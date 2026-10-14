@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+---
+- runFlow: now-playing.yaml
+- tapOn: "Queue"
+- waitForAnimationToEnd:
+    timeout: 5000

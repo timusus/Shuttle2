@@ -1,0 +1,7 @@
+# 1.0.10's queue is a second sheet under the full player.
+appId: ${APP_ID}
+---
+- runFlow: now-playing.yaml
+- tapOn: "Up Next"
+- waitForAnimationToEnd:
+    timeout: 5000

@@ -1,0 +1,11 @@
+# Grid in both versions; 1.0.10 starts in list (the choice persists, so re-picking Grid is harmless).
+appId: ${APP_ID}
+---
+- runFlow: ../album-list.yaml
+- tapOn:
+    text: "More options"
+    above: "Albums"
+- tapOn: "View as"
+- tapOn: "Grid"
+- waitForAnimationToEnd:
+    timeout: 5000

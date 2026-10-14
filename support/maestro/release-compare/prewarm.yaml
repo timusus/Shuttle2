@@ -1,4 +1,4 @@
-# Opens the target artist and the first screens of the artist and album lists once, so their covers are cached
+# Opens the target artist, the first screens of the album list and Home's shelves once, so their covers are cached
 # before the captures (the script still waits out placeholders per capture).
 appId: ${APP_ID}
 ---
@@ -24,3 +24,21 @@ appId: ${APP_ID}
           start: 50%,20%
           end: 50%,75%
           duration: 300
+- tapOn: "Home"
+- waitForAnimationToEnd:
+    timeout: 5000
+# shelves scroll sideways, so each one's first covers load as it passes
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%,75%
+          end: 50%,25%
+          duration: 400
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: 50%,25%
+          end: 50%,75%
+          duration: 400

@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+---
+- runFlow: playlist-list.yaml
+- tapOn: "${PLAYLIST}"
+- waitForAnimationToEnd:
+    timeout: 5000

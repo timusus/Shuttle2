@@ -1,0 +1,6 @@
+appId: ${APP_ID}
+---
+- runFlow: now-playing.yaml
+- tapOn: "Sleep timer"
+- waitForAnimationToEnd:
+    timeout: 5000

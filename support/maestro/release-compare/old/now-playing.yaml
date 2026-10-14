@@ -1,19 +1,10 @@
-# Starts the target track streaming, then opens the full player from the mini player; the script pauses it before capture.
-# The song rows reuse the mini player's titleTextView id, so it's matched inside the peek view.
 appId: ${APP_ID}
 ---
-- runFlow: album-detail.yaml
-- tapOn: "${TRACK}"
-- extendedWaitUntil:
-    visible:
-      id: "titleTextView"
-      text: "${TRACK}"
-      childOf:
-        id: "sheet1PeekView"
-    timeout: 20000
+- runFlow: mini-player.yaml
 - tapOn:
     id: "titleTextView"
     childOf:
       id: "sheet1PeekView"
-- waitForAnimationToEnd:
-    timeout: 5000
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
