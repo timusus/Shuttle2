@@ -242,9 +242,8 @@ fun HomeShelfTile(
         onClick = { callbacks.onOpenItem(item) },
         onLongClick = actions.showMenu,
         onLongClickLabel = stringResource(R.string.home_show_actions),
-        titleLines = if (largeText) LARGE_TEXT_TILE_LINES else 2,
+        titleMaxLines = 1,
         subtitleLines = if (largeText) LARGE_TEXT_TILE_LINES else 1,
-        alignSubtitles = true,
         artwork = {
             Box(Modifier.fillMaxSize()) {
                 HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize())
