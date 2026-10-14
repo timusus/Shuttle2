@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -254,7 +255,7 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `tapping a cell or tile opens it, and a genre tile shuffles the genre`() {
+    fun `tapping a cell or tile opens it, and a genre tile has a shuffle button that plays the genre`() {
         robot.setContent(HomeScenarios.content)
         val genre = HomeScenarios.genres.first()
 
@@ -267,7 +268,13 @@ class HomeScreenTest {
             HomeItem.AlbumItem(HomeScenarios.harbourWeather),
             HomeItem.ArtistItem(HomeScenarios.saltmarshChoir),
             HomeItem.AlbumItem(HomeScenarios.softFocus),
+            HomeItem.GenreItem(genre),
         )
+        robot.actions.shouldBeEmpty()
+
+        robot.scrollTo(genre.name)
+        robot.tapDescription("Shuffle ${genre.name}")
+
         robot.actions shouldContainExactly listOf(HomeItem.GenreItem(genre).playAction())
     }
 

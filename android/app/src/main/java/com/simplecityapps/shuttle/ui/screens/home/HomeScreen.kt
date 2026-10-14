@@ -77,7 +77,7 @@ class HomeCallbacks(
     val onRefresh: () -> Unit = {},
     /** Opens an item's detail: an album, artist, playlist or genre. */
     val onOpenItem: (HomeItem) -> Unit = {},
-    /** Plays, shuffles or queues an item: a play button, a genre tile's tap, or a TalkBack action. */
+    /** Plays, shuffles or queues an item: a play button, a genre tile's shuffle button, or a TalkBack action. */
     val onAction: (MediaAction) -> Unit = {},
     val onShowActions: (MediaActionsTarget) -> Unit = {},
     /** A section's "See all", shown only for a section with somewhere to go ([HomeSectionId.hasSeeAll]). */

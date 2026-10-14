@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
@@ -13,7 +15,9 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -28,6 +32,10 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.GeneratedArtwork
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.S2Action
+import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2IconButtonSize
+import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -214,8 +222,8 @@ fun homeItemActions(
 
 /**
  * A shelf tile: a [GridTile] of the item's artwork with its title and [HomeItem.subtitle] under it, where they can't
- * clash with text printed on the art (#404). A tap opens the item, or for a genre shuffles it (a Genre pick is
- * something to put on); a long press has the rest.
+ * clash with text printed on the art (#404). A tap opens the item; a genre's tile also has a shuffle button on its
+ * art (a Genre pick is something to put on); a long press has the rest.
  */
 @Composable
 fun HomeShelfTile(
@@ -231,18 +239,34 @@ fun HomeShelfTile(
     GridTile(
         title = item.title(),
         subtitle = item.subtitle(mixed),
-        onClick = { if (item is HomeItem.GenreItem) callbacks.onAction(item.playAction()) else callbacks.onOpenItem(item) },
+        onClick = { callbacks.onOpenItem(item) },
         onLongClick = actions.showMenu,
         onLongClickLabel = stringResource(R.string.home_show_actions),
         titleLines = if (largeText) LARGE_TEXT_TILE_LINES else 2,
         subtitleLines = if (largeText) LARGE_TEXT_TILE_LINES else 1,
-        artwork = { HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize()) },
+        artwork = {
+            Box(Modifier.fillMaxSize()) {
+                HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize())
+                if (item is HomeItem.GenreItem) {
+                    S2IconButton(
+                        icon = Icons.Rounded.Shuffle,
+                        contentDescription = stringResource(R.string.home_shuffle_item, item.title()),
+                        onClick = { callbacks.onAction(item.playAction()) },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(S2Spacing.small).testTag(GENRE_SHUFFLE_TAG),
+                        style = S2IconButtonStyle.Filled,
+                        size = S2IconButtonSize.Small,
+                    )
+                }
+            }
+        },
         modifier = modifier
             .width(width)
             .semantics { customActions = actions.accessibilityActions }
             .testTag(item.tileTag),
     )
 }
+
+internal const val GENRE_SHUFFLE_TAG = "homeTile.genre.shuffle"
 
 /** How many lines a tile's title and subtitle may take at the largest font sizes, where one would cut off nearly every title. */
 internal const val LARGE_TEXT_TILE_LINES = 3
