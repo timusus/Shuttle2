@@ -2,8 +2,6 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -16,7 +14,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
-import com.simplecityapps.shuttle.designsystem.R
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.theme.rowMeta
 
 /**
@@ -25,6 +24,8 @@ import com.simplecityapps.shuttle.designsystem.theme.rowMeta
  * on `secondaryContainer`, and an optional overflow button. The unselected container is
  * transparent, so a row takes the colour of what it sits on: a screen, a sheet or the search view.
  * The text is styled so a row can show spans, such as a search query's matches in bold.
+ * [edgeInset] is how far the row sits in from the screen edge (an inset selection container), so its overflow
+ * button still lands on the shared keyline ([RowMoreButton]).
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -42,6 +43,7 @@ internal fun MediaRow(
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
     dragHandle: (@Composable () -> Unit)? = null,
+    edgeInset: Dp = 0.dp,
 ) {
     ListItem(
         selected = selected,
@@ -64,12 +66,7 @@ internal fun MediaRow(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     meta?.let { Text(it, style = MaterialTheme.typography.rowMeta) }
                     onMore?.let {
-                        S2IconButton(
-                            icon = Icons.Rounded.MoreVert,
-                            contentDescription = stringResource(R.string.ds_more_options),
-                            onClick = it,
-                            enabled = enabled,
-                        )
+                        RowMoreButton(onClick = it, enabled = enabled, edgeInset = edgeInset)
                     }
                     dragHandle?.invoke()
                 }

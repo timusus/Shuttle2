@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
@@ -19,7 +21,8 @@ fun AlbumRow(
     selected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
-) = AlbumRow(AnnotatedString(title), AnnotatedString(artist), onClick, modifier, artwork, meta, selected, onLongClick, onMore)
+    edgeInset: Dp = 0.dp,
+) = AlbumRow(AnnotatedString(title), AnnotatedString(artist), onClick, modifier, artwork, meta, selected, onLongClick, onMore, edgeInset)
 
 /** An [AlbumRow] with styled [title] and [artist], such as a search query's matches in bold. */
 @Composable
@@ -33,6 +36,7 @@ fun AlbumRow(
     selected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+    edgeInset: Dp = 0.dp,
 ) {
     MediaRow(
         title = title,
@@ -44,6 +48,7 @@ fun AlbumRow(
         selected = selected,
         onLongClick = onLongClick,
         onMore = onMore,
+        edgeInset = edgeInset,
     )
 }
 

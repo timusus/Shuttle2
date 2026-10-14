@@ -38,6 +38,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -116,14 +117,22 @@ fun SearchTopResult(
     artwork: @Composable () -> Unit,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium),
+        // Inset 8dp like the artist-page album header card, with or without a ⋮; RowMoreButton gets that inset
+        // as its edgeInset to stay on the keyline.
+        modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.small),
         shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Row(
             modifier = Modifier
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-                .padding(S2Spacing.medium),
+                .padding(
+                    start = S2Spacing.large,
+                    top = S2Spacing.medium,
+                    // 16dp is ListItem's trailing padding, which RowMoreButton's offset is relative to
+                    end = if (onMore != null) S2Spacing.medium else S2Spacing.large,
+                    bottom = S2Spacing.medium,
+                ),
             horizontalArrangement = Arrangement.spacedBy(S2Spacing.medium),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -146,12 +155,7 @@ fun SearchTopResult(
                 )
             }
             if (onMore != null) {
-                S2IconButton(
-                    icon = Icons.Rounded.MoreVert,
-                    contentDescription = stringResource(R.string.ds_more_options),
-                    onClick = onMore,
-                    modifier = Modifier.align(Alignment.Top),
-                )
+                RowMoreButton(onClick = onMore, modifier = Modifier.align(Alignment.Top), edgeInset = S2Spacing.small)
             }
         }
     }

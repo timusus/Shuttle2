@@ -262,6 +262,7 @@ private fun AlbumSectionHeader(
         onClick = onToggle,
         // Inset so the unfolded album's selection container sits on the content inset, like the rows below it
         modifier = modifier.padding(horizontal = S2Spacing.small).semantics { stateDescription = foldState },
+        edgeInset = S2Spacing.small,
         artwork = {
             val openAlbumLabel = stringResource(R.string.artist_detail_open_album, album.name ?: unknown)
             // The thumbnail opens the album; the rest of the row folds it (#631). The description alone names
