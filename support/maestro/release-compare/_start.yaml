@@ -1,6 +1,11 @@
-# Run first by every library-screen flow: the script has just cold-started the app; clear what it opens over the library.
+# Run first by every library-screen flow: a cold start every time, so each screen begins from the same known state.
 appId: ${APP_ID}
 ---
+- launchApp
+# the nav bar is the known state; a one-off dialog can cover it first
+- extendedWaitUntil:
+    visible: "Library|Changelog|Thank You"
+    timeout: 20000
 - runFlow:
     when:
       visible: "Changelog"
@@ -11,3 +16,6 @@ appId: ${APP_ID}
       visible: "Thank You"
     commands:
       - tapOn: "CLOSE"
+- extendedWaitUntil:
+    visible: "Library"
+    timeout: 10000

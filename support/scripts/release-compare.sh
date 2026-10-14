@@ -5,7 +5,13 @@
 #   support/scripts/release-compare.sh --old <apk|git-ref> --new <apk|git-ref>
 #                                      [--version old|new|both] [--phase setup|screens|all] [--keep]
 #                                      [--screens a,b,...] [--out <dir>] [--build-type debug|release]
-#                                      [--flow-timeout <secs>] [--import-timeout <secs>]
+#                                      [--flow-timeout <secs>] [--import-timeout <secs>] [--refresh-old] [--fresh]
+#
+#     --refresh-old      recapture the old build. A full old run is cached under $S2_RC_CACHE (default
+#                        ~/.cache/s2-release-compare) by APK sha256 and flows hash and reused without the device.
+#     --fresh            full setup (install, onboarding, sign-in, import) even when a matching AVD snapshot exists.
+#                        Local AVD only: after setup settles the script saves a snapshot keyed by APK sha256 and the
+#                        Emby host, and a rerun loads it instead (the onboarding shots come from the cache).
 #
 #     --old / --new      an APK path, or a git ref that is built here (a bare branch name means origin/<name>, fetched
 #                        first; the current tree when the ref is HEAD and
@@ -42,8 +48,11 @@
 # new's setup, or the new build imports it alongside Emby; put it back when done.
 #
 # Maestro drives the real UI by visible text (flows in support/maestro/release-compare/, shared, with old/ and new/
-# overrides) and this script owns the capture: SystemUI demo mode, adb screencap every ~1.5 s until 3 consecutive
-# frames are identical and no artwork placeholder is on screen (45 s timeout: a manifest warning naming the screen).
+# overrides) and this script owns the capture under SystemUI demo mode. Setup screens: adb screencap every ~0.5 s until
+# 2 consecutive frames are identical. Library screens run in one Maestro session per version: a generated flow runs
+# each screen's flow, then takes K frames in a row; afterwards the script takes the first identical pair with no artwork
+# placeholder, and the screens that failed rerun in a second session with more frames (still unsettled: a manifest
+# warning naming the screen).
 # Credentials come from ~/.config/s2-test/emby-appreview.env (URL, USER_NAME, PASSWORD), stay unexported and reach
 # Maestro only as MAESTRO_URL/MAESTRO_USER_NAME/MAESTRO_PASSWORD env of that one invocation; Maestro output is scrubbed of them and kept in tmp/release-compare/<run>/, never next to the shots.
 #
@@ -88,7 +97,8 @@ SKIPPED=("widget	a home-screen widget needs a launcher setup the lane doesn't ha
 usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
 OLD_SPEC=""; NEW_SPEC=""; SCREENS_ARG=""; OUT=""; BUILD_TYPE=debug; VERSION=both; PHASE=all; KEEP=0
-FLOW_TIMEOUT=240; IMPORT_TIMEOUT=300
+REFRESH_OLD=0; FRESH=0
+FLOW_TIMEOUT=240; IMPORT_TIMEOUT=300; SESSION_TIMEOUT=900
 while [ $# -gt 0 ]; do
     case "$1" in
         --old) OLD_SPEC="${2:?release-compare: --old needs an APK or git ref}"; shift 2 ;;
@@ -96,6 +106,8 @@ while [ $# -gt 0 ]; do
         --version) VERSION="${2:?release-compare: --version needs old, new or both}"; shift 2 ;;
         --phase) PHASE="${2:?release-compare: --phase needs setup, screens or all}"; shift 2 ;;
         --keep) KEEP=1; shift ;;
+        --refresh-old) REFRESH_OLD=1; shift ;;
+        --fresh) FRESH=1; shift ;;
         --screens) SCREENS_ARG="${2:?release-compare: --screens needs a comma-separated list}"; shift 2 ;;
         --out) OUT="${2:?release-compare: --out needs a directory}"; shift 2 ;;
         --build-type) BUILD_TYPE="${2:?release-compare: --build-type needs debug or release}"; shift 2 ;;
@@ -133,6 +145,8 @@ LOG="${WORK}/run.log"
 LANE_STARTED=0
 DEVICE=""
 LOCAL_AVD="${S2_LOCAL_AVD:-s2test}"
+# outside the worktree, so every worktree and run shares the APKs, the old-build shots and the snapshot shots
+RC_CACHE="${S2_RC_CACHE:-$HOME/.cache/s2-release-compare}"
 EXTRA_WORKTREES=()
 
 # label <spec>: the output-path name of a build: an APK's versionName (first word), else the ref.
@@ -175,6 +189,10 @@ cleanup() {
     local wt
     if [ "$LANE_STARTED" = 1 ]; then
         emu_demo_mode off
+        # the AVD's seeded music is parked while an app imports (see park_music); a snapshot load reverts the disk, so
+        # put it back whenever it's found parked
+        [ "$DEVICE" = local ] && [ -n "${ANDROID_SERIAL:-}" ] &&
+            adb shell '[ -d /sdcard/rc-parked/music ] && mv /sdcard/rc-parked/music /sdcard/Music/' >>"$LOG" 2>&1
         if [ "$PHASE" = setup ] || [ "$KEEP" = 1 ]; then
             if [ "$DEVICE" = local ]; then echo "release-compare: local AVD left up for the next phase; adb -s ${ANDROID_SERIAL:-emulator-5554} emu kill when done"
             else echo "release-compare: lane left up for the next phase; support/scripts/remote-emu.sh stop when done"; fi
@@ -211,7 +229,7 @@ resolve_apk() {
     if [ -f "$spec" ]; then APK_PATH="$spec"; return 0; fi
     sha="$(resolve_ref "$spec")" || { echo "release-compare: '$spec' is neither an APK nor a git ref" >&2; return 1; }
     echo "release-compare: ${label}: ${spec} is ${sha:0:12}"
-    cached="${REPO_ROOT}/tmp/release-compare/apk/${sha:0:12}-${BUILD_TYPE}.apk"
+    cached="${RC_CACHE}/apk/${sha:0:12}-${BUILD_TYPE}.apk"
     if [ -f "$cached" ]; then APK_PATH="$cached"; return 0; fi
     src="$REPO_ROOT"
     if [ "$sha" = "$(git rev-parse HEAD)" ] && [ -n "$(git status --porcelain)" ]; then
@@ -354,7 +372,7 @@ settle_capture() {
         else
             if [ -f "$prev" ] && cmp -s "$cur" "$prev"; then same=$((same + 1)); else same=0; fi
             mv -f "$cur" "$prev"
-            if [ "$same" -ge 2 ] && [ $((now - start)) -ge 3 ]; then
+            if [ "$same" -ge 1 ] && [ $((now - start)) -ge 1 ]; then
                 ph="$(placeholders "$ver" "$prev")"
                 if [ "$ph" = 0 ]; then mv -f "$prev" "$dest"; return 0; fi
                 # a still frame with placeholders: give the covers PH_GRACE more seconds, then accept it
@@ -371,23 +389,33 @@ settle_capture() {
                 return 0
             fi
         fi
-        sleep 1.5
+        sleep 0.5
     done
 }
 
 selected() { case " ${SELECTED[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 
+# shot_dest <version> <id>: sets DEST to the shot's path, creating its directory
+shot_dest() {
+    local idx=0 s
+    for s in "${STEPS[@]}"; do idx=$((idx + 1)); [ "$s" = "$2" ] && break; done
+    mkdir -p "${OUT}/${1}"
+    SHOT_REL="${1}/$(printf '%02d' "$idx")-${2}.png"
+    DEST="${OUT}/${SHOT_REL}"
+}
+
+record_shot() {
+    printf '%s\t%s\t%s\n' "$1" "$2" "$SHOT_REL" >>"$ROWS"
+    echo "release-compare: ${SHOT_REL}"
+}
+
 # capture <version> <id> [live]
 capture() {
-    local ver="$1" id="$2" live="${3:-}" nn idx=0 s dest
-    for s in "${STEPS[@]}"; do idx=$((idx + 1)); [ "$s" = "$id" ] && break; done
+    local ver="$1" id="$2" live="${3:-}"
     selected "$id" || return 0
-    nn="$(printf '%02d' "$idx")"
-    mkdir -p "${OUT}/${ver}"
-    dest="${OUT}/${ver}/${nn}-${id}.png"
-    settle_capture "$ver" "$id" "$dest" "$live"
-    printf '%s\t%s\t%s\n' "$ver" "$id" "${ver}/${nn}-${id}.png" >>"$ROWS"
-    echo "release-compare: ${ver}/${nn}-${id}.png"
+    shot_dest "$ver" "$id"
+    settle_capture "$ver" "$id" "$DEST" "$live"
+    record_shot "$ver" "$id"
 }
 
 # wait_import <version>: the version's import-wait flow opens a screen whose texts show the library growing (a count
@@ -426,6 +454,8 @@ setup() {
     [ ${#forget_ids[@]} -eq 0 ] || forget "$ver" "${forget_ids[@]}"
     printf 'spec=%s\nsha=%s\npackage=%s\nversionName=%s\nversionCode=%s\napk=%s\n' "$spec" "$sha" "$PKG" \
         "$(emu_apk_info "$apk" versionName)" "$(emu_apk_info "$apk" versionCode)" "$apk" >"${STATE}/${ver}.env"
+    if snapshot_restore "$ver" "$apk"; then return 0; fi
+    park_music
     adb uninstall "$PKG" >/dev/null 2>&1
     step "${ver}: install" adb install -r "$apk" || return 1
     emu_demo_mode on
@@ -441,8 +471,92 @@ setup() {
         [ "$id" = sign-in ] && [ "$ver" = new ] && new_import_progress_check
     done
     [ "$ver" = new ] || import_progress "$ver"
-    wait_import "$ver"
+    wait_import "$ver" || return 1
+    # prewarmed here so the snapshot holds the cached covers and a rerun's screens start warm
+    start_app
+    step "${ver}: artwork prewarm" run_flow "$ver" prewarm
+    snapshot_save "$ver" "$apk"
 }
+
+# ---- Imported-state snapshots (local AVD only: the lane's AVD is read-only) ----
+
+# the Emby host, hashed: part of the snapshot key without putting it in a name or log
+HOST_TAG=""
+host_tag() {
+    local h="${URL#*://}"
+    h="${h%%[/:]*}"
+    [ -n "$HOST_TAG" ] || HOST_TAG="$(printf '%s' "$h" | shasum -a 256 | cut -c1-8)"
+}
+
+flows_hash() {
+    { printf '%s\n' "$ARTIST" "$ALBUM" "$TRACK" "$QUERY" "$GENRE" "$PLAYLIST"; cat "${FLOWS}"/*.yaml "${FLOWS}/${1}"/*.yaml; } |
+        shasum -a 256 | cut -c1-12
+}
+
+# snapshot_key <version> <apk>: names the snapshot and its onboarding-shot cache
+snapshot_key() { host_tag; echo "${1}-$(shasum -a 256 "$2" | cut -c1-12)-${HOST_TAG}"; }
+
+snapshot_exists() { adb emu avd snapshot list 2>/dev/null | tr -d '\r' | grep -qF " rc-${1} "; }
+
+# park_music: the AVD's seeded /sdcard/Music/music would be imported beside Emby; cleanup puts it back
+park_music() {
+    [ "$DEVICE" = local ] || return 0
+    adb shell 'mkdir -p /sdcard/rc-parked && [ -d /sdcard/Music/music ] && mv /sdcard/Music/music /sdcard/rc-parked/' >>"$LOG" 2>&1
+    return 0
+}
+
+# snapshot_restore <version> <apk>: loads the version's imported-state snapshot and its cached setup shots; 1 = do the
+# full setup. The shots are the cache's, so the cache must match the current flows.
+snapshot_restore() {
+    local ver="$1" key dir id f
+    [ "$DEVICE" = local ] && [ "$FRESH" = 0 ] || return 1
+    key="$(snapshot_key "$ver" "$2")"
+    dir="${RC_CACHE}/setup/${key}"
+    [ -f "${dir}/complete" ] && [ "$(cat "${dir}/flows")" = "$(flows_hash "$ver")" ] && snapshot_exists "$key" || return 1
+    step "${ver}: load snapshot" snapshot_load "rc-${key}" || return 1
+    adb shell pm path "$PKG" 2>/dev/null | grep -q package: || { echo "release-compare: ${ver}: snapshot has no ${PKG}, full setup" >&2; return 1; }
+    emu_demo_mode on
+    for id in "${SETUP_IDS[@]}" import-progress; do
+        selected "$id" || continue
+        f="$(awk -F'\t' -v i="$id" '$2 == i {print $3}' "${dir}/rows.tsv")"
+        [ -n "$f" ] || continue
+        mkdir -p "${OUT}/${ver}"
+        cp "${dir}/shots/$(basename "$f")" "${OUT}/${f}"
+        printf '%s\t%s\t%s\n' "$ver" "$id" "$f" >>"$ROWS"
+    done
+    selected import-progress && awk -F'\t' '$2 == "import-progress"' "${dir}/notes.tsv" >>"$NOTES"
+    echo "release-compare: ${ver}: setup restored from snapshot rc-${key}"
+}
+
+snapshot_load() {
+    adb emu avd snapshot load "$1" | tr -d '\r' | grep -q '^OK' || return 1
+    adb wait-for-device
+    until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do sleep 1; done
+}
+
+# snapshot_save <version> <apk>: after a clean, complete setup; replaces the version's older snapshots
+snapshot_save() {
+    local ver="$1" key dir tmp old
+    [ "$DEVICE" = local ] && [ -z "$SCREENS_ARG" ] || return 0
+    [ -z "$(awk -F'\t' -v v="$ver" '$1 == v' "$WARNS")" ] || { echo "release-compare: ${ver}: setup had warnings, no snapshot saved"; return 0; }
+    key="$(snapshot_key "$ver" "$2")"
+    for old in $(adb emu avd snapshot list 2>/dev/null | tr -d '\r' | awk -v p="rc-${ver}-" 'index($2, p) == 1 {print $2}'); do
+        adb emu avd snapshot delete "$old" >>"$LOG" 2>&1
+    done
+    step "${ver}: save snapshot" snapshot_do_save "rc-${key}" || return 0
+    dir="${RC_CACHE}/setup/${key}"
+    tmp="${dir}.tmp"
+    rm -rf "$tmp" "$dir"
+    mkdir -p "${tmp}/shots"
+    awk -F'\t' -v v="$ver" '$1 == v' "$ROWS" >"${tmp}/rows.tsv"
+    awk -F'\t' -v v="$ver" '$1 == v' "$NOTES" >"${tmp}/notes.tsv"
+    while IFS=$'\t' read -r _ _ f; do cp "${OUT}/${f}" "${tmp}/shots/" 2>/dev/null; done <"${tmp}/rows.tsv"
+    flows_hash "$ver" >"${tmp}/flows"
+    : >"${tmp}/complete"
+    mv "$tmp" "$dir"
+}
+
+snapshot_do_save() { adb emu avd snapshot save "$1" | tr -d '\r' | grep -q '^OK'; }
 
 # import_progress <version>: the flow waits for the version's import progress text, then the first frame is kept.
 # An import that finishes before it shows is a manifest note, not a failure.
@@ -509,18 +623,97 @@ screens() {
     [ ${#ids[@]} -gt 0 ] || return 0
     forget "$ver" "${ids[@]}" prewarm
     emu_demo_mode on
-    start_app
-    step "${ver}: artwork prewarm" run_flow "$ver" prewarm
-    for id in "${ids[@]}"; do
-        start_app
-        run_flow "$ver" "$id"; rc=$?
-        [ "$rc" = 0 ] || continue
-        # a playing screen is never still (progress bars, visualisers)
-        case "$PLAYBACK_IDS" in *" $id "*) adb shell input keyevent KEYCODE_MEDIA_PAUSE; sleep 1 ;; esac
-        [ "$id" = notification ] && { adb shell cmd statusbar expand-notifications; sleep 2; }
-        capture "$ver" "$id"
-        if [ "$id" = notification ]; then adb shell cmd statusbar collapse; fi
+    # a version without a screen's flow has no such screen (pairing old_only/new_only)
+    local todo=() pending=() next=() attempt k final crashed
+    for id in "${ids[@]}"; do flow_path "$ver" "$id" >/dev/null && todo+=("$id"); done
+    for attempt in 1 2; do
+        # attempt 2 takes many frames so slow covers get their grace, and reports what still fails
+        k=3; final=0; [ "$attempt" = 2 ] && { k=24; final=1; }
+        [ ${#pending[@]} -eq 0 ] || { todo=("${pending[@]}"); pending=(); }
+        [ ${#todo[@]} -gt 0 ] || break
+        rm -rf "$FRAMES_DIR"; mkdir -p "$FRAMES_DIR"
+        while [ ${#todo[@]} -gt 0 ]; do
+            run_session "$ver" "$k" "${todo[@]}"
+            next=(); crashed=""
+            for id in "${todo[@]}"; do
+                if [ -f "${FRAMES_DIR}/${id}-1.png" ]; then
+                    shot_dest "$ver" "$id"
+                    if judge_frames "$ver" "$id" "$k" "$final" "$DEST"; then record_shot "$ver" "$id"; else pending+=("$id"); fi
+                elif [ -z "$crashed" ]; then
+                    # a failing flow ends the session: the first screen without frames is it, the rest never ran
+                    crashed=1
+                    if [ "$final" = 1 ]; then warn "$ver" "$id" "flow failed, see ${WORK}/maestro-${ver}-session.log"; else pending+=("$id"); fi
+                else
+                    next+=("$id")
+                fi
+            done
+            todo=(${next[@]+"${next[@]}"})
+        done
     done
+}
+
+FRAMES_DIR="${WORK}/frames"
+
+# flow_path <version> <id>: sets FLOW_FILE to the id's flow (old/new override, else shared); 1 if the version has none
+flow_path() {
+    if [ -f "${FLOWS}/${1}/${2}.yaml" ]; then FLOW_FILE="${REPO_ROOT}/${FLOWS}/${1}/${2}.yaml"
+    elif [ -f "${FLOWS}/${2}.yaml" ]; then FLOW_FILE="${REPO_ROOT}/${FLOWS}/${2}.yaml"
+    else return 1; fi
+}
+
+# run_session <version> <frames> <ids...>: one Maestro run over the screens' flows in order. After each flow it pauses
+# playback or opens the shade where the screen needs it, then takes <frames> screenshots back to back into FRAMES_DIR
+# (judge_frames picks from them afterwards, so the session never waits on the script).
+run_session() {
+    local ver="$1" k="$2" id session="${WORK}/session-${ver}.yaml" rc; shift 2
+    {
+        printf 'appId: ${APP_ID}\n---\n'
+        for id in "$@"; do
+            flow_path "$ver" "$id"
+            printf -- '- runFlow: %s\n' "$FLOW_FILE"
+            # a playing screen is never still (progress bars, visualisers)
+            case "$PLAYBACK_IDS" in *" $id "*) printf -- '- pressKey: Remote Media Play Pause\n' ;; esac
+            [ "$id" = notification ] && printf -- '- swipe:\n    start: 50%%,0%%\n    end: 50%%,70%%\n'
+            printf -- '- evalScript: ${output.n = 0}\n- repeat:\n    times: %s\n    commands:\n' "$k"
+            printf -- '      - evalScript: ${output.n = output.n + 1}\n      - takeScreenshot: frames/%s-${output.n}\n' "$id"
+            [ "$id" = notification ] && printf -- '- swipe:\n    start: 50%%,70%%\n    end: 50%%,0%%\n'
+        done
+    } >"$session"
+    local args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}"
+        -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
+    run_with_timeout "$SESSION_TIMEOUT" maestro_run "$session" "${WORK}/scratch" "${args[@]}" 2>&1 | scrub >>"${WORK}/maestro-${ver}-session.log"
+    rc=${PIPESTATUS[0]}
+    # Maestro keeps screenshots under its output dir, not at the path given
+    find "${WORK}/scratch" -path '*/takeScreenshot/frames/*.png' -exec mv -f {} "$FRAMES_DIR/" \;
+    rm -rf -- "${WORK}/scratch"
+    return "$rc"
+}
+
+# judge_frames <version> <id> <frames> <final> <dest>: copies the first frame identical to the one before it with no
+# artwork placeholder to dest. 1 = none yet (the screen goes to the next session). On the final try an identical pair
+# with placeholders is kept as is (some albums have no art on the server), else the last frame with a warning.
+judge_frames() {
+    local ver="$1" id="$2" k="$3" final="$4" dest="$5" i prev="" cur hit="" ph hit_ph=0 last=""
+    for ((i = 1; i <= k; i++)); do
+        cur="${FRAMES_DIR}/${id}-${i}.png"
+        [ -f "$cur" ] || break
+        last="$cur"
+        if [ -n "$prev" ] && cmp -s "$prev" "$cur" && { [ -z "$hit" ] || ! cmp -s "$hit" "$cur"; }; then
+            ph="$(placeholders "$ver" "$cur")"
+            if [ "$ph" = 0 ]; then cp "$cur" "$dest"; return 0; fi
+            hit="$cur"; hit_ph="$ph"
+        fi
+        prev="$cur"
+    done
+    [ "$final" = 1 ] || return 1
+    if [ -n "$hit" ]; then
+        cp "$hit" "$dest"
+        echo "release-compare: ${ver}/${id}: ${hit_ph} artwork placeholder(s) kept" >>"$LOG"
+    else
+        cp "$last" "$dest"
+        warn "$ver" "$id" "frame never settled in ${k} frames (captured the last one)"
+    fi
+    return 0
 }
 
 write_manifest() {
@@ -557,6 +750,43 @@ write_montages() {
     done
 }
 
+# ---- Old-build cache ----
+
+# The old build never changes, so a full old capture is kept by its APK's sha256 and the flows' hash.
+old_cache_dir() { echo "${RC_CACHE}/old-shots/$(shasum -a 256 "$1" | cut -c1-16)-$(flows_hash old)"; }
+
+# old_cache_restore: the cached shots, rows and state in place of an old run; 1 = no usable cache
+old_cache_restore() {
+    local dir ids=()
+    [ "$REFRESH_OLD" = 0 ] && [ "$PHASE" = all ] && [ -z "$SCREENS_ARG" ] || return 1
+    resolve_apk "$OLD_SPEC" old || return 1
+    dir="$(old_cache_dir "$APK_PATH")"
+    [ -f "${dir}/complete" ] || return 1
+    forget old "${STEPS[@]}" import
+    rm -rf "${OUT}/old"
+    cp -R "${dir}/old" "${OUT}/old"
+    cat "${dir}/rows.tsv" >>"$ROWS"
+    cat "${dir}/notes.tsv" >>"$NOTES"
+    cp "${dir}/old.env" "${STATE}/old.env"
+    echo "release-compare: old: reused the cached capture (${dir##*/}; --refresh-old recaptures)"
+}
+
+# old_cache_save: after a full, clean old run
+old_cache_save() {
+    local dir tmp
+    [ "$PHASE" = all ] && [ -z "$SCREENS_ARG" ] && [ -z "$(awk -F'\t' '$1 == "old"' "$WARNS")" ] || return 0
+    dir="$(old_cache_dir "$(state_get old apk)")"
+    tmp="${dir}.tmp"
+    rm -rf "$tmp" "$dir"
+    mkdir -p "$tmp"
+    cp -R "${OUT}/old" "${tmp}/old"
+    awk -F'\t' '$1 == "old"' "$ROWS" >"${tmp}/rows.tsv"
+    awk -F'\t' '$1 == "old"' "$NOTES" >"${tmp}/notes.tsv"
+    cp "${STATE}/old.env" "${tmp}/old.env"
+    : >"${tmp}/complete"
+    mv "$tmp" "$dir"
+}
+
 # ---- Main ----
 
 # not exported: only run_flow hands these to Maestro (export -n in case the file says `export`)
@@ -572,6 +802,18 @@ if [ ! -f "$OLD_SPEC" ] || [ ! -f "$NEW_SPEC" ]; then
     git fetch -q origin >>"$LOG" 2>&1 || echo "release-compare: WARNING: git fetch origin failed, refs are as last fetched" >&2
 fi
 echo "release-compare: ${VERSIONS[*]} / ${PHASE}, output ${OUT}, logs ${WORK}"
+
+OLD_FROM_CACHE=0
+case " ${VERSIONS[*]} " in
+    *" old "*) if old_cache_restore; then OLD_FROM_CACHE=1; VERSIONS=(${VERSIONS[@]/old/}); fi ;;
+esac
+# the cached old capture needs no device
+if [ ${#VERSIONS[@]} -eq 0 ]; then
+    write_manifest
+    write_montages
+    echo "release-compare: manifest ${OUT}/manifest.json, warnings: $(wc -l <"$WARNS" | tr -d ' ')"
+    exit 0
+fi
 
 # armed first so the EXIT trap stops a partially started lane
 LANE_STARTED=1
@@ -594,8 +836,10 @@ fi
 
 failed=0
 for ver in "${VERSIONS[@]}"; do
+    vfailed=0
     if [ "$PHASE" != screens ]; then setup "$ver" || { echo "release-compare: ${ver} setup incomplete" >&2; failed=1; continue; }; fi
-    if [ "$PHASE" != setup ]; then screens "$ver" || { echo "release-compare: ${ver} screens incomplete" >&2; failed=1; }; fi
+    if [ "$PHASE" != setup ]; then screens "$ver" || { echo "release-compare: ${ver} screens incomplete" >&2; failed=1; vfailed=1; }; fi
+    [ "$ver" = old ] && [ "$vfailed" = 0 ] && old_cache_save
 done
 write_manifest
 write_montages

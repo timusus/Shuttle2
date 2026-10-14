@@ -105,11 +105,13 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
 `support/scripts/release-compare.sh --old <apk|git-ref> --new <apk|git-ref>` captures matched old/new screenshots of
 the real UI against the Emby test library (`~/.config/s2-test/emby-appreview.env`) on one lane, into
 `build/release-compare/<old>-vs-<new>/` with a `manifest.json` and side-by-side montages (ImageMagick). Run it in
-phases, each a foreground call: `--version old --phase setup` (install, onboarding captures, sign in, wait until the
-library list is stable over 3 polls, 5 min cap), then `--version old --phase screens --keep --screens a,b,c` in batches
-of about 3 (prewarm ~1 min plus ~1 min a screen; one long call hits the job time limit), then the same for `new`. Each
-run merges its rows and warnings into the manifest and rewrites the montages. `setup` and `--keep` leave the device up;
-stop it when done.
+one call: `detach start` the script alone, no worker (a worker is only for editing flows). It reuses the old build's
+cached capture (`~/.cache/s2-release-compare`, keyed by the old APK sha256 and the flows hash; `--refresh-old`
+recaptures) and loads the new build's AVD snapshot (taken after setup's import, keyed by APK sha256 and Emby host;
+`--fresh` forces a full setup), so a rerun on the same APK is only the screens session: ~8.5 min measured (a new APK
+adds sign-in, import and prewarm, ~6 min; a cold run with the old build too ~37 min). Phases still exist for debugging:
+`--version new --phase setup`, then `--phase screens --keep --screens a,b,c`; `--screens` bypasses both caches.
+Setup and `--keep` leave the device up; stop it when done.
 
 - **Device:** a box lane, else (`remote-emu.sh status` exit 3) the local AVD `s2test` (`S2_LOCAL_AVD` overrides),
   booted headless; always `adb -s emulator-5554`, since a phone may be attached. Before `new`'s setup park the AVD's
@@ -123,13 +125,15 @@ stop it when done.
   paywall (never captured) and notes such as 1.0.10's import progress, which finishes before a scanning message shows.
 - Maestro only navigates (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides; select by
   visible text, content description or resource id); the script owns the capture: demo-mode status bar, playback paused
-  on player screens, 3 identical frames, then an artwork placeholder check (each version's placeholder icon colour as
-  ImageMagick connected components on its tile colour). A placeholder gets 15 s to load, then the frame is kept without
-  a warning (Emby albums with no art); a frame that never settles in 45 s is a manifest warning naming the screen.
+  on player screens, 2 identical frames, then an artwork placeholder check (each version's placeholder icon colour as
+  ImageMagick connected components on its tile colour). Library screens run in one Maestro session per version: after
+  each screen's flow the generated session takes K screenshots in a row and the script picks the first identical pair
+  without placeholders afterwards; failing screens rerun in a second session with 24 frames, then keep a placeholder
+  frame without a warning (Emby albums with no art) or warn that it never settled.
 - Credentials reach Maestro only as `MAESTRO_URL`/`MAESTRO_USER_NAME`/`MAESTRO_PASSWORD` env of one invocation (the
   passthrough works on Maestro 2.10.0), never argv, and Maestro logs are scrubbed of them.
 - Targets (Alice In Chains / Facelift / Man in the Box / "Alice") are one config block at the top of the script; the
   artist and album have server art, and LRCLIB has the track's lyrics (new's lyrics flow turns the lookup on).
-- A git ref builds a debug APK once per commit (`tmp/release-compare/apk/`); a bare branch name resolves to
+- A git ref builds a debug APK once per commit (`~/.cache/s2-release-compare/apk/`); a bare branch name resolves to
   `origin/<name>` after a fetch, and screens reinstalls setup's APK if another build replaced it: a release build can't add a server on a
   lane, since without Play billing it never becomes Pro. `--help` has the options.
