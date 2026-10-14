@@ -12,6 +12,11 @@ internal suspend fun SongRepository.songsOf(album: Album): List<Song> = getSongs
     .firstOrNull()
     .orEmpty()
 
+/** The songs sharing [song]'s album. */
+internal suspend fun SongRepository.songsOfAlbum(song: Song): List<Song> = getSongs(SongQuery.AlbumGroupKey(song.albumGroupKey))
+    .firstOrNull()
+    .orEmpty()
+
 internal suspend fun SongRepository.firstSongOf(album: Album): Song? = songsOf(album).firstOrNull()
 
 /**

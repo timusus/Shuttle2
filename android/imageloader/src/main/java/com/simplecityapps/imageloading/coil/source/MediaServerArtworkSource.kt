@@ -10,14 +10,21 @@ import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.serverArtistId
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 
-/** Album art served by the media server a song streams from. */
+/**
+ * Album art served by the media server a song streams from. A song with no image version asks through a sibling that
+ * has one, since the server may carry the album's cover on only some of its tracks.
+ */
 internal class MediaServerSongArtworkSource(
     private val artworkSettings: ArtworkSettings,
+    private val songRepository: SongRepository,
     private val remoteArtworkProvider: RemoteArtworkProvider
 ) : ArtworkSource.Remote<Song> {
     override fun handles(model: Song): Boolean = !artworkSettings.localOnly.value
 
-    override suspend fun url(model: Song): String? = remoteArtworkProvider.getAlbumArtworkUrl(model)
+    override suspend fun url(model: Song): String? {
+        val source = if (model.artworkVersion != null) model else songRepository.songsOfAlbum(model).firstOrNull { it.artworkVersion != null } ?: model
+        return remoteArtworkProvider.getAlbumArtworkUrl(source)
+    }
 }
 
 /** Album art served for the album's first song with an image. */
