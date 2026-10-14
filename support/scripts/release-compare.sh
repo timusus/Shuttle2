@@ -27,8 +27,8 @@
 #     --screens a,b      only capture these ids (the other setup steps still run, so the library exists). Ids:
 #                          launch permission analytics source add-source emby-form sign-in import-progress
 #                          home artist-list artist-detail album-list album-detail song-list playlist-list
-#                          playlist-detail genre-list genre-detail folder-list search mini-player now-playing queue
-#                          sleep-timer sound lyrics notification settings
+#                          playlist-detail genre-list genre-detail folder-list folder-detail search mini-player now-playing
+#                          queue sleep-timer sound lyrics notification settings equaliser
 #                        A screen a version doesn't have is null in the manifest (pairing old_only/new_only).
 #     --out <dir>        output directory (default build/release-compare/<old>-vs-<new>, from the APK version
 #                        or the ref name). Runs merge into it: a capture replaces only its own screen's row.
@@ -83,13 +83,14 @@ PLAYLIST="Recently Added"
 ENV_FILE="$HOME/.config/s2-test/emby-appreview.env"
 FLOWS="support/maestro/release-compare"
 STEPS=(launch permission analytics source add-source emby-form sign-in import-progress home artist-list artist-detail
-    album-list album-detail song-list playlist-list playlist-detail genre-list genre-detail folder-list search mini-player
-    now-playing queue sleep-timer sound lyrics notification settings)
+    album-list album-detail song-list playlist-list playlist-detail genre-list genre-detail folder-list folder-detail
+    search mini-player now-playing queue sleep-timer sound lyrics notification settings equaliser)
 SETUP_IDS=(launch permission analytics source add-source emby-form sign-in)
 SCREEN_IDS=(home artist-list artist-detail album-list album-detail song-list playlist-list playlist-detail genre-list
-    genre-detail folder-list search mini-player now-playing queue sleep-timer sound lyrics notification settings)
+    genre-detail folder-list folder-detail search mini-player now-playing queue sleep-timer sound lyrics notification
+    settings equaliser)
 # screens that start playback: paused before capture, since a playing screen never goes still
-PLAYBACK_IDS=" mini-player now-playing queue sleep-timer sound lyrics notification "
+PLAYBACK_IDS=" mini-player now-playing queue sleep-timer sound lyrics notification equaliser "
 # never captured, with why (manifest not_captured)
 SKIPPED=("widget	a home-screen widget needs a launcher setup the lane doesn't have"
     "paywall	the debug build is always Pro, and a release build can't add a server without Play billing")

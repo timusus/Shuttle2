@@ -1,0 +1,13 @@
+# The equaliser sits behind the player's Sound panel. Its switch is off on a fresh install: the bands show once it is
+# on, and it is the last screen, so nothing after it sees the equaliser enabled.
+appId: ${APP_ID}
+---
+- runFlow: ../now-playing.yaml
+- tapOn: "Playback & sound"
+- tapOn: "Equalizer"
+- extendedWaitUntil:
+    visible: "Use equalizer"
+    timeout: 10000
+- tapOn: "Use equalizer"
+- waitForAnimationToEnd:
+    timeout: 5000
