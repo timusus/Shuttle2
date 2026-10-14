@@ -19,6 +19,8 @@
     <string name="genres">Genres</string>
     <!-- Shown when the folder list finishes loading, and there are no songs on the device -->
     <string name="folder_list_empty">No folders</string>
+    <!-- Explains the empty Folders tab: folders list music stored on the device, not on a connected server -->
+    <string name="folder_list_empty_message">Folders show music stored on this device. Server music isn\'t listed here.</string>
     <!-- Name of the device's internal storage, shown as a top level folder -->
     <string name="folders_internal_storage">Internal storage</string>
     <!-- Name of the folder holding songs whose location on the device is unknown -->

@@ -278,7 +278,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             }
 
             LibraryTab.Folders -> pages.folders?.let {
-                FoldersPage(it, onFolderClick = { f -> lastFolderClicked = f }, onFolderMore = { f -> lastMore = f }, onSongClick = { s -> lastSongClicked = s }, onSongMore = { s -> lastMore = s }, onNavigateUp = {})
+                FoldersPage(it, onFolderClick = { f -> lastFolderClicked = f }, onFolderMore = { f -> lastMore = f }, onSongClick = { s -> lastSongClicked = s }, onSongMore = { s -> lastMore = s }, onNavigateUp = {}, onAddFolder = { addFolderClicked = true })
             }
         } ?: Column {
             // A stand-in page still leads with the controls, as a real one does.

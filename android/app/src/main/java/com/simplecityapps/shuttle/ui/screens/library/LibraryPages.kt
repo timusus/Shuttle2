@@ -42,6 +42,7 @@ import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2GridTile
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
@@ -500,6 +501,16 @@ fun PlaylistsPage(
                         onAction = onNewPlaylist,
                     )
                 }
+                if (state.playlists.isEmpty()) {
+                    item(key = "playlists-empty") {
+                        S2Text(
+                            text = stringResource(R.string.playlist_list_empty_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = S2Spacing.large, vertical = S2Spacing.smallMedium).testTag("library-playlists-empty"),
+                        )
+                    }
+                }
                 items(state.playlists, key = { it.id }) { playlist ->
                     PlaylistRow(
                         name = playlist.name,
@@ -524,6 +535,7 @@ fun FoldersPage(
     onSongClick: (Song) -> Unit,
     onSongMore: (Song) -> Unit,
     onNavigateUp: () -> Unit,
+    onAddFolder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val content = when (state.loadingState) {
@@ -532,7 +544,14 @@ fun FoldersPage(
         FolderListUiState.LoadingState.Empty -> LibraryContentState.Empty
         FolderListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.folder_list_empty), modifier, state.scanProgress) {
+    LibraryContent(
+        content,
+        stringResource(R.string.folder_list_empty),
+        modifier,
+        state.scanProgress,
+        emptyMessage = stringResource(R.string.folder_list_empty_message),
+        emptyAction = StateAction(stringResource(R.string.sources_add_folder), onAddFolder),
+    ) {
         val listState = rememberLazyListState()
         ScrollToTopOnReselect(ShellTab.Library, listState)
         LazyColumn(state = listState, modifier = modifier.fillMaxSize().testTag("library-folders")) {

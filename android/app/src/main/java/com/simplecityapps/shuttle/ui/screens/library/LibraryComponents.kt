@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.designsystem.component.BarLoadingIndicator
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.LocalArtworkImageLoaded
+import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.model.Song
 
 // Pieces the Compose library screens share: artwork loaded through Coil into the catalogue's Artwork slot, the
@@ -86,6 +87,8 @@ fun LibraryContent(
     scanProgress: Progress? = null,
     controls: LibraryTabControls? = null,
     hasItems: Boolean = false,
+    emptyMessage: String? = null,
+    emptyAction: StateAction? = null,
     content: @Composable () -> Unit,
 ) {
     // Library is the default start tab, so the first page past Loading is when the app is fully drawn (TTFD)
@@ -117,7 +120,7 @@ fun LibraryContent(
                 progress = scanProgress?.indicatorProgress(),
             )
 
-            LibraryContentState.Empty -> EmptyState(title = emptyTitle, modifier = fill)
+            LibraryContentState.Empty -> EmptyState(title = emptyTitle, message = emptyMessage, action = emptyAction, modifier = fill)
 
             LibraryContentState.Ready -> Unit
         }

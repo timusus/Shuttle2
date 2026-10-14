@@ -1,1 +1,1 @@
-{ "type": "improvements", "text": "Playlists now show a cover collage from their songs at the top of the playlist page.", "commits": [] }
+{ "type": "improvements", "text": "Playlists now show a cover collage at the top of the playlist page. Empty Folders and Playlists tabs now explain what they are for, and Folders offers an Add folder button.", "commits": [] }

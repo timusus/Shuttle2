@@ -573,6 +573,7 @@ private fun LibraryPage(
                 onSongClick = { song -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(state.songs), state.songs.indexOf(song))) },
                 onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
                 onNavigateUp = viewModel::onNavigateUp,
+                onAddFolder = { onOpen(ThisDeviceRoute) },
             )
         }
     }

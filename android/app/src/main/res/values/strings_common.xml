@@ -50,6 +50,8 @@
     <string name="genre_list_empty">No genres</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">No playlists</string>
+    <!-- Hint under the Playlists header while the user has no playlists -->
+    <string name="playlist_list_empty_hint">No playlists yet. Tap New playlist to create one.</string>
     <!-- Button to skip to the next track -->
     <string name="button_skip_next">Skip next</string>
     <!-- Button to play/pause the current song-->

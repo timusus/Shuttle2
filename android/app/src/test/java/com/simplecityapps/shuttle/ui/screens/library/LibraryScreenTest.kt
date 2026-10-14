@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.readyAlbumArtistList
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
 import com.simplecityapps.shuttle.ui.screens.library.folders.createFolder
+import com.simplecityapps.shuttle.ui.screens.library.folders.emptyFolderList
 import com.simplecityapps.shuttle.ui.screens.library.folders.readyFolderList
 import com.simplecityapps.shuttle.ui.screens.library.genres.readyGenreList
 import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
@@ -546,6 +547,29 @@ class LibraryScreenTest {
 
         robot.clickText("Favorites")
         robot.lastSmartPlaylistClicked shouldBe SmartPlaylistId.Favourites.smartPlaylist
+    }
+
+    @Test
+    fun `empty folders page explains itself and offers to add a folder`() {
+        robot.setContent(
+            libraryState(enabledTabs = setOf(LibraryTab.Folders), currentTab = LibraryTab.Folders),
+            pages = LibraryPageStates(folders = emptyFolderList()),
+        )
+
+        robot.assertTextDisplayed("Folders show music stored on this device. Server music isn't listed here.")
+        robot.clickText("Add folder")
+
+        robot.addFolderClicked shouldBe true
+    }
+
+    @Test
+    fun `playlists page with no playlists says how to make one`() {
+        robot.setContent(
+            libraryState(enabledTabs = setOf(LibraryTab.Playlists), currentTab = LibraryTab.Playlists),
+            pages = LibraryPageStates(playlists = readyPlaylistList(playlists = emptyList())),
+        )
+
+        robot.assertTextDisplayed("No playlists yet. Tap New playlist to create one.")
     }
 
     @Test
