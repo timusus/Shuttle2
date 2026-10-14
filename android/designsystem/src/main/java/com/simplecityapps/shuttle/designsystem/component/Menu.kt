@@ -29,7 +29,8 @@ import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 /**
  * One verb in a menu or an actions sheet. [destructive] draws it in `error` (Delete, Remove);
  * [selected] non-null makes it a choice (a sort field, the sort order), checked when true.
- * [supporting] and [leading] only show in an actions sheet row.
+ * [supporting] and [leading] only show in an actions sheet row. [enabled] is read while composing, so a
+ * state-backed lambda greys the row in and out while the sheet is open.
  */
 data class S2Action(
     val label: String,
@@ -39,6 +40,7 @@ data class S2Action(
     val selected: Boolean? = null,
     val supporting: String? = null,
     val leading: (@Composable () -> Unit)? = null,
+    val enabled: () -> Boolean = { true },
 )
 
 /**
@@ -95,6 +97,7 @@ private fun MenuItem(
         SelectableDropdownMenuItem(
             selected = action.selected,
             onClick = onClick,
+            enabled = action.enabled(),
             text = { Text(action.label) },
             shapes = shapes,
             // An empty slot keeps unchecked choices aligned with the checked one.
@@ -104,6 +107,7 @@ private fun MenuItem(
     } else {
         DropdownMenuItem(
             onClick = onClick,
+            enabled = action.enabled(),
             text = { Text(action.label) },
             shape = shapes.shape,
             leadingIcon = leadingIcon,

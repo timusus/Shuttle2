@@ -313,8 +313,15 @@ internal fun NowPlayingBar(
             BarLabelled(stringResource(R.string.player_queue), stringResource(R.string.player_queue), queueOpen, openQueue) { button ->
                 BarButton(Icons.AutoMirrored.Rounded.QueueMusic, queueOpen, openQueue, button)
             }
-            val lyrics = S2Action(label = stringResource(R.string.player_bar_lyrics), onClick = { onPanel(NowPlayingPanel.Lyrics) }, icon = Icons.Rounded.Lyrics)
-            val extraActions = if (player.lyrics != null) listOf(lyrics, clearQueue) else listOf(clearQueue)
+            // Read inside the sheet, so a lyrics lookup that finishes while it is open enables the item.
+            val hasLyrics = rememberUpdatedState(player.lyrics != null)
+            val lyrics = S2Action(
+                label = stringResource(R.string.player_bar_lyrics),
+                onClick = { onPanel(NowPlayingPanel.Lyrics) },
+                icon = Icons.Rounded.Lyrics,
+                enabled = { hasLyrics.value },
+            )
+            val extraActions = listOf(lyrics, clearQueue)
             val showMore = { player.current?.let { mediaActions.showActions(it.actionsTarget(extraActions = extraActions)) } ?: Unit }
             BarLabelled(stringResource(R.string.player_bar_more), stringResource(DesignR.string.ds_more_options), selected = null, onClick = { showMore() }) { button ->
                 S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = null, onClick = { showMore() }, modifier = button)

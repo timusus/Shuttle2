@@ -112,6 +112,7 @@ fun ActionsSheetContent(
                         action.onClick()
                         onDismissRequest()
                     },
+                    enabled = action.enabled(),
                     leadingContent = action.leading ?: action.icon?.let { icon -> { Icon(icon, contentDescription = null, tint = if (action.destructive) tint else MaterialTheme.colorScheme.onSurfaceVariant) } },
                     supportingContent = action.supporting?.let { { Text(it) } },
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),

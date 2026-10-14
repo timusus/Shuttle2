@@ -959,14 +959,14 @@ class AppShellTest {
     }
 
     @Test
-    fun `a song without lyrics has no Lyrics item in the More menu, and the bar has no Lyrics button`() {
+    fun `a song without lyrics shows a disabled Lyrics item in the More menu, and the bar has no Lyrics button`() {
         robot.setContent(queue = shellQueue("First song"))
         robot.tapMiniPlayer()
         robot.assertReachable("Lyrics", reachable = false)
 
         robot.tapDescription("More options")
         robot.assertReachable("Clear queue", reachable = true)
-        robot.assertReachable("Lyrics", reachable = false)
+        robot.assertDisabled("Lyrics")
     }
 
     @Test

@@ -1,5 +1,5 @@
-# Lyrics show only for songs that have them: the server has none, so turn on the LRCLIB lookup first. Maestro can't read
-# the toggle row's checked state, so tap it, and tap it again if the setting was already on (no Lyrics item in More).
+# Lyrics are enabled only for songs that have them: the server has none, so turn on the LRCLIB lookup first. Maestro can't read
+# the toggle row's checked state, so tap it, and tap it again if the setting was already on (Lyrics stays disabled in More).
 appId: ${APP_ID}
 ---
 - runFlow: ../_start.yaml
@@ -7,7 +7,9 @@ appId: ${APP_ID}
 - runFlow: lyrics-open-more.yaml
 - runFlow:
     when:
-      notVisible: "Lyrics"
+      notVisible:
+        text: "Lyrics"
+        enabled: true
     commands:
       - pressKey: back
       - launchApp:

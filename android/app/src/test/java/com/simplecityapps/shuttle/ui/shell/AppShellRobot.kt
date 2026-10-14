@@ -28,6 +28,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -759,6 +760,10 @@ class AppShellRobot(
 
     fun assertPaneAbsent() {
         rule.onNodeWithTag(PlayerTestTags.Pane).assertDoesNotExist()
+    }
+
+    fun assertDisabled(text: String) {
+        rule.onNode(hasText(text)).assertIsNotEnabled()
     }
 
     fun assertReachable(
