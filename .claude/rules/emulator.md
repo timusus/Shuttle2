@@ -119,9 +119,13 @@ Setup and `--keep` leave the device up; stop it when done. The caches don't see 
   seeded music (`adb shell mv /sdcard/Music/music /sdcard/rc-parked/`, which holds a `.nomedia`), or the new build
   imports it alongside Emby; move it back and `adb emu kill` at the end.
 - **Screens** (ids in `--help`): onboarding, import progress, home, artist/album/song/playlist/genre/folder lists and
-  details, an opened folder (`folder-detail`, new only; Folders lists local songs only, so on the Emby library it
-  captures the empty list), search, mini player, now playing, queue, sleep timer, sound, lyrics, media notification,
-  settings, equaliser (last: new turns the equaliser on; old reaches it through DSP). Pairs are
+  details, search, mini player, now playing, queue, sleep timer, sound, lyrics, media notification,
+  settings, equaliser (new turns the equaliser on; old reaches it through DSP), then an opened folder
+  (`31-folder-detail`, new only, local AVD only). Folders lists local songs only, so it is a local phase after every
+  Emby screen: the AVD's parked music is moved back, a MediaStore volume scan and the debug `ACTION_IMPORT_MEDIA`
+  broadcast run each 10 s until the Folders tab lists a folder with songs (`--import-timeout`), the first folder is
+  opened and captured, and the music is parked again. Number 20 is unused so the other files keep their numbers; each
+  run first deletes shots in the output dir whose name no longer matches a screen. Pairs are
   fair: albums in grid on both, album detail reached via search on both. `pairing` is `both`, `old_only` or `new_only`
   (1.0.10 has no folders or lyrics; new has no permission, analytics or source step: its Welcome is both launch and
   source choice). `not_captured` lists the widget and

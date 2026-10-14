@@ -27,8 +27,9 @@
 #     --screens a,b      only capture these ids (the other setup steps still run, so the library exists). Ids:
 #                          launch permission analytics source add-source emby-form sign-in import-progress
 #                          home artist-list artist-detail album-list album-detail song-list playlist-list
-#                          playlist-detail genre-list genre-detail folder-list folder-detail search mini-player now-playing
-#                          queue sleep-timer sound lyrics notification settings equaliser
+#                          playlist-detail genre-list genre-detail folder-list search mini-player now-playing
+#                          queue sleep-timer sound lyrics notification settings equaliser folder-detail
+#                        folder-detail (new only) runs last, after the local music is un-parked and imported.
 #                        A screen a version doesn't have is null in the manifest (pairing old_only/new_only).
 #     --out <dir>        output directory (default build/release-compare/<old>-vs-<new>, from the APK version
 #                        or the ref name). Runs merge into it: a capture replaces only its own screen's row.
@@ -83,12 +84,15 @@ PLAYLIST="Recently Added"
 ENV_FILE="$HOME/.config/s2-test/emby-appreview.env"
 FLOWS="support/maestro/release-compare"
 STEPS=(launch permission analytics source add-source emby-form sign-in import-progress home artist-list artist-detail
-    album-list album-detail song-list playlist-list playlist-detail genre-list genre-detail folder-list folder-detail
-    search mini-player now-playing queue sleep-timer sound lyrics notification settings equaliser)
+    album-list album-detail song-list playlist-list playlist-detail genre-list genre-detail folder-list
+    search mini-player now-playing queue sleep-timer sound lyrics notification settings equaliser folder-detail)
 SETUP_IDS=(launch permission analytics source add-source emby-form sign-in)
 SCREEN_IDS=(home artist-list artist-detail album-list album-detail song-list playlist-list playlist-detail genre-list
-    genre-detail folder-list folder-detail search mini-player now-playing queue sleep-timer sound lyrics notification
+    genre-detail folder-list search mini-player now-playing queue sleep-timer sound lyrics notification
     settings equaliser)
+# folder-detail needs the AVD's local music, so it is captured after every Emby screen (local_folder_phase); its file
+# number is 31, the slot after equaliser, and the old 20 stays unused so every other screen keeps its number
+LOCAL_ID=folder-detail
 # screens that start playback: paused before capture, since a playing screen never goes still
 PLAYBACK_IDS=" mini-player now-playing queue sleep-timer sound lyrics notification equaliser "
 # never captured, with why (manifest not_captured)
@@ -396,12 +400,18 @@ settle_capture() {
 
 selected() { case " ${SELECTED[*]} " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
 
+# step_no <id>: the screen's file/manifest number, its position in STEPS plus the unused slot after folder-list
+step_no() {
+    local idx=0 s
+    for s in "${STEPS[@]}"; do idx=$((idx + 1)); [ "$s" = "$1" ] && break; done
+    [ "$idx" -gt 19 ] && idx=$((idx + 1))
+    echo "$idx"
+}
+
 # shot_dest <version> <id>: sets DEST to the shot's path, creating its directory
 shot_dest() {
-    local idx=0 s
-    for s in "${STEPS[@]}"; do idx=$((idx + 1)); [ "$s" = "$2" ] && break; done
     mkdir -p "${OUT}/${1}"
-    SHOT_REL="${1}/$(printf '%02d' "$idx")-${2}.png"
+    SHOT_REL="${1}/$(printf '%02d' "$(step_no "$2")")-${2}.png"
     DEST="${OUT}/${SHOT_REL}"
 }
 
@@ -667,6 +677,59 @@ screens() {
 
 FRAMES_DIR="${WORK}/frames"
 
+# unpark_music: the reverse of park_music
+unpark_music() {
+    adb shell '[ -d /sdcard/rc-parked/music ] && { [ -d /sdcard/Music/music ] || mv /sdcard/rc-parked/music /sdcard/Music/; }' >>"$LOG" 2>&1
+}
+
+# local_folder_phase: after every Emby screen, put the AVD's local music back, have the app import it, and capture an
+# opened folder. The import is a debug-build broadcast (ACTION_IMPORT_MEDIA, a MediaStore reimport) after a MediaStore
+# volume scan, repeated each poll; done once the Folders tab lists a folder with songs. The music is parked again after.
+local_folder_phase() {
+    local deadline start texts
+    selected "$LOCAL_ID" || return 0
+    forget new "$LOCAL_ID"
+    if [ "$DEVICE" != local ]; then
+        printf '%s\t%s\t%s\n' new "$LOCAL_ID" "only captured on the local AVD, which holds the local music" >>"$NOTES"
+        return 0
+    fi
+    echo "release-compare: new: local music phase"
+    unpark_music
+    adb shell content call --uri content://media/external/file --method scan_volume --arg external_primary >>"$LOG" 2>&1
+    start=$(date +%s)
+    deadline=$((start + IMPORT_TIMEOUT))
+    while [ "$(date +%s)" -lt "$deadline" ]; do
+        adb shell am broadcast -a com.simplecityapps.shuttle.debug.ACTION_IMPORT_MEDIA -p "$PKG" >>"$LOG" 2>&1
+        sleep 10
+        start_app
+        run_flow new folder-list optional >/dev/null 2>&1
+        texts="$(dump_texts 2>/dev/null)"
+        # the count's space is a no-break space
+        if grep -qE '[0-9]+[^0-9a-z]+songs?' <<<"$texts"; then
+            echo "release-compare: new: local folders listed after $(($(date +%s) - start))s"
+            run_flow new "$LOCAL_ID" && capture new "$LOCAL_ID"
+            park_music
+            return 0
+        fi
+    done
+    warn new "$LOCAL_ID" "no local folder listed after ${IMPORT_TIMEOUT} s"
+    park_music
+}
+
+# prune_stale: drops shots (and their rows) a renumbered or removed screen left in the output dir
+prune_stale() {
+    local ver id f keep=" "
+    for ver in old new montage; do
+        keep=" "
+        for id in "${STEPS[@]}"; do keep+="$(printf '%02d' "$(step_no "$id")")-${id}.png "; done
+        for f in "${OUT}/${ver}"/*.png; do
+            [ -f "$f" ] || continue
+            case "$keep" in *" ${f##*/} "*) ;; *) rm -f "$f"; echo "release-compare: removed stale ${ver}/${f##*/}" >>"$LOG" ;; esac
+        done
+    done
+    awk -F'\t' -v out="$OUT" '{ cmd = "[ -f \"" out "/" $3 "\" ]"; if (system(cmd) == 0) print }' "$ROWS" >"${ROWS}.tmp" && mv -f "${ROWS}.tmp" "$ROWS"
+}
+
 # flow_path <version> <id>: sets FLOW_FILE to the id's flow (old/new override, else shared); 1 if the version has none
 flow_path() {
     if [ -f "${FLOWS}/${1}/${2}.yaml" ]; then FLOW_FILE="${REPO_ROOT}/${FLOWS}/${1}/${2}.yaml"
@@ -747,14 +810,13 @@ judge_frames() {
 }
 
 write_manifest() {
-    local nn=0 id warns not_captured
+    local id warns not_captured
     warns="$(jq -R -s -c 'split("\n") | map(select(length > 0) | split("\t") | {version: .[0], screen: .[1], message: .[2]})' "$WARNS")"
     not_captured="$({ printf 'both\t%s\n' "${SKIPPED[@]}"; cat "$NOTES"; } |
         jq -R -s -c 'split("\n") | map(select(length > 0) | split("\t") | {version: .[0], screen: .[1], why: .[2]})')"
     {
         for id in "${STEPS[@]}"; do
-            nn=$((nn + 1))
-            jq -n -c --arg n "$(printf '%02d' "$nn")" --arg id "$id" \
+            jq -n -c --arg n "$(step_no "$id")" --arg id "$id" \
                 --arg old "$(awk -F'\t' -v i="$id" '$1 == "old" && $2 == i {p = $3} END {print p}' "$ROWS")" \
                 --arg new "$(awk -F'\t' -v i="$id" '$1 == "new" && $2 == i {p = $3} END {print p}' "$ROWS")" \
                 '{n: ($n | tonumber), id: $id, caption: "", old: (if $old == "" then null else $old end), new: (if $new == "" then null else $new end)}
@@ -768,15 +830,14 @@ write_manifest() {
 }
 
 write_montages() {
-    local id nn=0 o n
+    local id o n
     command -v magick >/dev/null || { echo "release-compare: ImageMagick not installed, no montages"; return 0; }
     mkdir -p "${OUT}/montage"
     for id in "${STEPS[@]}"; do
-        nn=$((nn + 1))
         o="$(awk -F'\t' -v i="$id" '$1 == "old" && $2 == i {p = $3} END {print p}' "$ROWS")"
         n="$(awk -F'\t' -v i="$id" '$1 == "new" && $2 == i {p = $3} END {print p}' "$ROWS")"
         [ -n "$o" ] && [ -n "$n" ] && [ -f "${OUT}/${o}" ] && [ -f "${OUT}/${n}" ] || continue
-        magick montage "${OUT}/${o}" "${OUT}/${n}" -tile 2x1 -geometry '+16+0' -background '#202020' "${OUT}/montage/$(printf '%02d' "$nn")-${id}.png" >>"$LOG" 2>&1
+        magick montage "${OUT}/${o}" "${OUT}/${n}" -tile 2x1 -geometry '+16+0' -background '#202020' "${OUT}/montage/$(printf '%02d' "$(step_no "$id")")-${id}.png" >>"$LOG" 2>&1
     done
 }
 
@@ -833,6 +894,7 @@ if [ ! -f "$OLD_SPEC" ] || [ ! -f "$NEW_SPEC" ]; then
 fi
 echo "release-compare: ${VERSIONS[*]} / ${PHASE}, output ${OUT}, logs ${WORK}"
 
+prune_stale
 OLD_FROM_CACHE=0
 case " ${VERSIONS[*]} " in
     *" old "*) if old_cache_restore; then OLD_FROM_CACHE=1; VERSIONS=(${VERSIONS[@]/old/}); fi ;;
@@ -868,7 +930,10 @@ failed=0
 for ver in "${VERSIONS[@]}"; do
     vfailed=0
     if [ "$PHASE" != screens ]; then setup "$ver" || { echo "release-compare: ${ver} setup incomplete" >&2; failed=1; continue; }; fi
-    if [ "$PHASE" != setup ]; then screens "$ver" || { echo "release-compare: ${ver} screens incomplete" >&2; failed=1; vfailed=1; }; fi
+    if [ "$PHASE" != setup ]; then
+        screens "$ver" || { echo "release-compare: ${ver} screens incomplete" >&2; failed=1; vfailed=1; }
+        [ "$ver" = new ] && [ "$vfailed" = 0 ] && local_folder_phase
+    fi
     [ "$ver" = old ] && [ "$vfailed" = 0 ] && old_cache_save
 done
 write_manifest

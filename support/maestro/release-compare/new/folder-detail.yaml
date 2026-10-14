@@ -1,10 +1,10 @@
-# Folders lists local songs only, so on the Emby library it is empty and there is no folder to open: the tap is optional.
+# Runs in the local-music phase, once the app has imported the AVD's local files, so the first folder has songs.
 appId: ${APP_ID}
 ---
 - runFlow: folder-list.yaml
+# the count's space is a no-break space
 - tapOn:
-    text: "[0-9]+ songs?"
+    text: "[0-9]+.songs?"
     index: 0
-    optional: true
 - waitForAnimationToEnd:
     timeout: 5000
