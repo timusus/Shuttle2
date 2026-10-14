@@ -7,7 +7,8 @@
 #                                      [--screens a,b,...] [--out <dir>] [--build-type debug|release]
 #                                      [--flow-timeout <secs>] [--import-timeout <secs>]
 #
-#     --old / --new      an APK path, or a git ref that is built here (the current tree when the ref is HEAD and
+#     --old / --new      an APK path, or a git ref that is built here (a bare branch name means origin/<name>, fetched
+#                        first; the current tree when the ref is HEAD and
 #                        the tree is clean, else a detached worktree under tmp/release-compare; the APK is cached
 #                        per commit and build type)
 #     --version          which build(s) to run (default both, old first)
@@ -192,12 +193,24 @@ trap 'exit 143' TERM
 
 # ---- APKs ----
 
+# resolve_ref <spec>: the commit sha. A bare branch name with an origin/<name> means origin's, since a worktree's
+# local branch (main especially) is often behind what was pushed. Main fetches origin first.
+resolve_ref() {
+    local ref="$1"
+    case "$ref" in
+        */* | *^* | *~* | *@*) ;;
+        *) git show-ref --verify -q "refs/tags/$ref" || ! git show-ref --verify -q "refs/remotes/origin/$ref" || ref="origin/$ref" ;;
+    esac
+    git rev-parse --verify -q "${ref}^{commit}"
+}
+
 # resolve_apk <spec> <label>: sets APK_PATH (a global, so EXTRA_WORKTREES survives; no subshell). A file is used as is;
 # a git ref is built once per commit.
 resolve_apk() {
     local spec="$1" label="$2" sha src apk cached gradle=(support/scripts/remote-build.sh) env_prefix=()
     if [ -f "$spec" ]; then APK_PATH="$spec"; return 0; fi
-    sha="$(git rev-parse --verify "${spec}^{commit}" 2>/dev/null)" || { echo "release-compare: '$spec' is neither an APK nor a git ref" >&2; return 1; }
+    sha="$(resolve_ref "$spec")" || { echo "release-compare: '$spec' is neither an APK nor a git ref" >&2; return 1; }
+    echo "release-compare: ${label}: ${spec} is ${sha:0:12}"
     cached="${REPO_ROOT}/tmp/release-compare/apk/${sha:0:12}-${BUILD_TYPE}.apk"
     if [ -f "$cached" ]; then APK_PATH="$cached"; return 0; fi
     src="$REPO_ROOT"
@@ -404,15 +417,15 @@ setup() {
     spec="$([ "$ver" = old ] && echo "$OLD_SPEC" || echo "$NEW_SPEC")"
     resolve_apk "$spec" "$ver" || return 1
     apk="$APK_PATH"
-    [ -f "$spec" ] || sha="$(git rev-parse --verify "${spec}^{commit}")"
+    [ -f "$spec" ] || sha="$(resolve_ref "$spec")"
     PKG="$(emu_apk_info "$apk" package)"
     echo "release-compare: == ${ver} setup: ${PKG} =="
     # only the screens being re-captured, so rows of the others merge
     for id in "${ids_all[@]}"; do selected "$id" && forget_ids+=("$id"); done
     selected import-progress && forget_ids+=(import)
     [ ${#forget_ids[@]} -eq 0 ] || forget "$ver" "${forget_ids[@]}"
-    printf 'spec=%s\nsha=%s\npackage=%s\nversionName=%s\nversionCode=%s\n' "$spec" "$sha" "$PKG" \
-        "$(emu_apk_info "$apk" versionName)" "$(emu_apk_info "$apk" versionCode)" >"${STATE}/${ver}.env"
+    printf 'spec=%s\nsha=%s\npackage=%s\nversionName=%s\nversionCode=%s\napk=%s\n' "$spec" "$sha" "$PKG" \
+        "$(emu_apk_info "$apk" versionName)" "$(emu_apk_info "$apk" versionCode)" "$apk" >"${STATE}/${ver}.env"
     adb uninstall "$PKG" >/dev/null 2>&1
     step "${ver}: install" adb install -r "$apk" || return 1
     emu_demo_mode on
@@ -421,10 +434,11 @@ setup() {
         run_flow "$ver" "$id" "$([ "$id" = sign-in ] && echo creds)"; rc=$?
         [ "$rc" = 2 ] && continue
         [ "$rc" = 1 ] && { echo "release-compare: ${ver}: setup stopped at ${id}" >&2; return 1; }
-        # new syncs within seconds of signing in, on the Sources page sign-in leaves open, so catch that first;
-        # 1.0.10 starts importing only once onboarding is finished
-        [ "$id" = sign-in ] && [ "$ver" = new ] && import_progress "$ver"
+        # new lands on the Library, syncing for a few seconds once signing in finishes the Welcome: a Maestro start is
+        # too slow to catch it, so the progress is the frame right after sign-in; 1.0.10 imports after onboarding
+        [ "$id" = sign-in ] && [ "$ver" = new ] && new_import_progress
         capture "$ver" "$id"
+        [ "$id" = sign-in ] && [ "$ver" = new ] && new_import_progress_check
     done
     [ "$ver" = new ] || import_progress "$ver"
     wait_import "$ver"
@@ -435,9 +449,52 @@ setup() {
 import_progress() {
     local ver="$1"
     if run_flow "$ver" import-progress optional; then capture "$ver" import-progress live; return 0; fi
+    import_progress_missed "$ver"
+}
+
+import_progress_missed() {
     selected import-progress || return 0
-    printf '%s\t%s\t%s\n' "$ver" import-progress "the import finished before its progress showed" >>"$NOTES"
-    echo "release-compare: ${ver}: import progress not caught (manifest note)"
+    printf '%s\t%s\t%s\n' "$1" import-progress "the import finished before its progress showed" >>"$NOTES"
+    echo "release-compare: ${1}: import progress not caught (manifest note)"
+}
+
+NEW_PROGRESS_SEEN=0
+new_import_progress() {
+    capture new import-progress live
+    # read after the frame, so progress still on screen was on it too
+    dump_texts 2>/dev/null | grep -qE 'Scanning your music|Fetching|Syncing' && NEW_PROGRESS_SEEN=1
+}
+
+# new_import_progress_check: a progress frame that matches the settled landing showed none.
+new_import_progress_check() {
+    local p="${OUT}/new/08-import-progress.png" s="${OUT}/new/07-sign-in.png"
+    selected import-progress && [ "$NEW_PROGRESS_SEEN" = 0 ] && [ -f "$p" ] && [ -f "$s" ] || return 0
+    cmp -s "$p" "$s" || { echo "release-compare: new: import progress frame kept (sync was done by the text check)" >>"$LOG"; return 0; }
+    rm -f "$p"
+    forget new import-progress
+    import_progress_missed new
+}
+
+# ensure_installed <version>: screens must shoot the build the manifest names. Refuses when the spec now resolves to
+# another commit than setup's (its data came from that build), and reinstalls over the data when the installed APK
+# isn't setup's (another run, or a phase on another lane, replaced it).
+ensure_installed() {
+    local ver="$1" spec want_sha cur_sha apk path dev_hash apk_hash
+    spec="$([ "$ver" = old ] && echo "$OLD_SPEC" || echo "$NEW_SPEC")"
+    want_sha="$(state_get "$ver" sha)"
+    if [ ! -f "$spec" ]; then
+        cur_sha="$(resolve_ref "$spec")"
+        [ "$cur_sha" = "$want_sha" ] || { echo "release-compare: ${ver}: setup ran on ${want_sha:0:12} but ${spec} is now ${cur_sha:0:12}: run --phase setup again" >&2; return 1; }
+    fi
+    apk="$(state_get "$ver" apk)"
+    [ -n "$apk" ] || apk="$(state_get "$ver" spec)"
+    [ -f "$apk" ] || { echo "release-compare: ${ver}: setup's APK ${apk} is gone: run --phase setup again" >&2; return 1; }
+    path="$(adb shell pm path "$PKG" 2>/dev/null | tr -d '\r' | sed -n 's/^package://p' | grep 'base\.apk$' | head -1)"
+    dev_hash="$(adb shell sha256sum "$path" 2>/dev/null | awk '{print $1}')"
+    apk_hash="$(shasum -a 256 "$apk" | awk '{print $1}')"
+    [ "$dev_hash" = "$apk_hash" ] && return 0
+    echo "release-compare: ${ver}: installed ${PKG} isn't setup's build (versionCode $(state_get "$ver" versionCode), ${want_sha:0:12}); reinstalling"
+    step "${ver}: reinstall" adb install -r "$apk"
 }
 
 # screens <version>: the library screens on the app setup installed.
@@ -446,6 +503,7 @@ screens() {
     PKG="$(state_get "$ver" package)"
     [ -n "$PKG" ] && adb shell pm path "$PKG" 2>/dev/null | grep -q package: ||
         { echo "release-compare: ${ver} isn't installed on this lane: run --phase setup first (and keep the lane up)" >&2; return 1; }
+    ensure_installed "$ver" || return 1
     echo "release-compare: == ${ver} screens: ${PKG} =="
     for id in "${SCREEN_IDS[@]}"; do selected "$id" && ids+=("$id"); done
     [ ${#ids[@]} -gt 0 ] || return 0
@@ -509,6 +567,10 @@ for v in URL USER_NAME PASSWORD; do [ -n "${!v:-}" ] || { echo "release-compare:
 for spec in "$OLD_SPEC" "$NEW_SPEC"; do
     case "$spec" in *.apk) [ -f "$spec" ] || { echo "release-compare: no such APK: $spec" >&2; exit 1; } ;; esac
 done
+# so a branch name resolves to what was pushed (resolve_ref); offline keeps the last fetch
+if [ ! -f "$OLD_SPEC" ] || [ ! -f "$NEW_SPEC" ]; then
+    git fetch -q origin >>"$LOG" 2>&1 || echo "release-compare: WARNING: git fetch origin failed, refs are as last fetched" >&2
+fi
 echo "release-compare: ${VERSIONS[*]} / ${PHASE}, output ${OUT}, logs ${WORK}"
 
 # armed first so the EXIT trap stops a partially started lane

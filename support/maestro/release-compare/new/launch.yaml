@@ -1,3 +1,7 @@
+# The first-run Welcome replaces the permission prompt; it is also new's source choice, so new has no source step.
 appId: ${APP_ID}
 ---
-- assertVisible: ".*access music and audio.*"
+- extendedWaitUntil:
+    visible: "Welcome to Shuttle Music"
+    timeout: 15000
+- assertVisible: "Connect a server"

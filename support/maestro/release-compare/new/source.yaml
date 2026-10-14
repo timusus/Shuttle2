@@ -1,4 +1,0 @@
-appId: ${APP_ID}
----
-- tapOn: "Allow"
-- assertVisible: "No music found"
