@@ -45,18 +45,4 @@ class FolderDisplayNameTest {
 
         folder.displayName(resources) shouldBe "1234-ABCD"
     }
-
-    @Test
-    fun `top level display path is the friendly volume name`() {
-        val folder = Folder(path = listOf(SongFolder.PRIMARY_VOLUME), songCount = 1)
-
-        folder.displayPath(resources) shouldBe "Internal storage"
-    }
-
-    @Test
-    fun `nested display path drops the volume segment`() {
-        val folder = Folder(path = listOf(SongFolder.PRIMARY_VOLUME, "Music", "Juniper Static"), songCount = 2)
-
-        folder.displayPath(resources) shouldBe "Music / Juniper Static"
-    }
 }

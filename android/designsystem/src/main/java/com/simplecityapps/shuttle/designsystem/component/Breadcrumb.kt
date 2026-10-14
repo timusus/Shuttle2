@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -70,7 +71,7 @@ fun S2Breadcrumb(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .heightIn(min = S2TouchTarget.minimum)
-                    .then(if (current) Modifier.semantics { heading() } else Modifier.clickable { onSegmentClick(index) })
+                    .then(if (current) Modifier.semantics { heading() } else Modifier.clickable(role = Role.Button) { onSegmentClick(index) })
                     .padding(horizontal = S2Spacing.small)
                     .wrapContentHeight(Alignment.CenterVertically),
             )

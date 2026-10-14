@@ -18,15 +18,5 @@ fun Folder.displayName(resources: Resources): String = if (path.size == 1) {
     name
 }
 
-/** Where the folder is, relative to its storage volume: "Music / Artist" rather than "primary / Music / Artist". */
-fun Folder.displayPath(resources: Resources): String = if (path.size == 1) {
-    displayName(resources)
-} else {
-    path.drop(1).joinToString(" / ")
-}
-
 @Composable
 fun Folder.displayName(): String = displayName(LocalContext.current.resources)
-
-@Composable
-fun Folder.displayPath(): String = displayPath(LocalContext.current.resources)

@@ -101,8 +101,9 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var lastSmartPlaylistClicked: SmartPlaylist? = null
         private set
-    var lastFolderClicked: Folder? = null
     var rootClicked = false
+        private set
+    var lastFolderClicked: Folder? = null
         private set
     var lastMore: Any? = null
         private set

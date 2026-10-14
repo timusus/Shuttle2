@@ -27,8 +27,6 @@
     <string name="folders_other">Other locations</string>
     <!-- Name of the device's root filesystem, shown as a top level folder when a song's storage volume can't be determined -->
     <string name="folders_root">Root</string>
-    <!-- Content description for the button that goes up to the parent folder -->
-    <string name="folders_navigate_up">Up one folder</string>
     <!-- Title for the list of playlists -->
     <string name="library_playlists">Playlists</string>
     <!-- Shown when the app is scanning for songs in the library -->
