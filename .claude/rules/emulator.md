@@ -111,7 +111,8 @@ recaptures) and loads the new build's AVD snapshot (taken after setup's import, 
 `--fresh` forces a full setup), so a rerun on the same APK is only the screens session: ~8.5 min measured (a new APK
 adds sign-in, import and prewarm, ~6 min; a cold run with the old build too ~37 min). Phases still exist for debugging:
 `--version new --phase setup`, then `--phase screens --keep --screens a,b,c`; `--screens` bypasses both caches.
-Setup and `--keep` leave the device up; stop it when done.
+Setup and `--keep` leave the device up; stop it when done. The caches don't see changes to the Emby library: pass
+`--fresh` (and `--refresh-old`) after changing the test library.
 
 - **Device:** a box lane, else (`remote-emu.sh status` exit 3) the local AVD `s2test` (`S2_LOCAL_AVD` overrides),
   booted headless; always `adb -s emulator-5554`, since a phone may be attached. Before `new`'s setup park the AVD's

@@ -501,6 +501,8 @@ snapshot_exists() { adb emu avd snapshot list 2>/dev/null | tr -d '\r' | grep -q
 # park_music: the AVD's seeded /sdcard/Music/music would be imported beside Emby; cleanup puts it back
 park_music() {
     [ "$DEVICE" = local ] || return 0
+    # a killed run leaves the music parked: put it back before parking again
+    adb shell '[ -d /sdcard/rc-parked/music ] && { [ -d /sdcard/Music/music ] && rm -rf /sdcard/rc-parked/music || mv /sdcard/rc-parked/music /sdcard/Music/; }' >>"$LOG" 2>&1
     adb shell 'mkdir -p /sdcard/rc-parked && [ -d /sdcard/Music/music ] && mv /sdcard/Music/music /sdcard/rc-parked/' >>"$LOG" 2>&1
     return 0
 }
@@ -521,6 +523,10 @@ snapshot_restore() {
         f="$(awk -F'\t' -v i="$id" '$2 == i {print $3}' "${dir}/rows.tsv")"
         [ -n "$f" ] || continue
         mkdir -p "${OUT}/${ver}"
+        if [ ! -f "${dir}/shots/$(basename "$f")" ]; then
+            warn "$ver" "$id" "cached setup shot missing, screen skipped"
+            continue
+        fi
         cp "${dir}/shots/$(basename "$f")" "${OUT}/${f}"
         printf '%s\t%s\t%s\n' "$ver" "$id" "$f" >>"$ROWS"
     done
@@ -531,7 +537,11 @@ snapshot_restore() {
 snapshot_load() {
     adb emu avd snapshot load "$1" | tr -d '\r' | grep -q '^OK' || return 1
     adb wait-for-device
-    until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do sleep 1; done
+    local deadline=$(($(date +%s) + 120))
+    until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+        [ "$(date +%s)" -lt "$deadline" ] || { echo "snapshot $1 loaded but sys.boot_completed not set in 120 s"; return 1; }
+        sleep 1
+    done
 }
 
 # snapshot_save <version> <apk>: after a clean, complete setup; replaces the version's older snapshots
@@ -540,17 +550,19 @@ snapshot_save() {
     [ "$DEVICE" = local ] && [ -z "$SCREENS_ARG" ] || return 0
     [ -z "$(awk -F'\t' -v v="$ver" '$1 == v' "$WARNS")" ] || { echo "release-compare: ${ver}: setup had warnings, no snapshot saved"; return 0; }
     key="$(snapshot_key "$ver" "$2")"
-    for old in $(adb emu avd snapshot list 2>/dev/null | tr -d '\r' | awk -v p="rc-${ver}-" 'index($2, p) == 1 {print $2}'); do
+    step "${ver}: save snapshot" snapshot_do_save "rc-${key}" || return 0
+    for old in $(adb emu avd snapshot list 2>/dev/null | tr -d '\r' | awk -v p="rc-${ver}-" -v k="rc-${key}" 'index($2, p) == 1 && $2 != k {print $2}'); do
         adb emu avd snapshot delete "$old" >>"$LOG" 2>&1
     done
-    step "${ver}: save snapshot" snapshot_do_save "rc-${key}" || return 0
     dir="${RC_CACHE}/setup/${key}"
     tmp="${dir}.tmp"
     rm -rf "$tmp" "$dir"
     mkdir -p "${tmp}/shots"
     awk -F'\t' -v v="$ver" '$1 == v' "$ROWS" >"${tmp}/rows.tsv"
     awk -F'\t' -v v="$ver" '$1 == v' "$NOTES" >"${tmp}/notes.tsv"
-    while IFS=$'\t' read -r _ _ f; do cp "${OUT}/${f}" "${tmp}/shots/" 2>/dev/null; done <"${tmp}/rows.tsv"
+    while IFS=$'\t' read -r _ _ f; do
+        cp "${OUT}/${f}" "${tmp}/shots/" || { echo "release-compare: ${ver}: setup shot copy failed, cache not marked complete" >&2; return 0; }
+    done <"${tmp}/rows.tsv"
     flows_hash "$ver" >"${tmp}/flows"
     : >"${tmp}/complete"
     mv "$tmp" "$dir"
@@ -665,24 +677,41 @@ flow_path() {
 # playback or opens the shade where the screen needs it, then takes <frames> screenshots back to back into FRAMES_DIR
 # (judge_frames picks from them afterwards, so the session never waits on the script).
 run_session() {
-    local ver="$1" k="$2" id session="${WORK}/session-${ver}.yaml" rc; shift 2
+    local ver="$1" k="$2" id session="${WORK}/session-${ver}.yaml" rc=0 split; shift 2
+    local args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}"
+        -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
+    # a playing screen is never still (progress bars, visualisers), and Maestro has no pause-only key (Play Pause
+    # toggles), so a playback screen's flow and its frames are separate runs with an idempotent adb pause between
     {
         printf 'appId: ${APP_ID}\n---\n'
         for id in "$@"; do
             flow_path "$ver" "$id"
             printf -- '- runFlow: %s\n' "$FLOW_FILE"
-            # a playing screen is never still (progress bars, visualisers)
-            case "$PLAYBACK_IDS" in *" $id "*) printf -- '- pressKey: Remote Media Play Pause\n' ;; esac
+            case "$PLAYBACK_IDS" in
+                *" $id "*) printf -- '#SPLIT\n' ;;
+            esac
             [ "$id" = notification ] && printf -- '- swipe:\n    start: 50%%,0%%\n    end: 50%%,70%%\n'
             printf -- '- evalScript: ${output.n = 0}\n- repeat:\n    times: %s\n    commands:\n' "$k"
             printf -- '      - evalScript: ${output.n = output.n + 1}\n      - takeScreenshot: frames/%s-${output.n}\n' "$id"
             [ "$id" = notification ] && printf -- '- swipe:\n    start: 50%%,70%%\n    end: 50%%,0%%\n'
         done
     } >"$session"
-    local args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}"
-        -e "GENRE=${GENRE}" -e "PLAYLIST=${PLAYLIST}")
-    run_with_timeout "$SESSION_TIMEOUT" maestro_run "$session" "${WORK}/scratch" "${args[@]}" 2>&1 | scrub >>"${WORK}/maestro-${ver}-session.log"
-    rc=${PIPESTATUS[0]}
+    # cut the session at each marker; the header (appId) leads every part
+    split="${WORK}/session-${ver}-part"
+    rm -f "${split}"-*.yaml
+    awk -v p="$split" 'BEGIN { n = 1; f = sprintf("%s-%03d.yaml", p, n) }
+        NR <= 2 { hdr = hdr $0 "\n" }
+        /^#SPLIT$/ { n++; f = sprintf("%s-%03d.yaml", p, n); printf "%s", hdr > f; next }
+        { print > f }' "$session"
+    local part parts=0
+    for part in "${split}"-*.yaml; do
+        [ "$parts" -gt 0 ] && adb shell input keyevent KEYCODE_MEDIA_PAUSE >>"$LOG" 2>&1
+        parts=$((parts + 1))
+        run_with_timeout "$SESSION_TIMEOUT" maestro_run "$part" "${WORK}/scratch" "${args[@]}" 2>&1 | scrub >>"${WORK}/maestro-${ver}-session.log"
+        rc=${PIPESTATUS[0]}
+        [ "$rc" = 0 ] || break
+        find "${WORK}/scratch" -path '*/takeScreenshot/frames/*.png' -exec mv -f {} "$FRAMES_DIR/" \;
+    done
     # Maestro keeps screenshots under its output dir, not at the path given
     find "${WORK}/scratch" -path '*/takeScreenshot/frames/*.png' -exec mv -f {} "$FRAMES_DIR/" \;
     rm -rf -- "${WORK}/scratch"
