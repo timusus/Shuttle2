@@ -17,9 +17,8 @@ class InstallDefaults @Inject constructor(
     fun onLaunch(versionCode: Int = BuildConfig.VERSION_CODE, versionName: String = BuildConfig.VERSION_NAME) {
         if (preferenceManager.previousVersionCode == -1) {
             // Nothing to catch up on: the changelog is for upgrades. Crash reporting and analytics default to on
-            // (#379, #481) on their own; nothing silently changed for a new install, so it never needs the notice.
+            // (#379, #481) on their own; noticeShown stays false so Home discloses that on the first run (#1031).
             preferenceManager.lastViewedChangelogVersion = versionName
-            analyticsConsentSettings.noticeShown.value = true
         } else if (preferenceManager.previousVersionCode != versionCode) {
             // First launch after upgrading to this version: analytics (and crash reporting) now default to on for
             // anyone who never chose (#481). The deleted Home consent card's No thanks or dismiss (#421) never wrote

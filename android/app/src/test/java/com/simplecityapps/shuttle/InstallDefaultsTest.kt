@@ -24,14 +24,14 @@ class InstallDefaultsTest {
     private val installDefaults = InstallDefaults(preferenceManager, privacySettings, analyticsConsentSettings)
 
     @Test
-    fun `a new install turns crash reporting and analytics on, has no changelog to show, and never needs the notice`() {
+    fun `a new install turns crash reporting and analytics on, has no changelog to show, and still needs the notice`() {
         installDefaults.onLaunch(versionCode = 26092501, versionName = "2026.09.25")
 
         privacySettings.crashReporting.value shouldBe true
         privacySettings.analytics.value shouldBe true
         preferenceManager.lastViewedChangelogVersion shouldBe "2026.09.25"
         preferenceManager.previousVersionCode shouldBe 26092501
-        analyticsConsentSettings.noticeShown.value shouldBe true
+        analyticsConsentSettings.noticeShown.value shouldBe false
     }
 
     @Test
