@@ -108,8 +108,8 @@ internal fun QueueHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            source?.let { QueueSourceLine(it, onOpen = { onOpenSource(it) }) }
             SectionHeader(title = stringResource(R.string.player_queue), containerColor = Color.Transparent)
+            source?.let { QueueSourceLine(it, onOpen = { onOpenSource(it) }) }
         }
         S2IconButton(icon = Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = stringResource(R.string.queue_save_as_playlist), onClick = onSave)
         S2IconButton(icon = Icons.Rounded.ClearAll, contentDescription = stringResource(R.string.menu_title_sort_clear_queue), onClick = onClear)
@@ -132,7 +132,7 @@ private fun QueueSourceLine(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClickLabel = goTo, role = Role.Button, onClick = onOpen)
-            .padding(start = S2Spacing.medium, end = S2Spacing.xsmall, top = S2Spacing.small)
+            .padding(start = S2Spacing.medium, end = S2Spacing.xsmall, bottom = S2Spacing.small)
             .testTag(PlayerTestTags.QueueSource),
     )
 }
