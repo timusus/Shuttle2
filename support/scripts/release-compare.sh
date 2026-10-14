@@ -36,8 +36,8 @@
 # Maestro drives the real UI by visible text (flows in support/maestro/release-compare/, shared, with old/ and new/
 # overrides) and this script owns the capture: SystemUI demo mode, adb screencap every ~1.5 s until 3 consecutive
 # frames are identical and no artwork placeholder is on screen (45 s timeout: a manifest warning naming the screen).
-# Credentials come from ~/.config/s2-test/emby-appreview.env (URL, USER_NAME, PASSWORD) and reach Maestro with -e
-# only; Maestro output is scrubbed of them and kept in tmp/release-compare/<run>/, never next to the shots.
+# Credentials come from ~/.config/s2-test/emby-appreview.env (URL, USER_NAME, PASSWORD), stay unexported and reach
+# Maestro only as MAESTRO_URL/MAESTRO_USER_NAME/MAESTRO_PASSWORD env of that one invocation; Maestro output is scrubbed of them and kept in tmp/release-compare/<run>/, never next to the shots.
 #
 # Output: <out>/{old,new}/NN-<id>.png, <out>/manifest.json (steps, old/new paths, versions, warnings),
 # <out>/montage/NN-<id>.png (old beside new, when ImageMagick is installed), run state in <out>/.state/.
@@ -45,6 +45,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+CALLER_PWD="$PWD"
 cd "$REPO_ROOT" || exit 1
 PATH="$PATH:$HOME/Library/Android/sdk/platform-tools"
 
@@ -87,6 +88,11 @@ while [ $# -gt 0 ]; do
     esac
 done
 [ -n "$OLD_SPEC" ] && [ -n "$NEW_SPEC" ] || { echo "release-compare: --old and --new are required" >&2; usage >&2; exit 2; }
+# relative paths mean the caller's cwd, not the repo root we cd to; an existing file is an APK, anything else a git ref
+abs_spec() { if [ -f "${CALLER_PWD}/$1" ] || [[ "$1" == *.apk ]]; then printf '%s\n' "${CALLER_PWD}/$1"; else printf '%s\n' "$1"; fi; }
+case "$OLD_SPEC" in /*) ;; *) OLD_SPEC="$(abs_spec "$OLD_SPEC")" ;; esac
+case "$NEW_SPEC" in /*) ;; *) NEW_SPEC="$(abs_spec "$NEW_SPEC")" ;; esac
+case "$OUT" in "" | /*) ;; *) OUT="${CALLER_PWD}/${OUT}" ;; esac
 case "$BUILD_TYPE" in debug | release) ;; *) echo "release-compare: --build-type must be debug or release" >&2; exit 2 ;; esac
 case "$VERSION" in old | new) VERSIONS=("$VERSION") ;; both) VERSIONS=(old new) ;; *) echo "release-compare: --version must be old, new or both" >&2; exit 2 ;; esac
 case "$PHASE" in setup | screens | all) ;; *) echo "release-compare: --phase must be setup, screens or all" >&2; exit 2 ;; esac
@@ -155,6 +161,7 @@ cleanup() {
         fi
     fi
     for wt in ${EXTRA_WORKTREES[@]+"${EXTRA_WORKTREES[@]}"}; do git worktree remove --force "$wt" >>"$LOG" 2>&1; done
+    git worktree prune >>"$LOG" 2>&1
 }
 trap cleanup EXIT
 trap 'exit 130' INT
@@ -162,14 +169,18 @@ trap 'exit 143' TERM
 
 # ---- APKs ----
 
-# resolve_apk <spec> <label>: prints the APK path. A file is used as is; a git ref is built once per commit.
+# resolve_apk <spec> <label>: sets APK_PATH (a global, so EXTRA_WORKTREES survives; no subshell). A file is used as is;
+# a git ref is built once per commit.
 resolve_apk() {
     local spec="$1" label="$2" sha src apk cached gradle=(support/scripts/remote-build.sh) env_prefix=()
-    if [ -f "$spec" ]; then printf '%s\n' "$spec"; return 0; fi
+    if [ -f "$spec" ]; then APK_PATH="$spec"; return 0; fi
     sha="$(git rev-parse --verify "${spec}^{commit}" 2>/dev/null)" || { echo "release-compare: '$spec' is neither an APK nor a git ref" >&2; return 1; }
     cached="${REPO_ROOT}/tmp/release-compare/apk/${sha:0:12}-${BUILD_TYPE}.apk"
-    if [ -f "$cached" ]; then printf '%s\n' "$cached"; return 0; fi
+    if [ -f "$cached" ]; then APK_PATH="$cached"; return 0; fi
     src="$REPO_ROOT"
+    if [ "$sha" = "$(git rev-parse HEAD)" ] && [ -n "$(git status --porcelain)" ]; then
+        echo "release-compare: WARNING: '$spec' is ${sha:0:12} but the tree has uncommitted changes; they are NOT in this build" >&2
+    fi
     if [ "$sha" != "$(git rev-parse HEAD)" ] || [ -n "$(git status --porcelain)" ]; then
         src="${REPO_ROOT}/tmp/release-compare/src-${label}-${sha:0:12}"
         rm -rf "$src"
@@ -190,7 +201,7 @@ resolve_apk() {
     [ -f "$apk" ] || { echo "release-compare: no APK at $apk" >&2; return 1; }
     mkdir -p "$(dirname "$cached")"
     cp "$apk" "$cached"
-    printf '%s\n' "$cached"
+    APK_PATH="$cached"
 }
 
 # ---- Maestro ----
@@ -208,9 +219,15 @@ run_flow() {
     elif [ -f "${FLOWS}/${id}.yaml" ]; then flow="${FLOWS}/${id}.yaml"
     else return 2; fi
     args=(-e "APP_ID=${PKG}" -e "ARTIST=${ARTIST}" -e "ALBUM=${ALBUM}" -e "TRACK=${TRACK}" -e "QUERY=${QUERY}")
-    [ -n "$creds" ] && args+=(-e "URL=${URL}" -e "USER_NAME=${USER_NAME}" -e "PASSWORD=${PASSWORD}")
-    run_with_timeout "$FLOW_TIMEOUT" maestro_run "$flow" "${WORK}/scratch" "${args[@]}" 2>&1 | scrub >"${WORK}/maestro-${ver}-${id}.log"
-    rc=${PIPESTATUS[0]}
+    # MAESTRO_-prefixed env vars reach flows as ${MAESTRO_*}; set only for this one invocation, never on argv
+    if [ -n "$creds" ]; then
+        MAESTRO_URL="$URL" MAESTRO_USER_NAME="$USER_NAME" MAESTRO_PASSWORD="$PASSWORD" \
+            run_with_timeout "$FLOW_TIMEOUT" maestro_run "$flow" "${WORK}/scratch" "${args[@]}" 2>&1 | scrub >"${WORK}/maestro-${ver}-${id}.log"
+        rc=${PIPESTATUS[0]}
+    else
+        run_with_timeout "$FLOW_TIMEOUT" maestro_run "$flow" "${WORK}/scratch" "${args[@]}" 2>&1 | scrub >"${WORK}/maestro-${ver}-${id}.log"
+        rc=${PIPESTATUS[0]}
+    fi
     rm -rf -- "${WORK}/scratch"
     if [ "$rc" -ne 0 ]; then
         warn "$ver" "$id" "flow failed (rc ${rc}), see ${WORK}/maestro-${ver}-${id}.log"
@@ -329,13 +346,18 @@ state_get() { sed -n "s/^$2=//p" "${STATE}/$1.env" 2>/dev/null; }
 
 # setup <version>: fresh install, onboarding captures, Emby sign-in, import.
 setup() {
-    local ver="$1" spec apk id rc
+    local ver="$1" spec apk id rc sha="" forget_ids=() ids_all=("${SETUP_IDS[@]}" import-progress)
     spec="$([ "$ver" = old ] && echo "$OLD_SPEC" || echo "$NEW_SPEC")"
-    apk="$(resolve_apk "$spec" "$ver")" || return 1
+    resolve_apk "$spec" "$ver" || return 1
+    apk="$APK_PATH"
+    [ -f "$spec" ] || sha="$(git rev-parse --verify "${spec}^{commit}")"
     PKG="$(emu_apk_info "$apk" package)"
     echo "release-compare: == ${ver} setup: ${PKG} =="
-    forget "$ver" "${SETUP_IDS[@]}" import-progress import
-    printf 'spec=%s\npackage=%s\nversionName=%s\nversionCode=%s\n' "$spec" "$PKG" \
+    # only the screens being re-captured, so rows of the others merge
+    for id in "${ids_all[@]}"; do selected "$id" && forget_ids+=("$id"); done
+    selected import-progress && forget_ids+=(import)
+    [ ${#forget_ids[@]} -eq 0 ] || forget "$ver" "${forget_ids[@]}"
+    printf 'spec=%s\nsha=%s\npackage=%s\nversionName=%s\nversionCode=%s\n' "$spec" "$sha" "$PKG" \
         "$(emu_apk_info "$apk" versionName)" "$(emu_apk_info "$apk" versionCode)" >"${STATE}/${ver}.env"
     adb uninstall "$PKG" >/dev/null 2>&1
     step "${ver}: install" adb install -r "$apk" || return 1
@@ -386,10 +408,10 @@ write_manifest() {
                 '{n: ($n | tonumber), id: $id, caption: "", old: (if $old == "" then null else $old end), new: (if $new == "" then null else $new end)}'
         done
     } | jq -s --argjson warnings "$warns" \
-        --arg os "$(state_get old spec)" --arg ov "$(state_get old versionName)" --arg oc "$(state_get old versionCode)" \
-        --arg ns "$(state_get new spec)" --arg nv "$(state_get new versionName)" --arg nc "$(state_get new versionCode)" \
+        --arg os "$(state_get old spec)" --arg ov "$(state_get old versionName)" --arg oc "$(state_get old versionCode)" --arg osha "$(state_get old sha)" \
+        --arg ns "$(state_get new spec)" --arg nv "$(state_get new versionName)" --arg nc "$(state_get new versionCode)" --arg nsha "$(state_get new sha)" \
         --arg run "$RUN" \
-        '{run: $run, old: {spec: $os, versionName: $ov, versionCode: ($oc | tonumber? // $oc)}, new: {spec: $ns, versionName: $nv, versionCode: ($nc | tonumber? // $nc)}, screens: map(select(.old != null or .new != null)), warnings: $warnings}' >"${OUT}/manifest.json"
+        '{run: $run, old: {spec: $os, sha: (if $osha == "" then null else $osha end), versionName: $ov, versionCode: ($oc | tonumber? // $oc)}, new: {spec: $ns, sha: (if $nsha == "" then null else $nsha end), versionName: $nv, versionCode: ($nc | tonumber? // $nc)}, screens: map(select(.old != null or .new != null)), warnings: $warnings}' >"${OUT}/manifest.json"
 }
 
 write_montages() {
@@ -407,12 +429,19 @@ write_montages() {
 
 # ---- Main ----
 
-set -a; . "$ENV_FILE"; set +a
+# not exported: only run_flow hands these to Maestro (export -n in case the file says `export`)
+. "$ENV_FILE"
+export -n URL USER_NAME PASSWORD 2>/dev/null
 for v in URL USER_NAME PASSWORD; do [ -n "${!v:-}" ] || { echo "release-compare: $v missing from $ENV_FILE" >&2; exit 1; }; done
+# an *.apk spec that isn't a file would otherwise be tried as a git ref, with a confusing error
+for spec in "$OLD_SPEC" "$NEW_SPEC"; do
+    case "$spec" in *.apk) [ -f "$spec" ] || { echo "release-compare: no such APK: $spec" >&2; exit 1; } ;; esac
+done
 echo "release-compare: ${VERSIONS[*]} / ${PHASE}, output ${OUT}, logs ${WORK}"
 
-step "remote-emu: start" support/scripts/remote-emu.sh start || exit 1
+# armed first so the EXIT trap stops a partially started lane
 LANE_STARTED=1
+step "remote-emu: start" support/scripts/remote-emu.sh start || exit 1
 eval "$(support/scripts/remote-emu.sh env)"
 MAESTRO_DEVICE_ARGS=(--device "$(support/scripts/remote-emu.sh serial)")
 # The lane's tether (Gnirehtet) asks to set up a VPN on a fresh boot; the dialog would sit over the first frames.
