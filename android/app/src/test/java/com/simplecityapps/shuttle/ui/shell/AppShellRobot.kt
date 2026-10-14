@@ -28,7 +28,6 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -457,13 +456,20 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
-    /** Taps the Now Playing bar's button for [panel], which opens it or, if it is open, closes it. */
+    /** Taps the Now Playing bar's button for [panel], which opens it or, if it is open, closes it. Lyrics is in the More menu. */
     fun tapPanelButton(panel: NowPlayingPanel) {
         val button = when (panel) {
             NowPlayingPanel.Queue -> hasText("Queue")
+
             NowPlayingPanel.SleepTimer -> hasContentDescription("Sleep timer", substring = true)
+
             NowPlayingPanel.PlaybackSound -> hasContentDescription("Playback & sound", substring = true)
-            NowPlayingPanel.Lyrics -> hasContentDescription("Show lyrics")
+
+            NowPlayingPanel.Lyrics -> {
+                tapDescription("More options")
+                tapText("Lyrics")
+                return
+            }
         }
         rule.onNode(button and hasAnyAncestor(hasTestTag(PlayerTestTags.Bar))).performClick()
         rule.waitForIdle()
@@ -753,10 +759,6 @@ class AppShellRobot(
 
     fun assertPaneAbsent() {
         rule.onNodeWithTag(PlayerTestTags.Pane).assertDoesNotExist()
-    }
-
-    fun assertDisabled(contentDescription: String) {
-        rule.onAllNodes(hasContentDescription(contentDescription)).onFirst().assertIsNotEnabled()
     }
 
     fun assertReachable(

@@ -1,24 +1,27 @@
 # Lyrics show only for songs that have them: the server has none, so turn on the LRCLIB lookup first. Maestro can't read
-# the toggle row's checked state, so tap it, and tap it again if the setting was already on (no Lyrics button).
+# the toggle row's checked state, so tap it, and tap it again if the setting was already on (no Lyrics item in More).
 appId: ${APP_ID}
 ---
 - runFlow: ../_start.yaml
 - runFlow: lyrics-toggle.yaml
+- tapOn: "More options"
 - extendedWaitUntil:
-    visible: "Show lyrics"
+    visible: "Lyrics"
     timeout: 20000
     optional: true
 - runFlow:
     when:
-      notVisible: "Show lyrics"
+      notVisible: "Lyrics"
     commands:
+      - pressKey: back
       - launchApp:
           stopApp: true
       - runFlow: ../_start.yaml
       - runFlow: lyrics-toggle.yaml
+      - tapOn: "More options"
       - extendedWaitUntil:
-          visible: "Show lyrics"
+          visible: "Lyrics"
           timeout: 20000
-- tapOn: "Show lyrics"
+- tapOn: "Lyrics"
 - waitForAnimationToEnd:
     timeout: 5000

@@ -949,7 +949,7 @@ class AppShellTest {
     }
 
     @Test
-    fun `a song with lyrics offers a Lyrics button that opens its lyrics`() {
+    fun `a song with lyrics offers Lyrics in the More menu, which opens its lyrics`() {
         robot.setContent(queue = shellQueue("First song").copy(lyrics = "Line one\nLine two"))
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.Lyrics)
@@ -959,11 +959,14 @@ class AppShellTest {
     }
 
     @Test
-    fun `a song without lyrics keeps its Lyrics button, disabled`() {
+    fun `a song without lyrics has no Lyrics item in the More menu, and the bar has no Lyrics button`() {
         robot.setContent(queue = shellQueue("First song"))
         robot.tapMiniPlayer()
+        robot.assertReachable("Lyrics", reachable = false)
 
-        robot.assertDisabled("Show lyrics")
+        robot.tapDescription("More options")
+        robot.assertReachable("Clear queue", reachable = true)
+        robot.assertReachable("Lyrics", reachable = false)
     }
 
     @Test

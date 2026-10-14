@@ -295,13 +295,6 @@ internal fun NowPlayingBar(
                     BarButton(Icons.Rounded.Bedtime, sleepTimerOpen, openSleepTimer, button)
                 }
             }
-            // Always present, so the row doesn't shift between songs; disabled when there are no lyrics to show.
-            val hasLyrics = player.lyrics != null
-            val openLyrics = { onPanel(NowPlayingPanel.Lyrics) }
-            val lyricsOpen = hasLyrics && selected == NowPlayingPanel.Lyrics
-            BarLabelled(stringResource(R.string.player_bar_lyrics), stringResource(R.string.player_lyrics), lyricsOpen, openLyrics, enabled = hasLyrics) { button ->
-                BarButton(Icons.Rounded.Lyrics, lyricsOpen, openLyrics, button, enabled = hasLyrics)
-            }
             if (player.castAvailable) {
                 // The route button is a View: a tap on the label clicks it, and it's left out of TalkBack for the label's node.
                 var castButton by remember { mutableStateOf<View?>(null) }
@@ -320,7 +313,9 @@ internal fun NowPlayingBar(
             BarLabelled(stringResource(R.string.player_queue), stringResource(R.string.player_queue), queueOpen, openQueue) { button ->
                 BarButton(Icons.AutoMirrored.Rounded.QueueMusic, queueOpen, openQueue, button)
             }
-            val showMore = { player.current?.let { mediaActions.showActions(it.actionsTarget(extraActions = listOf(clearQueue))) } ?: Unit }
+            val lyrics = S2Action(label = stringResource(R.string.player_bar_lyrics), onClick = { onPanel(NowPlayingPanel.Lyrics) }, icon = Icons.Rounded.Lyrics)
+            val extraActions = if (player.lyrics != null) listOf(lyrics, clearQueue) else listOf(clearQueue)
+            val showMore = { player.current?.let { mediaActions.showActions(it.actionsTarget(extraActions = extraActions)) } ?: Unit }
             BarLabelled(stringResource(R.string.player_bar_more), stringResource(DesignR.string.ds_more_options), selected = null, onClick = { showMore() }) { button ->
                 S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = null, onClick = { showMore() }, modifier = button)
             }
