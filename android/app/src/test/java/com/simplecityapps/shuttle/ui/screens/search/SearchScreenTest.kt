@@ -26,12 +26,10 @@ class SearchScreenTest {
     }
 
     @Test
-    fun `the field offers Settings`() {
+    fun `the field has no Settings button`() {
         robot.setContent(SearchScenarios.start)
 
-        robot.tapSettings()
-
-        robot.settingsOpened shouldBe 1
+        robot.assertNoSettingsButton()
     }
 
     @Test

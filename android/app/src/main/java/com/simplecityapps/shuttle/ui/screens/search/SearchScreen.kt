@@ -18,7 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarState
@@ -44,7 +43,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
-import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2SearchField
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
@@ -76,7 +74,6 @@ class SearchCallbacks(
     val onPlaylistClick: (Playlist) -> Unit,
     val onShowActions: (MediaActionsTarget) -> Unit,
     val onPlay: (MediaSelection) -> Unit,
-    val onOpenSettings: () -> Unit,
 )
 
 /**
@@ -125,9 +122,6 @@ fun SearchScreen(
                 },
                 placeholder = stringResource(R.string.search_placeholder),
                 focusRequester = focusRequester,
-                trailingAction = {
-                    S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
-                },
                 modifier = Modifier
                     .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
                     .fillMaxWidth()

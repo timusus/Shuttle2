@@ -16,7 +16,6 @@ import com.simplecityapps.shuttle.ui.screens.library.openTarget
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SearchRoute
-import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 fun EntryProviderScope<NavKey>.searchEntries(navigator: AppNavigator) {
@@ -53,7 +52,6 @@ private fun SearchDestination(
                 onPlaylistClick = { open(PlaylistRoute(it.id)) },
                 onShowActions = actions::showActions,
                 onPlay = { actions.dispatch(viewModel.play(it)) },
-                onOpenSettings = { onOpen(SettingsRoute) },
             ),
         )
     }

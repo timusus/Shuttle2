@@ -48,7 +48,7 @@ import com.simplecityapps.shuttle.designsystem.theme.rowSubtitle
 /**
  * The Search destination's field (reached from the Home and Library top bars): the M3 search bar's input field on its
  * container, with a search icon and a clear button while there is text. [focusRequester] lets the screen focus it on
- * arrival; [trailingAction] sits after the clear button.
+ * arrival.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +58,6 @@ fun S2SearchField(
     placeholder: String,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester = remember { FocusRequester() },
-    trailingAction: (@Composable () -> Unit)? = null,
 ) {
     val hasText = textFieldState.text.isNotEmpty()
     Surface(
@@ -74,13 +73,8 @@ fun S2SearchField(
             modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
             placeholder = { Text(placeholder) },
             leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-            trailingIcon = if (hasText || trailingAction != null) {
-                {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (hasText) S2IconButton(Icons.Rounded.Close, stringResource(R.string.ds_clear_search), { textFieldState.clearText() })
-                        trailingAction?.invoke()
-                    }
-                }
+            trailingIcon = if (hasText) {
+                { S2IconButton(Icons.Rounded.Close, stringResource(R.string.ds_clear_search), { textFieldState.clearText() }) }
             } else {
                 null
             },

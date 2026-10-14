@@ -32,8 +32,6 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
     var searches = 0
         private set
     var allSelected = 0
-    var settingsOpened = 0
-        private set
     val toggledCategories = mutableListOf<SearchCategory>()
     val removedRecentSearches = mutableListOf<String>()
     val playedSongs = mutableListOf<Int>()
@@ -65,7 +63,6 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
         onPlaylistClick = { openedPlaylists += it },
         onShowActions = { shownActions += it },
         onPlay = { playedSelections += it },
-        onOpenSettings = { settingsOpened++ },
     )
 
     fun tapText(text: String) {
@@ -85,8 +82,8 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
         rule.onAllNodesWithContentDescription("Remove from recent searches")[index].performClick()
     }
 
-    fun tapSettings() {
-        rule.onNodeWithContentDescription("Settings").performClick()
+    fun assertNoSettingsButton() {
+        rule.onNodeWithContentDescription("Settings").assertDoesNotExist()
     }
 
     fun assertTextDisplayed(text: String) {
