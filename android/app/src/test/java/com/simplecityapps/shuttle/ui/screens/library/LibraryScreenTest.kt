@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.emptySongList
 import com.simplecityapps.shuttle.ui.screens.library.songs.loadingSongList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
+import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -593,5 +594,16 @@ class LibraryScreenTest {
         )
 
         robot.assertTextDisplayed("Music / Juniper Static")
+    }
+
+    @Test
+    fun `an empty library offers to add a folder and has no offline toggle`() {
+        robot.setEmptyLibrary(LibraryAvailability.Empty(MusicAccess.Granted))
+
+        robot.assertTextDisplayed("Add folder")
+        robot.assertOfflineToggleNotDisplayed()
+        robot.clickText("Add folder")
+
+        robot.addFolderClicked shouldBe true
     }
 }

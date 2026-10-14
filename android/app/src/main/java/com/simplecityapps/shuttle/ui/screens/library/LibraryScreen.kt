@@ -104,6 +104,7 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewM
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoute
+import com.simplecityapps.shuttle.ui.screens.settings.ThisDeviceRoute
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.LocalTabReselects
@@ -193,12 +194,15 @@ fun LibraryScreen(
                                 modifier = Modifier.testTag("library-trial-chip"),
                             )
                         }
-                        S2IconButton(
-                            icon = if (offlineMode) Icons.Rounded.CloudOff else Icons.Rounded.Cloud,
-                            contentDescription = stringResource(if (offlineMode) R.string.library_offline_mode_on else R.string.library_offline_mode_off),
-                            onClick = onToggleOffline,
-                            modifier = Modifier.testTag("library-offline-mode"),
-                        )
+                        // With no songs there is nothing to take offline.
+                        if (emptyLibrary == null) {
+                            S2IconButton(
+                                icon = if (offlineMode) Icons.Rounded.CloudOff else Icons.Rounded.Cloud,
+                                contentDescription = stringResource(if (offlineMode) R.string.library_offline_mode_on else R.string.library_offline_mode_off),
+                                onClick = onToggleOffline,
+                                modifier = Modifier.testTag("library-offline-mode"),
+                            )
+                        }
                         S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                     }
                     if (compactHeight) {
@@ -443,6 +447,7 @@ fun LibraryDestination(
                         onOpenAppSettings = accessRequests.openAppSettings,
                         onScan = emptyViewModel::onScan,
                         onConnectServer = { connectingServer = true },
+                        onAddFolder = { onOpen(ThisDeviceRoute) },
                         modifier = modifier,
                         trialOffer = trialOffer,
                     )

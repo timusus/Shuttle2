@@ -113,6 +113,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var trialOpened = false
         private set
+    var addFolderClicked = false
+        private set
     var newPlaylistClicked = false
         private set
     var lastViewModeChange: ViewMode? = null
@@ -147,6 +149,39 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             }
         }
         rule.waitForIdle()
+    }
+
+    /** The container while the library has no songs, with the empty state in place of the tabs. */
+    fun setEmptyLibrary(state: LibraryAvailability.Empty) {
+        rule.setContent {
+            S2Theme {
+                LibraryScreen(
+                    uiState = libraryState(),
+                    chrome = LibraryTabChrome(),
+                    onTabSelected = {},
+                    onTabsChanged = { _, _ -> },
+                    onSelectionAction = {},
+                    onOpenSettings = {},
+                    emptyLibrary = { modifier ->
+                        LibraryEmptyScreen(
+                            state = state,
+                            onAllowAccess = {},
+                            onOpenAppSettings = {},
+                            onScan = {},
+                            onConnectServer = {},
+                            onAddFolder = { addFolderClicked = true },
+                            modifier = modifier,
+                        )
+                    },
+                    page = {},
+                )
+            }
+        }
+        rule.waitForIdle()
+    }
+
+    fun assertOfflineToggleNotDisplayed() {
+        rule.onAllNodesWithTag("library-offline-mode").fetchSemanticsNodes().isEmpty() || error("The offline toggle is shown")
     }
 
     /**

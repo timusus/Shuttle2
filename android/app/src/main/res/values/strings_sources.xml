@@ -10,7 +10,8 @@
     <string name="sources_connect_server">Connect a server</string>
     <string name="sources_scanning_title">Scanning your music</string>
     <string name="sources_no_music_title">No music found</string>
-    <string name="sources_no_music_message">Shuttle Music didn\'t find any music on this device. Add a folder in Sources, or connect a server.</string>
+    <string name="sources_no_music_message">Shuttle Music didn\'t find any music on this device. Add a folder, or connect a server.</string>
+    <string name="sources_no_music_scan_message">Shuttle Music didn\'t find any music on this device. Scan again, or connect a server.</string>
     <string name="sources_scan_again">Scan again</string>
 
     <!-- Settings > Sources: a card per source with its status (#663) -->

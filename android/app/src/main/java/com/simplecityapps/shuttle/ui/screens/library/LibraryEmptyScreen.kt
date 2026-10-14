@@ -56,9 +56,11 @@ fun LibraryEmptyScreen(
     onConnectServer: () -> Unit,
     modifier: Modifier = Modifier,
     trialOffer: TrialOfferActions? = null,
+    /** Opens Sources > This device to add a music folder; without it "No music found" offers Scan again instead. */
+    onAddFolder: (() -> Unit)? = null,
 ) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        LibraryEmptyContent(state, onAllowAccess, onOpenAppSettings, onScan, onConnectServer, Modifier)
+        LibraryEmptyContent(state, onAllowAccess, onOpenAppSettings, onScan, onConnectServer, onAddFolder, Modifier)
         if (trialOffer != null) TrialOffer(trialOffer, Modifier.align(Alignment.BottomCenter))
     }
 }
@@ -115,6 +117,7 @@ private fun LibraryEmptyContent(
     onOpenAppSettings: () -> Unit,
     onScan: () -> Unit,
     onConnectServer: () -> Unit,
+    onAddFolder: (() -> Unit)?,
     modifier: Modifier,
 ) {
     val connectServer = StateAction(stringResource(R.string.sources_connect_server), onConnectServer)
@@ -143,8 +146,8 @@ private fun LibraryEmptyContent(
 
         state.access == MusicAccess.Granted -> EmptyState(
             title = stringResource(R.string.sources_no_music_title),
-            message = stringResource(R.string.sources_no_music_message),
-            action = StateAction(stringResource(R.string.sources_scan_again), onScan),
+            message = stringResource(if (onAddFolder != null) R.string.sources_no_music_message else R.string.sources_no_music_scan_message),
+            action = if (onAddFolder != null) StateAction(stringResource(R.string.sources_add_folder), onAddFolder) else StateAction(stringResource(R.string.sources_scan_again), onScan),
             secondaryAction = connectServer,
             modifier = modifier.testTag("library-no-music"),
         )
