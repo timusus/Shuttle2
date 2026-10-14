@@ -72,7 +72,7 @@ SETUP_IDS=(launch permission analytics source add-source emby-form sign-in)
 SCREEN_IDS=(home artist-list artist-detail album-list album-detail song-list playlist-list playlist-detail genre-list
     genre-detail folder-list search mini-player now-playing queue sleep-timer sound lyrics notification settings)
 # screens that start playback: paused before capture, since a playing screen never goes still
-PLAYBACK_IDS=" mini-player now-playing queue sleep-timer lyrics notification "
+PLAYBACK_IDS=" mini-player now-playing queue sleep-timer sound lyrics notification "
 # never captured, with why (manifest not_captured)
 SKIPPED=("widget	a home-screen widget needs a launcher setup the lane doesn't have"
     "paywall	the debug build is always Pro, and a release build can't add a server without Play billing")
