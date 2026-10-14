@@ -47,9 +47,9 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.shuttle.ui.actions.NoOnlineLyrics
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.OnlineLyricsSource
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.screens.home.HomeItem
 import com.simplecityapps.shuttle.ui.screens.home.ResolveHomeItems
@@ -64,7 +64,9 @@ import kotlin.test.Test
 import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -98,6 +100,11 @@ class PlayerViewModelTest {
         }
 
         override suspend fun seedFor(hero: ArtistHeroArtwork): ArtworkSeed = error("The player seeds from songs")
+    }
+    private val onlineLyricsEnabled = MutableStateFlow(false)
+    private val onlineLyrics = object : OnlineLyricsSource {
+        override val enabled: Flow<Boolean> = onlineLyricsEnabled
+        override suspend fun lookup(song: Song): String? = "Online line".takeIf { onlineLyricsEnabled.value }
     }
     private val gatedSongs = MutableSharedFlow<Song>()
     private val replayGainModeSetting = ReplayGainModeSetting { PlaybackSettings.ReplayGain }
@@ -146,7 +153,7 @@ class PlayerViewModelTest {
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures()),
             mediaActionHandler = mediaActions.handler,
             deliveredFormats = deliveredFormats,
-            loadLyrics = LoadLyrics(songRepository, NoOnlineLyrics),
+            loadLyrics = LoadLyrics(songRepository, onlineLyrics),
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -199,6 +206,17 @@ class PlayerViewModelTest {
 
         queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
         viewModel.uiState.value.player.lyrics shouldBe null
+    }
+
+    @Test
+    fun `turning on online lyrics looks up the song that is already playing`() = runTest {
+        val viewModel = viewModel()
+        queueOperations.queueStateFlow.value = queueOf(songs("A"))
+        viewModel.uiState.value.player.lyrics shouldBe null
+
+        onlineLyricsEnabled.value = true
+
+        viewModel.uiState.value.player.lyrics shouldBe "Online line"
     }
 
     @Test

@@ -17,12 +17,13 @@ import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 
 class OnlineLyricsTest {
     private val requests = mutableListOf<HttpRequestData>()
     private var now = 1_000_000L
-    private var enabled = true
+    private val enabled = MutableStateFlow(true)
     private val store = InMemoryKeyValueStore()
 
     private var responder: (HttpRequestData) -> Pair<HttpStatusCode, String> = { HttpStatusCode.OK to FOUND }
@@ -38,14 +39,14 @@ class OnlineLyricsTest {
     }
 
     private fun onlineLyrics() = OnlineLyrics(
-        enabled = { enabled },
+        enabled = enabled,
         cache = LyricsCache(store, Dispatchers.Unconfined) { now },
         client = LrclibClient(createHttpClient(engine))
     )
 
     @Test
     fun `off makes no request`() = runTest {
-        enabled = false
+        enabled.value = false
 
         onlineLyrics().lookup(song()) shouldBe null
 
@@ -77,7 +78,7 @@ class OnlineLyricsTest {
     @Test
     fun `a cached lookup still works with the setting off`() = runTest {
         onlineLyrics().lookup(song())
-        enabled = false
+        enabled.value = false
 
         onlineLyrics().lookup(song()) shouldBe null
 

@@ -5,6 +5,8 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 
 class LoadLyricsTest {
@@ -12,6 +14,8 @@ class LoadLyricsTest {
     private val asked = mutableListOf<Long>()
     private var online: String? = "from online"
     private val onlineSource = object : OnlineLyricsSource {
+        override val enabled: Flow<Boolean> = flowOf(true)
+
         override suspend fun lookup(song: Song): String? {
             asked += song.id
             return online

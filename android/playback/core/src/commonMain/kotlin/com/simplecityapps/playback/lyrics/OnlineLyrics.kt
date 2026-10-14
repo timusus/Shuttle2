@@ -13,6 +13,8 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 /**
  * Lyrics from LRCLIB for a song with none of its own. Looks only while [enabled] (it sends the song's artist, title,
@@ -20,12 +22,12 @@ import kotlinx.coroutines.CoroutineDispatcher
  * not cached: the next view tries again.
  */
 class OnlineLyrics(
-    private val enabled: () -> Boolean,
+    override val enabled: Flow<Boolean>,
     private val cache: LyricsCache,
     private val client: LrclibClient,
 ) : OnlineLyricsSource {
     override suspend fun lookup(song: Song): String? {
-        if (!enabled()) return null
+        if (!enabled.first()) return null
         when (val cached = cache.get(song.id)) {
             is LyricsCache.Entry.Found -> return cached.text
             LyricsCache.Entry.NotFound -> return null
@@ -51,14 +53,16 @@ class OnlineLyrics(
 @ContributesBinding(AppScope::class)
 @Inject
 class AppOnlineLyrics(
-    settings: PlaybackSettings,
+    private val settings: PlaybackSettings,
     store: KeyValueStore,
     http: LrclibHttp,
     @IoDispatcher io: CoroutineDispatcher,
 ) : OnlineLyricsSource {
+    override val enabled: Flow<Boolean> get() = settings.fetchLyricsOnline.flow
+
     private val delegate by lazy {
         OnlineLyrics(
-            enabled = { settings.fetchLyricsOnline.value },
+            enabled = enabled,
             cache = LyricsCache(store, io) { Clock.System.now().toEpochMilliseconds() },
             client = LrclibClient(http.client),
         )
