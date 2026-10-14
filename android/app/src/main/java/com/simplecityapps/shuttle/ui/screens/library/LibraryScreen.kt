@@ -34,6 +34,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -203,6 +204,14 @@ fun LibraryScreen(
                                 modifier = Modifier.testTag("library-offline-mode"),
                             )
                         }
+                        if (emptyLibrary == null) {
+                            S2IconButton(
+                                icon = Icons.Rounded.Tune,
+                                contentDescription = stringResource(R.string.library_edit_tabs),
+                                onClick = { editingTabs = true },
+                                modifier = Modifier.testTag("library-edit-tabs"),
+                            )
+                        }
                         S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                     }
                     if (compactHeight) {
@@ -224,7 +233,7 @@ fun LibraryScreen(
                 modifier = Modifier.padding(padding).fillMaxSize(),
             )
         } else {
-            LibraryPager(tabs, uiState.currentTab, chrome, onTabSelected, { editingTabs = true }, Modifier.padding(padding), page)
+            LibraryPager(tabs, uiState.currentTab, chrome, onTabSelected, Modifier.padding(padding), page)
         }
     }
 
@@ -242,7 +251,6 @@ private fun LibraryPager(
     currentTab: LibraryTab?,
     chrome: LibraryTabChrome,
     onTabSelected: (LibraryTab) -> Unit,
-    onEditTabs: () -> Unit,
     modifier: Modifier,
     page: @Composable (LibraryTab) -> Unit,
 ) {
@@ -257,7 +265,6 @@ private fun LibraryPager(
             tabs = tabs,
             selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
-            onEdit = onEditTabs,
         )
         HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index ->
             // Only the visible section scrolls to the top on a re-select.
@@ -277,13 +284,12 @@ private fun LibrarySectionChips(
     tabs: List<LibraryTab>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
-    onEdit: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     var placed by remember { mutableStateOf(false) }
     LaunchedEffect(tabs, selectedIndex) {
         // Once the row holds these tabs, so the screen can open on a section past the row's edge.
-        snapshotFlow { listState.layoutInfo }.first { it.viewportSize.width > 0 && it.totalItemsCount == tabs.size + 1 }
+        snapshotFlow { listState.layoutInfo }.first { it.viewportSize.width > 0 && it.totalItemsCount == tabs.size }
         // The layout that published it may still be running; scrolling now would remeasure inside it.
         withFrameNanos { }
         // A second pass when the chip was out of the window, whose width the first could only estimate.
@@ -301,9 +307,6 @@ private fun LibrarySectionChips(
     ) {
         itemsIndexed(tabs, key = { _, tab -> tab }) { index, tab ->
             S2FilterChip(label = tab.label(), selected = index == selectedIndex, onClick = { onSelect(index) })
-        }
-        item(key = "edit") {
-            S2ActionChip(label = stringResource(R.string.library_edit_tabs_chip), onClick = onEdit, modifier = Modifier.testTag("library-edit-tabs"))
         }
     }
 }
