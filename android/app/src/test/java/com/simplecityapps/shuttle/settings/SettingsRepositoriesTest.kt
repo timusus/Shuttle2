@@ -95,7 +95,7 @@ class SettingsRepositoriesTest {
             "pref_theme_colour_from_artwork" to true,
             "pref_show_home_on_launch" to false,
             "widget_background_opacity" to 100,
-            "artwork_wifi_only" to true,
+            "artwork_wifi_only" to false,
             "artwork_local_only" to false,
             "media_session_artwork" to true,
             "pref_now_playing_artwork" to NowPlayingImage.AlbumArt,
@@ -215,7 +215,7 @@ class SettingsRepositoriesTest {
 
         AppearanceSettings(store).theme.value shouldBe ThemeMode.DayNight
         AppearanceSettings(store).accent.value shouldBe Accent.Default
-        ArtworkSettings(store).wifiOnly.value shouldBe true
+        ArtworkSettings(store).wifiOnly.value shouldBe false
     }
 
     @Test

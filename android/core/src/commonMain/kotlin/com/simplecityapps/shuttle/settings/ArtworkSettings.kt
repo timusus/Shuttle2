@@ -24,7 +24,7 @@ class ArtworkSettings @Inject constructor(
 
     companion object {
         /** Remote artwork waits for an unmetered network. */
-        val WifiOnly = Setting.boolean("artwork_wifi_only", true)
+        val WifiOnly = Setting.boolean("artwork_wifi_only", false)
 
         /** Never fetch artwork from remote sources. */
         val LocalOnly = Setting.boolean("artwork_local_only", false)

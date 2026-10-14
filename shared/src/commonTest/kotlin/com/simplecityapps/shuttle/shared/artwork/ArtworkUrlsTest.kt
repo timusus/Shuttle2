@@ -167,12 +167,12 @@ class ArtworkUrlsTest {
     }
 
     @Test
-    fun `S2 API requests stay off metered networks while artwork is wifi-only as it is by default`() = runTest {
-        artworkUrls.requests(song("song-1")).map { it.unmeteredOnly } shouldBe listOf(false, true)
-
-        artworkSettings.wifiOnly.value = false
-
+    fun `S2 API requests go on metered networks by default and stay off them only while artwork is wifi-only`() = runTest {
         artworkUrls.requests(song("song-1")).map { it.unmeteredOnly } shouldBe listOf(false, false)
+
+        artworkSettings.wifiOnly.value = true
+
+        artworkUrls.requests(song("song-1")).map { it.unmeteredOnly } shouldBe listOf(false, true)
     }
 
     @Test
@@ -206,7 +206,7 @@ class ArtworkUrlsTest {
         artworkUrls.requests(albumArtist(song)) shouldBe listOf(local)
     }
 
-    private fun s2(url: String) = ArtworkRequest(url, authorization = S2ArtworkApi.authorization, unmeteredOnly = true)
+    private fun s2(url: String) = ArtworkRequest(url, authorization = S2ArtworkApi.authorization, unmeteredOnly = false)
 
     private fun song(externalId: String) = Song(
         id = 0,
