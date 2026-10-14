@@ -22,7 +22,7 @@ interface AnalyticsSdk {
 
 /**
  * Each SDK runs only while its choice allows it. Both default to on for a user who never chose (#379, #481): Android's
- * Home says so in a card until the user acknowledges it (#1031), iOS's first-run welcome to everyone. Turning either
+ * Home says so once to an upgrader (`HomeEvent.AnalyticsNowOn`), iOS's first-run welcome to everyone. Turning either
  * off in Settings > Privacy stops its SDK at once. [startCrashReporting] and [startAnalytics] apply the stored choice
  * before anything can send a crash or an event, then follow every change to it.
  *

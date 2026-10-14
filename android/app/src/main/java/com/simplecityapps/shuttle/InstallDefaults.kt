@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
+import com.simplecityapps.shuttle.ui.screens.welcome.WelcomeSettings
 import dev.zacsweers.metro.Inject
 
 /**
@@ -13,12 +14,14 @@ class InstallDefaults @Inject constructor(
     private val preferenceManager: GeneralPreferenceManager,
     private val privacySettings: PrivacySettings,
     private val analyticsConsentSettings: AnalyticsConsentSettings,
+    private val welcomeSettings: WelcomeSettings,
 ) {
     fun onLaunch(versionCode: Int = BuildConfig.VERSION_CODE, versionName: String = BuildConfig.VERSION_NAME) {
         if (preferenceManager.previousVersionCode == -1) {
             // Nothing to catch up on: the changelog is for upgrades. Crash reporting and analytics default to on
-            // (#379, #481) on their own; noticeShown stays false so Home discloses that on the first run (#1031).
+            // (#379, #481) on their own; the welcome says so, and marks the notice shown once it has (#1031).
             preferenceManager.lastViewedChangelogVersion = versionName
+            welcomeSettings.pending.value = true
         } else if (preferenceManager.previousVersionCode != versionCode) {
             // First launch after upgrading to this version: analytics (and crash reporting) now default to on for
             // anyone who never chose (#481). The deleted Home consent card's No thanks or dismiss (#421) never wrote

@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
-import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -33,15 +32,10 @@ sealed interface HomeUiState {
     data object Loading : HomeUiState
 
     /** The library has no songs; Home is where the empty state lives. */
-    data class Empty(
-        /** As [Content.showTelemetryNotice]: a fresh install usually has no library yet. */
-        val showTelemetryNotice: Boolean,
-    ) : HomeUiState
+    data object Empty : HomeUiState
 
     data class Content(
         val showWhatsNew: Boolean,
-        /** Crash reports and usage data are on and the user hasn't yet acknowledged being told (#1031). */
-        val showTelemetryNotice: Boolean = false,
         /** The suggestion sections, in order; empty ones are left out (#633). */
         val sections: List<HomeSection>,
         val events: List<PendingEvent<HomeEvent>> = emptyList(),
@@ -54,6 +48,9 @@ sealed interface HomeUiState {
 
 /** An event Home's UI must handle once, whose loss would be a bug. */
 sealed interface HomeEvent {
+    /** Analytics just turned on for this upgrader who never chose (#481); shown once. */
+    data object AnalyticsNowOn : HomeEvent
+
     /** A shelf's songs are resolved: the UI hands [action] to the media actions to play them. */
     data class PlayShelf(val action: MediaAction) : HomeEvent
 
@@ -84,11 +81,12 @@ class HomeViewModel @Inject constructor(
     private val resolvingSections = mutableSetOf<HomeSectionId>()
     private var pickingRandom = false
 
-    // Counts as seen only once the user taps OK or Settings, so a missed card comes back next launch (#1031).
-    private val telemetryNoticePending = MutableStateFlow(
-        !readSetting(AnalyticsConsentSettings.NoticeShown) &&
-            (readSetting(PrivacySettings.CrashReporting) || readSetting(PrivacySettings.Analytics)),
-    )
+    init {
+        if (!readSetting(AnalyticsConsentSettings.NoticeShown)) {
+            saveSetting(AnalyticsConsentSettings.NoticeShown, true)
+            events.post(HomeEvent.AnalyticsNowOn)
+        }
+    }
 
     /**
      * The covers last loaded, by [HomeItem.key]. Held by the view model rather than the flow so they outlive a
@@ -136,13 +134,12 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, whatsNewPending, events.flow, refreshing, telemetryNoticePending) { (sections, covers), whatsNew, pendingEvents, refreshing, telemetryNotice ->
+    val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, whatsNewPending, events.flow, refreshing) { (sections, covers), whatsNew, pendingEvents, refreshing ->
         if (sections == null) {
-            HomeUiState.Empty(showTelemetryNotice = telemetryNotice)
+            HomeUiState.Empty
         } else {
             HomeUiState.Content(
                 showWhatsNew = whatsNew,
-                showTelemetryNotice = telemetryNotice,
                 sections = sections,
                 events = pendingEvents,
                 covers = covers,
@@ -191,11 +188,6 @@ class HomeViewModel @Inject constructor(
     fun onWhatsNewHandled() {
         markChangelogViewed()
         whatsNewPending.value = false
-    }
-
-    fun onTelemetryNoticeAcknowledged() {
-        saveSetting(AnalyticsConsentSettings.NoticeShown, true)
-        telemetryNoticePending.value = false
     }
 
     fun onEventHandled(id: Long) = events.consume(id)

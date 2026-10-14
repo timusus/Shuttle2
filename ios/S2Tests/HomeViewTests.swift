@@ -50,7 +50,7 @@ struct HomeViewTests {
     }
 
     private func content(_ sections: [HomeSection] = []) -> HomeUiState {
-        HomeUiStateContent(showWhatsNew: false, showTelemetryNotice: false, sections: sections, events: [], covers: [:], refreshing: false)
+        HomeUiStateContent(showWhatsNew: false, sections: sections, events: [], covers: [:], refreshing: false)
     }
 
     private func same(_ lhs: MediaAction?, _ rhs: MediaAction) -> Bool {
@@ -63,9 +63,8 @@ struct HomeViewTests {
     }
 
     @Test func emptyShowsTheEmptyState() throws {
-        let empty = HomeUiStateEmpty(showTelemetryNotice: false)
-        #expect((try? HomeContent(state: empty).inspect().find(text: "No Music")) != nil)
-        #expect((try? HomeContent(state: empty).inspect().find(ViewType.List.self)) == nil)
+        #expect((try? HomeContent(state: HomeUiStateEmpty.shared).inspect().find(text: "No Music")) != nil)
+        #expect((try? HomeContent(state: HomeUiStateEmpty.shared).inspect().find(ViewType.List.self)) == nil)
     }
 
     // MARK: Jump Back In

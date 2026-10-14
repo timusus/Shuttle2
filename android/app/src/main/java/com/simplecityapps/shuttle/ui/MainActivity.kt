@@ -22,11 +22,15 @@ import com.simplecityapps.shuttle.entitlement.OnPaywallClosed
 import com.simplecityapps.shuttle.ui.actions.SystemDeleteRequestReceiver
 import com.simplecityapps.shuttle.ui.actions.SystemMediaStoreSongDeleter
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
+import com.simplecityapps.shuttle.ui.screens.welcome.WelcomeGate
 import com.simplecityapps.shuttle.ui.shell.ShellRequest
 import com.simplecityapps.shuttle.ui.shell.ShellRoute
+import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.EntitlementRepository
@@ -113,23 +117,24 @@ class MainActivity : AppCompatActivity() {
                 S2AppTheme {
                     // Test tags as resource ids, so UiAutomator (the Baseline Profile journeys) and Maestro find them
                     Box(Modifier.semantics { testTagsAsResourceId = true }) {
-                        ShellRoute(shellRequests = shellRequestFlow)
+                        WelcomeGate(
+                            onOpenPrivacy = { shellRequests.trySend(ShellRequest(ShellTab.Library, SettingsDestinationRoute(SettingsDestination.Privacy))) },
+                        ) {
+                            ShellRoute(shellRequests = shellRequestFlow)
+                        }
                         PaywallHost(observePaywallRequests, onPaywallClosed)
                     }
                 }
             }
         }
 
-        // No onboarding (#379): ask for the music permission once, on first launch, and scan when it's granted.
-        // A later grant goes through Settings > Media > Sources, or the system settings. One already held at startup
-        // scans from MediaSources.scanIfNeverScanned.
-        // Up to Android 9, someone who granted it before deleting needed write access is asked for that alone; it's in the
-        // same storage group, so the system grants it without a prompt.
+        // The music permission is asked for by the welcome's "Music on this device" (#1040), the empty Library or
+        // Sources; one already held at startup scans from MediaSources.scanIfNeverScanned. Up to Android 9, someone who
+        // granted it before deleting needed write access is asked for that alone: it's in the same storage group, so
+        // the system grants it without a prompt.
         val missingPermissions = MusicPermission.missing(this)
-        if (savedInstanceState == null && missingPermissions.isNotEmpty()) {
-            if (MusicPermission.name !in missingPermissions || !sourcesSettings.musicPermissionRequested.value) {
-                musicPermissionRequest.launch(missingPermissions.toTypedArray())
-            }
+        if (savedInstanceState == null && missingPermissions.isNotEmpty() && MusicPermission.name !in missingPermissions) {
+            musicPermissionRequest.launch(missingPermissions.toTypedArray())
         }
 
         // Not on recreation, or on a relaunch from recents, which redeliver the intent that opened the file

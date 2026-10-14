@@ -283,7 +283,7 @@ struct SourcesViewTests {
     }
 
     @Test func emptyHomeOffersSources() throws {
-        let sut = HomeContent(state: HomeUiStateEmpty(showTelemetryNotice: false))
+        let sut = HomeContent(state: HomeUiStateEmpty.shared)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "homeEmpty.addSource")) != nil)
     }
 

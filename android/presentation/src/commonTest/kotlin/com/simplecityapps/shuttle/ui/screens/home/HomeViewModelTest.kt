@@ -23,7 +23,6 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.platform.AppVersion
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
-import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -133,7 +132,7 @@ class HomeViewModelTest {
 
     @Test
     fun `an empty library is the empty state`() = runTest(testDispatcher) {
-        viewModel().uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
+        viewModel().uiState.value shouldBe HomeUiState.Empty
     }
 
     @Test
@@ -388,7 +387,7 @@ class HomeViewModelTest {
     @Test
     fun `the library filling reloads home from its empty state`() = runTest(testDispatcher) {
         val viewModel = viewModel()
-        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
+        viewModel.uiState.value shouldBe HomeUiState.Empty
 
         suggestions.songCount.value = 2
         runCurrent()
@@ -495,63 +494,35 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `the telemetry notice shows on a fresh install and is not marked seen by showing`() = runTest(testDispatcher) {
+    fun `the analytics notice shows once when the notice hasn't been shown yet`() = runTest(testDispatcher) {
         suggestions.songCount.value = 1
 
-        val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
-
-        content.showTelemetryNotice shouldBe true
-        analyticsConsentSettings.noticeShown.value shouldBe false
-    }
-
-    @Test
-    fun `a fresh install with no library shows the telemetry notice until acknowledged`() = runTest(testDispatcher) {
-        val viewModel = viewModel()
-        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
-
-        viewModel.onTelemetryNoticeAcknowledged()
-        runCurrent()
-
-        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = false)
-    }
-
-    @Test
-    fun `acknowledging the telemetry notice hides it and marks it seen`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 1
         val viewModel = viewModel()
 
-        viewModel.onTelemetryNoticeAcknowledged()
-        runCurrent()
-
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().showTelemetryNotice shouldBe false
+        val content = viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
+        content.events.map { it.value } shouldBe listOf(HomeEvent.AnalyticsNowOn)
         analyticsConsentSettings.noticeShown.value shouldBe true
     }
 
     @Test
-    fun `the telemetry notice comes back on the next launch until acknowledged`() = runTest(testDispatcher) {
+    fun `consuming the analytics notice event removes it`() = runTest(testDispatcher) {
         suggestions.songCount.value = 1
-        viewModel()
+        val viewModel = viewModel()
+        val pending = (viewModel.uiState.value as HomeUiState.Content).events.single()
 
-        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().showTelemetryNotice shouldBe true
+        viewModel.onEventHandled(pending.id)
+        runCurrent()
+
+        (viewModel.uiState.value as HomeUiState.Content).events.shouldBeEmpty()
     }
 
     @Test
-    fun `the telemetry notice stays hidden for an upgrader who declined`() = runTest(testDispatcher) {
-        PrivacySettings(settingsStore).analytics.value = false
+    fun `the analytics notice does not show once already marked shown`() = runTest(testDispatcher) {
         analyticsConsentSettings.noticeShown.value = true
         suggestions.songCount.value = 1
 
-        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().showTelemetryNotice shouldBe false
-    }
-
-    @Test
-    fun `the telemetry notice stays hidden when both are off`() = runTest(testDispatcher) {
-        val privacy = PrivacySettings(settingsStore)
-        privacy.analytics.value = false
-        privacy.crashReporting.value = false
-        suggestions.songCount.value = 1
-
-        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().showTelemetryNotice shouldBe false
+        val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
+        content.events.shouldBeEmpty()
     }
 
     private fun HomeViewModel.postedEvents() = (uiState.value as HomeUiState.Content).events.map { it.value }.filter { it is HomeEvent.ShuffleRandom || it == HomeEvent.NothingToShuffle }
@@ -611,12 +582,12 @@ class HomeViewModelTest {
     @Test
     fun `playing a shelf without content does nothing`() = runTest(testDispatcher) {
         val viewModel = viewModel()
-        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
+        viewModel.uiState.value shouldBe HomeUiState.Empty
 
         viewModel.playSection(HomeSectionId.RecentlyAdded)
         runCurrent()
 
-        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
+        viewModel.uiState.value shouldBe HomeUiState.Empty
     }
 
     @Test

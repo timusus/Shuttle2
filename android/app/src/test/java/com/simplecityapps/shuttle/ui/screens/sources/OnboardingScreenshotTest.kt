@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationScreen
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsUiState
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.welcome.WelcomeScreen
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import java.io.File
@@ -33,7 +34,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Records first run, Settings > Sources (idle, scanning, a server it can't reach) its This device page and a server's page at phone size into `docs/design/onboarding/` for review (#379). A no-op
+ * Records the first run's welcome and empty Library, Settings > Sources (idle, scanning, a server it can't reach) its This device page and a server's page at phone size into `docs/design/onboarding/` for review (#379). A no-op
  * under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*OnboardingScreenshotTest*'`.
  */
@@ -68,6 +69,9 @@ class OnboardingScreenshotTest {
             }
         }
     }
+
+    @Test
+    fun welcome() = shot("welcome") { WelcomeScreen(onUseThisDevice = {}, onConnectServer = {}, onOpenPrivacy = {}) }
 
     @Test
     fun noPermission() = shot("empty-no-permission", emptyState(LibraryAvailability.Empty(MusicAccess.NotRequested)))

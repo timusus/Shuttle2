@@ -1,8 +1,11 @@
-# design-shots.sh screen: empty-library. Taken on the fresh install before the `library` fixture is seeded, so the app shows its no-music state.
+# design-shots.sh screen: empty-library. Taken on the fresh install before the `library` fixture is seeded, so the app shows its no-music state once the welcome's music prompt (#1040) is refused.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp:
     clearState: true
+- tapOn: "Music on this device"
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_deny_button"
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: empty-library

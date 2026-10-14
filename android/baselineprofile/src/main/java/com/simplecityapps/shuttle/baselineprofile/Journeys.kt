@@ -55,6 +55,8 @@ fun MacrobenchmarkScope.prepareLibrary() {
     SampleLibrary.seed()
     pressHome()
     startActivityAndWait()
+    // A fresh install opens on the welcome (#1040); the permission is already granted, so this asks nothing
+    device.wait(Until.findObject(By.text("Music on this device")), TIMEOUT_MS)?.click()
     waitForLaunchContent(FIRST_IMPORT_TIMEOUT_MS)
 }
 

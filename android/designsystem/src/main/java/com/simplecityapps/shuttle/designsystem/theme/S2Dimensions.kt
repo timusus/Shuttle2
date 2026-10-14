@@ -21,6 +21,9 @@ object S2IconSize {
 
     /** The tonal rounded-square a settings row sets its leading icon in. */
     val container = 40.dp
+
+    /** The app's launcher icon shown as a brand mark, as on the welcome screen. */
+    val brand = 96.dp
 }
 
 /** Outlines that separate a surface from what it sits on. */

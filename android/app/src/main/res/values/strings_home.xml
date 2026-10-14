@@ -108,10 +108,8 @@
     <string name="home_empty_title">No music yet</string>
     <!-- Home: message of the empty state when the library has no songs -->
     <string name="home_empty_message">Music on this device and on servers you connect shows up here</string>
-    <!-- Home: card telling a new install, or an upgrader who never chose, that crash reports and analytics are on (#481, #1031) -->
-    <string name="home_analytics_notice_message">Shuttle Music shares anonymous crash reports and usage data to help improve the app. You can turn this off in Settings.</string>
-    <!-- Home: button on the analytics notice card that acknowledges it -->
-    <string name="home_analytics_notice_ok">OK</string>
-    <!-- Home: button on the analytics notice card, opens Settings > Privacy -->
+    <!-- Home: one-time snackbar telling an upgrader analytics is now on, since it never was before (#481) -->
+    <string name="home_analytics_notice_message">Shuttle Music now shares anonymous usage data to help improve the app. You can turn this off in Settings.</string>
+    <!-- Home: action on the analytics notice snackbar, opens Settings > Privacy -->
     <string name="home_analytics_notice_action">Settings</string>
 </resources>

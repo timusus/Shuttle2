@@ -1,9 +1,12 @@
 # #379: first run from a clean install in the Compose shell (MainActivity, which the
-# caller launches), which opens on Home. The Library tab shows its empty state; "Allow access to music" shows the system
+# caller launches). Refusing the welcome's music prompt (#1040) leaves the shell on Home; the Library tab shows its empty state; "Allow access to music" shows the system
 # prompt, and granting it starts the S2 scanner and fills the Library with the seeded `playback`
 # fixture. Run it through support/scripts/checks/first-run.sh.
 appId: com.simplecityapps.shuttle.dev
 ---
+- tapOn: "Music on this device"
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_deny_button"
 - tapOn: "Library"
 - extendedWaitUntil:
     visible: "Allow access to music"

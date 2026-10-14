@@ -526,6 +526,10 @@ run_changed_mode() {
       echo "note: '${f}' is under android/ or shared/ but isn't part of a registered module; skipping"
       continue
     fi
+    if [ "${mpath}" = ":android:baselineprofile" ]; then
+      echo "note: '${f}' is in ${mpath}, an instrumented test module with no unit tests; skipping"
+      continue
+    fi
     id="$(module_id "${mpath}")"
     echo "${mpath}" >> "${WORK_DIR}/modules_seen"
     rel="${f#"${mdir}"/}"
@@ -796,6 +800,10 @@ run_changed_tests_mode() {
     IFS=$'\t' read -r mdir mpath <<< "$(module_dir_and_path_for_file "${f}")"
     if [ -z "${mpath}" ]; then
       echo "note: '${f}' is under android/ or shared/ but isn't part of a registered module; skipping"
+      continue
+    fi
+    if [ "${mpath}" = ":android:baselineprofile" ]; then
+      echo "note: '${f}' is in ${mpath}, an instrumented test module with no unit tests; skipping"
       continue
     fi
     id="$(module_id "${mpath}")"

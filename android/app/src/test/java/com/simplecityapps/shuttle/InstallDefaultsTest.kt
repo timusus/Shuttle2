@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
+import com.simplecityapps.shuttle.ui.screens.welcome.WelcomeSettings
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,17 +22,34 @@ class InstallDefaultsTest {
     private val preferenceManager = GeneralPreferenceManager(store)
     private val privacySettings = PrivacySettings(SettingsStore(store))
     private val analyticsConsentSettings = AnalyticsConsentSettings(SettingsStore(store))
-    private val installDefaults = InstallDefaults(preferenceManager, privacySettings, analyticsConsentSettings)
+    private val welcomeSettings = WelcomeSettings(SettingsStore(store))
+    private val installDefaults = InstallDefaults(preferenceManager, privacySettings, analyticsConsentSettings, welcomeSettings)
 
     @Test
-    fun `a new install turns crash reporting and analytics on, has no changelog to show, and still needs the notice`() {
+    fun `a new install turns crash reporting and analytics on, has no changelog to show, and queues the welcome`() {
         installDefaults.onLaunch(versionCode = 26092501, versionName = "2026.09.25")
 
         privacySettings.crashReporting.value shouldBe true
         privacySettings.analytics.value shouldBe true
         preferenceManager.lastViewedChangelogVersion shouldBe "2026.09.25"
         preferenceManager.previousVersionCode shouldBe 26092501
+        welcomeSettings.pending.value shouldBe true
+    }
+
+    @Test
+    fun `a new install leaves the analytics notice to the welcome`() {
+        installDefaults.onLaunch(versionCode = 26092501, versionName = "2026.09.25")
+
         analyticsConsentSettings.noticeShown.value shouldBe false
+    }
+
+    @Test
+    fun `an upgrade never queues the welcome`() {
+        preferenceManager.previousVersionCode = 26010101
+
+        installDefaults.onLaunch(versionCode = 26092501, versionName = "2026.09.25")
+
+        welcomeSettings.pending.value shouldBe false
     }
 
     @Test

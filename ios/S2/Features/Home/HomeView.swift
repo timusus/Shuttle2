@@ -90,8 +90,8 @@ final class HomeModels: ViewModelGroup {
 }
 
 /// Home from a `HomeUiState`. `showWhatsNew` has no iOS surface yet (no changelog screen until phase 7, #589), and
-/// `showTelemetryNotice` is ignored: iOS discloses telemetry on the first run's welcome (#776).
-/// `HomeEvent.PlayShelf` (a shelf header's Play, #865) is dispatched as a `MediaAction`.
+/// `HomeEvent.AnalyticsNowOn` never fires on iOS: the first run's welcome discloses telemetry instead (#776), so
+/// that event is consumed and dropped; `HomeEvent.PlayShelf` (a shelf header's Play, #865) is dispatched as a `MediaAction`.
 ///
 /// A `ScrollView` of a `LazyVStack`, not a `List`: the grid and the shelves are full-bleed, and the
 /// content is capped at `AdaptiveLayout.contentMaxWidth` and centred on an iPad.

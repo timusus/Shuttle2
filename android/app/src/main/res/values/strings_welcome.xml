@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">Welcome to Shuttle Music</string>
+    <string name="welcome_subtitle">Your music library, on this device or streamed from your own server.</string>
+    <string name="welcome_this_device">Music on this device</string>
+    <string name="welcome_telemetry">Crash reports and anonymous analytics are on, to help improve the app.</string>
+    <string name="welcome_privacy_settings">Privacy settings</string>
+</resources>

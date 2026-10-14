@@ -1,5 +1,5 @@
 # #379: first run from a clean install, with no onboarding, through the launcher's MainActivity. The
-# app opens to the Library with no changelog over it and asks for the music permission; granting it
+# app opens on the welcome (#1040) with no changelog over it; "Music on this device" asks for the music permission; granting it
 # starts the S2 scanner, the Library fills with the seeded `playback` fixture, and Settings >
 # Sources shows this device on. Run it through support/scripts/checks/first-run.sh, which clears the
 # app and seeds the files first; first-run-shell.yaml covers the Compose shell's empty state.
@@ -10,6 +10,7 @@ appId: com.simplecityapps.shuttle.dev
     stopApp: true
     permissions:
       all: unset
+- tapOn: "Music on this device"
 - tapOn:
     id: "com.android.permissioncontroller:id/permission_allow_button"
 # Debug builds are always Pro, so they thank the user once; release builds only after a purchase.

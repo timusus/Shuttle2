@@ -402,7 +402,7 @@ fi
 # MediaImporter.import() directly.
 if [ "$SKIP_ONBOARDING" = "1" ] && [ "$APP_STATE_MATCHES" != "1" ]; then
     echo "seed-test-media: writing debug-app prefs to skip onboarding (local provider) ..."
-    # Granted up front, so MainActivity doesn't ask for it on first launch.
+    # Granted up front: the import below reads MediaStore, and the welcome that would ask is skipped.
     radb shell pm grant "$DEBUG_APP_ID" android.permission.READ_MEDIA_AUDIO >/dev/null 2>&1 || true
     radb shell "run-as ${DEBUG_APP_ID} mkdir -p shared_prefs" \
         || { echo "seed-test-media: run-as failed -- is the debug APK installed?" >&2; exit 1; }
@@ -411,6 +411,9 @@ if [ "$SKIP_ONBOARDING" = "1" ] && [ "$APP_STATE_MATCHES" != "1" ]; then
 <map>
     <string name="media_providers">${PROVIDER_TYPES}</string>
     <boolean name="changelog_show_on_launch" value="false" />
+    <!-- An earlier launch, so InstallDefaults doesn't queue the first-run welcome (#1040); its analytics notice too -->
+    <int name="previous_version_code" value="1" />
+    <boolean name="pref_analytics_notice_shown" value="true" />
 </map>
 EOF
     echo "seed-test-media: launching the app ..."

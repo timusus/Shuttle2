@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.settings
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
+import com.simplecityapps.shuttle.ui.screens.welcome.WelcomeSettings
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
@@ -23,7 +24,8 @@ class SettingKeysTest {
         LibrarySettings::class,
         PlaybackSettings::class,
         EqualizerSettings::class,
-        DownloadSettings::class
+        DownloadSettings::class,
+        WelcomeSettings::class
     )
 
     @Test
@@ -80,7 +82,8 @@ class SettingKeysTest {
             "EqualizerSettings.PreampGain: equalizer_preamp_gain = 0.0",
             "DownloadSettings.WifiOnly: pref_download_wifi_only = true",
             "DownloadSettings.OfflineMode: pref_offline_mode = false",
-            "DownloadSettings.NotificationPermissionAsked: pref_download_notification_permission_asked = false"
+            "DownloadSettings.NotificationPermissionAsked: pref_download_notification_permission_asked = false",
+            "WelcomeSettings.Pending: welcome_pending = false"
         )
     }
 }

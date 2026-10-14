@@ -34,7 +34,7 @@ object HomeScenarios {
 
     val loading = HomeUiState.Loading
 
-    val empty = HomeUiState.Empty(showTelemetryNotice = false)
+    val empty = HomeUiState.Empty
 
     private fun section(
         id: HomeSectionId,
