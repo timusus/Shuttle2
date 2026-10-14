@@ -24,6 +24,13 @@ class ItemToSongTest {
     }
 
     @Test
+    fun `a song whose album has no image takes its own primary image tag as the artwork version`() {
+        val item = S2Json.decodeFromString<Item>("""{"Id": "115973", "AlbumId": "115984", "ImageTags": {"Primary": "song-tag"}}""")
+
+        item.toSong(SYNCED_AT).artworkVersion shouldBe "song-tag"
+    }
+
+    @Test
     fun `an album without an image has no artwork version`() {
         parse(albumPrimaryImageTag = null).toSong(SYNCED_AT).artworkVersion shouldBe null
     }

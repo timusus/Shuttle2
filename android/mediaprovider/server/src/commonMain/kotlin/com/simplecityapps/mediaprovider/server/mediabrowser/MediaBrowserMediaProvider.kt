@@ -397,8 +397,8 @@ fun Item.toSong(server: MediaBrowserServer, syncedAt: Instant): Song {
         sampleRate = audioStream?.sampleRate?.takeIf { it > 0 },
         channelCount = audioStream?.channels?.takeIf { it > 0 },
         audioCodec = audioStream?.codec?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
-        // Artwork for songs and albums is the album's primary image
-        artworkVersion = albumPrimaryImageTag,
+        // Artwork for songs and albums is the album's primary image, or the song's own when the album has none
+        artworkVersion = artworkTag,
         // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
         dateAdded = createdAt,
         // The server splits the file's ARTIST tag into Artists itself, so the raw credit string and COMPILATION aren't sent

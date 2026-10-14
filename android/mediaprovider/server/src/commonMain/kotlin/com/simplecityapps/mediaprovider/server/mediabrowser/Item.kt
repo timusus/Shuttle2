@@ -50,6 +50,8 @@ data class Item(
     @SerialName("Genres") val genres: List<String> = emptyList(),
     // Changes whenever the album's image does
     @SerialName("AlbumPrimaryImageTag") val albumPrimaryImageTag: String? = null,
+    // The item's own images by type; a song tagged without an album image (a single-disc "instrumental" release) still has its own Primary
+    @SerialName("ImageTags") val imageTags: Map<String, String> = emptyMap(),
     // Only returned when requested in 'fields'
     @SerialName("DateCreated") val dateCreated: String? = null,
     // A playlist's: when it was last saved (renamed, or its items edited), and how many items it holds
@@ -67,4 +69,8 @@ data class Item(
     @SerialName("PlaylistItemId") val playlistItemId: String? = null,
     // A library's kind, such as "music" or "books", as listed by /Users/{id}/Views; absent for a library of mixed content
     @SerialName("CollectionType") val collectionType: String? = null
-)
+) {
+    /** The tag of the image the song shows: its album's, else its own when the album has none. */
+    val artworkTag: String?
+        get() = albumPrimaryImageTag ?: imageTags["Primary"]
+}

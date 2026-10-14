@@ -58,6 +58,20 @@ class EmbyRemoteArtworkProviderTest {
     }
 
     @Test
+    fun `a song whose album has no image shows its own primary image`() = runTest {
+        server.respond("/Users/user-1/Items/105", "item_own_image.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/105")) shouldBe "${server.address}/Items/105/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
+    fun `an album image wins over the song's own primary image`() = runTest {
+        server.respond("/Users/user-1/Items/106", "item_album_and_own_image.json")
+
+        provider.getAlbumArtworkUrl(song("emby://item/106")) shouldBe "${server.address}/Items/202/Images/Primary?maxWidth=1000&maxHeight=1000"
+    }
+
+    @Test
     fun `artist artwork is the named artist's primary image - without asking for the song`() = runTest {
         provider.getArtistArtworkUrl(song("emby://item/102"), serverArtistId = "301") shouldBe "${server.address}/Items/301/Images/Primary?maxWidth=1000&maxHeight=1000"
         server.requests.shouldBeEmpty()

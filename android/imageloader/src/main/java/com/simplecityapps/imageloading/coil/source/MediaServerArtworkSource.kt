@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.serverArtistId
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 
@@ -19,7 +20,7 @@ internal class MediaServerSongArtworkSource(
     override suspend fun url(model: Song): String? = remoteArtworkProvider.getAlbumArtworkUrl(model)
 }
 
-/** Album art served for the album's first song. */
+/** Album art served for the album's first song with an image. */
 internal class MediaServerAlbumArtworkSource(
     private val artworkSettings: ArtworkSettings,
     private val songRepository: SongRepository,
@@ -27,7 +28,7 @@ internal class MediaServerAlbumArtworkSource(
 ) : ArtworkSource.Remote<Album> {
     override fun handles(model: Album): Boolean = !artworkSettings.localOnly.value
 
-    override suspend fun url(model: Album): String? = songRepository.firstSongOf(model)?.let { song -> remoteArtworkProvider.getAlbumArtworkUrl(song) }
+    override suspend fun url(model: Album): String? = songRepository.songsOf(model).albumArtworkSong()?.let { song -> remoteArtworkProvider.getAlbumArtworkUrl(song) }
 }
 
 /**

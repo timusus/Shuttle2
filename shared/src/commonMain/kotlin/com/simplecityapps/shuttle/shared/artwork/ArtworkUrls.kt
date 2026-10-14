@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.isAlbumArtist
 import com.simplecityapps.shuttle.model.serverArtistId
 import com.simplecityapps.shuttle.query.SongQuery
@@ -134,7 +135,7 @@ class ArtworkUrls(
     private suspend fun firstSongOf(album: Album): Song? = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
         .firstOrNull()
         .orEmpty()
-        .firstOrNull()
+        .albumArtworkSong()
 
     /**
      * The first of their songs that pins down the server's id for them ([serverArtistId], #653), with that id: their own

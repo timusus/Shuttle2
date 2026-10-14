@@ -1,0 +1,9 @@
+{
+  "Name": "Harbinger",
+  "Id": "106",
+  "Album": "Soundtrack",
+  "AlbumId": "202",
+  "AlbumPrimaryImageTag": "album-tag",
+  "AlbumArtist": "Artist One",
+  "ImageTags": { "Primary": "song-tag" }
+}

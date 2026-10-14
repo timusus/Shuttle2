@@ -5,7 +5,7 @@ import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.model.Song
 import io.ktor.http.parseUrl
 
-/** Artwork urls on the signed-in server; null when the server doesn't know the song's album, or when signed out. */
+/** Artwork urls on the signed-in server; the song's own image when its album has none; null when the server doesn't know the song's album, or when signed out. */
 open class MediaBrowserRemoteArtworkProvider(
     private val authenticationManager: MediaBrowserAuthenticationManager,
     private val itemsService: ItemsService
@@ -21,7 +21,10 @@ open class MediaBrowserRemoteArtworkProvider(
 
         val result = authenticationManager.checkSession(authenticatedCredentials, itemsService.item(address, authenticatedCredentials.accessToken, authenticatedCredentials.userId, itemId))
         if (result is NetworkResult.Success) {
-            val albumId = result.body.albumId ?: return null
+            val item = result.body
+            // An album with no image of its own 404s, while its songs may carry one each
+            if (item.albumPrimaryImageTag == null && item.imageTags.containsKey("Primary")) return primaryImageUrl(address, item.id)
+            val albumId = item.albumId ?: return null
             return primaryImageUrl(address, albumId)
         }
 
