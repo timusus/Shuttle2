@@ -646,3 +646,9 @@ Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seed
 
 - [ ] Android, a server with a large library (8k+ songs): Settings > Sources > the server > Sync now. A "syncing" progress notification appears; leave the app (home, then another app) and the import still completes, with the notification gone at the end and the library updated.
 - [ ] Android, the periodic sync (Settings > Library > rescan frequency set, then `adb shell cmd jobscheduler run -f <package> <job id>` for its job on a signed-in server whose library has been imported): a progress notification shows while it syncs and goes at the end. If none shows, `adb logcat -s Timber` for "Couldn't run the media import in the foreground" (Android 12+ refuses a foreground start from a plain background job).
+
+## Welcome screen on first launch (#1040, #1031)
+
+- [ ] Android, fresh install (`pm clear` or uninstall first): the app opens on the Welcome screen, with no permission prompt at launch. "Use music on this device" shows the real Music and audio prompt; allow it and the library fills. Repeat, denying it: the app lands on the empty library with its access message, no crash.
+- [ ] Android, fresh install: Welcome > connect a server opens the server picker over the Welcome screen; pick Emby and sign in. Welcome doesn't come back after the server is added, nor on relaunch. Back from the picker returns to Welcome.
+- [ ] Android, upgrade over an existing install with music: no Welcome screen; the library opens as before.
