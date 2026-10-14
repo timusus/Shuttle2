@@ -1,0 +1,18 @@
+# 1.0.10 re-authenticates on every import and keeps the password only when "Remember password" (off by default) is on;
+# its switch sits right of the label. Otherwise as ../sign-in.yaml.
+appId: ${APP_ID}
+---
+- tapOn: "https?://.*"
+- eraseText: 80
+- inputText: ${MAESTRO_URL}
+- tapOn: "Username"
+- inputText: ${MAESTRO_USER_NAME}
+- tapOn: "Password"
+- inputText: ${MAESTRO_PASSWORD}
+- hideKeyboard
+- tapOn:
+    rightOf: "Remember password"
+- tapOn: "(?i)authenticate"
+- extendedWaitUntil:
+    notVisible: "Username"
+    timeout: 60000

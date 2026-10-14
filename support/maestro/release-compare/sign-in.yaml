@@ -1,7 +1,7 @@
 # Env: MAESTRO_URL, MAESTRO_USER_NAME, MAESTRO_PASSWORD (MAESTRO_-prefixed so the script passes them by environment, not argv). The address field starts with "http://" in both builds.
 appId: ${APP_ID}
 ---
-- tapOn: "http://"
+- tapOn: "https?://.*"
 - eraseText: 80
 - inputText: ${MAESTRO_URL}
 - tapOn: "Username"

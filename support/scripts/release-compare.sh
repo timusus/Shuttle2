@@ -13,6 +13,8 @@
 #                        Local AVD only: after setup settles the script saves a snapshot keyed by APK sha256 and the
 #                        Emby host, and a rerun loads it instead (the onboarding shots come from the cache).
 #
+#     --resolve-only     build/resolve both APKs, print old=<apk> and new=<apk>, touch no device
+#
 #     --old / --new      an APK path, or a git ref that is built here (a bare branch name means origin/<name>, fetched
 #                        first; the current tree when the ref is HEAD and
 #                        the tree is clean, else a detached worktree under tmp/release-compare; the APK is cached
@@ -102,7 +104,7 @@ SKIPPED=("widget	a home-screen widget needs a launcher setup the lane doesn't ha
 usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
 OLD_SPEC=""; NEW_SPEC=""; SCREENS_ARG=""; OUT=""; BUILD_TYPE=debug; VERSION=both; PHASE=all; KEEP=0
-REFRESH_OLD=0; FRESH=0
+REFRESH_OLD=0; FRESH=0; RESOLVE_ONLY=0
 FLOW_TIMEOUT=240; IMPORT_TIMEOUT=300; SESSION_TIMEOUT=900
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -113,6 +115,7 @@ while [ $# -gt 0 ]; do
         --keep) KEEP=1; shift ;;
         --refresh-old) REFRESH_OLD=1; shift ;;
         --fresh) FRESH=1; shift ;;
+        --resolve-only) RESOLVE_ONLY=1; shift ;;
         --screens) SCREENS_ARG="${2:?release-compare: --screens needs a comma-separated list}"; shift 2 ;;
         --out) OUT="${2:?release-compare: --out needs a directory}"; shift 2 ;;
         --build-type) BUILD_TYPE="${2:?release-compare: --build-type needs debug or release}"; shift 2 ;;
@@ -230,7 +233,7 @@ resolve_ref() {
 # resolve_apk <spec> <label>: sets APK_PATH (a global, so EXTRA_WORKTREES survives; no subshell). A file is used as is;
 # a git ref is built once per commit.
 resolve_apk() {
-    local spec="$1" label="$2" sha src apk cached gradle=(support/scripts/remote-build.sh) env_prefix=()
+    local spec="$1" label="$2" sha src apk cached gradle=("${SCRIPT_DIR}/remote-build.sh") env_prefix=()
     if [ -f "$spec" ]; then APK_PATH="$spec"; return 0; fi
     sha="$(resolve_ref "$spec")" || { echo "release-compare: '$spec' is neither an APK nor a git ref" >&2; return 1; }
     echo "release-compare: ${label}: ${spec} is ${sha:0:12}"
@@ -253,6 +256,11 @@ resolve_apk() {
         # --local: the env reaches Gradle on this Mac only
         env_prefix=(env CI=true CONFIGURATION=Release "KEYSTORE_PATH=$HOME/.android/debug.keystore" KEYSTORE_PASSWORD=android KEYSTORE_ALIAS=androiddebugkey)
         gradle+=(--local)
+    fi
+    # trees from before the daemon JVM was pinned run Gradle 8 on JAVA_HOME, which can't read the default JDK 25
+    if [ ! -f "$src/gradle/gradle-daemon-jvm.properties" ]; then
+        env_prefix+=(env "JAVA_HOME=$(/usr/libexec/java_home -v 21)")
+        [[ " ${gradle[*]} " == *" --local "* ]] || gradle+=(--local)
     fi
     local task=assembleDebug; [ "$BUILD_TYPE" = release ] && task=assembleRelease
     (cd "$src" && step "build ${label} (${spec}, ${BUILD_TYPE})" ${env_prefix[@]+"${env_prefix[@]}"} "${gradle[@]}" -q ":android:app:${task}") >&2 || return 1
@@ -899,6 +907,14 @@ if [ ! -f "$OLD_SPEC" ] || [ ! -f "$NEW_SPEC" ]; then
 fi
 echo "release-compare: ${VERSIONS[*]} / ${PHASE}, output ${OUT}, logs ${WORK}"
 
+# upgrade-check.sh builds both sides through the same cache; stdout is exactly "old=<apk>" and "new=<apk>"
+if [ "$RESOLVE_ONLY" = 1 ]; then
+    resolve_apk "$OLD_SPEC" old >&2 || exit 1
+    echo "old=${APK_PATH}"
+    resolve_apk "$NEW_SPEC" new >&2 || exit 1
+    echo "new=${APK_PATH}"
+    exit 0
+fi
 prune_stale
 OLD_FROM_CACHE=0
 case " ${VERSIONS[*]} " in
