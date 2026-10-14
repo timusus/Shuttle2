@@ -143,7 +143,7 @@ fun WelcomeScreen(
                     S2Button(
                         text = stringResource(R.string.sources_connect_server),
                         onClick = onConnectServer,
-                        style = S2ButtonStyle.Tonal,
+                        style = S2ButtonStyle.Outlined,
                         size = S2ButtonSize.Medium,
                         modifier = Modifier.fillMaxWidth(),
                     )

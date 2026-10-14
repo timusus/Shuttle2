@@ -206,6 +206,8 @@
     <string name="settings_destination_library">Library</string>
     <!-- Settings: Title of the About settings screen -->
     <string name="settings_destination_about">About</string>
+    <!-- Settings: One line under Privacy on the settings root -->
+    <string name="settings_privacy_summary">Crash reports and analytics</string>
     <!-- Settings: Title of the Advanced group (debug logging) on the About screen -->
     <string name="settings_group_advanced">Advanced</string>
     <!-- Settings: Title of the Sources group that holds the streaming quality, download and artwork Wi-Fi rules -->

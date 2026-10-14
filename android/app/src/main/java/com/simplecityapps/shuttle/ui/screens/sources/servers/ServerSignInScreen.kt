@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -191,16 +193,28 @@ private fun SignInFields(
             missing = ServerSignInField.Password in form.missing,
             onPasswordChange = actions.onPasswordChange,
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            S2Text(stringResource(R.string.media_provider_config_switch_remember_password))
-            Spacer(Modifier.width(S2Spacing.medium))
-            Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
-        }
+        SwitchRow(stringResource(R.string.media_provider_config_switch_remember_password), form.rememberPassword, actions.onRememberPasswordChange)
         AdvancedSection(form, actions)
+    }
+}
+
+/** A label at the start and its switch at the end; the whole row toggles. */
+@Composable
+private fun SwitchRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(vertical = S2Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        S2Text(label, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(S2Spacing.medium))
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
@@ -210,15 +224,7 @@ private fun AdvancedSection(
     form: ServerSignInForm,
     actions: ServerSignInActions,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        S2Text(stringResource(R.string.media_provider_advanced))
-        Spacer(Modifier.width(S2Spacing.medium))
-        Switch(checked = form.showAdvanced, onCheckedChange = actions.onShowAdvancedChange)
-    }
+    SwitchRow(stringResource(R.string.media_provider_advanced), form.showAdvanced, actions.onShowAdvancedChange)
     if (!form.showAdvanced) return
     S2Text(stringResource(R.string.media_provider_custom_headers), style = MaterialTheme.typography.titleSmall)
     S2Text(stringResource(R.string.media_provider_custom_headers_helper), style = MaterialTheme.typography.bodySmall)

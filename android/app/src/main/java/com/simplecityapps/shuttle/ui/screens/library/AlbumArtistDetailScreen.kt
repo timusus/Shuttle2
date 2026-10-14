@@ -4,10 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -17,7 +19,14 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material.icons.rounded.UnfoldLess
 import androidx.compose.material.icons.rounded.UnfoldMore
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -347,6 +356,7 @@ private enum class ArtistSort(val order: ArtistSongSortOrder, val label: Int, va
  * menu, labelled with the current sort, and, when [allExpanded] isn't null (there are album sections), Expand all or
  * Collapse all.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SongsHeader(
     title: String,
@@ -388,11 +398,19 @@ private fun SongsHeader(
             )
         }
         if (allExpanded != null) {
-            S2IconButton(
-                icon = if (allExpanded) Icons.Rounded.UnfoldLess else Icons.Rounded.UnfoldMore,
-                contentDescription = stringResource(if (allExpanded) R.string.artist_detail_collapse_all else R.string.artist_detail_expand_all),
-                onClick = if (allExpanded) onCollapseAll else onExpandAll,
-            )
+            val label = stringResource(if (allExpanded) R.string.artist_detail_collapse_all else R.string.artist_detail_expand_all)
+            Spacer(Modifier.width(S2Spacing.small))
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                tooltip = { PlainTooltip { Text(label) } },
+                state = rememberTooltipState(),
+            ) {
+                S2IconButton(
+                    icon = if (allExpanded) Icons.Rounded.UnfoldLess else Icons.Rounded.UnfoldMore,
+                    contentDescription = label,
+                    onClick = if (allExpanded) onCollapseAll else onExpandAll,
+                )
+            }
         }
     }
 }

@@ -203,7 +203,7 @@ private val MediaProviderType.markRes: Int
 @Composable
 internal fun ProviderMark(type: MediaProviderType, modifier: Modifier = Modifier, failed: Boolean = false) {
     Box(modifier) {
-        TonalContainer(containerColor = MaterialTheme.colorScheme.secondaryContainer, size = S2IconSize.container) {
+        TonalContainer(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest, size = S2IconSize.container) {
             Image(painterResource(type.markRes), contentDescription = null, modifier = Modifier.size(S2IconSize.medium))
         }
         if (failed) {

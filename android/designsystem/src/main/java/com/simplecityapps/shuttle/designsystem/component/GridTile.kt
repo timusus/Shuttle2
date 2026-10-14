@@ -53,7 +53,8 @@ private const val SelectedArtworkScale = 0.88f
  * fills the slot (`Artwork(modifier = Modifier.fillMaxSize())`) and clips itself to its own shape.
  *
  * The title wraps to at most [titleLines] lines (two; more at the largest font sizes) and the subtitle takes [subtitleLines] (one); both
- * truncate with an ellipsis, and the subtitle sits right under the title however many lines it takes.
+ * truncate with an ellipsis, and the subtitle sits right under the title however many lines it takes, unless
+ * [alignSubtitles] reserves [titleLines] lines for the title so subtitles line up across a row of tiles.
  *
  * [selected] shrinks the artwork inside a `secondaryContainer` tile and badges it with a check;
  * [playing] marks the album or artist the current song belongs to, like [SongRow] does.
@@ -70,6 +71,7 @@ fun GridTile(
     playing: Boolean = false,
     titleLines: Int = 2,
     subtitleLines: Int = 1,
+    alignSubtitles: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onLongClickLabel: String? = null,
     interactionSource: MutableInteractionSource? = null,
@@ -128,6 +130,7 @@ fun GridTile(
                     text = title,
                     style = MaterialTheme.typography.tileTitle,
                     color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                    minLines = if (alignSubtitles) titleLines else 1,
                     maxLines = titleLines,
                     overflow = TextOverflow.Ellipsis,
                 )
