@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.designsystem.component
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -18,6 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -80,9 +85,31 @@ fun EqBand(
             topToBottom = false,
             interactionSource = interactionSource,
             thumb = { SliderDefaults.Thumb(interactionSource = interactionSource, isVertical = true, enabled = enabled, thumbSize = EqThumbSize) },
-            track = { SliderDefaults.Track(sliderState = it, modifier = Modifier.width(EqTrackThickness), enabled = enabled) },
+            track = { EqTrack(it, enabled) },
         )
         Text(frequency, style = MaterialTheme.typography.labelSmall, color = labelColor, maxLines = 1)
+    }
+}
+
+/** A vertical track filled from the 0 dB midpoint to the thumb: up for a boost, down for a cut, empty at 0 dB. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EqTrack(state: SliderState, enabled: Boolean) {
+    val colors = SliderDefaults.colors()
+    val activeColor = if (enabled) colors.activeTrackColor else colors.disabledActiveTrackColor
+    val inactiveColor = if (enabled) colors.inactiveTrackColor else colors.disabledInactiveTrackColor
+    val range = EqGainRange
+    Canvas(Modifier.width(EqTrackThickness).fillMaxHeight()) {
+        val radius = CornerRadius(size.width / 2f)
+        drawRoundRect(inactiveColor, cornerRadius = radius)
+        val fraction = ((state.value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
+        val thumbY = size.height * (1f - fraction)
+        val centreY = size.height / 2f
+        val top = minOf(thumbY, centreY)
+        val bottom = maxOf(thumbY, centreY)
+        if (bottom > top) {
+            drawRoundRect(activeColor, topLeft = Offset(0f, top), size = Size(size.width, bottom - top), cornerRadius = radius)
+        }
     }
 }
 
