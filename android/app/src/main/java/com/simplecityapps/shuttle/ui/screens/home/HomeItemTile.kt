@@ -86,7 +86,7 @@ val HomeItem.selection: MediaSelection
         is HomeItem.GenreItem -> MediaSelection.Genres(genre)
     }
 
-/** Plays the item in order from its start: [HomeItem.playAction], except a genre, whose tile shuffles but whose Play plays. */
+/** Plays the item in order from its start: [HomeItem.playAction], except a genre, whose shuffle button shuffles but whose Play plays. */
 fun HomeItem.playInOrderAction(): MediaAction = when (this) {
     is HomeItem.GenreItem -> MediaAction.Play(selection, context = playContext)
     else -> playAction()
