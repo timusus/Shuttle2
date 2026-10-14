@@ -1,13 +1,19 @@
 # 1.0.10 imports once onboarding finishes; the library shows a scanning message until it's done.
 appId: ${APP_ID}
 ---
+- extendedWaitUntil:
+    visible: "NEXT"
+    timeout: 10000
 - tapOn: "NEXT"
-- runFlow:
-    when:
-      notVisible: "Scanning your library.*"
-    commands:
-      - tapOn:
-          id: "libraryFragment"
+# finishing onboarding opens the Changelog over the library
+- extendedWaitUntil:
+    visible: "Changelog"
+    timeout: 10000
+- runFlow: ../_start.yaml
+- tapOn:
+    id: "libraryFragment"
+# the scanning message is the empty state of a list tab, and the library opens on its first tab
+- tapOn: "Artists"
 - extendedWaitUntil:
     visible: "Scanning your library.*"
     timeout: 15000
