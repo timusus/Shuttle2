@@ -2,4 +2,7 @@ appId: ${APP_ID}
 ---
 - runFlow: artist-list.yaml
 - tapOn: "${ARTIST}"
-- assertVisible: "${ALBUM}"
+# The album list loads after the header, and each row reads as one merged label ("Facelift, 1990 · 12 songs").
+- extendedWaitUntil:
+    visible: ".*${ALBUM}.*"
+    timeout: 15000
