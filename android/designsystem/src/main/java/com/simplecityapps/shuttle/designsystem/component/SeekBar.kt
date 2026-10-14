@@ -5,12 +5,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -26,15 +29,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -106,25 +108,30 @@ fun S2SeekBar(
                 )
             },
             track = { sliderState ->
+                val colors = SliderDefaults.colors()
+                val activeColor = if (enabled) colors.activeTrackColor else colors.disabledActiveTrackColor
+                val inactiveColor = if (enabled) colors.inactiveTrackColor else colors.disabledInactiveTrackColor
                 val bufferedColor = MaterialTheme.colorScheme.primary.copy(alpha = SeekBufferedAlpha)
-                val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-                val bufferedInset = with(LocalDensity.current) { S2Spacing.small.toPx() }
-                SliderDefaults.Track(
-                    sliderState = sliderState,
-                    modifier = Modifier
+                // One clipped pill with the played, loaded and remaining stretches painted across it, so the track
+                // stays whole at any progress (the stock track draws each as its own rounded piece and a stop dot).
+                Box(
+                    Modifier
+                        .fillMaxWidth()
                         .height(trackHeight)
-                        .drawWithContent {
-                            drawContent()
-                            val bufferedFraction = if (durationMs > 0) (bufferedMs.toFloat() / durationMs).coerceIn(fraction, 1f) else 0f
-                            val start = fraction * size.width + bufferedInset
-                            val end = bufferedFraction * size.width
-                            // Nothing is drawn for a local file, or once the thumb has caught up with what has loaded.
-                            if (enabled && bufferedMs in 1 until durationMs && end > start) {
-                                val left = if (rtl) size.width - end else start
-                                drawRoundRect(bufferedColor, Offset(left, 0f), Size(end - start, size.height), CornerRadius(size.height / 2))
+                        .clip(CircleShape)
+                        .drawBehind {
+                            val rtl = layoutDirection == LayoutDirection.Rtl
+                            fun stretch(from: Float, to: Float, color: Color) {
+                                val left = if (rtl) size.width * (1 - to) else size.width * from
+                                drawRect(color, Offset(left, 0f), Size(size.width * (to - from), size.height))
                             }
+                            val played = sliderState.value.coerceIn(0f, 1f)
+                            stretch(0f, 1f, inactiveColor)
+                            // Nothing is drawn for a local file, or once the thumb has caught up with what has loaded.
+                            val bufferedFraction = if (durationMs > 0) (bufferedMs.toFloat() / durationMs).coerceIn(played, 1f) else 0f
+                            if (enabled && bufferedMs in 1 until durationMs) stretch(played, bufferedFraction, bufferedColor)
+                            stretch(0f, played, activeColor)
                         },
-                    enabled = enabled,
                 )
             },
         )

@@ -139,6 +139,8 @@ fun SeekBarBoard(width: BoardWidth) {
                     interactionSource = rememberHeldInteraction { DragInteraction.Start() },
                 )
             },
+            BoardSection("Just started, loaded ahead") { S2SeekBar(positionMs = 3_000, durationMs = 383_000, bufferedMs = 60_000, onSeek = {}) },
+            BoardSection("Finished") { S2SeekBar(positionMs = 383_000, durationMs = 383_000, onSeek = {}) },
             BoardSection("Over an hour") { S2SeekBar(positionMs = 1_830_000, durationMs = 5_025_000, onSeek = {}) },
         ),
     )

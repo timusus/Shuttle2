@@ -92,7 +92,7 @@ val CatalogEntries = listOf(
     CatalogEntry("player-controls", "Player controls", listOf("playing", "paused", "buffering", "shuffle on, repeat all", "repeat one")) {
         PlayerControlsBoard(it)
     },
-    CatalogEntry("seek-bar", "Seek bar", listOf("resting", "disabled", "buffering", "dragging", "over an hour")) { SeekBarBoard(it) },
+    CatalogEntry("seek-bar", "Seek bar", listOf("resting", "disabled", "buffering", "dragging", "just started", "finished", "over an hour")) { SeekBarBoard(it) },
     CatalogEntry("progress", "Playback progress", listOf("playing", "paused", "indeterminate")) { ProgressBoard(it) },
     CatalogEntry("player-sheet", "Player sheet", listOf("sheet handle", "expanded, no panel", "queue open, player pushed up")) { PlayerSheetBoard(it) },
     CatalogEntry("player-pane", "Player pane", listOf("pane", "pane, queue open")) { PlayerPaneBoard(it) },
