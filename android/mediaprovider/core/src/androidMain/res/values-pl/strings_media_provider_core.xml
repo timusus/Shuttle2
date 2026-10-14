@@ -11,15 +11,12 @@
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_emby">Emby</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_emby">Personal media server</string>
     <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_jellyfin">Personal media server</string>
     <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_plex">Pleks</string>
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_plex">Personal media server</string>
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">Skanowanie nie powiodło się</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->

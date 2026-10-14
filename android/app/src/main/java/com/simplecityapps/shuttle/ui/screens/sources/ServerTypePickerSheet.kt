@@ -22,7 +22,14 @@ fun ServerTypePickerSheet(
 ) {
     S2ActionsSheet(
         title = stringResource(R.string.sources_connect_server),
-        actions = ServerTypes.map { type -> S2Action(stringResource(type.titleRes), onClick = { onTypeSelected(type) }) },
+        actions = ServerTypes.map { type ->
+            S2Action(
+                label = stringResource(type.titleRes),
+                onClick = { onTypeSelected(type) },
+                supporting = stringResource(type.descriptionRes),
+                leading = { ProviderMark(type) },
+            )
+        },
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         sheetState = sheetState,

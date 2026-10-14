@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 /**
  * One verb in a menu or an actions sheet. [destructive] draws it in `error` (Delete, Remove);
  * [selected] non-null makes it a choice (a sort field, the sort order), checked when true.
+ * [supporting] and [leading] only show in an actions sheet row.
  */
 data class S2Action(
     val label: String,
@@ -36,6 +37,8 @@ data class S2Action(
     val icon: ImageVector? = null,
     val destructive: Boolean = false,
     val selected: Boolean? = null,
+    val supporting: String? = null,
+    val leading: (@Composable () -> Unit)? = null,
 )
 
 /**

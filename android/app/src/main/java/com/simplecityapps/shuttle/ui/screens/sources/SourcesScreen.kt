@@ -1,27 +1,38 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
 import android.text.format.DateUtils
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.CloudOff
-import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material3.ListItemShapes
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ActionsSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2Icon
 import com.simplecityapps.shuttle.designsystem.component.SettingProgress
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
+import com.simplecityapps.shuttle.designsystem.component.TonalContainer
+import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
 import com.simplecityapps.shuttle.model.MediaProviderType
 import java.text.NumberFormat
 import kotlin.time.Clock
@@ -49,9 +60,11 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
                 @Composable { shapes: ListItemShapes ->
                     LinkSetting(
                         title = stringResource(server.type.titleRes),
-                        summary = serverStatusLine(server, now),
+                        summaryHead = server.account ?: stringResource(R.string.sources_server_connected).takeIf { server.status == SourceStatus.Idle },
+                        summary = serverSyncLine(server, now),
                         onClick = { actions.onServerClick(server) },
-                        icon = if (server.status is SourceStatus.Failed) Icons.Rounded.CloudOff else Icons.Rounded.Dns,
+                        leading = { ProviderMark(server.type, failed = server.status is SourceStatus.Failed) },
+                        summaryIsError = server.status is SourceStatus.Failed,
                         progress = server.status.progress,
                         shapes = shapes,
                         modifier = Modifier.testTag("sources-server-${server.type.name}"),
@@ -112,32 +125,28 @@ internal fun deviceStatusLine(uiState: SourcesUiState, now: Instant): String = w
     }
 }
 
-/** A server's status: syncing with its progress, unreachable, or its songs, when it last updated and any listing shortfall; led by its "user@host" account once it has one, else "Connected". */
+/** The second line of a server row, under its account: a sync's progress, unreachable, or "N songs · updated X"; null when an idle server has neither yet. */
 @Composable
-internal fun serverStatusLine(server: ServerSource, now: Instant): String = when (val status = server.status) {
-    is SourceStatus.Importing -> withAccount(
-        server.account,
-        status.progress?.let { progress ->
-            stringResource(R.string.sources_server_syncing_count, progress.progress.formatted(), progress.total.formatted())
-        } ?: stringResource(R.string.sources_server_syncing),
-    )
+internal fun serverSyncLine(server: ServerSource, now: Instant): String? = when (val status = server.status) {
+    is SourceStatus.Importing -> status.progress?.let { progress ->
+        stringResource(R.string.sources_server_syncing_count, progress.progress.formatted(), progress.total.formatted())
+    } ?: stringResource(R.string.sources_server_syncing)
 
-    is SourceStatus.Failed -> withAccount(server.account, stringResource(R.string.sources_server_unreachable))
+    is SourceStatus.Failed -> stringResource(R.string.sources_server_unreachable)
 
-    SourceStatus.Idle -> {
-        val connected = server.account ?: stringResource(R.string.sources_server_connected)
-        val withSongs = server.songs?.let { stringResource(R.string.sources_status_songs_updated, connected, songsLabel(it)) } ?: connected
-        val withUpdated = server.updated?.let { stringResource(R.string.sources_status_songs_updated, withSongs, updatedLabel(it, now)) } ?: withSongs
-        if (server.listingShortfall > 0) {
-            stringResource(R.string.sources_status_songs_updated, withUpdated, pluralStringResource(R.plurals.sources_server_listing_shortfall, server.listingShortfall, server.listingShortfall.formatted()))
-        } else {
-            withUpdated
-        }
-    }
+    SourceStatus.Idle -> listOfNotNull(
+        server.songs?.let { songsLabel(it) },
+        server.updated?.let { updatedLabel(it, now) },
+        server.listingShortfall.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.sources_server_listing_shortfall, it, it.formatted()) },
+    ).takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 
+/** [serverSyncLine] on one line, led by the server's "user@host" account once it has one, else "Connected" while idle. */
 @Composable
-private fun withAccount(account: String?, status: String): String = account?.let { stringResource(R.string.sources_status_songs_updated, it, status) } ?: status
+internal fun serverStatusLine(server: ServerSource, now: Instant): String {
+    val lead = server.account ?: stringResource(R.string.sources_server_connected).takeIf { server.status == SourceStatus.Idle }
+    return listOfNotNull(lead, serverSyncLine(server, now)).joinToString(" · ")
+}
 
 @Composable
 internal fun songsLabel(count: Int): String = pluralStringResource(R.plurals.sources_songs, count, count.formatted())
@@ -167,3 +176,47 @@ internal val MediaProviderType.titleRes: Int
         MediaProviderType.Subsonic -> R.string.media_provider_title_subsonic
         MediaProviderType.Shuttle, MediaProviderType.MediaStore -> R.string.sources_this_device
     }
+
+@get:StringRes
+internal val MediaProviderType.descriptionRes: Int
+    get() = when (this) {
+        MediaProviderType.Jellyfin -> MediaProviderR.string.media_provider_description_jellyfin
+        MediaProviderType.Emby -> MediaProviderR.string.media_provider_description_emby
+        MediaProviderType.Plex -> MediaProviderR.string.media_provider_description_plex
+        MediaProviderType.Subsonic -> MediaProviderR.string.media_provider_description_subsonic
+        MediaProviderType.Shuttle -> MediaProviderR.string.media_provider_description_s2
+        MediaProviderType.MediaStore -> MediaProviderR.string.media_provider_description_media_store
+    }
+
+@get:DrawableRes
+private val MediaProviderType.markRes: Int
+    get() = when (this) {
+        MediaProviderType.Jellyfin -> MediaProviderR.drawable.ic_jellyfin
+        MediaProviderType.Emby -> MediaProviderR.drawable.ic_emby
+        MediaProviderType.Plex -> MediaProviderR.drawable.ic_plex
+        MediaProviderType.Subsonic -> MediaProviderR.drawable.ic_subsonic
+        MediaProviderType.Shuttle -> MediaProviderR.drawable.ic_s2
+        MediaProviderType.MediaStore -> MediaProviderR.drawable.ic_baseline_android_24
+    }
+
+/** The provider's own mark in the same tonal square as the other settings icons, as the servers' row icon and in the type picker; [failed] adds an error badge. */
+@Composable
+internal fun ProviderMark(type: MediaProviderType, modifier: Modifier = Modifier, failed: Boolean = false) {
+    Box(modifier) {
+        TonalContainer(containerColor = MaterialTheme.colorScheme.secondaryContainer, size = S2IconSize.container) {
+            Image(painterResource(type.markRes), contentDescription = null, modifier = Modifier.size(S2IconSize.medium))
+        }
+        if (failed) {
+            S2Icon(
+                Icons.Rounded.Error,
+                contentDescription = null, // the row summary already says "Can't reach"
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .size(S2IconSize.small)
+                    .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                    .testTag("server-error-badge"),
+            )
+        }
+    }
+}

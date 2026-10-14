@@ -60,7 +60,7 @@ class ServerSignInTest {
     fun `Plex asks for no address or password - it signs in with plex_tv`() {
         robot.setContent(serverSignInForm(MediaProviderType.Plex))
 
-        robot.assertTextDisplayed("Plex Media Server")
+        robot.assertTextDisplayed("Plex Media Server, through your Plex account")
         robot.assertTextDisplayed("Sign in to your Plex account in the browser, then come back here. Shuttle Music connects to your Plex Media Server for you.")
         robot.assertFieldCount(0)
         robot.clickText("Sign in with Plex")

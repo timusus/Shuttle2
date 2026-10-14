@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -28,12 +29,24 @@ internal fun TonalIconContainer(
     iconSize: Dp,
     modifier: Modifier = Modifier,
 ) {
+    TonalContainer(containerColor = containerColor, size = size, modifier = modifier) {
+        Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(iconSize))
+    }
+}
+
+/** The [TonalIconContainer]'s square around other [content], such as a brand mark that keeps its own colours. */
+@Composable
+fun TonalContainer(
+    containerColor: Color,
+    size: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
     Box(
         modifier = modifier
             .size(size)
             .background(containerColor, IconContainerShape),
         contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(iconSize))
-    }
+        content = content,
+    )
 }

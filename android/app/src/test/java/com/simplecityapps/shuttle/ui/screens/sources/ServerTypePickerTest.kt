@@ -27,6 +27,16 @@ class ServerTypePickerTest {
     }
 
     @Test
+    fun `each row says what the server is`() {
+        robot.setContent()
+
+        robot.assertTextDisplayed("Free, open-source media server")
+        robot.assertTextDisplayed("Media server with optional Emby Premiere")
+        robot.assertTextDisplayed("Plex Media Server, through your Plex account")
+        robot.assertTextDisplayed("Navidrome, gonic, Airsonic and other Subsonic-compatible music servers")
+    }
+
+    @Test
     fun `choosing a type reports it`() {
         robot.setContent()
 

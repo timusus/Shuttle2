@@ -11,15 +11,15 @@
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_emby">Emby</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_emby">Personal media server</string>
+    <string name="media_provider_description_emby">Media server with optional Emby Premiere</string>
     <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_jellyfin">Personal media server</string>
+    <string name="media_provider_description_jellyfin">Free, open-source media server</string>
     <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_plex">Plex</string>
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_plex">Personal media server</string>
+    <string name="media_provider_description_plex">Plex Media Server, through your Plex account</string>
     <!-- The name of the 'Subsonic' media provider, for servers speaking the Subsonic API (Navidrome is the best known). Product names - probably don't need to be translated-->
     <string name="media_provider_title_subsonic">Navidrome / Subsonic</string>
     <!-- The description of the 'Subsonic' media provider. Navidrome, gonic and Airsonic are music servers - probably don't need to be translated-->
@@ -33,7 +33,7 @@
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">Authentication Successful</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
-    <string name="media_provider_title_long_plex">Plex Media Server</string>
+    <string name="media_provider_title_long_plex">Plex Media Server, through your Plex account</string>
     <!-- The longer title of a Subsonic-compatible server, such as Navidrome. Product names - probably don't need to be translated -->
     <string name="media_provider_title_long_subsonic">Navidrome / Subsonic server</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->

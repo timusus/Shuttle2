@@ -130,8 +130,12 @@ class OnboardingTest {
     fun `connected servers show their account and status and open their page - add a server picks a type`() {
         robot.setSources(SourcesScenarios.serverUnreachable)
 
-        robot.assertTextDisplayed("tim@jellyfin.local · 1,842 songs · Updated 2 hours ago")
-        robot.assertTextDisplayed("tim@plex.local · Can't reach")
+        robot.assertTextDisplayed("tim@jellyfin.local")
+        robot.assertTextDisplayed("1,842 songs · Updated 2 hours ago")
+        robot.assertTextDisplayed("tim@plex.local")
+        robot.assertTextDisplayed("Can't reach")
+        robot.assertServerFailed(MediaProviderType.Plex)
+        robot.assertServerNotFailed(MediaProviderType.Jellyfin)
         robot.assertTextNotDisplayed("Emby")
         robot.clickText("Plex")
         robot.lastServer shouldBe SourcesScenarios.serverUnreachable.servers.first { it.type == MediaProviderType.Plex }
@@ -144,8 +148,10 @@ class OnboardingTest {
     fun `a server's listing shortfall shows on its row`() {
         robot.setSources(SourcesScenarios.serverShortfall)
 
-        robot.assertTextDisplayed("tim@jellyfin.local · 1,842 songs · Updated 2 hours ago · 3 items the server counts but doesn't return")
-        robot.assertTextDisplayed("tim@plex.local · 1,842 songs · Updated 2 hours ago")
+        robot.assertTextDisplayed("tim@jellyfin.local")
+        robot.assertTextDisplayed("1,842 songs · Updated 2 hours ago · 3 items the server counts but doesn't return")
+        robot.assertTextDisplayed("tim@plex.local")
+        robot.assertTextDisplayed("1,842 songs · Updated 2 hours ago")
     }
 
     @Test

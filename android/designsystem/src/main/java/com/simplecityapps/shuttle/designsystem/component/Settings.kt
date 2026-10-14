@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2IconSize
@@ -68,6 +69,8 @@ fun SettingsGroup(
  * A setting that opens another screen, or acts when tapped. Android's convention: no trailing chevron; the [summary] carries the current value.
  * Beside an open screen, as in a list-detail layout, pass [selected]: the row becomes selectable and the one whose screen
  * is open takes the secondary container. Left null, the row is a plain button with no selection state to announce.
+ * [leading] replaces the icon with other content (a brand mark); [summaryHead] is a first summary line kept to one line, middle-ellipsised.
+ * [summaryIsError] draws the [summary] in the error colour.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -82,8 +85,11 @@ fun LinkSetting(
     progress: SettingProgress? = null,
     selected: Boolean? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
+    leading: (@Composable () -> Unit)? = null,
+    summaryHead: String? = null,
+    summaryIsError: Boolean = false,
 ) {
-    val leadingContent: (@Composable () -> Unit)? = icon?.let { { SettingIcon(it, iconStyle, enabled) } }
+    val leadingContent: (@Composable () -> Unit)? = leading ?: icon?.let { { SettingIcon(it, iconStyle, enabled) } }
     if (selected == null) {
         SegmentedListItem(
             onClick = onClick,
@@ -92,7 +98,7 @@ fun LinkSetting(
             colors = settingColors(),
             enabled = enabled,
             leadingContent = leadingContent,
-            supportingContent = settingSummary(summary, progress),
+            supportingContent = settingSummary(summary, progress, summaryHead, summaryIsError),
         ) { Text(title) }
     } else {
         SegmentedListItem(
@@ -103,7 +109,7 @@ fun LinkSetting(
             colors = settingColors(highlightSelected = true),
             enabled = enabled,
             leadingContent = leadingContent,
-            supportingContent = settingSummary(summary, progress),
+            supportingContent = settingSummary(summary, progress, summaryHead, summaryIsError),
         ) { Text(title) }
     }
 }
@@ -248,19 +254,25 @@ fun InfoSetting(
 @Immutable
 data class SettingProgress(val fraction: Float? = null)
 
-/** A row's supporting content: its [summary], with [progress]'s bar under it while there's work under way. */
+/** A row's supporting content: an optional single-line [head] (middle-ellipsised, for an account or host) over its [summary], with [progress]'s bar under it while there's work under way. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun settingSummary(summary: String?, progress: SettingProgress?): (@Composable () -> Unit)? {
-    if (progress == null) return summary?.let { { Text(it) } }
+private fun settingSummary(summary: String?, progress: SettingProgress?, head: String? = null, isError: Boolean = false): (@Composable () -> Unit)? {
+    if (progress == null && head == null) return summary?.let { { Text(it, color = summaryColor(isError)) } }
     return {
         Column {
-            summary?.let { Text(it) }
-            val modifier = Modifier.fillMaxWidth().padding(top = S2Spacing.small).testTag("setting-progress")
-            val fraction = progress.fraction
-            if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
+            head?.let { Text(it, maxLines = 1, overflow = TextOverflow.MiddleEllipsis) }
+            summary?.let { Text(it, color = summaryColor(isError)) }
+            if (progress != null) {
+                val modifier = Modifier.fillMaxWidth().padding(top = S2Spacing.small).testTag("setting-progress")
+                val fraction = progress.fraction
+                if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
+            }
         }
     }
 }
+
+@Composable
+private fun summaryColor(isError: Boolean): Color = if (isError) MaterialTheme.colorScheme.error else Color.Unspecified
 
 /**
  * Rows sit in `surfaceContainer` so a group reads as one container on the `surface` screen. A

@@ -6,7 +6,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -16,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.library.TrialOfferActions
@@ -115,6 +118,16 @@ class OnboardingRobot(private val composeTestRule: ComposeContentTestRule) {
     fun assertTextNotDisplayed(text: String) {
         composeTestRule.onAllNodesWithText(text).assertCountEquals(0)
     }
+
+    fun assertServerFailed(type: MediaProviderType) {
+        composeTestRule.onAllNodes(serverErrorBadge(type), useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    fun assertServerNotFailed(type: MediaProviderType) {
+        composeTestRule.onAllNodes(serverErrorBadge(type), useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    private fun serverErrorBadge(type: MediaProviderType) = hasTestTag("server-error-badge") and hasAnyAncestor(hasTestTag("sources-server-${type.name}"))
 
     fun clickTag(tag: String) {
         composeTestRule.onNodeWithTag(tag).performClick()
