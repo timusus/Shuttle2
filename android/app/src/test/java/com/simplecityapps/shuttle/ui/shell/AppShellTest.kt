@@ -810,7 +810,7 @@ class AppShellTest {
 
         robot.tapDescription("More options")
         robot.tapText("Add to playlist")
-        robot.assertTextDisplayed("New Playlist")
+        robot.assertTextDisplayed("New playlist")
         robot.tapText("Road trip")
 
         val added = robot.actions.mediaActions.single()

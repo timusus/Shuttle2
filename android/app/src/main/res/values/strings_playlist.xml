@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Menu option to create a new playlist -->
-    <string name="playlist_menu_create_playlist">New Playlist</string>
+    <string name="playlist_menu_create_playlist">New playlist</string>
     <!-- Shown when a playlist is successfully created -->
     <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g>\' successfully created</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->

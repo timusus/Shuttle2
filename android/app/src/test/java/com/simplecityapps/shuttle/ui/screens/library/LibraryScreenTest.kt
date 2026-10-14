@@ -538,7 +538,7 @@ class LibraryScreenTest {
         robot.clickText("Road trip")
         robot.lastPlaylistClicked shouldBe playlist
 
-        robot.clickText("New Playlist")
+        robot.clickText("New playlist")
         robot.newPlaylistClicked shouldBe true
     }
 

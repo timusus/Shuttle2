@@ -104,12 +104,12 @@ class MediaActionsHostTest {
     }
 
     @Test
-    fun `Add to Playlist opens the picker with New Playlist first, then the playlists`() {
+    fun `Add to Playlist opens the picker with New playlist first, then the playlists`() {
         setContent(target(onlyTypes = setOf(MediaActionType.AddToPlaylist)))
         rule.onNodeWithText("Add to playlist").performClick()
         rule.waitForIdle()
 
-        rule.onNodeWithText("New Playlist").assertIsDisplayed()
+        rule.onNodeWithText("New playlist").assertIsDisplayed()
         rule.onNodeWithText("Road trip").performClick()
         rule.waitForIdle()
 
