@@ -34,7 +34,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
-import com.simplecityapps.shuttle.designsystem.component.S2PlaybackProgress
+import com.simplecityapps.shuttle.designsystem.component.S2ProgressBar
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -131,7 +131,7 @@ private fun LibraryEmptyContent(
             EmptyState(title = stringResource(R.string.sources_scanning_title), icon = Icons.Rounded.Search)
             val progressModifier = Modifier.widthIn(max = 320.dp).fillMaxWidth().padding(horizontal = S2Spacing.large)
             val fraction = scan.fraction
-            S2PlaybackProgress(progress = fraction?.let { { it } }, playing = true, modifier = progressModifier)
+            S2ProgressBar(progress = fraction?.let { { it } }, modifier = progressModifier)
             scan.message?.let { message ->
                 S2Text(
                     text = message,

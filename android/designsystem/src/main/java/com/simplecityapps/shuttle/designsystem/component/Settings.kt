@@ -12,7 +12,6 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
@@ -250,12 +249,11 @@ fun InfoSetting(
     ) { Text(title) }
 }
 
-/** Work a settings row is doing, drawn as a wavy progress bar under its summary: [fraction] done, or null while it can't tell. */
+/** Work a settings row is doing, drawn as a progress bar under its summary: [fraction] done, or null while it can't tell. */
 @Immutable
 data class SettingProgress(val fraction: Float? = null)
 
 /** A row's supporting content: an optional single-line [head] (middle-ellipsised, for an account or host) over its [summary], with [progress]'s bar under it while there's work under way. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun settingSummary(summary: String?, progress: SettingProgress?, head: String? = null, isError: Boolean = false): (@Composable () -> Unit)? {
     if (progress == null && head == null) return summary?.let { { Text(it, color = summaryColor(isError)) } }
     return {
@@ -265,7 +263,7 @@ private fun settingSummary(summary: String?, progress: SettingProgress?, head: S
             if (progress != null) {
                 val modifier = Modifier.fillMaxWidth().padding(top = S2Spacing.small).testTag("setting-progress")
                 val fraction = progress.fraction
-                if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
+                S2ProgressBar(progress = fraction?.let { { it } }, modifier = modifier)
             }
         }
     }

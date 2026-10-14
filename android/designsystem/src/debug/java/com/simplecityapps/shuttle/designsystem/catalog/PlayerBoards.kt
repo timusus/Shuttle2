@@ -41,6 +41,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2PanelSheet
 import com.simplecityapps.shuttle.designsystem.component.S2PlaybackProgress
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
+import com.simplecityapps.shuttle.designsystem.component.S2ProgressBar
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 import com.simplecityapps.shuttle.designsystem.component.S2SheetHandle
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
@@ -154,6 +155,7 @@ fun ProgressBoard(width: BoardWidth) {
             BoardSection("Playing (wavy)") { S2PlaybackProgress(progress = { 0.4f }, playing = true, modifier = Modifier.fillMaxWidth()) },
             BoardSection("Paused (flat)") { S2PlaybackProgress(progress = { 0.4f }, playing = false, modifier = Modifier.fillMaxWidth()) },
             BoardSection("Indeterminate (loading)") { S2PlaybackProgress(progress = null, playing = true, modifier = Modifier.fillMaxWidth()) },
+            BoardSection("Plain bar (imports, downloads)") { S2ProgressBar(progress = { 0.4f }, modifier = Modifier.fillMaxWidth()) },
         ),
     )
 }

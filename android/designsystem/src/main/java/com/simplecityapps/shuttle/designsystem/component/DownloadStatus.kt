@@ -37,7 +37,7 @@ fun S2DownloadStatus(
             S2Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (progress != null) {
-            S2PlaybackProgress(progress = { progress }, playing = true, modifier = Modifier.fillMaxWidth())
+            S2ProgressBar(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
     }
 }
