@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.shuttle.designsystem.component.S2ProgressBar
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
@@ -44,7 +44,7 @@ fun HorizontalLoadingView(
             )
         }
 
-        LinearProgressIndicator(
+        S2ProgressBar(
             progress = { progress },
             modifier = Modifier.fillMaxWidth()
         )

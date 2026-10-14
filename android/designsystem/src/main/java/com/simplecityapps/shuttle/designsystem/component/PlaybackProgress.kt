@@ -25,12 +25,13 @@ private const val WAVELENGTH_SCALE = 1.75f
 private const val WAVE_SPEED_WAVELENGTHS_PER_SECOND = 0.5f
 
 private val wavelength: Dp = WavyProgressIndicatorDefaults.LinearDeterminateWavelength * WAVELENGTH_SCALE
+private val indeterminateWavelength: Dp = WavyProgressIndicatorDefaults.LinearIndeterminateWavelength * WAVELENGTH_SCALE
 private val waveSpeed: Dp = wavelength * WAVE_SPEED_WAVELENGTHS_PER_SECOND
 
 /** Flat at the ends of the track, like [WavyProgressIndicatorDefaults.indicatorAmplitude], [PEAK_AMPLITUDE] in between. */
 private fun taperedAmplitude(progress: Float): Float = if (progress <= AMPLITUDE_TAPER_START || progress >= AMPLITUDE_TAPER_END) 0f else PEAK_AMPLITUDE
 
-/** False when the system's animator duration scale is 0 ("Remove animations"). Read once per composition site. */
+/** False when the system's animator duration scale is 0 ("Remove animations"). Not observed: a change applies when the composable next enters composition. */
 @Composable
 private fun rememberSystemAnimationsEnabled(): Boolean {
     val resolver = LocalContext.current.contentResolver
@@ -49,11 +50,16 @@ fun S2PlaybackProgress(
     playing: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val animationsEnabled = rememberSystemAnimationsEnabled()
     if (progress == null) {
-        LinearWavyProgressIndicator(modifier = modifier)
+        if (animationsEnabled) {
+            LinearWavyProgressIndicator(modifier = modifier, amplitude = PEAK_AMPLITUDE, wavelength = indeterminateWavelength)
+        } else {
+            S2ProgressBar(progress = null, modifier = modifier)
+        }
         return
     }
-    val waving = playing && rememberSystemAnimationsEnabled()
+    val waving = playing && animationsEnabled
     // The wave's height is a colour-like effect, not a position, so it eases without overshoot.
     val scale by animateFloatAsState(if (waving) 1f else 0f, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "amplitude")
     LinearWavyProgressIndicator(
