@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
@@ -94,7 +95,11 @@ class LocalGenreRepository(
     override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = combine(genreRelay.filterNotNull(), albumIndex.updates) { genres, index ->
         genres.songs[genre].orEmpty()
             .sortedWith(compareBy<Song>({ index.identities[it.id]?.albumArtistName?.lowercase().orEmpty() }, { it.album?.lowercase() }, { it.id }))
-            .distinctBy { song -> index.identities[song.id]?.groupKey ?: song.id }
+            .groupBy { song -> index.identities[song.id]?.groupKey ?: song.id }
+            .values
+            .mapNotNull { albumSongs -> albumSongs.albumArtworkSong() }
+            // Albums with art lead so a tile isn't a placeholder while another album of the genre has a cover; the sort is stable.
+            .sortedBy { song -> song.artworkVersion == null }
             .take(limit)
             .withAlbumIdentities(index.identities)
     }.flowOn(Dispatchers.IO)

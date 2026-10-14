@@ -59,6 +59,25 @@ class LocalGenreRepositoryTest : InMemoryDatabaseTest() {
     }
 
     @Test
+    fun `genre cover songs prefer albums with artwork and a song of an album that has it`() = runTest {
+        database.songDataDao().insert(
+            listOf(
+                createSongData("Bare Album", "Artist A", track = 1).copy(genres = listOf("Dance")),
+                createSongData("Covered Album", "Artist B", track = 1).copy(genres = listOf("Dance")),
+                createSongData("Covered Album", "Artist B", track = 2).copy(genres = listOf("Dance"), artworkVersion = "v1"),
+                createSongData("Other Covered", "Artist C", track = 1).copy(genres = listOf("Dance"), artworkVersion = "v2"),
+            ),
+        )
+        val repository = database.libraryAlbumIndex().let { index -> LocalGenreRepository(backgroundScope, LocalSongRepository(backgroundScope, database.songDataDao(), index), index) }
+
+        val covers = repository.getGenreCoverSongs("Dance", limit = 2).first()
+
+        covers.map { it.album } shouldBe listOf("Covered Album", "Other Covered")
+        covers.map { it.artworkVersion } shouldBe listOf("v1", "v2")
+        repository.getGenreCoverSongs("Dance", limit = 4).first().map { it.album } shouldBe listOf("Covered Album", "Other Covered", "Bare Album")
+    }
+
+    @Test
     fun `excluded songs and other genres are left out`() = runTest {
         insert(Triple("Kid A", "Radiohead", listOf("Electronic")), Triple("Amnesiac", "Radiohead", listOf("Electronic")))
         val kidA = database.songDataDao().get().first { it.album == "Kid A" }
