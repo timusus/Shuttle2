@@ -1,1 +1,1 @@
-{ "type": "improvements", "text": "Shuttle now tells you on first launch that it sends crash reports and anonymous usage, with a card on Home that stays until you dismiss it and a switch to turn it off.", "commits": [] }
+{ "type": "improvements", "text": "Shuttle now tells you on first launch that it sends crash reports and anonymous usage, with a card on Home that stays until you dismiss it and a Settings button to turn it off.", "commits": ["e175bb557", "7aadd86e2"] }

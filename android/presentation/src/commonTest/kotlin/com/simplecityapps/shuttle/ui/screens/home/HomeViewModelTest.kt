@@ -133,7 +133,7 @@ class HomeViewModelTest {
 
     @Test
     fun `an empty library is the empty state`() = runTest(testDispatcher) {
-        viewModel().uiState.value shouldBe HomeUiState.Empty
+        viewModel().uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
     }
 
     @Test
@@ -388,7 +388,7 @@ class HomeViewModelTest {
     @Test
     fun `the library filling reloads home from its empty state`() = runTest(testDispatcher) {
         val viewModel = viewModel()
-        viewModel.uiState.value shouldBe HomeUiState.Empty
+        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
 
         suggestions.songCount.value = 2
         runCurrent()
@@ -505,6 +505,17 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a fresh install with no library shows the telemetry notice until acknowledged`() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
+
+        viewModel.onTelemetryNoticeAcknowledged()
+        runCurrent()
+
+        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = false)
+    }
+
+    @Test
     fun `acknowledging the telemetry notice hides it and marks it seen`() = runTest(testDispatcher) {
         suggestions.songCount.value = 1
         val viewModel = viewModel()
@@ -600,12 +611,12 @@ class HomeViewModelTest {
     @Test
     fun `playing a shelf without content does nothing`() = runTest(testDispatcher) {
         val viewModel = viewModel()
-        viewModel.uiState.value shouldBe HomeUiState.Empty
+        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
 
         viewModel.playSection(HomeSectionId.RecentlyAdded)
         runCurrent()
 
-        viewModel.uiState.value shouldBe HomeUiState.Empty
+        viewModel.uiState.value shouldBe HomeUiState.Empty(showTelemetryNotice = true)
     }
 
     @Test

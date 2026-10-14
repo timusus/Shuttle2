@@ -145,14 +145,17 @@ fun HomeScreen(
         when (uiState) {
             HomeUiState.Loading -> LoadingState(contentModifier)
 
-            HomeUiState.Empty -> if (emptyContent != null) {
-                emptyContent(contentModifier)
-            } else {
-                EmptyState(
-                    title = stringResource(R.string.home_empty_title),
-                    message = stringResource(R.string.home_empty_message),
-                    modifier = contentModifier,
-                )
+            is HomeUiState.Empty -> Column(contentModifier) {
+                if (uiState.showTelemetryNotice) TelemetryNoticeCard(callbacks)
+                if (emptyContent != null) {
+                    emptyContent(Modifier.fillMaxWidth().weight(1f))
+                } else {
+                    EmptyState(
+                        title = stringResource(R.string.home_empty_title),
+                        message = stringResource(R.string.home_empty_message),
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                    )
+                }
             }
 
             // The bar's scroll behaviour sits inside the pull, so pulling down expands the bar before it refreshes.

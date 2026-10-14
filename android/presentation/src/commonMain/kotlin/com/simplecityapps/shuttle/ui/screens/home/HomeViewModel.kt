@@ -33,7 +33,10 @@ sealed interface HomeUiState {
     data object Loading : HomeUiState
 
     /** The library has no songs; Home is where the empty state lives. */
-    data object Empty : HomeUiState
+    data class Empty(
+        /** As [Content.showTelemetryNotice]: a fresh install usually has no library yet. */
+        val showTelemetryNotice: Boolean,
+    ) : HomeUiState
 
     data class Content(
         val showWhatsNew: Boolean,
@@ -135,7 +138,7 @@ class HomeViewModel @Inject constructor(
 
     val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, whatsNewPending, events.flow, refreshing, telemetryNoticePending) { (sections, covers), whatsNew, pendingEvents, refreshing, telemetryNotice ->
         if (sections == null) {
-            HomeUiState.Empty
+            HomeUiState.Empty(showTelemetryNotice = telemetryNotice)
         } else {
             HomeUiState.Content(
                 showWhatsNew = whatsNew,
