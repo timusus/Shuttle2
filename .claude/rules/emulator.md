@@ -105,16 +105,29 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
 `support/scripts/release-compare.sh --old <apk|git-ref> --new <apk|git-ref>` captures matched old/new screenshots of
 the real UI against the Emby test library (`~/.config/s2-test/emby-appreview.env`) on one lane, into
 `build/release-compare/<old>-vs-<new>/` with a `manifest.json` and side-by-side montages (ImageMagick). Run it in
-phases, each a few minutes in the foreground: `--version old --phase setup` (install, onboarding captures, sign in, wait
-until the library list is stable over 3 polls, 5 min cap), then `--version old --phase screens --keep`, then the same for
-`new`; each run merges its rows and warnings into the manifest, and `--screens a,b` redoes single screens. `setup` and
-`--keep` leave the lane up; stop it when done.
+phases, each a foreground call: `--version old --phase setup` (install, onboarding captures, sign in, wait until the
+library list is stable over 3 polls, 5 min cap), then `--version old --phase screens --keep --screens a,b,c` in batches
+of about 3 (prewarm ~1 min plus ~1 min a screen; one long call hits the job time limit), then the same for `new`. Each
+run merges its rows and warnings into the manifest and rewrites the montages. `setup` and `--keep` leave the device up;
+stop it when done.
 
-- Maestro only navigates (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides); the script
-  owns the capture: demo-mode status bar, 3 identical frames, then an artwork placeholder check (each version's
-  placeholder icon colour as ImageMagick connected components on its tile colour). A placeholder gets 15 s to load, then
-  the frame is kept with a manifest warning; on the Emby library these are albums with no art on the server.
+- **Device:** a box lane, else (`remote-emu.sh status` exit 3) the local AVD `s2test` (`S2_LOCAL_AVD` overrides),
+  booted headless; always `adb -s emulator-5554`, since a phone may be attached. Before `new`'s setup park the AVD's
+  seeded music (`adb shell mv /sdcard/Music/music /sdcard/rc-parked/`, which holds a `.nomedia`), or the new build
+  imports it alongside Emby; move it back and `adb emu kill` at the end.
+- **Screens** (ids in `--help`): onboarding, import progress, home, artist/album/song/playlist/genre/folder lists and
+  details, search, mini player, now playing, queue, sleep timer, sound, lyrics, media notification, settings. Pairs are
+  fair: albums in grid on both, album detail reached via search on both. `pairing` is `both`, `old_only` or `new_only`
+  (1.0.10 has no folders or lyrics; new has no permission or analytics step). `not_captured` lists the widget and
+  paywall (never captured) and notes such as 1.0.10's import progress, which finishes before a scanning message shows.
+- Maestro only navigates (`support/maestro/release-compare/`, shared flows plus `old/` and `new/` overrides; select by
+  visible text, content description or resource id); the script owns the capture: demo-mode status bar, playback paused
+  on player screens, 3 identical frames, then an artwork placeholder check (each version's placeholder icon colour as
+  ImageMagick connected components on its tile colour). A placeholder gets 15 s to load, then the frame is kept without
+  a warning (Emby albums with no art); a frame that never settles in 45 s is a manifest warning naming the screen.
+- Credentials reach Maestro only as `MAESTRO_URL`/`MAESTRO_USER_NAME`/`MAESTRO_PASSWORD` env of one invocation (the
+  passthrough works on Maestro 2.10.0), never argv, and Maestro logs are scrubbed of them.
 - Targets (Alice In Chains / Facelift / Man in the Box / "Alice") are one config block at the top of the script; the
-  artist and album have server art.
+  artist and album have server art, and LRCLIB has the track's lyrics (new's lyrics flow turns the lookup on).
 - A git ref builds a debug APK once per commit (`tmp/release-compare/apk/`): a release build can't add a server on a
   lane, since without Play billing it never becomes Pro. `--help` has the options.

@@ -13,13 +13,16 @@
 #     --version          which build(s) to run (default both, old first)
 #     --phase            setup: fresh install, demo mode, the onboarding captures, sign in to Emby, wait for the
 #                        import. screens: artwork prewarm and the library captures on the app setup left installed.
-#                        all (default): both. Each phase stays under ~8 minutes per version, so run them one call
-#                        at a time; the lane's AVD is read-only, so screens needs the lane setup ran on: setup
-#                        always leaves it up, screens and all stop it unless --keep.
+#                        all (default): both. Run one phase per call; screens takes ~1 min of prewarm plus ~1 min
+#                        a screen, so capture them in batches of about 3 with --screens. The lane's AVD is
+#                        read-only, so screens needs the lane setup ran on: setup always leaves it up, screens and
+#                        all stop it unless --keep.
 #     --screens a,b      only capture these ids (the other setup steps still run, so the library exists). Ids:
 #                          launch permission analytics source add-source emby-form sign-in import-progress
-#                          home artist-list artist-detail album-list album-detail search now-playing settings
-#                        Onboarding differs by version: a step a version doesn't have is null in the manifest.
+#                          home artist-list artist-detail album-list album-detail song-list playlist-list
+#                          playlist-detail genre-list genre-detail folder-list search mini-player now-playing queue
+#                          sleep-timer sound lyrics notification settings
+#                        A screen a version doesn't have is null in the manifest (pairing old_only/new_only).
 #     --out <dir>        output directory (default build/release-compare/<old>-vs-<new>, from the APK version
 #                        or the ref name). Runs merge into it: a capture replaces only its own screen's row.
 #     --build-type       how a git ref is built (default debug). release is a minified release build signed with
@@ -29,9 +32,13 @@
 #
 # Typical run, one foreground call per line:
 #   release-compare.sh --old <apk> --new main --version old --phase setup
-#   release-compare.sh --old <apk> --new main --version old --phase screens --keep
-#   release-compare.sh --old <apk> --new main --version new --phase setup
-#   release-compare.sh --old <apk> --new main --version new --phase screens
+#   release-compare.sh --old <apk> --new main --version old --phase screens --keep --screens home,album-list,album-detail
+#   ... one screens call per batch of ~3 ids, then the same for --version new
+#   adb -s emulator-5554 emu kill (local AVD) or remote-emu.sh stop (lane) when done
+#
+# Device: a box lane (remote-emu.sh); when the box can't run one (status exit 3) the local AVD $S2_LOCAL_AVD (default
+# s2test), booted headless if none is running. Park the AVD's seeded /sdcard/Music/music (move it out of Music) before
+# new's setup, or the new build imports it alongside Emby; put it back when done.
 #
 # Maestro drives the real UI by visible text (flows in support/maestro/release-compare/, shared, with old/ and new/
 # overrides) and this script owns the capture: SystemUI demo mode, adb screencap every ~1.5 s until 3 consecutive
