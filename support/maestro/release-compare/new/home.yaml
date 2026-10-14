@@ -1,0 +1,7 @@
+appId: ${APP_ID}
+---
+- runFlow: ../home.yaml
+# Home shows a static loading indicator until its sections load, and the settle check alone accepts that frame.
+- extendedWaitUntil:
+    visible: "Recently added"
+    timeout: 30000
