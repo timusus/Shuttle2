@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "\"Connect a server\" on the empty library and Home opens the sign-in form again instead of closing.", "commits": [] }
