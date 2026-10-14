@@ -646,6 +646,11 @@ screens() {
     [ ${#ids[@]} -gt 0 ] || return 0
     forget "$ver" "${ids[@]}" prewarm
     emu_demo_mode on
+    # a user browses with something queued, so every screen shows the mini player; paused, since a playing screen never
+    # goes still. Each flow's cold start restores the queue.
+    start_app
+    step "${ver}: start playback" run_flow "$ver" mini-player
+    adb shell input keyevent KEYCODE_MEDIA_PAUSE >>"$LOG" 2>&1
     # a version without a screen's flow has no such screen (pairing old_only/new_only)
     local todo=() pending=() next=() attempt k final crashed
     for id in "${ids[@]}"; do flow_path "$ver" "$id" >/dev/null && todo+=("$id"); done
