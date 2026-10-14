@@ -75,12 +75,14 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `the bar stays pinned as a long Home scrolls`() {
+    fun `the bar is titled Home and keeps its actions in place as a long Home scrolls`() {
         robot.setContent(HomeScenarios.content)
+        robot.assertTextDisplayed("Home")
         val settingsTop = robot.settingsTop()
 
         robot.dragListUp()
 
+        robot.assertTextDisplayed("Home")
         robot.settingsTop() shouldBe settingsTop
     }
 
@@ -338,10 +340,10 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `home has no title and no search button, which the Search tab covers`() {
+    fun `home is titled and has no search button, which the Search tab covers`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertTextNotShown("Home")
+        robot.assertTextDisplayed("Home")
         robot.assertDescriptionNotShown("Search")
     }
 

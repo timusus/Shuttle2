@@ -48,11 +48,11 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Card
 import com.simplecityapps.shuttle.designsystem.component.S2Icon
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2PullToRefreshBox
 import com.simplecityapps.shuttle.designsystem.component.S2Scaffold
 import com.simplecityapps.shuttle.designsystem.component.S2Text
-import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2ShelfTileWidth
@@ -87,8 +87,8 @@ class HomeCallbacks(
 /**
  * Home (#633): Jump back in as a grid, then the library's shelves; at cold start, Shuffle all and a line on how Home
  * fills in; or the empty state when there's no music yet. There's no resume hero: the mini player is that (#646).
- * The bar is a pinned, untitled small bar holding Shuffle all and the Settings gear. The first section
- * leads with a headline; every shelf after it takes the one title header. Search is its own tab.
+ * The bar is a large "Home" title that collapses on scroll (as on iOS), holding Shuffle all and the Settings gear. The
+ * first section leads with a headline; every shelf after it takes the one title header. Search is its own tab.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,15 +102,14 @@ fun HomeScreen(
     // Fully drawn, for the startup metrics and the Baseline Profile (docs/performance/android-startup.md), once the
     // library has loaded: the sections, or the empty state.
     ReportDrawnWhen { uiState !is HomeUiState.Loading }
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     S2Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            // Untitled: the content leads, not the word "Home".
-            S2TopBar(
-                title = "",
+            S2LargeTopBar(
+                title = stringResource(R.string.shell_tab_home),
                 actions = {
                     // Cold start has its own, larger Shuffle all.
                     if (uiState is HomeUiState.Content && !uiState.coldStart) {
