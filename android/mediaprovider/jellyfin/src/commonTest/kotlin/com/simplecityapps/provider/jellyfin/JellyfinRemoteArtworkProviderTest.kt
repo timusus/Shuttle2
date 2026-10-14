@@ -59,6 +59,12 @@ class JellyfinRemoteArtworkProviderTest {
     }
 
     @Test
+    fun `a song with a sibling's artwork item asks for that item's image - without asking for the song`() = runTest {
+        provider.getAlbumArtworkUrl(song("jellyfin://item/song-2").copy(artworkItemId = "song-3")) shouldBe "${server.address}/Items/song-3/Images/Primary?maxWidth=1000&maxHeight=1000"
+        server.requests.shouldBeEmpty()
+    }
+
+    @Test
     fun `artist artwork is the named artist's primary image - without asking for the song`() = runTest {
         provider.getArtistArtworkUrl(song("jellyfin://item/song-2"), serverArtistId = "artist-1") shouldBe "${server.address}/Items/artist-1/Images/Primary?maxWidth=1000&maxHeight=1000"
         server.requests.shouldBeEmpty()

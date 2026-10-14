@@ -26,6 +26,8 @@ data class SongDataUpdate(
     @ColumnInfo(name = "lyrics") var lyrics: String? = null,
     @ColumnInfo(name = "grouping") var grouping: String? = null,
     @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
+    // Written on every update, so a sync fills it in for a server song stored before it existed (#1048)
+    @ColumnInfo(name = "artworkItemId") var artworkItemId: String? = null,
     // Written on update too, so a remote song's server date replaces an older import stamp. The importer's diff carries
     // the stored value over when the provider has none, so a local rescan or tag edit leaves it where it was.
     @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null,
@@ -71,6 +73,7 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     lyrics = lyrics,
     grouping = grouping,
     artworkVersion = artworkVersion,
+    artworkItemId = artworkItemId,
     dateAdded = dateAdded,
     albumArtists = albumArtists,
     artistsTag = artistsTag,

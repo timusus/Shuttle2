@@ -100,7 +100,7 @@ object CoilModule {
                 add(FolderSongArtworkSource(context, sharedStorageListsImages))
                 add(EmbeddedSongArtworkSource(context, ArtworkTagReader(kTagLib::getArtwork), tagReadGuard))
                 if (!sharedStorageListsImages) add(MediaStoreSongArtworkSource(context))
-                add(MediaServerSongArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
+                add(MediaServerSongArtworkSource(artworkSettings, remoteArtworkProvider))
                 add(S2SongArtworkSource(artworkSettings))
             }
         val albumSources =

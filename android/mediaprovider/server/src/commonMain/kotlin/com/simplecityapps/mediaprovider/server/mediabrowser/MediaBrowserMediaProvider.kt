@@ -72,7 +72,12 @@ open class MediaBrowserMediaProvider(
                 concatenated(libraries.map { libraryId -> queryItems(address = address, session = session, libraryId = libraryId, since = since, syncedAt = syncedAt) }, key = Song::path).map { event ->
                     if (event is FlowEvent.Success && since != null) {
                         val played = playedSince(address, session, since, syncedAt)?.filter { song -> song.path in storedPaths }
-                        FlowEvent.Success(event.result.withPlayedSongs(played).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }), event.missing)
+                        FlowEvent.Success(
+                            event.result.withPlayedSongs(played).withFavouriteChanges(existingSongs, favouritePaths(address, session)?.associateWith { syncedAt }).withSiblingArtwork(existingSongs),
+                            event.missing
+                        )
+                    } else if (event is FlowEvent.Success) {
+                        FlowEvent.Success(event.result.withSiblingArtwork(existingSongs), event.missing)
                     } else {
                         event
                     }
@@ -351,6 +356,28 @@ open class MediaBrowserMediaProvider(
 }
 
 private fun QueryResult.toPage() = Page(items, totalRecordCount)
+
+/**
+ * Gives each song with no image of its own (and an album with none either) the image of the first song of its album that
+ * has one, as [albumArtworkSong] picks the album's cover, so the song shows what the album does. [known] are the songs
+ * already stored, which stand in for siblings an incremental sync didn't return.
+ */
+internal fun List<Song>.withSiblingArtwork(known: List<Song> = emptyList()): List<Song> {
+    val paths = mapTo(HashSet()) { song -> song.path }
+    val donors =
+        (this + known.filter { song -> song.path !in paths })
+            .filter { song -> song.serverAlbumId != null && song.artworkVersion != null }
+            .groupBy { song -> song.serverAlbumId }
+            .mapValues { (_, songs) -> songs.first() }
+    return map { song ->
+        val donor = donors[song.serverAlbumId]
+        if (song.artworkVersion != null || song.serverAlbumId == null || donor == null) {
+            song
+        } else {
+            song.copy(artworkVersion = donor.artworkVersion, artworkItemId = donor.artworkItemId ?: donor.externalId)
+        }
+    }
+}
 
 /** Small, as a sync usually stops on the first page: few songs are played between two syncs. */
 private const val PLAYED_PAGE_SIZE = 100

@@ -15,6 +15,11 @@ open class MediaBrowserRemoteArtworkProvider(
     override fun handles(scheme: String?): Boolean = scheme == this.scheme
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? {
+        song.artworkItemId?.let { sibling ->
+            val address = authenticationManager.getAddress() ?: return null
+            if (authenticationManager.getAuthenticatedCredentials() == null) return null
+            return primaryImageUrl(address, sibling)
+        }
         val itemId = parseUrl(song.path)?.segments?.lastOrNull() ?: return null
         val address = authenticationManager.getAddress() ?: return null
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials() ?: return null

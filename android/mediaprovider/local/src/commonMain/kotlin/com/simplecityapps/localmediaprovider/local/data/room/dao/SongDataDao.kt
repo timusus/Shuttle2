@@ -483,5 +483,6 @@ fun SongData.toSong(): Song = Song(
     mbAlbumArtistIds = mbAlbumArtistIds,
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
-    serverAlbumArtistIds = serverAlbumArtistIds
+    serverAlbumArtistIds = serverAlbumArtistIds,
+    artworkItemId = artworkItemId
 )

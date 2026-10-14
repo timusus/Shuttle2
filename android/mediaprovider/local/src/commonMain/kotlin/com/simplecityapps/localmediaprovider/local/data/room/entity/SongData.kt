@@ -70,7 +70,8 @@ data class SongData(
     @ColumnInfo(name = "mbAlbumArtistIds") var mbAlbumArtistIds: List<String>? = null,
     @ColumnInfo(name = "serverAlbumId") var serverAlbumId: String? = null,
     @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
-    @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null
+    @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null,
+    @ColumnInfo(name = "artworkItemId") var artworkItemId: String? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -120,7 +121,8 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     mbAlbumArtistIds = mbAlbumArtistIds,
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
-    serverAlbumArtistIds = serverAlbumArtistIds
+    serverAlbumArtistIds = serverAlbumArtistIds,
+    artworkItemId = artworkItemId
 ).apply {
     id = this@toSongData.id
 }
@@ -150,7 +152,7 @@ const val SONG_COLUMNS =
         "replayGainTrack, replayGainAlbum, grouping, bitRate, bitDepth, sampleRate, channelCount, audioCodec, " +
         "artworkVersion, dateAdded, favouritedAt, albumArtists, artistsTag, artistDisplay, compilation, mbTrackId, " +
         "mbAlbumId, mbReleaseGroupId, mbArtistIds, mbAlbumArtistIds, serverAlbumId, serverArtistIds, " +
-        "serverAlbumArtistIds"
+        "serverAlbumArtistIds, artworkItemId"
 
 /** [SONG_COLUMNS], each qualified by the `songs` table, for a join. */
 const val SONG_COLUMNS_QUALIFIED =
@@ -161,4 +163,4 @@ const val SONG_COLUMNS_QUALIFIED =
         "songs.bitRate, songs.bitDepth, songs.sampleRate, songs.channelCount, songs.audioCodec, songs.artworkVersion, " +
         "songs.dateAdded, songs.favouritedAt, songs.albumArtists, songs.artistsTag, songs.artistDisplay, " +
         "songs.compilation, songs.mbTrackId, songs.mbAlbumId, songs.mbReleaseGroupId, songs.mbArtistIds, " +
-        "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds"
+        "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds, songs.artworkItemId"

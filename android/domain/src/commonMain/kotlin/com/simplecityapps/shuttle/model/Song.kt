@@ -43,6 +43,9 @@ data class Song(
     // Opaque token from the song's provider that changes whenever its artwork does; null when the
     // provider has none. Artwork cache keys include it, so art refreshes on the next sync after a change.
     val artworkVersion: String? = null,
+    // The server item whose image stands in for this song's own, when the song has none and a sibling track on its album
+    // does; [artworkVersion] is then that item's tag. Null when the song's own item is the one to ask for.
+    val artworkItemId: String? = null,
     // When the song was added: the server's date for a remote song, otherwise stamped on first import. Kept through later
     // updates, unlike [lastModified], which moves with every tag edit. Null for a song that isn't in the library, or
     // from a provider that has no date for it.
