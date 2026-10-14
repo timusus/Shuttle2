@@ -1,0 +1,1 @@
+{ "type": "improvements", "text": "Now Playing is tidier: the seek bar reads as one track at any point in a song, the Lyrics button stays in place (greyed out when a song has none), the Queue heading sits above \"Playing from\", and turning on online lyrics looks them up for the song that's already playing.", "commits": [] }

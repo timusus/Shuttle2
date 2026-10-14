@@ -959,11 +959,11 @@ class AppShellTest {
     }
 
     @Test
-    fun `a song without lyrics has no Lyrics button`() {
+    fun `a song without lyrics keeps its Lyrics button, disabled`() {
         robot.setContent(queue = shellQueue("First song"))
         robot.tapMiniPlayer()
 
-        robot.assertReachable("Show lyrics", reachable = false)
+        robot.assertDisabled("Show lyrics")
     }
 
     @Test

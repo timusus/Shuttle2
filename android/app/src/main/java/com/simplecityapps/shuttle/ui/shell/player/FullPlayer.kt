@@ -295,12 +295,12 @@ internal fun NowPlayingBar(
                     BarButton(Icons.Rounded.Bedtime, sleepTimerOpen, openSleepTimer, button)
                 }
             }
-            if (player.lyrics != null) {
-                val openLyrics = { onPanel(NowPlayingPanel.Lyrics) }
-                val lyricsOpen = selected == NowPlayingPanel.Lyrics
-                BarLabelled(stringResource(R.string.player_bar_lyrics), stringResource(R.string.player_lyrics), lyricsOpen, openLyrics) { button ->
-                    BarButton(Icons.Rounded.Lyrics, lyricsOpen, openLyrics, button)
-                }
+            // Always present, so the row doesn't shift between songs; disabled when there are no lyrics to show.
+            val hasLyrics = player.lyrics != null
+            val openLyrics = { onPanel(NowPlayingPanel.Lyrics) }
+            val lyricsOpen = hasLyrics && selected == NowPlayingPanel.Lyrics
+            BarLabelled(stringResource(R.string.player_bar_lyrics), stringResource(R.string.player_lyrics), lyricsOpen, openLyrics, enabled = hasLyrics) { button ->
+                BarButton(Icons.Rounded.Lyrics, lyricsOpen, openLyrics, button, enabled = hasLyrics)
             }
             if (player.castAvailable) {
                 // The route button is a View: a tap on the label clicks it, and it's left out of TalkBack for the label's node.
@@ -368,11 +368,12 @@ private fun BarLabelled(
     description: String,
     selected: Boolean?,
     onClick: () -> Unit,
+    enabled: Boolean = true,
     content: @Composable (Modifier) -> Unit,
 ) {
     Column(
         modifier = Modifier
-            .clickable(interactionSource = null, indication = null, role = Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, interactionSource = null, indication = null, role = Role.Button, onClick = onClick)
             .semantics {
                 contentDescription = description
                 if (selected != null) this.selected = selected
@@ -393,11 +394,13 @@ private fun BarButton(
     checked: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     S2IconToggleButton(
         icon = icon,
         contentDescription = null,
         checked = checked,
+        enabled = enabled,
         onCheckedChange = { onClick() },
         style = if (checked) S2IconButtonStyle.Tonal else S2IconButtonStyle.Standard,
         modifier = modifier,
