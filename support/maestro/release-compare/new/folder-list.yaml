@@ -11,7 +11,8 @@ appId: ${APP_ID}
     when:
       notVisible: "Folders"
     commands:
-      - tapOn: "Edit"
+      - tapOn:
+          id: "library-edit-tabs"
       - tapOn: "Folders"
       - back
       - swipe:

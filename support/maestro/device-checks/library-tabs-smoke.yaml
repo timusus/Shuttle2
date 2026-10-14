@@ -34,12 +34,9 @@ appId: com.simplecityapps.shuttle.dev
       TAB: Genres
 - assertVisible: "Ambient"
 - takeScreenshot: dc-467-genres
-# The page overflow (the top bar's "More options", first in the tree) lists "Edit tabs"
+- takeScreenshot: dc-467-genres-topbar
 - tapOn:
-    text: "More options"
-    index: 0
-- takeScreenshot: dc-467-genres-overflow
-- tapOn: "Edit tabs"
+    id: "library-edit-tabs"
 - tapOn: "Folders"
 - back
 - runFlow:
