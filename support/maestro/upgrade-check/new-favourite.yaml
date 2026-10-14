@@ -1,0 +1,7 @@
+appId: com.simplecityapps.shuttle.dev
+---
+- tapOn: "Favorites"
+- waitForAnimationToEnd
+- assertVisible: "1.song.*"
+- assertVisible: "Dusk"
+- takeScreenshot: new-3-favourites

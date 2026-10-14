@@ -1,0 +1,7 @@
+appId: com.simplecityapps.shuttle.dev
+---
+- tapOn: "Playlists"
+- waitForAnimationToEnd
+- assertVisible: "Upgrade List"
+- assertVisible: "s2-seed"
+- takeScreenshot: new-2-playlists

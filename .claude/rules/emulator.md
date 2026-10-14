@@ -144,3 +144,13 @@ Setup and `--keep` leave the device up; stop it when done. The caches don't see 
 - A git ref builds a debug APK once per commit (`~/.cache/s2-release-compare/apk/`); a bare branch name resolves to
   `origin/<name>` after a fetch, and screens reinstalls setup's APK if another build replaced it: a release build can't add a server on a
   lane, since without Play billing it never becomes Pro. `--help` has the options.
+
+## Upgrade check
+
+`support/scripts/upgrade-check.sh [--old <ref>] [--new <ref>]` (defaults 2c586573c = 1.0.10, origin/main; one foreground
+call, ~10 min) installs the old debug build on a lane, onboards it with the Android Media Store over the `playlist-basic`
+fixture, makes a favourite, a playlist and a dark theme (`support/maestro/upgrade-check/old-setup.yaml`), `adb install -r`s
+the new build and asserts with one Maestro flow per check that each survived and `logcat -b crash` is empty. Output:
+`build/upgrade-check/<old>-vs-<new>/` (`summary.txt`, screenshots). Not covered: Emby and the other remote providers, since
+a locally built 1.0.10 can't import from Emby ("Failed to authenticate"; the Play build can). The old build is a debug
+build because Play's signed APK can't be upgraded over by a local one.

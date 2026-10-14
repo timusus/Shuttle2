@@ -1,0 +1,9 @@
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- tapOn: "Settings"
+- waitForAnimationToEnd
+- assertVisible: "Appearance"
+- assertVisible: "Dark"
+- takeScreenshot: new-4-settings

@@ -1,0 +1,58 @@
+# 1.0.10 from a fresh install: onboarding with the Android Media Store, then a favourite, a playlist and a theme.
+# 1.0.10 is View-based; row overflow buttons have no label, so rows are tapped by position (Songs tab: Dusk, Midnight).
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "NEXT"
+    timeout: 20000
+- tapOn: "NEXT"
+- tapOn: "Android Media Store"
+- tapOn: "NEXT"
+- extendedWaitUntil:
+    visible: "Thank You|Library"
+    timeout: 20000
+- runFlow:
+    when:
+      visible: "Thank You"
+    commands:
+      - tapOn: "CLOSE"
+- runFlow:
+    when:
+      visible: "Changelog"
+    commands:
+      - pressKey: back
+- extendedWaitUntil:
+    visible:
+      id: "libraryFragment"
+    timeout: 10000
+- tapOn:
+    id: "libraryFragment"
+- tapOn:
+    text: "Songs"
+    below: "Library"
+- extendedWaitUntil:
+    visible: "Dusk"
+    timeout: 60000
+- takeScreenshot: old-1-songs
+# favourite: Dusk
+- tapOn:
+    point: "96%,26%"
+- tapOn: "Add to Playlist"
+- tapOn: "Favorites"
+# playlist: Midnight in a new "Upgrade List"
+- tapOn:
+    point: "96%,32%"
+- tapOn: "Add to Playlist"
+- tapOn: "New Playlist"
+- tapOn: "Playlist Name"
+- inputText: "Upgrade List"
+- tapOn: "SAVE"
+# setting: dark theme
+- tapOn:
+    id: "bottomSheetFragment"
+- tapOn: "Settings"
+- tapOn: "Appearance"
+- tapOn: "Dark Theme"
+- takeScreenshot: old-2-appearance

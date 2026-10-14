@@ -1,0 +1,12 @@
+# After the upgrade: the imported songs are still in the library. Cold start, as a user would reopen the app.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Library"
+    timeout: 30000
+- assertVisible: "5.songs"
+- assertVisible: "Dusk"
+- assertVisible: "Sunrise"
+- takeScreenshot: new-1-library
