@@ -22,6 +22,15 @@ class AlbumArtworkSongTest {
     }
 
     @Test
+    fun `the song is the same whatever order the list is in`() {
+        val first = song(id = 1, track = 1, path = "/a.mp3").copy(artworkVersion = "v1")
+        val second = song(id = 2, track = 2, path = "/b.mp3").copy(artworkVersion = "v2")
+
+        listOf(second, first).albumArtworkSong() shouldBe first
+        listOf(first, second).albumArtworkSong() shouldBe first
+    }
+
+    @Test
     fun `an empty album has no song`() {
         emptyList<Song>().albumArtworkSong() shouldBe null
     }

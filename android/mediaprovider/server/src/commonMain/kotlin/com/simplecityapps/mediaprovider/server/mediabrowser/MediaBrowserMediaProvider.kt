@@ -23,6 +23,7 @@ import com.simplecityapps.networking.retrofit.map
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumArtworkSong
 import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -77,7 +78,8 @@ open class MediaBrowserMediaProvider(
                             event.missing
                         )
                     } else if (event is FlowEvent.Success) {
-                        FlowEvent.Success(event.result.withSiblingArtwork(existingSongs), event.missing)
+                        // A full listing returns every song, so none stored is left to resolve (or is gone from the server)
+                        FlowEvent.Success(event.result.withSiblingArtwork(), event.missing)
                     } else {
                         event
                     }
@@ -358,25 +360,34 @@ open class MediaBrowserMediaProvider(
 private fun QueryResult.toPage() = Page(items, totalRecordCount)
 
 /**
- * Gives each song with no image of its own (and an album with none either) the image of the first song of its album that
- * has one, as [albumArtworkSong] picks the album's cover, so the song shows what the album does. [known] are the songs
- * already stored, which stand in for siblings an incremental sync didn't return.
+ * Gives each song with no image of its own the image of the song [albumArtworkSong] picks for its album among those that
+ * have one, so the song shows what the album does. A song's own image is one with no [Song.artworkItemId]; a borrowed one
+ * is dropped and resolved again, so a donor that lost its image stops lending it.
+ *
+ * [known] are the songs already stored, which stand in for siblings an incremental sync didn't return. Those among them
+ * the sync didn't return are listed too, after the returned songs, when what they show changed (a library stored before
+ * artwork was borrowed, a donor that gained or lost its image).
  */
 internal fun List<Song>.withSiblingArtwork(known: List<Song> = emptyList()): List<Song> {
     val paths = mapTo(HashSet()) { song -> song.path }
+    val stored = known.filter { song -> song.path !in paths }
     val donors =
-        (this + known.filter { song -> song.path !in paths })
-            .filter { song -> song.serverAlbumId != null && song.artworkVersion != null }
+        (this + stored)
+            .filter { song -> song.serverAlbumId != null && song.artworkItemId == null && song.artworkVersion != null }
             .groupBy { song -> song.serverAlbumId }
-            .mapValues { (_, songs) -> songs.first() }
-    return map { song ->
-        val donor = donors[song.serverAlbumId]
-        if (song.artworkVersion != null || song.serverAlbumId == null || donor == null) {
-            song
+            .mapValues { (_, songs) -> songs.albumArtworkSong() }
+
+    fun Song.resolved(): Song {
+        val own = if (artworkItemId == null) this else copy(artworkVersion = null, artworkItemId = null)
+        val donor = donors[serverAlbumId]
+        return if (own.artworkVersion != null || serverAlbumId == null || donor == null) {
+            own
         } else {
-            song.copy(artworkVersion = donor.artworkVersion, artworkItemId = donor.artworkItemId ?: donor.externalId)
+            own.copy(artworkVersion = donor.artworkVersion, artworkItemId = donor.externalId)
         }
     }
+    return map { song -> song.resolved() } +
+        stored.mapNotNull { song -> song.resolved().takeIf { resolved -> resolved.artworkItemId != song.artworkItemId || resolved.artworkVersion != song.artworkVersion } }
 }
 
 /** Small, as a sync usually stops on the first page: few songs are played between two syncs. */

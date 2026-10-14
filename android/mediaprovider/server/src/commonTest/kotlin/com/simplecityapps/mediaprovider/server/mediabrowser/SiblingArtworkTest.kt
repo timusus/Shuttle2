@@ -3,6 +3,7 @@ package com.simplecityapps.mediaprovider.server.mediabrowser
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import kotlin.random.Random
 import kotlin.test.Test
 
 class SiblingArtworkTest {
@@ -50,10 +51,55 @@ class SiblingArtworkTest {
     }
 
     @Test
-    fun `a stored sibling that itself borrowed an image passes on the item it borrowed from`() {
+    fun `a stored song that borrowed an image doesn't lend it on`() {
         val stored = listOf(song("b", tag = "tag-c", artworkItemId = "c"))
 
-        listOf(song("a", tag = null)).withSiblingArtwork(stored).single().artworkItemId shouldBe "c"
+        listOf(song("a", tag = null)).withSiblingArtwork(stored).first().run { artworkItemId to artworkVersion } shouldBe (null to null)
+    }
+
+    @Test
+    fun `a stored song from before borrowing is resolved by a sync that didn't return it`() {
+        val stored = listOf(song("a", tag = null), song("b", tag = "tag-b"))
+
+        val result = emptyList<Song>().withSiblingArtwork(stored)
+
+        result.map { it.externalId to (it.artworkItemId to it.artworkVersion) } shouldBe listOf("a" to ("b" to "tag-b"))
+    }
+
+    @Test
+    fun `a stored song that already shows the right image isn't listed again`() {
+        val stored = listOf(song("a", tag = "tag-b", artworkItemId = "b"), song("b", tag = "tag-b"))
+
+        emptyList<Song>().withSiblingArtwork(stored) shouldBe emptyList()
+    }
+
+    @Test
+    fun `the donor is the same whatever order the songs arrive in`() {
+        val songs = listOf(song("a", tag = null), song("b", tag = "tag-b", track = 2), song("c", tag = "tag-c", track = 1), song("d", tag = "tag-d", track = 3))
+
+        val results = listOf(songs, songs.reversed(), songs.shuffled(Random(1)), songs.shuffled(Random(2))).map { order ->
+            order.withSiblingArtwork().first { it.externalId == "a" }.artworkItemId
+        }
+
+        results shouldBe listOf("c", "c", "c", "c")
+    }
+
+    @Test
+    fun `borrowers are cleared when their donor loses its image and no sibling has one`() {
+        val stored = listOf(song("a", tag = "tag-b", artworkItemId = "b"), song("b", tag = "tag-b"))
+
+        val result = listOf(song("b", tag = null)).withSiblingArtwork(stored)
+
+        result.map { it.externalId to (it.artworkItemId to it.artworkVersion) } shouldBe listOf("b" to (null to null), "a" to (null to null))
+    }
+
+    @Test
+    fun `borrowers move to another sibling when their donor loses its image`() {
+        val stored = listOf(song("a", tag = "tag-b", artworkItemId = "b"), song("b", tag = "tag-b"), song("c", tag = "tag-c"))
+
+        val result = listOf(song("b", tag = null)).withSiblingArtwork(stored)
+
+        result.map { it.externalId to (it.artworkItemId to it.artworkVersion) } shouldBe listOf("b" to ("c" to "tag-c"), "a" to ("c" to "tag-c"))
     }
 
     @Test
@@ -67,14 +113,15 @@ class SiblingArtworkTest {
         id: String,
         tag: String?,
         albumId: String? = "album-1",
-        artworkItemId: String? = null
+        artworkItemId: String? = null,
+        track: Int? = null
     ) = Song(
         id = 0,
         name = id,
         albumArtist = "Artist",
         artists = listOf("Artist"),
         album = "Album",
-        track = null,
+        track = track,
         disc = null,
         duration = 180_000,
         date = null,
