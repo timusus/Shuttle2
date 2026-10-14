@@ -23,7 +23,7 @@ enum TestSongs {
             lastModified: nil, lastPlayed: lastPlayed, lastCompleted: nil, playCount: playCount, playbackPosition: 0,
             blacklisted: false, externalId: nil, mediaProvider: provider, replayGainTrack: nil,
             replayGainAlbum: nil, lyrics: nil, grouping: nil, bitRate: bitRate.map { KotlinInt(int: $0) }, bitDepth: bitDepth.map { KotlinInt(int: $0) }, sampleRate: sampleRate.map { KotlinInt(int: $0) },
-            channelCount: nil, audioCodec: nil, artworkVersion: nil, dateAdded: dateAdded, favouritedAt: favourite ? KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: 1_773_000_000_000) : nil,
+            channelCount: nil, audioCodec: nil, artworkVersion: nil, artworkItemId: nil, dateAdded: dateAdded, favouritedAt: favourite ? KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: 1_773_000_000_000) : nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil

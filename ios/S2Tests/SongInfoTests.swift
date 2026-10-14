@@ -20,7 +20,7 @@ struct SongInfoTests {
             blacklisted: false, externalId: nil, mediaProvider: provider, replayGainTrack: nil,
             replayGainAlbum: nil, lyrics: nil, grouping: nil, bitRate: bitRate.map { KotlinInt(int: $0) },
             bitDepth: bitDepth.map { KotlinInt(int: $0) }, sampleRate: sampleRate.map { KotlinInt(int: $0) },
-            channelCount: channels.map { KotlinInt(int: $0) }, audioCodec: codec, artworkVersion: nil, dateAdded: nil, favouritedAt: nil,
+            channelCount: channels.map { KotlinInt(int: $0) }, audioCodec: codec, artworkVersion: nil, artworkItemId: nil, dateAdded: nil, favouritedAt: nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil
