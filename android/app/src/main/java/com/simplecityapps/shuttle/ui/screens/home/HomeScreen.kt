@@ -73,6 +73,8 @@ class HomeCallbacks(
     val onShuffleRandom: (ShuffleBy) -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
+    val onAcknowledgeTelemetryNotice: () -> Unit = {},
+    val onOpenPrivacySettings: () -> Unit = {},
     /** Pull to refresh: reloads the sections. */
     val onRefresh: () -> Unit = {},
     /** Opens an item's detail: an album, artist, playlist or genre. */
@@ -194,6 +196,9 @@ private fun HomeContent(
     ) {
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks, Modifier.animateItem()) }
+        }
+        if (content.showTelemetryNotice) {
+            item(key = "telemetry-notice") { TelemetryNoticeCard(callbacks, Modifier.animateItem()) }
         }
         // Cold start's Shuffle all leads, above the shelves: the one sure thing to do with a new library.
         if (content.coldStart) {
@@ -320,6 +325,24 @@ private fun ColdStartCard(
 const val HOME_SHUFFLE_ALL_TAG = "home.shuffleAll"
 const val HOME_SHUFFLE_RANDOM_TAG = "home.shuffleRandom"
 const val HOME_COLD_START_HINT_TAG = "home.coldStartHint"
+
+@Composable
+private fun TelemetryNoticeCard(
+    callbacks: HomeCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    S2Card(modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
+        S2Text(
+            text = stringResource(R.string.home_analytics_notice_message),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = S2Spacing.medium, top = S2Spacing.medium, end = S2Spacing.medium),
+        )
+        Row(modifier = Modifier.padding(S2Spacing.xsmall)) {
+            S2Button(text = stringResource(R.string.home_analytics_notice_ok), onClick = callbacks.onAcknowledgeTelemetryNotice, style = S2ButtonStyle.Text)
+            S2Button(text = stringResource(R.string.home_analytics_notice_action), onClick = callbacks.onOpenPrivacySettings, style = S2ButtonStyle.Text)
+        }
+    }
+}
 
 @Composable
 private fun WhatsNewCard(

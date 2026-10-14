@@ -1,7 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,8 +60,6 @@ private fun HomeDestination(
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
     val trialOffer = rememberTrialOffer()
     val snackbarHostState = LocalShellSnackbarHostState.current
-    val analyticsNoticeMessage = stringResource(R.string.home_analytics_notice_message)
-    val analyticsNoticeAction = stringResource(R.string.home_analytics_notice_action)
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     var connectingServer by rememberSaveable { mutableStateOf(false) }
@@ -82,11 +78,6 @@ private fun HomeDestination(
                     }
 
                     HomeEvent.NothingToShuffle -> scope.launch { snackbarHostState.showSnackbar(resources.getString(R.string.home_shuffle_random_empty)) }
-
-                    HomeEvent.AnalyticsNowOn -> {
-                        val result = snackbarHostState.showSnackbar(analyticsNoticeMessage, actionLabel = analyticsNoticeAction, duration = SnackbarDuration.Long)
-                        if (result == SnackbarResult.ActionPerformed) onOpen(SettingsDestinationRoute(SettingsDestination.Privacy))
-                    }
                 }
             }
         }
@@ -101,6 +92,11 @@ private fun HomeDestination(
                     onOpen(WhatsNewRoute)
                 },
                 onDismissWhatsNew = viewModel::onWhatsNewHandled,
+                onAcknowledgeTelemetryNotice = viewModel::onTelemetryNoticeAcknowledged,
+                onOpenPrivacySettings = {
+                    viewModel.onTelemetryNoticeAcknowledged()
+                    onOpen(SettingsDestinationRoute(SettingsDestination.Privacy))
+                },
                 onOpenItem = { item -> onOpen(item.route) },
                 onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,
