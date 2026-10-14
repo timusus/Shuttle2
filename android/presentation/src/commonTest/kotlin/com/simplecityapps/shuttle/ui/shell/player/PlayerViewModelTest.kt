@@ -220,6 +220,25 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `toggling online lyrics keeps the shown lyrics rather than blanking them`() = runTest {
+        val viewModel = viewModel()
+        songRepository.lyrics[songs("A")[0].id] = "Line one"
+        queueOperations.queueStateFlow.value = queueOf(songs("A"))
+        val seen = mutableListOf<String?>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiState.collect { seen += it.player.lyrics }
+        }
+        seen.last() shouldBe "Line one"
+        seen.clear()
+
+        onlineLyricsEnabled.value = true
+        onlineLyricsEnabled.value = false
+
+        seen.none { it == null } shouldBe true
+        viewModel.uiState.value.player.lyrics shouldBe "Line one"
+    }
+
+    @Test
     fun `the Lyrics panel closes when the song has no lyrics`() = runTest {
         val viewModel = viewModel()
         val songs = songs("A", "B")

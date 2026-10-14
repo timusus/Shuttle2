@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -177,29 +178,36 @@ class PlayerViewModel @AssistedInject constructor(
             }.distinctUntilChanged()
 
     // Songs don't carry their lyrics (#873); null until loaded, so loading never holds the rest of the player back.
-    // Keyed on the song id so metadata updates (play count) neither reload nor blank them. A song that settles without
-    // lyrics also clears a stored Lyrics panel, so a later song with lyrics doesn't reopen it unprompted. Turning online
-    // lookup on or off looks the current song up again (#1046).
-    private val lyrics: Flow<String?> = combine(
-        currentSong.distinctUntilChanged { old, new -> old?.id == new?.id },
-        loadLyrics.onlineEnabled.distinctUntilChanged(),
-    ) { song, _ -> song }.flatMapLatest { song ->
-        if (song == null) {
-            flowOf(null)
-        } else {
-            flow {
-                val text = try {
-                    loadLyrics(song)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    null
-                }
-                if (text == null && savedStateHandle.get<NowPlayingPanel?>(PANEL_KEY) == NowPlayingPanel.Lyrics) savedStateHandle[PANEL_KEY] = null
-                emit(text)
-            }.onStart { emit(null) }
-        }
+    // The online setting re-runs the lookup but only a new song blanks the lyrics, so toggling it doesn't flash them.
+    private val lyrics: Flow<String?> = flow {
+        var shownId: Any? = Any()
+        emitAll(
+            combine(
+                currentSong.distinctUntilChanged { old, new -> old?.id == new?.id },
+                loadLyrics.onlineEnabled.distinctUntilChanged(),
+            ) { song, _ -> song }.flatMapLatest { song ->
+                val newSong = song?.id != shownId
+                shownId = song?.id
+                lyricsFor(song, resetFirst = newSong)
+            },
+        )
     }.distinctUntilChanged()
+
+    private fun lyricsFor(song: Song?, resetFirst: Boolean): Flow<String?> = if (song == null) {
+        flowOf(null)
+    } else {
+        flow {
+            val text = try {
+                loadLyrics(song)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            if (text == null && savedStateHandle.get<NowPlayingPanel?>(PANEL_KEY) == NowPlayingPanel.Lyrics) savedStateHandle[PANEL_KEY] = null
+            emit(text)
+        }.onStart { if (resetFirst) emit(null) }
+    }
 
     // None until it's resolved, so resolving it never holds the rest of the player back.
     private val queueSource: Flow<HomeItem?> = observeQueueSource(queue).onStart { emit(null) }

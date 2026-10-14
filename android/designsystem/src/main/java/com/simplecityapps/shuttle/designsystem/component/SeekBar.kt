@@ -112,8 +112,8 @@ fun S2SeekBar(
                 val activeColor = if (enabled) colors.activeTrackColor else colors.disabledActiveTrackColor
                 val inactiveColor = if (enabled) colors.inactiveTrackColor else colors.disabledInactiveTrackColor
                 val bufferedColor = MaterialTheme.colorScheme.primary.copy(alpha = SeekBufferedAlpha)
-                // One clipped pill with the played, loaded and remaining stretches painted across it, so the track
-                // stays whole at any progress (the stock track draws each as its own rounded piece and a stop dot).
+                // One clipped pill painted in stretches, so the track stays whole at any progress (the stock track
+                // splits into rounded pieces with a stop dot).
                 Box(
                     Modifier
                         .fillMaxWidth()
