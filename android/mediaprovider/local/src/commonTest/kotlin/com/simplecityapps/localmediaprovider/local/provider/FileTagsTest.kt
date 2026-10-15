@@ -400,6 +400,21 @@ class FileTagsTest {
     }
 
     @Test
+    fun `a performer's role may hold parentheses of its own`() {
+        parsePerformer("X (violin (solo))") shouldBe Performer("X", "violin (solo)")
+        parsePerformer("X (violin) (solo)") shouldBe Performer("X (violin)", "solo")
+    }
+
+    @Test
+    fun `a performer is a name with an optional role in parentheses`() {
+        parsePerformer("Yo-Yo Ma (cello)") shouldBe Performer("Yo-Yo Ma", "cello")
+        parsePerformer("  Yo-Yo Ma  ") shouldBe Performer("Yo-Yo Ma")
+        parsePerformer("(solo)") shouldBe Performer("(solo)")
+        parsePerformer("Yo-Yo Ma (cello") shouldBe Performer("Yo-Yo Ma (cello")
+        parsePerformer("  ") shouldBe null
+    }
+
+    @Test
     fun `an untagged file has no classical tags`() {
         val tags = emptyMap<String, List<String>>().toFileTags()
 

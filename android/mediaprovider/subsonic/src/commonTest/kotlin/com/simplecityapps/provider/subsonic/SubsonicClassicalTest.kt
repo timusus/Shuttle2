@@ -1,16 +1,30 @@
 package com.simplecityapps.provider.subsonic
 
+import com.simplecityapps.networking.S2Json
 import com.simplecityapps.provider.subsonic.http.SongDto
 import com.simplecityapps.shuttle.model.Performer
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
-import kotlinx.serialization.json.Json
 
 /** OpenSubsonic's classical fields (`contributors`, `displayComposer`, `works`, `movements`, `groupings`) on a song. */
 class SubsonicClassicalTest {
-    private val json = Json { ignoreUnknownKeys = true }
+    // The Json the client decodes with, so these tests see what a server response does
+    private val json = S2Json
 
     private fun song(body: String) = json.decodeFromString<SongDto>("""{"id":"s1","title":"T"$body}""").toSong()
+
+    @Test
+    fun `an explicit null in each classical list decodes as an empty list`() {
+        val dto =
+            json.decodeFromString<SongDto>(
+                """{"id":"s1","contributors":null,"works":null,"movements":null,"groupings":null}"""
+            )
+
+        dto.contributors shouldBe emptyList()
+        dto.works shouldBe emptyList()
+        dto.movements shouldBe emptyList()
+        dto.groupings shouldBe emptyList()
+    }
 
     @Test
     fun `a song maps its contributors - work - movement and grouping`() {

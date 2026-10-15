@@ -136,14 +136,30 @@ private fun Map<String, List<String>>.performers(): List<Performer> = entries.fl
     }
 }
 
-/** "Name (instrument)" is the name and the instrument; anything else is a name alone. A blank value is no performer. */
+/**
+ * "Name (instrument)" is the name and the instrument, the instrument itself may hold parentheses ("Name (violin (solo))");
+ * anything else is a name alone. A blank value is no performer.
+ */
 internal fun parsePerformer(value: String): Performer? {
     val trimmed = value.trim()
     if (trimmed.isEmpty()) return null
-    val open = trimmed.lastIndexOf(" (")
-    if (open <= 0 || !trimmed.endsWith(')')) return Performer(trimmed)
-    val role = trimmed.substring(open + 2, trimmed.length - 1).trim()
+    val open = matchingOpenParen(trimmed)
+    if (open == null || open == 0 || trimmed[open - 1] != ' ') return Performer(trimmed)
+    val role = trimmed.substring(open + 1, trimmed.length - 1).trim()
     return Performer(trimmed.substring(0, open).trim(), role.ifEmpty { null })
+}
+
+/** The index of the '(' that pairs with the ')' ending [value], or null when [value] doesn't end in a balanced group. */
+private fun matchingOpenParen(value: String): Int? {
+    if (!value.endsWith(')')) return null
+    var depth = 0
+    for (i in value.indices.reversed()) {
+        when (value[i]) {
+            ')' -> depth++
+            '(' -> if (--depth == 0) return i
+        }
+    }
+    return null
 }
 
 private const val VORBIS_MOVEMENT = "MOVEMENT"

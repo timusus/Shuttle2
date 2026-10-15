@@ -51,7 +51,7 @@ data class SongDataUpdate(
     @ColumnInfo(name = "sampleRate") var sampleRate: Int? = null,
     @ColumnInfo(name = "channelCount") var channelCount: Int? = null,
     @ColumnInfo(name = "audioCodec") var audioCodec: String? = null,
-    // Written on every update, so a rescan or sync fills them in for a song stored before they existed (#1065)
+    // Written on every update, so the re-import for a new tags version fills them in for a song stored before they existed (#1065)
     @ColumnInfo(name = "composer") var composer: String? = null,
     @ColumnInfo(name = "composerSort") var composerSort: String? = null,
     @ColumnInfo(name = "conductor") var conductor: String? = null,

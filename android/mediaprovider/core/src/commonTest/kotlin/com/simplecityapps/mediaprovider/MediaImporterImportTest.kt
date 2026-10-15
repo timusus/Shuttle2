@@ -224,6 +224,15 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
+    fun `songs read under the previous tags version are outdated and get read again`() {
+        preferences.songTagsRescanVersion = 5
+        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, 5)
+
+        importer.songTagsOutdated shouldBe true
+        preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
+    }
+
+    @Test
     fun `an import that throws leaves the source outdated`() = runBlocking<Unit> {
         provider.failNext.store(true)
         provider.gate.trySend(Unit)
