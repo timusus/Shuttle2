@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -56,6 +58,43 @@ class PlayerControlsTest {
         setControls(200.dp)
         composeTestRule.onNodeWithContentDescription("Play").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Repeat off").assertIsDisplayed()
+    }
+
+    private fun setToggles(shuffle: Boolean, repeatMode: S2RepeatMode) {
+        composeTestRule.setContent {
+            S2Theme {
+                S2PlayerControls(
+                    playing = false,
+                    onPlayPause = {},
+                    onPrevious = {},
+                    onNext = {},
+                    shuffle = shuffle,
+                    onShuffleChange = {},
+                    repeatMode = repeatMode,
+                    onRepeatClick = {},
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `shuffle and repeat are off when disabled`() {
+        setToggles(shuffle = false, repeatMode = S2RepeatMode.Off)
+        composeTestRule.onNodeWithContentDescription("Shuffle").assertIsOff()
+        composeTestRule.onNodeWithContentDescription("Repeat off").assertIsOff()
+    }
+
+    @Test
+    fun `shuffle is on, repeat all and repeat one are on`() {
+        setToggles(shuffle = true, repeatMode = S2RepeatMode.All)
+        composeTestRule.onNodeWithContentDescription("Shuffle").assertIsOn()
+        composeTestRule.onNodeWithContentDescription("Repeat all").assertIsOn()
+    }
+
+    @Test
+    fun `repeat one reads as on`() {
+        setToggles(shuffle = false, repeatMode = S2RepeatMode.One)
+        composeTestRule.onNodeWithContentDescription("Repeat one").assertIsOn()
     }
 
     @Test

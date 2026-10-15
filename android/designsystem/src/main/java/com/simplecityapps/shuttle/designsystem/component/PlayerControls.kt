@@ -236,8 +236,9 @@ private fun ToggleIcon(
         shapes = IconButtonDefaults.toggleableShapes(),
         modifier = modifier.size(size.toggle),
         colors = IconButtonDefaults.iconToggleButtonColors(
-            checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-            checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ),
         interactionSource = interactionSource,
     ) {
