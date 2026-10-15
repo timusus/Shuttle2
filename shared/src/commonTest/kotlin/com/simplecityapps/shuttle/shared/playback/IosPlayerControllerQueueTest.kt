@@ -156,6 +156,23 @@ class IosPlayerControllerQueueTest : IosPlayerControllerTestBase() {
     }
 
     @Test
+    fun `playing a new queue while playing hands the player its order once - with no seek into its first song`() = test { controller ->
+        controller.start(listOf(a, b))
+        var result: Result<Boolean>? = null
+
+        // As PlaySongs plays a search result: the queue is set, then loaded.
+        controller.queueOperations.setQueue(listOf(c, d, e), null, 0)
+        controller.load(playWhenReady = true) { result = it }
+        engine.settle()
+
+        // A seek would re-open a transcode under the same play, racing the server's first one.
+        engine.calls shouldBe listOf("items [3, 4, 5] at 0@0 playing", "play")
+        result shouldBe Result.success(true)
+        controller.currentSong shouldBe c
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
     fun `playing out a song moves on to the next gaplessly - and reports it ended`() = test { controller ->
         val ended = collect(controller.trackEndedFlow)
         controller.start(listOf(a, b, c))

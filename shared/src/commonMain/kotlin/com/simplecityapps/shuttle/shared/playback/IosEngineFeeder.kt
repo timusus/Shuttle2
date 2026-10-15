@@ -56,13 +56,21 @@ internal class IosEngineFeeder(
 
     /**
      * Makes [item] the player's current item at [startMs], then updates the next. Within the order the player has, it
-     * moves to [item], keeping what it pre-opened; a changed order replaces its own.
+     * moves to [item], keeping what it pre-opened; a changed order replaces its own. The same load still under way
+     * only takes the play intent, as a queue set while playing (which loads its new current item) and then loaded does.
      */
     fun startLoad(
         item: QueueItem,
         startMs: Int
     ) {
         log.info { "load song ${item.song.id} at $startMs ms, playWhenReady ${flows.playWhenReady}" }
+        val loading = current?.takeIf { it.item.uid == item.uid && !it.ready && !it.failed && it.loadingFrom == startMs }
+        if (loading != null && playOrder()?.first == sentOrder) {
+            // A seek into it would re-open a transcode under the same play, racing the server's first one.
+            if (flows.playWhenReady) player.play() else player.pause()
+            publishState()
+            return
+        }
         becomeCurrent(item, startMs)
         val (order, index) = playOrder() ?: return
         player.setRepeatMode(queue.repeatMode)
@@ -72,6 +80,7 @@ internal class IosEngineFeeder(
             player.setItems(order, index, startMs.toLong(), flows.playWhenReady)
         }
         sentOrder = order
+        current?.loadingFrom = startMs
         prewarm()
     }
 
@@ -188,6 +197,7 @@ internal class IosEngineFeeder(
     fun seek(positionMs: Int) {
         val feed = current ?: return
         log.info { "seek song ${feed.item.song.id} to $positionMs ms" }
+        feed.loadingFrom = null
         player.seek(positionMs.toLong())
         publishProgress(positionMs)
     }

@@ -13,6 +13,9 @@ internal class IosFeed(
 
     var failed = false
 
+    /** Where the player was told to load it from, until it seeks: loading it there again before it's ready is a no-op. */
+    var loadingFrom: Int? = null
+
     /**
      * Why the resolution the player opened it ahead with failed, before it became current and was asked again: the
      * failure the player reports for it after the transition.
