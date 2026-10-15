@@ -36,7 +36,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -71,6 +73,9 @@ object S2SheetDefaults {
 
     /** A [S2PanelSheet]'s grip: short, since the header under it drags the sheet too. */
     val gripHeight: Dp = S2Spacing.medium
+
+    /** How far down a [S2PanelSheet]'s `washTop` fades into its colour: the grip and a 56dp header. */
+    val washHeight: Dp = 72.dp
 
     /** The share of the [S2ExpandableSheetScaffold]'s height a panel takes, so the transport stays in view above it. */
     const val MAX_PANEL_FRACTION = 0.6f
@@ -117,12 +122,14 @@ fun S2SheetHandle(
  * the grip down, or anything [content] passes the `grip` modifier to, or pulling its scrolling
  * content down past the top, calls [onDismiss] once it has moved a quarter of its height or is
  * flung; short of that it springs back. Accessibility services close it from the grip, "Close panel".
+ * A [washTop] other than [color] tints the grip and header, fading into [color] over [S2SheetDefaults.washHeight].
  */
 @Composable
 fun S2PanelSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
+    washTop: Color = color,
     content: @Composable ColumnScope.(grip: Modifier) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -189,7 +196,13 @@ fun S2PanelSheet(
         shape = ContinuousRoundedCornerShape(topStart = S2SheetDefaults.corner, topEnd = S2SheetDefaults.corner),
         color = color,
     ) {
-        Column(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    if (washTop != color) drawRect(Brush.verticalGradient(listOf(washTop, color), endY = S2SheetDefaults.washHeight.toPx()))
+                },
+        ) {
             S2SheetHandle(
                 grip.semantics {
                     contentDescription = closeLabel

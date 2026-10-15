@@ -193,10 +193,10 @@ internal fun PlayerPanel(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    S2PanelSheet(onDismiss = onClose, modifier = modifier.testTag(PlayerTestTags.PanelSheet), color = PanelColor) { grip ->
+    S2PanelSheet(onDismiss = onClose, modifier = modifier.testTag(PlayerTestTags.PanelSheet), color = PanelColor, washTop = PanelWashTop) { grip ->
         // Switching panels starts the new one at its top, not scrolled to where the last one was.
         val scrollState = key(panel) { rememberScrollState() }
-        val scrolling = Modifier.verticalScroll(scrollState).panelHeaderWash().padding(contentPadding)
+        val scrolling = Modifier.verticalScroll(scrollState).padding(contentPadding)
         when (panel) {
             NowPlayingPanel.Queue -> {
                 val mediaActions = LocalPlayerMediaActions.current

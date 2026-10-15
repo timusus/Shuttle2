@@ -46,7 +46,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -83,8 +82,7 @@ internal val QueueHeaderHeight = 56.dp
 
 /**
  * "Queue" over the queue's rows, with Save as playlist and Clear Queue, and over it what the queue is playing from
- * ([source], #909), which [onOpenSource] opens. Under artwork it starts from the cover's tint and fades to the panel's
- * colour by its lower edge, so a long list below sits on plain surface.
+ * ([source], #909), which [onOpenSource] opens. It is transparent: the panel sheet's wash tints it under artwork.
  */
 @Composable
 internal fun QueueHeader(
@@ -94,13 +92,10 @@ internal fun QueueHeader(
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val color = PanelColor
-    val top = PanelWashTop
     Row(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = QueueHeaderHeight)
-            .background(Brush.verticalGradient(listOf(top, color)))
             .testTag(PlayerTestTags.QueueHeader)
             .padding(end = S2Spacing.small),
         verticalAlignment = Alignment.CenterVertically,

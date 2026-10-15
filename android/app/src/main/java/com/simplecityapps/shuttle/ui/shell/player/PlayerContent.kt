@@ -103,18 +103,7 @@ internal val PanelWashTop: Color
         return artworkRole(color, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = PanelWashAlpha).compositeOver(color))
     }
 
-/** Washes the top [PanelWashHeight] of a panel's content from [PanelWashTop] into [PanelColor], so every panel reads as the queue does. */
-@Composable
-internal fun Modifier.panelHeaderWash(): Modifier {
-    val top = PanelWashTop
-    val bottom = PanelColor
-    return drawBehind {
-        drawRect(Brush.verticalGradient(listOf(top, bottom), endY = PanelWashHeight.toPx()))
-    }
-}
-
 private const val PanelWashAlpha = 0.6f
-private val PanelWashHeight = 72.dp
 
 internal object PlayerTestTags {
     const val Sheet = "player_sheet"
