@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """App Store Connect API CLI (stdlib + openssl). Use this, not Chrome (#922).
 
-Credentials: env ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH, else ~/.secrets/asc.env (KEY=VALUE).
+Credentials: the podcasts Keychain key (`secret get podcasts ASC_KEY_ID / ASC_ISSUER_ID / ASC_API_KEY_P8`), else
+env ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH, else ~/.secrets/asc.env (KEY=VALUE). Complete env vars win.
 Default app: --app <bundle id>, else $ASC_APP_BUNDLE, else com.simplecityapps.shuttle.
 
   asc apps
@@ -20,6 +21,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -34,8 +36,28 @@ def die(msg):
     sys.exit(1)
 
 
+def keychain_get(name, out_file=None):
+    cmd = ["secret", "get", "podcasts", name] + (["--file", out_file] if out_file else [])
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True)
+    except FileNotFoundError:
+        return None
+    return r.stdout if r.returncode == 0 else None
+
+
+def keychain_has_key():
+    # The podcasts team key works for both apps; asc.env's key is rejected by Apple (#1022).
+    return all(keychain_get(n) for n in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_API_KEY_P8"))
+
+
 def load_env():
     cfg = {}
+    if not all(os.environ.get(k) for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH")) and keychain_has_key():
+        cfg["ASC_KEY_ID"] = keychain_get("ASC_KEY_ID").strip()
+        cfg["ASC_ISSUER_ID"] = keychain_get("ASC_ISSUER_ID").strip()
+        cfg["source"] = "keychain"
+        print("asc: credentials from Keychain (podcasts)", file=sys.stderr)
+        return cfg
     path = os.path.expanduser("~/.secrets/asc.env")
     if os.path.isfile(path):
         if os.stat(path).st_mode & 0o077:
@@ -49,6 +71,7 @@ def load_env():
     for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"):
         if os.environ.get(k):
             cfg[k] = os.environ[k]
+    print("asc: credentials from env/~/.secrets/asc.env (no podcasts Keychain key)", file=sys.stderr)
     return cfg
 
 
@@ -72,7 +95,8 @@ def der_to_raw(der):
 
 
 def make_jwt(cfg, ttl=1100):
-    for k in ("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_PATH"):
+    keychain = cfg.get("source") == "keychain"
+    for k in ("ASC_KEY_ID", "ASC_ISSUER_ID") + (() if keychain else ("ASC_KEY_PATH",)):
         if not cfg.get(k):
             die(f"{k} not set (env or ~/.secrets/asc.env)")
     now = int(time.time())
@@ -80,8 +104,15 @@ def make_jwt(cfg, ttl=1100):
     claims = {"iss": cfg["ASC_ISSUER_ID"], "iat": now, "exp": now + ttl, "aud": "appstoreconnect-v1"}
     signing = b64(json.dumps(header, separators=(",", ":")).encode()) + "." + \
         b64(json.dumps(claims, separators=(",", ":")).encode())
-    r = subprocess.run(["openssl", "dgst", "-sha256", "-sign", os.path.expanduser(cfg["ASC_KEY_PATH"])],
-                       input=signing.encode(), capture_output=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        key_path = os.path.join(tmp, "key.p8")
+        if keychain:
+            if keychain_get("ASC_API_KEY_P8", key_path) is None:
+                die("could not read podcasts ASC_API_KEY_P8 from the Keychain")
+        else:
+            key_path = os.path.expanduser(cfg["ASC_KEY_PATH"])
+        r = subprocess.run(["openssl", "dgst", "-sha256", "-sign", key_path],
+                           input=signing.encode(), capture_output=True)
     if r.returncode != 0:
         die("openssl could not sign the JWT (check ASC_KEY_PATH)")
     return signing + "." + b64(der_to_raw(r.stdout))

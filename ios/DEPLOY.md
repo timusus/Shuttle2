@@ -35,7 +35,9 @@ xcodebuild command line.
 1. App Store Connect > Users and Access > Integrations > App Store Connect API > Team Keys: generate a
    key with role App Manager (or reuse the Podcasts one) and keep the `.p8` and its Key ID and Issuer ID.
    Put them in `~/.secrets/asc.env` (mode 600; `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`); the
-   `support/scripts/asc` reads it (key default `/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8`); the
+   `support/scripts/asc` reads it (key default `/Users/tim/.secrets/AuthKey_98Q5SW65X5.p8`) only when the
+   podcasts Keychain key (`secret get podcasts ASC_KEY_ID / ASC_ISSUER_ID / ASC_API_KEY_P8`) is missing; it
+   prefers the Keychain key, which Apple accepts for both apps, and prints which source it used. The
    deploy itself does not need it.
 2. Xcode signed in (Settings > Accounts) with developer@simplecityapps.com, team 9HYNX943MQ: the
    deploy signs with it. The team's API keys cannot use a cloud-managed distribution certificate,
