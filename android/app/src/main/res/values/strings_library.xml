@@ -15,6 +15,10 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>&#160;song</item>
         <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>&#160;songs</item>
     </plurals>
+    <!-- An album's total runtime of an hour or more, e.g. "1 h 5 min" -->
+    <string name="runtime_hours_minutes"><xliff:g example="1" id="hours">%1$d</xliff:g>&#160;h <xliff:g example="5" id="minutes">%2$d</xliff:g>&#160;min</string>
+    <!-- An album's total runtime under an hour, e.g. "45 min" -->
+    <string name="runtime_minutes"><xliff:g example="45" id="minutes">%1$d</xliff:g>&#160;min</string>
     <!-- Title for the list of genres -->
     <string name="genres">Genres</string>
     <!-- Shown when the folder list finishes loading, and there are no songs on the device -->

@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
+import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
@@ -70,6 +71,7 @@ fun AlbumDetailScreen(
             subtitle = album?.let { albumSubtitle(it) },
             artwork = album,
             placeholder = ArtworkPlaceholder.Album,
+            artworkSize = ArtworkSize.Grid,
             artworkKey = album?.let { albumArtworkKey(it.route) },
             onNavigateUp = onNavigateUp,
             onPlay = { onPlay(songs, 0) },
@@ -130,8 +132,20 @@ private fun albumSubtitle(album: Album): String = listOfNotNull(
     album.friendlyArtistName,
     album.year?.toString(),
     pluralString(R.plurals.songsPlural, album.songCount),
-    formatDuration(album.duration.toLong()),
+    albumRuntime(album.duration.toLong()),
 ).filter { it.isNotBlank() }.joinToString(" · ")
+
+/** "45 min", or "1 h 5 min" from an hour up; empty for none. Whole minutes, rounded down. */
+@Composable
+internal fun albumRuntime(ms: Long): String {
+    val totalMinutes = (ms / 60_000).toInt()
+    val resources = LocalResources.current
+    return when {
+        totalMinutes <= 0 -> ""
+        totalMinutes < 60 -> resources.getString(R.string.runtime_minutes, totalMinutes)
+        else -> resources.getString(R.string.runtime_hours_minutes, totalMinutes / 60, totalMinutes % 60)
+    }
+}
 
 @Composable
 fun AlbumDetailDestination(

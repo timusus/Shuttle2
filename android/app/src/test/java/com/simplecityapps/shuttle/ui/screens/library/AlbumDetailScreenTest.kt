@@ -28,6 +28,22 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `the header gives the song count and a runtime under an hour in minutes`() {
+        val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 12, duration = 2_700_000, year = 2021)
+        robot.setAlbum(readyAlbumDetail(album = album))
+
+        robot.assertTextDisplayed("12 songs · 45 min", substring = true)
+    }
+
+    @Test
+    fun `the runtime of an hour or more shows hours and minutes`() {
+        val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 7_500_000, year = 2021)
+        robot.setAlbum(readyAlbumDetail(album = album))
+
+        robot.assertTextDisplayed("1 song · 2 h 5 min", substring = true)
+    }
+
+    @Test
     fun `Play starts the album from the top and a song plays from its position`() {
         val songs = phaseGardenSongs()
         robot.setAlbum(readyAlbumDetail(songs = songs))

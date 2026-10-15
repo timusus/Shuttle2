@@ -69,6 +69,7 @@ fun LibraryDetailScaffold(
     onMore: () -> Unit,
     modifier: Modifier = Modifier,
     bleed: Boolean = false,
+    artworkSize: ArtworkSize = ArtworkSize.Hero,
     artworkKey: String? = null,
     heroArtwork: (@Composable (Modifier) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
@@ -109,7 +110,7 @@ fun LibraryDetailScaffold(
                         topInset = topInset,
                         artwork = {
                             val sharedModifier = Modifier.sharedArtwork(artworkKey)
-                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = ArtworkSize.Hero)
+                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = artworkSize)
                         },
                         actions = playShuffle,
                         extra = header,
