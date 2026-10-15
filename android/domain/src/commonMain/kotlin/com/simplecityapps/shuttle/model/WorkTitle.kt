@@ -9,13 +9,18 @@ data class WorkTitle(
     val arrangement: String? = null
 )
 
-private const val CATALOGUE_PREFIXES = "BuxWV|BWV|Hob|HWV|TWV|TrV|SWV|WAB|WoO|Sz|RV|FP|JW|Wq|Kk|KV|Op|K|D|S|B"
+// The single letters K, B and D are only a catalogue with their dot ("K. 466", "B. 12", "D. 850"), S with a dot or a space.
+private const val CATALOGUE_PREFIXES = "BuxWV|BWV|Hob|HWV|TWV|TrV|SWV|WAB|WoO|Sz|RV|FP|JW|Wq|Kk|KV|Op|K(?=\\.)|D(?=\\.)|B(?=\\.)|S(?=[.\\s])"
 
 // Groups: 1 prefix, 2 Roman:number (Hob. XVI:52), 3 number with optional letter (BWV 1041a), 4 "No. 3" of "Op. 10 No. 3".
 private val catalogueRef = Regex(
     """($CATALOGUE_PREFIXES)\.?\s*(?:([IVX]+:\s*\d+[a-z]?)|(\d+[a-z]?))(?![A-Za-z0-9])(?:\s*(?:No|Nr)\.?\s*(\d+))?""",
     RegexOption.IGNORE_CASE
 )
+
+internal val workNumberRef = Regex("""\b(?:No|Nr)\.\s*\d""", RegexOption.IGNORE_CASE)
+
+private val structuralWords = setOf("part", "prelude", "book", "act", "movement", "no")
 
 // English keys only, and only at the end of the title or before punctuation, so "in A Little Night Music" is left alone.
 private val keyRef = Regex(
@@ -29,7 +34,7 @@ private val arrangementRef = Regex(
 
 private val quotedRef = Regex(""""([^"]+)"|“([^”]+)”|«\s*([^»]+?)\s*»""")
 
-private val commaNicknameRef = Regex("""^(.*\d[^,]*),\s*([A-ZÀ-Ý][^,]*)$""")
+private val commaNicknameRef = Regex("""^(.*\d[^,]*),\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]*)$""")
 
 private fun String.tidy(): String = replace(Regex("""\(\s*\)|\[\s*]"""), " ")
     .replace(Regex("""\s+"""), " ")
@@ -39,7 +44,11 @@ private fun String.tidy(): String = replace(Regex("""\(\s*\)|\[\s*]"""), " ")
 
 private fun catalogueMatches(text: String): List<MatchResult> = catalogueRef.findAll(text).filter { match ->
     val start = match.range.first
-    start == 0 || !text[start - 1].isLetterOrDigit()
+    val prefix = match.groupValues[1]
+    val before = text.substring(0, start).trimEnd()
+    (start == 0 || !text[start - 1].isLetterOrDigit()) &&
+        (prefix.length > 1 || prefix[0].isUpperCase()) &&
+        (!prefix.equals("D", ignoreCase = true) || before.isEmpty() || before.endsWith(','))
 }.toList()
 
 private fun MatchResult.display(): String {
@@ -76,8 +85,8 @@ fun parseWorkTitle(title: String): WorkTitle {
     if (keys.size > 1) return unchanged
     keys.singleOrNull()?.let { match ->
         val without = rest.removeRange(match.range).tidy()
-        // A work without a number ("Mass in B minor") keeps its key in the title, unless a catalogue number carries the second line.
-        if (without.any { it.isDigit() } || catalogue != null) {
+        // Only "No. 5" makes the work identifiable without its key; a catalogue number alone ("Mass in B minor, BWV 232") does not.
+        if (workNumberRef.containsMatchIn(without)) {
             key = match.groupValues[1].trim()
             rest = without
         }
@@ -86,7 +95,7 @@ fun parseWorkTitle(title: String): WorkTitle {
     if (nickname == null) {
         commaNicknameRef.matchEntire(rest)?.let { match ->
             val tail = match.groupValues[2].trim()
-            if (tail.split(' ').size <= 3) {
+            if (tail.lowercase() !in structuralWords) {
                 nickname = tail
                 rest = match.groupValues[1].trim()
             }

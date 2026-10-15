@@ -49,7 +49,8 @@ class WorkBlocksTest {
         val block = (groupWorks(songs).single() as AlbumItem.Work).block
         block.discBreaks shouldBe listOf(DiscBreak(2, 2))
         block.title.catalogue shouldBe "BWV 232"
-        block.title.key shouldBe "B minor"
+        block.title.key shouldBe null
+        block.title.core shouldBe "Mass in B minor"
     }
 
     @Test
@@ -71,6 +72,66 @@ class WorkBlocksTest {
         groupWorks(songs).all { it is AlbumItem.Track } shouldBe true
     }
 
+    private fun popSongs(vararg names: String) = names.mapIndexed { i, n ->
+        song(id = i + 1L, name = n, albumArtist = "Artist", artists = listOf("Artist"), album = "Record", genres = listOf("Pop")).copy(composer = "Writer")
+    }
+
+    @Test
+    fun `a pop album with one composer tag stays ungrouped`() {
+        groupWorks(popSongs("Artist - One", "Artist - Two")).all { it is AlbumItem.Track } shouldBe true
+    }
+
+    @Test
+    fun `songs sharing a title prefix are not a work without classical signs`() {
+        val songs = popSongs("Hold On - Live", "Hold On - Acoustic")
+        groupWorks(songs).all { it is AlbumItem.Track } shouldBe true
+    }
+
+    @Test
+    fun `a pop queue has no lock screen text work progress or work run`() {
+        val queue = popSongs("Hold On - Live", "Hold On - Acoustic")
+        lockScreenText(queue, 0) shouldBe null
+        workProgress(queue, 0) shouldBe null
+        workRunAt(queue, 0) shouldBe 0..0
+        workRunAt(queue, 1) shouldBe 1..1
+    }
+
+    @Test
+    fun `an untagged CD rip groups by its work prefix`() {
+        val songs = listOf("II. Andante con moto", "III. Allegro").mapIndexed { i, n ->
+            song(id = i + 1L, name = "Symphony No. 5 in C minor, Op. 67: $n", albumArtist = "Orchestra", artists = listOf("Orchestra"), album = "Disc")
+                .copy(composer = "Beethoven")
+        }
+        val block = (groupWorks(songs).single() as AlbumItem.Work).block
+        block.inferred shouldBe true
+        block.movements.map { it.name } shouldBe listOf("Andante con moto", "Allegro")
+    }
+
+    @Test
+    fun `a queue starting at movement 3 keeps its numerals`() {
+        val queue = symphony().drop(2).mapIndexed { i, s -> s.copy(movementNumber = i + 3, movementTotal = 4) }
+        lockScreenText(queue, 0)!!.title shouldBe "III. Scherzo"
+        lockScreenText(queue, 1)!!.title shouldBe "IV. Allegro"
+    }
+
+    @Test
+    fun `a lone movement keeps its numeral`() {
+        val queue = listOf(movement(1, "Symphony No. 5", "Andante", 2).copy(movementNumber = 2, movementTotal = 4))
+        lockScreenText(queue, 0)!!.title shouldBe "II. Andante"
+    }
+
+    @Test
+    fun `a slice of a 24 song cycle is numbered like the whole`() {
+        val cycle = List(24) {
+            song(id = it + 1L, name = "Lied ${it + 1}", albumArtist = "Fischer-Dieskau", genres = listOf("Classical"))
+                .copy(composer = "Schubert", work = "Winterreise", conductor = "Moore", movementNumber = it + 1, movementTotal = 24)
+        }
+        val album = (groupWorks(cycle).single() as AlbumItem.Work).block
+        val slice = cycle.subList(4, 6)
+        lockScreenText(slice, 0)!!.title shouldBe album.movements[4].label
+        lockScreenText(slice, 0)!!.title shouldBe "5. Lied 5"
+    }
+
     @Test
     fun `Atom Heart Mother numbers its parts`() {
         val songs = listOf("Father's Shout", "Breast Milky", "Mother Fore").mapIndexed { i, n ->
@@ -86,7 +147,7 @@ class WorkBlocksTest {
                 albumArtist = "Pink Floyd",
                 genres = listOf("Rock")
             )
-                .copy(composer = "Pink Floyd")
+                .copy(composer = "Pink Floyd", work = "Atom Heart Mother")
         }
         val block = (groupWorks(songs).single() as AlbumItem.Work).block
         block.numbering shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
@@ -104,6 +165,18 @@ class WorkBlocksTest {
         block.numbering.unit shouldBe "songs"
         block.title.catalogue shouldBe "D. 911"
         block.collapsedByDefault shouldBe false
+    }
+
+    @Test
+    fun `Winterreise collapses beside another work`() {
+        val cycle = List(24) {
+            song(id = it + 1L, name = "Lied ${it + 1}", albumArtist = "Fischer-Dieskau", genres = listOf("Lieder"))
+                .copy(composer = "Schubert", work = "Winterreise, D. 911", performers = listOf(Performer("Fischer-Dieskau", "baritone")))
+        }
+        val other = List(3) { movement(100L + it, "Symphony No. 5", "Allegro", it + 1, composer = "Beethoven") }
+        val items = groupWorks(cycle + other)
+        (items[0] as AlbumItem.Work).block.collapsedByDefault shouldBe true
+        (items[1] as AlbumItem.Work).block.collapsedByDefault shouldBe false
     }
 
     @Test

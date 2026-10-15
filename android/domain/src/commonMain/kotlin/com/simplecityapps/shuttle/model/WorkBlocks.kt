@@ -67,6 +67,25 @@ private fun runKey(song: Song): String? {
     return if (composer.isEmpty()) null else "i:${prefix.normalised()}|$composer"
 }
 
+private val formWords = Regex(
+    """\b(?:Symphon(?:y|ie)|Sonata|Concerto|Suite|Quartet|Trio|Partita|Mass|Requiem|Variations|Preludes|Études|Etudes|Cantata|Overture|Serenade)\b""",
+    RegexOption.IGNORE_CASE
+)
+
+/** Whether a shared title prefix on [songs] is a classical work rather than "Artist - Song" or "Hold On - Live". */
+private fun looksLikeInferredWork(songs: List<Song>, prefix: String): Boolean {
+    val first = songs.first()
+    val composer = first.cleanComposer() ?: return false
+    val albumArtist = first.albumArtist?.trim()
+    if (albumArtist != null && composer.equals(albumArtist, ignoreCase = true)) return false
+    val name = prefix.normalised()
+    val credited = songs.flatMap { it.artists + listOfNotNull(it.albumArtist, it.album) }
+    if (credited.any { it.normalised() == name }) return false
+    val classicalGenre = songs.any { song -> song.genres.any { genre -> classicalGenreWords.any { genre.contains(it, ignoreCase = true) } } }
+    val tagged = songs.any { !it.conductor.isNullOrBlank() || it.performers.orEmpty().isNotEmpty() }
+    return classicalGenre || tagged || parseWorkTitle(prefix).catalogue != null || workNumberRef.containsMatchIn(prefix) || formWords.containsMatchIn(prefix)
+}
+
 private fun findRuns(songs: List<Song>): List<Run> {
     val runs = mutableListOf<Run>()
     var start = 0
@@ -74,12 +93,14 @@ private fun findRuns(songs: List<Song>): List<Run> {
         val key = runKey(songs[start])
         var end = start
         while (key != null && end + 1 < songs.size && runKey(songs[end + 1]) == key) end++
-        if (end > start) {
-            val first = songs[start]
-            val tagged = first.cleanWork()
-            runs += Run(start..end, tagged ?: first.titlePrefix(), inferred = tagged == null)
+        val first = songs[start]
+        val tagged = first.cleanWork()
+        val prefix = if (tagged == null) first.titlePrefix() else null
+        val grouped = end > start && (tagged != null || (prefix != null && looksLikeInferredWork(songs.slice(start..end), prefix)))
+        if (grouped) {
+            runs += Run(start..end, tagged ?: prefix, inferred = tagged == null)
         } else {
-            runs += Run(start..start, null, false)
+            for (index in start..end) runs += Run(index..index, null, false)
         }
         start = end + 1
     }
@@ -113,7 +134,7 @@ private fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, album
         val raw = song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.name.orEmpty()
         val name = cleanMovementName(raw, work)
         val number = song.movementNumber?.takeIf { it >= 1 } ?: (index + 1)
-        val numeral = if (songs.size > 1 && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
+        val numeral = if ((songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
         Movement(song, number, name, numeral)
     }
     val discBreaks = songs.indices.drop(1).mapNotNull { index ->

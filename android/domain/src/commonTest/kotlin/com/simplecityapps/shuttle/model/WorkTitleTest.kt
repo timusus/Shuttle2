@@ -22,18 +22,51 @@ class WorkTitleTest {
             "Piano Sonata No. 8 in C minor, Op. 13 “Pathétique”" to title("Piano Sonata No. 8", nickname = "Pathétique", key = "C minor", catalogue = "Op. 13"),
             "Piano Sonata No. 2 in F♯ minor" to title("Piano Sonata No. 2", key = "F♯ minor"),
             "Piano Sonata, Op. 10 No. 3" to title("Piano Sonata", catalogue = "Op. 10 No. 3"),
-            "Sonata in D, D. 850" to title("Sonata", key = "D", catalogue = "D. 850"),
+            "Sonata in D, D. 850" to title("Sonata in D", catalogue = "D. 850"),
+            "Mass in B minor, BWV 232" to title("Mass in B minor", catalogue = "BWV 232"),
             "Symphony No. 52 in C minor, Hob. I:52" to title("Symphony No. 52", key = "C minor", catalogue = "Hob. I:52"),
-            "Piano Sonata in E-flat, Hob. XVI:52" to title("Piano Sonata", key = "E-flat", catalogue = "Hob. XVI:52"),
-            "Violin Concerto in A minor, BWV 1041a" to title("Violin Concerto", key = "A minor", catalogue = "BWV 1041a"),
+            "Piano Sonata in E-flat, Hob. XVI:52" to title("Piano Sonata in E-flat", catalogue = "Hob. XVI:52"),
+            "Violin Concerto in A minor, BWV 1041a" to title("Violin Concerto in A minor", catalogue = "BWV 1041a"),
             "Piano Concerto No. 20 in D minor, K. 466" to title("Piano Concerto No. 20", key = "D minor", catalogue = "K. 466"),
             "Concerto RV 537" to title("Concerto", catalogue = "RV 537"),
             "Cantata BWV 140" to title("Cantata", catalogue = "BWV 140"),
             "Symphony No. 9, WAB 109" to title("Symphony No. 9", catalogue = "WAB 109"),
             "Chaconne, BWV 1004 (arr. Busoni)" to title("Chaconne", catalogue = "BWV 1004", arrangement = "Busoni"),
-            "Cantata No. 140, Wachet auf" to title("Cantata No. 140", nickname = "Wachet auf")
+            "Symphony No. 3, Eroica" to title("Symphony No. 3", nickname = "Eroica")
         )
         cases.forEach { (input, expected) -> parseWorkTitle(input) shouldBe expected }
+    }
+
+    @Test
+    fun `a comma tail is a nickname only when it is a single capitalised word`() {
+        parseWorkTitle("Symphony No. 5, Part 1") shouldBe title("Symphony No. 5, Part 1")
+        parseWorkTitle("Suite No. 2, Prelude") shouldBe title("Suite No. 2, Prelude")
+        parseWorkTitle("Cantata No. 140, Wachet auf") shouldBe title("Cantata No. 140, Wachet auf")
+    }
+
+    @Test
+    fun `single letters are not catalogue numbers without their dot`() {
+        listOf("K2", "D12", "S1", "Vitamin B 12", "Symphony in B 12", "Piano Sonata K 310").forEach {
+            parseWorkTitle(it).catalogue shouldBe null
+            catalogueSearchKey(it) shouldBe null
+            catalogueSearchKeys(it) shouldBe emptyList()
+        }
+    }
+
+    @Test
+    fun `a D number must follow a comma or the start`() {
+        parseWorkTitle("Sonata D. 850").catalogue shouldBe null
+        catalogueSearchKeys("D. 850") shouldBe listOf("d850")
+        catalogueSearchKeys("Sonata in A, D. 959") shouldBe listOf("d959")
+    }
+
+    @Test
+    fun `strict single letter forms are catalogue numbers`() {
+        parseWorkTitle("Sonata, K. 310").catalogue shouldBe "K. 310"
+        parseWorkTitle("Sonata, KV 310").catalogue shouldBe "KV 310"
+        parseWorkTitle("Partita, S. 5").catalogue shouldBe "S. 5"
+        parseWorkTitle("Partita, S 5").catalogue shouldBe "S 5"
+        parseWorkTitle("Sonata, B. 12").catalogue shouldBe "B. 12"
     }
 
     @Test
@@ -69,7 +102,6 @@ class WorkTitleTest {
             "OP 67" to "op67",
             "BWV1007" to "bwv1007",
             "BWV 1007" to "bwv1007",
-            "K 466" to "k466",
             "K.466" to "k466",
             "KV 466" to "k466",
             "Hob. XVI:52" to "hobxvi:52",

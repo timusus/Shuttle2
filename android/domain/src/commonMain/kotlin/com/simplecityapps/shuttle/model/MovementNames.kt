@@ -11,7 +11,10 @@ data class WorkNumbering(val style: NumeralStyle, val unit: String) {
 }
 
 private val leadingNumeral = Regex("""^(?:X{0,3}(?:IX|IV|V?I{0,3})|\d{1,3})(?:\.|:|\)|\s[-–—])\s+(?=\S)""")
-private val ownLabel = Regex("""^(?:Var(?:iations?)?|No|Nr|Aria|Thema|Theme|Coda|Act|Akt|Scene)\b""", RegexOption.IGNORE_CASE)
+private val ownLabel = Regex(
+    """^(?:Var(?:iations?)?\b|(?:No|Nr)\.\s*\d|Aria\b|Coda\b|Scene\b|(?:Act|Akt)\s+(?:[IVX]+|\d+)\b|(?:Thema|Theme)(?:\s*$|\s*[:,]))""",
+    RegexOption.IGNORE_CASE
+)
 private val workPrefixSeparators = listOf(": ", " - ")
 
 /** The movement name without a leading "Work: " and a leading numeral ("II. ", "2. ", "II - ", "IV: "); the input when nothing would be left. */
@@ -33,7 +36,7 @@ fun hasOwnLabel(cleanName: String): Boolean = ownLabel.containsMatchIn(cleanName
 
 private val voiceWords = setOf("voice", "vocal", "vocals", "singer", "tenor", "soprano", "baritone", "mezzo", "alto", "bass", "countertenor")
 private val instrumentWords = setOf("double", "guitar", "viol", "viola", "saxophone", "sax", "flute", "recorder", "clarinet", "trombone", "tuba", "horn", "oboe", "bassoon")
-private val classicalGenreWords = listOf("classical", "opera", "baroque", "romantic", "orchestral", "chamber", "symphon", "choral", "concerto", "early music")
+internal val classicalGenreWords = listOf("classical", "opera", "baroque", "romantic", "orchestral", "chamber", "symphon", "choral", "concerto", "early music")
 private val songGenre = Regex("""\bsongs?\b|lieder|\blied\b""", RegexOption.IGNORE_CASE)
 
 private fun String.words() = lowercase().split(Regex("""[^a-z]+""")).filter { it.isNotEmpty() }
@@ -55,11 +58,18 @@ private fun List<Song>.isNonClassical(): Boolean {
     return !credited && !classicalGenre
 }
 
-/** The numbering of one work's [songs]: Roman for an instrumental classical work of up to 12 movements, Arabic for song cycles, vocal works, longer works and non-classical suites. */
-fun workNumbering(songs: List<Song>): WorkNumbering = when {
-    songs.isNonClassical() -> WorkNumbering(NumeralStyle.Arabic, if (songs.isSongGenre()) "songs" else "parts")
-    songs.isSongGenre() -> WorkNumbering(NumeralStyle.Arabic, "songs")
-    songs.any { song -> song.performers.orEmpty().any { it.isVoice() } } -> WorkNumbering(NumeralStyle.Arabic, "parts")
-    songs.size > 12 -> WorkNumbering(NumeralStyle.Arabic, "movements")
-    else -> WorkNumbering(NumeralStyle.Roman, "movements")
+/**
+ * The numbering of one work's [songs]: Roman for an instrumental classical work of up to 12 movements, Arabic for song
+ * cycles, vocal works, longer works and non-classical suites. The length is the tagged movement total, so a slice of a
+ * queue is numbered like the whole work.
+ */
+fun workNumbering(songs: List<Song>): WorkNumbering {
+    val length = songs.firstNotNullOfOrNull { it.movementTotal?.takeIf { total -> total >= 1 } } ?: songs.size
+    return when {
+        songs.isNonClassical() -> WorkNumbering(NumeralStyle.Arabic, if (songs.isSongGenre()) "songs" else "parts")
+        songs.isSongGenre() -> WorkNumbering(NumeralStyle.Arabic, "songs")
+        songs.any { song -> song.performers.orEmpty().any { it.isVoice() } } -> WorkNumbering(NumeralStyle.Arabic, "parts")
+        length > 12 -> WorkNumbering(NumeralStyle.Arabic, "movements")
+        else -> WorkNumbering(NumeralStyle.Roman, "movements")
+    }
 }

@@ -41,6 +41,8 @@ class MovementNamesTest {
             hasOwnLabel(it) shouldBe true
         }
         listOf("Nocturne", "Andante", "Allegro", "Arioso", "Breast Milky", "Actaeon").forEach { hasOwnLabel(it) shouldBe false }
+        listOf("No Surprises", "Theme from Vertigo", "Actaeon", "Act of Love", "Nr 5").forEach { hasOwnLabel(it) shouldBe false }
+        listOf("Theme", "Theme: Andante", "Thema, Adagio", "Act II").forEach { hasOwnLabel(it) shouldBe true }
         workNumbering(symphonySongs(4)).styleFor("Var. 13") shouldBe NumeralStyle.None
         workNumbering(symphonySongs(4)).styleFor("Allegro") shouldBe NumeralStyle.Roman
     }

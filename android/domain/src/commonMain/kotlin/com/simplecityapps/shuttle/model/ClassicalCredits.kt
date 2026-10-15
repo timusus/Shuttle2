@@ -13,7 +13,8 @@ private fun ComposerName.surname(): String? = sort?.takeIf { it.contains(',') }?
 fun composerDisplayName(composer: ComposerName, library: Collection<ComposerName> = emptyList()): String {
     val surname = composer.surname() ?: return composer.name
     val shared = library.any { other ->
-        !other.name.equals(composer.name, ignoreCase = true) && other.surname().equals(surname, ignoreCase = true)
+        val sameComposer = other.name.equals(composer.name, ignoreCase = true) || (other.sort != null && other.sort.equals(composer.sort, ignoreCase = true))
+        !sameComposer && other.surname().equals(surname, ignoreCase = true)
     }
     return if (shared) composer.name else surname
 }

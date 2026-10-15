@@ -30,6 +30,14 @@ class ClassicalCreditsTest {
     }
 
     @Test
+    fun `one composer spelled two ways is not a collision`() {
+        val short = ComposerName("J.S. Bach", "Bach, Johann Sebastian")
+        val full = ComposerName("Johann Sebastian Bach", "Bach, Johann Sebastian")
+        composerDisplayName(short, listOf(short, full)) shouldBe "Bach"
+        composerDisplayName(full, listOf(short, full)) shouldBe "Bach"
+    }
+
+    @Test
     fun `a song names its composer through its tags`() {
         song(id = 1).copy(composer = "Ludwig van Beethoven", composerSort = "Beethoven, Ludwig van").composerDisplayName() shouldBe "Beethoven"
         song(id = 1).composerDisplayName() shouldBe null
