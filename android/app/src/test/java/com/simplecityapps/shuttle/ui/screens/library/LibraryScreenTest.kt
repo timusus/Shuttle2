@@ -668,4 +668,28 @@ class LibraryScreenTest {
 
         robot.addFolderClicked shouldBe true
     }
+
+    @Test
+    fun `a library syncing from a server shows the sync, not the permission prompt`() {
+        robot.setEmptyLibrary(LibraryAvailability.Empty(MusicAccess.NotRequested, ScanProgress("Syncing Emby", 0.5f), hasServer = true))
+
+        robot.assertTextDisplayed("Syncing your music")
+        robot.assertTextDisplayed("Syncing Emby")
+        robot.assertTextNotDisplayed("Allow access to music")
+    }
+
+    @Test
+    fun `a library with a server waiting on its first import shows the sync`() {
+        robot.setEmptyLibrary(LibraryAvailability.Empty(MusicAccess.NotRequested, ScanProgress(), hasServer = true))
+
+        robot.assertTextDisplayed("Syncing your music")
+        robot.assertTextNotDisplayed("Allow access to music")
+    }
+
+    @Test
+    fun `a library with only this device and no permission asks for access`() {
+        robot.setEmptyLibrary(LibraryAvailability.Empty(MusicAccess.NotRequested))
+
+        robot.assertTextDisplayed("Allow access to music")
+    }
 }

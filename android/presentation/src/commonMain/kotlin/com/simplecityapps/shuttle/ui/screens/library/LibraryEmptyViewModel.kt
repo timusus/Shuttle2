@@ -18,8 +18,11 @@ sealed interface LibraryAvailability {
 
     data object HasMusic : LibraryAvailability
 
-    /** No songs yet: [access] decides what the empty state offers, and [scan] is the import running, if any. */
-    data class Empty(val access: MusicAccess, val scan: ScanProgress? = null) : LibraryAvailability
+    /**
+     * No songs yet: [access] decides what the empty state offers, and [scan] is the import running, if any. [hasServer]
+     * says a server is connected, so the first import is a sync and not a scan of this device.
+     */
+    data class Empty(val access: MusicAccess, val scan: ScanProgress? = null, val hasServer: Boolean = false) : LibraryAvailability
 }
 
 /**

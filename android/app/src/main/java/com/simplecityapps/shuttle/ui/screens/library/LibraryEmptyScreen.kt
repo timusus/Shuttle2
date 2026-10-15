@@ -128,7 +128,7 @@ private fun LibraryEmptyContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
         ) {
-            EmptyState(title = stringResource(R.string.sources_scanning_title), icon = Icons.Rounded.Search)
+            EmptyState(title = stringResource(if (state.hasServer) R.string.sources_syncing_title else R.string.sources_scanning_title), icon = Icons.Rounded.Search)
             val progressModifier = Modifier.widthIn(max = 320.dp).fillMaxWidth().padding(horizontal = S2Spacing.large)
             val fraction = scan.fraction
             S2ProgressBar(progress = fraction?.let { { it } }, modifier = progressModifier)
@@ -144,7 +144,8 @@ private fun LibraryEmptyContent(
             }
         }
 
-        state.access == MusicAccess.Granted -> EmptyState(
+        // With a server connected, the device's permission isn't what's missing.
+        state.access == MusicAccess.Granted || state.hasServer -> EmptyState(
             title = stringResource(R.string.sources_no_music_title),
             message = stringResource(if (onAddFolder != null) R.string.sources_no_music_message else R.string.sources_no_music_scan_message),
             action = if (onAddFolder != null) StateAction(stringResource(R.string.sources_add_folder), onAddFolder) else StateAction(stringResource(R.string.sources_scan_again), onScan),

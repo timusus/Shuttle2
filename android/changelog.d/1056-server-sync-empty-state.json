@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Right after you connect a server, an empty Library now says it is syncing your music instead of asking for access to music on this device.", "commits": [] }

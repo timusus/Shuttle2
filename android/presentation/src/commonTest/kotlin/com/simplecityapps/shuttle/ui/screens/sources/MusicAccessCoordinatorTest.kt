@@ -68,6 +68,29 @@ class MusicAccessCoordinatorTest {
     }
 
     @Test
+    fun `a connected server's first import shows as syncing before it starts`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = coordinator()
+
+        coordinator.onChecked(granted = false, showRationale = false)
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, ScanProgress(), hasServer = true)
+    }
+
+    @Test
+    fun `a connected server whose first import ended stops syncing`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.enable(MediaProviderType.Emby)
+        val coordinator = coordinator()
+        coordinator.onChecked(granted = false, showRationale = false)
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Emby, error = "offline"))
+
+        coordinator.availability.value shouldBe LibraryAvailability.Empty(MusicAccess.NotRequested, hasServer = true)
+    }
+
+    @Test
     fun `a grant from the prompt enables the S2 scanner and scans`() = runTest {
         songRepository.setSongs(emptyList())
         val coordinator = coordinator()

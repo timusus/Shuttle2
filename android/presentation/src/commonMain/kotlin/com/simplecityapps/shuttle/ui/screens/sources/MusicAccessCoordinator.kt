@@ -43,11 +43,22 @@ class MusicAccessCoordinator @Inject constructor(
             observeSongs(includeUnavailable = true).map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             access,
             importState.songImportState,
-        ) { hasSongs, access, import ->
+            mediaSources.enabledTypes,
+        ) { hasSongs, access, import, enabled ->
+            val hasServer = enabled.any { !it.isLocal }
+            // A server's first import starts a moment after sign-in; until it ends, this is a sync, not a missing permission.
+            val awaitingFirstImport = hasServer && !mediaSources.hasScanned && import !is SongImportState.ImportComplete
             when {
                 hasSongs -> LibraryAvailability.HasMusic
+
                 access == null -> LibraryAvailability.Loading
-                else -> LibraryAvailability.Empty(access, (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) })
+
+                else -> LibraryAvailability.Empty(
+                    access,
+                    (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) }
+                        ?: ScanProgress().takeIf { awaitingFirstImport },
+                    hasServer,
+                )
             }
         }.stateIn(appCoroutineScope, SharingStarted.WhileSubscribed(5_000), LibraryAvailability.Loading)
 
