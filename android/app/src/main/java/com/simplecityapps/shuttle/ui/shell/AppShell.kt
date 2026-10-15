@@ -86,8 +86,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2NavItem
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
-import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
@@ -532,19 +530,16 @@ private fun PaneShell(
                 destinations()
             }
             if (docked) {
-                ArtworkTheme(content.state.seed) {
-                    // Under artwork, the mini player's own fill runs down under the navigation bar.
-                    Surface(color = miniPlayerFill(MaterialTheme.colorScheme.surfaceContainer) { it.surfaceContainerHigh }) {
-                        MiniPlayer(
-                            player = content.state,
-                            progress = content.progress,
-                            actions = content.actions,
-                            interactive = true,
-                            onClick = { scope.launch { player.moveTo(PlayerLevel.Full) } },
-                            // The fill runs under the side cutout and navigation bar; the mini player's content clears them.
-                            modifier = Modifier.windowInsetsPadding(sideInsets.union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))),
-                        )
-                    }
+                Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+                    MiniPlayer(
+                        player = content.state,
+                        progress = content.progress,
+                        actions = content.actions,
+                        interactive = true,
+                        onClick = { scope.launch { player.moveTo(PlayerLevel.Full) } },
+                        // The fill runs under the side cutout and navigation bar; the mini player's content clears them.
+                        modifier = Modifier.windowInsetsPadding(sideInsets.union(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))),
+                    )
                 }
             }
         }

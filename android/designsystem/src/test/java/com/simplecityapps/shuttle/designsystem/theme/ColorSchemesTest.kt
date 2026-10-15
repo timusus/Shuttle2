@@ -6,7 +6,6 @@ import androidx.compose.ui.graphics.luminance
 import com.materialkolor.PaletteStyle
 import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.toHct
-import com.simplecityapps.shuttle.designsystem.component.MiniPlayerArtworkTint
 import io.kotest.assertions.withClue
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.doubles.shouldBeGreaterThan
@@ -137,7 +136,7 @@ class ColorSchemesTest {
     }
 
     @Test
-    fun `the player's artwork ground and mini player keep AA text contrast at default contrast`() {
+    fun `the player's artwork ground keeps AA text contrast at default contrast`() {
         // Default only: artworkRole keeps the root roles at Medium and High contrast, whose containers leave the surface tones.
         // Covers across hue and tone: Blue Hours, Night Bus Frequencies, Phase Garden, and brights
         val seeds = listOf(0xFF1F3FA8, 0xFF0B3D40, 0xFF00B8D4, 0xFF1F1530, 0xFFD9542B, 0xFFE6B800, 0xFF3FA34D, 0xFFF2A0C8, 0xFFFF2D95).map(::Color)
@@ -154,17 +153,6 @@ class ColorSchemesTest {
                         scheme.onSurfaceVariant.contrastRatio(ground) shouldBeGreaterThan 4.5
                         // The seek bar and controls are icons and a track: 3:1
                         scheme.primary.contrastRatio(ground) shouldBeGreaterThan 3.0
-                    }
-                }
-                // The mini player's fill: a light wash of secondaryContainer over the root scheme's surfaceContainerHigh (docked, surfaceContainer)
-                for (accent in S2Accent.entries) {
-                    val root = accentColorScheme(accent, isDark)
-                    for (surface in listOf(root.surfaceContainerHigh, root.surfaceContainer)) {
-                        val mini = lerp(surface, scheme.secondaryContainer, MiniPlayerArtworkTint)
-                        scheme.onSurface.contrastRatio(mini) shouldBeGreaterThan 4.5
-                        scheme.onSurfaceVariant.contrastRatio(mini) shouldBeGreaterThan 4.5
-                        scheme.primary.contrastRatio(mini) shouldBeGreaterThan 4.5 // the casting line
-                        scheme.primary.contrastRatio(mini) shouldBeGreaterThan 3.0 // the play button and progress line
                     }
                 }
             }

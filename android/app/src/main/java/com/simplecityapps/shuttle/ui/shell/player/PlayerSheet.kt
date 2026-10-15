@@ -37,7 +37,6 @@ import androidx.compose.ui.util.lerp
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2SheetDefaults
-import com.simplecityapps.shuttle.designsystem.component.miniPlayerFill
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.ui.shell.ChromeInsets
@@ -77,6 +76,7 @@ internal fun PlayerSheet(
 
     PanelResetEffect(state, player, actions)
 
+    val appColors = MaterialTheme.colorScheme
     ArtworkTheme(player.seed) {
         Surface(
             modifier = modifier
@@ -122,23 +122,25 @@ internal fun PlayerSheet(
                 // The mini player's fill runs on to the bottom edge, under the system navigation bar wherever no nav bar
                 // covers it, so the gesture area doesn't read as a band of its own, and out under a side cutout, which only
                 // its content clears.
-                val colors = MaterialTheme.colorScheme
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
-                        .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) }
-                        .background(miniPlayerFill(colors.surfaceContainerHigh) { it.surfaceContainerHigh }),
-                ) {
-                    MiniPlayer(
-                        player = player,
-                        progress = progress,
-                        actions = actions,
-                        interactive = miniInteractive,
-                        onClick = { scope.launch { state.moveTo(PlayerLevel.Full) } },
-                        // Beside the rail, the rail already covers that much of the cutout.
-                        modifier = Modifier.windowInsetsPadding(sideInsets.exclude(remember(collapsedInset) { ChromeInsets(start = collapsedInset) })),
-                    )
+                // It takes the app theme, not the artwork's, like the navigation bar it sits on.
+                MaterialTheme(colorScheme = appColors) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
+                            .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) }
+                            .background(appColors.surfaceContainer),
+                    ) {
+                        MiniPlayer(
+                            player = player,
+                            progress = progress,
+                            actions = actions,
+                            interactive = miniInteractive,
+                            onClick = { scope.launch { state.moveTo(PlayerLevel.Full) } },
+                            // Beside the rail, the rail already covers that much of the cutout.
+                            modifier = Modifier.windowInsetsPadding(sideInsets.exclude(remember(collapsedInset) { ChromeInsets(start = collapsedInset) })),
+                        )
+                    }
                 }
             }
         }
