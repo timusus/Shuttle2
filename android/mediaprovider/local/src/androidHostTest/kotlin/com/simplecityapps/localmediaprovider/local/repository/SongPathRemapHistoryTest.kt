@@ -46,4 +46,34 @@ class SongPathRemapHistoryTest {
         } shouldBe listOf(new, old)
         database.resumePointDao().getByContextIds(listOf("a")).single().point.songPath shouldBe new
     }
+
+    @Test
+    fun `a remap moves the history of its merged duplicates to the survivor so deleting them orphans nothing`() = runTest {
+        val old = "content://tree/document/primary%3AMusic%2FA.mp3"
+        val duplicatePath = "content://tree/document/primary%3AMusic%2FA-copy.mp3"
+        val new = "/storage/emulated/0/Music/A.mp3"
+        val dao = database.songDataDao()
+        val ids = dao.insert(
+            listOf(
+                createSongData(album = "A").copy(path = old),
+                createSongData(album = "A").copy(path = duplicatePath)
+            )
+        )
+        val provider = MediaProviderType.Shuttle
+        val now = Instant.fromEpochMilliseconds(0)
+        database.playEventDao().insert(PlayEventData(provider, duplicatePath, now, 1, true, 8, 3, "album", "a"))
+        database.playEventDao().insert(PlayEventData(MediaProviderType.Jellyfin, duplicatePath, now, 1, true, 8, 3, "album", "a"))
+        database.resumePointDao().upsert(ResumePointData("album", "a", provider, duplicatePath, 5_000, 0, 1, false, false, now))
+        database.resumePointDao().upsert(ResumePointData("album", "b", provider, old, 7_000, 0, 1, false, false, now))
+
+        val remap = SongPathRemap(ids[0], new, duplicateIds = listOf(ids[1]))
+        dao.remapPaths(listOf(remap), provider) { _, _ -> } shouldBe listOf(remap)
+        dao.delete(ids[1])
+
+        database.query("SELECT songPath FROM play_events ORDER BY id", null).use { cursor ->
+            buildList { while (cursor.moveToNext()) add(cursor.getString(0)) }
+        } shouldBe listOf(new, duplicatePath)
+        database.resumePointDao().getByContextIds(listOf("a", "b")).associate { it.point.contextId to it.point.songPath } shouldBe
+            mapOf("a" to new, "b" to new)
+    }
 }

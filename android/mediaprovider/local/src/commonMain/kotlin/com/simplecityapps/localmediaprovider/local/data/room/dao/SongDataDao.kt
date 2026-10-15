@@ -250,6 +250,11 @@ abstract class SongDataDao {
                     moveResumePoints(oldPath, remap.path, mediaProviderType)
                 }
                 if (remap.duplicateIds.isNotEmpty()) {
+                    // The duplicates get deleted by the caller, which would orphan history keyed by their own paths
+                    remap.duplicateIds.mapNotNull { pathOf(it) }.filter { it != remap.path }.forEach { duplicatePath ->
+                        movePlayEvents(duplicatePath, remap.path, mediaProviderType)
+                        moveResumePoints(duplicatePath, remap.path, mediaProviderType)
+                    }
                     movePlaylistEntries(remap.duplicateIds, remap.songId)
                     keepFavourite(remap.duplicateIds, remap.songId)
                 }
