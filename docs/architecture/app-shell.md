@@ -420,7 +420,8 @@ AppTheme(theme, accent)                       ← user's accent, everywhere
      ├─ NavDisplay
      │   └─ AlbumRoute → ArtworkTheme(seed = album art)   ← detail screens, own seed
      └─ PlayerSurface
-         └─ ArtworkTheme(seed = now-playing art)          ← mini, now playing, queue, pane
+         └─ ArtworkTheme(seed = now-playing art)          ← now playing, queue, pane
+             (the mini player re-applies the app scheme: it is neutral shell chrome, like the nav bar)
 ```
 
 `ArtworkTheme(seed)` is specified in `design-language.md` §1 (MaterialKolor seed from a small Coil
