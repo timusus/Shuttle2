@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import io.kotest.matchers.shouldBe
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -177,6 +178,13 @@ class AlbumListViewModelTest {
         viewModel.uiState.value.loadingState shouldBe AlbumListUiState.LoadingState.Scanning
         viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
         viewModel.uiState.value.albums.map { it.name } shouldBe listOf("Kept")
+    }
+
+    @Test
+    fun `the state before the library loads already carries the saved view mode`() {
+        fakeViewModePreferences.albumListViewMode = ViewMode.List
+
+        createViewModel().uiState.value.viewMode shouldBe ViewMode.List
     }
 
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {

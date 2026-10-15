@@ -100,7 +100,8 @@ class AlbumArtistListViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = AlbumArtistListUiState(),
+        // The saved layout, so a loading skeleton matches the grid or list that replaces it.
+        initialValue = AlbumArtistListUiState(viewMode = _viewMode.value, sortOrder = _sortOrder.value),
     )
 
     fun onArtistClick(albumArtist: AlbumArtist) {

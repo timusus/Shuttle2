@@ -24,10 +24,14 @@ struct ViewModeToggle: View {
 /// down the trailing edge scrolls to each section's first tile, by the tile's id.
 struct LibraryGrid<Content: View>: View {
     var index: [LetterIndexSection]?
+    /// Whether the columns leave room for the letter strip. The loading skeleton sets it with no index to lay out as
+    /// the loaded, indexed grid will.
+    var reservesIndex: Bool
     @ViewBuilder let content: () -> Content
 
-    init(index: [LetterIndexSection]? = nil, @ViewBuilder content: @escaping () -> Content) {
+    init(index: [LetterIndexSection]? = nil, reservesIndex: Bool? = nil, @ViewBuilder content: @escaping () -> Content) {
         self.index = index
+        self.reservesIndex = reservesIndex ?? (index != nil)
         self.content = content
     }
 
@@ -35,7 +39,7 @@ struct LibraryGrid<Content: View>: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var columns: [GridItem] {
-        let minimum = Self.minimumTile(layoutTier, indexed: index != nil, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
+        let minimum = Self.minimumTile(layoutTier, indexed: reservesIndex, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
         return [GridItem(.adaptive(minimum: minimum), spacing: AdaptiveLayout.gridSpacing, alignment: .top)]
     }
 
@@ -208,7 +212,7 @@ struct LibraryGridSkeleton: View {
     @ScaledMetric(relativeTo: .footnote) private var subtitleLine: CGFloat = 16
 
     var body: some View {
-        LibraryGrid {
+        LibraryGrid(reservesIndex: true) {
             ForEach(0 ..< tiles, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: Spacing.small) {
                     artworkShape.fill(.s2SurfaceFill)

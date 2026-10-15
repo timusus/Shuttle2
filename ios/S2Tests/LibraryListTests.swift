@@ -243,3 +243,48 @@ struct LibraryListTests {
         #expect(MediaActionText.alert(for: MediaActionMessageNotFound.shared) == nil)
     }
 }
+
+@MainActor
+struct LibrarySkeletonLayoutTests {
+    private func artistState(_ viewMode: ViewMode) -> AlbumArtistListUiState {
+        AlbumArtistListUiState(
+            albumArtists: [], selectedArtists: [], viewMode: viewMode, sortOrder: .`default`, loadingState: .loading, scanProgress: nil, letterIndex: nil
+        )
+    }
+
+    @Test func theArtistSkeletonFollowsTheViewMode() throws {
+        let grid = try AlbumArtistListContent(state: artistState(.grid)).inspect()
+        #expect((try? grid.find(LibraryGridSkeleton.self)) != nil)
+        #expect((try? grid.find(LibraryListSkeleton.self)) == nil)
+        let list = try AlbumArtistListContent(state: artistState(.list)).inspect()
+        #expect((try? list.find(LibraryListSkeleton.self)) != nil)
+        #expect((try? list.find(LibraryGridSkeleton.self)) == nil)
+    }
+
+    @Test func theAlbumSkeletonStartsOnTheSavedViewMode() {
+        // Android's default for albums is the grid; a saved list must show list rows from the first frame.
+        for viewMode in [ViewMode.list, .grid] {
+            let state = AlbumListUiState(
+                albums: [], selectedAlbums: [], viewMode: viewMode, sortOrder: .albumName, loadingState: .loading,
+                scanProgress: nil, events: [], letterIndex: nil
+            )
+            let sut = AlbumListContent(state: state)
+            let showsGrid = (try? sut.inspect().find(LibraryGridSkeleton.self)) != nil
+            let showsList = (try? sut.inspect().find(LibraryListSkeleton.self)) != nil
+            #expect(showsGrid == (viewMode == .grid), "\(viewMode)")
+            #expect(showsList == (viewMode == .list), "\(viewMode)")
+        }
+    }
+
+    @Test func theGridSkeletonUsesTheLoadedIndexedGridsColumns() throws {
+        let skeleton = try LibraryGridSkeleton().inspect().find(ViewType.LazyVGrid.self).columns()
+        let loaded = try LibraryGrid(index: []) { Color.clear }.inspect().find(ViewType.LazyVGrid.self).columns()
+        #expect(skeleton.map { "\($0)" } == loaded.map { "\($0)" })
+    }
+
+    @Test func withoutACategoryTheRootShowsNoSkeleton() {
+        let sut = LibraryRootContent(categories: [], availability: .loading, importStatus: .idle, selection: .constant(nil)) { Text($0.title) }
+        #expect((try? sut.inspect().find(LibraryListSkeleton.self)) == nil)
+        #expect((try? sut.inspect().find(LibraryGridSkeleton.self)) == nil)
+    }
+}

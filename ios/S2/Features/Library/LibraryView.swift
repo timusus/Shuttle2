@@ -174,7 +174,8 @@ struct LibraryRootContent<CategoryContent: View>: View {
                         .id(shownCategory)
                         .transition(.opacity)
                 } else {
-                    LibraryListSkeleton()
+                    // No category to draw: nothing replaces this, so a skeleton would promise a layout that never comes.
+                    Color.clear
                 }
             }
         }
