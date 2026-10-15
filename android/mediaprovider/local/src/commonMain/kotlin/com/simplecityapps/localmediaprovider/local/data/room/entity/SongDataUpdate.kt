@@ -50,7 +50,18 @@ data class SongDataUpdate(
     @ColumnInfo(name = "bitRate") var bitRate: Int? = null,
     @ColumnInfo(name = "sampleRate") var sampleRate: Int? = null,
     @ColumnInfo(name = "channelCount") var channelCount: Int? = null,
-    @ColumnInfo(name = "audioCodec") var audioCodec: String? = null
+    @ColumnInfo(name = "audioCodec") var audioCodec: String? = null,
+    // Written on every update, so a rescan or sync fills them in for a song stored before they existed (#1065)
+    @ColumnInfo(name = "composer") var composer: String? = null,
+    @ColumnInfo(name = "composerSort") var composerSort: String? = null,
+    @ColumnInfo(name = "conductor") var conductor: String? = null,
+    @ColumnInfo(name = "arranger") var arranger: String? = null,
+    @ColumnInfo(name = "work") var work: String? = null,
+    @ColumnInfo(name = "movementName") var movementName: String? = null,
+    @ColumnInfo(name = "movementNumber") var movementNumber: Int? = null,
+    @ColumnInfo(name = "movementTotal") var movementTotal: Int? = null,
+    @ColumnInfo(name = "showMovement") var showMovement: Boolean? = null,
+    @ColumnInfo(name = "performers") var performers: List<String>? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
@@ -91,7 +102,17 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     bitRate = bitRate,
     sampleRate = sampleRate,
     channelCount = channelCount,
-    audioCodec = audioCodec
+    audioCodec = audioCodec,
+    composer = composer,
+    composerSort = composerSort,
+    conductor = conductor,
+    arranger = arranger,
+    work = work,
+    movementName = movementName,
+    movementNumber = movementNumber,
+    movementTotal = movementTotal,
+    showMovement = showMovement,
+    performers = performers
 )
 
 fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()

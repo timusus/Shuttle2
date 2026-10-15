@@ -74,7 +74,19 @@ data class Song(
     val serverAlbumArtistIds: List<String>? = null,
     // The album this song belongs to in its library, as [AlbumIdentityRule] decided it over the library's songs; null for
     // a song read on its own (one being imported, or opened from another app), which is then its album's only song.
-    val albumIdentity: AlbumIdentity? = null
+    val albumIdentity: AlbumIdentity? = null,
+    // Classical metadata of #1065; null where the source has no value.
+    val composer: String? = null,
+    val composerSort: String? = null,
+    val conductor: String? = null,
+    val arranger: String? = null,
+    val work: String? = null,
+    val movementName: String? = null,
+    val movementNumber: Int? = null,
+    val movementTotal: Int? = null,
+    // Whether the work and movement are to be shown (SHOWMOVEMENT, shwm).
+    val showMovement: Boolean? = null,
+    val performers: List<Performer>? = null
 ) {
     val isFavourite: Boolean
         get() = favouritedAt != null

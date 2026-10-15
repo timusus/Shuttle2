@@ -141,7 +141,32 @@ data class SongDto(
     val starred: String? = null,
     val playCount: Int? = null,
     val musicBrainzId: String? = null,
-    val replayGain: ReplayGainDto? = null
+    val replayGain: ReplayGainDto? = null,
+    val contributors: List<ContributorDto> = emptyList(),
+    val displayComposer: String? = null,
+    val works: List<NamedDto> = emptyList(),
+    val movements: List<MovementDto> = emptyList(),
+    val groupings: List<String> = emptyList()
+)
+
+/** OpenSubsonic's `contributors` entry: [role] is `composer`, `conductor`, `performer`..., [subRole] the instrument. */
+@Serializable
+data class ContributorDto(
+    val role: String? = null,
+    val subRole: String? = null,
+    val artist: ArtistRefDto? = null
+)
+
+@Serializable
+data class NamedDto(
+    val name: String? = null
+)
+
+@Serializable
+data class MovementDto(
+    val name: String? = null,
+    val number: Int? = null,
+    val count: Int? = null
 )
 
 /** OpenSubsonic's `transcoding` extension: `getTranscodeDecision`'s answer for one song and [ClientInfoDto]. */

@@ -1,5 +1,7 @@
 package com.simplecityapps.mediaprovider.model
 
+import com.simplecityapps.shuttle.model.Performer
+
 data class AudioFile(
     val path: String,
     val size: Long,
@@ -34,5 +36,16 @@ data class AudioFile(
     val mbAlbumId: String? = null,
     val mbReleaseGroupId: String? = null,
     val mbArtistIds: List<String> = emptyList(),
-    val mbAlbumArtistIds: List<String> = emptyList()
+    val mbAlbumArtistIds: List<String> = emptyList(),
+    // Classical metadata (#1065), as [com.simplecityapps.shuttle.model.Song] stores it; null or empty where untagged.
+    val composer: String? = null,
+    val composerSort: String? = null,
+    val conductor: String? = null,
+    val arranger: String? = null,
+    val work: String? = null,
+    val movementName: String? = null,
+    val movementNumber: Int? = null,
+    val movementTotal: Int? = null,
+    val showMovement: Boolean? = null,
+    val performers: List<Performer> = emptyList()
 )

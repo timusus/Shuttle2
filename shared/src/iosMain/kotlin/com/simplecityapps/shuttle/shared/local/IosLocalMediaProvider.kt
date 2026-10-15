@@ -120,7 +120,7 @@ private fun folderIdOf(path: String): String? = path.removePrefix("${IosLocalFil
  */
 internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
     val fileName = file.path.substringAfterLast('/')
-    val fileTags = ffmpegPropertyMap(tags.map { it.key to it.value }).toFileTags()
+    val fileTags = ffmpegPropertyMap(tags.map { it.key to it.value }, id3 = mimeTypeOf(fileName) == "audio/mpeg").toFileTags()
     return Song(
         id = 0,
         name = fileTags.title ?: fileName.substringBeforeLast('.'),
@@ -160,7 +160,17 @@ internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
         mbAlbumId = fileTags.mbAlbumId,
         mbReleaseGroupId = fileTags.mbReleaseGroupId,
         mbArtistIds = fileTags.mbArtistIds,
-        mbAlbumArtistIds = fileTags.mbAlbumArtistIds
+        mbAlbumArtistIds = fileTags.mbAlbumArtistIds,
+        composer = fileTags.composer,
+        composerSort = fileTags.composerSort,
+        conductor = fileTags.conductor,
+        arranger = fileTags.arranger,
+        work = fileTags.work,
+        movementName = fileTags.movementName,
+        movementNumber = fileTags.movementNumber,
+        movementTotal = fileTags.movementTotal,
+        showMovement = fileTags.showMovement,
+        performers = fileTags.performers.ifEmpty { null }
     )
 }
 

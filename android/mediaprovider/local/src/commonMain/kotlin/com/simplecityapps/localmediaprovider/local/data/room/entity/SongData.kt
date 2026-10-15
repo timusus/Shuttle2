@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -71,7 +72,19 @@ data class SongData(
     @ColumnInfo(name = "serverAlbumId") var serverAlbumId: String? = null,
     @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
     @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null,
-    @ColumnInfo(name = "artworkItemId") var artworkItemId: String? = null
+    @ColumnInfo(name = "artworkItemId") var artworkItemId: String? = null,
+    // Classical metadata of #1065, as [Song] describes it. Added by the migration to version 59: null until the song is next read.
+    @ColumnInfo(name = "composer") var composer: String? = null,
+    @ColumnInfo(name = "composerSort") var composerSort: String? = null,
+    @ColumnInfo(name = "conductor") var conductor: String? = null,
+    @ColumnInfo(name = "arranger") var arranger: String? = null,
+    @ColumnInfo(name = "work") var work: String? = null,
+    @ColumnInfo(name = "movementName") var movementName: String? = null,
+    @ColumnInfo(name = "movementNumber") var movementNumber: Int? = null,
+    @ColumnInfo(name = "movementTotal") var movementTotal: Int? = null,
+    @ColumnInfo(name = "showMovement") var showMovement: Boolean? = null,
+    // Each entry is "name", or "name" + [PERFORMER_ROLE_SEPARATOR] + "role": the list column's ';' separator can't split a name.
+    @ColumnInfo(name = "performers") var performers: List<String>? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -122,10 +135,24 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
     serverAlbumArtistIds = serverAlbumArtistIds,
-    artworkItemId = artworkItemId
+    artworkItemId = artworkItemId,
+    composer = composer,
+    composerSort = composerSort,
+    conductor = conductor,
+    arranger = arranger,
+    work = work,
+    movementName = movementName,
+    movementNumber = movementNumber,
+    movementTotal = movementTotal,
+    showMovement = showMovement,
+    performers = performers?.map { performer -> performer.role?.let { role -> "${performer.name}$PERFORMER_ROLE_SEPARATOR$role" } ?: performer.name }
 ).apply {
     id = this@toSongData.id
 }
+
+internal const val PERFORMER_ROLE_SEPARATOR = '\u001F'
+
+fun List<String>.toPerformers(): List<Performer> = map { entry -> Performer(name = entry.substringBefore(PERFORMER_ROLE_SEPARATOR), role = entry.substringAfter(PERFORMER_ROLE_SEPARATOR, "").ifEmpty { null }) }
 
 /**
  * When the song was added: the provider's date (a remote server's) when it has one. Otherwise, when a song first reaches
@@ -152,7 +179,8 @@ const val SONG_COLUMNS =
         "replayGainTrack, replayGainAlbum, grouping, bitRate, bitDepth, sampleRate, channelCount, audioCodec, " +
         "artworkVersion, dateAdded, favouritedAt, albumArtists, artistsTag, artistDisplay, compilation, mbTrackId, " +
         "mbAlbumId, mbReleaseGroupId, mbArtistIds, mbAlbumArtistIds, serverAlbumId, serverArtistIds, " +
-        "serverAlbumArtistIds, artworkItemId"
+        "serverAlbumArtistIds, artworkItemId, composer, composerSort, conductor, arranger, work, movementName, " +
+        "movementNumber, movementTotal, showMovement, performers"
 
 /** [SONG_COLUMNS], each qualified by the `songs` table, for a join. */
 const val SONG_COLUMNS_QUALIFIED =
@@ -163,4 +191,6 @@ const val SONG_COLUMNS_QUALIFIED =
         "songs.bitRate, songs.bitDepth, songs.sampleRate, songs.channelCount, songs.audioCodec, songs.artworkVersion, " +
         "songs.dateAdded, songs.favouritedAt, songs.albumArtists, songs.artistsTag, songs.artistDisplay, " +
         "songs.compilation, songs.mbTrackId, songs.mbAlbumId, songs.mbReleaseGroupId, songs.mbArtistIds, " +
-        "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds, songs.artworkItemId"
+        "songs.mbAlbumArtistIds, songs.serverAlbumId, songs.serverArtistIds, songs.serverAlbumArtistIds, songs.artworkItemId, " +
+        "songs.composer, songs.composerSort, songs.conductor, songs.arranger, songs.work, songs.movementName, " +
+        "songs.movementNumber, songs.movementTotal, songs.showMovement, songs.performers"

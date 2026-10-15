@@ -14,6 +14,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTIT
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.toPerformers
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongStatsRestore
@@ -489,5 +490,15 @@ fun SongData.toSong(): Song = Song(
     serverAlbumId = serverAlbumId,
     serverArtistIds = serverArtistIds,
     serverAlbumArtistIds = serverAlbumArtistIds,
-    artworkItemId = artworkItemId
+    artworkItemId = artworkItemId,
+    composer = composer,
+    composerSort = composerSort,
+    conductor = conductor,
+    arranger = arranger,
+    work = work,
+    movementName = movementName,
+    movementNumber = movementNumber,
+    movementTotal = movementTotal,
+    showMovement = showMovement,
+    performers = performers?.toPerformers()
 )

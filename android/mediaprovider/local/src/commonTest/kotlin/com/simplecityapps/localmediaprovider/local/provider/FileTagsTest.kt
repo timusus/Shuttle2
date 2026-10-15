@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.AlbumIdentityTags
 import com.simplecityapps.shuttle.model.ArtistCredits
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Performer
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlinx.datetime.LocalDate
@@ -318,6 +319,95 @@ class FileTagsTest {
         // The ids are read without repeats, so three names and two ids don't pair: "Bee" isn't given B's id by position
         creditKeys("A; Bee; a", listOf(A_ID, B_ID, A_ID)) shouldBe listOf(key("A"), key("Bee"))
         creditKeys("A; a; Bee", listOf(A_ID, B_ID)) shouldBe listOf(key("A"), key("Bee"))
+    }
+
+    @Test
+    fun `maps the classical tags Picard writes to a Vorbis file`() {
+        val tags =
+            mapOf(
+                "COMPOSER" to listOf("Johann Sebastian Bach"),
+                "COMPOSERSORT" to listOf("Bach, Johann Sebastian"),
+                "CONDUCTOR" to listOf("John Eliot Gardiner"),
+                "ARRANGER" to listOf("Mozart"),
+                "WORK" to listOf("Mass in B minor"),
+                "MOVEMENTNAME" to listOf("Kyrie"),
+                "MOVEMENT" to listOf("1"),
+                "MOVEMENTTOTAL" to listOf("27"),
+                "SHOWMOVEMENT" to listOf("1"),
+                "PERFORMER" to listOf("Monteverdi Choir (choir)", "English Baroque Soloists")
+            ).toFileTags()
+
+        tags.composer shouldBe "Johann Sebastian Bach"
+        tags.composerSort shouldBe "Bach, Johann Sebastian"
+        tags.conductor shouldBe "John Eliot Gardiner"
+        tags.arranger shouldBe "Mozart"
+        tags.work shouldBe "Mass in B minor"
+        tags.movementName shouldBe "Kyrie"
+        tags.movementNumber shouldBe 1
+        tags.movementTotal shouldBe 27
+        tags.showMovement shouldBe true
+        tags.performers shouldBe listOf(Performer("Monteverdi Choir", "choir"), Performer("English Baroque Soloists"))
+    }
+
+    @Test
+    fun `maps the work and movement atoms Apple Music writes to an MP4`() {
+        val tags =
+            mapOf(
+                "COMPOSER" to listOf("Gustav Holst"),
+                "COMPOSERSORT" to listOf("Holst, Gustav"),
+                "WORK" to listOf("The Planets"),
+                "MOVEMENTNAME" to listOf("Mars"),
+                "MOVEMENTNUMBER" to listOf("1"),
+                "MOVEMENTCOUNT" to listOf("7"),
+                "SHOWWORKMOVEMENT" to listOf("1"),
+                "GROUPING" to listOf("Orchestral")
+            ).toFileTags()
+
+        tags.composer shouldBe "Gustav Holst"
+        tags.composerSort shouldBe "Holst, Gustav"
+        tags.work shouldBe "The Planets"
+        tags.movementName shouldBe "Mars"
+        tags.movementNumber shouldBe 1
+        tags.movementTotal shouldBe 7
+        tags.showMovement shouldBe true
+        tags.grouping shouldBe "Orchestral"
+    }
+
+    @Test
+    fun `maps the classical frames of an ID3v2_4 file with TIT1 as the work and GRP1 as the grouping`() {
+        val tags =
+            mapOf(
+                "COMPOSER" to listOf("Beethoven"),
+                "CONDUCTOR" to listOf("Karajan"),
+                "ARRANGER" to listOf("Liszt"),
+                "WORK" to listOf("Symphony No. 5"),
+                "MOVEMENTNAME" to listOf("Allegro con brio"),
+                "MOVEMENTNUMBER" to listOf("1/4"),
+                "GROUPING" to listOf("Favourites"),
+                "PERFORMER:violin" to listOf("Anne-Sophie Mutter"),
+                "PERFORMER:cello" to listOf("Yo-Yo Ma")
+            ).toFileTags()
+
+        tags.work shouldBe "Symphony No. 5"
+        tags.grouping shouldBe "Favourites"
+        tags.composer shouldBe "Beethoven"
+        tags.conductor shouldBe "Karajan"
+        tags.arranger shouldBe "Liszt"
+        tags.movementName shouldBe "Allegro con brio"
+        tags.movementNumber shouldBe 1
+        tags.movementTotal shouldBe 4
+        tags.performers shouldBe listOf(Performer("Anne-Sophie Mutter", "violin"), Performer("Yo-Yo Ma", "cello"))
+    }
+
+    @Test
+    fun `an untagged file has no classical tags`() {
+        val tags = emptyMap<String, List<String>>().toFileTags()
+
+        tags.composer shouldBe null
+        tags.work shouldBe null
+        tags.movementNumber shouldBe null
+        tags.showMovement shouldBe null
+        tags.performers shouldBe emptyList()
     }
 
     private companion object {

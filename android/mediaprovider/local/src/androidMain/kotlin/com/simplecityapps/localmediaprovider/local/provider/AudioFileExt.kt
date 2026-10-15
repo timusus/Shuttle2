@@ -47,7 +47,17 @@ fun AudioFile.toSong(
     mbAlbumId = mbAlbumId,
     mbReleaseGroupId = mbReleaseGroupId,
     mbArtistIds = mbArtistIds,
-    mbAlbumArtistIds = mbAlbumArtistIds
+    mbAlbumArtistIds = mbAlbumArtistIds,
+    composer = composer,
+    composerSort = composerSort,
+    conductor = conductor,
+    arranger = arranger,
+    work = work,
+    movementName = movementName,
+    movementNumber = movementNumber,
+    movementTotal = movementTotal,
+    showMovement = showMovement,
+    performers = performers.ifEmpty { null }
 )
 
 fun KTagLib.getAudioFile(
@@ -92,6 +102,16 @@ fun KTagLib.getAudioFile(
         mbAlbumId = tags.mbAlbumId,
         mbReleaseGroupId = tags.mbReleaseGroupId,
         mbArtistIds = tags.mbArtistIds,
-        mbAlbumArtistIds = tags.mbAlbumArtistIds
+        mbAlbumArtistIds = tags.mbAlbumArtistIds,
+        composer = tags.composer,
+        composerSort = tags.composerSort,
+        conductor = tags.conductor,
+        arranger = tags.arranger,
+        work = tags.work,
+        movementName = tags.movementName,
+        movementNumber = tags.movementNumber,
+        movementTotal = tags.movementTotal,
+        showMovement = tags.showMovement,
+        performers = tags.performers
     )
 }

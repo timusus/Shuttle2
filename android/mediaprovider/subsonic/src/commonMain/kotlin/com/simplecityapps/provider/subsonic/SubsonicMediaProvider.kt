@@ -24,6 +24,7 @@ import com.simplecityapps.provider.subsonic.http.SongDto
 import com.simplecityapps.provider.subsonic.http.SubsonicService
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.musicBrainzIds
 import io.ktor.http.encodeURLPathPart
@@ -163,6 +164,7 @@ internal fun SongDto.toSong(): Song {
     val codec = audioCodec()
     val createdAt = parseServerInstant(created)
     val gain = replayGain?.takeUnless { it.isEmpty() }
+    val movement = movements.firstOrNull()
     return Song(
         id = 0,
         name = title,
@@ -189,7 +191,7 @@ internal fun SongDto.toSong(): Song {
         replayGainTrack = gain?.trackGain,
         replayGainAlbum = gain?.albumGain,
         lyrics = null,
-        grouping = null,
+        grouping = groupings.firstOrNull { it.isNotBlank() },
         bitRate = bitRate?.takeIf { it > 0 },
         bitDepth = losslessBitDepth(codec, bitDepth),
         sampleRate = samplingRate?.takeIf { it > 0 },
@@ -207,9 +209,21 @@ internal fun SongDto.toSong(): Song {
         mbTrackId = musicBrainzIds(musicBrainzId).firstOrNull(),
         serverAlbumId = albumId,
         serverArtistIds = artists.mapNotNull(ArtistRefDto::id).ifEmpty { listOfNotNull(artistId) },
-        serverAlbumArtistIds = albumArtists.mapNotNull(ArtistRefDto::id)
+        serverAlbumArtistIds = albumArtists.mapNotNull(ArtistRefDto::id),
+        composer = contributorNames("composer").ifEmpty { listOfNotNull(displayComposer?.takeIf(String::isNotBlank)) }.joinToString("; ").ifEmpty { null },
+        conductor = contributorNames("conductor").joinToString("; ").ifEmpty { null },
+        arranger = contributorNames("arranger").joinToString("; ").ifEmpty { null },
+        work = works.firstNotNullOfOrNull { it.name?.takeIf(String::isNotBlank) },
+        movementName = movement?.name?.takeIf(String::isNotBlank),
+        movementNumber = movement?.number,
+        movementTotal = movement?.count,
+        performers = contributors.filter { it.role == "performer" }
+            .mapNotNull { c -> c.artist?.name?.takeIf(String::isNotBlank)?.let { Performer(it, c.subRole?.takeIf(String::isNotBlank)) } }
+            .ifEmpty { null }
     )
 }
+
+private fun SongDto.contributorNames(role: String): List<String> = contributors.filter { it.role == role }.mapNotNull { it.artist?.name?.takeIf(String::isNotBlank) }
 
 private fun List<ArtistRefDto>.names(): List<String> = mapNotNull { it.name?.takeIf(String::isNotBlank) }
 

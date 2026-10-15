@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
+import com.simplecityapps.shuttle.model.Performer
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
@@ -169,6 +170,59 @@ class FfmpegTagsTest {
         fileTags("date" to "2017", "year" to "2002").year shouldBe "2017"
         fileTags("originaldate" to "n/a", "date" to "2017").year shouldBe "2017"
         fileTags("date" to "unknown").year shouldBe null
+    }
+
+    @Test
+    fun `an MP3's TIT1 is the work and GRP1 the grouping`() {
+        // ffprobe on the ID3v2.4 fixture: TIT1 arrives as "grouping", TPE3 (the conductor) as "performer", TCOM as "composer"
+        val tags = ffmpegPropertyMap(listOf("grouping" to "Symphony No. 5", "GRP1" to "Favourites", "composer" to "Beethoven", "performer" to "Karajan", "TSOC" to "Beethoven, Ludwig van"), id3 = true).toFileTags()
+
+        tags.work shouldBe "Symphony No. 5"
+        tags.grouping shouldBe "Favourites"
+        tags.composer shouldBe "Beethoven"
+        tags.conductor shouldBe "Karajan"
+        tags.composerSort shouldBe "Beethoven, Ludwig van"
+    }
+
+    @Test
+    fun `an MP3 with only TIT1 has a work and no grouping`() {
+        val tags = ffmpegPropertyMap(listOf("grouping" to "Symphony No. 5"), id3 = true).toFileTags()
+
+        tags.work shouldBe "Symphony No. 5"
+        tags.grouping shouldBe null
+    }
+
+    @Test
+    fun `a FLAC's classical Vorbis comments map to their fields`() {
+        val tags =
+            fileTags(
+                "COMPOSER" to "Bach",
+                "CONDUCTOR" to "Gardiner",
+                "WORK" to "Mass in B minor",
+                "MOVEMENTNAME" to "Kyrie",
+                "MOVEMENT" to "1",
+                "MOVEMENTTOTAL" to "27",
+                "PERFORMER" to "Monteverdi Choir (choir); English Baroque Soloists"
+            )
+
+        tags.composer shouldBe "Bach"
+        tags.conductor shouldBe "Gardiner"
+        tags.work shouldBe "Mass in B minor"
+        tags.movementName shouldBe "Kyrie"
+        tags.movementNumber shouldBe 1
+        tags.movementTotal shouldBe 27
+        tags.performers shouldBe listOf(Performer("Monteverdi Choir", "choir"), Performer("English Baroque Soloists"))
+        tags.grouping shouldBe null
+    }
+
+    @Test
+    fun `an MP4's grouping stays the grouping`() {
+        val tags = fileTags("grouping" to "Mood", "composer" to "Ravel", "sort_composer" to "Ravel, Maurice")
+
+        tags.grouping shouldBe "Mood"
+        tags.work shouldBe null
+        tags.composer shouldBe "Ravel"
+        tags.composerSort shouldBe "Ravel, Maurice"
     }
 
     @Test

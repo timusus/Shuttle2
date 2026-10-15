@@ -50,6 +50,16 @@ internal class LocalFileTagMerger(
         mbAlbumId = existing.mbAlbumId,
         mbReleaseGroupId = existing.mbReleaseGroupId,
         mbArtistIds = existing.mbArtistIds,
-        mbAlbumArtistIds = existing.mbAlbumArtistIds
+        mbAlbumArtistIds = existing.mbAlbumArtistIds,
+        composer = existing.composer,
+        composerSort = existing.composerSort,
+        conductor = existing.conductor,
+        arranger = existing.arranger,
+        work = existing.work,
+        movementName = existing.movementName,
+        movementNumber = existing.movementNumber,
+        movementTotal = existing.movementTotal,
+        showMovement = existing.showMovement,
+        performers = existing.performers
     )
 }

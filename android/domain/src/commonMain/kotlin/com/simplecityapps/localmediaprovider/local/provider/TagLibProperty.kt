@@ -27,5 +27,21 @@ enum class TagLibProperty(val key: String) {
     MusicBrainzAlbumId("MUSICBRAINZ_ALBUMID"),
     MusicBrainzReleaseGroupId("MUSICBRAINZ_RELEASEGROUPID"),
     MusicBrainzArtistId("MUSICBRAINZ_ARTISTID"),
-    MusicBrainzAlbumArtistId("MUSICBRAINZ_ALBUMARTISTID")
+    MusicBrainzAlbumArtistId("MUSICBRAINZ_ALBUMARTISTID"),
+
+    // Classical metadata (#1065), TagLib's unified names. ID3 maps TCOM, TSOC, TPE3, TIT1 (the work, not the grouping:
+    // GRP1 is GROUPING), TIPL's arranger, MVNM and MVIN; MP4 maps ©wrt, soco, ©wrk, ©mvn, ©mvi and shwm. Vorbis comments
+    // pass through, with MOVEMENT for the number and MOVEMENTTOTAL for the count; [FileTags] reads those spellings too.
+    Composer("COMPOSER"),
+    ComposerSort("COMPOSERSORT"),
+    Conductor("CONDUCTOR"),
+    Arranger("ARRANGER"),
+    Work("WORK"),
+    MovementName("MOVEMENTNAME"),
+    MovementNumber("MOVEMENTNUMBER"),
+    MovementTotal("MOVEMENTTOTAL"),
+    ShowMovement("SHOWMOVEMENT"),
+
+    // A Vorbis comment holds "Name (instrument)"; ID3's TMCL is "PERFORMER:<instrument>" with the name as the value.
+    Performer("PERFORMER")
 }

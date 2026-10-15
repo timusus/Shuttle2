@@ -134,5 +134,15 @@ internal fun Song.withFileTags(tags: FileTags): Song = copy(
     mbAlbumId = tags.mbAlbumId,
     mbReleaseGroupId = tags.mbReleaseGroupId,
     mbArtistIds = tags.mbArtistIds,
-    mbAlbumArtistIds = tags.mbAlbumArtistIds
+    mbAlbumArtistIds = tags.mbAlbumArtistIds,
+    composer = tags.composer,
+    composerSort = tags.composerSort,
+    conductor = tags.conductor,
+    arranger = tags.arranger,
+    work = tags.work,
+    movementName = tags.movementName,
+    movementNumber = tags.movementNumber,
+    movementTotal = tags.movementTotal,
+    showMovement = tags.showMovement,
+    performers = tags.performers.ifEmpty { null }
 )

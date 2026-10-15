@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
 import com.simplecityapps.mediaprovider.splitArtistTag
+import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlinx.datetime.LocalDate
 
@@ -38,7 +39,18 @@ data class FileTags(
     val bitRate: Int? = null,
     val bitDepth: Int? = null,
     val sampleRate: Int? = null,
-    val channelCount: Int? = null
+    val channelCount: Int? = null,
+    // Classical metadata (#1065); `grouping` stays the GROUPING tag (ID3 GRP1, MP4 ©grp), never the work
+    val composer: String? = null,
+    val composerSort: String? = null,
+    val conductor: String? = null,
+    val arranger: String? = null,
+    val work: String? = null,
+    val movementName: String? = null,
+    val movementNumber: Int? = null,
+    val movementTotal: Int? = null,
+    val showMovement: Boolean? = null,
+    val performers: List<Performer> = emptyList()
 )
 
 /**
@@ -51,6 +63,8 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
     fun first(property: TagLibProperty): String? = get(property.key)?.firstOrNull()
     val trackTag = first(TagLibProperty.Track)
     val discTag = first(TagLibProperty.Disc)
+    // Vorbis writes the movement number as MOVEMENT, ID3's MVIN may be "n/total", MP4 counts with MOVEMENTCOUNT
+    val movementTag = first(TagLibProperty.MovementNumber) ?: get(VORBIS_MOVEMENT)?.firstOrNull()
     return FileTags(
         title = first(TagLibProperty.Title),
         // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST.
@@ -89,9 +103,52 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         mbAlbumId = musicBrainzIds(TagLibProperty.MusicBrainzAlbumId).firstOrNull(),
         mbReleaseGroupId = musicBrainzIds(TagLibProperty.MusicBrainzReleaseGroupId).firstOrNull(),
         mbArtistIds = musicBrainzIds(TagLibProperty.MusicBrainzArtistId),
-        mbAlbumArtistIds = musicBrainzIds(TagLibProperty.MusicBrainzAlbumArtistId)
+        mbAlbumArtistIds = musicBrainzIds(TagLibProperty.MusicBrainzAlbumArtistId),
+        composer = first(TagLibProperty.Composer),
+        composerSort = first(TagLibProperty.ComposerSort),
+        conductor = first(TagLibProperty.Conductor),
+        arranger = first(TagLibProperty.Arranger),
+        work = first(TagLibProperty.Work),
+        movementName = first(TagLibProperty.MovementName),
+        movementNumber = movementTag?.substringBefore('/')?.trim()?.toIntOrNull(),
+        movementTotal =
+            (first(TagLibProperty.MovementTotal) ?: get(MP4_MOVEMENT_COUNT)?.firstOrNull() ?: movementTag?.substringAfter('/', ""))
+                ?.trim()?.toIntOrNull(),
+        showMovement = (first(TagLibProperty.ShowMovement) ?: get(MP4_SHOW_WORK_MOVEMENT)?.firstOrNull())?.parseCompilation(),
+        performers = performers()
     )
 }
+
+/**
+ * The performers tagged: Vorbis/MP4 "Name (instrument)" values of PERFORMER, and ID3 TMCL, which TagLib exposes as
+ * "PERFORMER:<instrument>" with the name as the value. The instrument is the role; a bare name has none.
+ */
+private fun Map<String, List<String>>.performers(): List<Performer> = entries.flatMap { (key, values) ->
+    when {
+        key == TagLibProperty.Performer.key -> values.mapNotNull(::parsePerformer)
+
+        key.startsWith("${TagLibProperty.Performer.key}:") -> {
+            val role = key.substringAfter(':').trim().ifEmpty { null }
+            values.map { it.trim() }.filter { it.isNotEmpty() }.map { name -> Performer(name, role) }
+        }
+
+        else -> emptyList()
+    }
+}
+
+/** "Name (instrument)" is the name and the instrument; anything else is a name alone. A blank value is no performer. */
+internal fun parsePerformer(value: String): Performer? {
+    val trimmed = value.trim()
+    if (trimmed.isEmpty()) return null
+    val open = trimmed.lastIndexOf(" (")
+    if (open <= 0 || !trimmed.endsWith(')')) return Performer(trimmed)
+    val role = trimmed.substring(open + 2, trimmed.length - 1).trim()
+    return Performer(trimmed.substring(0, open).trim(), role.ifEmpty { null })
+}
+
+private const val VORBIS_MOVEMENT = "MOVEMENT"
+private const val MP4_MOVEMENT_COUNT = "MOVEMENTCOUNT"
+private const val MP4_SHOW_WORK_MOVEMENT = "SHOWWORKMOVEMENT"
 
 /** The first artist an ALBUMARTIST value names, split as [splitArtistTag] splits an ARTIST value; a value naming none (blank) is null. */
 internal fun primaryAlbumArtist(value: String): String? = splitArtistTag(value).firstOrNull()
