@@ -129,11 +129,17 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
     }
 
 /**
- * The catalogue's compact grid: as many columns as fit tiles of [S2GridTile.minimumWidth] scaled with the font, so a
- * phone shows two at the default size and one at 2.0, where two would cut every title to a word.
+ * The catalogue's grid: as many columns as fit tiles of [S2GridTile.minimumWidth] scaled with the font, so a
+ * phone shows two at the default size and one at 2.0, where two would cut every title to a word. The compact grid
+ * fits tiles of [S2GridTile.compactMinimumWidth] the same way, three on a phone.
  */
 @Composable
-private fun libraryGridColumns(): GridCells = GridCells.Adaptive(minSize = S2GridTile.minimumWidth * LocalDensity.current.fontScale)
+private fun libraryGridColumns(compact: Boolean): GridCells = GridCells.Adaptive(
+    minSize = (if (compact) S2GridTile.compactMinimumWidth else S2GridTile.minimumWidth) * LocalDensity.current.fontScale,
+)
+
+/** The gap between grid tiles, tighter in the compact grid. */
+private fun gridSpacing(compact: Boolean): Dp = if (compact) S2Spacing.xsmall else S2Spacing.small
 
 private val GridHorizontalPadding = S2Spacing.medium
 
@@ -300,15 +306,16 @@ fun AlbumsPage(
             LibraryFastScroller(state.albums, state.letterIndex, scrollableState, thumbLabel = albumThumbLabel(state.sortOrder), controls = controls)
         }
         Box(modifier.fillMaxSize()) {
-            if (state.viewMode == ViewMode.Grid) {
+            if (state.viewMode != ViewMode.List) {
+                val compact = state.viewMode == ViewMode.CompactGrid
                 val gridState = rememberLazyGridState()
                 ScrollToTopOnReselect(ShellTab.Library, gridState)
                 LazyVerticalGrid(
-                    columns = libraryGridColumns(),
+                    columns = libraryGridColumns(compact),
                     state = gridState,
                     contentPadding = gridPadding(controls, top = S2Spacing.small),
-                    horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
-                    verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(gridSpacing(compact)),
+                    verticalArrangement = Arrangement.spacedBy(gridSpacing(compact)),
                     modifier = Modifier.fillMaxSize().testTag("library-albums"),
                 ) {
                     controlsItem(controls, GridHorizontalPadding)
@@ -319,6 +326,7 @@ fun AlbumsPage(
                             onClick = { onAlbumClick(album) },
                             onLongClick = { onAlbumLongClick(album) },
                             selected = album in state.selectedAlbums,
+                            titleMaxLines = if (compact) 1 else null,
                             artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
                         )
                     }
@@ -370,15 +378,16 @@ fun ArtistsPage(
             LibraryFastScroller(artists, state.letterIndex, scrollableState, thumbLabel = artistThumbLabel(state.sortOrder), controls = controls)
         }
         Box(modifier.fillMaxSize()) {
-            if (state.viewMode == ViewMode.Grid) {
+            if (state.viewMode != ViewMode.List) {
+                val compact = state.viewMode == ViewMode.CompactGrid
                 val gridState = rememberLazyGridState()
                 ScrollToTopOnReselect(ShellTab.Library, gridState)
                 LazyVerticalGrid(
-                    columns = libraryGridColumns(),
+                    columns = libraryGridColumns(compact),
                     state = gridState,
                     contentPadding = gridPadding(controls, top = S2Spacing.medium),
-                    horizontalArrangement = Arrangement.spacedBy(S2Spacing.small),
-                    verticalArrangement = Arrangement.spacedBy(S2Spacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(gridSpacing(compact)),
+                    verticalArrangement = Arrangement.spacedBy(gridSpacing(compact)),
                     modifier = Modifier.fillMaxSize().testTag("library-artists"),
                 ) {
                     controlsItem(controls, GridHorizontalPadding)
@@ -389,6 +398,7 @@ fun ArtistsPage(
                             onClick = { onArtistClick(artist) },
                             onLongClick = { onArtistLongClick(artist) },
                             selected = artist in state.selectedArtists,
+                            titleMaxLines = if (compact) 1 else null,
                             artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, Modifier.fillMaxSize(), size = ArtworkSize.Grid, shape = ArtworkShape.Circle) },
                         )
                     }

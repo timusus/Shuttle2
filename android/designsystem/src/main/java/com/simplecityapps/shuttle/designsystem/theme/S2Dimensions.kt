@@ -77,4 +77,7 @@ object S2ShelfTileWidth {
 /** The narrowest a catalogue grid tile gets; a grid fits as many columns of at least this width as the window allows. */
 object S2GridTile {
     val minimumWidth = 140.dp
+
+    /** The compact grid's narrowest tile, so a phone fits three columns for faster browsing of a big library. */
+    val compactMinimumWidth = 105.dp
 }

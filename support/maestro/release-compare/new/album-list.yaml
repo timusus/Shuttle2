@@ -4,8 +4,10 @@ appId: ${APP_ID}
 - runFlow: ../album-list.yaml
 - runFlow:
     when:
-      visible: "Show as grid"
+      notVisible: "Layout: Grid"
     commands:
-      - tapOn: "Show as grid"
+      - tapOn:
+          id: "library-view-mode"
+      - tapOn: "Grid"
 - waitForAnimationToEnd:
     timeout: 5000

@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ViewList
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -23,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -150,15 +152,40 @@ internal fun LibraryControlsRow(controls: LibraryTabControls, modifier: Modifier
                 }
             }
         }
-        controls.viewMode?.let { mode ->
-            val next = if (mode == ViewMode.Grid) ViewMode.List else ViewMode.Grid
-            S2IconButton(
-                icon = if (next == ViewMode.Grid) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
-                contentDescription = stringResource(if (next == ViewMode.Grid) R.string.library_show_as_grid else R.string.library_show_as_list),
-                onClick = { controls.onViewModeChange(next) },
-            )
-        }
+        controls.viewMode?.let { mode -> ViewModeButton(mode, controls.onViewModeChange) }
         controls.onShuffle?.let { S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.menu_title_shuffle), onClick = it) }
         controls.onPlay?.let { S2IconButton(icon = Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.menu_title_play), onClick = it) }
     }
 }
+
+/** The layout button: shows the current [mode]'s icon and opens the three layouts as a menu, the current one checked. */
+@Composable
+private fun ViewModeButton(mode: ViewMode, onViewModeChange: (ViewMode) -> Unit) {
+    Box {
+        var choosing by remember { mutableStateOf(false) }
+        S2IconButton(
+            icon = mode.icon,
+            contentDescription = stringResource(R.string.library_view_mode_current, stringResource(mode.label)),
+            onClick = { choosing = true },
+            modifier = Modifier.testTag("library-view-mode"),
+        )
+        val options = ViewMode.entries.map { option ->
+            S2Action(stringResource(option.label), { onViewModeChange(option) }, option.icon, selected = option == mode)
+        }
+        S2Menu(expanded = choosing, onDismissRequest = { choosing = false }, groups = listOf(options))
+    }
+}
+
+private val ViewMode.icon: ImageVector
+    get() = when (this) {
+        ViewMode.List -> Icons.AutoMirrored.Rounded.ViewList
+        ViewMode.Grid -> Icons.Rounded.GridView
+        ViewMode.CompactGrid -> Icons.Rounded.Apps
+    }
+
+private val ViewMode.label: Int
+    get() = when (this) {
+        ViewMode.List -> R.string.library_view_mode_list
+        ViewMode.Grid -> R.string.library_view_mode_grid
+        ViewMode.CompactGrid -> R.string.library_view_mode_compact_grid
+    }

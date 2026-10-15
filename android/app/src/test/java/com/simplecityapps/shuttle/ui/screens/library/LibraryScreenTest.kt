@@ -239,7 +239,7 @@ class LibraryScreenTest {
         robot.setContent(libraryState(currentTab = LibraryTab.Albums), libraryControls(count = "1 album"))
 
         robot.assertTextDisplayed("1 album")
-        robot.assertContentDescriptionNotDisplayed("Show as list")
+        robot.assertContentDescriptionNotDisplayed("Layout: List")
         robot.assertContentDescriptionNotDisplayed("Play")
         robot.assertContentDescriptionNotDisplayed("Shuffle")
     }
@@ -279,17 +279,28 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the view toggle switches the albums page between grid and list`() {
-        val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"), createAlbum(name = "Salt Lines", albumArtist = "Harbour Owl"))
+    fun `the layout menu switches the albums page between grid, list and compact grid`() {
+        val albums = listOf(
+            createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"),
+            createAlbum(name = "Salt Lines", albumArtist = "Harbour Owl"),
+            createAlbum(name = "Tin Orchard", albumArtist = "Juniper Static"),
+        )
         robot.setAlbumsWithViewToggle(readyAlbumList(albums, viewMode = ViewMode.Grid))
         robot.sideBySide("Phase Garden", "Salt Lines") shouldBe true
+        robot.sideBySide("Phase Garden", "Tin Orchard") shouldBe false
 
-        robot.clickContentDescription("Show as list")
+        robot.clickContentDescription("Layout: Grid")
+        robot.clickText("List")
 
         robot.lastViewModeChange shouldBe ViewMode.List
         robot.sideBySide("Phase Garden", "Salt Lines") shouldBe false
-        robot.clickContentDescription("Show as grid")
-        robot.sideBySide("Phase Garden", "Salt Lines") shouldBe true
+
+        // A phone fits three compact tiles a row, where the grid fits two.
+        robot.clickContentDescription("Layout: List")
+        robot.clickText("Compact grid")
+
+        robot.lastViewModeChange shouldBe ViewMode.CompactGrid
+        robot.sideBySide("Phase Garden", "Tin Orchard") shouldBe true
     }
 
     @Test
@@ -390,7 +401,7 @@ class LibraryScreenTest {
         )
 
         robot.countOfText("1 album") shouldBe 1
-        robot.assertContentDescriptionDisplayed("Show as list")
+        robot.assertContentDescriptionDisplayed("Layout: Grid")
 
         robot.clickContentDescription("Play")
         robot.playClicked shouldBe true

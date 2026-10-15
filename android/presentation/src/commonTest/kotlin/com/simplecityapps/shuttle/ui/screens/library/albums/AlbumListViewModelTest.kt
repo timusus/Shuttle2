@@ -187,6 +187,18 @@ class AlbumListViewModelTest {
         createViewModel().uiState.value.viewMode shouldBe ViewMode.List
     }
 
+    @Test
+    fun `choosing the compact grid shows it and the next visit starts in it`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.setViewMode(ViewMode.CompactGrid)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.viewMode shouldBe ViewMode.CompactGrid
+        createViewModel().uiState.value.viewMode shouldBe ViewMode.CompactGrid
+    }
+
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {
         val preferences = fakeLibraryViewPreferences(sort = fakeSortPreferences, albumList = fakeViewModePreferences)
         val testMediaActions = TestMediaActions(

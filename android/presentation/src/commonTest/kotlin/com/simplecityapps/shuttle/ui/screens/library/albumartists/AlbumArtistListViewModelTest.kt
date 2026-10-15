@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.test.AfterTest
@@ -58,6 +59,18 @@ class AlbumArtistListViewModelTest {
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
     )
+
+    @Test
+    fun `choosing the compact grid shows it and the next visit starts in it`() = runTest {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.setViewMode(ViewMode.CompactGrid)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.viewMode shouldBe ViewMode.CompactGrid
+        viewModel().uiState.value.viewMode shouldBe ViewMode.CompactGrid
+    }
 
     @Test
     fun `the list holds album artists only until the setting adds those only credited on others' albums`() = runTest {

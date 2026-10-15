@@ -23,4 +23,19 @@ class AlbumListPreferenceManagerTest {
 
         preferences.albumListViewMode shouldBe ViewMode.List
     }
+
+    @Test
+    fun `a saved compact grid view mode sticks`() {
+        preferences.albumListViewMode = ViewMode.CompactGrid
+
+        preferences.albumListViewMode shouldBe ViewMode.CompactGrid
+    }
+
+    @Test
+    fun `a stored view mode the app no longer knows reads as the grid`() {
+        val store = GeneralPreferenceManager(InMemoryKeyValueStore())
+        store.albumListViewMode = "Mosaic"
+
+        AlbumListPreferenceManager(store).albumListViewMode shouldBe ViewMode.Grid
+    }
 }

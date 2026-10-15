@@ -188,7 +188,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
 
     /**
      * The Albums tab with its view toggle wired to the page, as the destination wires both to the tab ViewModel: the
-     * toggle switches the page between [ViewMode.Grid] and [ViewMode.List].
+     * layout menu switches the page between its [ViewMode]s.
      */
     fun setAlbumsWithViewToggle(albums: AlbumListUiState) {
         rule.setContent {

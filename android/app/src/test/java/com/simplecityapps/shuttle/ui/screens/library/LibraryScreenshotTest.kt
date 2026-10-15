@@ -124,6 +124,14 @@ class LibraryScreenshotTest {
         shot("phone-albums")
     }
 
+    /** The compact grid: three smaller tiles a row with one-line titles, for browsing a big library faster. */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumsCompactGrid() {
+        container(LibraryTab.Albums, "${albums.size} albums", albumViewMode = ViewMode.CompactGrid)
+        shot("phone-albums-compact-grid")
+    }
+
     /** A landscape phone: a small top bar over the chips, and the albums fill the rest. */
     @Test
     @Config(qualifiers = "w891dp-h411dp-xhdpi")
