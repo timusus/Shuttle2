@@ -48,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -71,7 +70,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
-import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.ui.screens.home.HomeItem
 import com.simplecityapps.shuttle.ui.screens.home.kind
@@ -97,7 +95,7 @@ internal fun QueueHeader(
     modifier: Modifier = Modifier,
 ) {
     val color = PanelColor
-    val top = artworkRole(color, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = HeaderWashAlpha).compositeOver(color))
+    val top = PanelWashTop
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -136,9 +134,6 @@ private fun QueueSourceLine(
             .testTag(PlayerTestTags.QueueSource),
     )
 }
-
-/** How much of the cover's tint the queue header starts from. */
-private const val HeaderWashAlpha = 0.6f
 
 /** The lazy keys of the section labels, which the reorder looks for when a drag begins. */
 private const val UpNextKey = "queue_up_next"

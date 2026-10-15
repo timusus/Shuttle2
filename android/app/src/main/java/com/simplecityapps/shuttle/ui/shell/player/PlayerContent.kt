@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
@@ -94,6 +95,26 @@ internal val PanelColor: Color
     } else {
         MaterialTheme.colorScheme.surfaceContainerLowest
     }
+
+/** The wash a panel's header starts from: the cover's secondaryContainer over [PanelColor], none without artwork. */
+internal val PanelWashTop: Color
+    @Composable get() {
+        val color = PanelColor
+        return artworkRole(color, MaterialTheme.colorScheme.secondaryContainer.copy(alpha = PanelWashAlpha).compositeOver(color))
+    }
+
+/** Washes the top [PanelWashHeight] of a panel's content from [PanelWashTop] into [PanelColor], so every panel reads as the queue does. */
+@Composable
+internal fun Modifier.panelHeaderWash(): Modifier {
+    val top = PanelWashTop
+    val bottom = PanelColor
+    return drawBehind {
+        drawRect(Brush.verticalGradient(listOf(top, bottom), endY = PanelWashHeight.toPx()))
+    }
+}
+
+private const val PanelWashAlpha = 0.6f
+private val PanelWashHeight = 72.dp
 
 internal object PlayerTestTags {
     const val Sheet = "player_sheet"
