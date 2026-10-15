@@ -645,7 +645,7 @@ Automated: `support/scripts/emu-verify.sh --check legacy-purchaser-offline` seed
 ## Library sync notification (#1027)
 
 - [ ] Android, a server with a large library (8k+ songs): Settings > Sources > the server > Sync now. A "syncing" progress notification appears; leave the app (home, then another app) and the import still completes, with the notification gone at the end and the library updated.
-- [ ] Android, the periodic sync (Settings > Library > rescan frequency set, then `adb shell cmd jobscheduler run -f <package> <job id>` for its job on a signed-in server whose library has been imported): a progress notification shows while it syncs and goes at the end. If none shows, `adb logcat -s Timber` for "Couldn't run the media import in the foreground" (Android 12+ refuses a foreground start from a plain background job).
+- [ ] Android, the periodic sync (Settings > Library > rescan frequency set, then `adb shell cmd jobscheduler run -f <package> <job id>` for its job on a signed-in server whose library has been imported): it syncs silently with no notification, and `adb logcat` shows no `ForegroundServiceStartNotAllowedException` (#1028, Android 12+).
 
 ## Welcome screen on first launch (#1040, #1031)
 

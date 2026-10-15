@@ -91,7 +91,14 @@ class MediaImportWorkerTest {
         worker().doWork() shouldBe Result.success()
 
         provider.scans shouldBe 1
-        foregrounds shouldBe 1
+    }
+
+    @Test
+    fun `a periodic sync never goes to the foreground`() = runBlocking<Unit> {
+        worker().doWork() shouldBe Result.success()
+
+        provider.scans shouldBe 1
+        foregrounds shouldBe 0
     }
 
     @Test

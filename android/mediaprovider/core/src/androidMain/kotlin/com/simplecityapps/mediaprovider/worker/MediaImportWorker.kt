@@ -36,8 +36,8 @@ import timber.log.Timber
 
 /**
  * The background sync (#771): brings every source up to date as [MediaImporter.sync] does, at the [ImportFrequency] chosen.
- * Runs as a foreground service with a progress notification, so a long scan isn't cut short by the worker time limit, and
- * is retried with backoff when a source's sync fails.
+ * Runs silently in the background, and is retried with backoff when a source's sync fails. The user's own scan or Sync now
+ * ([enqueueFullImport]) is expedited work and runs as a foreground service with a progress notification.
  */
 class MediaImportWorker
 @AssistedInject
@@ -56,8 +56,8 @@ constructor(
 
     override suspend fun doWork(): Result {
         if (inputData.getBoolean(KEY_FULL_IMPORT, false)) return runFullImport()
-        // Foregrounded as the sync starts work, so a sync that skips returns at once and shows nothing
-        val result = mediaImporter.sync(SyncTrigger.Periodic, onStart = ::promoteToForeground)
+        // Never foregrounded: Android 12+ refuses a foreground start from a non-expedited background job
+        val result = mediaImporter.sync(SyncTrigger.Periodic)
         return when {
             !result.shouldRetry -> Result.success()
 
