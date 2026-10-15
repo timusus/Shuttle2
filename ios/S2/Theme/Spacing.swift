@@ -85,6 +85,10 @@ enum ArtworkSize {
     /// The same beside a letter index, whose width is kept clear on both edges: small enough that two fit on a
     /// 320 pt iPhone, yet more than a third of a 430 pt one.
     static let gridMinimumCompactIndexed: CGFloat = 108
+    /// The smallest tile of the compact grid view mode (#1053), on every tier.
+    static let gridMinimumSmall: CGFloat = 105
+    /// The same beside a letter index: three fit on a 375 pt iPhone with the index's width kept clear on both edges.
+    static let gridMinimumSmallIndexed: CGFloat = 88
 
     /// A detail screen's hero at compact width.
     static let hero: CGFloat = 240

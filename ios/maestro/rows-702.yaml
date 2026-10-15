@@ -12,10 +12,11 @@ appId: com.simplecityapps.shuttle.dev
       CATEGORY: albumArtists
 - runFlow:
     when:
-      visible: "Show as List"
+      notVisible: "Layout: List"
     commands:
       - tapOn:
           id: "library.viewMode"
+      - tapOn: "List"
       - waitForAnimationToEnd:
           timeout: 5000
 - scrollUntilVisible:

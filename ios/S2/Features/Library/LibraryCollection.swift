@@ -5,17 +5,45 @@ import SwiftUI
 /// skeletons. The grid follows Shuttle Podcasts' subscriptions grid: adaptive columns of at least
 /// `ArtworkSize.gridMinimum`, square covers, the title and a secondary line under each.
 
-/// The toolbar button that flips a list between grid and list. Shows what it switches to.
+/// The toolbar menu that picks a list's layout: list, grid or compact grid, the current one checked. Its icon is the
+/// current layout's, as on Android.
 struct ViewModeToggle: View {
     let mode: ViewMode
     let onChange: (ViewMode) -> Void
 
+    static let modes: [ViewMode] = [.list, .grid, .compactGrid]
+
     var body: some View {
-        let isGrid = mode == .grid
-        Button(isGrid ? "Show as List" : "Show as Grid", systemImage: isGrid ? "list.bullet" : "square.grid.2x2") {
-            onChange(isGrid ? .list : .grid)
+        Menu {
+            ForEach(Self.modes, id: \.self) { option in
+                Button { onChange(option) } label: {
+                    if option == mode {
+                        Label(Self.title(option), systemImage: "checkmark")
+                    } else {
+                        Text(Self.title(option))
+                    }
+                }
+            }
+        } label: {
+            Label("Layout: \(Self.title(mode))", systemImage: Self.symbol(mode))
         }
         .accessibilityIdentifier("library.viewMode")
+    }
+
+    static func title(_ mode: ViewMode) -> String {
+        switch mode {
+        case .list: "List"
+        case .grid: "Grid"
+        case .compactGrid: "Compact Grid"
+        }
+    }
+
+    private static func symbol(_ mode: ViewMode) -> String {
+        switch mode {
+        case .list: "list.bullet"
+        case .grid: "square.grid.2x2"
+        case .compactGrid: "square.grid.3x3"
+        }
     }
 }
 
@@ -27,11 +55,14 @@ struct LibraryGrid<Content: View>: View {
     /// Whether the columns leave room for the letter strip. The loading skeleton sets it with no index to lay out as
     /// the loaded, indexed grid will.
     var reservesIndex: Bool
+    /// The compact grid view mode's smaller tiles, packed closer.
+    var small: Bool
     @ViewBuilder let content: () -> Content
 
-    init(index: [LetterIndexSection]? = nil, reservesIndex: Bool? = nil, @ViewBuilder content: @escaping () -> Content) {
+    init(index: [LetterIndexSection]? = nil, reservesIndex: Bool? = nil, small: Bool = false, @ViewBuilder content: @escaping () -> Content) {
         self.index = index
         self.reservesIndex = reservesIndex ?? (index != nil)
+        self.small = small
         self.content = content
     }
 
@@ -39,35 +70,46 @@ struct LibraryGrid<Content: View>: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var columns: [GridItem] {
-        let minimum = Self.minimumTile(layoutTier, indexed: reservesIndex, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
-        return [GridItem(.adaptive(minimum: minimum), spacing: AdaptiveLayout.gridSpacing, alignment: .top)]
+        let minimum = Self.minimumTile(layoutTier, indexed: reservesIndex, small: small, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
+        return [GridItem(.adaptive(minimum: minimum), spacing: Self.spacing(small: small), alignment: .top)]
     }
 
     /// The narrowest a tile gets. Compact width takes `ArtworkSize.gridMinimumCompact` (`gridMinimumCompactIndexed`
     /// with an index, so two fit with its width kept clear on both edges of a 320 pt screen); wider tiers
-    /// `ArtworkSize.gridMinimum`. Twice that at the accessibility text sizes, whose
+    /// `ArtworkSize.gridMinimum`. A `small` grid takes `ArtworkSize.gridMinimumSmall` (`gridMinimumSmallIndexed` with
+    /// an index at compact width). Twice that at the accessibility text sizes, whose
     /// titles two narrow tiles can't hold: one full-width column can.
-    static func minimumTile(_ tier: LayoutTier, indexed: Bool = true, accessibilitySize: Bool = false) -> CGFloat {
-        let compact = indexed ? ArtworkSize.gridMinimumCompactIndexed : ArtworkSize.gridMinimumCompact
-        let minimum = tier == .compact ? compact : ArtworkSize.gridMinimum
+    static func minimumTile(_ tier: LayoutTier, indexed: Bool = true, small: Bool = false, accessibilitySize: Bool = false) -> CGFloat {
+        let minimum: CGFloat = if small {
+            tier == .compact && indexed ? ArtworkSize.gridMinimumSmallIndexed : ArtworkSize.gridMinimumSmall
+        } else {
+            tier == .compact ? (indexed ? ArtworkSize.gridMinimumCompactIndexed : ArtworkSize.gridMinimumCompact) : ArtworkSize.gridMinimum
+        }
         return accessibilitySize ? minimum * 2 : minimum
+    }
+
+    /// The gap between columns: `AdaptiveLayout.gridSpacing`, half that in a `small` grid.
+    static func spacing(small: Bool) -> CGFloat {
+        small ? Spacing.small : AdaptiveLayout.gridSpacing
     }
 
     /// The columns the grid lays out in a container `width` wide, with an index strip `indexWidth` wide down its
     /// trailing edge and the same width kept clear on the leading edge so the margins match (#750). The width left
     /// inside the content insets (and `AdaptiveLayout.contentMaxWidth`) is filled as SwiftUI fills an adaptive
-    /// `GridItem`: with as many `minimumTile`s as fit `gridSpacing` apart.
-    static func columnCount(width: CGFloat, tier: LayoutTier, indexWidth: CGFloat = LetterIndexStrip.baseWidth, accessibilitySize: Bool = false) -> Int {
-        let spacing = AdaptiveLayout.gridSpacing
+    /// `GridItem`: with as many `minimumTile`s as fit `spacing` apart.
+    static func columnCount(
+        width: CGFloat, tier: LayoutTier, indexWidth: CGFloat = LetterIndexStrip.baseWidth, small: Bool = false, accessibilitySize: Bool = false
+    ) -> Int {
+        let spacing = spacing(small: small)
         let available = min(width - indexWidth * 2, AdaptiveLayout.contentMaxWidth) - AdaptiveLayout.contentInset(tier) * 2
-        let minimum = minimumTile(tier, indexed: indexWidth > 0, accessibilitySize: accessibilitySize)
+        let minimum = minimumTile(tier, indexed: indexWidth > 0, small: small, accessibilitySize: accessibilitySize)
         return max(1, Int(((available + spacing) / (minimum + spacing)).rounded(.down)))
     }
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVGrid(columns: columns, spacing: Spacing.large) {
+                LazyVGrid(columns: columns, spacing: small ? Spacing.medium : Spacing.large) {
                     content()
                 }
                 .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
@@ -203,6 +245,8 @@ private struct NowPlayingRowBackground: ViewModifier {
 /// and `LibraryTile`'s title and subtitle lines, so each tile sits where the loaded grid's will (#643).
 struct LibraryGridSkeleton: View {
     var artworkShape: S2Shape = .artworkTile
+    /// Lays out as the compact grid view mode's `LibraryGrid` does.
+    var small = false
     var tiles = 12
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -212,8 +256,8 @@ struct LibraryGridSkeleton: View {
     @ScaledMetric(relativeTo: .footnote) private var subtitleLine: CGFloat = 16
 
     var body: some View {
-        LibraryGrid(reservesIndex: true) {
-            ForEach(0 ..< tiles, id: \.self) { _ in
+        LibraryGrid(reservesIndex: true, small: small) {
+            ForEach(0 ..< (small ? tiles * 2 : tiles), id: \.self) { _ in
                 VStack(alignment: .leading, spacing: Spacing.small) {
                     artworkShape.fill(.s2SurfaceFill)
                         .aspectRatio(1, contentMode: .fit)

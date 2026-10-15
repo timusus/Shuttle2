@@ -14,10 +14,11 @@ appId: com.simplecityapps.shuttle.dev
 # The view mode is remembered: start from the list.
 - runFlow:
     when:
-      visible: "Show as List"
+      notVisible: "Layout: List"
     commands:
       - tapOn:
           id: "library.viewMode"
+      - tapOn: "List"
       - waitForAnimationToEnd:
           timeout: 5000
 - takeScreenshot: 1-artists-list
@@ -32,10 +33,11 @@ appId: com.simplecityapps.shuttle.dev
     timeout: 5000
 - runFlow:
     when:
-      visible: "Show as Grid"
+      notVisible: "Layout: Grid"
     commands:
       - tapOn:
           id: "library.viewMode"
+      - tapOn: "Grid"
       - waitForAnimationToEnd:
           timeout: 5000
 - takeScreenshot: 3-albums-grid

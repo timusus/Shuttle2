@@ -15,10 +15,11 @@ appId: com.simplecityapps.shuttle.dev
 # The view mode is remembered: the list, where names are rows.
 - runFlow:
     when:
-      visible: "Show as List"
+      notVisible: "Layout: List"
     commands:
       - tapOn:
           id: "library.viewMode"
+      - tapOn: "List"
       - waitForAnimationToEnd:
           timeout: 5000
 - scrollUntilVisible:

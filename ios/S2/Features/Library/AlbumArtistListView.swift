@@ -99,15 +99,15 @@ struct AlbumArtistListContent: View {
     private var content: some View {
         switch state.loadingState {
         case .loading:
-            if state.viewMode == .grid { LibraryGridSkeleton(artworkShape: .artist) } else { LibraryListSkeleton(artworkShape: .artist) }
+            if state.viewMode != .list { LibraryGridSkeleton(artworkShape: .artist, small: state.viewMode == .compactGrid) } else { LibraryListSkeleton(artworkShape: .artist) }
         case .scanning where state.albumArtists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Artists", systemImage: "person.2", message: "Pull to refresh to import.")
         case .ready, .scanning:
             let index = LetterIndex.sections(state.letterIndex, items: state.albumArtists, id: \.stableId)
-            if state.viewMode == .grid {
-                LibraryGrid(index: index) {
+            if state.viewMode != .list {
+                LibraryGrid(index: index, small: state.viewMode == .compactGrid) {
                     ForEach(state.albumArtists, id: \.stableId) { artist in
                         NavigationLink(value: Route.albumArtist(artist)) {
                             LibraryTile(

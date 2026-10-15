@@ -176,18 +176,46 @@ struct LibraryListTests {
         }
     }
 
-    @Test func theToolbarTogglesTheViewModeThroughTheViewModel() throws {
+    @Test func theLayoutMenuPicksEachViewModeThroughTheViewModel() throws {
         var chosen: ViewMode?
-        let toggle = ViewModeToggle(mode: .grid) { chosen = $0 }
-        try toggle.inspect().find(button: "Show as List").tap()
+        let menu = try ViewModeToggle(mode: .grid) { chosen = $0 }.inspect()
+        #expect((try? menu.find(text: "Layout: Grid")) != nil)
+        try menu.find(button: "List").tap()
         #expect(chosen == .list)
-        try ViewModeToggle(mode: .list) { chosen = $0 }.inspect().find(button: "Show as Grid").tap()
+        try menu.find(button: "Compact Grid").tap()
+        #expect(chosen == .compactGrid)
+        try ViewModeToggle(mode: .compactGrid) { chosen = $0 }.inspect().find(button: "Grid").tap()
         #expect(chosen == .grid)
     }
 
+    @Test func theLayoutMenuChecksTheCurrentMode() throws {
+        let menu = try ViewModeToggle(mode: .compactGrid) { _ in }.inspect()
+        #expect(try menu.find(button: "Compact Grid").find(ViewType.Image.self).actualImage().name() == "checkmark")
+        #expect((try? menu.find(button: "Grid").find(ViewType.Image.self)) == nil)
+    }
+
     @Test func theLoadingSkeletonFollowsTheViewMode() throws {
-        #expect((try? AlbumListContent(state: albumState([], .loading, viewMode: .grid)).inspect().find(LibraryGridSkeleton.self)) != nil)
+        let grid = try AlbumListContent(state: albumState([], .loading, viewMode: .grid)).inspect().find(LibraryGridSkeleton.self)
+        #expect(try !grid.actualView().small)
+        let compact = try AlbumListContent(state: albumState([], .loading, viewMode: .compactGrid)).inspect().find(LibraryGridSkeleton.self)
+        #expect(try compact.actualView().small)
         #expect((try? AlbumListContent(state: albumState([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
+    }
+
+    // 375 pt up: an iPhone in portrait, beside the letter index; 320 pt (an SE) keeps two.
+    @Test(arguments: [375, 393, 430] as [CGFloat])
+    func theCompactGridHasThreeColumnsOnAnIPhone(width: CGFloat) {
+        #expect(LibraryGrid<EmptyView>.columnCount(width: width, tier: .compact, small: true) == 3)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: width, tier: .compact, indexWidth: 0, small: true) == 3)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: width, tier: .compact) == 2)
+    }
+
+    @Test func theCompactGridHasMoreColumnsThanTheGridOnAnIPad() {
+        #expect(LibraryGrid<EmptyView>.columnCount(width: 834, tier: .regular, small: true) > LibraryGrid<EmptyView>.columnCount(width: 834, tier: .regular))
+    }
+
+    @Test func theCompactGridTakesFewerColumnsAtAccessibilityTextSizes() {
+        #expect(LibraryGrid<EmptyView>.columnCount(width: 393, tier: .compact, small: true, accessibilitySize: true) == 1)
     }
 
     @Test func thePlayingSongAndAlbumAreMarked() {
