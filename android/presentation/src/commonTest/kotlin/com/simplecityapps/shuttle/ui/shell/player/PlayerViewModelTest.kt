@@ -209,6 +209,24 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `a classical song shows its movement and work - or artist and album without a work - and nothing when the setting is off`() = runTest {
+        val viewModel = viewModel()
+        val withWork = createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(work = "Sonata No. 3")
+        val noWork = createSong(id = 2, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(movementName = "Allegro")
+
+        queueOperations.queueStateFlow.value = queueOf(listOf(withWork, noWork))
+        viewModel.uiState.value.player.classical?.subtitle shouldBe "Sonata No. 3"
+        viewModel.uiState.value.player.classical?.miniTitle shouldBe "Allegro – Sonata No. 3"
+
+        queueOperations.queueStateFlow.value = queueOf(listOf(withWork, noWork), current = 1)
+        viewModel.uiState.value.player.classical?.subtitle shouldBe "Ines Varga • Sonatas"
+        viewModel.uiState.value.player.classical?.miniTitle shouldBe "Allegro"
+
+        SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
+        viewModel.uiState.value.player.classical shouldBe null
+    }
+
+    @Test
     fun `turning on online lyrics looks up the song that is already playing`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(songs("A"))

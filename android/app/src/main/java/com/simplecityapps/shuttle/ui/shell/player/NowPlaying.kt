@@ -141,11 +141,7 @@ internal fun NowPlayingTitle(
             val classical = player.classical
             Text(text = classical?.movement ?: current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
             Text(
-                text = if (classical != null) {
-                    classical.work ?: current?.album.orEmpty()
-                } else {
-                    listOfNotNull(current?.artist, current?.album).joinToString(" • ")
-                },
+                text = classical?.subtitle ?: listOfNotNull(current?.artist, current?.album).joinToString(" • "),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,

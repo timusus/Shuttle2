@@ -174,6 +174,18 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `an album with no classical song keeps its subtitle despite a conductor tag`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song").copy(conductor = "Ines Varga")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.classical shouldBe true
+        viewModel.uiState.value.performers shouldBe null
+    }
+
+    @Test
     fun `no performers once Classical display is switched off`() = runTest {
         SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Allegro").copy(work = "Sonata No. 3", conductor = "Ines Varga")))

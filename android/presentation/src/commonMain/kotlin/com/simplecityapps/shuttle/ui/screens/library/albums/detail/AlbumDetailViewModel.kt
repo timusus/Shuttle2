@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.isClassical
 import com.simplecityapps.shuttle.model.performersLine
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
@@ -57,7 +58,7 @@ data class AlbumDetailUiState(
     val classical: Boolean = false,
 ) {
     /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off or none is tagged. */
-    val performers: String? get() = if (classical) songs.firstNotNullOfOrNull { it.performersLine() } else null
+    val performers: String? get() = if (classical && songs.any { it.isClassical }) songs.firstNotNullOfOrNull { it.performersLine() } else null
 
     /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = album?.playContext ?: PlayContext.None

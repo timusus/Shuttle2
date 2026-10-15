@@ -26,6 +26,13 @@ class ClassicalDisplayTest {
     }
 
     @Test
+    fun `a movement number below one is treated as absent`() {
+        song(id = 1).copy(movementName = "Allegro", movementNumber = 0).movementLabel() shouldBe "Allegro"
+        song(id = 1).copy(movementName = "Allegro", movementNumber = -1).movementLabel() shouldBe "Allegro"
+        song(id = 1, name = "Sonata: Allegro").copy(work = "Sonata", movementNumber = 0).movementLabel() shouldBe "Allegro"
+    }
+
+    @Test
     fun `a movement without a number shows its name alone`() {
         song(id = 1).copy(movementName = "Adagio").movementLabel() shouldBe "Adagio"
     }

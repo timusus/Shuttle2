@@ -10,7 +10,7 @@ val Song.isClassical: Boolean
 /** "IV. Allegro", or just the name without a number. Without a name, the title minus a leading "{work}: " / "{work} - ". */
 fun Song.movementLabel(): String {
     val name = movementName?.trim().orEmpty()
-    val number = movementNumber?.let(::toRoman)
+    val number = movementNumber?.takeIf { it >= 1 }?.let(::toRoman)
     return when {
         name.isNotEmpty() -> if (number != null) "$number. $name" else name
 
@@ -48,10 +48,22 @@ fun Song.performersLine(fallback: String? = null): String? {
 }
 
 /** What the player surfaces show for a classical song in place of its title and artist. */
-data class ClassicalText(val movement: String, val work: String?, val performers: String?)
+data class ClassicalText(val movement: String, val work: String?, val performers: String?, val subtitle: String) {
+    /** Movement first so a one-line ellipsis cuts the work, never the movement. */
+    val miniTitle: String get() = listOfNotNull(movement, work).joinToString(" – ")
+}
 
-/** Null unless the song is classical; [artist] is the performers line's fallback. */
-fun Song.classicalText(artist: String?): ClassicalText? = if (isClassical) ClassicalText(movementLabel(), workLine(), performersLine(artist)) else null
+/** Null unless the song is classical; [artist] is the performers line's fallback, and with no work the subtitle is "[artist] • [album]". */
+fun Song.classicalText(artist: String?, album: String?): ClassicalText? {
+    if (!isClassical) return null
+    val work = workLine()
+    return ClassicalText(
+        movement = movementLabel(),
+        work = work,
+        performers = performersLine(artist),
+        subtitle = work ?: listOfNotNull(artist, album).joinToString(" • "),
+    )
+}
 
 /** A run of consecutive tracks: [work] is set for a run of two or more sharing a work, null for a lone track. */
 data class WorkGroup(val work: String?, val songs: List<Song>) {

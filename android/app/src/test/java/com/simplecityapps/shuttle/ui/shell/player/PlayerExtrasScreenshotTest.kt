@@ -86,7 +86,7 @@ class PlayerExtrasScreenshotTest {
     @Test
     fun classicalNowPlaying() {
         nowPlaying(ArtworkCovers[0])
-        val classical = ClassicalText(movement = "II. Adagio", work = "Harrow: Sonata No. 3", performers = "Ines Varga, Mira Calder (piano)")
+        val classical = ClassicalText(movement = "II. Adagio", work = "Harrow: Sonata No. 3", performers = "Ines Varga, Mira Calder (piano)", subtitle = "Harrow: Sonata No. 3")
         robot.setQueue(sampleShellQueue(size = 16, playing = ArtworkCovers[0]).copy(classical = classical))
         shot("now-playing-classical")
     }

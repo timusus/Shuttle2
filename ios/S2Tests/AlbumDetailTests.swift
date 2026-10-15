@@ -36,7 +36,7 @@ struct AlbumDetailTests {
 
     @Test func readyShowsHeroAndSongs() throws {
         let songs = [song(1, "Airbag", track: 1, disc: 1), song(2, "Paranoid Android", track: 2, disc: 1)]
-        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "OK Computer")) != nil)
         #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("Radiohead · 1997 · 2 songs · ") })) != nil)
@@ -46,7 +46,7 @@ struct AlbumDetailTests {
 
     @Test func multiDiscAlbumsGetDiscSections() throws {
         let songs = [song(1, "Track A", track: 1, disc: 1), song(2, "Track B", track: 1, disc: 2)]
-        let state = AlbumDetailUiState(album: album(songCount: 2), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(songCount: 2), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "Disc 1")) != nil)
         #expect((try? sut.inspect().find(text: "Disc 2")) != nil)
@@ -54,13 +54,13 @@ struct AlbumDetailTests {
 
     @Test func singleDiscAlbumsGetNoDiscSectionTitle() throws {
         let songs = [song(1, "Airbag", track: 1, disc: 1)]
-        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "Disc 1")) == nil)
     }
 
     private func moreByState(_ others: [Album]) -> AlbumDetailUiState {
-        AlbumDetailUiState(album: album(songCount: 1), songs: [song(1, "Airbag", track: 1, disc: 1)], currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: others, moreByArtistNames: others.isEmpty ? [] : ["Radiohead"])
+        AlbumDetailUiState(album: album(songCount: 1), songs: [song(1, "Airbag", track: 1, disc: 1)], currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: others, moreByArtistNames: others.isEmpty ? [] : ["Radiohead"], classical: false)
     }
 
     @Test func moreByShelfShowsTheArtistsOtherAlbums() throws {
@@ -85,7 +85,7 @@ struct AlbumDetailTests {
     @Test func tappingATrackPlaysFromItsIndex() throws {
         var played: Int?
         let songs = [song(1, "Airbag", track: 1, disc: 1), song(2, "Paranoid Android", track: 2, disc: 1)]
-        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state, onPlay: { played = $0 })
         try sut.inspect().find(button: "Paranoid Android").tap()
         #expect(played == 1)
@@ -94,7 +94,7 @@ struct AlbumDetailTests {
     @Test func artistLineGoesToTheArtist() throws {
         var opened = 0
         let songs = [song(1, "Airbag", track: 1, disc: 1)]
-        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state, onGoToArtist: { opened += 1 })
         try sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string()) == "Go to Radiohead" }).tap()
         #expect(opened == 1)
@@ -108,7 +108,7 @@ struct AlbumDetailTests {
 
     @Test func noArtistKeyMeansNoArtistButton() throws {
         let songs = [song(1, "Airbag", track: 1, disc: 1)]
-        let state = AlbumDetailUiState(album: album(songCount: 1, artistKey: nil), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(songCount: 1, artistKey: nil), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state, onGoToArtist: {})
         #expect(artistButton(sut, "Go to Radiohead") == nil)
         // The artist stays in the eyebrow.
@@ -118,7 +118,7 @@ struct AlbumDetailTests {
     @Test func compilationLinkNamesTheAlbumArtist() throws {
         let songs = [song(1, "Airbag", track: 1, disc: 1)]
         let compilation = album(songCount: 1, albumArtist: "Various Artists", artists: ["A", "B", "C"], artistKey: "various artists")
-        let state = AlbumDetailUiState(album: compilation, songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: compilation, songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(state: state, onGoToArtist: {})
         #expect(artistButton(sut, "Go to Various Artists") != nil)
         #expect(artistButton(sut, "Go to A, B, C") == nil)
@@ -148,7 +148,7 @@ struct AlbumDetailTests {
         var queued: String?
         var artist = 0
         let songs = [song(1, "Airbag", track: 1, disc: 1)]
-        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let sut = AlbumDetailContent(
             state: state,
             onPlayAlbumNext: { next = $0.name },
@@ -166,15 +166,15 @@ struct AlbumDetailTests {
 
     @Test func moreMenuHidesGoToArtistWithoutAKey() throws {
         let songs = [song(1, "Airbag", track: 1, disc: 1)]
-        let state = AlbumDetailUiState(album: album(songCount: 1, artistKey: nil), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let state = AlbumDetailUiState(album: album(songCount: 1, artistKey: nil), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         let menu = try AlbumDetailContent(state: state, onGoToArtist: {}).inspect().find(ViewType.Menu.self)
         #expect((try? menu.find(button: "Go to Artist")) == nil)
     }
 
     @Test func placeholders() throws {
-        let empty = AlbumDetailUiState(album: nil, songs: [], currentSong: nil, loadingState: .loading, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let empty = AlbumDetailUiState(album: nil, songs: [], currentSong: nil, loadingState: .loading, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         #expect((try? AlbumDetailContent(state: empty).inspect().find(ViewType.ProgressView.self)) != nil)
-        let notFound = AlbumDetailUiState(album: nil, songs: [], currentSong: nil, loadingState: .empty, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [])
+        let notFound = AlbumDetailUiState(album: nil, songs: [], currentSong: nil, loadingState: .empty, seed: ArtworkSeedNone.shared, moreByArtist: [], moreByArtistNames: [], classical: false)
         #expect((try? AlbumDetailContent(state: notFound).inspect().find(text: "Album Not Found")) != nil)
     }
 }

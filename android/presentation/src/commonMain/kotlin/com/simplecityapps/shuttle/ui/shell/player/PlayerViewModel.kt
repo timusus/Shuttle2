@@ -246,7 +246,7 @@ class PlayerViewModel @AssistedInject constructor(
         }.combine(observeSetting(ArtworkSettings.NowPlayingArtworkSource)) { state, image ->
             state.copy(nowPlayingImage = image)
         }.combine(observeSetting(AppearanceSettings.ClassicalDisplay)) { state, enabled ->
-            state.copy(classical = state.current?.takeIf { enabled }?.let { it.song.classicalText(it.artist) })
+            state.copy(classical = state.current?.takeIf { enabled }?.let { it.song.classicalText(it.artist, it.album) })
         }.combine(deliveredFormats.byPath) { state, delivered ->
             state.copy(delivered = state.current?.song?.path?.let(delivered::get))
         }.combine(lyrics) { state, lyrics ->
