@@ -26,7 +26,8 @@ enum TestSongs {
             channelCount: nil, audioCodec: nil, artworkVersion: nil, artworkItemId: nil, dateAdded: dateAdded, favouritedAt: favourite ? KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: 1_773_000_000_000) : nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
-            serverAlbumArtistIds: nil, albumIdentity: nil
+            serverAlbumArtistIds: nil, albumIdentity: nil, composer: nil, composerSort: nil, conductor: nil, arranger: nil,
+            work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: []
         )
     }
 }

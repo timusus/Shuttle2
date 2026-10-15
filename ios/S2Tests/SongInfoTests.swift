@@ -23,7 +23,8 @@ struct SongInfoTests {
             channelCount: channels.map { KotlinInt(int: $0) }, audioCodec: codec, artworkVersion: nil, artworkItemId: nil, dateAdded: nil, favouritedAt: nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
-            serverAlbumArtistIds: nil, albumIdentity: nil
+            serverAlbumArtistIds: nil, albumIdentity: nil, composer: nil, composerSort: nil, conductor: nil, arranger: nil,
+            work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: []
         )
     }
 
