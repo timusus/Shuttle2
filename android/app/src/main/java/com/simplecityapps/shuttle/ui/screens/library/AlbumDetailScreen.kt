@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.common.downloads.DownloadStatusHeader
 import com.simplecityapps.shuttle.ui.common.downloads.offlineState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.common.utils.rememberMinutesFormat
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
@@ -128,23 +129,16 @@ internal fun albumMoreTarget(album: Album, goToAlbumLabel: String, onOpen: () ->
 
 /** "Artist · year · N songs · duration". The separator's dot stays with the item before it, so a wrapped line never starts on one. */
 @Composable
-private fun albumSubtitle(album: Album): String = listOfNotNull(
-    album.friendlyArtistName,
-    album.year?.toString(),
-    pluralString(R.plurals.songsPlural, album.songCount),
-    albumRuntime(album.duration.toLong()),
-).filter { it.isNotBlank() }.joinToString(" · ")
-
-/** "45 min", or "1 h 5 min" from an hour up; empty for none. Whole minutes, rounded down. */
-@Composable
-internal fun albumRuntime(ms: Long): String {
-    val totalMinutes = (ms / 60_000).toInt()
-    val resources = LocalResources.current
-    return when {
-        totalMinutes <= 0 -> ""
-        totalMinutes < 60 -> resources.getString(R.string.runtime_minutes, totalMinutes)
-        else -> resources.getString(R.string.runtime_hours_minutes, totalMinutes / 60, totalMinutes % 60)
-    }
+private fun albumSubtitle(album: Album): String {
+    val formatMinutes = rememberMinutesFormat()
+    // Whole minutes, rounded down; an album under a minute shows no runtime.
+    val minutes = (album.duration.toLong() / 60_000).toInt()
+    return listOfNotNull(
+        album.friendlyArtistName,
+        album.year?.toString(),
+        pluralString(R.plurals.songsPlural, album.songCount),
+        if (minutes > 0) formatMinutes(minutes) else null,
+    ).filter { it.isNotBlank() }.joinToString(" · ")
 }
 
 @Composable

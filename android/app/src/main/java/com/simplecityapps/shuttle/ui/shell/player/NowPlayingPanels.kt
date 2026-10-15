@@ -1,8 +1,5 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
-import android.icu.text.MeasureFormat
-import android.icu.util.Measure
-import android.icu.util.MeasureUnit
 import android.text.format.DateUtils
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
@@ -80,6 +77,7 @@ import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.ui.common.utils.rememberMinutesFormat
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
@@ -435,25 +433,6 @@ private val replayGainLabels: Map<ReplayGainMode, String>
         ReplayGainMode.Album to stringResource(R.string.dsp_replay_gain_album),
         ReplayGainMode.Off to stringResource(R.string.dsp_replay_gain_off),
     )
-
-/** Formats a length in minutes as "15 min", "1 hr" or "1 hr, 30 min", in the user's locale. */
-@Composable
-internal fun rememberMinutesFormat(): (Int) -> String {
-    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
-    return remember(locale) {
-        val format = MeasureFormat.getInstance(locale, MeasureFormat.FormatWidth.SHORT)
-        val formatMinutes: (Int) -> String = { minutes ->
-            val hours = minutes / 60
-            val rest = minutes % 60
-            val measures = buildList {
-                if (hours > 0) add(Measure(hours, MeasureUnit.HOUR))
-                if (rest > 0 || hours == 0) add(Measure(rest, MeasureUnit.MINUTE))
-            }
-            format.formatMeasures(*measures.toTypedArray())
-        }
-        formatMinutes
-    }
-}
 
 /** Formats a speed as "1×", "1.25×" or "0.5×", in the user's locale. */
 @Composable

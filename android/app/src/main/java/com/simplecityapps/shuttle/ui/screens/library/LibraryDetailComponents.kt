@@ -110,7 +110,7 @@ fun LibraryDetailScaffold(
                         topInset = topInset,
                         artwork = {
                             val sharedModifier = Modifier.sharedArtwork(artworkKey)
-                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = artworkSize)
+                            if (heroArtwork != null) heroArtwork(sharedModifier) else LibraryArtwork(model = artwork, placeholder = placeholder, modifier = sharedModifier, size = if (columnHeight == Dp.Unspecified) artworkSize else ArtworkSize.Hero)
                         },
                         actions = playShuffle,
                         extra = header,

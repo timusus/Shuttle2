@@ -32,7 +32,7 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 12, duration = 2_700_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("12 songs · 45 min", substring = true)
+        robot.assertTextDisplayed("12 songs · 45 min", substring = true)
     }
 
     @Test
@@ -40,7 +40,43 @@ class AlbumDetailScreenTest {
         val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 7_500_000, year = 2021)
         robot.setAlbum(readyAlbumDetail(album = album))
 
-        robot.assertTextDisplayed("1 song · 2 h 5 min", substring = true)
+        robot.assertTextDisplayed("1 song · 2 hr, 5 min", substring = true)
+    }
+
+    @Test
+    fun `an album with no duration shows no runtime and no stray separator`() {
+        assertNoRuntime(duration = 0)
+    }
+
+    @Test
+    fun `an album under a minute shows no runtime and no stray separator`() {
+        assertNoRuntime(duration = 59_000)
+    }
+
+    private fun assertNoRuntime(duration: Int) {
+        val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 2, duration = duration, year = 2021)
+        robot.setAlbum(readyAlbumDetail(album = album))
+
+        robot.assertTextDisplayed("Juniper Static · 2021 · 2 songs", substring = true)
+        robot.assertTextNotDisplayed("2 songs ·", substring = true)
+        robot.assertTextNotDisplayed("min", substring = true)
+    }
+
+    @Test
+    fun `59 minutes stays in minutes`() {
+        val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 3_540_000, year = 2021)
+        robot.setAlbum(readyAlbumDetail(album = album))
+
+        robot.assertTextDisplayed("1 song · 59 min", substring = true)
+    }
+
+    @Test
+    fun `exactly an hour shows no minutes`() {
+        val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 1, duration = 3_600_000, year = 2021)
+        robot.setAlbum(readyAlbumDetail(album = album))
+
+        robot.assertTextDisplayed("1 song · 1 hr", substring = true)
+        robot.assertTextNotDisplayed("0 min", substring = true)
     }
 
     @Test
