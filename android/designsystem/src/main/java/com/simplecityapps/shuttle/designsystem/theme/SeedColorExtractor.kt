@@ -37,7 +37,23 @@ private const val HUE_FAMILY_RANGE = 20.0
 private const val HUE_FAMILY_MIN_CHROMA = 8.0
 
 /**
- * The seed colour of [bitmap], or null when it has no colour worth theming with. Of the swatches
+ * Artwork whose population-weighted mean HCT chroma is below this is monochrome: a black-and-white photo with a faint
+ * sepia or blue cast has swatches that pass [MIN_SEED_CHROMA] one by one, but the cast is the whole image's, and
+ * Vibrant would amplify it into a loud accent (#1055). A vivid logo on grey still clears it, while a 3% speck
+ * ([MIN_PREFERRED_SEED_SHARE]) of even the most saturated colour does not.
+ */
+const val MIN_ARTWORK_CHROMA = 6.0
+
+/** Whether the image behind [populations] (quantised colour to pixel count) is too close to grey to seed a scheme. */
+fun isMonochrome(populations: Map<Int, Int>): Boolean {
+    val total = populations.values.sum()
+    if (total == 0) return true
+    val weighted = populations.entries.sumOf { (argb, population) -> Color(argb).toHct().chroma * population }
+    return weighted / total < MIN_ARTWORK_CHROMA
+}
+
+/**
+ * The seed colour of [bitmap], or null when it is monochrome (see [isMonochrome]) or has no colour worth theming with. Of the swatches
  * ranked by chroma and population, the first that isn't near-black (see [MIN_PREFERRED_SEED_TONE])
  * and whose hue covers at least [MIN_PREFERRED_SEED_SHARE] of the image, else the first. Quantises a downscaled
  * copy, so call it off the main thread (see [SeedColorCache.getOrExtract]).
@@ -51,6 +67,7 @@ fun extractSeedColor(bitmap: Bitmap): Color? {
     val pixels = IntArray(sample.width * sample.height)
     sample.getPixels(pixels, 0, sample.width, 0, 0, sample.width, sample.height)
     val populations = QuantizerCelebi.quantize(pixels, MAX_SWATCHES)
+    if (isMonochrome(populations)) return null
     val minPreferredPopulation = pixels.size * MIN_PREFERRED_SEED_SHARE
     val chromatic = populations.mapNotNull { (argb, population) ->
         Color(argb).toHct().takeIf { it.chroma >= HUE_FAMILY_MIN_CHROMA }?.let { it.hue to population }

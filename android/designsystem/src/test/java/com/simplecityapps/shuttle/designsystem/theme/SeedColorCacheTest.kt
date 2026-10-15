@@ -73,6 +73,45 @@ class SeedColorCacheTest {
     }
 
     @Test
+    fun `a black and white photo with a faint sepia cast has no seed`() {
+        // Radiohead (#1055): warm greys from dark to light, each swatch just over the old per-seed chroma gate
+        val cover = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply {
+            for (x in 0 until 100) {
+                for (y in 0 until 100) {
+                    val v = 40 + (x + y) % 160
+                    setPixel(x, y, android.graphics.Color.rgb(v + 10, v + 4, v - 6))
+                }
+            }
+        }
+        extractSeedColor(cover) shouldBe null
+    }
+
+    @Test
+    fun `a vivid logo on a grey cover keeps its seed`() {
+        val cover = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply {
+            for (x in 0 until 100) {
+                for (y in 0 until 100) {
+                    setPixel(x, y, if (x < 30 && y < 30) android.graphics.Color.rgb(217, 84, 43) else android.graphics.Color.rgb(120, 120, 120))
+                }
+            }
+        }
+        extractSeedColor(cover)!!.toHct().hue shouldBe (red.toHct().hue plusOrMinus 10.0)
+    }
+
+    @Test
+    fun `mean chroma decides monochrome at the boundary`() {
+        val grey = Color.Black.toArgb()
+        val red = red.toArgb()
+        val redChroma = Color(red).toHct().chroma
+        // Share of red whose weighted mean sits just either side of MIN_ARTWORK_CHROMA
+        val boundary = MIN_ARTWORK_CHROMA / redChroma
+        isMonochrome(mapOf(grey to 1000)) shouldBe true
+        isMonochrome(mapOf(red to (boundary * 0.9 * 1000).toInt(), grey to 1000 - (boundary * 0.9 * 1000).toInt())) shouldBe true
+        isMonochrome(mapOf(red to (boundary * 1.1 * 1000).toInt(), grey to 1000 - (boundary * 1.1 * 1000).toInt())) shouldBe false
+        isMonochrome(emptyMap()) shouldBe true
+    }
+
+    @Test
     fun `a grey bitmap has no seed`() {
         extractSeedColor(solidBitmap(Color(0xFF808080))) shouldBe null
     }

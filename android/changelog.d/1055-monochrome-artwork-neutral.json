@@ -1,0 +1,1 @@
+{ "type": "fixes", "text": "Artist and album screens no longer pick a loud accent colour from black-and-white artwork with a faint tint. They keep the app colours instead.", "commits": [] }
