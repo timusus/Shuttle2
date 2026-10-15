@@ -35,11 +35,13 @@ appId: com.simplecityapps.shuttle.dev
 - takeScreenshot: 3-artists-list
 - tapOn:
     id: "library.viewMode"
+- tapOn: "Grid"
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: 4-artists-grid
 - tapOn:
     id: "library.viewMode"
+- tapOn: "List"
 - tapOn:
     id: "libraryChip.albums"
 - waitForAnimationToEnd:
@@ -56,11 +58,13 @@ appId: com.simplecityapps.shuttle.dev
 - takeScreenshot: 5-albums-list
 - tapOn:
     id: "library.viewMode"
+- tapOn: "Grid"
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: 6-albums-grid
 - tapOn:
     id: "library.viewMode"
+- tapOn: "List"
 - tapOn:
     id: "libraryChip.songs"
 - extendedWaitUntil:
