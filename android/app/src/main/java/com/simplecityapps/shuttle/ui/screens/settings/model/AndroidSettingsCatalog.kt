@@ -76,6 +76,11 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         summary = StringKey.PREF_COLOUR_FROM_ARTWORK_SUMMARY
                     ),
                     SettingItem.Switch(
+                        setting = AppearanceSettings.ClassicalDisplay,
+                        title = StringKey.PREF_CLASSICAL_DISPLAY_TITLE,
+                        summary = StringKey.PREF_CLASSICAL_DISPLAY_SUMMARY
+                    ),
+                    SettingItem.Switch(
                         setting = AppearanceSettings.PureBlack,
                         title = StringKey.PREF_PURE_BLACK_TITLE,
                         summary = StringKey.PREF_PURE_BLACK_SUMMARY

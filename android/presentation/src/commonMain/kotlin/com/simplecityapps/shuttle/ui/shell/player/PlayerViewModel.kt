@@ -13,6 +13,8 @@ import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.classicalText
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.PlayerSettings
@@ -243,6 +245,8 @@ class PlayerViewModel @AssistedInject constructor(
             state.copy(showRemainingTime = showRemainingTime)
         }.combine(observeSetting(ArtworkSettings.NowPlayingArtworkSource)) { state, image ->
             state.copy(nowPlayingImage = image)
+        }.combine(observeSetting(AppearanceSettings.ClassicalDisplay)) { state, enabled ->
+            state.copy(classical = state.current?.takeIf { enabled }?.let { it.song.classicalText(it.artist) })
         }.combine(deliveredFormats.byPath) { state, delivered ->
             state.copy(delivered = state.current?.song?.path?.let(delivered::get))
         }.combine(lyrics) { state, lyrics ->

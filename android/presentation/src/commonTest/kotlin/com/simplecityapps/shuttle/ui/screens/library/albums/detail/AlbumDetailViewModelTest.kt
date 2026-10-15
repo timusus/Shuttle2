@@ -162,6 +162,31 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `a classical album names its conductor as performers while Classical display is on`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Allegro").copy(work = "Sonata No. 3", conductor = "Ines Varga")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.classical shouldBe true
+        viewModel.uiState.value.performers shouldBe "Ines Varga"
+    }
+
+    @Test
+    fun `no performers once Classical display is switched off`() = runTest {
+        SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Allegro").copy(work = "Sonata No. 3", conductor = "Ines Varga")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.classical shouldBe false
+        viewModel.uiState.value.performers shouldBe null
+    }
+
+    @Test
     fun `more by the artist excludes this album and lists the rest newest first`() = runTest {
         val older = createAlbum(name = "Tape Hiss", albumArtist = "The Tin Orchards", year = 1965)
         val newer = createAlbum(name = "Porch Light", albumArtist = "The Tin Orchards", year = 1975)
@@ -291,6 +316,7 @@ class AlbumDetailViewModelTest {
             observeArtists = testMediaActions.observeArtists,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
+            observeSetting = ObserveSetting(settingsStore),
         )
     }
 }

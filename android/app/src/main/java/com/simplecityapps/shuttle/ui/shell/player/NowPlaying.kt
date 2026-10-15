@@ -138,14 +138,22 @@ internal fun NowPlayingTitle(
     val titleLineHeight = with(LocalDensity.current) { titleStyle.lineHeight.roundToPx() }
     Row(modifier.fillMaxWidth().padding(start = S2Spacing.medium + S2Spacing.xsmall, end = S2Spacing.small, bottom = S2Spacing.small), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            Text(text = current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
+            val classical = player.classical
+            Text(text = classical?.movement ?: current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
             Text(
-                text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
+                text = if (classical != null) {
+                    classical.work ?: current?.album.orEmpty()
+                } else {
+                    listOfNotNull(current?.artist, current?.album).joinToString(" • ")
+                },
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
+            classical?.performers?.let { performers ->
+                Text(text = performers, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
             val castingTo = player.castingTo()
             if (castingTo != null) {
                 S2PlayingOn(castingTo, style = MaterialTheme.typography.bodyMedium)

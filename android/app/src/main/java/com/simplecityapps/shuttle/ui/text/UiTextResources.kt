@@ -105,6 +105,8 @@ val StringKey.resId: Int
         StringKey.PREF_THEME_ACCENT_DYNAMIC_COLOUR_HINT -> R.string.pref_theme_accent_dynamic_colour_hint
         StringKey.PREF_COLOUR_FROM_ARTWORK_TITLE -> R.string.pref_colour_from_artwork_title
         StringKey.PREF_COLOUR_FROM_ARTWORK_SUMMARY -> R.string.pref_colour_from_artwork_summary
+        StringKey.PREF_CLASSICAL_DISPLAY_TITLE -> R.string.pref_classical_display_title
+        StringKey.PREF_CLASSICAL_DISPLAY_SUMMARY -> R.string.pref_classical_display_summary
         StringKey.PREF_PURE_BLACK_TITLE -> R.string.pref_pure_black_title
         StringKey.PREF_PURE_BLACK_SUMMARY -> R.string.pref_pure_black_summary
         StringKey.PREF_CATEGORY_TITLE_WIDGETS -> R.string.pref_category_title_widgets

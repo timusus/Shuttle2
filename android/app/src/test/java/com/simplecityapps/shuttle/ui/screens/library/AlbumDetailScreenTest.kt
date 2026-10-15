@@ -129,6 +129,44 @@ class AlbumDetailScreenTest {
     }
 
     @Test
+    fun `a classical album groups its movements under the work with the composer`() {
+        robot.setAlbum(classicalAlbumDetail())
+
+        robot.assertTextDisplayed("Sonata No. 3")
+        robot.assertTextDisplayed("Harrow")
+        robot.assertTextDisplayed("I. Allegro")
+        robot.assertTextDisplayed("II. Adagio")
+        robot.assertTextDisplayed("III. Presto")
+        robot.assertTextNotDisplayed("Sonata No. 3: Allegro")
+    }
+
+    @Test
+    fun `a classical album's subtitle names the conductor`() {
+        robot.setAlbum(classicalAlbumDetail())
+
+        robot.assertTextDisplayed("Ines Varga", substring = true)
+    }
+
+    @Test
+    fun `a lone work gets no header and an untagged track keeps its title`() {
+        robot.setAlbum(classicalAlbumDetail())
+
+        robot.scrollTo("Encore")
+        robot.assertTextDisplayed("Encore")
+        robot.assertTextNotDisplayed("Prelude in D")
+        robot.assertTextNotDisplayed("Harrow · arr. T. Okoye")
+    }
+
+    @Test
+    fun `with Classical display off the album renders as before`() {
+        robot.setAlbum(classicalAlbumDetail(classical = false))
+
+        robot.assertTextDisplayed("Sonata No. 3: Allegro")
+        robot.assertTextNotDisplayed("I. Allegro")
+        robot.assertTextNotDisplayed("Ines Varga", substring = true)
+    }
+
+    @Test
     fun `the playing song is marked`() {
         val songs = phaseGardenSongs()
         robot.setAlbum(readyAlbumDetail(songs = songs, currentSong = songs[0]))

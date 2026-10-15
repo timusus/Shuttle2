@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
+import com.simplecityapps.shuttle.model.ClassicalText
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.settlingClock
@@ -80,6 +81,14 @@ class PlayerExtrasScreenshotTest {
     fun darkArtworkScheme() {
         nowPlaying(DarkCover)
         shot("now-playing-artwork-dark")
+    }
+
+    @Test
+    fun classicalNowPlaying() {
+        nowPlaying(ArtworkCovers[0])
+        val classical = ClassicalText(movement = "II. Adagio", work = "Harrow: Sonata No. 3", performers = "Ines Varga, Mira Calder (piano)")
+        robot.setQueue(sampleShellQueue(size = 16, playing = ArtworkCovers[0]).copy(classical = classical))
+        shot("now-playing-classical")
     }
 
     @Test

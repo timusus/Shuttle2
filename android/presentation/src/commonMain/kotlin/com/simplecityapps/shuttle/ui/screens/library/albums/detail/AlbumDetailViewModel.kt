@@ -10,8 +10,11 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.performersLine
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
@@ -50,7 +53,12 @@ data class AlbumDetailUiState(
     val moreByArtist: List<Album> = emptyList(),
     /** The album artists [moreByArtist] is from, by name in the album's order ("A", "B" for "A feat. B"), for the shelf's title. */
     val moreByArtistNames: List<String> = emptyList(),
+    /** Classical display is on: the screen groups movements under their work. */
+    val classical: Boolean = false,
 ) {
+    /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off or none is tagged. */
+    val performers: String? get() = if (classical) songs.firstNotNullOfOrNull { it.performersLine() } else null
+
     /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = album?.playContext ?: PlayContext.None
 
@@ -68,6 +76,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeArtists: ObserveArtists,
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
+    observeSetting: ObserveSetting,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -126,8 +135,8 @@ class AlbumDetailViewModel @AssistedInject constructor(
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreByArtist, moreByArtistNames, ::Pair),
-    ) { songs, album, currentSong, seed, (moreByArtist, moreByArtistNames) ->
+        combine(moreByArtist, moreByArtistNames, observeSetting(AppearanceSettings.ClassicalDisplay), ::Triple),
+    ) { songs, album, currentSong, seed, (moreByArtist, moreByArtistNames, classical) ->
         AlbumDetailUiState(
             album = album,
             songs = songs,
@@ -141,6 +150,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             moreByArtist = moreByArtist,
             // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
             moreByArtistNames = moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
+            classical = classical,
         )
     }.stateIn(
         scope = viewModelScope,

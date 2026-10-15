@@ -36,6 +36,7 @@ internal object BackedUpSettings {
         AppearanceSettings.DynamicColour,
         AppearanceSettings.ColourFromArtwork,
         AppearanceSettings.ShowHomeOnLaunch,
+        AppearanceSettings.ClassicalDisplay,
         AppearanceSettings.WidgetBackgroundOpacity,
         PlayerSettings.ShowRemainingTime,
         ArtistSettings.ShowCreditedArtists,

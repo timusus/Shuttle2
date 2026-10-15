@@ -37,6 +37,7 @@ class AppearanceSettings @Inject constructor(
     val dynamicColour = store.preference(DynamicColour)
     val colourFromArtwork = store.preference(ColourFromArtwork)
     val showHomeOnLaunch = store.preference(ShowHomeOnLaunch)
+    val classicalDisplay = store.preference(ClassicalDisplay)
     val widgetBackgroundOpacity = store.preference(WidgetBackgroundOpacity)
 
     companion object {
@@ -56,6 +57,9 @@ class AppearanceSettings @Inject constructor(
         val ColourFromArtwork = Setting.boolean("pref_theme_colour_from_artwork", true)
 
         val ShowHomeOnLaunch = Setting.boolean("pref_show_home_on_launch", false)
+
+        /** Group movements under their work and show composers, where the tags name a work or movement. */
+        val ClassicalDisplay = Setting.boolean("pref_classical_display", true)
 
         /** A percentage. The key predates the Glance widgets, so old values carry over. */
         val WidgetBackgroundOpacity = Setting.int("widget_background_opacity", 100)

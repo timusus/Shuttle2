@@ -238,6 +238,10 @@
     <string name="pref_colour_from_artwork_title">Colour from artwork</string>
     <!-- Settings: Summary of the colour from artwork switch -->
     <string name="pref_colour_from_artwork_summary">Tint the player with colours from the album art</string>
+    <!-- Settings: Title of the switch that shows classical music's works, composers and movements -->
+    <string name="pref_classical_display_title">Classical display</string>
+    <!-- Settings: Summary of the classical display switch -->
+    <string name="pref_classical_display_summary">Group movements under their work and show composers</string>
     <!-- Settings: Title of the switch that hides songs from servers which aren't downloaded -->
     <string name="pref_offline_mode_title">Offline mode</string>
     <!-- Settings: Summary of the Offline mode switch -->

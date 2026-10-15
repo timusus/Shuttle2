@@ -43,6 +43,28 @@ fun readyAlbumDetail(
     moreByArtistNames: List<String> = if (moreByArtist.isEmpty()) emptyList() else listOfNotNull(album.albumArtist),
 ) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready, moreByArtist = moreByArtist, moreByArtistNames = moreByArtistNames)
 
+/**
+ * A recital album: a three-movement sonata run, a lone prelude and an untagged encore, in track order, as the
+ * ViewModel derives it with Classical display [classical].
+ */
+fun classicalAlbumDetail(classical: Boolean = true): AlbumDetailUiState {
+    fun track(id: Long, name: String, track: Int) = createSong(id = id, name = name, albumArtist = "Mira Calder", album = "Late Sonatas", track = track, duration = 300_000)
+    val sonata = listOf("Allegro", "Adagio", "Presto").mapIndexed { index, movement ->
+        track(index + 1L, "Sonata No. 3: $movement", index + 1).copy(
+            composer = "Ludwig Harrow",
+            composerSort = "Harrow, Ludwig",
+            conductor = "Ines Varga",
+            work = "Sonata No. 3",
+            movementName = movement,
+            movementNumber = index + 1,
+        )
+    }
+    val prelude = track(4, "Prelude", 4).copy(composer = "Ludwig Harrow", composerSort = "Harrow, Ludwig", work = "Prelude in D", arranger = "T. Okoye")
+    val encore = track(5, "Encore", 5)
+    val songs = sonata + prelude + encore
+    return readyAlbumDetail(album = albumOf(songs), songs = songs).copy(classical = classical)
+}
+
 val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.LoadingState.Loading)
 
 val missingAlbumDetail = AlbumDetailUiState(album = null, loadingState = AlbumDetailUiState.LoadingState.Empty)

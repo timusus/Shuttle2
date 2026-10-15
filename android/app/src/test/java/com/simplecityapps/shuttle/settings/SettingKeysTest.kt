@@ -50,6 +50,7 @@ class SettingKeysTest {
             "AppearanceSettings.DynamicColour: pref_theme_dynamic_colour = true",
             "AppearanceSettings.ColourFromArtwork: pref_theme_colour_from_artwork = true",
             "AppearanceSettings.ShowHomeOnLaunch: pref_show_home_on_launch = false",
+            "AppearanceSettings.ClassicalDisplay: pref_classical_display = true",
             "AppearanceSettings.WidgetBackgroundOpacity: widget_background_opacity = 100",
             "ArtworkSettings.WifiOnly: artwork_wifi_only = false",
             "ArtworkSettings.LocalOnly: artwork_local_only = false",

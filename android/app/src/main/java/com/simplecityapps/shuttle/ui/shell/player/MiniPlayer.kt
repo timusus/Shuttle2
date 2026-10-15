@@ -59,8 +59,9 @@ internal fun MiniPlayer(
             val previousLabel = stringResource(DesignR.string.ds_previous)
             val seekable = current.song.type.isSeekable
             S2MiniPlayer(
-                title = current.title,
-                subtitle = current.artist.orEmpty(),
+                // Movement first so the one-line ellipsis cuts the work, never the movement.
+                title = player.classical?.let { listOfNotNull(it.movement, it.work).joinToString(" – ") } ?: current.title,
+                subtitle = player.classical?.performers ?: current.artist.orEmpty(),
                 playing = player.playing,
                 progress = { progress().fraction },
                 onPlayPause = actions::togglePlayback,
