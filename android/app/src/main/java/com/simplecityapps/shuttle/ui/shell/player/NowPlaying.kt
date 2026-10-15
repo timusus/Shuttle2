@@ -50,6 +50,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2PlayingOn
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
+import com.simplecityapps.shuttle.designsystem.component.S2Text
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
@@ -148,7 +149,7 @@ internal fun NowPlayingTitle(
                 overflow = TextOverflow.Ellipsis,
             )
             classical?.performers?.let { performers ->
-                Text(text = performers, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                S2Text(text = performers, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             val castingTo = player.castingTo()
             if (castingTo != null) {
