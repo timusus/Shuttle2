@@ -8,4 +8,7 @@ appId: ${APP_ID}
     end: 10%,21%
     duration: 400
 - tapOn: "Genres"
-- assertVisible: "Classical"
+# a row near the top: the mini player (restored from an earlier flow) covers "Classical"
+- extendedWaitUntil:
+    visible: "Alternative Rock"
+    timeout: 15000

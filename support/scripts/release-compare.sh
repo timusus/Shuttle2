@@ -78,11 +78,11 @@ source "${SCRIPT_DIR}/emu-lane.sh"
 ARTIST="Radiohead"
 ALBUM="Hail to the Thief"
 # a track on ALBUM, matched as a Maestro regex (the real titles carry punctuation and subtitles)
-ALBUM_TRACK="There There.*"
+ALBUM_TRACK=".*Sail to the Moon.*"
 # the now-playing song comes from another album, so the mini player, now-playing and queue differ from the artist screens
 PLAYING_ARTIST=".*Flume.*"
 PLAYING_ALBUM="Skin"
-PLAYING_TRACK="Never Be Like You.*"
+PLAYING_TRACK=".*Never Be Like You.*"
 QUERY="Radiohead"
 # an artist near the top of the A-Z artist list, which is all the import-wait poll sees
 IMPORT_MARKER="Alice In Chains"

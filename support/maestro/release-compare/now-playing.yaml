@@ -1,7 +1,10 @@
 appId: ${APP_ID}
 ---
 - runFlow: mini-player.yaml
-- tapOn: "${PLAYING_ARTIST}"
+# the album page still lists the track (index 0); the mini player's copy is index 1
+- tapOn:
+    text: "${PLAYING_TRACK}"
+    index: 1
 - extendedWaitUntil:
     visible: "Queue"
     timeout: 10000

@@ -3,4 +3,6 @@ appId: ${APP_ID}
 - runFlow: _start.yaml
 - tapOn: "Library"
 - tapOn: "Genres"
-- assertVisible: "Classical"
+- extendedWaitUntil:
+    visible: "Alternative Rock"
+    timeout: 15000
