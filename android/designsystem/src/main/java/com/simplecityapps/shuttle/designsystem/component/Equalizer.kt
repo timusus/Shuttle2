@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -48,9 +49,10 @@ internal fun formatGain(db: Float): String {
     return "$sign$magnitude"
 }
 
-// Slim enough that eleven sliders (the preamp and ten bands) sit apart at a 360dp phone width.
+/** The width of one band's touch target; the screen scrolls the bands sideways rather than squeezing them below it. */
+val EqBandWidth = 48.dp
 private val EqTrackThickness = 8.dp
-private val EqThumbSize = DpSize(width = 20.dp, height = 4.dp)
+private val EqThumbSize = DpSize(width = 32.dp, height = 8.dp)
 
 /**
  * One equalizer band: the gain above a slim `VerticalSlider` (boost up, cut down) and the [frequency]
@@ -84,7 +86,12 @@ fun EqBand(
             onValueChangeFinished = onGainChangeFinished,
             topToBottom = false,
             interactionSource = interactionSource,
-            thumb = { SliderDefaults.Thumb(interactionSource = interactionSource, isVertical = true, enabled = enabled, thumbSize = EqThumbSize) },
+            // The slider is as wide as its thumb, so the invisible box is what makes the touch target 48dp.
+            thumb = {
+                Box(Modifier.width(EqBandWidth), contentAlignment = Alignment.Center) {
+                    SliderDefaults.Thumb(interactionSource = interactionSource, isVertical = true, enabled = enabled, thumbSize = EqThumbSize)
+                }
+            },
             track = { EqTrack(it, enabled) },
         )
         Text(frequency, style = MaterialTheme.typography.labelSmall, color = labelColor, maxLines = 1)

@@ -3,10 +3,12 @@ package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasTestTag
@@ -16,7 +18,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
@@ -96,6 +100,11 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
 
     private fun preampSlider() = rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress) and hasAnyAncestor(hasTestTag(PREAMP_TAG)))
 
+    /** Asserts the band labelled [frequency] can be scrolled into view (the bands scroll sideways). */
+    fun assertBandReachable(frequency: String) {
+        rule.onNodeWithText(frequency).performScrollTo().assertIsDisplayed()
+    }
+
     fun assertDisplayed(text: String) {
         rule.onNodeWithText(text).assertIsDisplayed()
     }
@@ -119,6 +128,17 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
     fun assertBandNotEnabled(frequency: String) {
         rule.onNodeWithContentDescription(frequency).assertIsNotEnabled()
     }
+
+    /** Asserts every slider (the preamp and each band) is at least [minDp] wide and tall. */
+    fun assertSlidersAtLeast(minDp: Dp) {
+        val sliders = rule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress))
+        val count = sliders.fetchSemanticsNodes().size
+        repeat(count) { index ->
+            sliders[index].assertWidthIsAtLeast(minDp).assertHeightIsAtLeast(minDp)
+        }
+    }
+
+    fun sliderCount() = rule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress)).fetchSemanticsNodes().size
 
     fun assertChartDisplayed() {
         rule.onNodeWithTag("frequencyResponseChart").assertIsDisplayed()

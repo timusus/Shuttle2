@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -36,7 +37,7 @@ class EqualizerScreenTest {
         robot.assertSwitchOn()
         robot.assertDisplayed("Bass boost")
         robot.assertChartDisplayed()
-        listOf("32", "63", "125", "250", "500", "1k", "2k", "4k", "8k", "16k").forEach(robot::assertDisplayed)
+        listOf("32", "63", "125", "250", "500", "1k", "2k", "4k", "8k", "16k").forEach(robot::assertBandReachable)
     }
 
     @Test
@@ -97,6 +98,14 @@ class EqualizerScreenTest {
         robot.setPreamp(4f)
 
         robot.preampChanges shouldBe listOf(4f)
+    }
+
+    @Test
+    fun `every slider meets the 48dp touch target`() {
+        robot.setContent(state(enabled = true))
+
+        robot.sliderCount() shouldBe 11
+        robot.assertSlidersAtLeast(48.dp)
     }
 
     @Test

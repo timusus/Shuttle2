@@ -1,10 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -21,6 +24,7 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ChoiceSetting
 import com.simplecityapps.shuttle.designsystem.component.EqBand
+import com.simplecityapps.shuttle.designsystem.component.EqBandWidth
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2Surface
@@ -87,21 +91,24 @@ fun EqualizerScreen(
                             frequency = stringResource(R.string.dsp_preamp_short),
                             gainDb = uiState.preampGainDb,
                             onGainChange = onPreampGainChange,
-                            modifier = Modifier.weight(1f).testTag(PREAMP_TAG),
+                            modifier = Modifier.width(EqBandWidth).testTag(PREAMP_TAG),
                             enabled = uiState.enabled,
                             contentDescription = stringResource(R.string.dsp_preamp)
                         )
                         // Sets the preamp, which shifts every band, apart from the bands themselves.
                         S2VerticalDivider(Modifier.height(200.dp).padding(horizontal = 6.dp))
-                        uiState.bands.forEach { band ->
-                            EqBand(
-                                frequency = frequencyLabel(band.frequency),
-                                gainDb = band.gainDb,
-                                onGainChange = { onBandGainChange(band.frequency, it) },
-                                modifier = Modifier.weight(1f),
-                                enabled = uiState.enabled,
-                                onGainChangeFinished = onBandGainChangeFinished
-                            )
+                        // Ten bands at 48dp don't fit a phone, so they scroll while the preamp stays put.
+                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
+                            uiState.bands.forEach { band ->
+                                EqBand(
+                                    frequency = frequencyLabel(band.frequency),
+                                    gainDb = band.gainDb,
+                                    onGainChange = { onBandGainChange(band.frequency, it) },
+                                    modifier = Modifier.width(EqBandWidth),
+                                    enabled = uiState.enabled,
+                                    onGainChangeFinished = onBandGainChangeFinished
+                                )
+                            }
                         }
                     }
                     Caption(stringResource(R.string.settings_equalizer_units))
