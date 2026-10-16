@@ -9,7 +9,7 @@ data class WorkTitle(
     val arrangement: String? = null
 )
 
-// The single letters K, B, D, L and M are only a catalogue with their dot ("K. 466", "L. 75", "M. 83"), S with a dot or a space.
+// The single letters K, B, D, L and M are only a catalogue with their dot ("K. 466", "L. 75", "M. 83"), S with a dot or a space; TH needs capitals and a dot ("TH. 29").
 private val catalogueNames = listOf("BuxWV", "BWV", "Hob", "HWV", "TWV", "TrV", "SWV", "WAB", "WoO", "Sz", "RV", "FP", "JW", "Wq", "Kk", "KV", "Op", "TH")
 private val CATALOGUE_PREFIXES = catalogueNames.joinToString("|") + "|K(?=\\.)|D(?=\\.)|B(?=\\.)|L(?=\\.)|M(?=\\.)|S(?=[.\\s])"
 
@@ -62,6 +62,7 @@ private fun catalogueMatches(text: String): List<MatchResult> = catalogueRef.fin
     val before = text.substring(0, start).trimEnd()
     (start == 0 || !text[start - 1].isLetterOrDigit()) &&
         (prefix.length > 1 || prefix[0].isUpperCase()) &&
+        (!prefix.equals("TH", ignoreCase = true) || (prefix == "TH" && text.getOrNull(start + 2) == '.')) &&
         (!prefix.equals("D", ignoreCase = true) || before.isEmpty() || before.endsWith(','))
 }.toList()
 

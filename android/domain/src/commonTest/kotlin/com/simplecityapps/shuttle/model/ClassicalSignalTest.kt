@@ -89,4 +89,38 @@ class ClassicalSignalTest {
             hasNonClassicalGenre(listOf(it)) shouldBe true
         }
     }
+
+    @Test
+    fun `any popular word vetoes a classical word`() {
+        listOf("Chamber Folk", "Chamber Jazz", "Symphonic Jazz", "Folk Opera", "Orchestral Electronic", "Soul Choral", "Orchestral Gospel").forEach {
+            hasClassicalGenre(listOf(it)) shouldBe false
+            hasNonClassicalGenre(listOf(it)) shouldBe true
+        }
+        hasClassicalGenre(listOf("Latin Mass")) shouldBe true
+        hasNonClassicalGenre(listOf("Latin Mass")) shouldBe false
+        hasNonClassicalGenre(listOf("Latin")) shouldBe true
+    }
+
+    @Test
+    fun `popular roots match as word prefixes`() {
+        listOf("Dancehall", "Metalcore", "Rockabilly", "Folktronica", "Indietronica", "Electroclash", "Rocksteady", "Technopop", "Poppunk").forEach {
+            hasNonClassicalGenre(listOf(it)) shouldBe true
+        }
+        listOf("Popular", "Electroacoustic", "Soulful choral").forEach { hasNonClassicalGenre(listOf(it)) shouldBe false }
+    }
+
+    @Test
+    fun `operetta is classical but space and rock opera are not`() {
+        hasClassicalGenre(listOf("Operetta")) shouldBe true
+        hasClassicalGenre(listOf("Opera")) shouldBe true
+        hasClassicalGenre(listOf("Space Opera")) shouldBe false
+        hasClassicalGenre(listOf("Rock Opera")) shouldBe false
+    }
+
+    @Test
+    fun `a movement number on a rock song gives plain lock screen text`() {
+        val rock = song(id = 1, name = "Time", track = 4, genres = listOf("Rock")).copy(movementNumber = 2)
+
+        lockScreenText(listOf(rock), 0) shouldBe null
+    }
 }

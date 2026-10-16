@@ -67,7 +67,15 @@ class WorkTitleTest {
         parseWorkTitle("Suite bergamasque, L. 75").catalogue shouldBe "L. 75"
         catalogueSearchKeys("Suite bergamasque, L. 75") shouldBe listOf("l75")
         catalogueSearchKeys("Boléro, M. 81") shouldBe listOf("m81")
-        catalogueSearchKeys("Swan Lake, TH 12") shouldBe listOf("th12")
+        catalogueSearchKeys("Swan Lake, TH. 12") shouldBe listOf("th12")
+        catalogueSearchKeys("Symphony No. 6, TH. 29") shouldBe listOf("th29")
+    }
+
+    @Test
+    fun `TH is a catalogue key only in capitals with its dot`() {
+        listOf("Swan Lake, TH 1", "Swan Lake, th 3", "Swan Lake, th. 3", "Swan Lake, Th. 3").forEach {
+            catalogueSearchKeys(it) shouldBe emptyList()
+        }
     }
 
     @Test

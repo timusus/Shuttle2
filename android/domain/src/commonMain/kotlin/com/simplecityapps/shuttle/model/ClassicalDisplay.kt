@@ -20,7 +20,7 @@ private fun Song.hasClassicalSignal(): Boolean = isClassical || !conductor.isNul
 fun List<Song>.isClassicalBlock(): Boolean = (any { it.hasClassicalSignal() } && none { hasNonClassicalGenre(it.genres) }) || hasNumberedMovementTitles()
 
 /** Whether a lone song, tagged with a work, gets the movement-and-work wording of the player surfaces. */
-internal fun Song.isClassicalWork(): Boolean = isClassical || (!work.isNullOrBlank() && listOf(this).isClassicalBlock())
+internal fun Song.isClassicalWork(): Boolean = showsMovementLabel || (!work.isNullOrBlank() && listOf(this).isClassicalBlock())
 
 /** "IV. Allegro", or just the name without a number. Without a name, the title minus a leading "{work}: " / "{work} - ". */
 fun Song.movementLabel(): String {
