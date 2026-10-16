@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
 import com.simplecityapps.mediaprovider.search.SearchHit
+import com.simplecityapps.mediaprovider.search.SearchIndex
 import com.simplecityapps.mediaprovider.search.SearchQuery
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
@@ -8,6 +9,8 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.catalogueSearchKey
+import com.simplecityapps.shuttle.model.catalogueSearchKeys
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -42,9 +45,36 @@ class SearchLibrary @Inject constructor(
     operator fun invoke(query: String, categories: Set<SearchCategory>): Flow<SearchResults> {
         val searchQuery = SearchQuery.parse(query)
         if (searchQuery.isEmpty || categories.isEmpty()) return flowOf(SearchResults())
+        val catalogueKey = catalogueSearchKey(query)
         return libraryIndex.index
-            .map { index -> index.search(searchQuery) { it.category in categories }.grouped() }
+            .map { index ->
+                val hits = index.search(searchQuery) { it.category in categories }
+                if (catalogueKey == null) hits.grouped() else withCatalogueMatches(index, hits, searchQuery, catalogueKey, categories).grouped()
+            }
             .flowOn(dispatcher)
+    }
+
+    /**
+     * A query that is a catalogue number ("op67", "K 466") first lists the songs and albums whose work or name holds
+     * that number. Their text matches stay only where they carry no catalogue number of their own, so "op 6" doesn't
+     * find "Op. 67" by prefix.
+     */
+    private fun withCatalogueMatches(
+        index: SearchIndex<Any>,
+        hits: List<SearchHit<Any>>,
+        query: SearchQuery,
+        key: String,
+        categories: Set<SearchCategory>,
+    ): List<SearchHit<Any>> {
+        val matches = index.filter { (it is Song || it is Album) && it.category in categories && key in it.catalogueKeys() }
+        val rest = hits.filter { hit -> hit.item.catalogueKeys().isEmpty() }
+        return (matches.map { SearchHit(it, query) } + rest).distinctBy { it.item }
+    }
+
+    private fun Any.catalogueKeys(): List<String> = when (this) {
+        is Song -> work?.let(::catalogueSearchKeys).orEmpty().ifEmpty { name?.let(::catalogueSearchKeys).orEmpty() }
+        is Album -> name?.let(::catalogueSearchKeys).orEmpty()
+        else -> emptyList()
     }
 
     private fun List<SearchHit<Any>>.grouped(): SearchResults {

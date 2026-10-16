@@ -117,6 +117,32 @@ class SearchLibraryTest {
         searchLibrary("the sun will", setOf(SearchCategory.Songs)).first().songs.map { it.item.name } shouldContainExactly listOf("The Sun Will Rise")
     }
 
+    private fun classicalSongs() = listOf(
+        createSong(id = 1, name = "I. Allegro con brio", albumArtist = "Ludwig van Beethoven", album = "Symphonies").copy(work = "Symphony No. 5 in C minor, Op. 67"),
+        createSong(id = 2, name = "Piano Concerto No. 20 in D minor, K. 466", albumArtist = "Mozart", album = "Concertos"),
+        createSong(id = 3, name = "Sonata, Op. 6", albumArtist = "Someone", album = "Sonatas"),
+        createSong(id = 4, name = "Op 6 Blues", albumArtist = "Someone", album = "Blues"),
+    )
+
+    @Test
+    fun `finds a work by its catalogue number however it is typed`() = runTest {
+        songs.setSongs(classicalSongs())
+
+        for (query in listOf("op67", "Op. 67", "op 67", "OP.67")) {
+            searchLibrary(query, setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(1L)
+        }
+        for (query in listOf("k466", "K 466", "K.466")) {
+            searchLibrary(query, setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(2L)
+        }
+    }
+
+    @Test
+    fun `a partial catalogue number does not match a longer one`() = runTest {
+        songs.setSongs(classicalSongs())
+
+        searchLibrary("op 6", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(3L, 4L)
+    }
+
     @Test
     fun `tolerates typos`() = runTest {
         searchLibrary("junpier", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Juniper Static")

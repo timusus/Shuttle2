@@ -64,6 +64,9 @@ class SearchIndex<T> private constructor(
 
     fun search(query: String, accept: (T) -> Boolean = { true }): List<SearchHit<T>> = search(SearchQuery.parse(query), accept)
 
+    /** The indexed items that satisfy [predicate], in the order they were indexed, for matches the token index can't express. */
+    fun filter(predicate: (T) -> Boolean): List<T> = items.filter(predicate)
+
     /**
      * The documents that [accept] lets through and that match every token of [query], best first. When none match
      * every token, tokens are dropped from the end, then from the start, until something does. A leading "the" is
