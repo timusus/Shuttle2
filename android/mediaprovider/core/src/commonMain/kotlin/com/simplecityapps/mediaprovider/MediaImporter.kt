@@ -534,12 +534,15 @@ class MediaImporter(
          * ([songTagsOutdated]). 1: the raw artist and album tags and ids of #637. 3: the codec, bit rate,
          * sample rate and channel count of Emby and Jellyfin songs (#889). 4: a local combined album artist tag
          * ("A; B") reads as its first artist (#886). 5: a local multi-value ALBUMARTIST lists each value as an album artist.
-         * 6: the classical fields of #1065. Local files whose path, size and modified date are unchanged keep their
-         * stored tags, so only this re-import reads the new fields into them.
+         * 6: the classical fields of #1065. 7: the raw album artist tag (local files only). Local files whose path, size
+         * and modified date are unchanged keep their stored tags, so only this re-import reads the new fields into them.
          */
         const val SONG_TAGS_VERSION = 7
 
-        /** Whether [type]'s songs were last imported before [SONG_TAGS_VERSION]: recorded when its import is stored. */
-        fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < SONG_TAGS_VERSION
+        /** The version [type]'s songs must have been imported under: no remote provider populates the version 7 fields. */
+        fun requiredSongTagsVersion(type: MediaProviderType): Int = if (type.remote) 6 else SONG_TAGS_VERSION
+
+        /** Whether [type]'s songs were last imported before [requiredSongTagsVersion]: recorded when its import is stored. */
+        fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < requiredSongTagsVersion(type)
     }
 }

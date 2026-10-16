@@ -38,6 +38,18 @@ class WriteSongTagsTest {
     }
 
     @Test
+    fun `editing the album artist replaces the stored album artist credit`() = runTest {
+        val song = createSong(id = 1, albumArtist = "Old").copy(albumArtistDisplay = "Old; Performer")
+
+        writeSongTags(listOf(EditableSong(song, createAudioFile())), mapOf(TagField.AlbumArtist to "New"))
+
+        songRepository.updatedSongs.single().let {
+            it.albumArtist shouldBe "New"
+            it.albumArtistDisplay shouldBe "New"
+        }
+    }
+
+    @Test
     fun `editing another tag keeps the song's stored lyrics`() = runTest {
         songRepository.lyrics[1] = "la la la"
 

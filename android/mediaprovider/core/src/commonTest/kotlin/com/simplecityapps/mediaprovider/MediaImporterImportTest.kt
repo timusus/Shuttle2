@@ -233,6 +233,16 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
+    fun `songs imported under tags version 6 are outdated for local files but not for a remote server`() {
+        preferences.setSongTagsVersion(MediaProviderType.Jellyfin.name, 6)
+        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, 6)
+
+        preferences.songTagsOutdated(MediaProviderType.Jellyfin) shouldBe false
+        preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
+        preferences.songTagsOutdated(MediaProviderType.MediaStore) shouldBe true
+    }
+
+    @Test
     fun `an import that throws leaves the source outdated`() = runBlocking<Unit> {
         provider.failNext.store(true)
         provider.gate.trySend(Unit)

@@ -123,7 +123,7 @@ internal class SongImporter(
                             } else {
                                 preferenceManager.setLastFullSyncStart(mediaProvider.type.name, start)
                                 // Every song read again, so this source's songs hold every tag this build reads
-                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, MediaImporter.SONG_TAGS_VERSION)
+                                preferenceManager.setSongTagsVersion(mediaProvider.type.name, MediaImporter.requiredSongTagsVersion(mediaProvider.type))
                             }
                         } else if (guarded.awaitsFullPass || (removed?.unfetched ?: 0) > 0) {
                             // Likewise after an incremental sync, which also brings it forward for songs the source holds that

@@ -96,6 +96,7 @@ internal fun Song.edited(edits: Map<TagField, String>): Song {
         artistDisplay = text(TagField.Artists, artistDisplay),
         album = text(TagField.Album, album),
         albumArtist = text(TagField.AlbumArtist, albumArtist),
+        albumArtistDisplay = text(TagField.AlbumArtist, albumArtistDisplay),
         date = if (TagField.Year in edits) edits.getValue(TagField.Year).trim().toIntOrNull()?.let { LocalDate(it, 1, 1) } else date,
         track = number(TagField.Track, track),
         disc = number(TagField.Disc, disc),
