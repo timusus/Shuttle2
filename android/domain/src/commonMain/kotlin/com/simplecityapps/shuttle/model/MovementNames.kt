@@ -75,7 +75,7 @@ fun hasOwnLabel(cleanName: String): Boolean = ownLabel.containsMatchIn(cleanName
 
 private val voiceWords = setOf("voice", "vocal", "vocals", "singer", "tenor", "soprano", "baritone", "mezzo", "alto", "bass", "countertenor")
 private val instrumentWords = setOf("double", "guitar", "viol", "viola", "saxophone", "sax", "flute", "recorder", "clarinet", "trombone", "tuba", "horn", "oboe", "bassoon")
-internal val classicalGenreWords = listOf("classical", "opera", "baroque", "romantic", "orchestral", "chamber", "symphon", "choral", "concerto", "early music")
+private val classicalGenres = setOf("classical", "opera", "baroque", "chamber", "choral", "lieder", "art song", "early music", "orchestral")
 private val songGenre = Regex("""\bsongs?\b|lieder|\blied\b""", RegexOption.IGNORE_CASE)
 
 private fun String.words() = lowercase().split(Regex("""[^a-z]+""")).filter { it.isNotEmpty() }
@@ -87,12 +87,16 @@ private fun Performer.isVoice(): Boolean {
 
 private fun List<Song>.isSongGenre() = any { song -> song.genres.any { songGenre.containsMatchIn(it) } }
 
-// Any conductor, performer credit or classical genre keeps an album classical, even when the composer is also its album artist.
-private fun List<Song>.isNonClassical(): Boolean {
-    val credited = any { !it.conductor.isNullOrBlank() || it.performers.orEmpty().isNotEmpty() }
-    val classicalGenre = any { song -> song.genres.any { genre -> classicalGenreWords.any { genre.contains(it, ignoreCase = true) } } }
-    return !credited && !classicalGenre
+/** Whether [genres] name a classical genre; "Orchestral Pop" and "Romantic" do not, "Chamber Music" and "Baroque; Vocal" do. */
+internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.any { genre ->
+    genre.split(';', '/', ',').any { token ->
+        token.trim().lowercase().split(Regex("""\s+""")).filter { it != "music" }.joinToString(" ") in classicalGenres
+    }
 }
+
+// Only a conductor tag or a classical genre keeps an album classical; performer credits alone do not, so a band whose
+// leader wrote the suite stays a plain album.
+private fun List<Song>.isNonClassical(): Boolean = none { !it.conductor.isNullOrBlank() || hasClassicalGenre(it.genres) }
 
 // A singer with an instrumentalist and no conductor or ensemble is a song cycle (Winterreise: baritone and piano).
 private fun List<Song>.isSongCycle(): Boolean {

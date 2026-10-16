@@ -99,8 +99,8 @@ private fun looksLikeInferredWork(songs: List<Song>, prefix: String): Boolean {
     val name = prefix.normalised()
     val credited = songs.flatMap { it.artists + listOfNotNull(it.albumArtist, it.album) }
     if (credited.any { it.normalised() == name }) return false
-    val classicalGenre = songs.any { song -> song.genres.any { genre -> classicalGenreWords.any { genre.contains(it, ignoreCase = true) } } }
-    val tagged = songs.any { !it.conductor.isNullOrBlank() || it.performers.orEmpty().isNotEmpty() }
+    val classicalGenre = songs.any { hasClassicalGenre(it.genres) }
+    val tagged = songs.any { !it.conductor.isNullOrBlank() }
     return classicalGenre || tagged || parseWorkTitle(prefix).catalogue != null || workNumberRef.containsMatchIn(prefix) || formWords.containsMatchIn(prefix)
 }
 

@@ -112,6 +112,30 @@ class MovementNamesTest {
     }
 
     @Test
+    fun `performer credits alone do not make a rock suite classical`() {
+        val suite = List(3) {
+            song(id = it + 1L, albumArtist = "The Band", genres = listOf("Rock"))
+                .copy(composer = "The Band", work = "Suite", performers = listOf(Performer("Sam", "guitar"), Performer("Alex", "drums")))
+        }
+        workNumbering(suite) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        val noGenre = suite.map { it.copy(genres = emptyList()) }
+        workNumbering(noGenre) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+    }
+
+    @Test
+    fun `a classical genre keeps a work classical only as a whole token`() {
+        fun numbering(vararg genres: String) = workNumbering(
+            List(3) { song(id = it + 1L, albumArtist = "Someone", genres = genres.toList()).copy(composer = "Someone") }
+        )
+        numbering("Romantic") shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        numbering("Orchestral Pop") shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        numbering("Classical") shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
+        numbering("baroque; Orchestral") shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
+        numbering("Chamber Music") shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
+        numbering("Art Song") shouldBe WorkNumbering(NumeralStyle.Arabic, "songs")
+    }
+
+    @Test
     fun `a conductor tag keeps a work with no genre classical`() {
         val songs = List(3) { song(id = it + 1L, albumArtist = "Orchestra").copy(composer = "Mahler", conductor = "Abbado") }
         workNumbering(songs) shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
