@@ -35,6 +35,7 @@ import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ServerAccessGate
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
@@ -93,6 +94,9 @@ class PlaybackService : MediaLibraryService() {
     lateinit var artworkSettings: ArtworkSettings
 
     @Inject
+    lateinit var appearanceSettings: AppearanceSettings
+
+    @Inject
     lateinit var castStarter: CastStarter
 
     @Inject
@@ -137,7 +141,7 @@ class PlaybackService : MediaLibraryService() {
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
         callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate), toggleFavourite, observeFavouriteSongIds(), TrustedCallers::isTrusted)
-        val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
+        val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope) { appearanceSettings.classicalDisplay.value }
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
             .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, artworkSettings) { player.currentMediaItem?.queueEntryOrNull?.song })
             .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode(), favourite = null))

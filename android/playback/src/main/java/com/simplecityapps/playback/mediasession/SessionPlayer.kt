@@ -3,6 +3,7 @@ package com.simplecityapps.playback.mediasession
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
@@ -30,8 +31,19 @@ class SessionPlayer(
     player: Player,
     private val playbackOperations: PlaybackOperations,
     private val queueOperations: QueueOperations,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val classicalDisplay: () -> Boolean = { false }
 ) : ForwardingPlayer(player) {
+    /** Reworded for a movement of a work while Classical display is on; read afresh on each item change and by each controller update. */
+    override fun getMediaMetadata(): MediaMetadata {
+        val metadata = super.getMediaMetadata()
+        if (!classicalDisplay()) return metadata
+        val uid = currentMediaItem?.queueEntryOrNull?.uid ?: return metadata
+        val queue = queueOperations.getQueue()
+        val index = queue.indexOfFirst { it.uid == uid }
+        return if (index == -1) metadata else metadata.withClassicalText(queue.map { it.song }, index)
+    }
+
     override fun play() {
         playbackOperations.play()
     }
