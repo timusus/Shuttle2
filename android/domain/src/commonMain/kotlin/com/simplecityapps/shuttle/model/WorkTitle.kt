@@ -9,9 +9,9 @@ data class WorkTitle(
     val arrangement: String? = null
 )
 
-// The single letters K, B and D are only a catalogue with their dot ("K. 466", "B. 12", "D. 850"), S with a dot or a space.
-private val catalogueNames = listOf("BuxWV", "BWV", "Hob", "HWV", "TWV", "TrV", "SWV", "WAB", "WoO", "Sz", "RV", "FP", "JW", "Wq", "Kk", "KV", "Op")
-private val CATALOGUE_PREFIXES = catalogueNames.joinToString("|") + "|K(?=\\.)|D(?=\\.)|B(?=\\.)|S(?=[.\\s])"
+// The single letters K, B, D, L and M are only a catalogue with their dot ("K. 466", "L. 75", "M. 83"), S with a dot or a space.
+private val catalogueNames = listOf("BuxWV", "BWV", "Hob", "HWV", "TWV", "TrV", "SWV", "WAB", "WoO", "Sz", "RV", "FP", "JW", "Wq", "Kk", "KV", "Op", "TH")
+private val CATALOGUE_PREFIXES = catalogueNames.joinToString("|") + "|K(?=\\.)|D(?=\\.)|B(?=\\.)|L(?=\\.)|M(?=\\.)|S(?=[.\\s])"
 
 // "no." and "nos." are written "No." and "Nos." in a work title, whatever the tagger typed.
 private val numberAbbreviation = Regex("""\b(no|nos)\.(?=\s*\d)""", RegexOption.IGNORE_CASE)

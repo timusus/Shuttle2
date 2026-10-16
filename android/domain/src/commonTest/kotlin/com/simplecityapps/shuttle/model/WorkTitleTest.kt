@@ -63,8 +63,16 @@ class WorkTitleTest {
     }
 
     @Test
+    fun `Debussy Ravel and Tchaikovsky catalogues parse`() {
+        parseWorkTitle("Suite bergamasque, L. 75").catalogue shouldBe "L. 75"
+        catalogueSearchKeys("Suite bergamasque, L. 75") shouldBe listOf("l75")
+        catalogueSearchKeys("Boléro, M. 81") shouldBe listOf("m81")
+        catalogueSearchKeys("Swan Lake, TH 12") shouldBe listOf("th12")
+    }
+
+    @Test
     fun `single letters are not catalogue numbers without their dot`() {
-        listOf("K2", "D12", "S1", "Vitamin B 12", "Symphony in B 12", "Piano Sonata K 310").forEach {
+        listOf("K2", "D12", "S1", "Track L 5", "Song M 3", "Vitamin B 12", "Symphony in B 12", "Piano Sonata K 310").forEach {
             parseWorkTitle(it).catalogue shouldBe null
             catalogueSearchKeys(it) shouldBe emptyList()
         }
