@@ -6,12 +6,19 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toRepeatMode
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Proxy
+import java.util.IdentityHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -32,17 +39,63 @@ class SessionPlayer(
     private val playbackOperations: PlaybackOperations,
     private val queueOperations: QueueOperations,
     private val scope: CoroutineScope,
-    private val classicalDisplay: () -> Boolean = { false }
+    private val classicalDisplay: StateFlow<Boolean> = MutableStateFlow(false)
 ) : ForwardingPlayer(player) {
-    /** Reworded for a movement of a work while Classical display is on; read afresh on each item change and by each controller update. */
+    // The session reads the metadata on every state update, so the queue scan is done once per queue snapshot and song.
+    private var cachedQueue: List<QueueItem>? = null
+    private var cachedUid: Long? = null
+    private var cachedText: ClassicalText? = null
+
+    // ForwardingPlayer hands listeners the inner player's metadata; these hand them ours.
+    private val listeners = IdentityHashMap<Player.Listener, Player.Listener>()
+
+    /** Reworded for a movement of a work while Classical display is on. */
     override fun getMediaMetadata(): MediaMetadata {
         val metadata = super.getMediaMetadata()
-        if (!classicalDisplay()) return metadata
+        if (!classicalDisplay.value) return metadata
         val uid = currentMediaItem?.queueEntryOrNull?.uid ?: return metadata
-        val queue = queueOperations.getQueue()
-        val index = queue.indexOfFirst { it.uid == uid }
-        return if (index == -1) metadata else metadata.withClassicalText(queue.map { it.song }, index)
+        val text = classicalText(uid) ?: return metadata
+        return metadata.withClassicalText(text)
     }
+
+    private fun classicalText(uid: Long): ClassicalText? {
+        val queue = queueOperations.getQueue()
+        if (queue !== cachedQueue || uid != cachedUid) {
+            val index = queue.indexOfFirst { it.uid == uid }
+            cachedText = if (index == -1) null else classicalText(queue, index)
+            cachedQueue = queue
+            cachedUid = uid
+        }
+        return cachedText
+    }
+
+    init {
+        // The session only re-reads the metadata when the song changes; the setting can change under a playing one.
+        scope.launch { classicalDisplay.drop(1).collect { refreshMetadata() } }
+    }
+
+    private fun refreshMetadata() {
+        cachedQueue = null
+        val metadata = mediaMetadata
+        listeners.keys.toList().forEach { it.onMediaMetadataChanged(metadata) }
+    }
+
+    override fun addListener(listener: Player.Listener) {
+        super.addListener(listeners.getOrPut(listener) { withOwnMetadata(listener) })
+    }
+
+    override fun removeListener(listener: Player.Listener) {
+        super.removeListener(listeners.remove(listener) ?: listener)
+    }
+
+    // A proxy because Kotlin's `by` skips the Java default methods of Player.Listener, which is every one of them.
+    private fun withOwnMetadata(delegate: Player.Listener): Player.Listener = Proxy.newProxyInstance(Player.Listener::class.java.classLoader, arrayOf(Player.Listener::class.java)) { _, method, args ->
+        try {
+            if (method.name == "onMediaMetadataChanged") delegate.onMediaMetadataChanged(mediaMetadata) else method.invoke(delegate, *args.orEmpty())
+        } catch (e: InvocationTargetException) {
+            throw e.targetException
+        }
+    } as Player.Listener
 
     override fun play() {
         playbackOperations.play()

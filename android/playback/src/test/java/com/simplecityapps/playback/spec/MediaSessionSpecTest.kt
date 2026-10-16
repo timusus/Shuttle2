@@ -17,8 +17,11 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.CarAccess
 import com.simplecityapps.playback.mediasession.SessionCallback
+import com.simplecityapps.playback.mediasession.SessionPlayer
 import com.simplecityapps.playback.mediasession.TrustedCallers
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
+import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
@@ -37,6 +40,8 @@ import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.After
 import org.junit.Test
@@ -222,6 +227,43 @@ class MediaSessionSpecTest {
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_REPEAT, Bundle.EMPTY))
         harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ONE, CommandButton.ICON_HEART_UNFILLED) }
+    }
+
+    @Test
+    fun `RS-45b a movement of a work shows its movement as the title when Classical display is on, and a controller hears when it changes`() {
+        val work = listOf(1L, 2L).map { classical(it, "Movement $it", "Symphony No. 5") }
+        val harness = sessionHarness(songs = work)
+        loadPaused(harness, work)
+        val browser = harness.connect()
+        val plain = browser.mediaMetadata.title
+
+        harness.classicalDisplay.value = true
+        harness.playback.runUntil { browser.mediaMetadata.title.toString() == "I. Movement 1" }
+        browser.mediaMetadata.artist.toString() shouldBe "Beethoven: Symphony No. 5 · Kleiber"
+
+        harness.classicalDisplay.value = false
+        harness.playback.runUntil { browser.mediaMetadata.title == plain }
+    }
+
+    @Test
+    fun `RS-45c pop songs sharing a work tag, and a song missing from the queue, keep their own metadata`() {
+        val pops = listOf(1L, 2L).map { song(it).copy(name = "Hold On", albumArtist = "Wilson Phillips", composer = "Wilson Phillips", work = "Hold On", genres = listOf("Pop")) }
+        val harness = sessionHarness(songs = pops)
+        harness.classicalDisplay.value = true
+        loadPaused(harness, pops)
+        val browser = harness.connect()
+
+        browser.mediaMetadata.title.toString() shouldBe "Hold On"
+        browser.mediaMetadata.artist.toString() shouldBe "Wilson Phillips"
+
+        val work = listOf(1L, 2L).map { classical(it, "Movement $it", "Symphony No. 5") }
+        val loaded = sessionHarness(songs = work)
+        loadPaused(loaded, work)
+        val noQueue = object : QueueOperations by loaded.playback.queueOperations {
+            override fun getQueue() = emptyList<QueueItem>()
+        }
+        val player = SessionPlayer(loaded.playback.appPlayer, loaded.playback.playbackOperations, noQueue, CoroutineScope(Dispatchers.Main.immediate), MutableStateFlow(true))
+        player.mediaMetadata.title shouldBe loaded.playback.appPlayer.mediaMetadata.title
     }
 
     @Test
@@ -565,6 +607,12 @@ class MediaSessionSpecTest {
             "com.example.player"
         ).map { TrustedCallers.isTrusted(controller(it)) } shouldBe listOf(true, true, true, true, true, false)
     }
+
+    private fun classical(
+        id: Long,
+        name: String,
+        work: String
+    ) = song(id).copy(name = name, albumArtist = "Berliner Philharmoniker", composer = "Beethoven", conductor = "Kleiber", work = work, track = id.toInt(), genres = listOf("Classical"))
 
     private fun sessionHarness(
         songs: List<Song> = emptyList(),

@@ -54,7 +54,9 @@ class SessionHarness(
     /** How long a shuffle-all waits for the first song to load; tests that run the player's clock far ahead raise it. */
     shuffleAllLoadWaitMs: Long = SHUFFLE_ALL_LOAD_WAIT_MS,
     /** What the store says the user has: Pro by default. */
-    val entitlement: MutableStateFlow<Entitlement> = MutableStateFlow(Entitlement.Pro(ProSource.Lifetime))
+    val entitlement: MutableStateFlow<Entitlement> = MutableStateFlow(Entitlement.Pro(ProSource.Lifetime)),
+    /** The Classical display setting, off by default as in a fresh [SessionPlayer]. */
+    val classicalDisplay: MutableStateFlow<Boolean> = MutableStateFlow(false)
 ) {
     var trialStarts = 0
         private set
@@ -101,7 +103,7 @@ class SessionHarness(
         })
         val carAccess = if (car) CarAccess(gate, carPackages = setOf(context.packageName)) else CarAccess(gate)
         callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope, carAccess, ToggleFavourite(songRepository), ObserveFavouriteSongIds(songRepository)(), { trusted })
-        val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)
+        val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope, classicalDisplay)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)
         callback.launchRootRefreshes(session)

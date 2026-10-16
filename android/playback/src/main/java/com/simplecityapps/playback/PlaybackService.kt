@@ -47,6 +47,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 
 /**
@@ -141,7 +143,7 @@ class PlaybackService : MediaLibraryService() {
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
         callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope, CarAccess(serverAccessGate), toggleFavourite, observeFavouriteSongIds(), TrustedCallers::isTrusted)
-        val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope) { appearanceSettings.classicalDisplay.value }
+        val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope, appearanceSettings.classicalDisplay.stateIn(coroutineScope, SharingStarted.Eagerly))
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
             .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, artworkSettings) { player.currentMediaItem?.queueEntryOrNull?.song })
             .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode(), favourite = null))
