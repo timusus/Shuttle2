@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 import androidx.compose.runtime.Immutable
 import com.simplecityapps.playback.CastDevice
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
-import com.simplecityapps.shuttle.model.ClassicalText
+import com.simplecityapps.shuttle.model.NowPlayingWork
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.NowPlayingImage
@@ -68,8 +68,8 @@ data class PlayerUiState(
     val showRemainingTime: Boolean = true,
     /** Whether Now Playing and the mini player picture a song by its album art or its artist's image (#952). */
     val nowPlayingImage: NowPlayingImage = NowPlayingImage.AlbumArt,
-    /** The current song's movement, work and performers when it is classical and Classical display is on; null otherwise. */
-    val classical: ClassicalText? = null,
+    /** The work the current song sits in (movement, performers, ribbon) when Classical display is on; null for any other song. */
+    val work: NowPlayingWork? = null,
     /** The current song's lyrics from its tags, or null when it has none; the bar offers the Lyrics panel only when set. */
     val lyrics: String? = null,
     /** The panel the bar has open, or null at rest. */

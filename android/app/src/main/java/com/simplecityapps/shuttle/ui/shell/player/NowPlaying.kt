@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import android.view.ContextThemeWrapper
 import android.view.View
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,13 +35,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.mediarouter.app.MediaRouteButton
 import androidx.mediarouter.app.SystemOutputSwitcherDialogController
+import androidx.navigation3.runtime.NavKey
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
@@ -55,6 +60,8 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.artworkRole
 import com.simplecityapps.shuttle.designsystem.theme.isLargeText
+import com.simplecityapps.shuttle.model.NowPlayingWork
+import com.simplecityapps.shuttle.ui.shell.AlbumRoute
 
 /** The name of the Cast device playback plays on, or null while it plays on this one. */
 @Composable
@@ -130,6 +137,7 @@ internal fun NowPlayingArtwork(
 internal fun NowPlayingTitle(
     player: PlayerUiState,
     actions: PlayerActions,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val current = player.current
@@ -139,17 +147,18 @@ internal fun NowPlayingTitle(
     val titleLineHeight = with(LocalDensity.current) { titleStyle.lineHeight.roundToPx() }
     Row(modifier.fillMaxWidth().padding(start = S2Spacing.medium + S2Spacing.xsmall, end = S2Spacing.small, bottom = S2Spacing.small), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f)) {
-            val classical = player.classical
-            Text(text = classical?.movement ?: current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
-            Text(
-                text = classical?.subtitle ?: listOfNotNull(current?.artist, current?.album).joinToString(" • "),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            classical?.performers?.let { performers ->
-                S2Text(text = performers, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val work = player.work
+            if (work != null && current != null) {
+                ClassicalTitle(work, onComposerClick = { onOpenRoute(current.song.albumGroupKey.let { AlbumRoute(it.key, it.albumArtistGroupKey?.key, it.identity) }) })
+            } else {
+                Text(text = current?.title.orEmpty(), style = titleStyle, maxLines = if (largeText) 2 else 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
             val castingTo = player.castingTo()
             if (castingTo != null) {
@@ -177,6 +186,36 @@ internal fun NowPlayingTitle(
 }
 
 /**
+ * A song inside a work: the composer in accent caps, the work largest with its key and catalogue under it, then the
+ * movement as the title, which alone crossfades as the movement changes, and the performers.
+ */
+@Composable
+private fun ClassicalTitle(
+    work: NowPlayingWork,
+    onComposerClick: () -> Unit,
+) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    work.composer?.let { composer ->
+        S2Text(
+            text = composer.uppercase(),
+            style = MaterialTheme.typography.labelLarge.copy(letterSpacing = ComposerLetterSpacing),
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.clickable(role = Role.Button, onClick = onComposerClick).padding(bottom = S2Spacing.xsmall),
+        )
+    }
+    S2Text(text = work.work, style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    work.detail?.let { S2Text(text = it, style = MaterialTheme.typography.titleMedium, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+    Crossfade(targetState = work.movement, label = "movement") { movement ->
+        S2Text(text = movement, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+    work.performers?.let { S2Text(text = it, style = MaterialTheme.typography.bodyMedium, color = muted, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+}
+
+private val ComposerLetterSpacing = 1.5.sp
+
+/**
  * The artwork over the title, at least [gap] from the edges and from each other. The artwork takes
  * the height the title leaves, up to its square; whatever is spare is shared evenly above the artwork,
  * between it and the title, and below the title, rather than left as an empty band at either end.
@@ -186,11 +225,12 @@ internal fun NowPlayingSong(
     player: PlayerUiState,
     actions: PlayerActions,
     gap: Dp,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.SpaceEvenly) {
         NowPlayingArtwork(player, actions, gap, Modifier.weight(1f, fill = false))
-        NowPlayingTitle(player, actions)
+        NowPlayingTitle(player, actions, onOpenRoute)
     }
 }
 
@@ -210,6 +250,7 @@ internal fun Transport(
         modifier = modifier.fillMaxWidth().padding(bottom = gap).testTag(PlayerTestTags.Transport),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        player.work?.let { WorkRibbonBar(it, player, progress, actions, Modifier.padding(bottom = S2Spacing.small)) }
         SeekBar(player, progress, actions)
         Box(Modifier.padding(horizontal = S2Spacing.small), contentAlignment = Alignment.Center) {
             val seekable = player.current?.song?.type?.isSeekable == true

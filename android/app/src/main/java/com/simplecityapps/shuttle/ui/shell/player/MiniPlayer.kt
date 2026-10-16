@@ -59,8 +59,8 @@ internal fun MiniPlayer(
             val previousLabel = stringResource(DesignR.string.ds_previous)
             val seekable = current.song.type.isSeekable
             S2MiniPlayer(
-                title = player.classical?.miniTitle ?: current.title,
-                subtitle = player.classical?.performers ?: current.artist.orEmpty(),
+                title = player.work?.miniTitle ?: current.title,
+                subtitle = player.work?.miniSubtitle ?: current.artist.orEmpty(),
                 playing = player.playing,
                 progress = { progress().fraction },
                 onPlayPause = actions::togglePlayback,

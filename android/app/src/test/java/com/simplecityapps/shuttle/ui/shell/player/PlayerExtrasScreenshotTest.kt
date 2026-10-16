@@ -6,12 +6,12 @@ import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
-import com.simplecityapps.shuttle.model.ClassicalText
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.settlingClock
 import com.simplecityapps.shuttle.ui.shell.AppShellRobot
 import com.simplecityapps.shuttle.ui.shell.PhoneSystemBars
+import com.simplecityapps.shuttle.ui.shell.classicalShellQueue
 import com.simplecityapps.shuttle.ui.shell.sampleShellQueue
 import com.simplecityapps.shuttle.ui.shell.windowInfo
 import java.io.File
@@ -86,9 +86,21 @@ class PlayerExtrasScreenshotTest {
     @Test
     fun classicalNowPlaying() {
         nowPlaying(ArtworkCovers[0])
-        val classical = ClassicalText(movement = "II. Adagio", work = "Harrow: Sonata No. 3", performers = "Ines Varga, Mira Calder (piano)", subtitle = "Harrow: Sonata No. 3")
-        robot.setQueue(sampleShellQueue(size = 16, playing = ArtworkCovers[0]).copy(classical = classical))
+        robot.setQueue(classicalShellQueue())
         shot("now-playing-classical")
+    }
+
+    @Test
+    fun classicalMiniPlayer() {
+        robot.setContent(queue = classicalShellQueue(), window = windowInfo(411, 891), systemBars = PhoneSystemBars)
+        shot("mini-player-classical")
+    }
+
+    @Test
+    fun classicalManyMovements() {
+        nowPlaying(ArtworkCovers[0])
+        robot.setQueue(classicalShellQueue(movements = 30, playing = 12))
+        shot("now-playing-classical-30-movements")
     }
 
     @Test

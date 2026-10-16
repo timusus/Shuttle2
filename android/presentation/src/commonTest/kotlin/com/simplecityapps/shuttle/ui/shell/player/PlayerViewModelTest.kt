@@ -209,21 +209,24 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `a classical song shows its movement and work - or artist and album without a work - and nothing when the setting is off`() = runTest {
+    fun `a song in a work shows its movement and ribbon - a lone song nothing - and nothing when the setting is off`() = runTest {
         val viewModel = viewModel()
-        val withWork = createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(work = "Sonata No. 3")
-        val noWork = createSong(id = 2, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(movementName = "Allegro")
+        val first = createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(work = "Sonata No. 3", movementNumber = 1)
+        val second = createSong(id = 2, name = "Adagio", albumArtist = "Ines Varga", album = "Sonatas").copy(work = "Sonata No. 3", movementNumber = 2)
+        val lone = createSong(id = 3, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(movementName = "Allegro")
+        val queue = listOf(first, second, lone)
 
-        queueOperations.queueStateFlow.value = queueOf(listOf(withWork, noWork))
-        viewModel.uiState.value.player.classical?.subtitle shouldBe "Sonata No. 3"
-        viewModel.uiState.value.player.classical?.miniTitle shouldBe "Allegro – Sonata No. 3"
+        queueOperations.queueStateFlow.value = queueOf(queue, current = 1)
+        viewModel.uiState.value.player.work?.movement shouldBe "2. Adagio"
+        viewModel.uiState.value.player.work?.miniTitle shouldBe "Sonata No. 3"
+        viewModel.uiState.value.player.work?.ribbon?.movementCount shouldBe 2
 
-        queueOperations.queueStateFlow.value = queueOf(listOf(withWork, noWork), current = 1)
-        viewModel.uiState.value.player.classical?.subtitle shouldBe "Ines Varga • Sonatas"
-        viewModel.uiState.value.player.classical?.miniTitle shouldBe "Allegro"
+        queueOperations.queueStateFlow.value = queueOf(queue, current = 2)
+        viewModel.uiState.value.player.work shouldBe null
 
+        queueOperations.queueStateFlow.value = queueOf(queue, current = 1)
         SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
-        viewModel.uiState.value.player.classical shouldBe null
+        viewModel.uiState.value.player.work shouldBe null
     }
 
     @Test

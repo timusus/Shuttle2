@@ -171,7 +171,7 @@ internal fun SideBySidePlayer(
         first = {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 if (compactHeight) {
-                    CompactHeightPlayer(player, progress, actions, onCollapse)
+                    CompactHeightPlayer(player, progress, actions, onCollapse, onOpenRoute)
                     return@Box
                 }
                 Column(
@@ -184,7 +184,7 @@ internal fun SideBySidePlayer(
                     CollapseHandle(onCollapse)
                     // Nothing pushes this player, so the song and transport centre together in the room above the bar.
                     Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
-                        NowPlayingSong(player, actions, gap = S2Spacing.large, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
+                        NowPlayingSong(player, actions, gap = S2Spacing.large, onOpenRoute = onOpenRoute, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
                         Transport(player, progress, actions, gap = S2Spacing.large)
                     }
                     NowPlayingBar(player, actions, selected = panel, onPanel = actions::togglePanel)
@@ -222,6 +222,7 @@ private fun CompactHeightPlayer(
     progress: () -> PlayerProgress,
     actions: PlayerActions,
     onCollapse: () -> Unit,
+    onOpenRoute: (NavKey) -> Unit,
 ) {
     Row(
         Modifier
@@ -238,7 +239,7 @@ private fun CompactHeightPlayer(
         }
         Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.Center) {
             CollapseHandle(onCollapse)
-            NowPlayingTitle(player, actions)
+            NowPlayingTitle(player, actions, onOpenRoute)
             Transport(player, progress, actions, gap = S2Spacing.small)
             NowPlayingBar(player, actions, selected = player.panel, onPanel = actions::togglePanel)
         }
