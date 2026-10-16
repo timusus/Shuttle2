@@ -71,7 +71,7 @@ private fun Song.titlePrefix(): String? {
 }
 
 private fun runKey(song: Song): String? {
-    val composer = song.cleanComposer()?.normalised().orEmpty()
+    val composer = song.cleanComposer()?.let(::composerSurnameKey).orEmpty()
     song.cleanWork()?.let { return "w:${it.normalised()}|$composer" }
     val prefix = song.titlePrefix() ?: return null
     return if (composer.isEmpty() && !isStrongWorkPrefix(listOf(song), prefix)) null else "i:${prefix.normalised()}|$composer"

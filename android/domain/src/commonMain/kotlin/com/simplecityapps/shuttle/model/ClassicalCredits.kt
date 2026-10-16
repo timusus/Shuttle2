@@ -4,11 +4,19 @@ data class ComposerName(val name: String, val sort: String?)
 
 fun Song.composerName(): ComposerName? = composer?.trim()?.takeIf { it.isNotEmpty() }?.let { ComposerName(it, composerSort?.trim()?.takeIf(String::isNotEmpty)) }
 
-private fun ComposerName.surname(): String? = sort?.takeIf { it.contains(',') }?.substringBefore(',')?.trim()?.takeIf { it.isNotEmpty() }
+private val lifespan = Regex("""\s*\([^)]*\d{4}[^)]*\)""")
+
+// Taggers write one composer as "Mahler", "Gustav Mahler" and "Mahler, Gustav (1860 - 1911)"; the surname is what they share.
+internal fun composerSurnameKey(name: String): String {
+    val bare = name.replace(lifespan, "").trim()
+    return (if (bare.contains(',')) bare.substringBefore(',') else bare.substringAfterLast(' ')).trim().lowercase()
+}
+
+private fun ComposerName.surname(): String? = (sort ?: name.replace(lifespan, "").trim()).takeIf { it.contains(',') }?.substringBefore(',')?.trim()?.takeIf { it.isNotEmpty() }
 
 /**
- * The composer's surname from the sort name ("Beethoven, Ludwig van" gives "Beethoven"); the full name with no sort tag,
- * or when another composer in [library] shares the surname (the Bach family, the Strausses).
+ * The composer's surname from the sort name, or from a "Surname, Forename" name with no sort tag ("Beethoven, Ludwig van"
+ * gives "Beethoven"); the full name otherwise, or when another composer in [library] shares the surname (the Bach family, the Strausses).
  */
 fun composerDisplayName(composer: ComposerName, library: Collection<ComposerName> = emptyList()): String {
     val surname = composer.surname() ?: return composer.name

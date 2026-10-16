@@ -132,6 +132,25 @@ class RealAlbumTagsTest {
         }
     }
 
+    private fun mahler(): List<Song> {
+        val movements = listOf(
+            "I. Allegro maestoso", "II. Andante moderato", "III. In ruhig fliessender Bewegung", "IV. Urlicht. Sehr feierlich", "V. Im Tempo des Scherzo. Wild herausfahrend",
+            "V. Wieder sehr breit", "V. Ritardando… Maestoso", "V. Wieder zurückhaltend", "V. Langsam. Misterioso", "V. Etwas bewegter", "V. Mit Aufschwung aber nicht eilen"
+        )
+        return movements.mapIndexed { index, movement ->
+            song(
+                id = index + 1L,
+                name = "Symphony no. 2 in C minor “Resurrection”: $movement",
+                albumArtist = "Mahler; Arleen Augér, Janet Baker, CBSO Chorus, City of Birmingham Symphony Orchestra, Simon Rattle",
+                artists = listOf("Gustav Mahler"),
+                album = "Symphony No. 2",
+                track = if (index == 0) 1 else index,
+                disc = if (index == 0) 1 else 2,
+                genres = listOf("Classical")
+            ).copy(composer = if (index == 0) "Mahler" else "Mahler, Gustav (1860 - 1911)")
+        }
+    }
+
     private fun blocks(songs: List<Song>) = groupWorks(songs).map { (it as AlbumItem.Work).block }
 
     @Test
@@ -154,6 +173,20 @@ class RealAlbumTagsTest {
         val items = groupWorks(stokowski())
         items.map { if (it is AlbumItem.Work) it.block.movementCount else 1 } shouldBe listOf(2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1)
         items.filterIsInstance<AlbumItem.Work>().map { it.block.title.core } shouldBe listOf("Toccata and Fugue in D minor", "Passacaglia and Fugue in C minor")
+    }
+
+    @Test
+    fun `Mahler is one symphony whatever the composer spelling`() {
+        val blocks = blocks(mahler())
+        blocks.map { it.movementCount } shouldBe listOf(11)
+        blocks.single().title.core shouldBe "Symphony no. 2"
+    }
+
+    @Test
+    fun `composer display name reads a surname first name without a sort tag`() {
+        composerDisplayName(ComposerName("Mahler, Gustav (1860 - 1911)", null)) shouldBe "Mahler"
+        composerDisplayName(ComposerName("Mahler", null)) shouldBe "Mahler"
+        composerDisplayName(ComposerName("Gustav Mahler", null)) shouldBe "Gustav Mahler"
     }
 
     @Test
