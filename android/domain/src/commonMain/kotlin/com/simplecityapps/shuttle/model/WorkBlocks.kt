@@ -39,11 +39,14 @@ data class WorkBlock(
 
 internal class Run(val range: IntRange, val work: String?, val inferred: Boolean)
 
+private val opNumber = Regex("""\bop\.?\s*(?=\d)""")
+private val whitespaceRun = Regex("""\s+""")
+
 private fun String.normalised(): String = lowercase()
-    .replace(Regex("""\bop\.?\s*(?=\d)"""), "op")
+    .replace(opNumber, "op")
     .map { if (it.isLetterOrDigit()) it else ' ' }
     .joinToString("")
-    .replace(Regex("""\s+"""), " ")
+    .replace(whitespaceRun, " ")
     .trim()
 
 // Picard writes the movement-level work: "Symphony no. 5 in C minor, op. 67: I. Allegro con brio".
@@ -144,6 +147,25 @@ internal fun findRuns(songs: List<Song>): List<Run> {
     return runs
 }
 
+/**
+ * The run containing [index], found from its neighbours alone: a run never spans two works, so the songs sharing the
+ * current song's work key bound a window that starts and ends on a real run boundary, and [findRuns] over that window
+ * gives the same run as over the whole queue. A group of non-classical songs (Picard-tagged pop versions of one song)
+ * is not a work for the player.
+ */
+internal fun runAround(queue: List<Song>, index: Int): Run {
+    val alone = Run(index..index, null, false)
+    val work = runKey(queue[index])?.work ?: return alone
+    var from = index
+    while (from > 0 && runKey(queue[from - 1])?.work == work) from--
+    var to = index
+    while (to + 1 < queue.size && runKey(queue[to + 1])?.work == work) to++
+    val run = findRuns(queue.subList(from, to + 1)).first { index - from in it.range }
+    val range = (run.range.first + from)..(run.range.last + from)
+    if (run.work != null && queue.subList(range.first, range.last + 1).isNonClassical()) return alone
+    return Run(range, run.work, run.inferred)
+}
+
 private val actRef = Regex("""^(Act|Akt)\s+(\d+|[IVX]+)\b""", RegexOption.IGNORE_CASE)
 
 private fun actSections(movements: List<Movement>): List<ActSection> {
@@ -237,8 +259,12 @@ data class WorkProgress(
 
 /** Null when the song at [index] is not part of a work of two or more movements. [positionMs] is the playback position in that song. */
 fun workProgress(queue: List<Song>, index: Int, positionMs: Long = 0): WorkProgress? {
-    val run = findRuns(queue).firstOrNull { index in it.range && it.work != null } ?: return null
-    val block = buildBlock(queue.slice(run.range), run.work!!, run.inferred, null)
+    if (index !in queue.indices) return null
+    val run = runAround(queue, index).takeIf { it.work != null } ?: return null
+    return workProgress(run, buildBlock(queue.slice(run.range), run.work!!, run.inferred, null), index, positionMs)
+}
+
+internal fun workProgress(run: Run, block: WorkBlock, index: Int, positionMs: Long): WorkProgress {
     val current = index - run.range.first
     val ranges = block.acts.map { it.movements }.ifEmpty { block.movements.indices.map { it..it } }
     val durations = block.movements.map { it.song.duration.toLong() }
@@ -262,7 +288,7 @@ data class LockScreenText(val title: String, val artist: String?)
 /** Null unless the song at [index] is classical or part of a work. */
 fun lockScreenText(queue: List<Song>, index: Int, library: Collection<ComposerName> = emptyList()): LockScreenText? {
     val song = queue.getOrNull(index) ?: return null
-    val run = findRuns(queue).first { index in it.range }
+    val run = runAround(queue, index)
     if (run.work == null && !song.isClassical) return null
     val songs = queue.slice(run.range)
     val work = run.work ?: song.cleanWork()

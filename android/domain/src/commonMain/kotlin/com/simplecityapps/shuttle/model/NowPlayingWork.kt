@@ -23,9 +23,10 @@ data class NowPlayingWork(
 
 /** Null unless the song at [index] sits in a work block; [library] lets two composers sharing a surname show their full names. */
 fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerName> = emptyList()): NowPlayingWork? {
-    val ribbon = workProgress(queue, index) ?: return null
-    val run = findRuns(queue).first { index in it.range }
+    if (index !in queue.indices) return null
+    val run = runAround(queue, index).takeIf { it.work != null } ?: return null
     val block = buildBlock(queue.slice(run.range), run.work.orEmpty(), run.inferred, null)
+    val ribbon = workProgress(run, block, index, 0)
     val song = queue[index]
     val movement = block.movements[ribbon.movementIndex]
     val composer = song.composerDisplayName(library)
