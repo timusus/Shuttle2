@@ -10,26 +10,53 @@ data class WorkNumbering(val style: NumeralStyle, val unit: String) {
     fun format(number: Int): String = if (style == NumeralStyle.Roman) toRoman(number) else number.toString()
 }
 
-private val leadingNumeral = Regex("""^(?:X{0,3}(?:IX|IV|V?I{0,3})|\d{1,3})(?:\.|:|\)|\s[-–—])\s+(?=\S)""")
+private const val NUMERAL = """(?:X{0,3}(?:IX|IV|V?I{0,3})|\d{1,3})"""
+private val leadingNumeral = Regex("""^($NUMERAL)(?:\.|:|\)|\s[-–—])\s+(?=\S)""")
+
+// A "Work: " placed before a numbered movement, for when the work is not known ("Winterreise, D. 911: 1. Gute Nacht").
+private val prefixBeforeNumeral = Regex("""^[^:]+?\s*:\s+(?=$NUMERAL\.\s)""")
 private val ownLabel = Regex(
     """^(?:Var(?:iations?)?\b|(?:No|Nr)\.\s*\d|Aria\b|Coda\b|Scene\b|(?:Act|Akt)\s+(?:[IVX]+|\d+)\b|(?:Thema|Theme)(?:\s*$|\s*[:,]))""",
     RegexOption.IGNORE_CASE
 )
-private val workPrefixSeparators = listOf(": ", " - ")
+private val workPrefixSeparators = listOf(": ", " : ", " - ")
 
-/** The movement name without a leading "Work: " and a leading numeral ("II. ", "2. ", "II - ", "IV: "); the input when nothing would be left. */
-fun cleanMovementName(name: String, work: String? = null): String {
+private fun numeralValue(token: String): Int? = token.toIntOrNull() ?: token.takeIf { it.isNotEmpty() }?.let { roman ->
+    val values = mapOf('I' to 1, 'V' to 5, 'X' to 10)
+    roman.mapIndexed { i, c ->
+        val v = values.getValue(c)
+        if (i + 1 < roman.length && v < values.getValue(roman[i + 1])) -v else v
+    }.sum()
+}
+
+/** The name split into its clean form and the leading numeral token ("" when it has none). */
+private fun splitMovementName(name: String, work: String?): Pair<String, String> {
     val trimmed = name.trim()
     var rest = trimmed
     val prefix = work?.trim()?.takeIf { it.isNotEmpty() }
+    var stripped = false
     if (prefix != null && rest.startsWith(prefix, ignoreCase = true)) {
         val after = rest.substring(prefix.length)
-        workPrefixSeparators.firstOrNull { after.startsWith(it) }?.let { rest = after.removePrefix(it).trim() }
+        workPrefixSeparators.firstOrNull { after.startsWith(it) }?.let {
+            rest = after.removePrefix(it).trim()
+            stripped = true
+        }
     }
+    if (!stripped) prefixBeforeNumeral.find(rest)?.let { rest = rest.substring(it.range.last + 1).trim() }
     val numeral = leadingNumeral.find(rest)
-    if (numeral != null && numeral.value.isNotBlank()) rest = rest.substring(numeral.range.last + 1).trim()
-    return rest.ifEmpty { trimmed }
+    var token = ""
+    if (numeral != null && numeral.value.isNotBlank()) {
+        token = numeral.groupValues[1]
+        rest = rest.substring(numeral.range.last + 1).trim()
+    }
+    return rest.ifEmpty { trimmed } to token
 }
+
+/** The movement name without a leading "Work: " and a leading numeral ("II. ", "2. ", "II - ", "IV: "); the input when nothing would be left. */
+fun cleanMovementName(name: String, work: String? = null): String = splitMovementName(name, work).first
+
+/** The movement number a name leads with ("II. Andante" gives 2, after any "Work: " prefix); null when it has none. */
+fun movementNumberIn(name: String, work: String? = null): Int? = numeralValue(splitMovementName(name, work).second)
 
 /** Whether [cleanName] starts with its own label (Var., No., Nr., Aria, Thema, Coda, Act/Akt, Scene), which replaces the numeral. */
 fun hasOwnLabel(cleanName: String): Boolean = ownLabel.containsMatchIn(cleanName.trim())

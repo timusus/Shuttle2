@@ -46,7 +46,17 @@ private fun String.normalised(): String = lowercase()
     .replace(Regex("""\s+"""), " ")
     .trim()
 
-private fun Song.cleanWork(): String? = work?.trim()?.takeIf { it.isNotEmpty() }
+// Picard writes the movement-level work: "Symphony no. 5 in C minor, op. 67: I. Allegro con brio".
+private val workTail = Regex("""^(.*?\S)\s*:\s+((?:[IVX]{1,6}|\d{1,3})\.\s+\S.*)$""")
+
+/** The parent work, with the movement tail ("I. Allegro con brio") split off when the tag carries one. */
+private fun Song.workParts(): Pair<String, String?>? {
+    val tag = work?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val match = workTail.find(tag) ?: return tag to null
+    return match.groupValues[1] to match.groupValues[2]
+}
+
+private fun Song.cleanWork(): String? = workParts()?.first
 
 private fun Song.cleanComposer(): String? = composer?.trim()?.takeIf { it.isNotEmpty() }
 
@@ -131,9 +141,9 @@ private fun actSections(movements: List<Movement>): List<ActSection> {
 private fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albumCredits: String?): WorkBlock {
     val numbering = workNumbering(songs)
     val movements = songs.mapIndexed { index, song ->
-        val raw = song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.name.orEmpty()
+        val raw = song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty()
         val name = cleanMovementName(raw, work)
-        val number = song.movementNumber?.takeIf { it >= 1 } ?: (index + 1)
+        val number = song.movementNumber?.takeIf { it >= 1 } ?: movementNumberIn(raw, work) ?: (index + 1)
         val numeral = if ((songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
         Movement(song, number, name, numeral)
     }
