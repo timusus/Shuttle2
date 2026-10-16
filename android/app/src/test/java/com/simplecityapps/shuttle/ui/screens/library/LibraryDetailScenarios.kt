@@ -90,17 +90,18 @@ fun symphonyCycleAlbumDetail(): AlbumDetailUiState {
 
 /** A 24-part work, so its last movements carry wide numerals ("XVIII", "XXIV"). */
 fun longNumeralAlbumDetail(): AlbumDetailUiState {
-    val songs = (1..24).map { n ->
-        createSong(id = n.toLong(), name = "Variation $n", albumArtist = "Mira Calder", album = "Variations", track = n, duration = 120_000).copy(
-            composer = "Ludwig Harrow",
-            composerSort = "Harrow, Ludwig",
-            work = "Theme and Variations",
-            movementName = "Variation $n",
-            movementNumber = n,
-            genres = listOf("Classical"),
-        )
-    }
-    return classicalState(songs)
+    fun movement(id: Long, work: String, name: String, number: Int) = createSong(id = id, name = name, albumArtist = "Mira Calder", album = "Variations", track = number, duration = 120_000).copy(
+        composer = "Ludwig Harrow",
+        composerSort = "Harrow, Ludwig",
+        work = work,
+        movementName = name,
+        movementNumber = number,
+        genres = listOf("Classical"),
+    )
+    val prelude = listOf("Allegro", "Adagio").mapIndexed { i, name -> movement(i + 1L, "Sonata No. 3", name, i + 1) }
+    val variations = (1..24).map { n -> movement(10L + n, "Theme and Variations", "Variation $n", n) }
+    // A work of over 20 movements next to another starts collapsed; expand it.
+    return classicalState(prelude + variations, toggled = setOf(variations.first().id))
 }
 
 /** One long work split across two discs, as a double album side break does. */
