@@ -95,7 +95,7 @@ fun WorkHeaderRow(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        S2IconButton(icon = Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.ds_play_work, title), onClick = onPlay)
+        S2IconButton(icon = Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.ds_play_work, title), onClick = onPlay, style = S2IconButtonStyle.Tonal)
     }
 }
 

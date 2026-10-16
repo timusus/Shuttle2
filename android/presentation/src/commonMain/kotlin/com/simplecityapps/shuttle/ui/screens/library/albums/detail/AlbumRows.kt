@@ -94,10 +94,11 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
     var lastComposer: String? = null
     var lastDisc: Int? = null
 
-    // The album's first disc needs no heading above a work; its movements are already the page's top.
+    // The album's first disc needs no heading above a work, and none sits directly under a composer heading.
     fun discDivider(song: Song, beforeWork: Boolean) {
         val disc = song.disc ?: 1
-        if (multiDisc && disc != lastDisc && !(beforeWork && rows.isEmpty())) rows += AlbumRow.DiscDivider(disc, song.id)
+        val atTop = beforeWork && (rows.isEmpty() || rows.last() is AlbumRow.ComposerHeading)
+        if (multiDisc && disc != lastDisc && !atTop) rows += AlbumRow.DiscDivider(disc, song.id)
         lastDisc = disc
     }
 

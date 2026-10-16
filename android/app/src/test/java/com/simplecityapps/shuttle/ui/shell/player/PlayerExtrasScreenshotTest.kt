@@ -97,6 +97,13 @@ class PlayerExtrasScreenshotTest {
     }
 
     @Test
+    fun classicalTwelveMovements() {
+        nowPlaying(ArtworkCovers[0])
+        robot.setQueue(classicalShellQueue(movements = 12, playing = 5))
+        shot("now-playing-classical-12-movements")
+    }
+
+    @Test
     fun classicalManyMovements() {
         nowPlaying(ArtworkCovers[0])
         robot.setQueue(classicalShellQueue(movements = 30, playing = 12))

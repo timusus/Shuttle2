@@ -220,6 +220,27 @@ class AlbumRowsTest {
     }
 
     @Test
+    fun `a disc divider never sits directly under a composer heading`() {
+        val songs = sonata("Ludwig Harrow") +
+            listOf("I. Slow", "II. Fast").mapIndexed { i, name -> movement("Prelude in D", name, composer = "Nora Quill", track = i + 1, disc = 2) }
+
+        val rows = buildAlbumRows(songs, albumArtist = null, currentSongId = null, toggled = emptySet())!!.rows
+
+        val heading = rows.indexOfLast { it is AlbumRow.ComposerHeading }
+        rows[heading].shouldBeInstanceOf<AlbumRow.ComposerHeading>()
+        rows[heading + 1].shouldBeInstanceOf<AlbumRow.WorkHeader>()
+    }
+
+    @Test
+    fun `an album by its composer still shows the performers in the header credits`() {
+        val songs = sonata("Gustav Mahler").map { it.copy(conductor = "Ines Varga") }
+
+        val result = buildAlbumRows(songs, albumArtist = "Gustav Mahler", currentSongId = null, toggled = emptySet())!!
+
+        result.credits shouldBe "Ines Varga"
+    }
+
+    @Test
     fun `a long multi work album starts collapsed and a toggle expands one work`() {
         val songs = (1..2).flatMap { work -> (1..21).map { n -> movement("Suite No. $work", "Part $n", track = n) } }
 
