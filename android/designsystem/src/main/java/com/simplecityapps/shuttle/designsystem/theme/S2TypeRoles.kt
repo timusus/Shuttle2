@@ -42,8 +42,8 @@ val Typography.rowTitle: TextStyle get() = bodyLarge
 /** A list row's second line (artist, album, counts), and a section header's subtitle. On `onSurfaceVariant`. */
 val Typography.rowSubtitle: TextStyle get() = bodyMedium
 
-/** A row's trailing duration or count. */
-val Typography.rowMeta: TextStyle get() = labelMedium
+/** A row's trailing duration or count, in tabular figures so durations right-align digit for digit. */
+val Typography.rowMeta: TextStyle get() = labelMedium.copy(fontFeatureSettings = "tnum")
 
 /** A grid tile's or shelf card's title. */
 val Typography.tileTitle: TextStyle get() = titleSmall

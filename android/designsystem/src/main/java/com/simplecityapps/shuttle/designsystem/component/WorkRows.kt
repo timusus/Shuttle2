@@ -44,8 +44,12 @@ import com.simplecityapps.shuttle.designsystem.theme.rowMeta
 import com.simplecityapps.shuttle.designsystem.theme.rowSubtitle
 import com.simplecityapps.shuttle.designsystem.theme.rowTitle
 
-/** Width of the movement numeral column, so numerals of any length end on one edge and the names below share another. */
-private val NumeralColumn = 32.dp
+/**
+ * The numeral ends where a track row's number slot does (16dp row inset + 40dp small artwork slot, from the screen
+ * edge), and the name starts where a track title does (16dp after it), so the rail sits inside the slot.
+ */
+private val NumeralColumn = 56.dp - (24.dp + 2.dp + S2Spacing.xsmall)
+private val TitleGap = S2Spacing.medium
 
 /**
  * A classical work on an album page: its [title], a [detail] line (key, catalogue, arrangement), an optional [credits]
@@ -144,7 +148,6 @@ fun MovementRow(
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
 ) {
-    val tabular = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum")
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -157,14 +160,14 @@ fun MovementRow(
         Text(
             text = numeral.orEmpty(),
             modifier = Modifier.width(NumeralColumn),
-            style = tabular,
+            style = MaterialTheme.typography.rowMeta,
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End,
             maxLines = 1,
         )
         Text(
             text = name,
-            modifier = Modifier.weight(1f).padding(start = S2Spacing.smallMedium),
+            modifier = Modifier.weight(1f).padding(start = TitleGap),
             style = MaterialTheme.typography.rowTitle,
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
@@ -176,7 +179,7 @@ fun MovementRow(
         Text(
             duration,
             Modifier.padding(start = S2Spacing.small),
-            style = tabular,
+            style = MaterialTheme.typography.rowMeta,
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (onMore != null) RowMoreButton(onClick = onMore)
