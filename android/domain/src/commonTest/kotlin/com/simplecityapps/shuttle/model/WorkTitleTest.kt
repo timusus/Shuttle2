@@ -82,6 +82,15 @@ class WorkTitleTest {
     }
 
     @Test
+    fun `comma separated catalogue numbers show the last`() {
+        val cases = mapOf(
+            "Die Winterreise, op. 89, D. 911" to title("Die Winterreise", catalogue = "D. 911"),
+            "Symphony No. 5 in C minor, Op. 67, Hob. I:5" to title("Symphony No. 5", key = "C minor", catalogue = "Hob. I:5")
+        )
+        cases.forEach { (input, expected) -> parseWorkTitle(input) shouldBe expected }
+    }
+
+    @Test
     fun `doubt returns the title unchanged`() {
         parseWorkTitle("Concerto, BWV 1041 / RV 522") shouldBe title("Concerto, BWV 1041 / RV 522")
         parseWorkTitle("Symphony No. 5 in C minor for orchestra") shouldBe title("Symphony No. 5 in C minor for orchestra")

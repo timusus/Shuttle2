@@ -60,7 +60,7 @@ private fun MatchResult.display(): String {
     return "$shown $number$sub"
 }
 
-/** Splits [title] into its parts; on any doubt (two catalogue numbers, two keys, two nicknames) returns it unchanged as the core. */
+/** Splits [title] into its parts; on any doubt (unrelated catalogue numbers, two keys, two nicknames) returns it unchanged as the core. Of comma-separated catalogue numbers the last is shown. */
 fun parseWorkTitle(title: String): WorkTitle {
     val original = title.trim()
     val unchanged = WorkTitle(core = original)
@@ -76,9 +76,12 @@ fun parseWorkTitle(title: String): WorkTitle {
     if (quotes.isNotEmpty()) rest = rest.removeRange(quotes.single().range).tidy()
 
     val catalogues = catalogueMatches(rest)
-    if (catalogues.size > 1) return unchanged
-    val catalogue = catalogues.singleOrNull()?.display()
-    if (catalogues.isNotEmpty()) rest = rest.removeRange(catalogues.single().range).tidy()
+    // "Op. 89, D. 911" is one work with two catalogues; any other separator ("BWV 1041 / RV 522") is doubt.
+    val commaSeparated = catalogues.zipWithNext().all { (a, b) -> rest.substring(a.range.last + 1, b.range.first).trim() == "," }
+    if (catalogues.size > 1 && !commaSeparated) return unchanged
+    val catalogue = catalogues.lastOrNull()?.display()
+    for (match in catalogues.asReversed()) rest = rest.removeRange(match.range)
+    if (catalogues.isNotEmpty()) rest = rest.tidy()
 
     var key: String? = null
     val keys = keyRef.findAll(rest).toList()
