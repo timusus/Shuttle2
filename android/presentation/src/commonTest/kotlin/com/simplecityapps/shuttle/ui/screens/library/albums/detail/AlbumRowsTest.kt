@@ -49,6 +49,20 @@ class AlbumRowsTest {
     }
 
     @Test
+    fun `the header counts the movements listed instead of the tagged total of the work`() {
+        val work = "Symphony No. 2 in C minor"
+        val songs = listOf(
+            movement(work, "I. Allegro", track = 1).copy(movementNumber = 1, movementTotal = 5),
+            movement(work, "II. Andante", track = 2).copy(movementNumber = 2, movementTotal = 5),
+            movement(work, "III. Finale", track = 3).copy(movementNumber = 3, movementTotal = 5),
+        )
+
+        val header = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows[0]
+
+        header.shouldBeInstanceOf<AlbumRow.WorkHeader>().count shouldBe UiText.Plural(PluralKey.WORK_MOVEMENTS, 3)
+    }
+
+    @Test
     fun `a single composer album has an eyebrow and no composer headings`() {
         val result = buildAlbumRows(sonata(), albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!
 

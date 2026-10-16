@@ -46,7 +46,7 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         miniSubtitle = listOfNotNull(label, song.leadPerformer()).joinToString(" · "),
         ribbon = ribbon,
         ordinal = position(block.numbering, movement.number),
-        total = position(block.numbering, block.movementCount),
+        total = position(block.numbering, block.movementTotal),
         ordinals = block.movements.map { position(block.numbering, it.number) }
     )
 }

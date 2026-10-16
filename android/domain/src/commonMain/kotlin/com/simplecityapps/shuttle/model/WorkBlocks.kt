@@ -29,8 +29,11 @@ data class WorkBlock(
     val credits: String?,
     val collapsedByDefault: Boolean
 ) {
-    /** Movements, not tracks: one split over several tracks counts once. The tagged total wins, never below the highest number present. */
-    val movementCount: Int
+    /** Movements listed in this block, not tracks: the album header describes its rows, so a tagged total of the whole work doesn't apply. */
+    val movementCount: Int get() = movements.map { it.number }.distinct().size
+
+    /** Movements in the whole work, for "III of V" with a partial queue: the tagged total wins, never below the highest number present. */
+    val movementTotal: Int
         get() {
             val tagged = movements.firstNotNullOfOrNull { it.song.movementTotal?.takeIf { total -> total >= 1 } }
             return maxOf(tagged ?: movements.map { it.number }.distinct().size, movements.maxOf { it.number })
