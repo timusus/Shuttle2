@@ -35,7 +35,7 @@ class FindOtherRecordings {
             .mapNotNull { song ->
                 val composer = song.composer?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
                 if (!listOf(song).isClassicalBlock()) return@mapNotNull null
-                Candidate(song, composer.foldDiacritics(), song.workName() ?: return@mapNotNull null)
+                Candidate(song, composer, song.workName() ?: return@mapNotNull null)
             }
             .groupBy { composerSurnameKey(it.composer) }
         return works.mapNotNull { work ->
@@ -47,10 +47,10 @@ class FindOtherRecordings {
             val ownYear = first.date?.year
             val ownMovements = work.songs.mapTo(HashSet()) { it.name.orEmpty().normalised() }
             val identity = WorkIdentity(work.work)
-            val recordings = bySurname[composerSurnameKey(composer.foldDiacritics())].orEmpty()
+            val recordings = bySurname[composerSurnameKey(composer)].orEmpty()
                 .filter { candidate ->
                     candidate.song.albumGroupKey != own &&
-                        sameComposer(candidate.composer, composer.foldDiacritics()) &&
+                        sameComposer(candidate.composer, composer) &&
                         identity.matches(candidate.work)
                 }
                 .map { it.song }
@@ -83,7 +83,7 @@ internal class WorkIdentity(work: String) {
     }
 }
 
-private fun String.foldDiacritics(): String = buildString {
+internal fun String.foldDiacritics(): String = buildString {
     for (c in this@foldDiacritics) {
         if (c.code < 128) append(c) else append(SearchText.fold(c) ?: c.toString())
     }

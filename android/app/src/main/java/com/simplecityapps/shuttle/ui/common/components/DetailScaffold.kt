@@ -62,7 +62,7 @@ fun DetailScaffold(
     listState: LazyListState = rememberLazyListState(),
     hero: (@Composable (topInset: Dp, columnHeight: Dp) -> Unit)? = null,
     heroBleeds: Boolean = false,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: (@Composable RowScope.() -> Unit)? = null,
     overlay: (@Composable BoxScope.(topInset: Dp) -> Unit)? = null,
     content: LazyListScope.() -> Unit,
 ) {

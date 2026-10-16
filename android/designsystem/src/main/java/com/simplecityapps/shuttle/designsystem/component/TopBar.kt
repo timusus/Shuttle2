@@ -95,7 +95,7 @@ fun S2DetailTopBar(
     collapsed: Boolean,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
-    actions: @Composable RowScope.() -> Unit = {},
+    actions: (@Composable RowScope.() -> Unit)? = null,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     overImage: Boolean = false,
 ) {
@@ -137,7 +137,8 @@ fun S2DetailTopBar(
         navigationIcon = {
             onBack?.let { BackButton(it, Modifier.background(scrimColor, S2IconScrim.shape).padding(S2Spacing.xsmall)) }
         },
-        actions = { Row(Modifier.background(scrimColor, S2IconScrim.shape).padding(S2Spacing.xsmall), content = actions) },
+        // No actions means no scrim either: an empty one shows as a stray dot over the hero.
+        actions = { if (actions != null) Row(Modifier.background(scrimColor, S2IconScrim.shape).padding(S2Spacing.xsmall), content = actions) },
         // The pinned scroll behaviour would otherwise swap in its own colour as soon as the list moves.
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = containerColor,

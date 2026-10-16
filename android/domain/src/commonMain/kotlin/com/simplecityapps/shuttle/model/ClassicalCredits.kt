@@ -44,7 +44,7 @@ private fun nameParts(name: String): NameParts {
     return NameParts(words.last(), words.dropLast(1).joinToString(" ").ifEmpty { null }, suffix, bare)
 }
 
-private fun String.normalisedName(): String = lowercase().filter { it.isLetterOrDigit() || it == ' ' }.replace(Regex("""\s+"""), " ").trim()
+private fun String.normalisedName(): String = foldDiacritics().lowercase().filter { it.isLetterOrDigit() || it == ' ' }.replace(Regex("""\s+"""), " ").trim()
 
 // Taggers write one composer as "Mahler", "Gustav Mahler" and "Mahler, Gustav (1860 - 1911)"; the surname is what they share.
 internal fun composerSurnameKey(name: String): String = nameParts(name).surname.normalisedName()

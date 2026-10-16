@@ -61,4 +61,29 @@ class ComposerWorksTest {
     fun `an unknown composer has no page`() {
         find("Nobody", movements("A", "Symphony No. 5, Op. 67")) shouldBe null
     }
+
+    @Test
+    fun `title variants of one work number keep distinct keys`() {
+        val library = movements("A", "Symphony No. 5 in C minor") + movements("B", "Symphony No. 5") +
+            movements("C", "Piano Sonata No. 14 \"Moonlight\"") + movements("D", "Piano Sonata No. 14")
+        val works = find("Beethoven", library)!!.works
+        works.map { it.key }.distinct().size shouldBe works.size
+    }
+
+    @Test
+    fun `composer spellings with and without accents are one composer`() {
+        val library = movements("A", "Symphony No. 9, Op. 95", composer = "Dvořák") +
+            movements("B", "Cello Concerto, Op. 104", composer = "Antonín Dvorak")
+        find("Antonín Dvorak", library)!!.works.size shouldBe 2
+        find("Dvořák", library)!!.albums.size shouldBe 2
+    }
+
+    @Test
+    fun `a work block qualifying only through numbered movement titles is listed`() {
+        val library = List(3) {
+            song(id = nextId++, name = "Piano Sonata No. 8: ${listOf("I", "II", "III")[it]}. Satz", albumArtist = "Pollini", album = "Sonatas", track = it + 1, genres = listOf("Pop"))
+                .copy(composer = "Beethoven", work = "Piano Sonata No. 8")
+        }
+        find("Beethoven", library)!!.works.map { it.title } shouldBe listOf("Piano Sonata No. 8")
+    }
 }

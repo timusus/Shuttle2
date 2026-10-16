@@ -7,6 +7,8 @@ data class ComposerWork(
     val title: String,
     val catalogue: String?,
     val recordings: List<OtherRecording>,
+    /** Unique within a composer's works, unlike [title] and [catalogue], which drop the trimmed variants that tell works apart. */
+    val key: String = "$title|$catalogue",
 )
 
 data class ComposerWorks(
@@ -26,16 +28,19 @@ class FindComposerWorks {
     private class Cluster(val identity: WorkIdentity, val title: String, val songs: MutableList<Song> = mutableListOf())
 
     operator fun invoke(composer: String, library: List<Song>): ComposerWorks? {
-        val songs = library.filter { song ->
-            sameComposer(song.composer, composer) && listOf(song).isClassicalBlock() && song.workName() != null
-        }
-        if (songs.isEmpty()) return null
+        // Blocks are judged as the album page judges them, so a work that qualifies through its movement titles counts.
+        val blocks = library.filter { sameComposer(it.composer, composer) }
+            .map { it.albumGroupKey }.distinct().toSet()
+            .let { keys -> library.filter { it.albumGroupKey in keys } }
+            .groupBy { it.albumGroupKey }.values
+            .flatMap { album -> workBlocksOf(composer, album.sortedWith(compareBy({ it.disc ?: 1 }, { it.track ?: 0 }))) }
+        if (blocks.isEmpty()) return null
+        val songs = blocks.flatMap { it.second }
 
         val clusters = mutableListOf<Cluster>()
-        for (song in songs) {
-            val work = song.workName() ?: continue
+        for ((work, blockSongs) in blocks) {
             val cluster = clusters.firstOrNull { it.identity.matches(work) } ?: Cluster(WorkIdentity(work), work).also(clusters::add)
-            cluster.songs += song
+            cluster.songs += blockSongs
         }
         val works = clusters.map { cluster ->
             val parsed = parseWorkTitle(cluster.title)
@@ -45,10 +50,18 @@ class FindComposerWorks {
                     OtherRecording(key, ordered.first().album, ordered.first().albumArtist, ordered)
                 }
                 .sortedWith(compareByDescending<OtherRecording> { it.year ?: 0 }.thenBy { it.album.orEmpty().lowercase() })
-            ComposerWork(parsed.core, parsed.catalogue, recordings)
+            ComposerWork(parsed.core, parsed.catalogue, recordings, key = cluster.title)
         }.sortedBy { it.title.lowercase() }
 
         val named = songs.firstNotNullOf { it.composerName() }
         return ComposerWorks(named.fullName(), works, songs.map { it.albumGroupKey }.distinct())
+    }
+
+    /** The composer's classical works in one album, as (work title, songs): work blocks, and lone classical tracks the album page leaves as tracks. */
+    private fun workBlocksOf(composer: String, album: List<Song>): List<Pair<String, List<Song>>> = groupWorks(album).mapNotNull { item ->
+        when (item) {
+            is AlbumItem.Work -> item.block.takeIf { sameComposer(it.composer, composer) && it.songs.isClassicalBlock() }?.let { it.work to it.songs }
+            is AlbumItem.Track -> item.song.takeIf { sameComposer(it.composer, composer) && listOf(it).isClassicalBlock() }?.let { song -> song.workName()?.let { it to listOf(song) } }
+        }
     }
 }

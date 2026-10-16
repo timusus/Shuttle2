@@ -3,9 +3,14 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
@@ -26,6 +32,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import com.simplecityapps.shuttle.designsystem.theme.heroTitle
 import com.simplecityapps.shuttle.designsystem.theme.rowSubtitle
 import com.simplecityapps.shuttle.designsystem.theme.rowTitle
@@ -72,9 +79,9 @@ fun ComposerDetailScreen(
             hero = { topInset, _ -> ComposerHero(title, subtitle.orEmpty(), topInset) },
         ) {
             item(key = "works-header", contentType = "header") { SectionHeader(title = worksHeader) }
-            items(composer.works, key = { "work-${it.title}-${it.catalogue}" }, contentType = { "work" }) { work ->
+            items(composer.works, key = { "work-${it.key}" }, contentType = { "work" }) { work ->
                 WorkRow(work, onClick = {
-                    if (work.recordings.size == 1) onOpenAlbum(work.recordings.first().groupKey) else recordingsOf = work.key()
+                    if (work.recordings.size == 1) onOpenAlbum(work.recordings.first().groupKey) else recordingsOf = work.key
                 })
             }
             if (uiState.albums.isNotEmpty()) {
@@ -90,7 +97,7 @@ fun ComposerDetailScreen(
         }
     }
 
-    composer?.works?.firstOrNull { it.key() == recordingsOf }?.let { work ->
+    composer?.works?.firstOrNull { it.key == recordingsOf }?.let { work ->
         OtherRecordingsSheet(
             title = work.title,
             recordings = work.recordings,
@@ -103,8 +110,6 @@ fun ComposerDetailScreen(
     }
 }
 
-private fun ComposerWork.key() = "$title|$catalogue"
-
 @Composable
 private fun ComposerHero(name: String, subtitle: String, topInset: Dp) {
     val colors = MaterialTheme.colorScheme
@@ -115,7 +120,7 @@ private fun ComposerHero(name: String, subtitle: String, topInset: Dp) {
             .background(Brush.verticalGradient(listOf(colors.primaryContainer, colors.surface)))
             .padding(start = S2Spacing.medium, end = S2Spacing.medium, top = topInset + S2Spacing.large, bottom = S2Spacing.medium),
     ) {
-        Text(name.uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
+        Text(stringResource(R.string.composer_eyebrow).uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
         Text(name, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
         Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
     }
@@ -123,21 +128,26 @@ private fun ComposerHero(name: String, subtitle: String, topInset: Dp) {
 
 @Composable
 private fun WorkRow(work: ComposerWork, onClick: () -> Unit) {
-    Column(
+    Row(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .heightIn(min = S2TouchTarget.minimum)
             .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(work.title, style = MaterialTheme.typography.rowTitle, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        val recordings = pluralString(R.plurals.composer_recordings, work.recordings.size)
-        Text(
-            listOfNotNull(work.catalogue, recordings).joinToString(" · "),
-            style = MaterialTheme.typography.rowSubtitle,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Column(Modifier.weight(1f)) {
+            Text(work.title, style = MaterialTheme.typography.rowTitle, color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            val recordings = pluralString(R.plurals.composer_recordings, work.recordings.size)
+            Text(
+                listOfNotNull(work.catalogue, recordings).joinToString(" · "),
+                style = MaterialTheme.typography.rowSubtitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

@@ -155,6 +155,8 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> album</item>
         <item quantity="other"><xliff:g example="3" id="count">%1$d</xliff:g> albums</item>
     </plurals>
+    <!-- Small caps label above a composer page's title -->
+    <string name="composer_eyebrow">Composer</string>
     <string name="composer_works_header">Works</string>
     <string name="composer_albums_header">Albums</string>
     <!-- Accessibility label for a composer's name that opens their page -->
