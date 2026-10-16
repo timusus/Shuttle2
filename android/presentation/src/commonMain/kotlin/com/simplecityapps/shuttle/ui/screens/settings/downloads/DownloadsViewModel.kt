@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.ui.actions.ObserveDownloadStatuses
+import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
@@ -40,10 +40,10 @@ data class DownloadsUiState(
 @ContributesIntoMap(AppScope::class)
 class DownloadsViewModel @Inject constructor(
     observeSongs: ObserveSongs,
-    observeDownloadStatuses: ObserveDownloadStatuses,
+    downloadStatuses: DownloadStatusSource,
     private val songDownloader: SongDownloader
 ) : ViewModel() {
-    val uiState: StateFlow<DownloadsUiState> = combine(observeSongs(includeUnavailable = true), observeDownloadStatuses()) { songs, statuses ->
+    val uiState: StateFlow<DownloadsUiState> = combine(observeSongs(includeUnavailable = true), downloadStatuses.observe()) { songs, statuses ->
         val albums = songs
             .filter { statuses.states[it.path] == SongDownloadStatus.Downloaded }
             .groupBy { it.albumGroupKey }

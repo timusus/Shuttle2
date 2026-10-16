@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.actions
 
-import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 
 /** Where a song's download stands, for the songs with one worth showing. */
@@ -22,12 +21,4 @@ data class DownloadStatuses(
 /** The app's download state, implemented over its download manager. */
 interface DownloadStatusSource {
     fun observe(): Flow<DownloadStatuses>
-}
-
-/** The statuses of every download, as they change. */
-@Inject
-class ObserveDownloadStatuses(
-    private val source: DownloadStatusSource,
-) {
-    operator fun invoke(): Flow<DownloadStatuses> = source.observe()
 }

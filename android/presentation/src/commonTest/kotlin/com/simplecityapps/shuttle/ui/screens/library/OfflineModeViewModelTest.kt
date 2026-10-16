@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.fakes.FakeOfflineSongs
-import com.simplecityapps.shuttle.ui.actions.ObserveOfflineMode
-import com.simplecityapps.shuttle.ui.actions.SetOfflineMode
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -32,7 +30,7 @@ class OfflineModeViewModelTest {
 
     @Test
     fun `toggling flips Offline mode on and back off`() = runTest {
-        val viewModel = OfflineModeViewModel(ObserveOfflineMode(offline.modeSource), SetOfflineMode(offline.modeSource))
+        val viewModel = OfflineModeViewModel(offline.modeSource)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
         viewModel.uiState.value shouldBe false
@@ -49,7 +47,7 @@ class OfflineModeViewModelTest {
 
     @Test
     fun `reflects the mode being changed elsewhere`() = runTest {
-        val viewModel = OfflineModeViewModel(ObserveOfflineMode(offline.modeSource), SetOfflineMode(offline.modeSource))
+        val viewModel = OfflineModeViewModel(offline.modeSource)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 

@@ -38,7 +38,7 @@ class AboutViewModelsTest {
         files["changelog.json"] = CHANGELOG
         preferences.showChangelogOnLaunch = true
 
-        val viewModel = WhatsNewViewModel(GetChangelog(ChangelogRepository(bundledText)), MarkChangelogViewed(preferences, appVersion))
+        val viewModel = WhatsNewViewModel(ChangelogRepository(bundledText), MarkChangelogViewed(preferences, appVersion))
 
         val changeset = viewModel.uiState.value.changesets.single()
         viewModel.uiState.value.loading shouldBe false
@@ -60,7 +60,7 @@ class AboutViewModelsTest {
 
     @Test
     fun `an invalid or missing changelog reads as empty`() {
-        val viewModel = { WhatsNewViewModel(GetChangelog(ChangelogRepository(bundledText)), MarkChangelogViewed(preferences, appVersion)) }
+        val viewModel = { WhatsNewViewModel(ChangelogRepository(bundledText), MarkChangelogViewed(preferences, appVersion)) }
 
         viewModel().uiState.value.changesets.shouldBeEmpty()
         files["changelog.json"] = "[{\"versionName\": 1}]"
@@ -71,7 +71,7 @@ class AboutViewModelsTest {
     fun `licences come from the aboutlibraries metadata sorted by name`() {
         files["aboutlibraries.json"] = LICENCES
 
-        val viewModel = LicencesViewModel(GetLicences(LicencesRepository(bundledText)))
+        val viewModel = LicencesViewModel(LicencesRepository(bundledText))
 
         viewModel.uiState.value.loading shouldBe false
         viewModel.uiState.value.licences shouldBe listOf(
@@ -82,7 +82,7 @@ class AboutViewModelsTest {
 
     @Test
     fun `no licences metadata lists no licences`() {
-        LicencesViewModel(GetLicences(LicencesRepository(bundledText))).uiState.value.licences.shouldBeEmpty()
+        LicencesViewModel(LicencesRepository(bundledText)).uiState.value.licences.shouldBeEmpty()
     }
 
     private companion object {

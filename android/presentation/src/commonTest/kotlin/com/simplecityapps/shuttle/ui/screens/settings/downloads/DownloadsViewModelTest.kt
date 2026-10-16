@@ -7,7 +7,6 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
 import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
-import com.simplecityapps.shuttle.ui.actions.ObserveDownloadStatuses
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
 import io.kotest.matchers.shouldBe
@@ -43,7 +42,7 @@ class DownloadsViewModelTest {
         override fun observe(): Flow<DownloadStatuses> = statuses
     }
 
-    private fun viewModel() = DownloadsViewModel(ObserveSongs(songRepository, FakeOfflineSongs().filter), ObserveDownloadStatuses(statusSource), songDownloader)
+    private fun viewModel() = DownloadsViewModel(ObserveSongs(songRepository, FakeOfflineSongs().filter), statusSource, songDownloader)
 
     private fun remoteSong(id: Long, album: String, name: String = "song $id") = createSong(id = id, name = name, album = album, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://$id")
 

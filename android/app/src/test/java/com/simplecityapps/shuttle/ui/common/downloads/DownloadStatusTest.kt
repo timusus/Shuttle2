@@ -12,7 +12,6 @@ import com.simplecityapps.shuttle.downloads.RepositoryDownloadStatusSource
 import com.simplecityapps.shuttle.downloads.SongDownload
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
-import com.simplecityapps.shuttle.ui.actions.ObserveDownloadStatuses
 import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
@@ -108,7 +107,7 @@ class DownloadStatusTest {
     @Test
     fun `the view model holds the latest statuses`() = runTest {
         val repository = FakeSongDownloadRepository()
-        val viewModel = DownloadStatusViewModel(ObserveDownloadStatuses(RepositoryDownloadStatusSource(repository)))
+        val viewModel = DownloadStatusViewModel(RepositoryDownloadStatusSource(repository))
         backgroundScope.launch(mainDispatcherRule.testDispatcher) { viewModel.uiState.collect {} }
         viewModel.uiState.value shouldBe DownloadStatuses()
 

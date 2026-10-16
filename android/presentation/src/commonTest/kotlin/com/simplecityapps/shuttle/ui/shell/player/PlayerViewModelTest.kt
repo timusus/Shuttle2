@@ -142,7 +142,7 @@ class PlayerViewModelTest {
             setFavourite = ToggleFavourite(songRepository),
             playlistRepository = playlistRepository,
             controlSleepTimer = ControlSleepTimer(sleepTimer, preferenceManager),
-            readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
+            sleepTimer = sleepTimer,
             observeSleepTimerAtEndOfWork = ObserveSleepTimerAtEndOfWork(sleepTimer),
             readSleepTimerPlayToEnd = ReadSleepTimerPlayToEnd(preferenceManager),
             observeSetting = ObserveSetting(settingsStore),

@@ -2,8 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.shuttle.ui.actions.ObserveOfflineMode
-import com.simplecityapps.shuttle.ui.actions.SetOfflineMode
+import com.simplecityapps.shuttle.ui.actions.OfflineModeSource
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -16,10 +15,9 @@ import kotlinx.coroutines.flow.stateIn
 @ViewModelKey(OfflineModeViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class OfflineModeViewModel @Inject constructor(
-    observeOfflineMode: ObserveOfflineMode,
-    private val setOfflineMode: SetOfflineMode,
+    private val offlineMode: OfflineModeSource,
 ) : ViewModel() {
-    val uiState: StateFlow<Boolean> = observeOfflineMode().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    val uiState: StateFlow<Boolean> = offlineMode.observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    fun toggle() = setOfflineMode(!uiState.value)
+    fun toggle() = offlineMode.set(!uiState.value)
 }

@@ -17,7 +17,6 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.server.ServerConnectionStore
-import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerAccount
 import io.kotest.matchers.shouldBe
@@ -70,7 +69,7 @@ class SourcesViewModelTest {
         },
         ObserveAddServerResumes { addResumes },
         ConnectServer(mediaSources),
-        ObserveLastScanDate(preferences),
+        preferences,
         ForgetServer(mapOf(MediaProviderType.Emby to emby), preferences, ServerConnectionStore(SecurePreferenceManager(InMemoryKeyValueStore()))),
         ReadServerAccount(mapOf(MediaProviderType.Emby to emby)),
         ObserveSongCounts(songs),

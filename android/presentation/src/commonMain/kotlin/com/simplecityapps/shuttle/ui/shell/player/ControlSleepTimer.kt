@@ -37,13 +37,6 @@ class ControlSleepTimer @Inject constructor(
     }
 }
 
-/** The sleep timer's time left in milliseconds: null when off, 0 while it waits for the song to end. */
-class ReadSleepTimeRemaining @Inject constructor(
-    private val sleepTimer: SleepTimer,
-) {
-    operator fun invoke(): Long? = sleepTimer.timeRemaining()
-}
-
 /** Whether the running sleep timer waits for the end of the work playing. */
 class ObserveSleepTimerAtEndOfWork @Inject constructor(
     private val sleepTimer: SleepTimer,

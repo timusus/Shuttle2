@@ -16,21 +16,6 @@ interface OfflineModeSource {
     fun set(enabled: Boolean)
 }
 
-/** Whether Offline mode is on, as it changes. */
-@Inject
-class ObserveOfflineMode(
-    private val source: OfflineModeSource,
-) {
-    operator fun invoke(): Flow<Boolean> = source.observe()
-}
-
-@Inject
-class SetOfflineMode(
-    private val source: OfflineModeSource,
-) {
-    operator fun invoke(enabled: Boolean) = source.set(enabled)
-}
-
 /** A local song always plays; a server song plays offline only once its download has completed. */
 fun Song.isAvailableOffline(downloadedPaths: Set<String>): Boolean = !mediaProvider.remote || path in downloadedPaths
 

@@ -7,9 +7,9 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.entitlement.ObserveAddServerResumes
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SourceReachability
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
-import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerAccount
 import dev.zacsweers.metro.AppScope
@@ -83,7 +83,7 @@ class SourcesViewModel @Inject constructor(
     private val tryAddServer: TryAddServer,
     observeAddServerResumes: ObserveAddServerResumes,
     private val connectServer: ConnectServer,
-    observeLastScanDate: ObserveLastScanDate,
+    generalPreferenceManager: GeneralPreferenceManager,
     private val forgetServer: ForgetServer,
     private val readServerAccount: ReadServerAccount,
     observeSongCounts: ObserveSongCounts,
@@ -97,7 +97,7 @@ class SourcesViewModel @Inject constructor(
         combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), combine(observeSourceReachability(), observeSourceUpdated(), observeListingShortfalls(), observeDeviceSkippedFiles(), ::Stored), ::Imports)
 
     val uiState: StateFlow<SourcesUiState> =
-        combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate()) { types, folders, imports, lastImport ->
+        combine(mediaSources.enabledTypes, observeScannerFolders(), imports, generalPreferenceManager.observeLastMediaImportDate()) { types, folders, imports, lastImport ->
             val latest = imports.latest
             SourcesUiState(
                 thisDevice = types.any { it.isLocal },

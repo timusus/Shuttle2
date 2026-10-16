@@ -11,8 +11,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.DownloadStatusSource
 import com.simplecityapps.shuttle.ui.actions.DownloadStatuses
-import com.simplecityapps.shuttle.ui.actions.ObserveDownloadStatuses
 import com.simplecityapps.shuttle.ui.actions.SongDownloadStatus
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
@@ -39,9 +39,9 @@ fun Song.offlineState(): SongOfflineState = LocalDownloadOfflineStates.current[p
 @ViewModelKey(DownloadStatusViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class DownloadStatusViewModel @Inject constructor(
-    observeDownloadStatuses: ObserveDownloadStatuses,
+    downloadStatuses: DownloadStatusSource,
 ) : ViewModel() {
-    val uiState: StateFlow<DownloadStatuses> = observeDownloadStatuses()
+    val uiState: StateFlow<DownloadStatuses> = downloadStatuses.observe()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DownloadStatuses())
 }
 

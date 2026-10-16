@@ -13,6 +13,7 @@ import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.nowPlayingWork
@@ -102,7 +103,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val setFavourite: ToggleFavourite,
     private val playlistRepository: PlaylistRepository,
     private val controlSleepTimer: ControlSleepTimer,
-    private val readSleepTimeRemaining: ReadSleepTimeRemaining,
+    private val sleepTimer: SleepTimer,
     observeSleepTimerAtEndOfWork: ObserveSleepTimerAtEndOfWork,
     readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
     observeSetting: ObserveSetting,
@@ -169,11 +170,11 @@ class PlayerViewModel @AssistedInject constructor(
     private val sleepTimerActive: Flow<Boolean> =
         sleepTimerChanges
             .flatMapLatest {
-                if (readSleepTimeRemaining() == null) {
+                if (sleepTimer.timeRemaining() == null) {
                     flowOf(false)
                 } else {
                     flow {
-                        while (readSleepTimeRemaining() != null) {
+                        while (sleepTimer.timeRemaining() != null) {
                             emit(true)
                             delay(SLEEP_TIMER_TICK_MS)
                         }
@@ -337,7 +338,7 @@ class PlayerViewModel @AssistedInject constructor(
 
     override fun sleepTimerRemaining(): Flow<Long?> = flow {
         while (true) {
-            emit(readSleepTimeRemaining())
+            emit(sleepTimer.timeRemaining())
             delay(SLEEP_TIMER_TICK_MS)
         }
     }.distinctUntilChanged()

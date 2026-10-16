@@ -20,7 +20,7 @@ data class WhatsNewUiState(
 @ViewModelKey(WhatsNewViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class WhatsNewViewModel @Inject constructor(
-    getChangelog: GetChangelog,
+    changelogRepository: ChangelogRepository,
     markChangelogViewed: MarkChangelogViewed
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(WhatsNewUiState())
@@ -28,7 +28,7 @@ class WhatsNewViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            _uiState.value = WhatsNewUiState(changesets = getChangelog(), loading = false)
+            _uiState.value = WhatsNewUiState(changesets = changelogRepository.changelog(), loading = false)
         }
         markChangelogViewed()
     }

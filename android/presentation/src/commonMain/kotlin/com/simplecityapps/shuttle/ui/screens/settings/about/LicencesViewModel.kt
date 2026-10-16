@@ -19,14 +19,14 @@ data class LicencesUiState(
 @ViewModelKey(LicencesViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class LicencesViewModel @Inject constructor(
-    getLicences: GetLicences
+    licencesRepository: LicencesRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LicencesUiState())
     val uiState: StateFlow<LicencesUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            _uiState.value = LicencesUiState(licences = getLicences(), loading = false)
+            _uiState.value = LicencesUiState(licences = licencesRepository.licences(), loading = false)
         }
     }
 }
