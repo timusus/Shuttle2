@@ -54,11 +54,22 @@ class ReplayGainAudioProcessor(
     @Volatile
     var shuffled: Boolean = false
 
-    /** Whether the stream being processed is a movement of a work, decided when it started. Only touched on the playback thread. */
-    private var streamInWork = false
+    /** What the stream being processed was flushed with, kept to work out [streamInWork] on demand. Only touched on the playback thread. */
+    private var streamMetadata: AudioProcessor.StreamMetadata? = null
+
+    /**
+     * Whether the stream being processed is a movement of a work; null until a Track-mode buffer needs it, so a switch
+     * into Track mid-stream still gets the answer. Only touched on the playback thread.
+     */
+    private var streamInWork: Boolean? = null
 
     private val gain: Double
-        get() = replayGainDb(if (mode == ReplayGainMode.Track && streamInWork) ReplayGainMode.Album else mode, preAmpGain, streamReplayGain)
+        get() = replayGainDb(if (mode == ReplayGainMode.Track && inWork()) ReplayGainMode.Album else mode, preAmpGain, streamReplayGain)
+
+    private fun inWork(): Boolean = streamInWork ?: run {
+        val metadata = streamMetadata
+        (albumGainForWorks && metadata != null && isWorkMovement(metadata)).also { streamInWork = it }
+    }
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT &&
@@ -114,13 +125,15 @@ class ReplayGainAudioProcessor(
         // doesn't identify an item (a bare flush()) keeps the current stream's gain.
         val item = streamMetadata.mediaItem() ?: return
         streamReplayGain = (item.localConfiguration?.tag as? QueueEntry)?.replayGain
-        streamInWork = mode == ReplayGainMode.Track && albumGainForWorks && isWorkMovement(streamMetadata)
+        this.streamMetadata = streamMetadata
+        streamInWork = null
         Timber.d("ReplayGain for ${item.localConfiguration?.uri?.lastPathSegment}: $streamReplayGain, ${gain}dB")
     }
 
     override fun onReset() {
         streamReplayGain = null
-        streamInWork = false
+        streamMetadata = null
+        streamInWork = null
     }
 
     // Neighbours come from the player's timeline, not a copy of the queue.

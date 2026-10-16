@@ -2,6 +2,7 @@ package com.simplecityapps.playback.dsp
 
 import androidx.media3.common.C
 import androidx.media3.common.Timeline
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.exoplayer.source.ForwardingTimeline
 import com.simplecityapps.playback.dsp.crossfade.tailGainMode
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
@@ -15,7 +16,12 @@ import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import kotlin.math.pow
 import org.junit.Test
+
+private const val SAMPLE: Short = 10000
 
 class WorkGainNeighboursTest {
     private fun movement(id: Long) = testSong(id = id, replayGainTrack = -6.0, replayGainAlbum = 3.0).copy(
@@ -70,6 +76,41 @@ class WorkGainNeighboursTest {
 
         processor.albumGainForWorks = false
         tailGainMode(processor, timeline, timeline.getWindow(1, window).mediaItem) shouldBe ReplayGainMode.Track
+    }
+
+    @Test
+    fun `switching into Track mode mid-stream gives a movement its album gain`() {
+        val songs = listOf(movement(1), movement(2), lone(3))
+        val timeline = timeline(songs, playOrder = songs.indices.toList()) as ShuffledTimeline
+        val processor = ReplayGainAudioProcessor(ReplayGainMode.Off).apply { albumGainForWorks = true }
+        processor.configure(AudioProcessor.AudioFormat(44100, 2, C.ENCODING_PCM_16BIT))
+        processor.flush(streamOf(timeline, 1))
+        processor.process() shouldBe SAMPLE
+
+        processor.mode = ReplayGainMode.Track
+
+        processor.process() shouldBe gained(3.0)
+
+        processor.flush(streamOf(timeline, 2))
+        processor.process() shouldBe gained(-6.0)
+    }
+
+    private fun streamOf(
+        timeline: ShuffledTimeline,
+        index: Int
+    ): AudioProcessor.StreamMetadata = AudioProcessor.StreamMetadata.Builder()
+        .setTimeline(timeline)
+        .setPeriodUid(timeline.getUidOfPeriod(index))
+        .build()
+
+    private fun gained(gainDb: Double): Short = (SAMPLE * 10.0.pow(gainDb / 20)).toInt().toShort()
+
+    /** Queues one stereo frame of [SAMPLE] and returns the processed left channel. */
+    private fun ReplayGainAudioProcessor.process(): Short {
+        val input = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder())
+        input.putShort(SAMPLE).putShort(SAMPLE).flip()
+        queueInput(input)
+        return getOutput().short
     }
 
     @Test
