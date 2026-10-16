@@ -12,6 +12,37 @@ XcodeGen from `ios/project.yml`; it links the static `Shared.framework` that the
 its `.claude/rules/ios.md`). Use `support/scripts/asc`, not Chrome, for App Store Connect (`ios/DEPLOY.md`).
 Player, Now Playing and system-surface notes: `ios-playback.md`; device runs, the POC and Maestro: `ios-device.md`.
 
+## Architecture
+
+Every screen has the same shape.
+
+- A shared Kotlin ViewModel exposes one `uiState` StateFlow, plus at most one events flow. Konsist enforces this on Android.
+- The screen root view gets its ViewModel from `ViewModelCache.shared` and observes `uiState` exactly once, with SKIE `Observing`.
+- The root passes plain values and closures to a stateless content view. ViewInspector tests render the content view.
+- High-frequency state, such as playback position, goes through the allowlisted `@Observable` binding `PlayerBinding`. It is never per-screen.
+- Android mirrors this: `collectAsStateWithLifecycle(uiState)` at the screen root, then a stateless `…Content` composable.
+
+Rejected alternatives:
+
+- A Swift `@Observable` wrapper per screen: it duplicates the shared ViewModel.
+- `ObservableObject`/Combine: it invalidates the whole object, and iOS 17 superseded it.
+- TCA: it adds a second state system beside the shared Kotlin ViewModels.
+
+Enforced by codehealth (`codehealth/rules/arch-ios/`) in view code under `Features/` and `Components/`:
+
+| Rule | Check |
+|---|---|
+| R1 `ios-no-data-layer-in-views` | no `*Repository`, `*Dao`, `appPreferences`, `UserDefaults`, `URLSession` |
+| R2 `ios-no-observableobject` | no `ObservableObject`, `@Published`, `@ObservedObject`, `@StateObject`, `@EnvironmentObject` |
+| R3 `ios-graph-viewmodels-only` | views take only `*ViewModel`/`*ViewModelFactory` from the graph |
+| R4 `ios-viewmodel-from-cache` | ViewModels come from `ViewModelCache`, never stored straight off `AppGraph` |
+| R5 `ios-no-for-await-in-views` | no `for await` outside allowlisted bindings |
+| R6 `ios-no-shared-singletons` | no `static let shared` |
+| R7 `ios-no-dispatch-notification-in-views` | no `DispatchQueue` or `NotificationCenter` |
+| R8 `ios-no-combine-in-views` | no `import Combine`, `.sink`, `AnyCancellable` |
+| R9 `ios-no-uistate-value-in-body` | no `.uiState.value` snapshot reads |
+| R10 `ios-classes-are-bindings` | classes in view code are `*Models` or allowlisted bindings |
+
 ## Commands
 
 From the repo root.
@@ -111,9 +142,8 @@ on compact and a form sheet otherwise, presented from `ContentView`.
 
 - `import Shared`. Domain types keep their names (`Song`, `Album`) because `:android:domain` is `export`ed; a module
   that's only a dependency would appear as prefixed copies instead.
-- A Kotlin `StateFlow<T>` arrives as `SkieSwiftStateFlow<T>`. Observe it with `Observing(flow) { value in ... }`
-  or read `.value`. For tests, split a screen into an `Observing` wrapper and a plain view that takes values
-  (`LibraryView` / `SongList`); ViewInspector renders through `Observing` too.
+- A Kotlin `StateFlow<T>` arrives as `SkieSwiftStateFlow<T>`. Observe it with `Observing(flow) { value in ... }`.
+  `.value` is for tests and non-view code only; view code never reads it (R9).
 - **Screen view models come from `ViewModelCache.shared`**, keyed by screen and argument (`"album:42"`), never stored
   straight off the graph: a SwiftUI view struct is re-initialised on every parent body, so a fresh view model per init
   restarts every flow `Observing` is keyed on. Clear entries when their route leaves the path (`remove`/`retainOnly`).
