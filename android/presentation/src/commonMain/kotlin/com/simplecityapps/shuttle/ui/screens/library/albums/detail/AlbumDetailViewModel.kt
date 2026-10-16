@@ -154,13 +154,16 @@ class AlbumDetailViewModel @AssistedInject constructor(
         toggledWorks.update { if (firstSongId in it) it - firstSongId else it + firstSongId }
     }
 
-    private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val rows: AlbumRows?)
+    private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val grouped: Grouped)
+
+    /** The rows with the songs they were built from: row play indices point into these, so the screen must play from this list. */
+    private class Grouped(val songs: List<Song>, val rows: AlbumRows?)
 
     private val classicalDisplay = observeSetting(AppearanceSettings.ClassicalDisplay)
 
     /** The grouping, worked out once per change to the songs, album or settings; a song change in the player leaves it alone. */
-    private val groupedRows: Flow<AlbumRows?> = combine(songs, album, classicalDisplay, toggledWorks) { songs, album, classical, toggled ->
-        if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, null, toggled) else null
+    private val groupedRows: Flow<Grouped> = combine(songs, album, classicalDisplay, toggledWorks) { songs, album, classical, toggled ->
+        Grouped(songs, if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, null, toggled) else null)
     }
 
     private fun AlbumRows.withPlaying(songId: Long?): AlbumRows {
@@ -183,7 +186,8 @@ class AlbumDetailViewModel @AssistedInject constructor(
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
         combine(moreByArtist, moreByArtistNames, classicalDisplay, groupedRows, ::Extras),
-    ) { songs, album, currentSong, seed, extras ->
+    ) { _, album, currentSong, seed, extras ->
+        val songs = extras.grouped.songs
         AlbumDetailUiState(
             album = album,
             songs = songs,
@@ -198,7 +202,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
             moreByArtistNames = extras.moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
             classical = extras.classical,
-            rows = extras.rows?.withPlaying(currentSong?.id),
+            rows = extras.grouped.rows?.withPlaying(currentSong?.id),
         )
     }.stateIn(
         scope = viewModelScope,

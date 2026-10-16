@@ -192,6 +192,25 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `row play indices always point at their song in the state's songs`() = runTest {
+        val songs = (1..3).map { n -> createSong(id = n.toLong(), name = "Part $n").copy(work = "Suite No. 1", track = n) }
+        fakeSongRepository.setSongs(songs)
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        val states = mutableListOf<AlbumDetailUiState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect { states += it } }
+        advanceUntilIdle()
+
+        fakeSongRepository.setSongs(songs.drop(1))
+        advanceUntilIdle()
+
+        states.last().songs shouldBe songs.drop(1)
+        states.filter { it.rows != null }.forEach { state ->
+            state.rows!!.rows.filterIsInstance<AlbumRow.Movement>().forEach { state.songs[it.playIndex] shouldBe it.song }
+        }
+    }
+
+    @Test
     fun `no rows once Classical display is switched off or when the album has no works`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song")))
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
