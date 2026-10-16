@@ -184,8 +184,8 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
 
    | `ui/actions` file | Where | Why |
    |---|---|---|
-   | `AddToPlaylist`, `ClearPlaylist`, `CreatePlaylist`, `DeletePlaylist`, `RemoveFromPlaylist`, `RenamePlaylist`, `ReorderPlaylistSongs`, `RestorePlaylistSongs`, `UpdatePlaylistSortOrder` | domain | Playlist repository only |
-   | `ObserveAlbumArtists`, `ObserveAlbums`, `ObserveFavouriteSongIds`, `ObserveGenres`, `ObservePlaylistSongs`, `ObservePlaylists`, `ObserveSongs`, `ObserveSongsForGenre`, `ToggleFavourite` | domain | Repository reads and writes only |
+   | `AddToPlaylist` | domain | Playlist repository only |
+   | `ObserveAlbums`, `ObserveFavouriteSongIds`, `ObserveGenres`, `ObserveSongs`, `ToggleFavourite` | domain | Repository reads and writes only |
    | `EnqueueSongs`, `ExcludeSongs`, `PlaySongs`, `ShuffleAlbums`, `ShuffleSongs` | domain | Repositories plus `PlaybackOperations`/`QueueOperations` |
    | `MediaSelection`, `ResolveSongs` (+ `ui/screens/library/folders/ResolveFolderSongs`) | domain | Models and repositories only; every selection-based use case needs them |
    | `DeleteSongs` | domain, behind `SongFileDeleter` | The file deletion is the domain interface (now `suspend`, so the implementation picks its own dispatcher); the app's `SafSongFileDeleter` implements it with `DocumentFile` on the IO dispatcher and `SongFileDeleterModule` binds it |
@@ -198,8 +198,9 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    | `MediaAction` (`MediaActionType`, `MediaAction`, `MediaActionResult`, `SnackbarAction`, `NavigationTarget`, `MediaActionMessage`) | app | Presentation: the actions sheet's entries and what the UI shows afterwards |
    | `MediaActionMessageFormat` | app | Presentation: formats messages with Android resources |
 7. ~~**Burn down `viewmodel-data-access`** screen by screen (audit batches A–C).~~ (done: the
-   last ViewModels moved onto use cases in 6dc03d5b4, and the `viewmodel-data-access` and
-   `presentation-data-imports` baselines are empty, so any new violation fails the build.)
+   `presentation-data-imports` baseline is empty, so any new violation fails the build. The
+   `viewmodel-data-access` and `viewmodel-direct-deps` rules were later deleted, and the pass-through
+   use cases they forced with them: a ViewModel injects a repository or store directly.)
 8. **Split presentation** out of `:android:app` into `:android:ui` (screens, ViewModels,
    screen use cases) that depends on domain and designsystem only; `:android:app` keeps the
    Application, `MainActivity`, services and DI. `VerifyModuleLayers` then enforces presentation →
@@ -215,7 +216,7 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
 | Decision | Options | Recommendation |
 |---|---|---|
 | Use-case naming | `*UseCase` suffix (as the #443 brief said) vs the verb phrase UDF 8c prescribes | **Keep 8c** (`PlaySongs`, no suffix): every existing use case follows it and the Konsist rule enforces it. |
-| Trivial repository reads in ViewModels | UDF 8a allows inline one-liners (`repository.setExcluded(...)`) vs "only through use cases" | **Only through use cases**, including thin `Observe*` ones; update 8a when batch A lands so the doc and the rule agree. |
+| Trivial repository reads in ViewModels | inject the repository or store vs "only through use cases" | **Inject it directly.** A use case exists to combine, map or apply rules; `usecase-shape` rejects one that forwards a single call. |
 | Domain module name and place | `:android:domain` vs top-level `:domain`; one module vs `domain:model` + `domain` | **One `:android:domain`**, matching the `android/` layout; split only if build times demand it. |
 | Parcelable models | keep `:domain` an Android library for `@Parcelize` vs pure JVM | **Pure JVM** (done in step 3): routes already carry ids, and #381 removed the Fragment-argument users. |
 | Graph enforcement | `buildSrc` task vs `module-graph-assertion` plugin | **`buildSrc` task**, per the precedent above. |

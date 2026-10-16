@@ -178,14 +178,14 @@ fun onPlay(album: Album) {
 - The method coordinates 3+ dependencies
 
 **When to leave inline:**
-- One-liners over an injected use case: `enqueueSongs(songs)` + post event
+- A single call on a repository, store or operations interface: inject it and call it. A use case that only forwards one call adds a class and a fake for nothing, and the `usecase-shape` rule rejects it.
 - State mutations: `selectionState.toggle(item)`
 
-**ViewModels never inject `*Operations`, `*Preference(s)`, `*PreferenceManager`, `*Settings` or `*Store` types** (the playback and queue operations, preference holders and managers, settings groups, the settings store), even for a one-liner: put the call behind a use case such as `ObserveCurrentSong` or `ReadLibraryViewSetting`. The `viewmodel-direct-deps` Konsist rule enforces it alongside `viewmodel-data-access` (repositories, DAOs, providers). **Why:** the use case is the seam that can move to domain and be faked in a test with one lambda; a ViewModel holding the operations interface can reach every playback call, not just the one it needs.
+Use cases are optional. They exist to combine dependencies, map results or apply rules; ViewModels may inject repositories, stores and operations interfaces directly (never DAOs or network types: `presentation-data-imports`).
 
 Use cases are stateless — `@Inject constructor`, no scope annotation, Metro creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
 
-If a use case is shared across ViewModels, great. If it has only one consumer, that's fine too — the value is keeping the ViewModel readable and the logic independently testable.
+A use case with one consumer is fine if it holds real logic: the value is keeping the ViewModel readable and the logic independently testable.
 
 **Why:** ViewModels with 10+ action methods become hard to scan. The combine lambda is the interesting part — it's the single place where state is assembled. Action methods are mechanical plumbing. Extracting them into focused classes means when you open the ViewModel, you see *what it does* (state derivation + dispatching intent) without wading through *how* each action executes. The use case is also easier to test in isolation — simple inputs and outputs, no ViewModel lifecycle or coroutine scope to manage.
 

@@ -1,2 +1,2 @@
-# Use cases (classes declaring operator fun invoke) expose only that one public invoke, are @Inject-constructed, and import no Android UI
+# Use cases (classes declaring operator fun invoke) expose only that one public invoke, are @Inject-constructed, import no Android UI, and do more than forward one call (UDF 8a)
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
