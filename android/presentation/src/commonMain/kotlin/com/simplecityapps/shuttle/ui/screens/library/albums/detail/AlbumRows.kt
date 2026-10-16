@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.composerDisplayName
 import com.simplecityapps.shuttle.model.composerName
 import com.simplecityapps.shuttle.model.groupWorks
 import com.simplecityapps.shuttle.model.isClassical
+import com.simplecityapps.shuttle.model.isNonClassical
 import com.simplecityapps.shuttle.model.movementLabel
 import com.simplecityapps.shuttle.ui.text.PluralKey
 import com.simplecityapps.shuttle.ui.text.UiText
@@ -153,6 +154,6 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
     }
     // Bonus tracks carry no composer tag, so they don't break "one composer"; the album artist being that composer doesn't hide it.
     val tagged = songs.mapNotNull { it.composerDisplayName() }
-    val eyebrow = tagged.firstOrNull()?.takeIf { composer -> tagged.all { it == composer } }
+    val eyebrow = tagged.firstOrNull()?.takeIf { composer -> tagged.size >= 2 && !songs.isNonClassical() && tagged.all { it == composer } }
     return AlbumRows(rows, eyebrow = eyebrow, credits = albumCreditsLine(songs))
 }

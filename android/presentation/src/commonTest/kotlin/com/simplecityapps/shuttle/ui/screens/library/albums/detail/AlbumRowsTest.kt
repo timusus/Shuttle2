@@ -75,6 +75,38 @@ class AlbumRowsTest {
     }
 
     @Test
+    fun `a pop album with a grouped run and the artist as composer has no eyebrow`() {
+        val songs = listOf("Suite: I", "Suite: II").mapIndexed { i, name ->
+            movement(null, name, "Ines Varga", track = i + 1).copy(genres = listOf("Pop"))
+        }
+
+        buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())?.eyebrow shouldBe null
+    }
+
+    @Test
+    fun `a pop album with a shared work tag has no eyebrow`() {
+        val songs = sonata("Ines Varga").map { it.copy(genres = listOf("Pop")) }
+
+        buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())?.eyebrow shouldBe null
+    }
+
+    @Test
+    fun `Mahler as album artist in Classical keeps the eyebrow`() {
+        val songs = listOf("I. Langsam", "II. Scherzo").mapIndexed { i, name ->
+            movement("Symphony No. 1 in D", name, "Gustav Mahler", track = i + 1).copy(composerSort = "Mahler, Gustav")
+        }
+
+        buildAlbumRows(songs, albumArtist = "Gustav Mahler", currentSongId = null, toggled = emptySet())!!.eyebrow shouldBe "Mahler"
+    }
+
+    @Test
+    fun `one tagged song among untagged songs has no eyebrow`() {
+        val songs = sonata(composer = null).let { it.take(2) + it[2].copy(composer = "Ludwig Harrow", composerSort = "Harrow, Ludwig") }
+
+        buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.eyebrow shouldBe null
+    }
+
+    @Test
     fun `plain songs among works stay plain tracks`() {
         val songs = sonata() + movement(null, "Encore", composer = null)
 

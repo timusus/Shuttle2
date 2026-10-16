@@ -119,7 +119,7 @@ private fun Song.composerIsAlbumArtist(): Boolean {
 // A conductor tag or a classical genre keeps an album classical, and so does a composer other than the album artist
 // (Beethoven played by Hilary Hahn) unless a popular genre says otherwise. Performer credits alone do not, so a band
 // whose leader wrote the suite stays a plain album.
-private fun List<Song>.isNonClassical(): Boolean = none { !it.conductor.isNullOrBlank() || hasClassicalGenre(it.genres) } &&
+fun List<Song>.isNonClassical(): Boolean = none { !it.conductor.isNullOrBlank() || hasClassicalGenre(it.genres) } &&
     all { it.composerIsAlbumArtist() || it.hasPopularGenre() }
 
 private val accompanimentWords = setOf("piano", "fortepiano", "guitar", "lute", "harp")
