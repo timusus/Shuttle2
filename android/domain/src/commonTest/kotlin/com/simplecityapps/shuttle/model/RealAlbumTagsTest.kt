@@ -64,6 +64,74 @@ class RealAlbumTagsTest {
         }
     }
 
+    private fun yoYoMa(): List<Song> {
+        val suites = listOf(
+            "Unaccompanied Cello Suite No. 1 in G Major, BWV 1007",
+            "Unaccompanied Cello Suite No. 2 in D minor, BWV 1008",
+            "Unaccompanied Cello Suite No. 3 in C Major, BWV 1009",
+            "Unaccompanied Cello Suite No. 4 in E-flat Major, BWV 1010",
+            "Unaccompanied Cello Suite No. 5 in C minor, BWV 1011",
+            "Unaccompanied Cello Suite No. 6 in D Major, BWV 1012"
+        )
+        val movements = listOf("I. Prélude", "II. Allemande", "III. Courante", "IV. Sarabande", "V. Menuets I & II", "VI. Gigue")
+        return suites.flatMapIndexed { suite, title ->
+            movements.mapIndexed { index, movement ->
+                song(
+                    id = suite * 6L + index + 1,
+                    name = "$title : $movement",
+                    albumArtist = "Yo‐Yo Ma",
+                    artists = listOf("Yo‐Yo Ma"),
+                    album = "Six Evolutions: Bach Cello Suites",
+                    track = suite * 6 + index + 1,
+                    genres = listOf("Baroque", "Classical")
+                )
+            }
+        }
+    }
+
+    private fun stokowski(): List<Song> {
+        val titles = listOf(
+            "Toccata and Fugue in D minor, BWV 565: Toccata",
+            "Toccata and Fugue in D minor, BWV 565: Fugue",
+            "Aria (Air on the G String) from Orchestral Suite no. 3, BWV 1068",
+            "Fugue in G minor, BWV 578 \"Little Fugue\"",
+            "Sheep May Safely Graze from Cantata no. 208",
+            "Prelude in B minor from BWV 869",
+            "Passacaglia and Fugue in C minor, BWV 582: Passacaglia",
+            "Passacaglia and Fugue in C minor, BWV 582: Fugue",
+            "Siciliano from BWV 1017",
+            "Mein Jesu, BWV 487",
+            "Chorale from the Easter Cantata, BWV 4",
+            "Adagio in C from BWV 564",
+            "Komm süsser Tod, BWV 478",
+            "Wir glauben all' an Einen Gott, BWV 680 \"Giant Fugue\""
+        )
+        return titles.mapIndexed { index, title ->
+            song(
+                id = index + 1L,
+                name = title,
+                albumArtist = "Johann Sebastian Bach",
+                artists = listOf("Johann Sebastian Bach"),
+                album = "Stokowski's Symphonic Bach",
+                track = index + 1,
+                genres = listOf("Baroque", "Orchestral", "Cantata", "Motet", "Mass", "Classical")
+            )
+        }
+    }
+
+    private fun atomHeartMother(): List<Song> {
+        val titles = listOf(
+            "Atom Heart Mother: a) Father’s Shout / b) Breast Milky / c) Mother Fore",
+            "If",
+            "Summer ’68",
+            "Fat Old Sun",
+            "Alan’s Psychedelic Breakfast: a) Rise and Shine / b) Sunny Side Up / c) Morning Glory"
+        )
+        return titles.mapIndexed { index, title ->
+            song(id = index + 1L, name = title, albumArtist = "Pink Floyd", artists = listOf("Pink Floyd"), album = "Atom Heart Mother", track = index + 1)
+        }
+    }
+
     private fun blocks(songs: List<Song>) = groupWorks(songs).map { (it as AlbumItem.Work).block }
 
     @Test
@@ -71,6 +139,26 @@ class RealAlbumTagsTest {
         val blocks = blocks(kleiber())
         blocks.map { it.movementCount } shouldBe listOf(4, 4)
         blocks.map { it.title.core } shouldBe listOf("Symphony no. 5", "Symphony no. 7")
+    }
+
+    @Test
+    fun `Yo-Yo Ma is six suites of six movements without a composer tag`() {
+        val blocks = blocks(yoYoMa())
+        blocks.map { it.movementCount } shouldBe List(6) { 6 }
+        blocks.first().title.core shouldBe "Unaccompanied Cello Suite No. 1"
+        blocks.first().movements.map { it.name }.take(2) shouldBe listOf("Prélude", "Allemande")
+    }
+
+    @Test
+    fun `Stokowski groups only the Toccata and Passacaglia pairs`() {
+        val items = groupWorks(stokowski())
+        items.map { if (it is AlbumItem.Work) it.block.movementCount else 1 } shouldBe listOf(2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1)
+        items.filterIsInstance<AlbumItem.Work>().map { it.block.title.core } shouldBe listOf("Toccata and Fugue in D minor", "Passacaglia and Fugue in C minor")
+    }
+
+    @Test
+    fun `Atom Heart Mother stays five lone tracks`() {
+        groupWorks(atomHeartMother()).all { it is AlbumItem.Track } shouldBe true
     }
 
     @Test

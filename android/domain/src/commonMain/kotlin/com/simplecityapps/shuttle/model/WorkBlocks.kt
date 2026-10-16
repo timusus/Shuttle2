@@ -74,7 +74,7 @@ private fun runKey(song: Song): String? {
     val composer = song.cleanComposer()?.normalised().orEmpty()
     song.cleanWork()?.let { return "w:${it.normalised()}|$composer" }
     val prefix = song.titlePrefix() ?: return null
-    return if (composer.isEmpty()) null else "i:${prefix.normalised()}|$composer"
+    return if (composer.isEmpty() && !isStrongWorkPrefix(listOf(song), prefix)) null else "i:${prefix.normalised()}|$composer"
 }
 
 private val formWords = Regex(
@@ -82,10 +82,18 @@ private val formWords = Regex(
     RegexOption.IGNORE_CASE
 )
 
+/** Without a composer tag a prefix must name a work by itself: a catalogue number, or "No. 5" with a form word; and it is no artist or album. */
+private fun isStrongWorkPrefix(songs: List<Song>, prefix: String): Boolean {
+    val name = prefix.normalised()
+    val credited = songs.flatMap { it.artists + listOfNotNull(it.albumArtist, it.album) }
+    if (credited.any { it.normalised() == name }) return false
+    return catalogueSearchKeys(prefix).isNotEmpty() || (workNumberRef.containsMatchIn(prefix) && formWords.containsMatchIn(prefix))
+}
+
 /** Whether a shared title prefix on [songs] is a classical work rather than "Artist - Song" or "Hold On - Live". */
 private fun looksLikeInferredWork(songs: List<Song>, prefix: String): Boolean {
     val first = songs.first()
-    val composer = first.cleanComposer() ?: return false
+    val composer = first.cleanComposer() ?: return isStrongWorkPrefix(songs, prefix)
     val albumArtist = first.albumArtist?.trim()
     if (albumArtist != null && composer.equals(albumArtist, ignoreCase = true)) return false
     val name = prefix.normalised()
