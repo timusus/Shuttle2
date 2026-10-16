@@ -96,14 +96,24 @@ fun hasOwnLabel(cleanName: String): Boolean = ownLabel.containsMatchIn(cleanName
 
 private val voiceWords = setOf("voice", "vocal", "vocals", "singer", "tenor", "soprano", "baritone", "mezzo", "alto", "bass", "countertenor")
 private val instrumentWords = setOf("double", "guitar", "viol", "viola", "saxophone", "sax", "flute", "recorder", "clarinet", "trombone", "tuba", "horn", "oboe", "bassoon")
-private val classicalGenreWords = listOf("classical", "opera", "baroque", "chamber", "choral", "lieder", "art song", "early music", "orchestral", "symphon", "concerto", "romantic era")
 
-// Matched as word prefixes, so "Alternative Rock", "Hip-Hop", "Dance-Pop", "Synthpop" and "Latin" are all popular.
-private val nonClassicalGenreWords = listOf(
-    "rock", "pop", "jazz", "metal", "folk", "electro", "hip", "hop", "rap", "r&b", "rnb", "soul", "country", "blues", "punk", "indie",
-    "dance", "synth", "latin", "reggae", "funk", "disco", "techno", "house", "alternative", "grunge", "ska", "gospel"
+// Whole words or phrases of a genre; "Space Opera" and "Rock Opera" are removed first since they are not the art form.
+private val classicalGenreWords = listOf(
+    "classical", "opera", "operas", "baroque", "chamber", "choral", "lieder", "mass", "art song", "early music", "orchestral",
+    "symphony", "symphonic", "symphonies", "concerto", "concertos", "romantic era"
 )
-private val screenGenreWords = listOf("soundtrack", "score")
+private val notOperaPhrases = listOf("space opera", "rock opera")
+
+// Whole words only ("Popular Classical" and "Soulful choral" contain none); hyphens split, so "Hip-Hop" and "Dance-Pop" match their parts.
+private val nonClassicalGenreWords = setOf(
+    "rock", "pop", "jazz", "metal", "folk", "electro", "electronic", "electronica", "hip", "hop", "hiphop", "rap", "r&b", "rnb", "soul",
+    "country", "blues", "punk", "indie", "dance", "synth", "synthpop", "synthwave", "electropop", "britpop", "kpop", "jpop", "latin",
+    "reggae", "funk", "disco", "techno", "house", "alternative", "alt", "altrock", "grunge", "ska", "gospel"
+)
+
+// These win over a classical word ("Orchestral Pop"); the rest ("Latin Mass", "Soul Choral") give way to it.
+private val strongPopularGenreWords = setOf("rock", "pop", "metal", "punk", "rap", "hip", "hop", "hiphop", "indie", "grunge", "kpop", "jpop", "britpop", "synthpop", "electropop", "altrock")
+private val screenGenreWords = setOf("soundtrack", "score")
 private val genreWordSplit = Regex("""[^a-z0-9&]+""")
 private val songGenre = Regex("""\bsongs?\b|lieder|\blied\b""", RegexOption.IGNORE_CASE)
 
@@ -118,17 +128,25 @@ private fun List<Song>.isSongGenre() = any { song -> song.genres.any { songGenre
 
 private fun List<String>.genreTokens(): List<String> = flatMap { genre -> genre.split(';', '/', ',').map { it.trim().lowercase() } }.filter { it.isNotEmpty() }
 
-private fun String.hasGenreWord(words: List<String>): Boolean = split(genreWordSplit).any { part -> part.isNotEmpty() && words.any { part.startsWith(it) } }
+private fun String.genreWords(): List<String> = split(genreWordSplit).filter { it.isNotEmpty() }
 
-/** Whether [genres] name a classical genre; "Orchestral Pop" and "Romantic" do not, "Chamber Music", "Symphonic" and "Baroque; Vocal" do. */
-internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.genreTokens().any { token ->
-    classicalGenreWords.any { token.contains(it) } && !token.hasGenreWord(nonClassicalGenreWords)
+private fun String.hasClassicalGenreWord(): Boolean {
+    var padded = " ${genreWords().joinToString(" ")} "
+    notOperaPhrases.forEach { padded = padded.replace(" $it ", " ") }
+    return classicalGenreWords.any { padded.contains(" $it ") }
 }
 
-/** Whether [genres] name a popular genre; Soundtrack and Score are neutral, since film scores are often orchestral. */
-internal fun hasNonClassicalGenre(genres: List<String>): Boolean = genres.genreTokens().any { it.hasGenreWord(nonClassicalGenreWords) }
+private fun String.isStrongPopular() = genreWords().any { it in strongPopularGenreWords }
 
-private fun Song.hasPopularGenre() = hasNonClassicalGenre(genres) || genres.genreTokens().any { it.hasGenreWord(screenGenreWords) }
+/** Whether [genres] name a classical genre; "Orchestral Pop" and "Romantic" do not, "Chamber Music", "Symphonic", "Latin Mass" and "Baroque; Vocal" do. */
+internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.genreTokens().any { it.hasClassicalGenreWord() && !it.isStrongPopular() }
+
+/** Whether [genres] name a popular genre; Soundtrack and Score are neutral, since film scores are often orchestral. */
+internal fun hasNonClassicalGenre(genres: List<String>): Boolean = genres.genreTokens().any { token ->
+    token.genreWords().any { it in nonClassicalGenreWords } && (!token.hasClassicalGenreWord() || token.isStrongPopular())
+}
+
+private fun Song.hasPopularGenre() = hasNonClassicalGenre(genres) || genres.genreTokens().any { token -> token.genreWords().any { it in screenGenreWords } }
 
 private fun Song.composerIsAlbumArtist(): Boolean {
     val composer = composer?.trim()?.takeIf { it.isNotEmpty() } ?: return true

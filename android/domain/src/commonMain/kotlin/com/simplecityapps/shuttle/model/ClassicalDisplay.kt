@@ -76,46 +76,6 @@ fun Song.classicalText(artist: String?, album: String?): ClassicalText? {
     )
 }
 
-/** A run of consecutive tracks: [work] is set for a run of two or more sharing a work, null for a lone track. */
-data class WorkGroup(val work: String?, val songs: List<Song>) {
-    /** The first track that credits one, for the header's composer. */
-    val composer: String? get() = songs.firstNotNullOfOrNull { it.composerShortName() }
-    val arranger: String? get() = songs.firstNotNullOfOrNull { it.arranger?.trim()?.takeIf { arranger -> arranger.isNotEmpty() } }
-
-    /** "Bach · arr. Busoni" beneath the header's work; the arranger is dropped when the work already says "arr."; null with neither. */
-    val credits: String?
-        get() {
-            val arranger = arranger?.takeIf { work?.contains("arr.", ignoreCase = true) != true }
-            return listOfNotNull(composer, arranger?.let { "arr. $it" }).takeIf { it.isNotEmpty() }?.joinToString(" · ")
-        }
-}
-
-/** Splits [this] (in album order) into runs of consecutive tracks sharing a work; interleaved works don't merge. */
-fun List<Song>.groupByWorkRuns(): List<WorkGroup> {
-    val groups = mutableListOf<WorkGroup>()
-    var run = mutableListOf<Song>()
-    var runWork: String? = null
-
-    fun flush() {
-        if (run.isEmpty()) return
-        if (run.size >= 2 && runWork != null) {
-            groups += WorkGroup(runWork, run)
-        } else {
-            run.forEach { groups += WorkGroup(null, listOf(it)) }
-        }
-        run = mutableListOf()
-    }
-
-    for (song in this) {
-        val work = song.work?.trim()?.takeIf { it.isNotEmpty() }
-        if (work == null || work != runWork) flush()
-        runWork = work
-        run += song
-    }
-    flush()
-    return groups
-}
-
 private fun stripWorkPrefix(title: String, work: String?): String {
     if (work.isNullOrEmpty() || !title.startsWith(work)) return title
     val rest = title.substring(work.length)

@@ -66,4 +66,18 @@ class ClassicalSignalTest {
     fun `a popular genre vetoes a classical signal`() {
         listOf(song(id = 1).copy(conductor = "Someone", genres = listOf("Orchestral Pop"))).isClassicalBlock() shouldBe false
     }
+
+    @Test
+    fun `genres match as whole words`() {
+        listOf("Popular Classical", "Electroacoustic", "Latin Mass", "Soulful choral").forEach {
+            hasNonClassicalGenre(listOf(it)) shouldBe false
+        }
+        listOf("Popular Classical", "Latin Mass", "Soulful choral").forEach { hasClassicalGenre(listOf(it)) shouldBe true }
+        listOf("Space Opera", "Rock Opera", "Alternative Rock", "Synthpop", "Hip-Hop", "Dance-Pop").forEach {
+            hasClassicalGenre(listOf(it)) shouldBe false
+        }
+        listOf("Rock Opera", "Alternative Rock", "Synthpop", "Hip-Hop", "Dance-Pop").forEach {
+            hasNonClassicalGenre(listOf(it)) shouldBe true
+        }
+    }
 }

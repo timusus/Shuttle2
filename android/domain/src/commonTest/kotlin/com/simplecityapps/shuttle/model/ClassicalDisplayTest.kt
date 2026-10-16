@@ -88,33 +88,4 @@ class ClassicalDisplayTest {
         song(id = 1).performersLine(fallback = "Some Artist") shouldBe "Some Artist"
         song(id = 1).performersLine() shouldBe null
     }
-
-    @Test
-    fun `two consecutive tracks of a work form a run`() {
-        val a = song(id = 1).copy(work = "W")
-        val b = song(id = 2).copy(work = "W")
-        val c = song(id = 3)
-
-        listOf(a, b, c).groupByWorkRuns() shouldBe listOf(WorkGroup("W", listOf(a, b)), WorkGroup(null, listOf(c)))
-    }
-
-    @Test
-    fun `a work used by one track has no header`() {
-        val a = song(id = 1).copy(work = "W")
-
-        listOf(a).groupByWorkRuns() shouldBe listOf(WorkGroup(null, listOf(a)))
-    }
-
-    @Test
-    fun `interleaved works do not merge`() {
-        val a1 = song(id = 1).copy(work = "A")
-        val b = song(id = 2).copy(work = "B")
-        val a2 = song(id = 3).copy(work = "A")
-
-        listOf(a1, b, a2).groupByWorkRuns() shouldBe listOf(
-            WorkGroup(null, listOf(a1)),
-            WorkGroup(null, listOf(b)),
-            WorkGroup(null, listOf(a2))
-        )
-    }
 }
