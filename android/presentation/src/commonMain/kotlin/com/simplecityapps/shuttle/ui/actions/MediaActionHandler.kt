@@ -23,6 +23,7 @@ class MediaActionHandler @Inject constructor(
     private val filterPlayableSongs: FilterPlayableSongs,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
+    private val shuffleWorks: ShuffleWorks,
     private val resumeContext: ResumeContext,
     private val startRadio: StartRadio,
     private val enqueueSongs: EnqueueSongs,
@@ -42,6 +43,8 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.Play -> play(action, filterPlayableSongs(resolveSongs(action.selection)))
 
         is MediaAction.Shuffle -> shuffle(action, filterPlayableSongs(resolveSongs(action.selection)))
+
+        is MediaAction.ShuffleWorks -> shuffleWorks(action, filterPlayableSongs(resolveSongs(action.selection)))
 
         is MediaAction.Resume -> resume(action)
 
@@ -111,6 +114,14 @@ class MediaActionHandler @Inject constructor(
         return when (val result = shuffleSongs(songs, action.context)) {
             is ShuffleSongs.Result.Success -> MediaActionResult.None
             is ShuffleSongs.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
+        }
+    }
+
+    private suspend fun shuffleWorks(action: MediaAction.ShuffleWorks, songs: List<Song>): MediaActionResult {
+        if (songs.isEmpty()) return Message(MediaActionMessage.NoSongs)
+        return when (val result = shuffleWorks(songs, action.context)) {
+            is ShuffleWorks.Result.Success -> MediaActionResult.None
+            is ShuffleWorks.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
         }
     }
 

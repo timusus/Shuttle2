@@ -174,6 +174,39 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `a classical album gets work rows and toggling a work flips its collapse`() = runTest {
+        val songs = (1..2).flatMap { work -> (1..21).map { n -> createSong(id = work * 100L + n, name = "Part $n").copy(work = "Suite No. $work", track = n) } }
+        fakeSongRepository.setSongs(songs)
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val before = viewModel.uiState.value.rows!!.rows.first() as AlbumRow.WorkHeader
+        before.collapsed shouldBe true
+
+        viewModel.onToggleWork(before.songs.first().id)
+        advanceUntilIdle()
+
+        (viewModel.uiState.value.rows!!.rows.first() as AlbumRow.WorkHeader).collapsed shouldBe false
+    }
+
+    @Test
+    fun `no rows once Classical display is switched off or when the album has no works`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        viewModel.uiState.value.rows shouldBe null
+
+        SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Allegro").copy(work = "Sonata No. 3")))
+        advanceUntilIdle()
+        viewModel.uiState.value.rows shouldBe null
+    }
+
+    @Test
     fun `an album with no classical song keeps its subtitle despite a conductor tag`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song").copy(conductor = "Ines Varga")))
         fakeAlbumRepository.setAlbums(listOf(testAlbum))

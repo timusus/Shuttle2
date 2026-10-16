@@ -72,6 +72,8 @@ fun LibraryDetailScaffold(
     artworkSize: ArtworkSize = ArtworkSize.Hero,
     artworkKey: String? = null,
     heroArtwork: (@Composable (Modifier) -> Unit)? = null,
+    eyebrow: String? = null,
+    credits: String? = null,
     listState: LazyListState = rememberLazyListState(),
     actions: @Composable RowScope.() -> Unit = {},
     header: @Composable () -> Unit = {},
@@ -115,6 +117,8 @@ fun LibraryDetailScaffold(
                         actions = playShuffle,
                         extra = header,
                         columnHeight = columnHeight,
+                        eyebrow = eyebrow,
+                        credits = credits,
                     )
                 }
             },

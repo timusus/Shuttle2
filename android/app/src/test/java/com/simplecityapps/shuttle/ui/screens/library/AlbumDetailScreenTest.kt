@@ -133,10 +133,11 @@ class AlbumDetailScreenTest {
         robot.setAlbum(classicalAlbumDetail())
 
         robot.assertTextDisplayed("Sonata No. 3")
-        robot.assertTextDisplayed("Harrow")
-        robot.assertTextDisplayed("I. Allegro")
-        robot.assertTextDisplayed("II. Adagio")
-        robot.assertTextDisplayed("III. Presto")
+        robot.assertTextDisplayed("HARROW")
+        robot.assertTextDisplayed("Allegro")
+        robot.assertTextDisplayed("Adagio")
+        robot.assertTextDisplayed("Presto")
+        robot.assertTextDisplayed("III")
         robot.assertTextNotDisplayed("Sonata No. 3: Allegro")
     }
 

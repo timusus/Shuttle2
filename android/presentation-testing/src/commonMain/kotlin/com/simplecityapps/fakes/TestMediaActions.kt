@@ -46,6 +46,7 @@ import com.simplecityapps.shuttle.ui.actions.RestorePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ResumeContext
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleWorks
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.actions.StartRadio
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
@@ -75,6 +76,7 @@ class TestMediaActions(
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository), offline.statusSource)
     val playSongs = PlaySongs(queueOperations, playbackOperations)
     val shuffleSongs = ShuffleSongs(playbackOperations)
+    val shuffleWorks = ShuffleWorks(playSongs)
 
     /** The providers radio asks for similar songs; none by default, so a radio is built from the library. */
     val similarSongsProviders = mutableSetOf<SimilarSongsProvider>()
@@ -125,6 +127,7 @@ class TestMediaActions(
         filterPlayableSongs = filterPlayableSongs,
         playSongs = playSongs,
         shuffleSongs = shuffleSongs,
+        shuffleWorks = shuffleWorks,
         resumeContext = resumeContext,
         startRadio = startRadio,
         enqueueSongs = enqueueSongs,

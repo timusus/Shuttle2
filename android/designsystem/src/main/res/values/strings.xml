@@ -2,6 +2,9 @@
 <resources>
     <string name="ds_more_options">More options</string>
     <string name="ds_now_playing">Now playing</string>
+    <string name="ds_play_work">Play %1$s</string>
+    <string name="ds_expand_work">Expand</string>
+    <string name="ds_collapse_work">Collapse</string>
     <string name="ds_downloading">Downloading</string>
     <string name="ds_available_offline">Available offline</string>
     <string name="ds_loading">Loading</string>

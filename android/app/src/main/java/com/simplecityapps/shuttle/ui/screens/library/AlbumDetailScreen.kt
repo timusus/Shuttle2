@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
@@ -15,9 +16,12 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
+import com.simplecityapps.shuttle.designsystem.component.MovementRow
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.component.WorkHeaderRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
@@ -37,6 +41,8 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.common.utils.rememberMinutesFormat
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumRow
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.WorkUnit
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
 import com.simplecityapps.shuttle.ui.shell.albumArtworkKey
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
@@ -53,6 +59,9 @@ fun AlbumDetailScreen(
     onOpenAlbum: (Album) -> Unit,
     onMoreByAlbumMore: (Album) -> Unit,
     modifier: Modifier = Modifier,
+    onPlayWork: (songs: List<Song>) -> Unit = {},
+    onToggleWork: (firstSongId: Long) -> Unit = {},
+    onWorkMore: (title: String, songs: List<Song>) -> Unit = { _, _ -> },
 ) {
     val album = uiState.album
     val state = when {
@@ -73,7 +82,9 @@ fun AlbumDetailScreen(
         LibraryDetailScaffold(
             state = state,
             title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-            subtitle = album?.let { albumSubtitle(it, uiState.performers) },
+            subtitle = album?.let { if (uiState.rows != null) it.year?.toString() else albumSubtitle(it, uiState.performers) },
+            eyebrow = uiState.rows?.eyebrow,
+            credits = uiState.rows?.credits,
             artwork = album,
             placeholder = ArtworkPlaceholder.Album,
             artworkSize = ArtworkSize.Grid,
@@ -85,31 +96,36 @@ fun AlbumDetailScreen(
             header = { DownloadStatusHeader(songs, Modifier.padding(top = S2Spacing.smallMedium)) },
             modifier = modifier.testTag("album-detail"),
         ) {
-            val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
-            discs.forEach { (disc, discSongs) ->
-                if (discs.size > 1) {
-                    item(key = "disc-$disc", contentType = "disc") {
-                        SectionHeader(title = stringResource(R.string.album_detail_disc, disc))
-                    }
-                }
-                val groups = if (uiState.classical) discSongs.groupByWorkRuns() else listOf(WorkGroup(null, discSongs))
-                groups.forEach { group ->
-                    if (group.work != null) {
-                        item(key = "work-${group.songs.first().id}", contentType = "work") {
-                            SectionHeader(title = group.work.orEmpty(), subtitle = group.credits)
+            val rows = uiState.rows
+            if (rows != null) {
+                classicalRows(rows.rows, album, songs, onPlay, onPlayWork, onToggleWork, onWorkMore, onSongMore)
+            } else {
+                val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
+                discs.forEach { (disc, discSongs) ->
+                    if (discs.size > 1) {
+                        item(key = "disc-$disc", contentType = "disc") {
+                            SectionHeader(title = stringResource(R.string.album_detail_disc, disc))
                         }
                     }
-                    items(group.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
-                        SongRow(
-                            title = if (uiState.classical && song.isClassical) song.movementLabel() else song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                            subtitle = song.artistUnlessAlbumArtist(album),
-                            onClick = { onPlay(songs, songs.indexOf(song)) },
-                            trackNumber = song.track,
-                            duration = formatDuration(song.duration.toLong()),
-                            playing = song.id == uiState.currentSong?.id,
-                            offlineState = song.offlineState(),
-                            onMore = { onSongMore(song) },
-                        )
+                    val groups = if (uiState.classical) discSongs.groupByWorkRuns() else listOf(WorkGroup(null, discSongs))
+                    groups.forEach { group ->
+                        if (group.work != null) {
+                            item(key = "work-${group.songs.first().id}", contentType = "work") {
+                                SectionHeader(title = group.work.orEmpty(), subtitle = group.credits)
+                            }
+                        }
+                        items(group.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
+                            SongRow(
+                                title = if (uiState.classical && song.isClassical) song.movementLabel() else song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                                subtitle = song.artistUnlessAlbumArtist(album),
+                                onClick = { onPlay(songs, songs.indexOf(song)) },
+                                trackNumber = song.track,
+                                duration = formatDuration(song.duration.toLong()),
+                                playing = song.id == uiState.currentSong?.id,
+                                offlineState = song.offlineState(),
+                                onMore = { onSongMore(song) },
+                            )
+                        }
                     }
                 }
             }
@@ -123,6 +139,70 @@ fun AlbumDetailScreen(
                     onLongClick = onMoreByAlbumMore,
                 )
             }
+        }
+    }
+}
+
+private fun LazyListScope.classicalRows(
+    rows: List<AlbumRow>,
+    album: Album?,
+    songs: List<Song>,
+    onPlay: (songs: List<Song>, index: Int) -> Unit,
+    onPlayWork: (songs: List<Song>) -> Unit,
+    onToggleWork: (firstSongId: Long) -> Unit,
+    onWorkMore: (title: String, songs: List<Song>) -> Unit,
+    onSongMore: (Song) -> Unit,
+) {
+    items(rows, key = { it.key }, contentType = { it::class }) { row ->
+        when (row) {
+            is AlbumRow.ComposerHeading -> SectionHeader(title = row.name)
+
+            is AlbumRow.ActHeader -> SectionHeader(title = row.label, style = SectionHeaderStyle.Label)
+
+            is AlbumRow.DiscDivider -> SectionHeader(title = stringResource(R.string.album_detail_disc, row.disc))
+
+            is AlbumRow.WorkHeader -> {
+                val unit = pluralString(
+                    when (row.unit) {
+                        WorkUnit.Movements -> R.plurals.work_movements
+                        WorkUnit.Parts -> R.plurals.work_parts
+                        WorkUnit.Songs -> R.plurals.songsPlural
+                    },
+                    row.count,
+                )
+                WorkHeaderRow(
+                    title = row.title,
+                    detail = row.detail,
+                    meta = "$unit · ${formatDuration(row.durationMs)}",
+                    credits = row.credits,
+                    collapsed = if (row.collapsible) row.collapsed else null,
+                    playing = row.playing,
+                    onPlay = { onPlayWork(row.songs) },
+                    onClick = { if (row.collapsible) onToggleWork(row.songs.first().id) else onPlayWork(row.songs) },
+                    onLongClick = { onWorkMore(row.title, row.songs) },
+                )
+            }
+
+            is AlbumRow.Movement -> MovementRow(
+                numeral = row.numeral,
+                name = row.name,
+                duration = formatDuration(row.song.duration.toLong()),
+                trackNumber = row.song.track,
+                playing = row.playing,
+                onClick = { onPlay(songs, songs.indexOf(row.song)) },
+                onLongClick = { onSongMore(row.song) },
+            )
+
+            is AlbumRow.Track -> SongRow(
+                title = row.song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                subtitle = row.song.artistUnlessAlbumArtist(album),
+                onClick = { onPlay(songs, songs.indexOf(row.song)) },
+                trackNumber = row.song.track,
+                duration = formatDuration(row.song.duration.toLong()),
+                playing = row.playing,
+                offlineState = row.song.offlineState(),
+                onMore = { onSongMore(row.song) },
+            )
         }
     }
 }
@@ -172,7 +252,13 @@ fun AlbumDetailDestination(
             uiState = uiState,
             onNavigateUp = onNavigateUp,
             onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index, uiState.playContext)) },
-            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs), uiState.playContext)) },
+            onShuffle = {
+                val selection = MediaSelection.Songs(uiState.songs)
+                actions.dispatch(if (uiState.rows != null) MediaAction.ShuffleWorks(selection, uiState.playContext) else MediaAction.Shuffle(selection, uiState.playContext))
+            },
+            onPlayWork = { songs -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), 0, uiState.playContext)) },
+            onToggleWork = viewModel::onToggleWork,
+            onWorkMore = { title, songs -> actions.showActions(MediaActionsTarget(title, null, MediaSelection.Songs(songs), ArtworkPlaceholder.Album)) },
             onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onOpenAlbum = { album -> onOpen(album.route) },

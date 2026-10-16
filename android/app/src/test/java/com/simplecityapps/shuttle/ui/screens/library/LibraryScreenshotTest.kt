@@ -259,6 +259,20 @@ class LibraryScreenshotTest {
         shot("phone-album-detail-classical")
     }
 
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneSymphonyCycleAlbumDetail() {
+        detail.setAlbum(symphonyCycleAlbumDetail())
+        shot("phone-album-detail-classical-cycle")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneSplitWorkAlbumDetail() {
+        detail.setAlbum(splitWorkAlbumDetail())
+        shot("phone-album-detail-classical-split")
+    }
+
     /** A landscape phone: the art and actions sit beside the tracks, which scroll on their own. */
     @Test
     @Config(qualifiers = "w891dp-h411dp-xhdpi")

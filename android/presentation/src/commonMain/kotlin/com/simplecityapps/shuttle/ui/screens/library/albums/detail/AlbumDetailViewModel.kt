@@ -32,6 +32,7 @@ import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 
 data class AlbumDetailUiState(
     val album: Album? = null,
@@ -56,7 +58,21 @@ data class AlbumDetailUiState(
     val moreByArtistNames: List<String> = emptyList(),
     /** Classical display is on: the screen groups movements under their work. */
     val classical: Boolean = false,
+    /** The classical page's rows; null when classical display is off or the album has no work blocks, which then render as plain songs. */
+    val rows: AlbumRows? = null,
 ) {
+    // Swift sees no default arguments.
+    constructor(
+        album: Album?,
+        songs: List<Song>,
+        currentSong: Song?,
+        loadingState: LoadingState,
+        seed: ArtworkSeed,
+        moreByArtist: List<Album>,
+        moreByArtistNames: List<String>,
+        classical: Boolean,
+    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null)
+
     /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off or none is tagged. */
     val performers: String? get() = if (classical && songs.any { it.isClassical }) songs.firstNotNullOfOrNull { it.performersLine() } else null
 
@@ -131,13 +147,23 @@ class AlbumDetailViewModel @AssistedInject constructor(
         .distinctUntilChanged()
         .onStart { emit(emptyList()) }
 
+    /** Works (by first song id) whose collapse state the user flipped from its default. */
+    private val toggledWorks = MutableStateFlow<Set<Long>>(emptySet())
+
+    fun onToggleWork(firstSongId: Long) {
+        toggledWorks.update { if (firstSongId in it) it - firstSongId else it + firstSongId }
+    }
+
+    private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val toggled: Set<Long>)
+
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songs,
         album,
         observeCurrentSong(),
         observeArtworkSeed(songs.map { it.firstOrNull() }),
-        combine(moreByArtist, moreByArtistNames, observeSetting(AppearanceSettings.ClassicalDisplay), ::Triple),
-    ) { songs, album, currentSong, seed, (moreByArtist, moreByArtistNames, classical) ->
+        combine(moreByArtist, moreByArtistNames, observeSetting(AppearanceSettings.ClassicalDisplay), toggledWorks, ::Extras),
+    ) { songs, album, currentSong, seed, extras ->
+        val (moreByArtist, moreByArtistNames, classical) = Triple(extras.moreByArtist, extras.moreByArtistNames, extras.classical)
         AlbumDetailUiState(
             album = album,
             songs = songs,
@@ -152,6 +178,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             // A credited key with no artist row or a blank name resolves to nothing: fall back to the raw tag
             moreByArtistNames = moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
             classical = classical,
+            rows = if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, currentSong?.id, extras.toggled) else null,
         )
     }.stateIn(
         scope = viewModelScope,

@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState.SongSection
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.buildAlbumRows
 
 /** The album [songs] belong to, keyed the way the songs group, so it unfolds to them. */
 fun albumOf(songs: List<Song>, year: Int = 2021) = createAlbum(
@@ -62,7 +63,41 @@ fun classicalAlbumDetail(classical: Boolean = true): AlbumDetailUiState {
     val prelude = track(4, "Prelude", 4).copy(composer = "Ludwig Harrow", composerSort = "Harrow, Ludwig", work = "Prelude in D", arranger = "T. Okoye")
     val encore = track(5, "Encore", 5)
     val songs = sonata + prelude + encore
-    return readyAlbumDetail(album = albumOf(songs), songs = songs).copy(classical = classical)
+    return classicalState(songs, classical)
+}
+
+private fun classicalState(songs: List<Song>, classical: Boolean = true, currentSong: Song? = null, toggled: Set<Long> = emptySet()): AlbumDetailUiState {
+    val album = albumOf(songs)
+    return readyAlbumDetail(album = album, songs = songs, currentSong = currentSong).copy(
+        classical = classical,
+        rows = if (classical) buildAlbumRows(songs, album.albumArtist, currentSong?.id, toggled) else null,
+    )
+}
+
+/** One composer's cycle: a playing symphony expanded, the long second work collapsed by default. */
+fun symphonyCycleAlbumDetail(): AlbumDetailUiState {
+    fun movement(id: Long, work: String, name: String, track: Int) = createSong(id = id, name = name, albumArtist = "Ines Varga", album = "Symphonies", track = track, duration = 420_000).copy(
+        composer = "Ludwig Harrow",
+        composerSort = "Harrow, Ludwig",
+        conductor = "Ines Varga",
+        work = work,
+        genres = listOf("Classical"),
+    )
+    val fifth = listOf("Allegro con brio", "Andante", "Scherzo", "Finale").mapIndexed { i, name -> movement(i + 1L, "Symphony No. 5 in C minor, Op. 67", "${listOf("I", "II", "III", "IV")[i]}. $name", i + 1) }
+    val ninth = (1..24).map { n -> movement(10L + n, "Symphony No. 9 in D minor, Op. 125", "Part $n", n) }
+    return classicalState(fifth + ninth, currentSong = fifth[1])
+}
+
+/** One long work split across two discs, as a double album side break does. */
+fun splitWorkAlbumDetail(): AlbumDetailUiState {
+    val songs = (1..6).map { n ->
+        createSong(id = n.toLong(), name = "Part $n", albumArtist = "Mira Calder", album = "Heart Suite", track = if (n <= 3) n else n - 3, disc = if (n <= 3) 1 else 2, duration = 480_000).copy(
+            composer = "Mira Calder",
+            work = "Heart Suite",
+            genres = listOf("Classical"),
+        )
+    }
+    return classicalState(songs)
 }
 
 val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.LoadingState.Loading)

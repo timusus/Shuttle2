@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.heroSubtitle
@@ -49,6 +50,8 @@ fun DetailHero(
     topInset: Dp = 0.dp,
     extra: @Composable () -> Unit = {},
     columnHeight: Dp = Dp.Unspecified,
+    eyebrow: String? = null,
+    credits: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     if (columnHeight != Dp.Unspecified) {
@@ -88,9 +91,15 @@ fun DetailHero(
             modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
             verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
         ) {
+            if (eyebrow != null) {
+                Text(eyebrow.uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary)
+            }
             Text(title, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
             if (subtitle != null) {
                 Text(subtitle, style = MaterialTheme.typography.heroSubtitle, color = colors.onSurfaceVariant)
+            }
+            if (credits != null) {
+                Text(credits, style = MaterialTheme.typography.heroSubtitle, color = colors.onSurfaceVariant)
             }
             Box(Modifier.padding(top = S2Spacing.smallMedium)) { actions() }
             extra()

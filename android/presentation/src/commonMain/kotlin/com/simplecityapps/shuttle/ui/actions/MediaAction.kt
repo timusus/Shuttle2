@@ -74,6 +74,14 @@ sealed interface MediaAction {
         constructor(selection: MediaSelection) : this(selection, selection.playContext)
     }
 
+    /** Replaces the queue with the selection's songs shuffled by work: a work's movements stay together and in order. */
+    data class ShuffleWorks(
+        override val selection: MediaSelection,
+        val context: PlayContext = selection.playContext
+    ) : MediaAction {
+        constructor(selection: MediaSelection) : this(selection, selection.playContext)
+    }
+
     /**
      * Plays [context] from where it was left (#670), as a Jump back in tile's Play does ([ResumeContext]), or carries out
      * [fromStart] when there's nothing to carry on from.
