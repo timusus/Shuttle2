@@ -4,6 +4,7 @@ import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
@@ -22,6 +23,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.Density
 import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Album
@@ -90,7 +92,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
 
     // -- Content setup --
 
-    fun setAlbum(uiState: AlbumDetailUiState, compactHeight: Boolean = false) = render(compactHeight) {
+    fun setAlbum(uiState: AlbumDetailUiState, compactHeight: Boolean = false, fontScale: Float = 1f) = render(compactHeight, fontScale) {
         AlbumDetailScreen(uiState, onNavigateUp = ::up, onPlay = ::play, onShuffle = ::shuffle, onAlbumMore = ::more, onSongMore = ::more, onOpenAlbum = { lastAlbumClicked = it }, onMoreByAlbumMore = ::more)
     }
 
@@ -151,10 +153,14 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         SmartPlaylistDetailScreen(uiState, onNavigateUp = ::up, onPlay = ::play, onShuffle = ::shuffle, onPlaylistMore = { lastMore = uiState.smartPlaylist }, onSongMore = ::more)
     }
 
-    private fun render(compactHeight: Boolean = false, content: @Composable () -> Unit) {
+    private fun render(compactHeight: Boolean = false, fontScale: Float = 1f, content: @Composable () -> Unit) {
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-            CompositionLocalProvider(LocalShellLayout provides ShellLayout(if (compactHeight) ShellWidth.Expanded else ShellWidth.Compact, compactHeight)) {
+            val density = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(density.density, fontScale),
+                LocalShellLayout provides ShellLayout(if (compactHeight) ShellWidth.Expanded else ShellWidth.Compact, compactHeight),
+            ) {
                 S2Theme { content() }
             }
         }

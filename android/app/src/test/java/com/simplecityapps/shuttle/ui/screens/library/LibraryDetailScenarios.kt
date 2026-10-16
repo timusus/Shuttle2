@@ -88,6 +88,21 @@ fun symphonyCycleAlbumDetail(): AlbumDetailUiState {
     return classicalState(fifth + ninth, currentSong = fifth[1])
 }
 
+/** A 24-part work, so its last movements carry wide numerals ("XVIII", "XXIV"). */
+fun longNumeralAlbumDetail(): AlbumDetailUiState {
+    val songs = (1..24).map { n ->
+        createSong(id = n.toLong(), name = "Variation $n", albumArtist = "Mira Calder", album = "Variations", track = n, duration = 120_000).copy(
+            composer = "Ludwig Harrow",
+            composerSort = "Harrow, Ludwig",
+            work = "Theme and Variations",
+            movementName = "Variation $n",
+            movementNumber = n,
+            genres = listOf("Classical"),
+        )
+    }
+    return classicalState(songs)
+}
+
 /** One long work split across two discs, as a double album side break does. */
 fun splitWorkAlbumDetail(): AlbumDetailUiState {
     val songs = (1..6).map { n ->

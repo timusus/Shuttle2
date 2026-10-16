@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -22,11 +23,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -157,13 +163,19 @@ fun MovementRow(
             .padding(start = RuleInset + RuleWidth + S2Spacing.xsmall, end = S2Spacing.medium),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // A wide numeral grows left into the gutter beside the rail; past that it shrinks rather than touch the rail.
+        val numeralStyle = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum")
+        val maxNumeralWidth = with(LocalDensity.current) { (NumeralColumn + S2Spacing.xsmall).roundToPx() }
+        var numeralScale by remember(numeral, maxNumeralWidth, numeralStyle.fontSize) { mutableFloatStateOf(1f) }
         Text(
             text = numeral.orEmpty(),
-            modifier = Modifier.width(NumeralColumn),
-            style = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum"),
+            modifier = Modifier.width(NumeralColumn).wrapContentWidth(Alignment.End, unbounded = true),
+            style = numeralStyle.copy(fontSize = numeralStyle.fontSize * numeralScale),
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End,
             maxLines = 1,
+            softWrap = false,
+            onTextLayout = { if (it.size.width > maxNumeralWidth) numeralScale *= maxNumeralWidth.toFloat() / it.size.width },
         )
         Text(
             text = name,

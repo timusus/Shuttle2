@@ -273,6 +273,23 @@ class LibraryScreenshotTest {
         shot("phone-album-detail-classical-split")
     }
 
+    /** Wide numerals ("XXIV") grow into the gutter beside the rail instead of clipping, and the titles stay aligned (#1065). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneLongNumeralAlbumDetail() {
+        detail.setAlbum(longNumeralAlbumDetail())
+        detail.scrollTo("Variation 24")
+        shot("phone-album-detail-classical-long-numeral")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneLongNumeralAlbumDetailLargeText() {
+        detail.setAlbum(longNumeralAlbumDetail(), fontScale = 1.5f)
+        detail.scrollTo("Variation 24")
+        shot("phone-album-detail-classical-long-numeral-large-text")
+    }
+
     /** A landscape phone: the art and actions sit beside the tracks, which scroll on their own. */
     @Test
     @Config(qualifiers = "w891dp-h411dp-xhdpi")
