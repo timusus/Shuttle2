@@ -181,7 +181,7 @@ fun onPlay(album: Album) {
 - A single call on a repository, store or operations interface: inject it and call it. A use case that only forwards one call adds a class and a fake for nothing, and the `usecase-shape` rule rejects it.
 - State mutations: `selectionState.toggle(item)`
 
-Use cases are optional. They exist to combine dependencies, map results or apply rules; ViewModels may inject repositories, stores and operations interfaces directly (never DAOs or network types: `presentation-data-imports`).
+Use cases are optional. They exist to combine dependencies, map results or apply rules; ViewModels may inject repositories, stores and operations interfaces directly (never DAOs, media providers, the importer or network types: `presentation-data-imports`, `viewmodel-data-access`).
 
 Use cases are stateless — `@Inject constructor`, no scope annotation, Metro creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
 

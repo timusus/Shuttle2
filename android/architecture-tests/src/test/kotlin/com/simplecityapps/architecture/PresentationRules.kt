@@ -109,6 +109,26 @@ class PresentationRules {
         )
     }
 
+    @Test
+    fun `ViewModels do not depend on DAOs, media providers or the importer`() {
+        val violations = Production.viewModels.flatMap { viewModel ->
+            val file = viewModel.containingFile
+            val imported = file.importNames.filter(::isStorageOrSync)
+            val injected = viewModel.constructorTypeNames().map(file::resolve).filter(::isStorageOrSync)
+            (imported + injected).distinct().map { viewModel.violation(" -> $it") }
+        }
+        Baseline.assertMatches(
+            "viewmodel-data-access",
+            "ViewModels must not depend on DAOs, MediaProviders or MediaImporter; inject a repository, store or operations interface",
+            violations,
+        )
+    }
+
+    private fun isStorageOrSync(fqn: String): Boolean {
+        val simpleName = fqn.substringAfterLast('.')
+        return simpleName.endsWith("Dao") || simpleName.endsWith("MediaProvider") || simpleName == "MediaImporter"
+    }
+
     private fun useCases() = Production.classes.filter { declaration ->
         declaration !in Production.viewModels &&
             declaration.functions(includeNested = false, includeLocal = false).any { it.name == "invoke" && it.hasOperatorModifier }

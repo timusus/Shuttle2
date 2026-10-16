@@ -119,8 +119,9 @@ Why this over the alternatives:
   presentation modules that return domain types declare `api(project(":android:domain"))`; every
   other edge stays `implementation`, so data internals never leak transitively into presentation.
 - The composition root is the one module allowed to see everything. Until presentation is split
-  out of `:android:app`, the Konsist rules (`presentation-data-imports`, `viewmodel-data-access`)
-  are the enforcement inside it.
+  out of `:android:app`, the Konsist rules (`presentation-data-imports`, which bans Room, network
+  and DAO imports, and `viewmodel-data-access`, which bans DAO, `*MediaProvider` and `MediaImporter`
+  dependencies in ViewModels) are the enforcement inside it.
 
 ## DI wiring impact
 
@@ -199,8 +200,8 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    | `MediaActionMessageFormat` | app | Presentation: formats messages with Android resources |
 7. ~~**Burn down `viewmodel-data-access`** screen by screen (audit batches A–C).~~ (done: the
    `presentation-data-imports` baseline is empty, so any new violation fails the build. The
-   `viewmodel-data-access` and `viewmodel-direct-deps` rules were later deleted, and the pass-through
-   use cases they forced with them: a ViewModel injects a repository or store directly.)
+   `viewmodel-data-access` rule was later narrowed to DAOs, media providers and the importer, and the
+   pass-through use cases it forced were deleted: a ViewModel injects a repository or store directly.)
 8. **Split presentation** out of `:android:app` into `:android:ui` (screens, ViewModels,
    screen use cases) that depends on domain and designsystem only; `:android:app` keeps the
    Application, `MainActivity`, services and DI. `VerifyModuleLayers` then enforces presentation →
