@@ -278,7 +278,7 @@ class LibraryScreenshotTest {
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneLongNumeralAlbumDetail() {
         detail.setAlbum(longNumeralAlbumDetail())
-        detail.scrollTo("Variation 24")
+        detail.scrollTo("Finale")
         shot("phone-album-detail-classical-long-numeral")
     }
 
@@ -286,7 +286,7 @@ class LibraryScreenshotTest {
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneLongNumeralAlbumDetailLargeText() {
         detail.setAlbum(longNumeralAlbumDetail(), fontScale = 1.5f)
-        detail.scrollTo("Variation 24")
+        detail.scrollTo("Finale")
         shot("phone-album-detail-classical-long-numeral-large-text")
     }
 
