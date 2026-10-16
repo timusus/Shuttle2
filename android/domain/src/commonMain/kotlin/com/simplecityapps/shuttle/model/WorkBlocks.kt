@@ -163,10 +163,12 @@ private fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, album
     val movements = songs.mapIndexed { index, song ->
         val raw = song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty()
         val name = cleanMovementName(raw, work)
-        val number = song.movementNumber?.takeIf { it >= 1 } ?: movementNumberIn(raw, work) ?: (index + 1)
-        // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only.
-        val repeated = number == previous
-        previous = number
+        val tagged = song.movementNumber?.takeIf { it >= 1 }
+        val fromTitle = if (tagged == null) movementNumberIn(raw, work) else null
+        val number = tagged ?: fromTitle ?: (index + 1)
+        // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only; a tagged number is never repeated by mistake.
+        val repeated = fromTitle != null && fromTitle == previous
+        previous = fromTitle
         val numeral = if (!repeated && (songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
         Movement(song, number, name, numeral)
     }

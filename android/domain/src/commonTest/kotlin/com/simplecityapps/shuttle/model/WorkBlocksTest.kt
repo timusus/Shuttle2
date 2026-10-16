@@ -137,6 +137,16 @@ class WorkBlocksTest {
     }
 
     @Test
+    fun `a repeated tagged movement number keeps its numeral`() {
+        val songs = listOf(
+            movement(1, "Symphony No. 5", "Allegro", 1).copy(movementNumber = 2, movementTotal = 4),
+            movement(2, "Symphony No. 5", "Andante", 2).copy(movementNumber = 2, movementTotal = 4)
+        )
+        val block = (groupWorks(songs).single() as AlbumItem.Work).block
+        block.movements.map { it.numeral } shouldBe listOf("II", "II")
+    }
+
+    @Test
     fun `a lone movement keeps its numeral`() {
         val queue = listOf(movement(1, "Symphony No. 5", "Andante", 2).copy(movementNumber = 2, movementTotal = 4))
         lockScreenText(queue, 0)!!.title shouldBe "II. Andante"
