@@ -150,4 +150,5 @@ fun catalogueKeyPrefix(key: String): String {
 }
 
 /** The [catalogueSearchKey] of every catalogue reference inside [text], for the indexed side of a search. */
-fun catalogueSearchKeys(text: String): List<String> = catalogueMatches(text).map { it.searchKey() }
+fun catalogueSearchKeys(text: String): List<String> = // Every catalogue reference carries a number, so most titles skip the regex.
+    if (text.none(Char::isDigit)) emptyList() else catalogueMatches(text).map { it.searchKey() }
