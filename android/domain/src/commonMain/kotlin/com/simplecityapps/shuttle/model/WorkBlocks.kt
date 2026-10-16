@@ -37,7 +37,7 @@ data class WorkBlock(
     val songs: List<Song> get() = movements.map { it.song }
 }
 
-private class Run(val range: IntRange, val work: String?, val inferred: Boolean)
+internal class Run(val range: IntRange, val work: String?, val inferred: Boolean)
 
 private fun String.normalised(): String = lowercase()
     .replace(Regex("""\bop\.?\s*(?=\d)"""), "op")
@@ -123,7 +123,7 @@ private fun looksLikeInferredWork(songs: List<Song>, prefix: String): Boolean {
 
 private val screenGenres = setOf("soundtrack", "score", "ost", "game", "film")
 
-private fun findRuns(songs: List<Song>): List<Run> {
+internal fun findRuns(songs: List<Song>): List<Run> {
     val runs = mutableListOf<Run>()
     var start = 0
     while (start < songs.size) {
@@ -165,7 +165,7 @@ private fun actSections(movements: List<Movement>): List<ActSection> {
     return sections
 }
 
-private fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albumCredits: String?): WorkBlock {
+internal fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albumCredits: String?): WorkBlock {
     val numbering = workNumbering(songs)
     var previous: Int? = null
     val raws = songs.map { song -> song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty() }
@@ -230,7 +230,9 @@ data class WorkProgress(
     val movementIndex: Int,
     val movementCount: Int,
     val remainingMs: Long,
-    val continuous: Boolean
+    val continuous: Boolean,
+    /** Time in the current segment before the current movement starts (non-zero only for an act of several movements). */
+    val currentSegmentOffsetMs: Long = 0
 )
 
 /** Null when the song at [index] is not part of a work of two or more movements. [positionMs] is the playback position in that song. */
@@ -249,7 +251,8 @@ fun workProgress(queue: List<Song>, index: Int, positionMs: Long = 0): WorkProgr
         movementIndex = current,
         movementCount = block.movementCount,
         remainingMs = durations.drop(current).sum() - played,
-        continuous = segments.size > 12
+        continuous = segments.size > 12,
+        currentSegmentOffsetMs = ranges.first { current in it }.let { range -> range.first.until(current).sumOf { durations[it] } }
     )
 }
 
