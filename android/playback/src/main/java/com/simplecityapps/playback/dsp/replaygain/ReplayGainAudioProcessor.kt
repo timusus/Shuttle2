@@ -2,6 +2,7 @@ package com.simplecityapps.playback.dsp.replaygain
 
 import androidx.core.math.MathUtils.clamp
 import androidx.media3.common.C
+import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.AudioProcessor.UnhandledAudioFormatException
@@ -47,6 +48,10 @@ class ReplayGainAudioProcessor(
      */
     @Volatile
     var albumGainForWorks: Boolean = false
+
+    /** Whether the player shuffles, so a stream's neighbours are the ones in play order. Set from the main thread. */
+    @Volatile
+    var shuffled: Boolean = false
 
     /** Whether the stream being processed is a movement of a work, decided when it started. Only touched on the playback thread. */
     private var streamInWork = false
@@ -117,16 +122,37 @@ class ReplayGainAudioProcessor(
         streamInWork = false
     }
 
-    // Neighbours come from the player's timeline (playlist order, so shuffle doesn't hide a work), not a copy of the queue.
+    // Neighbours come from the player's timeline, not a copy of the queue.
     private fun isWorkMovement(streamMetadata: AudioProcessor.StreamMetadata): Boolean {
         val index = streamMetadata.windowIndex() ?: return false
-        val timeline = streamMetadata.timeline
-        val window = Timeline.Window()
-        val songs = object : AbstractList<Song>() {
-            override val size get() = timeline.windowCount
-
-            override fun get(index: Int) = timeline.getWindow(index, window).mediaItem.queueEntry.song
-        }
-        return replayGainModeAt(ReplayGainMode.Track, songs, index) == ReplayGainMode.Album
+        return isWorkMovementAt(streamMetadata.timeline, index, shuffled)
     }
+}
+
+/**
+ * Whether the window at [index] is a movement of a work, judged over the windows around it in play order: playlist
+ * order, or the shuffle order when [shuffled] (a shuffle by work keeps a work's movements together; a song shuffle
+ * doesn't).
+ */
+internal fun isWorkMovementAt(
+    timeline: Timeline,
+    index: Int,
+    shuffled: Boolean
+): Boolean {
+    val window = Timeline.Window()
+    fun songAt(i: Int): Song = timeline.getWindow(i, window).mediaItem.queueEntry.song
+    val before = ArrayDeque<Song>()
+    var i = timeline.getPreviousWindowIndex(index, Player.REPEAT_MODE_OFF, shuffled)
+    while (i != C.INDEX_UNSET) {
+        before.addFirst(songAt(i))
+        i = timeline.getPreviousWindowIndex(i, Player.REPEAT_MODE_OFF, shuffled)
+    }
+    val songs = before + songAt(index)
+    i = timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, shuffled)
+    val queue = songs.toMutableList()
+    while (i != C.INDEX_UNSET) {
+        queue += songAt(i)
+        i = timeline.getNextWindowIndex(i, Player.REPEAT_MODE_OFF, shuffled)
+    }
+    return replayGainModeAt(ReplayGainMode.Track, queue, before.size) == ReplayGainMode.Album
 }

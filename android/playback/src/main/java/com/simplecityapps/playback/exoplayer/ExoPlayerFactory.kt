@@ -120,8 +120,16 @@ class ExoPlayerFactory(
 
     fun create(): ExoPlayer {
         val player = buildPlayer(renderersFactory, CrossfadeClippingMediaSourceFactory(mediaSourceFactory))
-        val crossfade = Crossfade(player, crossfadeMixer, TailDecoder(::decoderPlayer, replayGainAudioProcessor), crossfadeDurationMs, onCrossfadeSkipped)
+        val crossfade = Crossfade(player, crossfadeMixer, TailDecoder(::decoderPlayer, replayGainAudioProcessor, player::getCurrentTimeline), crossfadeDurationMs, onCrossfadeSkipped)
         this.crossfade = crossfade
+        replayGainAudioProcessor.shuffled = player.shuffleModeEnabled
+        player.addListener(
+            object : Player.Listener {
+                override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                    replayGainAudioProcessor.shuffled = shuffleModeEnabled
+                }
+            }
+        )
         player.setHandleAudioBecomingNoisy(true)
         player.setAudioAttributes(MUSIC, true)
         val owner = AudioTrackReopener(player)

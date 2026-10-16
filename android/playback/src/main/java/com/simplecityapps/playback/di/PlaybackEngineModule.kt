@@ -88,6 +88,7 @@ class PlaybackEngineModule {
         appearanceSettings: AppearanceSettings,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value.toDouble()).also { processor ->
+        processor.albumGainForWorks = appearanceSettings.classicalDisplay.value
         appCoroutineScope.launch { appearanceSettings.classicalDisplay.flow.collect { processor.albumGainForWorks = it } }
     }
 

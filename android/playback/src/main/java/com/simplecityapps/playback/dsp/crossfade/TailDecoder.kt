@@ -16,7 +16,10 @@ import androidx.media3.exoplayer.audio.AudioOutputProvider
 import androidx.media3.exoplayer.audio.AudioTrackAudioOutputProvider
 import androidx.media3.exoplayer.audio.ForwardingAudioOutputProvider
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.dsp.replaygain.isWorkMovementAt
 import com.simplecityapps.playback.queue.queueEntry
+import com.simplecityapps.playback.queue.queueEntryOrNull
 import java.nio.ByteBuffer
 import timber.log.Timber
 
@@ -44,6 +47,22 @@ sealed interface TailOutcome {
     class Missing(val reason: CrossfadeSkip) : TailOutcome
 }
 
+/**
+ * The mode the tail of [item] decodes at: the one the playback player's [replayGain] resolves for it in [timeline],
+ * so the tail plays at the level its main stream did (a work's movement in Track mode, at its album gain).
+ */
+internal fun tailGainMode(
+    replayGain: ReplayGainAudioProcessor,
+    timeline: Timeline,
+    item: MediaItem
+): ReplayGainMode {
+    if (replayGain.mode != ReplayGainMode.Track || !replayGain.albumGainForWorks) return replayGain.mode
+    val window = Timeline.Window()
+    val uid = item.queueEntry.uid
+    val index = (0 until timeline.windowCount).firstOrNull { timeline.getWindow(it, window).mediaItem.queueEntryOrNull?.uid == uid } ?: return replayGain.mode
+    return if (isWorkMovementAt(timeline, index, replayGain.shuffled)) ReplayGainMode.Album else ReplayGainMode.Track
+}
+
 /** How far before the clip end [TailDecoder] starts a tail: the mixer plays it from wherever the clipped item stopped. */
 private const val TAIL_MARGIN_MS = 500L
 
@@ -59,7 +78,9 @@ class TailDecoder(
     /** Builds a helper player whose audio sink runs these processors and outputs to [CapturingAudioOutputProvider]. */
     private val newPlayer: (Array<AudioProcessor>) -> ExoPlayer,
     /** The playback player's ReplayGain: its mode and pre-amp apply to the tail. */
-    private val replayGain: ReplayGainAudioProcessor
+    private val replayGain: ReplayGainAudioProcessor,
+    /** The playback player's timeline, which decides whether the entry plays at its work's album gain. */
+    private val timeline: () -> Timeline
 ) : TailSource {
     private var player: ExoPlayer? = null
 
@@ -71,7 +92,7 @@ class TailDecoder(
     ) {
         cancel()
         val capture = TailCaptureProcessor()
-        val gain = ReplayGainAudioProcessor(replayGain.mode, replayGain.preAmpGain).also { it.bypassed = replayGain.bypassed }
+        val gain = ReplayGainAudioProcessor(tailGainMode(replayGain, timeline(), item), replayGain.preAmpGain).also { it.bypassed = replayGain.bypassed }
         val player = newPlayer(arrayOf(gain, capture))
         this.player = player
         val started = System.nanoTime()
