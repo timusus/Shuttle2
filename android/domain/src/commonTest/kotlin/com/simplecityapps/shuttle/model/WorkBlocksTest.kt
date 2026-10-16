@@ -143,6 +143,14 @@ class WorkBlocksTest {
     }
 
     @Test
+    fun `a dash after a bare numeral is a movement number only in an increasing run from I`() {
+        fun names(vararg raw: String) = (groupWorks(raw.mapIndexed { i, n -> movement(i + 1L, "Symphony No. 5", n, i + 1) }).single() as AlbumItem.Work).block.movements.map { it.name }
+        names("X - Files Theme", "I - Love You") shouldBe listOf("X - Files Theme", "I - Love You")
+        names("I - Allegro", "II - Adagio") shouldBe listOf("Allegro", "Adagio")
+        names("I. Allegro", "II: Adagio") shouldBe listOf("Allegro", "Adagio")
+    }
+
+    @Test
     fun `a pop queue has no lock screen text work progress or work run`() {
         val queue = popSongs("Hold On - Live", "Hold On - Acoustic")
         lockScreenText(queue, 0) shouldBe null

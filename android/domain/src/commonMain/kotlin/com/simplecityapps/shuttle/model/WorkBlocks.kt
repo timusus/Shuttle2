@@ -168,11 +168,13 @@ private fun actSections(movements: List<Movement>): List<ActSection> {
 private fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albumCredits: String?): WorkBlock {
     val numbering = workNumbering(songs)
     var previous: Int? = null
+    val raws = songs.map { song -> song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty() }
+    val loose = looseNumeralsFormRun(raws, work)
     val movements = songs.mapIndexed { index, song ->
-        val raw = song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty()
-        val name = cleanMovementName(raw, work)
+        val raw = raws[index]
+        val name = cleanMovementName(raw, work, loose)
         val tagged = song.movementNumber?.takeIf { it >= 1 }
-        val fromTitle = if (tagged == null) movementNumberIn(raw, work) else null
+        val fromTitle = if (tagged == null) movementNumberIn(raw, work, loose) else null
         val number = tagged ?: fromTitle ?: (index + 1)
         // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only; a tagged number is never repeated by mistake.
         val repeated = fromTitle != null && fromTitle == previous

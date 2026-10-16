@@ -11,7 +11,10 @@ data class WorkNumbering(val style: NumeralStyle, val unit: String) {
 }
 
 private const val NUMERAL = """(?:X{0,3}(?:IX|IV|V?I{0,3})|\d{1,3})"""
-private val leadingNumeral = Regex("""^($NUMERAL)(?:\.|:|\)|\s[-–—])\s+(?=\S)""")
+private val leadingNumeral = Regex("""^($NUMERAL)(?:\.|:|\))\s+(?=\S)""")
+
+// "II - Adagio" is ambiguous ("X - Files Theme"), so a block accepts it only as a run from I.
+private val looseNumeral = Regex("""^($NUMERAL)\s[-–—]\s+(?=\S)""")
 
 // A "Work: " placed before a numbered movement, for when the work is not known ("Winterreise, D. 911: 1. Gute Nacht").
 private val prefixBeforeNumeral = Regex("""^[^:]+?\s*:\s+(?=$NUMERAL\.\s)""")
@@ -40,7 +43,7 @@ private fun namesWork(candidate: String, work: String?): Boolean {
 }
 
 /** The name split into its clean form and the leading numeral token ("" when it has none). */
-private fun splitMovementName(name: String, work: String?): Pair<String, String> {
+private fun splitMovementName(name: String, work: String?, looseNumerals: Boolean = true): Pair<String, String> {
     val trimmed = name.trim()
     var rest = trimmed
     val prefix = work?.trim()?.takeIf { it.isNotEmpty() }
@@ -55,7 +58,7 @@ private fun splitMovementName(name: String, work: String?): Pair<String, String>
     if (!stripped) {
         prefixBeforeNumeral.find(rest)?.takeIf { namesWork(rest.substringBefore(':'), prefix) }?.let { rest = rest.substring(it.range.last + 1).trim() }
     }
-    val numeral = leadingNumeral.find(rest)
+    val numeral = leadingNumeral.find(rest) ?: if (looseNumerals) looseNumeral.find(rest) else null
     var token = ""
     if (numeral != null && numeral.value.isNotBlank()) {
         token = numeral.groupValues[1]
@@ -65,10 +68,19 @@ private fun splitMovementName(name: String, work: String?): Pair<String, String>
 }
 
 /** The movement name without a leading "Work: " and a leading numeral ("II. ", "2. ", "II - ", "IV: "); the input when nothing would be left. */
-fun cleanMovementName(name: String, work: String? = null): String = splitMovementName(name, work).first
+fun cleanMovementName(name: String, work: String? = null, looseNumerals: Boolean = true): String = splitMovementName(name, work, looseNumerals).first
 
 /** The movement number a name leads with ("II. Andante" gives 2, after any "Work: " prefix); null when it has none. */
-fun movementNumberIn(name: String, work: String? = null): Int? = numeralValue(splitMovementName(name, work).second)
+fun movementNumberIn(name: String, work: String? = null, looseNumerals: Boolean = true): Int? = numeralValue(splitMovementName(name, work, looseNumerals).second)
+
+/** Whether the "II - Adagio" style numerals among a block's [names] count from I upwards, so none is a title like "X - Files Theme". */
+internal fun looseNumeralsFormRun(names: List<String>, work: String?): Boolean {
+    val values = names.mapNotNull { name ->
+        val token = splitMovementName(name, work, looseNumerals = true).second
+        if (token.isNotEmpty() && splitMovementName(name, work, looseNumerals = false).second.isEmpty()) numeralValue(token) else null
+    }
+    return values.withIndex().all { (index, value) -> value == index + 1 }
+}
 
 /** Whether [cleanName] starts with its own label (Var., No., Nr., Aria, Thema, Coda, Act/Akt, Scene), which replaces the numeral. */
 fun hasOwnLabel(cleanName: String): Boolean = ownLabel.containsMatchIn(cleanName.trim())
