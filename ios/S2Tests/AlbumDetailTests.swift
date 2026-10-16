@@ -17,7 +17,7 @@ struct AlbumDetailTests {
             externalId: nil, mediaProvider: .shuttle, replayGainTrack: nil, replayGainAlbum: nil, lyrics: nil,
             grouping: nil, bitRate: nil, bitDepth: nil, sampleRate: nil, channelCount: nil, audioCodec: nil,
             artworkVersion: nil, artworkItemId: nil, dateAdded: nil, favouritedAt: nil, albumArtists: nil, artistsTag: nil,
-            artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil, mbReleaseGroupId: nil,
+            artistDisplay: nil, albumArtistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil, mbReleaseGroupId: nil,
             mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil, composer: nil, composerSort: nil, conductor: nil, arranger: nil,
             work: nil, movementName: nil, movementNumber: nil, movementTotal: nil, showMovement: nil, performers: []
