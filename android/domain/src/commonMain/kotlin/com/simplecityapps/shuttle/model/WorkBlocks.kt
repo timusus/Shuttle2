@@ -70,11 +70,16 @@ private fun Song.titlePrefix(): String? {
     return title.substring(0, at).trim().takeIf { it.isNotEmpty() }
 }
 
-private fun runKey(song: Song): String? {
-    val composer = song.cleanComposer()?.let(::composerSurnameKey).orEmpty()
-    song.cleanWork()?.let { return "w:${it.normalised()}|$composer" }
+// Consecutive songs share a run when kind and work match and the composer tags name one person.
+private class RunKey(val work: String, val composer: String?) {
+    fun matches(other: RunKey) = work == other.work && sameComposer(composer, other.composer)
+}
+
+private fun runKey(song: Song): RunKey? {
+    val composer = song.cleanComposer()
+    song.cleanWork()?.let { return RunKey("w:${it.normalised()}", composer) }
     val prefix = song.titlePrefix() ?: return null
-    return if (composer.isEmpty() && !isStrongWorkPrefix(listOf(song), prefix)) null else "i:${prefix.normalised()}|$composer"
+    return if (composer == null && !isStrongWorkPrefix(listOf(song), prefix)) null else RunKey("i:${prefix.normalised()}", composer)
 }
 
 internal val formWords = Regex(
@@ -116,7 +121,7 @@ private fun findRuns(songs: List<Song>): List<Run> {
     while (start < songs.size) {
         val key = runKey(songs[start])
         var end = start
-        while (key != null && end + 1 < songs.size && runKey(songs[end + 1]) == key) end++
+        while (key != null && end + 1 < songs.size && runKey(songs[end + 1])?.let(key::matches) == true) end++
         val first = songs[start]
         val tagged = first.cleanWork()
         val prefix = if (tagged == null) first.titlePrefix() else null
