@@ -137,6 +137,13 @@
     <string name="artist_detail_album_collapsed">Collapsed</string>
     <string name="album_detail_more_by_artist">More by this artist</string>
     <string name="album_detail_more_by">More by <xliff:g example="Artist name" id="artist">%1$s</xliff:g></string>
+    <!-- Classical album page: opens the other albums in the library that hold a recording of this work; the number is how many albums -->
+    <plurals name="album_detail_other_recordings">
+        <item quantity="one">Other recordings (<xliff:g example="1" id="count">%1$d</xliff:g>)</item>
+        <item quantity="other">Other recordings (<xliff:g example="3" id="count">%1$d</xliff:g>)</item>
+    </plurals>
+    <!-- Other recordings list: an album's line under its title, the lead performer then the release year, such as "Ines Varga · 1998" -->
+    <string name="album_detail_other_recording_credit"><xliff:g example="Ines Varga" id="performer">%1$s</xliff:g> · <xliff:g example="1998" id="year">%2$s</xliff:g></string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->
     <string name="detail_shuffle_albums">Shuffle albums</string>
     <!-- Snackbar shown when Shuffle albums couldn't start playback -->

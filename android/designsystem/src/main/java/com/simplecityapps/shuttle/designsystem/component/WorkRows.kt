@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
@@ -49,7 +51,8 @@ private val NumeralColumn = 32.dp
  * A classical work on an album page: its [title], a [detail] line (key, catalogue, arrangement), an optional [credits]
  * line and a [meta] summary ("4 movements · 31:20") on the right. The play button plays the whole work; tapping the row
  * runs [onClick] (a collapse toggle, for a [collapsed] of non-null) and long-pressing it [onLongClick]. [playing] tints the
- * title while one of its movements is the current song.
+ * title while one of its movements is the current song. A non-null [otherRecordings] label ("Other recordings (3)") shows
+ * under the credits and runs [onOtherRecordings].
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -64,6 +67,8 @@ fun WorkHeaderRow(
     collapsed: Boolean? = null,
     playing: Boolean = false,
     onLongClick: (() -> Unit)? = null,
+    otherRecordings: String? = null,
+    onOtherRecordings: () -> Unit = {},
 ) {
     Row(
         modifier = modifier
@@ -84,6 +89,16 @@ fun WorkHeaderRow(
             )
             listOfNotNull(detail, credits).forEach {
                 Text(it, style = MaterialTheme.typography.rowSubtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            if (otherRecordings != null) {
+                Text(
+                    otherRecordings,
+                    modifier = Modifier.clickable(onClick = onOtherRecordings).defaultMinSize(minHeight = 32.dp).wrapContentHeight(Alignment.CenterVertically),
+                    style = MaterialTheme.typography.rowSubtitle,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
         Text(meta, style = MaterialTheme.typography.rowMeta, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -182,7 +197,7 @@ fun MovementRow(
 private fun WorkRowsPreview() {
     S2Preview {
         Column {
-            WorkHeaderRow(title = "Sonata No. 3", detail = "C minor · Op. 10", meta = "3 movements · 24:10", credits = "Ines Varga", onPlay = {}, onClick = {})
+            WorkHeaderRow(title = "Sonata No. 3", detail = "C minor · Op. 10", meta = "3 movements · 24:10", credits = "Ines Varga", otherRecordings = "Other recordings (2)", onPlay = {}, onClick = {})
             MovementRow(numeral = "I", name = "Allegro", duration = "8:02", trackNumber = 1, onClick = {})
             MovementRow(numeral = "II", name = "Adagio", duration = "9:30", trackNumber = 2, playing = true, onClick = {})
             MovementRow(numeral = "III", name = "Finale", duration = "6:38", trackNumber = 3, onClick = {})

@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
+import com.simplecityapps.shuttle.model.FindOtherRecordings
 import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -251,6 +252,18 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `a work header counts the other albums that hold the same work`() = runTest {
+        fun movement(id: Long, album: String) = createSong(id = id, name = "Allegro", album = album, albumArtist = "The Tin Orchards").copy(composer = "Ludwig Harrow", composerSort = "Harrow, Ludwig", work = "Sonata No. 3, Op. 10", genres = listOf("Classical"))
+        fakeSongRepository.setSongs(listOf(movement(1, "Cassette Summer"), movement(2, "Porch Light"), movement(3, "Tape Hiss")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        (viewModel.uiState.value.rows!!.rows.first() as AlbumRow.WorkHeader).otherRecordings shouldBe 2
+    }
+
+    @Test
     fun `no rows once Classical display is switched off or when the album has no works`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song")))
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
@@ -421,6 +434,7 @@ class AlbumDetailViewModelTest {
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             observeSetting = ObserveSetting(settingsStore),
+            findOtherRecordings = FindOtherRecordings(),
         )
     }
 }

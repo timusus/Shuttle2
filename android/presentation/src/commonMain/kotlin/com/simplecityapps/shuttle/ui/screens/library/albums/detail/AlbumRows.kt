@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import com.simplecityapps.shuttle.model.AlbumItem
+import com.simplecityapps.shuttle.model.OtherRecording
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.WorkBlock
 import com.simplecityapps.shuttle.model.albumCreditsLine
@@ -39,6 +40,8 @@ sealed interface AlbumRow {
         val collapsed: Boolean,
         val songs: List<Song>,
         val playing: Boolean,
+        /** How many other albums in the library hold a recording of this work; the header offers them when above zero. */
+        val otherRecordings: Int = 0,
     ) : AlbumRow {
         override val key get() = "work-${songs.first().id}"
 
@@ -73,9 +76,9 @@ data class AlbumRows(
 
 /**
  * Groups [songs] into works and flattens them to rows. [toggled] holds the works (by first song id) whose collapse state
- * the user flipped from the default.
+ * the user flipped from the default. [otherRecordings] is keyed by a work's first song id, as FindOtherRecordings returns it.
  */
-fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?, toggled: Set<Long>): AlbumRows? {
+fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?, toggled: Set<Long>, otherRecordings: Map<Long, List<OtherRecording>> = emptyMap()): AlbumRows? {
     val items = groupWorks(songs)
     val blocks = items.filterIsInstance<AlbumItem.Work>().map { it.block }
     if (blocks.isEmpty()) return null
@@ -140,6 +143,7 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
                     collapsed = collapsed,
                     songs = block.songs,
                     playing = block.songs.any { it.id == currentSongId },
+                    otherRecordings = otherRecordings[first.id]?.size ?: 0,
                 )
                 if (!collapsed) {
                     block.movements.forEachIndexed { index, movement ->

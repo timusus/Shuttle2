@@ -18,31 +18,50 @@ data class OtherRecording(
 
 /**
  * Other recordings of a work in the library, one per album and never the work's own album. A song belongs to the same
- * work when its composer is the same person and either the catalogue reference (Op. 67, BWV 1041) or the whole work
- * title is the same, ignoring case, punctuation and diacritics. The library is read once per call, so one call serves
- * every work of an album.
+ * work when it passes the strict classical test, its composer is the same person and either the catalogue reference
+ * (Op. 67, BWV 1041) or the whole work title is the same, ignoring case, punctuation and diacritics. The library is
+ * read once per call, so one call serves every work of an album; a work that isn't strictly classical finds nothing.
  *
  * Songs carry no MusicBrainz work id, so that tier of matching does not exist yet.
  */
 @Inject
 class FindOtherRecordings {
+    private class Candidate(val song: Song, val composer: String, val work: String)
+
     /** The recordings of each of [works], keyed by the id of the work's first song; a work with none is absent. */
     operator fun invoke(works: List<WorkBlock>, library: List<Song>): Map<Long, List<OtherRecording>> {
         if (works.isEmpty()) return emptyMap()
         val bySurname = library
-            .filter { !it.composer.isNullOrBlank() && it.workName() != null }
-            .groupBy { composerSurnameKey(it.composer.orEmpty()).foldDiacritics() }
+            .mapNotNull { song ->
+                val composer = song.composer?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                if (!listOf(song).isClassicalBlock()) return@mapNotNull null
+                Candidate(song, composer.foldDiacritics(), song.workName() ?: return@mapNotNull null)
+            }
+            .groupBy { composerSurnameKey(it.composer) }
         return works.mapNotNull { work ->
-            val composer = work.composer ?: return@mapNotNull null
-            val own = work.songs.first().albumGroupKey
+            val composer = work.composer?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            if (!work.songs.isClassicalBlock()) return@mapNotNull null
+            val first = work.songs.first()
+            val own = first.albumGroupKey
+            val ownAlbum = first.album.orEmpty().normalised()
+            val ownYear = first.date?.year
+            val ownMovements = work.songs.mapTo(HashSet()) { it.name.orEmpty().normalised() }
             val identity = WorkIdentity(work.work)
-            val recordings = bySurname[composerSurnameKey(composer).foldDiacritics()].orEmpty()
-                .filter { song ->
-                    song.albumGroupKey != own &&
-                        sameComposer(song.composer?.foldDiacritics(), composer.foldDiacritics()) &&
-                        identity.matches(song.workName().orEmpty())
+            val recordings = bySurname[composerSurnameKey(composer.foldDiacritics())].orEmpty()
+                .filter { candidate ->
+                    candidate.song.albumGroupKey != own &&
+                        sameComposer(candidate.composer, composer.foldDiacritics()) &&
+                        identity.matches(candidate.work)
                 }
+                .map { it.song }
                 .groupBy { it.albumGroupKey }
+                .filterValues { songs ->
+                    // The same album imported twice (local and streaming copy, or split by album artist) has another group key
+                    val copy = songs.first().album.orEmpty().normalised() == ownAlbum &&
+                        songs.first().date?.year == ownYear &&
+                        songs.mapTo(HashSet()) { it.name.orEmpty().normalised() } == ownMovements
+                    !copy
+                }
                 .map { (key, songs) ->
                     val ordered = songs.sortedWith(compareBy({ it.disc ?: 1 }, { it.track ?: 0 }))
                     OtherRecording(key, ordered.first().album, ordered.first().albumArtist, ordered)

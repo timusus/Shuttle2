@@ -8,8 +8,12 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
+import com.simplecityapps.shuttle.model.AlbumItem
+import com.simplecityapps.shuttle.model.FindOtherRecordings
+import com.simplecityapps.shuttle.model.OtherRecording
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.groupWorks
 import com.simplecityapps.shuttle.model.isClassicalBlock
 import com.simplecityapps.shuttle.model.performersLine
 import com.simplecityapps.shuttle.model.playContext
@@ -30,6 +34,7 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +44,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -60,6 +66,8 @@ data class AlbumDetailUiState(
     val classical: Boolean = false,
     /** The classical page's rows; null when classical display is off or the album has no work blocks, which then render as plain songs. */
     val rows: AlbumRows? = null,
+    /** Other albums' recordings of each of this album's works, by the work's first song id; works with none are absent. */
+    val otherRecordings: Map<Long, List<OtherRecording>> = emptyMap(),
 ) {
     // Swift sees no default arguments.
     constructor(
@@ -71,7 +79,7 @@ data class AlbumDetailUiState(
         moreByArtist: List<Album>,
         moreByArtistNames: List<String>,
         classical: Boolean,
-    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null)
+    ) : this(album, songs, currentSong, loadingState, seed, moreByArtist, moreByArtistNames, classical, null, emptyMap())
 
     /** The first conductor or performer credit among the songs, for the subtitle; null when classical display is off, the songs aren't a classical block or none is tagged. */
     val performers: String? get() = if (classical && songs.isClassicalBlock()) songs.firstNotNullOfOrNull { it.performersLine() } else null
@@ -94,6 +102,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
     observeSetting: ObserveSetting,
+    private val findOtherRecordings: FindOtherRecordings,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -157,13 +166,33 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private class Extras(val moreByArtist: List<Album>, val moreByArtistNames: List<String>, val classical: Boolean, val grouped: Grouped)
 
     /** The rows with the songs they were built from: row play indices point into these, so the screen must play from this list. */
-    private class Grouped(val songs: List<Song>, val rows: AlbumRows?)
+    private class Grouped(val songs: List<Song>, val rows: AlbumRows?, val otherRecordings: Map<Long, List<OtherRecording>>)
 
     private val classicalDisplay = observeSetting(AppearanceSettings.ClassicalDisplay)
 
+    /**
+     * Found once per change to the album's works or the library, off the main thread, never per row. Starts empty so the
+     * Ready state never waits on the library scan. The library is only read while classical display is on and the album
+     * has a strictly classical work, so a pop library is never loaded for its albums.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val otherRecordings: Flow<Map<Long, List<OtherRecording>>> = combine(songs, classicalDisplay.distinctUntilChanged()) { albumSongs, classical ->
+        if (classical) groupWorks(albumSongs).filterIsInstance<AlbumItem.Work>().map { it.block }.filter { it.songs.isClassicalBlock() } else emptyList()
+    }
+        .distinctUntilChanged()
+        .flatMapLatest { works ->
+            if (works.isEmpty()) {
+                flowOf(emptyMap())
+            } else {
+                observeSongs().map { library -> findOtherRecordings(works, library) }.flowOn(Dispatchers.Default)
+            }
+        }
+        .distinctUntilChanged()
+        .onStart { emit(emptyMap()) }
+
     /** The grouping, worked out once per change to the songs, album or settings; a song change in the player leaves it alone. */
-    private val groupedRows: Flow<Grouped> = combine(songs, album, classicalDisplay, toggledWorks) { songs, album, classical, toggled ->
-        Grouped(songs, if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, null, toggled) else null)
+    private val groupedRows: Flow<Grouped> = combine(songs, album, classicalDisplay, toggledWorks, otherRecordings) { songs, album, classical, toggled, otherRecordings ->
+        Grouped(songs, if (classical) buildAlbumRows(songs, album?.albumArtist ?: album?.friendlyArtistName, null, toggled, otherRecordings) else null, otherRecordings)
     }
 
     private fun AlbumRows.withPlaying(songId: Long?): AlbumRows {
@@ -203,6 +232,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             moreByArtistNames = extras.moreByArtistNames.ifEmpty { listOfNotNull(album?.albumArtist?.takeIf { it.isNotBlank() }) },
             classical = extras.classical,
             rows = extras.grouped.rows?.withPlaying(currentSong?.id),
+            otherRecordings = extras.grouped.otherRecordings,
         )
     }.stateIn(
         scope = viewModelScope,

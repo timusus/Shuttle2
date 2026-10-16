@@ -5,8 +5,12 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
+import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
@@ -61,6 +65,7 @@ fun AlbumDetailScreen(
     onPlayWork: (songs: List<Song>) -> Unit = {},
     onToggleWork: (firstSongId: Long) -> Unit = {},
     onWorkMore: (title: String, songs: List<Song>) -> Unit = { _, _ -> },
+    onOtherRecordings: (firstSongId: Long) -> Unit = {},
 ) {
     val album = uiState.album
     val state = when {
@@ -97,7 +102,7 @@ fun AlbumDetailScreen(
         ) {
             val rows = uiState.rows
             if (rows != null) {
-                classicalRows(rows.rows, album, songs, onPlay, onPlayWork, onToggleWork, onWorkMore, onSongMore)
+                classicalRows(rows.rows, album, songs, onPlay, onPlayWork, onToggleWork, onWorkMore, onOtherRecordings, onSongMore)
             } else {
                 val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
                 discs.forEach { (disc, discSongs) ->
@@ -142,6 +147,7 @@ private fun LazyListScope.classicalRows(
     onPlayWork: (songs: List<Song>) -> Unit,
     onToggleWork: (firstSongId: Long) -> Unit,
     onWorkMore: (title: String, songs: List<Song>) -> Unit,
+    onOtherRecordings: (firstSongId: Long) -> Unit,
     onSongMore: (Song) -> Unit,
 ) {
     items(rows, key = { it.key }, contentType = { it::class }) { row ->
@@ -167,6 +173,8 @@ private fun LazyListScope.classicalRows(
                     }
                 },
                 onLongClick = { onWorkMore(row.title, row.songs) },
+                otherRecordings = if (row.otherRecordings > 0) pluralString(R.plurals.album_detail_other_recordings, row.otherRecordings) else null,
+                onOtherRecordings = { onOtherRecordings(row.songs.first().id) },
             )
 
             is AlbumRow.Movement -> MovementRow(
@@ -235,7 +243,17 @@ fun AlbumDetailDestination(
     val resources = LocalResources.current
     val viewModel = assistedMetroViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var recordingsOf by remember { mutableStateOf<Long?>(null) }
     MediaActionsHost(onNavigate = onNavigate) { actions ->
+        val recordings = recordingsOf?.let { uiState.otherRecordings[it] }
+        if (recordingsOf != null && recordings != null) {
+            OtherRecordingsSheet(
+                title = uiState.rows?.rows.orEmpty().filterIsInstance<AlbumRow.WorkHeader>().firstOrNull { it.songs.first().id == recordingsOf }?.title.orEmpty(),
+                recordings = recordings,
+                onOpen = { key -> onOpen(AlbumRoute(key.key, key.albumArtistGroupKey?.key, key.identity)) },
+                onDismissRequest = { recordingsOf = null },
+            )
+        }
         AlbumDetailScreen(
             uiState = uiState,
             onNavigateUp = onNavigateUp,
@@ -246,7 +264,17 @@ fun AlbumDetailDestination(
             },
             onPlayWork = { songs -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), 0, uiState.playContext)) },
             onToggleWork = viewModel::onToggleWork,
-            onWorkMore = { title, songs -> actions.showActions(MediaActionsTarget(title, null, MediaSelection.Songs(songs), ArtworkPlaceholder.Album)) },
+            onWorkMore = { title, songs ->
+                val firstSongId = songs.first().id
+                val count = uiState.otherRecordings[firstSongId]?.size ?: 0
+                val extraActions = if (count > 0) {
+                    listOf(S2Action(resources.getQuantityString(R.plurals.album_detail_other_recordings, count, count), { recordingsOf = firstSongId }, Icons.Rounded.LibraryMusic))
+                } else {
+                    emptyList()
+                }
+                actions.showActions(MediaActionsTarget(title, null, MediaSelection.Songs(songs), ArtworkPlaceholder.Album, extraActions = extraActions))
+            },
+            onOtherRecordings = { recordingsOf = it },
             onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
             onOpenAlbum = { album -> onOpen(album.route) },
