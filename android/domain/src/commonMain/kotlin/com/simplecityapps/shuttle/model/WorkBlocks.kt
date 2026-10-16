@@ -148,11 +148,15 @@ private fun actSections(movements: List<Movement>): List<ActSection> {
 
 private fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albumCredits: String?): WorkBlock {
     val numbering = workNumbering(songs)
+    var previous: Int? = null
     val movements = songs.mapIndexed { index, song ->
         val raw = song.movementName?.trim()?.takeIf { it.isNotEmpty() } ?: song.workParts()?.second ?: song.name.orEmpty()
         val name = cleanMovementName(raw, work)
         val number = song.movementNumber?.takeIf { it >= 1 } ?: movementNumberIn(raw, work) ?: (index + 1)
-        val numeral = if ((songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
+        // A movement split over several tracks ("V. ...", "V. ...") is numbered on its first track only.
+        val repeated = number == previous
+        previous = number
+        val numeral = if (!repeated && (songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
         Movement(song, number, name, numeral)
     }
     val discBreaks = songs.indices.drop(1).mapNotNull { index ->

@@ -180,6 +180,13 @@ class RealAlbumTagsTest {
         val blocks = blocks(mahler())
         blocks.map { it.movementCount } shouldBe listOf(11)
         blocks.single().title.core shouldBe "Symphony no. 2"
+        blocks.single().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV", "V") + List(6) { null }
+        blocks.single().movements.map { it.number } shouldBe listOf(1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5)
+    }
+
+    @Test
+    fun `Yo-Yo Ma numerals come from the titles`() {
+        blocks(yoYoMa()).first().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV", "V", "VI")
     }
 
     @Test
