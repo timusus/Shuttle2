@@ -109,6 +109,39 @@ class WorkBlocksTest {
         groupWorks(songs).all { it is AlbumItem.Track } shouldBe true
     }
 
+    private fun withComposer(composer: String, albumArtist: String, album: String, genres: List<String>, vararg names: String) = names.mapIndexed { i, n ->
+        song(id = i + 1L, name = n, albumArtist = albumArtist, artists = listOf(albumArtist), album = album, genres = genres).copy(composer = composer)
+    }
+
+    @Test
+    fun `a soundtrack with a form word in its title prefix stays ungrouped`() {
+        val massEffect = withComposer("Clint Mansell", "Various Artists", "Mass Effect 3 OST", emptyList(), "Mass Effect - Leaving Earth", "Mass Effect - An End Once and For All")
+        groupWorks(massEffect).all { it is AlbumItem.Track } shouldBe true
+        val requiem = withComposer("Clint Mansell", "Various Artists", "Requiem", listOf("Soundtrack"), "Requiem for a Dream - Summer", "Requiem for a Dream - Winter")
+        groupWorks(requiem).all { it is AlbumItem.Track } shouldBe true
+        val hogwarts = withComposer("John Williams", "Various Artists", "Harry Potter", listOf("Soundtrack; Orchestral"), "Hogwarts: A", "Hogwarts: B")
+        groupWorks(hogwarts).all { it is AlbumItem.Track } shouldBe true
+    }
+
+    @Test
+    fun `a form word alone is not enough but a catalogue number or a credit is`() {
+        val bare = withComposer("Mahler", "Orchestra", "Disc", emptyList(), "Symphony - I", "Symphony - II")
+        groupWorks(bare).all { it is AlbumItem.Track } shouldBe true
+        val catalogue = withComposer("Bach", "Orchestra", "Disc", emptyList(), "Mass, BWV 232: Kyrie", "Mass, BWV 232: Gloria")
+        groupWorks(catalogue).single() shouldBe groupWorks(catalogue).first()
+        (groupWorks(catalogue).single() is AlbumItem.Work) shouldBe true
+        val credited = withComposer("Mahler", "Orchestra", "Disc", emptyList(), "Symphony - I", "Symphony - II").map { it.copy(conductor = "Abbado") }
+        (groupWorks(credited).single() is AlbumItem.Work) shouldBe true
+    }
+
+    @Test
+    fun `an album artist who is the composer still groups with a classical signal`() {
+        val mahler = withComposer("Mahler", "Mahler", "Disc", listOf("Classical"), "Symphony No. 5: I. Trauermarsch", "Symphony No. 5: II. Stürmisch bewegt")
+        (groupWorks(mahler).single() is AlbumItem.Work) shouldBe true
+        val pop = withComposer("Artist", "Artist", "Disc", listOf("Pop"), "Symphony No. 5: One", "Symphony No. 5: Two")
+        groupWorks(pop).all { it is AlbumItem.Track } shouldBe true
+    }
+
     @Test
     fun `a pop queue has no lock screen text work progress or work run`() {
         val queue = popSongs("Hold On - Live", "Hold On - Acoustic")

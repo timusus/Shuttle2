@@ -106,14 +106,22 @@ private fun looksLikeInferredWork(songs: List<Song>, prefix: String): Boolean {
     val first = songs.first()
     val composer = first.cleanComposer() ?: return isStrongWorkPrefix(songs, prefix)
     val albumArtist = first.albumArtist?.trim()
-    if (albumArtist != null && composer.equals(albumArtist, ignoreCase = true)) return false
+    val classicalGenre = songs.any { hasClassicalGenre(it.genres) }
+    val conducted = songs.any { !it.conductor.isNullOrBlank() }
+    if (albumArtist != null && composer.equals(albumArtist, ignoreCase = true) && !classicalGenre && !conducted) return false
     val name = prefix.normalised()
     val credited = songs.flatMap { it.artists + listOfNotNull(it.albumArtist, it.album) }
     if (credited.any { it.normalised() == name }) return false
-    val classicalGenre = songs.any { hasClassicalGenre(it.genres) }
-    val tagged = songs.any { !it.conductor.isNullOrBlank() }
-    return classicalGenre || tagged || parseWorkTitle(prefix).catalogue != null || workNumberRef.containsMatchIn(prefix) || formWords.containsMatchIn(prefix)
+    val catalogue = parseWorkTitle(prefix).catalogue != null
+    val numbered = workNumberRef.containsMatchIn(prefix)
+    // "Mass Effect" in "Mass Effect 3 OST" names the game, unless the prefix carries a catalogue or work number.
+    if (!catalogue && !numbered && songs.any { it.album?.contains(prefix, ignoreCase = true) == true }) return false
+    if (!catalogue && songs.any { song -> song.genres.any { genre -> genre.split(';', '/', ',').any { it.trim().lowercase() in screenGenres } } }) return false
+    val credit = conducted || songs.any { !it.performers.isNullOrEmpty() }
+    return catalogue || numbered || (formWords.containsMatchIn(prefix) && (credit || classicalGenre))
 }
+
+private val screenGenres = setOf("soundtrack", "score", "ost", "game", "film")
 
 private fun findRuns(songs: List<Song>): List<Run> {
     val runs = mutableListOf<Run>()
