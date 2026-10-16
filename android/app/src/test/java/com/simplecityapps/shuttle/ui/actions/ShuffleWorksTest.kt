@@ -15,7 +15,7 @@ class ShuffleWorksTest {
     private val fakeQueueOperations = FakeQueueOperations()
     private val shuffleWorks = ShuffleWorks(fakeQueueOperations, FakePlaybackOperations())
 
-    private fun movement(id: Long, work: String) = createSong(id = id, name = "Movement $id").copy(work = work, composer = "Ludwig Harrow")
+    private fun movement(id: Long, work: String) = createSong(id = id, name = "Movement $id").copy(work = work, composer = "Ludwig Harrow", genres = listOf("Classical"))
 
     @Test
     fun `never splits or reorders a work's movements, whatever the shuffle`() = runTest {

@@ -27,8 +27,6 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.WorkGroup
-import com.simplecityapps.shuttle.model.groupByWorkRuns
 import com.simplecityapps.shuttle.model.isClassical
 import com.simplecityapps.shuttle.model.movementLabel
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -108,25 +106,17 @@ fun AlbumDetailScreen(
                             SectionHeader(title = stringResource(R.string.album_detail_disc, disc))
                         }
                     }
-                    val groups = if (uiState.classical) discSongs.groupByWorkRuns() else listOf(WorkGroup(null, discSongs))
-                    groups.forEach { group ->
-                        if (group.work != null) {
-                            item(key = "work-${group.songs.first().id}", contentType = "work") {
-                                SectionHeader(title = group.work.orEmpty(), subtitle = group.credits)
-                            }
-                        }
-                        items(group.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
-                            SongRow(
-                                title = if (uiState.classical && song.isClassical) song.movementLabel() else song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                                subtitle = song.artistUnlessAlbumArtist(album),
-                                onClick = { onPlay(songs, songs.indexOf(song)) },
-                                trackNumber = song.track,
-                                duration = formatDuration(song.duration.toLong()),
-                                playing = song.id == uiState.currentSong?.id,
-                                offlineState = song.offlineState(),
-                                onMore = { onSongMore(song) },
-                            )
-                        }
+                    items(discSongs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
+                        SongRow(
+                            title = if (uiState.classical && song.isClassical) song.movementLabel() else song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                            subtitle = song.artistUnlessAlbumArtist(album),
+                            onClick = { onPlay(songs, songs.indexOf(song)) },
+                            trackNumber = song.track,
+                            duration = formatDuration(song.duration.toLong()),
+                            playing = song.id == uiState.currentSong?.id,
+                            offlineState = song.offlineState(),
+                            onMore = { onSongMore(song) },
+                        )
                     }
                 }
             }

@@ -20,6 +20,7 @@ fun classicalShellQueue(
             composer = "Harrow",
             composerSort = "Harrow, Ines",
             conductor = "Mira Calder",
+            genres = listOf("Classical"),
             work = "Symphony No. 5 in C minor, Op. 67",
             track = index + 1,
             duration = (4 + index % 3) * 60_000 + 15_000,

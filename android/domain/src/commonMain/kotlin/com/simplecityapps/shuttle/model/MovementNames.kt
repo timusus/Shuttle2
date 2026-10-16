@@ -73,6 +73,15 @@ fun cleanMovementName(name: String, work: String? = null, looseNumerals: Boolean
 /** The movement number a name leads with ("II. Andante" gives 2, after any "Work: " prefix); null when it has none. */
 fun movementNumberIn(name: String, work: String? = null, looseNumerals: Boolean = true): Int? = numeralValue(splitMovementName(name, work, looseNumerals).second)
 
+/** Whether two or more songs are titled as movements numbered I, II, III... of one work ("Work: I. Name"). */
+internal fun List<Song>.hasNumberedMovementTitles(): Boolean {
+    if (size < 2) return false
+    val work = firstNotNullOfOrNull { it.work?.trim()?.takeIf { work -> work.isNotEmpty() } }
+    return withIndex().all { (index, song) ->
+        movementNumberIn(song.movementName?.takeIf { it.isNotBlank() } ?: song.name.orEmpty(), work, looseNumerals = false) == index + 1
+    }
+}
+
 /** Whether the "II - Adagio" style numerals among a block's [names] count from I upwards, so none is a title like "X - Files Theme". */
 internal fun looseNumeralsFormRun(names: List<String>, work: String?): Boolean {
     val values = names.mapNotNull { name ->
@@ -87,7 +96,15 @@ fun hasOwnLabel(cleanName: String): Boolean = ownLabel.containsMatchIn(cleanName
 
 private val voiceWords = setOf("voice", "vocal", "vocals", "singer", "tenor", "soprano", "baritone", "mezzo", "alto", "bass", "countertenor")
 private val instrumentWords = setOf("double", "guitar", "viol", "viola", "saxophone", "sax", "flute", "recorder", "clarinet", "trombone", "tuba", "horn", "oboe", "bassoon")
-private val classicalGenres = setOf("classical", "opera", "baroque", "chamber", "choral", "lieder", "art song", "early music", "orchestral")
+private val classicalGenreWords = listOf("classical", "opera", "baroque", "chamber", "choral", "lieder", "art song", "early music", "orchestral", "symphon", "concerto", "romantic era")
+
+// Matched as word prefixes, so "Alternative Rock", "Hip-Hop", "Dance-Pop", "Synthpop" and "Latin" are all popular.
+private val nonClassicalGenreWords = listOf(
+    "rock", "pop", "jazz", "metal", "folk", "electro", "hip", "hop", "rap", "r&b", "rnb", "soul", "country", "blues", "punk", "indie",
+    "dance", "synth", "latin", "reggae", "funk", "disco", "techno", "house", "alternative", "grunge", "ska", "gospel"
+)
+private val screenGenreWords = listOf("soundtrack", "score")
+private val genreWordSplit = Regex("""[^a-z0-9&]+""")
 private val songGenre = Regex("""\bsongs?\b|lieder|\blied\b""", RegexOption.IGNORE_CASE)
 
 private fun String.words() = lowercase().split(Regex("""[^a-z]+""")).filter { it.isNotEmpty() }
@@ -99,16 +116,19 @@ private fun Performer.isVoice(): Boolean {
 
 private fun List<Song>.isSongGenre() = any { song -> song.genres.any { songGenre.containsMatchIn(it) } }
 
-/** Whether [genres] name a classical genre; "Orchestral Pop" and "Romantic" do not, "Chamber Music" and "Baroque; Vocal" do. */
-internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.any { genre ->
-    genre.split(';', '/', ',').any { token ->
-        token.trim().lowercase().split(Regex("""\s+""")).filter { it != "music" }.joinToString(" ") in classicalGenres
-    }
+private fun List<String>.genreTokens(): List<String> = flatMap { genre -> genre.split(';', '/', ',').map { it.trim().lowercase() } }.filter { it.isNotEmpty() }
+
+private fun String.hasGenreWord(words: List<String>): Boolean = split(genreWordSplit).any { part -> part.isNotEmpty() && words.any { part.startsWith(it) } }
+
+/** Whether [genres] name a classical genre; "Orchestral Pop" and "Romantic" do not, "Chamber Music", "Symphonic" and "Baroque; Vocal" do. */
+internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.genreTokens().any { token ->
+    classicalGenreWords.any { token.contains(it) } && !token.hasGenreWord(nonClassicalGenreWords)
 }
 
-private val popularGenres = setOf("rock", "pop", "jazz", "metal", "folk", "electronic", "hip hop", "rap", "r&b", "soul", "country", "blues", "punk", "indie", "soundtrack", "score")
+/** Whether [genres] name a popular genre; Soundtrack and Score are neutral, since film scores are often orchestral. */
+internal fun hasNonClassicalGenre(genres: List<String>): Boolean = genres.genreTokens().any { it.hasGenreWord(nonClassicalGenreWords) }
 
-private fun Song.hasPopularGenre() = genres.any { genre -> genre.split(';', '/', ',').any { it.trim().lowercase() in popularGenres } }
+private fun Song.hasPopularGenre() = hasNonClassicalGenre(genres) || genres.genreTokens().any { it.hasGenreWord(screenGenreWords) }
 
 private fun Song.composerIsAlbumArtist(): Boolean {
     val composer = composer?.trim()?.takeIf { it.isNotEmpty() } ?: return true

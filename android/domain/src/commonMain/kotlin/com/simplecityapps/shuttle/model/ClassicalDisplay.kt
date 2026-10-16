@@ -1,11 +1,22 @@
 package com.simplecityapps.shuttle.model
 
-/**
- * Whether the song's tags say it is a movement of a work. Genre and composer alone never count (a pop song can credit a
- * composer), and titles are never split on ":".
- */
+/** Whether the song carries movement tags. A work tag alone never counts (Picard writes one for pop songs), and titles are never split on ":". */
 val Song.isClassical: Boolean
-    get() = !work.isNullOrBlank() || !movementName.isNullOrBlank() || showMovement == true
+    get() = !movementName.isNullOrBlank() || (movementNumber ?: 0) >= 1 || showMovement == true
+
+private fun Song.hasClassicalSignal(): Boolean = isClassical || !conductor.isNullOrBlank() || hasClassicalGenre(genres) ||
+    listOfNotNull(work, name, album).any { catalogueSearchKeys(it).isNotEmpty() }
+
+/**
+ * The one test every classical surface applies before treating [this] (one work's songs, or an album) as classical:
+ * some song has movement tags, a conductor, a classical genre or a catalogue key, and none has a popular genre; or the
+ * titles number the movements from I ("Atom Heart Mother: I. ..."), which a plain pop album's titles never do. A
+ * composer and work tag alone are not enough.
+ */
+fun List<Song>.isClassicalBlock(): Boolean = (any { it.hasClassicalSignal() } && none { hasNonClassicalGenre(it.genres) }) || hasNumberedMovementTitles()
+
+/** Whether a lone song, tagged with a work, gets the movement-and-work wording of the player surfaces. */
+internal fun Song.isClassicalWork(): Boolean = isClassical || (!work.isNullOrBlank() && listOf(this).isClassicalBlock())
 
 /** "IV. Allegro", or just the name without a number. Without a name, the title minus a leading "{work}: " / "{work} - ". */
 fun Song.movementLabel(): String {

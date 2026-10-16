@@ -6,8 +6,9 @@ import kotlin.test.Test
 
 class ClassicalDisplayTest {
     @Test
-    fun `a work or a movement name or show movement makes a song classical`() {
-        song(id = 1).copy(work = "Symphony No. 5").isClassical shouldBe true
+    fun `a movement tag makes a song classical but a work tag alone does not`() {
+        song(id = 1).copy(work = "Symphony No. 5").isClassical shouldBe false
+        song(id = 1).copy(movementNumber = 2).isClassical shouldBe true
         song(id = 1).copy(movementName = "Allegro").isClassical shouldBe true
         song(id = 1).copy(showMovement = true).isClassical shouldBe true
     }

@@ -143,7 +143,8 @@ internal fun findRuns(songs: List<Song>): List<Run> {
         val first = songs[start]
         val tagged = first.cleanWork()
         val prefix = if (tagged == null) first.titlePrefix() else null
-        val grouped = end > start && (tagged != null || (prefix != null && looksLikeInferredWork(songs.slice(start..end), prefix)))
+        val block = songs.slice(start..end)
+        val grouped = end > start && block.isClassicalBlock() && (tagged != null || (prefix != null && looksLikeInferredWork(block, prefix)))
         if (grouped) {
             runs += Run(start..end, tagged ?: prefix, inferred = tagged == null)
         } else {
@@ -297,7 +298,7 @@ data class LockScreenText(val title: String, val artist: String?)
 fun lockScreenText(queue: List<Song>, index: Int, library: Collection<ComposerName> = emptyList()): LockScreenText? {
     val song = queue.getOrNull(index) ?: return null
     val run = runAround(queue, index)
-    if (run.work == null && !song.isClassical) return null
+    if (run.work == null && !song.isClassicalWork()) return null
     val songs = queue.slice(run.range)
     val work = run.work ?: song.cleanWork()
     val block = buildBlock(songs, work.orEmpty(), run.inferred, null)

@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.ArtistHeroArtwork
+import com.simplecityapps.shuttle.model.Performer
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -163,7 +164,12 @@ class AlbumDetailViewModelTest {
 
     @Test
     fun `a classical album names its conductor as performers while Classical display is on`() = runTest {
-        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Allegro").copy(work = "Sonata No. 3", conductor = "Ines Varga")))
+        fakeSongRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Allegro", track = 1).copy(work = "Sonata No. 3", conductor = "Ines Varga"),
+                createSong(id = 2, name = "Andante", track = 2).copy(work = "Sonata No. 3", conductor = "Ines Varga")
+            )
+        )
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
@@ -174,8 +180,25 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `a rock album with grouping tags and performer credits renders as with Classical display off`() = runTest {
+        val songs = (1..12).map { n ->
+            createSong(id = n.toLong(), name = "Track $n", track = n)
+                .copy(work = "Favourites", genres = listOf("Rock"), performers = listOf(Performer(name = "Jane Doe", role = "guitar")))
+        }
+        fakeSongRepository.setSongs(songs)
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.classical shouldBe true
+        viewModel.uiState.value.rows shouldBe null
+        viewModel.uiState.value.performers shouldBe null
+    }
+
+    @Test
     fun `a classical album gets work rows and toggling a work flips its collapse`() = runTest {
-        val songs = (1..2).flatMap { work -> (1..21).map { n -> createSong(id = work * 100L + n, name = "Part $n").copy(work = "Suite No. $work", track = n) } }
+        val songs = (1..2).flatMap { work -> (1..21).map { n -> createSong(id = work * 100L + n, name = "Part $n").copy(work = "Suite No. $work", conductor = "Ines Varga", track = n) } }
         fakeSongRepository.setSongs(songs)
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
         val viewModel = createViewModel()
