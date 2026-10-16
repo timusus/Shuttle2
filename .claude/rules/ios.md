@@ -143,7 +143,8 @@ on compact and a form sheet otherwise, presented from `ContentView`.
 - `import Shared`. Domain types keep their names (`Song`, `Album`) because `:android:domain` is `export`ed; a module
   that's only a dependency would appear as prefixed copies instead.
 - A Kotlin `StateFlow<T>` arrives as `SkieSwiftStateFlow<T>`. Observe it with `Observing(flow) { value in ... }`.
-  `.value` is for tests and non-view code only; view code never reads it (R9).
+  `.value` is for tests and non-view code only; view code never reads it (R9). Tests target the content view
+  (`LibraryView` / `SongList`), though ViewInspector can also render through `Observing`.
 - **Screen view models come from `ViewModelCache.shared`**, keyed by screen and argument (`"album:42"`), never stored
   straight off the graph: a SwiftUI view struct is re-initialised on every parent body, so a fresh view model per init
   restarts every flow `Observing` is keyed on. Clear entries when their route leaves the path (`remove`/`retainOnly`).
