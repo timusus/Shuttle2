@@ -208,10 +208,27 @@ class RealAlbumTagsTest {
     @Test
     fun `Mahler credits come from the album artist when no conductor or performer is tagged`() {
         val songs = mahler()
-        val expected = "Arleen Augér · Janet Baker · CBSO Chorus · City of Birmingham Symphony Orchestra · Simon Rattle"
+        val expected = "Simon Rattle · City of Birmingham Symphony Orchestra · Arleen Augér · Janet Baker · CBSO Chorus"
         albumCreditsLine(songs) shouldBe expected
         nowPlayingWork(songs, 2)!!.performers shouldBe expected
-        nowPlayingWork(songs, 2)!!.miniSubtitle shouldBe "III. In ruhig fliessender Bewegung · Arleen Augér"
+        nowPlayingWork(songs, 2)!!.miniSubtitle shouldBe "III. In ruhig fliessender Bewegung · Simon Rattle"
+        songs.first().leadPerformer() shouldBe "Simon Rattle"
+    }
+
+    @Test
+    fun `a sort-form name in the album artist is one credit shown given name first`() {
+        val songs = mahler(albumArtist = "Mahler; Baker, Janet; Rattle, Simon")
+        albumCreditsLine(songs) shouldBe "Janet Baker · Simon Rattle"
+        albumCreditsLine(mahler(albumArtist = "Mahler; Baker, Janet / Rattle, Simon")) shouldBe "Janet Baker · Simon Rattle"
+        albumCreditsLine(mahler(albumArtist = "Mahler; Janet Baker & Simon Rattle")) shouldBe "Janet Baker · Simon Rattle"
+        albumCreditsLine(mahler(albumArtist = "Mahler; Janet Baker, Simon Rattle")) shouldBe "Janet Baker · Simon Rattle"
+    }
+
+    @Test
+    fun `a soloist alone with no ensemble keeps the tag order`() {
+        val songs = mahler(albumArtist = "Mahler; Yo-Yo Ma")
+        albumCreditsLine(songs) shouldBe "Yo-Yo Ma"
+        songs.first().leadPerformer() shouldBe "Yo-Yo Ma"
     }
 
     @Test

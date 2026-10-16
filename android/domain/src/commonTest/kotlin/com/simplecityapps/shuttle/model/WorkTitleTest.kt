@@ -48,6 +48,14 @@ class WorkTitleTest {
     }
 
     @Test
+    fun `abbreviation case edge cases`() {
+        parseWorkTitle("Symphonies nos. 5 & 7") shouldBe title("Symphonies Nos. 5 & 7")
+        parseWorkTitle("Symphony No. 9, op. posth.") shouldBe title("Symphony No. 9, op. posth.")
+        parseWorkTitle("No. 1 Hits") shouldBe title("No. 1 Hits")
+        parseWorkTitle("Sonata in D, d. 850") shouldBe title("Sonata in D, d. 850")
+    }
+
+    @Test
     fun `a comma tail is a nickname only when it is a single capitalised word`() {
         parseWorkTitle("Symphony No. 5, Part 1") shouldBe title("Symphony No. 5, Part 1")
         parseWorkTitle("Suite No. 2, Prelude") shouldBe title("Suite No. 2, Prelude")

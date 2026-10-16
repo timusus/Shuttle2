@@ -120,13 +120,35 @@ private fun Performer.voice(): String? {
     return if (role.endsWith(" vocals")) role.removeSuffix(" vocals").takeIf { it in voiceTypes } else role.takeIf { it in unambiguousVoices }
 }
 
-// A singer leads the credits, ahead of the accompanist.
+private val ensembleName = Regex("""\b(?:orchestr|philharmoni|symphon|sinfonia|ensemble|chor|choir|quartet|trio|consort|kammer|staatskapelle|academy|players|baroque|camerata)""", RegexOption.IGNORE_CASE)
+private val choirName = Regex("""\b(?:chor|choir)""", RegexOption.IGNORE_CASE)
+
+// "Baker, Janet" is one person; "Arleen Augér, Janet Baker, CBSO Chorus" is a list. A sort-form name is a one-word surname before one or two forenames.
+private fun splitCredit(text: String): List<String> {
+    val pieces = text.split(',').map { it.trim() }
+    val sortForm = pieces.size == 2 && pieces.none(ensembleName::containsMatchIn) &&
+        pieces[0].split(' ').size == 1 && pieces[1].split(' ').size in 1..2 && pieces.none { it.isEmpty() }
+    return if (sortForm) listOf("${pieces[1]} ${pieces[0]}") else pieces
+}
+
+// Without roles the MusicBrainz classical convention applies: soloists, then ensembles, then the conductor.
+// Ensembles with a person after them make that person the conductor, who then leads, followed by the orchestra.
+private fun List<Performer>.conductorFirst(): List<Performer> {
+    val last = lastOrNull() ?: return this
+    if (size < 2 || ensembleName.containsMatchIn(last.name) || none { ensembleName.containsMatchIn(it.name) }) return this
+    val rest = dropLast(1)
+    val (choirs, orchestras) = rest.filter { ensembleName.containsMatchIn(it.name) }.partition { choirName.containsMatchIn(it.name) }
+    val others = rest.filter { !ensembleName.containsMatchIn(it.name) }
+    return listOf(Performer(last.name, "conductor")) + orchestras + others + choirs
+}
+
 // Taggers that only write ARTIST and ALBUMARTIST put the performers after the composer ("Mahler; Janet Baker, Simon Rattle"), with no roles.
 private fun Song.untaggedCredits(): List<Performer> {
     if (!conductor.isNullOrBlank() || !performers.isNullOrEmpty() || !hasClassicalGenre(genres)) return emptyList()
     val composer = composer?.trim()?.takeIf { it.isNotEmpty() } ?: return emptyList()
-    val fromAlbumArtist = albumArtist.orEmpty().split(';').filter { it.isNotBlank() && !sameComposer(it.trim(), composer) }.flatMap { it.split(',') }
-    return (artists + fromAlbumArtist).map { it.trim() }.filter { it.isNotEmpty() && !sameComposer(it, composer) }.distinct().map { Performer(it) }
+    val fromAlbumArtist = albumArtist.orEmpty().split(';').filter { it.isNotBlank() && !sameComposer(it.trim(), composer) }
+        .flatMap { it.split("/", " & ") }.flatMap(::splitCredit)
+    return (artists + fromAlbumArtist).map { it.trim() }.filter { it.isNotEmpty() && !sameComposer(it, composer) }.distinct().map { Performer(it) }.conductorFirst()
 }
 
 private fun Song.credited() = performers.orEmpty().ifEmpty { untaggedCredits() }
@@ -135,14 +157,17 @@ private fun Song.soloists() = credited().filter { !it.isConductor() && !it.isEns
 
 private fun Song.ensembles() = credited().filter { !it.isConductor() && it.isEnsemble() && it.name.isNotBlank() }
 
-private fun Song.conductorName() = conductor?.trim()?.takeIf { it.isNotEmpty() } ?: performers.orEmpty().firstOrNull { it.isConductor() }?.name?.trim()?.takeIf { it.isNotEmpty() }
+private fun Song.conductorName() = conductor?.trim()?.takeIf { it.isNotEmpty() } ?: credited().firstOrNull { it.isConductor() }?.name?.trim()?.takeIf { it.isNotEmpty() }
 
 /** The soloist, else the conductor, else the ensemble; null when the tags name none. */
 fun Song.leadPerformer(): String? = soloists().firstOrNull()?.name?.trim() ?: conductorName() ?: ensembles().firstOrNull()?.name?.trim()
 
 /** "Soloist, instrument · Ensemble · Conductor"; null when the tags name none. */
 fun Song.creditsLine(): String? {
-    val parts = soloists().map { "${it.name.trim()}, ${it.voice() ?: it.cleanRole()}" } + ensembles().map { it.name.trim() } + listOfNotNull(conductorName())
+    val soloists = soloists().map { "${it.name.trim()}, ${it.voice() ?: it.cleanRole()}" }
+    val ensembles = ensembles().map { it.name.trim() }
+    // Credits read from ARTIST tags put the conductor first, ahead of the orchestra.
+    val parts = if (performers.isNullOrEmpty() && conductor.isNullOrBlank()) listOfNotNull(conductorName()) + soloists + ensembles else soloists + ensembles + listOfNotNull(conductorName())
     return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 
