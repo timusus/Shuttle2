@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -93,8 +94,8 @@ fun S2WorkRibbon(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
-                .clickable(onClickLabel = openListLabel, role = Role.Button, onClick = onOpenList)
-                .padding(top = S2Spacing.xsmall),
+                .minimumInteractiveComponentSize()
+                .clickable(onClickLabel = openListLabel, role = Role.Button, onClick = onOpenList),
         )
     }
 }
