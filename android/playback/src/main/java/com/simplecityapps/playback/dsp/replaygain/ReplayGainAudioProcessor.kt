@@ -17,6 +17,7 @@ import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.workRunKey
 import java.nio.ByteBuffer
 import timber.log.Timber
 
@@ -113,7 +114,7 @@ class ReplayGainAudioProcessor(
         // doesn't identify an item (a bare flush()) keeps the current stream's gain.
         val item = streamMetadata.mediaItem() ?: return
         streamReplayGain = (item.localConfiguration?.tag as? QueueEntry)?.replayGain
-        streamInWork = albumGainForWorks && isWorkMovement(streamMetadata)
+        streamInWork = mode == ReplayGainMode.Track && albumGainForWorks && isWorkMovement(streamMetadata)
         Timber.d("ReplayGain for ${item.localConfiguration?.uri?.lastPathSegment}: $streamReplayGain, ${gain}dB")
     }
 
@@ -141,17 +142,25 @@ internal fun isWorkMovementAt(
 ): Boolean {
     val window = Timeline.Window()
     fun songAt(i: Int): Song = timeline.getWindow(i, window).mediaItem.queueEntry.song
+    val song = songAt(index)
+    // Only the songs sharing this one's work key can join its run, so the walk stops at the first that doesn't.
+    val key = workRunKey(song)
+    if (song.replayGainAlbum == null || key == null) return false
     val before = ArrayDeque<Song>()
     var i = timeline.getPreviousWindowIndex(index, Player.REPEAT_MODE_OFF, shuffled)
     while (i != C.INDEX_UNSET) {
-        before.addFirst(songAt(i))
+        val neighbour = songAt(i)
+        if (workRunKey(neighbour) != key) break
+        before.addFirst(neighbour)
         i = timeline.getPreviousWindowIndex(i, Player.REPEAT_MODE_OFF, shuffled)
     }
-    val songs = before + songAt(index)
+    val queue = before.toMutableList()
+    queue += song
     i = timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, shuffled)
-    val queue = songs.toMutableList()
     while (i != C.INDEX_UNSET) {
-        queue += songAt(i)
+        val neighbour = songAt(i)
+        if (workRunKey(neighbour) != key) break
+        queue += neighbour
         i = timeline.getNextWindowIndex(i, Player.REPEAT_MODE_OFF, shuffled)
     }
     return replayGainModeAt(ReplayGainMode.Track, queue, before.size) == ReplayGainMode.Album

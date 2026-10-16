@@ -89,6 +89,9 @@ private fun runKey(song: Song): RunKey? {
     return if (composer == null && !isStrongWorkPrefix(listOf(song), prefix)) null else RunKey("i:${prefix.normalised()}", composer)
 }
 
+/** The work key [runAround] bounds a run by: neighbours with an equal key may share [song]'s work; null when [song] can't be in one. */
+fun workRunKey(song: Song): String? = runKey(song)?.work
+
 internal val formWords = Regex(
     """\b(?:Symphon(?:y|ie)|Sonata|Concerto|Suite|Quartet|Trio|Partita|Mass|Requiem|Variations|Preludes|Études|Etudes|Cantata|Overture|Serenade|Toccata|Fugue|Fantasia|Chaconne)\b""",
     RegexOption.IGNORE_CASE

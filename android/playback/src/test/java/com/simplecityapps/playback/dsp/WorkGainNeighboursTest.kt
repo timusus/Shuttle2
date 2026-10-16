@@ -72,6 +72,39 @@ class WorkGainNeighboursTest {
         tailGainMode(processor, timeline, timeline.getWindow(1, window).mediaItem) shouldBe ReplayGainMode.Track
     }
 
+    @Test
+    fun `a lone song in a long queue reads only its own window and its neighbours`() {
+        val songs = List(500) { lone(it + 1L) }
+        val counting = CountingTimeline(timeline(songs, playOrder = songs.indices.toList()))
+
+        isWorkMovementAt(counting, 250, shuffled = false) shouldBe false
+
+        (counting.windowsRead <= 3) shouldBe true
+    }
+
+    @Test
+    fun `a song without an album gain reads no neighbours`() {
+        val songs = List(500) { movement(it + 1L).copy(replayGainAlbum = null) }
+        val counting = CountingTimeline(timeline(songs, playOrder = songs.indices.toList()))
+
+        isWorkMovementAt(counting, 250, shuffled = false) shouldBe false
+
+        counting.windowsRead shouldBe 1
+    }
+
+    private class CountingTimeline(base: Timeline) : ForwardingTimeline(base) {
+        var windowsRead = 0
+
+        override fun getWindow(
+            windowIndex: Int,
+            window: Timeline.Window,
+            defaultPositionProjectionUs: Long
+        ): Timeline.Window {
+            windowsRead++
+            return super.getWindow(windowIndex, window, defaultPositionProjectionUs)
+        }
+    }
+
     /** [base] with a shuffle order: [playOrder] lists window indices in the order they play. */
     private class ShuffledTimeline(
         base: Timeline,
