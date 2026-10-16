@@ -34,8 +34,6 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
     val composer = song.composerDisplayName(library)
     // A continuation track ("V. ..." again) has no numeral on the album page but is still that movement on Now Playing.
     val continuation = movement.numeral == null && ribbon.movementIndex > 0 && movement.number == block.movements[ribbon.movementIndex - 1].number && block.numbering.styleFor(movement.name) != NumeralStyle.None
-    // Never below the highest number present, so a partial work (II and III only) cannot read "III of II".
-    val counted = queue.slice(run.range).firstNotNullOfOrNull { it.movementTotal?.takeIf { total -> total >= 1 } } ?: block.movements.map { it.number }.distinct().size
     val label = (if (continuation) "${position(block.numbering, movement.number)}. ${movement.name}" else movement.label).ifEmpty { song.name.orEmpty() }
     val title = block.title
     return NowPlayingWork(
@@ -48,7 +46,7 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         miniSubtitle = listOfNotNull(label, song.leadPerformer()).joinToString(" · "),
         ribbon = ribbon,
         ordinal = position(block.numbering, movement.number),
-        total = position(block.numbering, maxOf(counted, block.movements.maxOf { it.number })),
+        total = position(block.numbering, block.movementCount),
         ordinals = block.movements.map { position(block.numbering, it.number) }
     )
 }

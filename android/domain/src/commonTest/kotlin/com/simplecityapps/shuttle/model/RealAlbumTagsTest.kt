@@ -182,7 +182,8 @@ class RealAlbumTagsTest {
     @Test
     fun `Mahler is one symphony whatever the composer spelling`() {
         val blocks = blocks(mahler())
-        blocks.map { it.movementCount } shouldBe listOf(11)
+        blocks.map { it.movementCount } shouldBe listOf(5)
+        blocks.single().movements.size shouldBe 11
         blocks.single().title.core shouldBe "Symphony No. 2"
         blocks.single().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV", "V") + List(6) { null }
         blocks.single().movements.map { it.number } shouldBe listOf(1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5)
@@ -203,7 +204,7 @@ class RealAlbumTagsTest {
     @Test
     fun `Mahler is one symphony of 11 across both discs when the album artist is the full name`() {
         val blocks = blocks(mahler(albumArtist = "Gustav Mahler"))
-        blocks.map { it.movementCount } shouldBe listOf(11)
+        blocks.map { it.movements.size } shouldBe listOf(11)
     }
 
     @Test

@@ -33,6 +33,22 @@ class AlbumRowsTest {
     }
 
     @Test
+    fun `a last movement split over tracks counts once in the header`() {
+        val work = "Symphony No. 2 in C minor"
+        val songs = listOf(
+            movement(work, "I. Allegro", track = 1).copy(movementNumber = 1),
+            movement(work, "II. Andante", track = 2).copy(movementNumber = 2),
+            movement(work, "III. Finale", track = 3).copy(movementNumber = 3),
+            movement(work, "III. Finale (chorus)", track = 4).copy(movementNumber = 3),
+            movement(work, "III. Finale (coda)", track = 5).copy(movementNumber = 3),
+        )
+
+        val header = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows[0]
+
+        header.shouldBeInstanceOf<AlbumRow.WorkHeader>().count shouldBe UiText.Plural(PluralKey.WORK_MOVEMENTS, 3)
+    }
+
+    @Test
     fun `a single composer album has an eyebrow and no composer headings`() {
         val result = buildAlbumRows(sonata(), albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!
 

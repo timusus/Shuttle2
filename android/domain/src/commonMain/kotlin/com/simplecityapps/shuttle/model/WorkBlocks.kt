@@ -29,7 +29,12 @@ data class WorkBlock(
     val credits: String?,
     val collapsedByDefault: Boolean
 ) {
-    val movementCount: Int get() = movements.size
+    /** Movements, not tracks: one split over several tracks counts once. The tagged total wins, never below the highest number present. */
+    val movementCount: Int
+        get() {
+            val tagged = movements.firstNotNullOfOrNull { it.song.movementTotal?.takeIf { total -> total >= 1 } }
+            return maxOf(tagged ?: movements.map { it.number }.distinct().size, movements.maxOf { it.number })
+        }
     val songs: List<Song> get() = movements.map { it.song }
 }
 
@@ -225,7 +230,7 @@ fun groupWorks(songs: List<Song>): List<AlbumItem> {
     return runs.flatMap { run ->
         if (run.work == null) return@flatMap listOf(AlbumItem.Track(songs[run.range.first]))
         val block = buildBlock(songs.slice(run.range), run.work, run.inferred, albumCredits)
-        listOf(AlbumItem.Work(block.copy(collapsedByDefault = block.movementCount > 20 && blockCount > 1)))
+        listOf(AlbumItem.Work(block.copy(collapsedByDefault = block.movements.size > 20 && blockCount > 1)))
     }
 }
 
@@ -266,7 +271,7 @@ internal fun workProgress(run: Run, block: WorkBlock, index: Int, positionMs: Lo
         segmentStarts = ranges.map { run.range.first + it.first },
         currentSegment = ranges.indexOfFirst { current in it },
         movementIndex = current,
-        movementCount = block.movementCount,
+        movementCount = block.movements.size,
         remainingMs = durations.drop(current).sum() - played,
         continuous = segments.size > 12,
         currentSegmentOffsetMs = ranges.first { current in it }.let { range -> range.first.until(current).sumOf { durations[it] } }
