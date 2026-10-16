@@ -109,7 +109,13 @@ internal fun Performer.isEnsemble(): Boolean {
     return role.lowercase().split(Regex("""[^a-z]+""")).any { it in ensembleWords }
 }
 
-private fun Song.soloists() = performers.orEmpty().filter { !it.isConductor() && !it.isEnsemble() && it.name.isNotBlank() }
+private val voiceTypes = setOf("soprano", "mezzo-soprano", "alto", "contralto", "countertenor", "tenor", "baritone", "bass-baritone", "bass", "treble")
+
+// Picard writes a singer's role as "baritone vocals"; the voice type alone is what a programme shows.
+private fun Performer.voice() = cleanRole()?.lowercase()?.removeSuffix(" vocals")?.takeIf { it in voiceTypes }
+
+// A singer leads the credits, ahead of the accompanist.
+private fun Song.soloists() = performers.orEmpty().filter { !it.isConductor() && !it.isEnsemble() && it.name.isNotBlank() }.sortedBy { if (it.voice() != null) 0 else 1 }
 
 private fun Song.ensembles() = performers.orEmpty().filter { !it.isConductor() && it.isEnsemble() && it.name.isNotBlank() }
 
@@ -120,7 +126,7 @@ fun Song.leadPerformer(): String? = soloists().firstOrNull()?.name?.trim() ?: co
 
 /** "Soloist, instrument · Ensemble · Conductor"; null when the tags name none. */
 fun Song.creditsLine(): String? {
-    val parts = soloists().map { "${it.name.trim()}, ${it.cleanRole()}" } + ensembles().map { it.name.trim() } + listOfNotNull(conductorName())
+    val parts = soloists().map { "${it.name.trim()}, ${it.voice() ?: it.cleanRole()}" } + ensembles().map { it.name.trim() } + listOfNotNull(conductorName())
     return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 

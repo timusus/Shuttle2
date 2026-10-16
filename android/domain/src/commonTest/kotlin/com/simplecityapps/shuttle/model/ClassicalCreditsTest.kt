@@ -121,6 +121,14 @@ class ClassicalCreditsTest {
     }
 
     @Test
+    fun `a singer leads the credits with the voice type for a role`() {
+        val winterreise = song(id = 1).copy(performers = listOf(Performer("Gerald Moore", "piano"), Performer("Dietrich Fischer‐Dieskau", "baritone vocals")))
+
+        winterreise.creditsLine() shouldBe "Dietrich Fischer‐Dieskau, baritone · Gerald Moore, piano"
+        winterreise.leadPerformer() shouldBe "Dietrich Fischer‐Dieskau"
+    }
+
+    @Test
     fun `a work shows credits only when they differ from the album`() {
         val album = song(id = 1).copy(conductor = "Kleiber")
         val guest = song(id = 2).copy(conductor = "Karajan")

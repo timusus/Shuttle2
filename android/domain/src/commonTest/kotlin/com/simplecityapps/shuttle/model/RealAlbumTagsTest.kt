@@ -132,7 +132,7 @@ class RealAlbumTagsTest {
         }
     }
 
-    private fun mahler(): List<Song> {
+    private fun mahler(albumArtist: String = "Mahler; Arleen Augér, Janet Baker, CBSO Chorus, City of Birmingham Symphony Orchestra, Simon Rattle"): List<Song> {
         val movements = listOf(
             "I. Allegro maestoso", "II. Andante moderato", "III. In ruhig fliessender Bewegung", "IV. Urlicht. Sehr feierlich", "V. Im Tempo des Scherzo. Wild herausfahrend",
             "V. Wieder sehr breit", "V. Ritardando… Maestoso", "V. Wieder zurückhaltend", "V. Langsam. Misterioso", "V. Etwas bewegter", "V. Mit Aufschwung aber nicht eilen"
@@ -141,7 +141,7 @@ class RealAlbumTagsTest {
             song(
                 id = index + 1L,
                 name = "Symphony no. 2 in C minor “Resurrection”: $movement",
-                albumArtist = "Mahler; Arleen Augér, Janet Baker, CBSO Chorus, City of Birmingham Symphony Orchestra, Simon Rattle",
+                albumArtist = albumArtist,
                 artists = listOf("Gustav Mahler"),
                 album = "Symphony No. 2",
                 track = if (index == 0) 1 else index,
@@ -185,6 +185,13 @@ class RealAlbumTagsTest {
         blocks.single().title.core shouldBe "Symphony no. 2"
         blocks.single().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV", "V") + List(6) { null }
         blocks.single().movements.map { it.number } shouldBe listOf(1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5)
+    }
+
+    @Test
+    fun `Mahler is one symphony of 11 with the disc break inside when the album artist is the full name`() {
+        val blocks = blocks(mahler(albumArtist = "Gustav Mahler"))
+        blocks.map { it.movementCount } shouldBe listOf(11)
+        blocks.single().discBreaks.map { it.disc } shouldBe listOf(2)
     }
 
     @Test

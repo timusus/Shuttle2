@@ -56,13 +56,22 @@ class AlbumRowsTest {
     }
 
     @Test
-    fun `a suite by the album artist shows no composer heading or eyebrow`() {
+    fun `a suite by the album artist shows the eyebrow but no composer heading`() {
         val songs = sonata("Ines Varga")
 
         val result = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!
 
-        result.eyebrow shouldBe null
+        result.eyebrow shouldBe "Varga"
         result.rows.none { it is AlbumRow.ComposerHeading } shouldBe true
+    }
+
+    @Test
+    fun `Beethoven with the composer as album artist and a bonus track still has the eyebrow`() {
+        val songs = listOf("I. Allegro con brio", "II. Andante con moto").map {
+            movement("Symphony no. 5 in C minor, op. 67", it, "Ludwig van Beethoven").copy(composerSort = "Beethoven, Ludwig van")
+        } + movement(null, "Bonus", composer = null)
+
+        buildAlbumRows(songs, albumArtist = "Ludwig van Beethoven", currentSongId = null, toggled = emptySet())!!.eyebrow shouldBe "Beethoven"
     }
 
     @Test
@@ -127,8 +136,8 @@ class AlbumRowsTest {
     }
 
     @Test
-    fun `a plain song among the works removes the eyebrow`() {
-        val songs = sonata() + movement(null, "Encore", composer = null)
+    fun `a plain song with another composer removes the eyebrow`() {
+        val songs = sonata() + movement(null, "Encore", composer = "Maud Verrin")
 
         buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.eyebrow shouldBe null
     }

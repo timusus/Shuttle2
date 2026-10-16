@@ -66,7 +66,7 @@ sealed interface AlbumRow {
 /** What the classical album page shows for an album's songs; null from [buildAlbumRows] when the album has no work blocks. */
 data class AlbumRows(
     val rows: List<AlbumRow>,
-    /** The one composer of every song on the album, for the header's eyebrow; null on a recital, a mixed album or when the composer is the album artist. */
+    /** The one composer of every song on the album, for the header's eyebrow; null on a recital or a mixed album. */
     val eyebrow: String?,
     val credits: String?,
 )
@@ -151,7 +151,8 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
             }
         }
     }
-    val shown = songs.map { it.shownComposer() }
-    val eyebrow = shown.firstOrNull()?.takeIf { composer -> shown.all { it == composer } }
+    // Bonus tracks carry no composer tag, so they don't break "one composer"; the album artist being that composer doesn't hide it.
+    val tagged = songs.mapNotNull { it.composerDisplayName() }
+    val eyebrow = tagged.firstOrNull()?.takeIf { composer -> tagged.all { it == composer } }
     return AlbumRows(rows, eyebrow = eyebrow, credits = albumCreditsLine(songs))
 }
