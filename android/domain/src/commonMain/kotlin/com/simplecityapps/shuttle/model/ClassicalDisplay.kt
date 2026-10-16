@@ -4,6 +4,10 @@ package com.simplecityapps.shuttle.model
 val Song.isClassical: Boolean
     get() = !movementName.isNullOrBlank() || (movementNumber ?: 0) >= 1 || showMovement == true
 
+/** [isClassical] unless the song's genre is a popular one, which a stray movement tag on a pop track doesn't override. */
+val Song.showsMovementLabel: Boolean
+    get() = isClassical && !hasNonClassicalGenre(genres)
+
 private fun Song.hasClassicalSignal(): Boolean = isClassical || !conductor.isNullOrBlank() || hasClassicalGenre(genres) ||
     listOfNotNull(work, name, album).any { catalogueSearchKeys(it).isNotEmpty() }
 

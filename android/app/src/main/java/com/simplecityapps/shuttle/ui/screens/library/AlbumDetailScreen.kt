@@ -27,8 +27,8 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.isClassical
 import com.simplecityapps.shuttle.model.movementLabel
+import com.simplecityapps.shuttle.model.showsMovementLabel
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
@@ -108,7 +108,7 @@ fun AlbumDetailScreen(
                     }
                     items(discSongs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
                         SongRow(
-                            title = if (uiState.classical && song.isClassical) song.movementLabel() else song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                            title = if (uiState.classical && song.showsMovementLabel) song.movementLabel() else song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
                             subtitle = song.artistUnlessAlbumArtist(album),
                             onClick = { onPlay(songs, songs.indexOf(song)) },
                             trackNumber = song.track,

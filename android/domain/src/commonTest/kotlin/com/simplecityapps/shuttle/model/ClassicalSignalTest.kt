@@ -21,6 +21,15 @@ class ClassicalSignalTest {
     }
 
     @Test
+    fun `a movement tag on a rock track does not relabel it`() {
+        val rock = song(id = 1, name = "Time", track = 4, genres = listOf("Rock")).copy(movementNumber = 2)
+        val classical = song(id = 2, name = "Allegro", track = 1).copy(movementNumber = 2)
+
+        rock.showsMovementLabel shouldBe false
+        classical.showsMovementLabel shouldBe true
+    }
+
+    @Test
     fun `a pop title with a work tag keeps its title`() {
         val queen = song(id = 1, name = "Bohemian Rhapsody - Remastered 2011", track = 11)
             .copy(work = "Bohemian Rhapsody", composer = "Freddie Mercury", genres = listOf("Rock"))

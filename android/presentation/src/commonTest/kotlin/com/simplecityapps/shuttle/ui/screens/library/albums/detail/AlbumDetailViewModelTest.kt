@@ -180,6 +180,23 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
+    fun `a classical album without work tags still names its conductor`() = runTest {
+        fakeSongRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Allegro", track = 1).copy(conductor = "Ines Varga"),
+                createSong(id = 2, name = "Andante", track = 2).copy(conductor = "Ines Varga")
+            )
+        )
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.rows shouldBe null
+        viewModel.uiState.value.performers shouldBe "Ines Varga"
+    }
+
+    @Test
     fun `a rock album with grouping tags and performer credits renders as with Classical display off`() = runTest {
         val songs = (1..12).map { n ->
             createSong(id = n.toLong(), name = "Track $n", track = n)
@@ -249,8 +266,8 @@ class AlbumDetailViewModelTest {
     }
 
     @Test
-    fun `an album with no classical song keeps its subtitle despite a conductor tag`() = runTest {
-        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song").copy(conductor = "Ines Varga")))
+    fun `a rock album keeps its subtitle despite a conductor tag`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song").copy(conductor = "Ines Varga", genres = listOf("Rock"))))
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }

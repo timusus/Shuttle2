@@ -7,9 +7,9 @@ import com.simplecityapps.shuttle.model.albumCreditsLine
 import com.simplecityapps.shuttle.model.composerDisplayName
 import com.simplecityapps.shuttle.model.composerName
 import com.simplecityapps.shuttle.model.groupWorks
-import com.simplecityapps.shuttle.model.isClassical
 import com.simplecityapps.shuttle.model.isNonClassical
 import com.simplecityapps.shuttle.model.movementLabel
+import com.simplecityapps.shuttle.model.showsMovementLabel
 import com.simplecityapps.shuttle.ui.text.PluralKey
 import com.simplecityapps.shuttle.ui.text.UiText
 
@@ -106,7 +106,7 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
             is AlbumItem.Track -> {
                 discDivider(item.song, beforeWork = false)
                 val song = item.song
-                rows += AlbumRow.Track(song, if (song.isClassical) song.movementLabel() else song.name, song.id == currentSongId, playIndexes.getValue(song.id))
+                rows += AlbumRow.Track(song, if (song.showsMovementLabel) song.movementLabel() else song.name, song.id == currentSongId, playIndexes.getValue(song.id))
             }
 
             is AlbumItem.Work -> {
