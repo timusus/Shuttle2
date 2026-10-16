@@ -23,7 +23,8 @@ struct SearchPerformanceTests {
             SearchDocument<AnyObject>(
                 item: song,
                 fields: [KotlinPair(first: SearchField.name as __SearchField, second: song.name as NSString?), KotlinPair(first: SearchField.artist as __SearchField, second: song.albumArtist as NSString?)],
-                popularity: 0
+                popularity: 0,
+                catalogueKeys: []
             )
         }
         let clock = ContinuousClock()
