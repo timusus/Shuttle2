@@ -18,11 +18,14 @@ import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -35,6 +38,15 @@ import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.designsystem.theme.heroSubtitle
 import com.simplecityapps.shuttle.designsystem.theme.heroTitle
+
+/** Set by the detail scaffold: the hero's title reports its bottom edge in window coordinates, to time the bar's own title. */
+val LocalDetailHeroTitleBottom = staticCompositionLocalOf<((Float) -> Unit)?> { null }
+
+@Composable
+private fun Modifier.reportHeroTitleBottom(): Modifier {
+    val report = LocalDetailHeroTitleBottom.current ?: return this
+    return onGloballyPositioned { report(it.boundsInWindow().bottom) }
+}
 
 /**
  * The head of an artwork detail screen (album, artist, playlist, genre): [artwork] centred on a wash of the scheme's
@@ -105,7 +117,7 @@ fun DetailHero(
                 }
                 Text(eyebrow.uppercase(), style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.5.sp), color = colors.primary, modifier = tap)
             }
-            Text(title, style = MaterialTheme.typography.heroTitle, color = colors.onSurface)
+            Text(title, style = MaterialTheme.typography.heroTitle, color = colors.onSurface, modifier = Modifier.reportHeroTitleBottom())
             if (credits != null) {
                 Text(credits, style = MaterialTheme.typography.heroSubtitle, color = colors.onSurfaceVariant)
             }
@@ -184,7 +196,7 @@ fun DetailBleedHero(
                     modifier = Modifier.align(Alignment.BottomStart).padding(S2Spacing.medium),
                     verticalArrangement = Arrangement.spacedBy(S2Spacing.xsmall),
                 ) {
-                    Text(title, style = MaterialTheme.typography.heroTitle, color = Color.White)
+                    Text(title, style = MaterialTheme.typography.heroTitle, color = Color.White, modifier = Modifier.reportHeroTitleBottom())
                     if (subtitle != null) {
                         Text(subtitle, style = MaterialTheme.typography.heroSubtitle, color = Color.White.copy(alpha = 0.85f))
                     }

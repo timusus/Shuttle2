@@ -98,18 +98,20 @@ fun S2DetailTopBar(
     actions: (@Composable RowScope.() -> Unit)? = null,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     overImage: Boolean = false,
+    filled: Boolean = collapsed,
 ) {
     val defaults = TopAppBarDefaults.topAppBarColors()
-    val containerColor by animateColorAsState(if (collapsed) defaults.containerColor else Color.Transparent, label = "detailTopBarContainer")
+    // [filled] is the opaque bar, from the first pixel of scroll so the hero is clipped under it; [collapsed] is when the title shows.
+    val containerColor by animateColorAsState(if (filled) defaults.containerColor else Color.Transparent, label = "detailTopBarContainer")
     // Over a full-bleed image (and its scrim) the icons are white until the bar fills in.
-    val onImage = overImage && !collapsed
+    val onImage = overImage && !filled
     val navigationColor by animateColorAsState(if (onImage) Color.White else defaults.navigationIconContentColor, label = "detailTopBarNavigation")
     val actionColor by animateColorAsState(if (onImage) Color.White else defaults.actionIconContentColor, label = "detailTopBarActions")
     // Circular containers behind the icons while the bar is transparent, so they hold 3:1 whatever the art or wash
     // under them: black over an image (white icons on it), the surface colour over the wash.
     val scrimColor by animateColorAsState(
         when {
-            collapsed -> Color.Transparent
+            filled -> Color.Transparent
             overImage -> S2IconScrim.overImage
             else -> MaterialTheme.colorScheme.surface.copy(alpha = S2IconScrim.overWashAlpha)
         },

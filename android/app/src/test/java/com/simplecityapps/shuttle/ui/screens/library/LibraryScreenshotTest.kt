@@ -252,6 +252,35 @@ class LibraryScreenshotTest {
         shot("phone-album-detail")
     }
 
+    /** Mid-scroll the hero is clipped under the bar and status bar, and the bar has no title yet (#1068). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumDetailScrolled() {
+        phoneAlbumDetailScrolledBy(500f, "phone-album-detail-scrolled")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumDetailArtworkUnderBar() {
+        phoneAlbumDetailScrolledBy(250f, "phone-album-detail-artwork-under-bar")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumDetailCollapsed() {
+        phoneAlbumDetailScrolledBy(900f, "phone-album-detail-collapsed")
+    }
+
+    private fun phoneAlbumDetailScrolledBy(px: Float, name: String) {
+        val album = SampleLibrary.album("phase-garden")
+        val base = album.songs.map { it.toSong() }
+        // Enough tracks to scroll the whole hero away.
+        val tracks = (0 until 4).flatMap { round -> base.mapIndexed { i, song -> song.copy(id = song.id + round * 100L, track = round * base.size + i + 1) } }
+        detail.setAlbum(readyAlbumDetail(album = album.toAlbum(), songs = tracks, currentSong = tracks[1]))
+        detail.scrollByPx(px)
+        shot(name)
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneClassicalAlbumDetail() {
