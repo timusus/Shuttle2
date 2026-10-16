@@ -149,14 +149,17 @@ private fun RunningSleepTimer(
         }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
-        S2Button(
-            text = stringResource(R.string.player_sleep_timer_extend, formatMinutes(ExtendMinutes)),
-            onClick = { actions.startSleepTimer((remaining ?: 0) + ExtendMinutes * DateUtils.MINUTE_IN_MILLIS, player.sleepTimerPlayToEnd) },
-            style = S2ButtonStyle.Tonal,
-            size = S2ButtonSize.Medium,
-            icon = Icons.Rounded.Add,
-            modifier = Modifier.weight(1f),
-        )
+        // Extending would replace the end-of-work timer with a fixed-length one.
+        if (!player.sleepTimerAtEndOfWork) {
+            S2Button(
+                text = stringResource(R.string.player_sleep_timer_extend, formatMinutes(ExtendMinutes)),
+                onClick = { actions.startSleepTimer((remaining ?: 0) + ExtendMinutes * DateUtils.MINUTE_IN_MILLIS, player.sleepTimerPlayToEnd) },
+                style = S2ButtonStyle.Tonal,
+                size = S2ButtonSize.Medium,
+                icon = Icons.Rounded.Add,
+                modifier = Modifier.weight(1f),
+            )
+        }
         S2Button(
             text = stringResource(R.string.sleep_timer_dialog_button_stop_timer),
             onClick = actions::stopSleepTimer,
