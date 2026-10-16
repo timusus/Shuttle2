@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.local
 
+import com.simplecityapps.localmediaprovider.local.provider.carriesId3
 import com.simplecityapps.localmediaprovider.local.provider.ffmpegPropertyMap
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
 import com.simplecityapps.localmediaprovider.local.provider.toYearDate
@@ -120,7 +121,7 @@ private fun folderIdOf(path: String): String? = path.removePrefix("${IosLocalFil
  */
 internal fun IosLocalTags.toSong(file: IosLocalFileRef): Song {
     val fileName = file.path.substringAfterLast('/')
-    val id3 = mimeTypeOf(fileName) == "audio/mpeg"
+    val id3 = carriesId3(fileName)
     val fileTags = ffmpegPropertyMap(tags.map { it.key to it.value }, id3 = id3).toFileTags(id3 = id3)
     return Song(
         id = 0,

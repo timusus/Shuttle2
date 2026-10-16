@@ -385,6 +385,12 @@ class FileTagsTest {
     }
 
     @Test
+    fun `MP3 AIFF and WAV files carry ID3 tags`() {
+        listOf("a.mp3", "a.MP3", "a.aif", "a.aiff", "a.wav", "dir.d/a.WAV").forEach { carriesId3(it) shouldBe true }
+        listOf("a.flac", "a.m4a", "a.ogg", "mp3").forEach { carriesId3(it) shouldBe false }
+    }
+
+    @Test
     fun `maps the classical frames of an ID3v2_4 file with TIT1 as the work and GRP1 as the grouping`() {
         val tags =
             mapOf(

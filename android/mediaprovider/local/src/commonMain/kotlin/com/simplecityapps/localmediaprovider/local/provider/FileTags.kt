@@ -54,6 +54,9 @@ data class FileTags(
     val performers: List<Performer> = emptyList()
 )
 
+/** Whether [fileName] is a format whose tags are ID3 frames: MP3, and the AIFF and WAV chunks that embed ID3. */
+fun carriesId3(fileName: String): Boolean = fileName.substringAfterLast('.', "").lowercase() in setOf("mp3", "aif", "aiff", "aifc", "wav")
+
 /**
  * Maps a TagLib property map (keyed by [TagLibProperty] keys, whatever the container: ID3, Vorbis comments, MP4 atoms or
  * Matroska tags) to [FileTags]. Android passes TagLib's own map; iOS passes FFmpeg's tags renamed by [ffmpegPropertyMap].

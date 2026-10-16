@@ -70,7 +70,7 @@ fun KTagLib.getAudioFile(
     mimeType: String?
 ): AudioFile {
     val metadata = getMetadata(fileDescriptor, fileName)
-    val tags = metadata?.propertyMap.orEmpty().toFileTags(id3 = fileName.endsWith(".mp3", ignoreCase = true))
+    val tags = metadata?.propertyMap.orEmpty().toFileTags(id3 = carriesId3(fileName))
     return AudioFile(
         path = filePath,
         size = size,

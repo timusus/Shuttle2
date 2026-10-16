@@ -7,6 +7,7 @@ import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FileTags
 import com.simplecityapps.localmediaprovider.local.provider.LocalFileTagMerger
+import com.simplecityapps.localmediaprovider.local.provider.carriesId3
 import com.simplecityapps.localmediaprovider.local.provider.matroskaTitleOf
 import com.simplecityapps.localmediaprovider.local.provider.taglibBitDepth
 import com.simplecityapps.localmediaprovider.local.provider.toFileTags
@@ -48,7 +49,7 @@ class KTagLibMediaStoreTagReader(
                 val fileName = file.path.substringAfterLast('/')
                 kTagLib.getMetadata(pfd.fd, fileName)?.let { metadata ->
                     val audio = metadata.audioProperties
-                    metadata.propertyMap?.toFileTags(id3 = fileName.endsWith(".mp3", ignoreCase = true))?.let { tags ->
+                    metadata.propertyMap?.toFileTags(id3 = carriesId3(fileName))?.let { tags ->
                         tags.copy(
                             // TagLib's property map has no Matroska segment title (#523)
                             title = tags.title ?: matroskaTitleOf(pfd.fd, fileName),
