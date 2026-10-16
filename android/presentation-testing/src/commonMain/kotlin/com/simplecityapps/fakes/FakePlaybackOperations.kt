@@ -79,8 +79,12 @@ class FakePlaybackOperations : PlaybackOperations {
         onAddToQueue(songs)
     }
 
+    /** Runs after each [playNext], for a test that keeps a fake queue in step. */
+    var onPlayNext: (List<Song>) -> Unit = {}
+
     override suspend fun playNext(songs: List<Song>) {
         playedNext.addAll(songs)
+        onPlayNext(songs)
     }
 
     var lastShuffleContext: PlayContext? = null

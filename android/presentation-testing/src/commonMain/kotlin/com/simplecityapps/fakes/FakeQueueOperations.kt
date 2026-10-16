@@ -55,8 +55,14 @@ class FakeQueueOperations : QueueOperations {
     /** Each [move], in order, as from to to. */
     val moves = mutableListOf<Pair<Int, Int>>()
 
+    /** Reorders [queueStateFlow] as the player does: the item at [from] ends up at [to]. */
     override fun move(from: Int, to: Int) {
         moves += from to to
+        val state = queueStateFlow.value
+        if (from !in state.items.indices || to !in state.items.indices) return
+        val items = state.items.toMutableList()
+        items.add(to, items.removeAt(from))
+        queueStateFlow.value = state.copy(items = items, currentPosition = state.currentItem?.let { current -> items.indexOfFirst { it.uid == current.uid } })
     }
 
     /** Every item passed to [remove], in order. */

@@ -212,14 +212,69 @@ class MediaActionHandlerTest {
 
     private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven")
 
+    /** Makes [PlaybackOperations.playNext] insert after the current song like the player does, optionally advancing first. */
+    private fun insertsPlayNextAfterCurrent(advanceFirst: Boolean = false) {
+        var nextUid = 100L
+        playbackOperations.onPlayNext = { added ->
+            var state = queueOperations.queueStateFlow.value
+            if (advanceFirst) {
+                val next = state.currentPosition!! + 1
+                state = state.copy(currentItem = state.items[next], currentPosition = next)
+            }
+            val at = state.currentPosition!! + 1
+            val items = state.items.toMutableList()
+            items.addAll(at, added.map { QueueItem(uid = nextUid++, song = it, isCurrent = false) })
+            queueOperations.queueStateFlow.value = state.copy(items = items)
+        }
+    }
+
+    private fun queuedSongs() = queueOperations.queueStateFlow.value.items.map { it.song }
+
     @Test
     fun `play after this work queues the songs next then carries them past the work`() = runTest {
-        playing(0, movement(10), movement(11), movement(12), createSong(id = 20))
+        val tail = createSong(id = 20)
+        playing(0, movement(10), movement(11), movement(12), tail)
+        insertsPlayNextAfterCurrent()
 
         handler.handle(MediaAction.PlayAfterWork(songs)) shouldBe Message(MediaActionMessage.AddedToQueue(2))
 
         playbackOperations.playedNext shouldBe listOf(song, other)
-        queueOperations.moves shouldBe listOf(1 to 4, 1 to 4)
+        queuedSongs() shouldBe listOf(movement(10), movement(11), movement(12), song, other, tail)
+    }
+
+    @Test
+    fun `play after this work from the middle of the work lands after its last movement`() = runTest {
+        val tail = createSong(id = 20)
+        playing(1, movement(10), movement(11), movement(12), tail)
+        insertsPlayNextAfterCurrent()
+
+        handler.handle(MediaAction.PlayAfterWork(songs))
+
+        queuedSongs() shouldBe listOf(movement(10), movement(11), movement(12), song, other, tail)
+        queueOperations.queueStateFlow.value.currentPosition shouldBe 1
+    }
+
+    @Test
+    fun `play after this work still lands after the work when the song advances while queuing`() = runTest {
+        val tail = createSong(id = 20)
+        playing(0, movement(10), movement(11), movement(12), tail)
+        insertsPlayNextAfterCurrent(advanceFirst = true)
+
+        handler.handle(MediaAction.PlayAfterWork(songs))
+
+        queuedSongs() shouldBe listOf(movement(10), movement(11), movement(12), song, other, tail)
+    }
+
+    @Test
+    fun `play after this work leaves the songs in place when playback has already left the work`() = runTest {
+        val tail = createSong(id = 20)
+        playing(2, movement(10), movement(11), movement(12), tail)
+        insertsPlayNextAfterCurrent(advanceFirst = true)
+
+        handler.handle(MediaAction.PlayAfterWork(songs))
+
+        queuedSongs() shouldBe listOf(movement(10), movement(11), movement(12), tail, song, other)
+        queueOperations.moves shouldBe emptyList()
     }
 
     @Test

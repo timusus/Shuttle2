@@ -21,13 +21,19 @@ class PlayAfterWork(
     suspend operator fun invoke(selection: MediaSelection): List<Song> {
         val songs = filterPlayableSongs(resolveSongs(selection))
         if (songs.isEmpty()) return songs
-        val state = queueOperations.queueStateFlow.value
-        val current = state.currentPosition ?: return emptyList()
-        val run = workRunOf(state.items.map { it.song }, current) ?: return emptyList()
+        val before = queueOperations.queueStateFlow.value
+        val current = before.currentPosition ?: return emptyList()
+        val run = workRunOf(before.items.map { it.song }, current) ?: return emptyList()
+        val runUids = run.map { before.items[it].uid }.toSet()
+        val beforeUids = before.items.mapTo(HashSet()) { it.uid }
         playbackOperations.playNext(songs)
-        // The songs now sit right after the current one; carry them to the end of the run, in order.
-        val target = run.last + songs.size
-        repeat(songs.size) { queueOperations.move(current + 1, target) }
+        // The song can advance while playNext builds the items, so locate everything by uid in the queue as it is now.
+        val items = queueOperations.queueStateFlow.value.items
+        val inserted = items.indices.filter { items[it].uid !in beforeUids }
+        val end = items.indexOfLast { it.uid in runUids }
+        val first = inserted.firstOrNull() ?: return songs
+        // Carry the inserted songs, in order, to the end of the run; if playback already moved past it they are there.
+        if (end > first) repeat(inserted.size) { queueOperations.move(first, end) }
         return songs
     }
 
