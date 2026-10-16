@@ -55,6 +55,50 @@ class NowPlayingWorkTest {
     }
 
     @Test
+    fun `a movement split over tracks counts once in the caption`() {
+        val names = listOf("I. Allegro", "II. Andante", "III. Scherzo", "IV. Urlicht", "V. Finale", "V. Wieder sehr breit", "V. Langsam", "V. Mit Aufschwung")
+        val songs = names.mapIndexed { i, name -> movement(i + 1L, "Symphony No. 2", name) }
+
+        val third = nowPlayingWork(songs, 2)!!
+        third.ordinal shouldBe "III"
+        third.total shouldBe "V"
+
+        val continuation = nowPlayingWork(songs, 6)!!
+        continuation.ordinal shouldBe "V"
+        continuation.movement shouldBe "V. Langsam"
+        continuation.ribbon.movementCount shouldBe 8
+        continuation.ribbon.segments.size shouldBe 8
+        continuation.ordinals shouldBe listOf("I", "II", "III", "IV", "V", "V", "V", "V")
+    }
+
+    @Test
+    fun `the tagged movement number and total win over the track count`() {
+        val songs = listOf("Kyrie", "Gloria", "Gloria part two", "Credo").mapIndexed { i, name ->
+            movement(i + 1L, "Mass in B minor", name).copy(
+                movementNumber = if (i < 2) {
+                    i + 1
+                } else if (i == 2) {
+                    2
+                } else {
+                    3
+                },
+                movementTotal = 3
+            )
+        }
+        val work = nowPlayingWork(songs, 2)!!
+        work.ordinal shouldBe "II"
+        work.total shouldBe "III"
+    }
+
+    @Test
+    fun `without movement numbers the caption counts tracks`() {
+        val songs = listOf("Prologue", "Dance", "Finale").mapIndexed { i, name -> movement(i + 1L, "Suite", name) }
+        val work = nowPlayingWork(songs, 1)!!
+        work.ordinal shouldBe "II"
+        work.total shouldBe "III"
+    }
+
+    @Test
     fun `thirty movements make a continuous ribbon`() {
         val songs = List(30) { movement(it + 1L, "Goldberg Variations, BWV 988", "Variatio ${it + 1}") }
         val work = nowPlayingWork(songs, 4)!!

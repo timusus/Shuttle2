@@ -16,10 +16,10 @@ data class NowPlayingWork(
     /** "II. Andante con moto · Kleiber" */
     val miniSubtitle: String,
     val ribbon: WorkProgress,
-    /** "II" of "IV", numbered like the movements themselves. */
+    /** "II" of "IV", numbered like the movements themselves: a movement split over tracks counts once. */
     val ordinal: String,
     val total: String,
-    /** The numeral of every movement of the work, in order; a ribbon segment (a movement or an act) is named by its first. */
+    /** The numeral of every track of the work, in order; a ribbon segment (a movement or an act) is named by its first. */
     val ordinals: List<String>
 )
 
@@ -32,7 +32,9 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
     val song = queue[index]
     val movement = block.movements[ribbon.movementIndex]
     val composer = song.composerDisplayName(library)
-    val label = movement.label.ifEmpty { song.name.orEmpty() }
+    // A continuation track ("V. ..." again) has no numeral on the album page but is still that movement on Now Playing.
+    val continuation = movement.numeral == null && ribbon.movementIndex > 0 && movement.number == block.movements[ribbon.movementIndex - 1].number && block.numbering.styleFor(movement.name) != NumeralStyle.None
+    val label = (if (continuation) "${position(block.numbering, movement.number)}. ${movement.name}" else movement.label).ifEmpty { song.name.orEmpty() }
     val title = block.title
     return NowPlayingWork(
         composer = composer,
@@ -43,9 +45,9 @@ fun nowPlayingWork(queue: List<Song>, index: Int, library: Collection<ComposerNa
         miniTitle = listOfNotNull(composer, title.core).joinToString(": "),
         miniSubtitle = listOfNotNull(label, song.leadPerformer()).joinToString(" · "),
         ribbon = ribbon,
-        ordinal = position(block.numbering, ribbon.movementIndex + 1),
-        total = position(block.numbering, ribbon.movementCount),
-        ordinals = List(ribbon.movementCount) { position(block.numbering, it + 1) }
+        ordinal = position(block.numbering, movement.number),
+        total = position(block.numbering, queue.slice(run.range).firstNotNullOfOrNull { it.movementTotal?.takeIf { total -> total >= 1 } } ?: block.movements.map { it.number }.distinct().size),
+        ordinals = block.movements.map { position(block.numbering, it.number) }
     )
 }
 

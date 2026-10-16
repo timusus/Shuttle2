@@ -188,6 +188,18 @@ class RealAlbumTagsTest {
     }
 
     @Test
+    fun `Mahler Now Playing reads III of V and keeps V on the finale tracks`() {
+        val songs = mahler()
+        val third = nowPlayingWork(songs, 2)!!
+        third.ordinal shouldBe "III"
+        third.total shouldBe "V"
+        val finale = nowPlayingWork(songs, 8)!!
+        finale.ordinal shouldBe "V"
+        finale.movement shouldBe "V. Langsam. Misterioso"
+        finale.ribbon.segments.size shouldBe 11
+    }
+
+    @Test
     fun `Mahler is one symphony of 11 across both discs when the album artist is the full name`() {
         val blocks = blocks(mahler(albumArtist = "Gustav Mahler"))
         blocks.map { it.movementCount } shouldBe listOf(11)
