@@ -111,8 +111,14 @@ internal fun Performer.isEnsemble(): Boolean {
 
 private val voiceTypes = setOf("soprano", "mezzo-soprano", "alto", "contralto", "countertenor", "tenor", "baritone", "bass-baritone", "bass", "treble")
 
+// Bare "bass", "alto" and "treble" are also instruments, so only these name a voice without a " vocals" suffix.
+private val unambiguousVoices = voiceTypes - setOf("bass", "alto", "treble")
+
 // Picard writes a singer's role as "baritone vocals"; the voice type alone is what a programme shows.
-private fun Performer.voice() = cleanRole()?.lowercase()?.removeSuffix(" vocals")?.takeIf { it in voiceTypes }
+private fun Performer.voice(): String? {
+    val role = cleanRole()?.lowercase() ?: return null
+    return if (role.endsWith(" vocals")) role.removeSuffix(" vocals").takeIf { it in voiceTypes } else role.takeIf { it in unambiguousVoices }
+}
 
 // A singer leads the credits, ahead of the accompanist.
 private fun Song.soloists() = performers.orEmpty().filter { !it.isConductor() && !it.isEnsemble() && it.name.isNotBlank() }.sortedBy { if (it.voice() != null) 0 else 1 }

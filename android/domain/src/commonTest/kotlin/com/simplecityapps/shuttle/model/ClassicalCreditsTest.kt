@@ -129,6 +129,31 @@ class ClassicalCreditsTest {
     }
 
     @Test
+    fun `bass vocals is a voice shown as bass and promoted`() {
+        val song = song(id = 1).copy(performers = listOf(Performer("Gerald Moore", "piano"), Performer("Hans Hotter", "bass vocals")))
+
+        song.creditsLine() shouldBe "Hans Hotter, bass · Gerald Moore, piano"
+        song.leadPerformer() shouldBe "Hans Hotter"
+    }
+
+    @Test
+    fun `a jazz trio keeps its order and labels`() {
+        val trio = song(id = 1).copy(performers = listOf(Performer("Ray Brown", "bass"), Performer("Oscar Peterson", "piano"), Performer("Ed Thigpen", "drums")))
+
+        trio.creditsLine() shouldBe "Ray Brown, bass · Oscar Peterson, piano · Ed Thigpen, drums"
+        trio.leadPerformer() shouldBe "Ray Brown"
+        song(id = 1).copy(performers = listOf(Performer("Oscar Peterson", "piano"), Performer("Ray Brown", "bass"))).leadPerformer() shouldBe "Oscar Peterson"
+    }
+
+    @Test
+    fun `lead and backing vocals are unchanged`() {
+        val song = song(id = 1).copy(performers = listOf(Performer("Sam Backer", "backing vocals"), Performer("Lee Lead", "lead vocals")))
+
+        song.creditsLine() shouldBe "Sam Backer, backing vocals · Lee Lead, lead vocals"
+        song.leadPerformer() shouldBe "Sam Backer"
+    }
+
+    @Test
     fun `a work shows credits only when they differ from the album`() {
         val album = song(id = 1).copy(conductor = "Kleiber")
         val guest = song(id = 2).copy(conductor = "Karajan")
