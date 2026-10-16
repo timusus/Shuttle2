@@ -233,11 +233,24 @@ class MediaImporterImportTest : MediaImporterTestBase() {
     }
 
     @Test
-    fun `songs imported under tags version 6 are outdated for local files but not for a remote server`() {
-        preferences.setSongTagsVersion(MediaProviderType.Jellyfin.name, 6)
-        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, 6)
+    fun `songs imported under tags version 5 are outdated for local files and Subsonic but not for other remote servers`() {
+        for (type in listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex, MediaProviderType.Subsonic, MediaProviderType.Shuttle)) {
+            preferences.setSongTagsVersion(type.name, 5)
+        }
 
         preferences.songTagsOutdated(MediaProviderType.Jellyfin) shouldBe false
+        preferences.songTagsOutdated(MediaProviderType.Emby) shouldBe false
+        preferences.songTagsOutdated(MediaProviderType.Plex) shouldBe false
+        preferences.songTagsOutdated(MediaProviderType.Subsonic) shouldBe true
+        preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
+    }
+
+    @Test
+    fun `songs imported under tags version 6 are outdated for local files but not for a remote server`() {
+        preferences.setSongTagsVersion(MediaProviderType.Subsonic.name, 6)
+        preferences.setSongTagsVersion(MediaProviderType.Shuttle.name, 6)
+
+        preferences.songTagsOutdated(MediaProviderType.Subsonic) shouldBe false
         preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
         preferences.songTagsOutdated(MediaProviderType.MediaStore) shouldBe true
     }

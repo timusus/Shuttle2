@@ -539,8 +539,15 @@ class MediaImporter(
          */
         const val SONG_TAGS_VERSION = 7
 
-        /** The version [type]'s songs must have been imported under: no remote provider populates the version 7 fields. */
-        fun requiredSongTagsVersion(type: MediaProviderType): Int = if (type.remote) 6 else SONG_TAGS_VERSION
+        /**
+         * The version [type]'s songs must have been imported under: only Subsonic fills the version 6 fields among the
+         * remote providers, and only local files the version 7 ones.
+         */
+        fun requiredSongTagsVersion(type: MediaProviderType): Int = when {
+            !type.remote -> SONG_TAGS_VERSION
+            type == MediaProviderType.Subsonic -> 6
+            else -> 5
+        }
 
         /** Whether [type]'s songs were last imported before [requiredSongTagsVersion]: recorded when its import is stored. */
         fun GeneralPreferenceManager.songTagsOutdated(type: MediaProviderType): Boolean = songTagsVersion(type.name) < requiredSongTagsVersion(type)
