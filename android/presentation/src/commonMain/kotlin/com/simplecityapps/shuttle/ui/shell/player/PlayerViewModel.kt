@@ -102,6 +102,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val observePlaylists: ObservePlaylists,
     private val controlSleepTimer: ControlSleepTimer,
     private val readSleepTimeRemaining: ReadSleepTimeRemaining,
+    observeSleepTimerAtEndOfWork: ObserveSleepTimerAtEndOfWork,
     readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
     observeSetting: ObserveSetting,
     private val saveSetting: SaveSetting,
@@ -139,7 +140,7 @@ class PlayerViewModel @AssistedInject constructor(
     /** Bumped when the sleep timer is started or stopped here. */
     private val sleepTimerChanges = MutableStateFlow(0)
     private val sleepTimerPlayToEnd = MutableStateFlow(readSleepTimerPlayToEnd())
-    private val sleepTimerAtEndOfWork = MutableStateFlow(false)
+    private val sleepTimerAtEndOfWork: Flow<Boolean> = observeSleepTimerAtEndOfWork()
 
     private val events = PendingEvents<PlayerUiEvent>()
 
@@ -320,19 +321,16 @@ class PlayerViewModel @AssistedInject constructor(
     ) {
         controlSleepTimer(SleepTimerCommand.Start(durationMs, playToEnd))
         sleepTimerPlayToEnd.value = playToEnd
-        sleepTimerAtEndOfWork.value = false
         sleepTimerChanges.value++
     }
 
     override fun startSleepTimerAtEndOfWork() {
         controlSleepTimer(SleepTimerCommand.StartAtEndOfWork)
-        sleepTimerAtEndOfWork.value = true
         sleepTimerChanges.value++
     }
 
     override fun stopSleepTimer() {
         controlSleepTimer(SleepTimerCommand.Stop)
-        sleepTimerAtEndOfWork.value = false
         sleepTimerChanges.value++
     }
 

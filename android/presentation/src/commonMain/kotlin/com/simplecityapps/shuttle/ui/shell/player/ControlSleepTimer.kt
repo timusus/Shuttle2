@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dev.zacsweers.metro.Inject
+import kotlinx.coroutines.flow.Flow
 
 sealed interface SleepTimerCommand {
     /** Pauses after [durationMs], or at the end of the song playing then when [playToEnd]. */
@@ -41,6 +42,13 @@ class ReadSleepTimeRemaining @Inject constructor(
     private val sleepTimer: SleepTimer,
 ) {
     operator fun invoke(): Long? = sleepTimer.timeRemaining()
+}
+
+/** Whether the running sleep timer waits for the end of the work playing. */
+class ObserveSleepTimerAtEndOfWork @Inject constructor(
+    private val sleepTimer: SleepTimer,
+) {
+    operator fun invoke(): Flow<Boolean> = sleepTimer.atEndOfWork
 }
 
 /** The play-to-end choice the sleep timer was last started with. */

@@ -10,6 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -38,6 +41,11 @@ class SleepTimer(
 
     private var delay: Long = 0L
 
+    private val _atEndOfWork = MutableStateFlow(false)
+
+    /** Whether the running timer waits for the end of the work playing, rather than a delay or the end of the song. */
+    val atEndOfWork: StateFlow<Boolean> = _atEndOfWork.asStateFlow()
+
     /**
      * Start the sleep timer, replacing any timer already running.
      *
@@ -52,6 +60,7 @@ class SleepTimer(
 
         startTime = elapsedRealtime()
         this.delay = delay
+        _atEndOfWork.value = false
 
         timerJob =
             appCoroutineScope.launch(context) {
@@ -75,6 +84,7 @@ class SleepTimer(
 
         startTime = elapsedRealtime()
         delay = 0L
+        _atEndOfWork.value = true
 
         timerJob =
             appCoroutineScope.launch(context) {
@@ -102,6 +112,7 @@ class SleepTimer(
         timerJob = null
         delay = 0L
         startTime = null
+        _atEndOfWork.value = false
     }
 
     /**

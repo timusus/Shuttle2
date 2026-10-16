@@ -123,8 +123,12 @@ class PlayerViewModelTest {
     /** What the Pro gate decides turning ReplayGain on from; Pro by default. */
     private var entitlement: Entitlement = Entitlement.Pro(ProSource.Lifetime)
 
-    private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
-        val sleepTimer = SleepTimer(playbackOperations, queueOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
+    private fun TestScope.sleepTimer() = SleepTimer(playbackOperations, queueOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
+
+    private fun TestScope.viewModel(
+        savedStateHandle: SavedStateHandle = SavedStateHandle(),
+        sleepTimer: SleepTimer = sleepTimer(),
+    ): PlayerViewModel {
         val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         mediaActions.entitlement.value = entitlement
         return PlayerViewModel(
@@ -140,6 +144,7 @@ class PlayerViewModelTest {
             observePlaylists = ObservePlaylists(playlistRepository),
             controlSleepTimer = ControlSleepTimer(sleepTimer, preferenceManager),
             readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
+            observeSleepTimerAtEndOfWork = ObserveSleepTimerAtEndOfWork(sleepTimer),
             readSleepTimerPlayToEnd = ReadSleepTimerPlayToEnd(preferenceManager),
             observeSetting = ObserveSetting(settingsStore),
             saveSetting = SaveSetting(settingsStore),
@@ -801,6 +806,22 @@ class PlayerViewModelTest {
         viewModel.stopSleepTimer()
         viewModel.uiState.value.player.sleepTimerActive shouldBe false
         viewModel.uiState.value.player.sleepTimerAtEndOfWork shouldBe false
+    }
+
+    @Test
+    fun `a new view model shows an end of work sleep timer already running`() = runTest {
+        val sleepTimer = sleepTimer()
+        val movements = listOf(
+            createSong(id = 1, name = "Allegro", albumArtist = "Ines Varga", album = "Sonatas").copy(genres = listOf("Classical"), work = "Sonata No. 3", movementNumber = 1),
+            createSong(id = 2, name = "Adagio", albumArtist = "Ines Varga", album = "Sonatas").copy(genres = listOf("Classical"), work = "Sonata No. 3", movementNumber = 2),
+        )
+        queueOperations.queueStateFlow.value = queueOf(movements, current = 0)
+        sleepTimer.startTimerAtEndOfWork()
+
+        val viewModel = viewModel(sleepTimer = sleepTimer)
+
+        viewModel.uiState.value.player.sleepTimerActive shouldBe true
+        viewModel.uiState.value.player.sleepTimerAtEndOfWork shouldBe true
     }
 
     @Test
