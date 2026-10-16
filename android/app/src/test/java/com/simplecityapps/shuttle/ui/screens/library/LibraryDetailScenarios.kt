@@ -99,7 +99,8 @@ fun longNumeralAlbumDetail(): AlbumDetailUiState {
         genres = listOf("Classical"),
     )
     val prelude = listOf("Allegro", "Adagio").mapIndexed { i, name -> movement(i + 1L, "Sonata No. 3", name, i + 1) }
-    val variations = (1..24).map { n -> movement(10L + n, "Theme and Variations", "Variation $n", n) }
+    val numerals = listOf("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXII", "XXIII", "XXIV")
+    val variations = numerals.mapIndexed { i, numeral -> movement(11L + i, "Theme and Variations", "$numeral. Variation ${i + 1}", i + 1) }
     // A work of over 20 movements next to another starts collapsed; expand it.
     return classicalState(prelude + variations, toggled = setOf(variations.first().id))
 }
