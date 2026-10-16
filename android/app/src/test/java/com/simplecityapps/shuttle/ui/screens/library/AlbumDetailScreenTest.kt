@@ -140,8 +140,8 @@ class AlbumDetailScreenTest {
         robot.setAlbum(classicalAlbumDetail())
 
         robot.assertTextDisplayed("Sonata No. 3")
-        // The untagged encore means the album isn't all one composer's
-        robot.assertTextNotDisplayed("HARROW")
+        // The untagged encore is a bonus track and doesn't break "one composer"
+        robot.assertTextDisplayed("HARROW")
         robot.assertTextDisplayed("Allegro")
         robot.assertTextDisplayed("Adagio")
         robot.assertTextDisplayed("Presto")
