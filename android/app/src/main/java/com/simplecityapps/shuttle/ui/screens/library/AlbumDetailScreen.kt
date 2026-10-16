@@ -250,7 +250,10 @@ fun AlbumDetailDestination(
             OtherRecordingsSheet(
                 title = uiState.rows?.rows.orEmpty().filterIsInstance<AlbumRow.WorkHeader>().firstOrNull { it.songs.first().id == recordingsOf }?.title.orEmpty(),
                 recordings = recordings,
-                onOpen = { key -> onOpen(AlbumRoute(key.key, key.albumArtistGroupKey?.key, key.identity)) },
+                onOpen = { key ->
+                    recordingsOf = null
+                    onOpen(AlbumRoute(key.key, key.albumArtistGroupKey?.key, key.identity))
+                },
                 onDismissRequest = { recordingsOf = null },
             )
         }

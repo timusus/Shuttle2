@@ -263,6 +263,61 @@ class AlbumDetailViewModelTest {
         (viewModel.uiState.value.rows!!.rows.first() as AlbumRow.WorkHeader).otherRecordings shouldBe 2
     }
 
+    private fun sonata(id: Long, album: String) = createSong(id = id, name = "Allegro", album = album, albumArtist = "The Tin Orchards").copy(composer = "Ludwig Harrow", composerSort = "Harrow, Ludwig", work = "Sonata No. 3, Op. 10", genres = listOf("Classical"))
+
+    @Test
+    fun `other recordings are found again when the library changes`() = runTest {
+        fakeSongRepository.setSongs(listOf(sonata(1, "Cassette Summer"), sonata(2, "Porch Light")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        (viewModel.uiState.value.rows!!.rows.first() as AlbumRow.WorkHeader).otherRecordings shouldBe 1
+
+        fakeSongRepository.setSongs(listOf(sonata(1, "Cassette Summer"), sonata(2, "Porch Light"), sonata(3, "Tape Hiss")))
+        advanceUntilIdle()
+
+        (viewModel.uiState.value.rows!!.rows.first() as AlbumRow.WorkHeader).otherRecordings shouldBe 2
+    }
+
+    @Test
+    fun `the library is not read while Classical display is off`() = runTest {
+        SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
+        fakeSongRepository.setSongs(listOf(sonata(1, "Cassette Summer"), sonata(2, "Porch Light")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.otherRecordings shouldBe emptyMap()
+        fakeSongRepository.getSongsCalls shouldBe 1
+    }
+
+    @Test
+    fun `the library is not read for an album without works`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Rewind Button"), createSong(id = 2, name = "Something")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.otherRecordings shouldBe emptyMap()
+        fakeSongRepository.getSongsCalls shouldBe 1
+    }
+
+    @Test
+    fun `a pop album with a work tag neither reads the library nor lists other recordings`() = runTest {
+        fun bohemian(id: Long, album: String) = createSong(id = id, name = "Bohemian Rhapsody", album = album, albumArtist = "Queen").copy(composer = "Freddie Mercury", work = "Bohemian Rhapsody", genres = listOf("Rock"))
+        fakeSongRepository.setSongs(listOf(bohemian(1, "Cassette Summer"), bohemian(2, "Greatest Hits")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.otherRecordings shouldBe emptyMap()
+        fakeSongRepository.getSongsCalls shouldBe 1
+    }
+
     @Test
     fun `no rows once Classical display is switched off or when the album has no works`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Song")))
@@ -435,6 +490,7 @@ class AlbumDetailViewModelTest {
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             observeSetting = ObserveSetting(settingsStore),
             findOtherRecordings = FindOtherRecordings(),
+            ioDispatcher = UnconfinedTestDispatcher(),
         )
     }
 }

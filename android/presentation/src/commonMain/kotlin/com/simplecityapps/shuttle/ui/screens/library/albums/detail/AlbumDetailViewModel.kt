@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -34,7 +35,7 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -103,6 +104,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeArtworkSeed: ObserveArtworkSeed,
     observeSetting: ObserveSetting,
     private val findOtherRecordings: FindOtherRecordings,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -184,7 +186,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             if (works.isEmpty()) {
                 flowOf(emptyMap())
             } else {
-                observeSongs().map { library -> findOtherRecordings(works, library) }.flowOn(Dispatchers.Default)
+                observeSongs().map { library -> findOtherRecordings(works, library) }.flowOn(ioDispatcher)
             }
         }
         .distinctUntilChanged()

@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.model
 
 import com.simplecityapps.shuttle.smartplaylist.song
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlin.test.Test
+import kotlinx.datetime.LocalDate
 
 class OtherRecordingsTest {
     private var nextId = 1L
@@ -72,5 +74,60 @@ class OtherRecordingsTest {
         val found = FindOtherRecordings()(listOf(blockOf(current)), current + other).values.single().single()
         found.songs.size shouldBe 4
         found.leadPerformer shouldBe "Kleiber"
+    }
+
+    private fun rockMovements(album: String, count: Int = 2) = List(count) {
+        song(id = nextId++, name = "Part ${it + 1}", albumArtist = "Queen", album = album, track = it + 1, genres = listOf("Rock"))
+            .copy(composer = "Freddie Mercury", work = "Bohemian Rhapsody")
+    }
+
+    @Test
+    fun `two pop albums sharing a work tag and songwriter find no other recordings`() {
+        val night = rockMovements("A Night at the Opera")
+        val hits = rockMovements("Greatest Hits")
+        val works = groupWorks(night).filterIsInstance<AlbumItem.Work>().map { it.block }.filter { it.songs.isClassicalBlock() }
+        FindOtherRecordings()(works, night + hits) shouldBe emptyMap()
+    }
+
+    @Test
+    fun `a pop song never matches a classical work through its title`() {
+        val current = movements("A", "Symphony No. 5, Op. 67")
+        val pop = listOf(song(id = nextId++, name = "Symphony No. 5, Op. 67: Remix", albumArtist = "Queen", album = "B", genres = listOf("Rock")).copy(composer = "Beethoven", work = null))
+        others(current, pop) shouldBe emptyList()
+    }
+
+    @Test
+    fun `a classical song without a work tag matches by its title prefix`() {
+        val current = movements("A", "Symphony No. 5, Op. 67")
+        val untagged = List(2) {
+            song(id = nextId++, name = "Symphony No. 5, Op. 67: Movement ${it + 1}", albumArtist = "Karajan", album = "B", track = it + 1, genres = listOf("Classical"))
+                .copy(composer = "Beethoven", composerSort = "Beethoven, Ludwig van")
+        }
+        others(current, untagged) shouldBe listOf("B")
+    }
+
+    @Test
+    fun `songs sharing one album key are one recording`() {
+        val current = movements("A", "Symphony No. 5, Op. 67")
+        val first = movements("B", "Symphony No. 5, Op. 67", conductor = "Karajan", count = 1)
+        val second = movements("B", "Symphony No. 5, Op. 67", conductor = "Karajan", count = 1)
+        FindOtherRecordings()(listOf(blockOf(current)), current + first + second).values.single() shouldBe listOf(
+            OtherRecording(first.first().albumGroupKey, "B", "Karajan", (first + second).sortedBy { it.track })
+        )
+    }
+
+    @Test
+    fun `a song with a blank composer is ignored`() {
+        val current = movements("A", "Symphony No. 5, Op. 67")
+        val blank = movements("B", "Symphony No. 5, Op. 67", composer = " ")
+        others(current, blank) shouldBe emptyList()
+    }
+
+    @Test
+    fun `a copy of the current album under another album artist is not another recording`() {
+        val current = movements("Kleiber 5", "Symphony No. 5, Op. 67").map { it.copy(date = LocalDate(1975, 1, 1)) }
+        val copy = current.map { it.copy(id = nextId++, albumArtist = "Carlos Kleiber (streaming)") }
+        copy.first().albumGroupKey shouldNotBe current.first().albumGroupKey
+        others(current, copy) shouldBe emptyList()
     }
 }
