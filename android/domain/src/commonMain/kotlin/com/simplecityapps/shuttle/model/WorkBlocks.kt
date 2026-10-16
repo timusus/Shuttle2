@@ -46,7 +46,7 @@ internal class Run(val range: IntRange, val work: String?, val inferred: Boolean
 private val opNumber = Regex("""\bop\.?\s*(?=\d)""")
 private val whitespaceRun = Regex("""\s+""")
 
-private fun String.normalised(): String = lowercase()
+internal fun String.normalised(): String = lowercase()
     .replace(opNumber, "op")
     .map { if (it.isLetterOrDigit()) it else ' ' }
     .joinToString("")
@@ -66,6 +66,9 @@ private fun Song.workParts(): Pair<String, String?>? {
 private fun Song.cleanWork(): String? = workParts()?.first
 
 private fun Song.cleanComposer(): String? = composer?.trim()?.takeIf { it.isNotEmpty() }
+
+/** The work this song belongs to, from its work tag or else the "Work: movement" prefix of its title. */
+internal fun Song.workName(): String? = cleanWork() ?: titlePrefix()
 
 private val titleSeparators = listOf(": ", " - ")
 
