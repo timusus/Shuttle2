@@ -158,6 +158,9 @@ class RealAlbumTagsTest {
         val blocks = blocks(kleiber())
         blocks.map { it.movementCount } shouldBe listOf(4, 4)
         blocks.map { it.title.core } shouldBe listOf("Symphony no. 5", "Symphony no. 7")
+        blocks.forEach { it.numbering shouldBe WorkNumbering(NumeralStyle.Roman, "movements") }
+        blocks.first().movements.map { it.label } shouldBe listOf("I. Allegro con brio", "II. Andante con moto", "III. Scherzo. Allegro", "IV. Allegro")
+        blocks.last().movements.map { it.numeral } shouldBe listOf("I", "II", "III", "IV")
     }
 
     @Test
@@ -207,5 +210,8 @@ class RealAlbumTagsTest {
         blocks.map { it.movementCount } shouldBe listOf(24)
         blocks.single().title.core shouldBe "Die Winterreise"
         blocks.single().title.catalogue shouldBe "D. 911"
+        blocks.single().numbering shouldBe WorkNumbering(NumeralStyle.Arabic, "songs")
+        blocks.single().movements.map { it.label }.let { it.first() to it.last() } shouldBe ("1. Gute Nacht" to "24. Der Leiermann")
+        blocks.single().movements.map { it.number } shouldBe (1..24).toList()
     }
 }

@@ -75,14 +75,18 @@ private fun Performer.isVoice(): Boolean {
 
 private fun List<Song>.isSongGenre() = any { song -> song.genres.any { songGenre.containsMatchIn(it) } }
 
+// Any conductor, performer credit or classical genre keeps an album classical, even when the composer is also its album artist.
 private fun List<Song>.isNonClassical(): Boolean {
-    val first = firstOrNull() ?: return false
-    val composer = first.composer?.trim()?.takeIf { it.isNotEmpty() }
-    val albumArtist = first.albumArtist?.trim()
-    if (composer != null && albumArtist != null && composer.equals(albumArtist, ignoreCase = true)) return true
     val credited = any { !it.conductor.isNullOrBlank() || it.performers.orEmpty().isNotEmpty() }
     val classicalGenre = any { song -> song.genres.any { genre -> classicalGenreWords.any { genre.contains(it, ignoreCase = true) } } }
     return !credited && !classicalGenre
+}
+
+// A singer with an instrumentalist and no conductor or ensemble is a song cycle (Winterreise: baritone and piano).
+private fun List<Song>.isSongCycle(): Boolean {
+    val performers = flatMap { it.performers.orEmpty() }
+    return none { !it.conductor.isNullOrBlank() } && performers.any { it.isVoice() } &&
+        performers.any { !it.isVoice() && !it.isEnsemble() } && performers.none { !it.isVoice() && it.isEnsemble() }
 }
 
 /**
@@ -94,7 +98,7 @@ fun workNumbering(songs: List<Song>): WorkNumbering {
     val length = songs.firstNotNullOfOrNull { it.movementTotal?.takeIf { total -> total >= 1 } } ?: songs.size
     return when {
         songs.isNonClassical() -> WorkNumbering(NumeralStyle.Arabic, if (songs.isSongGenre()) "songs" else "parts")
-        songs.isSongGenre() -> WorkNumbering(NumeralStyle.Arabic, "songs")
+        songs.isSongGenre() || songs.isSongCycle() -> WorkNumbering(NumeralStyle.Arabic, "songs")
         songs.any { song -> song.performers.orEmpty().any { it.isVoice() } } -> WorkNumbering(NumeralStyle.Arabic, "parts")
         length > 12 -> WorkNumbering(NumeralStyle.Arabic, "movements")
         else -> WorkNumbering(NumeralStyle.Roman, "movements")

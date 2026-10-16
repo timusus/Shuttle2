@@ -35,7 +35,7 @@ private fun Performer.cleanRole() = role?.trim()?.takeIf { it.isNotEmpty() }
 
 private fun Performer.isConductor() = cleanRole()?.equals("conductor", ignoreCase = true) == true
 
-private fun Performer.isEnsemble(): Boolean {
+internal fun Performer.isEnsemble(): Boolean {
     val role = cleanRole() ?: return true
     return role.lowercase().split(Regex("""[^a-z]+""")).any { it in ensembleWords }
 }
