@@ -160,7 +160,7 @@ fun MovementRow(
         Text(
             text = numeral.orEmpty(),
             modifier = Modifier.width(NumeralColumn),
-            style = MaterialTheme.typography.rowMeta,
+            style = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum"),
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End,
             maxLines = 1,
@@ -179,7 +179,7 @@ fun MovementRow(
         Text(
             duration,
             Modifier.padding(start = S2Spacing.small),
-            style = MaterialTheme.typography.rowMeta,
+            style = MaterialTheme.typography.rowMeta.copy(fontFeatureSettings = "tnum"),
             color = if (playing) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (onMore != null) RowMoreButton(onClick = onMore)

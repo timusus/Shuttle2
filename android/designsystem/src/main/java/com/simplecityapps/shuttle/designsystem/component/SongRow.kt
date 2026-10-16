@@ -50,6 +50,7 @@ fun SongRow(
     offlineState: SongOfflineState = SongOfflineState.None,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+    tabularDuration: Boolean = false,
 ) = SongRow(
     AnnotatedString(title),
     subtitle?.let(::AnnotatedString),
@@ -64,6 +65,7 @@ fun SongRow(
     offlineState,
     onLongClick,
     onMore,
+    tabularDuration,
 )
 
 /** A [SongRow] with styled [title] and [subtitle], such as a search query's matches in bold. */
@@ -82,6 +84,7 @@ fun SongRow(
     offlineState: SongOfflineState = SongOfflineState.None,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+    tabularDuration: Boolean = false,
 ) {
     // On a track list the playing mark takes the track number's place, keeping the secondary line for the offline mark
     val playingInLeading = playing && artwork == null && trackNumber != null
@@ -119,6 +122,7 @@ fun SongRow(
         enabled = enabled,
         onLongClick = onLongClick,
         onMore = onMore,
+        tabularMeta = tabularDuration,
     )
 }
 

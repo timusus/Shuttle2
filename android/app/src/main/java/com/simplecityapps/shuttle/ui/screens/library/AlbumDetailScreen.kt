@@ -121,6 +121,7 @@ fun AlbumDetailScreen(
                             playing = song.id == uiState.currentSong?.id,
                             offlineState = song.offlineState(),
                             onMore = { onSongMore(song) },
+                            tabularDuration = true,
                         )
                     }
                 }
@@ -196,6 +197,7 @@ private fun LazyListScope.classicalRows(
                 playing = row.playing,
                 offlineState = row.song.offlineState(),
                 onMore = { onSongMore(row.song) },
+                tabularDuration = true,
             )
         }
     }

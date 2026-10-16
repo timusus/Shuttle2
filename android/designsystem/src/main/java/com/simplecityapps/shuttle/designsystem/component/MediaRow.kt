@@ -44,6 +44,7 @@ internal fun MediaRow(
     onMore: (() -> Unit)? = null,
     dragHandle: (@Composable () -> Unit)? = null,
     edgeInset: Dp = 0.dp,
+    tabularMeta: Boolean = false,
 ) {
     ListItem(
         selected = selected,
@@ -64,7 +65,10 @@ internal fun MediaRow(
         trailingContent = if (meta != null || onMore != null || dragHandle != null) {
             {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    meta?.let { Text(it, style = MaterialTheme.typography.rowMeta) }
+                    meta?.let {
+                        val style = MaterialTheme.typography.rowMeta
+                        Text(it, style = if (tabularMeta) style.copy(fontFeatureSettings = "tnum") else style)
+                    }
                     onMore?.let {
                         RowMoreButton(onClick = it, enabled = enabled, edgeInset = edgeInset)
                     }
