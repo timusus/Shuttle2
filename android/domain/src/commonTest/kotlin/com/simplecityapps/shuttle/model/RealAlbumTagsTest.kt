@@ -200,6 +200,24 @@ class RealAlbumTagsTest {
     }
 
     @Test
+    fun `Hahn stays ungrouped because nothing names a work`() {
+        val titles = listOf(
+            "Allegro Molto Appassionato",
+            "Andante",
+            "Allegretto Non Troppo - Allegro Molto Vivace",
+            "Nocturne. Moderato",
+            "Scherzo. Allegro",
+            "Passacaglia. Andante",
+            "Cadenza",
+            "Burlesque. Allegro Con Brio"
+        )
+        val songs = titles.mapIndexed { index, title ->
+            song(id = index + 1L, name = title, albumArtist = null, artists = listOf("Hilary Hahn"), album = "Mendelssohn & Shostakovich Violin Concertos", track = index + 1, genres = listOf("Classical"))
+        }
+        groupWorks(songs).all { it is AlbumItem.Track } shouldBe true
+    }
+
+    @Test
     fun `Atom Heart Mother stays five lone tracks`() {
         groupWorks(atomHeartMother()).all { it is AlbumItem.Track } shouldBe true
     }
