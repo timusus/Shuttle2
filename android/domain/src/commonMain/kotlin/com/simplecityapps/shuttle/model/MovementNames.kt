@@ -94,9 +94,21 @@ internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.any { gen
     }
 }
 
-// Only a conductor tag or a classical genre keeps an album classical; performer credits alone do not, so a band whose
-// leader wrote the suite stays a plain album.
-private fun List<Song>.isNonClassical(): Boolean = none { !it.conductor.isNullOrBlank() || hasClassicalGenre(it.genres) }
+private val popularGenres = setOf("rock", "pop", "jazz", "metal", "folk", "electronic", "hip hop", "rap", "r&b", "soul", "country", "blues", "punk", "indie", "soundtrack", "score")
+
+private fun Song.hasPopularGenre() = genres.any { genre -> genre.split(';', '/', ',').any { it.trim().lowercase() in popularGenres } }
+
+private fun Song.composerIsAlbumArtist(): Boolean {
+    val composer = composer?.trim()?.takeIf { it.isNotEmpty() } ?: return true
+    val albumArtist = albumArtist?.trim()?.takeIf { it.isNotEmpty() } ?: return true
+    return sameComposer(composer, albumArtist) || albumArtist.startsWith("$composer;") || albumArtist.startsWith("$composer,")
+}
+
+// A conductor tag or a classical genre keeps an album classical, and so does a composer other than the album artist
+// (Beethoven played by Hilary Hahn) unless a popular genre says otherwise. Performer credits alone do not, so a band
+// whose leader wrote the suite stays a plain album.
+private fun List<Song>.isNonClassical(): Boolean = none { !it.conductor.isNullOrBlank() || hasClassicalGenre(it.genres) } &&
+    all { it.composerIsAlbumArtist() || it.hasPopularGenre() }
 
 private val accompanimentWords = setOf("piano", "fortepiano", "guitar", "lute", "harp")
 

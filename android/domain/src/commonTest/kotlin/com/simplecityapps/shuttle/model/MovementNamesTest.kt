@@ -149,6 +149,27 @@ class MovementNamesTest {
     }
 
     @Test
+    fun `a composer other than the album artist is classical without a genre or conductor`() {
+        val sonata = List(4) { song(id = it + 1L, albumArtist = "Hilary Hahn", genres = listOf("Romantic")).copy(composer = "Beethoven") }
+        workNumbering(sonata) shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
+        val blank = List(4) { song(id = it + 1L, albumArtist = "Hilary Hahn", genres = emptyList()).copy(composer = "Beethoven") }
+        workNumbering(blank) shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
+        val cycle = List(6) {
+            song(id = it + 1L, albumArtist = "Ian Bostridge", genres = emptyList())
+                .copy(composer = "Schumann", performers = listOf(Performer("Ian Bostridge", "tenor"), Performer("Julius Drake", "piano")))
+        }
+        workNumbering(cycle) shouldBe WorkNumbering(NumeralStyle.Arabic, "songs")
+    }
+
+    @Test
+    fun `a composer listed first in the album artist is the album artist`() {
+        val band = List(4) { song(id = it + 1L, albumArtist = "Pink Floyd; Roger Waters", genres = emptyList()).copy(composer = "Pink Floyd") }
+        workNumbering(band) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        val duo = List(4) { song(id = it + 1L, albumArtist = "Mahler, Orchestra", genres = emptyList()).copy(composer = "Mahler") }
+        workNumbering(duo) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+    }
+
+    @Test
     fun `a conductor tag keeps a work with no genre classical`() {
         val songs = List(3) { song(id = it + 1L, albumArtist = "Orchestra").copy(composer = "Mahler", conductor = "Abbado") }
         workNumbering(songs) shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
