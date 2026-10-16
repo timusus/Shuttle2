@@ -13,9 +13,6 @@ data class Movement(val song: Song, val number: Int, val name: String, val numer
     val label: String get() = if (numeral != null) "$numeral. $name" else name
 }
 
-/** A disc change inside a work: a divider goes before the movement at [beforeIndex]. */
-data class DiscBreak(val beforeIndex: Int, val disc: Int)
-
 /** A sub-header ("Act 2") over [movements]; [label] is null for movements before the first act (an overture). */
 data class ActSection(val label: String?, val movements: IntRange)
 
@@ -26,7 +23,6 @@ data class WorkBlock(
     val inferred: Boolean,
     val movements: List<Movement>,
     val numbering: WorkNumbering,
-    val discBreaks: List<DiscBreak>,
     val acts: List<ActSection>,
     val durationMs: Long,
     /** Null when it matches the album's credits. */
@@ -204,10 +200,6 @@ internal fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albu
         val numeral = if (!repeated && (songs.size > 1 || song.movementNumber != null) && numbering.styleFor(name) != NumeralStyle.None) numbering.format(number) else null
         Movement(song, number, name, numeral)
     }
-    val discBreaks = songs.indices.drop(1).mapNotNull { index ->
-        val disc = songs[index].disc
-        if (disc != null && songs[index - 1].disc != null && disc != songs[index - 1].disc) DiscBreak(index, disc) else null
-    }
     return WorkBlock(
         work = work,
         title = parseWorkTitle(work),
@@ -215,7 +207,6 @@ internal fun buildBlock(songs: List<Song>, work: String, inferred: Boolean, albu
         inferred = inferred,
         movements = movements,
         numbering = numbering,
-        discBreaks = discBreaks,
         acts = actSections(movements),
         durationMs = songs.sumOf { it.duration.toLong() },
         credits = workCreditsLine(songs, albumCredits),

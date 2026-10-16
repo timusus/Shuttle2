@@ -53,8 +53,7 @@ sealed interface AlbumRow {
         override val key get() = "act-$firstSongId"
     }
 
-    /** [inWork] is a disc change in the middle of a work, drawn with the work's movements. */
-    data class DiscDivider(val disc: Int, val firstSongId: Long, val inWork: Boolean = false) : AlbumRow {
+    data class DiscDivider(val disc: Int, val firstSongId: Long) : AlbumRow {
         override val key get() = "disc-$firstSongId"
     }
 
@@ -144,7 +143,6 @@ fun buildAlbumRows(songs: List<Song>, albumArtist: String?, currentSongId: Long?
                 )
                 if (!collapsed) {
                     block.movements.forEachIndexed { index, movement ->
-                        block.discBreaks.firstOrNull { it.beforeIndex == index }?.let { rows += AlbumRow.DiscDivider(it.disc, movement.song.id, inWork = true) }
                         block.acts.firstOrNull { it.movements.first == index }?.label?.let { rows += AlbumRow.ActHeader(it, movement.song.id) }
                         rows += AlbumRow.Movement(movement.song, movement.numeral, movement.name, movement.song.id == currentSongId, playIndexes.getValue(movement.song.id))
                     }

@@ -177,28 +177,6 @@ fun MovementRow(
     }
 }
 
-/** A disc change in the middle of a work: a quiet small-caps [label] and a hairline, indented with the work's movements and its rule. */
-@Composable
-fun WorkDiscDivider(label: String, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 40.dp)
-            .workRule(accent = false)
-            .padding(start = RuleInset + RuleWidth + S2Spacing.xsmall + NumeralColumn + S2Spacing.smallMedium, end = S2Spacing.medium)
-            .semantics { heading() },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
-    ) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp, fontWeight = FontWeight.SemiBold),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
-    }
-}
-
 @Preview
 @Composable
 private fun WorkRowsPreview() {
@@ -207,7 +185,6 @@ private fun WorkRowsPreview() {
             WorkHeaderRow(title = "Sonata No. 3", detail = "C minor · Op. 10", meta = "3 movements · 24:10", credits = "Ines Varga", onPlay = {}, onClick = {})
             MovementRow(numeral = "I", name = "Allegro", duration = "8:02", trackNumber = 1, onClick = {})
             MovementRow(numeral = "II", name = "Adagio", duration = "9:30", trackNumber = 2, playing = true, onClick = {})
-            WorkDiscDivider("Disc 2")
             MovementRow(numeral = "III", name = "Finale", duration = "6:38", trackNumber = 3, onClick = {})
         }
     }

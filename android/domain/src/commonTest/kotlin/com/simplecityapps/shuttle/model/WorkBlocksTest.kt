@@ -39,7 +39,7 @@ class WorkBlocksTest {
     }
 
     @Test
-    fun `a block spans a disc break and records it`() {
+    fun `a block spans a disc break`() {
         val songs = listOf(
             movement(1, "Mass in B minor, BWV 232", "Kyrie", 1, disc = 1),
             movement(2, "Mass in B minor, BWV 232", "Gloria", 2, disc = 1),
@@ -47,7 +47,7 @@ class WorkBlocksTest {
             movement(4, "Mass in B minor, BWV 232", "Sanctus", 4, disc = 2)
         )
         val block = (groupWorks(songs).single() as AlbumItem.Work).block
-        block.discBreaks shouldBe listOf(DiscBreak(2, 2))
+        block.movementCount shouldBe 4
         block.title.catalogue shouldBe "BWV 232"
         block.title.key shouldBe null
         block.title.core shouldBe "Mass in B minor"

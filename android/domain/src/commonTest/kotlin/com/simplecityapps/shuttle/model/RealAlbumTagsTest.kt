@@ -188,10 +188,9 @@ class RealAlbumTagsTest {
     }
 
     @Test
-    fun `Mahler is one symphony of 11 with the disc break inside when the album artist is the full name`() {
+    fun `Mahler is one symphony of 11 across both discs when the album artist is the full name`() {
         val blocks = blocks(mahler(albumArtist = "Gustav Mahler"))
         blocks.map { it.movementCount } shouldBe listOf(11)
-        blocks.single().discBreaks.map { it.disc } shouldBe listOf(2)
     }
 
     @Test

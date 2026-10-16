@@ -21,7 +21,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.component.SongRow
-import com.simplecityapps.shuttle.designsystem.component.WorkDiscDivider
 import com.simplecityapps.shuttle.designsystem.component.WorkHeaderRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -161,10 +160,7 @@ private fun LazyListScope.classicalRows(
 
             is AlbumRow.ActHeader -> SectionHeader(title = row.label, style = SectionHeaderStyle.Label)
 
-            is AlbumRow.DiscDivider -> {
-                val label = stringResource(R.string.album_detail_disc, row.disc)
-                if (row.inWork) WorkDiscDivider(label) else SectionHeader(title = label)
-            }
+            is AlbumRow.DiscDivider -> SectionHeader(title = stringResource(R.string.album_detail_disc, row.disc))
 
             is AlbumRow.WorkHeader -> WorkHeaderRow(
                 title = row.title,

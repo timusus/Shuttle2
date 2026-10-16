@@ -121,7 +121,7 @@ class AlbumRowsTest {
     }
 
     @Test
-    fun `a disc change inside a work gets a divider before its movement`() {
+    fun `a disc change inside a work gets no divider`() {
         val songs = listOf(
             movement("Sonata No. 3 in C minor, Op. 10", "I. Allegro", track = 1, disc = 1),
             movement("Sonata No. 3 in C minor, Op. 10", "II. Adagio", track = 2, disc = 1),
@@ -130,9 +130,7 @@ class AlbumRowsTest {
 
         val rows = buildAlbumRows(songs, albumArtist = "Ines Varga", currentSongId = null, toggled = emptySet())!!.rows
 
-        rows.map { it::class.simpleName } shouldBe listOf("WorkHeader", "Movement", "Movement", "DiscDivider", "Movement")
-        (rows[3] as AlbumRow.DiscDivider).disc shouldBe 2
-        (rows[3] as AlbumRow.DiscDivider).inWork shouldBe true
+        rows.map { it::class.simpleName } shouldBe listOf("WorkHeader", "Movement", "Movement", "Movement")
     }
 
     @Test
