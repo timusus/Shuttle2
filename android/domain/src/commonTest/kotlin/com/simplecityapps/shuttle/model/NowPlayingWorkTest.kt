@@ -91,6 +91,34 @@ class NowPlayingWorkTest {
     }
 
     @Test
+    fun `a partial work never reads past its total`() {
+        val songs = listOf("II. Andante", "III. Scherzo").mapIndexed { i, name -> movement(i + 1L, "Symphony No. 5", name) }
+        val work = nowPlayingWork(songs, 1)!!
+        work.ordinal shouldBe "III"
+        work.total shouldBe "III"
+    }
+
+    @Test
+    fun `a gapped work totals at its highest tagged number`() {
+        val songs = listOf(1, 2, 4).mapIndexed { i, number -> movement(i + 1L, "Suite", "Dance $number").copy(movementNumber = number) }
+        val work = nowPlayingWork(songs, 2)!!
+        work.ordinal shouldBe "IV"
+        work.total shouldBe "IV"
+    }
+
+    @Test
+    fun `two works that both number their movements from one do not continue each other`() {
+        val first = listOf("Allegro", "Adagio").mapIndexed { i, name -> movement(i + 1L, "Symphony No. 1", name).copy(movementNumber = i + 1) }
+        val second = listOf("Allegro", "Adagio").mapIndexed { i, name -> movement(i + 3L, "Symphony No. 2", name).copy(movementNumber = i + 1) }
+        val queue = first + second
+        val work = nowPlayingWork(queue, 2)!!
+        work.work shouldBe "Symphony No. 2"
+        work.movement shouldBe "I. Allegro"
+        work.ordinal shouldBe "I"
+        work.total shouldBe "II"
+    }
+
+    @Test
     fun `without movement numbers the caption counts tracks`() {
         val songs = listOf("Prologue", "Dance", "Finale").mapIndexed { i, name -> movement(i + 1L, "Suite", name) }
         val work = nowPlayingWork(songs, 1)!!
