@@ -101,8 +101,8 @@ fun longNumeralAlbumDetail(): AlbumDetailUiState {
     val prelude = listOf("Allegro", "Adagio").mapIndexed { i, name -> movement(i + 1L, "Sonata No. 3", name, i + 1) }
     val names = listOf("Andante", "Allegro", "Scherzo", "Minuet", "Largo", "Presto", "Waltz", "Gigue")
     val numerals = listOf("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI", "XXII", "XXIII", "XXIV")
-    val variations = (1..24).map { n -> movement(10L + n, "Theme and Variations", "${numerals[n - 1]}. ${if (n == 24) "Finale" else names[n % names.size]}", n) }
-    // A work of over 20 movements next to another starts collapsed; expand it.
+    val variations = (1..24).map { n -> movement(10L + n, "Theme and Variations", "${numerals[n - 1]}. ${if (n == 24) "Finale" else names[n % names.size]}", n).copy(movementTotal = 12) }
+    // A tagged total of 12 keeps the numerals Roman although the work runs past it; over 20 movements it starts collapsed, so expand it.
     return classicalState(prelude + variations, toggled = setOf(variations.first().id))
 }
 
