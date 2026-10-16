@@ -87,6 +87,19 @@ class MovementNamesTest {
     }
 
     @Test
+    fun `only a voice with an accompanist makes a song cycle`() {
+        fun numbering(vararg performers: Performer) = workNumbering(
+            List(4) { song(id = it + 1L, genres = listOf("Classical")).copy(composer = "Bach", performers = performers.toList()) }
+        )
+        numbering(Performer("Anna", "soprano"), Performer("Ben", "organ")) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        numbering(Performer("Anna", "soprano"), Performer("Ben", "harpsichord continuo")) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        numbering(Performer("Anna", "soprano"), Performer("Ben", "piano"), Performer("Choir", "choir")) shouldBe WorkNumbering(NumeralStyle.Arabic, "parts")
+        numbering(Performer("Anna", "baritone vocals"), Performer("Ben", "piano")) shouldBe WorkNumbering(NumeralStyle.Arabic, "songs")
+        numbering(Performer("Anna", "tenor"), Performer("Ben", "lute"), Performer("Unknown", null)) shouldBe WorkNumbering(NumeralStyle.Arabic, "songs")
+        numbering(Performer("Anna", "violin"), Performer("Ben", "piano")) shouldBe WorkNumbering(NumeralStyle.Roman, "movements")
+    }
+
+    @Test
     fun `a vocal role makes a work Arabic parts`() {
         val mass = List(5) {
             song(id = it + 1L, genres = listOf("Classical")).copy(composer = "Bach", performers = listOf(Performer("Anna", "soprano")))

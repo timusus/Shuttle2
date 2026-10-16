@@ -98,11 +98,16 @@ internal fun hasClassicalGenre(genres: List<String>): Boolean = genres.any { gen
 // leader wrote the suite stays a plain album.
 private fun List<Song>.isNonClassical(): Boolean = none { !it.conductor.isNullOrBlank() || hasClassicalGenre(it.genres) }
 
-// A singer with an instrumentalist and no conductor or ensemble is a song cycle (Winterreise: baritone and piano).
+private val accompanimentWords = setOf("piano", "fortepiano", "guitar", "lute", "harp")
+
+private fun Performer.isAccompanist(): Boolean = role?.words().orEmpty().let { words -> words.any { it in accompanimentWords } && words.none { it in setOf("organ", "continuo") } }
+
+// A singer with only an accompanist and no conductor, ensemble, organ or continuo is a song cycle (Winterreise: baritone and piano).
+// A performer with no role is unknown and ignored.
 private fun List<Song>.isSongCycle(): Boolean {
-    val performers = flatMap { it.performers.orEmpty() }
-    return none { !it.conductor.isNullOrBlank() } && performers.any { it.isVoice() } &&
-        performers.any { !it.isVoice() && !it.isEnsemble() } && performers.none { !it.isVoice() && it.isEnsemble() }
+    val performers = flatMap { it.performers.orEmpty() }.filter { !it.role.isNullOrBlank() }
+    val others = performers.filter { !it.isVoice() }
+    return none { !it.conductor.isNullOrBlank() } && performers.any { it.isVoice() } && others.isNotEmpty() && others.all { !it.isEnsemble() && it.isAccompanist() }
 }
 
 /**
