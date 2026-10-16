@@ -72,6 +72,28 @@ class WorkBlocksTest {
         groupWorks(songs).all { it is AlbumItem.Track } shouldBe true
     }
 
+    private fun composerless(genre: String?, vararg names: String) = names.mapIndexed { i, n ->
+        song(id = i + 1L, name = n, albumArtist = "Artist", artists = listOf("Artist"), album = "Record", genres = listOfNotNull(genre))
+    }
+
+    @Test
+    fun `an indie Op prefix without a form word stays ungrouped`() {
+        groupWorks(composerless(null, "Op. 1: Intro", "Op. 1: Outro")).all { it is AlbumItem.Track } shouldBe true
+        groupWorks(composerless("Classical", "Op. 1: Intro", "Op. 1: Outro")).all { it is AlbumItem.Track } shouldBe false
+    }
+
+    @Test
+    fun `a prog symphony without a catalogue number stays ungrouped`() {
+        val songs = composerless("Progressive Rock", "Symphony No. 2 - Pt 1", "Symphony No. 2 - Pt 2")
+        groupWorks(songs).all { it is AlbumItem.Track } shouldBe true
+    }
+
+    @Test
+    fun `a form word with a catalogue number groups without a composer or genre`() {
+        val songs = composerless(null, "Cello Suite No. 1, BWV 1007: I. Prélude", "Cello Suite No. 1, BWV 1007: II. Allemande")
+        (groupWorks(songs).single() as AlbumItem.Work).block.movementCount shouldBe 2
+    }
+
     private fun popSongs(vararg names: String) = names.mapIndexed { i, n ->
         song(id = i + 1L, name = n, albumArtist = "Artist", artists = listOf("Artist"), album = "Record", genres = listOf("Pop")).copy(composer = "Writer")
     }

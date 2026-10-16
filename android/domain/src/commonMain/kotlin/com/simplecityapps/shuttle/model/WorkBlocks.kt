@@ -82,12 +82,18 @@ internal val formWords = Regex(
     RegexOption.IGNORE_CASE
 )
 
-/** Without a composer tag a prefix must name a work by itself: a catalogue number, or "No. 5" with a form word; and it is no artist or album. */
+/**
+ * Without a composer tag a prefix must name a work by itself and show a classical signal: a form word with a catalogue
+ * number ("Cello Suite No. 1, BWV 1007"), or a classical genre with a catalogue number or "No. 5" and a form word. It is no artist or album.
+ */
 private fun isStrongWorkPrefix(songs: List<Song>, prefix: String): Boolean {
     val name = prefix.normalised()
     val credited = songs.flatMap { it.artists + listOfNotNull(it.albumArtist, it.album) }
     if (credited.any { it.normalised() == name }) return false
-    return catalogueSearchKeys(prefix).isNotEmpty() || (workNumberRef.containsMatchIn(prefix) && formWords.containsMatchIn(prefix))
+    val catalogue = catalogueSearchKeys(prefix).isNotEmpty()
+    val form = formWords.containsMatchIn(prefix)
+    if (catalogue && form) return true
+    return songs.any { hasClassicalGenre(it.genres) } && (catalogue || (workNumberRef.containsMatchIn(prefix) && form))
 }
 
 /** Whether a shared title prefix on [songs] is a classical work rather than "Artist - Song" or "Hold On - Live". */
