@@ -9,6 +9,8 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.entitlement.Entitlement
 import com.simplecityapps.shuttle.entitlement.ProFeature
@@ -16,6 +18,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.SmartPlaylistId
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -200,6 +203,33 @@ class MediaActionHandlerTest {
 
         playbackOperations.playedNext shouldBe listOf(song, other)
         playbackOperations.addedToQueue shouldBe listOf(song)
+    }
+
+    private fun playing(position: Int, vararg queued: Song) {
+        val items = queued.mapIndexed { index, queuedSong -> QueueItem(uid = index.toLong(), song = queuedSong, isCurrent = index == position) }
+        queueOperations.queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position)
+    }
+
+    private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven")
+
+    @Test
+    fun `play after this work queues the songs next then carries them past the work`() = runTest {
+        playing(0, movement(10), movement(11), movement(12), createSong(id = 20))
+
+        handler.handle(MediaAction.PlayAfterWork(songs)) shouldBe Message(MediaActionMessage.AddedToQueue(2))
+
+        playbackOperations.playedNext shouldBe listOf(song, other)
+        queueOperations.moves shouldBe listOf(1 to 4, 1 to 4)
+    }
+
+    @Test
+    fun `play after this work outside a work adds nothing`() = runTest {
+        playing(0, createSong(id = 10), createSong(id = 20))
+
+        handler.handle(MediaAction.PlayAfterWork(songs)) shouldBe Message(MediaActionMessage.NoSongs)
+
+        playbackOperations.playedNext shouldBe emptyList()
+        queueOperations.moves shouldBe emptyList()
     }
 
     @Test

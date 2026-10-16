@@ -150,7 +150,7 @@ class PlayerViewModelTest {
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueOperations, playbackOperations),
             restoreQueue = RestoreQueue(queueOperations, playbackOperations),
-            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures()),
+            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore)),
             mediaActionHandler = mediaActions.handler,
             deliveredFormats = deliveredFormats,
             loadLyrics = LoadLyrics(songRepository, onlineLyrics),

@@ -10,6 +10,9 @@ enum class MediaActionType {
     Play,
     Shuffle,
     PlayNext,
+
+    /** Play next, after the last movement of the work playing now; offered only while the current song is in a work. */
+    PlayAfterWork,
     AddToQueue,
 
     /** Opens the playlist picker, which then sends [MediaAction.AddToPlaylist] or [MediaAction.CreatePlaylist]. */
@@ -33,6 +36,7 @@ enum class MediaActionType {
         Play -> MediaAction.Play(selection)
         Shuffle -> MediaAction.Shuffle(selection)
         PlayNext -> MediaAction.PlayNext(selection)
+        PlayAfterWork -> MediaAction.PlayAfterWork(selection)
         AddToQueue -> MediaAction.AddToQueue(selection)
         AddToPlaylist -> null
         StartRadio -> MediaAction.StartRadio(selection)
@@ -94,6 +98,8 @@ sealed interface MediaAction {
     }
 
     data class PlayNext(override val selection: MediaSelection) : MediaAction
+
+    data class PlayAfterWork(override val selection: MediaSelection) : MediaAction
 
     data class AddToQueue(override val selection: MediaSelection) : MediaAction
 

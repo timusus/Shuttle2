@@ -4,9 +4,18 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createGenre
 import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
+import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.AddToPlaylist
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.AddToQueue
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Delete
@@ -16,6 +25,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType.Exclude
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.GoToAlbum
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.GoToArtist
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Play
+import com.simplecityapps.shuttle.ui.actions.MediaActionType.PlayAfterWork
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.PlayNext
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.RemoveDownload
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.Share
@@ -33,7 +43,9 @@ import kotlinx.coroutines.test.runTest
 class AvailableMediaActionsTest {
 
     private val downloads = FakeSongDownloader()
-    private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures())
+    private val queueOperations = FakeQueueOperations()
+    private val settingsStore = SettingsStore(InMemoryKeyValueStore())
+    private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(), queueOperations, ObserveSetting(settingsStore))
 
     private val remote = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
@@ -43,6 +55,42 @@ class AvailableMediaActionsTest {
     fun `a single local song offers everything but downloads`() = runTest {
         actionsFor(MediaSelection.Songs(createSong())) shouldBe
             listOf(Play, Shuffle, PlayNext, AddToQueue, AddToPlaylist, StartRadio, GoToAlbum, GoToArtist, EditTags, SongInfo, Share, Exclude, Delete)
+    }
+
+    private fun movement(id: Long) = createSong(id = id, name = "Movement $id", track = id.toInt()).copy(work = "Symphony No. 5", composer = "Beethoven")
+
+    private fun playing(position: Int, vararg songs: Song) {
+        val items = songs.mapIndexed { index, song -> QueueItem(uid = index.toLong(), song = song, isCurrent = index == position) }
+        queueOperations.queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position)
+    }
+
+    @Test
+    fun `play after this work follows play next while a work is playing`() = runTest {
+        playing(1, movement(1), movement(2), movement(3), createSong(id = 9))
+
+        actionsFor(MediaSelection.Songs(createSong(id = 20))).take(5) shouldBe listOf(Play, Shuffle, PlayNext, PlayAfterWork, AddToQueue)
+    }
+
+    @Test
+    fun `play after this work is not offered for a lone track`() = runTest {
+        playing(0, createSong(id = 8), createSong(id = 9))
+
+        actionsFor(MediaSelection.Songs(createSong(id = 20))) shouldNotContain PlayAfterWork
+    }
+
+    @Test
+    fun `play after this work is not offered with classical display off`() = runTest {
+        SaveSetting(settingsStore)(AppearanceSettings.ClassicalDisplay, false)
+        playing(1, movement(1), movement(2), movement(3))
+
+        actionsFor(MediaSelection.Songs(createSong(id = 20))) shouldNotContain PlayAfterWork
+    }
+
+    @Test
+    fun `play after this work is not offered for the queue itself`() = runTest {
+        playing(1, movement(1), movement(2), movement(3))
+
+        actionsFor(MediaSelection.Queue) shouldNotContain PlayAfterWork
     }
 
     @Test
@@ -85,7 +133,7 @@ class AvailableMediaActionsTest {
     @Test
     fun `a platform without offline downloads offers neither download action`() = runTest {
         downloads.heldPaths.value = setOf(remote.path)
-        val withoutDownloads = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(offlineDownloads = false))
+        val withoutDownloads = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(offlineDownloads = false), queueOperations, ObserveSetting(settingsStore))
 
         val actions = withoutDownloads(MediaSelection.Songs(listOf(remote, createSong(id = 2, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://2")))).first()
 

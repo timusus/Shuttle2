@@ -1,19 +1,24 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.platform.PlatformFeatures
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 
 /**
  * The actions the shared actions sheet offers for a selection, in display order, updating as downloads change.
  *
  * - Play, Shuffle, Play next, Add to queue, Add to playlist: everything but the queue, which only offers Add to
  *   playlist (save the queue).
+ * - Play after this work: right after Play next, while the current song is in a work run and classical display is on.
  * - Start radio: a single song, album or artist.
  * - Go to album: a single song. Go to artist: a single song or album.
  * - Edit tags: when every provider in the selection supports tag editing (local files only).
@@ -28,14 +33,29 @@ class AvailableMediaActions @Inject constructor(
     private val resolveSongs: ResolveSongs,
     private val songDownloader: SongDownloader,
     private val platformFeatures: PlatformFeatures,
+    private val queueOperations: QueueOperations,
+    private val observeSetting: ObserveSetting,
 ) {
     operator fun invoke(selection: MediaSelection): Flow<List<MediaActionType>> {
-        val base = baseActions(selection)
-        if (!platformFeatures.offlineDownloads || selection.mediaProviders?.any { it.remote } != true) return flowOf(base)
+        val base = withPlayAfterWork(baseActions(selection), selection)
+        if (!platformFeatures.offlineDownloads || selection.mediaProviders?.any { it.remote } != true) return base
         return flow {
             val songs = resolveSongs(selection)
-            emitAll(songDownloader.observeHeldPaths().map { heldPaths -> base + downloadActions(songs, heldPaths) })
+            emitAll(base.combine(songDownloader.observeHeldPaths()) { actions, heldPaths -> actions + downloadActions(songs, heldPaths) })
         }
+    }
+
+    /** Play after this work follows Play next while classical display is on and the current song is in a work run. */
+    private fun withPlayAfterWork(actions: List<MediaActionType>, selection: MediaSelection): Flow<List<MediaActionType>> {
+        val at = actions.indexOf(MediaActionType.PlayNext)
+        if (at < 0 || selection is MediaSelection.Queue) return flowOf(actions)
+        return combine(queueOperations.queueStateFlow, observeSetting(AppearanceSettings.ClassicalDisplay)) { state, classical ->
+            if (classical && PlayAfterWork.offered(state.items.map { it.song }, state.currentPosition)) {
+                actions.toMutableList().apply { add(at + 1, MediaActionType.PlayAfterWork) }
+            } else {
+                actions
+            }
+        }.distinctUntilChanged()
     }
 
     private fun baseActions(selection: MediaSelection): List<MediaActionType> = buildList {

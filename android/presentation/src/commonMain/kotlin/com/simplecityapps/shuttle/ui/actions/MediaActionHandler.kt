@@ -27,6 +27,7 @@ class MediaActionHandler @Inject constructor(
     private val resumeContext: ResumeContext,
     private val startRadio: StartRadio,
     private val enqueueSongs: EnqueueSongs,
+    private val playAfterWork: PlayAfterWork,
     private val addToPlaylist: AddToPlaylist,
     private val createPlaylist: CreatePlaylist,
     private val favouriteSongs: FavouriteSongs,
@@ -55,6 +56,10 @@ class MediaActionHandler @Inject constructor(
         }
 
         is MediaAction.PlayNext -> enqueue(action.selection, EnqueueSongs.Position.Next)
+
+        is MediaAction.PlayAfterWork -> playAfterWork(action.selection).let { songs ->
+            Message(if (songs.isEmpty()) MediaActionMessage.NoSongs else MediaActionMessage.AddedToQueue(songs.size))
+        }
 
         is MediaAction.AddToQueue -> enqueue(action.selection, EnqueueSongs.Position.End)
 

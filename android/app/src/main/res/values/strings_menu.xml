@@ -10,6 +10,8 @@
     <string name="menu_title_album_shuffle">Album shuffle</string>
     <!-- Menu option to add this song to the queue, to play next -->
     <string name="menu_title_play_next">Play next</string>
+    <!-- Menu option to add this song to the queue after the last movement of the classical work now playing -->
+    <string name="menu_title_play_after_work">Play after this work</string>
     <!-- Menu option to open the tag editor for this song/album/artist -->
     <string name="menu_title_edit_tags">Edit tags</string>
     <!-- Menu option to add the selected song to the 'favorites' playlist -->

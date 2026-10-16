@@ -240,6 +240,12 @@ fun groupWorks(songs: List<Song>): List<AlbumItem> {
 /** The queue indices of the work containing [index] (just [index] for a lone song). */
 fun workRunAt(queue: List<Song>, index: Int): IntRange = findRuns(queue).firstOrNull { index in it.range }?.range ?: index..index
 
+/** The queue indices of the work of two or more movements containing [index], as the player shows it; null for a lone song. */
+fun workRunOf(queue: List<Song>, index: Int): IntRange? {
+    if (index !in queue.indices) return null
+    return runAround(queue, index).takeIf { it.work != null }?.range
+}
+
 /**
  * The ribbon over the current work: [segments] are durations (one per movement, or per act when the movement names carry
  * Act prefixes), [segmentStarts] the queue index each begins at. [continuous] above 12 segments.

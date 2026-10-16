@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.FileDownloadOff
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material.icons.rounded.Radio
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Shuffle
@@ -364,6 +365,7 @@ fun MediaActionType.label(): String = stringResource(
         MediaActionType.Play -> R.string.menu_title_play
         MediaActionType.Shuffle -> R.string.menu_title_shuffle
         MediaActionType.PlayNext -> R.string.menu_title_play_next
+        MediaActionType.PlayAfterWork -> R.string.menu_title_play_after_work
         MediaActionType.AddToQueue -> R.string.menu_title_add_to_queue
         MediaActionType.AddToPlaylist -> R.string.menu_title_add_to_playlist
         MediaActionType.StartRadio -> R.string.media_action_start_radio
@@ -384,6 +386,7 @@ val MediaActionType.icon: ImageVector
         MediaActionType.Play -> Icons.Rounded.PlayArrow
         MediaActionType.Shuffle -> Icons.Rounded.Shuffle
         MediaActionType.PlayNext -> Icons.Rounded.SkipNext
+        MediaActionType.PlayAfterWork -> Icons.Rounded.QueuePlayNext
         MediaActionType.AddToQueue -> Icons.AutoMirrored.Rounded.QueueMusic
         MediaActionType.AddToPlaylist -> Icons.AutoMirrored.Rounded.PlaylistAdd
         MediaActionType.StartRadio -> Icons.Rounded.Radio

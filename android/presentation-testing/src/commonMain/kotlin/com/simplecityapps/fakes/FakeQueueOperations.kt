@@ -51,7 +51,13 @@ class FakeQueueOperations : QueueOperations {
     override suspend fun addToQueue(songs: List<Song>): Boolean = false
     override suspend fun addToNext(songs: List<Song>): Boolean = false
     override fun updateSongs(songs: List<Song>) {}
-    override fun move(from: Int, to: Int) {}
+
+    /** Each [move], in order, as from to to. */
+    val moves = mutableListOf<Pair<Int, Int>>()
+
+    override fun move(from: Int, to: Int) {
+        moves += from to to
+    }
 
     /** Every item passed to [remove], in order. */
     val removedItems = mutableListOf<QueueItem>()
