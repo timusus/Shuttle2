@@ -14,12 +14,14 @@ enum class SearchField(internal val weight: Int) {
 
 /**
  * Something to search for: an [item] and the text of its [fields]. A field may repeat (a song's several artists);
- * blank values are skipped. [popularity], a play count, breaks ties between otherwise equal matches.
+ * blank values are skipped. [popularity], a play count, breaks ties between otherwise equal matches. [catalogueKeys]
+ * are the item's catalogue search keys, worked out once here so a query only compares strings.
  */
 class SearchDocument<T>(
     val item: T,
     val fields: List<Pair<SearchField, String?>>,
     val popularity: Int = 0,
+    val catalogueKeys: List<String> = emptyList(),
 )
 
 /** One result: the [item] and the [query] that found it, which knows which parts of any of its text to highlight. */
@@ -51,6 +53,7 @@ class SearchIndex<T> private constructor(
     private val alphabeticalRank: IntArray,
     private val byAlphabeticalRank: IntArray,
     private val popularity: IntArray,
+    private val catalogueKeys: List<List<String>>,
     private val maxTermLength: Int,
 ) {
     val size: Int
@@ -64,8 +67,11 @@ class SearchIndex<T> private constructor(
 
     fun search(query: String, accept: (T) -> Boolean = { true }): List<SearchHit<T>> = search(SearchQuery.parse(query), accept)
 
-    /** The indexed items that satisfy [predicate], in the order they were indexed, for matches the token index can't express. */
-    fun filter(predicate: (T) -> Boolean): List<T> = items.filter(predicate)
+    /** The indexed items that satisfy [accept], in the order they were indexed, whose catalogue keys include [key]. */
+    fun withCatalogueKey(key: String, accept: (T) -> Boolean): List<T> = items.filterIndexed { doc, item -> key in catalogueKeys[doc] && accept(item) }
+
+    /** [search], where [accept] also sees each item's catalogue keys. */
+    fun searchWithCatalogueKeys(query: SearchQuery, accept: (T, List<String>) -> Boolean): List<SearchHit<T>> = searchDocuments(query) { doc -> accept(items[doc], catalogueKeys[doc]) }
 
     /**
      * The documents that [accept] lets through and that match every token of [query], best first. When none match
@@ -75,7 +81,9 @@ class SearchIndex<T> private constructor(
      * Ranking is bucketed: tokens matched, then fewer typos, then whole-token over prefix matches, then field weight,
      * then tokens found next to each other in order, then popularity, then alphabetical.
      */
-    fun search(query: SearchQuery, accept: (T) -> Boolean = { true }): List<SearchHit<T>> {
+    fun search(query: SearchQuery, accept: (T) -> Boolean = { true }): List<SearchHit<T>> = searchDocuments(query) { doc -> accept(items[doc]) }
+
+    private fun searchDocuments(query: SearchQuery, acceptDocument: (Int) -> Boolean): List<SearchHit<T>> {
         if (query.isEmpty || items.isEmpty()) return emptyList()
         val matches = query.tokens.map(::bestMatches)
         val optional = if (query.tokens.size > 1 && query.tokens.first() == "the") 0 else -1
@@ -85,7 +93,7 @@ class SearchIndex<T> private constructor(
             val keys = rank(tokens, matches, optional) { doc ->
                 if (!checked[doc]) {
                     checked[doc] = true
-                    accepted[doc] = accept(items[doc])
+                    accepted[doc] = acceptDocument(doc)
                 }
                 accepted[doc]
             }
@@ -348,6 +356,7 @@ class SearchIndex<T> private constructor(
                 alphabeticalRank = alphabeticalRank,
                 byAlphabeticalRank = byAlphabeticalRank,
                 popularity = popularity,
+                catalogueKeys = documents.map { it.catalogueKeys },
                 maxTermLength = terms.maxOfOrNull { it.length } ?: 0,
             )
         }

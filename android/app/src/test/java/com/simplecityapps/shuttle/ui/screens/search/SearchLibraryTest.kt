@@ -140,7 +140,38 @@ class SearchLibraryTest {
     fun `a partial catalogue number does not match a longer one`() = runTest {
         songs.setSongs(classicalSongs())
 
-        searchLibrary("op 6", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(3L, 4L)
+        searchLibrary("op 6", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(4L, 3L)
+    }
+
+    @Test
+    fun `a bare letter catalogue number finds a work the text index cannot`() = runTest {
+        songs.setSongs(
+            classicalSongs() + createSong(id = 5, name = "II. Romanze", albumArtist = "Mozart", album = "Piano Concertos").copy(work = "Piano Concerto No. 20 in D minor, K. 466")
+        )
+
+        for (query in listOf("k466", "K 466")) {
+            searchLibrary(query, setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(2L, 5L)
+        }
+    }
+
+    @Test
+    fun `a catalogue query keeps text hits that carry another catalogue`() = runTest {
+        songs.setSongs(classicalSongs() + createSong(id = 5, name = "Sonata, Hob. 52", albumArtist = "Op 67 Band", album = "Sonatas"))
+
+        searchLibrary("op 67", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(1L, 5L)
+    }
+
+    @Test
+    fun `catalogue matches are ordered by album then track`() = runTest {
+        songs.setSongs(
+            listOf(
+                createSong(id = 1, name = "Op. 67 second", album = "Zeta", track = 1),
+                createSong(id = 2, name = "Op. 67 b", album = "Alpha", track = 2),
+                createSong(id = 3, name = "Op. 67 a", album = "Alpha", track = 1),
+            )
+        )
+
+        searchLibrary("op67", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(3L, 2L, 1L)
     }
 
     @Test

@@ -42,10 +42,18 @@ private val quotedRef = Regex(""""([^"]+)"|“([^”]+)”|«\s*([^»]+?)\s*»""
 
 private val commaNicknameRef = Regex("""^(.*\d[^,]*),\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]*)$""")
 
-private fun String.tidy(): String = replace(Regex("""\(\s*\)|\[\s*]"""), " ")
-    .replace(Regex("""\s+"""), " ")
-    .replace(Regex("""\s+,"""), ",")
-    .replace(Regex(""",(\s*,)+"""), ",")
+private val whitespace = Regex("""\s+""")
+private val emptyBrackets = Regex("""\(\s*\)|\[\s*]""")
+private val spaceBeforeComma = Regex("""\s+,""")
+private val repeatedCommas = Regex(""",(\s*,)+""")
+
+// A query may drop the dot a stored "K. 466" needs: exactly letter, optional space, number.
+private val bareLetterQuery = Regex("""(KV|K|D|B)\s*(\d+[a-z]?)""", RegexOption.IGNORE_CASE)
+
+private fun String.tidy(): String = replace(emptyBrackets, " ")
+    .replace(whitespace, " ")
+    .replace(spaceBeforeComma, ",")
+    .replace(repeatedCommas, ",")
     .trim(' ', ',', ';', ':', '-', '–', '—')
 
 private fun catalogueMatches(text: String): List<MatchResult> = catalogueRef.findAll(text).filter { match ->
@@ -62,7 +70,7 @@ private fun MatchResult.display(): String {
     val dotted = value.getOrNull(prefix.length) == '.'
     val canonical = catalogueNames.firstOrNull { it.equals(prefix, ignoreCase = true) }?.takeIf { it.length > 1 } ?: prefix
     val shown = if (canonical == "Op") "Op." else canonical + if (dotted) "." else ""
-    val number = groupValues[2].ifEmpty { groupValues[3] }.replace(Regex("""\s+"""), "")
+    val number = groupValues[2].ifEmpty { groupValues[3] }.replace(whitespace, "")
     val sub = groupValues[4].takeIf { it.isNotEmpty() }?.let { " No. $it" }.orEmpty()
     return "$shown $number$sub"
 }
@@ -118,12 +126,28 @@ fun parseWorkTitle(title: String): WorkTitle {
 
 private fun MatchResult.searchKey(): String {
     val prefix = groupValues[1].lowercase().let { if (it == "kv") "k" else it }
-    val number = groupValues[2].ifEmpty { groupValues[3] }.lowercase().replace(Regex("""\s+"""), "")
+    val number = groupValues[2].ifEmpty { groupValues[3] }.lowercase().replace(whitespace, "")
     return prefix + number
 }
 
-/** One comparable form for a catalogue reference ("op67", "Op. 67" -> "op67"; "K 466", "KV466" -> "k466"); null when [text] is not exactly one. */
-fun catalogueSearchKey(text: String): String? = catalogueRef.matchEntire(text.trim())?.searchKey()
+/**
+ * One comparable form for a catalogue reference ("op67", "Op. 67" -> "op67"; "K 466", "KV466" -> "k466"); null when
+ * [text] is not exactly one. Unlike [catalogueSearchKeys] it accepts "k466", "d 850" and "b178" without the dot.
+ */
+fun catalogueSearchKey(text: String): String? {
+    val trimmed = text.trim()
+    catalogueRef.matchEntire(trimmed)?.let { return it.searchKey() }
+    val bare = bareLetterQuery.matchEntire(trimmed) ?: return null
+    val letter = bare.groupValues[1].lowercase().let { if (it == "kv") "k" else it }
+    return letter + bare.groupValues[2].lowercase()
+}
+
+/** The catalogue of a [catalogueSearchKey] without its number ("op67" -> "op", "hobxvi:52" -> "hob"). */
+fun catalogueKeyPrefix(key: String): String {
+    val letters = key.takeWhile { it.isLetter() }
+    // The Roman numeral of "Hob. XVI:52" is part of the number.
+    return if (':' in key) letters.trimEnd('i', 'v', 'x') else letters
+}
 
 /** The [catalogueSearchKey] of every catalogue reference inside [text], for the indexed side of a search. */
 fun catalogueSearchKeys(text: String): List<String> = catalogueMatches(text).map { it.searchKey() }

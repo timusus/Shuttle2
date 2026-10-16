@@ -9,8 +9,8 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.catalogueKeyPrefix
 import com.simplecityapps.shuttle.model.catalogueSearchKey
-import com.simplecityapps.shuttle.model.catalogueSearchKeys
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -48,33 +48,45 @@ class SearchLibrary @Inject constructor(
         val catalogueKey = catalogueSearchKey(query)
         return libraryIndex.index
             .map { index ->
-                val hits = index.search(searchQuery) { it.category in categories }
-                if (catalogueKey == null) hits.grouped() else withCatalogueMatches(index, hits, searchQuery, catalogueKey, categories).grouped()
+                if (catalogueKey == null) {
+                    index.search(searchQuery) { it.category in categories }.grouped()
+                } else {
+                    withCatalogueMatches(index, searchQuery, catalogueKey, categories).grouped()
+                }
             }
             .flowOn(dispatcher)
     }
 
     /**
      * A query that is a catalogue number ("op67", "K 466") first lists the songs and albums whose work or name holds
-     * that number. Their text matches stay only where they carry no catalogue number of their own, so "op 6" doesn't
-     * find "Op. 67" by prefix.
+     * that number, by album then track (albums by name). The text matches follow in their own order, minus those
+     * carrying another number of the same catalogue, so "op 6" doesn't find "Op. 67" by prefix.
      */
     private fun withCatalogueMatches(
         index: SearchIndex<Any>,
-        hits: List<SearchHit<Any>>,
         query: SearchQuery,
         key: String,
         categories: Set<SearchCategory>,
     ): List<SearchHit<Any>> {
-        val matches = index.filter { (it is Song || it is Album) && it.category in categories && key in it.catalogueKeys() }
-        val rest = hits.filter { hit -> hit.item.catalogueKeys().isEmpty() }
-        return (matches.map { SearchHit(it, query) } + rest).distinctBy { it.item }
+        val prefix = catalogueKeyPrefix(key)
+        val matches = index.withCatalogueKey(key) { (it is Song || it is Album) && it.category in categories }.sortedWith(catalogueOrder)
+        val matchedSongs = matches.filterIsInstance<Song>().mapTo(HashSet()) { it.id }
+        val matchedAlbums = matches.filterIsInstance<Album>().mapTo(HashSet()) { it.groupKey ?: it }
+        val rest = index.searchWithCatalogueKeys(query) { item, keys ->
+            item.category in categories &&
+                keys.none { it != key && catalogueKeyPrefix(it) == prefix } &&
+                !(item is Song && item.id in matchedSongs) &&
+                !(item is Album && (item.groupKey ?: item) in matchedAlbums)
+        }
+        return matches.map { SearchHit(it, query) } + rest
     }
 
-    private fun Any.catalogueKeys(): List<String> = when (this) {
-        is Song -> work?.let(::catalogueSearchKeys).orEmpty().ifEmpty { name?.let(::catalogueSearchKeys).orEmpty() }
-        is Album -> name?.let(::catalogueSearchKeys).orEmpty()
-        else -> emptyList()
+    private val catalogueOrder = Comparator<Any> { a, b ->
+        when {
+            a is Song && b is Song -> compareValuesBy(a, b, { it.album == null }, { it.album?.lowercase() }, { it.disc ?: 0 }, { it.track ?: 0 }, { it.id })
+            a is Album && b is Album -> compareValuesBy(a, b, { it.name == null }, { it.name?.lowercase() })
+            else -> if (a is Album) -1 else 1
+        }
     }
 
     private fun List<SearchHit<Any>>.grouped(): SearchResults {

@@ -66,7 +66,6 @@ class WorkTitleTest {
     fun `single letters are not catalogue numbers without their dot`() {
         listOf("K2", "D12", "S1", "Vitamin B 12", "Symphony in B 12", "Piano Sonata K 310").forEach {
             parseWorkTitle(it).catalogue shouldBe null
-            catalogueSearchKey(it) shouldBe null
             catalogueSearchKeys(it) shouldBe emptyList()
         }
     }
@@ -137,6 +136,24 @@ class WorkTitleTest {
         cases.forEach { (input, expected) -> catalogueSearchKey(input) shouldBe expected }
         catalogueSearchKey("beethoven") shouldBe null
         catalogueSearchKey("Symphony No. 5") shouldBe null
+    }
+
+    @Test
+    fun `a query may drop the dot of a single letter catalogue`() {
+        mapOf("k466" to "k466", "K 466" to "k466", "KV466" to "k466", "d 850" to "d850", "D850" to "d850", "b 178" to "b178", " k 466 " to "k466")
+            .forEach { (input, expected) -> catalogueSearchKey(input) shouldBe expected }
+        catalogueSearchKey("k") shouldBe null
+        catalogueSearchKey("Sonata k466") shouldBe null
+        catalogueSearchKey("e 466") shouldBe null
+        catalogueSearchKeys("Sonata K 466") shouldBe emptyList()
+    }
+
+    @Test
+    fun `catalogue key prefixes ignore the number`() {
+        catalogueKeyPrefix("op67") shouldBe "op"
+        catalogueKeyPrefix("k466") shouldBe "k"
+        catalogueKeyPrefix("hobxvi:52") shouldBe "hob"
+        catalogueKeyPrefix("bwv1041a") shouldBe "bwv"
     }
 
     @Test

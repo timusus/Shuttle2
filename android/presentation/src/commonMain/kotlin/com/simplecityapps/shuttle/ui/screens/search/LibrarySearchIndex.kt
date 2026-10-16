@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.catalogueSearchKeys
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -141,6 +142,7 @@ class LibrarySearchIndex @Inject constructor(
         album,
         (fields(SearchField.Name to album.name, SearchField.Artist to album.albumArtist) + album.artists.map { SearchField.Artist to it }).distinct(),
         album.playCount,
+        album.name?.let(::catalogueSearchKeys).orEmpty(),
     )
 
     private fun document(song: Song) = SearchDocument<Any>(
@@ -151,6 +153,7 @@ class LibrarySearchIndex @Inject constructor(
                 song.genres.map { SearchField.Genre to it }
             ).distinct(),
         song.playCount,
+        song.work?.let(::catalogueSearchKeys).orEmpty().ifEmpty { song.name?.let(::catalogueSearchKeys).orEmpty() },
     )
 
     private fun document(playlist: Playlist) = SearchDocument<Any>(playlist, fields(SearchField.Name to playlist.name))
